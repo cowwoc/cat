@@ -1,6 +1,6 @@
-# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT
+# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Agents that land on their feet
 
-**Agents that land on their feet** - A Claude Code plugin for structured project execution with multi-agent orchestration.
+A Claude Code plugin for structured project execution with multi-agent orchestration.
 
 ```
 MAJOR VERSION -> MINOR VERSION -> TASK
