@@ -122,7 +122,7 @@ Subagents get **fresh context** (200K tokens, 0% used) - peak performance for au
 ```json
 {
   "contextLimit": 200000,
-  "targetContextUsage": 0.4
+  "targetContextUsage": 40
 }
 ```
 

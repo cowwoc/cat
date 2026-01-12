@@ -1,6 +1,6 @@
 # <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT
 
-**Coordinated Agentic Tasks** - A Claude Code plugin for structured project execution with multi-agent orchestration.
+**Agents that land on their feet** - A Claude Code plugin for structured project execution with multi-agent orchestration.
 
 ```
 MAJOR VERSION -> MINOR VERSION -> TASK
@@ -16,6 +16,7 @@ Large projects fail in AI assistants because context windows overflow. CAT solve
 - **Multi-agent orchestration** - Subagents execute in isolated worktrees
 - **Quality gates** - Approval checkpoints prevent runaway changes
 - **Automatic state tracking** - Never lose progress between sessions
+- **Continuous improvement** - Learns from mistakes and runs regular retrospectives
 
 ## Quick Start
 
@@ -86,7 +87,7 @@ Large projects fail in AI assistants because context windows overflow. CAT solve
 | Command | Description |
 |---------|-------------|
 | `/cat:cleanup` | Clean up abandoned worktrees, lock files, and orphaned branches from crashed sessions. |
-| `/cat:research [topic]` | Research implementation approaches before planning. For niche domains (3D, audio, ML). |
+| `/cat:research [topic]` | Research implementation approaches before planning. Use for moderate/high complexity features where the best approach isn't obvious. |
 
 ## Project Structure
 
@@ -120,7 +121,7 @@ Edit `.claude/cat/cat-config.json`:
 {
   "yoloMode": false,
   "contextLimit": 200000,
-  "targetContextUsage": 0.4,
+  "targetContextUsage": 40,
   "autoCleanupWorktrees": true
 }
 ```
@@ -131,7 +132,7 @@ Edit `.claude/cat/cat-config.json`:
 |--------|------|---------|-------------|
 | `yoloMode` | boolean | `false` | When `true`, skips approval gates and auto-proceeds. When `false`, requires user approval at each task completion. |
 | `contextLimit` | number | `200000` | Total context window size in tokens. Set based on your Claude model's limit. |
-| `targetContextUsage` | number | `0.4` | Target maximum context usage as a decimal (0.4 = 40%). Tasks are sized to stay within this limit. At 200K context, 0.4 means ~80K tokens per task. |
+| `targetContextUsage` | number | `40` | Target maximum context usage as a percentage (40 = 40%). Tasks are sized to stay within this limit. At 200K context, 40 means ~80K tokens per task. |
 | `autoCleanupWorktrees` | boolean | `true` | When `true`, automatically removes worktrees and task branches after successful merge. When `false`, keeps them for manual inspection. |
 
 ### Operating Modes
@@ -206,7 +207,7 @@ PENDING → IN-PROGRESS → COMPLETED
 3. **Worktree Created** - Isolated git worktree for safe execution
 4. **Execution** - Subagent or direct execution
 5. **Approval Gate** - User reviews changes (interactive mode)
-6. **Commit Squash** - Commits grouped by type (feature, test, docs, etc.)
+6. **Commit Squash** - Implementation commits (feature, bugfix, test, refactor, docs) squashed together; config commits squashed separately
 7. **Merge** - Task branch merged to main
 8. **Cleanup** - Worktree removed, STATE.md updated
 
