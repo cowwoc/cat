@@ -151,7 +151,11 @@ Edit `.claude/cat/cat-config.json`:
 
 ## Available Skills
 
-Skills are internal capabilities used by commands. Some can be invoked directly:
+Skills are internal capabilities used by commands. Some can be invoked directly.
+
+**Important:** When invoking skills via the Skill tool, use the full name with `cat:` prefix:
+- `/cat:learn-from-mistakes` or `Skill(skill: "cat:learn-from-mistakes")`
+- The `cat:` prefix is required for all CAT skills
 
 ### Git Operations
 | Skill | Description |
