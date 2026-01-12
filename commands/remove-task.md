@@ -1,7 +1,7 @@
 ---
 name: cat:remove-task
 description: Remove a task
-argument-hint: "[major.minor/task-name]"
+argument-hint: "[major.minor-task-name]"
 allowed-tools:
   - Read
   - Write
@@ -34,7 +34,7 @@ confirms with the user.
 **Determine task to remove:**
 
 **If $ARGUMENTS provided:**
-- Parse as `major.minor/task-name` format
+- Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
 - Validate task exists
 
 **If $ARGUMENTS empty:**
@@ -42,14 +42,14 @@ confirms with the user.
 List all tasks:
 
 ```bash
-# Find all tasks with their status
-find .claude/cat -name "STATE.md" -path "*/task/*/STATE.md" 2>/dev/null | while read f; do
-    TASK_PATH=$(dirname "$f")
-    TASK_NAME=$(basename "$TASK_PATH")
-    MAJOR=$(echo "$f" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
-    MINOR=$(echo "$f" | sed 's|.*/v[0-9]*/v[0-9]*\.\([0-9]*\)/.*|\1|')
-    STATUS=$(grep "Status:" "$f" | sed 's/.*: //')
-    echo "$MAJOR.$MINOR/$TASK_NAME ($STATUS)"
+# Find all tasks with their status (tasks are directories under v{n}.{m}/ that aren't named v*)
+find .claude/cat/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
+    [ -f "$d/STATE.md" ] || continue
+    TASK_NAME=$(basename "$d")
+    MAJOR=$(echo "$d" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
+    MINOR=$(echo "$d" | sed 's|.*/v[0-9]*/v[0-9]*\.\([0-9]*\)/.*|\1|')
+    STATUS=$(grep "Status:" "$d/STATE.md" | sed 's/.*: //')
+    echo "$MAJOR.$MINOR-$TASK_NAME ($STATUS)"
 done
 ```
 
@@ -67,7 +67,7 @@ If "Cancel" -> exit command.
 **Validate task can be removed:**
 
 ```bash
-TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/task/$TASK_NAME"
+TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
 
 # Check task exists
 [ ! -d "$TASK_PATH" ] && echo "ERROR: Task does not exist" && exit 1
@@ -114,7 +114,7 @@ If "No, keep it" -> exit command.
 
 ```bash
 # Find tasks that list this task as a dependency
-grep -r "Dependencies:.*$TASK_NAME" .claude/cat/v*/v*.*/task/*/STATE.md 2>/dev/null
+find .claude/cat/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" -exec grep -l "Dependencies:.*$TASK_NAME" {}/STATE.md \; 2>/dev/null
 ```
 
 If dependents found:

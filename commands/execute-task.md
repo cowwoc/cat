@@ -1,7 +1,7 @@
 ---
 name: cat:execute-task
 description: Execute task (continues incomplete work)
-argument-hint: "[major.minor/task-name]"
+argument-hint: "[major.minor-task-name]"
 allowed-tools:
   - Read
   - Write
@@ -78,8 +78,8 @@ Read `.claude/cat/cat-config.json` to determine:
 **Identify task to execute:**
 
 **If $ARGUMENTS provided:**
-- Parse as `major.minor/task-name` format
-- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/`
+- Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
+- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/{task-name}/`
 - Load its STATE.md and PLAN.md
 
 **If $ARGUMENTS empty:**
@@ -89,8 +89,8 @@ Read `.claude/cat/cat-config.json` to determine:
   3. Parent minor version's dependencies are met
 
 ```bash
-# Find all task STATE.md files
-find .claude/cat -name "STATE.md" -path "*/task/*/STATE.md" 2>/dev/null
+# Find all task STATE.md files (depth 3 under major version = task level)
+find .claude/cat/v*/v*.* -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
 For each task, check:
