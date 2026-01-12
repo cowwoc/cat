@@ -1,26 +1,25 @@
 # <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT
 
-A Claude Code plugin for orchestrated multi-agent task execution with comprehensive planning and quality gates.
+**Coordinated Agentic Tasks** - A Claude Code plugin for structured project execution with multi-agent orchestration.
 
-## Features
+```
+MAJOR VERSION -> MINOR VERSION -> TASK
+     v1/            v1.0/          task/setup-auth/
+```
 
-### Core Capabilities
-- **Multi-agent orchestration**: Main agent coordinates, subagents execute in parallel
-- **MAJOR → MINOR → TASK hierarchy**: Structured project planning
-- **Token-aware decomposition**: Automatic task splitting to prevent context overflow
-- **Comprehensive planning**: PLAN.md documents before execution
+## Why CAT?
 
-### Workflow Enhancements
-- **Parallel subagent execution**: Multiple tasks concurrently in isolated worktrees
-- **Automatic merge handling**: Main agent resolves conflicts and merges branches
-- **Quality gates**: Approval checkpoints in interactive mode
-- **TDD integration**: Test-driven development support
-- **Learn-from-mistakes**: Analysis with conversation length as potential cause
-- **Git safety validation**: Protected branch and operation validation
+Large projects fail in AI assistants because context windows overflow. CAT solves this by:
 
-## Installation
+- **Hierarchical planning** - Break work into Major > Minor > Task levels
+- **Token-aware execution** - Tasks sized to fit within context limits
+- **Multi-agent orchestration** - Subagents execute in isolated worktrees
+- **Quality gates** - Approval checkpoints prevent runaway changes
+- **Automatic state tracking** - Never lose progress between sessions
 
-In Claude Code, run:
+## Quick Start
+
+### 1. Install
 
 ```bash
 # Add the marketplace
@@ -31,34 +30,63 @@ In Claude Code, run:
 
 # Verify installation
 /cat:help
-
-# Remove
-/plugin uninstall cat
 ```
 
-## Commands
+### 2. Initialize Your Project
+
+```bash
+# New project
+/cat:init
+
+# Answer the guided questions about your project
+```
+
+### 3. Start Working
+
+```bash
+# Add your first major version
+/cat:add-major-version
+
+# Add tasks to it
+/cat:add-task 1.0
+
+# Execute tasks
+/cat:execute-task
+```
+
+## Commands Reference
 
 ### Core Workflow
-| Command | Description |
-|---------|-------------|
-| `/cat:init` | Initialize CAT structure (new or existing project) |
-| `/cat:execute-task` | Execute task (continues incomplete work) |
-| `/cat:status` | Show hierarchy status with visual tree |
-| `/cat:help` | Show all available commands |
 
-### Planning Commands
 | Command | Description |
 |---------|-------------|
-| `/cat:add-task [major.minor]` | Add task to minor version |
-| `/cat:add-minor-version [major]` | Add minor version to major |
-| `/cat:add-major-version` | Add new major version |
+| `/cat:init` | Initialize CAT structure (new or existing project). Guided wizard creates PROJECT.md, ROADMAP.md, and config. |
+| `/cat:execute-task [path]` | Execute a task. Creates worktree, runs work, handles approval gate, merges to main. Path format: `1.0/task-name` |
+| `/cat:status` | Show visual tree of all versions and tasks with progress bars and status indicators. |
+| `/cat:help` | Display complete command and skill reference. |
 
-### Remove Commands
+### Adding Structure
+
 | Command | Description |
 |---------|-------------|
-| `/cat:remove-task` | Remove a task |
-| `/cat:remove-minor-version` | Remove a minor version |
-| `/cat:remove-major-version` | Remove a major version |
+| `/cat:add-major-version` | Add a new major version. Collaborative discussion helps crystallize your vision. |
+| `/cat:add-minor-version [major]` | Add minor version to a major (e.g., `1` adds v1.1). For bugfixes and smaller features. |
+| `/cat:add-task [major.minor]` | Add task to minor version (e.g., `1.0` adds to v1.0). Generates comprehensive PLAN.md. |
+
+### Removing Structure
+
+| Command | Description |
+|---------|-------------|
+| `/cat:remove-major-version` | Remove a major version and all its contents. |
+| `/cat:remove-minor-version` | Remove a minor version and all its tasks. |
+| `/cat:remove-task` | Remove a specific task. |
+
+### Utilities
+
+| Command | Description |
+|---------|-------------|
+| `/cat:cleanup` | Clean up abandoned worktrees, lock files, and orphaned branches from crashed sessions. |
+| `/cat:research [topic]` | Research implementation approaches before planning. For niche domains (3D, audio, ML). |
 
 ## Project Structure
 
@@ -67,22 +95,22 @@ After running `/cat:init`:
 ```
 your-project/
 └── .claude/cat/
-    ├── PROJECT.md              # Project overview and goals
-    ├── ROADMAP.md              # Major/minor version summaries
+    ├── PROJECT.md              # Project overview, goals, requirements
+    ├── ROADMAP.md              # High-level version summaries
     ├── cat-config.json         # Plugin configuration
-    └── v1/
-        ├── STATE.md            # Major version state
-        ├── PLAN.md             # Major version plan
-        ├── CHANGELOG.md        # Major version changelog
-        └── v1.0/
+    └── v1/                     # Major version 1
+        ├── STATE.md            # Major version state & progress
+        ├── PLAN.md             # Business-level objectives
+        ├── CHANGELOG.md        # What was accomplished
+        └── v1.0/               # Minor version 1.0
             ├── STATE.md        # Minor version state
-            ├── PLAN.md         # Minor version plan
-            ├── CHANGELOG.md    # Minor version changelog
+            ├── PLAN.md         # Feature-level plan
+            ├── CHANGELOG.md    # Minor changelog
             └── task/
-                └── {task-name}/
-                    ├── STATE.md    # Task state
-                    ├── PLAN.md     # Task plan
-                    └── CHANGELOG.md # Task changelog
+                └── setup-auth/     # Individual task
+                    ├── STATE.md    # Task state (pending/in-progress/completed)
+                    ├── PLAN.md     # Detailed execution steps
+                    └── CHANGELOG.md # What the task accomplished
 ```
 
 ## Configuration
@@ -98,30 +126,115 @@ Edit `.claude/cat/cat-config.json`:
 }
 ```
 
-### Options
+### Configuration Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `yoloMode` | `false` | Skip approval gates, auto-proceed |
-| `contextLimit` | `200000` | Total context window in tokens |
-| `targetContextUsage` | `0.4` | Target max usage (40% = 80K tokens) |
-| `autoCleanupWorktrees` | `true` | Clean worktrees after merge |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `yoloMode` | boolean | `false` | When `true`, skips approval gates and auto-proceeds. When `false`, requires user approval at each task completion. |
+| `contextLimit` | number | `200000` | Total context window size in tokens. Set based on your Claude model's limit. |
+| `targetContextUsage` | number | `0.4` | Target maximum context usage as a decimal (0.4 = 40%). Tasks are sized to stay within this limit. At 200K context, 0.4 means ~80K tokens per task. |
+| `autoCleanupWorktrees` | boolean | `true` | When `true`, automatically removes worktrees and task branches after successful merge. When `false`, keeps them for manual inspection. |
 
 ### Operating Modes
 
-**Interactive Mode (Default)**
-- Approval gates required at task level
-- Main agent proposes next task when dependencies met
-- Merge requires user acceptance
+**Interactive Mode** (default, `yoloMode: false`)
+- Approval gates at task completion
+- Review changes before merge
+- Request modifications if needed
+- Full control over what gets merged
 
-**Yolo Mode**
+**YOLO Mode** (`yoloMode: true`)
 - Approval gates skipped
-- Main agent begins immediately when dependencies met
 - Automatic merge on task completion
+- Faster execution for trusted workflows
+- Best for well-defined, low-risk tasks
 
-## Version Tracking
+## Available Skills
 
-See [VERSION.md](VERSION.md) for version history.
+Skills are internal capabilities used by commands. Some can be invoked directly:
+
+### Git Operations
+| Skill | Description |
+|-------|-------------|
+| `git-commit` | Guided commit message writing |
+| `git-squash` | Safely squash commits with backup and verification |
+| `git-rebase` | Safe rebase with automatic backup and conflict handling |
+| `git-amend` | Safely amend commits with HEAD verification |
+| `git-merge-linear` | Merge with linear history and verification |
+
+### Multi-Agent
+| Skill | Description |
+|-------|-------------|
+| `spawn-subagent` | Launch subagent with task context in isolated worktree |
+| `monitor-subagents` | Check status of running subagents including token usage |
+| `collect-results` | Gather results from completed subagents |
+| `merge-subagent` | Merge subagent branch with conflict resolution |
+| `parallel-execute` | Orchestrate multiple independent subagents concurrently |
+
+### Task Management
+| Skill | Description |
+|-------|-------------|
+| `decompose-task` | Split oversized task into smaller tasks |
+| `token-report` | Generate detailed token usage report |
+| `run-retrospective` | Run scheduled retrospective analysis |
+
+### Development
+| Skill | Description |
+|-------|-------------|
+| `tdd-implementation` | Test-driven development workflow |
+| `learn-from-mistakes` | Analyze mistakes and implement prevention |
+| `batch-read` | Read multiple files efficiently (50-70% faster) |
+| `grep-and-read` | Find and read files in one operation |
+
+### Utilities
+| Skill | Description |
+|-------|-------------|
+| `safe-rm` | Safely remove files without breaking shell |
+| `validate-git-safety` | Validate git operations won't affect protected branches |
+
+## Task Lifecycle
+
+```
+PENDING → IN-PROGRESS → COMPLETED
+   │           │            │
+   │           │            └── Merged to main, worktree cleaned
+   │           └── Executing in isolated worktree
+   └── Dependencies not yet met
+```
+
+1. **Task Created** - PLAN.md defines what to do
+2. **Dependencies Check** - Waits for required tasks to complete
+3. **Worktree Created** - Isolated git worktree for safe execution
+4. **Execution** - Subagent or direct execution
+5. **Approval Gate** - User reviews changes (interactive mode)
+6. **Commit Squash** - Commits grouped by type (feature, test, docs, etc.)
+7. **Merge** - Task branch merged to main
+8. **Cleanup** - Worktree removed, STATE.md updated
+
+## Status Indicators
+
+When viewing `/cat:status`:
+
+| Symbol | Meaning |
+|--------|---------|
+| `[x]` | Completed |
+| `[>]` | In progress |
+| `[ ]` | Pending |
+| `[!]` | Blocked (dependencies not met) |
+
+## Tips
+
+- **Start small** - Begin with one major version and a few tasks
+- **Clear `/clear`** - Run `/clear` between tasks for fresh context
+- **Check status** - Use `/cat:status` to see where you are
+- **Research first** - Use `/cat:research` for unfamiliar domains before planning
+- **YOLO wisely** - Only enable YOLO mode for well-understood, low-risk work
+
+## Uninstall
+
+```bash
+/plugin uninstall cat
+```
 
 ## License
 
