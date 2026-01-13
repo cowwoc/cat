@@ -18,9 +18,13 @@ allowed-tools:
 
 Execute a task with worktree isolation, subagent orchestration, and quality gates.
 
+**Concurrent Execution:** This command uses task-level locking to prevent multiple Claude instances
+from executing the same task simultaneously. Locks use heartbeat-based leases (5-minute timeout).
+
 This is CAT's core execution command. It:
 1. Finds the next executable task (pending + dependencies met)
-2. Creates a task worktree and branch
+2. Acquires exclusive task lock (prevents concurrent execution)
+3. Creates a task worktree and branch
 3. Executes the PLAN.md (spawn subagent or work directly)
 4. Monitors token usage throughout
 5. Runs approval gate (interactive mode)
@@ -38,6 +42,7 @@ This is CAT's core execution command. It:
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/execute-task.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/merge-and-cleanup.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/agent-architecture.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/subagent-delegation.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/commit-types.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
@@ -116,6 +121,51 @@ Use /cat:add-task to add new tasks.
 ```
 
 Exit command.
+
+</step>
+
+<step name="acquire_lock">
+
+**Acquire task lock (concurrent execution safety):**
+
+Before proceeding, acquire an exclusive lock to prevent multiple Claude instances from executing the
+same task simultaneously.
+
+```bash
+TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
+
+# SESSION_ID is provided by echo-session-id.sh hook at startup
+if [[ -z "${SESSION_ID:-}" ]]; then
+  echo "ERROR: SESSION_ID not set. Ensure echo-session-id.sh hook is registered."
+  echo "Register with: /cat:register-hook"
+  exit 1
+fi
+
+# Attempt to acquire lock
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+
+if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
+  OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
+  echo "ERROR: Task $TASK_ID is locked by another session: $OWNER"
+  echo "Another Claude instance is already executing this task."
+  echo ""
+  echo "Options:"
+  echo "  - Wait for the other instance to complete"
+  echo "  - Run /cat:status to see current state"
+  echo "  - Use cleanup --stale-minutes 0 to force release (DANGER: may corrupt state)"
+  exit 1
+fi
+
+echo "Lock acquired for task: $TASK_ID"
+```
+
+**Heartbeat during long operations:**
+
+For operations that take more than 2 minutes, refresh the heartbeat:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "$TASK_ID" "$SESSION_ID"
+```
 
 </step>
 
@@ -338,7 +388,7 @@ Handle merge conflicts:
 
 <step name="cleanup">
 
-**Clean up worktree:**
+**Clean up worktree and release lock:**
 
 ```bash
 # Remove worktree
@@ -346,7 +396,15 @@ git worktree remove "$WORKTREE_PATH" --force
 
 # Optionally delete branch if autoCleanupWorktrees is true
 git branch -d "{task-branch}" 2>/dev/null || true
+
+# Release task lock
+TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "$SESSION_ID"
+echo "Lock released for task: $TASK_ID"
 ```
+
+**Note:** Lock is also released automatically by `session-unlock.sh` hook on session end, providing
+a safety net if the agent crashes or is interrupted.
 
 </step>
 
