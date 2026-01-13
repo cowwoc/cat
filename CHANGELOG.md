@@ -67,7 +67,7 @@ Stabilization release with workflow improvements and better context management.
 CAT v2.0 is a complete reimagining of the plugin, introducing:
 
 **Architecture:**
-- **MAJOR → MINOR → TASK** hierarchy (replaces MILESTONE → RELEASE → CHANGE)
+- **MAJOR → MINOR → TASK** hierarchy
 - Multi-agent orchestration with parallel subagent execution
 - Main agent coordinates, subagents execute in dedicated worktrees
 - Token-aware task decomposition to prevent context overflow
