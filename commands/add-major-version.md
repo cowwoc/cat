@@ -47,7 +47,7 @@ You figure out:
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/major-state.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/major-plan.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/questioning.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/questioning.md
 
 </execution_context>
 
