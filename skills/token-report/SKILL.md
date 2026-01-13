@@ -11,6 +11,12 @@ Analyze token consumption from session files to understand context utilization, 
 patterns, and provide recommendations for context management. Essential for CAT's proactive context
 window management strategy.
 
+## Prerequisites
+
+**SESSION_ID Required**: Get the session ID from the SessionStart system-reminder in conversation context.
+Look for `Session ID: {uuid}` and extract the UUID. Substitute this value into all bash commands below
+that reference `${SESSION_ID}`.
+
 ## When to Use
 
 - Periodic health checks during long-running orchestration
@@ -22,6 +28,8 @@ window management strategy.
 ## Workflow
 
 ### 1. Locate Session File
+
+Substitute your actual SESSION_ID from context:
 
 ```bash
 # Session file location
