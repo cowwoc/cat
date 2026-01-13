@@ -88,16 +88,34 @@ If conflicts:
 - Attempt automatic resolution
 - Escalate to user if unresolved
 
-### 7. Update State
+### 7. Cleanup Subagent Resources
+
+**After merging subagent branch to task branch, cleanup BEFORE approval gate:**
+
+```bash
+# Remove subagent worktree
+git worktree remove {subagent-worktree-path}
+
+# Delete subagent branch
+git branch -d {subagent-branch}
+```
+
+This ensures:
+- Only the task branch remains for review
+- No orphaned worktrees/branches if user rejects
+- Clean state for approval decision
+
+### 8. Update State
 
 Update task STATE.md:
 ```markdown
-- **Status:** completed
-- **Progress:** 100%
+- **Status:** in-progress
+- **Progress:** 90%
 - **Last Updated:** {timestamp}
+- **Note:** Subagent work merged, awaiting approval
 ```
 
-### 8. Approval Gate (Interactive Mode)
+### 9. Approval Gate (Interactive Mode)
 
 Present to user:
 - Summary of changes
@@ -136,7 +154,7 @@ Present changes → User responds
 
 **Anti-pattern (M052):** Interpreting feedback as implicit approval and merging without re-confirmation.
 
-### 9. Final Merge
+### 10. Final Merge
 
 After approval:
 ```bash
@@ -148,15 +166,15 @@ git checkout main
 git merge {task-branch}
 ```
 
-### 10. Cleanup
+### 11. Cleanup
 
 ```bash
+# Task worktree and branch (subagent already cleaned in step 7)
 git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
-git branch -d {subagent-branch}
 ```
 
-### 11. Update Changelogs
+### 12. Update Changelogs
 
 Update minor and major version CHANGELOG.md files with completed task summary.
 
