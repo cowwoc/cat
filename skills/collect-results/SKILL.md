@@ -22,15 +22,23 @@ parent task branch.
 
 ### 1. Verify Subagent Completion
 
-Check that the subagent has finished or is in a state where results can be collected:
+Check for completion marker file (fast path, no session parsing):
 
 ```bash
 WORKTREE=".worktrees/${TASK}-sub-${UUID}"
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+COMPLETION_FILE="${WORKTREE}/.completion.json"
 
-# Check for completion marker in session
-jq -s 'last | select(.type == "result" or .content | contains("COMPLETED"))' "${SESSION_FILE}"
+# Check for completion marker (preferred - lightweight)
+if [ -f "$COMPLETION_FILE" ]; then
+  echo "Subagent completed"
+  cat "$COMPLETION_FILE"  # Contains status, tokensUsed, compactionEvents, summary
+else
+  echo "Subagent not yet complete or marker not written"
+fi
 ```
+
+**Why completion marker?** Reading `.completion.json` (~200 bytes) is far cheaper than parsing
+the session JSONL file (potentially megabytes of conversation history).
 
 ### 2. Extract Commit History
 
@@ -46,22 +54,28 @@ git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
 
 ### 3. Parse Token Metrics
 
+**Preferred: Read from completion marker** (already computed by subagent):
+
 ```bash
-# Read session file for metrics
+COMPLETION_FILE="${WORKTREE}/.completion.json"
+if [ -f "$COMPLETION_FILE" ]; then
+  TOTAL_TOKENS=$(jq -r '.tokensUsed // 0' "$COMPLETION_FILE")
+  COMPACTIONS=$(jq -r '.compactionEvents // 0' "$COMPLETION_FILE")
+  STATUS=$(jq -r '.status // "unknown"' "$COMPLETION_FILE")
+fi
+```
+
+**Fallback: Parse session file** (only if marker unavailable):
+
+```bash
+SESSION_ID=$(cat "${WORKTREE}/.session_id" 2>/dev/null)
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
-# Total tokens used
-TOTAL_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
-  (.input_tokens + .output_tokens)] | add' "${SESSION_FILE}")
-
-# Input vs output breakdown
-INPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") |
-  .message.usage.input_tokens] | add' "${SESSION_FILE}")
-OUTPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") |
-  .message.usage.output_tokens] | add' "${SESSION_FILE}")
-
-# Compaction events
-COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
+if [ -f "$SESSION_FILE" ]; then
+  TOTAL_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
+    (.input_tokens + .output_tokens)] | add // 0' "${SESSION_FILE}")
+  COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
+fi
 ```
 
 ### 4. Read Subagent Work Products

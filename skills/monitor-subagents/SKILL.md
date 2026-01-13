@@ -21,149 +21,94 @@ about intervention or result collection.
 
 ## Workflow
 
-### 1. List Active Worktrees
+### 1. Run Monitoring Script (Recommended)
+
+Use the optimized monitoring script for minimal context impact:
 
 ```bash
-# Get all subagent worktrees
-git worktree list --porcelain | grep -A2 "worktree.*-sub-"
+/workspace/cat/scripts/monitor-subagents.sh
 ```
 
-Output interpretation:
-```
-worktree /workspace/.worktrees/1.2-parser-sub-a1b2c3d4
-HEAD abc123def456
-branch refs/heads/1.2-parser-sub-a1b2c3d4
-```
-
-### 2. Check Token Usage Per Subagent
-
-Read session file for each subagent:
-
-```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
-
-# Calculate total tokens used
-jq -s '[.[] | select(.type == "assistant") | .message.usage |
-  (.input_tokens + .output_tokens)] | add' "${SESSION_FILE}"
+**Output format:**
+```json
+{
+  "subagents": [
+    {"id": "a1b2c3d4", "task": "1.2-parser", "status": "running", "tokens": 45000, "compactions": 0},
+    {"id": "b2c3d4e5", "task": "1.3-formatter", "status": "warning", "tokens": 85000, "compactions": 1}
+  ],
+  "summary": {"total": 2, "running": 1, "complete": 0, "warning": 1}
+}
 ```
 
-### 3. Detect Context Limit Approach
+**Status values:**
+- `running` - Active, tokens below threshold
+- `warning` - Tokens >= 80K (40% of context), consider intervention
+- `complete` - Completion marker (`.completion.json`) found in worktree
 
-**Critical Threshold: 40% = 80,000 tokens** (of 200K context)
+### 2. Interpret Results
 
-```bash
-# Check if approaching limit
-TOKENS_USED=$(calculate_tokens "${SESSION_ID}")
-THRESHOLD=80000
+**If status = "warning":**
+- Subagent approaching context limits
+- Consider collecting partial results with `collect-results`
+- May need to decompose remaining work
 
-if [ "${TOKENS_USED}" -ge "${THRESHOLD}" ]; then
-  echo "WARNING: Subagent ${SESSION_ID} at ${TOKENS_USED} tokens (40%+ of context)"
-fi
-```
+**If status = "complete":**
+- Subagent finished, ready for result collection
+- Check `.completion.json` in worktree for details
 
-### 4. Detect Compaction Events
-
-Compaction (context window resets) indicate the subagent hit context limits:
-
-```bash
-# Count compaction events
-jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}"
-```
-
-**If compaction count > 0**: Subagent has experienced context pressure. Consider:
-- Collecting partial results immediately
-- Decomposing remaining work
-- Spawning fresh subagent for continuation
-
-### 5. Check Subagent Activity
-
-```bash
-# Check last activity timestamp
-jq -s 'last | .timestamp' "${SESSION_FILE}"
-
-# Compare to current time for staleness detection
-```
-
-### 6. Generate Status Report
-
-```yaml
-subagent_status:
-  - id: a1b2c3d4
-    task: 1.2-implement-parser
-    status: running
-    tokens_used: 45000
-    tokens_percent: 22.5%
-    compaction_events: 0
-    last_activity: 2026-01-10T14:45:00Z
-    health: healthy
-
-  - id: b2c3d4e5
-    task: 1.3-implement-formatter
-    status: running
-    tokens_used: 85000
-    tokens_percent: 42.5%
-    compaction_events: 1
-    last_activity: 2026-01-10T14:40:00Z
-    health: WARNING - approaching context limit
-```
+**If compactions > 0:**
+- Subagent experienced context pressure
+- Quality may have degraded
+- Collect results and review carefully
 
 ## Examples
 
 ### Quick Status Check
 
 ```bash
-# List all subagent worktrees with status
-for worktree in $(git worktree list --porcelain | grep "worktree.*-sub-" | cut -d' ' -f2); do
-  echo "Worktree: ${worktree}"
-  # Check if session file exists and get metrics
-done
+# Single command returns all subagent status
+/workspace/cat/scripts/monitor-subagents.sh
 ```
 
-### Token Usage Summary
+### Check Specific Subagent
 
 ```bash
-# Aggregate token usage across all subagents
-TOTAL=0
-for session in $(get_subagent_sessions); do
-  TOKENS=$(calculate_tokens "${session}")
-  TOTAL=$((TOTAL + TOKENS))
-  echo "${session}: ${TOKENS} tokens"
-done
-echo "Total: ${TOTAL} tokens"
+# Filter output with jq
+/workspace/cat/scripts/monitor-subagents.sh | jq '.subagents[] | select(.id == "a1b2c3d4")'
 ```
 
-### Health Check with Alerts
+### Count Active Subagents
 
-```yaml
-# Output format for parent agent decision-making
-health_check:
-  timestamp: 2026-01-10T14:50:00Z
-  active_subagents: 3
-  alerts:
-    - subagent: b2c3d4e5
-      alert: CONTEXT_LIMIT_WARNING
-      tokens_used: 85000
-      recommendation: "Consider collecting results and spawning fresh subagent"
-    - subagent: c3d4e5f6
-      alert: STALLED
-      last_activity: 2026-01-10T13:00:00Z
-      recommendation: "Check for errors or blocked state"
+```bash
+# Get summary counts only
+/workspace/cat/scripts/monitor-subagents.sh | jq '.summary'
 ```
 
 ## Anti-Patterns
+
+### Do NOT use inline jq queries repeatedly
+
+```bash
+# ❌ Running jq manually each poll (accumulates tool call overhead)
+jq -s '[...] | add' "${SESSION_FILE}"
+jq -s '[...] | length' "${SESSION_FILE}"
+
+# ✅ Single script call returns all data
+/workspace/cat/scripts/monitor-subagents.sh
+```
 
 ### Do NOT poll too frequently
 
 ```bash
 # ❌ Checking every second
 while true; do
-  monitor-subagents
+  /workspace/cat/scripts/monitor-subagents.sh
   sleep 1
 done
 
 # ✅ Reasonable polling interval (30-60 seconds)
 while true; do
-  monitor-subagents
+  /workspace/cat/scripts/monitor-subagents.sh
   sleep 60
 done
 ```
