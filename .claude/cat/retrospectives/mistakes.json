@@ -21,5 +21,28 @@
       "catches_variations": true
     },
     "correct_behavior": "For 6+ files, ALWAYS spawn subagent. Main agent only for single file shrinking."
+  },
+  {
+    "id": "M002",
+    "timestamp": "2026-01-13T16:15:00Z",
+    "category": "protocol_violation",
+    "description": "Asked user to review implementation before committing changes",
+    "root_cause": "Showed code changes in chat without committing first - users cannot see unstaged changes",
+    "prevention_type": "hook",
+    "prevention_path": "/workspace/cat/hooks/inject-session-instructions.sh",
+    "pattern_keywords": [
+      "commit",
+      "review",
+      "unstaged",
+      "visibility"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "ALWAYS commit changes BEFORE asking users to review. Pattern: Implement → Commit → Review"
   }
 ]
