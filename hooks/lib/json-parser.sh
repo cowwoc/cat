@@ -133,3 +133,48 @@ safe_json_get() {
         extract_json_value "$json" "$key"
     fi
 }
+
+# ============================================================================
+# Hook Output Functions
+# ============================================================================
+
+# Output hook block message and deny permission (PreToolUse hooks ONLY)
+# This ACTUALLY BLOCKS the action via Claude Code's permission system
+#
+# Args: user_message
+#   user_message: Detailed message shown to user
+#
+# CRITICAL: Caller MUST exit 0 after calling this function
+# Usage: output_hook_block "Blocked: policy violation"; exit 0
+output_hook_block() {
+    local user_message="$1"
+
+    # Output detailed message to stderr for user visibility
+    echo "$user_message" >&2
+
+    # Output JSON permission denial to stdout
+    jq -n --arg reason "${user_message:0:200}" '{
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": $reason
+        }
+    }'
+}
+
+# Output hook warning message (does NOT block)
+# Args: message_content
+output_hook_warning() {
+    local message="$1"
+
+    # Output message to stderr for user visibility
+    echo "$message" >&2
+
+    # Output JSON context
+    jq -n --arg msg "$message" '{
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "additionalContext": $msg
+        }
+    }'
+}
