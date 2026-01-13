@@ -135,7 +135,7 @@ TASK_COUNT=$((TASK_COUNT - 1))
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} tasks\n- All STATE.md, PLAN.md, CHANGELOG.md files"
+- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} tasks\n- All STATE.md, PLAN.md files"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort
