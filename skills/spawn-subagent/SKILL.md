@@ -24,6 +24,27 @@ subagent output while it runs. Users cannot:
 comprehensive enough that execution is purely mechanical - following explicit instructions without
 judgment calls.
 
+## Hook Inheritance (A008)
+
+**Subagents inherit project hooks automatically** when running in the same project directory.
+However, subagents may not follow hook guidance if not explicitly reminded.
+
+**MANDATORY: Include key prohibitions in subagent prompt:**
+
+```
+CRITICAL PROHIBITIONS (enforced by hooks):
+- NEVER add PMD suppression annotations - decompose code instead
+- NEVER use git merge --no-ff - use --ff-only for linear history
+- NEVER use git filter-branch - use git-filter-repo instead
+- NEVER delete .git/refs/original without explicit user request
+- Tests for bugfixes belong in SAME commit as the fix, not separate
+
+These are ABSOLUTE rules. Violation will be detected and blocked.
+```
+
+**Why explicit in prompt:** Hooks can block commands, but subagents may try alternatives. Stating
+prohibitions in the prompt prevents wasted effort on blocked approaches.
+
 ## When to Use
 
 - Task has a well-defined PLAN.md ready for execution
