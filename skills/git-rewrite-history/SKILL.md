@@ -36,9 +36,21 @@ pip install --break-system-packages git-filter-repo
 
 1. **Work on a fresh clone** (filter-repo requires this by default)
 2. Create backup of original remote URL
-3. Execute the filter operation
+3. Execute the filter operation **with `--partial`** (preserves reflog for recovery)
 4. **Verify immediately** - check history is correct
-5. Force push only after verification
+5. Force push only after verification and explicit user approval
+
+### MANDATORY: Always Use --partial Flag
+
+**NEVER run git-filter-repo without `--partial`**. Without it:
+- Reflog is expired (old commits unrecoverable)
+- Automatic `git gc` runs (objects permanently deleted)
+- No recovery possible after force-push
+
+With `--partial`:
+- Old commits preserved in reflog
+- Recovery via `git reset --hard HEAD@{n}` possible
+- New history is active, old history available as fallback
 
 ## Common Operations
 
@@ -49,58 +61,60 @@ pip install --break-system-packages git-filter-repo
 git clone --mirror <url> repo-filter
 cd repo-filter
 
-# Remove file
-git filter-repo --path secrets.txt --invert-paths
+# Remove file (--partial preserves reflog for recovery)
+git filter-repo --partial --path secrets.txt --invert-paths
 
 # Verify
 git log --all --oneline -- secrets.txt  # Should return nothing
 
-# Push (requires --force)
+# If wrong, recover: git reflog && git reset --hard HEAD@{n}
+
+# Push only after verification (requires explicit user approval)
 git push origin --force --all
 ```
 
 ### Remove a Directory from All History
 
 ```bash
-git filter-repo --path vendor/ --invert-paths
+git filter-repo --partial --path vendor/ --invert-paths
 ```
 
 ### Remove a Submodule from History
 
 ```bash
 # This removes the gitlink entry for a submodule
-git filter-repo --path submodule-name --invert-paths
+git filter-repo --partial --path submodule-name --invert-paths
 ```
 
 ### Rename/Move Files in History
 
 ```bash
 # Rename a file across all history
-git filter-repo --path-rename old-name.txt:new-name.txt
+git filter-repo --partial --path-rename old-name.txt:new-name.txt
 
 # Move directory
-git filter-repo --path-rename old-dir/:new-dir/
+git filter-repo --partial --path-rename old-dir/:new-dir/
 ```
 
 ### Remove Large Files
 
 ```bash
 # Remove files larger than 10MB
-git filter-repo --strip-blobs-bigger-than 10M
+git filter-repo --partial --strip-blobs-bigger-than 10M
 ```
 
 ### Keep Only Specific Paths
 
 ```bash
 # Keep only src/ directory (remove everything else)
-git filter-repo --path src/
+git filter-repo --partial --path src/
 ```
 
 ### Filter by Content (Remove Secrets)
 
 ```bash
 # Replace text patterns
-git filter-repo --replace-text expressions.txt
+git filter-repo --partial --replace-text expressions.txt
 
 # Where expressions.txt contains:
 # PASSWORD=secret123==>PASSWORD=REDACTED
@@ -112,8 +126,8 @@ git filter-repo --replace-text expressions.txt
 By default, git-filter-repo requires a fresh clone. To work on an existing repo:
 
 ```bash
-# CAUTION: Only if you understand the implications
-git filter-repo --force --path file-to-remove --invert-paths
+# --partial preserves reflog, --force allows non-fresh clone
+git filter-repo --partial --force --path file-to-remove --invert-paths
 ```
 
 ## After Rewriting History
@@ -133,16 +147,24 @@ git filter-repo --force --path file-to-remove --invert-paths
 
 ## Recovery
 
-If something goes wrong:
+If something goes wrong (before force-push):
 
 ```bash
-# If you have original remote
+# With --partial, old history is in reflog
+git reflog                           # Find old commit (e.g., HEAD@{2})
+git reset --hard HEAD@{2}            # Restore to pre-filter state
+
+# If you have original remote (after force-push)
 git fetch origin
 git reset --hard origin/<branch>
 
 # If you kept a backup branch
 git reset --hard backup-before-filter
 ```
+
+**CRITICAL**: Recovery from reflog only works if:
+1. You used `--partial` flag
+2. You haven't force-pushed yet (or haven't run `git gc`)
 
 ## When to Use This Skill
 
