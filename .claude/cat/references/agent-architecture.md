@@ -52,11 +52,31 @@ Collect:
 
 ### Return Protocol
 
-On completion, subagent returns:
-- Success/failure status
-- Token usage metrics
-- Compaction event count
-- Work summary
+**MANDATORY**: On completion, subagent MUST output a completion report.
+
+**Format**:
+```json
+{
+  "status": "success|failure",
+  "tokensUsed": 75000,
+  "compactionEvents": 0,
+  "summary": "Brief description of work completed"
+}
+```
+
+**How to calculate**:
+```bash
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+
+# Total tokens
+TOTAL=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
+  (.input_tokens + .output_tokens)] | add' "${SESSION_FILE}")
+
+# Compaction events
+COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
+```
+
+**Output**: Print the JSON to stdout before exiting. Main agent will capture this.
 
 ## Communication Flow
 

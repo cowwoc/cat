@@ -70,9 +70,12 @@ echo '{"type":"spawn","parent_session":"'${PARENT_SESSION}'","task":"'${TASK_NAM
 # Change to worktree and launch Claude Code
 cd "${WORKTREE_PATH}"
 
-# Launch with task context
+# Launch with task context - MUST include completion report requirement
 claude --resume "${SESSION_ID}" \
-  --prompt "Execute PLAN.md at ${TASK_PLAN}. Report completion status and metrics."
+  --prompt "Execute PLAN.md at ${TASK_PLAN}.
+On completion, output JSON completion report:
+{\"status\": \"success|failure\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}
+Calculate tokens from session file using jq (see agent-architecture.md)."
 ```
 
 ### 6. Record Spawn in Parent STATE.md
@@ -101,16 +104,18 @@ UUID="a1b2c3d4"
 
 git worktree add -b "${TASK}-sub-${UUID}" ".worktrees/${TASK}-sub-${UUID}" HEAD
 
-# Launch subagent
+# Launch subagent with completion report requirement
 cd ".worktrees/${TASK}-sub-${UUID}"
-claude --prompt "Execute task 1.2 PLAN.md"
+claude --prompt "Execute task 1.2 PLAN.md.
+On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}"
 ```
 
 ### Spawn with Token Budget
 
 ```bash
-# Include token budget in subagent prompt
-claude --prompt "Execute task 1.2 PLAN.md. Token budget: 80,000 tokens. Report if approaching limit."
+# Include token budget and completion report requirement
+claude --prompt "Execute task 1.2 PLAN.md. Token budget: 80,000 tokens.
+On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}"
 ```
 
 ## Anti-Patterns
@@ -121,9 +126,49 @@ claude --prompt "Execute task 1.2 PLAN.md. Token budget: 80,000 tokens. Report i
 # ❌ Spawning with vague instructions
 claude --prompt "Work on the parser"
 
-# ✅ Spawning with concrete plan
-claude --prompt "Execute PLAN.md at .claude/cat/tasks/1.2-implement-parser/PLAN.md"
+# ✅ Spawning with concrete plan and completion report requirement
+claude --prompt "Execute PLAN.md at .claude/cat/tasks/1.2-implement-parser/PLAN.md.
+On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}"
 ```
+
+### Do NOT assume subagent will infer implementation details
+
+When specific API usage or patterns are required, provide explicit before/after code examples:
+
+```bash
+# ❌ Vague instruction - subagent may find different solution
+claude --prompt "Remove the unnecessary cast in LexerTest.java"
+
+# ✅ Explicit code example showing expected change
+claude --prompt "Change LexerTest.java line 625:
+  FROM: requireThat(token.text() == token.decodedText(), \"sameInstance\").isTrue();
+  TO:   requireThat(token.text(), \"token.text()\").isReferenceEqualTo(token.decodedText(), \"token.decodedText()\");"
+```
+
+**Why**: Subagents optimize for passing tests/builds. Without explicit examples, they may find alternative
+solutions (e.g., @SuppressWarnings) that technically work but don't match the intended approach.
+
+### Do NOT let subagent derive test expected values from actual output
+
+For parser/test tasks, include manual derivation requirement in prompt:
+
+```bash
+# ❌ Missing test derivation guidance
+claude --prompt "Add parser tests for new feature"
+
+# ✅ Explicit manual derivation requirement
+claude --prompt "Add parser tests for new feature.
+
+CRITICAL: Test expected values MUST be manually derived:
+1. Analyze source string character by character
+2. Determine expected node types from Java grammar
+3. Use (0, 0) placeholders for positions initially
+4. VERIFY actual positions are correct before updating expected values
+5. NEVER copy actual output as expected values without verification"
+```
+
+**Why**: Subagents may use placeholder technique incorrectly - copying actual output without verification
+creates tests that pass but don't validate correctness.
 
 ### Do NOT spawn dependent tasks simultaneously
 
