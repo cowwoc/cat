@@ -25,10 +25,20 @@ Use this when:
 echo "=== Git Worktrees ==="
 git worktree list
 
-# List lock files
+# List task locks (new format in .claude/cat/locks/)
 echo ""
-echo "=== Lock Files ==="
-ls -la .cat-*.lock 2>/dev/null || echo "No lock files found"
+echo "=== Task Locks ==="
+if [[ -d .claude/cat/locks ]]; then
+  "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" list 2>/dev/null || \
+    ls -la .claude/cat/locks/*.lock 2>/dev/null || echo "No task locks found"
+else
+  echo "No task locks found"
+fi
+
+# List legacy lock files
+echo ""
+echo "=== Legacy Lock Files ==="
+ls -la .cat-*.lock 2>/dev/null || echo "No legacy lock files found"
 
 # List execution context files
 echo ""
@@ -38,7 +48,7 @@ ls -la .cat-execution-context 2>/dev/null || echo "No context file found"
 # List CAT-related branches
 echo ""
 echo "=== CAT Branches ==="
-git branch -a | grep -E "(release/|worktree)" || echo "No CAT branches found"
+git branch -a | grep -E "(release/|worktree|\d+\.\d+-)" || echo "No CAT branches found"
 ```
 
 Present findings to user.
@@ -52,7 +62,23 @@ A worktree is likely abandoned if:
 - The worktree directory exists but has no recent activity
 - The main project has a stale `.cat-change-*.lock` file
 
-Check each lock file:
+**Check task locks (new format):**
+```bash
+if [[ -d .claude/cat/locks ]]; then
+  echo "=== Task Lock Status ==="
+  for lock in .claude/cat/locks/*.lock; do
+    [[ ! -f "$lock" ]] && continue
+    task_id=$(basename "$lock" .lock)
+    status=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "$task_id" 2>/dev/null)
+    is_stale=$(echo "$status" | jq -r '.stale // false')
+    heartbeat_age=$(echo "$status" | jq -r '.heartbeat_age_seconds // 0')
+    session=$(echo "$status" | jq -r '.session_id // "unknown"')
+    echo "  $task_id: session=$session, heartbeat_age=${heartbeat_age}s, stale=$is_stale"
+  done
+fi
+```
+
+**Check legacy lock files:**
 ```bash
 for lock in .cat-change-*.lock; do
   if [[ -f "$lock" ]]; then
@@ -95,12 +121,22 @@ cd -
 
 For each abandoned artifact, confirm before removing:
 
+**Clean up stale task locks:**
+```bash
+# Remove task locks older than 5 minutes without heartbeat
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" cleanup --stale-minutes 5
+
+# For emergency cleanup (DANGER: may interrupt active sessions):
+# "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" cleanup --stale-minutes 0
+```
+
+**Clean up worktrees:**
 ```bash
 # Remove worktree (MUST be done BEFORE deleting its branch)
 WORKTREE_PATH="<path>"
 git worktree remove "$WORKTREE_PATH" --force
 
-# Remove associated lock file
+# Remove associated legacy lock file
 CHANGE_ID="<extracted-from-path>"  # e.g., "02-01" from ".worktrees/m1-02-01"
 rm -f ".cat-change-${CHANGE_ID}.lock"
 
@@ -110,10 +146,11 @@ git branch -D "$BRANCH_NAME" 2>/dev/null || true
 ```
 
 **Order matters:**
-1. Remove worktree FIRST (git won't delete a branch checked out in a worktree)
-2. Remove lock files
-3. Delete orphaned branches
-4. Remove context file last
+1. Clean up stale task locks FIRST (may be blocking worktree operations)
+2. Remove worktree (git won't delete a branch checked out in a worktree)
+3. Remove legacy lock files
+4. Delete orphaned branches
+5. Remove context file last
 </step>
 
 <step name="verify">
