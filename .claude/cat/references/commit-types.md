@@ -23,7 +23,7 @@ Use ONLY these types when committing in a CAT-managed project:
 | Type | When to Use | Example |
 |------|-------------|---------|
 | `feature` | New functionality, endpoint, component | `feature: add user registration` |
-| `bugfix` | Bug fix, error correction | `bugfix: correct email validation` |
+| `bugfix` | Bug fix, error correction, **retrospective action items** | `bugfix: correct email validation` |
 | `test` | Test-only changes | `test: add failing test for hashing` |
 | `refactor` | Code cleanup, no behavior change | `refactor: extract validation helper` |
 | `performance` | Performance improvement | `performance: add database index` |
