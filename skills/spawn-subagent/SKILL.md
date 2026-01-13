@@ -45,6 +45,12 @@ These are ABSOLUTE rules. Violation will be detected and blocked.
 **Why explicit in prompt:** Hooks can block commands, but subagents may try alternatives. Stating
 prohibitions in the prompt prevents wasted effort on blocked approaches.
 
+## Prerequisites
+
+**SESSION_ID Required**: Get the session ID from the SessionStart system-reminder in conversation context.
+Look for `Session ID: {uuid}` and extract the UUID. Substitute this value into all bash commands below
+that reference `${SESSION_ID}`.
+
 ## When to Use
 
 - Task has a well-defined PLAN.md ready for execution
