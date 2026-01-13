@@ -44,19 +44,40 @@ Use ONLY these types when committing in a CAT-managed project:
 
 These abbreviated forms are NOT in the standard types. Use the full names above.
 
-## Squashing by Type
+## Squash Categories
 
-When squashing commits before merge:
-- One commit per type
-- Group all `feature` commits into one `feature:` commit
-- Group all `bugfix` commits into one `bugfix:` commit
-- etc.
+Before merge, commits are grouped into TWO categories:
 
-## Example Result After Squashing
+**Implementation** (ONE squashed commit):
+- `feature:`, `bugfix:`, `test:`, `refactor:`, `docs:`
+
+**Infrastructure** (ONE squashed commit, optional):
+- `config:` - configuration/tooling changes
+
+A single task produces **one or two commits** total:
+1. Implementation commit (required) - all feature/bugfix/test/refactor/docs work
+2. Config commit (optional) - only if task includes **general** config changes
+
+**Task STATE.md vs General Config:**
+- **Task's STATE.md changes** → **SAME commit** as implementation (always)
+- **General config** (adding dependencies, updating tooling) → Can be **separate commit**
+
+Any changes to a task's STATE.md (marking complete, updating status, adding notes) are part of
+implementing that task and belong in the same commit as the code changes.
 
 ```
-feature: add token tracking to subagent execution
-bugfix: resolve merge conflict in parser module
-refactor: simplify worktree cleanup logic
-test: add unit tests for token tracking
+# ✅ CORRECT - Implementation + STATE.md update (ONE commit)
+abc1234 feature: add nested annotation type support
+# (includes STATE.md changes for this task)
+
+# ✅ CORRECT - Task with general config changes (TWO commits)
+abc1234 feature: add nested annotation type support
+def5678 config: add new dependency for annotation support
+
+# ❌ WRONG - STATE.md changes in separate commit
+abc1234 feature: add nested annotation type support
+def5678 config: mark add-nested-annotation-type-support complete
+# (STATE.md changes belong with the feature commit)
 ```
+
+Use `test:` type ONLY for standalone test changes (no production code).
