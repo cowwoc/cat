@@ -21,25 +21,33 @@ if [[ -f "$LOCK_FILE" ]]; then
     echo "Session lock released: $LOCK_FILE"
 fi
 
-# Clean up any worktree locks
-WORKTREE_LOCK_DIR="${PROJECT_DIR}/.claude/cat/worktree-locks"
-if [[ -d "$WORKTREE_LOCK_DIR" ]]; then
-    # Read session_id from stdin if available
-    SESSION_ID=""
-    if [[ ! -t 0 ]]; then
-        INPUT=$(cat 2>/dev/null || echo "{}")
-        SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo "")
-    fi
+# Read session_id from stdin if available (used for lock cleanup)
+SESSION_ID=""
+if [[ ! -t 0 ]]; then
+    INPUT=$(cat 2>/dev/null || echo "{}")
+    SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo "")
+fi
 
-    # Remove locks owned by this session
-    if [[ -n "$SESSION_ID" ]]; then
-        find "$WORKTREE_LOCK_DIR" -name "*.lock" -exec sh -c '
-            if grep -q "'"$SESSION_ID"'" "$1" 2>/dev/null; then
-                rm -f "$1"
-                echo "Worktree lock released: $1"
-            fi
-        ' _ {} \;
-    fi
+# Clean up task locks owned by this session
+TASK_LOCK_DIR="${PROJECT_DIR}/.claude/cat/locks"
+if [[ -d "$TASK_LOCK_DIR" ]] && [[ -n "$SESSION_ID" ]]; then
+    find "$TASK_LOCK_DIR" -name "*.lock" -exec sh -c '
+        if grep -q "session_id='"$SESSION_ID"'" "$1" 2>/dev/null; then
+            rm -f "$1"
+            echo "Task lock released: $1"
+        fi
+    ' _ {} \;
+fi
+
+# Clean up any worktree locks (legacy)
+WORKTREE_LOCK_DIR="${PROJECT_DIR}/.claude/cat/worktree-locks"
+if [[ -d "$WORKTREE_LOCK_DIR" ]] && [[ -n "$SESSION_ID" ]]; then
+    find "$WORKTREE_LOCK_DIR" -name "*.lock" -exec sh -c '
+        if grep -q "'"$SESSION_ID"'" "$1" 2>/dev/null; then
+            rm -f "$1"
+            echo "Worktree lock released: $1"
+        fi
+    ' _ {} \;
 fi
 
 # Clean up stale lock files (older than 24 hours)
