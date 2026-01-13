@@ -17,7 +17,48 @@ them. Essential for efficient use of CAT's multi-agent capabilities.
 - Tasks can execute in complete isolation
 - Parent agent needs to coordinate multiple work streams
 - Optimizing for wall-clock time rather than token efficiency
-- After decomposition creates independent subtasks
+- **AUTO-TRIGGERED:** After decompose-task creates independent subtasks
+
+## Auto-Trigger from Decomposition
+
+When `/cat:execute-task` triggers auto-decomposition (task exceeds context threshold),
+this skill is automatically invoked for parallel execution:
+
+```
+execute-task → analyze_task_size → (exceeds threshold) → decompose-task → parallel-execute
+```
+
+**Integration workflow:**
+
+1. `execute-task` estimates task size > threshold (e.g., 80K tokens)
+2. `execute-task` auto-invokes `decompose-task`
+3. `decompose-task` creates subtasks and generates parallel execution plan
+4. `decompose-task` identifies wave-based parallelization
+5. `execute-task` auto-invokes `parallel-execute` with the wave plan
+6. `parallel-execute` spawns subagents for each wave
+
+**Example auto-trigger flow:**
+
+```yaml
+# execute-task detects large task
+task: 1.2-implement-parser
+estimated_tokens: 120000
+threshold: 80000  # 40% of 200K
+
+# Auto-decomposition triggered
+decomposed_into:
+  - 1.2a-parser-lexer (25K tokens)
+  - 1.2b-parser-ast (30K tokens)
+  - 1.2c-parser-semantic (25K tokens)
+
+# Parallel plan generated
+parallel_plan:
+  wave_1: [1.2a, 1.2c]  # Independent, run concurrently
+  wave_2: [1.2b]         # Depends on 1.2a
+
+# Auto-parallel execution
+action: spawn 2 subagents for wave_1
+```
 
 ## Workflow
 

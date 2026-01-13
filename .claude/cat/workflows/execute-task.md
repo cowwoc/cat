@@ -27,7 +27,61 @@ If blocked:
 - Identify blocking dependencies
 - Report to user or execute blockers first
 
-### 2. Create Task Worktree
+### 2. Analyze Task Size and Auto-Decompose
+
+**MANDATORY: Estimate task complexity before execution.**
+
+```yaml
+# Read config
+context_limit: 200000  # from cat-config.json
+target_usage: 40       # percentage
+threshold: 80000       # context_limit * target_usage / 100
+
+# Estimate task size from PLAN.md
+estimation_factors:
+  files_to_create: count × 5000
+  files_to_modify: count × 3000
+  test_files: count × 4000
+  plan_steps: count × 2000
+  exploration_buffer: 10000 if uncertain
+
+estimated_tokens: sum of factors
+```
+
+**If estimated_tokens > threshold:**
+
+```
+AUTO-DECOMPOSITION TRIGGERED
+
+Estimated: ~85,000 tokens
+Threshold: 80,000 tokens (40% of 200,000)
+
+Invoking /cat:decompose-task...
+```
+
+1. Invoke decompose-task skill automatically
+2. Decompose-task creates subtasks with dependencies
+3. Decompose-task generates parallel execution plan
+4. If parallel tasks exist, invoke parallel-execute:
+
+```
+Parallel Execution Plan:
+  Wave 1: [1.2a-parser-lexer, 1.2c-parser-tests] (concurrent)
+  Wave 2: [1.2b-parser-ast] (after wave 1)
+
+Spawning 2 subagents for wave 1...
+```
+
+**If estimated_tokens <= threshold:**
+
+```
+Task size OK: ~65,000 tokens (81% of threshold)
+Proceeding with single subagent.
+```
+
+Continue to create worktree step.
+
+### 3. Create Task Worktree
 
 ```bash
 # Main agent creates task branch and worktree
@@ -38,7 +92,7 @@ Update STATE.md:
 - Status: `in-progress`
 - Last Updated: current timestamp
 
-### 3. Pre-Spawn Decision Making
+### 4. Pre-Spawn Decision Making
 
 **CRITICAL**: Before spawning, the main agent must resolve ALL ambiguities and decisions.
 
@@ -61,7 +115,7 @@ or correct mistakes in real-time. The subagent prompt must enable purely mechani
 
 See `spawn-subagent` skill for detailed prompt requirements.
 
-### 4. Spawn Subagent
+### 5. Spawn Subagent
 
 Main agent spawns subagent with:
 - Task PLAN.md content **expanded with decisions from step 3**
@@ -75,7 +129,7 @@ Subagent branch:
 {major}.{minor}-{task-name}-sub-{uuid}
 ```
 
-### 5. Subagent Execution
+### 6. Subagent Execution
 
 Subagent in worktree:
 1. Read PLAN.md execution steps
@@ -89,9 +143,9 @@ Token tracking:
 - Sum input_tokens + output_tokens
 - Count compaction events
 
-### 6. Subagent Completion
+### 7. Subagent Completion
 
-On completion, subagent returns:
+On completion, subagent returns via `.completion.json`:
 ```json
 {
   "status": "success|failure",
@@ -101,18 +155,59 @@ On completion, subagent returns:
 }
 ```
 
-### 7. Main Agent Merge
+### 8. MANDATORY: Report Token Metrics to User
+
+**After collecting subagent results, ALWAYS present token metrics to user:**
+
+```
+## Subagent Execution Report
+
+**Task:** {task-name}
+**Status:** {success|partial|failed}
+
+**Token Usage:**
+- Total tokens: 75,000 (37.5% of 200K context)
+- Compaction events: 0
+- Execution quality: Good ✓
+
+**Work Summary:**
+- Commits: 3
+- Files changed: 5
+- Lines: +450 / -120
+```
+
+**Why mandatory:**
+- Users cannot observe subagent execution in real-time
+- Token metrics are the only visibility into execution quality
+- Compaction events indicate potential quality degradation
+- Enables informed decisions about decomposition
+
+**If compaction events > 0:**
+
+```
+⚠️ CONTEXT COMPACTION DETECTED
+
+Compaction events: 2
+Execution quality: DEGRADED - context was summarized during execution
+
+RECOMMENDATION: Invoke /cat:decompose-task for remaining similar work.
+The subagent may have lost context and produced lower quality output.
+```
+
+Present AskUserQuestion with decomposition as recommended option.
+
+### 9. Main Agent Merge
 
 ```bash
 # In task worktree
-git merge {subagent-branch} --no-ff
+git merge {subagent-branch} --ff-only
 ```
 
 If conflicts:
 - Attempt automatic resolution
 - Escalate to user if unresolved
 
-### 8. Cleanup Subagent Resources
+### 10. Cleanup Subagent Resources
 
 **After merging subagent branch to task branch, cleanup BEFORE approval gate:**
 
@@ -129,7 +224,7 @@ This ensures:
 - No orphaned worktrees/branches if user rejects
 - Clean state for approval decision
 
-### 9. Update State
+### 11. Update State
 
 Update task STATE.md:
 ```markdown
@@ -139,7 +234,7 @@ Update task STATE.md:
 - **Note:** Subagent work merged, awaiting approval
 ```
 
-### 10. Approval Gate (Interactive Mode)
+### 12. Approval Gate (Interactive Mode)
 
 Present to user:
 - Summary of changes
@@ -178,7 +273,7 @@ Present changes → User responds
 
 **Anti-pattern (M052):** Interpreting feedback as implicit approval and merging without re-confirmation.
 
-### 11. Final Merge
+### 13. Final Merge
 
 After approval:
 ```bash
@@ -190,15 +285,15 @@ git checkout main
 git merge {task-branch}
 ```
 
-### 12. Cleanup
+### 14. Cleanup
 
 ```bash
-# Task worktree and branch (subagent already cleaned in step 8)
+# Task worktree and branch (subagent already cleaned in step 10)
 git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
 ```
 
-### 13. Update Changelogs
+### 15. Update Changelogs
 
 Update minor and major version CHANGELOG.md files with completed task summary.
 

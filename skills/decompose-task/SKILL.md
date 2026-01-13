@@ -157,13 +157,94 @@ git checkout "1.2a-parser-lexer"
 git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed parent"
 ```
 
-### 8. Mark Original Task as Decomposed
+### 8. Generate Parallel Execution Plan
+
+**MANDATORY: Analyze dependencies and create wave-based execution plan.**
+
+After decomposition, determine which subtasks can run concurrently:
+
+```yaml
+# Dependency analysis
+subtasks:
+  - id: 1.2a-parser-lexer
+    dependencies: []
+    estimated_tokens: 25000
+  - id: 1.2b-parser-ast
+    dependencies: [1.2a-parser-lexer]
+    estimated_tokens: 30000
+  - id: 1.2c-parser-tests
+    dependencies: []
+    estimated_tokens: 20000
+
+# Wave-based parallel plan
+parallel_execution_plan:
+  wave_1:
+    # Tasks with no dependencies - can run concurrently
+    tasks: [1.2a-parser-lexer, 1.2c-parser-tests]
+    max_concurrent: 2
+    reason: "Both have no dependencies, can execute in parallel"
+
+  wave_2:
+    # Tasks that depend on wave_1 completion
+    tasks: [1.2b-parser-ast]
+    depends_on: [wave_1]
+    reason: "Depends on 1.2a-parser-lexer from wave_1"
+
+execution_order:
+  1. Spawn subagents for wave_1 tasks (parallel)
+  2. Monitor and collect wave_1 results
+  3. Merge wave_1 branches
+  4. Spawn subagents for wave_2 tasks (parallel)
+  5. Monitor and collect wave_2 results
+  6. Merge wave_2 branches
+```
+
+**Output parallel plan to STATE.md:**
+
+```markdown
+## Parallel Execution Plan
+
+### Wave 1 (Concurrent)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| 1.2a-parser-lexer | 25K | None |
+| 1.2c-parser-tests | 20K | None |
+
+### Wave 2 (After Wave 1)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| 1.2b-parser-ast | 30K | 1.2a-parser-lexer |
+
+**Total waves:** 2
+**Max concurrent subagents:** 2
+```
+
+**Conflict detection for parallel tasks:**
+
+Ensure no parallel tasks modify the same files:
+
+```yaml
+conflict_check:
+  task_1: 1.2a-parser-lexer
+    files: [src/parser/Lexer.java, test/parser/LexerTest.java]
+  task_2: 1.2c-parser-tests
+    files: [test/parser/ParserIntegrationTest.java]
+
+  overlap: []  # No conflicts - safe to parallelize
+
+  # If overlap exists:
+  conflict_resolution:
+    move_conflicting_task_to_next_wave: true
+```
+
+### 9. Mark Original Task as Decomposed
 
 ```bash
 # Update original PLAN.md
 echo "---
 status: DECOMPOSED
 decomposed_into: [1.2a, 1.2b, 1.2c]
+parallel_plan: wave_1=[1.2a, 1.2c], wave_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
 ```
 
