@@ -7,6 +7,23 @@ description: Reduce document size while preserving essential information. Use wh
 
 **Purpose**: Reduce document size while preserving essential information for efficient context usage.
 
+## Execution Model
+
+**MANDATORY: Always spawn subagent for bulk operations.**
+
+| Scope | Execution |
+|-------|-----------|
+| Single file | Main agent OK |
+| 2-5 files | Subagent recommended |
+| 6+ files | **Subagent required** |
+
+For bulk operations:
+```
+/cat:spawn-subagent with prompt:
+"Shrink all MD files in {directory} using shrink-doc strategies.
+Target: 40-60% reduction. Preserve all essential information."
+```
+
 ## When to Use
 
 - Document exceeds context window limits
