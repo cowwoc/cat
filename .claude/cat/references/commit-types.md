@@ -29,8 +29,12 @@ Use ONLY these types when committing in a CAT-managed project:
 | `performance` | Performance improvement | `performance: add database index` |
 | `docs` | User-facing docs (README, API docs) | `docs: add API documentation` |
 | `style` | Formatting, linting fixes | `style: format auth module` |
-| `config` | Config, tooling, deps, Claude-facing docs | `config: add bcrypt dependency` |
+| `config` | Config, tooling, deps, Claude-facing docs | `config: update CLAUDE.md rules` |
 | `planning` | Planning system updates (ROADMAP, STATE) | `planning: add task 5 summary` |
+
+**Claude-facing vs User-facing docs:**
+- `docs:` = README, API docs, user guides - things humans read
+- `config:` = CLAUDE.md, hooks, skills, style rules - things Claude reads
 
 ## Format
 
