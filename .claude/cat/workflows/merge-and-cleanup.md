@@ -87,22 +87,40 @@ To review: `git diff main..{branch}`
 **Approve merge to main?**
 ```
 
-### 6. Merge to Main
+### 6. Update Task STATE.md (BEFORE merge)
 
-After approval:
+**CRITICAL (M070): STATE.md must be in same commit as implementation.**
+
+Before squashing/merging, update task STATE.md to completed in the task branch:
+
+```bash
+# In task worktree - update STATE.md
+# .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+#   status: completed
+#   progress: 100%
+#   completed: {date}
+
+# Include in implementation commit
+git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git commit --amend --no-edit
+```
+
+### 7. Merge to Main
+
+After approval and STATE.md update:
 ```bash
 # Ensure main is up to date
 git checkout main
 git pull origin main
 
-# Merge task branch
+# Merge task branch (STATE.md already included)
 git merge {major}.{minor}-{task-name} --no-ff
 
 # Push to remote
 git push origin main
 ```
 
-### 7. Worktree Cleanup
+### 8. Worktree Cleanup
 
 Remove task worktree:
 ```bash
@@ -114,7 +132,7 @@ If worktree removal fails:
 git worktree remove --force ../cat-worktree-{task-name}
 ```
 
-### 8. Branch Cleanup
+### 9. Branch Cleanup
 
 Delete merged branches:
 ```bash
@@ -125,20 +143,15 @@ git branch -d {major}.{minor}-{task-name}
 git branch -d {major}.{minor}-{task-name}-sub-*
 ```
 
-### 9. Update State Files
+### 10. Update Parent State Files
 
-Update task STATE.md:
-```markdown
-- **Status:** completed
-- **Progress:** 100%
-- **Last Updated:** {timestamp}
-```
+Update minor and major STATE.md progress (task STATE.md already updated in step 6):
 
-Update minor STATE.md progress.
-Update major STATE.md progress.
-Update ROADMAP.md if needed.
+- Minor STATE.md: recalculate progress based on completed tasks
+- Major STATE.md: recalculate progress based on completed minors
+- ROADMAP.md: update if version status changed
 
-### 10. Update Changelogs
+### 11. Update Changelogs
 
 Update minor/major CHANGELOG.md to include completed task summary.
 
@@ -147,7 +160,7 @@ Update minor/major CHANGELOG.md to include completed task summary.
 
 ## Yolo Mode Differences
 
-In Yolo mode, steps 5-6 are automatic:
+In Yolo mode, steps 5-7 are automatic:
 - No user approval required
 - Immediate merge after verification passes
 - Cleanup proceeds without pause
