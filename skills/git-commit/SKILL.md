@@ -135,6 +135,35 @@ Task ID: v2.1-implement-user-auth
 
 **Format:** `{type}: {description}`
 
+### Commit Type Separation (MANDATORY)
+
+**NEVER mix commit types in a single commit.** Each commit should have ONE type.
+
+```
+# WRONG - Mixed types in one commit
+bugfix: fix parser bug and update documentation
+
+Changes:
+- Fix comment parsing in member declarations
+- Update requirements-api.md with correct method names
+
+# CORRECT - Separate commits by type
+bugfix: fix parser bug for comments in member declarations
+
+Task ID: v0.5-fix-comment-in-member-declaration
+
+---
+
+config: correct method names in requirements-api.md
+
+Updated isReferenceEqualTo documentation.
+```
+
+**Why**: Git history becomes searchable by type. `git log --grep="^config:"` finds all config
+changes. Mixed commits break this traceability.
+
+**Rule**: If changes span multiple types, create multiple commits.
+
 ## Good Verbs for Description
 
 | Verb | Use For |
