@@ -27,7 +27,30 @@ if [[ "$TOOL_NAME" != "Bash" ]]; then
   exit 0
 fi
 
-# Check for dangerous git history-rewriting patterns
+# WARN: git filter-branch is deprecated - recommend git-filter-repo
+# Only warn, don't block, since user may have reason to use it
+if echo "$COMMAND" | grep -qE '(^|;|&&|\|)\s*git\s+filter-branch'; then
+  cat >&2 <<EOF
+⚠️  WARNING: git filter-branch is deprecated
+
+Git itself warns: "git-filter-branch has a glut of gotchas generating mangled history"
+
+**Recommended alternative**: git-filter-repo (10-50x faster, safer)
+
+  pip install git-filter-repo
+  git filter-repo --partial --msg-filter 'sed "s/old/new/"'
+
+**If you must use filter-branch**:
+- The .git/refs/original/ backup will be created
+- Do NOT delete refs/original unless user explicitly requests it
+- Use --partial with filter-repo to preserve reflog
+
+**See**: /cat:git-rewrite-history skill for proper usage
+EOF
+  # Continue - this is just a warning, not a block
+fi
+
+# BLOCK: dangerous --all or --branches flags with history rewriting
 # Only check actual filter-branch/rebase commands, not git commit messages
 if echo "$COMMAND" | grep -qE '(^|;|&&|\|)\s*git\s+(filter-branch|rebase)\s+.*\s+--(all|branches)(\s|$)'; then
   cat >&2 <<EOF
