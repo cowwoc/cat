@@ -21,29 +21,29 @@ them. Essential for efficient use of CAT's multi-agent capabilities.
 
 ## Auto-Trigger from Decomposition
 
-When `/cat:work` triggers auto-decomposition (task exceeds context threshold),
+When `/cat:execute-task` triggers auto-decomposition (task exceeds context threshold),
 this skill is automatically invoked for parallel execution:
 
 ```
-work → analyze_task_size → (exceeds threshold) → decompose-task → parallel-execute
+execute-task → analyze_task_size → (exceeds threshold) → decompose-task → parallel-execute
 ```
 
 **Integration workflow:**
 
-1. `work` estimates task size > threshold (e.g., 80K tokens)
-2. `work` auto-invokes `decompose-task`
+1. `execute-task` estimates task size > threshold (e.g., 80K tokens)
+2. `execute-task` auto-invokes `decompose-task`
 3. `decompose-task` creates subtasks and generates parallel execution plan
-4. `decompose-task` identifies sub-task-based parallelization
-5. `work` auto-invokes `parallel-execute` with the sub-task plan
-6. `parallel-execute` spawns subagents for each sub-task
+4. `decompose-task` identifies wave-based parallelization
+5. `execute-task` auto-invokes `parallel-execute` with the wave plan
+6. `parallel-execute` spawns subagents for each wave
 
 **Example auto-trigger flow:**
 
 ```yaml
-# work detects large task
+# execute-task detects large task
 task: 1.2-implement-parser
 estimated_tokens: 120000
-# See agent-architecture.md § Context Limit Constants for threshold
+threshold: 80000  # 40% of 200K
 
 # Auto-decomposition triggered
 decomposed_into:
@@ -53,11 +53,11 @@ decomposed_into:
 
 # Parallel plan generated
 parallel_plan:
-  sub_task_1: [1.2a, 1.2c]  # Independent, run concurrently
-  sub_task_2: [1.2b]         # Depends on 1.2a
+  wave_1: [1.2a, 1.2c]  # Independent, run concurrently
+  wave_2: [1.2b]         # Depends on 1.2a
 
 # Auto-parallel execution
-action: spawn 2 subagents for sub_task_1
+action: spawn 2 subagents for wave_1
 ```
 
 ## Workflow
