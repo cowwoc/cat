@@ -82,36 +82,39 @@ For each STATE.md found, extract:
 **Progress:** [=========>    ] 75% (15/20 tasks)
 **Mode:** [Interactive|YOLO]
 
-## MAJOR 1: [Name from ROADMAP] (In Progress)
+## v1: [Name from ROADMAP] (2/5 complete)
 
-### MINOR 0: [Description]
-- [x] parse-tokens (completed)
-- [>] build-ast (in-progress, 60%)
-- [ ] validate-ast (pending)
+### v1.0: [Description] (2/3)
+[x] parse-tokens
+[>] build-ast (in-progress)
+[ ] validate-ast
 
-### MINOR 1: [Description]
-- [ ] generate-ir (pending)
-- [ ] optimize-ir (pending, depends: generate-ir)
+### v1.1: [Description] (0/2)
+[ ] generate-ir
+[ ] optimize-ir (depends: generate-ir)
 
-## MAJOR 2: [Name from ROADMAP] (Pending)
+## v2: [Name from ROADMAP] (Pending)
 
-### MINOR 0: [Description]
-- [ ] emit-code (pending)
-- [ ] format-output (pending)
+### v2.0: [Description] (Pending)
+[ ] emit-code (pending)
+[ ] format-output (pending)
 
 ---
 
-**Current:** Major 1, Minor 0, Task: build-ast
+**Current:** v1.0, Task: build-ast
 **Next executable:** validate-ast (after build-ast completes)
 
 ---
 ```
 
-**Status symbols:**
+**Status symbols (MANDATORY for every task line):**
 - `[x]` - completed
 - `[>]` - in-progress
 - `[ ]` - pending
 - `[!]` - blocked (dependencies not met)
+
+**CRITICAL**: Do NOT use list dash prefix with checkboxes. Use `[x] task` not `- [x] task`.
+The dash triggers markdown list rendering which strips checkbox syntax in CLI output.
 
 **Color hints (if terminal supports):**
 - Green for completed
@@ -132,8 +135,8 @@ List any tasks that are blocked:
 ```
 ## Blocked Tasks
 
-- **Major 1.1/optimize-ir** - waiting on: generate-ir
-- **Major 2.0/emit-code** - waiting on: Major 1 completion
+[!] **v1.1/optimize-ir** - waiting on: generate-ir
+[!] **v2.0/emit-code** - waiting on: v1 completion
 ```
 
 </step>
