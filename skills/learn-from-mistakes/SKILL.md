@@ -267,6 +267,18 @@ Go back to step 7 and find a code/config/documentation fix.
 
 **File:** `.claude/cat/retrospectives/mistakes.json`
 
+**CRITICAL PATH CHECK**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
+If files exist at wrong location, migrate them first:
+
+```bash
+# Check for files at wrong location and migrate
+if [ -d .claude/retrospectives ] && [ ! -d .claude/cat/retrospectives ]; then
+  mkdir -p .claude/cat/retrospectives
+  mv .claude/retrospectives/*.json .claude/cat/retrospectives/ 2>/dev/null || true
+  rmdir .claude/retrospectives 2>/dev/null || true
+fi
+```
+
 ```bash
 # Create retrospectives directory if needed
 mkdir -p .claude/cat/retrospectives
