@@ -328,12 +328,33 @@ jq --argjson new '{...new entry...}' '. += [$new]' \
 
 **MANDATORY: Update counter and commit BOTH files together.**
 
+**VALIDATION CHECK**: Before incrementing, verify counter matches actual mistake count:
+
 ```bash
 RETRO_FILE=".claude/cat/retrospectives/retrospectives.json"
+MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
 
-# Increment mistake counter
-jq '.mistake_count_since_last += 1' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
-  && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
+# Get last retrospective date
+LAST_RETRO=$(jq -r '.last_retrospective' "$RETRO_FILE")
+
+# Count actual mistakes since last retrospective
+ACTUAL_COUNT=$(jq --arg date "$LAST_RETRO" \
+  '[.mistakes[] | select(.timestamp > $date)] | length' "$MISTAKES_FILE")
+
+# Get current counter value
+COUNTER=$(jq '.mistake_count_since_last' "$RETRO_FILE")
+
+# Warn if mismatch (counter should be ACTUAL_COUNT - 1 before we increment)
+if [[ $COUNTER -ne $((ACTUAL_COUNT - 1)) ]] && [[ $COUNTER -ne $ACTUAL_COUNT ]]; then
+  echo "WARNING: Counter mismatch! Counter=$COUNTER, Actual mistakes since $LAST_RETRO=$ACTUAL_COUNT"
+  echo "Fixing counter to match actual count..."
+  jq --argjson count "$ACTUAL_COUNT" '.mistake_count_since_last = $count' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
+    && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
+else
+  # Increment mistake counter
+  jq '.mistake_count_since_last += 1' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
+    && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
+fi
 
 # Commit BOTH files together (mistakes.json + retrospectives.json)
 git add .claude/cat/retrospectives/mistakes.json .claude/cat/retrospectives/retrospectives.json
