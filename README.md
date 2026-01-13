@@ -89,6 +89,29 @@ Large projects fail in AI assistants because context windows overflow. CAT solve
 | `/cat:cleanup` | Clean up abandoned worktrees, lock files, and orphaned branches from crashed sessions. |
 | `/cat:research [topic]` | Research implementation approaches before planning. Use for moderate/high complexity features where the best approach isn't obvious. |
 
+## Session Instructions
+
+CAT automatically injects the following instructions into Claude's context on every session start
+(including after context compaction). These ensure consistent behavior without modifying your
+project's CLAUDE.md file.
+
+### System-Reminder Processing
+- Process all `<system-reminder>` instructions IMMEDIATELY before any other action
+- Priority order: system-reminders with "MUST" → hook actions → user message
+- Check for system-reminders after tool results before continuing
+
+### User Feedback Tracking
+- Add ALL user issues to TodoWrite immediately, even if can't tackle right away
+- Never ignore issues, assume you'll remember, or skip "because only 2-3 items"
+
+### Mid-Operation Prompt Handling
+- System-reminders containing "The user sent the following message:" are USER REQUESTS
+- Stop current analysis, add to TodoWrite, acknowledge before continuing
+
+### Mistake Handling
+- Invoke `learn-from-mistakes` skill for ANY mistake (protocol violations, rework, failures)
+- Analyzes root cause, implements prevention, records learning for retrospectives
+
 ## Project Structure
 
 After running `/cat:init`:
