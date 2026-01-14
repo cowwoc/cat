@@ -25,15 +25,17 @@ This is CAT's core execution command. It:
 1. Finds the next executable task (pending + dependencies met)
 2. Acquires exclusive task lock (prevents concurrent execution)
 3. Creates a task worktree and branch
-3. Executes the PLAN.md (spawn subagent or work directly)
-4. Monitors token usage throughout
-5. Runs approval gate (interactive mode)
-6. Squashes commits by type
-7. Merges task branch to main
-8. Cleans up worktrees
-9. Updates STATE.md
-10. Updates changelogs (minor/major CHANGELOG.md)
-11. Offers next task
+4. Executes the PLAN.md (spawn subagent or work directly)
+5. Monitors token usage throughout
+6. Runs stakeholder review gate (multi-perspective quality review)
+7. Loops back to fix concerns if review rejects
+8. Runs user approval gate (interactive mode)
+9. Squashes commits by type
+10. Merges task branch to main
+11. Cleans up worktrees
+12. Updates STATE.md
+13. Updates changelogs (minor/major CHANGELOG.md)
+14. Offers next task
 
 </objective>
 
@@ -462,6 +464,98 @@ Informational warning:
 
 The subagent used significant context (threshold: {targetContextUsage}%).
 Consider decomposing similar tasks in the future.
+```
+
+</step>
+
+<step name="stakeholder_review">
+
+**Multi-perspective stakeholder review gate:**
+
+Skip if `yoloMode: true` in config OR `stakeholderReview.enabled: false`.
+
+**MANDATORY: Run stakeholder review BEFORE user approval.**
+
+After implementation completes and token metrics are collected, run parallel stakeholder reviews
+to identify concerns from multiple perspectives before presenting to user.
+
+**Stakeholders:**
+
+| Stakeholder | Focus | Reference |
+|-------------|-------|-----------|
+| architect | System design, modules, APIs | stakeholders/architect.md |
+| security | Vulnerabilities, validation | stakeholders/security.md |
+| quality | Code quality, complexity | stakeholders/quality.md |
+| tester | Test coverage, edge cases | stakeholders/tester.md |
+| performance | Efficiency, resources | stakeholders/performance.md |
+
+**Execution:**
+
+1. Identify changed files: `git diff --name-only ${MAIN_BRANCH}..HEAD`
+2. Spawn 5 subagents in parallel (one per stakeholder)
+3. Each reviews implementation against their criteria
+4. Collect JSON responses with concerns and severity
+
+**Aggregation rules:**
+
+| Condition | Result |
+|-----------|--------|
+| Any CRITICAL concern | REJECTED |
+| Any stakeholder REJECTED | REJECTED |
+| 3+ HIGH concerns total | REJECTED |
+| Only MEDIUM concerns | CONCERNS (proceed) |
+| No concerns | APPROVED |
+
+**If REJECTED:**
+
+Present concerns to user:
+
+```
+## Stakeholder Review: REJECTED
+
+**Critical Concerns (Must Fix):**
+{list concerns with locations and recommendations}
+
+**High Priority Concerns:**
+{list concerns}
+```
+
+Use AskUserQuestion:
+- header: "Review Gate"
+- question: "Stakeholder review identified concerns that should be addressed:"
+- options:
+  - "Fix concerns" - Return to implementation with concern list (Recommended)
+  - "Override and proceed" - Continue to user approval with concerns noted
+  - "Abort" - Stop task execution
+
+**If "Fix concerns":**
+- Record concerns in task context
+- Loop back to `execute` step
+- Subagent receives concerns as additional requirements
+- Repeat until APPROVED or max iterations (3) reached
+
+**If max iterations reached:**
+- Force escalation to user
+- Present all remaining concerns
+- User decides whether to override or abort
+
+**If APPROVED or CONCERNS:**
+
+Proceed to approval_gate with stakeholder summary:
+
+```
+## Stakeholder Review: PASSED
+
+| Stakeholder | Status | Concerns |
+|-------------|--------|----------|
+| architect | ✓ APPROVED | 0 |
+| security | ✓ APPROVED | 0 |
+| quality | ⚠ CONCERNS | 2 medium |
+| tester | ✓ APPROVED | 0 |
+| performance | ✓ APPROVED | 0 |
+
+**Medium Priority (Informational):**
+{list if any}
 ```
 
 </step>
@@ -991,6 +1085,7 @@ See [task-resolution.md](../references/task-resolution.md) for details.
 - [ ] PLAN.md executed successfully via subagent(s)
 - [ ] **Token metrics collected and reported to user**
 - [ ] **Compaction events evaluated (decomposition offered if > 0)**
+- [ ] **Stakeholder review passed (or concerns addressed)**
 - [ ] Approval gate passed (if interactive)
 - [ ] Commits squashed by type
 - [ ] Branch(es) merged to main
