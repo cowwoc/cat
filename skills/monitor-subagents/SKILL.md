@@ -86,7 +86,7 @@ Use the optimized monitoring script for minimal context impact:
 
 ## Anti-Patterns
 
-### Do NOT use inline jq queries repeatedly
+### Use single script call for all metrics
 
 ```bash
 # ❌ Running jq manually each poll (accumulates tool call overhead)
@@ -97,7 +97,7 @@ jq -s '[...] | length' "${SESSION_FILE}"
 /workspace/cat/scripts/monitor-subagents.sh
 ```
 
-### Do NOT poll too frequently
+### Use reasonable polling intervals (30-60 seconds)
 
 ```bash
 # ❌ Checking every second
@@ -113,7 +113,7 @@ while true; do
 done
 ```
 
-### Do NOT ignore compaction events
+### Treat compaction as intervention signal
 
 ```bash
 # ❌ Ignoring compaction
@@ -128,7 +128,7 @@ if [ "${COMPACTIONS}" -gt 0 ]; then
 fi
 ```
 
-### Do NOT assume worktree presence means running
+### Verify session activity (worktree presence alone is insufficient)
 
 ```bash
 # ❌ Assuming worktree = active subagent

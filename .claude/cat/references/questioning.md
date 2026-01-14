@@ -63,7 +63,7 @@ Use AskUserQuestion:
 
 **5. Ground in reality**
 
-Only ask about constraints that actually exist. Don't invent concerns.
+Only ask about constraints that actually exist. Focus on real constraints, not hypothetical concerns.
 
 Use AskUserQuestion:
 - header: "Constraints"
@@ -100,7 +100,7 @@ Use AskUserQuestion:
 </good_vs_bad>
 
 <probing_techniques>
-When answers are vague, don't accept them. Probe with AskUserQuestion:
+When answers are vague, probe for specifics using AskUserQuestion:
 
 **"Make it good"** →
 - header: "Good"
@@ -155,7 +155,7 @@ Loop until "Create PROJECT.md" selected.
 - **Corporate speak** - "What are your success criteria?" "Who are your stakeholders?"
 - **Rushing** - Minimizing questions to get to "the work"
 - **Assuming** - Filling gaps with assumptions instead of asking
-- **User skills** - NEVER ask about user's technical experience. Claude builds — user's skills are irrelevant.
+- **User skills** - Focus on what to build, not user's technical experience. Claude builds — user's skills are irrelevant.
 - **Premature constraints** - Asking about tech stack before understanding the idea
 - **Shallow acceptance** - Taking vague answers without probing for specifics
 </anti_patterns>

@@ -249,7 +249,7 @@ aggregate_token_report:
 
 ## Anti-Patterns
 
-### Do NOT ignore compaction events
+### Always flag compaction events as concerns
 
 ```yaml
 # ❌ Treating compaction as normal
@@ -262,7 +262,7 @@ status: WARNING
 recommendation: "Multiple compactions indicate task is too large"
 ```
 
-### Do NOT report raw numbers without context
+### Always provide contextual interpretation for numbers
 
 ```yaml
 # ❌ Numbers without meaning
@@ -275,7 +275,7 @@ status: HEALTHY
 headroom_remaining: 135000
 ```
 
-### Do NOT wait until 100% to warn
+### Warn proactively at 40% threshold
 
 ```bash
 # ❌ Warning only at limit
@@ -289,7 +289,7 @@ if [ "${PERCENT}" -ge 40 ]; then
 fi
 ```
 
-### Do NOT aggregate without individual analysis
+### Analyze individually before aggregating
 
 ```yaml
 # ❌ Only aggregate view

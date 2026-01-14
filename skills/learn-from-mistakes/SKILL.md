@@ -66,7 +66,40 @@ MESSAGE_COUNT=$(jq -s '[.[] | select(.type == "assistant")] | length' "${SESSION
 SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 ```
 
-### 3. Perform 5-Whys Analysis
+### 3. Perform Root Cause Analysis
+
+**A/B TEST IN PROGRESS** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
+
+**Method Assignment Rule:** Use mistake ID modulo 3:
+- IDs ending in 6,9,2,5,8 (mod 3 = 0) → Method A (5-Whys)
+- IDs ending in 7,0,3 (mod 3 = 1) → Method B (Taxonomy)
+- IDs ending in 8,1,4 (mod 3 = 2) → Method C (Causal Barrier)
+
+---
+
+#### Method A: 5-Whys (Control)
+
+Ask "why" iteratively until reaching fundamental cause (typically 5 levels):
+
+```yaml
+five_whys:
+  - why: "Why did this happen?"
+    answer: "Immediate cause of the mistake"
+  - why: "Why [previous answer]?"
+    answer: "Deeper contributing factor"
+  - why: "Why [previous answer]?"
+    answer: "Organizational or process factor"
+  - why: "Why [previous answer]?"
+    answer: "Systemic or environmental factor"
+  - why: "Why [previous answer]?"
+    answer: "Root cause - fundamental issue"
+
+root_cause: "The fundamental issue identified at deepest 'why'"
+category: "Select from category reference"
+rca_method: "A"
+```
+
+**Example:**
 
 ```yaml
 five_whys:
@@ -82,7 +115,117 @@ five_whys:
     answer: "Token monitoring wasn't triggering at 40% threshold"
 
 root_cause: "Task exceeded safe context bounds without decomposition"
-category: CONTEXT_DEGRADATION
+category: "context_degradation"
+rca_method: "A"
+```
+
+**Check against common root cause patterns:**
+- Assumption without verification?
+- Completion bias (rationalized ignoring rules)?
+- Memory reliance (didn't re-verify)?
+- Environment state mismatch?
+- Documentation ignored (rule existed)?
+
+---
+
+#### Method B: Modular Error Taxonomy
+
+Based on [AgentErrorTaxonomy](https://arxiv.org/abs/2509.25370) (24% accuracy improvement).
+
+```yaml
+taxonomy_analysis:
+  # Step 1: Classify into module
+  module: MEMORY | PLANNING | ACTION | REFLECTION | SYSTEM
+  module_definitions:
+    MEMORY: "Failed to retain/recall earlier context"
+    PLANNING: "Poor task decomposition or sequencing"
+    ACTION: "Incorrect tool use or execution"
+    REFLECTION: "Failed to detect/correct own error"
+    SYSTEM: "Environment, tooling, or integration failure"
+
+  # Step 2: Identify failure mode within module
+  failure_mode: "What specific capability failed?"
+  failure_type: FALSE_POSITIVE | FALSE_NEGATIVE
+    # FALSE_POSITIVE = did something wrong
+    # FALSE_NEGATIVE = missed something
+
+  # Step 3: Check for cascading
+  cascading:
+    caused_downstream: true | false
+    is_symptom_of: null | "earlier failure description"
+
+  # Step 4: Corrective feedback
+  corrective_feedback: "What specific guidance would have prevented this?"
+  intervention_point: "At what step should intervention have occurred?"
+
+root_cause: "..."
+category: "..."
+rca_method: "B"
+```
+
+---
+
+#### Method C: Causal Barrier Analysis
+
+Based on [causal reasoning research](https://www.infoq.com/articles/causal-reasoning-observability/).
+
+```yaml
+causal_barrier_analysis:
+  # Step 1: List ALL candidate causes
+  candidates:
+    - cause: "Knowledge gap - didn't know correct approach"
+      expected_symptoms: ["asked questions", "explored alternatives"]
+      observed: false
+      likelihood: LOW
+
+    - cause: "Compliance failure - knew rule, didn't follow"
+      expected_symptoms: ["rule exists in docs", "no confusion expressed"]
+      observed: true
+      likelihood: HIGH
+
+    - cause: "Tool limitation - tool couldn't do what was needed"
+      expected_symptoms: ["error messages", "tried alternatives"]
+      observed: false
+      likelihood: LOW
+
+  # Step 2: Select most likely cause
+  selected_cause: "Compliance failure"
+  confidence: HIGH | MEDIUM | LOW
+  evidence: "Rule documented in X, no exploration attempts observed"
+
+  # Step 3: Verify cause vs symptom
+  verification:
+    question: "If we fixed this, would the problem definitely not recur?"
+    answer: "Yes, if enforcement hook blocks the incorrect behavior"
+    is_root_cause: true  # If uncertain, this may be a symptom
+
+  # Step 4: Barrier analysis
+  barriers:
+    - barrier: "Documentation in CLAUDE.md"
+      existed: true
+      why_failed: "Agent did not read/follow it"
+
+    - barrier: "PreToolUse hook"
+      existed: false
+      should_exist: true
+      strength_if_added: "Would block incorrect behavior"
+
+  minimum_effective_barrier: "hook (level 2)"
+
+root_cause: "..."
+category: "..."
+rca_method: "C"
+```
+
+---
+
+**Record the method used** in the final JSON entry:
+
+```json
+{
+  "rca_method": "A|B|C",
+  "rca_method_name": "5-whys|taxonomy|causal-barrier"
+}
 ```
 
 ### 4. Check for Context Degradation Patterns
@@ -107,29 +250,43 @@ context_degradation_analysis:
 
 ### 5. Identify Prevention Level
 
+**Choose the strongest prevention level that addresses the root cause:**
+
 ```yaml
 prevention_hierarchy:
   - level: 1
     type: code_fix
-    description: "Make code self-correcting or impossible to get wrong"
+    description: "Make incorrect behavior impossible in code"
+    examples: ["compile-time check", "type system enforcement", "API design"]
   - level: 2
-    type: earlier_decomposition
-    description: "Trigger task split before context degradation occurs"
-    cat_specific: true
+    type: hook
+    description: "Automated enforcement via PreToolUse/PostToolUse hooks"
+    examples: ["block dangerous commands", "require confirmation", "validate state"]
   - level: 3
     type: validation
-    description: "Add automated checks that catch the mistake early"
+    description: "Automated checks that catch mistakes early"
+    examples: ["build verification", "lint rules", "test assertions"]
   - level: 4
-    type: threshold_adjustment
-    description: "Reduce context threshold from 40% to more conservative value"
+    type: config
+    description: "Configuration or threshold changes"
+    examples: ["lower context threshold", "adjust timeouts", "change defaults"]
     cat_specific: true
   - level: 5
-    type: process
-    description: "Change workflow to prevent mistake"
+    type: skill
+    description: "Update skill documentation with explicit guidance"
+    examples: ["add anti-pattern section", "add checklist item", "clarify steps"]
   - level: 6
+    type: process
+    description: "Change workflow steps or ordering"
+    examples: ["add mandatory checkpoint", "reorder operations", "add verification"]
+  - level: 7
     type: documentation
     description: "Document to prevent future occurrence"
+    examples: ["add to CLAUDE.md", "update style guide", "add comments"]
+    note: "Weakest prevention - escalate if documentation already exists"
 ```
+
+**Key principle:** Lower level = stronger prevention. Always prefer level 1-3 over level 5-7.
 
 ### 6. Evaluate Prevention Quality
 
@@ -171,7 +328,7 @@ prevention_quality_check:
 
 ### 6b. Check If Prevention Already Exists (MANDATORY)
 
-**CRITICAL: Prevention MUST escalate if current level already failed.**
+**CRITICAL: If prevention already exists, it FAILED and MUST be replaced with stronger prevention.**
 
 Before implementing prevention, check if it already exists:
 
@@ -185,13 +342,16 @@ existing_prevention_check:
     - Existing hooks
 
   if_exists:
-    conclusion: "Existing prevention FAILED - documentation was ignored"
+    conclusion: "Existing prevention FAILED - it was ineffective"
     action: "MUST escalate to higher prevention level"
     rationale: |
-      If documentation says "MANDATORY: do X" and agent didn't do X,
-      then documentation alone is insufficient. The mistake WILL recur
-      unless enforced by automation.
+      If prevention exists and the mistake still occurred, that prevention
+      is NOT WORKING. Pointing to it again changes nothing. The mistake
+      WILL recur unless you implement STRONGER prevention.
 ```
+
+**Key insight:** Existing prevention that didn't prevent the mistake is NOT prevention - it's
+failed prevention. You must escalate to a level that will actually work.
 
 **Escalation hierarchy (when current level failed):**
 
@@ -210,7 +370,7 @@ existing_prevention_check:
 
 # ❌ WRONG: Record prevention as "documentation" pointing to same workflow
 prevention_type: documentation
-prevention_path: "execute-task.md"  # Already says MANDATORY!
+prevention_path: "execute-task.md"  # Already says MANDATORY - and it FAILED!
 
 # ✅ CORRECT: Escalate to hook that enforces the behavior
 prevention_type: hook
@@ -221,16 +381,32 @@ action: |
   removing any information that could be used to bypass the lock.
 ```
 
-**The prevention step MUST take action.** Recording a mistake without implementing NEW prevention
+**The prevention step MUST take NEW action.** Recording a mistake without implementing NEW prevention
 (beyond what already existed) is not learning - it's just logging. The same mistake WILL recur.
 
-**Verification question:** "If I encounter this exact situation again tomorrow, what NEW mechanism
-will prevent me from making the same mistake?" If the answer is "the documentation that I ignored
-today," that is NOT valid prevention.
+**Verification questions:**
+1. "Did prevention for this already exist?" → If YES, it failed and must be escalated
+2. "What NEW mechanism will prevent this tomorrow?" → Must be different from what failed today
+3. "Is this prevention stronger than what failed?" → Must be higher in the hierarchy
+
+**If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
 
 ### 7. Implement Prevention
 
-For context-related mistakes:
+**MANDATORY: Take concrete action. Prevention without action changes nothing.**
+
+The prevention step must result in a modified file - code, hook, configuration, or documentation.
+If you finish this step without editing a file, you have not implemented prevention.
+
+**Language requirements for documentation/prompt changes:**
+
+When prevention involves updating documentation, prompts, or instructions:
+- Use **positive actionable language** (what to do) instead of negative language (what not to do)
+- Convert "Do NOT do X" to "Do Y instead" where a clear alternative exists
+- Keep negative language only when no actionable positive alternative exists
+- Example: "Always collect results before merging" instead of "Do NOT merge without collection"
+
+**For context-related mistakes:**
 
 ```yaml
 prevention_action:
@@ -348,14 +524,17 @@ NEXT_ID=$(printf "M%03d" $NEXT_NUM)
 {
   "id": "{NEXT_ID}",
   "timestamp": "{ISO-8601 timestamp}",
-  "category": "{protocol_violation|prompt_engineering|context_degradation|tool_misuse}",
+  "category": "{see category reference below}",
   "description": "{One-line description of the mistake}",
-  "root_cause": "{Root cause from 5-whys analysis}",
-  "prevention_type": "{code|hook|skill|threshold|process|documentation}",
+  "root_cause": "{Root cause from analysis}",
+  "rca_method": "{A|B|C}",
+  "rca_method_name": "{5-whys|taxonomy|causal-barrier}",
+  "prevention_type": "{code_fix|hook|validation|config|skill|threshold|process|documentation}",
   "prevention_path": "{path/to/file/changed}",
   "pattern_keywords": ["{keyword1}", "{keyword2}"],
   "prevention_implemented": true,
   "prevention_verified": true,
+  "recurrence_of": "{null or ID of original mistake if this is a recurrence}",
   "prevention_quality": {
     "verification_type": "{positive|negative}",
     "fragility": "{low|medium|high}",
@@ -364,6 +543,49 @@ NEXT_ID=$(printf "M%03d" $NEXT_NUM)
   "correct_behavior": "{What should be done instead}"
 }
 ```
+
+**Category Reference:**
+
+| Category | Description |
+|----------|-------------|
+| protocol_violation | Violated documented workflow, skill steps, or mandatory instructions |
+| prompt_engineering | Subagent prompt lacked necessary instructions or constraints |
+| context_degradation | Quality degraded due to context window pressure or compaction |
+| tool_misuse | Used wrong tool, wrong flags, or misunderstood tool behavior |
+| assumption_without_verification | Claimed state without measurement or verification |
+| bash_error | Shell script error (syntax, reserved variables, compatibility) |
+| git_operation_failure | Git command failed or produced unexpected results |
+| build_failure | Compilation, checkstyle, PMD, or other build tool failure |
+| test_failure | Test assertion failure or incorrect test construction |
+| logical_error | Incorrect reasoning or misapplied rule |
+| detection_gap | Monitoring/hook failed to catch a problem |
+| architecture_issue | Structural or design-level mistake |
+| documentation_violation | Violated documented standard (not workflow protocol) |
+| giving_up | Presented options instead of implementing, or stopped prematurely |
+
+**Prevention Type Reference:**
+
+| Type | Level | Description | Example |
+|------|-------|-------------|---------|
+| code_fix | 1 | Make incorrect behavior impossible in code | Compile-time check, type system |
+| hook | 2 | Automated enforcement via PreToolUse/PostToolUse | Block dangerous commands |
+| validation | 3 | Automated check that catches mistakes early | Build verification, lint |
+| config | 4 | Configuration change that affects behavior | Threshold adjustment, settings |
+| skill | 5 | Update skill documentation with explicit guidance | Add anti-pattern section |
+| process | 6 | Change workflow steps or ordering | Add mandatory checkpoint |
+| documentation | 7 | Document to prevent future occurrence | Add to CLAUDE.md, style guide |
+
+**Common Root Cause Patterns (check during 5-whys):**
+
+| Pattern | Indicators | Typical Prevention |
+|---------|------------|-------------------|
+| Assumption without verification | "I assumed...", claimed state without measurement | Add verification step (hook/validation) |
+| Completion bias | Rationalized ignoring protocol to finish task | Strengthen enforcement (hook/code_fix) |
+| Memory reliance | Used memory instead of get-history/re-reading | Add verification requirement (process) |
+| Environment state mismatch | Wrong directory, stale data, wrong branch | Add state verification (hook/validation) |
+| Documentation ignored | Rule existed but wasn't followed | Escalate to hook/code_fix |
+| Shell compatibility | zsh vs bash differences | Document in CLAUDE.md (documentation) |
+| Ordering/timing | Operations in wrong sequence | Add explicit ordering (skill/process) |
 
 **Use jq to append (safe for concurrent access):**
 
@@ -503,7 +725,7 @@ prevention:
 
 ## Anti-Patterns
 
-### Do NOT ignore token metrics
+### Always analyze token metrics in 5-whys
 
 ```yaml
 # ❌ Standard analysis only
@@ -521,7 +743,7 @@ five_whys:
   - "Why 95K tokens?" -> "Task not decomposed"
 ```
 
-### Do NOT assume all mistakes are context-related
+### Distinguish context-related from non-context mistakes
 
 ```yaml
 # ❌ Blaming context for everything
@@ -537,7 +759,7 @@ analysis: |
   Actual cause: Simple typo, needs spellcheck
 ```
 
-### Do NOT adjust thresholds without data
+### Base threshold adjustments on data
 
 ```yaml
 # ❌ Arbitrary threshold change
@@ -551,7 +773,7 @@ analysis: |
 new_threshold: 50000
 ```
 
-### Do NOT skip verification
+### Always verify prevention works
 
 ```yaml
 # ❌ Implement and forget
@@ -566,7 +788,7 @@ verification:
   - Confirm mistake type doesn't recur
 ```
 
-### Do NOT use fragile negative verification
+### Use robust positive verification (check for correct format)
 
 ```yaml
 # ❌ Check for specific failure pattern (fragile)
@@ -582,7 +804,7 @@ prevention: |
 # Key insight: Verify what you WANT, not what you DON'T want
 ```
 
-### Do NOT fix the immediate problem when user says "Learn from mistakes" (M072)
+### Invoke the skill first when user says "Learn from mistakes" (M072)
 
 When user explicitly requests mistake analysis:
 
@@ -605,7 +827,7 @@ agent: [then fixes immediate problem]
 **Key principle:** "Learn from mistakes" is a trigger to invoke this skill, not a description of what
 to conceptually do. Always invoke the actual skill.
 
-### Do NOT record existing documentation as "prevention" (M084)
+### Escalate to enforcement when documentation failed (M084)
 
 ```yaml
 # ❌ WRONG: Documentation already existed and was ignored
@@ -636,3 +858,61 @@ automation that makes the incorrect behavior impossible or blocked.
 - `cat:decompose-task` - Implements earlier decomposition
 - `cat:monitor-subagents` - Catches context issues early
 - `cat:collect-results` - Preserves progress before intervention
+
+## A/B Test: RCA Method Comparison
+
+**STATUS: ACTIVE** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
+
+### Current Test Parameters
+
+- **Start:** M086
+- **Methods:** A (5-Whys), B (Taxonomy), C (Causal Barrier)
+- **Assignment:** Mistake ID modulo 3
+
+### Milestone Reviews (MANDATORY)
+
+At each milestone, run analysis and document decision:
+
+| Milestone | Trigger | Action |
+|-----------|---------|--------|
+| 30 mistakes | M115 recorded | Run analysis, check for >2x difference |
+| 60 mistakes | M145 recorded | Run analysis, check for >50% difference |
+| 90 mistakes | M175 recorded | Final determination, lock in winner |
+
+### Milestone Review Command
+
+```bash
+# Run at each milestone
+MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
+START_ID=86
+
+jq --argjson start "$START_ID" '
+  [.mistakes[] | select((.id | ltrimstr("M") | tonumber) >= $start)] |
+  group_by(.rca_method) |
+  map({
+    method: .[0].rca_method // "unassigned",
+    count: length,
+    recurrences: [.[] | select(.recurrence_of != null)] | length,
+    recurrence_rate: (([.[] | select(.recurrence_of != null)] | length) / length * 100 | floor)
+  }) |
+  sort_by(.method)
+' "$MISTAKES_FILE"
+```
+
+### Early Termination
+
+If at 30 mistakes one method shows **>2x better recurrence rate** than control (Method A):
+
+1. Verify recurrences had >14 days to manifest
+2. Check improvement is consistent across categories
+3. Confirm no confounding factors
+4. If validated: declare winner, proceed to lock-in
+
+### Lock-In Process
+
+When winner determined:
+
+1. Remove A/B test infrastructure from this skill
+2. Keep only winning method as Step 3
+3. Archive RCA-AB-TEST.md to `archive/` subdirectory
+4. Update this section to document final result

@@ -286,7 +286,7 @@ execution_workflow:
 
 ## Anti-Patterns
 
-### Do NOT skip effectiveness checks
+### Check existing action effectiveness first
 
 ```yaml
 # ❌ Just add new action items
@@ -298,7 +298,7 @@ check: "A004 had 3 post-fix failures -> escalate"
 then: "Create ESCALATE with root cause analysis"
 ```
 
-### Do NOT derive vague action items
+### Create specific, actionable items
 
 ```yaml
 # ❌ Vague
@@ -308,7 +308,7 @@ description: "Improve git operations"
 description: "Add PreToolUse hook to block `git reflog expire` and `git gc --prune` commands"
 ```
 
-### Do NOT ignore escalations
+### Treat escalations as high priority
 
 ```yaml
 # ❌ Create escalation, never act
