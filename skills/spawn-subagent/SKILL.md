@@ -153,6 +153,55 @@ Before spawning, verify your prompt answers:
 - [ ] What commit message to use? (exact text, for implementation)
 - [ ] **Does prompt include STATE.md update?** (MUST be in same commit as implementation - M076/M077)
 
+### Mandatory Subagent Prompt Checklist (A013)
+
+**CRITICAL: Cross-reference recent learnings before spawning.**
+
+Every subagent prompt MUST include these items based on past mistakes:
+
+**STATE.md Requirements (M076, M077, M085, M087, M092):**
+```
+STATE.md UPDATE (required in SAME commit as implementation):
+- Path: .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
+- Set: Status: completed
+- Set: Progress: 100%
+- Set: Resolution: implemented (MANDATORY - not optional)
+- Set: Completed: {YYYY-MM-DD}
+- Include STATE.md in git add before commit
+```
+
+**Parser Test Requirements (M079, for parser tasks only):**
+```
+PARSER TEST STYLE:
+- Do NOT add comments describing expected node positions
+- Text blocks are self-documenting
+- Use isEqualTo(expected) NOT isSuccess()/isNotNull()/isNotEmpty()
+- Derive expected values manually, do NOT copy from actual output
+```
+
+**Code Style Requirements:**
+```
+CODE STYLE:
+- NEVER add @SuppressWarnings annotations - decompose code instead
+- NEVER swallow exceptions silently - rethrow as AssertionError
+- Tests for bugfixes belong in SAME commit as the fix
+```
+
+**Verification:**
+
+Before invoking Task tool, confirm:
+
+| Checklist Item | Required For | Mistake Ref |
+|----------------|--------------|-------------|
+| STATE.md path specified | All implementation tasks | M076, M085 |
+| Resolution field mentioned | All implementation tasks | M092 |
+| CRITICAL PROHIBITIONS block | All tasks | A008 |
+| Parser test style notes | Parser tasks | M079 |
+| Exact code examples | Non-trivial changes | M062 |
+| Fail-fast conditions | All tasks | spawn-subagent core |
+
+**Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
+
 ### Example: Exploration Task (gather info, no action)
 
 **❌ WRONG (explores AND decides):**
