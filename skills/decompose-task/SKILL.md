@@ -326,7 +326,7 @@ emergency_decomposition:
 
 ## Anti-Patterns
 
-### Do NOT create artificial splits
+### Split at logical boundaries
 
 ```yaml
 # ❌ Splitting at arbitrary points
@@ -338,7 +338,7 @@ emergency_decomposition:
 1.2b: "AST builder component"
 ```
 
-### Do NOT ignore dependencies
+### Model actual dependencies accurately
 
 ```yaml
 # ❌ Treating all subtasks as independent
@@ -352,7 +352,7 @@ emergency_decomposition:
 1.2c-parser-semantic: [1.2b]
 ```
 
-### Do NOT lose partial progress
+### Preserve partial progress when decomposing
 
 ```yaml
 # ❌ Starting fresh after decomposition
@@ -365,7 +365,7 @@ decompose_task "1.2-parser"
 merge_to_appropriate_subtask "${SUBAGENT_WORK}"
 ```
 
-### Do NOT over-decompose
+### Create meaningful chunks (avoid over-decomposition)
 
 ```yaml
 # ❌ Too granular
@@ -380,7 +380,7 @@ merge_to_appropriate_subtask "${SUBAGENT_WORK}"
 1.2b: "Implement Parser (AST, expressions, statements)"
 ```
 
-### Do NOT decompose without updating orchestration
+### Always update orchestration when decomposing
 
 ```yaml
 # ❌ Create subtasks, forget to track

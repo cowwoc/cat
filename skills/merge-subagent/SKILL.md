@@ -202,7 +202,7 @@ done
 
 ## Anti-Patterns
 
-### Do NOT merge before collecting results
+### Always collect results before merging
 
 ```bash
 # ❌ Skipping collection
@@ -214,7 +214,7 @@ collect-results "${SUBAGENT_ID}"
 merge-subagent "${SUBAGENT_ID}"
 ```
 
-### Do NOT leave orphaned worktrees
+### Include worktree cleanup with merge
 
 ```bash
 # ❌ Forgetting cleanup
@@ -228,7 +228,7 @@ git branch -d "${SUBAGENT_BRANCH}"
 git worktree remove "${WORKTREE}"
 ```
 
-### Do NOT force merge without understanding conflicts
+### Understand conflicts before force-resolving
 
 ```bash
 # ❌ Blindly forcing
@@ -242,7 +242,7 @@ git diff --name-only --diff-filter=U
 # Make informed resolution decisions
 ```
 
-### Do NOT merge to wrong branch
+### Merge to task branch first (not directly to main)
 
 ```bash
 # ❌ Merging subagent to main
@@ -256,7 +256,7 @@ git merge 1.2-parser-sub-a1b2c3d4
 # Task branch later merges to main
 ```
 
-### Do NOT delete branch before verifying merge
+### Verify merge before deleting branch
 
 ```bash
 # ❌ Immediate deletion
