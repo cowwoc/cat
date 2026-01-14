@@ -107,18 +107,37 @@ Update STATE.md:
 
 ### 4. Pre-Spawn Decision Making
 
-**CRITICAL**: Before spawning, the main agent must resolve ALL ambiguities and decisions.
+**CRITICAL**: Before spawning implementation, the main agent must resolve ALL ambiguities and decisions.
 
 Users cannot supervise subagent execution. Claude Code provides no way to view subagent output
 or correct mistakes in real-time. The subagent prompt must enable purely mechanical execution.
 
-**Main agent MUST**:
-1. Read all files the subagent will modify
-2. Make all architectural/design decisions
-3. Write explicit code examples (not descriptions)
-4. Specify exact verification steps and expected output
-5. Determine error handling approaches
-6. Compose the exact commit message
+**Code Analysis via Exploration Subagent (M088)**:
+
+Main agent does NOT read code files directly. Spawn an exploration subagent first:
+
+```
+Task tool invocation:
+  description: "Explore {task} implementation"
+  subagent_type: "Explore"
+  prompt: |
+    Analyze code for {task-name}. Return:
+    1. Relevant method locations and signatures
+    2. Current implementation patterns
+    3. Existing test coverage
+    4. Integration points
+
+    RETURN FINDINGS ONLY. Do NOT implement changes.
+```
+
+Then use exploration results to make decisions.
+
+**Main agent MUST** (after receiving exploration findings):
+1. Make all architectural/design decisions based on findings
+2. Write explicit code examples (not descriptions)
+3. Specify exact verification steps and expected output
+4. Determine error handling approaches
+5. Compose the exact commit message
 
 **Prompt completeness check**:
 - Does it specify exact file paths? (not "find the auth file")
