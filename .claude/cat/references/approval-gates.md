@@ -3,7 +3,7 @@
 ## Operating Modes
 
 ### Interactive Mode (Default)
-Approval required at task completion before merge to main.
+Stakeholder review and user approval required before merge to main.
 
 ### Yolo Mode
 All approval gates skipped. Tasks auto-proceed and auto-merge.
@@ -21,11 +21,25 @@ Enable via `cat-config.json`:
 Task work complete
         |
         v
+  STAKEHOLDER REVIEW GATE
+  (5 parallel reviews)
+        |
+        v
+  Aggregate concerns
+        |
+    [REJECTED?]----> Fix concerns
+        |                  |
+        v                  v
+    [APPROVED]       Loop back
+        |
+        v
 Squash commits by type
         |
         v
-Present to user:
+  USER APPROVAL GATE
+  Present to user:
   - Overview of changes
+  - Stakeholder review summary
   - Branch name for review
   - Files changed summary
         |
@@ -34,6 +48,42 @@ User decision:
   - Request changes -> iterate
   - Approve -> merge to main
 ```
+
+## Stakeholder Review Gate
+
+Before user approval, implementation is reviewed by 5 stakeholder perspectives:
+
+| Stakeholder | Focus Area |
+|-------------|------------|
+| architect | System design, module boundaries, APIs |
+| security | Vulnerabilities, input validation |
+| quality | Code quality, complexity, duplication |
+| tester | Test coverage, edge cases |
+| performance | Efficiency, resource usage |
+
+**Aggregation Rules:**
+
+| Condition | Result |
+|-----------|--------|
+| Any CRITICAL concern | REJECTED - must fix |
+| Any stakeholder REJECTED | REJECTED - must fix |
+| 3+ HIGH concerns total | REJECTED - must fix |
+| Only MEDIUM concerns | CONCERNS - proceed with notes |
+| No concerns | APPROVED - proceed |
+
+**Configuration:**
+
+```json
+{
+  "stakeholderReview": {
+    "enabled": true,
+    "stakeholders": ["architect", "security", "quality", "tester", "performance"],
+    "maxIterations": 3
+  }
+}
+```
+
+See [stakeholders/index.md](stakeholders/index.md) for detailed stakeholder definitions.
 
 ## Information Presented
 
