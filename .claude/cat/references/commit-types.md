@@ -97,3 +97,57 @@ def5678 bugfix: fix comment parsing
 # ✅ CORRECT - single commit with test and fix
 abc1234 bugfix: fix comment parsing (includes tests)
 ```
+
+## Task Resolution and Commit Footers
+
+### Standard Task Completion
+
+Implementation commits include a `Task ID` footer for traceability:
+
+```
+bugfix: fix multi-parameter lambda parsing
+
+[description]
+
+Task ID: v0.5-fix-multi-param-lambda
+```
+
+### Duplicate Task Resolution
+
+When a task is discovered to be a duplicate of another task:
+
+1. **No implementation commit** - the work was already done
+2. **STATE.md-only commit** - marks the duplicate task complete
+3. **No Task ID footer** - because there's no implementation
+
+```
+# Commit for closing a duplicate task
+config: close duplicate task fix-cast-lambda-in-method-args
+
+Duplicate of fix-multi-param-lambda (resolved in commit abc1234).
+Both tasks addressed "Expected RIGHT_PARENTHESIS but found COMMA" errors.
+
+# NOTE: No "Task ID:" footer - this is not an implementation commit
+```
+
+### Obsolete Task Resolution
+
+When a task is no longer needed:
+
+```
+config: close obsolete task add-legacy-support
+
+Requirements changed - legacy support is no longer in scope.
+
+# NOTE: No "Task ID:" footer - this is not an implementation commit
+```
+
+### Finding Commits by Task
+
+| Resolution | How to Find Commit |
+|------------|--------------------|
+| `implemented` | `git log --grep="Task ID: v{x}.{y}-{task-name}"` |
+| `duplicate` | Check STATE.md for `Duplicate Of`, search for that task |
+| `obsolete` | No implementation commit exists |
+
+See [task-resolution.md](task-resolution.md) for detailed resolution handling.
