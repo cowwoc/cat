@@ -977,23 +977,58 @@ Before merging any work to main:
 
 <main_agent_boundaries>
 
-**MANDATORY: Main agent delegates ALL implementation to subagents.**
+**MANDATORY: Main agent delegates ALL work phases to subagents.**
 
-The main agent is an ORCHESTRATOR. All code implementation MUST be delegated to subagents.
+The main agent is an ORCHESTRATOR. All phases MUST be delegated to subagents:
 
-**Main agent responsibilities:**
-- Read files for analysis
-- Run diagnostic commands (git status, build, tests)
-- Edit STATE.md, PLAN.md, CHANGELOG.md (orchestration files)
-- Present summaries and ask questions
+| Phase | Delegate To | Anti-Pattern |
+|-------|-------------|--------------|
+| Exploration | Exploration subagent | M088: Main agent reading source files directly |
+| Planning | Planning subagent | M091: Main agent making architectural decisions |
+| Implementation | Implementation subagent | M063: Main agent editing source code |
+
+**Main agent responsibilities (ONLY these):**
+- Read orchestration files (STATE.md, PLAN.md, CHANGELOG.md)
+- Run diagnostic commands (git status, build output, test results)
+- Edit orchestration files (STATE.md, PLAN.md, CHANGELOG.md)
+- Present summaries and ask questions to user
 - Invoke skills and spawn subagents
+- Aggregate and present subagent findings
 
-**Subagent responsibilities (Learning M063):**
-- Write and edit source code files (.java, .ts, .py, etc.)
-- Write and edit test files
-- Fix bugs
-- Make corrections to code
-- Implement any code changes
+**Subagent responsibilities (ALL substantive work):**
+- **Exploration subagent:** Read and analyze source code, report findings
+- **Planning subagent:** Make architectural decisions, write specifications
+- **Implementation subagent:** Write/edit source code, tests, fix bugs
+
+**Orchestration Enforcement (A014):**
+
+Before any file read or code analysis, ask: "Should a subagent do this?"
+
+| Action | Main Agent OK? | Why |
+|--------|----------------|-----|
+| Read STATE.md | ✅ Yes | Orchestration file |
+| Read Parser.java | ❌ No | Delegate to exploration subagent |
+| Decide which API to use | ❌ No | Delegate to planning subagent |
+| Write test code | ❌ No | Delegate to implementation subagent |
+| Present approval gate | ✅ Yes | Orchestration action |
+
+**Correct workflow pattern:**
+
+```
+1. Main agent spawns EXPLORATION subagent: "Find all X and report findings"
+2. Exploration subagent returns: "Found X at locations A, B, C with patterns..."
+3. Main agent spawns PLANNING subagent: "Given findings, decide approach and write spec"
+4. Planning subagent returns: "Recommended approach: ... Implementation spec: ..."
+5. Main agent spawns IMPLEMENTATION subagent: "Execute this spec"
+6. Implementation subagent returns: "Completed. Commits: ..."
+7. Main agent presents approval gate to user
+```
+
+**Anti-pattern (M088):** Main agent reading source files "to understand the code" - delegate to exploration subagent.
+
+**Anti-pattern (M091):** Main agent deciding "we should use pattern X" - delegate to planning subagent.
+
+**Anti-pattern (M089):** Presenting subagent branch instead of task branch in approval gate.
 
 **When user provides feedback requiring code changes:**
 
