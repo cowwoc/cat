@@ -19,6 +19,10 @@
 set -euo pipefail
 trap 'echo "{\"status\": \"error\", \"message\": \"ERROR at line $LINENO: $BASH_COMMAND\"}" >&2; exit 1' ERR
 
+# Progress tracking
+source "$(dirname "$0")/lib/progress.sh"
+progress_init 8
+
 START_TIME=$(date +%s)
 
 # Parse arguments
@@ -50,32 +54,41 @@ if [[ -z "$TASK_BRANCH" ]]; then
 fi
 
 # Step 1: Validate we're on main branch
+progress_step "Validating current branch"
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [[ "$CURRENT_BRANCH" != "main" ]]; then
     echo "{\"status\": \"error\", \"message\": \"Must be on main branch. Currently on: $CURRENT_BRANCH\"}"
     exit 1
 fi
+progress_done "On main branch"
 
 # Step 2: Verify task branch exists
+progress_step "Verifying task branch exists"
 if ! git rev-parse --verify "$TASK_BRANCH" >/dev/null 2>&1; then
     echo "{\"status\": \"error\", \"message\": \"Task branch not found: $TASK_BRANCH\"}"
     exit 1
 fi
+progress_done "Task branch found: $TASK_BRANCH"
 
 # Step 3: Check working directory is clean
+progress_step "Checking working directory"
 if [[ -n "$(git status --porcelain)" ]]; then
     echo "{\"status\": \"error\", \"message\": \"Working directory is not clean. Commit or stash changes first.\"}"
     exit 1
 fi
+progress_done "Working directory clean"
 
 # Step 4: Verify exactly 1 commit on task branch
+progress_step "Verifying commit count"
 COMMIT_COUNT=$(git rev-list --count main.."$TASK_BRANCH")
 if [[ "$COMMIT_COUNT" -ne 1 ]]; then
     echo "{\"status\": \"error\", \"message\": \"Task branch must have exactly 1 commit. Found: $COMMIT_COUNT. Squash commits first.\"}"
     exit 1
 fi
+progress_done "Task branch has exactly 1 commit"
 
 # Step 5: Check if fast-forward is possible
+progress_step "Checking fast-forward eligibility"
 if ! git merge-base --is-ancestor main "$TASK_BRANCH" 2>/dev/null; then
     # main is not an ancestor of task branch - check if rebase needed
     BEHIND_COUNT=$(git rev-list --count "$TASK_BRANCH"..main)
@@ -84,28 +97,34 @@ if ! git merge-base --is-ancestor main "$TASK_BRANCH" 2>/dev/null; then
         exit 1
     fi
 fi
+progress_done "Fast-forward merge possible"
 
 # Get commit info before merge
 COMMIT_MSG=$(git log -1 --format=%s "$TASK_BRANCH")
 COMMIT_SHA_BEFORE=$(git rev-parse --short "$TASK_BRANCH")
 
 # Step 6: Execute fast-forward merge
+progress_step "Executing fast-forward merge"
 if ! git merge --ff-only "$TASK_BRANCH" 2>/dev/null; then
     echo "{\"status\": \"error\", \"message\": \"Fast-forward merge failed. Rebase task branch onto main first.\"}"
     exit 1
 fi
+progress_done "Merged $TASK_BRANCH to main"
 
 # Step 7: Verify linear history (no merge commits)
+progress_step "Verifying linear history"
 PARENT_COUNT=$(git log -1 --format=%p HEAD | wc -w)
 if [[ "$PARENT_COUNT" -gt 1 ]]; then
     echo "{\"status\": \"error\", \"message\": \"Merge commit detected! History is not linear.\"}"
     exit 1
 fi
+progress_done "Linear history confirmed"
 
 # Get commit SHA after merge
 COMMIT_SHA_AFTER=$(git rev-parse --short HEAD)
 
 # Step 8: Optional cleanup
+progress_step "Cleanup (if requested)"
 WORKTREE_REMOVED="false"
 BRANCH_DELETED="false"
 
@@ -122,6 +141,9 @@ if [[ "$CLEANUP" == "true" ]]; then
     if git branch -d "$TASK_BRANCH" 2>/dev/null; then
         BRANCH_DELETED="true"
     fi
+    progress_done "Cleanup completed (worktree: $WORKTREE_REMOVED, branch: $BRANCH_DELETED)"
+else
+    progress_done "Cleanup skipped (--no-cleanup)"
 fi
 
 # Calculate duration

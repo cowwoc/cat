@@ -62,6 +62,29 @@ action: spawn 2 subagents for wave_1
 
 ## Workflow
 
+**Progress Output (MANDATORY):**
+
+Display wave-based progress for parallel execution:
+```
+═══════════════════════════════════════════════════
+Wave N/M: Spawning K subagents (P% overall | Xs elapsed)
+═══════════════════════════════════════════════════
+[Subagent 1/K] task-name-a... spawned
+[Subagent 2/K] task-name-b... spawned
+
+Wave N/M: Monitoring K subagents (P% | Xs elapsed | ~Ys remaining)
+  ✓ task-name-a: complete (12s, 45K tokens)
+  ⏳ task-name-b: running (8s elapsed)
+
+Wave N/M: Collecting results (P% | Xs elapsed)
+  ✓ task-name-a: merged
+  ✓ task-name-b: merged
+
+✅ Wave N/M complete: 2/2 subagents merged
+```
+
+Steps per wave: 1. Spawn subagents, 2. Monitor progress, 3. Collect results, 4. Merge branches
+
 ### 1. Identify Parallelizable Tasks
 
 Analyze task dependencies to find independent work:
@@ -338,7 +361,7 @@ parallel_execution:
 
 ## Anti-Patterns
 
-### Do NOT parallelize dependent tasks
+### Sequence dependent tasks (only parallelize independent ones)
 
 ```bash
 # ❌ Launching tasks with dependencies
@@ -352,7 +375,7 @@ merge-subagent "1.2a"
 spawn-subagent "1.2b-parser-ast"  # Now safe
 ```
 
-### Do NOT spawn too many subagents
+### Limit concurrent subagents to safe maximum
 
 ```bash
 # ❌ Spawning without limit
@@ -370,7 +393,7 @@ while has_tasks; do
 done
 ```
 
-### Do NOT ignore partial failures
+### Handle partial failures progressively
 
 ```bash
 # ❌ All-or-nothing approach
@@ -392,7 +415,7 @@ for subagent in $(get_completed); do
 done
 ```
 
-### Do NOT merge without collection
+### Always collect results before merging
 
 ```bash
 # ❌ Skipping collection
@@ -407,7 +430,7 @@ for subagent in $(get_completed); do
 done
 ```
 
-### Do NOT forget worktree cleanup
+### Clean up worktrees after parallel execution
 
 ```bash
 # ❌ Leaving worktrees after parallel execution
