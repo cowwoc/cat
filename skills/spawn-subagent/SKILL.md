@@ -80,6 +80,7 @@ their worktree association (recorded in the lock file).
 | Test verification steps | Explicit commands to run, expected outcomes |
 | Edge cases to handle | Subagent won't discover these independently |
 | Commit message format | Exact text, not guidelines |
+| **STATE.md update** | Task STATE.md must be updated to completed IN THE SAME COMMIT |
 
 ### Fail-Fast Requirements
 
@@ -117,6 +118,7 @@ Before spawning, verify your prompt answers:
 - [ ] What does success look like? (specific criteria)
 - [ ] What if the build fails? (fail-fast, not recovery)
 - [ ] What commit message to use? (exact text, for implementation)
+- [ ] **Does prompt include STATE.md update?** (MUST be in same commit as implementation - M076/M077)
 
 ### Example: Exploration Task (gather info, no action)
 
@@ -472,6 +474,32 @@ WORKTREE=".worktrees/${TASK}-sub-${UUID}"
 git worktree add "${WORKTREE}"
 # Record in STATE.md for merge-subagent skill
 ```
+
+### Do NOT forget STATE.md update in implementation commits (M076/M077)
+
+Task STATE.md MUST be updated to `status: completed` in the SAME commit as implementation:
+
+```
+# ❌ WRONG - No STATE.md update in prompt
+Task prompt: |
+  Implement feature X.
+  COMMIT: git commit -m "feature: add X"
+
+# ✅ CORRECT - STATE.md update included in commit instructions
+Task prompt: |
+  Implement feature X.
+
+  COMMIT (all in same commit):
+  1. Update .claude/cat/v0/v1.2/task/feature-x/STATE.md:
+     - Set status: completed
+     - Set progress: 100%
+     - Add completed: {date}
+  2. git add <implementation files> .claude/cat/v0/v1.2/task/feature-x/STATE.md
+  3. git commit -m "feature: add X"
+```
+
+**Why**: STATE.md tracks task lifecycle. Committing it separately creates incomplete history and
+violates atomic task completion (M076). Main agent prompts must include explicit STATE.md instructions.
 
 ### Do NOT spawn from within a subagent worktree
 
