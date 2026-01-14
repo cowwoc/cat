@@ -109,16 +109,11 @@ Update STATE.md:
 - Status: `in-progress`
 - Last Updated: current timestamp
 
-### 4. Pre-Spawn Decision Making
+### 4. Delegate Exploration
 
-**CRITICAL**: Before spawning implementation, the main agent must resolve ALL ambiguities and decisions.
+**CRITICAL**: Main agent is orchestrator only. Delegate ALL work to subagents.
 
-Users cannot supervise subagent execution. Claude Code provides no way to view subagent output
-or correct mistakes in real-time. The subagent prompt must enable purely mechanical execution.
-
-**Code Analysis via Exploration Subagent (M088)**:
-
-Main agent does NOT read code files directly. Spawn an exploration subagent first:
+Main agent does NOT read code files directly. Spawn an exploration subagent:
 
 ```
 Task tool invocation:
@@ -134,38 +129,48 @@ Task tool invocation:
     RETURN FINDINGS ONLY. Do NOT implement changes.
 ```
 
-Then use exploration results to make decisions.
+### 5. Delegate Planning (M091)
 
-**Main agent MUST** (after receiving exploration findings):
-1. Make all architectural/design decisions based on findings
-2. Write explicit code examples (not descriptions)
-3. Specify exact verification steps and expected output
-4. Determine error handling approaches
-5. Compose the exact commit message
+**CRITICAL**: Main agent does NOT make decisions or write code. Delegate planning to a subagent.
 
-**Prompt completeness check**:
-- Does it specify exact file paths? (not "find the auth file")
-- Does it include actual code? (not "add error handling")
-- Does it define success criteria? (not "make sure it works")
-- Does it handle failure cases? (not "handle errors appropriately")
+After receiving exploration findings, spawn a planning subagent:
 
-See `spawn-subagent` skill for detailed prompt requirements.
+```
+Task tool invocation:
+  description: "Plan {task} implementation"
+  subagent_type: "Plan"
+  prompt: |
+    Based on these exploration findings:
+    {exploration_results}
 
-### 5. Spawn Subagent
+    And the task PLAN.md:
+    {plan_md_content}
 
-Main agent spawns subagent with:
-- Task PLAN.md content **expanded with decisions from step 3**
+    Create a detailed implementation specification:
+    1. Make all architectural/design decisions
+    2. Write explicit code examples (actual code, not descriptions)
+    3. Specify exact file paths to modify
+    4. Define verification steps with expected output
+    5. Determine error handling approaches
+    6. Compose the commit message
+
+    RETURN IMPLEMENTATION SPEC ONLY. Do NOT implement changes.
+```
+
+### 6. Spawn Implementation Subagent
+
+Main agent spawns implementation subagent with:
+- Planning subagent's implementation specification
 - Worktree path
 - Session tracking info
 - Token monitoring instructions
-- **Complete code examples and verification steps**
 
 Subagent branch:
 ```
 {major}.{minor}-{task-name}-sub-{uuid}
 ```
 
-### 6. Subagent Execution
+### 7. Subagent Execution
 
 Subagent in worktree:
 1. Read PLAN.md execution steps
@@ -179,7 +184,7 @@ Token tracking:
 - Sum input_tokens + output_tokens
 - Count compaction events
 
-### 7. Subagent Completion
+### 8. Subagent Completion
 
 On completion, subagent returns via `.completion.json`:
 ```json
@@ -191,7 +196,7 @@ On completion, subagent returns via `.completion.json`:
 }
 ```
 
-### 8. MANDATORY: Report Token Metrics to User
+### 9. MANDATORY: Report Token Metrics to User
 
 **After collecting subagent results, ALWAYS present token metrics to user:**
 
@@ -232,7 +237,7 @@ The subagent may have lost context and produced lower quality output.
 
 Present AskUserQuestion with decomposition as recommended option.
 
-### 9. Main Agent Merge
+### 10. Main Agent Merge
 
 ```bash
 # In task worktree
@@ -243,7 +248,7 @@ If conflicts:
 - Attempt automatic resolution
 - Escalate to user if unresolved
 
-### 10. Cleanup Subagent Resources
+### 11. Cleanup Subagent Resources
 
 **After merging subagent branch to task branch, cleanup BEFORE approval gate:**
 
@@ -260,7 +265,7 @@ This ensures:
 - No orphaned worktrees/branches if user rejects
 - Clean state for approval decision
 
-### 11. Update State
+### 12. Update State
 
 Update task STATE.md:
 ```markdown
@@ -270,7 +275,7 @@ Update task STATE.md:
 - **Note:** Subagent work merged, awaiting approval
 ```
 
-### 12. Approval Gate (Interactive Mode)
+### 13. Approval Gate (Interactive Mode)
 
 Present to user:
 - Summary of changes
@@ -310,7 +315,7 @@ Present changes → User responds
 
 **Anti-pattern (M052):** Interpreting feedback as implicit approval and merging without re-confirmation.
 
-### 13. Final Merge
+### 14. Final Merge
 
 After approval:
 
@@ -366,7 +371,7 @@ git merge --ff-only {task-branch}
 
 **Anti-pattern (M070):** Committing STATE.md update as separate "planning:" commit after merge.
 
-### 14. Cleanup
+### 15. Cleanup
 
 ```bash
 # MANDATORY: Return to main workspace before removing worktree
@@ -378,7 +383,7 @@ git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
 ```
 
-### 15. Update Parent State (Rollup Only)
+### 16. Update Parent State (Rollup Only)
 
 **NOTE**: Minor version CHANGELOG.md was already updated in step 13 with the implementation commit.
 
