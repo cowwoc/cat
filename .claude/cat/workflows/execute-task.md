@@ -314,20 +314,27 @@ Present changes → User responds
 
 After approval:
 
-**CRITICAL (M070): Update STATE.md BEFORE squashing (same commit as implementation)**
+**CRITICAL (M070/M090): Update STATE.md AND CHANGELOG.md BEFORE squashing (same commit as implementation)**
 
 Per commit-types.md, task STATE.md changes must be in the SAME commit as implementation.
-Update STATE.md to completed in the task branch BEFORE squashing:
+Minor version CHANGELOG.md should also be updated in the same commit for atomicity.
 
 ```bash
 # In task worktree - update STATE.md to completed
 # Edit .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
 #   status: completed
 #   progress: 100%
+#   resolution: implemented
 #   completed: {date}
 
-# Stage STATE.md with implementation
+# In task worktree - update minor version CHANGELOG.md
+# Edit .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md:
+# Add task entry to Tasks Completed table:
+#   | {task-name} | {commit-type} | {description from PLAN.md} | implemented |
+
+# Stage STATE.md and CHANGELOG.md with implementation
 git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git add .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md
 git commit --amend --no-edit  # Include in last implementation commit
 
 # Squash commits by type
@@ -337,6 +344,8 @@ git rebase -i main  # Group by feature, bugfix, refactor, etc.
 git checkout main
 git merge --ff-only {task-branch}
 ```
+
+**Anti-pattern (M090):** Committing CHANGELOG.md as separate commit after merge.
 
 **If --ff-only fails (M081):** Main has diverged from task branch base.
 
@@ -369,27 +378,28 @@ git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
 ```
 
-### 15. Update Changelogs
+### 15. Update Parent State (Rollup Only)
 
-Update minor and major version CHANGELOG.md files with completed task summary.
+**NOTE**: Minor version CHANGELOG.md was already updated in step 13 with the implementation commit.
 
-**Minor version CHANGELOG.md** (`.claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md`):
-
-Add task entry to Tasks Completed table:
-```markdown
-| {task-name} | {commit-type} | {brief description from PLAN.md goal} |
-```
+This step handles only:
+1. Parent STATE.md progress rollup (minor/major)
+2. Major version CHANGELOG.md (if minor version completes)
 
 **Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
 
-Update aggregate summary if this completes a minor version.
+Update aggregate summary only when a minor version completes (all tasks done).
 
-> **NOTE**: Task changelog content is embedded in commit messages, not separate files.
-> See `templates/changelog.md` for full changelog format.
+**CHANGELOG table format** (minor version):
+```markdown
+| Task | Type | Description | Resolution |
+|------|------|-------------|------------|
+| {task-name} | {commit-type} | {description from PLAN.md} | implemented |
+```
 
 If CHANGELOG.md doesn't exist yet, create it using the template format with:
 - Version header and pending status
-- Empty Tasks Completed table
+- Empty Tasks Completed table with correct column order
 - Placeholder sections
 
 ## Error Recovery
