@@ -47,6 +47,8 @@ This is CAT's core execution command. It:
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/merge-subagent/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/stakeholder-review/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
 
 </execution_context>
 
@@ -151,10 +153,10 @@ same task simultaneously.
 3. Use that value in the commands below by substituting it directly
 
 **If no "Session ID:" appears in the conversation context:**
-1. **STOP EXECUTION IMMEDIATELY** - Do NOT proceed to worktree creation
+1. **STOP** - Session ID is required before proceeding
 2. Inform user: "Session ID not found in context. The echo-session-id.sh hook may not be registered."
 3. Instruct: "Run `/cat:register-hook` to register required hooks, then restart Claude Code."
-4. **EXIT this command** - Do not continue with any further steps
+4. **EXIT this command** - Wait for user to register hooks and restart
 
 **Only if SESSION_ID is found in context**, proceed with lock acquisition.
 
@@ -175,11 +177,9 @@ if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   echo "MANDATORY: Execute a DIFFERENT task instead."
   echo "Run /cat:status to find other executable tasks."
   echo ""
-  echo "DO NOT:"
-  echo "  - Force release the lock (will corrupt the other instance's work)"
-  echo "  - Retry this task (will cause conflict)"
-  echo ""
-  echo "If session crashed, user must run /cat:cleanup to remove stale lock."
+  echo "REQUIRED ACTIONS:"
+  echo "  - Choose a different task from /cat:status"
+  echo "  - If session crashed, ask user to run /cat:cleanup to remove stale lock"
   exit 1
 fi
 
@@ -489,6 +489,21 @@ fi
 
 **Anti-pattern (M072):** Presenting AskUserQuestion for approval with uncommitted changes.
 The user sees a summary but cannot `git diff` or review actual file contents.
+
+**MANDATORY: Verify STATE.md in implementation commit (M076/M085).**
+
+Before presenting approval gate, verify STATE.md is included:
+
+```bash
+TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
+
+# Check if STATE.md was modified in the commits
+if ! git diff --name-only ${MAIN_BRANCH}..HEAD | grep -q "STATE.md"; then
+  echo "ERROR: STATE.md not in commit. Must update STATE.md in same commit as implementation."
+  echo "Fix: Amend the implementation commit to include STATE.md update."
+  # DO NOT present approval gate until fixed
+fi
+```
 
 **MANDATORY: STATE.md in implementation commit (M076).**
 
@@ -805,10 +820,10 @@ Before merging any work to main:
 
 1. Present complete summary of changes
 2. **WAIT** for explicit approval via AskUserQuestion
-3. Never assume approval - explicit "Approve" required
+3. Require explicit "Approve" response before proceeding
 4. If changes are made after initial review, request re-approval
 
-**Anti-Pattern (M035):** Committing and marking complete without pausing for user review.
+**Required behavior (M035):** Always pause for user review before marking complete.
 
 **User review includes:**
 - All files changed with diffs
@@ -820,36 +835,33 @@ Before merging any work to main:
 
 <main_agent_boundaries>
 
-**MANDATORY: Main agent NEVER writes implementation code.**
+**MANDATORY: Main agent delegates ALL implementation to subagents.**
 
 The main agent is an ORCHESTRATOR. All code implementation MUST be delegated to subagents.
 
-**Main agent CAN:**
+**Main agent responsibilities:**
 - Read files for analysis
 - Run diagnostic commands (git status, build, tests)
 - Edit STATE.md, PLAN.md, CHANGELOG.md (orchestration files)
 - Present summaries and ask questions
 - Invoke skills and spawn subagents
 
-**Main agent CANNOT (Learning M063):**
-- Write or edit source code files (.java, .ts, .py, etc.)
-- Write or edit test files
-- Fix bugs directly
-- Make "small corrections" to code
-- "Quickly fix" something instead of spawning a subagent
+**Subagent responsibilities (Learning M063):**
+- Write and edit source code files (.java, .ts, .py, etc.)
+- Write and edit test files
+- Fix bugs
+- Make corrections to code
+- Implement any code changes
 
 **When user provides feedback requiring code changes:**
 
-1. **DO NOT** implement the fix directly
-2. **DO** spawn a new subagent with:
+1. **Spawn a new subagent** with:
    - The feedback as context
    - Clear instructions on what to fix
    - The existing branch/worktree
-3. **DO** use `/cat:spawn-subagent` or continue in existing subagent
+2. **Use** `/cat:spawn-subagent` or continue in existing subagent
 
-**Anti-Pattern (M063):** "Let me quickly fix that test assertion..." [main agent edits file]
-
-**Correct Pattern:** "I'll spawn a subagent to address that feedback." [invokes spawn-subagent]
+**Required behavior (M063):** "I'll spawn a subagent to address that feedback." [invokes spawn-subagent]
 
 **Exception:** Trivial STATE.md updates that are purely orchestration (status changes, not code).
 
@@ -864,17 +876,18 @@ After each execution step:
 2. Commit with appropriate type prefix
 3. Types: feature, bugfix, test, refactor, docs, config, performance
 
-**NEVER use:**
-- `git add .`
-- `git add -A`
-- `git add src/` or any broad directory
+**Always stage files individually:**
+```bash
+git add path/to/specific/file.java
+git add path/to/another/file.java
+```
 
-**Always stage files individually.**
+Avoid broad staging (`git add .`, `git add -A`, `git add src/`) which captures unintended files.
 
 **Enhanced Commit Message Format (replaces task CHANGELOG.md):**
 
 The final squashed commit message MUST include changelog content. The commit diff
-implies Files Modified, Files Created, and Test Coverage - do NOT duplicate these.
+already shows Files Modified, Files Created, and Test Coverage - omit these from the message.
 
 ```
 {type}: {concise description}
@@ -936,7 +949,7 @@ implemented the same functionality.
 
 **How to handle:**
 
-1. **Stop execution** - don't create worktree or do implementation work
+1. **Stop execution** - skip worktree creation and implementation
 2. **Verify** - test the specific scenarios from this task's PLAN.md
 3. **Identify original** - find which task/commit implemented the fix
 4. **Update STATE.md** with duplicate resolution:
@@ -962,7 +975,7 @@ Verification confirmed all scenarios from PLAN.md pass.
 6. **Release lock and cleanup** - same as normal task completion
 7. **Offer next task** - continue to next executable task
 
-**Important:** Duplicate tasks do NOT get a `Task ID:` footer because there's no implementation.
+**Important:** Duplicate tasks omit the `Task ID:` footer (reserved for implementation commits).
 See [task-resolution.md](../references/task-resolution.md) for details.
 
 </duplicate_task_handling>
