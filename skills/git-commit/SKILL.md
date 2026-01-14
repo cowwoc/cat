@@ -69,7 +69,8 @@ Task ID: v{major}.{minor}-{task-name}
 
 ## Task ID Footer (MANDATORY for CAT tasks)
 
-**Every commit for a CAT task MUST include the Task ID in the last line:**
+**Every commit for a CAT task MUST include the Task ID in the last line.** A task may span multiple
+commits (across sessions or addressing distinct aspects). Each commit MUST include the same Task ID:
 
 ```
 feature: add yield statement parsing support
@@ -87,7 +88,8 @@ Task ID: v3.0-add-yield-statement-support
 **Format**: `Task ID: v{major}.{minor}-{task-name}`
 
 **Why**: Enables reliable commit identification without storing commit hashes in documentation.
-Find all commits for a task: `git log --grep="Task ID: v3.0-add-yield-statement-support"`
+Find all commits for a task: `git log --grep="Task ID: v3.0-add-yield-statement-support"` (may
+return multiple commits if the task was implemented across multiple commits)
 
 ## For Squashed Commits
 
