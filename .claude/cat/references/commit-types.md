@@ -29,12 +29,17 @@ Use ONLY these types when committing in a CAT-managed project:
 | `performance` | Performance improvement | `performance: add database index` |
 | `docs` | User-facing docs (README, API docs) | `docs: add API documentation` |
 | `style` | Formatting, linting fixes | `style: format auth module` |
-| `config` | Config, tooling, deps, Claude-facing docs | `config: update CLAUDE.md rules` |
+| `config` | Config, tooling, deps, **Claude-facing docs** | `config: update CLAUDE.md rules` |
 | `planning` | Planning system updates (ROADMAP, STATE) | `planning: add task 5 summary` |
 
-**Claude-facing vs User-facing docs:**
-- `docs:` = README, API docs, user guides - things humans read
-- `config:` = CLAUDE.md, hooks, skills, style rules - things Claude reads
+**Claude-facing vs User-facing docs (M089):**
+
+| File Type | Commit Type | Examples |
+|-----------|-------------|----------|
+| User-facing | `docs:` | README.md, API docs, user guides |
+| Claude-facing | `config:` | CLAUDE.md, hooks, skills, workflows, style rules |
+
+**Key test:** Who reads this file - humans or Claude? If Claude uses it for behavior, use `config:`.
 
 ## Format
 
