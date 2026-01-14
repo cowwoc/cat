@@ -31,6 +31,13 @@ if [[ ! -f "$COMMIT_MESSAGE_FILE" ]]; then
 fi
 
 # ============================================================================
+# PROGRESS TRACKING
+# ============================================================================
+
+source "$(dirname "$0")/lib/progress.sh"
+progress_init 11
+
+# ============================================================================
 # EXECUTION RESULT TRACKING
 # ============================================================================
 
@@ -65,7 +72,7 @@ EOF
 # STEP 1: POSITION HEAD
 # ============================================================================
 
-echo "Step 1: Positioning HEAD at last commit to squash..."
+progress_step "Positioning HEAD at last commit to squash"
 if ! git checkout "$EXPECTED_LAST_COMMIT" 2>&1; then
   output_result "error" "Failed to checkout $EXPECTED_LAST_COMMIT"
 fi
@@ -77,14 +84,13 @@ if [[ "$CURRENT_HEAD" != "$EXPECTED_HEAD" ]]; then
   output_result "error" "HEAD is not at expected last commit: $EXPECTED_LAST_COMMIT"
 fi
 
-echo "✅ HEAD positioned at $(git log --oneline -1 HEAD)"
+progress_done "HEAD positioned at $(git log --oneline -1 HEAD)"
 
 # ============================================================================
 # STEP 2: CREATE BACKUP
 # ============================================================================
 
-echo ""
-echo "Step 2: Creating backup branch..."
+progress_step "Creating backup branch"
 BACKUP_BRANCH="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
 
 if ! git branch "$BACKUP_BRANCH"; then
@@ -95,21 +101,20 @@ if ! git rev-parse --verify "$BACKUP_BRANCH" >/dev/null 2>&1; then
   output_result "error" "Backup branch verification failed"
 fi
 
-echo "✅ Backup created: $BACKUP_BRANCH"
+progress_done "Backup created: $BACKUP_BRANCH"
 echo "   Restore command: git reset --hard $BACKUP_BRANCH"
 
 # ============================================================================
 # STEP 3: VERIFY PRECONDITIONS
 # ============================================================================
 
-echo ""
-echo "Step 3: Verifying preconditions..."
+progress_step "Verifying preconditions"
 
 # Check working directory clean
 if [[ -n "$(git status --porcelain)" ]]; then
   output_result "error" "Working directory not clean - commit or stash changes first"
 fi
-echo "✅ Working directory clean"
+echo "  Working directory clean"
 
 # Verify base commit exists
 if ! git rev-parse --verify "$BASE_COMMIT" >/dev/null 2>&1; then
@@ -118,19 +123,17 @@ fi
 
 # Show commits to be squashed
 echo ""
-echo "Commits to squash:"
+echo "  Commits to squash:"
 git log --oneline "$BASE_COMMIT..HEAD"
 
 COMMIT_COUNT=$(git rev-list --count "$BASE_COMMIT..HEAD")
-echo ""
-echo "✅ Will squash $COMMIT_COUNT commits into 1"
+progress_done "Will squash $COMMIT_COUNT commits into 1"
 
 # ============================================================================
 # STEP 4: RECORD ORIGINAL STATE
 # ============================================================================
 
-echo ""
-echo "Step 4: Recording original state..."
+progress_step "Recording original state"
 ORIGINAL_HEAD=$(git rev-parse HEAD)
 
 # Record commits before base (must remain unchanged)
@@ -140,26 +143,24 @@ else
   COMMITS_BEFORE_BASE=""
 fi
 
-echo "✅ Original state recorded"
+progress_done "Original state recorded"
 
 # ============================================================================
 # STEP 5: EXECUTE SQUASH
 # ============================================================================
 
-echo ""
-echo "Step 5: Executing squash..."
+progress_step "Executing squash"
 if ! git reset --soft "$BASE_COMMIT"; then
   output_result "error" "git reset --soft failed"
 fi
 
-echo "✅ Soft reset to base commit complete"
+progress_done "Soft reset to base commit complete"
 
 # ============================================================================
 # STEP 6: VERIFY NO CHANGES LOST OR ADDED
 # ============================================================================
 
-echo ""
-echo "Step 6: Verifying no changes lost or added..."
+progress_step "Verifying no changes lost or added"
 DIFF_OUTPUT=$(git diff --stat "$BACKUP_BRANCH")
 
 if [[ -n "$DIFF_OUTPUT" ]]; then
@@ -168,34 +169,32 @@ if [[ -n "$DIFF_OUTPUT" ]]; then
   output_result "error" "Staged changes verification failed. Rollback: git reset --hard $BACKUP_BRANCH"
 fi
 
-echo "✅ Verification passed: No changes lost or added"
+progress_done "Verification passed: No changes lost or added"
 
 # ============================================================================
 # STEP 7: CREATE SQUASHED COMMIT
 # ============================================================================
 
-echo ""
-echo "Step 7: Creating squashed commit..."
+progress_step "Creating squashed commit"
 if ! git commit -F "$COMMIT_MESSAGE_FILE"; then
   output_result "error" "git commit failed"
 fi
 
 SQUASHED_COMMIT=$(git rev-parse HEAD)
-echo "✅ Squashed commit created: $SQUASHED_COMMIT"
+progress_done "Squashed commit created: $SQUASHED_COMMIT"
 
 # ============================================================================
 # STEP 8: VERIFY NON-SQUASHED COMMITS UNCHANGED
 # ============================================================================
 
-echo ""
-echo "Step 8: Verifying non-squashed commits unchanged..."
+progress_step "Verifying non-squashed commits unchanged"
 
 if [[ -n "$COMMITS_BEFORE_BASE" ]]; then
   CURRENT_COMMITS_BEFORE_BASE=$(git rev-list "${BASE_COMMIT}~1")
   if [[ "$COMMITS_BEFORE_BASE" != "$CURRENT_COMMITS_BEFORE_BASE" ]]; then
     output_result "error" "Commits before base were modified. Rollback: git reset --hard $BACKUP_BRANCH"
   fi
-  echo "✅ Commits before base unchanged"
+  echo "  Commits before base unchanged"
 fi
 
 # Verify final working tree matches original HEAD
@@ -206,21 +205,20 @@ if [[ -n "$TREE_DIFF" ]]; then
   output_result "error" "Working tree verification failed. Rollback: git reset --hard $BACKUP_BRANCH"
 fi
 
-echo "✅ Final working tree matches original HEAD"
+progress_done "Final working tree matches original HEAD"
 
 # ============================================================================
 # STEP 9: FINAL COUNT VERIFICATION
 # ============================================================================
 
-echo ""
-echo "Step 9: Final count verification..."
+progress_step "Final count verification"
 NEW_COMMIT_COUNT=$(git rev-list --count "$BASE_COMMIT..HEAD")
 
 if [[ "$NEW_COMMIT_COUNT" -ne 1 ]]; then
   output_result "error" "Expected 1 commit after squash, got $NEW_COMMIT_COUNT"
 fi
 
-echo "✅ Squash successful: $COMMIT_COUNT commits → 1 commit"
+progress_done "Squash successful: $COMMIT_COUNT commits → 1 commit"
 echo ""
 git log --oneline -3
 
@@ -228,24 +226,22 @@ git log --oneline -3
 # STEP 10: UPDATE BRANCH (if detached HEAD)
 # ============================================================================
 
-echo ""
-echo "Step 10: Updating original branch..."
+progress_step "Updating original branch"
 if [[ -n "$ORIGINAL_BRANCH" ]] && [[ "$(git rev-parse --abbrev-ref HEAD)" == "HEAD" ]]; then
   git branch -f "$ORIGINAL_BRANCH" HEAD
   git checkout "$ORIGINAL_BRANCH"
-  echo "✅ Updated $ORIGINAL_BRANCH to squashed commit"
+  progress_done "Updated $ORIGINAL_BRANCH to squashed commit"
 else
-  echo "✅ Already on branch or no update needed"
+  progress_done "Already on branch or no update needed"
 fi
 
 # ============================================================================
 # STEP 11: CLEANUP BACKUP
 # ============================================================================
 
-echo ""
-echo "Step 11: Removing backup..."
+progress_step "Removing backup"
 if git branch -D "$BACKUP_BRANCH"; then
-  echo "✅ Backup removed after successful verification"
+  progress_done "Backup removed after successful verification"
 else
   echo "⚠️  Warning: Failed to delete backup branch $BACKUP_BRANCH" >&2
   echo "   You can manually delete it with: git branch -D $BACKUP_BRANCH" >&2

@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+# Progress tracking
+source "$(dirname "$0")/lib/progress.sh"
+progress_init 3
+
 # batch-read.sh - Batch file search and read with smart filtering
 #
 # This script finds files matching a pattern and reads them in one operation,
@@ -96,14 +100,14 @@ EOF
 # STEP 1: FIND MATCHING FILES
 # ============================================================================
 
-echo "Step 1: Finding files matching pattern: $PATTERN"
+progress_step "Finding files matching pattern: $PATTERN"
 
 # Build grep command
 GREP_CMD="grep -r -l"
 
 if [[ -n "$FILE_TYPE" ]]; then
   GREP_CMD="$GREP_CMD --include=*.${FILE_TYPE}"
-  echo "File type filter: *.$FILE_TYPE"
+  echo "  File type filter: *.$FILE_TYPE"
 fi
 
 # Find files containing pattern
@@ -119,25 +123,23 @@ if [[ "$FILES_FOUND" -eq 0 ]]; then
   output_result "error" "No files found matching pattern: $PATTERN"
 fi
 
-echo "✅ Found $FILES_FOUND file(s)"
-
 # Limit to MAX_FILES
 if [[ "$FILES_FOUND" -gt "$MAX_FILES" ]]; then
-  echo "⚠️  Limiting to first $MAX_FILES files (found $FILES_FOUND total)"
+  echo "  ⚠️  Limiting to first $MAX_FILES files (found $FILES_FOUND total)"
   MATCHING_FILES=$(echo "$MATCHING_FILES" | head -n "$MAX_FILES")
   FILES_FOUND=$MAX_FILES
 fi
 
+progress_done "Found $FILES_FOUND file(s)"
 echo ""
-echo "Files to read:"
+echo "  Files to read:"
 echo "$MATCHING_FILES"
 
 # ============================================================================
 # STEP 2: READ FILES
 # ============================================================================
 
-echo ""
-echo "Step 2: Reading file contents..."
+progress_step "Reading file contents"
 
 # Initialize output file
 > "$OUTPUT_FILE"
@@ -184,18 +186,16 @@ while IFS= read -r file; do
     echo ""
   } >> "$OUTPUT_FILE"
 
-  echo "  ✅ Read: $file"
+  echo "  ✓ Read: $file"
 done <<< "$MATCHING_FILES"
 
-echo ""
-echo "✅ Read $FILES_READ file(s)"
+progress_done "Read $FILES_READ file(s)"
 
 # ============================================================================
 # STEP 3: VERIFY OUTPUT
 # ============================================================================
 
-echo ""
-echo "Step 3: Verifying output..."
+progress_step "Verifying output"
 
 if [[ ! -s "$OUTPUT_FILE" ]]; then
   output_result "error" "No content read from files"
@@ -206,25 +206,14 @@ echo "Output size: $OUTPUT_SIZE bytes"
 
 # Check if output is too large (warn but don't fail)
 if [[ "$OUTPUT_SIZE" -gt 100000 ]]; then
-  echo "⚠️  Warning: Output is large ($OUTPUT_SIZE bytes)"
-  echo "   Consider using --context-lines to limit output"
+  echo "  ⚠️  Warning: Output is large ($OUTPUT_SIZE bytes)"
+  echo "     Consider using --context-lines to limit output"
 fi
 
-echo "✅ Output verified"
+progress_done "Output verified ($OUTPUT_SIZE bytes)"
 
-# ============================================================================
-# STEP 4: SUMMARY
-# ============================================================================
-
-echo ""
-echo "════════════════════════════════════════"
-echo "Batch Read Summary:"
-echo "  Pattern:      $PATTERN"
-echo "  Files found:  $FILES_FOUND"
-echo "  Files read:   $FILES_READ"
-echo "  Output size:  $OUTPUT_SIZE bytes"
-echo "  Output file:  $OUTPUT_FILE"
-echo "════════════════════════════════════════"
+progress_summary
+echo "Pattern: $PATTERN | Files: $FILES_READ/$FILES_FOUND"
 
 # ============================================================================
 # SUCCESS

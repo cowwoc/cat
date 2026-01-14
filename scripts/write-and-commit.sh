@@ -15,6 +15,10 @@
 set -euo pipefail
 trap 'echo "{\"status\": \"error\", \"message\": \"ERROR at line $LINENO: $BASH_COMMAND\"}" >&2; exit 1' ERR
 
+# Progress tracking
+source "$(dirname "$0")/lib/progress.sh"
+progress_init 6
+
 START_TIME=$(date +%s)
 
 # Parse arguments
@@ -27,7 +31,8 @@ if [[ "${4:-}" == "--executable" ]]; then
     EXECUTABLE="true"
 fi
 
-# Validate arguments
+# Step 1: Validate arguments
+progress_step "Validating arguments"
 if [[ -z "$FILE_PATH" ]]; then
     echo "{\"status\": \"error\", \"message\": \"Missing required argument: file-path\"}"
     exit 1
@@ -52,52 +57,57 @@ if [[ ! -f "$COMMIT_MSG_FILE" ]]; then
     echo "{\"status\": \"error\", \"message\": \"Commit message file not found: $COMMIT_MSG_FILE\"}"
     exit 1
 fi
+progress_done "All arguments valid"
 
-# Verify we're in a git repository
+# Step 2: Verify git repository
+progress_step "Verifying git repository"
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
     echo "{\"status\": \"error\", \"message\": \"Not in a git repository\"}"
     exit 1
 fi
-
-# Get working directory
 WORKING_DIR=$(pwd)
+progress_done "In git repository: $WORKING_DIR"
 
-# Create parent directories if needed
+# Step 3: Create parent directories
+progress_step "Creating parent directories"
 PARENT_DIR=$(dirname "$FILE_PATH")
 if [[ "$PARENT_DIR" != "." ]]; then
     mkdir -p "$PARENT_DIR"
+    progress_done "Created: $PARENT_DIR"
+else
+    progress_done "No parent directory needed"
 fi
 
-# Check if file already exists (warn but continue)
+# Step 4: Write file content
+progress_step "Writing file content"
 FILE_EXISTS="false"
 if [[ -f "$FILE_PATH" ]]; then
     FILE_EXISTS="true"
 fi
-
-# Write file content
 cp "$CONTENT_FILE" "$FILE_PATH"
-
-# Make executable if requested
 if [[ "$EXECUTABLE" == "true" ]]; then
     chmod +x "$FILE_PATH"
+    progress_done "Wrote $FILE_PATH (executable)"
+else
+    progress_done "Wrote $FILE_PATH"
 fi
 
-# Stage file
+# Step 5: Stage and commit
+progress_step "Staging and committing"
 git add "$FILE_PATH"
-
-# Commit with message from file
 COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
 git commit -m "$COMMIT_MSG"
-
-# Get commit SHA
 COMMIT_SHA=$(git rev-parse --short HEAD)
+progress_done "Committed: $COMMIT_SHA"
+
+# Step 6: Cleanup
+progress_step "Cleaning up temp files"
+rm -f "$CONTENT_FILE" "$COMMIT_MSG_FILE"
+progress_done "Temp files removed"
 
 # Calculate duration
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
-
-# Cleanup temp files
-rm -f "$CONTENT_FILE" "$COMMIT_MSG_FILE"
 
 # Output success JSON
 jq -n \
