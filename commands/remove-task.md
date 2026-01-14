@@ -84,7 +84,7 @@ If status is `in-progress`:
 ERROR: Cannot remove task that is in-progress.
 
 Current status: in-progress
-Progress: {progress}%
+Progress: [==========>         ] {progress}%
 
 Options:
 1. Complete the task first with /cat:execute-task
