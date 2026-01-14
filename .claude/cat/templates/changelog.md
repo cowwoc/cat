@@ -12,9 +12,15 @@
 
 ## Tasks Completed
 
-| Task | Type | Description |
-|------|------|-------------|
-| {task-name} | {type} | {brief description} |
+| Task | Type | Resolution | Description |
+|------|------|------------|-------------|
+| {task-name} | {type} | implemented | {brief description} |
+| {dup-task} | - | duplicate of {orig-task} | {what it duplicated} |
+
+**Resolution types:**
+- `implemented` - Task completed normally with its own commit
+- `duplicate of {task}` - Work done by another task
+- `obsolete` - Task no longer needed
 
 ## Key Changes
 
@@ -59,3 +65,17 @@ git log --oneline --grep="Task ID: v1.0-"
 # For specific task within the version:
 git log --oneline --grep="Task ID: v1.0-{task-name}"
 ```
+
+### Finding Commits for Duplicate Tasks
+
+Duplicate tasks have no commit with their own Task ID. To find the resolving commit:
+
+1. Check the task's STATE.md for the `Duplicate Of` field
+2. Search for that original task's ID:
+
+```bash
+# If task-b is duplicate of v1.0-task-a:
+git log --oneline --grep="Task ID: v1.0-task-a"
+```
+
+See [task-resolution.md](../references/task-resolution.md) for details.
