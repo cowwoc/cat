@@ -65,6 +65,39 @@ This skill respects task-level locking. Before spawning, verify the parent agent
 The lock should have been acquired by `/cat:execute-task`. Subagents inherit lock ownership through
 their worktree association (recorded in the lock file).
 
+**MANDATORY: Verify Lock Ownership (M082)**
+
+After any lock acquisition attempt, verify ownership by reading the actual lock file:
+
+```bash
+TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
+LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${TASK_ID}.lock"
+
+# Verify lock file exists and we own it
+if [[ ! -f "$LOCK_FILE" ]]; then
+  echo "ERROR: Lock file does not exist at $LOCK_FILE"
+  echo "Lock was NOT acquired. Another session may own this task."
+  exit 1
+fi
+
+# Verify session_id matches current session
+LOCK_SESSION=$(grep "^session_id=" "$LOCK_FILE" | cut -d= -f2)
+if [[ "$LOCK_SESSION" != "$SESSION_ID" ]]; then
+  echo "ERROR: Lock owned by different session: $LOCK_SESSION"
+  echo "Current session: $SESSION_ID"
+  echo "Do NOT proceed - another Claude instance is working on this task."
+  exit 1
+fi
+
+echo "Lock verified: $LOCK_FILE owned by current session"
+```
+
+**Anti-pattern (M082):** Trusting lock script return value without verifying the actual lock file.
+Lock directory must be `.claude/cat/locks/` (NOT `/tmp/cat-locks/` or other paths).
+
+**After session restart (M083):** Re-run lock verification commands. Do not rely on observations from
+before the restart - the filesystem may have changed while the session was inactive.
+
 ## Prompt Requirements: Zero Decision Delegation
 
 **MANDATORY**: Before spawning, ensure the prompt contains everything needed for mechanical execution.
