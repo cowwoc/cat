@@ -310,10 +310,27 @@ git commit --amend --no-edit  # Include in last implementation commit
 # Squash commits by type
 git rebase -i main  # Group by feature, bugfix, refactor, etc.
 
-# Merge to main
+# Merge to main with linear history
 git checkout main
-git merge {task-branch}
+git merge --ff-only {task-branch}
 ```
+
+**If --ff-only fails (M081):** Main has diverged from task branch base.
+
+```bash
+# DO NOT merge main into task branch (creates non-linear history)
+# INSTEAD: Rebase task branch onto main first
+
+# In task worktree:
+git fetch origin
+git rebase origin/main  # Or use /cat:git-rebase skill
+
+# Then merge with fast-forward
+git checkout main
+git merge --ff-only {task-branch}
+```
+
+**Anti-pattern (M081):** Merging main INTO task branch creates merge commits and non-linear history.
 
 **Anti-pattern (M070):** Committing STATE.md update as separate "planning:" commit after merge.
 
