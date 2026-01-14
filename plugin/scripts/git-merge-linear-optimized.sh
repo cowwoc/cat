@@ -59,16 +59,14 @@ if [[ -z "$TASK_BRANCH" ]]; then
     exit 1
 fi
 
-# Detect base branch if not specified (from worktree metadata, fail-fast if missing)
-if [[ -z "$BASE_BRANCH" ]]; then
-    GIT_DIR=$(git rev-parse --git-dir)
-    CAT_BASE_FILE="${GIT_DIR}/worktrees/${TASK_BRANCH}/cat-base"
-    if [[ ! -f "$CAT_BASE_FILE" ]]; then
-        echo "{\"status\": \"error\", \"message\": \"cat-base file not found: $CAT_BASE_FILE. Recreate worktree with /cat:work.\"}"
-        exit 1
-    fi
-    BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+# Step 1: Validate we're on main branch
+progress_step "Validating current branch"
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+    echo "{\"status\": \"error\", \"message\": \"Must be on main branch. Currently on: $CURRENT_BRANCH\"}"
+    exit 1
 fi
+progress_done "On main branch"
 
 # Step 1: Validate we're on base branch
 progress_step "Validating current branch"
@@ -97,7 +95,7 @@ progress_done "Working directory clean"
 
 # Step 4: Verify exactly 1 commit on task branch
 progress_step "Verifying commit count"
-COMMIT_COUNT=$(git rev-list --count $BASE_BRANCH.."$TASK_BRANCH")
+COMMIT_COUNT=$(git rev-list --count main.."$TASK_BRANCH")
 if [[ "$COMMIT_COUNT" -ne 1 ]]; then
     echo "{\"status\": \"error\", \"message\": \"Task branch must have exactly 1 commit. Found: $COMMIT_COUNT. Squash commits first.\"}"
     exit 1
@@ -106,9 +104,9 @@ progress_done "Task branch has exactly 1 commit"
 
 # Step 5: Check if fast-forward is possible
 progress_step "Checking fast-forward eligibility"
-if ! git merge-base --is-ancestor $BASE_BRANCH "$TASK_BRANCH" 2>/dev/null; then
-    # $BASE_BRANCH is not an ancestor of task branch - check if rebase needed
-    BEHIND_COUNT=$(git rev-list --count "$TASK_BRANCH"..$BASE_BRANCH)
+if ! git merge-base --is-ancestor main "$TASK_BRANCH" 2>/dev/null; then
+    # main is not an ancestor of task branch - check if rebase needed
+    BEHIND_COUNT=$(git rev-list --count "$TASK_BRANCH"..main)
     if [[ "$BEHIND_COUNT" -gt 0 ]]; then
         echo "{\"status\": \"error\", \"message\": \"Task branch is behind $BASE_BRANCH by $BEHIND_COUNT commits. Rebase required: git checkout $TASK_BRANCH && git rebase $BASE_BRANCH\"}"
         exit 1
@@ -126,7 +124,7 @@ if ! git merge --ff-only "$TASK_BRANCH" 2>/dev/null; then
     echo "{\"status\": \"error\", \"message\": \"Fast-forward merge failed. Rebase task branch onto $BASE_BRANCH first.\"}"
     exit 1
 fi
-progress_done "Merged $TASK_BRANCH to $BASE_BRANCH"
+progress_done "Merged $TASK_BRANCH to main"
 
 # Step 7: Verify linear history (no merge commits)
 progress_step "Verifying linear history"
