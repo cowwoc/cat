@@ -480,24 +480,32 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
 **Subagent execution workflow:**
 
-1. Read refactoring preference and include in subagent prompt:
+1. Read preferences and include in subagent prompt:
    ```bash
+   APPROACH_PREF=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
    REFACTOR_PREF=$(jq -r '.refactoring // "opportunistic"' .claude/cat/cat-config.json)
    ```
 
-   Include this instruction based on preference:
-   | Preference | Subagent Instruction |
-   |------------|---------------------|
+   **Approach instruction** (for planning subagent):
+   | Preference | Planning Subagent Instruction |
+   |------------|-------------------------------|
+   | `conservative` | "Favor the safest path. Minimize scope. Avoid architectural changes. Prefer incremental fixes over comprehensive rewrites." |
+   | `balanced` | "Balance safety and thoroughness. Address the core issue without over-engineering. Include reasonable improvements." |
+   | `aggressive` | "Favor comprehensive solutions. Address root causes. Include related improvements. Prefer clean architecture over minimal changes." |
+
+   **Refactoring instruction** (for implementation subagent):
+   | Preference | Implementation Subagent Instruction |
+   |------------|-------------------------------------|
    | `avoid` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
    | `opportunistic` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
    | `eager` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
 
 2. Invoke `/cat:spawn-subagent` skill with:
    - Task path
-   - PLAN.md contents
+   - PLAN.md contents (with Selected Approach filled in)
    - Worktree path
    - Token tracking enabled
-   - Refactoring instruction (from above)
+   - Approach instruction (for planning) or Refactoring instruction (for implementation)
 
 3. Monitor subagent via `/cat:monitor-subagents`:
    - Check for compaction events
@@ -1109,7 +1117,7 @@ The main agent is an ORCHESTRATOR. All phases MUST be delegated to subagents:
 
 **Subagent responsibilities (ALL substantive work):**
 - **Exploration subagent:** Read and analyze source code, report findings
-- **Planning subagent:** Make architectural decisions, write specifications
+- **Planning subagent:** Produce three approach options (conservative/balanced/aggressive), write specifications
 - **Implementation subagent:** Write/edit source code, tests, fix bugs
 
 **Orchestration Enforcement (A014):**
@@ -1129,11 +1137,15 @@ Before any file read or code analysis, ask: "Should a subagent do this?"
 ```
 1. Main agent spawns EXPLORATION subagent: "Find all X and report findings"
 2. Exploration subagent returns: "Found X at locations A, B, C with patterns..."
-3. Main agent spawns PLANNING subagent: "Given findings, decide approach and write spec"
-4. Planning subagent returns: "Recommended approach: ... Implementation spec: ..."
-5. Main agent spawns IMPLEMENTATION subagent: "Execute this spec"
-6. Implementation subagent returns: "Completed. Commits: ..."
-7. Main agent presents approval gate to user
+3. Main agent spawns PLANNING subagent: "Given findings, produce three approach options"
+4. Planning subagent returns approaches in PLAN.md format:
+   - Conservative: [minimal scope, low risk]
+   - Balanced: [reasonable scope, medium risk]
+   - Aggressive: [comprehensive, high risk]
+5. Main agent selects approach based on user preference or presents choice
+6. Main agent spawns IMPLEMENTATION subagent: "Execute the [selected] approach"
+7. Implementation subagent returns: "Completed. Commits: ..."
+8. Main agent presents approval gate to user
 ```
 
 **Anti-pattern (M088):** Main agent reading source files "to understand the code" - delegate to exploration subagent.
