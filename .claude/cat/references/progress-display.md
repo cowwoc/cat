@@ -2,6 +2,204 @@
 
 Standard visual elements for displaying progress across CAT workflows.
 
+## Box Display Format {#box-display-format}
+
+**MANDATORY** for all status boxes and checkpoints.
+
+### Border Styles
+
+Use **double-line borders** for primary status boxes (checkpoints, blockers, forks):
+
+| Character | Purpose |
+|-----------|---------|
+| `╔` `╗` `╚` `╝` | Corners |
+| `═` | Horizontal border |
+| `║` | Vertical border |
+| `╠` `╣` | T-junctions (horizontal dividers) |
+
+Use **single-line borders** for nested content or secondary boxes:
+
+| Character | Purpose |
+|-----------|---------|
+| `┌` `┐` `└` `┘` | Corners |
+| `─` | Horizontal border |
+| `│` | Vertical border |
+| `├` `┤` | T-junctions |
+
+**When to use each:**
+
+| Style | Use For | Example Context |
+|-------|---------|-----------------|
+| Double-line (`╔═╗`) | Outer frame/main container | Status boxes, menus, checkpoints |
+| Single-line (`┌─┐`) | Nested boxes inside double-line | Config sections, grouped values |
+| Single-line divider (`─`) | Section dividers within boxes | Separating METRICS from CHANGES |
+
+**Hierarchy pattern:**
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  OUTER FRAME (double-line)                                        ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Section Title                                                    ║
+║  ┌─────────────────────────────────────────────────────────────┐  ║
+║  │  Nested content (single-line)                               │  ║
+║  │  Value: something                                           │  ║
+║  └─────────────────────────────────────────────────────────────┘  ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+
+**Never nest double-line inside double-line** or single-line inside single-line.
+
+### Box Dimensions
+
+**Standard widths by context:**
+
+| Context | Total Width | Internal Content | Use For |
+|---------|-------------|------------------|---------|
+| Full-width | 69 chars | 65 chars | Status boxes, checkpoints, forks |
+| Menu/Config | 61 chars | 57 chars | Settings menus, selection dialogs |
+
+**Full-width box (69 chars):**
+
+| Element | Width |
+|---------|-------|
+| Total box width | 69 |
+| Internal content | 65 (between `║` and padding) |
+| Side padding | 2 spaces each side |
+
+**Menu box (61 chars):**
+
+| Element | Width |
+|---------|-------|
+| Total box width | 61 |
+| Internal content | 57 (between `║` and padding) |
+| Side padding | 2 spaces each side |
+
+Use menu boxes for focused interactions (config wizards, mode selection).
+Use full-width boxes for status displays and workflow checkpoints.
+
+**Wider boxes (when needed):**
+For content that requires more width (e.g., shell script alerts with long messages),
+boxes can be wider. Calculate width based on longest content line + padding.
+Maintain consistent width within each box.
+
+### Emoji Width Handling
+
+**CRITICAL**: Emojis display as 2 characters wide in most terminals.
+
+When calculating padding for lines with emojis:
+- Count each emoji as **2 characters**
+- Subtract emoji display width from available content space
+
+### Box Template
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  TITLE TEXT HERE                                                  ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Content line here                                                ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+
+**Character counts:**
+- Top/bottom border: 1 `╔` + 67 `═` + 1 `╗` = 69
+- Middle divider: 1 `╠` + 67 `═` + 1 `╣` = 69
+- Content line: 1 `║` + 2 spaces + 63 content + 2 spaces + 1 `║` = 69
+- Empty line: 1 `║` + 67 spaces + 1 `║` = 69
+
+### Padding Calculation
+
+```
+CONTENT_WIDTH = 63  # Maximum content characters (excluding side padding)
+
+# For plain text:
+padding_needed = CONTENT_WIDTH - len(text)
+line = f"║  {text}{' ' * padding_needed}  ║"
+
+# For text with emoji (each emoji = 2 display chars):
+emoji_count = count_emojis(text)
+display_width = len(text) + emoji_count  # Each emoji adds 1 extra
+padding_needed = CONTENT_WIDTH - display_width
+line = f"║  {text}{' ' * padding_needed}  ║"
+```
+
+### Common Status Boxes
+
+**Task Blocked:**
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  ⏸️ NO EXECUTABLE TASKS AVAILABLE                                 ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Task `task-name` is locked by another session.                   ║
+║                                                                   ║
+║  Blocked tasks:                                                   ║
+║  - task-a                                                         ║
+║  - task-b                                                         ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+Note: Header has 1 emoji (⏸️) = remove 1 space from padding.
+
+**Checkpoint:**
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  ✅ CHECKPOINT: Task Complete                                     ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Task: task-name                                                  ║
+║  Status: SUCCESS                                                  ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+Note: Header has 1 emoji (✅) = remove 1 space from padding.
+
+**Fork in the Road:**
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  🔀 FORK IN THE ROAD                                              ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  [A] 🛡️ Option A                                                  ║
+║  [B] ⚔️ Option B                                                  ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+Note: Each line with emoji removes 1 space per emoji.
+
+### Anti-Patterns
+
+**Variable width lines (WRONG):**
+```
+║  Short line          ║
+║  Much longer line that extends past the border║
+```
+
+**Not accounting for emoji width (WRONG):**
+```
+║  ⏸️ NO EXECUTABLE TASKS                                           ║
+```
+The emoji displays as 2 chars but only counts as 1 in string length. Remove 1 space:
+```
+║  ⏸️ NO EXECUTABLE TASKS                                          ║
+```
+
+**Mixing border styles within one box (WRONG):**
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  Title                                                            ║
+├───────────────────────────────────────────────────────────────────┤
+```
+Use single-line divider for internal separators:
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  Title                                                            ║
+║  ─────────────────────────────────────────────────────────────────║
+```
+
 ## Progress Bar Format {#progress-bar-format}
 
 **MANDATORY** for all progress displays.
