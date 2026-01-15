@@ -145,12 +145,14 @@ def display_width(s):
     i = 0
     while i < len(s):
         c = s[i]
-        # Skip variation selectors (they don't add display width)
+        # Skip variation selectors (handled by lookahead below)
         if c == '\uFE0F':
             i += 1
             continue
-        # Most emojis are 2 columns wide
-        if ord(c) >= 0x1F300:
+        # Check if next char is VS16 (emoji presentation selector)
+        has_vs16 = (i + 1 < len(s) and s[i + 1] == '\uFE0F')
+        # Emoji presentation (VS16) or high codepoint emoji = 2 columns
+        if has_vs16 or ord(c) >= 0x1F300:
             width += 2
         elif unicodedata.east_asian_width(c) in ('F', 'W'):
             width += 2
@@ -167,7 +169,7 @@ def display_width(s):
 **Task Blocked:**
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  ⏸️ NO EXECUTABLE TASKS AVAILABLE                                  ║
+║  ⏸️ NO EXECUTABLE TASKS AVAILABLE                                 ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Task `task-name` is locked by another session.                   ║
@@ -199,7 +201,7 @@ Note: Header has 1 emoji (✅) = remove 1 space from padding.
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  [A] 🛡️ Option A                                                  ║
-║  [B] ⚔️ Option B                                                   ║
+║  [B] ⚔️ Option B                                                  ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
