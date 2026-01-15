@@ -1,92 +1,19 @@
 [
   {
-    "id": "M001",
-    "timestamp": "2026-01-13T04:30:00Z",
+    "id": "M091",
+    "timestamp": "2026-01-15T06:15:00Z",
     "category": "protocol_violation",
-    "description": "Executed bulk shrink-doc operation in main agent instead of spawning subagent",
-    "root_cause": "shrink-doc skill lacked guidance on subagent usage for bulk file operations",
+    "description": "Released v1.7 without updating CHANGELOG.md - ran git tag directly instead of using release-plugin skill",
+    "root_cause": "Ad-hoc release process instead of using release-plugin skill which ensures changelog synchronization",
+    "rca_method": "B",
+    "rca_method_name": "taxonomy",
     "prevention_type": "skill",
-    "prevention_path": "/workspace/cat/skills/shrink-doc/SKILL.md",
+    "prevention_path": "/workspace/cat/skills/release-plugin/SKILL.md",
     "pattern_keywords": [
-      "shrink-doc",
-      "subagent",
-      "bulk-operation",
-      "main-agent"
-    ],
-    "prevention_implemented": true,
-    "prevention_verified": true,
-    "prevention_quality": {
-      "verification_type": "positive",
-      "fragility": "low",
-      "catches_variations": true
-    },
-    "correct_behavior": "For 6+ files, ALWAYS spawn subagent. Main agent only for single file shrinking."
-  },
-  {
-    "id": "M002",
-    "timestamp": "2026-01-13T16:15:00Z",
-    "category": "protocol_violation",
-    "description": "Asked user to review implementation before committing changes",
-    "root_cause": "Showed code changes in chat without committing first - users cannot see unstaged changes",
-    "prevention_type": "hook",
-    "prevention_path": "/workspace/cat/hooks/inject-session-instructions.sh",
-    "pattern_keywords": [
-      "commit",
-      "review",
-      "unstaged",
-      "visibility"
-    ],
-    "prevention_implemented": true,
-    "prevention_verified": true,
-    "prevention_quality": {
-      "verification_type": "positive",
-      "fragility": "low",
-      "catches_variations": true
-    },
-    "correct_behavior": "ALWAYS commit changes BEFORE asking users to review. Pattern: Implement → Commit → Review"
-  },
-  {
-    "id": "M089",
-    "timestamp": "2026-01-14T19:16:46Z",
-    "category": "documentation_violation",
-    "description": "Used docs: prefix for Claude-facing workflow file instead of config:",
-    "root_cause": "Commit-types distinction between Claude-facing (config:) and user-facing (docs:) was documented but not prominent enough",
-    "rca_method": "A",
-    "rca_method_name": "5-whys",
-    "prevention_type": "documentation",
-    "prevention_path": "/workspace/cat/.claude/cat/references/commit-types.md",
-    "pattern_keywords": [
-      "commit-type",
-      "docs",
-      "config",
-      "claude-facing",
-      "workflow"
-    ],
-    "prevention_implemented": true,
-    "prevention_verified": true,
-    "recurrence_of": null,
-    "prevention_quality": {
-      "verification_type": "positive",
-      "fragility": "low",
-      "catches_variations": true
-    },
-    "correct_behavior": "Use config: for Claude-facing files (CLAUDE.md, hooks, skills, workflows). Use docs: only for user-facing documentation (README, API docs)."
-  },
-  {
-    "id": "M090",
-    "timestamp": "2026-01-14T17:00:00Z",
-    "category": "protocol_violation",
-    "description": "Used invalid commit type 'chore' instead of valid CAT types (feature, bugfix, docs, config, etc.)",
-    "root_cause": "validate-commit-type.sh hook existed but was not registered in hooks.json, so enforcement was not active",
-    "rca_method": "A",
-    "rca_method_name": "5-whys",
-    "prevention_type": "hook",
-    "prevention_path": "/workspace/cat/hooks/hooks.json",
-    "pattern_keywords": [
-      "commit",
-      "chore",
-      "conventional-commits",
-      "hook-registration"
+      "release",
+      "changelog",
+      "git tag",
+      "version"
     ],
     "prevention_implemented": true,
     "prevention_verified": false,
@@ -96,6 +23,86 @@
       "fragility": "low",
       "catches_variations": true
     },
-    "correct_behavior": "Use CAT commit types: feature, bugfix, test, refactor, performance, docs, style, config, planning. Hook now registered to enforce this."
+    "correct_behavior": "When user requests a release, always invoke release-plugin skill. Update CHANGELOG.md BEFORE creating git tag."
+  },
+  {
+    "id": "M092",
+    "timestamp": "2026-01-15T01:50:00Z",
+    "category": "protocol_violation",
+    "description": "Used invalid commit type feat: instead of feature:",
+    "root_cause": "Defaulted to conventional commit pattern without checking project-specific commit types in git-commit skill",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "hook",
+    "prevention_path": "/workspace/cat/hooks/validate-commit-type.sh",
+    "pattern_keywords": [
+      "commit",
+      "type",
+      "feat",
+      "feature",
+      "conventional"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use feature: not feat:, bugfix: not fix:, and other full names as specified in git-commit skill line 136"
+  },
+  {
+    "id": "M093",
+    "timestamp": "2026-01-15T02:00:00Z",
+    "category": "protocol_violation",
+    "description": "Recorded M092 with documentation as prevention when documentation already existed and failed",
+    "root_cause": "Skipped step 8 of learn-from-mistakes workflow (check if prevention already exists) due to completion bias",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/cat/skills/learn-from-mistakes/SKILL.md",
+    "pattern_keywords": [
+      "prevention",
+      "escalation",
+      "existing",
+      "documentation"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Before recording prevention, check if it already exists. If existing prevention failed, escalate to stronger level (documentation → hook/validation)"
+  },
+  {
+    "id": "M094",
+    "timestamp": "2026-01-15T02:15:00Z",
+    "category": "protocol_violation",
+    "description": "Created hook script with wrong implementation (PostToolUse logic in PreToolUse hook) and did not use register-hook skill",
+    "root_cause": "Did not use register-hook skill which would have guided proper hook type selection and implementation pattern",
+    "rca_method": "B",
+    "rca_method_name": "taxonomy",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/cat/skills/register-hook/SKILL.md",
+    "pattern_keywords": [
+      "hook",
+      "register",
+      "PreToolUse",
+      "PostToolUse",
+      "TOOL_INPUT"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use /cat:register-hook skill when creating hooks. It guides proper hook type selection and provides correct implementation patterns."
   }
 ]
