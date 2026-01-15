@@ -4,7 +4,12 @@
 
 ### 2026-01-15: v1.7
 
-*In development*
+**Config Command & Documentation**
+
+- **Feature**: Renamed `/cat:update-config` to `/cat:config` for brevity
+- **Feature**: Config wizard now returns to parent menu after changing settings
+- **Docs**: Clarified approach descriptions (Conservative/Balanced/Aggressive) with actionable impact
+- **Bugfix**: Fixed emoji alignment in box-drawing documentation
 
 ### 2026-01-14: v1.6
 
@@ -21,7 +26,7 @@ Introduces the "fun AND reliable" philosophy with adventure-style workflow enhan
 
 **Skills:**
 - `choose-approach` - Present approach options at task forks with recommendations
-- `update-config` - Interactive wizard to customize CAT settings
+- `config` - Interactive wizard to customize CAT settings
 
 **Workflow Enhancements:**
 - Enhanced approval gate with adventure-style checkpoint display
