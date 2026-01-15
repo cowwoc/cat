@@ -65,29 +65,44 @@ git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
 
 ### 3. Parse Token Metrics
 
+**CRITICAL: Token totals must span ALL compaction events.**
+
+Session files contain entries BEFORE and AFTER any compaction. The jq command below parses ALL
+assistant entries regardless of when compaction occurred, providing cumulative totals.
+
 **Preferred: Read from completion marker** (already computed by subagent):
 
 ```bash
 COMPLETION_FILE="${WORKTREE}/.completion.json"
 if [ -f "$COMPLETION_FILE" ]; then
   TOTAL_TOKENS=$(jq -r '.tokensUsed // 0' "$COMPLETION_FILE")
+  INPUT_TOKENS=$(jq -r '.inputTokens // 0' "$COMPLETION_FILE")
+  OUTPUT_TOKENS=$(jq -r '.outputTokens // 0' "$COMPLETION_FILE")
   COMPACTIONS=$(jq -r '.compactionEvents // 0' "$COMPLETION_FILE")
   STATUS=$(jq -r '.status // "unknown"' "$COMPLETION_FILE")
 fi
 ```
 
-**Fallback: Parse session file** (only if marker unavailable):
+**Fallback: Parse session file for cumulative totals** (spans all compactions):
 
 ```bash
 SESSION_ID=$(cat "${WORKTREE}/.session_id" 2>/dev/null)
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
 if [ -f "$SESSION_FILE" ]; then
-  TOTAL_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
-    (.input_tokens + .output_tokens)] | add // 0' "${SESSION_FILE}")
+  # CUMULATIVE totals - parses ALL entries including those before compaction
+  INPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage.input_tokens] |
+    add // 0' "${SESSION_FILE}")
+  OUTPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage.output_tokens] |
+    add // 0' "${SESSION_FILE}")
+  TOTAL_TOKENS=$((INPUT_TOKENS + OUTPUT_TOKENS))
   COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
 fi
 ```
+
+**Why cumulative matters:** When compaction occurs, the session file retains all pre-compaction
+entries. The jq `add` over ALL entries captures the true total token consumption, enabling
+accurate comparison against estimates.
 
 ### 4. Read Subagent Work Products
 
@@ -287,6 +302,23 @@ collect_token_metrics "${SUBAGENT}"
 collect_compaction_events "${SUBAGENT}"
 update_parent_state "${SUBAGENT}"
 ```
+
+### Collect cumulative tokens spanning compactions
+
+```bash
+# ❌ Only counting post-compaction tokens
+TOKENS=$(jq -s 'last | .message.usage | .input_tokens + .output_tokens' "${SESSION_FILE}")
+# This misses all pre-compaction token usage!
+
+# ✅ Cumulative totals spanning ALL compactions
+TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
+  (.input_tokens + .output_tokens)] | add' "${SESSION_FILE}")
+# Sums ALL entries regardless of compaction events
+```
+
+**Why this matters:** Token estimates are for the ENTIRE task. If a subagent uses 50K tokens,
+hits compaction, then uses another 30K tokens, the actual usage is 80K - not 30K. Accurate
+reporting enables proper estimate validation.
 
 ### Preserve partial progress from incomplete work
 
