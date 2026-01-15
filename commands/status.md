@@ -36,6 +36,10 @@ This outputs JSON with:
 
 If the script fails with "No planning structure found", inform user to run `/cat:init`.
 
+**MANDATORY: Use ONLY the data from status-data.sh and the gate collection below.**
+If the script output seems incomplete (e.g., empty pending_tasks despite work remaining), that indicates
+a script bug - report it after rendering. Never run additional bash commands to "supplement" the data.
+
 **Additionally, collect gate status:**
 
 For each version, read its PLAN.md and extract the `## Gates` section:
