@@ -187,9 +187,11 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 
 ```json
 {
+  "version": "1.0.8",
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
+  "autoCleanupWorktrees": true,
   "approach": "balanced",
   "stakeholderReview": "high-risk-only",
   "refactoring": "opportunistic"
@@ -200,12 +202,17 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `version` | string | — | CAT version (managed automatically for migrations) |
 | `yoloMode` | boolean | `false` | Skip all approval gates when `true` |
 | `contextLimit` | number | `200000` | Total context window size in tokens |
 | `targetContextUsage` | number | `40` | Soft limit percentage for task size |
+| `autoCleanupWorktrees` | boolean | `true` | Auto-cleanup worktrees after task completion |
 | `approach` | string | `balanced` | Risk tolerance for approach selection |
 | `stakeholderReview` | string | `high-risk-only` | When to run multi-perspective reviews |
 | `refactoring` | string | `opportunistic` | Cleanup behavior for adjacent code |
+
+**version** — The installed CAT version. Managed automatically by the migration system to track
+upgrades and run version-specific migrations.
 
 **yoloMode**
 - `false` (Interactive) — Checkpoints after each task, you review and approve changes
@@ -216,6 +223,9 @@ when tasks need decomposition.
 
 **targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
 200K (80K tokens), CAT warns that the task may need decomposition.
+
+**autoCleanupWorktrees** — When `true`, automatically removes task worktrees after successful
+completion and merge. Set to `false` to keep worktrees for manual inspection.
 
 **approach** — Controls how CAT chooses when multiple implementation paths exist:
 - `conservative` — Auto-selects targeted fixes; avoids refactoring; fewer files touched
