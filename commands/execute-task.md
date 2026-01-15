@@ -353,9 +353,8 @@ This step implements the "Fork in the Road" experience. It only presents choices
 **Load user preferences:**
 
 ```bash
-# Read adventure mode preferences
-PREFS=$(jq -r '.adventureMode.preferences // {}' .claude/cat/cat-config.json)
-USER_APPROACH=$(echo "$PREFS" | jq -r '.approach // "balanced"')
+# Read approach preference
+USER_APPROACH=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
 ```
 
 **Analyze PLAN.md for approaches:**
@@ -481,18 +480,31 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
 **Subagent execution workflow:**
 
-1. Invoke `/cat:spawn-subagent` skill with:
+1. Read refactoring preference and include in subagent prompt:
+   ```bash
+   REFACTOR_PREF=$(jq -r '.refactoring // "opportunistic"' .claude/cat/cat-config.json)
+   ```
+
+   Include this instruction based on preference:
+   | Preference | Subagent Instruction |
+   |------------|---------------------|
+   | `avoid` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
+   | `opportunistic` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
+   | `eager` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
+
+2. Invoke `/cat:spawn-subagent` skill with:
    - Task path
    - PLAN.md contents
    - Worktree path
    - Token tracking enabled
+   - Refactoring instruction (from above)
 
-2. Monitor subagent via `/cat:monitor-subagents`:
+3. Monitor subagent via `/cat:monitor-subagents`:
    - Check for compaction events
    - Track token usage
    - Handle early failures
 
-3. Collect results via `/cat:collect-results`:
+4. Collect results via `/cat:collect-results`:
    - Get execution summary
    - Get token usage report
    - Get any issues encountered
@@ -583,7 +595,26 @@ Consider decomposing similar tasks in the future.
 
 **Multi-perspective stakeholder review gate:**
 
-Skip if `yoloMode: true` in config OR `stakeholderReview.enabled: false`.
+**Skip conditions:**
+
+```bash
+# Read preferences
+YOLO_MODE=$(jq -r '.yoloMode // false' .claude/cat/cat-config.json)
+REVIEW_PREF=$(jq -r '.stakeholderReview // "high-risk-only"' .claude/cat/cat-config.json)
+```
+
+| Condition | Action |
+|-----------|--------|
+| `yoloMode: true` | Skip review |
+| `stakeholderReview: "never"` | Skip review |
+| `stakeholderReview: "always"` | Run review |
+| `stakeholderReview: "high-risk-only"` | Check PLAN.md Risk Assessment |
+
+**For "high-risk-only":** Read the task's PLAN.md Risk Assessment section. Run review if ANY of:
+- Risk section mentions "breaking change", "data loss", "security", "production"
+- Task modifies authentication, authorization, or payment code
+- Task touches 5+ files
+- Task is marked as HIGH risk
 
 **MANDATORY: Run stakeholder review BEFORE user approval.**
 

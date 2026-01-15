@@ -2,6 +2,11 @@
 
 Select the appropriate template based on work type.
 
+**MANDATORY:** All plans must include a Risk Assessment section with:
+- **Risk Level:** LOW | MEDIUM | HIGH (required for stakeholder review decisions)
+- Concerns/risks specific to the task type
+- Mitigation strategy
+
 ---
 
 ## Feature Template
@@ -14,6 +19,11 @@ Select the appropriate template based on work type.
 
 ## Approach
 [High-level implementation strategy]
+
+## Risk Assessment
+- **Risk Level:** LOW | MEDIUM | HIGH
+- **Concerns:** [potential issues]
+- **Mitigation:** [how to address]
 
 ## Files to Modify
 - path/to/file1.ext - [reason]
@@ -48,6 +58,11 @@ Select the appropriate template based on work type.
 ## Fix Approach
 [How the fix will work]
 
+## Risk Assessment
+- **Risk Level:** LOW | MEDIUM | HIGH
+- **Regression Risk:** [what could break]
+- **Mitigation:** [how to verify]
+
 ## Files to Modify
 - path/to/file.ext - [change description]
 
@@ -80,8 +95,9 @@ Select the appropriate template based on work type.
 - path/to/file.ext - [change description]
 
 ## Risk Assessment
-- [Potential risk 1]
-- [Potential risk 2]
+- **Risk Level:** LOW | MEDIUM | HIGH
+- **Breaking Changes:** [API changes, behavior changes]
+- **Mitigation:** [incremental approach, tests]
 
 ## Execution Steps
 1. Step 1
