@@ -22,6 +22,50 @@ with intelligent recommendations based on task characteristics and user preferen
 - Approaches have unusually different tradeoffs
 - HIGH risk task (user should confirm)
 
+## MANDATORY: Respect User Preferences
+
+**The agent MUST follow the user's approach preference unless there is a compelling technical reason
+to deviate.** The preference in `cat-config.json` represents a standing instruction from the user.
+
+**Compelling technical reasons include:**
+- The preferred approach is technically infeasible (e.g., API doesn't exist)
+- The preferred approach has severe performance implications (quantified, not speculative)
+- The preferred approach would break existing functionality
+- The preferred approach would create security vulnerabilities
+
+**NOT compelling reasons:**
+- Agent judgment that another approach is "cleaner" or "simpler"
+- Agent preference for a different coding style
+- Speculation about future maintainability without evidence
+- Vague concerns like "might be overkill"
+
+**If there IS a compelling technical reason to deviate:**
+
+1. **Explain the specific technical issue** with concrete evidence
+2. **Quantify the impact** where possible (e.g., "adds O(n) scan to every parenthesized expression")
+3. **Present the choice to the user** with the deviation explained
+4. **Let the user decide** - they may accept the tradeoff
+
+**Example of proper deviation handling:**
+
+```
+Your config shows `approach: aggressive`. However, the aggressive approach here
+has a specific performance concern:
+
+- Adds isLambdaExpression() lookahead to EVERY parenthesized expression
+- In typical Java files, this adds ~950 unnecessary scans per 1000 parens
+- Quantified overhead: O(n) per paren where n = tokens until )
+
+The balanced approach achieves the same correctness without this overhead.
+
+Would you like to:
+- Proceed with Aggressive (accept overhead for architectural clarity)
+- Use Balanced (targeted fix without overhead)
+```
+
+**Anti-pattern:** "I selected Balanced because Aggressive seemed like overkill for this task."
+This overrides user preference based on agent judgment, not technical necessity.
+
 ## Workflow
 
 ### 1. Analyze Task & Preferences
