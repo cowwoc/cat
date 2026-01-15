@@ -63,8 +63,41 @@ fi
 # Get current branch (try multiple methods)
 CURRENT_BRANCH=""
 
-# Method 1: Check if command changes to main first
+# Method 1: Check if command changes to /workspace (main worktree)
+# This protects the main worktree's checkout state
 if echo "$COMMAND" | grep -qE "cd[[:space:]]+(/workspace|['\"]*/workspace['\"]*)"; then
+	# Check if command also includes git checkout (changing what's checked out in main worktree)
+	if echo "$COMMAND" | grep -qE "git[[:space:]]+checkout[[:space:]]"; then
+		# Extract the branch being checked out
+		CHECKOUT_BRANCH=$(echo "$COMMAND" | sed -n 's/.*git[[:space:]]\+checkout[[:space:]]\+\([^[:space:];&|]*\).*/\1/p' | head -1)
+		# Block: trying to checkout a different branch in main worktree then rebase
+		cat << EOF >&2
+
+🚨 MAIN WORKTREE CHECKOUT CHANGE BLOCKED
+═══════════════════════════════════════════════════════════════
+
+❌ Attempted: cd /workspace && git checkout $CHECKOUT_BRANCH && git rebase
+✅ Correct:   Rebase from your task worktree, not from /workspace
+
+WHY THIS IS BLOCKED:
+• This would change what's checked out in the main worktree
+• The main worktree should always have 'main' checked out
+• Changing it disrupts other operations and breaks assumptions
+
+WHAT TO DO INSTEAD:
+1. Run rebase from your task worktree:
+   cd /workspace/.worktrees/$CHECKOUT_BRANCH
+   git rebase main
+
+2. Then return to main worktree for fast-forward merge:
+   cd /workspace
+   git merge --ff-only $CHECKOUT_BRANCH
+
+═══════════════════════════════════════════════════════════════
+EOF
+		output_hook_block "Blocked: Cannot checkout '$CHECKOUT_BRANCH' in main worktree. Run 'git rebase main' from task worktree instead."
+		exit 0
+	fi
 	CURRENT_BRANCH="main"
 fi
 
