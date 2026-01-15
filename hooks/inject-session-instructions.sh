@@ -50,6 +50,11 @@ MESSAGE=$(cat << 'INSTRUCTIONS'
 
 **Invocation**: `/cat:learn-from-mistakes` with description of the mistake
 
+**Trigger phrase recognition**: When user says "Learn from mistakes: [description]":
+1. INVOKE `/cat:learn-from-mistakes` skill FIRST (do not just fix the problem)
+2. Complete the full RCA workflow
+3. THEN address the immediate issue
+
 ### Commit Before Review
 **CRITICAL**: ALWAYS commit changes BEFORE asking users to review implementation.
 
