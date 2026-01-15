@@ -59,6 +59,38 @@ that reference `${SESSION_ID}`.
 - Parent agent needs to continue with other work
 - Context window management requires task isolation
 
+## Subagent Types and Two-Stage Planning
+
+**Planning Subagent (two stages for token efficiency):**
+
+| Stage | Purpose | Output | Tokens |
+|-------|---------|--------|--------|
+| Stage 1 | High-level approach outlines | 3 brief options + agent_id | ~5K |
+| Stage 2 | Detailed implementation spec | Full PLAN.md for selected approach | ~20K |
+
+**Stage 1 prompt template:**
+```
+Analyze the task and produce HIGH-LEVEL outlines (1-2 sentences each) for:
+- Conservative approach: [minimal scope, low risk]
+- Balanced approach: [moderate scope, medium risk]
+- Aggressive approach: [comprehensive, high risk]
+
+Do NOT produce detailed execution steps yet. Keep outlines brief.
+Return your agent_id for later resumption.
+```
+
+**Stage 2 prompt (using Task tool with `resume` parameter):**
+```
+resume: {agent_id from Stage 1}
+prompt: "User selected [approach]. Now produce the DETAILED spec with:
+- Specific files to modify
+- Exact code changes
+- Step-by-step execution
+- Verification commands"
+```
+
+**Implementation Subagent:** Receives completed PLAN.md, executes mechanically.
+
 ## Concurrent Execution Safety
 
 This skill respects task-level locking. Before spawning, verify the parent agent holds the task lock.
