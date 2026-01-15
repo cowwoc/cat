@@ -75,13 +75,19 @@ for major_dir in "$CAT_DIR"/v[0-9]*/; do
         MINOR_CURRENT[$minor]="$current"
         TOTAL_COMPLETED=$((TOTAL_COMPLETED + completed))
         TOTAL_TASKS=$((TOTAL_TASKS + total))
-
-        if [[ -n "$current" ]]; then
-            CURRENT_MINOR="$minor"
-        elif [[ -z "$CURRENT_MINOR" ]] && [[ "$completed" -lt "$total" ]]; then
-            CURRENT_MINOR="$minor"
-        fi
     done
+done
+
+# Find current minor in version-sorted order (fixes v0.10 before v0.2 bug)
+for minor in $(echo "${!MINOR_STATS[@]}" | tr ' ' '\n' | sort -V); do
+    IFS='/' read comp tot <<< "${MINOR_STATS[$minor]}"
+    if [[ -n "${MINOR_CURRENT[$minor]}" ]]; then
+        CURRENT_MINOR="$minor"
+        break
+    elif [[ "$comp" -lt "$tot" ]]; then
+        CURRENT_MINOR="$minor"
+        break
+    fi
 done
 
 [ "$TOTAL_TASKS" -eq 0 ] && TOTAL_TASKS=1
