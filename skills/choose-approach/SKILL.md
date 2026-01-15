@@ -122,15 +122,15 @@ Display with visual formatting (see progress-display.md for box standards):
 ║  Task: [task-name]                                                ║
 ║  Risk: [HIGH - requires confirmation]                             ║
 ║                                                                   ║
-║  [A] 🛡️ Conservative  [⭐ if preference matches]                 ║
+║  [A] 🛡️ Conservative  [⭐ if preference matches]                   ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: LOW | Tradeoff: [from PLAN.md]                         ║
 ║                                                                   ║
-║  [B] ⚖️ Balanced                                                  ║
+║  [B] ⚖️ Balanced                                                   ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: MEDIUM | Tradeoff: [from PLAN.md]                      ║
 ║                                                                   ║
-║  [C] ⚔️ Aggressive  [⭐ if preference matches]                   ║
+║  [C] ⚔️ Aggressive  [⭐ if preference matches]                     ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: HIGH | Tradeoff: [from PLAN.md]                        ║
 ║                                                                   ║
@@ -184,7 +184,7 @@ a comprehensive spec without re-reading the codebase.
 ║                                                                   ║
 ║  Task: implement-incremental-parsing                              ║
 ║                                                                   ║
-║  [A] 🏗️ Full implementation                                       ║
+║  [A] 🏗️ Full implementation                                        ║
 ║      Build complete solution upfront                              ║
 ║                                                                   ║
 ║  [B] 📦 Incremental approach                                      ║
@@ -206,11 +206,11 @@ a comprehensive spec without re-reading the codebase.
 ║                                                                   ║
 ║  Task: rename-parser-methods-for-consistency                      ║
 ║                                                                   ║
-║  [A] ⚡ Direct rename  ⭐ RECOMMENDED                              ║
+║  [A] ⚡ Direct rename  ⭐ RECOMMENDED                             ║
 ║      Find-and-replace across codebase                             ║
 ║      Why: Mechanical change, low risk, clear scope                ║
 ║                                                                   ║
-║  [B] 🏗️ Refactor with deprecation                                 ║
+║  [B] 🏗️ Refactor with deprecation                                  ║
 ║      Add new names, deprecate old, migrate gradually              ║
 ║                                                                   ║
 ║  [C] 🔍 Research first                                            ║
@@ -228,7 +228,7 @@ a comprehensive spec without re-reading the codebase.
 ║                                                                   ║
 ║  Task: split-parser-into-multiple-classes                         ║
 ║                                                                   ║
-║  [A] 🏗️ Interface-based extraction                                ║
+║  [A] 🏗️ Interface-based extraction                                 ║
 ║      Cleaner abstraction, more upfront work                       ║
 ║      Best for: Long-term maintainability                          ║
 ║                                                                   ║
