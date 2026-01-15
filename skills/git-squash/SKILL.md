@@ -15,11 +15,29 @@ description: Safely squash multiple commits into one with automatic backup and v
 3. **Verify immediately** - no changes lost or added
 4. Cleanup backup only after verification passes
 
-## Quick Workflow
+## Workflow Selection
+
+**CRITICAL: Choose workflow based on commit position.**
 
 ```bash
-# 1. Position HEAD at last commit to squash
-git checkout <last-commit-to-squash>
+# Check if commits are at tip of branch
+LAST_COMMIT="<last-commit-to-squash>"
+BRANCH_TIP=$(git rev-parse HEAD)
+
+if [ "$(git rev-parse $LAST_COMMIT)" = "$BRANCH_TIP" ]; then
+    echo "Commits at tip → Use Quick Workflow (soft reset)"
+else
+    echo "Commits in middle of history → Use Interactive Rebase Workflow"
+fi
+```
+
+## Quick Workflow (Commits at Branch Tip Only)
+
+**Use ONLY when squashing the most recent commits on a branch.**
+
+```bash
+# 1. Verify commits are at tip
+git log --oneline -1  # Should show <last-commit-to-squash>
 
 # 2. Create backup
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
@@ -41,15 +59,65 @@ git commit -m "Unified message describing what code does"
 git diff "$BACKUP"  # Must be empty
 git rev-list --count <base-commit>..HEAD  # Must be 1
 
-# 8. Update branch and cleanup
-git branch -f main HEAD
-git checkout main
+# 8. Cleanup backup
 git branch -D "$BACKUP"
+```
+
+## Interactive Rebase Workflow (Commits in Middle of History)
+
+**Use when commits to squash have other commits after them.**
+
+```bash
+# 1. Create backup of current branch
+BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
+git branch "$BACKUP"
+
+# 2. Create sequence editor script
+FIRST_COMMIT="<first-commit-to-squash>"  # Keep this one, squash others into it
+COMMITS_TO_SQUASH="<second-commit> <third-commit> ..."  # These get squashed
+
+cat > /tmp/squash-editor.sh << EOF
+#!/bin/bash
+$(for c in $COMMITS_TO_SQUASH; do echo "sed -i 's/^pick $c/squash $c/' \"\$1\""; done)
+EOF
+chmod +x /tmp/squash-editor.sh
+
+# 3. Create commit message editor script
+cat > /tmp/msg-editor.sh << 'EOF'
+#!/bin/bash
+cat > "$1" << 'MSG'
+<your unified commit message here>
+MSG
+EOF
+chmod +x /tmp/msg-editor.sh
+
+# 4. Run interactive rebase
+BASE_COMMIT="<parent-of-first-commit>"
+GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
+
+# 5. Verify no changes lost
+git diff "$BACKUP"  # Must be empty
+
+# 6. Cleanup
+git branch -D "$BACKUP"
+rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 ```
 
 ## Critical Rules
 
-### Position HEAD First
+### Use Correct Workflow for Commit Position
+
+```bash
+# WRONG - Using soft reset workflow for mid-history commits
+git checkout <mid-history-commit>
+git reset --soft <base>
+git branch -f main HEAD  # LOSES all commits after the squash range!
+
+# CORRECT - Use interactive rebase for mid-history commits
+GIT_SEQUENCE_EDITOR=... git rebase -i <base>  # Preserves all commits
+```
+
+### Position HEAD First (Quick Workflow Only)
 ```bash
 # WRONG - HEAD beyond squash range
 git reset --soft <base>  # Squashes ALL commits to current HEAD!
