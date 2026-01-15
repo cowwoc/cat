@@ -164,6 +164,81 @@ Loop until "Create it" selected.
 
 </step>
 
+<step name="configure_gates">
+
+**Configure entry and exit gates:**
+
+Gates define when tasks in this version can start (entry) and when the version is complete (exit).
+
+**1. Entry Gate:**
+
+Use AskUserQuestion:
+- header: "Entry Gate"
+- question: "When can tasks in v$MAJOR.$NEXT_MINOR start?"
+- options:
+  - "Previous version complete (Recommended)" - v$MAJOR.{NEXT_MINOR-1} must be done
+  - "No prerequisites" - tasks can start anytime
+  - "Specific conditions" - let me define custom conditions
+
+**If "Previous version complete":**
+- Set entry gate to: `Previous minor version ($MAJOR.{NEXT_MINOR-1}) complete`
+- For first minor (X.0), inherit from major version gate or "No prerequisites"
+
+**If "Specific conditions":**
+
+Use AskUserQuestion:
+- header: "Entry Conditions"
+- question: "Select entry conditions (multiple allowed):"
+- multiSelect: true
+- options:
+  - "Previous version complete" - previous minor must be done
+  - "Specific task(s) complete" - named tasks must be done first
+  - "Manual approval required" - explicit sign-off before starting
+  - "Custom condition" - freeform text
+
+If "Specific task(s) complete" selected:
+- Ask: "Which task(s) must complete first? (e.g., 0.5-design-review)"
+
+If "Custom condition" selected:
+- Ask: "Describe the custom entry condition:"
+
+**2. Exit Gate:**
+
+Use AskUserQuestion:
+- header: "Exit Gate"
+- question: "When is v$MAJOR.$NEXT_MINOR complete?"
+- options:
+  - "All tasks complete (Recommended)" - standard behavior
+  - "Specific conditions" - let me define custom conditions
+  - "No exit criteria" - manual decision only
+
+**If "All tasks complete":**
+- Set exit gate to: `All tasks complete`
+
+**If "Specific conditions":**
+
+Use AskUserQuestion:
+- header: "Exit Conditions"
+- question: "Select exit conditions (multiple allowed):"
+- multiSelect: true
+- options:
+  - "All tasks complete" - every task in this version done
+  - "Specific task(s) complete" - only named tasks required
+  - "Tests passing" - test suite must pass
+  - "Code review complete" - review sign-off required
+  - "Manual sign-off" - explicit approval required
+  - "Custom condition" - freeform text
+
+If "Specific task(s) complete" selected:
+- Ask: "Which task(s) are required? (leave blank if TBD)"
+
+If "Custom condition" selected:
+- Ask: "Describe the custom exit condition:"
+
+**Store gate configuration for use in create_plan step.**
+
+</step>
+
 <step name="create_structure">
 
 **Create minor version directory structure:**
@@ -202,6 +277,16 @@ mkdir -p "$MINOR_PATH/task"
 
 ## Scope
 {scope type from discussion}
+
+## Gates
+
+### Entry
+{entry gate conditions from configure_gates step, one per line with "- " prefix}
+{If no conditions: "- No prerequisites"}
+
+### Exit
+{exit gate conditions from configure_gates step, one per line with "- " prefix}
+{If no conditions: "- All tasks complete"}
 
 ## Tasks
 *No tasks defined yet. Use `/cat:add-task {major}.{minor}` to add tasks.*
@@ -298,8 +383,9 @@ Minor version created:
 - [ ] Target major version validated
 - [ ] Next minor version number determined
 - [ ] Discussion captured focus and scope
+- [ ] Entry and exit gates configured
 - [ ] Directory structure created
-- [ ] STATE.md, PLAN.md, CHANGELOG.md created
+- [ ] STATE.md, PLAN.md (with Gates section), CHANGELOG.md created
 - [ ] ROADMAP.md updated
 - [ ] Parent STATE.md updated
 - [ ] All committed to git
