@@ -239,7 +239,7 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 Display welcome banner:
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  🎮 WELCOME TO YOUR DEVELOPMENT ADVENTURE                         ║
+║  🎮 WELCOME TO YOUR DEVELOPMENT ADVENTURE                          ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  A few quick questions to understand your style.                  ║
@@ -320,7 +320,7 @@ git commit -m "docs: initialize CAT planning structure"
 Display completion banner:
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  ✨ YOUR ADVENTURE AWAITS                                         ║
+║  ✨ YOUR ADVENTURE AWAITS                                          ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Style: [approach] │ Reviews: [stakeholderReview]                 ║
