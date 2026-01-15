@@ -36,6 +36,26 @@ This outputs JSON with:
 
 If the script fails with "No planning structure found", inform user to run `/cat:init`.
 
+**Additionally, collect gate status:**
+
+For each version, read its PLAN.md and extract the `## Gates` section:
+```bash
+# For each minor version, check gates
+for version_dir in .claude/cat/v*/v*.*; do
+  plan_file="$version_dir/PLAN.md"
+  [ -f "$plan_file" ] && grep -A 20 "^## Gates" "$plan_file" 2>/dev/null
+done
+```
+
+Parse gate conditions and evaluate their status:
+- For entry gates: check if conditions are met
+- For exit gates: count how many conditions are satisfied
+
+Store gate status for each version:
+- `entry_gate_satisfied`: boolean
+- `entry_gate_blocking`: string (unmet condition, if any)
+- `exit_gate_progress`: string (e.g., "2/3 conditions met")
+
 </step>
 
 <step name="render">
@@ -80,8 +100,22 @@ tool call wrappers, output the styled text directly as part of your response.
    📋 ... and {N} more pending tasks
 
 🔳 v{N}.{M}: {Future minor} ({completed}/{total})
+   🚧 Entry gate: waiting on v{N}.{M-1} completion
 
 └────────────────────────────────────────────────────────────────────┘
+
+**Gate status indicators (show inline with version when applicable):**
+
+For versions with unsatisfied entry gates:
+```
+🚧 v{N}.{M}: {Minor description} ({completed}/{total})
+   🚧 Entry gate: waiting on {unmet condition}
+```
+
+For current/in-progress versions, show exit gate progress:
+```
+🔄 **v{N}.{M}: {Current minor}** ({completed}/{total}) | Exit: 2/3 conditions
+```
 
 ═══════════════════════════════════════════════════════════════════════
 🎯 **Current Quest:** v{N}.{M} - {Minor version description}
@@ -97,7 +131,7 @@ tool call wrappers, output the styled text directly as part of your response.
 
 ---
 
-**Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked
+**Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
 
 **Progress bar format:** Use block characters: `█` for filled, `░` for empty.
 Example: `[████████████████░░░░]` for 80% complete.
@@ -125,13 +159,30 @@ The visual structure renders correctly in the terminal without needing ANSI esca
 
 <step name="blockers">
 
-**Identify blocked tasks:**
+**Identify blocked tasks and versions:**
 
-If any tasks are blocked, list them after the legend:
+If any tasks are blocked by dependencies, list them:
 
-**🚫 BLOCKED:**
+**🚫 BLOCKED TASKS:**
 🚫 v1.1/optimize-ir - waiting on: generate-ir
-🚫 v2.0/emit-code - waiting on: v1 completion
+🚫 v2.0/emit-code - waiting on: v1.5-core-complete
+
+If any versions have unsatisfied entry gates, list them:
+
+**🚧 ENTRY GATES NOT MET:**
+🚧 v0.6 - waiting on: v0.5 completion
+🚧 v1.0 - waiting on: Major 0 completion
+🚧 v1.2 - waiting on: manual approval
+
+To override an entry gate for a specific task:
+```
+/cat:execute-task {version}-{task} --override-gate
+```
+
+To configure gates:
+```
+/cat:config → 📊 Version Gates
+```
 
 </step>
 
@@ -167,11 +218,13 @@ The status output should be:
 
 - [ ] All major versions displayed
 - [ ] All minor versions under each major displayed
-- [ ] All tasks with correct status emojis (☑️ 🔄 🔳 🚫)
+- [ ] All tasks with correct status emojis (☑️ 🔄 🔳 🚫 🚧)
+- [ ] Gate status shown for versions with entry/exit gates
+- [ ] Versions with unsatisfied entry gates show 🚧 indicator
 - [ ] Progress bar accurate
 - [ ] Current minor version bolded
 - [ ] NEXT STEPS table renders with bold [**1**] and [**2**]
-- [ ] Legend displayed
-- [ ] Blocked tasks listed (if any)
+- [ ] Legend displayed (including 🚧 Gate Waiting)
+- [ ] Blocked tasks and gate-blocked versions listed (if any)
 
 </success_criteria>

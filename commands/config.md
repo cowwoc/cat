@@ -4,6 +4,8 @@ description: Interactive wizard to customize your CAT adventure settings
 allowed-tools:
   - Bash
   - Read
+  - Write
+  - AskUserQuestion
 ---
 
 <objective>
@@ -83,6 +85,8 @@ If file doesn't exist, inform user to run `/cat:init` first.
     description: "Development approach"
   - label: "🧹 Cleanup"
     description: "Worktree management"
+  - label: "📊 Version Gates"
+    description: "Entry/exit conditions for versions"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
@@ -210,6 +214,187 @@ Map: Auto-cleanup → `autoCleanupWorktrees: true`, Keep → `autoCleanupWorktre
 
 </step>
 
+<step name="version-gates">
+
+**📊 Version Gates configuration:**
+
+Display current gate overview:
+```
+╔══════════════════════════════════════════════════════════════╗
+║                                                              ║
+║                    📊 VERSION GATES                          ║
+║                                                              ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║   Gates control when work can start and when it's done.      ║
+║   Each version can have entry (start) and exit (done) gates. ║
+║                                                              ║
+║   Major gates are inherited by all minor versions.           ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+**Step 1: Select version to configure**
+
+First, scan for available versions:
+```bash
+ls -1d .claude/cat/v[0-9]*/v[0-9]*.[0-9]* 2>/dev/null | \
+  sed 's|.claude/cat/v[0-9]*/v||' | sort -V
+```
+
+Determine current minor version from ROADMAP.md (first non-completed).
+
+Use AskUserQuestion:
+- header: "Select Version"
+- question: "Which version's gates do you want to configure?"
+- options:
+  - "v{X}.{Y-1} - Previous minor" (if exists)
+  - "v{X}.{Y} - Current minor" (highlighted)
+  - "v{X}.{Y+1} - Next minor" (if exists)
+  - "Enter version number" - Custom input
+
+**If "Enter version number":**
+
+Use AskUserQuestion:
+- header: "Version"
+- question: "Enter the version number (e.g., 0.5 or just 0 for major):"
+- options: ["← Back"]
+
+Parse input to determine if major (single digit) or minor (X.Y format).
+
+**Step 2: Display current gates**
+
+Read the PLAN.md for selected version:
+```bash
+cat .claude/cat/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
+cat .claude/cat/v{major}/PLAN.md 2>/dev/null
+```
+
+Extract and display the `## Gates` section:
+```
+┌──────────────────────────────────────────────────────────────┐
+│  📊 Gates for v{version}                                     │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ENTRY (when can work start?):                               │
+│  • {condition 1}                                             │
+│  • {condition 2}                                             │
+│                                                              │
+│  EXIT (when is it done?):                                    │
+│  • {condition 1}                                             │
+│  • {condition 2}                                             │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+If no gates section exists, display:
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ⚠️ No gates configured for v{version}                       │
+│                                                              │
+│  Default behavior applies:                                   │
+│  • Entry: Previous version must complete                     │
+│  • Exit: All tasks must complete                             │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Step 3: Choose action**
+
+Use AskUserQuestion:
+- header: "Action"
+- question: "What would you like to do?"
+- options:
+  - label: "Edit entry gate"
+    description: "Change when work can start"
+  - label: "Edit exit gate"
+    description: "Change completion criteria"
+  - label: "View another version"
+    description: "Select a different version"
+  - label: "← Back"
+    description: "Return to main menu"
+
+**Step 4a: Edit entry gate**
+
+Use AskUserQuestion:
+- header: "Entry Gate"
+- question: "Select entry conditions (current: {current conditions}):"
+- multiSelect: true
+- options:
+  - "Previous version complete" - sequential dependency
+  - "Specific task(s) complete" - named tasks required
+  - "Specific version(s) complete" - named versions required
+  - "Manual approval required" - explicit sign-off
+  - "No prerequisites" - clear all entry conditions
+  - "Custom condition" - freeform text
+
+If "Specific task(s) complete":
+- Ask: "Which task(s)? (e.g., 0.5-design-review, comma-separated)"
+
+If "Specific version(s) complete":
+- Ask: "Which version(s)? (e.g., 0.3, 0.4, comma-separated)"
+
+If "Custom condition":
+- Ask: "Describe the custom entry condition:"
+
+**Step 4b: Edit exit gate**
+
+Use AskUserQuestion:
+- header: "Exit Gate"
+- question: "Select exit conditions (current: {current conditions}):"
+- multiSelect: true
+- options:
+  - "All tasks complete" - every task in version done
+  - "Specific task(s) complete" - only named tasks required
+  - "Tests passing" - test suite must pass
+  - "Code review complete" - review sign-off
+  - "Manual sign-off" - explicit approval
+  - "No exit criteria" - clear all exit conditions
+  - "Custom condition" - freeform text
+
+If "Specific task(s) complete":
+- Ask: "Which task(s)? (comma-separated)"
+
+If "Custom condition":
+- Ask: "Describe the custom exit condition:"
+
+**Step 5: Update PLAN.md**
+
+Read the version's PLAN.md, update the `## Gates` section:
+
+```markdown
+## Gates
+
+### Entry
+- {condition 1}
+- {condition 2}
+
+### Exit
+- {condition 1}
+- {condition 2}
+```
+
+If the PLAN.md doesn't have a `## Gates` section, insert it after `## Focus` or `## Vision`.
+
+Write the updated PLAN.md using the Write tool.
+
+**Step 6: Confirm and loop**
+
+Display confirmation:
+```
+┌──────────────────────────────────────────────────────────────┐
+│  ✓ Gates updated for v{version}                              │
+│                                                              │
+│  Entry: {summary of entry conditions}                        │
+│  Exit:  {summary of exit conditions}                         │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Return to Step 3 (Choose action) to allow further edits or navigation.
+
+</step>
+
 <step name="update-config">
 
 **Update configuration file:**
@@ -296,6 +481,8 @@ If no changes:
 - [ ] Current configuration displayed in adventure theme
 - [ ] User navigated wizard successfully
 - [ ] Settings updated in cat-config.json using safe jq pattern
+- [ ] Version gates viewable and editable via wizard
+- [ ] Gate changes saved to version PLAN.md files
 - [ ] Changes confirmed with before/after values
 
 </success_criteria>
