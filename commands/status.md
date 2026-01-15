@@ -83,7 +83,7 @@ tool call wrappers, output the styled text directly as part of your response.
 ║  📊 Progress: [████████████░░░░░░░░] **{PERCENT}%**               ║
 ║  🏆 **{COMPLETED}/{TOTAL}** tasks complete                        ║
 ║                                                                   ║
-║  ⚙️ Mode: {Interactive|YOLO}                                      ║
+║  ⚙️ Mode: {Interactive|YOLO}                                       ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
@@ -142,8 +142,13 @@ Example: `[████████████████░░░░]` for 80
 - 🔳 pending
 - 🚫 blocked (dependencies not met)
 
-**Collapse completed versions:** For completed minor versions, show only summary line.
-For current/incomplete versions, show task details.
+**Task display rules (CRITICAL):**
+- **Completed versions (☑️):** Summary line only, no tasks
+- **Current/in-progress version (🔄):** Show up to 5 pending tasks, then "📋 ... and {N} more"
+- **Blocked versions (🚧):** Summary line + gate blocking message ONLY, no individual tasks
+- **Future pending versions (🔳):** Summary line only, no tasks
+
+**Only the CURRENT active version (marked 🔄) displays its pending tasks.**
 
 **Key point:** Output this text directly in your response. Do NOT wrap it in Bash tool calls.
 The visual structure renders correctly in the terminal without needing ANSI escape codes.
@@ -226,5 +231,6 @@ The status output should be:
 - [ ] NEXT STEPS table renders with bold [**1**] and [**2**]
 - [ ] Legend displayed (including 🚧 Gate Waiting)
 - [ ] Blocked tasks and gate-blocked versions listed (if any)
+- [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions
 
 </success_criteria>
