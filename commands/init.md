@@ -224,6 +224,90 @@ created: `{path}` | modified: `{path}`
 
 </step>
 
+<step name="configure_gates" condition="Existing codebase">
+
+**Configure entry/exit gates for imported versions:**
+
+After importing version structure, configure gates for each version.
+
+Use AskUserQuestion:
+- header: "Version Gates"
+- question: "How would you like to configure entry/exit gates for imported versions?"
+- options:
+  - "Use defaults (Recommended)" - sequential dependencies, all-tasks-complete exit
+  - "Configure per version" - set gates for each major/minor version
+  - "Skip for now" - add gates later via /cat:config
+
+**If "Use defaults":**
+
+For each major version PLAN.md, add:
+```markdown
+## Gates
+
+### Entry
+- Previous major version complete
+
+### Exit
+- All minor versions complete
+```
+
+For each minor version PLAN.md, add:
+```markdown
+## Gates
+
+### Entry
+- Previous minor version complete
+
+### Exit
+- All tasks complete
+```
+
+After applying defaults, display:
+```
+┌──────────────────────────────────────────────────────────────┐
+│  📊 Default gates configured for {N} versions:               │
+│                                                              │
+│  Entry gates: Work proceeds sequentially                     │
+│  • Each minor waits for previous minor to complete           │
+│  • Each major waits for previous major to complete           │
+│                                                              │
+│  Exit gates: Standard completion criteria                    │
+│  • Minor versions: all tasks must complete                   │
+│  • Major versions: all minor versions must complete          │
+│                                                              │
+│  To customize gates for any version:                         │
+│  → /cat:config → 📊 Version Gates                            │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**If "Configure per version":**
+
+For each major version found, use AskUserQuestion:
+- header: "Major {N} Entry"
+- question: "Entry gate for Major {N}?"
+- options: ["Previous major complete", "No prerequisites", "Custom"]
+
+Then:
+- header: "Major {N} Exit"
+- question: "Exit gate for Major {N}?"
+- options: ["All minors complete", "Specific conditions", "No criteria"]
+
+For each minor version, use AskUserQuestion:
+- header: "v{X}.{Y} Entry"
+- question: "Entry gate for v{X}.{Y}?"
+- options: ["Previous minor complete", "No prerequisites", "Custom"]
+
+Then:
+- header: "v{X}.{Y} Exit"
+- question: "Exit gate for v{X}.{Y}?"
+- options: ["All tasks complete", "Specific conditions", "No criteria"]
+
+**If "Skip for now":**
+- Note in PROJECT.md: "Gates not configured. Use `/cat:config` to set up version gates."
+
+</step>
+
 <!-- COMMON STEPS -->
 
 <step name="mode">
@@ -356,6 +440,7 @@ Next: /clear -> /cat:execute-task {task} OR /cat:add-task
 | PROJECT.md captures context | ✓ | ✓ (inferred) |
 | ROADMAP.md created | ✓ | ✓ (with history) |
 | Task dirs with PLAN/STATE | - | ✓ (full content) |
+| Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
 | Git committed | ✓ | ✓ |
 
