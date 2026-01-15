@@ -109,7 +109,7 @@ Update STATE.md:
 - Status: `in-progress`
 - Last Updated: current timestamp
 
-### 4. Delegate Exploration
+### 4. Delegate Exploration (with Duplicate Detection)
 
 **CRITICAL**: Main agent is orchestrator only. Delegate ALL work to subagents.
 
@@ -120,7 +120,16 @@ Task tool invocation:
   description: "Explore {task} implementation"
   subagent_type: "Explore"
   prompt: |
-    Analyze code for {task-name}. Return:
+    Analyze code for {task-name}.
+
+    **DUPLICATE CHECK (FIRST):**
+    Before exploring, check if functionality already exists:
+    1. Search for key methods/classes mentioned in PLAN.md
+    2. Check if tests exist for scenarios in STATE.md
+    3. If functionality exists AND tests pass:
+       Return "DUPLICATE: [evidence]" and STOP immediately
+
+    **If NOT duplicate, continue with:**
     1. Relevant method locations and signatures
     2. Current implementation patterns
     3. Existing test coverage
@@ -128,6 +137,16 @@ Task tool invocation:
 
     RETURN FINDINGS ONLY. Do NOT implement changes.
 ```
+
+**If exploration returns DUPLICATE:**
+
+Skip remaining steps. Mark task as duplicate:
+1. Update STATE.md: status=completed, resolution=duplicate
+2. Commit STATE.md only (no Task ID footer)
+3. Cleanup worktree, release lock
+4. Offer next task
+
+This saves ~10-15 minutes by avoiding unnecessary planning and implementation subagents.
 
 ### 5. Delegate Planning (M091)
 
