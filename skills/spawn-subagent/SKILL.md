@@ -39,6 +39,10 @@ CRITICAL PROHIBITIONS (enforced by hooks):
 - NEVER delete .git/refs/original without explicit user request
 - Tests for bugfixes belong in SAME commit as the fix, not separate
 
+COMMIT SEPARATION (M089):
+- .claude/rules/ updates → separate config: commit (not bundled with bugfix/feature)
+- STATE.md updates → same commit as implementation (M076/M077)
+
 These are ABSOLUTE rules. Violation will be detected and blocked.
 ```
 
@@ -241,6 +245,28 @@ CODE STYLE:
 - Tests for bugfixes belong in SAME commit as the fix
 ```
 
+**Token Tracking Requirements (for accurate estimate comparison):**
+```
+TOKEN TRACKING (MANDATORY - required for estimate validation):
+- Track cumulative token usage across the ENTIRE session
+- If context compaction occurs, PRESERVE pre-compaction token count
+- Write TOTAL tokens (pre-compaction + post-compaction) to .completion.json
+- Include: inputTokens, outputTokens, tokensUsed (total), compactionEvents count
+
+ON COMPLETION, write .completion.json with cumulative totals:
+{
+  "status": "success|partial|failed",
+  "tokensUsed": {CUMULATIVE_TOTAL},
+  "inputTokens": {CUMULATIVE_INPUT},
+  "outputTokens": {CUMULATIVE_OUTPUT},
+  "compactionEvents": {COUNT},
+  "summary": "..."
+}
+
+If compaction occurred, the pre-compaction tokens are NOT lost - they must be
+preserved and added to post-compaction usage for accurate reporting.
+```
+
 **Verification:**
 
 Before invoking Task tool, confirm:
@@ -253,6 +279,7 @@ Before invoking Task tool, confirm:
 | Parser test style notes | Parser tasks | M079 |
 | Exact code examples | Non-trivial changes | M062 |
 | Fail-fast conditions | All tasks | spawn-subagent core |
+| Token tracking instructions | All tasks | spawn-subagent core |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
 
