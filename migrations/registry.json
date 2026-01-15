@@ -1,0 +1,11 @@
+{
+  "description": "CAT migration registry - maps versions to migration scripts",
+  "usage": "Each entry runs when upgrading TO that version. Scripts run in version order.",
+  "migrations": [
+    {
+      "version": "1.0.8",
+      "script": "1.0.8.sh",
+      "description": "Add version field to existing configs"
+    }
+  ]
+}
