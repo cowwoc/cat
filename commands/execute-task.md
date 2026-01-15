@@ -44,7 +44,7 @@ This is CAT's core execution command. It:
 **MANDATORY: Display progress at each major step.**
 
 This workflow has 15 steps. Display progress at each step using the format from
-[progress-display.md § Step Progress Format](.claude/cat/references/progress-display.md#step-progress-format):
+[display-standards.md § Step Progress Format](.claude/cat/references/display-standards.md#step-progress-format):
 1. Verify planning structure
 2. Find/load task
 3. Acquire task lock
@@ -257,7 +257,7 @@ Read the task's:
 - Parent major's `STATE.md` - for context
 
 Present task overview with visual progress bar
-(see [progress-display.md § Progress Bar Format](.claude/cat/references/progress-display.md#progress-bar-format)):
+(see [display-standards.md § Progress Bar Format](.claude/cat/references/display-standards.md#progress-bar-format)):
 
 ```
 ## Task: {task-name}
@@ -429,7 +429,7 @@ Look for:
 ║                                                                   ║
 ║  Task: {task-name}                                                ║
 ║                                                                   ║
-║  [A] [Approach Name]  [⭐ RECOMMENDED if applicable]               ║
+║  [A] [Approach Name]  [⭐ RECOMMENDED if applicable]              ║
 ║      [Description]                                                ║
 ║      [If recommended: Why: {reason}]                              ║
 ║                                                                   ║
