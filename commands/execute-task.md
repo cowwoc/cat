@@ -289,6 +289,18 @@ Analyze PLAN.md to estimate token requirements:
 | Steps in PLAN.md | 2K tokens each | Count × 2000 |
 | Exploration needed | 10K tokens | +10000 if uncertain |
 
+**MANDATORY: Store the estimate for later comparison:**
+
+After calculating the estimate, record it for comparison with actual usage:
+
+```bash
+# Store estimate for later comparison (used in collect_and_report step)
+ESTIMATED_TOKENS={calculated_estimate}
+echo "Estimated tokens: ${ESTIMATED_TOKENS}"
+```
+
+This estimate will be compared against actual subagent token usage to detect estimation errors.
+
 **If estimated size > threshold:**
 
 ```
@@ -556,6 +568,38 @@ After subagent completes, invoke `/cat:collect-results` and present metrics:
 
 **Why mandatory:** Users cannot observe subagent execution. Token metrics are the only visibility
 into execution quality. Compaction events indicate potential quality degradation.
+
+**MANDATORY: Compare actual vs estimated tokens:**
+
+After collecting metrics, compare actual token usage against the estimate from step 5:
+
+```bash
+# Calculate variance (actual vs estimated)
+ACTUAL_TOKENS={total_tokens_from_collect_results}
+VARIANCE_THRESHOLD=125  # 25% higher = 125% of estimate
+
+# Calculate percentage: (actual / estimated) * 100
+ACTUAL_PERCENT=$((ACTUAL_TOKENS * 100 / ESTIMATED_TOKENS))
+
+if [ "${ACTUAL_PERCENT}" -ge "${VARIANCE_THRESHOLD}" ]; then
+  echo "⚠️ TOKEN ESTIMATE VARIANCE DETECTED"
+  echo "Estimated: ${ESTIMATED_TOKENS}"
+  echo "Actual: ${ACTUAL_TOKENS} (${ACTUAL_PERCENT}% of estimate)"
+  echo "Variance exceeds 25% threshold - triggering learn-from-mistakes"
+  # MANDATORY: Invoke learn-from-mistakes
+fi
+```
+
+**If actual >= estimate × 1.25 (25% or more higher):**
+
+Invoke `/cat:learn-from-mistakes` with:
+- Description: "Token estimate underestimated actual usage by {variance}%"
+- Estimated tokens: {ESTIMATED_TOKENS}
+- Actual tokens: {ACTUAL_TOKENS}
+- Task: {task-name}
+- Compaction events: {N}
+
+This helps calibrate estimation factors over time and identify patterns in underestimation.
 
 </step>
 
@@ -1185,6 +1229,28 @@ IMPLEMENTATION:
 **Required behavior (M063):** "I'll spawn a subagent to address that feedback." [invokes spawn-subagent]
 
 **Exception:** Trivial STATE.md updates that are purely orchestration (status changes, not code).
+
+<pre_edit_checkpoint>
+
+**MANDATORY Pre-Edit Self-Check (M088):**
+
+BEFORE using the Edit tool on ANY source file (.java, .md code docs, etc.), STOP and verify:
+
+1. **Am I the main agent?** (orchestrating a CAT task)
+2. **Is this a source/documentation file?** (not STATE.md, PLAN.md, CHANGELOG.md)
+3. **Is a subagent already running or could one be spawned?**
+
+If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
+
+**This applies even for "simple" changes:**
+- Variable renaming → subagent
+- Comment updates → subagent
+- Style fixes → subagent
+- Convention updates to style guides → subagent
+
+**Rationale:** "Simple" edits bypass the delegation boundary. If it touches code, delegate it.
+
+</pre_edit_checkpoint>
 
 </main_agent_boundaries>
 
