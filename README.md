@@ -1,192 +1,195 @@
 # <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Agents that land on their feet
 
-Development should be **fun** AND **reliable**. CAT makes both happen.
+> *"Every great project is an adventure. CAT makes sure you enjoy the journey."*
 
-```
-MAJOR VERSION -> MINOR VERSION -> TASK
-     v1/            v1.0/          setup-auth/
-```
+<p align="center">
+  <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="Your Quest" width="500"/></a>
+</p>
 
-## Why CAT?
+---
 
-### 🎮 Fun: Your Development Adventure
+## The Problem with AI Projects
 
-Large AI projects often feel like babysitting—constant hand-holding, context loss,
-unpredictable results. CAT transforms this into an engaging experience:
+Large AI-assisted projects often feel like babysitting. Context overflows. Progress
+gets lost. You're constantly re-explaining what you want. The AI makes decisions you
+didn't ask for, or worse—asks permission for things that don't matter.
 
-- **Your Adventure, Your Choices** - Express your style once, make meaningful choices
-  at genuine decision points, watch your project unfold
-- **Smart Recommendations** - When you face a fork in the road, CAT suggests the
-  best path based on task characteristics (but you always choose)
-- **Visual Progress** - See your adventure map, track decisions made, celebrate
-  completed quests
-- **Flow State** - Routine tasks auto-proceed; you're only interrupted when your
-  input genuinely matters
+**CAT flips this around.**
 
-### 🛡️ Reliable: Trust the Process
+You tell CAT your style once. It learns what matters to you. Then it handles the
+routine stuff automatically while presenting you with meaningful choices at genuine
+decision points—like a well-designed game that respects your time.
 
-Fun without reliability is chaos. CAT ensures your adventure has guardrails:
+---
 
-- **Hierarchical Planning** - Break work into Major > Minor > Task levels
-- **Token-Aware Execution** - Tasks sized to fit within context limits
-- **Multi-Agent Orchestration** - Subagents execute in isolated worktrees
-- **Quality Gates** - Stakeholder reviews catch issues before merge
-- **Automatic State Tracking** - Never lose progress between sessions
-- **Continuous Improvement** - Learns from mistakes, runs retrospectives
+## Your Adventure Awaits
 
-**The Balance:** Reliability enables trust. Trust enables flow. Flow enables fun.
+<p align="center">
+  <a href="#your-adventure-awaits"><img src="docs/choose-path.svg" alt="Choose Your Path" width="500"/></a>
+</p>
+
+<p align="center">
+  <a href="#quick-start"><b>[A] Quick Start</b></a> ·
+  <a href="#how-cat-works"><b>[B] How It Works</b></a> ·
+  <a href="#commands"><b>[C] Commands</b></a>
+</p>
+
+---
 
 ## Quick Start
 
-### 1. Install
+### Step 1: Join the Adventure
 
 ```bash
-# Add the marketplace
+# Add the plugin marketplace
 /plugin marketplace add cowwoc/cat
 
-# Install the plugin
+# Install CAT
 /plugin install cat@cowwoc-claude-code-cat
 
-# Verify installation
+# Verify you're ready
 /cat:help
 ```
 
-### 2. Initialize Your Project
+### Step 2: Initialize Your Quest
 
 ```bash
-# New project
 /cat:init
-
-# Answer the guided questions about your project
 ```
 
-### 3. Start Working
+CAT will ask about your project and your preferences:
+
+<p align="center">
+  <a href="#quick-start"><img src="docs/choose-adventurer.svg" alt="Choose Your Adventurer" width="500"/></a>
+</p>
+
+Your answers shape how CAT makes decisions throughout your project.
+
+### Step 3: Chart Your Course
 
 ```bash
-# Add your first major version
+# Define your first major version (the big picture)
 /cat:add-major-version
 
-# Add tasks to it
-/cat:add-task 1.0
+# Add tasks (optionally specify target version)
+/cat:add-task [version]
 
-# Execute tasks
+# See your adventure map
+/cat:status
+```
+
+### Step 4: Begin the Quest
+
+```bash
 /cat:execute-task
 ```
 
-## Development Philosophy
+CAT spawns a subagent in an isolated worktree, executes the task, and presents
+you with results at a checkpoint:
 
-CAT is built on a simple insight: **development is more fun when you can trust the process**.
+<p align="center">
+  <a href="#quick-start"><img src="docs/checkpoint.svg" alt="Checkpoint" width="500"/></a>
+</p>
 
-When you trust that:
-- Context won't overflow mid-task
-- Progress won't be lost between sessions
-- Quality gates will catch problems
-- Mistakes will be learned from
+---
 
-...then you can relax into the adventure. Make bold choices. Try the comprehensive
-refactor. Let the system handle the bookkeeping while you focus on the creative decisions.
+## How CAT Works
 
-**Your Role:** Express your style, make meaningful choices, guide the direction.
+### The Map: Hierarchical Planning
 
-**CAT's Role:** Handle execution, track state, ensure quality, learn and improve.
+Every adventure needs a map. CAT organizes work into three levels:
 
-## Commands Reference
+<p align="center">
+  <a href="#the-map-hierarchical-planning">
+    <img src="docs/hierarchy.svg" alt="Hierarchy" width="500"/>
+  </a>
+</p>
 
-### Core Workflow
+- **Major versions** are your milestones (v1: "Core Features", v2: "Polish & Performance")
+- **Minor versions** group related work (v1.0: "Authentication", v1.1: "User Profiles")
+- **Tasks** are individual quests sized to fit in a single session
 
-| Command | Description |
-|---------|-------------|
-| `/cat:init` | Initialize CAT structure (new or existing project). Guided wizard creates PROJECT.md, ROADMAP.md, and config. |
-| `/cat:execute-task [id]` | Execute a task. Creates worktree, runs work, handles approval gate, merges to main. ID format: `1.0-task-name` |
-| `/cat:status` | Show visual tree of all versions and tasks with progress bars and status indicators. |
-| `/cat:help` | Display complete command and skill reference. |
+### The Compass: Your Preferences
 
-### Adding Structure
+During `/cat:init`, you choose your adventurer style:
 
-| Command | Description |
-|---------|-------------|
-| `/cat:add-major-version` | Add a new major version. Collaborative discussion helps crystallize your vision. |
-| `/cat:add-minor-version [major]` | Add minor version to a major (e.g., `1` adds v1.1). For bugfixes and smaller features. |
-| `/cat:add-task [major.minor]` | Add task to minor version (e.g., `1.0` adds to v1.0). Generates comprehensive PLAN.md. |
+| Preference | What it Controls |
+|------------|------------------|
+| **Approach** | How CAT recommends paths at decision points |
+| **Stakeholder Review** | When to summon the review council |
+| **Refactoring** | Whether to clean up code you pass by |
 
-### Removing Structure
+These aren't just settings—they're how CAT learns to think like you.
 
-| Command | Description |
-|---------|-------------|
-| `/cat:remove-major-version` | Remove a major version and all its contents. |
-| `/cat:remove-minor-version` | Remove a minor version and all its tasks. |
-| `/cat:remove-task` | Remove a specific task. |
+### The Journey: Task Lifecycle
 
-### Utilities
+<p align="center">
+  <a href="#the-journey-task-lifecycle">
+    <img src="docs/task-lifecycle.svg" alt="Task Lifecycle" width="500"/>
+  </a>
+</p>
 
-| Command | Description |
-|---------|-------------|
-| `/cat:cleanup` | Clean up abandoned worktrees, lock files, and orphaned branches from crashed sessions. |
-| `/cat:research [topic]` | Research implementation approaches before planning. Use for moderate/high complexity features where the best approach isn't obvious. |
+Each task follows this path:
 
-## Session Instructions
+1. **Planning** → PLAN.md defines the quest objectives
+2. **Approach Selection** → At forks in the road, you choose the path
+3. **Execution** → Subagent works in isolation (no risk to your main branch)
+4. **Verification** → Build, test, lint—all must pass
+5. **Review** → Optional stakeholder council weighs in
+6. **Checkpoint** → You approve or request changes
+7. **Completion** → Merged to main, progress saved
 
-CAT automatically injects the following instructions into Claude's context on every session start
-(including after context compaction). These ensure consistent behavior without modifying your
-project's CLAUDE.md file.
+### The Safety Net: Reliability Features
 
-### User Input Handling
-- Process ALL user input IMMEDIATELY, regardless of how it arrives
-- User input sources: direct messages, system-reminders with "The user sent the following message:",
-  or system-reminders with "MUST"/"Before proceeding"/"AGENT INSTRUCTION"
-- Priority order: mandatory system-reminders → hook actions → user message content
-- When input arrives mid-operation: stop, add to TodoWrite, acknowledge before continuing
-- Never ignore issues or assume you'll remember—always TodoWrite immediately
+Adventures are more fun when you're not worried about falling:
 
-### Mistake Handling
-- Invoke `learn-from-mistakes` skill for ANY mistake (protocol violations, rework, failures)
-- Analyzes root cause, implements prevention, records learning for retrospectives
+- **Token-Aware Tasks** → Tasks sized to fit within context limits
+- **Isolated Worktrees** → Each task runs in its own git worktree
+- **Automatic State Tracking** → Never lose progress between sessions
+- **Learn from Mistakes** → CAT analyzes failures and prevents repeats
+- **Quality Gates** → Multi-perspective reviews catch issues early
 
-### Skill Workflow Compliance
-- When a skill is invoked, follow its documented workflow COMPLETELY
-- Never invoke a skill then manually do a subset of steps
-- Execute every step in sequence; if a step doesn't apply, note why and continue
+---
 
-### Commit Before Review
-- ALWAYS commit changes BEFORE asking users to review implementation
-- Users cannot see unstaged changes in their environment
-- Pattern: Implement → Commit → Then ask for review
+## Commands
 
-## Project Structure
+### Your Main Actions
 
-After running `/cat:init`:
+| Command | What It Does |
+|---------|--------------|
+| `/cat:init` | Start a new adventure (creates project structure) |
+| `/cat:status` | View your adventure map with progress |
+| `/cat:execute-task` | Begin or continue a quest |
+| `/cat:help` | Quick reference for all commands |
 
-```
-your-project/
-└── .claude/cat/
-    ├── PROJECT.md              # Project overview, goals, requirements
-    ├── ROADMAP.md              # High-level version summaries
-    ├── cat-config.json         # Plugin configuration
-    └── v1/                     # Major version 1
-        ├── STATE.md            # Major version state & progress
-        ├── PLAN.md             # Business-level objectives
-        ├── CHANGELOG.md        # What was accomplished (aggregates tasks)
-        └── v1.0/               # Version 1.0 (major 1, minor 0)
-            ├── STATE.md        # Minor version state
-            ├── PLAN.md         # Feature-level plan
-            ├── CHANGELOG.md    # Minor changelog (aggregates tasks)
-            └── setup-auth/     # Individual task
-                ├── STATE.md    # Task state (pending/in-progress/completed)
-                └── PLAN.md     # Detailed execution steps
-```
+### Building Your Map
 
-> **NOTE**: Task changelog content is embedded in commit messages, not separate files.
+| Command | What It Does |
+|---------|--------------|
+| `/cat:add-major-version` | Add a new chapter to your story |
+| `/cat:add-minor-version` | Add a section within a chapter |
+| `/cat:add-task` | Add a quest to tackle |
+| `/cat:research` | Scout ahead before committing to a path |
+
+### Housekeeping
+
+| Command | What It Does |
+|---------|--------------|
+| `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
+| `/cat:update-preferences` | Change your adventurer style |
+| `/cat:remove-task` | Remove a quest from the map |
+
+---
 
 ## Configuration
 
-Edit `.claude/cat/cat-config.json`:
+Your adventure settings live in `.claude/cat/cat-config.json`:
 
 ```json
 {
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "autoCleanupWorktrees": true,
   "adventureMode": {
     "enabled": true,
     "preferences": {
@@ -198,149 +201,97 @@ Edit `.claude/cat/cat-config.json`:
 }
 ```
 
-### Configuration Options
+### Mode Selection
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `yoloMode` | boolean | `false` | When `true`, skips approval gates and auto-proceeds. When `false`, requires user approval at each task completion. |
-| `contextLimit` | number | `200000` | Total context window size in tokens. Set based on your Claude model's limit. |
-| `targetContextUsage` | number | `40` | Target maximum context usage as a percentage (40 = 40%). Tasks are sized to stay within this limit. At 200K context, 40 means ~80K tokens per task. |
-
-### Adventure Mode Preferences
-
-These preferences shape how CAT makes autonomous decisions. Set during `/cat:init` or update with `/cat:update-preferences`.
-
-| Preference | Values | Effect |
-|------------|--------|--------|
-| `approach` | `conservative`, `balanced`, `aggressive` | Influences approach recommendations at decision points |
-| `stakeholderReview` | `always`, `high-risk-only`, `never` | Controls when multi-perspective review triggers |
-| `refactoring` | `avoid`, `opportunistic`, `eager` | Determines cleanup behavior on adjacent code |
-| `autoCleanupWorktrees` | boolean | `true` | When `true`, automatically removes worktrees and task branches after successful merge. When `false`, keeps them for manual inspection. |
-
-### Operating Modes
-
-**Interactive Mode** (default, `yoloMode: false`)
-- Approval gates at task completion
-- Review changes before merge
-- Request modifications if needed
+**Interactive Mode** (`yoloMode: false`) — *Recommended*
+- Checkpoints after each task
+- You review and approve changes
 - Full control over what gets merged
 
-**YOLO Mode** (`yoloMode: true`)
-- Approval gates skipped
-- Automatic merge on task completion
-- Faster execution for trusted workflows
-- Best for well-defined, low-risk tasks
+**YOLO Mode** (`yoloMode: true`) — *For the bold*
+- Automatic progression
+- Skips approval checkpoints
+- Best for well-defined, low-risk work
 
-## Available Skills
+---
 
-Skills are internal capabilities used by commands. Some can be invoked directly.
+## Skills Reference
 
-**Important:** When invoking skills via the Skill tool, use the full name with `cat:` prefix:
-- `/cat:learn-from-mistakes` or `Skill(skill: "cat:learn-from-mistakes")`
-- The `cat:` prefix is required for all CAT skills
+Skills are specialized abilities CAT can invoke. Most run automatically, but some
+you can call directly:
 
 ### Git Operations
-| Skill | Description |
-|-------|-------------|
-| `git-commit` | Guided commit message writing |
-| `git-squash` | Safely squash commits with backup and verification |
-| `git-rebase` | Safe rebase with automatic backup and conflict handling |
-| `git-amend` | Safely amend commits with HEAD verification |
-| `git-merge-linear` | Merge with linear history and verification |
+`git-commit` · `git-squash` · `git-rebase` · `git-amend` · `git-merge-linear`
 
-### Multi-Agent
-| Skill | Description |
-|-------|-------------|
-| `spawn-subagent` | Launch subagent with task context in isolated worktree |
-| `monitor-subagents` | Check status of running subagents including token usage |
-| `collect-results` | Gather results from completed subagents |
-| `merge-subagent` | Merge subagent branch with conflict resolution |
-| `parallel-execute` | Orchestrate multiple independent subagents concurrently |
+### Multi-Agent Coordination
+`spawn-subagent` · `monitor-subagents` · `collect-results` · `merge-subagent` · `parallel-execute`
 
-### Task Management
-| Skill | Description |
-|-------|-------------|
-| `decompose-task` | Split oversized task into smaller tasks |
-| `token-report` | Generate detailed token usage report |
-| `run-retrospective` | Run scheduled retrospective analysis |
-| `stakeholder-review` | Multi-perspective review (architect, security, quality, tester, performance) |
+### Quality & Learning
+`stakeholder-review` · `learn-from-mistakes` · `run-retrospective` · `decompose-task`
 
-### Development
-| Skill | Description |
-|-------|-------------|
-| `tdd-implementation` | Test-driven development workflow |
-| `learn-from-mistakes` | Analyze mistakes and implement prevention |
-| `batch-read` | Read multiple files efficiently (50-70% faster) |
-| `grep-and-read` | Find and read files in one operation |
+---
 
-### Utilities
-| Skill | Description |
-|-------|-------------|
-| `safe-rm` | Safely remove files without breaking shell |
-| `validate-git-safety` | Validate git operations won't affect protected branches |
+## Project Structure
 
-## Task Lifecycle
+After `/cat:init`, your project gains an adventure journal:
 
 ```
-PENDING → IN-PROGRESS → COMPLETED
-   │           │            │
-   │           │            └── Merged to main, worktree cleaned
-   │           └── Executing in isolated worktree
-   └── Dependencies not yet met
+your-project/
+└── .claude/cat/
+    ├── PROJECT.md          # Your quest overview
+    ├── ROADMAP.md          # The big picture
+    ├── cat-config.json     # Your preferences
+    └── v1/                 # Major version 1
+        ├── STATE.md        # Chapter progress
+        ├── PLAN.md         # Chapter objectives
+        └── v1.0/           # Minor version
+            ├── STATE.md    # Section progress
+            └── setup-auth/ # Individual task
+                ├── STATE.md
+                └── PLAN.md
 ```
 
-1. **Task Created** - PLAN.md defines what to do
-2. **Dependencies Check** - Waits for task and minor version dependencies
-3. **Size Analysis** - Auto-decompose if estimated tokens exceed threshold
-4. **Worktree Created** - Isolated git worktree for safe execution
-5. **Execution** - Subagent execution with token tracking and metrics reporting
-6. **Build Verification** - Compile, test, lint checks must pass
-7. **Stakeholder Review** - Multi-perspective review (architect, security, quality, tester, performance)
-8. **Approval Gate** - User reviews changes (interactive mode)
-9. **Merge & Cleanup** - STATE.md updated, commits squashed by type, merged to main, worktree removed
+---
 
-## Status Indicators
+## Tips for a Successful Adventure
 
-When viewing `/cat:status`:
+**Start small** — Begin with one major version and a few tasks. Expand as you
+find your rhythm.
 
-| Symbol | Meaning |
-|--------|---------|
-| `[x]` | Completed |
-| `[>]` | In progress |
-| `[ ]` | Pending |
-| `[!]` | Blocked (dependencies not met) |
+**Check your map** — Run `/cat:status` often. It shows where you are and
+suggests next steps.
 
-## Tips
+**Scout unfamiliar territory** — Use `/cat:research` before tackling complex
+features in unknown domains.
 
-- **Start small** - Begin with one major version and a few tasks
-- **Clear `/clear`** - Run `/clear` between tasks for fresh context
-- **Check status** - Use `/cat:status` to see where you are
-- **Research first** - Use `/cat:research` for unfamiliar domains before planning
-- **YOLO wisely** - Only enable YOLO mode for well-understood, low-risk work
+**Clear the fog** — Run `/clear` between tasks to start fresh with full context.
 
-## Uninstall
+**Trust the process** — CAT tracks state automatically. If a session ends
+mid-task, just run `/cat:execute-task` to continue where you left off.
 
-```bash
-/plugin uninstall cat
-```
+---
 
 ## Contributing
 
-CAT is primarily a driver for my own projects. It's not intended to be a kitchen sink of every
-possible feature—the focus is on doing a few things well rather than accumulating tangentially
-related functionality.
+CAT is opinionated by design. It does a few things well rather than everything
+poorly.
 
 Contributions are welcome when they:
-- Align with the plugin's existing functionality and style
 - Solve real problems encountered during structured project execution
-- Maintain the focused, opinionated nature of the tool
+- Align with the existing adventure-style workflow
+- Maintain the focused nature of the tool
 
-If you're unsure whether a contribution fits, open an issue to discuss before investing significant
-effort.
+Open an issue to discuss before investing significant effort.
+
+---
 
 ## License
 
-CAT Source-Available Commercial License - see [LICENSE.md](LICENSE.md)
+CAT Source-Available Commercial License — see [LICENSE.md](LICENSE.md)
 
 Free for personal use and small organizations (< $100K/year revenue).
 Commercial use requires a paid license.
+
+---
+
+<p align="center"><em>Now go build something amazing.</em> 🐱</p>

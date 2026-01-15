@@ -71,5 +71,31 @@
       "catches_variations": true
     },
     "correct_behavior": "Use config: for Claude-facing files (CLAUDE.md, hooks, skills, workflows). Use docs: only for user-facing documentation (README, API docs)."
+  },
+  {
+    "id": "M090",
+    "timestamp": "2026-01-14T17:00:00Z",
+    "category": "protocol_violation",
+    "description": "Used invalid commit type 'chore' instead of valid CAT types (feature, bugfix, docs, config, etc.)",
+    "root_cause": "validate-commit-type.sh hook existed but was not registered in hooks.json, so enforcement was not active",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "hook",
+    "prevention_path": "/workspace/cat/hooks/hooks.json",
+    "pattern_keywords": [
+      "commit",
+      "chore",
+      "conventional-commits",
+      "hook-registration"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use CAT commit types: feature, bugfix, test, refactor, performance, docs, style, config, planning. Hook now registered to enforce this."
   }
 ]
