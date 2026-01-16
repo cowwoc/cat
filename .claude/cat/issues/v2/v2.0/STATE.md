@@ -1,4 +1,4 @@
-# Minor Version 2.0 State: Billing
+# Minor Version 2.0 State: Licensing
 
 ## Status
 - **Status:** in-progress
@@ -6,7 +6,7 @@
 - **Started:** 2026-01-20
 
 ## Summary
-Prepare CAT for commercial release with pricing tiers, license key system, and billing integration.
+Prepare CAT for commercial release with pricing tiers and license key system.
 
 ## Tasks Completed
 - reorganize-plugin-layout
@@ -88,6 +88,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - update-work-command-paths
 - update-research-skills-paths
 - update-python-handler-paths
+- version-completion-approval-gate
 
 ## Tasks Decomposed
 - centralize-version-path-resolution (decomposed into 6 subtasks above)
