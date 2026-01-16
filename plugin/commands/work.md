@@ -44,7 +44,20 @@ This is CAT's core execution command. It:
 **MANDATORY: Use pre-computed progress format from handler.**
 
 Check conversation context for "PRE-COMPUTED WORK PROGRESS FORMAT" and render progress
-displays using those templates. The handler provides:
+displays using those templates.
+
+**CRITICAL: Copy-paste boxes verbatim from system-reminder (M246)**
+
+When the instructions say "Use the **XXX** box from PRE-COMPUTED WORK BOXES":
+1. Search conversation for "--- XXX ---" in the system-reminder
+2. Copy the ENTIRE box after that marker (all lines with ╭╮╰╯│ characters)
+3. Paste it EXACTLY - do NOT manually type or reconstruct it
+4. Only replace placeholder text like `{task-name}` with actual values
+
+**Why:** Box characters and emoji widths vary across terminals. Pre-computed boxes are tested
+for alignment; manually typed boxes will have misaligned vertical bars.
+
+The handler provides:
 
 - Header format template
 - Progress banner format with phase symbols
@@ -351,7 +364,11 @@ argument, skip the entry gate check for that specific task.
 
 **If no executable task found:**
 
-Use the **NO_EXECUTABLE_TASKS** box from PRE-COMPUTED WORK BOXES.
+**MANDATORY: Copy-paste the exact box from system-reminder (M246)**
+
+Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the PRE-COMPUTED WORK BOXES
+section. Copy the ENTIRE box structure verbatim - do NOT manually type it. Box characters and
+emoji widths vary across terminals; only the pre-computed version is guaranteed aligned.
 
 **MANDATORY: Accept find-task.sh results (M245)**
 
