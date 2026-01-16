@@ -4,15 +4,21 @@ Version 1.0
 
 ## Hi! Here's what you need to know:
 
-**Free for personal use** - Tinkering on a side project? Learning to code?
-Doing research? Go for it, no strings attached.
+| Tier | Price | Who it's for |
+|------|-------|--------------|
+| **Indie** | Free | Solo builders — full CAT, single user |
+| **Team** | $19/seat/month | Teams of 1-50 — adds collaboration features |
+| **Enterprise** | $49/seat/month | 50+ seats — adds compliance & integrations |
 
-**Free for small organizations** - If your org makes less than $100K/year,
-you're welcome to use CAT at no cost.
+**Indie is free forever** - Working alone? Building a side project? Learning?
+You get full CAT functionality at no cost. No time limits, no feature crippling.
 
-**Commercial use needs a license** - Working at a company? Using this for
-paying clients? You'll need to purchase a license. It helps keep the project
-sustainable.
+**Team unlocks collaboration** - When you need task locking (so two devs don't
+work the same task), shared config, team analytics, or cross-session handoff,
+upgrade to Team.
+
+**Enterprise adds compliance** - SSO/SAML, audit logs, issue tracker sync,
+Slack integration, custom LLM endpoints, SLA support.
 
 **Building a product with CAT?**
 - If your product runs CAT for your users (like a code formatting SaaS),
@@ -60,31 +66,47 @@ includes, but is not limited to:
 - Use by employees or contractors in the course of their employment
 - Use in developing, testing, or deploying commercial products or services
 - Use in providing paid consulting or professional services
-- Use by any organization (including non-profits) with annual revenue or
-  funding exceeding $100,000 USD
+
+**"Indie Use"** means use by a single individual user, regardless of whether
+that use is personal or commercial. Indie Use is free and does not require
+a paid license, but is limited to a single user seat.
+
+**"Team Features"** means collaboration functionality including but not limited
+to: task locking, shared configuration sync, team activity feeds, cross-session
+handoff, branch naming policies, team analytics, and project token budgets.
+
+**"Enterprise Features"** means compliance and integration functionality
+including but not limited to: SSO/SAML authentication, audit log export,
+issue tracker synchronization, messaging platform notifications, custom LLM
+endpoints, webhook APIs, data residency options, and SLA support.
 
 **"Derivative Work"** means any work that is based on or derived from the
 Software, including modifications, translations, adaptations, and works
 that incorporate substantial portions of the Software.
 
-## Grant of Rights for Personal Use
+## Grant of Rights for Indie Use
 
 Subject to the terms of this license, the Licensor grants You a worldwide,
 royalty-free, non-exclusive, non-transferable license to:
 
-1. Use the Software for Personal Use
-2. Copy and distribute the Software for Personal Use
-3. Modify the Software and create Derivative Works for Personal Use
-4. Distribute Derivative Works for Personal Use
+1. Use the Software for Indie Use (single user, personal or commercial)
+2. Copy and distribute the Software
+3. Modify the Software and create Derivative Works
+4. Distribute Derivative Works
 
-## Commercial Use Requires a Paid License
+**Indie Use is free** — A single individual may use CAT for any purpose,
+including commercial work, without purchasing a license. This grant covers
+all core CAT functionality but excludes Team Features and Enterprise Features.
 
-**Commercial Use of the Software requires a separate paid license from the
-Licensor.**
+## Team and Enterprise Features Require a Paid License
 
-If You wish to use the Software for Commercial Use, You must purchase a
-commercial license directly from the Licensor. Contact the Licensor for
-pricing and terms.
+**Access to Team Features requires a Team license ($19/seat/month).**
+
+**Access to Enterprise Features requires an Enterprise license ($49/seat/month).**
+
+If You wish to use Team Features or Enterprise Features, You must purchase
+the appropriate license directly from the Licensor. See https://cat.dev/pricing
+for current pricing and terms.
 
 ## Runtime Redistribution Requires Per-User Licensing
 
