@@ -6,6 +6,7 @@ load '../test_helper'
 setup() {
     setup_test_dir
     source "$HOOKS_LIB_DIR/json-parser.sh"
+    source "$HOOKS_LIB_DIR/json-output.sh"
 }
 
 teardown() {
