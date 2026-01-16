@@ -2,6 +2,8 @@
 name: cat:remove-major-version
 description: Remove a major version
 argument-hint: "[major]"
+model: haiku
+context: fork
 allowed-tools:
   - Read
   - Write
