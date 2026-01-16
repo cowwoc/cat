@@ -1137,7 +1137,6 @@ If no more tasks (all completed, blocked, or locked):
 Minor version {major}.{minor} is complete!
 
 Use `/cat:status` to see overall progress.
-Use `/cat:cleanup` to remove stale locks if tasks appear stuck.
 Use `/cat:add-task` to add more tasks.
 Use `/cat:add-minor-version` to add a new minor version.
 
