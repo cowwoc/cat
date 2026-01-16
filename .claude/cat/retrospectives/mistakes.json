@@ -2469,6 +2469,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use /cat:add command to create tasks, which uses templates with correct bullet-point format for STATE.md files"
+    },
+    {
+      "id": "M211",
+      "timestamp": "2026-01-23T22:25:00Z",
+      "category": "protocol_violation",
+      "description": "Ran render-diff.py but reformatted output into standard diff code block instead of presenting verbatim 4-column table",
+      "root_cause": "Agent treated tool output as data to process rather than content to display verbatim",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "render-diff",
+        "approval-gate",
+        "verbatim",
+        "reformatting"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Copy-paste the EXACT render-diff.py Bash output into response - do not extract, reformat, or summarize"
     }
   ]
 }
