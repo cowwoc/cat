@@ -105,29 +105,20 @@ git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 git commit --amend --no-edit
 ```
 
-### 7. Merge to Base Branch
+### 7. Merge to Main
 
-After approval and STATE.md update, merge from within the task worktree (no checkout needed):
-
+After approval and STATE.md update:
 ```bash
-# From task worktree - detect base branch from worktree metadata (fail-fast if missing)
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-[[ ! -f "$CAT_BASE_FILE" ]] && echo "ERROR: cat-base file missing. Recreate worktree." && exit 1
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+# Ensure main is up to date
+git checkout main
+git pull origin main
 
-# Fast-forward base branch to current HEAD
-git push . "HEAD:${BASE_BRANCH}"
+# Merge task branch (STATE.md already included)
+git merge {major}.{minor}-{task-name} --no-ff
 
-# Verify merge succeeded
-echo "Merged to $BASE_BRANCH: $(git rev-parse --short HEAD)"
+# Push to remote
+git push origin main
 ```
-
-**Why this approach:**
-- No branch checkout required (stays in worktree)
-- Maintains linear history (fast-forward only)
-- Works with any base branch (main, v1.10, etc.)
-
-See `/cat:git-merge-linear` skill for complete workflow with squashing and cleanup.
 
 ### 8. Worktree Cleanup
 

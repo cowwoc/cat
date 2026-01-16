@@ -849,33 +849,22 @@ Pass selected approach to subagent prompt to guide implementation.
 Branch naming: `{major}.{minor}-{task-name}`
 
 ```bash
-# Detect base branch (currently checked out branch in main worktree)
-BASE_BRANCH=$(git branch --show-current)
-echo "Base branch for task: $BASE_BRANCH"
+# Ensure we're on main branch
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
 
-# Create task branch from current branch (not hardcoded main)
+# Create branch if it doesn't exist
 TASK_BRANCH="{major}.{minor}-{task-name}"
-git branch "$TASK_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
+git branch "$TASK_BRANCH" "$MAIN_BRANCH" 2>/dev/null || true
 
 # Create worktree (use absolute path to avoid cwd dependency)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$TASK_BRANCH"
 git worktree add "$WORKTREE_PATH" "$TASK_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
 
-# Store base branch in worktree metadata (auto-deleted when worktree removed)
-echo "$BASE_BRANCH" > "$(git rev-parse --git-common-dir)/worktrees/$TASK_BRANCH/cat-base"
-
 # MANDATORY: Change to worktree directory
 cd "$WORKTREE_PATH"
 pwd  # Verify we're in the worktree
 ```
-
-**Base Branch Configuration:**
-
-The base branch is stored in the worktree's metadata directory at `.git/worktrees/<task>/cat-base`.
-This file is automatically deleted when the worktree is removed, preventing orphaned config entries.
-Tasks can be forked from any branch (main, v1.10, feature branches, etc.) and merge back to
-the same branch when complete.
 
 **CRITICAL: Main agent MUST work from worktree directory**
 
@@ -1240,15 +1229,8 @@ echo "Verification level: $VERIFY_LEVEL"
 
 ```bash
 # Check if any source files changed (not just STATE.md or CHANGELOG.md)
-# Read base branch from worktree metadata (set during worktree creation)
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-  echo "ERROR: Base branch file not found: $CAT_BASE_FILE"
-  echo "This worktree was not created properly. Recreate with /cat:work."
-  exit 1
-fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
-SOURCE_CHANGES=$(git diff --name-only ${BASE_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+SOURCE_CHANGES=$(git diff --name-only ${MAIN_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
 
 if [[ -z "$SOURCE_CHANGES" ]]; then
   echo "⚡ VERIFICATION: SKIPPED (no source files changed)"
@@ -1513,16 +1495,9 @@ Skip if `trust: "high"` in config.
 Users cannot review uncommitted changes. Before presenting the approval gate:
 
 ```bash
-# Verify there are commits on the task branch that aren't on base branch
-# Read base branch from worktree metadata (set during worktree creation)
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-  echo "ERROR: Base branch file not found: $CAT_BASE_FILE"
-  echo "This worktree was not created properly. Recreate with /cat:work."
-  exit 1
-fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
-COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD 2>/dev/null || echo "0")
+# Verify there are commits on the task branch that aren't on main
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+COMMIT_COUNT=$(git rev-list --count ${MAIN_BRANCH}..HEAD 2>/dev/null || echo "0")
 
 if [[ "$COMMIT_COUNT" -eq 0 ]]; then
   echo "ERROR: No commits on task branch. Commit changes before approval gate."
@@ -1605,177 +1580,25 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
-**MANDATORY: Show diff BEFORE approval question (M160).**
-
-Users cannot make informed approval decisions without seeing actual code changes. Before presenting
-the AskUserQuestion approval prompt, display the full diff:
-
-```bash
-# Show commit summary
-git log ${BASE_BRANCH}..HEAD --oneline
-
-# Show full diff content
-git diff ${BASE_BRANCH}..HEAD
-```
-
-Display the diff output directly (not just file names or statistics). The user needs to see the
-actual code changes to approve or request modifications.
-
-**Anti-pattern (M160):** Presenting approval gate with only file change summary (names, line counts)
-without showing the actual diff content. Users reject approval because they cannot evaluate changes.
-
 Use AskUserQuestion with options:
 - header: "Next Step"
 - question: "What would you like to do?"
 - options:
   - "✓ Approve and merge" - Merge to main, continue to next task
+  - "🔍 Review changes first" - I'll examine the diff
   - "✏️ Request changes" - Need modifications before proceeding
   - "✗ Abort" - Discard work entirely
 
-**If "Request changes":**
-
-Capture user feedback and spawn implementation subagent to address concerns.
-
-**MANDATORY: Main agent does NOT implement feedback directly (M063).**
-
-The main agent is an orchestrator. All code changes - including feedback fixes - MUST be delegated
-to a subagent with fresh context.
-
-**Step 1: Capture User Feedback**
-
-Use AskUserQuestion to collect specific feedback:
-- header: "Feedback"
-- question: "What changes would you like made?"
-- freeform: true (allow detailed text input)
-
-Wait for user to provide specific feedback about what needs to change.
-
-**Step 2: Gather Context for Subagent**
-
+**If "Review changes first":**
+Provide commands to review:
 ```bash
-# Get current diff for context
-BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
-git diff ${BASE_BRANCH}..HEAD > /tmp/current-implementation.diff
-
-# Get task PLAN.md path
-TASK_PLAN=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/PLAN.md"
-
-# Get worktree path (already created in create_worktree step)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${TASK_BRANCH}"
+git log {main}..{task-branch} --oneline
+git diff {main}...{task-branch}
 ```
+Wait for user to respond with approval.
 
-**Step 3: Spawn Feedback Implementation Subagent**
-
-Invoke `/cat:spawn-subagent` with feedback context:
-
-```
-Task tool invocation:
-  description: "Address user feedback for ${TASK_NAME}"
-  subagent_type: "general-purpose"
-  prompt: |
-    ADDRESS USER FEEDBACK
-
-    WORKING DIRECTORY: ${WORKTREE_PATH}
-
-    USER FEEDBACK:
-    ${user_feedback_text}
-
-    EXISTING IMPLEMENTATION:
-    Review the current implementation diff below and apply the requested changes.
-
-    CURRENT DIFF:
-    ${contents of /tmp/current-implementation.diff}
-
-    TASK PLAN REFERENCE:
-    ${TASK_PLAN contents}
-
-    VERIFICATION:
-    1. Run build/tests as appropriate for project type
-    2. All must pass
-
-    FAIL-FAST CONDITIONS:
-    - If build fails after changes, report BLOCKED with error
-    - If feedback is unclear, report BLOCKED requesting clarification
-    - Do NOT attempt workarounds - report and stop
-
-    COMMIT:
-    After verification passes, commit with message:
-    "feature: address review feedback - {brief summary of changes}"
-```
-
-**Step 4: Collect Results**
-
-Invoke `/cat:collect-results` to gather:
-- Token usage from subagent
-- Commits made
-- Files changed
-- Any discovered issues
-
-Display subagent execution report to user (MANDATORY per token reporting requirements).
-
-**Step 5: Merge Feedback Changes to Task Branch**
-
-Invoke `/cat:merge-subagent` to:
-- Merge subagent branch into task branch
-- Clean up subagent worktree
-- Update tracking state
-
-**Step 6: RE-PRESENT Approval Gate**
-
-**MANDATORY: Loop back to approval gate with updated changes.**
-
-After merging feedback changes, the approval gate MUST be re-presented. This ensures:
-- User sees updated diff reflecting their requested changes
-- User explicitly approves final implementation
-- No changes merge without explicit approval
-
-Display updated checkpoint:
-
-```
-✅ **CHECKPOINT: Feedback Applied**
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                              │
-│  **Task:** {task-name}                                                                       │
-│  **Feedback iteration:** {N}                                                                 │
-│                                                                                              │
-├──────────────────────────────────────────────────────────────────────────────────────────────┤
-│  **Feedback subagent:** {N}K tokens                                                          │
-│  **Total tokens (all iterations):** {total}K                                                 │
-├──────────────────────────────────────────────────────────────────────────────────────────────┤
-│  **Branch:** {task-branch}                                                                   │
-│                                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
-```
-
-Then re-present approval options via AskUserQuestion:
-- header: "Next Step"
-- question: "Feedback has been applied. What would you like to do?"
-- options:
-  - "✓ Approve and merge" - Merge to main, continue to next task
-  - "🔍 Review changes first" - I'll examine the updated diff
-  - "✏️ Request more changes" - Need additional modifications
-  - "✗ Abort" - Discard all work
-
-**Loop Continuation:**
-
-If user selects "Request more changes", repeat Steps 1-6 with fresh feedback.
-
-**Maximum Iterations Safety:**
-
-Track feedback iterations. If iterations exceed 5:
-
-```
-⚠️ FEEDBACK ITERATION LIMIT
-
-5 feedback iterations completed without approval.
-
-Options:
-1. Continue with current implementation
-2. Abort and start fresh
-3. Override limit and continue iterations
-```
-
-Use AskUserQuestion to capture decision.
+**If "Request changes":**
+Receive feedback and loop back to execute step.
 
 **If "Abort":**
 Clean up worktree and branch, mark task as pending.
