@@ -238,20 +238,24 @@ Implementation Phase
 
 ## Configuration
 
-Stakeholder review can be configured in `cat-config.json`:
+Stakeholder review frequency is controlled via `stakeholderReview` in `cat-config.json`:
 
 ```json
 {
-  "stakeholderReview": {
-    "enabled": true,
-    "stakeholders": ["architect", "security", "quality", "tester", "performance"],
-    "skipInYoloMode": true,
-    "maxIterations": 3
-  }
+  "yoloMode": false,
+  "stakeholderReview": "high-risk-only"
 }
 ```
 
-- `enabled`: Enable/disable stakeholder review (default: true)
-- `stakeholders`: Which stakeholders to include (default: all)
-- `skipInYoloMode`: Skip review in yolo mode (default: true)
-- `maxIterations`: Max review-fix cycles before escalating to user (default: 3)
+| Value | Behavior |
+|-------|----------|
+| `always` | Run stakeholder review on every task |
+| `high-risk-only` | Only review tasks with high-risk indicators (default) |
+| `never` | Skip stakeholder reviews entirely |
+
+**High-risk indicators** (any triggers review):
+- Risk section mentions "breaking change", "data loss", "security", "production"
+- Task modifies authentication, authorization, or payment code
+- Task touches 5+ files
+
+**Note:** Reviews are always skipped when `yoloMode: true`.

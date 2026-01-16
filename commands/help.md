@@ -208,10 +208,12 @@ Change anytime by editing `.claude/cat/cat-config.json`
 cat-config.json:
 ```json
 {
-  "yoloMode": false,           // Skip approval gates
-  "contextLimit": 200000,      // Total context window
-  "targetContextUsage": 40,    // Soft limit (40%)
-  "autoCleanupWorktrees": true // Clean after merge
+  "yoloMode": false,            // Skip approval gates
+  "contextLimit": 200000,       // Total context window
+  "targetContextUsage": 40,     // Soft limit (40%)
+  "approach": "balanced",       // conservative | balanced | aggressive
+  "stakeholderReview": "high-risk-only", // always | high-risk-only | never
+  "refactoring": "opportunistic" // avoid | opportunistic | eager
 }
 ```
 
