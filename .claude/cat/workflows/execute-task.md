@@ -99,6 +99,10 @@ Continue to create worktree step.
 ```bash
 # Main agent creates task branch and worktree
 git worktree add ../cat-worktree-{task-name} -b {major}.{minor}-{task-name}
+
+# MANDATORY: Change to worktree directory for task execution
+cd ../cat-worktree-{task-name}
+pwd  # Verify we're in the worktree
 ```
 
 Update STATE.md:
@@ -356,6 +360,10 @@ git merge --ff-only {task-branch}
 ### 14. Cleanup
 
 ```bash
+# MANDATORY: Return to main workspace before removing worktree
+cd /workspace
+pwd  # Verify we're in main workspace (not worktree)
+
 # Task worktree and branch (subagent already cleaned in step 10)
 git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
