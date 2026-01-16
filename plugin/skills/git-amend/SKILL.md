@@ -19,7 +19,7 @@ description: Safely amend commits with HEAD verification and push checks
 # Check if pushed:
 git status
 # Look for: "Your branch is ahead of 'origin/main' by X commits"
-# If it says "up to date" - DO NOT AMEND (already pushed)
+# "up to date" = already pushed (amending creates divergent history)
 ```
 
 ## Quick Workflow
@@ -70,11 +70,11 @@ git commit --amend -m "Better commit message"
 ## Dangerous Situations
 
 ```bash
-# NEVER amend if already pushed
+# Only amend unpushed commits
 git push origin main
 git commit --amend  # Creates divergent history!
 
-# NEVER amend someone else's commit
+# Only amend your own commits
 git pull  # Pulls teammate's commit
 git commit --amend  # Rewrites their work!
 

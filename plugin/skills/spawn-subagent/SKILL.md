@@ -29,15 +29,15 @@ judgment calls.
 **Subagents inherit project hooks automatically** when running in the same project directory.
 However, subagents may not follow hook guidance if not explicitly reminded.
 
-**MANDATORY: Include key prohibitions in subagent prompt:**
+**MANDATORY: Include key requirements in subagent prompt:**
 
 ```
-CRITICAL PROHIBITIONS (enforced by hooks):
-- NEVER add PMD suppression annotations - decompose code instead
-- NEVER use git merge --no-ff - use --ff-only for linear history
-- NEVER use git filter-branch - use git-filter-repo instead
-- NEVER delete .git/refs/original without explicit user request
-- Tests for bugfixes belong in SAME commit as the fix, not separate
+CRITICAL REQUIREMENTS (enforced by hooks):
+- Always decompose code instead of adding PMD suppression annotations
+- Always use git merge --ff-only for linear history
+- Always use git-filter-repo instead of git filter-branch
+- Preserve .git/refs/original unless user explicitly requests deletion
+- Include tests for bugfixes in the SAME commit as the fix
 
 COMMIT SEPARATION (M089):
 - .claude/rules/ updates → separate config: commit (not bundled with bugfix/feature)
@@ -125,8 +125,8 @@ echo "Lock verified: $LOCK_FILE owned by current session"
 **Anti-pattern (M082):** Trusting lock script return value without verifying the actual lock file.
 Lock directory must be `.claude/cat/locks/` (NOT `/tmp/cat-locks/` or other paths).
 
-**After session restart (M083):** Re-run lock verification commands. Do not rely on observations from
-before the restart - the filesystem may have changed while the session was inactive.
+**After session restart (M083):** Re-run lock verification commands. Always re-verify state after
+restart - the filesystem may have changed while the session was inactive.
 
 ## Prompt Requirements: Zero Decision Delegation
 
@@ -153,16 +153,15 @@ before the restart - the filesystem may have changed while the session was inact
 # Always include:
 FAIL-FAST CONDITIONS:
 - If [specific condition], report "BLOCKED: [reason]" and stop
-- Do NOT attempt workarounds or fallback approaches
-- Do NOT make decisions about how to proceed
-- Return findings/status for main agent to decide next steps
+- Report status and return to main agent for decisions
+- Main agent handles all workarounds and fallback choices
 ```
 
-Subagents must never use fallback behaviors - those involve decisions that users can't supervise.
+Subagents use fail-fast behavior: report BLOCKED and stop. Fallback decisions require user oversight.
 
 ### Main Agent Responsibilities (BEFORE Spawning)
 
-1. **Read all relevant code** - Don't delegate exploration
+1. **Read all relevant code** - Complete exploration before spawning
 2. **Make architectural decisions** - Which pattern, which API, which approach
 3. **Resolve ambiguities** - If PLAN.md says "handle errors appropriately", decide HOW
 4. **Identify edge cases** - Subagent executes happy path unless told otherwise
@@ -219,12 +218,12 @@ CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
 
 | Value | Include in Implementation Prompt |
 |-------|----------------------------------|
-| `low` | "Focus ONLY on the assigned task. Do NOT note or report issues outside the immediate scope." |
-| `medium` | "While working, NOTE obvious issues in files you touch (same function/class). Report them in .completion.json but do NOT fix them." |
-| `high` | "Actively look for code quality issues, patterns, and improvement opportunities in files you touch. Report ALL findings in .completion.json but do NOT fix them." |
+| `low` | "Focus ONLY on the assigned task. Report only task-related issues." |
+| `medium` | "While working, NOTE obvious issues in files you touch (same function/class). Report them in .completion.json. Fixing is handled by main agent." |
+| `high` | "Actively look for code quality issues, patterns, and improvement opportunities in files you touch. Report ALL findings in .completion.json. Fixing is handled by main agent." |
 
-**IMPORTANT:** The implementor subagent NEVER fixes discovered issues directly. It reports them
-in `.completion.json` for the main agent to handle based on the patience setting.
+**IMPORTANT:** The implementor subagent reports discovered issues in `.completion.json`. Main agent
+handles fixes based on the patience setting.
 
 **Patience Setting — Main Agent Uses This (NOT passed to subagent):**
 
@@ -264,18 +263,17 @@ Do NOT include patience instructions in implementation subagent prompts.
 **Parser Test Requirements (M079, for parser tasks only):**
 ```
 PARSER TEST STYLE:
-- Do NOT add comments describing expected node positions
-- Text blocks are self-documenting
-- Use isEqualTo(expected) NOT isSuccess()/isNotNull()/isNotEmpty()
-- Derive expected values manually, do NOT copy from actual output
+- Use text blocks which are self-documenting (skip position comments)
+- Use isEqualTo(expected) for assertions
+- Derive expected values manually from source analysis
 ```
 
 **Code Style Requirements:**
 ```
 CODE STYLE:
-- NEVER add @SuppressWarnings annotations - decompose code instead
-- NEVER swallow exceptions silently - rethrow as AssertionError
-- Tests for bugfixes belong in SAME commit as the fix
+- Decompose code instead of adding @SuppressWarnings annotations
+- Rethrow caught exceptions as AssertionError (ensure visibility)
+- Include tests for bugfixes in the SAME commit as the fix
 ```
 
 **Token Tracking Requirements (A017 - CRITICAL):**
@@ -483,10 +481,10 @@ Task tool invocation:
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
-    CRITICAL PROHIBITIONS (enforced by hooks):
-    - NEVER add PMD suppression annotations
-    - NEVER use git merge --no-ff
-    - Tests for bugfixes belong in SAME commit as the fix
+    CRITICAL REQUIREMENTS (enforced by hooks):
+    - Decompose code instead of adding PMD suppression annotations
+    - Use git merge --ff-only for linear history
+    - Include tests for bugfixes in SAME commit as the fix
 
     VERIFICATION:
     1. Run tests: ./mvnw test -pl parser
@@ -570,9 +568,9 @@ Task tool invocation:
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
-    CRITICAL PROHIBITIONS:
-    - NEVER add PMD suppression annotations
-    - Tests belong in SAME commit as implementation
+    CRITICAL REQUIREMENTS:
+    - Decompose code instead of adding PMD suppression annotations
+    - Include tests in SAME commit as implementation
 
     EXACT CHANGES:
     1. Create src/Feature.java with: [code listing]
@@ -650,7 +648,7 @@ Task prompt: |
   2. Determine expected node types from Java grammar
   3. Use (0, 0) placeholders for positions initially
   4. VERIFY actual positions are correct before updating expected values
-  5. NEVER copy actual output as expected values without verification
+  5. Always verify before copying actual output as expected values
 ```
 
 **Why**: Subagents may use placeholder technique incorrectly - copying actual output without verification

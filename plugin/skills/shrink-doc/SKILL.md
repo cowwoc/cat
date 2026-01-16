@@ -114,13 +114,13 @@ grep -c "Step 1:" CLAUDE.md  # Should be minimal
 
 When compressing `.claude/rules/*.md` or `docs/code-style/*-claude.md`:
 
-**NEVER remove style rule sections** (lines starting with `### `). These are intentionally-added
+**Preserve style rule sections** (lines starting with `### `). These are intentionally-added
 detection patterns and rules. Compression can:
 - ✅ Condense explanatory text within sections
 - ✅ Shorten verbose rationale paragraphs
 - ✅ Combine redundant examples
-- ❌ **NEVER** delete entire `### Section Name` blocks
-- ❌ **NEVER** remove detection patterns or code examples
+- ❌ Deleting entire `### Section Name` blocks breaks detection
+- ❌ Removing detection patterns or code examples breaks detection
 
 **Verification Required**: After compression, count section headers:
 ```bash
@@ -331,8 +331,7 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 **⚠️ CRITICAL REMINDER**: On second, third, etc. invocations:
 - ✅ **REUSE** `/tmp/original-{{filename}}` from first invocation
-- ❌ **DO NOT** create `/tmp/original-{{filename}}-v2.md` or similar
-- ❌ **DO NOT** compare against intermediate compressed versions
+- ✅ Always compare against original baseline (not intermediate versions)
 - The baseline is set ONCE on first invocation and REUSED for all subsequent invocations
 
 ---

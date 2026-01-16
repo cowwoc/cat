@@ -271,15 +271,15 @@ Suggestions:
 | **Sequential** (Grep + 3 Reads) | 4 | ~10s | ~12,000 | Baseline |
 | **grep-and-read Skill** | 1 | ~3s | ~4,000 | 70% time, 67% tokens |
 
-## When NOT to Use This Skill
+## When to Use This Skill
 
-**Don't use when**:
-- You need only file paths (use Grep alone with `output_mode="files_with_matches"`)
-- You need specific line context (use Grep with `output_mode="content"` and `-C` flag)
-- Files are too large (> 1000 lines each) and you don't know which parts to read
-- Pattern is exploratory and you need to see matches before reading
+**Use Grep alone when**:
+- You need only file paths (use `output_mode="files_with_matches"`)
+- You need specific line context (use `output_mode="content"` and `-C` flag)
+- Files are too large (> 1000 lines each) and you need to see matches before committing to full reads
+- Pattern is exploratory and you want to evaluate matches first
 
-**DO use when**:
+**Use this skill when**:
 - You know you'll read the matching files
 - Files are reasonably sized (< 1000 lines each)
 - You want comprehensive view of pattern usage

@@ -10,7 +10,7 @@ description: Rewrite git history using git-filter-repo (not filter-branch)
 
 ## Why git-filter-repo over git-filter-branch
 
-**NEVER use `git filter-branch`**. Git itself warns against it:
+**Always use `git-filter-repo` instead of `git filter-branch`**. Git itself warns against filter-branch:
 
 > git-filter-branch has a glut of gotchas generating mangled history rewrites.
 > Use git-filter-repo instead.
@@ -42,7 +42,7 @@ pip install --break-system-packages git-filter-repo
 
 ### MANDATORY: Always Use --partial Flag
 
-**NEVER run git-filter-repo without `--partial`**. Without it:
+**Always include the `--partial` flag with git-filter-repo**. Without it:
 - Reflog is expired (old commits unrecoverable)
 - Automatic `git gc` runs (objects permanently deleted)
 - No recovery possible after force-push

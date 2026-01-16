@@ -3,8 +3,8 @@
 **Purpose**: Release a new version of a Claude Code plugin by merging to main, tagging, and preparing
 the next version branch.
 
-**CRITICAL**: Always use this skill for releases. Never run `git tag` directly without updating
-CHANGELOG.md first. The skill ensures changelog, version files, and tags stay synchronized.
+**CRITICAL**: Always use this skill for releases. Update CHANGELOG.md before running `git tag`.
+The skill ensures changelog, version files, and tags stay synchronized.
 
 **When to Use**:
 - When user says "release", "publish", "tag a new version", or similar
@@ -28,7 +28,7 @@ Before releasing, ensure all tests pass:
 npm test
 ```
 
-**If tests fail**, fix the issues before proceeding. Do not release with failing tests.
+**If tests fail**, fix the issues before proceeding. All tests must pass before release.
 
 ### 2. Verify Version Consistency
 
@@ -39,7 +39,7 @@ echo "package.json:" && jq '.version' package.json
 echo "plugin.json:" && jq '.version' .claude-plugin/plugin.json
 ```
 
-**If versions don't match**, fix them before proceeding.
+**If versions differ**, fix them before proceeding. Both files must match.
 
 ### 2. Update CHANGELOG.md for Current Version
 

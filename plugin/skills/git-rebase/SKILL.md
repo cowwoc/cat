@@ -81,13 +81,13 @@ git rebase -i <base-commit>
 # drop   - remove commit
 ```
 
-## Dangerous Operations to Avoid
+## Safe Rebase Patterns
 
 ```bash
-# NEVER rebase shared/public branches
+# Only rebase local/feature branches (not shared ones)
 git rebase main  # While ON main - rewrites shared history!
 
-# NEVER use --all flag
+# Avoid --all flag (rewrites ALL branches)
 git rebase --all  # Rewrites ALL branches!
 
 # SAFE - rebase feature branch onto main
