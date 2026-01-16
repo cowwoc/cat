@@ -2,7 +2,7 @@
 
 > *"Every great project is an adventure. CAT makes sure you enjoy the journey."*
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="Your Quest" width="500"/></a>
 </p>
 
@@ -10,7 +10,7 @@
 
 ## The Problem with AI Projects
 
-<p style="text-align: center;">
+<p align="center">
   <img src="docs/problem.png" alt="The problem with AI projects" width="600"/>
 </p>
 
@@ -23,11 +23,11 @@ You tell CAT your style once. It learns what matters to you. Then it handles the
 
 ## Your Adventure Awaits
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#your-adventure-awaits"><img src="docs/choose-path.svg" alt="Choose Your Path" width="500"/></a>
 </p>
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#quick-start"><b>[A] Quick Start</b></a> ·
   <a href="#how-cat-works"><b>[B] How It Works</b></a> ·
   <a href="#commands"><b>[C] Commands</b></a>
@@ -58,7 +58,7 @@ You tell CAT your style once. It learns what matters to you. Then it handles the
 
 CAT will ask about your project and your preferences:
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#quick-start"><img src="docs/choose-adventurer.svg" alt="Choose Your Adventurer" width="500"/></a>
 </p>
 
@@ -86,7 +86,7 @@ Your answers shape how CAT makes decisions throughout your project.
 CAT spawns a subagent in an isolated worktree, executes the task, and presents
 you with results at a checkpoint:
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#quick-start"><img src="docs/checkpoint.svg" alt="Checkpoint" width="500"/></a>
 </p>
 
@@ -98,7 +98,7 @@ you with results at a checkpoint:
 
 Every adventure needs a map. CAT organizes work into three levels:
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#the-map-hierarchical-planning">
     <img src="docs/hierarchy.svg" alt="Hierarchy" width="500"/>
   </a>
@@ -122,7 +122,7 @@ These aren't just settings—they're how CAT learns to think like you.
 
 ### The Journey: Task Lifecycle
 
-<p style="text-align: center;">
+<p align="center">
   <a href="#the-journey-task-lifecycle">
     <img src="docs/task-lifecycle.svg" alt="Task Lifecycle" width="500"/>
   </a>
@@ -186,11 +186,9 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 
 ```json
 {
-  "version": "1.8",
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "autoCleanupWorktrees": true,
   "approach": "balanced",
   "stakeholderReview": "high-risk-only",
   "refactoring": "opportunistic"
@@ -201,17 +199,12 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `version` | string | — | CAT version (managed automatically for migrations) |
 | `yoloMode` | boolean | `false` | Skip all approval gates when `true` |
 | `contextLimit` | number | `200000` | Total context window size in tokens |
 | `targetContextUsage` | number | `40` | Soft limit percentage for task size |
-| `autoCleanupWorktrees` | boolean | `true` | Auto-cleanup worktrees after task completion |
 | `approach` | string | `balanced` | Risk tolerance for approach selection |
 | `stakeholderReview` | string | `high-risk-only` | When to run multi-perspective reviews |
 | `refactoring` | string | `opportunistic` | Cleanup behavior for adjacent code |
-
-**version** — The installed CAT version. Managed automatically by the migration system to track
-upgrades and run version-specific migrations.
 
 **yoloMode**
 - `false` (Interactive) — Checkpoints after each task, you review and approve changes
@@ -222,9 +215,6 @@ when tasks need decomposition.
 
 **targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
 200K (80K tokens), CAT warns that the task may need decomposition.
-
-**autoCleanupWorktrees** — When `true`, automatically removes task worktrees after successful
-completion and merge. Set to `false` to keep worktrees for manual inspection.
 
 **approach** — Controls how CAT chooses when multiple implementation paths exist:
 - `conservative` — Auto-selects targeted fixes; avoids refactoring; fewer files touched
@@ -322,4 +312,4 @@ Commercial use requires a paid license.
 
 ---
 
-<p style="text-align: center;"><em>Now go build something amazing.</em> 🐱</p>
+<p align="center"><em>Now go build something amazing.</em> 🐱</p>
