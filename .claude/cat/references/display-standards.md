@@ -2,6 +2,32 @@
 
 Standard visual elements for CAT workflows: status displays, progress bars, and visual hierarchy.
 
+## Core Principle: No Markdown Bold in CLI Output {#no-markdown-bold}
+
+**MANDATORY**: Never use `**bold**` markdown syntax in CLI output text.
+
+**Rationale**: Claude Code CLI renders output in a terminal. Terminals do not interpret `**text**` as
+bold - users see the raw asterisks. Use plain text for emphasis, or UPPERCASE for headers/labels.
+
+**Instead of:**
+```
+**Status:** pending
+**Progress:** [=====>    ] 50%
+```
+
+**Use:**
+```
+Status: pending
+Progress: [=====>    ] 50%
+```
+
+For section headers, use box borders or UPPERCASE instead of bold:
+```
+═══════════════════════════════════════════════════════════════════
+TASK DETAILS
+═══════════════════════════════════════════════════════════════════
+```
+
 ## Core Principle: No Vertical Borders {#no-vertical-borders}
 
 **MANDATORY**: Avoid vertical borders (`║`, `│`) in all displays.
