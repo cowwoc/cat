@@ -63,6 +63,34 @@ git push --force-with-lease
 git branch -f v21 <new-commit>
 ```
 
+## Worktree Verification (M101)
+
+**During CAT task execution, NEVER operate on the main `/workspace` worktree.**
+
+```bash
+# Before ANY git operation in a CAT task, verify location:
+CURRENT_DIR=$(pwd)
+if [[ "$CURRENT_DIR" == "/workspace" ]] && [[ -d "/workspace/.worktrees" ]]; then
+  echo "BLOCKED: Currently in main worktree while task worktrees exist"
+  echo "Expected: /workspace/.worktrees/<task-name>"
+  echo "Current:  $CURRENT_DIR"
+  exit 1
+fi
+```
+
+**Check for active task worktrees:**
+```bash
+# If any worktrees exist, you should be in one of them (not main)
+if ls -d /workspace/.worktrees/*/ 2>/dev/null | head -1 | grep -q .; then
+  # Worktrees exist - verify we're in one
+  if [[ "$(pwd)" == "/workspace" ]]; then
+    echo "ERROR: Task worktrees exist but operating on main"
+    ls /workspace/.worktrees/
+    exit 1
+  fi
+fi
+```
+
 ## Pre-Operation Checklist
 
 Before any history-rewriting operation:
