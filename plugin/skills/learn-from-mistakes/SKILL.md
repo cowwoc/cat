@@ -232,10 +232,12 @@ rca_method: "C"
 
 **CAT-specific analysis checklist:**
 
+Reference: agent-architecture.md § Context Limit Constants
+
 ```yaml
 context_degradation_analysis:
   tokens_at_error: 95000
-  threshold_exceeded: true  # > 80K
+  threshold_exceeded: true
   threshold_exceeded_by: 15000
   compaction_events: 2
   errors_after_compaction: true
@@ -434,16 +436,15 @@ When prevention involves updating documentation, prompts, or instructions:
 ```yaml
 prevention_action:
   if_context_related:
+    # Context limits are fixed - see agent-architecture.md § Context Limit Constants
     primary:
-      action: "Adjust token monitoring threshold"
-      current_threshold: 80000  # 40%
-      new_threshold: 60000      # 30%
-      rationale: "Earlier warning gives time to decompose"
+      action: "Improve task size estimation"
+      rationale: "Better estimates prevent exceeding limits"
 
     secondary:
       action: "Add quality checkpoint at 50% context"
       implementation: |
-        At 50% context (100K tokens), pause and verify:
+        At 50% context, pause and verify:
         - Is work quality consistent with early session?
         - Are earlier decisions still being referenced?
         - Should task be decomposed now?

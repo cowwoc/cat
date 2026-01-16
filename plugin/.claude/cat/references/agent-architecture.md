@@ -152,3 +152,126 @@ Main Agent
 - Main agent manages based on available resources
 - Independent tasks execute simultaneously
 - Dependent tasks wait for prerequisites
+
+## Context Limit Constants (A018)
+
+**These values are FIXED and defined here as the single source of truth.**
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `CONTEXT_LIMIT` | 200000 | Claude's context window (tokens) |
+| `SOFT_TARGET_PCT` | 40 | Ideal task size percentage |
+| `HARD_LIMIT_PCT` | 80 | Maximum safe execution percentage |
+
+**Derived values:**
+- Soft target: 80,000 tokens (40% of 200K)
+- Hard limit: 160,000 tokens (80% of 200K)
+
+**Usage in scripts:**
+```bash
+# Reference: agent-architecture.md § Context Limit Constants
+CONTEXT_LIMIT=200000
+SOFT_TARGET_PCT=40
+HARD_LIMIT_PCT=80
+SOFT_TARGET=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))  # 80000
+HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))    # 160000
+```
+
+**Why fixed, not configurable:**
+- Claude's context window is model-determined, not user preference
+- Quality thresholds are based on empirical testing
+- Consistency across all CAT installations ensures reliable behavior
+
+### Limit Hierarchy
+
+| Limit | Percentage | Tokens (200K) | Purpose |
+|-------|------------|---------------|---------|
+| Soft target | 40% | 80,000 | Recommended task size for optimal quality |
+| Hard limit | 80% | 160,000 | Maximum allowed - MANDATORY decomposition above |
+| Context limit | 100% | 200,000 | Absolute ceiling - compaction occurs |
+
+### Main Agent Responsibilities
+
+**Pre-Spawn (BEFORE spawning any subagent):**
+
+1. Calculate estimated tokens from task analysis
+2. Calculate hard limit: `HARD_LIMIT = CONTEXT_LIMIT * 80 / 100`
+3. Validate: `estimate < hard_limit`
+4. If validation fails: MANDATORY decomposition (do NOT spawn)
+
+**Post-Spawn (AFTER subagent completes):**
+
+1. Collect actual token usage from `.completion.json`
+2. Compare actual against hard limit
+3. Flag violations with EXCEEDED status
+4. Trigger `/cat:learn-from-mistakes` for each violation
+
+### Enforcement Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MAIN AGENT (Pre-Spawn)                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. Analyze task → estimate tokens                              │
+│                     │                                           │
+│                     v                                           │
+│  2. Calculate: HARD_LIMIT = CONTEXT_LIMIT * 80%                │
+│                     │                                           │
+│                     v                                           │
+│  3. Validate: estimate < HARD_LIMIT?                           │
+│                     │                                           │
+│           ┌────────┴────────┐                                  │
+│           │                 │                                   │
+│           v                 v                                   │
+│        YES: Spawn      NO: MANDATORY                            │
+│        subagent        decomposition                            │
+│           │            (do NOT spawn)                           │
+│           v                                                     │
+│  4. Monitor execution                                           │
+│           │                                                     │
+│           v                                                     │
+│  5. Collect results → actual tokens                             │
+│           │                                                     │
+│           v                                                     │
+│  6. Check: actual >= HARD_LIMIT?                               │
+│           │                                                     │
+│     ┌─────┴─────┐                                              │
+│     │           │                                               │
+│     v           v                                               │
+│   NO: OK     YES: Flag EXCEEDED                                 │
+│              + learn-from-mistakes                              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Aggregate Reporting Format
+
+For multi-subagent tasks, generate aggregate token report:
+
+```
+## Aggregate Token Report
+
+| Subagent | Tokens | % of Limit | Status |
+|----------|--------|------------|--------|
+| task-sub-a1b2c3d4 | 65,000 | 32% | OK |
+| task-sub-e5f6g7h8 | 170,000 | 85% | EXCEEDED |
+| task-sub-i9j0k1l2 | 45,000 | 22% | OK |
+
+**Total tokens:** 280,000
+**Subagents exceeded hard limit:** 1
+```
+
+### Violation Handling Process
+
+When a subagent exceeds the hard limit:
+
+1. **Flag:** Mark subagent status as EXCEEDED in aggregate report
+2. **Record:** Invoke `/cat:learn-from-mistakes` with:
+   - Mistake reference: A018
+   - Subagent ID
+   - Actual tokens used
+   - Hard limit value
+   - Task context
+3. **Analyze:** Review why estimation failed
+4. **Improve:** Update estimation factors based on pattern

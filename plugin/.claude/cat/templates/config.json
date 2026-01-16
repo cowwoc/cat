@@ -1,8 +1,6 @@
 {
   "version": "${CAT_VERSION}",
   "yoloMode": false,
-  "contextLimit": 200000,
-  "targetContextUsage": 40,
   "autoRemoveWorktrees": true,
   "trust": "medium",
   "verify": "changed",
