@@ -688,7 +688,7 @@ fi
 
 # Commit BOTH files together
 git add .claude/cat/retrospectives/mistakes.json .claude/cat/retrospectives/retrospectives.json
-git commit -m "docs: record learning ${NEXT_ID} - {short description}"
+git commit -m "config: record learning ${NEXT_ID} - {short description}"
 
 # Get current values to check trigger
 MISTAKES=$(jq '.mistake_count_since_last' "$RETRO_FILE")
