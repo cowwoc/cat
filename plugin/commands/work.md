@@ -1585,12 +1585,22 @@ git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
 
 See [render-diff SKILL.md](../skills/render-diff/SKILL.md) for format details and features.
 
-**SELF-CHECK before showing approval gate (M201):**
+**SELF-CHECK before showing approval gate (M201/M211):**
 - [ ] Did I run render-diff.py (NOT plain `git diff`)?
-- [ ] Does output have box characters (╭╮╰╯│)?
-- [ ] Is output in 4-column format (Old | Symbol | New | Content)?
+- [ ] Did I present the VERBATIM output (not reformatted, summarized, or extracted)?
+- [ ] Does the output I showed have box characters (╭╮╰╯│)?
+- [ ] Is the output I showed in 4-column format (Old | Symbol | New | Content)?
 
 If any answer is NO, re-run using the render-diff skill command above.
+
+**CRITICAL (M211): Present render-diff output VERBATIM.**
+Copy-paste the exact Bash tool output into your response. Do NOT:
+- Extract portions into code blocks
+- Reformat into standard diff format
+- Summarize or paraphrase the changes
+- Create your own diff representation
+
+The user must see the ACTUAL render-diff output, not your interpretation of it.
 
 **Anti-pattern (M160):** Presenting approval gate with only file change summary (names, line counts)
 without showing the actual diff content. Users reject approval because they cannot evaluate changes.
