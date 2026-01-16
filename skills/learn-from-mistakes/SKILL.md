@@ -510,9 +510,10 @@ fi
 
 ```bash
 mkdir -p .claude/cat/retrospectives
-[ -f .claude/cat/retrospectives/mistakes.json ] || echo '[]' > .claude/cat/retrospectives/mistakes.json
+# Note: mistakes.json is an OBJECT with a .mistakes array, not a flat array
+[ -f .claude/cat/retrospectives/mistakes.json ] || echo '{"mistakes":[]}' > .claude/cat/retrospectives/mistakes.json
 
-LAST_ID=$(jq -r 'map(.id) | map(select(startswith("M"))) | sort | last // "M000"' \
+LAST_ID=$(jq -r '.mistakes | map(.id) | map(select(startswith("M"))) | sort | last // "M000"' \
   .claude/cat/retrospectives/mistakes.json)
 NEXT_NUM=$((${LAST_ID#M} + 1))
 NEXT_ID=$(printf "M%03d" $NEXT_NUM)
@@ -590,7 +591,8 @@ NEXT_ID=$(printf "M%03d" $NEXT_NUM)
 **Use jq to append (safe for concurrent access):**
 
 ```bash
-jq --argjson new '{...new entry...}' '. += [$new]' \
+# mistakes.json is an object with .mistakes array, not a flat array
+jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
   .claude/cat/retrospectives/mistakes.json > .claude/cat/retrospectives/mistakes.json.tmp \
   && mv .claude/cat/retrospectives/mistakes.json.tmp .claude/cat/retrospectives/mistakes.json
 ```
