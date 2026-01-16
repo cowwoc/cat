@@ -581,6 +581,20 @@ Proceeding to task size analysis.
 
 **MANDATORY: Analyze task complexity BEFORE execution.**
 
+**Option: Use Exploration Subagent**
+
+For cleaner UX, spawn an exploration subagent to handle preparation, exploration, and verification
+phases internally. This hides noisy tool calls (Bash, Read, Grep) from the user and returns
+structured JSON. See `spawn-subagent` skill → "Expanded Exploration Subagent" section.
+
+```bash
+# Spawn exploration subagent for preparation + exploration
+/cat:spawn-subagent --type exploration --task "$TASK_PATH"
+# Returns JSON with: status, preparation.estimatedTokens, findings, verification
+```
+
+**Alternative: Inline Analysis (current default)**
+
 Read the task's PLAN.md and estimate context requirements.
 
 Output format (do NOT wrap in ```):
