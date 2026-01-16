@@ -31,7 +31,7 @@ Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
 
 **If NOT found:**
 - STOP immediately
-- Output error: "ERROR: Pre-computed display not available. Hook precompute-config.sh may have failed."
+- Output error: "ERROR: Pre-computed display not available. Handler config_handler.py may have failed."
 - Do NOT attempt to construct boxes manually
 - This is a fail-fast requirement per skill-builder methodology
 
@@ -60,7 +60,7 @@ BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUse
 Copy the exact box from the "PRE-COMPUTED CONFIG DISPLAY" context. Do NOT recompute or modify alignment.
 
 **Why pre-computed:** Agents miscalculate emoji widths, causing misaligned box borders.
-The hook precompute-config.sh runs Python to calculate correct widths before the skill starts.
+The handler config_handler.py calculates correct widths before the skill starts.
 
 </step>
 
