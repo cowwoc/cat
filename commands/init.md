@@ -249,9 +249,9 @@ Display welcome banner:
 ```
 
 AskUserQuestion: header="Approach", question="Development approach?", options=[
-  "🛡️ Conservative - minimal changes, thorough testing, avoid risk",
-  "⚖️ Balanced - pragmatic tradeoffs, reasonable coverage (Recommended)",
-  "⚔️ Aggressive - comprehensive improvements, move fast, refactor freely"
+  "🛡️ Conservative - targeted fixes, avoid refactoring, fewer files touched",
+  "⚖️ Balanced - you decide at each fork, CAT shows options (Recommended)",
+  "⚔️ Aggressive - root-cause solutions, refactor when it improves code"
 ]
 
 AskUserQuestion: header="Review", question="When should CAT trigger stakeholder review?", options=[
