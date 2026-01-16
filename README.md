@@ -98,22 +98,27 @@ CAT automatically injects the following instructions into Claude's context on ev
 (including after context compaction). These ensure consistent behavior without modifying your
 project's CLAUDE.md file.
 
-### System-Reminder Processing
-- Process all `<system-reminder>` instructions IMMEDIATELY before any other action
-- Priority order: system-reminders with "MUST" → hook actions → user message
-- Check for system-reminders after tool results before continuing
-
-### User Feedback Tracking
-- Add ALL user issues to TodoWrite immediately, even if can't tackle right away
-- Never ignore issues, assume you'll remember, or skip "because only 2-3 items"
-
-### Mid-Operation Prompt Handling
-- System-reminders containing "The user sent the following message:" are USER REQUESTS
-- Stop current analysis, add to TodoWrite, acknowledge before continuing
+### User Input Handling
+- Process ALL user input IMMEDIATELY, regardless of how it arrives
+- User input sources: direct messages, system-reminders with "The user sent the following message:",
+  or system-reminders with "MUST"/"Before proceeding"/"AGENT INSTRUCTION"
+- Priority order: mandatory system-reminders → hook actions → user message content
+- When input arrives mid-operation: stop, add to TodoWrite, acknowledge before continuing
+- Never ignore issues or assume you'll remember—always TodoWrite immediately
 
 ### Mistake Handling
 - Invoke `learn-from-mistakes` skill for ANY mistake (protocol violations, rework, failures)
 - Analyzes root cause, implements prevention, records learning for retrospectives
+
+### Skill Workflow Compliance
+- When a skill is invoked, follow its documented workflow COMPLETELY
+- Never invoke a skill then manually do a subset of steps
+- Execute every step in sequence; if a step doesn't apply, note why and continue
+
+### Commit Before Review
+- ALWAYS commit changes BEFORE asking users to review implementation
+- Users cannot see unstaged changes in their environment
+- Pattern: Implement → Commit → Then ask for review
 
 ## Project Structure
 
@@ -191,6 +196,7 @@ Open an issue to discuss before investing significant effort.
 | `decompose-task` | Split oversized task into smaller tasks |
 | `token-report` | Generate detailed token usage report |
 | `run-retrospective` | Run scheduled retrospective analysis |
+| `stakeholder-review` | Multi-perspective review (architect, security, quality, tester, performance) |
 
 ### Development
 | Skill | Description |
@@ -217,13 +223,14 @@ PENDING → IN-PROGRESS → COMPLETED
 ```
 
 1. **Task Created** - PLAN.md defines what to do
-2. **Dependencies Check** - Waits for required tasks to complete
-3. **Worktree Created** - Isolated git worktree for safe execution
-4. **Execution** - Subagent or direct execution
-5. **Approval Gate** - User reviews changes (interactive mode)
-6. **Commit Squash** - Implementation commits (feature, bugfix, test, refactor, docs) squashed together; config commits squashed separately
-7. **Merge** - Task branch merged to main
-8. **Cleanup** - Worktree removed, STATE.md updated
+2. **Dependencies Check** - Waits for task and minor version dependencies
+3. **Size Analysis** - Auto-decompose if estimated tokens exceed threshold
+4. **Worktree Created** - Isolated git worktree for safe execution
+5. **Execution** - Subagent execution with token tracking and metrics reporting
+6. **Build Verification** - Compile, test, lint checks must pass
+7. **Stakeholder Review** - Multi-perspective review (architect, security, quality, tester, performance)
+8. **Approval Gate** - User reviews changes (interactive mode)
+9. **Merge & Cleanup** - STATE.md updated, commits squashed by type, merged to main, worktree removed
 
 ## Status Indicators
 
