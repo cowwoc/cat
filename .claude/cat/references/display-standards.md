@@ -2,31 +2,34 @@
 
 Standard visual elements for CAT workflows: status displays, progress bars, and visual hierarchy.
 
-## Core Principle: No Markdown Bold in CLI Output {#no-markdown-bold}
+## Core Principle: Markdown Rendering Context {#markdown-rendering}
 
-**MANDATORY**: Never use `**bold**` markdown syntax in CLI output text.
+Claude Code CLI renders markdown in the main conversation output. However, markdown rendering
+depends on context - some output contexts render markdown properly, others show raw syntax.
 
-**Rationale**: Claude Code CLI renders output in a terminal. Terminals do not interpret `**text**` as
-bold - users see the raw asterisks. Use plain text for emphasis, or UPPERCASE for headers/labels.
+**Where markdown renders correctly:**
+- Main conversation responses (direct assistant output)
+- Multi-line formatted blocks with clear structure
 
-**Instead of:**
-```
-**Status:** pending
-**Progress:** [=====>    ] 50%
-```
+**Where markdown may show raw syntax:**
+- Progress indicators and step counters
+- Single-line status updates
+- Output mixed with special characters or emojis
 
-**Use:**
-```
-Status: pending
-Progress: [=====>    ] 50%
-```
+**Guideline:** For status displays, progress bars, and structured output, prefer plain text
+or UPPERCASE for emphasis rather than relying on markdown bold:
 
-For section headers, use box borders or UPPERCASE instead of bold:
 ```
 ═══════════════════════════════════════════════════════════════════
 TASK DETAILS
 ═══════════════════════════════════════════════════════════════════
+
+Status: pending
+Progress: [=====>    ] 50%
 ```
+
+**Why this works:** Box borders and UPPERCASE provide visual hierarchy without depending on
+markdown rendering. This ensures consistent display across all output contexts.
 
 ## Core Principle: No Vertical Borders {#no-vertical-borders}
 
@@ -110,17 +113,64 @@ Status: SUCCESS
 ═══════════════════════════════════════════════════════════════════
 ```
 
-**Fork in the Road:**
+**Fork in the Road (Wizard-Style):** {#fork-in-the-road}
+
+The fork-in-the-road display uses a wizard-style format that guides users through the decision.
+It separates two types of recommendations that may differ:
+
+- **⭐ QUICK WIN** - Best for immediate task completion (low risk, fast delivery)
+- **🏆 LONG-TERM** - Best for project health over time (maintainability, patterns, architecture)
+
 ```
 ═══════════════════════════════════════════════════════════════════
 🔀 FORK IN THE ROAD
 ═══════════════════════════════════════════════════════════════════
 
-[A] 🛡️ Option A - Description here
-[B] ⚔️ Option B - Description here
+Task: {task-name}
+Risk: {LOW|MEDIUM|HIGH}
+
+CHOOSE YOUR PATH
+───────────────────────────────────────────────────────────────────
+
+[A] 🛡️ Conservative
+    {scope description}
+    Risk: LOW | Scope: {N} files | ~{N}K tokens
+
+[B] ⚖️ Balanced
+    {scope description}
+    Risk: MEDIUM | Scope: {N} files | ~{N}K tokens
+
+[C] ⚔️ Aggressive
+    {scope description}
+    Risk: HIGH | Scope: {N} files | ~{N}K tokens
+
+───────────────────────────────────────────────────────────────────
+ANALYSIS
+───────────────────────────────────────────────────────────────────
+
+⭐ QUICK WIN: [{letter}] {approach name}
+   {1-2 sentence rationale for immediate completion}
+
+🏆 LONG-TERM: [{letter}] {approach name}
+   {1-2 sentence rationale for project health over time}
+
+{Note if they differ, explaining why}
 
 ═══════════════════════════════════════════════════════════════════
 ```
+
+**When Quick Win and Long-Term differ:**
+
+This is common and expected. Quick Win optimizes for immediate task completion with minimal risk.
+Long-Term optimizes for project maintainability, establishing good patterns, or addressing root
+causes that prevent similar issues.
+
+Example where they differ:
+- Quick Win: Conservative (fixes this bug fast)
+- Long-Term: Balanced (establishes pattern to prevent similar bugs)
+
+Example where they're the same:
+- Both: Balanced (targeted fix that also improves the codebase)
 
 **Adventure Status (cat:status):**
 ```
