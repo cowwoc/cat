@@ -4,8 +4,9 @@ set -euo pipefail
 # Error handler - output helpful message to stderr on failure
 trap 'echo "ERROR in validate-git-filter-branch.sh at line $LINENO: Command failed: $BASH_COMMAND" >&2; exit 1' ERR
 
-# Source helper for proper hook blocking
-source /workspace/.claude/scripts/json-output.sh
+# Source helper for proper hook blocking from local lib directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/json-output.sh"
 
 # Validates git filter-branch and other history-rewriting commands
 # Prevents use of --all or --branches flags that would rewrite protected version branches
@@ -76,7 +77,7 @@ if echo "$COMMAND" | grep -qE '(^|;|&&|\|)\s*git\s+(filter-branch|rebase)\s+.*\s
 EOF
   # Use proper permission system: reason to Claude, exit 0 for JSON processing
   # Note: detailed message already sent to stderr via heredoc above
-  output_hook_block "Blocked: git filter-branch/rebase with --all/--branches would rewrite protected version branches. Target specific branch instead." ""
+  output_hook_block "Blocked: git filter-branch/rebase with --all/--branches would rewrite protected version branches. Target specific branch instead."
   exit 0
 fi
 

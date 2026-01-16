@@ -1,10 +1,11 @@
 #!/usr/bin/env bats
-# Tests for prompt_handlers/destructive_ops.py - Warns about destructive operations
+# Tests for hooks/verify-destructive-operations.sh - Warns about destructive operations
 
 load '../test_helper'
 
 setup() {
     setup_test_dir
+    source "$HOOKS_LIB_DIR/json-parser.sh"
 }
 
 teardown() {
@@ -15,15 +16,15 @@ teardown() {
 create_prompt_json() {
     local message="$1"
     # Escape special characters for JSON
-    local escaped_message=$(echo "$message" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    local escaped_message=$(echo "$message" | sed 's/"/\\"/g' | sed 's/\\/\\\\/g')
     echo "{\"hook_event_name\": \"UserPromptSubmit\", \"session_id\": \"test-session\", \"message\": \"$escaped_message\"}"
 }
 
-# Helper to run hook with user prompt via Python dispatcher
+# Helper to run hook with user prompt
 run_hook_with_prompt() {
     local message="$1"
     local json=$(create_prompt_json "$message")
-    echo "$json" | python3 "$HOOKS_DIR/get-skill-output.py"
+    echo "$json" | "$HOOKS_DIR/verify-destructive-operations.sh"
 }
 
 # ============================================================================
@@ -143,12 +144,11 @@ run_hook_with_prompt() {
 # Event Handling
 # ============================================================================
 
-@test "verify-destructive-operations: handles non-UserPromptSubmit by producing empty output" {
+@test "verify-destructive-operations: ignores non-UserPromptSubmit events" {
     local json='{"hook_event_name": "PreToolUse", "tool_name": "Bash", "message": "git rebase"}'
-    run bash -c 'echo "$1" | python3 '"$HOOKS_DIR"'/get-skill-output.py' -- "$json"
+    run bash -c 'echo "$1" | '"$HOOKS_DIR"'/verify-destructive-operations.sh' -- "$json"
     [ "$status" -eq 0 ]
-    # Non-UserPromptSubmit events still get checked since it's the same dispatcher
-    # but the prompt field may be empty, so no DESTRUCTIVE warning
+    [[ "$output" != *"DESTRUCTIVE"* ]]
 }
 
 # ============================================================================

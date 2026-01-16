@@ -1,12 +1,11 @@
 #!/usr/bin/env bats
-# Tests for bash_handlers/block_main_rebase.py - Prevents git rebase on main branch
+# Tests for hooks/block-main-rebase.sh - Prevents git rebase on main branch
 
 load '../test_helper'
 
 setup() {
     setup_git_repo
-    # Create a main branch for testing
-    git checkout -b main 2>/dev/null || git checkout main 2>/dev/null || true
+    source "$HOOKS_LIB_DIR/json-parser.sh"
 }
 
 teardown() {
@@ -16,86 +15,106 @@ teardown() {
 # Helper to create hook input JSON for Bash tool
 create_bash_hook_json() {
     local command="$1"
-    # Escape backslashes and quotes for JSON
-    command=$(echo "$command" | sed 's/\\/\\\\/g; s/"/\\"/g')
-    echo "{\"hook_event_name\": \"PreToolUse\", \"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"$command\"}}"
+    # Escape special characters for JSON
+    local escaped_command=$(echo "$command" | sed 's/"/\\"/g')
+    echo "{\"hook_event_name\": \"PreToolUse\", \"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"$escaped_command\"}}"
 }
 
-# Helper to run hook with JSON input via Python dispatcher
+# Helper to run hook with JSON input
 run_hook_with_command() {
     local command="$1"
     local json=$(create_bash_hook_json "$command")
-    echo "$json" | python3 "$HOOKS_DIR/get-bash-pretool-output.py"
+    echo "$json" | "$HOOKS_DIR/block-main-rebase.sh"
 }
 
 # ============================================================================
-# Block Rebase on Main
+# Block Rebase on Main Branch
 # ============================================================================
 
 @test "block-main-rebase: blocks git rebase on main branch" {
+    # Ensure we're on main
     cd "$TEST_TEMP_DIR"
-    run run_hook_with_command "git rebase feature-branch"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
+    run run_hook_with_command "git rebase HEAD~1"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
+    [[ "$output" == *"deny"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 @test "block-main-rebase: blocks git rebase -i on main branch" {
     cd "$TEST_TEMP_DIR"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
     run run_hook_with_command "git rebase -i HEAD~3"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
+    [[ "$output" == *"deny"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 @test "block-main-rebase: blocks git rebase --onto on main branch" {
     cd "$TEST_TEMP_DIR"
-    run run_hook_with_command "git rebase --onto main feature1 feature2"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
+    run run_hook_with_command "git rebase --onto feature-branch HEAD~2"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
+    [[ "$output" == *"deny"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 # ============================================================================
-# Allow Rebase on Feature Branch
+# Allow Rebase on Feature Branches
 # ============================================================================
 
 @test "block-main-rebase: allows git rebase on feature branch" {
     cd "$TEST_TEMP_DIR"
-    git checkout -b feature-test
+    git checkout -q -b feature-branch
+
     run run_hook_with_command "git rebase main"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 @test "block-main-rebase: allows git rebase -i on feature branch" {
     cd "$TEST_TEMP_DIR"
-    git checkout -b feature-test
-    run run_hook_with_command "git rebase -i HEAD~2"
+    git checkout -q -b fix/my-fix
+
+    run run_hook_with_command "git rebase -i HEAD~3"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 # ============================================================================
-# Allow Other Git Commands on Main
+# Allow Non-Rebase Commands on Main
 # ============================================================================
 
 @test "block-main-rebase: allows git commit on main" {
     cd "$TEST_TEMP_DIR"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
     run run_hook_with_command "git commit -m 'test'"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
-@test "block-main-rebase: allows git merge --ff-only on main" {
+@test "block-main-rebase: allows git merge on main" {
     cd "$TEST_TEMP_DIR"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
     run run_hook_with_command "git merge --ff-only feature-branch"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 @test "block-main-rebase: allows git pull on main" {
     cd "$TEST_TEMP_DIR"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
     run run_hook_with_command "git pull origin main"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"block"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 # ============================================================================
@@ -104,9 +123,10 @@ run_hook_with_command() {
 
 @test "block-main-rebase: ignores non-Bash tools" {
     local json='{"hook_event_name": "PreToolUse", "tool_name": "Read", "tool_input": {"file_path": "test.txt"}}'
-    run bash -c 'echo "$1" | python3 '"$HOOKS_DIR"'/get-bash-pretool-output.py' -- "$json"
+    run bash -c 'echo "$1" | '"$HOOKS_DIR"'/block-main-rebase.sh' -- "$json"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]]
+    [[ "$output" == *"{}"* ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 # ============================================================================
@@ -114,26 +134,31 @@ run_hook_with_command() {
 # ============================================================================
 
 @test "block-main-rebase: handles empty command" {
-    run run_hook_with_command ""
+    local json='{"hook_event_name": "PreToolUse", "tool_name": "Bash", "tool_input": {"command": ""}}'
+    run bash -c 'echo "$1" | '"$HOOKS_DIR"'/block-main-rebase.sh' -- "$json"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]]
+    [[ "$output" == *"{}"* ]]
 }
 
 @test "block-main-rebase: rebase in middle of command chain blocked on main" {
     cd "$TEST_TEMP_DIR"
-    run run_hook_with_command "echo test && git rebase main"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
+    run run_hook_with_command "echo test && git rebase HEAD~1"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"block"* ]] || [[ "$output" == *"BLOCKED"* ]]
+    [[ "$output" == *"deny"* ]] || [[ "$output" == *"BLOCKED"* ]]
 }
 
 # ============================================================================
-# Guidance Message Tests
+# Message Content Tests
 # ============================================================================
 
 @test "block-main-rebase: includes guidance in error message" {
     cd "$TEST_TEMP_DIR"
-    run run_hook_with_command "git rebase feature"
+    git checkout -q main 2>/dev/null || git checkout -q -b main
+
+    run run_hook_with_command "git rebase HEAD~1"
     [ "$status" -eq 0 ]
-    # Should include guidance about what to do instead
-    [[ "$output" == *"worktree"* ]] || [[ "$output" == *"BLOCKED"* ]] || [[ "$output" == *"block"* ]]
+    # Should mention worktree as alternative
+    [[ "$output" == *"worktree"* ]] || [[ "$output" == *"task"* ]] || [[ "$output" == *"branch"* ]]
 }

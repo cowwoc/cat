@@ -76,26 +76,30 @@ run_hook_with_command() {
 @test "block-lock-manipulation: allows rm of unrelated files" {
     run run_hook_with_command "rm test-file.txt"
     [ "$status" -eq 0 ]
-    # Should output empty JSON (allow)
-    [[ "$output" == "{}" ]] || [[ "$output" != *"BLOCKED"* ]]
+    # Should output empty JSON (allow) and NOT contain denial
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 @test "block-lock-manipulation: allows rm in other directories" {
     run run_hook_with_command "rm -rf /tmp/test-dir"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"BLOCKED"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 @test "block-lock-manipulation: allows non-rm commands" {
     run run_hook_with_command "ls -la .claude/cat/locks"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"BLOCKED"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 @test "block-lock-manipulation: allows cat of lock files" {
     run run_hook_with_command "cat .claude/cat/locks/task.lock"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"BLOCKED"* ]]
+    [[ "$output" == "{}" ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 # ============================================================================
@@ -106,7 +110,9 @@ run_hook_with_command() {
     local json='{"hook_event_name": "PreToolUse", "tool_name": "Read", "tool_input": {"file_path": ".claude/cat/locks/task.lock"}}'
     run bash -c 'echo "$1" | '"$HOOKS_DIR"'/block-lock-manipulation.sh' -- "$json"
     [ "$status" -eq 0 ]
-    [[ "$output" == "{}" ]] || [[ "$output" != *"BLOCKED"* ]]
+    # Hook outputs {} (from init_bash_hook early exit and from main script)
+    [[ "$output" == *"{}"* ]]
+    [[ "$output" != *"deny"* ]]
 }
 
 # ============================================================================

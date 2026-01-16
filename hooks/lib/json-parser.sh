@@ -5,7 +5,31 @@
 # REQUIREMENT: jq must be installed for reliable JSON parsing.
 # Fallback regex parsing only works for simple, flat JSON.
 #
-# Usage: source "${CLAUDE_PLUGIN_ROOT}/hooks/lib/json-parser.sh"
+# Usage:
+#   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#   source "$SCRIPT_DIR/lib/json-parser.sh"
+#
+# GLOBAL VARIABLES SET BY THIS LIBRARY:
+# =====================================
+# After calling init_hook() or init_bash_hook(), these globals are set:
+#
+#   HOOK_JSON       - Raw JSON input from stdin
+#   HOOK_EVENT      - Value of hook_event_name field
+#   SESSION_ID      - Value of session_id field
+#   USER_PROMPT     - Value of message/user_message/prompt field
+#   TOOL_NAME       - Value of tool_name field
+#   TOOL_INPUT_JSON - Stringified tool_input object
+#   HOOK_COMMAND    - (init_bash_hook only) Extracted command string
+#
+# FUNCTION CONTRACTS:
+# ===================
+# - extract_json_*: Pure functions, return via stdout, no globals
+# - parse_hook_json: Sets globals (HOOK_EVENT, SESSION_ID, etc.)
+# - init_hook: Sets HOOK_JSON + calls parse_hook_json
+# - init_bash_hook: Calls init_hook + sets HOOK_COMMAND
+#
+# For output functions (output_hook_block, output_hook_warning, etc.),
+# source lib/json-output.sh instead.
 
 # Check jq availability once at load time
 _JQ_AVAILABLE=false
@@ -253,44 +277,10 @@ init_bash_hook() {
 # ============================================================================
 # Hook Output Functions
 # ============================================================================
+# Output functions are defined in lib/json-output.sh
+# Source it here for backward compatibility with existing hooks
 
-# Output hook block message and deny permission (PreToolUse hooks ONLY)
-# This ACTUALLY BLOCKS the action via Claude Code's permission system
-#
-# Args: user_message
-#   user_message: Detailed message shown to user
-#
-# CRITICAL: Caller MUST exit 0 after calling this function
-# Usage: output_hook_block "Blocked: policy violation"; exit 0
-output_hook_block() {
-    local user_message="$1"
-
-    # Output detailed message to stderr for user visibility
-    echo "$user_message" >&2
-
-    # Output JSON permission denial to stdout
-    jq -n --arg reason "${user_message:0:200}" '{
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": $reason
-        }
-    }'
-}
-
-# Output hook warning message (does NOT block)
-# Args: message_content
-output_hook_warning() {
-    local message="$1"
-
-    # Output message to stderr for user visibility
-    echo "$message" >&2
-
-    # Output JSON context
-    jq -n --arg msg "$message" '{
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "additionalContext": $msg
-        }
-    }'
-}
+_JSON_PARSER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$_JSON_PARSER_DIR/json-output.sh" ]]; then
+    source "$_JSON_PARSER_DIR/json-output.sh"
+fi
