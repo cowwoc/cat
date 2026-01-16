@@ -45,19 +45,30 @@ Use ONLY these types when committing in a CAT-managed project:
 
 **Key test:** Is the file in `.claude/cat/`? → Use `planning:`. Is it Claude behavior config? → Use `config:`. Is it for end users? → Use `docs:`.
 
+**CRITICAL: Commit type = WHAT changed, not WHERE (M134)**
+
+File location determines the DEFAULT type, but the nature of the change takes precedence:
+
+| Change Type | Commit Type | Example |
+|-------------|-------------|---------|
+| Bug fix in any file | `bugfix:` | Fix creating empty directories |
+| New feature in any file | `feature:` | Add new command |
+| Refactor in any file | `refactor:` | Restructure plugin directories |
+| Config/maintenance | `config:` | Update settings, add dependencies |
+
 **CAT Plugin Repo Structure (special case):**
 
 The CAT plugin repo separates plugin source from planning:
 
-| Location | Commit Type | What It Is |
-|----------|-------------|------------|
+| Location | Default Type | What It Is |
+|----------|--------------|------------|
 | `plugin/` | `config:` | Plugin source code that ships to users |
 | `plugin/.claude/cat/references/` | `config:` | Plugin's bundled reference docs |
 | `plugin/commands/`, `plugin/skills/` | `config:` | Plugin commands and skills |
 | `.claude/cat/` (root) | `planning:` | CAT's own development planning |
 | `.claude/cat/v*/` (root) | `planning:` | CAT's version/task structure |
 
-**Key distinction:** Files in `plugin/` ship to users → `config:`. Files in root `.claude/cat/` are CAT's own planning → `planning:`.
+**Key distinction:** Default type is based on location, but always override with the actual change type (bugfix, feature, refactor) when applicable. `config:` is for maintenance/settings changes, not all plugin file edits.
 
 ## Format
 
