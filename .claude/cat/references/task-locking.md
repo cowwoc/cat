@@ -113,6 +113,34 @@ User: Runs /cat:cleanup or task-lock.sh force-release
 Instance B: Acquires lock (previous lock removed by user)
 ```
 
+## Agent Lock Protocol (M097)
+
+**MANDATORY behavior when lock acquisition fails:**
+
+1. **Report** the lock exists and which session holds it
+2. **Find another task** to execute instead
+3. **Inform user** they can run `/cat:cleanup` if they believe it's stale
+
+**NEVER:**
+- Investigate lock validity (commit counts, worktree state, timestamps are IRRELEVANT)
+- Label locks as "stale" based on any evidence
+- Offer to remove locks or suggest cleanup proactively
+- Question whether the lock owner is still active
+
+**Rationale:** Locks may be held by active sessions that haven't committed yet. A worktree with
+0 commits does NOT indicate a stale lock - the session may be actively working. Only the USER
+can determine if a lock is stale (they know if other sessions are running).
+
+**Correct response pattern:**
+```
+Task {name} is locked by session {uuid}.
+Finding another executable task...
+
+[If no other tasks available]
+All executable tasks are locked. You can run /cat:cleanup if you believe
+these are stale locks from crashed sessions.
+```
+
 ## Troubleshooting
 
 ### "Task locked by another session"
