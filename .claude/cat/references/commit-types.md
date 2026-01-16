@@ -58,9 +58,13 @@ Before merge, commits are grouped into TWO categories:
 **Infrastructure** (ONE squashed commit, optional):
 - `config:` - configuration/tooling changes
 
-A single task produces **one or two commits** total:
-1. Implementation commit (required) - all feature/bugfix/test/refactor/docs work
+A single task typically produces **one or two commits**, but may have more:
+1. Implementation commit(s) (required) - all feature/bugfix/test/refactor/docs work
 2. Config commit (optional) - only if task includes **general** config changes
+
+**Multi-Commit Tasks**: A task may be implemented across multiple commits when the work spans
+multiple sessions, requires incremental progress, or addresses distinct aspects of the same task.
+All commits for a task MUST include the same `Task ID` footer for traceability.
 
 **Task STATE.md vs General Config:**
 - **Task's STATE.md changes** → **SAME commit** as implementation (always)
@@ -144,10 +148,13 @@ Requirements changed - legacy support is no longer in scope.
 
 ### Finding Commits by Task
 
-| Resolution | How to Find Commit |
-|------------|--------------------|
-| `implemented` | `git log --grep="Task ID: v{x}.{y}-{task-name}"` |
+| Resolution | How to Find Commits |
+|------------|---------------------|
+| `implemented` | `git log --grep="Task ID: v{x}.{y}-{task-name}"` (may return multiple commits) |
 | `duplicate` | Check STATE.md for `Duplicate Of`, search for that task |
 | `obsolete` | No implementation commit exists |
+
+**Note**: The grep command may return multiple commits if the task was implemented across multiple
+commits. Each commit for the same task shares the identical `Task ID` footer.
 
 See [task-resolution.md](task-resolution.md) for detailed resolution handling.
