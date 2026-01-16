@@ -550,8 +550,8 @@ MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^re
 TASK_BRANCH="{major}.{minor}-{task-name}"
 git branch "$TASK_BRANCH" "$MAIN_BRANCH" 2>/dev/null || true
 
-# Create worktree
-WORKTREE_PATH="../.worktrees/$TASK_BRANCH"
+# Create worktree (use absolute path to avoid cwd dependency)
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$TASK_BRANCH"
 git worktree add "$WORKTREE_PATH" "$TASK_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
 
