@@ -132,5 +132,56 @@
       "catches_variations": true
     },
     "correct_behavior": "Check if commits are at branch tip; use interactive rebase workflow for mid-history squashes"
+  },
+  {
+    "id": "M096",
+    "timestamp": "2026-01-16T00:45:00Z",
+    "category": "logical_error",
+    "description": "Token estimation underestimated by 473% (29K estimated vs 137K actual) for extract-type-parser task",
+    "root_cause": "Estimation only counted implementation phase, ignored exploration+planning subagent costs",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/cat/.claude/cat/workflows/execute-task.md",
+    "pattern_keywords": [
+      "token_estimation",
+      "decomposition",
+      "subagent_phases"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Estimate tokens for ALL subagent phases: exploration (~10K) + planning (~15K) + implementation + review"
+  },
+  {
+    "id": "M097",
+    "timestamp": "2026-01-16T00:50:00Z",
+    "category": "protocol_violation",
+    "description": "Main agent edited source code directly during merge conflict instead of spawning subagent",
+    "root_cause": "Completion bias - rationalized bypassing protocol for perceived efficiency on small fix",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/cat/.claude/cat/references/agent-architecture.md",
+    "pattern_keywords": [
+      "main_agent_boundary",
+      "code_edit",
+      "delegation",
+      "completion_bias"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "medium",
+      "catches_variations": true
+    },
+    "correct_behavior": "Spawn subagent for ALL code changes including merge conflict resolution - no exceptions for small fixes"
   }
 ]

@@ -50,15 +50,22 @@ context_limit: 200000  # from cat-config.json
 target_usage: 40       # percentage
 threshold: 80000       # context_limit * target_usage / 100
 
-# Estimate task size from PLAN.md
+# Estimate task size - INCLUDE ALL PHASES (M096)
 estimation_factors:
+  # Fixed costs per subagent phase
+  exploration_subagent: 10000    # codebase analysis
+  planning_subagent: 15000       # approach design
+  stakeholder_review: 5000       # per reviewer (5 reviewers typical)
+
+  # Variable costs from PLAN.md (implementation phase)
   files_to_create: count × 5000
   files_to_modify: count × 3000
   test_files: count × 4000
   plan_steps: count × 2000
   exploration_buffer: 10000 if uncertain
 
-estimated_tokens: sum of factors
+# Total = exploration + planning + implementation + review
+estimated_tokens: 10000 + 15000 + (implementation factors) + 25000
 ```
 
 **If estimated_tokens > threshold:**

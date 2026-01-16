@@ -20,6 +20,19 @@
 - Execute implementation tasks
 - Work in worktrees except for merging
 
+### No Exceptions for "Small Fixes" (M097)
+
+**MANDATORY**: Main agent NEVER edits source code directly, even for:
+- Merge conflict resolution (spawn subagent)
+- 1-3 line fixes (spawn subagent)
+- Compilation error fixes (spawn subagent)
+- Style corrections (spawn subagent)
+
+**Anti-pattern**: "This is just a small fix, I'll do it directly" → ALWAYS delegate.
+
+The delegation boundary exists for quality and traceability, not efficiency.
+"Quick fixes" bypass fresh context and create untraceable changes.
+
 ### Worktree Usage
 
 Main agent uses worktrees ONLY for:
