@@ -2,7 +2,16 @@
 # Library for JSON parsing utilities
 # Source this file in hooks that need to parse JSON input
 #
+# REQUIREMENT: jq must be installed for reliable JSON parsing.
+# Fallback regex parsing only works for simple, flat JSON.
+#
 # Usage: source "${CLAUDE_PLUGIN_ROOT}/hooks/lib/json-parser.sh"
+
+# Check jq availability once at load time
+_JQ_AVAILABLE=false
+if command -v jq &>/dev/null; then
+    _JQ_AVAILABLE=true
+fi
 
 # Extract a single JSON value
 # Usage: extract_json_value "$json" "key"
@@ -10,7 +19,15 @@
 extract_json_value() {
     local json="$1"
     local key="$2"
-    # Use grep and sed for basic JSON parsing (allow grep to fail without triggering set -e)
+
+    # Prefer jq for reliable parsing
+    if $_JQ_AVAILABLE; then
+        echo "$json" | jq -r --arg k "$key" '.[$k] // empty' 2>/dev/null || echo ""
+        return
+    fi
+
+    # Fallback: regex parsing (WARNING: only works for simple flat JSON with string values)
+    # Does NOT handle: nested objects, arrays, escaped quotes, multiline values
     echo "$json" | grep -o "\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed "s/\"$key\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\"/\1/" || true
 }
 
@@ -20,7 +37,14 @@ extract_json_value() {
 extract_json_number() {
     local json="$1"
     local key="$2"
-    echo "$json" | grep -o "\"$key\"[[:space:]]*:[[:space:]]*[0-9]*" | sed "s/\"$key\"[[:space:]]*:[[:space:]]*//" || true
+
+    if $_JQ_AVAILABLE; then
+        echo "$json" | jq -r --arg k "$key" '.[$k] // empty | select(type == "number")' 2>/dev/null || echo ""
+        return
+    fi
+
+    # Fallback
+    echo "$json" | grep -o "\"$key\"[[:space:]]*:[[:space:]]*[0-9.-]*" | sed "s/\"$key\"[[:space:]]*:[[:space:]]*//" || true
 }
 
 # Extract a boolean JSON value
@@ -29,6 +53,13 @@ extract_json_number() {
 extract_json_bool() {
     local json="$1"
     local key="$2"
+
+    if $_JQ_AVAILABLE; then
+        echo "$json" | jq -r --arg k "$key" '.[$k] // empty | select(type == "boolean")' 2>/dev/null || echo ""
+        return
+    fi
+
+    # Fallback
     echo "$json" | grep -o "\"$key\"[[:space:]]*:[[:space:]]*\(true\|false\)" | sed "s/\"$key\"[[:space:]]*:[[:space:]]*//" || true
 }
 
@@ -60,24 +91,40 @@ extract_json_cached() {
     echo "$value"
 }
 
-# Parse all common hook JSON fields at once
+# Parse all common hook JSON fields at once (optimized - single jq call when available)
 # Usage: parse_hook_json "$JSON_INPUT"
 # Sets global variables: HOOK_EVENT, SESSION_ID, USER_PROMPT, TOOL_NAME, TOOL_INPUT_JSON
 parse_hook_json() {
     local json="$1"
 
-    # Extract all common fields in one pass
-    HOOK_EVENT=$(extract_json_value "$json" "hook_event_name")
-    SESSION_ID=$(extract_json_value "$json" "session_id")
+    if $_JQ_AVAILABLE; then
+        # Single jq call extracts all fields efficiently
+        local parsed
+        parsed=$(echo "$json" | jq -r '[
+            .hook_event_name // "",
+            .session_id // "",
+            (.message // .user_message // .prompt // ""),
+            .tool_name // "",
+            (.tool_input | if . then tostring else "" end)
+        ] | @tsv' 2>/dev/null) || parsed=""
 
-    # Try multiple possible fields for user prompt
-    USER_PROMPT=$(extract_json_value "$json" "message")
-    [[ -z "$USER_PROMPT" ]] && USER_PROMPT=$(extract_json_value "$json" "user_message")
-    [[ -z "$USER_PROMPT" ]] && USER_PROMPT=$(extract_json_value "$json" "prompt")
+        if [[ -n "$parsed" ]]; then
+            IFS=$'\t' read -r HOOK_EVENT SESSION_ID USER_PROMPT TOOL_NAME TOOL_INPUT_JSON <<< "$parsed"
+        fi
+    else
+        # Fallback: multiple extractions (less efficient)
+        HOOK_EVENT=$(extract_json_value "$json" "hook_event_name")
+        SESSION_ID=$(extract_json_value "$json" "session_id")
 
-    # Tool-related fields for PreToolUse/PostToolUse hooks
-    TOOL_NAME=$(extract_json_value "$json" "tool_name")
-    TOOL_INPUT_JSON=$(echo "$json" | grep -o '"tool_input"[[:space:]]*:[[:space:]]*{[^}]*}' | sed 's/"tool_input"[[:space:]]*:[[:space:]]*//' || true)
+        # Try multiple possible fields for user prompt
+        USER_PROMPT=$(extract_json_value "$json" "message")
+        [[ -z "$USER_PROMPT" ]] && USER_PROMPT=$(extract_json_value "$json" "user_message")
+        [[ -z "$USER_PROMPT" ]] && USER_PROMPT=$(extract_json_value "$json" "prompt")
+
+        # Tool-related fields
+        TOOL_NAME=$(extract_json_value "$json" "tool_name")
+        TOOL_INPUT_JSON=$(echo "$json" | grep -o '"tool_input"[[:space:]]*:[[:space:]]*{[^}]*}' | sed 's/"tool_input"[[:space:]]*:[[:space:]]*//' || true)
+    fi
 
     # Export for use in calling script
     export HOOK_EVENT SESSION_ID USER_PROMPT TOOL_NAME TOOL_INPUT_JSON
@@ -132,6 +179,64 @@ safe_json_get() {
         local key="${path#.}"
         extract_json_value "$json" "$key"
     fi
+}
+
+# ============================================================================
+# Standard Hook Initialization
+# ============================================================================
+
+# Initialize a hook by reading JSON from stdin with timeout
+# Usage: init_hook [timeout_seconds]
+# Sets: HOOK_JSON (raw JSON input), plus calls parse_hook_json
+# Returns: 0 on success, 1 if no input or invalid JSON
+init_hook() {
+    local timeout_secs="${1:-5}"
+
+    # Read JSON from stdin with timeout (prevent hanging)
+    if [ -t 0 ]; then
+        # No stdin available
+        HOOK_JSON="{}"
+        return 1
+    fi
+
+    HOOK_JSON=$(timeout "${timeout_secs}s" cat 2>/dev/null) || HOOK_JSON="{}"
+
+    # Validate it's actually JSON
+    if $_JQ_AVAILABLE && ! echo "$HOOK_JSON" | jq -e '.' > /dev/null 2>&1; then
+        echo "Warning: Invalid JSON input to hook" >&2
+        HOOK_JSON="{}"
+        return 1
+    fi
+
+    # Parse common fields
+    parse_hook_json "$HOOK_JSON"
+
+    export HOOK_JSON
+    return 0
+}
+
+# Initialize a Bash tool hook (PreToolUse/PostToolUse for Bash)
+# Usage: init_bash_hook
+# Sets: HOOK_JSON, TOOL_NAME, BASH_COMMAND
+# Returns: 0 if Bash tool, 1 otherwise (caller should exit 0)
+init_bash_hook() {
+    init_hook || return 1
+
+    # Check if this is a Bash tool call
+    if [[ "$TOOL_NAME" != "Bash" && "$TOOL_NAME" != "bash" ]]; then
+        echo '{}'
+        return 1
+    fi
+
+    # Extract command from tool_input
+    if $_JQ_AVAILABLE; then
+        BASH_COMMAND=$(echo "$HOOK_JSON" | jq -r '.tool_input.command // empty' 2>/dev/null) || BASH_COMMAND=""
+    else
+        BASH_COMMAND=$(echo "$TOOL_INPUT_JSON" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' || true)
+    fi
+
+    export BASH_COMMAND
+    return 0
 }
 
 # ============================================================================
