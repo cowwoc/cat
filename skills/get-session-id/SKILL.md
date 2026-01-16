@@ -1,23 +1,21 @@
 ---
 name: get-session-id
-description: Session ID is automatically injected at SessionStart via echo-session-id.sh hook
-allowed-tools: None (automatic hook)
+description: Session ID is automatically available via ${CLAUDE_SESSION_ID} substitution
+allowed-tools: None (automatic substitution)
 ---
 
 # Get Session ID Skill
 
-**Purpose**: The session ID is automatically available at session start via the `echo-session-id.sh` hook.
+**Purpose**: The session ID is automatically available in skills and commands via `${CLAUDE_SESSION_ID}`.
 
 **How It Works**:
-- The `echo-session-id.sh` hook is registered for `SessionStart` events
-- When the session starts, the hook automatically injects the session ID into context
-- The session ID appears in system reminders as: `✅ Session ID: {uuid}`
-- No manual invocation required
+- Claude Code substitutes `${CLAUDE_SESSION_ID}` with the actual session ID when loading skills
+- No manual extraction or lookup required
+- The session ID is also visible in context via SessionStart hooks for user reference
 
 **When to Use This Skill**:
-- The session ID is already available - just look for it in the SessionStart system reminders
-- Use this skill documentation to understand how the session ID is provided
-- Reference when coordinating with hooks that use session IDs
+- Reference this documentation to understand how session IDs work
+- The session ID is already available - just use `${CLAUDE_SESSION_ID}` in skill/command templates
 
 ## How Session IDs Work
 
@@ -27,76 +25,68 @@ Claude Code assigns a unique session ID (UUID v4) to each conversation session. 
 - Hook coordination across tools
 - Task ownership in multi-instance scenarios
 
-## Automatic Injection via SessionStart Hook
+## Automatic Substitution in Skills
 
-The `echo-session-id.sh` hook is registered in `.claude/settings.json` for `SessionStart` events.
+In skill and command markdown files, use `${CLAUDE_SESSION_ID}` directly:
 
-**How it works**:
-1. Claude Code invokes SessionStart hooks when the session starts OR resumes after compaction
-2. `echo-session-id.sh` reads stdin JSON from Claude Code
-3. Extracts `session_id` field using `jq`
-4. Outputs `hookSpecificOutput` with formatted session ID
-5. Claude Code injects this into context as a system reminder
-
-**Output injected into context**:
+```bash
+# This gets auto-substituted when the skill loads
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
+cat "$SESSION_FILE" | jq -s 'length'
 ```
-✅ Session ID: b6933609-ab67-467e-af26-e48c3c8c129e
+
+## Hooks and Scripts
+
+Bash hooks receive the session ID via stdin JSON:
+
+```bash
+# Read stdin JSON and extract session_id
+INPUT=$(cat)
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+
+# Use for session-specific operations
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+```
+
+## User Visibility
+
+The session ID is injected into conversation context via two mechanisms:
+- `echo-session-id.sh`: Outputs session ID at SessionStart
+- `inject-session-instructions.sh`: Includes session ID in CAT instructions
+
+Users see the session ID in system reminders at conversation start:
+```
+Session ID: b6933609-ab67-467e-af26-e48c3c8c129e
 ```
 
 ## Usage Examples
 
-### Example 1: Get Current Session ID
-
-The session ID is automatically available in SessionStart system reminders. Look for:
-
-```
-✅ Session ID: b6933609-ab67-467e-af26-e48c3c8c129e
-```
-
-No manual execution needed - it's already in your context!
-
-### Example 2: Use Session ID for File Operations
-
-After getting the session ID, you can use it to:
+### Example 1: In Skill Templates
 
 ```bash
-# Access conversation history
-cat /home/node/.config/projects/-workspace/{session-id}.jsonl | jq -r 'select(.type == "message")'
-
-# Find session-specific logs
-find /home/node/.config/projects/-workspace/ -name "${SESSION_ID}*"
-
-# Access session conversation
-cat /home/node/.config/projects/-workspace/${SESSION_ID}.jsonl
+# Session ID is auto-substituted - no manual lookup needed
+cat /home/node/.config/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl | jq -s 'length'
 ```
 
-## Integration with Hooks
-
-The session ID from this skill matches the session ID that hooks receive via stdin:
+### Example 2: Access Session History
 
 ```bash
-# Hooks can use echo-session-id.sh to get formatted output
-SESSION_OUTPUT=$(cat | ~/.claude/hooks/echo-session-id.sh)
-echo "$SESSION_OUTPUT" | jq -r '.hookSpecificOutput'
-
-# Or extract directly from stdin JSON
-SESSION_ID=$(cat | jq -r '.session_id')
+# The session ID is already substituted when this runs
+jq -s '[.[] | select(.type == "message")]' \
+  "/home/node/.config/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 ```
 
-Both methods read from the same stdin JSON provided by Claude Code.
+### Example 3: In Hook Scripts (stdin JSON)
+
+```bash
+#!/bin/bash
+INPUT=$(cat)
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+# Now use $SESSION_ID for session-specific operations
+```
 
 ## Related
 
-- **echo-session-id.sh**: Script that outputs session ID from Claude Code stdin JSON
+- **echo-session-id.sh**: Hook that outputs session ID for user visibility
+- **inject-session-instructions.sh**: Hook that includes session ID in CAT instructions
 - **get-history**: Skill that uses session ID to access conversation
-- **hook-logger.sh**: Library that uses session ID for session-specific logging
-
-## Implementation Details
-
-The `echo-session-id.sh` script:
-- Reads JSON from stdin (provided by Claude Code)
-- Extracts `session_id` field using `jq`
-- Outputs JSON with `hookSpecificOutput` field
-- Requires `jq` to be installed (standard in Claude Code environment)
-
-**Script Location**: `~/.claude/hooks/echo-session-id.sh`

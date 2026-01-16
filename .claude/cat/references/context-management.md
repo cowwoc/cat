@@ -72,7 +72,7 @@ potential debugging.
 
 ### Session File Location
 ```
-/home/node/.config/claude/projects/-workspace/{SESSION_ID}.jsonl
+/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl
 ```
 
 ### Metrics
