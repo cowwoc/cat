@@ -1,7 +1,7 @@
 ---
 name: cat:execute-task
 description: Execute task (continues incomplete work)
-argument-hint: "[major.minor-task-name]"
+argument-hint: "[major.minor-task-name] [--override-gate]"
 allowed-tools:
   - Read
   - Write
@@ -128,29 +128,54 @@ Read `.claude/cat/cat-config.json` to determine:
 - Scan all tasks to find first executable:
   1. Status is `pending` or `in-progress`
   2. All task dependencies are `completed`
-  3. Minor version dependency is met (see below)
+  3. Version entry gate is satisfied (see below)
 
 ```bash
 # Find all task STATE.md files (depth 3 under major version = task level)
 find .claude/cat/v*/v*.* -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
-**Minor version dependency rules:**
+**Entry Gate Evaluation:**
 
-| Scenario | Dependency |
-|----------|------------|
-| First minor of first major (v0.0) | None - always executable |
-| Subsequent minors (e.g., v0.5) | Previous minor must be complete (v0.4) |
-| First minor of new major (e.g., v1.0) | Last minor of previous major must be complete |
+For each candidate task, read the version's PLAN.md and extract the `## Gates` → `### Entry` section.
 
-**To check if a minor is complete:**
-All tasks within that minor version must have `status: completed`.
+Evaluate each entry condition:
+
+| Condition Type | How to Evaluate |
+|----------------|-----------------|
+| `Previous minor version (X.Y) complete` | All tasks in vX.Y must have status: completed |
+| `Previous major version (N) complete` | All minor versions in vN must be complete |
+| `Task X.Y-task-name complete` | That specific task must have status: completed |
+| `Version X.Y complete` | All tasks in that version must be complete |
+| `Manual approval required` | Check STATE.md for `Entry Approved: true` |
+| `Inherits from Major N gates` | Read Major N's PLAN.md, evaluate those gates |
+| `No prerequisites` | Always satisfied |
+| Custom conditions | Display to user, they decide |
+
+**If no `## Gates` section exists**, fall back to default rules:
+- First minor of first major (v0.0): No prerequisites
+- Subsequent minors (e.g., v0.5): Previous minor must be complete
+- First minor of new major (e.g., v1.0): Last minor of previous major must be complete
 
 For each task, check:
 - Parse STATUS from STATE.md
 - Parse DEPENDENCIES from STATE.md
 - Verify each task dependency has status: completed
-- Verify minor version dependency is met (all tasks in dependency minor are completed)
+- **Evaluate entry gate from version PLAN.md**
+
+**If entry gate not satisfied for a task:**
+
+Display the blocking gate condition:
+```
+⏸️ Task {task-name} blocked by entry gate:
+   🚧 Waiting on: {unmet condition}
+
+To override and work on this task anyway, explicitly request:
+   /cat:execute-task {major}.{minor}-{task-name} --override-gate
+```
+
+Continue scanning for next eligible task. Only if user explicitly provides `--override-gate`
+argument, skip the entry gate check for that specific task.
 
 **If no executable task found:**
 
@@ -160,9 +185,10 @@ No executable tasks found.
 Possible reasons:
 - All tasks completed
 - Remaining tasks have unmet dependencies
+- Entry gates not satisfied
 - No tasks defined yet
 
-Use /cat:status to see current state.
+Use /cat:status to see current state and gate status.
 Use /cat:add-task to add new tasks.
 ```
 
@@ -1370,6 +1396,7 @@ See [task-resolution.md](../references/task-resolution.md) for details.
 <success_criteria>
 
 - [ ] Task identified and loaded
+- [ ] **Entry gate evaluated (blocked if unmet, unless --override-gate)**
 - [ ] Task lock acquired (SESSION_ID verified)
 - [ ] **Task size analyzed (estimate vs threshold)**
 - [ ] **If oversized: auto-decomposition triggered**

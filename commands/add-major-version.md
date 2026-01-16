@@ -168,6 +168,86 @@ Loop until "Create it" selected.
 
 </step>
 
+<step name="configure_gates">
+
+**Configure entry and exit gates for Major Version:**
+
+Gates define when work on this major version can start (entry) and when it's complete (exit).
+**Major gates are inherited by all minor versions within this major.**
+
+**1. Entry Gate:**
+
+Use AskUserQuestion:
+- header: "Entry Gate"
+- question: "When can work on Major $NEXT_MAJOR begin?"
+- options:
+  - "Previous major complete (Recommended)" - Major {NEXT_MAJOR-1} must be done
+  - "No prerequisites" - work can start anytime
+  - "Specific conditions" - let me define custom conditions
+
+**If "Previous major complete":**
+- Set entry gate to: `Previous major version ({NEXT_MAJOR-1}) complete`
+- For first major (v0 or v1), default to "No prerequisites"
+
+**If "Specific conditions":**
+
+Use AskUserQuestion:
+- header: "Entry Conditions"
+- question: "Select entry conditions (multiple allowed):"
+- multiSelect: true
+- options:
+  - "Previous major complete" - previous major must be done
+  - "Specific version(s) complete" - named versions must be done first
+  - "Specific task(s) complete" - named tasks must be done first
+  - "Manual approval required" - explicit sign-off before starting
+  - "Custom condition" - freeform text
+
+If "Specific version(s) complete" selected:
+- Ask: "Which version(s) must complete first? (e.g., 0.5)"
+
+If "Specific task(s) complete" selected:
+- Ask: "Which task(s) must complete first? (e.g., 0.5-design-review)"
+
+If "Custom condition" selected:
+- Ask: "Describe the custom entry condition:"
+
+**2. Exit Gate:**
+
+Use AskUserQuestion:
+- header: "Exit Gate"
+- question: "When is Major $NEXT_MAJOR complete?"
+- options:
+  - "All minor versions complete (Recommended)" - standard behavior
+  - "Specific conditions" - let me define custom conditions
+  - "No exit criteria" - manual decision only
+
+**If "All minor versions complete":**
+- Set exit gate to: `All minor versions complete`
+
+**If "Specific conditions":**
+
+Use AskUserQuestion:
+- header: "Exit Conditions"
+- question: "Select exit conditions (multiple allowed):"
+- multiSelect: true
+- options:
+  - "All minor versions complete" - every minor version in this major done
+  - "Specific version(s) complete" - only named minors required
+  - "Tests passing" - full test suite must pass
+  - "Code review complete" - review sign-off required
+  - "Manual sign-off" - explicit approval required
+  - "Custom condition" - freeform text
+
+If "Specific version(s) complete" selected:
+- Ask: "Which minor version(s) are required? (leave blank if TBD)"
+
+If "Custom condition" selected:
+- Ask: "Describe the custom exit condition:"
+
+**Store gate configuration for use in create_major_plan step.**
+
+</step>
+
 <step name="create_structure">
 
 **Create major version directory structure:**
@@ -209,6 +289,18 @@ mkdir -p "$MAJOR_PATH/v$NEXT_MAJOR.0/task"
 
 ## Scope
 {scope assessment}
+
+## Gates
+
+### Entry
+{entry gate conditions from configure_gates step, one per line with "- " prefix}
+{If no conditions: "- No prerequisites"}
+
+### Exit
+{exit gate conditions from configure_gates step, one per line with "- " prefix}
+{If no conditions: "- All minor versions complete"}
+
+**Note:** These gates are inherited by all minor versions in this major.
 
 ## Goals
 - {goal 1}
@@ -266,6 +358,14 @@ Create `.claude/cat/v{major}/v{major}.0/` with:
 
 ## Focus
 Initial implementation for Major {major}
+
+## Gates
+
+### Entry
+- Inherits from Major {major} gates
+
+### Exit
+- All tasks complete
 
 ## Tasks
 *No tasks defined yet. Use `/cat:add-task {major}.0` to add tasks.*
@@ -353,9 +453,10 @@ Major version created:
 
 - [ ] Next major version number determined
 - [ ] Deep discussion captured vision and scope
+- [ ] Entry and exit gates configured
 - [ ] Major directory structure created
-- [ ] Major STATE.md, PLAN.md, CHANGELOG.md created
-- [ ] Initial minor version (X.0) created
+- [ ] Major STATE.md, PLAN.md (with Gates section), CHANGELOG.md created
+- [ ] Initial minor version (X.0) created with inherited gates
 - [ ] ROADMAP.md updated with new major section
 - [ ] All committed to git
 
