@@ -67,7 +67,7 @@ for pattern in "${ALLOWED_PATTERNS[@]}"; do
 done
 
 # This appears to be a source file edit - warn but don't block
-output_hook_warning "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097)
+output_hook_warning "PreToolUse" "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097)
 
 File: $FILE_PATH
 
