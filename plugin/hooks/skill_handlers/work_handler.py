@@ -30,8 +30,159 @@ def build_header_top(header: str, max_width: int) -> str:
     return "╭" + prefix_dashes + header + " " + suffix_dashes + "╮"
 
 
+def build_simple_box(icon: str, title: str, content_lines: list[str]) -> str:
+    """Build a simple box with icon prefix header (╭─ icon title ...)."""
+    prefix = f"─ {icon} {title}"
+    # Calculate max width from content
+    content_widths = [display_width(c) for c in content_lines]
+    prefix_width = display_width(prefix)
+    max_content = max(content_widths) if content_widths else 0
+    inner_width = max(max_content, prefix_width) + 2
+
+    lines = []
+    # Top border with embedded prefix
+    suffix_dashes = "─" * (inner_width - prefix_width)
+    lines.append("╭" + prefix + suffix_dashes + "╮")
+    # Content lines
+    for content in content_lines:
+        padding = inner_width - display_width(content)
+        lines.append("│ " + content + " " * (padding - 1) + "│")
+    # Bottom border
+    lines.append("╰" + "─" * inner_width + "╯")
+    return "\n".join(lines)
+
+
 class WorkHandler:
     """Handler for /cat:work skill."""
+
+    def _build_no_executable_tasks(self) -> str:
+        """Build No executable tasks info box."""
+        return build_simple_box(
+            "ℹ️",
+            "No executable tasks",
+            [
+                "",
+                "Run /cat:status to see available tasks",
+            ]
+        )
+
+    def _build_task_not_found(self) -> str:
+        """Build Task not found box with suggestion placeholder."""
+        return build_simple_box(
+            "❓",
+            "Task \"{task-name}\" not found",
+            [
+                "",
+                "Did you mean: {suggestion}?",
+                "Run /cat:status to see all tasks",
+            ]
+        )
+
+    def _build_fork_in_the_road(self) -> str:
+        """Build Fork in the road wizard box."""
+        content_lines = [
+            "   Task: {task-name}",
+            "",
+            "   Multiple viable paths - how would you prefer to proceed?",
+            "",
+            "   CHOOSE YOUR PATH",
+            "   ─────────────────────────────────────────────────────────────────",
+            "",
+            "   [A] {approach-name}",
+            "       {description}",
+            "       Risk: {level} | Scope: {N} files | Config alignment: {N}%",
+            "",
+            "   [B] {approach-name}",
+            "       {description}",
+            "       Risk: {level} | Scope: {N} files | Config alignment: {N}%",
+            "",
+            "   [C] {approach-name} (if exists)",
+            "       ...",
+            "",
+        ]
+        # Calculate max width
+        content_widths = [display_width(c) for c in content_lines]
+        max_width = max(content_widths) if content_widths else 60
+
+        lines = []
+        lines.append("🔀 FORK IN THE ROAD")
+        lines.append("╭" + "─" * (max_width + 2) + "╮")
+        for content in content_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("╰" + "─" * (max_width + 2) + "╯")
+        return "\n".join(lines)
+
+    def _build_checkpoint_task_complete(self) -> str:
+        """Build Checkpoint: Task Complete box with metrics."""
+        content_lines = [
+            "",
+            "**Task:** {task-name}",
+            "",
+        ]
+        metrics_lines = [
+            "**Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)",
+        ]
+        branch_lines = [
+            "**Branch:** {task-branch}",
+            "",
+        ]
+
+        all_content = content_lines + metrics_lines + branch_lines
+        content_widths = [display_width(c) for c in all_content]
+        header = "✅ **CHECKPOINT: Task Complete**"
+        header_width = display_width(header)
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
+        lines = []
+        lines.append(header)
+        lines.append("╭" + "─" * (max_width + 2) + "╮")
+        for content in content_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("├" + "─" * (max_width + 2) + "┤")
+        for content in metrics_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("├" + "─" * (max_width + 2) + "┤")
+        for content in branch_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("╰" + "─" * (max_width + 2) + "╯")
+        return "\n".join(lines)
+
+    def _build_checkpoint_feedback_applied(self) -> str:
+        """Build Checkpoint: Feedback Applied box."""
+        content_lines = [
+            "",
+            "**Task:** {task-name}",
+            "**Feedback iteration:** {N}",
+            "",
+        ]
+        metrics_lines = [
+            "**Feedback subagent:** {N}K tokens",
+            "**Total tokens (all iterations):** {total}K",
+        ]
+        branch_lines = [
+            "**Branch:** {task-branch}",
+            "",
+        ]
+
+        all_content = content_lines + metrics_lines + branch_lines
+        content_widths = [display_width(c) for c in all_content]
+        header = "✅ **CHECKPOINT: Feedback Applied**"
+        header_width = display_width(header)
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
+        lines = []
+        lines.append(header)
+        lines.append("╭" + "─" * (max_width + 2) + "╮")
+        for content in content_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("├" + "─" * (max_width + 2) + "┤")
+        for content in metrics_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("├" + "─" * (max_width + 2) + "┤")
+        for content in branch_lines:
+            lines.append(build_line(content, max_width))
+        lines.append("╰" + "─" * (max_width + 2) + "╯")
+        return "\n".join(lines)
 
     def _build_task_complete_with_next(self) -> str:
         """Build Task Complete box for auto-continue mode (trust >= medium)."""
@@ -227,7 +378,26 @@ Use these templates directly in your output. Do NOT call any external scripts.
 
 INSTRUCTION: Render progress displays inline using these templates. Update the banner at each phase transition.
 
-PRE-COMPUTED WORK BOXES (copy exactly when rendering):
+PRE-COMPUTED WORK BOXES - LITERAL COPY-PASTE REQUIRED (M225):
+
+**CRITICAL**: Copy-paste the EXACT box below into your response. Do NOT reconstruct or retype it.
+The boxes use precise Unicode characters (╭╮╰╯│├┤─) that must be preserved exactly.
+Typing similar-looking characters (like |) causes misalignment.
+
+--- NO_EXECUTABLE_TASKS ---
+{self._build_no_executable_tasks()}
+
+--- TASK_NOT_FOUND ---
+{self._build_task_not_found()}
+
+--- FORK_IN_THE_ROAD ---
+{self._build_fork_in_the_road()}
+
+--- CHECKPOINT_TASK_COMPLETE ---
+{self._build_checkpoint_task_complete()}
+
+--- CHECKPOINT_FEEDBACK_APPLIED ---
+{self._build_checkpoint_feedback_applied()}
 
 --- TASK_COMPLETE_WITH_NEXT_TASK ---
 {self._build_task_complete_with_next()}
@@ -238,7 +408,8 @@ PRE-COMPUTED WORK BOXES (copy exactly when rendering):
 --- TASK_COMPLETE_LOW_TRUST ---
 {self._build_task_complete_low_trust()}
 
-INSTRUCTION: Use the appropriate pre-computed box above. Replace placeholders ({{task-name}}, {{next-task-name}}, {{goal from PLAN.md}}, {{scope description}}) with actual values but keep box structure exact. Maintain spacing and alignment."""
+INSTRUCTION: Copy-paste the box structure VERBATIM, then replace ONLY the placeholder text inside.
+Do NOT retype box characters - copy the entire box including │ and ─ characters exactly as shown."""
 
 
 # Register handler
