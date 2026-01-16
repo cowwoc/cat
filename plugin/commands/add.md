@@ -281,17 +281,45 @@ If validation fails, prompt user for different name.
 Note: Task description and type were already captured in task_gather_intent step.
 Use TASK_DESCRIPTION and TASK_TYPE from that step.
 
-**1. Scope:**
+**1. Scope, Dependencies, and Blockers (combined):**
+
+Collect all three independent questions in a single AskUserQuestion call:
 
 Use AskUserQuestion:
-- header: "Scope"
-- question: "How many files will this likely touch?"
-- options:
-  - "1-2 files" - Very focused change
-  - "3-5 files" - Moderate scope
-  - "6+ files" - Broad change (consider splitting)
+- questions:
+    - question: "How many files will this task likely touch?"
+      header: "Scope"
+      options:
+        - label: "1-2 files"
+          description: "Very focused change"
+        - label: "3-5 files"
+          description: "Moderate scope"
+        - label: "6+ files"
+          description: "Broad change - consider splitting"
+      multiSelect: false
 
-If "6+ files":
+    - question: "Does this task depend on other tasks completing first?"
+      header: "Dependencies"
+      options:
+        - label: "No dependencies"
+          description: "Can start immediately"
+        - label: "Yes, select dependencies"
+          description: "Show task list to choose from"
+      multiSelect: false
+
+    - question: "Does this task block any existing tasks?"
+      header: "Blocks"
+      options:
+        - label: "No, doesn't block anything"
+          description: "Continue without blockers"
+        - label: "Yes, select blocked tasks"
+          description: "Show task list to choose from"
+      multiSelect: false
+
+**2. Conditional follow-ups based on answers:**
+
+**If Scope = "6+ files":**
+
 Use AskUserQuestion:
 - header: "Task Size"
 - question: "This seems like a large task. Should we split it into multiple smaller tasks?"
@@ -301,29 +329,16 @@ Use AskUserQuestion:
 
 If "Split into multiple tasks" -> guide user to define multiple tasks, loop this command.
 
-**2. Dependencies:**
+**If Dependencies = "Yes, select dependencies":**
 
-Use AskUserQuestion:
-- header: "Dependencies"
-- question: "Does this task depend on other tasks completing first?"
-- options:
-  - "No dependencies" - Can run immediately
-  - "Yes, select dependencies" - Show task list
+List existing tasks in same minor version for selection using AskUserQuestion with multiSelect.
 
-If dependencies needed, list existing tasks in same minor version for selection.
+**If Blocks = "Yes, select blocked tasks":**
 
-**3. Blockers:**
+List existing tasks in same minor version for selection using AskUserQuestion with multiSelect.
+When blockers are selected, add this new task to their Dependencies list in STATE.md.
 
-Use AskUserQuestion:
-- header: "Blocks"
-- question: "Does this task block any existing tasks?"
-- options:
-  - "No, doesn't block anything" - Continue
-  - "Yes, select tasks to block" - Show task list
-
-If blockers selected, add this new task to their Dependencies list in STATE.md.
-
-**4. Acceptance criteria:**
+**3. Acceptance criteria:**
 
 Ask inline: "What are the acceptance criteria? How will we know this task is complete?"
 
