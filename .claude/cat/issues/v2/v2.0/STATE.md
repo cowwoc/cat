@@ -78,5 +78,6 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - split-retrospective-files-by-time
 
 ## Tasks Pending
+- reorganize-plugin-layout
 - branching-strategy-config
 - centralize-version-path-resolution
