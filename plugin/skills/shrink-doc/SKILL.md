@@ -356,6 +356,20 @@ After presenting validation results for ANY version, show comparison table.
 **Note:** Use `/cat:render-box` skill for table rendering - emojis (✅/❌/✓) require
 emoji-aware width calculation for proper column alignment.
 
+**Render-box service usage:**
+```bash
+# Render validation table using box.sh service mode
+"${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh" table '{
+  "headers": ["Version", "Lines", "Size", "Reduction", "Score", "Status"],
+  "widths": [14, 7, 6, 11, 7, 14],
+  "rows": [
+    ["**Original**", "{n}", "{n}K", "baseline", "N/A", "Reference"],
+    ["**V{n}**", "{n}", "{n}K", "{n}%", "{score}", "{status}"]
+  ]
+}'
+```
+
+**Expected output format:**
 ```
 ╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
 │ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
