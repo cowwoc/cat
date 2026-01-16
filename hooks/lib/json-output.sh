@@ -25,18 +25,19 @@ output_hook_message() {
 }
 
 # Output hook warning message (does NOT block)
-# Args: message_content
+# Args: event_name message_content
 # Note: Outputs to stderr for user visibility, JSON to stdout
 output_hook_warning() {
-	local message="$1"
+	local event="$1"
+	local message="$2"
 
 	# Output message to stderr for user visibility
 	echo "$message" >&2
 
 	# Output JSON context
-	jq -n --arg msg "$message" '{
+	jq -n --arg event "$event" --arg msg "$message" '{
 		"hookSpecificOutput": {
-			"hookEventName": "PreToolUse",
+			"hookEventName": $event,
 			"additionalContext": $msg
 		}
 	}'

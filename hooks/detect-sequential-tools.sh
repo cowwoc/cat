@@ -148,8 +148,8 @@ See: CLAUDE.md § Performance Optimization Requirements
   # Reset counter after warning
   echo "{\"last_tool_time\": $CURRENT_TIME, \"sequential_count\": 0, \"last_tool_names\": []}" > "$STATE_FILE"
 
-  # Output warning using helper
-  output_hook_warning "$MESSAGE"
+  # Output warning using helper (PostToolUse event)
+  output_hook_warning "PostToolUse" "$MESSAGE"
 fi
 
 exit 0
