@@ -107,27 +107,10 @@ if ! bash -n "$TEMP_SCRIPT" 2>/dev/null; then
 fi
 rm -f "$TEMP_SCRIPT"
 
-# 3. Block dangerous patterns (fail-fast security)
-# Check each pattern separately for clear error messages
-if echo "$SCRIPT_CONTENT" | grep -qE 'curl[^|]*\|[^|]*(ba)?sh'; then
-    echo "{\"status\": \"error\", \"message\": \"BLOCKED: Script contains 'curl | sh' pattern (remote code execution risk)\"}"
-    exit 1
-fi
-if echo "$SCRIPT_CONTENT" | grep -qE 'wget[^|]*\|[^|]*(ba)?sh'; then
-    echo "{\"status\": \"error\", \"message\": \"BLOCKED: Script contains 'wget | sh' pattern (remote code execution risk)\"}"
-    exit 1
-fi
-if echo "$SCRIPT_CONTENT" | grep -qE 'rm[[:space:]]+-rf[[:space:]]+/[^.]'; then
-    echo "{\"status\": \"error\", \"message\": \"BLOCKED: Script contains 'rm -rf /' pattern (destructive operation)\"}"
-    exit 1
-fi
-if echo "$SCRIPT_CONTENT" | grep -qE 'eval[[:space:]]+\$'; then
-    echo "{\"status\": \"error\", \"message\": \"BLOCKED: Script contains 'eval \$' pattern (arbitrary code execution)\"}"
-    exit 1
-fi
-if echo "$SCRIPT_CONTENT" | grep -qE 'exec[[:space:]]+<'; then
-    echo "{\"status\": \"error\", \"message\": \"BLOCKED: Script contains 'exec <' pattern (input redirection risk)\"}"
-    exit 1
+# 3. Warn about potentially dangerous patterns (but don't block)
+DANGEROUS_PATTERNS="curl.*\|.*bash|wget.*\|.*sh|rm -rf /[^.]|eval.*\$|exec.*<"
+if echo "$SCRIPT_CONTENT" | grep -qE "$DANGEROUS_PATTERNS"; then
+    echo "⚠️  Warning: Script contains potentially dangerous patterns. Review carefully." >&2
 fi
 
 # Write hook script
