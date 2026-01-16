@@ -250,6 +250,20 @@ When viewing `/cat:status`:
 /plugin uninstall cat
 ```
 
+## Contributing
+
+CAT is primarily a driver for my own projects. It's not intended to be a kitchen sink of every
+possible feature—the focus is on doing a few things well rather than accumulating tangentially
+related functionality.
+
+Contributions are welcome when they:
+- Align with the plugin's existing functionality and style
+- Solve real problems encountered during structured project execution
+- Maintain the focused, opinionated nature of the tool
+
+If you're unsure whether a contribution fits, open an issue to discuss before investing significant
+effort.
+
 ## License
 
 CAT Source-Available Commercial License — see [LICENSE.md](LICENSE.md)
