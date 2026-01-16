@@ -119,7 +119,7 @@ echo "$SUBAGENT_DATA" | jq --argjson limit "$CONTEXT_LIMIT" '
 
 ### 3. Render Table
 
-Using the JSON output, render a table. Follow `skills/box-alignment/SKILL.md` for proper column alignment.
+Using the JSON output, render a table.
 Add warning emoji OUTSIDE the box (right side) for exceeded rows:
 
 ```

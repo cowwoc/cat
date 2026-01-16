@@ -33,9 +33,7 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 <step name="display-format">
 
-**Use closed-border format for configuration displays.**
-
-Follow `skills/box-alignment/SKILL.md` for proper alignment, using `${CLAUDE_PLUGIN_ROOT}/emoji-widths.json` for emoji display widths.
+**Display format:**
 
 ```
 ╭─── ⚙️ SETTINGS ────────────────────────────────────────────────────╮
@@ -66,7 +64,7 @@ BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUse
 **Why this matters:** Users need visual context before making choices. Jumping directly to
 prompts without display creates confusion and poor UX.
 
-**Display settings screen in closed-border format:**
+**Display settings screen:**
 
 ```
 ╭─── ⚙️ CURRENT SETTINGS ────────────────────────────────────────────╮

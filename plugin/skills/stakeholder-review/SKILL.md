@@ -282,8 +282,7 @@ fi
 
 ### Output Format
 
-After context analysis, display selection results using closed-border format.
-Follow `skills/box-alignment/SKILL.md` for proper alignment.
+After context analysis, display selection results:
 
 ```
 ╭─── STAKEHOLDER SELECTION ──────────────────────────────╮
@@ -467,7 +466,7 @@ for review in reviews:
 
 **Generate compact review report:**
 
-Output the review results using closed-border format. Follow `skills/box-alignment/SKILL.md` for proper alignment, using `${CLAUDE_PLUGIN_ROOT}/emoji-widths.json` for emoji display widths.
+Output the review results:
 
 **Summary box:**
 
