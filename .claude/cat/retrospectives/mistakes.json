@@ -3167,6 +3167,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When find-task.sh detects an existing worktree for a task, skip that task (auto-discovery) or return existing_worktree status (specific task request). Agent should then find a different task or report no tasks available."
+    },
+    {
+      "id": "M239",
+      "timestamp": "2026-01-24T15:14:26-05:00",
+      "category": "protocol_violation",
+      "description": "Offered to resume existing worktrees when no tasks were available - worktrees should be skipped as in-use",
+      "root_cause": "Missing explicit guidance in work.md for no-tasks-available scenario - agent improvised with resume worktree options instead of suggesting cleanup only if stale",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/commands/work.md",
+      "pattern_keywords": [
+        "worktree",
+        "resume",
+        "no_tasks",
+        "cleanup"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When no tasks are available due to existing worktrees, explain the situation and suggest /cat:cleanup only if user believes worktrees are stale - NEVER offer to resume worktrees"
     }
   ]
 }
