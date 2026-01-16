@@ -589,6 +589,29 @@ prevention: |
 # Positive verification catches all failures, not just anticipated ones
 ```
 
+### Do NOT fix the immediate problem when user says "Learn from mistakes" (M072)
+
+When user explicitly requests mistake analysis (e.g., "Learn from mistakes: ..."):
+
+```yaml
+# ❌ WRONG: Fix immediate problem, skip skill invocation
+user: "Learn from mistakes: you didn't commit before approval"
+agent: [makes the commit]
+agent: "Done, here's the approval gate again"
+# Mistake not recorded, will recur!
+
+# ✅ CORRECT: Invoke skill, analyze, record, THEN fix
+user: "Learn from mistakes: you didn't commit before approval"
+agent: [invokes /cat:learn-from-mistakes skill]
+agent: [performs 5-whys analysis]
+agent: [records in mistakes.json]
+agent: [implements prevention]
+agent: [then fixes immediate problem]
+```
+
+**Key principle:** The phrase "Learn from mistakes" is a trigger to invoke this skill,
+not a description of what you should conceptually do. Always invoke the actual skill.
+
 ## Related Skills
 
 - `cat:run-retrospective` - Aggregate analysis triggered by this skill
