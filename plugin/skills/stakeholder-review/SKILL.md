@@ -167,37 +167,53 @@ for review in reviews:
 
 <step name="report">
 
-**Generate review report:**
+**Generate compact review report:**
 
-```markdown
-## Stakeholder Review Summary
+Use the `stakeholder-review.sh` script to render structured output:
 
-**Status:** {APPROVED|CONCERNS|REJECTED}
+```bash
+# Render full review with summary + concern boxes
+./plugin/scripts/stakeholder-review.sh full "TASK_NAME" "$REVIEW_JSON"
 
-### Stakeholder Results
-
-| Stakeholder | Status | Critical | High | Medium |
-|-------------|--------|----------|------|--------|
-| requirements | {status} | {count} | {count} | {count} |
-| architect | {status} | {count} | {count} | {count} |
-| security | {status} | {count} | {count} | {count} |
-| quality | {status} | {count} | {count} | {count} |
-| tester | {status} | {count} | {count} | {count} |
-| performance | {status} | {count} | {count} | {count} |
-| ux | {status} | {count} | {count} | {count} |
-| sales | {status} | {count} | {count} | {count} |
-| marketing | {status} | {count} | {count} | {count} |
-| legal | {status} | {count} | {count} | {count} |
-
-### Critical Concerns (Must Fix)
-{list of critical concerns with locations and recommendations}
-
-### High Priority Concerns
-{list of high concerns}
-
-### Medium Priority Concerns (Informational)
-{list of medium concerns}
+# Add --verbose for medium-priority concerns
+./plugin/scripts/stakeholder-review.sh full "TASK_NAME" "$REVIEW_JSON" --verbose
 ```
+
+**Output format:**
+
+```
+╭─── STAKEHOLDER REVIEW ─────────────────────────────────╮
+│                                                        │
+│  Task: task-name                                       │
+│                                                        │
+├────────────────────────────────────────────────────────┤
+│  Spawning reviewers...                                 │
+│  ├── requirements ✓                                    │
+│  ├── architect ✓                                       │
+│  ├── security ⚠ 1 HIGH                                 │
+│  └── tester ✗ 1 CRITICAL                               │
+├────────────────────────────────────────────────────────┤
+│  Result: REJECTED (1 critical, 1 high)                 │
+│                                                        │
+╰────────────────────────────────────────────────────────╯
+
+┌─ CRITICAL ─────────────────────────────────────────────┐
+│ [Tester] No unit tests                                 │
+│ └─ src/                                                │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+
+┌─ HIGH ─────────────────────────────────────────────────┐
+│ [Security] Input validation missing                    │
+│ └─ api.js:42                                           │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
+
+**Status icons:**
+- `✓` - APPROVED
+- `⚠` - CONCERNS (shows HIGH count if any)
+- `✗` - REJECTED (shows CRITICAL or HIGH count)
 
 </step>
 
