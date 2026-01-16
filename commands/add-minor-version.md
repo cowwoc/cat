@@ -270,7 +270,7 @@ mkdir -p "$MINOR_PATH/task"
 **Create PLAN.md:**
 
 ```markdown
-# Plan: Minor Version {major}.{minor}
+# Plan: Version {major}.{minor}
 
 ## Focus
 {focus from discussion}

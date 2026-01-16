@@ -279,7 +279,7 @@ mkdir -p "$MAJOR_PATH/v$NEXT_MAJOR.0/task"
 **Create Major PLAN.md (business-level):**
 
 ```markdown
-# Plan: Major Version {major}
+# Plan: Version {major}
 
 ## Vision
 {vision from discussion}
@@ -354,7 +354,7 @@ Create `.claude/cat/v{major}/v{major}.0/` with:
 
 **PLAN.md:**
 ```markdown
-# Plan: Minor Version {major}.0
+# Plan: Version {major}.0
 
 ## Focus
 Initial implementation for Major {major}
