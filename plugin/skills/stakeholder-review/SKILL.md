@@ -196,45 +196,39 @@ for review in reviews:
 
 **Generate compact review report:**
 
-Use the `stakeholder-review.sh` script to render structured output:
+Output the review results directly using open-border format:
 
-```bash
-# Render full review with summary + concern boxes
-./plugin/scripts/stakeholder-review.sh full "TASK_NAME" "$REVIEW_JSON"
-
-# Add --verbose for medium-priority concerns
-./plugin/scripts/stakeholder-review.sh full "TASK_NAME" "$REVIEW_JSON" --verbose
-```
-
-**Output format:**
+**Summary box:**
 
 ```
-╭─── STAKEHOLDER REVIEW ─────────────────────────────────╮
-│                                                        │
-│  Task: task-name                                       │
-│                                                        │
-├────────────────────────────────────────────────────────┤
-│  Spawning reviewers...                                 │
-│  ├── requirements ✓                                    │
-│  ├── architect ✓                                       │
-│  ├── security ⚠ 1 HIGH                                 │
-│  └── tester ✗ 1 CRITICAL                               │
-├────────────────────────────────────────────────────────┤
-│  Result: REJECTED (1 critical, 1 high)                 │
-│                                                        │
-╰────────────────────────────────────────────────────────╯
+╭─ STAKEHOLDER REVIEW
+│
+│  Task: {task-name}
+│
+│  Spawning reviewers...
+│  ├── requirements ✓
+│  ├── architect ✓
+│  ├── security ⚠ 1 HIGH
+│  └── tester ✗ 1 CRITICAL
+│
+│  Result: REJECTED (1 critical, 1 high)
+╰─
+```
 
-┌─ CRITICAL ─────────────────────────────────────────────┐
-│ [Tester] No unit tests                                 │
-│ └─ src/                                                │
-│                                                        │
-└────────────────────────────────────────────────────────┘
+**Concern boxes (if any):**
 
-┌─ HIGH ─────────────────────────────────────────────────┐
-│ [Security] Input validation missing                    │
-│ └─ api.js:42                                           │
-│                                                        │
-└────────────────────────────────────────────────────────┘
+```
+╭─ CRITICAL
+│
+│  [Tester] No unit tests
+│    └─ src/
+╰─
+
+╭─ HIGH
+│
+│  [Security] Input validation missing
+│    └─ api.js:42
+╰─
 ```
 
 **Status icons:**
