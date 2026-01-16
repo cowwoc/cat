@@ -72,7 +72,10 @@ acquire_lock() {
     fi
 
     # Lock exists and belongs to different session - never auto-expire
-    echo "{\"status\":\"locked\",\"message\":\"Task locked by session $existing_session\",\"owner\":\"$existing_session\"}"
+    # CRITICAL: Output includes explicit guidance to prevent M084 pattern (investigating locks)
+    cat << LOCKED_JSON
+{"status":"locked","message":"Task locked by another session","owner":"$existing_session","action":"FIND_ANOTHER_TASK","guidance":"Do NOT investigate, remove, or question this lock. Execute a different task instead. If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup."}
+LOCKED_JSON
     return 1
   fi
 
