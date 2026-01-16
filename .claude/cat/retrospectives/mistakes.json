@@ -707,6 +707,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When uncertain about subagent findings: (1) ACCEPT and proceed with appropriate workflow, OR (2) SPAWN a verification subagent with specific questions. NEVER investigate directly by reading code or running tests."
+    },
+    {
+      "id": "M148",
+      "timestamp": "2026-01-19T20:43:12Z",
+      "category": "protocol_violation",
+      "description": "Used 'docs:' commit type for learning M147 commit instead of 'config:' - files modified were Claude-facing (mistakes.json, retrospectives.json, spawn-subagent/SKILL.md)",
+      "root_cause": "learn-from-mistakes skill Step 12 hardcoded 'docs:' commit type instead of 'config:' for Claude-facing file changes",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn-from-mistakes/SKILL.md",
+      "pattern_keywords": [
+        "commit-type",
+        "docs",
+        "config",
+        "claude-facing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use 'config:' commit type for Claude-facing files (skills, hooks, retrospectives, mistakes.json). Use 'docs:' only for user-facing documentation."
     }
   ]
 }
