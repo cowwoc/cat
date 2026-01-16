@@ -2442,6 +2442,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Copy-paste emojis from the emoji_reference table at top of config.md when constructing displays"
+    },
+    {
+      "id": "M211",
+      "timestamp": "2026-01-23T03:36:29Z",
+      "category": "protocol_violation",
+      "description": "Manual task creation with invalid STATE.md format bypassed /cat:add command",
+      "root_cause": "Documentation in agent-architecture.md § Work Request Handling existed but was not enforced - agent manually created STATE.md files without using /cat:add, resulting in invalid YAML format instead of required bullet-point format",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/hooks/validate-state-md-format.sh",
+      "pattern_keywords": [
+        "STATE.md",
+        "format",
+        "template",
+        "cat:add",
+        "manual creation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use /cat:add command to create tasks, which uses templates with correct bullet-point format for STATE.md files"
     }
   ]
 }
