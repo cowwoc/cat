@@ -105,18 +105,19 @@ your-project/
     └── v1/                     # Major version 1
         ├── STATE.md            # Major version state & progress
         ├── PLAN.md             # Business-level objectives
-        ├── CHANGELOG.md        # What was accomplished
+        ├── CHANGELOG.md        # What was accomplished (aggregates tasks)
         └── v1.0/               # Version 1.0 (major 1, minor 0)
             ├── STATE.md        # Minor version state
             ├── PLAN.md         # Feature-level plan
-            ├── CHANGELOG.md    # Minor changelog
+            ├── CHANGELOG.md    # Minor changelog (aggregates tasks)
             └── setup-auth/     # Individual task
                 ├── STATE.md    # Task state (pending/in-progress/completed)
-                ├── PLAN.md     # Detailed execution steps
-                └── CHANGELOG.md # What the task accomplished
+                └── PLAN.md     # Detailed execution steps
 ```
 
----
+> **NOTE**: Task changelog content is embedded in commit messages, not separate files.
+
+## Configuration
 
 ## Tips for Success
 
