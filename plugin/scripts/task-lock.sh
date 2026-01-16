@@ -1,21 +1,20 @@
 #!/bin/bash
 # task-lock.sh - Task-level locking for concurrent CAT execution
 #
-# Provides atomic lock acquisition with persistent locks.
-# Locks never expire automatically - user must explicitly release or force-release.
+# Provides atomic lock acquisition with heartbeat-based lease management.
 # Prevents multiple Claude instances from executing the same task simultaneously.
 #
 # Usage:
-#   task-lock.sh acquire <project-dir> <task-id> <session-id> [worktree]
-#   task-lock.sh update <project-dir> <task-id> <session-id> <worktree>
-#   task-lock.sh release <project-dir> <task-id> <session-id>
-#   task-lock.sh force-release <project-dir> <task-id>
-#   task-lock.sh check <project-dir> <task-id>
-#   task-lock.sh list <project-dir>
+#   task-lock.sh acquire <task-id> <session-id>
+#   task-lock.sh release <task-id> <session-id>
+#   task-lock.sh check <task-id>
+#   task-lock.sh heartbeat <task-id> <session-id>
+#   task-lock.sh cleanup [--stale-minutes N]
 #
 # Lock file format (.claude/cat/locks/<task-id>.lock):
 #   session_id=<uuid>
 #   created_at=<timestamp>
+#   heartbeat=<timestamp>
 #   worktree=<path>
 
 set -euo pipefail
@@ -25,7 +24,9 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 # CONFIGURATION
 # ============================================================================
 
-PROJECT_DIR=""  # Required: set via --project-dir
+LOCK_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/cat/locks"
+STALE_MINUTES=5  # Lock considered stale if no heartbeat for this long
+HEARTBEAT_INTERVAL=120  # Seconds between heartbeats (2 minutes)
 
 # ============================================================================
 # FUNCTIONS
@@ -50,17 +51,6 @@ iso_timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
-# Validate session_id looks like a UUID (prevents arg order mistakes - M204)
-validate_session_id() {
-  local session_id="$1"
-  # Session IDs should be UUIDs: 8-4-4-4-12 hex pattern
-  if [[ ! "$session_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
-    echo "{\"status\":\"error\",\"message\":\"Invalid session_id format: '$session_id'. Expected UUID. Did you swap task_id and session_id arguments?\"}"
-    return 1
-  fi
-  return 0
-}
-
 # Acquire lock atomically
 # Returns: 0 if acquired, 1 if already locked by another session
 acquire_lock() {
@@ -68,54 +58,39 @@ acquire_lock() {
   local session_id="$2"
   local worktree="${3:-}"
 
-  # Validate session_id format to catch argument order mistakes (M204)
-  if ! validate_session_id "$session_id"; then
-    return 1
-  fi
-
   ensure_lock_dir
   local lock_file
   lock_file=$(get_lock_file "$task_id")
 
-  # Check if lock exists
+  # Check if lock exists and is still valid
   if [[ -f "$lock_file" ]]; then
-    local existing_session
+    local existing_session existing_heartbeat
     existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+    existing_heartbeat=$(grep "^heartbeat=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
 
-    # If same session, return success (idempotent)
+    # If same session, refresh and return success
     if [[ "$existing_session" == "$session_id" ]]; then
-      echo '{"status":"acquired","message":"Lock already held by this session"}'
+      update_heartbeat "$lock_file"
+      echo '{"status":"acquired","message":"Lock refreshed (same session)"}'
       return 0
     fi
 
-    # Lock exists and belongs to different session - never auto-expire
-    # CRITICAL: Output includes explicit guidance to prevent M084 pattern (investigating locks)
+    # Check if existing lock is stale
+    local now stale_threshold
+    now=$(current_timestamp)
+    stale_threshold=$((STALE_MINUTES * 60))
 
-    # Fetch remote branch metadata for additional context
-    local remote_author="unknown"
-    local remote_email=""
-    local remote_date="unknown"
-    local remote_branch=""
-
-    # Try to find remote branch matching the task_id pattern
-    for branch_pattern in "origin/${task_id}" "origin/*-${task_id#*-}"; do
-      remote_branch=$(git branch -r 2>/dev/null | grep -m1 "$branch_pattern" | tr -d ' ') || true
-      [[ -n "$remote_branch" ]] && break
-    done
-
-    if [[ -n "$remote_branch" ]]; then
-      remote_author=$(git log -1 --format='%an' "$remote_branch" 2>/dev/null) || remote_author="unknown"
-      remote_email=$(git log -1 --format='%ae' "$remote_branch" 2>/dev/null) || remote_email=""
-      remote_date=$(git log -1 --format='%cr' "$remote_branch" 2>/dev/null) || remote_date="unknown"
+    if [[ $((now - existing_heartbeat)) -lt $stale_threshold ]]; then
+      # Lock is still valid - another instance owns it
+      echo "{\"status\":\"locked\",\"message\":\"Task locked by session $existing_session\",\"owner\":\"$existing_session\"}"
+      return 1
     fi
 
-    cat << LOCKED_JSON
-{"status":"locked","message":"Task locked by another session","owner":"$existing_session","action":"FIND_ANOTHER_TASK","guidance":"Do NOT investigate, remove, or question this lock. Execute a different task instead. If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.","remote_author":"$remote_author","remote_email":"$remote_email","remote_date":"$remote_date"}
-LOCKED_JSON
-    return 1
+    # Lock is stale - remove and acquire
+    rm -f "$lock_file"
   fi
 
-  # Atomic lock creation using temp file + rename
+  # Atomic lock creation using mkdir (atomic on POSIX)
   local temp_lock="${lock_file}.$$"
   local now
   now=$(current_timestamp)
@@ -123,6 +98,7 @@ LOCKED_JSON
   cat > "$temp_lock" << EOF
 session_id=${session_id}
 created_at=${now}
+heartbeat=${now}
 worktree=${worktree}
 created_iso=$(iso_timestamp)
 EOF
@@ -139,61 +115,10 @@ EOF
   fi
 }
 
-# Update lock metadata (only if owned by this session)
-update_lock() {
-  local task_id="$1"
-  local session_id="$2"
-  local worktree="$3"
-
-  # Validate session_id format (M204)
-  if ! validate_session_id "$session_id"; then
-    return 1
-  fi
-
-  local lock_file
-  lock_file=$(get_lock_file "$task_id")
-
-  if [[ ! -f "$lock_file" ]]; then
-    echo '{"status":"error","message":"No lock exists to update"}'
-    return 1
-  fi
-
-  local existing_session
-  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
-
-  if [[ "$existing_session" != "$session_id" ]]; then
-    echo "{\"status\":\"error\",\"message\":\"Lock owned by different session: $existing_session\"}"
-    return 1
-  fi
-
-  # Read existing values
-  local created_at created_iso
-  created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
-  created_iso=$(grep "^created_iso=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
-
-  # Write updated lock file atomically
-  local temp_lock="${lock_file}.$$"
-  cat > "$temp_lock" << EOF
-session_id=${session_id}
-created_at=${created_at}
-worktree=${worktree}
-created_iso=${created_iso}
-EOF
-
-  mv -f "$temp_lock" "$lock_file"
-  echo "{\"status\":\"updated\",\"message\":\"Lock updated with worktree\",\"worktree\":\"$worktree\"}"
-  return 0
-}
-
 # Release lock (only if owned by this session)
 release_lock() {
   local task_id="$1"
   local session_id="$2"
-
-  # Validate session_id format (M204)
-  if ! validate_session_id "$session_id"; then
-    return 1
-  fi
 
   local lock_file
   lock_file=$(get_lock_file "$task_id")
@@ -228,72 +153,143 @@ check_lock() {
     return 0
   fi
 
-  local session_id created_at worktree
+  local session_id heartbeat created_at worktree
   session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
+  heartbeat=$(grep "^heartbeat=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
   created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
   worktree=$(grep "^worktree=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
 
-  local now age
+  local now stale_threshold is_stale
   now=$(current_timestamp)
-  age=$((now - created_at))
+  stale_threshold=$((STALE_MINUTES * 60))
 
-  echo "{\"locked\":true,\"session_id\":\"$session_id\",\"age_seconds\":$age,\"worktree\":\"$worktree\"}"
+  if [[ $((now - heartbeat)) -ge $stale_threshold ]]; then
+    is_stale="true"
+  else
+    is_stale="false"
+  fi
+
+  local age=$((now - created_at))
+  local since_heartbeat=$((now - heartbeat))
+
+  echo "{\"locked\":true,\"session_id\":\"$session_id\",\"age_seconds\":$age,\"heartbeat_age_seconds\":$since_heartbeat,\"stale\":$is_stale,\"worktree\":\"$worktree\"}"
   return 0
 }
 
-# Force release lock (user action - ignores session ownership)
-force_release_lock() {
+# Update heartbeat timestamp
+update_heartbeat() {
+  local lock_file="$1"
+  local now
+  now=$(current_timestamp)
+
+  if [[ -f "$lock_file" ]]; then
+    # Update heartbeat line in place
+    sed -i "s/^heartbeat=.*/heartbeat=${now}/" "$lock_file"
+  fi
+}
+
+# Heartbeat command - refresh lock timestamp
+heartbeat() {
   local task_id="$1"
+  local session_id="$2"
 
   local lock_file
   lock_file=$(get_lock_file "$task_id")
 
   if [[ ! -f "$lock_file" ]]; then
-    echo '{"status":"released","message":"No lock exists"}'
-    return 0
+    echo '{"status":"error","message":"No lock to refresh"}'
+    return 1
   fi
 
   local existing_session
-  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
+  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
 
-  rm -f "$lock_file"
-  echo "{\"status\":\"released\",\"message\":\"Lock forcibly released (was owned by $existing_session)\"}"
+  if [[ "$existing_session" != "$session_id" ]]; then
+    echo "{\"status\":\"error\",\"message\":\"Lock owned by different session: $existing_session\"}"
+    return 1
+  fi
+
+  update_heartbeat "$lock_file"
+  echo '{"status":"refreshed","message":"Heartbeat updated"}'
   return 0
 }
 
-# List all locks (optimized: single jq call instead of O(n))
-list_locks() {
+# Cleanup stale locks
+cleanup() {
+  local stale_minutes="${1:-$STALE_MINUTES}"
+
   ensure_lock_dir
 
-  local now
+  local now cleaned_count
   now=$(current_timestamp)
+  cleaned_count=0
+  stale_threshold=$((stale_minutes * 60))
 
-  # Collect all lock data in a simple format first (no jq in loop)
-  local lock_data=""
+  local cleaned_locks=()
+
   for lock_file in "$LOCK_DIR"/*.lock; do
     [[ ! -f "$lock_file" ]] && continue
 
-    local task_id session_id created_at age
-    task_id=$(basename "$lock_file" .lock)
-    session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
-    created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
-    age=$((now - created_at))
+    local heartbeat
+    heartbeat=$(grep "^heartbeat=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
 
-    # Accumulate as tab-separated values
-    lock_data+="${task_id}\t${session_id}\t${age}\n"
+    if [[ $((now - heartbeat)) -ge $stale_threshold ]]; then
+      local task_id
+      task_id=$(basename "$lock_file" .lock)
+      cleaned_locks+=("$task_id")
+      rm -f "$lock_file"
+      cleaned_count=$((cleaned_count + 1))
+    fi
   done
 
-  # Single jq call to construct entire JSON array
-  if [[ -z "$lock_data" ]]; then
-    echo "[]"
+  if [[ $cleaned_count -gt 0 ]]; then
+    local locks_json
+    locks_json=$(printf '%s\n' "${cleaned_locks[@]}" | jq -R . | jq -s .)
+    echo "{\"status\":\"cleaned\",\"count\":$cleaned_count,\"locks\":$locks_json}"
   else
-    printf "%b" "$lock_data" | jq -R -s '
-      split("\n") | map(select(length > 0)) | map(
-        split("\t") | {task: .[0], session: .[1], age_seconds: (.[2] | tonumber)}
-      )
-    '
+    echo '{"status":"clean","count":0,"message":"No stale locks found"}'
   fi
+  return 0
+}
 
+# List all locks
+list_locks() {
+  ensure_lock_dir
+
+  local locks_json="[]"
+  local now
+  now=$(current_timestamp)
+
+  for lock_file in "$LOCK_DIR"/*.lock; do
+    [[ ! -f "$lock_file" ]] && continue
+
+    local task_id session_id heartbeat created_at
+    task_id=$(basename "$lock_file" .lock)
+    session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
+    heartbeat=$(grep "^heartbeat=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
+    created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
+
+    local stale_threshold is_stale
+    stale_threshold=$((STALE_MINUTES * 60))
+    if [[ $((now - heartbeat)) -ge $stale_threshold ]]; then
+      is_stale="true"
+    else
+      is_stale="false"
+    fi
+
+    local entry
+    entry=$(jq -n \
+      --arg task "$task_id" \
+      --arg session "$session_id" \
+      --argjson age "$((now - created_at))" \
+      --argjson heartbeat_age "$((now - heartbeat))" \
+      --argjson stale "$is_stale" \
+      '{task: $task, session: $session, age_seconds: $age, heartbeat_age_seconds: $heartbeat_age, stale: $stale}')
+
+    locks_json=$(echo "$locks_json" | jq --argjson entry "$entry" '. += [$entry]')
+  done
+
+  echo "$locks_json"
   return 0
 }
 
@@ -303,76 +299,52 @@ list_locks() {
 
 usage() {
   cat << 'EOF'
-Usage: task-lock.sh <command> <project-dir> [args]
+Usage: task-lock.sh <command> [args]
 
 Commands:
-  acquire <project-dir> <task-id> <session-id> [worktree]  - Acquire lock for task
-  update <project-dir> <task-id> <session-id> <worktree>   - Update lock with worktree path
-  release <project-dir> <task-id> <session-id>             - Release lock (only if owned)
-  force-release <project-dir> <task-id>                    - Force release lock (any owner)
-  check <project-dir> <task-id>                            - Check if task is locked
-  list <project-dir>                                       - List all locks
+  acquire <task-id> <session-id> [worktree]  - Acquire lock for task
+  release <task-id> <session-id>             - Release lock for task
+  check <task-id>                            - Check if task is locked
+  heartbeat <task-id> <session-id>           - Refresh lock heartbeat
+  cleanup [--stale-minutes N]                - Remove stale locks (default 5 min)
+  list                                       - List all locks
 
-Arguments:
-  project-dir    Project root directory (contains .claude/cat/)
-  task-id        Task identifier (e.g., "2.0-fix-parser")
-  session-id     Claude session UUID
-  worktree       Optional worktree path
+Environment:
+  CLAUDE_PROJECT_DIR  - Project root (default: current directory)
 
-Locks are persistent and never expire automatically.
-Use 'force-release' to remove stale locks from crashed sessions.
+Lock files stored in: $LOCK_DIR/
 EOF
-}
-
-# Helper to validate project directory
-validate_project_dir() {
-  local dir="$1"
-  if [[ -z "$dir" ]]; then
-    echo '{"status":"error","message":"project-dir is required"}'
-    exit 1
-  fi
-  if [[ ! -d "$dir/.claude/cat" ]]; then
-    echo '{"status":"error","message":"Not a CAT project: '"$dir"' (no .claude/cat directory)"}'
-    exit 1
-  fi
-  PROJECT_DIR="$dir"
-  LOCK_DIR="$PROJECT_DIR/.claude/cat/locks"
 }
 
 case "${1:-}" in
   acquire)
-    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: acquire <project-dir> <task-id> <session-id> [worktree]"}'; exit 1; }
-    validate_project_dir "$2"
-    acquire_lock "$3" "$4" "${5:-}"
-    ;;
-  update)
-    [[ $# -lt 5 ]] && { echo '{"status":"error","message":"Usage: update <project-dir> <task-id> <session-id> <worktree>"}'; exit 1; }
-    validate_project_dir "$2"
-    update_lock "$3" "$4" "$5"
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: acquire <task-id> <session-id> [worktree]"}'; exit 1; }
+    acquire_lock "$2" "$3" "${4:-}"
     ;;
   release)
-    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: release <project-dir> <task-id> <session-id>"}'; exit 1; }
-    validate_project_dir "$2"
-    release_lock "$3" "$4"
-    ;;
-  force-release)
-    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: force-release <project-dir> <task-id>"}'; exit 1; }
-    validate_project_dir "$2"
-    force_release_lock "$3"
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: release <task-id> <session-id>"}'; exit 1; }
+    release_lock "$2" "$3"
     ;;
   check)
-    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: check <project-dir> <task-id>"}'; exit 1; }
-    validate_project_dir "$2"
-    check_lock "$3"
+    [[ $# -lt 2 ]] && { echo '{"status":"error","message":"Usage: check <task-id>"}'; exit 1; }
+    check_lock "$2"
+    ;;
+  heartbeat)
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: heartbeat <task-id> <session-id>"}'; exit 1; }
+    heartbeat "$2" "$3"
+    ;;
+  cleanup)
+    stale_mins="$STALE_MINUTES"
+    if [[ "${2:-}" == "--stale-minutes" ]] && [[ -n "${3:-}" ]]; then
+      stale_mins="$3"
+    fi
+    cleanup "$stale_mins"
     ;;
   list)
-    [[ $# -lt 2 ]] && { echo '{"status":"error","message":"Usage: list <project-dir>"}'; exit 1; }
-    validate_project_dir "$2"
     list_locks
     ;;
   -h|--help|help)
     usage
-    exit 0
     ;;
   *)
     echo '{"status":"error","message":"Unknown command. Use --help for usage."}'

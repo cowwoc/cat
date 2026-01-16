@@ -38,20 +38,44 @@ Update STATE.md:
 - Status: `in-progress`
 - Last Updated: current timestamp
 
-### 3. Spawn Subagent
+### 3. Pre-Spawn Decision Making
+
+**CRITICAL**: Before spawning, the main agent must resolve ALL ambiguities and decisions.
+
+Users cannot supervise subagent execution. Claude Code provides no way to view subagent output
+or correct mistakes in real-time. The subagent prompt must enable purely mechanical execution.
+
+**Main agent MUST**:
+1. Read all files the subagent will modify
+2. Make all architectural/design decisions
+3. Write explicit code examples (not descriptions)
+4. Specify exact verification steps and expected output
+5. Determine error handling approaches
+6. Compose the exact commit message
+
+**Prompt completeness check**:
+- Does it specify exact file paths? (not "find the auth file")
+- Does it include actual code? (not "add error handling")
+- Does it define success criteria? (not "make sure it works")
+- Does it handle failure cases? (not "handle errors appropriately")
+
+See `spawn-subagent` skill for detailed prompt requirements.
+
+### 4. Spawn Subagent
 
 Main agent spawns subagent with:
-- Task PLAN.md content
+- Task PLAN.md content **expanded with decisions from step 3**
 - Worktree path
 - Session tracking info
 - Token monitoring instructions
+- **Complete code examples and verification steps**
 
 Subagent branch:
 ```
 {major}.{minor}-{task-name}-sub-{uuid}
 ```
 
-### 4. Subagent Execution
+### 5. Subagent Execution
 
 Subagent in worktree:
 1. Read PLAN.md execution steps
@@ -65,7 +89,7 @@ Token tracking:
 - Sum input_tokens + output_tokens
 - Count compaction events
 
-### 5. Subagent Completion
+### 6. Subagent Completion
 
 On completion, subagent returns:
 ```json
@@ -77,7 +101,7 @@ On completion, subagent returns:
 }
 ```
 
-### 6. Main Agent Merge
+### 7. Main Agent Merge
 
 ```bash
 # In task worktree
@@ -88,7 +112,7 @@ If conflicts:
 - Attempt automatic resolution
 - Escalate to user if unresolved
 
-### 7. Cleanup Subagent Resources
+### 8. Cleanup Subagent Resources
 
 **After merging subagent branch to task branch, cleanup BEFORE approval gate:**
 
@@ -105,7 +129,7 @@ This ensures:
 - No orphaned worktrees/branches if user rejects
 - Clean state for approval decision
 
-### 8. Update State
+### 9. Update State
 
 Update task STATE.md:
 ```markdown
@@ -115,7 +139,7 @@ Update task STATE.md:
 - **Note:** Subagent work merged, awaiting approval
 ```
 
-### 9. Approval Gate (Interactive Mode)
+### 10. Approval Gate (Interactive Mode)
 
 Present to user:
 - Summary of changes
@@ -154,7 +178,7 @@ Present changes → User responds
 
 **Anti-pattern (M052):** Interpreting feedback as implicit approval and merging without re-confirmation.
 
-### 10. Final Merge
+### 11. Final Merge
 
 After approval:
 ```bash
@@ -166,15 +190,15 @@ git checkout main
 git merge {task-branch}
 ```
 
-### 11. Cleanup
+### 12. Cleanup
 
 ```bash
-# Task worktree and branch (subagent already cleaned in step 7)
+# Task worktree and branch (subagent already cleaned in step 8)
 git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
 ```
 
-### 12. Update Changelogs
+### 13. Update Changelogs
 
 Update minor and major version CHANGELOG.md files with completed task summary.
 
