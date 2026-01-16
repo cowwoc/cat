@@ -265,6 +265,15 @@ ON COMPLETION, write .completion.json with cumulative totals:
 
 If compaction occurred, the pre-compaction tokens are NOT lost - they must be
 preserved and added to post-compaction usage for accurate reporting.
+
+HOW TO MEASURE (M099 - subagents measure their own tokens):
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+cat > /tmp/token_count.jq << 'EOF'
+[.[] | select(.type == "assistant") | .message.usage | select(. != null) |
+  (.input_tokens + .output_tokens)] | add // 0
+EOF
+TOKENS=$(jq -s -f /tmp/token_count.jq "$SESSION_FILE")
+echo "Measured tokens: $TOKENS"
 ```
 
 **Verification:**
