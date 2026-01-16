@@ -41,46 +41,17 @@ This is CAT's core execution command. It:
 
 <progress_output>
 
-**MANDATORY: Use work-progress.sh script for ALL progress display (A012).**
+**MANDATORY: Use pre-computed progress format from handler.**
 
-### Using work-progress.sh
+Check conversation context for "PRE-COMPUTED WORK PROGRESS FORMAT" and render progress
+displays using those templates. The handler provides:
 
-The `work-progress.sh` script ensures correct header + progress output. **Do NOT manually type progress
-displays** - use this script to prevent M164/M165/M169 mistakes.
+- Header format template
+- Progress banner format with phase symbols
+- Example transitions for each phase
+- Success and failure display formats
 
-```bash
-# Display progress at each phase transition
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "${TASK_ID}" <phase> [metrics]
-
-# Phases: preparing, executing, reviewing, merging, passed, failed
-# TASK_ID must be full format: {major}.{minor}-{task-name}
-```
-
-**Examples:**
-
-```bash
-# Starting workflow (Preparing phase)
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" preparing
-
-# After subagent starts (Executing phase with token count)
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" executing "45K tokens"
-
-# After review completes
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" reviewing "75K · 3 commits"
-
-# Task complete
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" passed "75K · approved"
-```
-
-**Output format (rendered by script):**
-
-```
-🐱 > 2.0-fix-config-documentation
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
-                     45K tokens
-```
+**If NOT found**: Display error and check that `hooks/skill_handlers/work_handler.py` exists.
 
 ### Phase Mapping
 
@@ -91,40 +62,12 @@ displays** - use this script to prevent M164/M165/M169 mistakes.
 | Reviewing | stakeholder_review, approval_gate | Review passed, user approved |
 | Merging | squash_commits, merge, cleanup, update_state, commit_metadata, update_changelogs, next_task | Merged to main, cleanup done |
 
-### Progress Symbols
+### Key Principles
 
-| Symbol | Meaning |
-|--------|---------|
-| `○` | Pending (empty circle) |
-| `●` | Complete (filled circle) |
-| `◉` | Current/Active (fisheye) |
-| `✗` | Failed |
-
-**Anti-patterns (M164/M165/M169):**
-- Manually typing header or progress lines
-- Skipping progress display entirely
-- Using partial task ID (e.g., "fix-config" instead of "2.0-fix-config-documentation")
-
-### When to Update Progress
-
-Call `work-progress.sh` at each phase transition:
-
-| Event | Command |
-|-------|---------|
-| Workflow starts | `work-progress.sh "$TASK_ID" preparing` |
-| Worktree created, subagent starting | `work-progress.sh "$TASK_ID" executing` |
-| Subagent complete | `work-progress.sh "$TASK_ID" executing "75K tokens"` |
-| Review starting | `work-progress.sh "$TASK_ID" reviewing "75K · 3 commits"` |
-| User approved | `work-progress.sh "$TASK_ID" merging "75K · approved"` |
-| Task complete | `work-progress.sh "$TASK_ID" passed "75K · approved"` |
-| Task failed | `work-progress.sh "$TASK_ID" failed` |
-
-**Key principles:**
-
-1. **Always use the script** - Never manually type header or progress lines
-2. **Full task ID required** - Script validates format `{major}.{minor}-{task-name}`
+1. **Use templates from handler** - Render progress inline using provided formats
+2. **Full task ID required** - Format: `{major}.{minor}-{task-name}`
 3. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
-4. **Metrics optional** - Pass as third argument when relevant data available
+4. **Update at transitions** - Display progress banner when phase changes
 
 </progress_output>
 
@@ -2025,14 +1968,14 @@ echo "✓ Lock released for task: $TASK_ID"
 **Anti-pattern (M173): Do NOT add fallback rm commands to lock release.**
 
 ```bash
-# ❌ WRONG - fallback rm triggers block-lock-manipulation.sh hook
+# ❌ WRONG - fallback rm triggers block_lock_manipulation hook
 task-lock.sh release "$TASK_ID" "${CLAUDE_SESSION_ID}" || rm -f .claude/cat/locks/*.lock
 
 # ✅ CORRECT - just call task-lock.sh, handle errors separately
 task-lock.sh release "$TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-The `block-lock-manipulation.sh` hook checks the ENTIRE command string for `rm ... .claude/cat/locks`.
+The `block_lock_manipulation` handler checks the ENTIRE command string for `rm ... .claude/cat/locks`.
 Adding `|| rm` as fallback causes the hook to block the entire command, even though the primary
 command (task-lock.sh) is safe.
 
