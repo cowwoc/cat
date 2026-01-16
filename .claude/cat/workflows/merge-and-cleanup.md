@@ -95,13 +95,13 @@ Before squashing/merging, update task STATE.md to completed in the task branch:
 
 ```bash
 # In task worktree - update STATE.md
-# .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+# .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md:
 #   status: completed
 #   progress: 100%
 #   completed: {date}
 
 # Include in implementation commit
-git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git add .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
 git commit --amend --no-edit
 ```
 
