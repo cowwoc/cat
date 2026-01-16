@@ -2984,6 +2984,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use inner_width - 2 - len(content) for padding calculation to ensure all box lines have consistent width"
+    },
+    {
+      "id": "M224",
+      "timestamp": "2026-01-24T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Presented approval gate with unsquashed commits - implementation and parent STATE.md update were separate commits instead of squashed together",
+      "root_cause": "Merged to base branch then committed STATE.md update separately in main workspace, bypassing worktree commit squashing",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-unsquashed-approval.sh",
+      "pattern_keywords": [
+        "squash",
+        "approval",
+        "commits",
+        "STATE.md"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Squash all related commits (implementation + STATE.md updates) into a single commit BEFORE presenting the approval gate to user"
     }
   ]
 }
