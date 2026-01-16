@@ -210,6 +210,98 @@ Present task overview:
 
 </step>
 
+<step name="analyze_task_size">
+
+**MANDATORY: Analyze task complexity BEFORE execution.**
+
+Read the task's PLAN.md and estimate context requirements:
+
+```
+## Task Size Analysis
+
+**Indicators of large task:**
+- Multiple distinct features or components
+- Many files to create/modify (> 5)
+- Multiple test suites required
+- Complex logic requiring exploration
+- Estimated steps > 10
+```
+
+**Calculate threshold from config:**
+
+```bash
+# Read from cat-config.json
+CONTEXT_LIMIT=$(jq -r '.contextLimit // 200000' .claude/cat/cat-config.json)
+TARGET_USAGE=$(jq -r '.targetContextUsage // 40' .claude/cat/cat-config.json)
+THRESHOLD=$((CONTEXT_LIMIT * TARGET_USAGE / 100))
+
+echo "Context threshold: ${THRESHOLD} tokens (${TARGET_USAGE}% of ${CONTEXT_LIMIT})"
+```
+
+**Estimate task size:**
+
+Analyze PLAN.md to estimate token requirements:
+
+| Factor | Weight | Estimation |
+|--------|--------|------------|
+| Files to create | 5K tokens each | Count × 5000 |
+| Files to modify | 3K tokens each | Count × 3000 |
+| Test files | 4K tokens each | Count × 4000 |
+| Steps in PLAN.md | 2K tokens each | Count × 2000 |
+| Exploration needed | 10K tokens | +10000 if uncertain |
+
+**If estimated size > threshold:**
+
+```
+⚠️ TASK SIZE EXCEEDS CONTEXT THRESHOLD
+
+Estimated tokens: ~{estimate}
+Threshold: {THRESHOLD} ({TARGET_USAGE}% of {CONTEXT_LIMIT})
+
+AUTO-DECOMPOSITION TRIGGERED
+Invoking /cat:decompose-task to split into smaller tasks...
+```
+
+Invoke `/cat:decompose-task` automatically, then proceed with parallel execution.
+
+**Decomposition output:**
+
+decompose-task will produce:
+1. List of subtasks with dependencies
+2. Parallel execution plan (which tasks can run concurrently)
+3. Updated STATE.md files
+
+**After decomposition, invoke parallel execution:**
+
+If decomposition created independent subtasks:
+
+```
+## Parallel Execution Plan
+
+**Independent tasks (can run concurrently):**
+- 1.2a-parser-lexer
+- 1.2b-parser-ast (after 1.2a)
+- 1.2c-parser-tests
+
+**Wave 1 (parallel):** 1.2a-parser-lexer, 1.2c-parser-tests
+**Wave 2 (after wave 1):** 1.2b-parser-ast
+
+Spawning {N} subagents for wave 1...
+```
+
+Use `/cat:parallel-execute` skill to spawn multiple subagents.
+
+**If task size is within threshold:**
+
+```
+✓ Task size OK: ~{estimate} tokens ({percentage}% of threshold)
+Proceeding with single subagent execution.
+```
+
+Continue to create_worktree step.
+
+</step>
+
 <step name="create_worktree">
 
 **Create task worktree and branch:**
@@ -287,19 +379,72 @@ If execution fails:
 
 </step>
 
+<step name="collect_and_report">
+
+**MANDATORY: Collect results and report token metrics to user.**
+
+After subagent completes, invoke `/cat:collect-results` and present metrics:
+
+```
+## Subagent Execution Report
+
+**Task:** {task-name}
+**Status:** {success|partial|failed}
+
+**Token Usage:**
+- Total tokens: {N} ({percentage}% of context)
+- Input tokens: {input_N}
+- Output tokens: {output_N}
+- Compaction events: {N}
+
+**Work Summary:**
+- Commits: {N}
+- Files changed: {N}
+- Lines: +{added} / -{removed}
+```
+
+**Why mandatory:** Users cannot observe subagent execution. Token metrics are the only visibility
+into execution quality. Compaction events indicate potential quality degradation.
+
+</step>
+
 <step name="token_check">
 
-**Check token usage:**
+**Evaluate token metrics for decomposition:**
 
-If subagent reported compaction events:
+**If compaction events > 0:**
+
+Present strong recommendation:
+
+```
+⚠️ CONTEXT COMPACTION DETECTED
+
+The subagent experienced {N} compaction event(s). This indicates:
+- Context window was exhausted during execution
+- Quality may have degraded as context was summarized
+- Task may be too large for single-subagent execution
+
+RECOMMENDATION: Decompose remaining work into smaller tasks.
+```
 
 Use AskUserQuestion:
 - header: "Token Warning"
-- question: "Task triggered context compaction. This may indicate it's too large. Consider:"
+- question: "Task triggered context compaction. Decomposition is strongly recommended:"
 - options:
-  - "Continue" - Proceed with current task
-  - "Decompose" - Split into smaller tasks via /cat:decompose-task
-  - "Abort" - Stop and review
+  - "Decompose" - Split into smaller tasks via /cat:decompose-task (Recommended)
+  - "Continue anyway" - Accept potential quality impact
+  - "Abort" - Stop and review work quality
+
+**If tokens >= targetContextUsage threshold (from cat-config.json) but no compaction:**
+
+Informational warning:
+
+```
+📊 HIGH TOKEN USAGE: {N} tokens ({percentage}% of context)
+
+The subagent used significant context (threshold: {targetContextUsage}%).
+Consider decomposing similar tasks in the future.
+```
 
 </step>
 
@@ -309,10 +454,15 @@ Use AskUserQuestion:
 
 Skip if `yoloMode: true` in config.
 
-Present work summary:
+Present work summary with **mandatory token metrics**:
 
 ```
 ## Task Complete: {task-name}
+
+**Subagent Metrics:**
+- Tokens used: {N} ({percentage}% of context)
+- Compaction events: {N}
+- Execution quality: {good|degraded if compactions > 0}
 
 **Files Changed:**
 - path/to/file1.ext (+10, -5)
@@ -325,6 +475,9 @@ Present work summary:
 
 **Review branch:** {task-branch}
 ```
+
+**CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
+parse session file directly or report "Metrics unavailable - manual review recommended."
 
 Use AskUserQuestion:
 - header: "Approval"
@@ -666,13 +819,19 @@ Task ID: v1.0-parse-lambdas
 <success_criteria>
 
 - [ ] Task identified and loaded
-- [ ] Worktree created with correct branch
-- [ ] PLAN.md executed successfully
-- [ ] Token usage monitored
+- [ ] Task lock acquired (SESSION_ID verified)
+- [ ] **Task size analyzed (estimate vs threshold)**
+- [ ] **If oversized: auto-decomposition triggered**
+- [ ] **If decomposed: parallel execution plan generated**
+- [ ] Worktree(s) created with correct branch(es)
+- [ ] PLAN.md executed successfully via subagent(s)
+- [ ] **Token metrics collected and reported to user**
+- [ ] **Compaction events evaluated (decomposition offered if > 0)**
 - [ ] Approval gate passed (if interactive)
 - [ ] Commits squashed by type
-- [ ] Branch merged to main
-- [ ] Worktree cleaned up
+- [ ] Branch(es) merged to main
+- [ ] Worktree(s) cleaned up
+- [ ] Lock released
 - [ ] STATE.md files updated
 - [ ] Next task offered
 

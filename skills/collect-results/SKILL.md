@@ -102,7 +102,43 @@ cat "${WORKTREE}/.claude/cat/tasks/${TASK}/STATE.md"
 cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null
 ```
 
-### 6. Update Parent STATE.md
+### 6. MANDATORY: Report Token Metrics to User
+
+**Before updating state, present token metrics to user:**
+
+```
+## Subagent Execution Report
+
+**Subagent:** a1b2c3d4
+**Task:** 1.2-implement-parser
+**Status:** success
+
+**Token Usage:**
+- Total tokens: 65,000 (32.5% of 200K context)
+- Input tokens: 45,000
+- Output tokens: 20,000
+- Compaction events: 0
+- Execution quality: Good ✓
+
+**Work Summary:**
+- Commits: 5
+- Files changed: 12
+- Lines: +450 / -120
+```
+
+**Why mandatory:** Users cannot observe subagent execution. This report is the only visibility
+into what happened during subagent execution and whether quality may have degraded.
+
+**If compaction events > 0, add warning:**
+
+```
+⚠️ CONTEXT COMPACTION DETECTED
+
+The subagent experienced context pressure and may have produced lower quality output.
+Consider invoking /cat:decompose-task for similar tasks in the future.
+```
+
+### 7. Update Parent STATE.md
 
 Record collection results in parent's tracking:
 
@@ -123,9 +159,10 @@ subagents:
       output_tokens: 20000
       compaction_events: 0
     ready_for_merge: true
+    reported_to_user: true  # MANDATORY - metrics must be shown to user
 ```
 
-### 7. Prepare for Merge
+### 8. Prepare for Merge
 
 ```bash
 # Ensure subagent branch is up to date
