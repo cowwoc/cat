@@ -66,13 +66,36 @@ This workflow has 4 phases. Display a persistent progress header that updates as
 
 **Display format (output directly, NOT in code blocks):**
 
-**MANDATORY (M129):** Verify ALL box lines have identical display width before output. Count explicitly.
+**Use centralized box rendering scripts for all progress displays.**
 
-At workflow start, display the header and initial state:
+LLMs cannot reliably calculate character-level padding for Unicode text (M142).
+All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 
-╭─────────────────────────────────────────────────────────────────╮
-│  CAT ► {task-name}                                              │
-╰─────────────────────────────────────────────────────────────────╯
+**Available work progress scripts:**
+
+```bash
+# work-progress.sh - Renders all /cat:work boxes
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" BOX_TYPE [ARGS...]
+
+# Box types:
+#   header TASK_NAME [STATUS]           - Task header box (status: success|failed)
+#   checkpoint TASK_NAME APPROACH TIME TOKENS TOKEN_PCT BRANCH
+#   task-complete TASK_NAME [NEXT_TASK] [NEXT_GOAL]
+#   task-complete-auto TASK_NAME NEXT_TASK NEXT_GOAL
+#   scope-complete SCOPE_DESC
+#   blocked TASK_NAME BLOCKED_TASKS
+#   no-tasks
+```
+
+At workflow start, display the header:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" > /tmp/work-box.txt
+```
+
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
+
+Then output the phase indicators (plain text, no box calculation needed):
 
 ▸ Preparing ◆
 ▹ Executing
@@ -109,9 +132,11 @@ When Reviewing completes:
 
 **On success (final state):**
 
-╭─────────────────────────────────────────────────────────────────╮
-│  CAT ► {task-name}                                         ✓    │
-╰─────────────────────────────────────────────────────────────────╯
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" success > /tmp/work-box.txt
+```
+
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by phase indicators:
 
 ▸ Preparing ✓
 ▸ Executing ✓ {N}K tokens · {N} commits
@@ -124,9 +149,11 @@ Next: {next-task-name} (run `/cat:work` to continue)
 
 **On failure (show context inline):**
 
-╭─────────────────────────────────────────────────────────────────╮
-│  CAT ► {task-name}                                         ✗    │
-╰─────────────────────────────────────────────────────────────────╯
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" failed > /tmp/work-box.txt
+```
+
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by phase indicators:
 
 ▸ Preparing ✓
 ▸ Executing ✓ {N}K tokens · {N} commits
