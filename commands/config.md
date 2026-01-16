@@ -80,17 +80,19 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 **Present main menu using AskUserQuestion:**
 
+Show current values in descriptions using data from read-config step.
+
 - header: "Settings"
 - question: "What would you like to configure?"
 - options:
   - label: "🎮 Game Mode"
-    description: "How CAT handles approvals"
+    description: "Currently: {yoloMode ? '⚡ YOLO' : '🛡️ Interactive'}"
   - label: "🧠 Context Limits"
-    description: "Token thresholds"
+    description: "Currently: {contextLimit}k / {targetContextUsage}%"
   - label: "🐱 CAT Behavior"
-    description: "Trust, verification, exploration, timing"
+    description: "Currently: {leash} · {caution} · {curiosity} · {patience}"
   - label: "🧹 Cleanup / 📊 Gates"
-    description: "Worktrees and version conditions"
+    description: "Currently: {autoCleanupWorktrees ? 'Auto-cleanup' : 'Keep'}"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
@@ -100,7 +102,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **🎮 Game Mode selection:**
 
-Display:
+Display (add "⭐ CURRENT" after the mode name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
@@ -108,13 +110,13 @@ Display:
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  🛡️ INTERACTIVE                                             ║
+║  🛡️ INTERACTIVE {!yoloMode ? '⭐ CURRENT' : ''}              ║
 ║  ─────────────────────────────────────────────────────────  ║
 ║  CAT pauses at key moments for your approval.               ║
 ║  You review changes before they merge to main.              ║
 ║  Best for: Learning CAT, important projects                 ║
 ║                                                             ║
-║  ⚡ YOLO                                                    ║
+║  ⚡ YOLO {yoloMode ? '⭐ CURRENT' : ''}                      ║
 ║  ─────────────────────────────────────────────────────────  ║
 ║  CAT runs autonomously without stopping.                    ║
 ║  Tasks complete and merge automatically.                    ║
@@ -134,6 +136,7 @@ AskUserQuestion:
   - label: "← Back"
     description: "Return to main menu"
 
+
 Map selection: Interactive → `yoloMode: false`, YOLO → `yoloMode: true`
 
 </step>
@@ -145,20 +148,20 @@ Map selection: Interactive → `yoloMode: false`, YOLO → `yoloMode: true`
 Display current settings, then AskUserQuestion:
 - header: "Context"
 - question: "What would you like to adjust?"
-- options:
+- options (show current values in descriptions):
   - label: "Context window size"
-    description: "Total tokens available"
+    description: "Currently: {contextLimit} tokens"
   - label: "Target usage threshold"
-    description: "When to trigger decomposition"
+    description: "Currently: {targetContextUsage}%"
   - label: "← Back"
     description: "Return to main menu"
 
-**For context limit:**
+**For context limit** (prefix ONLY the option matching current contextLimit with "✅ "):
 - "200,000 tokens - Claude Opus (Recommended)"
 - "128,000 tokens - Claude Sonnet"
 - "Custom value"
 
-**For target usage:**
+**For target usage** (prefix ONLY the option matching current targetContextUsage with "✅ "):
 - "30% - Conservative, lots of headroom"
 - "40% - Balanced (Recommended)"
 - "50% - Aggressive, maximize task size"
@@ -172,15 +175,17 @@ Display current settings, then AskUserQuestion:
 AskUserQuestion:
 - header: "Behavior"
 - question: "Which setting would you like to adjust?"
-- options:
+- options (show current values in descriptions):
   - label: "🔗 Leash"
-    description: "How much you trust CAT to decide"
+    description: "Currently: {leash || 'medium'}"
   - label: "⚠️ Caution"
-    description: "Verification depth before commits"
+    description: "Currently: {caution || 'moderate'}"
   - label: "🔍 Curiosity"
-    description: "How much CAT explores beyond tasks"
+    description: "Currently: {curiosity || 'low'}"
   - label: "⏳ Patience"
-    description: "When CAT acts on discoveries"
+    description: "Currently: {patience || 'high'}"
+  - label: "← Back"
+    description: "Return to main menu"
 
 </step>
 
@@ -188,38 +193,47 @@ AskUserQuestion:
 
 **🔗 Leash — How much you trust CAT to make decisions**
 
-Display:
+Display (add "⭐ CURRENT" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
 ║                   🔗 LEASH LENGTH                           ║
 ║                                                             ║
+║           How much freedom does CAT have to roam?           ║
+║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  SHORT                                                      ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Low trust. CAT presents options frequently: where to       ║
-║  place code, which approach to take, how to name things.    ║
-║  Best for: Learning CAT, strong preferences, critical code  ║
+║  🐱─┈  SHORT {leash == 'short' ? '⭐ CURRENT' : ''}          ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Low trust. CAT presents options frequently:         │   ║
+║  │  where to place code, which approach to take,        │   ║
+║  │  how to name things.                                 │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Learning, strong preferences, critical  │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  MEDIUM                                                     ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Moderate trust. CAT handles routine decisions but          ║
-║  presents options for meaningful trade-offs.                ║
-║  Best for: Balanced control and efficiency                  ║
+║  🐱─ ─ ┈  MEDIUM {leash == 'medium' ? '⭐ CURRENT' : ''}     ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Moderate trust. CAT handles routine decisions       │   ║
+║  │  but presents options for meaningful trade-offs.     │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Balanced control and efficiency         │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  LONG                                                       ║
-║  ─────────────────────────────────────────────────────────  ║
-║  High trust. CAT decides most things autonomously.          ║
-║  Only presents options when genuinely ambiguous.            ║
-║  Best for: Trusted workflows, reviewing outcomes            ║
+║  🐱─ ─ ─ ─ ┈  LONG {leash == 'long' ? '⭐ CURRENT' : ''}     ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  High trust. CAT decides most things autonomously.   │   ║
+║  │  Only presents options when genuinely ambiguous.     │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Trusted workflows, reviewing outcomes   │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
 ```
 
 AskUserQuestion:
 - header: "Leash"
-- question: "How much do you trust CAT to make decisions?"
+- question: "How much do you trust CAT to make decisions? (Current: {leash || 'medium'})"
 - options:
   - label: "Medium (Recommended)"
     description: "Presents options for meaningful trade-offs"
@@ -238,38 +252,46 @@ Map: Short → `leash: "short"`, Medium → `leash: "medium"`, Long → `leash: 
 
 **⚠️ Caution — How thoroughly CAT verifies changes before committing**
 
-Display:
+Display (add "⭐ CURRENT" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
 ║                   ⚠️ CAUTION LEVEL                          ║
 ║                                                             ║
+║         How carefully does CAT check before commit?         ║
+║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  RELAXED                                                    ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Compile/typecheck only. Fast feedback but won't catch      ║
-║  logic errors.                                              ║
-║  Best for: Rapid prototyping, slow test suites              ║
+║  😌  RELAXED {caution == 'relaxed' ? '⭐ CURRENT' : ''}      ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Compile/typecheck only. Fast feedback but won't     │   ║
+║  │  catch logic errors.                                 │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Rapid prototyping, slow test suites     │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  MODERATE                                                   ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Run tests affected by the changes. Catches most            ║
-║  regressions without running the full suite.                ║
-║  Best for: Most workflows                                   ║
+║  ⚖️  MODERATE {caution == 'moderate' ? '⭐ CURRENT' : ''}    ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Run tests affected by the changes. Catches most     │   ║
+║  │  regressions without running the full suite.         │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Most workflows                          │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  VIGILANT                                                   ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Run the full test suite before each commit. Slowest        ║
-║  but highest confidence.                                    ║
-║  Best for: Critical code, flaky test suites                 ║
+║  🔒  VIGILANT {caution == 'vigilant' ? '⭐ CURRENT' : ''}    ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Run the full test suite before each commit.         │   ║
+║  │  Slowest but highest confidence.                     │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Critical code, flaky test suites        │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
 ```
 
 AskUserQuestion:
 - header: "Caution"
-- question: "How thoroughly should CAT verify changes?"
+- question: "How thoroughly should CAT verify changes? (Current: {caution || 'moderate'})"
 - options:
   - label: "Moderate (Recommended)"
     description: "Run affected tests"
@@ -288,38 +310,46 @@ Map: Relaxed → `caution: "relaxed"`, Moderate → `caution: "moderate"`, Vigil
 
 **🔍 Curiosity — How much CAT explores beyond the immediate task**
 
-Display:
+Display (add "⭐ CURRENT" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
 ║                   🔍 CURIOSITY LEVEL                        ║
 ║                                                             ║
+║           How much does CAT look beyond the task?           ║
+║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  LOW                                                        ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Task-only. Complete exactly what's required, nothing       ║
-║  more. Don't look for improvements or note issues.          ║
-║  Best for: Minimal scope, predictable output                ║
+║  🎯  LOW {curiosity == 'low' ? '⭐ CURRENT' : ''}            ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Task-only. Complete exactly what's required,        │   ║
+║  │  nothing more. Don't look for improvements.          │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Minimal scope, predictable output       │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  MEDIUM                                                     ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Opportunistic. Notice obvious issues encountered while     ║
-║  working (bugs in same function, deprecated syntax).        ║
-║  Best for: Balanced thoroughness                            ║
+║  👀  MEDIUM {curiosity == 'medium' ? '⭐ CURRENT' : ''}      ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Opportunistic. Notice obvious issues encountered    │   ║
+║  │  while working (bugs, deprecated syntax).            │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Balanced thoroughness                   │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  HIGH                                                       ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Proactive. Actively examine related code for patterns,     ║
-║  tech debt, or optimization opportunities.                  ║
-║  Best for: Comprehensive improvement                        ║
+║  🔭  HIGH {curiosity == 'high' ? '⭐ CURRENT' : ''}          ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Proactive. Actively examine related code for        │   ║
+║  │  patterns, tech debt, or optimization opportunities. │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Comprehensive improvement               │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
 ```
 
 AskUserQuestion:
 - header: "Curiosity"
-- question: "How much should CAT explore beyond the task?"
+- question: "How much should CAT explore beyond the task? (Current: {curiosity || 'low'})"
 - options:
   - label: "Low (Recommended)"
     description: "Task-only, minimal scope"
@@ -338,38 +368,46 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 **⏳ Patience — When CAT acts on discovered opportunities**
 
-Display:
+Display (add "⭐ CURRENT" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
 ║                   ⏳ PATIENCE LEVEL                         ║
 ║                                                             ║
+║            When does CAT act on what it finds?              ║
+║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  LOW                                                        ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Act immediately. Address improvements as part of the       ║
-║  current task. Scope expands but work is done now.          ║
-║  Best for: Comprehensive fixes, avoiding tech debt          ║
+║  ⚡  LOW {patience == 'low' ? '⭐ CURRENT' : ''}             ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Act immediately. Address improvements as part of    │   ║
+║  │  the current task. Scope expands but work is done.   │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Comprehensive fixes, avoiding tech debt │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  MEDIUM                                                     ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Defer to current version. Log improvements as separate     ║
-║  tasks within the current version.                          ║
-║  Best for: Focused tasks with nearby follow-up              ║
+║  📋  MEDIUM {patience == 'medium' ? '⭐ CURRENT' : ''}       ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Defer to current version. Log improvements as       │   ║
+║  │  separate tasks within the current version.          │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Focused tasks with nearby follow-up     │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  HIGH                                                       ║
-║  ─────────────────────────────────────────────────────────  ║
-║  Defer by priority. Schedule improvements to appropriate    ║
-║  future versions based on benefit/cost ratio.               ║
-║  Best for: Surgical tasks, controlled scope                 ║
+║  📅  HIGH {patience == 'high' ? '⭐ CURRENT' : ''}           ║
+║  ├──────────────────────────────────────────────────────┤   ║
+║  │  Defer by priority. Schedule improvements to future  │   ║
+║  │  versions based on benefit/cost ratio.               │   ║
+║  │                                                      │   ║
+║  │  ✦ Best for: Surgical tasks, controlled scope        │   ║
+║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
 ```
 
 AskUserQuestion:
 - header: "Patience"
-- question: "When should CAT act on discovered opportunities?"
+- question: "When should CAT act on discovered opportunities? (Current: {patience || 'high'})"
 - options:
   - label: "High (Recommended)"
     description: "Defer by priority to future versions"
@@ -396,9 +434,9 @@ Map: Low → `patience: "low"`, Medium → `patience: "medium"`, High → `patie
 AskUserQuestion:
 - header: "Settings"
 - question: "What would you like to configure?"
-- options:
+- options (show current values in descriptions):
   - label: "🧹 Cleanup"
-    description: "Worktree cleanup behavior"
+    description: "Currently: {autoCleanupWorktrees ? 'Auto-cleanup' : 'Keep'}"
   - label: "📊 Version Gates"
     description: "Entry/exit conditions for versions"
   - label: "← Back"
@@ -412,7 +450,7 @@ AskUserQuestion:
 
 AskUserQuestion:
 - header: "Cleanup"
-- question: "Worktree cleanup behavior:"
+- question: "Worktree cleanup behavior: (Current: {autoCleanupWorktrees ? 'Auto-cleanup' : 'Keep'})"
 - options:
   - label: "🧹 Auto-cleanup (Recommended)"
     description: "Remove after task completion"
@@ -420,6 +458,7 @@ AskUserQuestion:
     description: "Preserve for manual inspection"
   - label: "← Back"
     description: "Return to previous menu"
+
 
 Map: Auto-cleanup → `autoCleanupWorktrees: true`, Keep → `autoCleanupWorktrees: false`
 
