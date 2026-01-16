@@ -323,31 +323,33 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 Display welcome banner:
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  🎮 WELCOME TO YOUR DEVELOPMENT ADVENTURE                         ║
+║  🎮 CHOOSE YOUR ADVENTURER                                        ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║  A few quick questions to understand your style.                  ║
-║  (These shape how CAT makes decisions throughout the project)     ║
+║  Every adventurer has a style. These questions shape how your     ║
+║  AI companion navigates the coding quest ahead.                   ║
+║                                                                   ║
+║  Choose wisely - your preferences guide every decision.           ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
 
-AskUserQuestion: header="Trust", question="How much autonomy should CAT have?", options=[
-  "🔍 Short leash - review frequently, confirm often",
-  "⚖️ Medium leash - review on significant changes (Recommended)",
-  "🚀 Long leash - trust CAT to make decisions, review less"
+AskUserQuestion: header="Trust", question="How do you command your companion?", options=[
+  "🛡️ Cautious Commander - check in often, verify each move",
+  "⚔️ Balanced Leader - trust routine calls, review key decisions (Recommended)",
+  "🏹 Autonomous Ally - let the companion lead, intervene only when critical"
 ]
 
-AskUserQuestion: header="Curiosity", question="How much should CAT explore beyond the immediate task?", options=[
-  "📦 Low - stay focused, minimal exploration",
-  "⚖️ Medium - explore related concerns when relevant (Recommended)",
-  "🔭 High - investigate root causes and broader patterns"
+AskUserQuestion: header="Curiosity", question="How should your companion explore the dungeon?", options=[
+  "🎯 Focused Scout - stay on the quest path, ignore side passages",
+  "🗺️ Observant Explorer - note interesting finds, but stay on mission (Recommended)",
+  "🔮 Thorough Investigator - map every corner, document all discoveries"
 ]
 
-AskUserQuestion: header="Patience", question="How tolerant of opportunistic improvements?", options=[
-  "🎯 High patience - only change what's required",
-  "⚖️ Medium patience - clean up related code when natural (Recommended)",
-  "⚡ Low patience - actively improve code quality in touched files"
+AskUserQuestion: header="Patience", question="When your companion spots treasure off the path...", options=[
+  "📜 Log it for later - add to the quest backlog, maintain focus",
+  "⚖️ Quick assessment - grab low-hanging fruit, note the rest (Recommended)",
+  "💎 Seize the moment - if it's valuable, claim it now"
 ]
 
 Map responses to preference values:
@@ -408,14 +410,18 @@ git commit -m "docs: initialize CAT planning structure"
 Display completion banner:
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  ✨ YOUR ADVENTURE AWAITS                                         ║
+║  ⚔️ YOUR QUEST BEGINS                                             ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║  Trust: [trust] │ Curiosity: [curiosity] │ Patience: [patience]   ║
-║  Mode: [interactive|yolo]                                         ║
+║  ADVENTURER PROFILE                                               ║
+║  ─────────────────────────────────────────────────────────────────║
+║  Command Style:  [trust]                                          ║
+║  Exploration:    [curiosity]                                      ║
+║  Opportunity:    [patience]                                       ║
+║  Quest Mode:     [interactive|yolo]                               ║
 ║                                                                   ║
-║  These preferences will guide autonomous decisions.               ║
-║  Change anytime with: /cat:config                                 ║
+║  Your companion awaits your command.                              ║
+║  Reforge your style anytime: /cat:config                          ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```

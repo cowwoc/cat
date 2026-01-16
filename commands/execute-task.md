@@ -43,7 +43,7 @@ This is CAT's core execution command. It:
 
 **MANDATORY: Display progress at each major step.**
 
-This workflow has 15 steps. Display progress at each step using the format from
+This workflow has 17 steps. Display progress at each step using the format from
 [display-standards.md § Step Progress Format](.claude/cat/references/display-standards.md#step-progress-format):
 1. Verify planning structure
 2. Find/load task
@@ -55,11 +55,13 @@ This workflow has 15 steps. Display progress at each step using the format from
 8. Execute task (spawn subagent)
 9. Collect subagent results
 10. Evaluate token usage
-11. Run stakeholder review
-12. Squash commits
-13. User approval gate
-14. Merge to main
-15. Update state and changelog
+11. Handle discovered issues (patience setting)
+12. Verify changes (based on verify setting)
+13. Run stakeholder review
+14. Squash commits
+15. User approval gate
+16. Merge to main
+17. Update state and changelog
 
 **Track timing:**
 - Record start time at command begin: `START_TIME=$(date +%s)`
@@ -540,29 +542,25 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 1. Read preferences and include in subagent prompt:
    ```bash
    CURIOSITY=$(jq -r '.curiosity // "medium"' .claude/cat/cat-config.json)
-   PATIENCE=$(jq -r '.patience // "medium"' .claude/cat/cat-config.json)
+   # Note: PATIENCE is used by main agent AFTER collecting results, not passed to subagent
    ```
 
-   **Curiosity instruction** (for planning subagent):
-   | Level | Planning Subagent Instruction |
-   |-------|-------------------------------|
-   | `low` | "Stay focused on the immediate task. Minimize scope. Avoid exploring tangential issues." |
-   | `medium` | "Balance focus with reasonable exploration. Investigate directly related concerns." |
-   | `high` | "Explore thoroughly. Investigate root causes and related patterns. Consider broader implications." |
-
-   **Patience instruction** (for implementation subagent):
+   **Curiosity instruction** (for IMPLEMENTATION subagent — whether to NOTE issues):
    | Level | Implementation Subagent Instruction |
    |-------|-------------------------------------|
-   | `high` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
-   | `medium` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
-   | `low` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
+   | `low` | "Focus ONLY on the assigned task. Do NOT note or report issues outside the immediate scope." |
+   | `medium` | "While working, NOTE obvious issues in files you touch. Report them in .completion.json but do NOT fix them." |
+   | `high` | "Actively look for issues and improvement opportunities. Report ALL findings in .completion.json but do NOT fix them." |
+
+   **IMPORTANT:** The implementor subagent NEVER fixes discovered issues directly. It follows
+   instructions mechanically and reports issues for the main agent to handle.
 
 2. Invoke `/cat:spawn-subagent` skill with:
    - Task path
    - PLAN.md contents (with Selected Approach filled in)
    - Worktree path
    - Token tracking enabled
-   - Curiosity instruction (for planning) or Patience instruction (for implementation)
+   - Curiosity instruction (determines issue reporting, NOT fixing)
 
 3. Monitor subagent via `/cat:monitor-subagents`:
    - Check for compaction events
@@ -685,6 +683,208 @@ Informational warning:
 The subagent used significant context (threshold: {targetContextUsage}%).
 Consider decomposing similar tasks in the future.
 ```
+
+</step>
+
+<step name="handle_discovered_issues">
+
+**Handle issues discovered by subagent (patience setting):**
+
+After collecting results, check `.completion.json` for discovered issues:
+
+```bash
+COMPLETION_FILE="${WORKTREE}/.completion.json"
+ISSUES=$(jq -r '.discoveredIssues // []' "$COMPLETION_FILE")
+ISSUE_COUNT=$(echo "$ISSUES" | jq 'length')
+
+if [ "$ISSUE_COUNT" -gt 0 ]; then
+  PATIENCE=$(jq -r '.patience // "high"' .claude/cat/cat-config.json)
+  echo "Found $ISSUE_COUNT discovered issues. Patience: $PATIENCE"
+fi
+```
+
+**If no issues discovered:** Skip to stakeholder_review.
+
+**If issues discovered, handle based on patience:**
+
+| Patience | Action |
+|----------|--------|
+| `high` | Create tasks in FUTURE version backlog (prioritized by benefit/cost) |
+| `medium` | Create tasks in CURRENT version backlog |
+| `low` | Resume PLANNER subagent to update plan, then re-execute |
+
+**For patience: high**
+
+```bash
+# Add issues to future version backlog
+for issue in $(echo "$ISSUES" | jq -c '.[]'); do
+  BENEFIT_COST=$(echo "$issue" | jq -r '.benefitCost // 1')
+  # Create task in next minor version based on priority
+  echo "Backlog: $(echo "$issue" | jq -r '.description')"
+done
+```
+
+Display to user:
+```
+📋 DISCOVERED ISSUES → FUTURE BACKLOG
+
+{N} issues noted during implementation have been added to the backlog
+for future versions (sorted by benefit/cost ratio).
+
+Issues will not block current task completion.
+```
+
+**For patience: medium**
+
+```bash
+# Add issues as tasks in current version
+for issue in $(echo "$ISSUES" | jq -c '.[]'); do
+  # Create task in current minor version
+  echo "New task: $(echo "$issue" | jq -r '.description')"
+done
+```
+
+Display to user:
+```
+📋 DISCOVERED ISSUES → CURRENT VERSION
+
+{N} issues noted during implementation have been added as tasks
+in the current minor version.
+
+Issues will not block current task completion.
+```
+
+**For patience: low**
+
+Resume the PLANNER subagent to incorporate fixes into the current task:
+
+```bash
+# Resume planner subagent with discovered issues
+PLANNER_ID=$(cat "${WORKTREE}/.planner_agent_id" 2>/dev/null)
+```
+
+Display to user:
+```
+🔄 DISCOVERED ISSUES → IMMEDIATE ACTION
+
+{N} issues noted during implementation. Patience is LOW.
+Resuming planner subagent to update the plan with fixes...
+```
+
+Use Task tool with `resume: PLANNER_ID`:
+- Provide discovered issues as context
+- Request updated PLAN.md incorporating fixes
+- Then spawn new implementation subagent with updated plan
+
+**Important:** The implementor does NOT fix issues directly. The planner updates the plan,
+and a new implementation pass executes the expanded plan mechanically.
+
+</step>
+
+<step name="verify_changes">
+
+**Run verification based on verify setting:**
+
+```bash
+VERIFY_LEVEL=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
+echo "Verification level: $VERIFY_LEVEL"
+```
+
+| verify | Action |
+|--------|--------|
+| `none` | Skip verification entirely (fastest iteration) |
+| `changed` | Run tests on changed files/modules only |
+| `all` | Run full project verification (build + all tests) |
+
+**For verify: none**
+
+```
+⚡ VERIFICATION: SKIPPED (verify: none)
+
+Proceeding without running tests or build verification.
+Use for rapid prototyping; recommend verify: changed for production code.
+```
+
+Skip to stakeholder_review.
+
+**For verify: changed**
+
+Run targeted verification on changed files/modules only:
+
+```bash
+# Get list of changed files
+CHANGED_FILES=$(git diff --name-only origin/HEAD..HEAD)
+```
+
+**Approach:**
+1. Identify changed files from git diff
+2. Detect project type (see build-verification.md for detection logic)
+3. Run project-appropriate targeted tests for those files/modules
+4. Report results
+
+**Examples by project type:**
+| Type | Targeted Test Command |
+|------|----------------------|
+| Maven | `./mvnw test -pl {changed-modules} -am` |
+| Node | `npm test -- --findRelatedTests {files}` |
+| Python | `pytest {changed-modules}` |
+| Go | `go test {changed-packages}` |
+| Rust | `cargo test {changed-crates}` |
+
+Display result:
+```
+📦 VERIFICATION: CHANGED FILES ONLY (verify: changed)
+
+Changed files: {N}
+Tests run: {M} (targeting changed modules)
+Result: {PASS|FAIL}
+```
+
+**For verify: all**
+
+Run full project verification (build + all tests):
+
+**Approach:**
+1. Detect project type from marker files (pom.xml, package.json, etc.)
+2. Run the project's standard build command
+3. Run the project's full test suite
+4. Report results
+
+**Examples by project type:**
+| Type | Full Verification Command |
+|------|--------------------------|
+| Maven | `./mvnw verify` |
+| Node | `npm run build && npm test` |
+| Python | `pytest` |
+| Go | `go build ./... && go test ./...` |
+| Rust | `cargo build && cargo test` |
+| Make | `make && make test` |
+
+Display result:
+```
+🔒 VERIFICATION: FULL PROJECT (verify: all)
+
+Build: {PASS|FAIL}
+Tests: {N} passed, {M} failed
+Result: {PASS|FAIL}
+```
+
+**On verification failure:**
+
+Block progression and present options:
+
+```
+❌ VERIFICATION FAILED
+
+{Error details}
+
+Options:
+1. Fix issues and retry
+2. Override and proceed (not recommended)
+3. Abort task
+```
+
+Use AskUserQuestion to capture decision.
 
 </step>
 
