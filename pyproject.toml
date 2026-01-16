@@ -1,0 +1,23 @@
+[project]
+name = "claude-code-cat"
+version = "2.0"
+description = "Multi-agent task orchestration"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/handlers"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+pythonpath = ["plugin/hooks", "plugin/scripts"]
+
+[tool.coverage.run]
+source = ["plugin/hooks/skill_handlers"]
+omit = ["tests/*"]
