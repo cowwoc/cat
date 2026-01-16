@@ -990,6 +990,46 @@
         "catches_variations": true
       },
       "correct_behavior": "For multi-subagent tasks, execute aggregate_token_report step to display token table with all subagents BEFORE presenting approval gate. Never report single-subagent metrics for multi-subagent tasks."
+    },
+    {
+      "id": "M158",
+      "timestamp": "2026-01-20T12:45:00Z",
+      "category": "protocol_violation",
+      "description": "Did not re-squash commits after user requested changes - presented 3 separate commits instead of clean squashed history",
+      "root_cause": "Workflow says 'loop back to execute' after requested changes but doesn't explicitly require re-squashing before re-presenting approval gate",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "causal_barrier_analysis": {
+        "selected_cause": "Workflow gap - no instruction to re-squash after user-requested changes",
+        "confidence": "HIGH",
+        "evidence": "Line 1633-1634 says loop back to execute but doesn't mention re-squashing",
+        "barriers": [
+          {
+            "barrier": "squash_commits step",
+            "existed": true,
+            "why_failed": "Only runs AFTER approval, not during change loop"
+          }
+        ],
+        "minimum_effective_barrier": "skill (level 5)"
+      },
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.worktrees/2.0-fork-from-current-branch/plugin/commands/work.md",
+      "pattern_keywords": [
+        "squash",
+        "commits",
+        "request-changes",
+        "approval",
+        "iteration"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After making requested changes, squash all commits before re-presenting the approval gate. Users should review clean commit history."
     }
   ]
 }
