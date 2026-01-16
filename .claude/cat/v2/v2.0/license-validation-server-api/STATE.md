@@ -1,11 +1,6 @@
-# Task State: license-validation-server-api
+# State
 
-## Status
-status: pending
-progress: 0%
-
-## Dependencies
-- license-validation-server-spring-setup (needs Spring Boot foundation)
-
-## Provides
-- REST API endpoints for license validation
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** [license-validation-server-spring-setup]
+- **Last Updated:** 2026-01-23

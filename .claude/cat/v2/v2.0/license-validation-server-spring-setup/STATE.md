@@ -1,13 +1,6 @@
-# Task State: license-validation-server-spring-setup
+# State
 
-## Status
-status: pending
-progress: 0%
-
-## Dependencies
-- jwt-token-generation (needs token classes)
-- tier-feature-mapping (needs entitlement definitions)
-
-## Provides
-- Spring Boot application foundation
-- Base configuration for other server subtasks
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** [jwt-token-generation, tier-feature-mapping]
+- **Last Updated:** 2026-01-23
