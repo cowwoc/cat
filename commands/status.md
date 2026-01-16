@@ -2,10 +2,7 @@
 name: cat:status
 description: Show hierarchy status with visual tree
 allowed-tools:
-  - Read
   - Bash
-  - Glob
-  - Grep
 ---
 
 <objective>
@@ -19,60 +16,25 @@ Provides situational awareness for project progress.
 
 <process>
 
-<step name="verify">
+<step name="collect-data">
 
-**Verify planning structure exists:**
-
-```bash
-[ ! -d .claude/cat ] && echo "No planning structure found. Run /cat:new-project to start." && exit 1
-```
-
-</step>
-
-<step name="load">
-
-**Load project context:**
-
-- Read `.claude/cat/PROJECT.md` for project name and overview
-- Read `.claude/cat/ROADMAP.md` for version structure
-- Read `.claude/cat/cat-config.json` for configuration and user preferences:
-  - `mode` (yolo/interactive)
-  - `adventureMode.preferences.approach` (conservative/balanced/aggressive)
-  - `adventureMode.preferences.stakeholderReview` (always/high-risk-only/never)
-  - `adventureMode.preferences.refactoring` (avoid/opportunistic/eager)
-
-</step>
-
-<step name="scan">
-
-**Scan all STATE.md files:**
+**Collect status data:**
 
 ```bash
-# Find all major versions
-ls -1d .claude/cat/v[0-9]* 2>/dev/null | sort -V
-
-# Find all minor versions under each major
-find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | sort -V
-
-# Find all tasks under each minor
-find .claude/cat/v*/v*.*/task -maxdepth 1 -type d 2>/dev/null | sort
+"${CLAUDE_PLUGIN_ROOT}/scripts/status-data.sh" .claude/cat
 ```
 
-For each STATE.md found, extract:
-- Status (pending, in-progress, completed, blocked)
-- Progress percentage
-- Dependencies
+This outputs JSON with:
+- `project_name`: Project name from PROJECT.md
+- `percent`: Overall completion percentage
+- `completed`/`total`: Task counts
+- `current_minor`: The current minor version being worked on
+- `first_pending`: Next executable task name
+- `in_progress_task`: Currently in-progress task (if any)
+- `majors[]`: Array of major versions with nested minors and their stats
+- `pending_tasks[]`: List of pending tasks in current minor
 
-</step>
-
-<step name="calculate">
-
-**Calculate overall progress:**
-
-1. Count total tasks across all major/minor versions
-2. Count completed tasks
-3. Calculate percentage: (completed / total) * 100
-4. Identify current position (first in-progress or pending task)
+If the script fails with "No planning structure found", inform user to run `/cat:init`.
 
 </step>
 
@@ -80,71 +42,84 @@ For each STATE.md found, extract:
 
 **Render adventure-style visual tree:**
 
-**Progress Bar Generation (MANDATORY):**
+**IMPORTANT: Output styled text DIRECTLY - do NOT use Bash tool for rendering.**
 
-Use `scripts/lib/progress.sh` library:
+Claude Code shows all Bash tool invocations in the terminal. To display clean output without
+tool call wrappers, output the styled text directly as part of your response.
 
-```bash
-source "$(dirname "$0")/../scripts/lib/progress.sh"
-# Generate bar for percentage (0-100)
-_progress_bar 75  # Returns: [██████████████████░░] with gradient color
+**CRITICAL: Markdown rendering rules:**
+- Text inside code fences (```) does NOT render markdown (bold shows as `**text**`)
+- Text outside code fences DOES render markdown (**text** becomes bold)
+- Use code fences only for box-drawing that needs alignment
+- Put bold elements (current version, options) OUTSIDE code fences
+
+**Use this exact format (substitute actual values):**
+
+```
+╔════════════════════════════════════════════════════════════════════╗
+║  🗺️ YOUR ADVENTURE - {PROJECT_NAME}                                  ║
+╠════════════════════════════════════════════════════════════════════╣
+║                                                                    ║
+║  📊 Progress: [████████████░░░░░░░░] **{PERCENT}%**                    ║
+║  🏆 **{COMPLETED}/{TOTAL}** tasks complete                             ║
+║                                                                    ║
+║  ⚙️ Mode: {Interactive|YOLO}                                       ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
 ```
 
-Features: 24-bit gradient (red→yellow→green), fractional blocks for precision, respects NO_COLOR.
+┌─ 📦 v{N}: {Major Version Name} ────────────────────────────────────┐
 
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║  🗺️  YOUR ADVENTURE - [Project Name]                              ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║  Progress: [██████████████████████████████████████░░░░░░░░░░░░░░] ║
-║            75% complete (15/20 tasks)                             ║
-║                                                                   ║
-║  Style: Balanced │ Mode: Interactive                              ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+☑️ v{N}.{M}: {Minor description} ({completed}/{total})
+☑️ v{N}.{M}: {Another completed minor} ({completed}/{total})
 
-┌─ v1: [Name from ROADMAP] ───────────────────────────────────────┐
-│                                                                  │
-│  v1.0: [Description]                                             │
-│    ✓ parse-tokens                                                │
-│    → build-ast ← YOU ARE HERE                                    │
-│    ○ validate-ast                                                │
-│                                                                  │
-│  v1.1: [Description]                                             │
-│    ○ generate-ir                                                 │
-│    ○ optimize-ir (depends: generate-ir)                          │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total})
+   🔳 {pending-task-1}
+   🔳 {pending-task-2}
+   🔳 {pending-task-3}
+   📋 ... and {N} more pending tasks
 
-┌─ v2: [Name from ROADMAP] ───────────────────────────────────────┐
-│                                                                  │
-│  v2.0: [Description]                                             │
-│    ○ emit-code                                                   │
-│    ○ format-output                                               │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+🔳 v{N}.{M}: {Future minor} ({completed}/{total})
 
-───────────────────────────────────────────────────────────────────
-Current Quest: v1.0, Task: build-ast
-Next: validate-ast (after build-ast completes)
-───────────────────────────────────────────────────────────────────
-```
+└────────────────────────────────────────────────────────────────────┘
 
-**Status symbols (MANDATORY for every task line):**
-- `✓` - completed
-- `→` with `← YOU ARE HERE` - in-progress (current task)
-- `○` - pending
-- `🚫` - blocked (dependencies not met)
+═══════════════════════════════════════════════════════════════════════
+🎯 **Current Quest:** v{N}.{M} - {Minor version description}
+📋 **Available tasks:** {N} pending
+═══════════════════════════════════════════════════════════════════════
 
-**CRITICAL**: Do NOT use list dash prefix with symbols. Use `✓ task` not `- ✓ task`.
-The dash triggers markdown list rendering which strips symbols in CLI output.
+**🚀 NEXT STEPS**
 
-**Color hints (if terminal supports):**
-- Green for completed
-- Yellow for in-progress
-- Gray for pending
-- Red for blocked
+| Option | Action | Command |
+|--------|--------|---------|
+| [**1**] | Execute a task | `/cat:execute-task {version}-<task-name>` |
+| [**2**] | Add new task | `/cat:add-task {version}` |
+
+---
+
+**Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked
+
+**Progress bar format:** Use block characters: `█` for filled, `░` for empty.
+Example: `[████████████████░░░░]` for 80% complete.
+
+**Status symbols (emoji):**
+- ☑️ completed (for done tasks and 100% complete minors)
+- 🔄 in-progress (for current minor version AND any actively running task)
+- 🔳 pending
+- 🚫 blocked (dependencies not met)
+
+**Collapse completed versions:** For completed minor versions, show only summary line.
+For current/incomplete versions, show task details.
+
+**Key point:** Output this text directly in your response. Do NOT wrap it in Bash tool calls.
+The visual structure renders correctly in the terminal without needing ANSI escape codes.
+
+**When a task is actively in progress, show it like:**
+
+🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total})
+   🔄 {in-progress-task}
+   🔳 {pending-task-1}
+   🔳 {pending-task-2}
 
 </step>
 
@@ -152,47 +127,26 @@ The dash triggers markdown list rendering which strips symbols in CLI output.
 
 **Identify blocked tasks:**
 
-List any tasks that are blocked:
-- Show which dependencies are incomplete
-- Calculate when they could become unblocked
+If any tasks are blocked, list them after the legend:
 
-```
-BLOCKED:
+**🚫 BLOCKED:**
 🚫 v1.1/optimize-ir - waiting on: generate-ir
 🚫 v2.0/emit-code - waiting on: v1 completion
-```
 
 </step>
 
 <step name="next">
 
-**Suggest next action (adventure style):**
+**Adapt NEXT STEPS based on state:**
 
-Based on current state, suggest the most appropriate next command:
+The table options change based on current state:
 
-| State | Suggestion |
-|-------|------------|
-| Has executable task | `/cat:execute-task` |
-| All tasks complete for minor | `/cat:add-task` or `/cat:add-minor-version` |
-| All minors complete for major | `/cat:add-major-version` |
-| All complete | "Quest complete!" |
-
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║  🎯 NEXT STEPS                                                    ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║  [A] Continue quest                                               ║
-║      /cat:execute-task 1.0-build-ast                              ║
-║                                                                   ║
-║  [B] Add new task                                                 ║
-║      /cat:add-task 1.0                                            ║
-║                                                                   ║
-║  [C] Update preferences                                           ║
-║      /cat:update-preferences                                      ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
-```
+| State | Option 1 | Option 2 |
+|-------|----------|----------|
+| Has pending tasks | Execute a task | Add new task |
+| All tasks complete for minor | Add new task | Add minor version |
+| All minors complete for major | Add minor version | Add major version |
+| All complete | 🎉 Quest complete! | (no options needed) |
 
 </step>
 
@@ -213,10 +167,11 @@ The status output should be:
 
 - [ ] All major versions displayed
 - [ ] All minor versions under each major displayed
-- [ ] All tasks with correct status symbols
+- [ ] All tasks with correct status emojis (☑️ 🔄 🔳 🚫)
 - [ ] Progress bar accurate
-- [ ] Current position identified
-- [ ] Next action suggested
-- [ ] Blocked tasks explained
+- [ ] Current minor version bolded
+- [ ] NEXT STEPS table renders with bold [**1**] and [**2**]
+- [ ] Legend displayed
+- [ ] Blocked tasks listed (if any)
 
 </success_criteria>
