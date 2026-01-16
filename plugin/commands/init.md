@@ -18,6 +18,30 @@ and `conventions/` directory for Claude-facing coding standards.
 
 <process>
 
+<step name="check_precomputed_boxes">
+
+**MANDATORY:** Check context for "PRE-COMPUTED INIT BOXES".
+
+If found: Use those box templates exactly as provided. Replace only the {variable} placeholders with actual values.
+If NOT found: **FAIL** with this error message:
+```
+ERROR: Pre-computed boxes not found in context.
+The get-init-output.sh hook should have provided box templates.
+Please report this issue - the hook may not be registered correctly.
+```
+
+**Box templates available:**
+- `default_gates_configured` - For version gate configuration (variable: {N})
+- `research_skipped` - When research is skipped (static)
+- `choose_your_partner` - Partner preference intro (static)
+- `cat_initialized` - Final init confirmation (variables: {trust}, {curiosity}, {patience})
+- `first_task_walkthrough` - Task walkthrough intro (static)
+- `first_task_created` - Task creation confirmation (variable: {task-name})
+- `all_set` - Exit with work pointer (static)
+- `explore_at_your_own_pace` - Exit with exploration pointer (static)
+
+</step>
+
 <step name="verify">
 
 ```bash
