@@ -220,9 +220,9 @@ when tasks need decomposition.
 200K (80K tokens), CAT warns that the task may need decomposition.
 
 **trust** — How much trust you place in CAT to make decisions:
-- `short` — CAT presents options frequently; you guide most decisions
+- `low` — CAT presents options frequently; you guide most decisions
 - `medium` — CAT presents options for meaningful trade-offs; handles routine choices
-- `long` — CAT decides autonomously; only presents HIGH risk or architectural choices
+- `high` — CAT decides autonomously; only presents HIGH risk or architectural choices
 
 **verify** — What verification CAT runs before presenting changes:
 - `none` — No verification; fastest iteration

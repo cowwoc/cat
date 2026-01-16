@@ -9,13 +9,13 @@ set -euo pipefail
 # - Stakeholder review is now automatically triggered based on task characteristics
 #
 # Migration mapping:
-#   approach: conservative -> trust: short, curiosity: low
+#   approach: conservative -> trust: low, curiosity: low
 #   approach: balanced -> trust: medium, curiosity: medium
-#   approach: aggressive -> trust: long, curiosity: high
+#   approach: aggressive -> trust: high, curiosity: high
 #
-#   stakeholderReview: always -> trust: short (if not set by approach)
+#   stakeholderReview: always -> trust: low (if not set by approach)
 #   stakeholderReview: high-risk-only -> trust: medium (if not set by approach)
-#   stakeholderReview: never -> trust: long (if not set by approach)
+#   stakeholderReview: never -> trust: high (if not set by approach)
 #
 #   refactoring: avoid -> curiosity: low, patience: high
 #   refactoring: opportunistic -> curiosity: medium, patience: medium
@@ -64,7 +64,7 @@ patience="high"
 # Map approach -> trust + curiosity
 case "$approach" in
     conservative)
-        trust="short"
+        trust="low"
         curiosity="low"
         ;;
     balanced)
@@ -72,17 +72,17 @@ case "$approach" in
         curiosity="medium"
         ;;
     aggressive)
-        trust="long"
+        trust="high"
         curiosity="high"
         ;;
 esac
 
 # stakeholderReview influences trust if approach didn't set it strongly
-# Use the more conservative (shorter) trust if there's a conflict
+# Use the more conservative (lower) trust if there's a conflict
 case "$stakeholder_review" in
     always)
         # If approach was aggressive but reviews were always, use medium trust
-        if [[ "$trust" == "long" ]]; then
+        if [[ "$trust" == "high" ]]; then
             trust="medium"
         fi
         ;;

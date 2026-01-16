@@ -903,8 +903,8 @@ TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 | Condition | Action |
 |-----------|--------|
 | `yoloMode: true` | Skip review |
-| `trust: "long"` | Skip review (high trust) |
-| `trust: "short"` | Run review always |
+| `trust: "high"` | Skip review (high trust) |
+| `trust: "low"` | Run review always |
 | `trust: "medium"` | Check task risk assessment |
 
 **For medium trust:** Read the task's PLAN.md Risk Assessment section. Run review if ANY of:
