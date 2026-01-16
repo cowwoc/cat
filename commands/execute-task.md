@@ -478,6 +478,28 @@ fi
 **Anti-pattern (M072):** Presenting AskUserQuestion for approval with uncommitted changes.
 The user sees a summary but cannot `git diff` or review actual file contents.
 
+**MANDATORY: STATE.md in implementation commit (M076).**
+
+STATE.md tracks task state and MUST be updated in the same commit as the implementation,
+not in a separate docs commit:
+
+```bash
+# Update task STATE.md before committing implementation
+TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
+
+# Set status to completed and update progress
+# This change must be staged and committed WITH the implementation code
+```
+
+**Why:** STATE.md reflects task completion. Separating it from the implementation:
+- Creates disconnected commits that require extra squash/rebase
+- Makes the implementation commit incomplete (doesn't reflect task state)
+- Violates atomic commit principle (related changes in one commit)
+
+**Correct pattern:** Subagent or main agent updates STATE.md → includes in implementation commit.
+
+**Anti-pattern (M076):** Committing STATE.md separately as "docs: complete task {name}".
+
 Present work summary with **mandatory token metrics**:
 
 ```
@@ -602,20 +624,18 @@ a safety net if the agent crashes or is interrupted.
 
 **Update STATE.md files:**
 
-1. **Task STATE.md:**
-   - Set status: `completed`
-   - Set progress: `100`
-   - Record completion timestamp
+**Note:** Task STATE.md was already updated and committed with the implementation (M076).
+This step handles the parent STATE.md rollup updates.
 
-2. **Minor STATE.md:**
+1. **Minor STATE.md:**
    - Recalculate progress based on task completion
    - Update status if all tasks complete
 
-3. **Major STATE.md:**
+2. **Major STATE.md:**
    - Recalculate progress based on minor completion
    - Update status if all minors complete
 
-4. **Dependent tasks:**
+3. **Dependent tasks:**
    - Find all tasks in the same minor version that list this task in Dependencies
    - For each dependent task, check if ALL its dependencies are now completed
    - If all dependencies met, the task is now executable (no longer blocked)
@@ -624,16 +644,17 @@ a safety net if the agent crashes or is interrupted.
 
 <step name="commit_metadata">
 
-**Commit STATE.md updates:**
+**Commit parent STATE.md rollup updates:**
+
+Only commit Minor/Major STATE.md updates here. Task STATE.md was already committed
+with the implementation per M076.
 
 ```bash
-git add .claude/cat/
+git add .claude/cat/v*/STATE.md .claude/cat/v*/v*.*/STATE.md
 git commit -m "$(cat <<'EOF'
-docs: complete task {task-name}
+config: update progress for v{major}.{minor}
 
-Updates STATE.md for Major {major}, Minor {minor}.
-
-Task ID: v{major}.{minor}-{task-name}
+Task {task-name} completed. Updates minor/major STATE.md progress.
 EOF
 )"
 ```
