@@ -400,5 +400,61 @@
       "catches_variations": true
     },
     "correct_behavior": "Verify all lines have consistent borders using the PRE-OUTPUT CHECKLIST before rendering status display"
+  },
+  {
+    "id": "M137",
+    "timestamp": "2026-01-19T05:28:00Z",
+    "category": "protocol_violation",
+    "description": "Status display output had vertical alignment issues - inner boxes not properly bordered, skipped PRE-OUTPUT CHECKLIST",
+    "root_cause": "Compliance failure - PRE-OUTPUT CHECKLIST existed but was skipped during rendering. Documentation-level prevention from M136 failed.",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "validation",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/validate-status-alignment.sh",
+    "pattern_keywords": [
+      "status",
+      "display",
+      "alignment",
+      "border",
+      "checklist",
+      "validation"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": "M136",
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Run validate-status-alignment.sh on proposed output before rendering, ensuring all lines have both left and right borders"
+  },
+  {
+    "id": "M138",
+    "timestamp": "2026-01-19T05:28:00Z",
+    "category": "protocol_violation",
+    "description": "Manually read PROJECT.md and multiple PLAN.md files after status-data.sh returned incomplete data, violating MANDATORY: Use ONLY script data instruction",
+    "root_cause": "MANDATORY instructions without enforcement are treated as suggestions. Script returned incomplete data due to directory structure mismatch, and I prioritized completeness over protocol compliance.",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "code_fix",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/status-data.sh",
+    "pattern_keywords": [
+      "status",
+      "script",
+      "mandatory",
+      "data",
+      "manual",
+      "read"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use ONLY data from status-data.sh output. If script returns incomplete data, report the bug after rendering rather than manually supplementing."
   }
 ]
