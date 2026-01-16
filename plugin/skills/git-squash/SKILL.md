@@ -153,6 +153,28 @@ rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 
 ## Critical Rules
 
+### Preserve Commit Type Boundaries When Squashing
+
+**CRITICAL: Follow commit grouping rules from [commit-types.md](../../.claude/cat/references/commit-types.md).**
+
+Key rules when squashing:
+- **Task STATE.md** → same commit as implementation (M076)
+- **Different commit types** (`feature:` vs `docs:`) → keep separate
+- **Related same-type commits** → can combine
+
+**Before squashing, analyze commit types:**
+
+```bash
+# List commits with their types
+git log --oneline <base>..HEAD | while read hash msg; do
+    type=$(echo "$msg" | cut -d: -f1)
+    echo "$type: $hash ${msg#*: }"
+done | sort -t: -k1
+
+# Group by type to determine squash strategy
+git log --format="%s" <base>..HEAD | cut -d: -f1 | sort | uniq -c
+```
+
 ### Automatic STATE.md Preservation
 
 **CRITICAL: Preserve final STATE.md state when squashing planning commits.**
