@@ -13,9 +13,8 @@ window management strategy.
 
 ## Prerequisites
 
-**SESSION_ID Required**: Get the session ID from the SessionStart system-reminder in conversation context.
-Look for `Session ID: {uuid}` and extract the UUID. Substitute this value into all bash commands below
-that reference `${SESSION_ID}`.
+**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this skill.
+All bash commands below use this value directly.
 
 ## When to Use
 
@@ -29,15 +28,15 @@ that reference `${SESSION_ID}`.
 
 ### 1. Locate Session File
 
-Substitute your actual SESSION_ID from context:
+Session file location (uses auto-substituted session ID):
 
 ```bash
 # Session file location
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
 # Verify file exists
 if [ ! -f "${SESSION_FILE}" ]; then
-  echo "ERROR: Session file not found for ${SESSION_ID}"
+  echo "ERROR: Session file not found for ${CLAUDE_SESSION_ID}"
   exit 1
 fi
 ```

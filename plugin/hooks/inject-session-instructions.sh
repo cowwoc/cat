@@ -18,6 +18,13 @@ trap 'echo "ERROR in inject-session-instructions.sh at line $LINENO: $BASH_COMMA
 # - Injects Skill Workflow Compliance
 # - No file modifications - pure context injection
 
+# Read stdin JSON and extract session_id
+INPUT=""
+if [ ! -t 0 ]; then
+    INPUT=$(cat)
+fi
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null || echo "unknown")
+
 # Build message as readable multiline text, let jq handle JSON escaping
 MESSAGE=$(cat << 'INSTRUCTIONS'
 ## CAT SESSION INSTRUCTIONS
@@ -73,9 +80,9 @@ Skills exist to enforce consistent processes. Shortcuts defeat their purpose.
 INSTRUCTIONS
 )
 
-# Append session ID if available
+# Append session ID (extracted from stdin JSON)
 MESSAGE="${MESSAGE}
-Session ID: ${SESSION_ID:-unknown}"
+Session ID: ${SESSION_ID}"
 
 # Use jq to properly escape the message into JSON
 jq -n --arg msg "$MESSAGE" '{
