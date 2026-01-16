@@ -15,7 +15,6 @@
 </p>
 
 This is what herding cats feels like. Brilliant, forgetful, easily distracted cats.
-
 **CAT flips this around.**
 
 You tell CAT your style once. It learns what matters to you. Then it handles the routine stuff automatically while presenting you with meaningful choices at genuine decision points. It's an adventure where you're the author — the plot moves when you say so, and nobody rewrites act two while you're getting coffee.
