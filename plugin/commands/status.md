@@ -19,8 +19,7 @@ User sees a correctly-aligned, complete project status display with actionable n
 ## Prerequisites
 
 - CAT project initialized (`.claude/cat` directory exists)
-- Status data collection script: `${CLAUDE_PLUGIN_ROOT}/scripts/status.sh`
-- Box rendering script: `${CLAUDE_PLUGIN_ROOT}/scripts/build-box-lines.py`
+- Box rendering utilities: `${CLAUDE_PLUGIN_ROOT}/scripts/build_box_lines.py`
 
 ---
 
@@ -83,11 +82,11 @@ The UserPromptSubmit hook pre-computes the entire status display to prevent alig
 ```
 ERROR: Pre-computed status display not found in context.
 
-The hook (precompute-status-display.sh) should have provided this.
+The status handler should have provided this.
 
 Troubleshooting:
-1. Check if hooks/precompute-status-display.sh exists in plugin
-2. Verify hook is registered in hooks.json
+1. Check if hooks/skill_handlers/status_handler.py exists in plugin
+2. Verify get-skill-output.py dispatcher is registered in hooks.json
 3. Check for hook errors in output above
 4. Ensure .claude/cat directory exists (run /cat:init if needed)
 
@@ -128,13 +127,13 @@ accurate widths. Manual rendering defeats the purpose of extraction.
 
 This skill relies on pre-computation via UserPromptSubmit hook to prevent alignment errors.
 
-**Hook**: `hooks/precompute-status-display.sh`
+**Handler**: `hooks/skill_handlers/status_handler.py`
 **Trigger**: User invokes `/cat:status`
 **Output**: Complete rendered box via additionalContext
 
-The hook:
-1. Runs `status.sh` to collect JSON data
-2. Runs `build-box-lines.py` to compute exact line padding
+The handler:
+1. Collects status data directly from `.claude/cat` directory structure
+2. Uses `build_box_lines.py` to compute exact line padding
 3. Returns pre-rendered display for direct output
 
 **Why pre-compute?** LLMs cannot reliably calculate emoji widths or character padding.
