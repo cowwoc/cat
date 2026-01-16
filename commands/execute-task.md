@@ -119,9 +119,18 @@ Read `.claude/cat/cat-config.json` to determine:
 
 **Identify task to execute:**
 
+**IMPORTANT: Verify SESSION_ID first (required for lock checks).**
+
+Look for `Session ID: {uuid}` in the SessionStart system-reminder at conversation start.
+If no SESSION_ID is found:
+1. Inform user: "Session ID not found in context. The echo-session-id.sh hook may not be registered."
+2. Instruct: "Run `/cat:register-hook` to register required hooks, then restart Claude Code."
+3. **EXIT this command**
+
 **If $ARGUMENTS provided:**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
 - Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/{task-name}/`
+- **Try to acquire lock BEFORE loading task details** (see lock check below)
 - Load its STATE.md and PLAN.md
 
 **If $ARGUMENTS empty:**
@@ -129,11 +138,41 @@ Read `.claude/cat/cat-config.json` to determine:
   1. Status is `pending` or `in-progress`
   2. All task dependencies are `completed`
   3. Version entry gate is satisfied (see below)
+  4. **Task is not locked by another session** (see lock check below)
 
 ```bash
 # Find all task STATE.md files (depth 3 under major version = task level)
 find .claude/cat/v*/v*.* -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
+
+**MANDATORY: Lock Check Before Offering Task (M097)**
+
+For each candidate task (whether from $ARGUMENTS or auto-discovery), attempt to acquire the lock
+BEFORE offering it as available:
+
+```bash
+TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
+SESSION_ID="<substitute-actual-uuid-from-context>"
+
+# Try to acquire lock
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+
+if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
+  OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
+  echo "⏸️ Task $TASK_ID is locked by session: $OWNER"
+  # Skip this task and try the next candidate
+  # Do NOT offer this task as available
+  continue
+fi
+
+# Lock acquired - this task is now ours
+echo "✓ Lock acquired for task: $TASK_ID"
+```
+
+**Why check locks early:**
+- Prevents offering tasks that another Claude instance is already executing
+- Avoids wasted exploration/planning work on locked tasks
+- Provides clear feedback about why certain tasks are unavailable
 
 **Entry Gate Evaluation:**
 
@@ -162,6 +201,7 @@ For each task, check:
 - Parse DEPENDENCIES from STATE.md
 - Verify each task dependency has status: completed
 - **Evaluate entry gate from version PLAN.md**
+- **Try to acquire lock (skip if locked by another session)**
 
 **If entry gate not satisfied for a task:**
 
@@ -186,9 +226,11 @@ Possible reasons:
 - All tasks completed
 - Remaining tasks have unmet dependencies
 - Entry gates not satisfied
+- All eligible tasks are locked by other sessions
 - No tasks defined yet
 
 Use /cat:status to see current state and gate status.
+Use /cat:cleanup to remove stale locks from crashed sessions.
 Use /cat:add-task to add new tasks.
 ```
 
@@ -198,51 +240,18 @@ Exit command.
 
 <step name="acquire_lock">
 
-**Acquire task lock (concurrent execution safety):**
+**Verify task lock (already acquired in find_task step):**
 
-Before proceeding, acquire an exclusive lock to prevent multiple Claude instances from executing the
-same task simultaneously.
-
-**MANDATORY STOP POINT (M057):** First verify SESSION_ID is available in context.
-
-**How to get SESSION_ID:**
-1. Look for `Session ID: {uuid}` in the SessionStart system-reminder at conversation start
-2. Extract the UUID (e.g., `5d3a593f-718d-4b8f-8830-e97e2c646713`)
-3. Use that value in the commands below by substituting it directly
-
-**If no "Session ID:" appears in the conversation context:**
-1. **STOP** - Session ID is required before proceeding
-2. Inform user: "Session ID not found in context. The echo-session-id.sh hook may not be registered."
-3. Instruct: "Run `/cat:register-hook` to register required hooks, then restart Claude Code."
-4. **EXIT this command** - Wait for user to register hooks and restart
-
-**Only if SESSION_ID is found in context**, proceed with lock acquisition.
-
-Substitute the actual session ID UUID into these commands:
+The lock was already acquired during the find_task step (M097). This step verifies the lock is held
+and displays confirmation.
 
 ```bash
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-SESSION_ID="<substitute-actual-uuid-from-context>"
-
-# Attempt to acquire lock
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
-
-if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
-  OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
-  echo "ERROR: Task $TASK_ID is locked by another session: $OWNER"
-  echo "Another Claude instance is already executing this task."
-  echo ""
-  echo "MANDATORY: Execute a DIFFERENT task instead."
-  echo "Run /cat:status to find other executable tasks."
-  echo ""
-  echo "REQUIRED ACTIONS:"
-  echo "  - Choose a different task from /cat:status"
-  echo "  - If session crashed, ask user to run /cat:cleanup to remove stale lock"
-  exit 1
-fi
-
-echo "Lock acquired for task: $TASK_ID"
+echo "✓ Lock held for task: $TASK_ID (acquired in find_task step)"
 ```
+
+**Note:** If you reach this step without a lock, something went wrong in find_task. Re-run
+the command to properly acquire a lock before proceeding.
 
 </step>
 
@@ -1055,9 +1064,32 @@ EOF
 
 **Offer next task:**
 
-Find next executable task (pending + dependencies met).
+Find next executable task (pending + dependencies met + not locked).
 
-If found:
+**MANDATORY: Try to acquire lock before offering next task.**
+
+For each candidate task:
+1. Check status is `pending` or `in-progress`
+2. Check all dependencies are `completed`
+3. **Try to acquire lock** - skip if locked by another session
+
+```bash
+NEXT_TASK_ID="${MAJOR}.${MINOR}-${NEXT_TASK_NAME}"
+
+# Try to acquire lock for next task
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$NEXT_TASK_ID" "$SESSION_ID")
+
+if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
+  # This task is locked, try the next candidate
+  continue
+fi
+
+# Lock acquired - we can offer this task
+# Release it immediately since user will /clear and re-acquire
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "$SESSION_ID"
+```
+
+If found (and lockable):
 
 ```
 ---
@@ -1077,7 +1109,7 @@ If found:
 ---
 ```
 
-If no more tasks:
+If no more tasks (all completed, blocked, or locked):
 
 ```
 ---
@@ -1091,6 +1123,7 @@ If no more tasks:
 Minor version {major}.{minor} is complete!
 
 Use `/cat:status` to see overall progress.
+Use `/cat:cleanup` to remove stale locks if tasks appear stuck.
 Use `/cat:add-task` to add more tasks.
 Use `/cat:add-minor-version` to add a new minor version.
 
@@ -1395,9 +1428,9 @@ See [task-resolution.md](../references/task-resolution.md) for details.
 
 <success_criteria>
 
+- [ ] **Task lock acquired BEFORE offering task (M097)**
 - [ ] Task identified and loaded
 - [ ] **Entry gate evaluated (blocked if unmet, unless --override-gate)**
-- [ ] Task lock acquired (SESSION_ID verified)
 - [ ] **Task size analyzed (estimate vs threshold)**
 - [ ] **If oversized: auto-decomposition triggered**
 - [ ] **If decomposed: parallel execution plan generated**
@@ -1412,6 +1445,6 @@ See [task-resolution.md](../references/task-resolution.md) for details.
 - [ ] Worktree(s) cleaned up
 - [ ] Lock released
 - [ ] STATE.md files updated
-- [ ] Next task offered
+- [ ] **Next task offered (lock checked first)**
 
 </success_criteria>
