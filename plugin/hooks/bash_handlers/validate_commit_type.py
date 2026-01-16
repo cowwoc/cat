@@ -34,15 +34,16 @@ class ValidateCommitTypeHandler:
             return None
 
         # Extract commit message from -m flag
-        # Pattern 1: -m "message" or -m 'message'
-        match = re.search(r'-m\s+["\']([^"\']+)["\']', command)
-        if match:
-            message = match.group(1)
+        # Check HEREDOC first (more specific pattern)
+        # Pattern 1: HEREDOC format: -m "$(cat <<'EOF'\nmessage\nEOF\n)"
+        heredoc_match = re.search(r'-m\s+"\$\(cat\s+<<[\'"]?EOF[\'"]?\s*\n(.+?)\nEOF', command, re.DOTALL)
+        if heredoc_match:
+            message = heredoc_match.group(1).strip()
         else:
-            # Pattern 2: HEREDOC format: -m "$(cat <<'EOF'\nmessage\nEOF\n)"
-            heredoc_match = re.search(r'-m\s+"\$\(cat\s+<<[\'"]?EOF[\'"]?\s*\n(.+?)\nEOF', command, re.DOTALL)
-            if heredoc_match:
-                message = heredoc_match.group(1).strip()
+            # Pattern 2: Simple -m "message" or -m 'message'
+            match = re.search(r'-m\s+["\']([^"\']+)["\']', command)
+            if match:
+                message = match.group(1)
             else:
                 # -m flag present but couldn't parse - suspicious in Claude Code context
                 # Check if there's actually a -m flag we failed to parse
