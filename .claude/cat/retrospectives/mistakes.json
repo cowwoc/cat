@@ -842,6 +842,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After squashing, check commit message with git log -1. If concatenated, amend with unified message describing what the combined change accomplishes."
+    },
+    {
+      "id": "M153",
+      "timestamp": "2026-01-19T19:40:00Z",
+      "category": "protocol_violation",
+      "description": "Presented approval gate with STATE.md at 90% in-progress instead of 100% completed - files proposed for merge should be in final state",
+      "root_cause": "Workflow work.md step 12 shows 90% state before approval, but files being proposed for merge should already reflect final state. Subagent was given incorrect 90% instruction.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/workflows/work.md",
+      "pattern_keywords": [
+        "STATE.md",
+        "approval_gate",
+        "final_state",
+        "progress",
+        "merge"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Set STATE.md to completed/100% BEFORE presenting approval gate. The commit being proposed for merge should reflect final state."
     }
   ]
 }
