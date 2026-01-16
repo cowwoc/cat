@@ -74,6 +74,9 @@ Select the appropriate template based on work type.
 
 ## Bugfix Template
 
+**MANDATORY (M122):** Bugfix plans MUST include reproduction code. Tasks must be self-contained
+and executable without external dependencies (e.g., external codebases, third-party repos).
+
 ### Stage 1: Approach Outlines
 
 ```markdown
@@ -81,6 +84,17 @@ Select the appropriate template based on work type.
 
 ## Problem
 [1-2 sentences describing the bug]
+
+## Reproduction Code
+\`\`\`
+// Minimal code that triggers the bug - REQUIRED
+// Use appropriate language for your project
+code_that_fails();
+\`\`\`
+
+## Expected vs Actual
+- **Expected:** [what should happen]
+- **Actual:** [error message or wrong behavior]
 
 ## Root Cause
 [1-2 sentences - analysis or "to be determined"]
