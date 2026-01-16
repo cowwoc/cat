@@ -70,6 +70,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - work-box-hook-precomputation
 
 ## Tasks Pending
+- move-planning-to-issues-subdir
 - license-validation-server
 - license-validation-server-spring-setup
 - license-validation-server-api
