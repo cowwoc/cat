@@ -2904,6 +2904,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Render scorecard with 11 dimensions: Speed, Cost, Quality as top-level row (3), then Architect, Security, Tester, Performance, UX, Sales, Marketing, Legal as stakeholder row (8)"
+    },
+    {
+      "id": "M227",
+      "timestamp": "2026-01-23T14:50:00Z",
+      "category": "protocol_violation",
+      "description": "Added ASCII box template directly to research.md skill instead of referencing handler function. Skills must not contain embedded box templates (M217).",
+      "root_cause": "Bypassed skill-builder process for quick fix. Attempted to fix M226 by embedding visual template instead of updating handler reference.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/research.md",
+      "pattern_keywords": [
+        "box",
+        "template",
+        "embedded",
+        "skill-builder",
+        "handler"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use skill-builder for skill modifications. Reference handler functions by name (e.g., build_scorecard) instead of embedding visual examples. Skills describe structure textually, handlers render it."
     }
   ]
 }
