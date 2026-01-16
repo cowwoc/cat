@@ -10,16 +10,74 @@ from pathlib import Path
 
 from . import register_handler
 
-# Add plugin scripts directory to path for imports
+# Get plugin root for accessing cat data
 SCRIPT_DIR = Path(__file__).parent.parent
 PLUGIN_ROOT = SCRIPT_DIR.parent
-sys.path.insert(0, str(PLUGIN_ROOT / 'scripts'))
 
-try:
-    from build_box_lines import display_width, build_line, build_border
-    HAS_BOX_UTILS = True
-except ImportError:
-    HAS_BOX_UTILS = False
+
+# Emojis that display as width 2 in most terminals
+WIDTH_2_EMOJIS = {
+    '📊', '📦', '🎯', '📋', '⚙️', '🏆', '🧠', '🐱', '🧹', '🤝',
+    '✅', '🔍', '👀', '🔭', '⏳', '⚡', '🔒', '✨', '⚠️', '✦',
+    '☑️', '🔄', '🔳', '🚫', '🚧', '🚀'
+}
+
+# Single-character emojis (without variation selector) that are width 2
+WIDTH_2_SINGLE = {
+    '📊', '📦', '🎯', '📋', '🏆', '🧠', '🐱', '🧹', '🤝',
+    '✅', '🔍', '👀', '🔭', '⏳', '⚡', '🔒', '✨', '✦',
+    '🔄', '🔳', '🚫', '🚧', '🚀'
+}
+
+
+def display_width(text: str) -> int:
+    """Calculate terminal display width of a string."""
+    width = 0
+    i = 0
+    while i < len(text):
+        char = text[i]
+
+        # Check for two-character emoji sequences (char + variation selector)
+        if i + 1 < len(text):
+            two_char = text[i:i+2]
+            if two_char in WIDTH_2_EMOJIS:
+                width += 2
+                i += 2
+                continue
+
+        # Check for single-character width-2 emojis
+        if char in WIDTH_2_SINGLE:
+            width += 2
+            i += 1
+            continue
+
+        # Skip variation selectors (they don't add width)
+        if char == '\ufe0f':  # variation selector-16
+            i += 1
+            continue
+
+        # All other characters are width 1
+        width += 1
+        i += 1
+
+    return width
+
+
+def build_line(content: str, max_width: int) -> str:
+    """Build a single box line with correct padding."""
+    content_width = display_width(content)
+    padding = max_width - content_width
+    return "│ " + content + " " * padding + " │"
+
+
+def build_border(max_width: int, is_top: bool) -> str:
+    """Build top or bottom border."""
+    dash_count = max_width + 2
+    dashes = "─" * dash_count
+    if is_top:
+        return "╭" + dashes + "╮"
+    else:
+        return "╰" + dashes + "╯"
 
 
 def build_progress_bar(percent: int, width: int = 25) -> str:
@@ -226,9 +284,6 @@ class StatusHandler:
 
     def handle(self, context: dict) -> str | None:
         """Run status computation and return result."""
-        if not HAS_BOX_UTILS:
-            return None
-
         project_root = context.get("project_root")
 
         if not project_root:
