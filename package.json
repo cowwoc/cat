@@ -14,5 +14,13 @@
     "plugin"
   ],
   "author": "cowwoc",
-  "license": "https://github.com/cowwoc/cat/blob/main/LICENSE.md"
+  "license": "https://github.com/cowwoc/cat/blob/main/LICENSE.md",
+  "scripts": {
+    "test": "npx bats tests/**/*.bats",
+    "test:scripts": "npx bats tests/scripts/*.bats",
+    "test:hooks": "npx bats tests/hooks/*.bats"
+  },
+  "devDependencies": {
+    "bats": "^1.13.0"
+  }
 }
