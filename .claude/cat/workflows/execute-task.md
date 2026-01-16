@@ -50,7 +50,7 @@ context_limit: 200000  # from cat-config.json
 target_usage: 40       # percentage
 threshold: 80000       # context_limit * target_usage / 100
 
-# Estimate task size - INCLUDE ALL PHASES (M096)
+# Estimate task size - INCLUDE ALL PHASES
 estimation_factors:
   # Fixed costs per subagent phase
   exploration_subagent: 10000    # codebase analysis
