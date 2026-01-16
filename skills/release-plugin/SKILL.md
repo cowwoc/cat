@@ -3,7 +3,11 @@
 **Purpose**: Release a new version of a Claude Code plugin by merging to main, tagging, and preparing
 the next version branch.
 
+**CRITICAL**: Always use this skill for releases. Never run `git tag` directly without updating
+CHANGELOG.md first. The skill ensures changelog, version files, and tags stay synchronized.
+
 **When to Use**:
+- When user says "release", "publish", "tag a new version", or similar
 - After completing work on a plugin version branch
 - When ready to publish a new plugin version
 
@@ -234,6 +238,32 @@ jq '.version' .claude-plugin/plugin.json
 # Fix the one that's wrong
 jq --arg v "{CORRECT_VERSION}" '.version = $v' {FILE} > {FILE}.tmp && mv {FILE}.tmp {FILE}
 ```
+
+## Main-Only Workflow (Simplified)
+
+If working directly on main without version branches:
+
+```bash
+# 1. Update CHANGELOG.md FIRST
+# - Replace "In development" with actual release notes
+# - Commit the changelog update
+
+# 2. Tag and push
+CURRENT_VERSION=$(jq -r '.version' package.json)
+git tag -a "v${CURRENT_VERSION}" -m "v${CURRENT_VERSION} release"
+git push origin main
+git push origin "v${CURRENT_VERSION}"
+
+# 3. Bump version for next development cycle
+NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{print $1"."$2"."$3+1}')
+jq --arg v "$NEXT_VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
+# Add "In development" entry to CHANGELOG for next version
+git add package.json CHANGELOG.md
+git commit -m "config: bump version to ${NEXT_VERSION}"
+git push origin main
+```
+
+**Key principle**: CHANGELOG.md must be updated BEFORE creating the release tag.
 
 ## Related
 
