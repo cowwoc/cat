@@ -19,6 +19,24 @@ users through modifying their preferences.
 
 <process>
 
+<step name="check-precomputed">
+
+**MANDATORY: Check for pre-computed display**
+
+Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
+
+**If found:**
+- Store the exact box text from the context
+- Continue to "read-config" step
+
+**If NOT found:**
+- STOP immediately
+- Output error: "ERROR: Pre-computed display not available. Hook precompute-config.sh may have failed."
+- Do NOT attempt to construct boxes manually
+- This is a fail-fast requirement per skill-builder methodology
+
+</step>
+
 <step name="read-config">
 
 **Read current configuration:**
@@ -31,51 +49,18 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 </step>
 
-<step name="display-format">
-
-**Display format:**
-
-```
-╭─── ⚙️ SETTINGS ────────────────────────────────────────────────────╮
-│                                                                    │
-│  Trust: medium                                                     │
-│  Verify: changed                                                   │
-│  Curiosity: low                                                    │
-│  Patience: high                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-```
-
-**MANDATORY (M140):** Output display text in your response BEFORE calling AskUserQuestion.
-Users need visual context before making choices.
-
-</step>
-
 <step name="display-settings">
 
 **MANDATORY (M130/A021) - Display-Before-Prompt Protocol:**
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-**Verification sequence:**
-1. Have I output a settings/info box in THIS step? If NO → output box first
-2. Only AFTER box is displayed → call AskUserQuestion
-3. If you find yourself about to call AskUserQuestion without a preceding box → STOP
+**Output the PRE-COMPUTED CONFIG DISPLAY from context**
 
-**Why this matters:** Users need visual context before making choices. Jumping directly to
-prompts without display creates confusion and poor UX.
+Copy the exact box from the "PRE-COMPUTED CONFIG DISPLAY" context. Do NOT recompute or modify alignment.
 
-**Display settings screen:**
-
-```
-╭─── ⚙️ CURRENT SETTINGS ────────────────────────────────────────────╮
-│                                                                    │
-│  🤝 Trust: {trust}                                                 │
-│  ✅ Verify: {verify}                                               │
-│  🔍 Curiosity: {curiosity}                                         │
-│  ⏳ Patience: {patience}                                           │
-│  🧹 Cleanup: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}        │
-╰────────────────────────────────────────────────────────────────────╯
-```
+**Why pre-computed:** Agents miscalculate emoji widths, causing misaligned box borders.
+The hook precompute-config.sh runs Python to calculate correct widths before the skill starts.
 
 </step>
 
