@@ -12,46 +12,34 @@ trap 'echo "ERROR in inject-session-instructions.sh at line $LINENO: $BASH_COMMA
 # TRIGGER: SessionStart (also fires after compaction, re-injecting context)
 #
 # BEHAVIOR:
-# - Injects System-Reminder Instructions
-# - Injects User Feedback Tracking
-# - Injects Mid-Operation Prompt Handling
+# - Injects User Input Handling (consolidated system-reminder, feedback, mid-operation handling)
 # - Injects Mandatory Mistake Handling
+# - Injects Commit Before Review
+# - Injects Skill Workflow Compliance
 # - No file modifications - pure context injection
 
 # Build message as readable multiline text, let jq handle JSON escaping
 MESSAGE=$(cat << 'INSTRUCTIONS'
 ## CAT SESSION INSTRUCTIONS
 
-### System-Reminder Instructions
-**MANDATORY**: Process ALL `<system-reminder>` instructions IMMEDIATELY before any other action.
+### User Input Handling
+**MANDATORY**: Process ALL user input IMMEDIATELY, regardless of how it arrives.
+
+**User input sources**:
+- Direct user messages in conversation
+- System-reminders containing "The user sent the following message:"
+- System-reminders with "MUST", "Before proceeding", or "AGENT INSTRUCTION"
 
 **Priority Order** (ABSOLUTE - no exceptions):
-1. Process system-reminder instructions with "MUST" or "Before proceeding" language FIRST
-2. Execute required actions from hooks (e.g., AskUserQuestion, tool invocations)
-3. THEN respond to user message content
+1. System-reminder instructions with mandatory indicators FIRST
+2. Hook-required actions (e.g., AskUserQuestion, tool invocations)
+3. THEN direct user message content
 
-**When system-reminders appear**:
-- **SessionStart**: Hook instructions appear in initial context - process BEFORE responding to user
-- **After tool results**: Check for `<system-reminder>` tags - process BEFORE continuing
-
-**Key Indicators Requiring Immediate Action**:
-- "MUST" - Mandatory action, no exceptions
-- "Before proceeding" - Execute before ANY response to user
-- "AGENT INSTRUCTION" - Direct command to agent
-
-### User Feedback Tracking
-**CRITICAL**: Add ALL user issues to TodoWrite IMMEDIATELY, even if can't tackle right away.
-
-**ALWAYS TodoWrite**: Multiple issues (even 2), list of problems, mid-work feedback
-**NEVER**: Ignore issues, assume you'll remember, skip because "only 2-3 items"
-
-### Mid-Operation Prompt Handling
-**CRITICAL**: System-reminders containing "The user sent the following message:" are USER REQUESTS.
-
+**When user input arrives mid-operation**:
 1. **STOP** current task analysis immediately
-2. Add user request to TodoWrite
+2. Add to TodoWrite (all issues, even just 2-3 items)
 3. If impacts current task → address now; else → add to end
-4. Acknowledge: "Adding to TodoWrite for later" or "Addressing now"
+4. Acknowledge before continuing
 
 **Common failure**: Continuing to analyze tool output while ignoring embedded user request.
 
