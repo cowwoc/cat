@@ -103,12 +103,12 @@ you with results at a checkpoint:
 
 ## How CAT Works
 
-### The Map: Hierarchical Planning
+### Hierarchical Planning
 
 CAT organizes work into three levels:
 
 <p align="center">
-  <a href="#the-map-hierarchical-planning">
+  <a href="#hierarchical-planning">
     <img src="docs/hierarchy.svg" alt="Hierarchy" width="500"/>
   </a>
 </p>
@@ -117,7 +117,7 @@ CAT organizes work into three levels:
 - **Minor versions** group related work (v1.0: "Authentication", v1.1: "User Profiles")
 - **Tasks** are individual units of work sized to fit in a single session
 
-### The Compass: Your Preferences
+### Your Style
 
 During `/cat:init`, you configure your preferences:
 
