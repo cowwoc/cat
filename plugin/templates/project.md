@@ -21,6 +21,45 @@
 [Key directory structure]
 ```
 
+## Git Workflow
+
+<!-- Populated by /cat:init wizard based on your preferences -->
+
+### Branching Strategy
+
+| Branch Type | Pattern | Purpose |
+|-------------|---------|---------|
+| Main | `main` | Production-ready code |
+| [Version] | `v{major}.{minor}` | [If applicable] |
+| [Task] | `{version}-{task-name}` | Individual work |
+
+**Rules:**
+- [MUST/SHOULD/MAY rules for branching]
+
+### Merge Policy
+
+**Pre-merge requirements:**
+- [Requirements list]
+
+**Merge method:**
+- [MUST use X method]
+
+### Squash Policy
+
+**When:** [Timing]
+**Strategy:** [Approach]
+
+**Example:**
+```
+Before: feat: add login, feat: add validation, bugfix: fix typo
+After:  feature: add login with validation
+```
+
+### Commit Format
+
+**Pattern:** `{type}: {description}`
+**Rules:** [MUST/SHOULD/MAY rules]
+
 ## Getting Started
 [Quick start instructions]
 

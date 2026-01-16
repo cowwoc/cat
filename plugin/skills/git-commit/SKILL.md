@@ -7,6 +7,29 @@ description: Guide for writing clear, descriptive commit messages
 
 **Purpose**: Provide guidance for writing clear, descriptive commit messages that explain WHAT the code does and WHY.
 
+## PROJECT.md Commit Format (If Configured)
+
+**Before writing a commit message, check if PROJECT.md specifies commit format rules.**
+
+```bash
+# Check for configured commit format in PROJECT.md
+COMMIT_FORMAT=$(grep -A10 "### Commit Format" .claude/cat/PROJECT.md 2>/dev/null)
+
+if [[ -n "$COMMIT_FORMAT" ]]; then
+  echo "Using commit format from PROJECT.md:"
+  echo "$COMMIT_FORMAT"
+  echo ""
+  echo "Apply any MUST rules from PROJECT.md to the commit message."
+fi
+```
+
+**When PROJECT.md has commit format rules:**
+- MUST rules are mandatory - follow them exactly
+- SHOULD rules are recommended - follow unless you have a good reason not to
+- MAY rules are optional - use your judgment
+
+**If no PROJECT.md configuration exists:** Use the default rules below.
+
 ## Core Principles
 
 ### 1. Describe WHAT the Code Does, Not the Process
