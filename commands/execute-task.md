@@ -1346,9 +1346,12 @@ EOF
 
 <step name="next_task">
 
-**Offer next task:**
+**MANDATORY: Provide next steps to user (M120).**
 
-Find next executable task (pending + dependencies met + not locked).
+After cleanup, ALWAYS show user their available options. Never end with just "Task Complete" -
+user needs guidance on what to do next.
+
+**Find next executable task** (pending + dependencies met + not locked).
 
 **MANDATORY: Try to acquire lock before offering next task.**
 
