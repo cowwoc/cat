@@ -53,11 +53,12 @@ If file doesn't exist, inform user to run `/cat:init` first.
 ║  │  Target:  {targetContextUsage}% before split       │     ║
 ║  └────────────────────────────────────────────────────┘     ║
 ║                                                             ║
-║  ⚔️ PLAY STYLE                                              ║
+║  🐱 CAT BEHAVIOR                                            ║
 ║  ┌────────────────────────────────────────────────────┐     ║
-║  │  Approach:    {approach || "balanced"}             │     ║
-║  │  Reviews:     {stakeholderReview || "high-risk"}   │     ║
-║  │  Refactoring: {refactoring || "opportunistic"}     │     ║
+║  │  Leash:     {leash || "medium"}                    │     ║
+║  │  Caution:   {caution || "moderate"}                │     ║
+║  │  Curiosity: {curiosity || "low"}                   │     ║
+║  │  Patience:  {patience || "high"}                   │     ║
 ║  └────────────────────────────────────────────────────┘     ║
 ║                                                             ║
 ║  🧹 CLEANUP                                                 ║
@@ -86,12 +87,10 @@ If file doesn't exist, inform user to run `/cat:init` first.
     description: "How CAT handles approvals"
   - label: "🧠 Context Limits"
     description: "Token thresholds"
-  - label: "⚔️ Play Style"
-    description: "Development approach"
-  - label: "🧹 Cleanup"
-    description: "Worktree management"
-  - label: "📊 Version Gates"
-    description: "Entry/exit conditions for versions"
+  - label: "🐱 CAT Behavior"
+    description: "Trust, verification, exploration, timing"
+  - label: "🧹 Cleanup / 📊 Gates"
+    description: "Worktrees and version conditions"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
@@ -166,37 +165,244 @@ Display current settings, then AskUserQuestion:
 
 </step>
 
-<step name="play-style">
+<step name="cat-behavior">
 
-**⚔️ Play Style selection:**
+**🐱 CAT Behavior selection:**
 
 AskUserQuestion:
-- header: "Style"
+- header: "Behavior"
 - question: "Which setting would you like to adjust?"
 - options:
-  - label: "Approach"
-    description: "Risk tolerance level"
-  - label: "Reviews"
-    description: "When to request stakeholder review"
-  - label: "Refactoring"
-    description: "Code cleanup behavior"
+  - label: "🔗 Leash"
+    description: "How much you trust CAT to decide"
+  - label: "⚠️ Caution"
+    description: "Verification depth before commits"
+  - label: "🔍 Curiosity"
+    description: "How much CAT explores beyond tasks"
+  - label: "⏳ Patience"
+    description: "When CAT acts on discoveries"
+
+</step>
+
+<step name="leash">
+
+**🔗 Leash — How much you trust CAT to make decisions**
+
+Display:
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                             ║
+║                   🔗 LEASH LENGTH                           ║
+║                                                             ║
+╠═════════════════════════════════════════════════════════════╣
+║                                                             ║
+║  SHORT                                                      ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Low trust. CAT presents options frequently: where to       ║
+║  place code, which approach to take, how to name things.    ║
+║  Best for: Learning CAT, strong preferences, critical code  ║
+║                                                             ║
+║  MEDIUM                                                     ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Moderate trust. CAT handles routine decisions but          ║
+║  presents options for meaningful trade-offs.                ║
+║  Best for: Balanced control and efficiency                  ║
+║                                                             ║
+║  LONG                                                       ║
+║  ─────────────────────────────────────────────────────────  ║
+║  High trust. CAT decides most things autonomously.          ║
+║  Only presents options when genuinely ambiguous.            ║
+║  Best for: Trusted workflows, reviewing outcomes            ║
+║                                                             ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+AskUserQuestion:
+- header: "Leash"
+- question: "How much do you trust CAT to make decisions?"
+- options:
+  - label: "Medium (Recommended)"
+    description: "Presents options for meaningful trade-offs"
+  - label: "Short"
+    description: "Presents options frequently"
+  - label: "Long"
+    description: "Decides autonomously, rarely asks"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Short → `leash: "short"`, Medium → `leash: "medium"`, Long → `leash: "long"`
+
+</step>
+
+<step name="caution">
+
+**⚠️ Caution — How thoroughly CAT verifies changes before committing**
+
+Display:
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                             ║
+║                   ⚠️ CAUTION LEVEL                          ║
+║                                                             ║
+╠═════════════════════════════════════════════════════════════╣
+║                                                             ║
+║  RELAXED                                                    ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Compile/typecheck only. Fast feedback but won't catch      ║
+║  logic errors.                                              ║
+║  Best for: Rapid prototyping, slow test suites              ║
+║                                                             ║
+║  MODERATE                                                   ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Run tests affected by the changes. Catches most            ║
+║  regressions without running the full suite.                ║
+║  Best for: Most workflows                                   ║
+║                                                             ║
+║  VIGILANT                                                   ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Run the full test suite before each commit. Slowest        ║
+║  but highest confidence.                                    ║
+║  Best for: Critical code, flaky test suites                 ║
+║                                                             ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+AskUserQuestion:
+- header: "Caution"
+- question: "How thoroughly should CAT verify changes?"
+- options:
+  - label: "Moderate (Recommended)"
+    description: "Run affected tests"
+  - label: "Relaxed"
+    description: "Compile/typecheck only"
+  - label: "Vigilant"
+    description: "Run full test suite"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Relaxed → `caution: "relaxed"`, Moderate → `caution: "moderate"`, Vigilant → `caution: "vigilant"`
+
+</step>
+
+<step name="curiosity">
+
+**🔍 Curiosity — How much CAT explores beyond the immediate task**
+
+Display:
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                             ║
+║                   🔍 CURIOSITY LEVEL                        ║
+║                                                             ║
+╠═════════════════════════════════════════════════════════════╣
+║                                                             ║
+║  LOW                                                        ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Task-only. Complete exactly what's required, nothing       ║
+║  more. Don't look for improvements or note issues.          ║
+║  Best for: Minimal scope, predictable output                ║
+║                                                             ║
+║  MEDIUM                                                     ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Opportunistic. Notice obvious issues encountered while     ║
+║  working (bugs in same function, deprecated syntax).        ║
+║  Best for: Balanced thoroughness                            ║
+║                                                             ║
+║  HIGH                                                       ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Proactive. Actively examine related code for patterns,     ║
+║  tech debt, or optimization opportunities.                  ║
+║  Best for: Comprehensive improvement                        ║
+║                                                             ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+AskUserQuestion:
+- header: "Curiosity"
+- question: "How much should CAT explore beyond the task?"
+- options:
+  - label: "Low (Recommended)"
+    description: "Task-only, minimal scope"
+  - label: "Medium"
+    description: "Notice obvious issues while working"
+  - label: "High"
+    description: "Actively explore for improvements"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `curiosity: "high"`
+
+</step>
+
+<step name="patience">
+
+**⏳ Patience — When CAT acts on discovered opportunities**
+
+Display:
+```
+╔═════════════════════════════════════════════════════════════╗
+║                                                             ║
+║                   ⏳ PATIENCE LEVEL                         ║
+║                                                             ║
+╠═════════════════════════════════════════════════════════════╣
+║                                                             ║
+║  LOW                                                        ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Act immediately. Address improvements as part of the       ║
+║  current task. Scope expands but work is done now.          ║
+║  Best for: Comprehensive fixes, avoiding tech debt          ║
+║                                                             ║
+║  MEDIUM                                                     ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Defer to current version. Log improvements as separate     ║
+║  tasks within the current version.                          ║
+║  Best for: Focused tasks with nearby follow-up              ║
+║                                                             ║
+║  HIGH                                                       ║
+║  ─────────────────────────────────────────────────────────  ║
+║  Defer by priority. Schedule improvements to appropriate    ║
+║  future versions based on benefit/cost ratio.               ║
+║  Best for: Surgical tasks, controlled scope                 ║
+║                                                             ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+AskUserQuestion:
+- header: "Patience"
+- question: "When should CAT act on discovered opportunities?"
+- options:
+  - label: "High (Recommended)"
+    description: "Defer by priority to future versions"
+  - label: "Medium"
+    description: "Defer to current version"
+  - label: "Low"
+    description: "Act immediately, expand scope"
+  - label: "← Back"
+    description: "Return to behavior menu"
+
+Map: Low → `patience: "low"`, Medium → `patience: "medium"`, High → `patience: "high"`
+
+**Priority-based deferral (when patience is high):**
+- High benefit, low cost → Current or next version
+- Moderate → Next major version
+- Low benefit, high cost → Backlog or distant future
+
+</step>
+
+<step name="cleanup-gates">
+
+**🧹 Cleanup / 📊 Version Gates:**
+
+AskUserQuestion:
+- header: "Settings"
+- question: "What would you like to configure?"
+- options:
+  - label: "🧹 Cleanup"
+    description: "Worktree cleanup behavior"
+  - label: "📊 Version Gates"
+    description: "Entry/exit conditions for versions"
   - label: "← Back"
     description: "Return to main menu"
-
-**Approach options:**
-- "🛡️ Conservative" - Minimal changes, thorough testing
-- "⚖️ Balanced (Recommended)" - Pragmatic tradeoffs
-- "⚔️ Aggressive" - Comprehensive improvements
-
-**Review options:**
-- "Always - Every task gets reviewed"
-- "High-risk only (Recommended)" - Cross-module or risky changes
-- "Never - I'll request when needed"
-
-**Refactoring options:**
-- "Avoid - Only fix what's explicitly broken"
-- "Opportunistic (Recommended)" - Clean adjacent code naturally
-- "Eager - Proactively improve quality"
 
 </step>
 
@@ -213,7 +419,7 @@ AskUserQuestion:
   - label: "📦 Keep"
     description: "Preserve for manual inspection"
   - label: "← Back"
-    description: "Return to main menu"
+    description: "Return to previous menu"
 
 Map: Auto-cleanup → `autoCleanupWorktrees: true`, Keep → `autoCleanupWorktrees: false`
 
@@ -330,17 +536,12 @@ Use AskUserQuestion:
   - "Specific task(s) complete" - named tasks required
   - "Specific version(s) complete" - named versions required
   - "Manual approval required" - explicit sign-off
-  - "No prerequisites" - clear all entry conditions
-  - "Custom condition" - freeform text
 
 If "Specific task(s) complete":
 - Ask: "Which task(s)? (e.g., 0.5-design-review, comma-separated)"
 
 If "Specific version(s) complete":
 - Ask: "Which version(s)? (e.g., 0.3, 0.4, comma-separated)"
-
-If "Custom condition":
-- Ask: "Describe the custom entry condition:"
 
 **Step 4b: Edit exit gate**
 
@@ -352,16 +553,10 @@ Use AskUserQuestion:
   - "All tasks complete" - every task in version done
   - "Specific task(s) complete" - only named tasks required
   - "Tests passing" - test suite must pass
-  - "Code review complete" - review sign-off
   - "Manual sign-off" - explicit approval
-  - "No exit criteria" - clear all exit conditions
-  - "Custom condition" - freeform text
 
 If "Specific task(s) complete":
 - Ask: "Which task(s)? (comma-separated)"
-
-If "Custom condition":
-- Ask: "Describe the custom exit condition:"
 
 **Step 5: Update PLAN.md**
 
@@ -428,10 +623,10 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 **After confirming**: Return to the **parent menu** and re-display its options.
 
 Examples:
-- Changed "Refactoring" → return to Play Style menu (Approach, Reviews, Refactoring, ← Back)
+- Changed "Leash" → return to CAT Behavior menu
 - Changed "Context window size" → return to Context Limits menu
 - Changed "Game Mode" → return to main menu (no parent submenu)
-- Changed "Cleanup" → return to main menu (no parent submenu)
+- Changed "Cleanup" → return to Cleanup/Gates menu
 
 </step>
 
@@ -474,10 +669,31 @@ If no changes:
 | `yoloMode` | boolean | false | Skip approval gates |
 | `contextLimit` | number | 200000 | Context window size |
 | `targetContextUsage` | number | 40 | Decomposition threshold (%) |
-| `approach` | string | "balanced" | Risk tolerance |
-| `stakeholderReview` | string | "high-risk-only" | Review frequency |
-| `refactoring` | string | "opportunistic" | Cleanup behavior |
+| `leash` | string | "medium" | Trust level for CAT decisions |
+| `caution` | string | "moderate" | Verification depth before commits |
+| `curiosity` | string | "low" | Exploration beyond immediate task |
+| `patience` | string | "high" | When to act on discoveries |
 | `autoCleanupWorktrees` | boolean | true | Auto-remove worktrees |
+
+### Leash Values
+- `short` — Low trust. CAT presents options frequently.
+- `medium` — Moderate trust. Options for meaningful trade-offs.
+- `long` — High trust. CAT decides autonomously.
+
+### Caution Values
+- `relaxed` — Compile/typecheck only.
+- `moderate` — Run affected tests.
+- `vigilant` — Run full test suite.
+
+### Curiosity Values
+- `low` — Task-only. Don't explore.
+- `medium` — Notice obvious issues while working.
+- `high` — Actively explore for improvements.
+
+### Patience Values
+- `low` — Act immediately. Expand scope.
+- `medium` — Defer to current version.
+- `high` — Defer by priority to future versions.
 
 </configuration_reference>
 
