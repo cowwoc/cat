@@ -952,6 +952,44 @@
         "catches_variations": true
       },
       "correct_behavior": "Guard associative array access with empty key check: if [ -n \"$KEY\" ]; then ... fi. Bash 5.2+ throws 'bad array subscript' on arr[\"\"] even with :- default syntax."
+    },
+    {
+      "id": "M157",
+      "timestamp": "2026-01-20T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Reported single subagent token estimate (~35K) instead of aggregating tokens across all subagents (exploration, planning, implementation x2)",
+      "root_cause": "Failed to execute aggregate_token_report step after collecting results from multiple subagents - workflow step existed but was not followed",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "taxonomy_analysis": {
+        "module": "MEMORY",
+        "failure_mode": "Failed to recall aggregate_token_report step requirement",
+        "failure_type": "FALSE_NEGATIVE",
+        "cascading": {
+          "caused_downstream": false,
+          "is_symptom_of": "Not following workflow steps completely"
+        },
+        "corrective_feedback": "For multi-subagent tasks, ALWAYS execute aggregate_token_report before approval gate",
+        "intervention_point": "After collect_and_report step completes"
+      },
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.worktrees/2.0-fork-from-current-branch/plugin/commands/work.md",
+      "pattern_keywords": [
+        "token",
+        "aggregate",
+        "subagent",
+        "report",
+        "metrics"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "For multi-subagent tasks, execute aggregate_token_report step to display token table with all subagents BEFORE presenting approval gate. Never report single-subagent metrics for multi-subagent tasks."
     }
   ]
 }
