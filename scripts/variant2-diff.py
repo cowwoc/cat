@@ -404,9 +404,12 @@ class DiffParser:
             # Check for file header
             match = self.FILE_HEADER.match(line)
             if match:
-                if current_file and (current_file.hunks or current_file.is_binary):
-                    files.append(current_file)
-                    stats.files_changed += 1
+                if current_file:
+                    if current_hunk:
+                        current_file.hunks.append(current_hunk)
+                    if current_file.hunks or current_file.is_binary:
+                        files.append(current_file)
+                        stats.files_changed += 1
 
                 current_file = DiffFile(
                     old_path=match.group(1),
