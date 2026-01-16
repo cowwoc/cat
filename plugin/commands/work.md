@@ -633,7 +633,18 @@ RECOMMENDATION: Consider decomposing for optimal quality.
 Proceeding is allowed but may result in quality degradation.
 ```
 
-Ask user whether to decompose or proceed.
+Use AskUserQuestion:
+- header: "Task Size"
+- question: "Task exceeds soft threshold ({TARGET_USAGE}% of context). How would you like to proceed?"
+- options:
+  - "Decompose into subtasks (Recommended)" - Invoke /cat:decompose-task to split into smaller tasks
+  - "Proceed anyway" - Continue with single subagent execution (may degrade quality)
+  - "Abort" - Stop and review task scope
+
+**If "Decompose into subtasks":**
+Invoke `/cat:decompose-task` automatically, then proceed with parallel execution.
+
+**If "Proceed anyway":**
 
 **If estimated size <= soft threshold:**
 
