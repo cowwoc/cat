@@ -5,11 +5,10 @@
 # Get the directory containing the test file
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$TEST_DIR/.." && pwd)"
-PLUGIN_ROOT="$PROJECT_ROOT/plugin"
 
 # Export paths for scripts under test
-export SCRIPTS_DIR="$PLUGIN_ROOT/scripts"
-export HOOKS_DIR="$PLUGIN_ROOT/hooks"
+export SCRIPTS_DIR="$PROJECT_ROOT/scripts"
+export HOOKS_DIR="$PROJECT_ROOT/hooks"
 export HOOKS_LIB_DIR="$HOOKS_DIR/lib"
 
 # Create temporary test directory
