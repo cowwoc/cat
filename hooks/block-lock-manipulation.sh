@@ -12,9 +12,10 @@
 
 set -euo pipefail
 
-# Source standard hook library
+# Source standard hook libraries
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "$SCRIPT_DIR/lib/json-parser.sh"
+source "$SCRIPT_DIR/lib/json-output.sh"
 
 # Initialize as Bash hook (reads stdin JSON, extracts command)
 if ! init_bash_hook; then

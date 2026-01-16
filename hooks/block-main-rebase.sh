@@ -20,9 +20,10 @@ trap 'echo "ERROR in block-main-rebase.sh at line $LINENO: Command failed: $BASH
 # - Rebasing on feature branches (for squashing before merge)
 # - Any non-rebase git operations on main
 
-# Source JSON parsing library
+# Source JSON libraries
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/json-parser.sh"
+source "${SCRIPT_DIR}/lib/json-output.sh"
 
 # Initialize as Bash hook (reads stdin, parses JSON, extracts command)
 if ! init_bash_hook; then
