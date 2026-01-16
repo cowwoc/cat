@@ -16,9 +16,9 @@
   <rect x="2" y="26" width="496" height="10" fill="url(#headerGrad2)"/>
   <line x1="2" y1="34" x2="498" y2="34" stroke="#4a5568" stroke-width="1"/>
   <!-- Header text -->
-  <text x="250" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR COMPANION</text>
+  <text x="250" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR PARTNER</text>
   <!-- Question -->
-  <text x="250" y="60" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="12">How do you command your companion?</text>
+  <text x="250" y="60" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="12">How do you prefer to work together?</text>
   <!-- Options -->
   <text x="25" y="95" fill="#68d391" font-family="monospace" font-size="13" font-weight="bold">[A]</text>
   <text x="58" y="95" fill="#e2e8f0" font-family="monospace" font-size="12">Cautious Commander</text>
@@ -31,5 +31,5 @@
 
   <text x="25" y="159" fill="#f6ad55" font-family="monospace" font-size="13" font-weight="bold">[C]</text>
   <text x="58" y="159" fill="#e2e8f0" font-family="monospace" font-size="12">Autonomous Ally</text>
-  <text x="192" y="159" fill="#718096" font-family="monospace" font-size="12">- let companion lead, intervene rarely</text>
+  <text x="192" y="159" fill="#718096" font-family="monospace" font-size="12">- let partner lead, intervene rarely</text>
 </svg>
