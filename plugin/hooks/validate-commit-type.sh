@@ -96,5 +96,52 @@ if [[ "$TYPE" == "docs" ]]; then
     done
 fi
 
+# Check for config: used on actual source code (M134)
+# Source code changes should use feature:, bugfix:, refactor:, etc.
+if [[ "$TYPE" == "config" ]]; then
+    STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+
+    # Source code patterns that should NOT use config:
+    SOURCE_PATTERNS=(
+        "\.java$"
+        "\.py$"
+        "\.js$"
+        "\.ts$"
+        "\.go$"
+        "\.rs$"
+        "\.c$"
+        "\.cpp$"
+        "\.h$"
+        "src/"
+        "lib/"
+        "test/"
+        "tests/"
+    )
+
+    for pattern in "${SOURCE_PATTERNS[@]}"; do
+        if echo "$STAGED" | grep -qE "$pattern"; then
+            output_hook_block "'config:' used for source code" \
+                "Source code files should use: feature:, bugfix:, refactor:, test:, or performance:" \
+                "config: is for configuration/tooling changes, not code changes"
+            exit 0
+        fi
+    done
+fi
+
+# Check for planning: vs config: in .claude/cat/ (M133)
+# .claude/cat/v*/ planning files can use planning: or config:
+# Other .claude/cat/ files should use config:
+if [[ "$TYPE" == "planning" ]]; then
+    STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+
+    # planning: is only valid for version planning files
+    if ! echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
+        output_hook_block "'planning:' used outside version planning" \
+            "planning: is for .claude/cat/v*/ version files (STATE.md, PLAN.md)" \
+            "Use 'config:' for other .claude/cat/ files"
+        exit 0
+    fi
+fi
+
 echo '{}'
 exit 0
