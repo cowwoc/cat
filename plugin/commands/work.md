@@ -1632,9 +1632,17 @@ Use AskUserQuestion with options:
 - header: "Next Step"
 - question: "What would you like to do?"
 - options:
-  - "✓ Approve and merge" - Merge to main, continue to next task
+  - "✓ Approve and merge" - Merge to base branch, continue to next task
   - "✏️ Request changes" - Need modifications before proceeding
   - "✗ Abort" - Discard work entirely
+
+**CRITICAL (M248): Distinguish task version from base branch in approval messages.**
+
+- **Task version**: Extracted from task ID (e.g., `2.1-batch-finalization-subagent` → v2.1)
+- **Base branch**: The git branch being merged into (e.g., `v2.0`)
+
+When presenting approval, say "merge v{major}.{minor} task to {base-branch}" NOT "merge to v{base-branch}"
+which conflates the branch name with the task's version.
 
 **If "Request changes":**
 
