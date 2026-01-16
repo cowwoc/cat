@@ -4,12 +4,14 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-25T00:00:00Z",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-01-26T00:38:39Z",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
     ],
-    "retrospectives": []
+    "retrospectives": [
+      "retrospectives-2026-01.json"
+    ]
   }
 }
