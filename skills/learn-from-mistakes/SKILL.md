@@ -384,10 +384,33 @@ action: |
 **The prevention step MUST take NEW action.** Recording a mistake without implementing NEW prevention
 (beyond what already existed) is not learning - it's just logging. The same mistake WILL recur.
 
+**BLOCKING CRITERIA (A002) - Documentation-level prevention NOT ALLOWED when:**
+
+| Condition | Why Blocked | Required Action |
+|-----------|-------------|-----------------|
+| Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
+| Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
+| This is a recurrence (`recurrence_of` is set) | Previous prevention failed | Escalate to stronger level |
+| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) |
+
+**Self-check before recording prevention_type: documentation:**
+
+```yaml
+documentation_prevention_blocked_if:
+  - Similar instruction already exists in workflow/skill docs
+  - The mistake was ignoring existing documentation
+  - Category is protocol_violation (protocols ARE documentation)
+  - This is a recurrence of a previous mistake
+
+# If ANY of the above is true:
+action: "STOP. Escalate to hook, validation, or code_fix instead."
+```
+
 **Verification questions:**
 1. "Did prevention for this already exist?" → If YES, it failed and must be escalated
 2. "What NEW mechanism will prevent this tomorrow?" → Must be different from what failed today
 3. "Is this prevention stronger than what failed?" → Must be higher in the hierarchy
+4. "Am I choosing documentation because it's easy?" → If YES, find a stronger approach (A002)
 
 **If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
 
