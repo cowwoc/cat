@@ -747,6 +747,43 @@ Before merging any work to main:
 
 </user_review_checkpoint>
 
+<main_agent_boundaries>
+
+**MANDATORY: Main agent NEVER writes implementation code.**
+
+The main agent is an ORCHESTRATOR. All code implementation MUST be delegated to subagents.
+
+**Main agent CAN:**
+- Read files for analysis
+- Run diagnostic commands (git status, build, tests)
+- Edit STATE.md, PLAN.md, CHANGELOG.md (orchestration files)
+- Present summaries and ask questions
+- Invoke skills and spawn subagents
+
+**Main agent CANNOT (Learning M063):**
+- Write or edit source code files (.java, .ts, .py, etc.)
+- Write or edit test files
+- Fix bugs directly
+- Make "small corrections" to code
+- "Quickly fix" something instead of spawning a subagent
+
+**When user provides feedback requiring code changes:**
+
+1. **DO NOT** implement the fix directly
+2. **DO** spawn a new subagent with:
+   - The feedback as context
+   - Clear instructions on what to fix
+   - The existing branch/worktree
+3. **DO** use `/cat:spawn-subagent` or continue in existing subagent
+
+**Anti-Pattern (M063):** "Let me quickly fix that test assertion..." [main agent edits file]
+
+**Correct Pattern:** "I'll spawn a subagent to address that feedback." [invokes spawn-subagent]
+
+**Exception:** Trivial STATE.md updates that are purely orchestration (status changes, not code).
+
+</main_agent_boundaries>
+
 <commit_rules>
 
 **Per-Step Commits:**
