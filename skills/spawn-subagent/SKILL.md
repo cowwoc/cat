@@ -229,24 +229,44 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
 ### 5. Launch Subagent
 
-```bash
-# Change to worktree and launch Claude Code
-cd "${WORKTREE_PATH}"
+**Use the Task tool** to spawn subagents - do NOT use raw CLI commands:
 
-# Launch with task context - MUST include completion marker requirement
-claude --resume "${SESSION_ID}" \
-  --prompt "Execute PLAN.md at ${TASK_PLAN}.
+```
+Task tool invocation:
+  description: "Execute parser task"
+  subagent_type: "general-purpose"
+  prompt: |
+    Execute PLAN.md at ${TASK_PLAN}.
 
-COMPLETION REQUIREMENT:
-When finished, write completion marker to worktree:
-  echo '{\"status\":\"success\",\"tokensUsed\":N,\"compactionEvents\":N,\"summary\":\"...\"}' > .completion.json
+    WORKING DIRECTORY: ${WORKTREE_PATH}
 
-Calculate tokens: jq -s '[.[] | select(.type == \"assistant\") | .message.usage | (.input_tokens + .output_tokens)] | add' \"/home/node/.config/claude/projects/-workspace/\${SESSION_ID}.jsonl\"
-Count compactions: jq -s '[.[] | select(.type == \"summary\")] | length' same-file"
+    CRITICAL PROHIBITIONS (enforced by hooks):
+    - NEVER add PMD suppression annotations
+    - NEVER use git merge --no-ff
+    - Tests for bugfixes belong in SAME commit as the fix
+
+    VERIFICATION:
+    1. Run tests: ./mvnw test -pl parser
+    2. Run style checks: ./mvnw checkstyle:check pmd:check -pl parser
+    3. All must pass
+
+    FAIL-FAST CONDITIONS:
+    - If build fails, report BLOCKED with error
+    - Do NOT attempt workarounds
+
+    COMMIT:
+    After verification passes:
+    git add <files>
+    git commit -m "feature: description"
+
+    ON COMPLETION: Report summary of changes made.
 ```
 
-**CRITICAL**: The `.completion.json` marker enables lightweight monitoring. Without it, the parent
-must parse session files to detect completion.
+**Why Task tool instead of CLI:**
+- Task tool manages subagent lifecycle automatically
+- Provides proper context inheritance
+- Returns results directly to parent agent
+- No need for .completion.json markers or session file parsing
 
 ### 6. Record Spawn in Parent STATE.md
 
@@ -268,68 +288,101 @@ subagents:
 ### Basic Spawn
 
 ```bash
-# Parent agent spawning subagent for parser task
+# Parent agent: First create worktree
 TASK="1.2-implement-parser"
 UUID="a1b2c3d4"
 WORKTREE=".worktrees/${TASK}-sub-${UUID}"
 
 git worktree add -b "${TASK}-sub-${UUID}" "${WORKTREE}" HEAD
-
-# Write session ID for monitoring script
-echo "${SESSION_ID}" > "${WORKTREE}/.session_id"
-
-# Launch subagent with completion marker requirement
-cd "${WORKTREE}"
-claude --prompt "Execute task 1.2 PLAN.md.
-On completion: echo '{\"status\":\"success\",\"tokensUsed\":N,\"compactionEvents\":N,\"summary\":\"...\"}' > .completion.json"
 ```
 
-### Spawn with Token Budget
+Then use the Task tool to launch the subagent:
 
-```bash
-# Include token budget and completion marker requirement
-claude --prompt "Execute task 1.2 PLAN.md. Token budget: 80,000 tokens.
-On completion: echo '{\"status\":\"success\",\"tokensUsed\":N,\"compactionEvents\":N,\"summary\":\"...\"}' > .completion.json"
+```
+Task tool invocation:
+  description: "Execute parser task"
+  subagent_type: "general-purpose"
+  prompt: |
+    Execute task 1.2 PLAN.md.
+
+    WORKING DIRECTORY: .worktrees/1.2-implement-parser-sub-a1b2c3d4
+
+    VERIFICATION:
+    1. Run tests
+    2. Run style checks
+
+    ON COMPLETION: Report summary.
+```
+
+### Spawn for Complex Implementation
+
+```
+Task tool invocation:
+  description: "Implement feature X"
+  subagent_type: "general-purpose"
+  prompt: |
+    Implement feature X following PLAN.md.
+
+    WORKING DIRECTORY: ${WORKTREE_PATH}
+
+    CRITICAL PROHIBITIONS:
+    - NEVER add PMD suppression annotations
+    - Tests belong in SAME commit as implementation
+
+    EXACT CHANGES:
+    1. Create src/Feature.java with: [code listing]
+    2. Create test/FeatureTest.java with: [test code]
+
+    VERIFICATION:
+    1. ./mvnw test -Dtest=FeatureTest
+    2. ./mvnw checkstyle:check pmd:check
+
+    FAIL-FAST: If any check fails, report BLOCKED
+
+    COMMIT: git commit -m "feature: add X"
 ```
 
 ## Anti-Patterns
 
 ### Do NOT delegate decisions to subagents
 
-```bash
-# ❌ Requires subagent to make decisions
-claude --prompt "Implement error handling for the parser. Choose appropriate exception types."
+```
+# ❌ WRONG - Requires subagent to make decisions
+Task prompt: "Implement error handling for the parser. Choose appropriate exception types."
 
-# ✅ All decisions made by main agent
-claude --prompt "Add error handling to Parser.java:
-- Line 45: wrap in try-catch, throw ParseException(\"Invalid token at position \" + pos)
-- Line 72: add null check, throw IllegalArgumentException(\"Input cannot be null\")
-- All exceptions must include position information for debugging"
+# ✅ CORRECT - All decisions made by main agent
+Task prompt: |
+  Add error handling to Parser.java:
+  - Line 45: wrap in try-catch, throw ParseException("Invalid token at position " + pos)
+  - Line 72: add null check, throw IllegalArgumentException("Input cannot be null")
+  - All exceptions must include position information for debugging
 ```
 
 ### Do NOT spawn without PLAN.md
 
-```bash
-# ❌ Spawning with vague instructions
-claude --prompt "Work on the parser"
+```
+# ❌ WRONG - Vague instructions
+Task prompt: "Work on the parser"
 
-# ✅ Spawning with concrete plan and completion marker requirement
-claude --prompt "Execute PLAN.md at .claude/cat/tasks/1.2-implement-parser/PLAN.md.
-On completion: echo '{\"status\":\"success\",...}' > .completion.json"
+# ✅ CORRECT - Concrete plan reference
+Task prompt: |
+  Execute PLAN.md at .claude/cat/tasks/1.2-implement-parser/PLAN.md.
+  WORKING DIRECTORY: .worktrees/1.2-implement-parser-sub-a1b2c3d4
 ```
 
 ### Do NOT assume subagent will infer implementation details
 
 When specific API usage or patterns are required, provide explicit before/after code examples:
 
-```bash
-# ❌ Vague instruction - subagent may find different solution
-claude --prompt "Remove the unnecessary cast in LexerTest.java"
+```
+# ❌ WRONG - Vague instruction, subagent may find different solution
+Task prompt: "Remove the unnecessary cast in LexerTest.java"
 
-# ✅ Explicit code example showing expected change
-claude --prompt "Change LexerTest.java line 625:
-  FROM: requireThat(token.text() == token.decodedText(), \"sameInstance\").isTrue();
-  TO:   requireThat(token.text(), \"token.text()\").isReferenceEqualTo(token.decodedText(), \"token.decodedText()\");"
+# ✅ CORRECT - Explicit code example showing expected change
+Task prompt: |
+  Change LexerTest.java line 625:
+    FROM: requireThat(token.text() == token.decodedText(), "sameInstance").isTrue();
+    TO:   requireThat(token.text(), "token.text()").isReferenceEqualTo(token.decodedText(), "token.decodedText()");
 ```
 
 **Why**: Subagents optimize for passing tests/builds. Without explicit examples, they may find alternative
@@ -339,19 +392,20 @@ solutions (e.g., @SuppressWarnings) that technically work but don't match the in
 
 For parser/test tasks, include manual derivation requirement in prompt:
 
-```bash
-# ❌ Missing test derivation guidance
-claude --prompt "Add parser tests for new feature"
+```
+# ❌ WRONG - Missing test derivation guidance
+Task prompt: "Add parser tests for new feature"
 
-# ✅ Explicit manual derivation requirement
-claude --prompt "Add parser tests for new feature.
+# ✅ CORRECT - Explicit manual derivation requirement
+Task prompt: |
+  Add parser tests for new feature.
 
-CRITICAL: Test expected values MUST be manually derived:
-1. Analyze source string character by character
-2. Determine expected node types from Java grammar
-3. Use (0, 0) placeholders for positions initially
-4. VERIFY actual positions are correct before updating expected values
-5. NEVER copy actual output as expected values without verification"
+  CRITICAL: Test expected values MUST be manually derived:
+  1. Analyze source string character by character
+  2. Determine expected node types from Java grammar
+  3. Use (0, 0) placeholders for positions initially
+  4. VERIFY actual positions are correct before updating expected values
+  5. NEVER copy actual output as expected values without verification
 ```
 
 **Why**: Subagents may use placeholder technique incorrectly - copying actual output without verification
@@ -361,32 +415,34 @@ creates tests that pass but don't validate correctness.
 
 Parser tests MUST verify AST structure, not just parsing success:
 
-```bash
+```
 # ❌ WRONG - Only checks parsing succeeded
-claude --prompt "Add tests for new parser feature.
-@Test
-public void testNewFeature()
-{
-    try (Parser _ = parse(source))
-    {
-        // INADEQUATE - only checks parsing didn't throw
-    }
-}"
+Task prompt: |
+  Add tests for new parser feature.
+  @Test
+  public void testNewFeature()
+  {
+      try (Parser _ = parse(source))
+      {
+          // INADEQUATE - only checks parsing didn't throw
+      }
+  }
 
 # ✅ CORRECT - Verifies expected AST structure
-claude --prompt "Add tests for new parser feature.
-@Test
-public void testNewFeature()
-{
-    try (Parser parser = parse(source);
-        NodeArena expected = new NodeArena())
-    {
-        NodeArena actual = parser.getArena();
-        // Build expected AST with exact node types and positions
-        expected.allocateNode(NodeType.X, startPos, endPos);
-        requireThat(actual, \"actual\").isEqualTo(expected);
-    }
-}"
+Task prompt: |
+  Add tests for new parser feature.
+  @Test
+  public void testNewFeature()
+  {
+      try (Parser parser = parse(source);
+          NodeArena expected = new NodeArena())
+      {
+          NodeArena actual = parser.getArena();
+          // Build expected AST with exact node types and positions
+          expected.allocateNode(NodeType.X, startPos, endPos);
+          requireThat(actual, "actual").isEqualTo(expected);
+      }
+  }
 ```
 
 **Why (M062)**: Tests that only check `isSuccess()` provide false confidence - parsing can succeed
@@ -394,24 +450,24 @@ but produce incorrect AST. The `isEqualTo(expected)` pattern catches structural 
 
 ### Do NOT spawn dependent tasks simultaneously
 
-```bash
-# ❌ Spawning B that depends on A's output
-spawn-subagent task-a
-spawn-subagent task-b  # Depends on task-a!
+```
+# ❌ WRONG - Spawning B that depends on A's output
+Task tool: task-a
+Task tool: task-b  # Depends on task-a!
 
-# ✅ Wait for dependency
-spawn-subagent task-a
-# ... wait for completion ...
-spawn-subagent task-b
+# ✅ CORRECT - Wait for dependency
+Task tool: task-a
+# ... wait for task-a result ...
+Task tool: task-b  # Now safe to spawn
 ```
 
 ### Do NOT forget worktree cleanup path
 
 ```bash
-# ❌ No tracking of worktree location
+# ❌ WRONG - No tracking of worktree location
 git worktree add somewhere
 
-# ✅ Track for later cleanup
+# ✅ CORRECT - Track for later cleanup
 WORKTREE=".worktrees/${TASK}-sub-${UUID}"
 git worktree add "${WORKTREE}"
 # Record in STATE.md for merge-subagent skill
@@ -426,59 +482,63 @@ parent agent.
 
 Subagents CAN explore/research, but must return findings for main agent to decide - not act on them.
 
-```bash
-# ❌ Subagent explores AND decides what to do
-claude --prompt "Find where authentication is handled and add rate limiting"
+```
+# ❌ WRONG - Subagent explores AND decides what to do
+Task prompt: "Find where authentication is handled and add rate limiting"
 
-# ✅ Subagent explores, returns findings, main agent decides later
-claude --prompt "Find all authentication entry points in the codebase.
-Return a list of:
-- File path and line number
-- Method signature
-- Current error handling approach
+# ✅ CORRECT - Subagent explores, returns findings, main agent decides later
+Task prompt: |
+  Find all authentication entry points in the codebase.
+  Return a list of:
+  - File path and line number
+  - Method signature
+  - Current error handling approach
 
-FAIL-FAST: If you cannot locate authentication code within 10 minutes,
-report 'BLOCKED: Could not locate auth code' and stop.
-Do NOT implement anything - return findings only."
+  FAIL-FAST: If you cannot locate authentication code within 10 minutes,
+  report 'BLOCKED: Could not locate auth code' and stop.
+  Do NOT implement anything - return findings only.
 
-# ✅ OR: Main agent already explored, provides exact instructions
-claude --prompt "Add rate limiting to src/auth/AuthService.java:
-In the authenticate() method at line 45, add before the password check:
-  if (rateLimiter.isRateLimited(username)) {
-    throw new RateLimitExceededException(username);
-  }"
+# ✅ ALSO CORRECT - Main agent already explored, provides exact instructions
+Task prompt: |
+  Add rate limiting to src/auth/AuthService.java:
+  In the authenticate() method at line 45, add before the password check:
+    if (rateLimiter.isRateLimited(username)) {
+      throw new RateLimitExceededException(username);
+    }
 ```
 
 ### Do NOT use vague success criteria
 
-```bash
-# ❌ Subagent must judge "working correctly"
-claude --prompt "Make sure the parser handles all edge cases correctly"
+```
+# ❌ WRONG - Subagent must judge "working correctly"
+Task prompt: "Make sure the parser handles all edge cases correctly"
 
-# ✅ Explicit verification steps
-claude --prompt "Verify parser handles edge cases:
-1. Run: ./gradlew test --tests 'ParserEdgeCaseTest'
-2. All 12 tests must pass
-3. Run: ./scripts/parse-corpus.sh testdata/edge-cases/
-4. Output must show: 'Processed 47 files, 0 errors'
+# ✅ CORRECT - Explicit verification steps
+Task prompt: |
+  Verify parser handles edge cases:
+  1. Run: ./gradlew test --tests 'ParserEdgeCaseTest'
+  2. All 12 tests must pass
+  3. Run: ./scripts/parse-corpus.sh testdata/edge-cases/
+  4. Output must show: 'Processed 47 files, 0 errors'
 
-FAIL-FAST: If any test fails, report BLOCKED with output. Do NOT fix."
+  FAIL-FAST: If any test fails, report BLOCKED with output. Do NOT fix.
 ```
 
 ### Do NOT allow fallback behaviors
 
-```bash
-# ❌ Fallback involves decisions
-claude --prompt "Try to use the new API. If it doesn't work, fall back to the legacy API."
+```
+# ❌ WRONG - Fallback involves decisions
+Task prompt: "Try to use the new API. If it doesn't work, fall back to the legacy API."
 
-# ✅ Fail-fast, let main agent decide
-claude --prompt "Use the new API at src/api/v1/Client.java.
+# ✅ CORRECT - Fail-fast, let main agent decide
+Task prompt: |
+  Use the new API at src/api/v1/Client.java.
 
-FAIL-FAST:
-- If new API returns errors, report BLOCKED with error details
-- Do NOT fall back to legacy API
-- Do NOT try alternative approaches
-- Return status for main agent to decide next steps"
+  FAIL-FAST:
+  - If new API returns errors, report BLOCKED with error details
+  - Do NOT fall back to legacy API
+  - Do NOT try alternative approaches
+  - Return status for main agent to decide next steps
 ```
 
 **Why**: Choosing between approaches is a decision. Decisions require user oversight.
