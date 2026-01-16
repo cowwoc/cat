@@ -141,8 +141,8 @@ Read `.claude/cat/cat-config.json` to determine:
 For programmatic task discovery, use the `find-task.sh` script:
 
 ```bash
-# Find next available task
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" --session-id "$SESSION_ID")
+# Find next available task (CLAUDE_PROJECT_DIR required by script)
+RESULT=$(CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR}" "${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" --session-id "$SESSION_ID")
 
 # Parse result
 if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
