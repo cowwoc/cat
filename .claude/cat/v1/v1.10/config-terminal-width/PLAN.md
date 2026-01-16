@@ -3,6 +3,30 @@
 ## Goal
 Add terminal width configuration option to /cat:config interactive wizard, allowing users to set their preferred display width for diffs and output formatting.
 
+## Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| REQ-001 | *Define requirement* | must-have | *How to verify* |
+
+
+## Research
+
+*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
+
+### Stack
+| Library | Purpose | Version | Rationale |
+|---------|---------|---------|-----------|
+| *TBD* | *TBD* | *TBD* | *TBD* |
+
+### Architecture
+- **Pattern:** *TBD*
+- **Integration:** *TBD*
+
+### Pitfalls
+- *Run /cat:research to populate*
+
+
 ## Satisfies
 - None (usability improvement)
 

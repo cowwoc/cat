@@ -199,7 +199,8 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
   "trust": "medium",
   "verify": "changed",
   "curiosity": "low",
-  "patience": "high"
+  "patience": "high",
+  "terminalWidth": 120
 }
 ```
 
@@ -213,6 +214,7 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 | `verify` | string | `changed` | What verification runs before checkpoints |
 | `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
+| `terminalWidth` | number | `120` | Display width in characters for output formatting |
 
 **trust**
 - `low` — Asks before fixing review issues. Presents options frequently.
@@ -244,6 +246,11 @@ when tasks need decomposition.
 - `low` — Acts immediately on high-priority discoveries (benefit/cost > 3)
 - `medium` — Defers most discoveries; acts on critical issues only
 - `high` — Defers all discoveries to backlog; maximum focus on current task
+
+**terminalWidth** — Display width in characters for output formatting:
+- `120` — Desktop/Laptop (Recommended). Optimized for wide monitors
+- `50` — Mobile. Optimized for phones and narrow screens
+- `40-200` — Custom. Any value in this range is valid
 
 ### Stakeholder Reviews
 
