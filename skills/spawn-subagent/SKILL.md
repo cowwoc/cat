@@ -170,6 +170,17 @@ STATE.md UPDATE (required in SAME commit as implementation):
 - Include STATE.md in git add before commit
 ```
 
+**Refactoring Scope (from cat-config.json `refactoring` preference):**
+```bash
+REFACTOR_PREF=$(jq -r '.refactoring // "opportunistic"' .claude/cat/cat-config.json)
+```
+
+| Value | Include in Prompt |
+|-------|-------------------|
+| `avoid` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
+| `opportunistic` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
+| `eager` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
+
 **Parser Test Requirements (M079, for parser tasks only):**
 ```
 PARSER TEST STYLE:

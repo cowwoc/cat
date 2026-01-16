@@ -26,9 +26,8 @@ with intelligent recommendations based on task characteristics and user preferen
 ### 1. Analyze Task & Preferences
 
 ```bash
-# Load user preferences
-PREFS=$(cat .claude/cat/cat-config.json | jq -r '.adventureMode.preferences')
-APPROACH=$(echo "$PREFS" | jq -r '.approach')
+# Load approach preference
+APPROACH=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
 ```
 
 Read PLAN.md and extract:

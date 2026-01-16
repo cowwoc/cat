@@ -73,15 +73,13 @@ Before user approval, implementation is reviewed by 5 stakeholder perspectives:
 
 **Configuration:**
 
-```json
-{
-  "stakeholderReview": {
-    "enabled": true,
-    "stakeholders": ["architect", "security", "quality", "tester", "performance"],
-    "maxIterations": 3
-  }
-}
-```
+Stakeholder review frequency is controlled via `stakeholderReview` in cat-config.json:
+
+| Value | Behavior |
+|-------|----------|
+| `always` | Run on every task |
+| `high-risk-only` | Only tasks with risk indicators (default) |
+| `never` | Skip entirely |
 
 See [stakeholders/index.md](stakeholders/index.md) for detailed stakeholder definitions.
 

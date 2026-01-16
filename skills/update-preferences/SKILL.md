@@ -19,7 +19,7 @@ description: Update adventure style preferences for the project
 
 ```bash
 # Read current preferences
-cat .claude/cat/cat-config.json | jq '.adventureMode.preferences'
+jq '{approach, stakeholderReview, refactoring}' .claude/cat/cat-config.json
 ```
 
 Display:
@@ -72,8 +72,7 @@ AskUserQuestion: header="Refactoring", question="Refactoring appetite?", options
 Update `.claude/cat/cat-config.json`:
 ```bash
 # Use jq to update the specific preference
-jq '.adventureMode.preferences.approach = "aggressive"' .claude/cat/cat-config.json > tmp.json
-mv tmp.json .claude/cat/cat-config.json
+jq '.approach = "aggressive"' .claude/cat/cat-config.json > tmp.json && mv tmp.json .claude/cat/cat-config.json
 ```
 
 Update `PROJECT.md` User Preferences section to match.
