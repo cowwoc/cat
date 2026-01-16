@@ -445,33 +445,46 @@ Re-invoking agent with feedback to fix issues...
 ```
 → Go to Step 6 (Iteration)
 
-**⚠️ CRITICAL: Verify Decision Logic Before Presenting**
+**⚠️ MANDATORY: Score Validation Gate (M254)**
 
-Before presenting results to user, MANDATORY self-check:
+**BLOCKING REQUIREMENT**: Complete this validation BEFORE making any approval decision.
 
-```bash
-# Self-validation checklist
-if [ score == 1.0 ]; then
-  decision="APPROVE"
-elif [ score < 1.0 ]; then
-  decision="ITERATE"
-fi
+**Step 1: Extract exact score value**
+```
+SCORE={exact decimal from /compare-docs execution_equivalence_score}
+```
 
-# Verify no contradictions
-if [ stated_decision != expected_decision ]; then
-  ERROR: "Decision logic error detected"
-  FIX: "Recalculate thresholds"
+**Step 2: Perform explicit comparison**
+```
+THRESHOLD=1.0
+IS_EXACTLY_ONE=$(echo "$SCORE == $THRESHOLD" | bc -l)
+```
+
+**Step 3: Decision based ONLY on comparison result**
+```
+if [ "$IS_EXACTLY_ONE" -eq 1 ]; then
+  DECISION="APPROVE"
+else
+  DECISION="ITERATE"  # ANY value less than 1.0, including 0.99, 0.999, etc.
 fi
 ```
 
-**Common Mistakes**:
-❌ **WRONG**: "Score 0.97, close enough to 1.0" (0.97 < 1.0, must be perfect)
-✅ **CORRECT**: "Score 0.97 < 1.0, iterate to achieve perfect equivalence"
+**Step 4: State decision with explicit score verification**
+```
+Score: {SCORE}/1.0
+Comparison: {SCORE} == 1.0 → {true|false}
+Decision: {DECISION}
+```
 
-❌ **WRONG**: "Score 0.99, good enough" (ignores 1.0 threshold)
-✅ **CORRECT**: "Score 0.99 < 1.0, iterate to eliminate any loss"
+**FAIL-FAST**: If DECISION=ITERATE, STOP. Do not ask user for approval. Proceed directly to Step 6 (Iteration Loop).
 
-**Prevention**: Always verify threshold comparison matches stated score value before presenting.
+**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough" scores. Only exact equality (score == 1.0) permits approval. No exceptions.
+
+**Anti-patterns (blocked by this gate)**:
+- ❌ "Score 0.97, close enough to 1.0" → BLOCKED (0.97 ≠ 1.0)
+- ❌ "Score 0.99, good enough" → BLOCKED (0.99 ≠ 1.0)
+- ❌ "Score 0.999, essentially perfect" → BLOCKED (0.999 ≠ 1.0)
+- ✅ "Score 1.0" → APPROVED (1.0 == 1.0)
 
 ---
 
