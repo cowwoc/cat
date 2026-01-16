@@ -2495,6 +2495,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Copy-paste the EXACT render-diff.py Bash output into response - do not extract, reformat, or summarize"
+    },
+    {
+      "id": "M212",
+      "timestamp": "2026-01-23T12:15:00Z",
+      "category": "logical_error",
+      "description": "render-diff.py placed [] brackets incorrectly, splitting words like max_width into [ma]x_width",
+      "root_cause": "Character-level diff matching found minimal differences without respecting word boundaries, and line wrapping could split bracketed regions",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/plugin/scripts/render-diff.py",
+      "pattern_keywords": [
+        "render-diff",
+        "brackets",
+        "word-boundary",
+        "wrapping"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Expand bracket boundaries to complete words and wrap lines at safe points outside brackets"
     }
   ]
 }
