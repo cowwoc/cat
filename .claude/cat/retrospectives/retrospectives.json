@@ -1,6 +1,6 @@
 {
-  "last_retrospective": "2026-01-23T12:07:04-05:00",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-01-23T19:15:39-05:00",
+  "mistake_count_since_last": 0,
   "config": {
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
@@ -504,9 +504,75 @@
         "verdict": "pending"
       },
       "note": "Implemented warn-skill-edit-without-builder.sh hook"
+    },
+    {
+      "id": "A020",
+      "priority": "high",
+      "description": "Enforce template precomputation: Any skill with structured display (boxes, scorecards, tables) MUST have a Python handler that precomputes the output. Skills should not contain raw ASCII art or box templates.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-014",
+      "status": "open",
+      "created_date": "2026-01-23T19:15:39-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M215",
+        "M216",
+        "M225",
+        "M226",
+        "M227"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 5,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     }
   ],
   "retrospectives": [
+    {
+      "id": "R012",
+      "timestamp": "2026-01-23T19:15:39-05:00",
+      "trigger": "count_threshold",
+      "period_analyzed": "2026-01-23T12:07:04-05:00 to 2026-01-23T19:15:39-05:00",
+      "mistakes_analyzed": 11,
+      "summary": "11 mistakes: 8 protocol_violation (73%), 3 logical_error. Key patterns: template_precomputation_misuse (5 - M215, M216, M225, M226, M227), box_alignment_issues (4 - script bugs and LLM errors). M229 fixed scorecard padding calculation bug in research_handler.py with regression tests added.",
+      "findings": {
+        "category_breakdown": {
+          "protocol_violation": 8,
+          "logical_error": 3
+        },
+        "prevention_types_used": {
+          "validation": 2,
+          "skill": 5,
+          "code_fix": 3,
+          "hook": 1
+        },
+        "patterns_identified": [
+          "PATTERN-014: template_precomputation_misuse (5 occurrences) - LLM modifies templates instead of using handlers",
+          "Box alignment issues continue (4) - both script bugs and LLM rendering errors",
+          "Workflow phase violations (2) - skipping approval gates and worktree isolation"
+        ],
+        "action_items_created": [
+          "A020"
+        ],
+        "action_item_effectiveness": {
+          "all_implemented": "EFFECTIVE - 10 implemented action items with 0 recurrences this period",
+          "note": "Precomputation handlers (A014, A016) working - no manual box rendering failures"
+        },
+        "key_insights": [
+          "Precomputation strategy working: Python handlers eliminated manual box rendering failures",
+          "New failure mode: LLM modifies handler output or bypasses precomputation entirely",
+          "Script bugs (M212, M229) show handlers need unit tests for display consistency",
+          "73% protocol violations indicate need for stronger process enforcement"
+        ],
+        "recommendations": [
+          "A020: Audit all skills for embedded templates - move to handlers",
+          "Add unit tests for all handler display functions (M229 regression test added)",
+          "Consider PreToolUse hook for skills that bypass skill-builder"
+        ]
+      }
+    },
     {
       "id": "R011",
       "timestamp": "2026-01-23T12:07:04-05:00",
@@ -1254,6 +1320,29 @@
         "M187"
       ],
       "note": "Nested boxes require build inner-first approach but agents use flat single-table. Sub-pattern of PATTERN-011."
+    },
+    {
+      "pattern_id": "PATTERN-014",
+      "pattern": "template_precomputation_misuse",
+      "occurrences_total": 5,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-23T12:30:00Z",
+      "last_seen": "2026-01-24T12:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [],
+      "related_action_items": [
+        "A020"
+      ],
+      "related_mistakes": [
+        "M215",
+        "M216",
+        "M225",
+        "M226",
+        "M227"
+      ],
+      "note": "LLM generates/modifies templates instead of using pre-computed handler output. Includes skill recommendations that bypass precomputation."
     }
   ]
 }
