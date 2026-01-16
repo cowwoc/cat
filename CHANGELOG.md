@@ -2,6 +2,10 @@
 
 ## Version History
 
+### 2026-01-15: v1.7
+
+*In development*
+
 ### 2026-01-14: v1.6
 
 **Adventure Mode**
