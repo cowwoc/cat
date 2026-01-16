@@ -1139,6 +1139,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After creating task STATE.md and PLAN.md, always add task name to parent version STATE.md Tasks Pending list"
+    },
+    {
+      "id": "M164",
+      "timestamp": "2026-01-21T18:09:12Z",
+      "category": "protocol_violation",
+      "description": "Agent skipped header box display during /cat:work, went directly to progress line",
+      "root_cause": "Header instruction lacked emphasis and appeared after progress examples, causing agents to skip it",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "header",
+        "progress",
+        "work",
+        "display",
+        "box"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display header box FIRST using work-progress.sh header, then show progress line updates"
     }
   ]
 }
