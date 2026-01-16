@@ -179,7 +179,7 @@ Create ROADMAP.md:
 
 Create task directories:
 ```bash
-mkdir -p ".claude/cat/v{major}/v{major}.{minor}/{task-name}"
+mkdir -p ".claude/cat/v{major}/v{major}.{minor}/task/{task-name}"
 ```
 
 **PLAN.md** (from task definition source):
