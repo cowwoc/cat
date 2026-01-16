@@ -139,6 +139,30 @@ git reflog
 git reset --hard HEAD@{N}
 ```
 
+## Verification After Amend/Fixup Operations
+
+**CRITICAL: When using rebase to amend or fixup a historical commit, verify the target commit
+actually contains the expected changes.**
+
+```bash
+# After rebase completes, verify the target commit has expected files
+TARGET_COMMIT="<original-hash>"  # Note: hash changes after rebase!
+
+# Find new commit with same message
+NEW_COMMIT=$(git log --oneline --all | grep "<partial-message>" | head -1 | cut -d' ' -f1)
+
+# Verify it contains expected files
+git show "$NEW_COMMIT" --stat
+
+# Check specific file exists in commit
+git show "$NEW_COMMIT" -- path/to/expected/file.md
+
+# If file is NOT in the commit, the amend/fixup FAILED silently
+```
+
+**Common failure mode (M244):** Rebase reports "Successfully rebased" but the fixup commit was
+dropped due to conflicts. Always verify the target commit's contents before proceeding.
+
 ## Success Criteria
 
 - [ ] Backup created before rebase
@@ -146,4 +170,5 @@ git reset --hard HEAD@{N}
 - [ ] Conflicts resolved (if any)
 - [ ] History looks correct
 - [ ] No commits lost
+- [ ] **Target commit contains expected changes (for amend/fixup)**
 - [ ] Backup removed after verification

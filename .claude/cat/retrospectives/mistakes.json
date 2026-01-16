@@ -3309,6 +3309,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use TASK_ALREADY_COMPLETE pre-computed template for tasks found already implemented"
+    },
+    {
+      "id": "M244",
+      "timestamp": "2026-01-25T18:30:00Z",
+      "category": "git_operation_failure",
+      "description": "Rebase reported success but fixup commit was silently dropped due to conflicts, leaving target commit unchanged",
+      "root_cause": "No verification step after rebase to confirm target commit actually contains expected changes",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/git-rebase/SKILL.md",
+      "pattern_keywords": [
+        "rebase",
+        "fixup",
+        "amend",
+        "verify",
+        "silent failure"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After rebase with amend/fixup, use git show <commit> --stat to verify target commit contains expected files before proceeding"
     }
   ]
 }
