@@ -25,8 +25,10 @@ The skill ensures changelog, version files, and tags stay synchronized.
 Before releasing, ensure all tests pass:
 
 ```bash
-npm test
+npm run test:all
 ```
+
+This runs both BATS tests (shell scripts) and pytest tests (Python handlers).
 
 **If tests fail**, fix the issues before proceeding. All tests must pass before release.
 
