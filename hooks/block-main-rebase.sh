@@ -138,17 +138,14 @@ WHY THIS IS BLOCKED:
 • Merged commits get recreated as direct commits
 • This breaks the audit trail and disrupts collaboration
 
-WHAT TO DO INSTEAD:
-• If you need to fix a commit message: Use git commit --amend on a feature
-  branch BEFORE merging to main
-• If already merged: The history is final. Accept it or create a new commit
-• For commit reordering: Do this on feature branches, not main
+TO REBASE A TASK BRANCH ONTO MAIN:
+Run the rebase from within your task's worktree, not from the main worktree:
 
-CORRECT WORKFLOW:
-1. All changes on feature branch
-2. Squash/rebase on feature branch (before merge)
-3. Merge to main with --ff-only
-4. Never rebase main
+  cd /workspace/.worktrees/<task-branch>
+  git rebase main
+
+The main worktree must always have 'main' checked out. Rebase operations
+from here could change that, which breaks assumptions across the system.
 
 ═══════════════════════════════════════════════════════════════
 ❌ COMMAND BLOCKED - Rebase on main is prohibited
