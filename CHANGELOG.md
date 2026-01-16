@@ -2,6 +2,10 @@
 
 ## Version History
 
+### 2026-01-14: v1.6
+
+*In development*
+
 ### 2026-01-14: v1.5
 
 **Quality Gates, Progress Indicators, and Workflow Stability**
