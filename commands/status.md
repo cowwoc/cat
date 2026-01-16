@@ -84,7 +84,7 @@ terminals. Horizontal-only borders eliminate padding calculation problems.
 🗺️ **YOUR ADVENTURE** - {PROJECT_NAME}
 ═══════════════════════════════════════════════════════════════════
 
-📊 Progress: [████████████████░░░░] **{PERCENT}%**
+📊 Overall: [███████████████████████████████████░░░░░░░░░░] **{PERCENT}%**
 🏆 **{COMPLETED}/{TOTAL}** tasks complete
 ⚙️ Mode: {Interactive|YOLO}
 
@@ -134,7 +134,9 @@ For current/in-progress versions, show exit gate progress:
 **Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
 
 **Progress bar format:** Use block characters: `█` for filled, `░` for empty.
-Example: `[████████████████░░░░]` for 80% complete.
+The bar should be **45 characters** wide (filled + empty = 45) to match the border width.
+Example for 80%: `[████████████████████████████████████░░░░░░░░░]` (36 filled + 9 empty)
+This represents **overall project progress** across all versions.
 
 **Status symbols (emoji):**
 - ☑️ completed (for done tasks and 100% complete minors)
