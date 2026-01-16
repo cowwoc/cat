@@ -31,7 +31,6 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - hide-tool-calls-during-execution
 - improve-skill-discoverability
 - improve-video-link-visibility
-- jwt-token-generation
 - merge-and-cleanup-script
 - merge-or-pr-config
 - optimize-add-wizard-flow
@@ -69,9 +68,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - update-graphics-tagline
 - work-box-hook-precomputation
 - research-executive-summary
-- license-validation-server-jetty-setup
 - task-tools-integration
-- license-validation-server-persistence
 
 ## Tasks Pending
 - local-config-override
@@ -80,11 +77,4 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - split-retrospective-files-by-time
 - optimize-git-squash
 - move-planning-to-issues-subdir
-- license-validation-server
-- license-validation-server-api
-- license-validation-server-security
-- license-validation-server-docker
-- license-commands
-- offline-validation
-- payment-processor-integration
 - update-check-startup
