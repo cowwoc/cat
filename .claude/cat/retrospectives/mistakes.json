@@ -2293,7 +2293,7 @@
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "hook",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/block-main-rebase.sh",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/references/principles.md",
       "pattern_keywords": [
         "git-checkout",
         "main-worktree",
@@ -2309,6 +2309,33 @@
         "catches_variations": true
       },
       "correct_behavior": "During task cleanup, only delete the worktree directory. Never run git checkout in main worktree (/workspace). Main worktree should keep its current branch unchanged."
+    },
+    {
+      "id": "M206",
+      "timestamp": "2026-01-22T17:10:00Z",
+      "category": "protocol_violation",
+      "description": "Manually rendered status display instead of failing when pre-computed display was missing",
+      "root_cause": "Completion bias led to ignoring explicit fail-fast instruction in status.md",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/references/principles.md",
+      "pattern_keywords": [
+        "status",
+        "pre-computed",
+        "fail-fast",
+        "manual-render",
+        "completion-bias"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output the ERROR message exactly as shown when pre-computed display is not found, then STOP"
     }
   ]
 }
