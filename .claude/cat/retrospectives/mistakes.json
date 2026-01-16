@@ -2120,6 +2120,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before recommending approach for skill-builder rewrite, verify extraction criteria: if skill has counting/arithmetic/formatting/aggregation operations, extraction to hooks is REQUIRED regardless of content type (ASCII or emoji)"
+    },
+    {
+      "id": "M199",
+      "timestamp": "2026-01-22T13:47:00Z",
+      "category": "git_operation_failure",
+      "description": "Squash-and-merge deleted unrelated task files added to base branch after worktree creation",
+      "root_cause": "git-merge-linear skill lacked divergence check before squashing - squash to old base point overwrote newer commits",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/git-merge-linear/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "divergence",
+        "worktree",
+        "merge",
+        "deleted-files"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check git rev-list HEAD..BASE_BRANCH before squashing - if >0 commits, rebase first"
     }
   ]
 }
