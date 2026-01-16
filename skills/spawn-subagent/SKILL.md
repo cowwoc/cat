@@ -365,22 +365,27 @@ Parser tests MUST verify AST structure, not just parsing success:
 # ❌ WRONG - Only checks parsing succeeded
 claude --prompt "Add tests for new parser feature.
 @Test
-public void testNewFeature() {
-    ParseResult result = parser.parse(source);
-    requireThat(result.isSuccess(), ...).isTrue();  // INADEQUATE!
+public void testNewFeature()
+{
+    try (Parser _ = parse(source))
+    {
+        // INADEQUATE - only checks parsing didn't throw
+    }
 }"
 
 # ✅ CORRECT - Verifies expected AST structure
 claude --prompt "Add tests for new parser feature.
 @Test
-public void testNewFeature() {
-    ParseResult result = parser.parse(source);
-    requireThat(result.isSuccess(), ...).isTrue();
-    NodeArena actual = result.arena();
-    NodeArena expected = new NodeArena();
-    // Build expected AST with exact node types and positions
-    expected.allocateNode(NodeType.X, startPos, endPos);
-    requireThat(actual, \"actual\").isEqualTo(expected);
+public void testNewFeature()
+{
+    try (Parser parser = parse(source);
+        NodeArena expected = new NodeArena())
+    {
+        NodeArena actual = parser.getArena();
+        // Build expected AST with exact node types and positions
+        expected.allocateNode(NodeType.X, startPos, endPos);
+        requireThat(actual, \"actual\").isEqualTo(expected);
+    }
 }"
 ```
 
