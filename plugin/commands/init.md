@@ -23,12 +23,26 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 **MANDATORY:** Check context for "PRE-COMPUTED INIT BOXES".
 
 If found: Use those box templates exactly as provided. Replace only the {variable} placeholders with actual values.
-If NOT found: **FAIL** with this error message:
+If NOT found: **FAIL immediately**.
+
+First, detect the likely cause:
+
+```bash
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+  echo "ERROR: Pre-computed boxes not found."
+  echo ""
+  echo "Hooks are configured but not running. This usually means:"
+  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
+  echo ""
+  echo "Solution: Restart Claude Code, then run /cat:init again."
+else
+  echo "ERROR: Pre-computed boxes not found."
+  echo "The init_handler.py should have provided box templates."
+  echo "Please report this issue - the handler may not be registered correctly."
+fi
 ```
-ERROR: Pre-computed boxes not found in context.
-The init_handler.py should have provided box templates.
-Please report this issue - the handler may not be registered correctly.
-```
+
+Output the appropriate error and STOP.
 
 **Box templates available:**
 - `default_gates_configured` - For version gate configuration (variable: {N})
