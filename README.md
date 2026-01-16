@@ -148,8 +148,11 @@ mid-task, just run `/cat:work` to continue where you left off.
 
 ## Contributing
 
-CAT is opinionated by design. It does a few things well rather than everything
-poorly.
+Skills are internal capabilities used by commands. Some can be invoked directly.
+
+**Important:** When invoking skills via the Skill tool, use the full name with `cat:` prefix:
+- `/cat:learn-from-mistakes` or `Skill(skill: "cat:learn-from-mistakes")`
+- The `cat:` prefix is required for all CAT skills
 
 Contributions are welcome when they:
 - Solve real problems encountered during structured project execution
