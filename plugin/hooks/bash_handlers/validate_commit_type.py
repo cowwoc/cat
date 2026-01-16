@@ -34,12 +34,21 @@ class ValidateCommitTypeHandler:
             return None
 
         # Extract commit message from -m flag
+        # Pattern 1: -m "message" or -m 'message'
         match = re.search(r'-m\s+["\']([^"\']+)["\']', command)
-        if not match:
-            # Could be using heredoc or other method
-            return None
+        if match:
+            message = match.group(1)
+        else:
+            # Pattern 2: HEREDOC format: -m "$(cat <<'EOF'\nmessage\nEOF\n)"
+            heredoc_match = re.search(r'-m\s+"\$\(cat\s+<<[\'"]?EOF[\'"]?\s*\n(.+?)\nEOF', command, re.DOTALL)
+            if heredoc_match:
+                message = heredoc_match.group(1).strip()
+            else:
+                # No recognizable message format
+                return None
 
-        message = match.group(1)
+        # Strip leading whitespace from each line (heredoc indentation)
+        message = '\n'.join(line.strip() for line in message.split('\n'))
 
         # Check for conventional commit format
         type_match = re.match(r'^(\w+)(\(.+\))?:', message)
@@ -52,8 +61,8 @@ class ValidateCommitTypeHandler:
 
 Valid commit types: {', '.join(VALID_COMMIT_TYPES)}
 
-Example: feat: add user authentication
-         fix: resolve memory leak in parser"""
+Example: feature: add user authentication
+         bugfix: resolve memory leak in parser"""
                 }
 
         return None
