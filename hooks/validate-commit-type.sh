@@ -46,4 +46,36 @@ case "$TYPE" in
     ;;
 esac
 
+# Check for docs: used on Claude-facing files (M089, M112)
+# Claude-facing files should use config:, not docs:
+if [[ "$TYPE" == "docs" ]]; then
+  # Get staged files
+  STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+
+  # Claude-facing file patterns (should use config:, not docs:)
+  CLAUDE_FACING_PATTERNS=(
+    "CLAUDE.md"
+    ".claude/"
+    "hooks/"
+    "skills/"
+    "workflows/"
+    "commands/"
+    "retrospectives/"
+    "mistakes.json"
+  )
+
+  for pattern in "${CLAUDE_FACING_PATTERNS[@]}"; do
+    if echo "$STAGED" | grep -q "$pattern"; then
+      echo "BLOCKED: 'docs:' used for Claude-facing file"
+      echo ""
+      echo "Files matching '$pattern' are Claude-facing (read by Claude for behavior)."
+      echo "Use 'config:' instead of 'docs:' for these files."
+      echo ""
+      echo "Rule (M089): docs: = user-facing (README, API docs)"
+      echo "             config: = Claude-facing (CLAUDE.md, hooks, skills, workflows)"
+      exit 2
+    fi
+  done
+fi
+
 exit 0
