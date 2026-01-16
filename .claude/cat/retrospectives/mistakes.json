@@ -3064,6 +3064,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When diff output is saved to file due to size, read and present the ENTIRE file content to user, never summarize or excerpt"
+    },
+    {
+      "id": "M232",
+      "timestamp": "2026-01-24T14:15:00Z",
+      "category": "protocol_violation",
+      "description": "Manually read diff file and formatted markdown instead of using cat:render-diff skill for approval gate",
+      "root_cause": "Agent defaulted to Read tool for diff display despite MANDATORY render-diff requirement documented in work.md",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-approval-without-renderdiff.sh",
+      "pattern_keywords": [
+        "render-diff",
+        "approval-gate",
+        "diff-format",
+        "4-column-table"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M201",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use cat:render-diff skill: git diff ${BASE_BRANCH}..HEAD | \"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py\" and present verbatim output"
     }
   ]
 }
