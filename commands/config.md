@@ -57,15 +57,15 @@ If file doesn't exist, inform user to run `/cat:init` first.
 ║                                                             ║
 ║  🐱 CAT BEHAVIOR                                            ║
 ║  ┌────────────────────────────────────────────────────┐     ║
-║  │  Leash:     {leash || "medium"}                    │     ║
-║  │  Caution:   {caution || "moderate"}                │     ║
+║  │  Trust:     {trust || "medium"}                    │     ║
+║  │  Verify:    {verify || "changed"}                  │     ║
 ║  │  Curiosity: {curiosity || "low"}                   │     ║
 ║  │  Patience:  {patience || "high"}                   │     ║
 ║  └────────────────────────────────────────────────────┘     ║
 ║                                                             ║
 ║  🧹 CLEANUP                                                 ║
 ║  ┌────────────────────────────────────────────────────┐     ║
-║  │  Auto-cleanup: {autoCleanupWorktrees ? "On":"Off"} │     ║
+║  │  Auto-remove: {autoRemoveWorktrees ? "On":"Off"} │     ║
 ║  └────────────────────────────────────────────────────┘     ║
 ║                                                             ║
 ║  📊 VERSION GATES                                           ║
@@ -92,9 +92,9 @@ Show current values in descriptions using data from read-config step.
   - label: "🧠 Context Limits"
     description: "Currently: {contextLimit}k / {targetContextUsage}%"
   - label: "🐱 CAT Behavior"
-    description: "Currently: {leash} · {caution} · {curiosity} · {patience}"
+    description: "Currently: {trust} · {verify} · {curiosity} · {patience}"
   - label: "🧹 Cleanup / 📊 Gates"
-    description: "Currently: {autoCleanupWorktrees ? 'Auto-cleanup' : 'Keep'}"
+    description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
@@ -104,7 +104,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **🎮 Game Mode selection:**
 
-Display (add "⭐ CURRENT" after the mode name if it matches current config):
+Display (add "(current)" after the mode name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
@@ -112,13 +112,13 @@ Display (add "⭐ CURRENT" after the mode name if it matches current config):
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  🛡️ INTERACTIVE {!yoloMode ? '⭐ CURRENT' : ''}              ║
+║  🛡️ INTERACTIVE {!yoloMode ? '(current)' : ''}              ║
 ║  ─────────────────────────────────────────────────────────  ║
 ║  CAT pauses at key moments for your approval.               ║
 ║  You review changes before they merge to main.              ║
 ║  Best for: Learning CAT, important projects                 ║
 ║                                                             ║
-║  ⚡ YOLO {yoloMode ? '⭐ CURRENT' : ''}                      ║
+║  ⚡ YOLO {yoloMode ? '(current)' : ''}                      ║
 ║  ─────────────────────────────────────────────────────────  ║
 ║  CAT runs autonomously without stopping.                    ║
 ║  Tasks complete and merge automatically.                    ║
@@ -178,10 +178,10 @@ AskUserQuestion:
 - header: "Behavior"
 - question: "Which setting would you like to adjust?"
 - options (show current values in descriptions):
-  - label: "🔗 Leash"
-    description: "Currently: {leash || 'medium'}"
-  - label: "⚠️ Caution"
-    description: "Currently: {caution || 'moderate'}"
+  - label: "🤝 Trust"
+    description: "Currently: {trust || 'medium'}"
+  - label: "✅ Verify"
+    description: "Currently: {verify || 'changed'}"
   - label: "🔍 Curiosity"
     description: "Currently: {curiosity || 'low'}"
   - label: "⏳ Patience"
@@ -191,21 +191,21 @@ AskUserQuestion:
 
 </step>
 
-<step name="leash">
+<step name="trust">
 
-**🔗 Leash — How much you trust CAT to make decisions**
+**🤝 Trust — How much you trust CAT to make decisions**
 
-Display (add "⭐ CURRENT" after the level name if it matches current config):
+Display (add "(current)" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
-║                   🔗 LEASH LENGTH                           ║
+║                   🤝 TRUST LEVEL                            ║
 ║                                                             ║
 ║           How much freedom does CAT have to roam?           ║
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  🐱─┈  SHORT {leash == 'short' ? '⭐ CURRENT' : ''}          ║
+║  🐱─┈  SHORT {trust == 'short' ? '(current)' : ''}          ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Low trust. CAT presents options frequently:         │   ║
 ║  │  where to place code, which approach to take,        │   ║
@@ -214,7 +214,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║  │  ✦ Best for: Learning, strong preferences, critical  │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  🐱─ ─ ┈  MEDIUM {leash == 'medium' ? '⭐ CURRENT' : ''}     ║
+║  🐱─ ─ ┈  MEDIUM {trust == 'medium' ? '(current)' : ''}     ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Moderate trust. CAT handles routine decisions       │   ║
 ║  │  but presents options for meaningful trade-offs.     │   ║
@@ -222,7 +222,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║  │  ✦ Best for: Balanced control and efficiency         │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  🐱─ ─ ─ ─ ┈  LONG {leash == 'long' ? '⭐ CURRENT' : ''}     ║
+║  🐱─ ─ ─ ─ ┈  LONG {trust == 'long' ? '(current)' : ''}     ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  High trust. CAT decides most things autonomously.   │   ║
 ║  │  Only presents options when genuinely ambiguous.     │   ║
@@ -234,8 +234,8 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ```
 
 AskUserQuestion:
-- header: "Leash"
-- question: "How much do you trust CAT to make decisions? (Current: {leash || 'medium'})"
+- header: "Trust"
+- question: "How much do you trust CAT to make decisions? (Current: {trust || 'medium'})"
 - options:
   - label: "Medium (Recommended)"
     description: "Presents options for meaningful trade-offs"
@@ -246,65 +246,65 @@ AskUserQuestion:
   - label: "← Back"
     description: "Return to behavior menu"
 
-Map: Short → `leash: "short"`, Medium → `leash: "medium"`, Long → `leash: "long"`
+Map: Short → `trust: "short"`, Medium → `trust: "medium"`, Long → `trust: "long"`
 
 </step>
 
-<step name="caution">
+<step name="verify">
 
-**⚠️ Caution — How thoroughly CAT verifies changes before committing**
+**✅ Verify — What verification CAT runs before committing**
 
-Display (add "⭐ CURRENT" after the level name if it matches current config):
+Display (add "(current)" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
-║                   ⚠️ CAUTION LEVEL                          ║
+║                   ✅ VERIFICATION LEVEL                     ║
 ║                                                             ║
-║         How carefully does CAT check before commit?         ║
+║            What does CAT check before commit?               ║
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  😌  RELAXED {caution == 'relaxed' ? '⭐ CURRENT' : ''}      ║
+║  ⚡  NONE {verify == 'none' ? '(current)' : ''}              ║
 ║  ├──────────────────────────────────────────────────────┤   ║
-║  │  Compile/typecheck only. Fast feedback but won't     │   ║
-║  │  catch logic errors.                                 │   ║
+║  │  No verification before commit. Fastest iteration    │   ║
+║  │  but won't catch any errors automatically.           │   ║
 ║  │                                                      │   ║
-║  │  ✦ Best for: Rapid prototyping, slow test suites     │   ║
+║  │  ✦ Best for: Rapid prototyping, manual verification  │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  ⚖️  MODERATE {caution == 'moderate' ? '⭐ CURRENT' : ''}    ║
+║  📦  CHANGED {verify == 'changed' ? '(current)' : ''}        ║
 ║  ├──────────────────────────────────────────────────────┤   ║
-║  │  Run tests affected by the changes. Catches most     │   ║
-║  │  regressions without running the full suite.         │   ║
+║  │  Verify modified file/module only. Catches most      │   ║
+║  │  regressions without verifying the full project.     │   ║
 ║  │                                                      │   ║
 ║  │  ✦ Best for: Most workflows                          │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  🔒  VIGILANT {caution == 'vigilant' ? '⭐ CURRENT' : ''}    ║
+║  🔒  ALL {verify == 'all' ? '(current)' : ''}                ║
 ║  ├──────────────────────────────────────────────────────┤   ║
-║  │  Run the full test suite before each commit.         │   ║
+║  │  Verify the entire project before each commit.       │   ║
 ║  │  Slowest but highest confidence.                     │   ║
 ║  │                                                      │   ║
-║  │  ✦ Best for: Critical code, flaky test suites        │   ║
+║  │  ✦ Best for: Critical code, integration changes      │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
 ```
 
 AskUserQuestion:
-- header: "Caution"
-- question: "How thoroughly should CAT verify changes? (Current: {caution || 'moderate'})"
+- header: "Verify"
+- question: "What verification should CAT run? (Current: {verify || 'changed'})"
 - options:
-  - label: "Moderate (Recommended)"
-    description: "Run affected tests"
-  - label: "Relaxed"
-    description: "Compile/typecheck only"
-  - label: "Vigilant"
-    description: "Run full test suite"
+  - label: "Changed (Recommended)"
+    description: "Verify modified file/module only"
+  - label: "None"
+    description: "No verification before commit"
+  - label: "All"
+    description: "Verify entire project"
   - label: "← Back"
     description: "Return to behavior menu"
 
-Map: Relaxed → `caution: "relaxed"`, Moderate → `caution: "moderate"`, Vigilant → `caution: "vigilant"`
+Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify: "all"`
 
 </step>
 
@@ -312,7 +312,7 @@ Map: Relaxed → `caution: "relaxed"`, Moderate → `caution: "moderate"`, Vigil
 
 **🔍 Curiosity — How much CAT explores beyond the immediate task**
 
-Display (add "⭐ CURRENT" after the level name if it matches current config):
+Display (add "(current)" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
@@ -322,7 +322,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  🎯  LOW {curiosity == 'low' ? '⭐ CURRENT' : ''}            ║
+║  🎯  LOW {curiosity == 'low' ? '(current)' : ''}            ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Task-only. Complete exactly what's required,        │   ║
 ║  │  nothing more. Don't look for improvements.          │   ║
@@ -330,7 +330,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║  │  ✦ Best for: Minimal scope, predictable output       │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  👀  MEDIUM {curiosity == 'medium' ? '⭐ CURRENT' : ''}      ║
+║  👀  MEDIUM {curiosity == 'medium' ? '(current)' : ''}      ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Opportunistic. Notice obvious issues encountered    │   ║
 ║  │  while working (bugs, deprecated syntax).            │   ║
@@ -338,7 +338,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║  │  ✦ Best for: Balanced thoroughness                   │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  🔭  HIGH {curiosity == 'high' ? '⭐ CURRENT' : ''}          ║
+║  🔭  HIGH {curiosity == 'high' ? '(current)' : ''}          ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Proactive. Actively examine related code for        │   ║
 ║  │  patterns, tech debt, or optimization opportunities. │   ║
@@ -370,7 +370,7 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 **⏳ Patience — When CAT acts on discovered opportunities**
 
-Display (add "⭐ CURRENT" after the level name if it matches current config):
+Display (add "(current)" after the level name if it matches current config):
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
@@ -380,7 +380,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
-║  ⚡  LOW {patience == 'low' ? '⭐ CURRENT' : ''}             ║
+║  ⚡  LOW {patience == 'low' ? '(current)' : ''}             ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Act immediately. Address improvements as part of    │   ║
 ║  │  the current task. Scope expands but work is done.   │   ║
@@ -388,7 +388,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║  │  ✦ Best for: Comprehensive fixes, avoiding tech debt │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  📋  MEDIUM {patience == 'medium' ? '⭐ CURRENT' : ''}       ║
+║  📋  MEDIUM {patience == 'medium' ? '(current)' : ''}       ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Defer to current version. Log improvements as       │   ║
 ║  │  separate tasks within the current version.          │   ║
@@ -396,7 +396,7 @@ Display (add "⭐ CURRENT" after the level name if it matches current config):
 ║  │  ✦ Best for: Focused tasks with nearby follow-up     │   ║
 ║  └──────────────────────────────────────────────────────┘   ║
 ║                                                             ║
-║  📅  HIGH {patience == 'high' ? '⭐ CURRENT' : ''}           ║
+║  📅  HIGH {patience == 'high' ? '(current)' : ''}           ║
 ║  ├──────────────────────────────────────────────────────┤   ║
 ║  │  Defer by priority. Schedule improvements to future  │   ║
 ║  │  versions based on benefit/cost ratio.               │   ║
@@ -438,7 +438,7 @@ AskUserQuestion:
 - question: "What would you like to configure?"
 - options (show current values in descriptions):
   - label: "🧹 Cleanup"
-    description: "Currently: {autoCleanupWorktrees ? 'Auto-cleanup' : 'Keep'}"
+    description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
   - label: "📊 Version Gates"
     description: "Entry/exit conditions for versions"
   - label: "← Back"
@@ -452,9 +452,9 @@ AskUserQuestion:
 
 AskUserQuestion:
 - header: "Cleanup"
-- question: "Worktree cleanup behavior: (Current: {autoCleanupWorktrees ? 'Auto-cleanup' : 'Keep'})"
+- question: "Worktree cleanup behavior: (Current: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'})"
 - options:
-  - label: "🧹 Auto-cleanup (Recommended)"
+  - label: "🧹 Auto-remove (Recommended)"
     description: "Remove after task completion"
   - label: "📦 Keep"
     description: "Preserve for manual inspection"
@@ -462,7 +462,7 @@ AskUserQuestion:
     description: "Return to previous menu"
 
 
-Map: Auto-cleanup → `autoCleanupWorktrees: true`, Keep → `autoCleanupWorktrees: false`
+Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees: false`
 
 </step>
 
@@ -664,7 +664,7 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 **After confirming**: Return to the **parent menu** and re-display its options.
 
 Examples:
-- Changed "Leash" → return to CAT Behavior menu
+- Changed "Trust" → return to CAT Behavior menu
 - Changed "Context window size" → return to Context Limits menu
 - Changed "Game Mode" → return to main menu (no parent submenu)
 - Changed "Cleanup" → return to Cleanup/Gates menu
@@ -710,21 +710,21 @@ If no changes:
 | `yoloMode` | boolean | false | Skip approval gates |
 | `contextLimit` | number | 200000 | Context window size |
 | `targetContextUsage` | number | 40 | Decomposition threshold (%) |
-| `leash` | string | "medium" | Trust level for CAT decisions |
-| `caution` | string | "moderate" | Verification depth before commits |
+| `trust` | string | "medium" | Trust level for CAT decisions |
+| `verify` | string | "changed" | What verification runs before commits |
 | `curiosity` | string | "low" | Exploration beyond immediate task |
 | `patience` | string | "high" | When to act on discoveries |
-| `autoCleanupWorktrees` | boolean | true | Auto-remove worktrees |
+| `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
 
-### Leash Values
+### Trust Values
 - `short` — Low trust. CAT presents options frequently.
 - `medium` — Moderate trust. Options for meaningful trade-offs.
 - `long` — High trust. CAT decides autonomously.
 
-### Caution Values
-- `relaxed` — Compile/typecheck only.
-- `moderate` — Run affected tests.
-- `vigilant` — Run full test suite.
+### Verify Values
+- `none` — No verification before commit.
+- `changed` — Verify modified file/module only.
+- `all` — Verify entire project.
 
 ### Curiosity Values
 - `low` — Task-only. Don't explore.

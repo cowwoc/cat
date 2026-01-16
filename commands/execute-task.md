@@ -995,7 +995,7 @@ Handle merge conflicts:
 # Remove worktree
 git worktree remove "$WORKTREE_PATH" --force
 
-# Optionally delete branch if autoCleanupWorktrees is true
+# Optionally delete branch if autoRemoveWorktrees is true
 git branch -d "{task-branch}" 2>/dev/null || true
 
 # Release task lock (substitute actual SESSION_ID from context)

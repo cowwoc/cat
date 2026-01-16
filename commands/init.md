@@ -369,8 +369,6 @@ Create `.claude/cat/cat-config.json`:
 {
   "version": "[CAT_VERSION from above]",
   "mode": "[mode from step]",
-  "initialized": "[date]",
-  "source": "[new|existing]",
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,

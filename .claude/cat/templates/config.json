@@ -3,9 +3,9 @@
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "autoCleanupWorktrees": true,
-  "leash": "medium",
-  "caution": "moderate",
+  "autoRemoveWorktrees": true,
+  "trust": "medium",
+  "verify": "changed",
   "curiosity": "low",
   "patience": "high"
 }
