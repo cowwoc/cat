@@ -8,11 +8,38 @@ this document instead of hardcoding version path assumptions.
 
 ## Supported Versioning Schemes
 
+See [version-scheme.md](version-scheme.md) for detailed scheme documentation.
+
 | Scheme | Structure | Example |
 |--------|-----------|---------|
 | Major only | `v$MAJOR/` | `v1/`, `v2/` |
 | Major+Minor | `v$MAJOR/v$MAJOR.$MINOR/` | `v1/v1.0/`, `v1/v1.1/` |
 | Major+Minor+Patch | `v$MAJOR/v$MAJOR.$MINOR/v$MAJOR.$MINOR.$PATCH/` | `v1/v1.0/v1.0.1/` |
+
+## Directory Structure
+
+Tasks are placed **directly under the version directory** (not in a `task/` subdirectory).
+
+The version directory varies by scheme, but task placement is consistent:
+
+| Scheme | Task Path |
+|--------|-----------|
+| MAJOR only | `.claude/cat/issues/v1/my-task/` |
+| MAJOR.MINOR | `.claude/cat/issues/v1/v1.0/my-task/` |
+| MAJOR.MINOR.PATCH | `.claude/cat/issues/v1/v1.0/v1.0.1/my-task/` |
+
+Example (MAJOR.MINOR scheme):
+```
+.claude/cat/issues/
+└── v1/
+    └── v1.0/
+        ├── STATE.md
+        ├── PLAN.md
+        ├── CHANGELOG.md
+        └── my-task-name/      ← Task directory (directly under version)
+            ├── STATE.md
+            └── PLAN.md
+```
 
 ## Path Resolution Functions
 
