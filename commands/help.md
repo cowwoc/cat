@@ -208,7 +208,7 @@ cat-config.json:
   "yoloMode": false,            // Skip approval gates
   "contextLimit": 200000,       // Total context window
   "targetContextUsage": 40,     // Soft limit (40%)
-  "trust": "medium",            // short | medium | long (review frequency)
+  "trust": "medium",            // low | medium | high (review frequency)
   "verify": "changed",          // changed | all (verification scope)
   "curiosity": "medium",        // low | medium | high (exploration level)
   "patience": "medium"          // low | medium | high (refactoring tolerance)
