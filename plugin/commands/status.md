@@ -117,6 +117,9 @@ Claude Code collapses large Bash tool results, so output must be shown via Read 
 **M144 update (2026-01-19):** Clarified that file contents must be output VERBATIM, not summarized.
 "Display its contents" was ambiguous - agent summarized instead of echoing exact output.
 
+**M149 update (2026-01-19):** Added explicit anti-pattern - NEVER manually type box characters.
+Even in other contexts (like /cat:work), agents must use scripts, not manual box typing.
+
 **M145 update (2026-01-19):** Added MANDATORY OUTPUT TEMPLATE with validation checkpoint.
 M144's "VERBATIM" instruction failed - agent still skipped output. Added structural template
 showing exact expected format, plus validation check for box characters before NEXT STEPS.
