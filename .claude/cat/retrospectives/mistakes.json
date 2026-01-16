@@ -44,5 +44,32 @@
       "catches_variations": true
     },
     "correct_behavior": "ALWAYS commit changes BEFORE asking users to review. Pattern: Implement → Commit → Review"
+  },
+  {
+    "id": "M089",
+    "timestamp": "2026-01-14T19:16:46Z",
+    "category": "documentation_violation",
+    "description": "Used docs: prefix for Claude-facing workflow file instead of config:",
+    "root_cause": "Commit-types distinction between Claude-facing (config:) and user-facing (docs:) was documented but not prominent enough",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "documentation",
+    "prevention_path": "/workspace/cat/.claude/cat/references/commit-types.md",
+    "pattern_keywords": [
+      "commit-type",
+      "docs",
+      "config",
+      "claude-facing",
+      "workflow"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use config: for Claude-facing files (CLAUDE.md, hooks, skills, workflows). Use docs: only for user-facing documentation (README, API docs)."
   }
 ]
