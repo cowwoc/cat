@@ -534,9 +534,9 @@
       "description": "ESCALATION: Approval gate diff display has 4 failures (M211, M231, M232) despite documentation. Hooks exist but agent bypasses by using Read tool instead. Consider: (1) PostToolUse hook that detects approval gate context without render-diff invocation, (2) Move render-diff to be ONLY way to get diff content.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-015",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-24T14:34:30-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-24T14:46:09-05:00",
       "related_mistakes": [
         "M211",
         "M231",
