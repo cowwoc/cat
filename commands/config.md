@@ -159,8 +159,10 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {contextLimit}k / {targetContextUsage}%"
   - label: "🐱 CAT Behavior"
     description: "Currently: {trust} · {verify} · {curiosity} · {patience}"
-  - label: "🧹 Cleanup / 📊 Gates"
+  - label: "🧹 Cleanup"
     description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
+  - label: "📊 Version Gates"
+    description: "Entry/exit conditions for versions"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
@@ -224,6 +226,8 @@ Then AskUserQuestion:
     description: "Currently: {curiosity || 'low'}"
   - label: "⏳ Patience"
     description: "Currently: {patience || 'high'}"
+  - label: "← Back"
+    description: "Return to main menu"
 
 </step>
 
@@ -416,23 +420,6 @@ Map: Low → `patience: "low"`, Medium → `patience: "medium"`, High → `patie
 
 </step>
 
-<step name="cleanup-gates">
-
-**🧹 Cleanup / 📊 Version Gates:**
-
-AskUserQuestion:
-- header: "Settings"
-- question: "What would you like to configure?"
-- options (show current values in descriptions):
-  - label: "🧹 Cleanup"
-    description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
-  - label: "📊 Version Gates"
-    description: "Entry/exit conditions for versions"
-  - label: "← Back"
-    description: "Return to main menu"
-
-</step>
-
 <step name="cleanup">
 
 **🧹 Cleanup selection:**
@@ -446,7 +433,7 @@ AskUserQuestion:
   - label: "📦 Keep"
     description: "Preserve for manual inspection"
   - label: "← Back"
-    description: "Return to previous menu"
+    description: "Return to main menu"
 
 
 Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees: false`
