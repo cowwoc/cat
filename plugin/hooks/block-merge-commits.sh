@@ -6,13 +6,14 @@
 #
 # BLOCKED:
 #   - git merge --no-ff (explicitly creates merge commit)
+#   - git merge without --ff-only or --squash (might create merge commit)
 #
 # WARNED (not blocked):
-#   - git merge without --ff-only (might create merge commit if not fast-forwardable)
+#   - MERGE_HEAD exists (merge in progress - informational)
 #
 # ALLOWED:
 #   - git merge --ff-only (only fast-forward, fails if not possible)
-#   - git merge --ff (default, but creates merge commit if not fast-forwardable)
+#   - git merge --squash (creates single commit, no merge commit)
 #
 # See: Learning M047 - use ff-merge to maintain linear history
 
@@ -22,6 +23,19 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 # Source the CAT hook library for consistent messaging
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/json-parser.sh"
+
+# Check if MERGE_HEAD exists (merge in progress)
+if git rev-parse -q --verify MERGE_HEAD > /dev/null 2>&1; then
+    cat >&2 <<EOF
+⚠️  WARNING: Merge in progress (MERGE_HEAD exists)
+
+This project uses linear history (--ff-only merges).
+If main has diverged from your branch:
+  1. Abort: git merge --abort
+  2. Rebase: /cat:git-rebase
+  3. Then merge: git merge --ff-only <branch>
+EOF
+fi
 
 # Read tool input from stdin (Claude Code passes JSON via stdin)
 INPUT=""
@@ -64,21 +78,23 @@ Or use the \`/cat:git-merge-linear\` skill which handles this correctly.
     exit 0
 fi
 
-# WARN: git merge without --ff-only (might create merge commit)
-# Only warn if neither --ff-only nor --squash is present
+# BLOCK: git merge without --ff-only or --squash (might create merge commit)
 if ! echo "$COMMAND" | grep -qE '\-\-ff-only|\-\-squash'; then
-    # Output warning to stderr but allow command to proceed
-    cat >&2 <<EOF
-⚠️  WARNING: git merge without --ff-only may create merge commits
+    output_hook_block "
+**BLOCKED: git merge without --ff-only may create merge commits**
 
-Consider using: git merge --ff-only <branch>
-This will fail if a fast-forward merge isn't possible,
-preventing accidental merge commits.
+Linear history is required. Use one of:
+- \`git merge --ff-only <branch>\` - Fast-forward only, fails if not possible
+- \`git merge --squash <branch>\` - Squash commits into one
+- \`git rebase <branch>\` - Rebase for linear history
 
-Or use /cat:git-merge-linear skill.
-EOF
+Or use the \`/cat:git-merge-linear\` skill which handles this correctly.
+
+**See**: Learning M047 - merge commits break linear history
+"
+    exit 0
 fi
 
-# Allow command
+# Allow command (has --ff-only or --squash)
 echo '{}'
 exit 0
