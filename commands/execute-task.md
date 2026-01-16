@@ -475,6 +475,56 @@ Only rule 4 requires user intervention.
 
 </deviation_rules>
 
+<plan_change_checkpoint>
+
+**MANDATORY: Announce plan changes BEFORE implementation.**
+
+If during execution you discover the plan needs modification:
+
+1. **STOP** implementation immediately
+2. **ANNOUNCE** the change to user with:
+   - What the original plan said
+   - What needs to change
+   - Why the change is needed
+3. **WAIT** for user acknowledgment before proceeding
+4. **DOCUMENT** the change in commit message under "Deviations from Plan"
+
+**Anti-Pattern (M034):** Changing plan silently and only mentioning it after user asks.
+
+**Examples requiring announcement:**
+- Removing a planned feature or flag
+- Adding unplanned dependencies
+- Changing the approach/architecture
+- Skipping planned tests
+
+**Examples NOT requiring announcement:**
+- Minor implementation details
+- Bug fixes discovered during implementation
+- Adding helper methods not in plan
+
+</plan_change_checkpoint>
+
+<user_review_checkpoint>
+
+**MANDATORY: User review before merge (unless yoloMode).**
+
+Before merging any work to main:
+
+1. Present complete summary of changes
+2. **WAIT** for explicit approval via AskUserQuestion
+3. Never assume approval - explicit "Approve" required
+4. If changes are made after initial review, request re-approval
+
+**Anti-Pattern (M035):** Committing and marking complete without pausing for user review.
+
+**User review includes:**
+- All files changed with diffs
+- All commits with messages
+- Token usage and compaction events
+- Any deviations from original plan
+
+</user_review_checkpoint>
+
 <commit_rules>
 
 **Per-Step Commits:**
