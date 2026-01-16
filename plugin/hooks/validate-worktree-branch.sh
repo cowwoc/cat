@@ -55,18 +55,29 @@ if $IS_WORKTREE; then
     fi
 fi
 
-# Check expected branch pattern for CAT tasks: {major}.{minor}-{task-name}
-# Only warn if current branch doesn't match expected pattern
+# Check expected branch pattern for CAT tasks: {version}-{task-name}
+# Supports: MAJOR (1), MAJOR.MINOR (1.0), MAJOR.MINOR.PATCH (1.0.0)
 if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
-    # Expected pattern: digit.digit-taskname (e.g., 1.0-implement-feature)
-    if ! echo "$CURRENT_BRANCH" | grep -qE "^[0-9]+\.[0-9]+-[a-zA-Z]"; then
-        # Only warn if this looks like it should be a task branch
-        if echo "$CURRENT_BRANCH" | grep -qE "^(task|feature|bugfix|hotfix)"; then
-            echo "NOTE: Branch naming convention"
-            echo ""
-            echo "Current branch: $CURRENT_BRANCH"
-            echo "Expected pattern: {major}.{minor}-{task-name}"
-            echo "Example: 1.0-implement-feature"
+    # Source shared version utilities
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    VERSION_UTILS="${SCRIPT_DIR}/../scripts/lib/version-utils.sh"
+
+    if [[ -f "$VERSION_UTILS" ]]; then
+        source "$VERSION_UTILS"
+
+        # Extract version part (everything before first dash followed by letter)
+        VERSION_PART="${CURRENT_BRANCH%%-[a-zA-Z]*}"
+
+        # Validate using shared function
+        if ! validate_version "$VERSION_PART"; then
+            # Only warn if this looks like it should be a task branch
+            if echo "$CURRENT_BRANCH" | grep -qE "^(task|feature|bugfix|hotfix)"; then
+                echo "NOTE: Branch naming convention"
+                echo ""
+                echo "Current branch: $CURRENT_BRANCH"
+                echo "Expected pattern: {version}-{task-name}"
+                echo "Examples: 1-task, 1.0-task, 1.0.0-task"
+            fi
         fi
     fi
 fi
