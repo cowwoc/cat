@@ -88,6 +88,13 @@ This skill uses pre-computed utilities from research_handler.py:
 |--------|---------|--------|
 | major.minor | `1.2` | `.claude/cat/issues/v1/v1.2/PLAN.md` |
 | major | `1` | `.claude/cat/issues/v1/PLAN.md` |
+| topic only | `payment-processor` | **FAIL - ask user for version** |
+
+**BLOCKING GATE (M228):** If no version number provided, use AskUserQuestion to request one:
+```
+AskUserQuestion: "Which version should this research target?"
+Options: List existing versions from .claude/cat/issues/ OR "Create new version"
+```
 
 Read the target PLAN.md to extract:
 - **Topic**: From `## Focus` or version description
@@ -97,9 +104,15 @@ Read the target PLAN.md to extract:
 PLAN_PATH=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/PLAN.md"  # or v${MAJOR}/PLAN.md for major
 ```
 
+**STATE VARIABLE (track throughout session):**
+```
+RESEARCH_PLAN_PATH="[path to PLAN.md]"  # Set here, use in update_plan step
+```
+
 Present:
 ```
 Research target: v[version]
+PLAN.md path: [RESEARCH_PLAN_PATH]
 Topic: [extracted topic]
 
 I'll spawn 9 stakeholders to research [topic] in parallel,
@@ -376,8 +389,20 @@ Do NOT wait for additional confirmation or ask "should I proceed?"
 
 <step name="update_plan">
 
+**BLOCKING GATE (M228): PLAN.md update is MANDATORY before drill-down or completion.**
+
+Verify RESEARCH_PLAN_PATH was set in identify_version step. If not set:
+1. STOP - you skipped the identify_version step
+2. Go back and ask user for version target
+3. Set RESEARCH_PLAN_PATH before continuing
+
 **ALWAYS update PLAN.md immediately after user selection, BEFORE offering drill-down.**
 
+**Verification checklist (complete before proceeding):**
+- [ ] RESEARCH_PLAN_PATH is set to a valid file path
+- [ ] File exists at RESEARCH_PLAN_PATH (or will be created)
+- [ ] Edit tool will be used to update the file
+- [ ] Update happens BEFORE offering drill-down
 
 **Update PLAN.md with ONLY the selected option's context:**
 
