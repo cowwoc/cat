@@ -12,25 +12,25 @@ with intelligent recommendations based on task characteristics and user preferen
 
 **Show choice point when ALL conditions are met:**
 - PLAN.md has the three standard approaches (Conservative/Balanced/Aggressive)
-- User's `leash` setting is `short` or `medium`
+- User's `trust` setting is `short` or `medium`
 
 **Auto-select (skip user prompt) when:**
-- User's `leash` setting is `long` (high trust, autonomous decisions)
-- For `long` leash: auto-select Balanced approach unless task risk is HIGH
+- User's `trust` setting is `long` (high trust, autonomous decisions)
+- For `long` trust: auto-select Balanced approach unless task risk is HIGH
 
-**Present choice even with long leash when:**
+**Present choice even with long trust when:**
 - Task has HIGH risk level (user should confirm)
 - Approaches have significantly different architectural implications
 
-## MANDATORY: Respect User's Leash Setting
+## MANDATORY: Respect User's Trust Setting
 
-**The agent MUST respect the user's `leash` setting which controls when to present choices.**
+**The agent MUST respect the user's `trust` setting which controls when to present choices.**
 
-- `short` leash = Present options frequently, user guides most decisions
-- `medium` leash = Present options for meaningful trade-offs only
-- `long` leash = Make autonomous decisions, only present for HIGH risk or significant architecture
+- `short` trust = Present options frequently, user guides most decisions
+- `medium` trust = Present options for meaningful trade-offs only
+- `long` trust = Make autonomous decisions, only present for HIGH risk or significant architecture
 
-**When presenting options (short/medium leash or high-risk task):**
+**When presenting options (short/medium trust or high-risk task):**
 
 If there IS a compelling technical reason to recommend one approach:
 
@@ -56,16 +56,16 @@ Would you like to:
 - Use Balanced (targeted fix without overhead)
 ```
 
-**Anti-pattern:** Auto-selecting an approach when `leash: short` or `leash: medium` without
+**Anti-pattern:** Auto-selecting an approach when `trust: short` or `trust: medium` without
 presenting the choice to the user.
 
 ## Workflow
 
-### 1. Analyze Task & Leash Setting
+### 1. Analyze Task & Trust Setting
 
 ```bash
-# Load leash setting (trust level)
-LEASH=$(jq -r '.leash // "medium"' .claude/cat/cat-config.json)
+# Load trust setting (trust level)
+TRUST=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 ```
 
 Read PLAN.md and extract:
@@ -75,7 +75,7 @@ Read PLAN.md and extract:
 
 ### 2. Determine if Choice Point Needed
 
-| Risk Level | Leash Setting | Decision |
+| Risk Level | Trust Setting | Decision |
 |------------|---------------|----------|
 | LOW/MEDIUM | `long` | Auto-select Balanced, log to STATE.md |
 | LOW/MEDIUM | `medium` | Present choice for meaningful trade-offs |
@@ -84,11 +84,11 @@ Read PLAN.md and extract:
 
 ### 3. Auto-Selection or Recommendation
 
-**If auto-selecting (long leash with non-HIGH risk):**
+**If auto-selecting (long trust with non-HIGH risk):**
 
 ```
 ✓ Approach: Balanced
-  (Auto-selected: long leash setting, routine trade-off)
+  (Auto-selected: long trust setting, routine trade-off)
 ```
 
 Update PLAN.md "Selected Approach" section and proceed to implementation.
@@ -122,7 +122,7 @@ Display with visual formatting (see display-standards.md for box standards):
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: HIGH | Tradeoff: [from PLAN.md]                        ║
 ║                                                                   ║
-║  Your leash: [leash setting]                                      ║
+║  Your trust: [trust setting]                                      ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
@@ -227,7 +227,7 @@ a comprehensive spec without re-reading the codebase.
 ║  [C] 🔍 Research first                                            ║
 ║      Analyze usage patterns before deciding                       ║
 ║                                                                   ║
-║  Your leash is "medium" - presenting options for your decision.   ║
+║  Your trust is "medium" - presenting options for your decision.   ║
 ║  Which path calls to you?                                         ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝

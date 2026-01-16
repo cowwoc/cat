@@ -205,9 +205,9 @@ STATE.md UPDATE (required in SAME commit as implementation):
 - Include STATE.md in git add before commit
 ```
 
-**Leash Setting (from cat-config.json `leash` preference, for PLANNING subagents):**
+**Trust Setting (from cat-config.json `trust` preference, for PLANNING subagents):**
 ```bash
-LEASH_PREF=$(jq -r '.leash // "medium"' .claude/cat/cat-config.json)
+TRUST_PREF=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 ```
 
 | Value | Include in Planning Prompt |
@@ -430,6 +430,7 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}
 Task tool invocation:
   description: "Execute parser task"
   subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
     Execute PLAN.md at ${TASK_PLAN}.
 
@@ -497,6 +498,7 @@ Then use the Task tool to launch the subagent:
 Task tool invocation:
   description: "Execute parser task"
   subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
     Execute task 1.2 PLAN.md.
 
@@ -515,6 +517,7 @@ Task tool invocation:
 Task tool invocation:
   description: "Implement feature X"
   subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
     Implement feature X following PLAN.md.
 

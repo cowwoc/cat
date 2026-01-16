@@ -114,8 +114,8 @@ During `/cat:init`, you choose your adventurer style:
 
 | Preference | What it Controls |
 |------------|------------------|
-| **Leash** | How much you trust CAT to make decisions autonomously |
-| **Caution** | How thoroughly CAT verifies changes before checkpoints |
+| **Trust** | How much you trust CAT to make decisions autonomously |
+| **Verify** | What verification CAT runs before checkpoints |
 | **Curiosity** | Whether CAT notices optimization opportunities beyond the task |
 | **Patience** | When CAT acts on discovered opportunities |
 
@@ -190,8 +190,8 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "leash": "medium",
-  "caution": "moderate",
+  "trust": "medium",
+  "verify": "changed",
   "curiosity": "low",
   "patience": "high"
 }
@@ -204,8 +204,8 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 | `yoloMode` | boolean | `false` | Skip all approval gates when `true` |
 | `contextLimit` | number | `200000` | Total context window size in tokens |
 | `targetContextUsage` | number | `40` | Soft limit percentage for task size |
-| `leash` | string | `medium` | How much you trust CAT to decide autonomously |
-| `caution` | string | `moderate` | Verification depth before checkpoints |
+| `trust` | string | `medium` | How much you trust CAT to decide autonomously |
+| `verify` | string | `changed` | What verification runs before checkpoints |
 | `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
 
@@ -219,15 +219,15 @@ when tasks need decomposition.
 **targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
 200K (80K tokens), CAT warns that the task may need decomposition.
 
-**leash** — How much trust you place in CAT to make decisions:
+**trust** — How much trust you place in CAT to make decisions:
 - `short` — CAT presents options frequently; you guide most decisions
 - `medium` — CAT presents options for meaningful trade-offs; handles routine choices
 - `long` — CAT decides autonomously; only presents HIGH risk or architectural choices
 
-**caution** — How thoroughly CAT verifies changes before presenting them:
-- `relaxed` — Build verification only; fastest iteration
-- `moderate` — Build + test verification; balanced confidence
-- `vigilant` — Build + test + lint; highest confidence before checkpoint
+**verify** — What verification CAT runs before presenting changes:
+- `none` — No verification; fastest iteration
+- `changed` — Verify modified file/module only; balanced confidence
+- `all` — Verify entire project; highest confidence before checkpoint
 
 **curiosity** — Whether CAT notices optimization opportunities while working:
 - `low` — Stays focused; only completes the assigned task

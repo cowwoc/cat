@@ -4,23 +4,24 @@ set -euo pipefail
 # Migration to CAT 1.0.9
 #
 # Changes:
-# - Replaces approach/stakeholderReview/refactoring with leash/caution/curiosity/patience
+# - Replaces approach/stakeholderReview/refactoring with trust/verify/curiosity/patience
+# - Renames autoCleanupWorktrees to autoRemoveWorktrees
 # - Stakeholder review is now automatically triggered based on task characteristics
 #
 # Migration mapping:
-#   approach: conservative -> leash: short, curiosity: low
-#   approach: balanced -> leash: medium, curiosity: medium
-#   approach: aggressive -> leash: long, curiosity: high
+#   approach: conservative -> trust: short, curiosity: low
+#   approach: balanced -> trust: medium, curiosity: medium
+#   approach: aggressive -> trust: long, curiosity: high
 #
-#   stakeholderReview: always -> leash: short (if not set by approach)
-#   stakeholderReview: high-risk-only -> leash: medium (if not set by approach)
-#   stakeholderReview: never -> leash: long (if not set by approach)
+#   stakeholderReview: always -> trust: short (if not set by approach)
+#   stakeholderReview: high-risk-only -> trust: medium (if not set by approach)
+#   stakeholderReview: never -> trust: long (if not set by approach)
 #
 #   refactoring: avoid -> curiosity: low, patience: high
 #   refactoring: opportunistic -> curiosity: medium, patience: medium
 #   refactoring: eager -> curiosity: high, patience: low
 #
-# New defaults: leash: medium, caution: moderate, curiosity: low, patience: high
+# New defaults: trust: medium, verify: changed, curiosity: low, patience: high
 
 # Error handler
 trap 'echo "ERROR in 1.0.9.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
@@ -35,9 +36,9 @@ if [[ ! -f "$config_file" ]]; then
     exit 1
 fi
 
-# Check if already migrated (has leash setting)
-if jq -e '.leash' "$config_file" > /dev/null 2>&1; then
-    log_migration "Already migrated (leash setting exists), skipping"
+# Check if already migrated (has trust setting)
+if jq -e '.trust' "$config_file" > /dev/null 2>&1; then
+    log_migration "Already migrated (trust setting exists), skipping"
     exit 0
 fi
 
@@ -55,34 +56,34 @@ log_migration "Old settings: approach=$approach, stakeholderReview=$stakeholder_
 
 # Determine new values based on old settings
 # Start with defaults
-leash="medium"
-caution="moderate"
+trust="medium"
+verify="changed"
 curiosity="low"
 patience="high"
 
-# Map approach -> leash + curiosity
+# Map approach -> trust + curiosity
 case "$approach" in
     conservative)
-        leash="short"
+        trust="short"
         curiosity="low"
         ;;
     balanced)
-        leash="medium"
+        trust="medium"
         curiosity="medium"
         ;;
     aggressive)
-        leash="long"
+        trust="long"
         curiosity="high"
         ;;
 esac
 
-# stakeholderReview influences leash if approach didn't set it strongly
-# Use the more conservative (shorter) leash if there's a conflict
+# stakeholderReview influences trust if approach didn't set it strongly
+# Use the more conservative (shorter) trust if there's a conflict
 case "$stakeholder_review" in
     always)
-        # If approach was aggressive but reviews were always, use medium leash
-        if [[ "$leash" == "long" ]]; then
-            leash="medium"
+        # If approach was aggressive but reviews were always, use medium trust
+        if [[ "$trust" == "long" ]]; then
+            trust="medium"
         fi
         ;;
     never)
@@ -113,25 +114,27 @@ case "$refactoring" in
         ;;
 esac
 
-log_migration "New settings: leash=$leash, caution=$caution, curiosity=$curiosity, patience=$patience"
+log_migration "New settings: trust=$trust, verify=$verify, curiosity=$curiosity, patience=$patience"
 
 # Update config file
 tmp_file="${config_file}.tmp"
-jq --arg leash "$leash" \
-   --arg caution "$caution" \
+jq --arg trust "$trust" \
+   --arg verify "$verify" \
    --arg curiosity "$curiosity" \
    --arg patience "$patience" \
    'del(.approach, .stakeholderReview, .refactoring) |
+    # Rename autoCleanupWorktrees to autoRemoveWorktrees (preserve value if exists)
+    (if has("autoCleanupWorktrees") then .autoRemoveWorktrees = .autoCleanupWorktrees | del(.autoCleanupWorktrees) else . end) |
     . + {
-        "leash": $leash,
-        "caution": $caution,
+        "trust": $trust,
+        "verify": $verify,
         "curiosity": $curiosity,
         "patience": $patience
     }' "$config_file" > "$tmp_file"
 mv "$tmp_file" "$config_file"
 
 log_success "Configuration migrated successfully"
-log_migration "  leash: $leash (trust level for CAT decisions)"
-log_migration "  caution: $caution (verification depth before commits)"
+log_migration "  trust: $trust (trust level for CAT decisions)"
+log_migration "  verify: $verify (what verification runs before commits)"
 log_migration "  curiosity: $curiosity (exploration beyond immediate task)"
 log_migration "  patience: $patience (when to act on discoveries)"
