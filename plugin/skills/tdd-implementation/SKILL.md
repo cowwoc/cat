@@ -86,7 +86,7 @@ git commit -m "test: add failing test for [feature]
 
 ## ⚠️ CHANGING EXISTING BEHAVIOR vs NEW FEATURES
 
-**CRITICAL: Do NOT create duplicate tests when changing behavior.**
+**CRITICAL: Update existing tests when changing behavior (avoid duplicates).**
 
 ### Adding NEW Feature:
 - Create a NEW test method
@@ -162,7 +162,7 @@ git commit -m "refactor: clean up [feature]
 
 ## STEP 4: VERIFY AGAINST ORIGINAL USE-CASE
 
-**⚠️ CRITICAL: Test passing ≠ bug is fixed. Don't assume your RED test captured the bug correctly.**
+**⚠️ CRITICAL: Test passing ≠ bug is fixed. Verify your RED test captured the actual bug.**
 
 ### Verification Steps:
 1. **Return to the original scenario** - The exact inputs/conditions that exposed the bug
