@@ -1380,31 +1380,56 @@
     },
     {
       "id": "M171",
-      "timestamp": "2026-01-22T12:45:00Z",
-      "category": "protocol_violation",
-      "description": "Box drawing output had misaligned right-side vertical bars due to varying content lengths without padding",
-      "root_cause": "Skills show example box output without explicit procedure: (1) collect all lines, (2) find max width, (3) pad each line, (4) then output",
+      "timestamp": "2026-01-22T03:03:12Z",
+      "category": "documentation_violation",
+      "description": "Approval gate diff used Variant 2 format instead of 4-column table format from render-diff-skill PLAN.md",
+      "root_cause": "Two conflicting diff format specs exist: workflows/work.md (Variant 2) and render-diff-skill PLAN.md (4-column table). Prevention for M170 referenced the wrong/older format.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
       "pattern_keywords": [
-        "box",
-        "alignment",
-        "padding",
-        "border",
-        "width",
-        "closed-box"
+        "diff-format",
+        "4-column-table",
+        "render-diff-skill",
+        "approval-gate",
+        "variant-2"
       ],
       "prevention_implemented": true,
       "prevention_verified": false,
-      "recurrence_of": null,
+      "recurrence_of": "M170",
       "prevention_quality": {
         "verification_type": "positive",
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "For closed-border boxes: collect all content lines first, calculate max width, pad each line to match, then output. Reference skills/box-alignment/SKILL.md."
+      "correct_behavior": "Use 4-column table format from render-diff-skill PLAN.md with box-drawing characters, line numbers, and hunk context"
+    },
+    {
+      "id": "M172",
+      "timestamp": "2026-01-22T03:11:28Z",
+      "category": "protocol_violation",
+      "description": "Referenced PLAN.md for a skill instead of the actual skill documentation (SKILL.md)",
+      "root_cause": "Used PLAN.md (task planning doc) as authoritative format spec instead of SKILL.md (skill documentation). PLAN.md describes what to build; SKILL.md describes how to use it.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "PLAN.md",
+        "SKILL.md",
+        "skill-reference",
+        "documentation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M171",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Reference SKILL.md for usage documentation, not PLAN.md. Use the skill via its script/command, not by reading the plan."
     }
   ]
 }
