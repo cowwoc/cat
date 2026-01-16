@@ -24,11 +24,31 @@ Full diff rendering library with language-aware section detection, syntax highli
 - **Tradeoff:** Over-engineering, complexity
 
 ## Acceptance Criteria
+
+### Core Functionality
 - [ ] Script reads git diff (stdin or file argument)
 - [ ] Reads terminalWidth from cat-config.json
-- [ ] Outputs variant 2 format with proper text wrapping
-- [ ] Detects section boundaries for markdown files (## headings)
-- [ ] Detects section boundaries for code files (function/class definitions)
-- [ ] Isolates changed text from unchanged context
+- [ ] Outputs variant 2 format
 - [ ] Includes file-by-file, section-by-section structure
 - [ ] Shows summary header (files, +/- lines)
+
+### Text/Prose Files (markdown, txt, license)
+- [ ] Wraps text at configured width
+- [ ] Detects section boundaries (## headings, blank line paragraphs)
+- [ ] Isolates changed phrases from unchanged context
+
+### Code Files (java, python, js, ts, sh, json, yaml)
+- [ ] Preserves original indentation exactly
+- [ ] Does NOT wrap code lines (code readability > width compliance)
+- [ ] Detects section boundaries by language:
+  - Java/JS/TS: class/function/method definitions
+  - Python: def/class definitions
+  - Shell: function definitions
+  - JSON/YAML: top-level keys
+- [ ] Shows complete changed lines (not isolated phrases)
+- [ ] Includes 2-3 lines of context around changes
+
+### File Type Detection
+- [ ] Detect file type from extension
+- [ ] Apply appropriate formatting rules per type
+- [ ] Fallback to code-style (no wrapping) for unknown types
