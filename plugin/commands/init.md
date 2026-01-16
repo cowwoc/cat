@@ -414,6 +414,96 @@ Map responses to preference values:
 
 </step>
 
+<step name="git_workflow">
+
+**Configure Git Workflow Preferences**
+
+This step captures the user's preferred git workflow through a conversational wizard.
+The answers are used to generate RFC 2119-formatted rules in PROJECT.md.
+
+**Step 1: Ask about branching strategy**
+
+AskUserQuestion: header="Branching Strategy", question="How do you organize your git branches?", options=[
+  "Main-only (Recommended for small projects)" - All work happens on main, no feature branches,
+  "Feature branches" - Short-lived branches for each task, merge to main when done,
+  "Version branches" - Long-lived branches for each version (v1.0, v2.0), tasks branch from version,
+  "Let me describe" - FREEFORM input for custom workflow
+]
+
+Map response to BRANCHING_STRATEGY:
+- "Main-only" -> "main-only"
+- "Feature branches" -> "feature"
+- "Version branches" -> "version"
+- "Let me describe" -> capture FREEFORM as CUSTOM_BRANCHING
+
+**Step 2: Ask about merge style (skip if main-only)**
+
+**If BRANCHING_STRATEGY is NOT "main-only":**
+
+AskUserQuestion: header="Merge Style", question="How do you prefer to integrate changes?", options=[
+  "Rebase + fast-forward (Recommended)" - Linear history, no merge commits,
+  "Merge commits" - Non-linear history, explicit merge points,
+  "Squash merge" - Each branch becomes single commit on target branch
+]
+
+Map response to MERGE_STYLE:
+- "Rebase + fast-forward" -> "fast-forward"
+- "Merge commits" -> "merge-commit"
+- "Squash merge" -> "squash"
+
+**If BRANCHING_STRATEGY is "main-only":**
+- Set MERGE_STYLE = "direct" (commits directly to main)
+
+**Step 3: Ask about commit squashing preference**
+
+AskUserQuestion: header="Commit Squashing", question="Before merging a branch, how should commits be handled?", options=[
+  "Squash by type (Recommended)" - Group commits by type (feature:, bugfix:, etc.),
+  "Single commit" - Squash all into one commit,
+  "Keep all commits" - Preserve complete commit history,
+  "Let me describe" - FREEFORM for custom squash rules
+]
+
+Map response to SQUASH_POLICY:
+- "Squash by type" -> "by-type"
+- "Single commit" -> "single"
+- "Keep all commits" -> "keep-all"
+- "Let me describe" -> capture FREEFORM as CUSTOM_SQUASH
+
+**Step 4: Iterative clarification loop**
+
+**Synthesize understanding based on captured preferences:**
+
+Generate a summary of the captured workflow:
+
+```
+Based on your answers, here's my understanding of your git workflow:
+
+**Branching:** {BRANCHING_STRATEGY description}
+**Merge Style:** {MERGE_STYLE description}
+**Squashing:** {SQUASH_POLICY description}
+```
+
+**Confirm understanding:**
+
+AskUserQuestion: header="Confirm Workflow", question="Did I understand your workflow correctly?", options=[
+  "Yes, that's correct" - Proceed to config step,
+  "No, let me clarify" - FREEFORM to provide corrections
+]
+
+**If "No, let me clarify":**
+- Capture clarification
+- Update understanding
+- Re-present synthesis
+- Loop until user confirms "Yes, that's correct"
+
+**Store captured values for config step:**
+- GIT_BRANCHING_STRATEGY
+- GIT_MERGE_STYLE
+- GIT_SQUASH_POLICY
+- GIT_CUSTOM_NOTES (if any FREEFORM input was provided)
+
+</step>
+
 <step name="config">
 
 Get plugin version for config:
@@ -428,8 +518,224 @@ Create `.claude/cat/cat-config.json`:
   "trust": "[low|medium|high]",
   "verify": "changed",
   "curiosity": "[low|medium|high]",
-  "patience": "[high|medium|low]"
+  "patience": "[high|medium|low]",
+  "gitWorkflow": {
+    "branchingStrategy": "[main-only|feature|version]",
+    "mergeStyle": "[direct|fast-forward|merge-commit|squash]",
+    "squashPolicy": "[by-type|single|keep-all]"
+  }
 }
+```
+
+**Generate Git Workflow section for PROJECT.md:**
+
+Based on the values captured in the git_workflow step, generate the Git Workflow section using
+RFC 2119 terminology (MUST, SHOULD, MAY).
+
+**Branching Strategy rules by type:**
+
+**If GIT_BRANCHING_STRATEGY is "main-only":**
+```markdown
+## Git Workflow
+
+### Branching Strategy
+
+| Branch Type | Pattern | Purpose |
+|-------------|---------|---------|
+| Main | `main` | All development happens here |
+
+**Rules:**
+- All commits MUST go directly to `main`
+- Feature branches SHOULD NOT be created
+- Long-running branches MUST NOT exist
+```
+
+**If GIT_BRANCHING_STRATEGY is "feature":**
+```markdown
+## Git Workflow
+
+### Branching Strategy
+
+| Branch Type | Pattern | Purpose |
+|-------------|---------|---------|
+| Main | `main` | Production-ready code |
+| Task | `{major}.{minor}-{task-name}` | Individual task work |
+
+**Rules:**
+- Task branches MUST be created from `main`
+- Task branches MUST be short-lived (merge within days, not weeks)
+- Task branches MUST be deleted after merge
+- Direct commits to `main` SHOULD be avoided
+```
+
+**If GIT_BRANCHING_STRATEGY is "version":**
+```markdown
+## Git Workflow
+
+### Branching Strategy
+
+| Branch Type | Pattern | Purpose |
+|-------------|---------|---------|
+| Main | `main` | Latest stable release |
+| Version | `v{major}.{minor}` | Long-lived development branches |
+| Task | `{major}.{minor}-{task-name}` | Individual task work |
+
+**Rules:**
+- Version branches MUST be created from `main` when starting a new version
+- Task branches MUST be created from their parent version branch
+- Task branches MUST merge back to their parent version branch
+- Version branches SHOULD merge to `main` only when version is complete
+- Direct commits to version branches SHOULD be avoided
+```
+
+**Merge Policy rules by type:**
+
+**If GIT_MERGE_STYLE is "direct":**
+```markdown
+### Merge Policy
+
+**Pre-merge requirements:**
+- Code MUST be tested before committing
+- Commit messages MUST follow project conventions
+
+**Merge method:**
+- Direct commits to `main` (no branches to merge)
+```
+
+**If GIT_MERGE_STYLE is "fast-forward":**
+```markdown
+### Merge Policy
+
+**Pre-merge requirements:**
+- Branch MUST be rebased onto target branch
+- All conflicts MUST be resolved before merge
+- CI checks SHOULD pass (if configured)
+
+**Merge method:**
+- MUST use fast-forward merge (`git merge --ff-only`)
+- Merge commits MUST NOT be created
+- Linear history MUST be maintained
+```
+
+**If GIT_MERGE_STYLE is "merge-commit":**
+```markdown
+### Merge Policy
+
+**Pre-merge requirements:**
+- Branch MAY have diverged from target
+- All conflicts MUST be resolved during merge
+
+**Merge method:**
+- MUST use merge commits (`git merge --no-ff`)
+- Merge commits SHOULD have descriptive messages
+- Branch history SHOULD be preserved
+```
+
+**If GIT_MERGE_STYLE is "squash":**
+```markdown
+### Merge Policy
+
+**Pre-merge requirements:**
+- Branch changes MUST be ready for single-commit summary
+- Commit message MUST describe all changes
+
+**Merge method:**
+- MUST use squash merge (`git merge --squash`)
+- All branch commits become one commit on target
+- Original commits MAY be lost from history
+```
+
+**Squash Policy rules by type:**
+
+**If GIT_SQUASH_POLICY is "by-type":**
+```markdown
+### Squash Policy
+
+**When:** Before merging branch to target
+**Strategy:** Group commits by type prefix
+
+**Rules:**
+- Implementation commits (feature:, bugfix:, refactor:) MUST be squashed together
+- Infrastructure commits (config:, docs:) SHOULD be squashed separately
+- Planning commits (planning:) SHOULD be included with implementation
+
+**Example:**
+```
+Before:
+- feature: add login form
+- feature: add validation
+- bugfix: fix button alignment
+- config: update dependencies
+
+After:
+- feature: add login form with validation and alignment fix
+- config: update dependencies
+```
+```
+
+**If GIT_SQUASH_POLICY is "single":**
+```markdown
+### Squash Policy
+
+**When:** Before merging branch to target
+**Strategy:** Squash all commits into one
+
+**Rules:**
+- All commits MUST be squashed into a single commit
+- Final commit message MUST summarize all changes
+- Individual commit messages MAY be preserved in body
+
+**Example:**
+```
+Before:
+- feature: add login form
+- feature: add validation
+- bugfix: fix button alignment
+
+After:
+- feature: add complete login functionality
+```
+```
+
+**If GIT_SQUASH_POLICY is "keep-all":**
+```markdown
+### Squash Policy
+
+**When:** N/A - commits preserved as-is
+**Strategy:** Keep all commits
+
+**Rules:**
+- Commits MUST NOT be squashed
+- Each commit SHOULD be atomic and meaningful
+- Commit history MUST be preserved through merge
+
+**Note:** This policy works best with merge-commit merge style.
+```
+
+**Add Commit Format section:**
+
+```markdown
+### Commit Format
+
+**Pattern:** `{type}: {description}`
+
+**Valid types:** feature, bugfix, test, refactor, performance, docs, style, config, planning
+
+**Rules:**
+- Commit type prefix MUST be lowercase
+- Description MUST be imperative mood ("add", not "added")
+- Description MUST NOT exceed 72 characters
+- Body MAY provide additional context
+- Task ID footer SHOULD be included for CAT tasks
+```
+
+**If GIT_CUSTOM_NOTES exists:**
+
+Append after commit format:
+```markdown
+### Custom Notes
+
+{GIT_CUSTOM_NOTES content}
 ```
 
 Append to PROJECT.md (after Key Decisions):
