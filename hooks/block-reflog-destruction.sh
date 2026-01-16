@@ -112,5 +112,33 @@ To bypass this block, acknowledge the risk by running the command with a comment
     exit 0
 fi
 
+# Check for deletion of .git/refs/original (filter-branch backup)
+if echo "$COMMAND" | grep -qE 'rm\s+(-rf?|--recursive)?\s+.*\.git/refs/original'; then
+    output_hook_block "
+**BLOCKED: Deletion of filter-branch backup detected**
+
+You're attempting to run:
+  $COMMAND
+
+The .git/refs/original/ directory is created by git filter-branch as a SAFETY BACKUP.
+It contains references to all original commits before they were rewritten.
+
+**Why this is dangerous:**
+If the filter-branch operation introduced problems (wrong commits removed,
+incorrect message rewriting, etc.), you can recover using:
+  git reset --hard refs/original/refs/heads/main
+
+Once you delete .git/refs/original/, this recovery option is GONE FOREVER.
+
+**RECOMMENDED APPROACH:**
+1. WAIT until you've verified filter-branch worked correctly
+2. Check build passes, tests pass, history looks correct
+3. Only delete after explicit user confirmation
+
+To bypass this block, the user must EXPLICITLY request deletion of refs/original.
+"
+    exit 0
+fi
+
 # No dangerous cleanup commands detected
 exit 0
