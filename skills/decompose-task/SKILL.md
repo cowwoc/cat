@@ -393,6 +393,34 @@ update_parent_state "decomposed" "1.2a,1.2b,1.2c"
 update_orchestration_plan
 ```
 
+### Distinguish runtime dependencies from extraction dependencies
+
+For code extraction/refactoring tasks, runtime method calls are NOT task dependencies.
+
+```yaml
+# ❌ Confusing runtime calls with task dependencies
+# "parseUnary calls parsePostfix, so extract-unary must run before extract-postfix"
+subtasks:
+  extract-unary: []
+  extract-postfix: [extract-unary]  # Wrong! Just copying code, not executing it
+
+# ✅ Extraction tasks that write to different sections can run in parallel
+# Methods call each other at RUNTIME, but extraction is just copying text
+subtasks:
+  extract-unary: [setup-interface]      # Both depend on interface setup
+  extract-postfix: [setup-interface]    # Both can run concurrently
+
+# Key insight: "Does method A call method B?" is irrelevant for extraction order.
+# Ask instead: "Do both tasks write to the same file section?"
+# If writing to different sections of the same file → can parallelize
+# Only the final integration task depends on all extractions completing
+```
+
+**Dependency analysis questions:**
+1. Does task B need OUTPUT from task A? (Real dependency)
+2. Does task B just reference CODE that task A also references? (Not a dependency)
+3. Are both tasks copying different methods to the same target file? (Parallelizable with merge)
+
 ## Related Skills
 
 - `cat:token-report` - Triggers decomposition decisions
