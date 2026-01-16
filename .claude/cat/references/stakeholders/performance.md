@@ -24,11 +24,13 @@ Evaluate implementation against these performance criteria:
 
 ## Performance Red Flags
 
-Automatically flag:
+Automatically flag (language-agnostic):
 - Nested loops over collections (potential O(n²))
-- String concatenation with `+` in loops
-- `new` keyword inside loops for immutable objects
-- Missing `final` on fields that should be cached
+- String building in loops without buffer/builder pattern
+- Object allocations in tight loops for immutable values
+- Missing memoization for expensive repeated computations
+
+**Note**: See `lang/{language}.md` for language-specific red flags.
 
 ## Review Output Format
 

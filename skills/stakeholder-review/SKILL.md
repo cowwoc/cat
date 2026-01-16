@@ -42,16 +42,26 @@ perspectives (architecture, security, quality, testing, performance) before user
 # Get changed files
 CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
 
-# Categorize by type
-JAVA_FILES=$(echo "$CHANGED_FILES" | grep "\.java$" || true)
-TEST_FILES=$(echo "$CHANGED_FILES" | grep -E "(Test|Spec)\.java$" || true)
-CONFIG_FILES=$(echo "$CHANGED_FILES" | grep -E "\.(json|yaml|yml|xml|properties)$" || true)
+# Detect primary language from file extensions
+PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.')
+# Maps: java, py, ts, js, go, rs, etc.
+
+# Categorize by type (language-agnostic patterns)
+SOURCE_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(java|py|ts|js|go|rs|c|cpp|cs)$' || true)
+TEST_FILES=$(echo "$CHANGED_FILES" | grep -E '(Test|Spec|_test|_spec)\.' || true)
+CONFIG_FILES=$(echo "$CHANGED_FILES" | grep -E '\.(json|yaml|yml|xml|properties|toml)$' || true)
+
+# Check for language supplement
+LANG_SUPPLEMENT=""
+if [[ -f ".claude/cat/references/stakeholders/lang/${PRIMARY_LANG}.md" ]]; then
+    LANG_SUPPLEMENT=$(cat ".claude/cat/references/stakeholders/lang/${PRIMARY_LANG}.md")
+fi
 ```
 
 **Stakeholder relevance:**
-- **architect**: Always run if Java files changed
-- **security**: Always run if Java files changed
-- **quality**: Always run if Java files changed
+- **architect**: Always run if source files changed
+- **security**: Always run if source files changed
+- **quality**: Always run if source files changed
 - **tester**: Run if test files changed OR production code changed without tests
 - **performance**: Run if algorithm-heavy code changed
 
@@ -69,6 +79,9 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 ## Your Role
 {content of stakeholders/{stakeholder}.md}
 
+## Language-Specific Patterns
+{content of LANG_SUPPLEMENT if available, otherwise "No language supplement loaded."}
+
 ## Files to Review
 {list of changed files relevant to this stakeholder}
 
@@ -77,9 +90,10 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 
 ## Instructions
 1. Review the implementation against your stakeholder criteria
-2. Identify concerns at CRITICAL, HIGH, or MEDIUM severity
-3. Return your assessment in the specified JSON format
-4. Be specific about locations and recommendations
+2. Apply language-specific red flags from the supplement (if loaded)
+3. Identify concerns at CRITICAL, HIGH, or MEDIUM severity
+4. Return your assessment in the specified JSON format
+5. Be specific about locations and recommendations
 
 Return ONLY valid JSON matching the format in your stakeholder definition.
 ```
