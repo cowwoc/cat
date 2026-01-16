@@ -190,7 +190,7 @@ git commit --amend --no-edit
 
 ### Preserve Commit Type Boundaries When Squashing
 
-**CRITICAL: Follow commit grouping rules from [commit-types.md](../../.claude/cat/references/commit-types.md).**
+**CRITICAL: Follow commit grouping rules from [commit-types.md](../../concepts/commit-types.md).**
 
 Key rules when squashing:
 - **Task STATE.md** → same commit as implementation (M076)
