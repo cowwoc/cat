@@ -139,7 +139,7 @@ feature: add login form with validation and error handling
 - Server-side validation with descriptive error messages
 - Loading states and error display
 
-Task ID: v2.1-implement-user-auth
+Task ID: v1.1-implement-user-auth
 ```
 
 ## Commit Types (MANDATORY)
