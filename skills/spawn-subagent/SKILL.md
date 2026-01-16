@@ -51,9 +51,8 @@ prohibitions in the prompt prevents wasted effort on blocked approaches.
 
 ## Prerequisites
 
-**SESSION_ID Required**: Get the session ID from the SessionStart system-reminder in conversation context.
-Look for `Session ID: {uuid}` and extract the UUID. Substitute this value into all bash commands below
-that reference `${SESSION_ID}`.
+**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this skill.
+All bash commands below use this value directly.
 
 ## When to Use
 
@@ -267,7 +266,7 @@ If compaction occurred, the pre-compaction tokens are NOT lost - they must be
 preserved and added to post-compaction usage for accurate reporting.
 
 HOW TO MEASURE (M099 - subagents measure their own tokens):
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 cat > /tmp/token_count.jq << 'EOF'
 [.[] | select(.type == "assistant") | .message.usage | select(. != null) |
   (.input_tokens + .output_tokens)] | add // 0
@@ -406,10 +405,10 @@ Create session tracking files:
 
 ```bash
 # Write session ID to worktree for monitoring script
-echo "${SESSION_ID}" > "${WORKTREE_PATH}/.session_id"
+echo "${CLAUDE_SESSION_ID}" > "${WORKTREE_PATH}/.session_id"
 
 # Session file location (for reference)
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 ```
 
 ### 5. Launch Subagent
@@ -463,7 +462,7 @@ subagents:
     task: 1.2-implement-parser
     worktree: .worktrees/1.2-implement-parser-sub-a1b2c3d4
     branch: 1.2-implement-parser-sub-a1b2c3d4
-    session: ${SESSION_ID}
+    session: ${CLAUDE_SESSION_ID}
     spawned_at: 2026-01-10T14:30:00Z
     status: running
 ```

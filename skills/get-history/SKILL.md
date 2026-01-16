@@ -19,19 +19,10 @@ description: Access raw conversation history from Claude Code session storage fo
 
 **Location**: `/home/node/.config/projects/-workspace/{session-id}.jsonl`
 
-**Session ID Detection**:
+**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this skill.
 
-The session ID is automatically provided via the `get-session-id` skill (SessionStart hook).
-
-Look for the system reminder in context:
-```
-✅ Session ID: 88194cb6-734b-498c-ab5d-ac7c773d8b34
-```
-
-Then use it directly:
 ```bash
-SESSION_ID="88194cb6-734b-498c-ab5d-ac7c773d8b34"
-cat /home/node/.config/projects/-workspace/${SESSION_ID}.jsonl
+cat /home/node/.config/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl
 ```
 
 ### 2. Parse Conversation Structure
