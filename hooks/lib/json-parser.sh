@@ -55,7 +55,8 @@ extract_json_bool() {
     local key="$2"
 
     if $_JQ_AVAILABLE; then
-        echo "$json" | jq -r --arg k "$key" '.[$k] // empty | select(type == "boolean")' 2>/dev/null || echo ""
+        # Note: Cannot use "// empty" for booleans because false is falsey in jq
+        echo "$json" | jq -r --arg k "$key" '.[$k] | if type == "boolean" then tostring else empty end' 2>/dev/null || echo ""
         return
     fi
 
@@ -99,17 +100,27 @@ parse_hook_json() {
 
     if $_JQ_AVAILABLE; then
         # Single jq call extracts all fields efficiently
+        # NOTE: Uses SOH (0x01) placeholder for empty strings to prevent bash IFS
+        # from merging adjacent tabs (leading empty field gets dropped otherwise)
         local parsed
-        parsed=$(echo "$json" | jq -r '[
-            .hook_event_name // "",
-            .session_id // "",
-            (.message // .user_message // .prompt // ""),
-            .tool_name // "",
-            (.tool_input | if . then tostring else "" end)
-        ] | @tsv' 2>/dev/null) || parsed=""
+        parsed=$(echo "$json" | jq -r '
+            def ep: if . == "" or . == null then "\u0001" else . end;
+            [
+                ((.hook_event_name // "") | ep),
+                ((.session_id // "") | ep),
+                ((.message // .user_message // .prompt // "") | ep),
+                ((.tool_name // "") | ep),
+                ((.tool_input | if . then tostring else "" end) | ep)
+            ] | @tsv' 2>/dev/null) || parsed=""
 
         if [[ -n "$parsed" ]]; then
             IFS=$'\t' read -r HOOK_EVENT SESSION_ID USER_PROMPT TOOL_NAME TOOL_INPUT_JSON <<< "$parsed"
+            # Replace SOH placeholder back to empty string
+            HOOK_EVENT="${HOOK_EVENT//$'\x01'/}"
+            SESSION_ID="${SESSION_ID//$'\x01'/}"
+            USER_PROMPT="${USER_PROMPT//$'\x01'/}"
+            TOOL_NAME="${TOOL_NAME//$'\x01'/}"
+            TOOL_INPUT_JSON="${TOOL_INPUT_JSON//$'\x01'/}"
         fi
     else
         # Fallback: multiple extractions (less efficient)
@@ -217,7 +228,7 @@ init_hook() {
 
 # Initialize a Bash tool hook (PreToolUse/PostToolUse for Bash)
 # Usage: init_bash_hook
-# Sets: HOOK_JSON, TOOL_NAME, BASH_COMMAND
+# Sets: HOOK_JSON, TOOL_NAME, HOOK_COMMAND
 # Returns: 0 if Bash tool, 1 otherwise (caller should exit 0)
 init_bash_hook() {
     init_hook || return 1
@@ -230,12 +241,12 @@ init_bash_hook() {
 
     # Extract command from tool_input
     if $_JQ_AVAILABLE; then
-        BASH_COMMAND=$(echo "$HOOK_JSON" | jq -r '.tool_input.command // empty' 2>/dev/null) || BASH_COMMAND=""
+        HOOK_COMMAND=$(echo "$HOOK_JSON" | jq -r '.tool_input.command // empty' 2>/dev/null) || HOOK_COMMAND=""
     else
-        BASH_COMMAND=$(echo "$TOOL_INPUT_JSON" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' || true)
+        HOOK_COMMAND=$(echo "$TOOL_INPUT_JSON" | grep -o '"command"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"command"[[:space:]]*:[[:space:]]*"\([^"]*\)"/\1/' || true)
     fi
 
-    export BASH_COMMAND
+    export HOOK_COMMAND
     return 0
 }
 
