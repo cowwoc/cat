@@ -153,7 +153,7 @@ TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 SESSION_ID="<substitute-actual-uuid-from-context>"
 
 # Attempt to acquire lock
-LOCK_RESULT=$("/home/node/.config/claude/plugins/cache/claude-code-cat/cat/1.2/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
@@ -175,7 +175,7 @@ echo "Lock acquired for task: $TASK_ID"
 For operations that take more than 2 minutes, refresh the heartbeat (substitute actual SESSION_ID):
 
 ```bash
-"/home/node/.config/claude/plugins/cache/claude-code-cat/cat/1.2/scripts/task-lock.sh" heartbeat "$TASK_ID" "$SESSION_ID"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "$TASK_ID" "$SESSION_ID"
 ```
 
 </step>
@@ -563,7 +563,7 @@ git branch -d "{task-branch}" 2>/dev/null || true
 
 # Release task lock (substitute actual SESSION_ID from context)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-"/home/node/.config/claude/plugins/cache/claude-code-cat/cat/1.2/scripts/task-lock.sh" release "$TASK_ID" "$SESSION_ID"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "$SESSION_ID"
 echo "Lock released for task: $TASK_ID"
 ```
 
