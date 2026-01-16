@@ -54,3 +54,4 @@ from . import work_handler
 from . import cleanup_handler
 from . import add_handler
 from . import research_handler
+from . import render_diff_handler
