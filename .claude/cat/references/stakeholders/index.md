@@ -40,3 +40,23 @@ The review gate REJECTS if ANY stakeholder returns:
 - A stakeholder returns REJECTED status
 
 Otherwise, concerns are documented but implementation proceeds to user approval.
+
+## Language Supplements
+
+Stakeholder definitions are language-agnostic. Language-specific red flags and patterns are in:
+
+```
+lang/
+├── java.md       # Java-specific patterns (StringBuilder, final, etc.)
+├── python.md     # Python-specific (GIL, memory, etc.) [planned]
+└── typescript.md # TypeScript-specific (any, async, etc.) [planned]
+```
+
+**Loading**: When spawning stakeholder reviewers, detect the primary language from file extensions
+and include the relevant `lang/{language}.md` content in the reviewer prompt.
+
+**Detection heuristic**:
+```bash
+# Count files by extension in changed files
+PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')
+```
