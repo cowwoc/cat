@@ -3,8 +3,13 @@
 Build box lines with correct padding for terminal display.
 
 Usage:
-  build-box-lines.py [--max-width N] content1 [content2 ...]
-  echo -e "content1\ncontent2" | build-box-lines.py [--max-width N]
+  build-box-lines.py [--min-width N] content1 [content2 ...]
+  echo -e "content1\ncontent2" | build-box-lines.py [--min-width N]
+
+Options:
+  --min-width N   Minimum box width. Box expands automatically to fit content
+                  if content is wider than N. Useful for ensuring consistent
+                  widths when header text is wider than content.
 
 Output:
   JSON with computed lines ready to copy-paste into box output.
@@ -94,7 +99,8 @@ def build_border(max_width: int, is_top: bool) -> str:
 def main():
     parser = argparse.ArgumentParser(description='Build box lines with correct padding')
     parser.add_argument('contents', nargs='*', help='Content items for the box')
-    parser.add_argument('--max-width', type=int, help='Force a specific max width')
+    parser.add_argument('--min-width', type=int,
+                        help='Minimum width (box expands to fit content if wider)')
     parser.add_argument('--format', choices=['json', 'lines'], default='json',
                        help='Output format (default: json)')
     args = parser.parse_args()
@@ -115,7 +121,9 @@ def main():
 
     # Calculate widths
     widths = [(c, display_width(c)) for c in contents]
-    max_content_width = args.max_width or max(w for _, w in widths)
+    natural_max = max(w for _, w in widths)
+    # --min-width sets minimum width; always expand to fit content
+    max_content_width = max(args.min_width or 0, natural_max)
 
     # Build lines
     lines = [build_line(c, max_content_width) for c in contents]
