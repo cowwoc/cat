@@ -174,6 +174,19 @@ echo "✓ Lock acquired for task: $TASK_ID"
 - Avoids wasted exploration/planning work on locked tasks
 - Provides clear feedback about why certain tasks are unavailable
 
+**MANDATORY: Agent behavior when encountering locks (M097):**
+1. **Report** the lock exists and which session holds it
+2. **Skip** this task and try the next candidate
+3. Only mention `/cat:cleanup` if ALL tasks are locked (no alternatives)
+
+**NEVER:**
+- Investigate lock validity (commit counts, worktree state, timestamps are IRRELEVANT)
+- Label locks as "stale" based on any evidence
+- Offer to remove locks proactively
+- Question whether the lock owner is still active
+
+Locks may be held by active sessions that haven't committed yet. Only the USER decides if stale.
+
 **Entry Gate Evaluation:**
 
 For each candidate task, read the version's PLAN.md and extract the `## Gates` → `### Entry` section.
@@ -230,8 +243,9 @@ Possible reasons:
 - No tasks defined yet
 
 Use /cat:status to see current state and gate status.
-Use /cat:cleanup to remove stale locks from crashed sessions.
 Use /cat:add-task to add new tasks.
+
+If you believe locks are from crashed sessions, run /cat:cleanup.
 ```
 
 Exit command.
