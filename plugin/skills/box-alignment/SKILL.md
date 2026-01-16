@@ -11,23 +11,9 @@ Render properly-aligned box output by calculating content width and applying pad
 
 ## When to Use
 
-Use this skill when rendering any box output with closed borders (right-side `│`).
+Use this skill when rendering any box output with borders (right-side `│`).
 
-**Open-border format** (left border only) does not require this skill - no alignment needed.
-
-## Box Types
-
-### Open Border (No Alignment Needed)
-
-```
-╭─
-│ Content line 1
-│ Content line 2
-│ Longer content line here
-╰─
-```
-
-### Closed Border (Alignment Required)
+## Box Format
 
 ```
 ╭────────────────────────────╮
@@ -37,16 +23,16 @@ Use this skill when rendering any box output with closed borders (right-side `�
 ╰────────────────────────────╯
 ```
 
-Closed borders require all lines to have equal display width so right-side `│` characters align.
+Boxes require all lines to have equal display width so right-side `│` characters align.
 
 ## Procedure for Closed Borders
 
-**MANDATORY: Build a calculation table before outputting any box.**
+**MANDATORY: The table IS the output source. Build it first, then output directly from it.**
 
-Work through this procedure step-by-step. Do NOT output calculations to the user—only output the
-final box. The table is for your internal use to ensure correct alignment.
+Work through this procedure step-by-step. The table is internal work—only show the final box to the
+user.
 
-### Step 1: Build the Calculation Table (internal)
+### Step 1: Build the Table (internal) — This IS Your Output
 
 Create this table with EVERY line that will appear in the box:
 
@@ -57,7 +43,7 @@ Create this table with EVERY line that will appear in the box:
 | 3 | `Settings saved` | 14 | — | 14 | 2 |
 
 **Column definitions:**
-- **Content**: Exact text between `│ ` and ` │` (copy-paste, don't paraphrase)
+- **Content**: Exact text that will appear between `│ ` and ` │`
 - **Chars**: Count of non-emoji characters (letters, digits, spaces, punctuation)
 - **Emojis**: List each emoji with its width from SessionStart
 - **Width**: Chars + sum of emoji widths
@@ -65,42 +51,65 @@ Create this table with EVERY line that will appear in the box:
 
 **Max width: 16** (largest value in Width column)
 
-### Step 2: Verify Line Count (internal)
+### Step 2: Output Directly From Table
 
-Before proceeding, verify completeness:
-
-- Lines in table: **3**
-- Content lines in final box: **3**
-- **Match? YES** → proceed / **NO** → add missing lines to table
-
-### Step 3: Output the Box (this is the only visible output)
-
-Apply padding from the Pad column to each line:
+For each row, output: `│ ` + Content + (Pad spaces) + ` │`
 
 ```
 ╭──────────────────╮
-│ 📊 Overall: 45%  │
-│ 🏆 10/22 tasks   │
-│ Settings saved   │
+│ 📊 Overall: 45%  │   ← Row 1: Content + 0 spaces
+│ 🏆 10/22 tasks   │   ← Row 2: Content + 2 spaces
+│ Settings saved   │   ← Row 3: Content + 2 spaces
 ╰──────────────────╯
 ```
 
-**Border width:** max_width + 4 (for `│ ` prefix and ` │` suffix)
+**Border construction:**
+- Total line width: max_width + 4 (for `│ ` prefix and ` │` suffix)
+- Top/bottom dash count: max_width + 2 (between corner characters `╭` and `╮`)
 
 ---
 
-**Why use a table? (M175, M176)**
+**Why the table IS the source (M175, M176, M178)**
 
-Previous failures occurred when calculations were done "mentally" or estimated.
-The table format:
-- Forces enumeration of every line (omissions become obvious)
-- Makes width calculations systematic and precise
-- Catches errors before output, not after
+Previous failures occurred when:
+- Calculations were done "mentally" (M175, M176)
+- Table content differed from actual output (M178)
 
-The table is internal work—only output the final box to the user.
+The table is not a calculation aid—it is the single source of truth. Output is mechanically
+generated from it: take each Content value, append Pad spaces, wrap with borders.
+
+**Key insight:** If you write output that doesn't come directly from the table's Content column,
+alignment will fail. There is no "verify output matches table" step because output IS the table.
 
 **Debugging:** When extended thinking is enabled, the calculation table is visible in the thinking
 trace and can be reviewed to diagnose alignment issues.
+
+## Special Cases
+
+### Blank Lines
+
+For visual separators within a box, use an empty Content value:
+
+| # | Content | Chars | Emojis | Width | Pad |
+|---|---------|-------|--------|-------|-----|
+| 1 | `Header` | 6 | — | 6 | 0 |
+| 2 | `` | 0 | — | 0 | 6 |
+| 3 | `Footer` | 6 | — | 6 | 0 |
+
+Output: `│ ` + (max_width spaces) + ` │` for blank lines.
+
+### Nested Boxes
+
+For boxes containing inner boxes (e.g., status display with major version sections):
+
+1. **Calculate inner box width first** — determine max content width for inner box
+2. **Inner box lines become outer content** — each inner box line (including its borders) is one
+   Content entry in the outer table
+3. **Outer padding applies to entire inner lines**
+
+Example: inner box is 30 chars wide → outer table has Content entries of 30 chars each for those
+lines, plus whatever prefix/indent you want.
+
 
 ## Common Mistakes
 
@@ -132,24 +141,20 @@ Correct: 4 non-emoji chars + 🐱(2) = 6
 - Lines have similar visual length
 - There are many lines (easy to miss one)
 
-### Copy-Paste Workflow (M177)
+### Why Table-as-Source Exists (M177, M178)
 
-Use this workflow to ensure table calculations match final output:
+Previous approach: build table, then write output separately, then verify they match.
 
-1. **Write final content first** - Draft the exact text that will appear in each line
-2. **Copy-paste into table** - Select and paste each line into the Content column
-3. **Calculate from pasted content** - Count characters in the pasted strings
-4. **Output the same content** - Use the exact strings from your table in the final box
+This failed because content would diverge (e.g., table had `v1.1 (8/8)` but output had
+`v1.1: Core Rewrite (8/8)` — 11 chars longer). Verification steps were skipped or ineffective.
 
-**Why copy-paste matters:** The Content column and final output must be identical strings.
-Typing similar content separately risks differences (e.g., `v1.1: (8/8)` vs
-`v1.1: Core Rewrite (8/8)` → 11-character width difference).
+Current approach makes divergence impossible: the table Content column IS the output.
 
 ## Example with Emojis
 
 Given SessionStart widths: `🐱=2, ✅=2`
 
-**Build the calculation table (internal work, not shown to user):**
+**Step 1: Build the table (this IS the output source):**
 
 | # | Content | Chars | Emojis | Width | Pad |
 |---|---------|-------|--------|-------|-----|
@@ -159,19 +164,13 @@ Given SessionStart widths: `🐱=2, ✅=2`
 
 **Max width: 18**
 
-**Line count check:** 3 table rows, 3 box lines ✓
-
-**Output:**
+**Step 2: Output directly from table (Content + Pad spaces):**
 
 ```
 ╭────────────────────╮
-│ 🐱 CAT initialized │
-│ ✅ Trust: high     │
-│ Settings saved     │
+│ 🐱 CAT initialized │   ← Row 1 Content + 0 spaces
+│ ✅ Trust: high     │   ← Row 2 Content + 4 spaces
+│ Settings saved     │   ← Row 3 Content + 4 spaces
 ╰────────────────────╯
 ```
 
-## Recommendation
-
-**Prefer open-border format** when possible - it avoids alignment complexity entirely.
-Use closed borders only when visual containment is specifically required.
