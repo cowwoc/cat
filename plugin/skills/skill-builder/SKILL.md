@@ -1017,6 +1017,17 @@ extraction_verification:
 (ASCII vs emoji) rather than computation type. The extraction criteria are about WHAT OPERATIONS
 the skill performs (counting, arithmetic, formatting), NOT what characters appear in the output.
 
+**Anti-pattern (M203):** Acknowledging extraction is required, then overriding with case-specific
+reasoning. Common override patterns to REJECT:
+- "HOWEVER, consider that this only runs once..."
+- "BUT for this specific case, hooks are overkill..."
+- "Given the static content, we can simplify..."
+- "The complexity cost outweighs the benefit..."
+
+**If signals show extraction_required: true, the determination is FINAL.** Do not add "HOWEVER"
+exceptions. The methodology exists precisely because case-specific reasoning leads to errors.
+Frequency of execution, content type, and perceived complexity are NOT valid override reasons.
+
 **Example - Token-report skill:**
 ```yaml
 # WRONG analysis (led to M198):
