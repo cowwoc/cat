@@ -3037,6 +3037,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Complete ALL task-related changes (implementation + task STATE.md + parent STATE.md rollup) IN THE WORKTREE before merge, ensuring single squashed commit"
+    },
+    {
+      "id": "M231",
+      "timestamp": "2026-01-24T13:45:00Z",
+      "category": "protocol_violation",
+      "description": "Only showed excerpt of 115KB diff (1 file of 16), summarized rest as 'standard implementation'",
+      "root_cause": "Agent chose to summarize large diff output instead of showing full content, violating M160/M201 requirement to show diff before approval",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "diff",
+        "truncated",
+        "large output",
+        "approval gate",
+        "summarize"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When diff output is saved to file due to size, read and present the ENTIRE file content to user, never summarize or excerpt"
     }
   ]
 }
