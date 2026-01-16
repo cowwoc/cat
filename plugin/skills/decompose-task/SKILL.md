@@ -3,6 +3,12 @@ name: cat:decompose-task
 description: Split oversized task into smaller tasks with proper dependency management
 ---
 
+<execution_context>
+
+@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
+
+</execution_context>
+
 # Decompose Task
 
 ## Purpose
