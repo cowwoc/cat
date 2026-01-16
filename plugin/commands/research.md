@@ -253,6 +253,99 @@ Read the existing PLAN.md, then add or update the `## Research` section:
 
 </step>
 
+<step name="synthesize_executive_summary">
+
+**Synthesize findings into executive summary:**
+
+After aggregating stakeholder perspectives, analyze them to produce an executive summary
+with actionable options and tradeoffs.
+
+**1. Check for pre-computed templates:**
+
+Look in context for "PRE-COMPUTED RESEARCH TEMPLATES". These provide:
+- Box borders (top, bottom, divider)
+- Line format (width=74, "│ " prefix, " │" suffix)
+- Structure guidelines
+
+**2. Identify distinct approaches (reasoning):**
+
+Review all stakeholder findings and identify 2-4 distinct solution approaches.
+Each approach should be a coherent strategy that emerges from the findings.
+
+Consider patterns like:
+- Cloud-native vs self-hosted
+- Build vs buy
+- Speed-focused vs quality-focused
+- Minimal dependencies vs full framework
+
+**3. For each approach, extract:**
+
+- **Name**: Short label (e.g., "Cloud-Native Stack", "Minimal Dependencies")
+- **Description**: 1-2 sentence summary
+- **Advocates**: Which stakeholders favor this
+- **Tradeoffs**: Concerns from other stakeholders
+- **Best when**: User preferences this suits (cost/speed/simplicity/security)
+
+**4. Build executive summary using templates:**
+
+Use pre-computed templates to build the output. For each line:
+- Start with "│ "
+- Add content left-justified to 74 characters
+- End with " │"
+
+```
+{TOP_BORDER from templates}
+│ 📋 Executive Summary                                                     │
+{DIVIDER}
+│                                                                          │
+│ Approaches Identified: {count}                                           │
+│                                                                          │
+{DIVIDER}
+│ Option 1: {Name}                                                         │
+│                                                                          │
+│ Description: {1-2 sentences, wrap if needed}                             │
+│                                                                          │
+│ Advocates: {stakeholders}                                                │
+│                                                                          │
+│ Tradeoffs:                                                               │
+│   • {Stakeholder}: {concern}                                             │
+│   • {Stakeholder}: {concern}                                             │
+│                                                                          │
+│ Best when: {preference fit}                                              │
+│                                                                          │
+{DIVIDER}
+... repeat for each option ...
+{DIVIDER}
+│ ⚡ Quick Decision Guide                                                  │
+│                                                                          │
+│ If you prioritize...        Consider...                                  │
+│ ─────────────────────────────────────────                                │
+│ Speed to market             Option {X}                                   │
+│ Long-term maintainability   Option {Y}                                   │
+│ Minimal cost                Option {Z}                                   │
+│ Security compliance         Option {W}                                   │
+│                                                                          │
+{BOTTOM_BORDER from templates}
+```
+
+**5. Add to PLAN.md:**
+
+Insert executive summary at the START of the `## Research` section, before
+individual stakeholder perspectives:
+
+```markdown
+## Research
+
+### Executive Summary
+
+{rendered box from above}
+
+### Architect Perspective
+...
+```
+
+</step>
+
 <step name="done">
 
 **Present summary:**
@@ -291,5 +384,8 @@ efficiency, and stakeholder satisfaction.
 - [ ] Results aggregated into PLAN.md Research section
 - [ ] Confidence levels assigned
 - [ ] Sources documented
+- [ ] Executive summary synthesized with 2-4 options
+- [ ] Each option has name, description, advocates, tradeoffs, best-when
+- [ ] Quick decision guide maps preferences to options
 
 </success_criteria>
