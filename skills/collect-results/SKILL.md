@@ -20,6 +20,17 @@ parent task branch.
 
 ## Workflow
 
+**Progress Output (MANDATORY):**
+
+Display progress at each step using this format:
+```
+[Step N/6] Step description (P% | Xs elapsed | ~Ys remaining)
+✅ Completed: result summary
+```
+
+Steps: 1. Verify completion, 2. Extract commits, 3. Parse metrics, 4. Read work products, 5. Extract
+status, 6. Compile report
+
 ### 1. Verify Subagent Completion
 
 Check for completion marker file (fast path, no session parsing):
@@ -237,7 +248,7 @@ collection_report:
 
 ## Anti-Patterns
 
-### Do NOT collect from running subagent without cause
+### Wait for completion before collecting
 
 ```bash
 # ❌ Interrupting active work
@@ -249,7 +260,7 @@ if is_complete "${SUBAGENT}" || needs_intervention "${SUBAGENT}"; then
 fi
 ```
 
-### Do NOT ignore uncommitted changes
+### Handle uncommitted changes before proceeding
 
 ```bash
 # ❌ Proceeding with dirty worktree
@@ -263,7 +274,7 @@ if has_uncommitted_changes "${SUBAGENT}"; then
 fi
 ```
 
-### Do NOT skip metrics collection
+### Always collect full metrics
 
 ```bash
 # ❌ Only grabbing commits
@@ -277,7 +288,7 @@ collect_compaction_events "${SUBAGENT}"
 update_parent_state "${SUBAGENT}"
 ```
 
-### Do NOT lose partial progress
+### Preserve partial progress from incomplete work
 
 ```bash
 # ❌ Discarding incomplete work

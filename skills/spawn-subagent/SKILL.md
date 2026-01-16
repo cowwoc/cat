@@ -210,6 +210,17 @@ Commit:
 
 ## Workflow
 
+**Progress Output (MANDATORY):**
+
+Display progress at each step using this format:
+```
+[Step N/6] Step description (P% | Xs elapsed | ~Ys remaining)
+✅ Completed: result summary
+```
+
+Steps: 1. Generate IDs, 2. Create worktree, 3. Prepare context, 4. Configure tracking, 5. Launch
+subagent, 6. Confirm launch
+
 ### 1. Generate Subagent Identifiers
 
 ```bash
@@ -379,7 +390,7 @@ Task tool invocation:
 
 ## Anti-Patterns
 
-### Do NOT delegate decisions to subagents
+### Main agent makes all decisions before spawning
 
 ```
 # ❌ WRONG - Requires subagent to make decisions
@@ -393,7 +404,7 @@ Task prompt: |
   - All exceptions must include position information for debugging
 ```
 
-### Do NOT spawn without PLAN.md
+### Always provide concrete PLAN.md reference
 
 ```
 # ❌ WRONG - Vague instructions
@@ -405,7 +416,7 @@ Task prompt: |
   WORKING DIRECTORY: .worktrees/1.2-implement-parser-sub-a1b2c3d4
 ```
 
-### Do NOT assume subagent will infer implementation details
+### Provide explicit code examples for required changes
 
 When specific API usage or patterns are required, provide explicit before/after code examples:
 
@@ -423,7 +434,7 @@ Task prompt: |
 **Why**: Subagents optimize for passing tests/builds. Without explicit examples, they may find alternative
 solutions (e.g., @SuppressWarnings) that technically work but don't match the intended approach.
 
-### Do NOT let subagent derive test expected values from actual output
+### Require manual derivation of test expected values
 
 For parser/test tasks, include manual derivation requirement in prompt:
 
@@ -446,7 +457,7 @@ Task prompt: |
 **Why**: Subagents may use placeholder technique incorrectly - copying actual output without verification
 creates tests that pass but don't validate correctness.
 
-### Do NOT let subagent create tests that only check isSuccess()
+### Require parser tests to verify AST structure
 
 Parser tests MUST verify AST structure, not just parsing success:
 
@@ -483,7 +494,7 @@ Task prompt: |
 **Why (M062)**: Tests that only check `isSuccess()` provide false confidence - parsing can succeed
 but produce incorrect AST. The `isEqualTo(expected)` pattern catches structural errors.
 
-### Do NOT spawn dependent tasks simultaneously
+### Sequence dependent tasks (wait for completion)
 
 ```
 # ❌ WRONG - Spawning B that depends on A's output
@@ -496,7 +507,7 @@ Task tool: task-a
 Task tool: task-b  # Now safe to spawn
 ```
 
-### Do NOT forget worktree cleanup path
+### Track worktree location for cleanup
 
 ```bash
 # ❌ WRONG - No tracking of worktree location
@@ -508,7 +519,7 @@ git worktree add "${WORKTREE}"
 # Record in STATE.md for merge-subagent skill
 ```
 
-### Do NOT forget STATE.md update in implementation commits (M076/M077)
+### Include STATE.md update in implementation commits (M076/M077)
 
 Task STATE.md MUST be updated to `status: completed` in the SAME commit as implementation:
 
@@ -534,12 +545,12 @@ Task prompt: |
 **Why**: STATE.md tracks task lifecycle. Committing it separately creates incomplete history and
 violates atomic task completion (M076). Main agent prompts must include explicit STATE.md instructions.
 
-### Do NOT spawn from within a subagent worktree
+### Report back to parent agent for decomposition
 
 Subagents should not spawn further subagents. If a task needs decomposition, report back to the
 parent agent.
 
-### Do NOT let subagents make decisions based on exploration
+### Separate exploration tasks from implementation tasks
 
 Subagents CAN explore/research, but must return findings for main agent to decide - not act on them.
 
@@ -568,7 +579,7 @@ Task prompt: |
     }
 ```
 
-### Do NOT use vague success criteria
+### Provide explicit verification steps with expected output
 
 ```
 # ❌ WRONG - Subagent must judge "working correctly"
@@ -585,7 +596,7 @@ Task prompt: |
   FAIL-FAST: If any test fails, report BLOCKED with output. Do NOT fix.
 ```
 
-### Do NOT allow fallback behaviors
+### Use fail-fast (report BLOCKED, let main agent decide)
 
 ```
 # ❌ WRONG - Fallback involves decisions
