@@ -82,7 +82,7 @@ for major_dir in "$CAT_DIR"/v[0-9]*/; do
             ((local_total++)) || true
 
             case "$st" in
-                completed|done) ((local_completed++)) ;;
+                completed|done) ((local_completed++)) || true ;;
                 in-progress|active) local_inprog="$task_name" ;;
             esac
         done
@@ -192,8 +192,16 @@ done
 
 box_empty
 box_divider
-box_line "  🎯 Active: ${CURRENT_MINOR} - ${MINOR_DESC[$CURRENT_MINOR]:-}"
-box_line "  📋 Available: ${#PENDING_TASKS[@]} pending tasks"
+
+# Handle case when no active minor version (empty CURRENT_MINOR)
+if [ -n "$CURRENT_MINOR" ]; then
+    box_line "  🎯 Active: ${CURRENT_MINOR} - ${MINOR_DESC[$CURRENT_MINOR]:-}"
+    box_line "  📋 Available: ${#PENDING_TASKS[@]} pending tasks"
+else
+    box_line "  🎯 Active: None - all tasks complete or no tasks defined"
+    box_line "  📋 Available: 0 pending tasks"
+fi
+
 box_divider
 box_empty
 box_bottom
