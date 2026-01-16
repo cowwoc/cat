@@ -19,7 +19,7 @@ allowed-tools:
 Execute a task with worktree isolation, subagent orchestration, and quality gates.
 
 **Concurrent Execution:** This command uses task-level locking to prevent multiple Claude instances
-from executing the same task simultaneously. Locks use heartbeat-based leases (5-minute timeout).
+from executing the same task simultaneously. Locks persist until explicitly released.
 
 This is CAT's core execution command. It:
 1. Finds the next executable task (pending + dependencies met)
@@ -176,21 +176,14 @@ if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   echo "Run /cat:status to find other executable tasks."
   echo ""
   echo "DO NOT:"
-  echo "  - Wait for lock to expire (stale cleanup is for CRASHED sessions only)"
   echo "  - Force release the lock (will corrupt the other instance's work)"
   echo "  - Retry this task (will cause conflict)"
+  echo ""
+  echo "If session crashed, user must run /cat:cleanup to remove stale lock."
   exit 1
 fi
 
 echo "Lock acquired for task: $TASK_ID"
-```
-
-**Heartbeat during long operations:**
-
-For operations that take more than 2 minutes, refresh the heartbeat (substitute actual SESSION_ID):
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "$TASK_ID" "$SESSION_ID"
 ```
 
 </step>
@@ -466,6 +459,24 @@ Consider decomposing similar tasks in the future.
 **Approval gate (Interactive mode only):**
 
 Skip if `yoloMode: true` in config.
+
+**MANDATORY: Verify commit exists before presenting approval (M072).**
+
+Users cannot review uncommitted changes. Before presenting the approval gate:
+
+```bash
+# Verify there are commits on the task branch that aren't on main
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+COMMIT_COUNT=$(git rev-list --count ${MAIN_BRANCH}..HEAD 2>/dev/null || echo "0")
+
+if [[ "$COMMIT_COUNT" -eq 0 ]]; then
+  echo "ERROR: No commits on task branch. Commit changes before approval gate."
+  # Stage and commit all task-related changes before proceeding
+fi
+```
+
+**Anti-pattern (M072):** Presenting AskUserQuestion for approval with uncommitted changes.
+The user sees a summary but cannot `git diff` or review actual file contents.
 
 Present work summary with **mandatory token metrics**:
 
