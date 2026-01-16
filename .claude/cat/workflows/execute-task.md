@@ -105,7 +105,36 @@ Present to user:
 - Branch for review
 - Test results
 
-Wait for approval or change requests.
+**CRITICAL: Approval Protocol**
+
+1. Use AskUserQuestion with explicit "Approve" / "Reject" options
+2. Wait for explicit approval response
+3. **If user provides feedback instead of approval:**
+   - Address the feedback (fix issues, adjust changes)
+   - **RE-PRESENT the approval gate** with updated changes
+   - **Feedback is NOT approval** - do not proceed to merge
+4. Only proceed to Final Merge after explicit "Approve" response
+
+```
+Approval Gate Flow:
+
+Present changes → User responds
+                      |
+        +-------------+-------------+
+        |                           |
+    "Approve"                   Feedback/Request
+        |                           |
+        v                           v
+    Proceed to              Address feedback
+    Final Merge                     |
+                                    v
+                            RE-PRESENT approval gate
+                                    |
+                                    v
+                            (loop until Approve/Reject)
+```
+
+**Anti-pattern (M052):** Interpreting feedback as implicit approval and merging without re-confirmation.
 
 ### 9. Final Merge
 
