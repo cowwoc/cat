@@ -170,13 +170,24 @@ STATE.md UPDATE (required in SAME commit as implementation):
 - Include STATE.md in git add before commit
 ```
 
-**Refactoring Scope (from cat-config.json `refactoring` preference):**
+**Approach Style (from cat-config.json `approach` preference, for PLANNING subagents):**
+```bash
+APPROACH_PREF=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
+```
+
+| Value | Include in Planning Prompt |
+|-------|---------------------------|
+| `conservative` | "Favor the safest path. Minimize scope. Avoid architectural changes. Prefer incremental fixes." |
+| `balanced` | "Balance safety and thoroughness. Address the core issue without over-engineering." |
+| `aggressive` | "Favor comprehensive solutions. Address root causes. Prefer clean architecture over minimal changes." |
+
+**Refactoring Scope (from cat-config.json `refactoring` preference, for IMPLEMENTATION subagents):**
 ```bash
 REFACTOR_PREF=$(jq -r '.refactoring // "opportunistic"' .claude/cat/cat-config.json)
 ```
 
-| Value | Include in Prompt |
-|-------|-------------------|
+| Value | Include in Implementation Prompt |
+|-------|----------------------------------|
 | `avoid` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
 | `opportunistic` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
 | `eager` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |

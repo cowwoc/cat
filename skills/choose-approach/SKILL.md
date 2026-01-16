@@ -11,15 +11,16 @@ with intelligent recommendations based on task characteristics and user preferen
 ## When This Skill Activates
 
 **Show choice point when ALL conditions are met:**
-- PLAN.md has 2+ genuinely different approaches
-- Approaches have meaningfully different tradeoffs
-- User's stored preferences don't clearly favor one path
+- PLAN.md has the three standard approaches (Conservative/Balanced/Aggressive)
+- User preference is `balanced` (no auto-selection possible)
 
-**Auto-proceed (skip this skill) when ANY condition is true:**
-- Only one viable approach exists
-- User's style clearly indicates the path (e.g., "conservative" → safer option)
-- Approaches are similar enough that choice doesn't matter
-- Low-risk task with obvious solution
+**Auto-select (skip user prompt) when:**
+- User preference is `conservative` → auto-select Conservative approach
+- User preference is `aggressive` → auto-select Aggressive approach
+
+**Present choice even with preference when:**
+- Approaches have unusually different tradeoffs
+- HIGH risk task (user should confirm)
 
 ## Workflow
 
@@ -32,35 +33,38 @@ APPROACH=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
 
 Read PLAN.md and extract:
 - Risk level (from Risk Assessment section)
-- Available approaches (from Approach or Alternatives section)
+- The three standard approaches: Conservative, Balanced, Aggressive
 - Task complexity (estimated tokens, scope)
-- Whether task crosses module boundaries
 
 ### 2. Determine if Choice Point Needed
 
-| Task Characteristic | User Style | Decision |
-|---------------------|------------|----------|
-| Single approach | Any | Auto-proceed |
-| Low risk, simple | Any | Auto-proceed |
-| Multiple approaches | Conservative | Recommend safer, offer choice |
-| Multiple approaches | Aggressive | Recommend comprehensive, offer choice |
-| Multiple approaches | Balanced | Must ask - no clear preference |
-| High complexity | Any | Recommend research, offer choice |
+| Risk Level | User Preference | Decision |
+|------------|-----------------|----------|
+| LOW/MEDIUM | `conservative` | Auto-select Conservative, log to STATE.md |
+| LOW/MEDIUM | `aggressive` | Auto-select Aggressive, log to STATE.md |
+| LOW/MEDIUM | `balanced` | Present choice, no recommendation |
+| HIGH | Any | Present choice (user must confirm for high-risk) |
 
-### 3. Generate Recommendation
+### 3. Auto-Selection or Recommendation
 
-Based on task characteristics:
+**If auto-selecting (non-HIGH risk with clear preference):**
 
-| Task Pattern | Recommendation | Why |
-|--------------|----------------|-----|
-| High complexity / architectural | Research first | Understand before committing |
-| Mechanical / clear scope | Fast/direct path | Low risk, clear scope |
-| Cross-module dependencies | Research or comprehensive | Wider impact |
-| Bugfix with known root cause | Direct fix | Clear path |
-| Bugfix with unclear cause | Research first | Need investigation |
-| User is "conservative" | Safer/incremental | Matches preference |
-| User is "aggressive" | Comprehensive | Matches preference |
-| Genuine toss-up | No recommendation | User decides |
+```
+✓ Approach: [Conservative|Aggressive]
+  (Auto-selected: matches your "{preference}" style)
+```
+
+Update PLAN.md "Selected Approach" section and proceed to implementation.
+
+**If presenting choice:**
+
+Generate recommendation based on task characteristics:
+
+| User Preference | Recommended Option | Note |
+|-----------------|-------------------|------|
+| `conservative` | Conservative | "Matches your preference" |
+| `aggressive` | Aggressive | "Matches your preference" |
+| `balanced` | None | User decides |
 
 ### 4. Present Fork in the Road
 
@@ -72,26 +76,26 @@ Display with visual formatting:
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Task: [task-name]                                                ║
+║  Risk: [HIGH - requires confirmation]                             ║
 ║                                                                   ║
-║  [A] [emoji] [Approach Name]  [⭐ RECOMMENDED if applicable]       ║
-║      [1-line description]                                         ║
-║      [If recommended: Why: reason based on task characteristics]  ║
+║  [A] 🛡️ Conservative  [⭐ if preference matches]                   ║
+║      [scope from PLAN.md]                                         ║
+║      Risk: LOW | Tradeoff: [from PLAN.md]                         ║
 ║                                                                   ║
-║  [B] [emoji] [Approach Name]                                      ║
-║      [1-line description]                                         ║
+║  [B] ⚖️ Balanced                                                   ║
+║      [scope from PLAN.md]                                         ║
+║      Risk: MEDIUM | Tradeoff: [from PLAN.md]                      ║
 ║                                                                   ║
-║  [C] 🔍 Research first                                            ║
-║      Analyze the codebase before committing                       ║
+║  [C] ⚔️ Aggressive  [⭐ if preference matches]                      ║
+║      [scope from PLAN.md]                                         ║
+║      Risk: HIGH | Tradeoff: [from PLAN.md]                        ║
 ║                                                                   ║
-║  [footer based on situation]                                      ║
+║  Your style: [preference]                                         ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
 
-**Footer variations:**
-- If recommendation exists: blank (recommendation speaks for itself)
-- If toss-up: "Your project style is '[style]' - either fits. Which path calls to you?"
-- If no preference stored: "No style preference set. Use /cat:update-preferences to set one."
+Use AskUserQuestion with options: "Conservative", "Balanced", "Aggressive"
 
 ### 5. Record Choice
 
