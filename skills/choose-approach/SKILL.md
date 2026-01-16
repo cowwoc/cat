@@ -112,7 +112,7 @@ Generate recommendation based on task characteristics:
 
 ### 4. Present Fork in the Road
 
-Display with visual formatting (see progress-display.md for box standards):
+Display with visual formatting (see display-standards.md for box standards):
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
@@ -122,7 +122,7 @@ Display with visual formatting (see progress-display.md for box standards):
 ║  Task: [task-name]                                                ║
 ║  Risk: [HIGH - requires confirmation]                             ║
 ║                                                                   ║
-║  [A] 🛡️ Conservative  [⭐ if preference matches]                   ║
+║  [A] 🛡️ Conservative  [⭐ if preference matches]                  ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: LOW | Tradeoff: [from PLAN.md]                         ║
 ║                                                                   ║
@@ -184,7 +184,7 @@ a comprehensive spec without re-reading the codebase.
 ║                                                                   ║
 ║  Task: implement-incremental-parsing                              ║
 ║                                                                   ║
-║  [A] 🏗️ Full implementation                                        ║
+║  [A] 🏗️ Full implementation                                       ║
 ║      Build complete solution upfront                              ║
 ║                                                                   ║
 ║  [B] 📦 Incremental approach                                      ║
@@ -210,7 +210,7 @@ a comprehensive spec without re-reading the codebase.
 ║      Find-and-replace across codebase                             ║
 ║      Why: Mechanical change, low risk, clear scope                ║
 ║                                                                   ║
-║  [B] 🏗️ Refactor with deprecation                                  ║
+║  [B] 🏗️ Refactor with deprecation                                 ║
 ║      Add new names, deprecate old, migrate gradually              ║
 ║                                                                   ║
 ║  [C] 🔍 Research first                                            ║
@@ -228,7 +228,7 @@ a comprehensive spec without re-reading the codebase.
 ║                                                                   ║
 ║  Task: split-parser-into-multiple-classes                         ║
 ║                                                                   ║
-║  [A] 🏗️ Interface-based extraction                                 ║
+║  [A] 🏗️ Interface-based extraction                                ║
 ║      Cleaner abstraction, more upfront work                       ║
 ║      Best for: Long-term maintainability                          ║
 ║                                                                   ║
