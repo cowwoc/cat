@@ -68,11 +68,16 @@ if [[ -n "$TYPE" ]] && ! echo "$TYPE" | grep -qE "^($VALID_TYPES)$"; then
     exit 0
 fi
 
-# Check for docs: used on Claude-facing files (M089, M112)
+# Check for docs: used on Claude-facing files (M089, M112, M156)
 # Claude-facing files should use config:, not docs:
 if [[ "$TYPE" == "docs" ]]; then
-    # Get staged files
+    # Get staged files - but note: for "git add X && git commit", the add hasn't run yet!
+    # So also extract files from git add commands in the same command string (M156)
     STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+
+    # Extract files from "git add" in the command (handles "git add X && git commit")
+    ADD_FILES=$(echo "$COMMAND" | grep -oE 'git add [^&|;]+' | sed 's/git add //' | tr ' ' '\n' || echo "")
+    STAGED=$(printf '%s\n%s' "$STAGED" "$ADD_FILES")
 
     # Claude-facing file patterns (should use config:, not docs:)
     CLAUDE_FACING_PATTERNS=(
@@ -96,10 +101,12 @@ if [[ "$TYPE" == "docs" ]]; then
     done
 fi
 
-# Check for config: used on actual source code (M134)
+# Check for config: used on actual source code (M134, M156)
 # Source code changes should use feature:, bugfix:, refactor:, etc.
 if [[ "$TYPE" == "config" ]]; then
     STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+    ADD_FILES=$(echo "$COMMAND" | grep -oE 'git add [^&|;]+' | sed 's/git add //' | tr ' ' '\n' || echo "")
+    STAGED=$(printf '%s\n%s' "$STAGED" "$ADD_FILES")
 
     # Source code patterns that should NOT use config:
     SOURCE_PATTERNS=(
@@ -128,11 +135,13 @@ if [[ "$TYPE" == "config" ]]; then
     done
 fi
 
-# Check for planning: vs config: in .claude/cat/ (M133)
+# Check for planning: vs config: in .claude/cat/ (M133, M156)
 # .claude/cat/v*/ planning files can use planning: or config:
 # Other .claude/cat/ files should use config:
 if [[ "$TYPE" == "planning" ]]; then
     STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+    ADD_FILES=$(echo "$COMMAND" | grep -oE 'git add [^&|;]+' | sed 's/git add //' | tr ' ' '\n' || echo "")
+    STAGED=$(printf '%s\n%s' "$STAGED" "$ADD_FILES")
 
     # planning: is only valid for version planning files
     if ! echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
