@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- shrink-doc-token-metrics
 - batch-finalization-subagent
 - rename-stakeholders
 - rename-task-to-issue
