@@ -1,19 +1,12 @@
-#!/bin/bash
-set -euo pipefail
+"""
+Critical thinking reminder handler.
 
-# Error handler - output helpful message to stderr on failure
-trap 'echo "ERROR in critical-thinking.sh at line $LINENO: Command failed: $BASH_COMMAND" >&2; exit 1' ERR
+Always injects the critical thinking requirements reminder.
+"""
 
-# Critical Thinking Hook
-# This hook ensures Claude applies critical thinking to all user prompts
-# by challenging assumptions and providing substantive technical analysis
+from . import register_handler
 
-# The hook always triggers to enforce critical thinking requirements
-# No need to check transcript history - we want this behavior consistently
-
-cat <<'EOF'
-<system-reminder>
-## 🧠 CRITICAL THINKING REQUIREMENTS
+CRITICAL_THINKING_REMINDER = """## 🧠 CRITICAL THINKING REQUIREMENTS
 
 **MANDATORY**: Apply evidence-based critical thinking
 - FIRST gather evidence through investigation, testing, or research
@@ -30,6 +23,16 @@ Use: "That approach addresses the immediate issue. Based on testing X, I can con
 Instead of: "You're absolutely right"
 Use: "The core logic is sound. My investigation shows X evidence supporting this. However, we should also consider scenario Y where this might need adjustment."
 
-**APPLY TO CURRENT PROMPT**: Gather evidence first, then provide critical analysis based on that evidence.
-</system-reminder>
-EOF
+**APPLY TO CURRENT PROMPT**: Gather evidence first, then provide critical analysis based on that evidence."""
+
+
+class CriticalThinkingHandler:
+    """Always inject critical thinking reminder."""
+
+    def check(self, prompt: str, session_id: str) -> str | None:
+        """Always return the critical thinking reminder."""
+        return CRITICAL_THINKING_REMINDER
+
+
+# Register handler
+register_handler(CriticalThinkingHandler())
