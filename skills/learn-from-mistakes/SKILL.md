@@ -22,6 +22,32 @@ context-related failure patterns and recommend preventive measures including ear
 
 ## Workflow
 
+### 0. Verify Event Sequence (MANDATORY)
+
+**CRITICAL: Do NOT rely on memory for root cause analysis.**
+
+Before analyzing, verify the actual event sequence using get-history:
+
+```bash
+# Get conversation history for accurate sequence
+/cat:get-history
+
+# Look for:
+# - When was the relevant instruction/plan stated?
+# - What actions happened in what order?
+# - Were there any user corrections or feedback?
+# - What was the actual trigger for the mistake?
+```
+
+**Anti-Pattern (M037):** Performing root cause analysis based on memory without
+verifying via get-history. Memory is unreliable, especially about:
+- Causation (what caused what)
+- Timing (what happened when)
+- Attribution (who said/did what)
+
+**If get-history is unavailable:** Document that analysis is based on current
+context only and may be incomplete.
+
 ### 1. Document the Mistake
 
 ```yaml
@@ -267,7 +293,30 @@ Go back to step 7 and find a code/config/documentation fix.
 
 **File:** `.claude/cat/retrospectives/mistakes.json`
 
-**CRITICAL PATH CHECK**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
+**CRITICAL PATH CHECKS**:
+
+1. **Directory path**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
+
+2. **prevention_path format (M040)**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative paths:
+   ```yaml
+   # INVALID - relative paths break when cwd changes
+   prevention_path: ".claude/hooks/my-hook.sh"
+   prevention_path: "hooks/my-hook.sh"
+
+   # VALID - absolute paths work from any directory
+   prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/my-hook.sh"
+   prevention_path: "/workspace/cat/skills/my-skill/SKILL.md"
+   ```
+
+3. **Plugin source vs cache (M041)**: When fixing CAT plugin files, edit SOURCE not CACHE:
+   ```yaml
+   # WRONG - edits lost on plugin update
+   ~/.config/claude/plugins/cache/claude-code-cat/cat/1.1/skills/...
+
+   # CORRECT - edit the source repository
+   /workspace/cat/skills/...  # or wherever CAT source is cloned
+   ```
+
 If files exist at wrong location, migrate them first:
 
 ```bash
