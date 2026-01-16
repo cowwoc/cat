@@ -1,0 +1,25 @@
+[
+  {
+    "id": "M001",
+    "timestamp": "2026-01-13T04:30:00Z",
+    "category": "protocol_violation",
+    "description": "Executed bulk shrink-doc operation in main agent instead of spawning subagent",
+    "root_cause": "shrink-doc skill lacked guidance on subagent usage for bulk file operations",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/cat/skills/shrink-doc/SKILL.md",
+    "pattern_keywords": [
+      "shrink-doc",
+      "subagent",
+      "bulk-operation",
+      "main-agent"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "For 6+ files, ALWAYS spawn subagent. Main agent only for single file shrinking."
+  }
+]
