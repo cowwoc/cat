@@ -22,7 +22,7 @@ measures including earlier decomposition.
 
 ## Workflow
 
-### 0. Verify Event Sequence (MANDATORY)
+### 1. Verify Event Sequence (MANDATORY)
 
 **CRITICAL: Do NOT rely on memory for root cause analysis.**
 
@@ -38,7 +38,7 @@ Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
-### 1. Document the Mistake
+### 2. Document the Mistake
 
 ```yaml
 mistake:
@@ -51,7 +51,7 @@ mistake:
     All tests using operator precedence failing. Required complete rewrite.
 ```
 
-### 2. Gather Context Metrics
+### 3. Gather Context Metrics
 
 **CAT-specific: Always collect token data**
 
@@ -66,7 +66,7 @@ MESSAGE_COUNT=$(jq -s '[.[] | select(.type == "assistant")] | length' "${SESSION
 SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 ```
 
-### 3. Perform Root Cause Analysis
+### 4. Perform Root Cause Analysis
 
 **A/B TEST IN PROGRESS** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
 
@@ -228,7 +228,7 @@ rca_method: "C"
 }
 ```
 
-### 4. Check for Context Degradation Patterns
+### 5. Check for Context Degradation Patterns
 
 **CAT-specific analysis checklist:**
 
@@ -248,7 +248,7 @@ context_degradation_analysis:
   confidence: 0.85
 ```
 
-### 5. Identify Prevention Level
+### 6. Identify Prevention Level
 
 **Choose the strongest prevention level that addresses the root cause:**
 
@@ -288,7 +288,7 @@ prevention_hierarchy:
 
 **Key principle:** Lower level = stronger prevention. Always prefer level 1-3 over level 5-7.
 
-### 6. Evaluate Prevention Quality
+### 7. Evaluate Prevention Quality
 
 **BEFORE implementing, verify the prevention is robust:**
 
@@ -326,7 +326,7 @@ prevention_quality_check:
 
 **Decision gate:** If fragility is HIGH, redesign the prevention before implementing.
 
-### 6b. Check If Prevention Already Exists (MANDATORY)
+### 8. Check If Prevention Already Exists (MANDATORY)
 
 **CRITICAL: If prevention already exists, it FAILED and MUST be replaced with stronger prevention.**
 
@@ -391,7 +391,7 @@ action: |
 
 **If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
 
-### 7. Implement Prevention
+### 9. Implement Prevention
 
 **MANDATORY: Take concrete action. Prevention without action changes nothing.**
 
@@ -432,7 +432,7 @@ prevention_action:
         Each milestone = potential decomposition point.
 ```
 
-### 8. Verify Prevention Works
+### 10. Verify Prevention Works
 
 ```yaml
 verification:
@@ -443,7 +443,7 @@ verification:
     - Original mistake type does not recur
 ```
 
-### 9. Record Learning
+### 11. Record Learning
 
 **MANDATORY: Persist learning to file, not just context.**
 
@@ -469,7 +469,7 @@ prevention_path_validation:
 ```
 
 **If you cannot identify a real file to change, you have NOT implemented prevention.**
-Go back to step 7 and find a code/config/documentation fix.
+Go back to step 9 and find a code/config/documentation fix.
 
 **File:** `.claude/cat/retrospectives/mistakes.json`
 
@@ -595,7 +595,7 @@ jq --argjson new '{...new entry...}' '. += [$new]' \
   && mv .claude/cat/retrospectives/mistakes.json.tmp .claude/cat/retrospectives/mistakes.json
 ```
 
-### 10. Update Retrospective Counter and Commit
+### 12. Update Retrospective Counter and Commit
 
 **MANDATORY: Update counter and commit BOTH files together.**
 

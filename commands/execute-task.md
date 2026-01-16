@@ -43,29 +43,23 @@ This is CAT's core execution command. It:
 
 **MANDATORY: Display progress at each major step.**
 
-This workflow has 14 major steps. Display progress at each step using the format from
+This workflow has 15 steps. Display progress at each step using the format from
 [progress-display.md § Step Progress Format](.claude/cat/references/progress-display.md#step-progress-format):
-
-```
-[Step N/14] Step description [=====>              ] P% (Xs | ~Ys remaining)
-✅ Step completed: result summary
-```
-
-**Major steps for progress tracking:**
 1. Verify planning structure
 2. Find/load task
 3. Acquire task lock
 4. Load task details
 5. Analyze task size
-6. Create worktree and branch
-7. Execute task (spawn subagent)
-8. Collect subagent results
-9. Evaluate token usage
-10. Run stakeholder review
-11. User approval gate
-12. Squash commits
-13. Merge to main
-14. Update state and changelog
+6. Choose approach (fork in the road)
+7. Create worktree and branch
+8. Execute task (spawn subagent)
+9. Collect subagent results
+10. Evaluate token usage
+11. Run stakeholder review
+12. User approval gate
+13. Squash commits
+14. Merge to main
+15. Update state and changelog
 
 **Track timing:**
 - Record start time at command begin: `START_TIME=$(date +%s)`
@@ -85,6 +79,7 @@ This workflow has 14 major steps. Display progress at each step using the format
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/merge-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/stakeholder-review/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/choose-approach/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
 
 </execution_context>
@@ -342,7 +337,87 @@ Use `/cat:parallel-execute` skill to spawn multiple subagents.
 Proceeding with single subagent execution.
 ```
 
-Continue to create_worktree step.
+Continue to choose_approach step.
+
+</step>
+
+<step name="choose_approach">
+
+**Present approach options if task has multiple viable paths:**
+
+This step implements the "Fork in the Road" experience. It only presents choices when:
+- PLAN.md has 2+ genuinely different approaches
+- User's stored preferences don't clearly favor one path
+- Approaches have meaningfully different tradeoffs
+
+**Load user preferences:**
+
+```bash
+# Read adventure mode preferences
+PREFS=$(jq -r '.adventureMode.preferences // {}' .claude/cat/cat-config.json)
+USER_APPROACH=$(echo "$PREFS" | jq -r '.approach // "balanced"')
+```
+
+**Analyze PLAN.md for approaches:**
+
+Look for:
+- "## Approach" or "## Approaches" section
+- "## Alternatives" section
+- Risk Assessment section
+
+**Decision matrix:**
+
+| Task Pattern | User Style | Action |
+|--------------|------------|--------|
+| Single approach | Any | Auto-proceed |
+| Low risk, obvious | Any | Auto-proceed |
+| High complexity | Any | Show choice, recommend "Research first" |
+| Multiple approaches | Conservative | Show choice, recommend safer path |
+| Multiple approaches | Aggressive | Show choice, recommend comprehensive path |
+| Multiple approaches | Balanced | Show choice, no recommendation |
+
+**If auto-proceed:**
+
+```
+✓ Approach: [approach name]
+  (Auto-selected: [reason - e.g., "single viable approach" or "matches conservative style"])
+```
+
+**If choice needed, display fork:**
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  🔀 FORK IN THE ROAD                                              ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Task: {task-name}                                                ║
+║                                                                   ║
+║  [A] [emoji] [Approach Name]  [⭐ RECOMMENDED if applicable]       ║
+║      [Description]                                                ║
+║      [If recommended: Why: {reason}]                              ║
+║                                                                   ║
+║  [B] [emoji] [Approach Name]                                      ║
+║      [Description]                                                ║
+║                                                                   ║
+║  [C] 🔍 Research first                                            ║
+║      Analyze the codebase before committing                       ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+
+Use AskUserQuestion to capture selection.
+
+**Record choice in STATE.md:**
+
+Add to task's STATE.md:
+```yaml
+- **Approach Selected:** [approach name]
+- **Selection Reason:** [user choice | auto-selected: reason]
+```
+
+**Pass to subagent:**
+
+The selected approach will be included in the subagent prompt to guide implementation.
 
 </step>
 
@@ -666,26 +741,32 @@ Resolution field is MANDATORY. Valid values: `implemented`, `duplicate`, `obsole
 
 **Anti-pattern (M076):** Committing STATE.md separately as "docs: complete task {name}".
 
-Present work summary with **mandatory token metrics**:
+Present work summary with adventure-style checkpoint:
 
 ```
-## Task Complete: {task-name}
-
-**Subagent Metrics:**
-- Tokens used: {N} ({percentage}% of context)
-- Compaction events: {N}
-- Execution quality: {good|degraded if compactions > 0}
-
-**Files Changed:**
-- path/to/file1.ext (+10, -5)
-- path/to/file2.ext (+25, -0)
-
-**Commits:**
-- feature: add feature X
-- test: add tests for feature X
-- docs: update README
-
-**Review branch:** {task-branch}
+╔═══════════════════════════════════════════════════════════════════╗
+║  ✅ CHECKPOINT: Task Complete                                     ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Task: {task-name}                                                ║
+║  Approach: {selected approach from choose_approach step}          ║
+║                                                                   ║
+║  ─────────────────────────────────────────────────────────────    ║
+║  METRICS                                                          ║
+║  ─────────────────────────────────────────────────────────────    ║
+║  Tokens used: {N} ({percentage}% of context)                      ║
+║  Compaction events: {N}                                           ║
+║  Quality: {good|degraded if compactions > 0}                      ║
+║                                                                   ║
+║  ─────────────────────────────────────────────────────────────    ║
+║  CHANGES                                                          ║
+║  ─────────────────────────────────────────────────────────────    ║
+║  Files: {N} changed (+{adds}, -{deletes})                         ║
+║  Commits: {N} ({types list})                                      ║
+║                                                                   ║
+║  Review branch: {task-branch}                                     ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
 ```
 
 **Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
@@ -694,16 +775,16 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
-Use AskUserQuestion:
-- header: "Approval"
-- question: "Review changes and approve merge to main?"
+Use AskUserQuestion with adventure-style options:
+- header: "Next Step"
+- question: "What would you like to do?"
 - options:
-  - "Approve" - Merge to main
-  - "Review first" - I'll check the changes
-  - "Request changes" - Need modifications
-  - "Abort" - Discard work
+  - "✓ Approve and merge" - Merge to main, continue adventure
+  - "🔍 Review changes first" - I'll examine the diff
+  - "✏️ Request changes" - Need modifications before proceeding
+  - "✗ Abort" - Discard work entirely
 
-**If "Review first":**
+**If "Review changes first":**
 Provide commands to review:
 ```bash
 git log {main}..{task-branch} --oneline
