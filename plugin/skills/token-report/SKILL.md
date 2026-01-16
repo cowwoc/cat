@@ -68,15 +68,15 @@ SUBAGENT_DATA=$(jq -s '
 ' "${SESSION_FILE}")
 ```
 
-### 2. Build Table JSON and Render
+### 2. Format and Output Data
 
-Build the table data as JSON and render via the render-box service for clean output.
+Format the data as a readable table. The script outputs JSON; the skill renders the table.
 
 ```bash
 CONTEXT_LIMIT=200000
 
-# Build table JSON with formatted data
-TABLE_JSON=$(echo "$SUBAGENT_DATA" | jq --argjson limit "$CONTEXT_LIMIT" '
+# Format subagent data as JSON for rendering
+echo "$SUBAGENT_DATA" | jq --argjson limit "$CONTEXT_LIMIT" '
   # Format tokens (e.g., 68400 -> "68.4k")
   def format_tokens:
     if . >= 1000000 then "\(. / 1000000 | . * 10 | floor / 10)M"
@@ -91,11 +91,11 @@ TABLE_JSON=$(echo "$SUBAGENT_DATA" | jq --argjson limit "$CONTEXT_LIMIT" '
     else "\($secs)s"
     end;
 
-  # Get context status with warning indicators
+  # Get context status with ASCII indicators
   def context_status:
     (. * 100 / $limit | floor) as $pct |
-    if $pct >= 80 then "\($pct)% ⚠ EXCEEDED"
-    elif $pct >= 40 then "\($pct)% ⚠ HIGH"
+    if $pct >= 80 then "\($pct)% [EXCEEDED]"
+    elif $pct >= 40 then "\($pct)% [HIGH]"
     else "\($pct)%"
     end;
 
@@ -104,37 +104,59 @@ TABLE_JSON=$(echo "$SUBAGENT_DATA" | jq --argjson limit "$CONTEXT_LIMIT" '
   ([.[].duration_ms] | add // 0) as $total_duration |
 
   {
-    headers: ["Type", "Description", "Tokens", "Context", "Duration"],
-    widths: [17, 30, 8, 14, 10],
-    rows: [.[] | [
-      .type,
-      .description,
-      (.tokens | format_tokens),
-      (.tokens | context_status),
-      (.duration_ms | format_duration)
-    ]],
-    footer: ["", "TOTAL", ($total_tokens | format_tokens), "-", ($total_duration | format_duration)]
+    rows: [.[] | {
+      type: .type,
+      description: .description,
+      tokens: (.tokens | format_tokens),
+      context: (.tokens | context_status),
+      duration: (.duration_ms | format_duration)
+    }],
+    total_tokens: ($total_tokens | format_tokens),
+    total_duration: ($total_duration | format_duration)
   }
-')
-
-# Render via service (clean output only)
-"${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh" table "$TABLE_JSON"
+'
 ```
+
+### 3. Render Table
+
+Using the JSON output, render a table. Add warning emoji OUTSIDE the box (right side) for exceeded rows:
+
+```
+╭─────────────────┬──────────────────────────────┬────────┬────────────────┬──────────╮
+│ Type            │ Description                  │ Tokens │ Context        │ Duration │
+├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
+│ Explore         │ Explore codebase             │ 68.4k  │ 34%            │ 1m 7s    │
+│ general-purpose │ Implement fix                │ 45.0k  │ 45% [HIGH]     │ 43s      │ ⚠️
+│ general-purpose │ Refactor module              │ 170.0k │ 85% [EXCEEDED] │ 3m 12s   │ 🚨
+├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
+│                 │ TOTAL                        │ 283.4k │ -              │ 5m 2s    │
+╰─────────────────┴──────────────────────────────┴────────┴────────────────┴──────────╯
+```
+
+**Warning indicators (outside box):**
+- ⚠️ = Context >= 40% (high usage)
+- 🚨 = Context >= 80% (exceeded limit)
+
+**Column widths:** Type=17, Description=30, Tokens=8, Context=16, Duration=10
+
+**Truncation:** Content exceeding column width should be truncated with `...`
+- Example: "general-purpose-impl..." for a 17-char Type column
+- Keep first N-3 characters, append `...`
 
 ## Example Output
 
-Per-subagent breakdown table:
+Per-subagent breakdown table (warning emojis outside box for visibility):
 
 ```
-╭─────────────────┬──────────────────────────────┬────────┬──────────────┬──────────╮
-│ Type            │ Description                  │ Tokens │ Context      │ Duration │
-├─────────────────┼──────────────────────────────┼────────┼──────────────┼──────────┤
-│ Explore         │ Explore session file format  │ 69.2k  │ 34%          │ 1m 7s    │
-│ Plan            │ Plan token measurement fix   │ 56.0k  │ 28%          │ 52s      │
-│ general-purpose │ Implement token fix          │ 45.0k  │ 45% ⚠ HIGH   │ 43s      │
-├─────────────────┼──────────────────────────────┼────────┼──────────────┼──────────┤
-│                 │ TOTAL                        │ 170.2k │ -            │ 2m 42s   │
-╰─────────────────┴──────────────────────────────┴────────┴──────────────┴──────────╯
+╭─────────────────┬──────────────────────────────┬────────┬────────────────┬──────────╮
+│ Type            │ Description                  │ Tokens │ Context        │ Duration │
+├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
+│ Explore         │ Explore session file format  │ 69.2k  │ 34%            │ 1m 7s    │
+│ Plan            │ Plan token measurement fix   │ 56.0k  │ 28%            │ 52s      │
+│ general-purpose │ Implement token fix          │ 45.0k  │ 45% [HIGH]     │ 43s      │ ⚠️
+├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
+│                 │ TOTAL                        │ 170.2k │ -              │ 2m 42s   │
+╰─────────────────┴──────────────────────────────┴────────┴────────────────┴──────────╯
 ```
 
 ## Status Indicator Logic
@@ -144,8 +166,8 @@ The Context column reflects context health with minimal indicators:
 | Context % | Display | Meaning |
 |-----------|---------|---------|
 | < 40% | Just percentage (e.g., "34%") | Healthy - plenty of headroom |
-| >= 40% and < 80% | "45% ⚠ HIGH" | Warning - above soft target, monitor usage |
-| >= 80% | "85% ⚠ EXCEEDED" | Critical - approaching limit, consider decomposition |
+| >= 40% and < 80% | "45% [HIGH]" | Warning - above soft target, monitor usage |
+| >= 80% | "85% [EXCEEDED]" | Critical - approaching limit, consider decomposition |
 
 Healthy status shows only the percentage - lack of warning implies success.
 
@@ -178,7 +200,6 @@ extra whitespace around the table output.
 
 ## Related Skills
 
-- `cat:render-box` - Box rendering library for consistent formatting
 - `cat:monitor-subagents` - Uses token data for health checks
 - `cat:decompose-task` - Triggered when context reaches critical levels
 - `cat:learn-from-mistakes` - Uses token data for context-related analysis
