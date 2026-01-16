@@ -223,20 +223,47 @@ CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
 
 | Value | Include in Implementation Prompt |
 |-------|----------------------------------|
-| `low` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
-| `medium` | "You MAY note obvious issues encountered while working (same function/class). Log them but don't fix unless trivial." |
-| `high` | "Actively note code quality issues in files you touch. Log them for future tasks." |
+| `low` | "Focus ONLY on the assigned task. Do NOT note or report issues outside the immediate scope." |
+| `medium` | "While working, NOTE obvious issues in files you touch (same function/class). Report them in .completion.json but do NOT fix them." |
+| `high` | "Actively look for code quality issues, patterns, and improvement opportunities in files you touch. Report ALL findings in .completion.json but do NOT fix them." |
 
-**Patience Setting (from cat-config.json `patience` preference, for handling discovered issues):**
-```bash
-PATIENCE_PREF=$(jq -r '.patience // "high"' .claude/cat/cat-config.json)
+**IMPORTANT:** The implementor subagent NEVER fixes discovered issues directly. It reports them
+in `.completion.json` for the main agent to handle based on the patience setting.
+
+**Patience Setting — Main Agent Uses This (NOT passed to subagent):**
+
+The patience setting determines what the MAIN AGENT does with issues returned from subagents.
+Do NOT include patience instructions in implementation subagent prompts.
+
+| Value | Main Agent Action on Returned Issues |
+|-------|--------------------------------------|
+| `low` | Resume PLANNER subagent to update plan with fixes, then continue execution |
+| `medium` | Create tasks for discovered issues in CURRENT version backlog |
+| `high` | Create tasks for discovered issues in FUTURE version backlog (prioritized by benefit/cost) |
+
+**Issues Return Format (subagent writes to .completion.json):**
+```json
+{
+  "status": "success",
+  "tokensUsed": 65000,
+  "inputTokens": 45000,
+  "outputTokens": 20000,
+  "compactionEvents": 0,
+  "summary": "Implemented parser with full test coverage",
+  "discoveredIssues": [
+    {
+      "file": "src/parser/Lexer.java",
+      "line": 142,
+      "type": "code-quality",
+      "severity": "medium",
+      "description": "Duplicate token validation logic could be extracted",
+      "benefitCost": 2.5
+    }
+  ]
+}
 ```
 
-| Value | Include in Implementation Prompt |
-|-------|----------------------------------|
-| `low` | "Fix discovered issues immediately as part of this task." |
-| `medium` | "Log discovered issues as tasks for the current version." |
-| `high` | "Log discovered issues for future versions based on priority (benefit/cost)." |
+**discoveredIssues**: Only populated if curiosity is medium or high. Empty array if curiosity is low.
 
 **Parser Test Requirements (M079, for parser tasks only):**
 ```
