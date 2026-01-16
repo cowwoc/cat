@@ -869,6 +869,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Set STATE.md to completed/100% BEFORE presenting approval gate. The commit being proposed for merge should reflect final state."
+    },
+    {
+      "id": "M154",
+      "timestamp": "2026-01-19T18:45:00-05:00",
+      "category": "protocol_violation",
+      "description": "Changed checked out branch in main worktree when merging task",
+      "root_cause": "Incorrectly assumed merge requires checking out target branch in main workspace",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "git checkout",
+        "main worktree",
+        "branch switch",
+        "merge"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "negative",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Merge task branch into whatever branch is currently checked out in main workspace without switching branches"
     }
   ]
 }
