@@ -2521,6 +2521,112 @@
         "catches_variations": true
       },
       "correct_behavior": "Expand bracket boundaries to complete words and wrap lines at safe points outside brackets"
+    },
+    {
+      "id": "M213",
+      "timestamp": "2026-01-23T03:50:00Z",
+      "category": "documentation_violation",
+      "description": "Did not use /cat:skill-builder before updating research command - skill-builder description said skill but not command",
+      "root_cause": "skill-builder description says any skill but does not explicitly include commands, leading agents to miss using it for command file updates",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "skill-builder",
+        "command",
+        "skill",
+        "update"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use /cat:skill-builder BEFORE updating any skill OR command file"
+    },
+    {
+      "id": "M214",
+      "timestamp": "2026-01-23T04:15:00Z",
+      "category": "logical_error",
+      "description": "In skill-builder, conflated content generation (reasoning) with display rendering (deterministic) - incorrectly concluded extraction not needed because content was reasoning-based",
+      "root_cause": "skill-builder verification checklist did not explicitly separate content vs display as independent dimensions for extraction analysis",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "skill-builder",
+        "extraction",
+        "content",
+        "display",
+        "rendering",
+        "box"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Separately evaluate content generation (reasoning vs static) and display rendering (formatting vs none) - extract rendering even when content is reasoning-based"
+    },
+    {
+      "id": "M215",
+      "timestamp": "2026-01-23T20:45:00Z",
+      "category": "protocol_violation",
+      "description": "Skill-builder recommended skill-invoked scripts instead of hook-based precomputation",
+      "root_cause": "Documentation described extraction pattern where skill invokes scripts via Bash, but this shows Bash tools to users and defeats the purpose of extraction. Correct pattern is hook runs BEFORE skill and provides pre-computed output.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "hook",
+        "precomputation",
+        "skill-invoked-script",
+        "additionalContext"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Extract computation to skill handlers in plugin/hooks/skill_handlers/ that run BEFORE the skill. Handler pre-computes ALL possible outputs and returns via additionalContext. Skill receives pre-computed content and outputs directly - no Bash invocation."
+    },
+    {
+      "id": "M216",
+      "timestamp": "2026-01-23T21:00:00Z",
+      "category": "protocol_violation",
+      "description": "Skill-builder analysis concluded no extraction needed because content is reasoning-based, ignoring that output structure is known",
+      "root_cause": "When output structure is known (box width, borders, line format) but content is reasoning-based, the hook should pre-compute templates that the skill fills in. This was not covered in skill-builder guidance.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "template",
+        "precomputation",
+        "mixed-case",
+        "structure-known"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When content is reasoning-based but output structure is known (box width, borders), use template-based precomputation. Hook pre-computes structural templates, skill fills in content using templates."
     }
   ]
 }
