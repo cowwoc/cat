@@ -513,10 +513,19 @@ mkdir -p .claude/cat/retrospectives
 # Note: mistakes.json is an OBJECT with a .mistakes array, not a flat array
 [ -f .claude/cat/retrospectives/mistakes.json ] || echo '{"mistakes":[]}' > .claude/cat/retrospectives/mistakes.json
 
-LAST_ID=$(jq -r '.mistakes | map(.id) | map(select(startswith("M"))) | sort | last // "M000"' \
+# Use numeric max to avoid string sort issues (M99 vs M100)
+MAX_NUM=$(jq -r '.mistakes | map(.id) | map(select(startswith("M")) | ltrimstr("M") | tonumber) | max // 0' \
   .claude/cat/retrospectives/mistakes.json)
-NEXT_NUM=$((${LAST_ID#M} + 1))
+NEXT_NUM=$((MAX_NUM + 1))
 NEXT_ID=$(printf "M%03d" $NEXT_NUM)
+
+# Verify ID doesn't already exist (safety check)
+if jq -e --arg id "$NEXT_ID" '.mistakes[] | select(.id == $id)' .claude/cat/retrospectives/mistakes.json >/dev/null 2>&1; then
+  echo "ERROR: ID $NEXT_ID already exists! Finding next available..."
+  MAX_NUM=$(jq -r '.mistakes | map(.id) | map(ltrimstr("M") | tonumber) | max' .claude/cat/retrospectives/mistakes.json)
+  NEXT_NUM=$((MAX_NUM + 1))
+  NEXT_ID=$(printf "M%03d" $NEXT_NUM)
+fi
 ```
 
 **Append entry to mistakes.json:**
