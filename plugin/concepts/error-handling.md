@@ -1,6 +1,147 @@
-# Error Handling
+# Error Handling and Fail-Fast Patterns
 
-## Subagent Failure Escalation
+## Core Principle: Fail-Fast
+
+**CRITICAL**: When something is wrong, stop immediately. Do not attempt workarounds.
+
+```
+Problem detected
+      |
+      v
+STOP immediately
+      |
+      v
+Report clear error message
+      |
+      v
+Let caller/user decide next action
+```
+
+**Why fail-fast?**
+- Workarounds produce incorrect or incomplete results
+- Silent failures cascade into harder-to-debug issues
+- Early failure with clear message enables faster resolution
+- User/main-agent has context to make informed decisions
+
+## Fail-Fast Patterns
+
+### 1. Pre-Computed Handler Output
+
+Skills that depend on handler-computed output must fail if output is missing.
+
+```markdown
+**Check for pre-computed output:**
+
+Look in conversation context for "PRE-COMPUTED {SKILL_NAME} OUTPUT" section.
+
+If NOT found: **FAIL immediately**.
+
+Do NOT attempt to compute the output manually - the handler exists precisely
+because manual computation is error-prone.
+```
+
+**Why?** Manual computation was extracted to handlers because agents make errors
+when computing deterministic values (widths, alignments, formatting). The handler
+guarantees correctness.
+
+### 2. Subagent Fail-Fast
+
+Subagents must fail-fast when encountering problems, not attempt recovery.
+
+```markdown
+FAIL-FAST CONDITIONS:
+- Required file not found within N minutes
+- Ambiguity in requirements that needs clarification
+- Build/test failure (report BLOCKED, do NOT fix)
+- Merge conflicts requiring human judgment
+- Any situation requiring user decision
+```
+
+**Example prompt inclusion:**
+```
+FAIL-FAST: If you cannot locate the authentication code within 10 minutes,
+report BLOCKED with search attempts. Do NOT guess or make assumptions.
+```
+
+**Why?** Subagents lack full context. Recovery attempts may:
+- Make incorrect assumptions
+- Waste tokens on wrong paths
+- Produce work that must be discarded
+
+### 3. Environment/Metadata Fail-Fast
+
+Operations requiring specific environment state must verify before proceeding.
+
+```bash
+# Detect base branch from worktree metadata (fail-fast if missing)
+BASE_BRANCH=$(cat .git/cat-base 2>/dev/null)
+if [[ -z "$BASE_BRANCH" ]]; then
+    echo "ERROR: No cat-base file found. Not in a CAT worktree."
+    exit 1
+fi
+```
+
+**Why?** Operating without required metadata produces undefined behavior.
+
+### 4. Validation Fail-Fast
+
+Input validation must fail on first error, not accumulate.
+
+```bash
+# WRONG - continues after error
+[ -z "$TASK_NAME" ] && echo "Warning: no task name"
+[ -z "$VERSION" ] && echo "Warning: no version"
+# ... continues with invalid state
+
+# CORRECT - fail-fast
+[ -z "$TASK_NAME" ] && echo "ERROR: TASK_NAME required" && exit 1
+[ -z "$VERSION" ] && echo "ERROR: VERSION required" && exit 1
+```
+
+## Anti-Patterns
+
+### Fallback Computation
+
+```markdown
+# BAD - Fallback undermines handler purpose
+If pre-computed output not found:
+  - Try to compute manually...
+  - Fall back to simplified version...
+
+# GOOD - Fail-fast exposes problems
+If pre-computed output not found:
+  - FAIL immediately
+  - Error message explains what's missing
+```
+
+### Silent Degradation
+
+```markdown
+# BAD - Silently produces wrong result
+if [[ -z "$CONFIG" ]]; then
+    CONFIG="default"  # User never knows this happened
+fi
+
+# GOOD - Explicit about state
+if [[ -z "$CONFIG" ]]; then
+    echo "ERROR: CONFIG not set. Run /cat:config first."
+    exit 1
+fi
+```
+
+### Guessing Intent
+
+```markdown
+# BAD - Guesses what user meant
+Requirement unclear? Assume they meant X and proceed...
+
+# GOOD - Ask for clarification
+Requirement unclear? Report BLOCKED:
+"Cannot proceed: requirement 'improve performance' is ambiguous.
+ Please specify: CPU performance, memory usage, or response time?"
+```
+
+## Escalation Flow
 
 ```
 Subagent encounters error
@@ -16,33 +157,22 @@ Main agent attempts resolution
           +---> Unresolved: Escalate to user
 ```
 
-## Fail-Fast Triggers
-
-Subagents return immediately when:
-- Plan has ambiguities or issues
-- Required files not found
-- Prerequisites not met
-- Build/test failures
-- Unrecoverable errors
-
-## User Escalation
+### User Escalation Format
 
 When escalating to user, provide:
 
-### Required Information
 1. **Error message**: Clear description of failure
-2. **Task context**: Which task failed
-3. **Subagent logs**: Relevant output
-4. **Remediation**: Suggested next steps
+2. **Task context**: Which task/operation failed
+3. **Details**: Relevant logs or state
+4. **Suggested actions**: What user can do
 
-### Example Escalation
 ```markdown
 ## Task Failed: parse-switch-statements
 
 **Error:** Unable to resolve merge conflict in Parser.java
 
 **Context:**
-- Branch: 1.0-parse-switch-statements-sub-a1b2c3
+- Branch: 1.0-parse-switch-statements
 - Conflicting file: src/main/java/Parser.java
 
 **Conflict Details:**
@@ -56,17 +186,18 @@ Lines 45-52 have conflicting changes from:
 3. Resume with /cat:work
 ```
 
-## Unplanned Issues
+## Recovery After Session Interruption
 
-When bugs/issues discovered during development:
+If session ends during execution:
 
-1. Main agent proposes adding as new task
-2. User decides target minor/major version
-3. If accepted, create task via normal flow
+1. STATE.md reflects last known state
+2. Worktree may exist with partial work
+3. User resumes with `/cat:work`
+4. Main agent assesses state and continues or restarts
 
 ## Learn-from-Mistakes Integration
 
-When analyzing mistakes, consider:
+When analyzing mistakes, consider context factors:
 
 | Factor | Consideration |
 |--------|---------------|
@@ -75,11 +206,3 @@ When analyzing mistakes, consider:
 | Compaction events | May signal lost context |
 
 Recommendation: Decompose work earlier when context-related patterns emerge.
-
-## Recovery After Session Interruption
-
-If session ends during subagent execution:
-1. STATE.md reflects last known state
-2. Worktree may exist with partial work
-3. User resumes with `/cat:work`
-4. Main agent assesses state and continues or restarts

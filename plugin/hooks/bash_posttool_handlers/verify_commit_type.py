@@ -17,7 +17,7 @@ CLAUDE_FACING_PATTERNS = [
     ".claude/",
     "hooks/",
     "skills/",
-    "workflows/",
+    "concepts/",
     "commands/",
     "retrospectives/",
     "mistakes.json",      # Legacy single file
