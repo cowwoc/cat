@@ -91,7 +91,7 @@ Incomplete tasks:
 {list of incomplete tasks}
 
 Options:
-1. Complete all tasks first with /cat:execute-task
+1. Complete all tasks first with /cat:work
 2. Remove individual tasks with /cat:remove-task
 3. Force removal by setting all task statuses to 'completed'
 ```

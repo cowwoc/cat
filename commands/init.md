@@ -494,7 +494,7 @@ Next: /clear -> /cat:add-major-version
 **Existing codebases:**
 ```
 Initialized with [N] majors, [N] minors, [N] tasks
-Next: /clear -> /cat:execute-task {task} OR /cat:add-task
+Next: /clear -> /cat:work {task} OR /cat:add-task
 ```
 
 </step>

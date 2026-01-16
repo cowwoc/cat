@@ -92,7 +92,7 @@ prompt: "User selected [approach]. Now produce the DETAILED spec with:
 ## Concurrent Execution Safety
 
 This skill respects task-level locking. Before spawning, verify the parent agent holds the task lock.
-The lock should have been acquired by `/cat:execute-task`. Subagents inherit lock ownership through
+The lock should have been acquired by `/cat:work`. Subagents inherit lock ownership through
 their worktree association (recorded in the lock file).
 
 **MANDATORY: Verify Lock Ownership (M082)**
@@ -419,11 +419,11 @@ BRANCH_NAME="1.2-implement-parser-sub-a1b2c3d4"
 # Create worktree directory
 WORKTREE_PATH=".worktrees/${WORKTREE_NAME}"
 
-# Verify task lock is held (should be acquired by execute-task)
+# Verify task lock is held (should be acquired by work)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 LOCK_STATUS=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "$TASK_ID" 2>/dev/null || echo '{}')
 if ! echo "$LOCK_STATUS" | jq -e '.locked == true' > /dev/null 2>&1; then
-  echo "WARNING: Task lock not held. Acquire lock via execute-task first."
+  echo "WARNING: Task lock not held. Acquire lock via work first."
 fi
 
 # Create branch and worktree together
