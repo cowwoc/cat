@@ -95,6 +95,22 @@ At workflow start, display the header:
 
 Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
 
+**Anti-pattern (M149): NEVER manually type box characters.**
+
+```
+# ❌ WRONG - manually typing box in text output
+╭─── ✓ Task Complete ───────────────────────────────╮
+│  task-name merged to main.                        │  ← LLM cannot align these
+╰───────────────────────────────────────────────────╯
+
+# ✅ CORRECT - render to file, then Read and output
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" task-complete "task-name" > /tmp/work-box.txt
+# Then use Read tool on /tmp/work-box.txt
+```
+
+Why: LLMs miscalculate Unicode character widths (emojis, special chars). The right-side
+vertical bars will NOT align. ALWAYS use scripts + Read tool pattern.
+
 Then output the phase indicators (plain text, no box calculation needed):
 
 ▸ Preparing ◆

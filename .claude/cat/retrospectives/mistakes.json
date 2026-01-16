@@ -733,6 +733,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Use 'config:' commit type for Claude-facing files (skills, hooks, retrospectives, mistakes.json). Use 'docs:' only for user-facing documentation."
+    },
+    {
+      "id": "M149",
+      "timestamp": "2026-01-19T16:30:00Z",
+      "category": "protocol_violation",
+      "description": "Manually typed box characters in text output instead of using work-progress.sh script, causing misaligned vertical borders",
+      "root_cause": "Compliance failure - M142 documentation was loaded but agent typed boxes manually instead of using render-to-file-then-read pattern",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "box",
+        "unicode",
+        "alignment",
+        "manual",
+        "work-progress",
+        "render"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M142",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use work-progress.sh to render box to temp file, then Read tool to output contents. NEVER manually type box characters."
     }
   ]
 }
