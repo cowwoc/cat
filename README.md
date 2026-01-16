@@ -10,15 +10,15 @@
 
 ## The Problem with AI Projects
 
-Large AI-assisted projects often feel like babysitting. Context overflows. Progress
-gets lost. You're constantly re-explaining what you want. The AI makes decisions you
-didn't ask for, or worse—asks permission for things that don't matter.
+<p align="center">
+  <img src="docs/problem.png" alt="The problem with AI projects" width="600"/>
+</p>
+
+This is what herding cats feels like. Brilliant, forgetful, easily distracted cats.
 
 **CAT flips this around.**
 
-You tell CAT your style once. It learns what matters to you. Then it handles the
-routine stuff automatically while presenting you with meaningful choices at genuine
-decision points—like a well-designed game that respects your time.
+You tell CAT your style once. It learns what matters to you. Then it handles the routine stuff automatically while presenting you with meaningful choices at genuine decision points. It's an adventure where you're the author — the plot moves when you say so, and nobody rewrites act two while you're getting coffee.
 
 ---
 
