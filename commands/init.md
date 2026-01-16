@@ -391,7 +391,7 @@ These preferences shape how CAT makes autonomous decisions:
 - **Stakeholder Review:** [always|high-risk-only|never]
 - **Refactoring Appetite:** [avoid|opportunistic|eager]
 
-Update anytime with: `/cat:update-preferences`
+Update anytime with: `/cat:config`
 ```
 
 </step>
@@ -417,7 +417,7 @@ Display completion banner:
 ║  Refactoring: [refactoring] │ Mode: [interactive|yolo]            ║
 ║                                                                   ║
 ║  These preferences will guide autonomous decisions.               ║
-║  Change anytime with: /cat:update-preferences                     ║
+║  Change anytime with: /cat:config                     ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
