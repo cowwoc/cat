@@ -847,6 +847,127 @@ Main agent options:
 2. Is there uncertainty about accuracy? → Spawn verification subagent with specific verification steps
 3. NEVER: Read code directly, run commands directly, or otherwise investigate outside the subagent framework
 
+## Expanded Exploration Subagent
+
+The exploration subagent handles three phases internally, hiding noisy tool calls from the user
+and returning a structured JSON result for clean display.
+
+### Three Phases
+
+| Phase | Responsibilities | Output |
+|-------|------------------|--------|
+| **Preparation** | Read PLAN.md, analyze task size, create worktree | `preparation` object with estimate and worktree path |
+| **Exploration** | Search codebase, find relevant code, check duplicates | `findings` object with locations and patterns |
+| **Verification** | Verify findings exist, run preliminary tests, confirm state | `verification` object with validation results |
+
+### Phase Details
+
+**Phase 1: Preparation**
+
+The exploration subagent performs task setup that would otherwise expose Bash/Read calls to user:
+
+1. Read task PLAN.md to understand scope
+2. Analyze task size using the estimation factors:
+   - Files to create: 5K tokens each
+   - Files to modify: 3K tokens each
+   - Test files: 4K tokens each
+   - Steps in PLAN.md: 2K tokens each
+   - Exploration needed: +10K tokens if uncertain
+3. Compare estimate against context threshold (contextLimit × targetContextUsage)
+4. Create worktree and branch if task proceeds
+
+**Phase 2: Exploration**
+
+Standard exploration responsibilities:
+
+1. Search codebase for relevant patterns
+2. Identify files to modify and their locations
+3. Check for duplicate functionality
+4. Map dependencies and impacts
+5. Note any blockers or concerns
+
+**Phase 3: Verification**
+
+Post-exploration validation before returning to main agent:
+
+1. Verify all reported file paths exist
+2. Confirm code patterns mentioned are accurate
+3. Run any preliminary checks (syntax, imports)
+4. Validate that findings are complete (no gaps)
+
+### Structured JSON Return Format
+
+The exploration subagent MUST return structured JSON for clean main agent display:
+
+```json
+{
+  "status": "READY|OVERSIZED|DUPLICATE|BLOCKED",
+  "preparation": {
+    "estimatedTokens": 45000,
+    "thresholdTokens": 80000,
+    "percentOfThreshold": 56,
+    "worktreePath": "/workspace/.worktrees/1.0-parse-lambdas",
+    "branch": "1.0-parse-lambdas"
+  },
+  "findings": {
+    "filesToModify": [
+      {"path": "src/Parser.java", "lines": "145-200", "reason": "Add lambda parsing"},
+      {"path": "src/Lexer.java", "lines": "50-60", "reason": "Add arrow token"}
+    ],
+    "filesToCreate": [
+      {"path": "src/LambdaNode.java", "reason": "AST node for lambdas"}
+    ],
+    "patterns": ["Visitor pattern for AST", "Recursive descent parsing"],
+    "duplicateCheck": "NOT_DUPLICATE",
+    "blockers": []
+  },
+  "verification": {
+    "allPathsExist": true,
+    "patternsConfirmed": true,
+    "preliminaryChecks": "PASSED",
+    "notes": []
+  }
+}
+```
+
+### Status Values
+
+| Status | Meaning | Main Agent Action |
+|--------|---------|-------------------|
+| `READY` | Task within threshold, ready to proceed | Continue to approach selection |
+| `OVERSIZED` | Estimated tokens exceed threshold | Trigger decomposition |
+| `DUPLICATE` | Task already implemented elsewhere | Mark as duplicate, skip |
+| `BLOCKED` | Cannot proceed (missing deps, etc.) | Present blocker to user |
+
+### Anti-Patterns
+
+```
+# ❌ WRONG - Main agent does preparation work inline
+Main agent: "Let me read the PLAN.md..."
+Main agent: "Now let me calculate the task size..."
+Main agent: "Creating worktree with git worktree add..."
+# User sees all this noisy output!
+
+# ✅ CORRECT - Exploration subagent handles it internally
+Main agent: "Spawning exploration subagent..."
+[Subagent runs preparation + exploration + verification internally]
+Main agent receives JSON: {"status": "READY", "preparation": {...}, ...}
+Main agent displays: "✓ Task size OK: ~45K tokens (56% of threshold)"
+# User sees clean summary only!
+```
+
+```
+# ❌ WRONG - Main agent investigates after exploration subagent returns
+Exploration subagent returns: {"filesToModify": ["Parser.java"]}
+Main agent: "Let me read Parser.java to understand the structure..."
+# Violates M088 - main agent should NOT read source files!
+
+# ✅ CORRECT - Trust exploration findings, pass to implementation
+Exploration subagent returns: {"filesToModify": ["Parser.java", lines: "145-200"]}
+Main agent: "Exploration complete. Spawning implementation subagent..."
+# Main agent trusts findings, doesn't re-investigate
+```
+
 ## Related Skills
 
 - `cat:monitor-subagents` - Check status of spawned subagents

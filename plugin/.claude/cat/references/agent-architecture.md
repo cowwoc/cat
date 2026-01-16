@@ -39,9 +39,11 @@ Main agent uses worktrees ONLY for:
 - Merging subagent branches into task branches
 - Merging task branches into main
 
-## Subagent
+## Subagent Types
 
-### Responsibilities
+### Implementation Subagent
+
+Standard subagent for executing coding tasks.
 
 | Area | Actions |
 |------|---------|
@@ -51,6 +53,37 @@ Main agent uses worktrees ONLY for:
 | Compaction detection | Track summary events |
 | Reporting | Return metrics on completion |
 | Fail-fast | Return immediately on plan issues |
+
+### Exploration Subagent
+
+Specialized subagent for task preparation, codebase exploration, and verification.
+Handles three phases internally to hide noisy tool calls from user.
+
+| Phase | Responsibilities | Output |
+|-------|------------------|--------|
+| **Preparation** | Read PLAN.md, analyze task size, create worktree | Estimate and worktree path |
+| **Exploration** | Search codebase, find patterns, check duplicates | File locations and patterns |
+| **Verification** | Validate findings, confirm paths exist | Validation results |
+
+**Returns structured JSON** for clean main agent display:
+
+```json
+{
+  "status": "READY|OVERSIZED|DUPLICATE|BLOCKED",
+  "preparation": {"estimatedTokens": 45000, "worktreePath": "..."},
+  "findings": {"filesToModify": [...], "patterns": [...]},
+  "verification": {"allPathsExist": true}
+}
+```
+
+**Benefits:**
+- User sees clean summary instead of Bash/Read/Grep tool calls
+- Main agent receives structured data for decision-making
+- Preparation work isolated from main agent context
+
+See `spawn-subagent` skill → "Expanded Exploration Subagent" for full details.
+
+## Subagent Responsibilities
 
 ### Token Tracking
 
