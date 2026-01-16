@@ -7,18 +7,18 @@ description: Analyze mistakes with conversation length as potential cause (CAT-s
 
 ## Purpose
 
-Analyze mistakes using 5-whys methodology with CAT-specific consideration of conversation length
-and context degradation as potential root causes. Integrates with token tracking data to identify
-context-related failure patterns and recommend preventive measures including earlier decomposition.
+Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context
+degradation. Integrates token tracking to identify context-related failures and recommend preventive
+measures including earlier decomposition.
 
 ## When to Use
 
-- Any mistake occurs during CAT orchestration
-- Subagent produces incorrect or incomplete results
+- Any mistake during CAT orchestration
+- Subagent produces incorrect/incomplete results
 - Task requires rework or correction
-- Build failures, test failures, logical errors
+- Build/test/logical errors
 - Repeated attempts at same operation
-- Quality degradation observed over time
+- Quality degradation over time
 
 ## Workflow
 
@@ -26,27 +26,17 @@ context-related failure patterns and recommend preventive measures including ear
 
 **CRITICAL: Do NOT rely on memory for root cause analysis.**
 
-Before analyzing, verify the actual event sequence using get-history:
+Verify actual event sequence using get-history:
 
 ```bash
-# Get conversation history for accurate sequence
 /cat:get-history
-
-# Look for:
-# - When was the relevant instruction/plan stated?
-# - What actions happened in what order?
-# - Were there any user corrections or feedback?
-# - What was the actual trigger for the mistake?
+# Look for: When stated? Action order? User corrections? Actual trigger?
 ```
 
-**Anti-Pattern (M037):** Performing root cause analysis based on memory without
-verifying via get-history. Memory is unreliable, especially about:
-- Causation (what caused what)
-- Timing (what happened when)
-- Attribution (who said/did what)
+**Anti-Pattern (M037):** Root cause analysis based on memory without get-history verification.
+Memory is unreliable for causation, timing, attribution.
 
-**If get-history is unavailable:** Document that analysis is based on current
-context only and may be incomplete.
+**If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
 ### 1. Document the Mistake
 
@@ -56,11 +46,9 @@ mistake:
   type: incorrect_implementation
   description: |
     Subagent implemented parser with wrong precedence rules.
-    Expressions like "a + b * c" parsed as "(a + b) * c" instead
-    of "a + (b * c)".
+    Expressions like "a + b * c" parsed as "(a + b) * c" instead of "a + (b * c)".
   impact: |
-    All tests using operator precedence failing.
-    Required complete rewrite of expression parsing.
+    All tests using operator precedence failing. Required complete rewrite.
 ```
 
 ### 2. Gather Context Metrics
@@ -71,38 +59,25 @@ mistake:
 SESSION_ID="${SUBAGENT_SESSION}"
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
-# Token usage at time of mistake
 TOKENS_AT_ERROR=$(jq -s 'map(select(.type == "assistant")) |
   map(.message.usage | .input_tokens + .output_tokens) | add' "${SESSION_FILE}")
-
-# Compaction events before mistake
 COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
-
-# Messages before mistake
 MESSAGE_COUNT=$(jq -s '[.[] | select(.type == "assistant")] | length' "${SESSION_FILE}")
-
-# Time since session start
 SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 ```
 
 ### 3. Perform 5-Whys Analysis
 
-Standard analysis with CAT-specific consideration:
-
 ```yaml
 five_whys:
   - why: "Why was precedence implemented incorrectly?"
     answer: "Subagent confused multiplication and addition handling"
-
   - why: "Why was the subagent confused?"
     answer: "Earlier context about precedence rules was not referenced"
-
   - why: "Why wasn't earlier context referenced?"
     answer: "Session had 95K tokens, approaching context limit"
-
   - why: "Why were there 95K tokens in the session?"
     answer: "Task scope was too large for single context window"
-
   - why: "Why wasn't the task decomposed earlier?"
     answer: "Token monitoring wasn't triggering at 40% threshold"
 
@@ -116,63 +91,41 @@ category: CONTEXT_DEGRADATION
 
 ```yaml
 context_degradation_analysis:
-  # Token-related factors
   tokens_at_error: 95000
   threshold_exceeded: true  # > 80K
   threshold_exceeded_by: 15000
-
-  # Compaction factors
   compaction_events: 2
   errors_after_compaction: true
-
-  # Temporal factors
   session_duration: 4.5 hours
   messages_before_error: 127
-
-  # Quality trend
   early_session_quality: high
   late_session_quality: degraded
   quality_degradation_detected: true
-
-  # Conclusion
   context_related: LIKELY
   confidence: 0.85
 ```
 
 ### 5. Identify Prevention Level
 
-Standard hierarchy with CAT additions:
-
 ```yaml
 prevention_hierarchy:
-  # Level 1: Code fix (best)
   - level: 1
     type: code_fix
     description: "Make code self-correcting or impossible to get wrong"
-
-  # Level 2: CAT-specific - Earlier decomposition
   - level: 2
     type: earlier_decomposition
     description: "Trigger task split before context degradation occurs"
     cat_specific: true
-
-  # Level 3: Validation/hook
   - level: 3
     type: validation
     description: "Add automated checks that catch the mistake early"
-
-  # Level 4: Lower threshold
   - level: 4
     type: threshold_adjustment
     description: "Reduce context threshold from 40% to more conservative value"
     cat_specific: true
-
-  # Level 5: Process change
   - level: 5
     type: process
     description: "Change workflow to prevent mistake"
-
-  # Level 6: Documentation (last resort)
   - level: 6
     type: documentation
     description: "Document to prevent future occurrence"
@@ -184,7 +137,6 @@ prevention_hierarchy:
 
 ```yaml
 prevention_quality_check:
-  # Positive vs Negative verification
   verification_type:
     positive: "Check for PRESENCE of correct behavior"  # ✅ Preferred
     negative: "Check for ABSENCE of specific failure"   # ❌ Fragile
@@ -194,26 +146,21 @@ prevention_quality_check:
   #   ❌ grep "Initial implementation -"  (catches ONE placeholder pattern)
   #   ✅ grep "^- \`[a-f0-9]{7,}\`"        (checks for correct commit format)
 
-  # Generality test
   generality:
     question: "If the failure mode varies slightly, will this still catch it?"
     examples:
       - "What if placeholder text changes from 'Initial' to 'First'?"
       - "What if someone uses 'TBD' or 'TODO' instead?"
       - "What if the format is subtly wrong in a different way?"
-
     # If answer is NO → prevention is too specific → redesign
 
-  # Inversion test
   inversion:
     question: "Can I invert this check to verify correctness instead?"
     pattern: |
       Instead of: "Fail if BAD_PATTERN exists"
       Try:        "Fail if GOOD_PATTERN is missing"
-
     # Positive verification catches ALL failures, not just anticipated ones
 
-  # Fragility score
   fragility_assessment:
     low:    "Checks for correct format/behavior (positive verification)"
     medium: "Checks for category of errors (e.g., any TODO-like text)"
@@ -221,6 +168,65 @@ prevention_quality_check:
 ```
 
 **Decision gate:** If fragility is HIGH, redesign the prevention before implementing.
+
+### 6b. Check If Prevention Already Exists (MANDATORY)
+
+**CRITICAL: Prevention MUST escalate if current level already failed.**
+
+Before implementing prevention, check if it already exists:
+
+```yaml
+existing_prevention_check:
+  question: "Does documentation/process already cover this?"
+  check_locations:
+    - Workflow files (execute-task.md, etc.)
+    - CLAUDE.md / project instructions
+    - Skill documentation
+    - Existing hooks
+
+  if_exists:
+    conclusion: "Existing prevention FAILED - documentation was ignored"
+    action: "MUST escalate to higher prevention level"
+    rationale: |
+      If documentation says "MANDATORY: do X" and agent didn't do X,
+      then documentation alone is insufficient. The mistake WILL recur
+      unless enforced by automation.
+```
+
+**Escalation hierarchy (when current level failed):**
+
+| Failed Level | Escalate To | Example |
+|--------------|-------------|---------|
+| Documentation | Hook/Validation | Add pre-commit hook that blocks incorrect behavior |
+| Process | Code fix | Make incorrect path impossible in code |
+| Threshold | Lower threshold + hook | Add monitoring that forces action |
+| Validation | Code fix | Compile-time or runtime enforcement |
+
+**Example - Documentation failed:**
+
+```yaml
+# Situation: Workflow says "MANDATORY: Execute different task when locked"
+# Agent ignored it and tried to delete the lock
+
+# ❌ WRONG: Record prevention as "documentation" pointing to same workflow
+prevention_type: documentation
+prevention_path: "execute-task.md"  # Already says MANDATORY!
+
+# ✅ CORRECT: Escalate to hook that enforces the behavior
+prevention_type: hook
+prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/enforce-lock-protocol.sh"
+action: |
+  Create hook that detects lock investigation patterns and blocks them.
+  Or: Modify task-lock.sh to output ONLY "find another task" guidance,
+  removing any information that could be used to bypass the lock.
+```
+
+**The prevention step MUST take action.** Recording a mistake without implementing NEW prevention
+(beyond what already existed) is not learning - it's just logging. The same mistake WILL recur.
+
+**Verification question:** "If I encounter this exact situation again tomorrow, what NEW mechanism
+will prevent me from making the same mistake?" If the answer is "the documentation that I ignored
+today," that is NOT valid prevention.
 
 ### 7. Implement Prevention
 
@@ -269,7 +275,6 @@ verification:
 
 ```yaml
 prevention_path_validation:
-  # INVALID paths (will cause recurrence):
   invalid_examples:
     - "N/A"
     - "N/A - behavioral change"
@@ -278,7 +283,6 @@ prevention_path_validation:
     - ""  # empty
     - "TBD"
 
-  # VALID paths (actual files that were changed):
   valid_examples:
     - "/workspace/cat/commands/execute-task.md"
     - ".claude/hooks/validate-commit.sh"
@@ -297,7 +301,8 @@ Go back to step 7 and find a code/config/documentation fix.
 
 1. **Directory path**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
 
-2. **prevention_path format (M040)**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative paths:
+2. **prevention_path format (M040)**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative
+paths:
    ```yaml
    # INVALID - relative paths break when cwd changes
    prevention_path: ".claude/hooks/my-hook.sh"
@@ -317,10 +322,9 @@ Go back to step 7 and find a code/config/documentation fix.
    /workspace/cat/skills/...  # or wherever CAT source is cloned
    ```
 
-If files exist at wrong location, migrate them first:
+If files exist at wrong location, migrate:
 
 ```bash
-# Check for files at wrong location and migrate
 if [ -d .claude/retrospectives ] && [ ! -d .claude/cat/retrospectives ]; then
   mkdir -p .claude/cat/retrospectives
   mv .claude/retrospectives/*.json .claude/cat/retrospectives/ 2>/dev/null || true
@@ -329,13 +333,9 @@ fi
 ```
 
 ```bash
-# Create retrospectives directory if needed
 mkdir -p .claude/cat/retrospectives
-
-# Initialize mistakes.json if it doesn't exist
 [ -f .claude/cat/retrospectives/mistakes.json ] || echo '[]' > .claude/cat/retrospectives/mistakes.json
 
-# Determine next mistake ID
 LAST_ID=$(jq -r 'map(.id) | map(select(startswith("M"))) | sort | last // "M000"' \
   .claude/cat/retrospectives/mistakes.json)
 NEXT_NUM=$((${LAST_ID#M} + 1))
@@ -383,14 +383,9 @@ jq --argjson new '{...new entry...}' '. += [$new]' \
 RETRO_FILE=".claude/cat/retrospectives/retrospectives.json"
 MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
 
-# Get last retrospective date
 LAST_RETRO=$(jq -r '.last_retrospective' "$RETRO_FILE")
-
-# Count actual mistakes since last retrospective
 ACTUAL_COUNT=$(jq --arg date "$LAST_RETRO" \
   '[.mistakes[] | select(.timestamp > $date)] | length' "$MISTAKES_FILE")
-
-# Get current counter value
 COUNTER=$(jq '.mistake_count_since_last' "$RETRO_FILE")
 
 # Warn if mismatch (counter should be ACTUAL_COUNT - 1 before we increment)
@@ -400,12 +395,11 @@ if [[ $COUNTER -ne $((ACTUAL_COUNT - 1)) ]] && [[ $COUNTER -ne $ACTUAL_COUNT ]];
   jq --argjson count "$ACTUAL_COUNT" '.mistake_count_since_last = $count' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
     && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
 else
-  # Increment mistake counter
   jq '.mistake_count_since_last += 1' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
     && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
 fi
 
-# Commit BOTH files together (mistakes.json + retrospectives.json)
+# Commit BOTH files together
 git add .claude/cat/retrospectives/mistakes.json .claude/cat/retrospectives/retrospectives.json
 git commit -m "docs: record learning ${NEXT_ID} - {short description}"
 
@@ -447,7 +441,7 @@ retrospective_trigger:
 ```
 
 **Anti-pattern (M071):** Printing "retrospective should be triggered" without using AskUserQuestion
-to give user explicit choice. User must be prompted with options, not just informed.
+to give user explicit choice.
 
 ## Examples
 
@@ -586,12 +580,11 @@ prevention: |
   # Catches ANY code quality failure, not just anticipated ones
 
 # Key insight: Verify what you WANT, not what you DON'T want
-# Positive verification catches all failures, not just anticipated ones
 ```
 
 ### Do NOT fix the immediate problem when user says "Learn from mistakes" (M072)
 
-When user explicitly requests mistake analysis (e.g., "Learn from mistakes: ..."):
+When user explicitly requests mistake analysis:
 
 ```yaml
 # ❌ WRONG: Fix immediate problem, skip skill invocation
@@ -609,8 +602,32 @@ agent: [implements prevention]
 agent: [then fixes immediate problem]
 ```
 
-**Key principle:** The phrase "Learn from mistakes" is a trigger to invoke this skill,
-not a description of what you should conceptually do. Always invoke the actual skill.
+**Key principle:** "Learn from mistakes" is a trigger to invoke this skill, not a description of what
+to conceptually do. Always invoke the actual skill.
+
+### Do NOT record existing documentation as "prevention" (M084)
+
+```yaml
+# ❌ WRONG: Documentation already existed and was ignored
+situation: "Workflow said MANDATORY but agent ignored it"
+recorded_prevention:
+  type: documentation
+  path: "execute-task.md"  # Same file that was already ignored!
+# This is NOT prevention - the documentation already failed!
+
+# ✅ CORRECT: Escalate to enforcement
+situation: "Workflow said MANDATORY but agent ignored it"
+analysis: "Documentation alone is insufficient - must automate"
+recorded_prevention:
+  type: hook
+  path: ".claude/hooks/enforce-lock-protocol.sh"
+  action: "Created hook that blocks lock bypass attempts"
+# NEW mechanism that didn't exist before
+```
+
+**Key insight:** If you're pointing to a file that already contained the instruction you violated,
+you have NOT implemented prevention. You've just documented your failure to read. Escalate to
+automation that makes the incorrect behavior impossible or blocked.
 
 ## Related Skills
 
