@@ -44,7 +44,27 @@ class ValidateCommitTypeHandler:
             if heredoc_match:
                 message = heredoc_match.group(1).strip()
             else:
-                # No recognizable message format
+                # -m flag present but couldn't parse - suspicious in Claude Code context
+                # Check if there's actually a -m flag we failed to parse
+                if re.search(r'-m\s+', command):
+                    return {
+                        "decision": "block",
+                        "reason": """**BLOCKED: Could not parse commit message format**
+
+The commit uses -m flag but the message format is not recognized.
+Claude Code should use the standard HEREDOC format:
+
+```
+git commit -m "$(cat <<'EOF'
+type: description
+EOF
+)"
+```
+
+If this is a legitimate format that should be supported, update
+validate_commit_type.py to handle it."""
+                    }
+                # No -m flag at all (interactive mode) - unusual for Claude Code
                 return None
 
         # Strip leading whitespace from each line (heredoc indentation)
