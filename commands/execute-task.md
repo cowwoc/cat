@@ -43,10 +43,11 @@ This is CAT's core execution command. It:
 
 **MANDATORY: Display progress at each major step.**
 
-This workflow has 14 major steps. Display progress at each step using this format:
+This workflow has 14 major steps. Display progress at each step using the format from
+[progress-display.md § Step Progress Format](.claude/cat/references/progress-display.md#step-progress-format):
 
 ```
-[Step N/14] Step description (P% | Xs elapsed | ~Ys remaining)
+[Step N/14] Step description [=====>              ] P% (Xs | ~Ys remaining)
 ✅ Step completed: result summary
 ```
 
@@ -234,14 +235,15 @@ Read the task's:
 - Parent minor's `STATE.md` - for context
 - Parent major's `STATE.md` - for context
 
-Present task overview:
+Present task overview with visual progress bar
+(see [progress-display.md § Progress Bar Format](.claude/cat/references/progress-display.md#progress-bar-format)):
 
 ```
 ## Task: {task-name}
 
 **Version:** {major}.{minor}
 **Status:** {status}
-**Progress:** {progress}%
+**Progress:** [==========>         ] {progress}%
 
 **Goal:**
 {goal from PLAN.md}
@@ -676,6 +678,9 @@ Present work summary with **mandatory token metrics**:
 
 **Review branch:** {task-branch}
 ```
+
+**Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
+Users review the task branch which contains merged subagent work, not the internal subagent branch.
 
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."

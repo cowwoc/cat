@@ -76,10 +76,15 @@ For each STATE.md found, extract:
 
 **Render visual tree:**
 
+**Progress Bar Generation (MANDATORY):**
+
+See [progress-display.md § Progress Bar Format](.claude/cat/references/progress-display.md#progress-bar-format)
+for the standard algorithm and examples.
+
 ```
 # [Project Name]
 
-**Progress:** [=========>    ] 75% (15/20 tasks)
+**Progress:** [===============>    ] 75% (15/20 tasks)
 **Mode:** [Interactive|YOLO]
 
 ## v1: [Name from ROADMAP] (2/5 complete)
