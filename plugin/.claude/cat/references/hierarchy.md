@@ -83,6 +83,22 @@ Minor versions have implicit sequential dependencies:
 - Tasks within a minor depend on their explicit dependency list in STATE.md
 - Cross-minor task dependencies are not supported (use minor version ordering instead)
 
+## Task Execution Order
+
+**Non-Linear Progression:** Tasks execute based on dependency resolution, not sequence order.
+
+When dependencies are met, tasks become eligible for execution regardless of their position in the
+task list. Multiple independent tasks can execute concurrently.
+
+| Task State | Execution Eligibility |
+|------------|----------------------|
+| Dependencies empty | Immediately eligible |
+| All dependencies completed | Eligible |
+| Any dependency pending | Blocked until resolved |
+
+This enables parallel execution of independent tasks while maintaining correct ordering for
+dependent tasks.
+
 ## Example Path
 
 ```
