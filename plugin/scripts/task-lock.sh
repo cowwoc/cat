@@ -50,12 +50,28 @@ iso_timestamp() {
   date -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
+# Validate session_id looks like a UUID (prevents arg order mistakes - M204)
+validate_session_id() {
+  local session_id="$1"
+  # Session IDs should be UUIDs: 8-4-4-4-12 hex pattern
+  if [[ ! "$session_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+    echo "{\"status\":\"error\",\"message\":\"Invalid session_id format: '$session_id'. Expected UUID. Did you swap task_id and session_id arguments?\"}"
+    return 1
+  fi
+  return 0
+}
+
 # Acquire lock atomically
 # Returns: 0 if acquired, 1 if already locked by another session
 acquire_lock() {
   local task_id="$1"
   local session_id="$2"
   local worktree="${3:-}"
+
+  # Validate session_id format to catch argument order mistakes (M204)
+  if ! validate_session_id "$session_id"; then
+    return 1
+  fi
 
   ensure_lock_dir
   local lock_file
@@ -129,6 +145,11 @@ update_lock() {
   local session_id="$2"
   local worktree="$3"
 
+  # Validate session_id format (M204)
+  if ! validate_session_id "$session_id"; then
+    return 1
+  fi
+
   local lock_file
   lock_file=$(get_lock_file "$task_id")
 
@@ -168,6 +189,11 @@ EOF
 release_lock() {
   local task_id="$1"
   local session_id="$2"
+
+  # Validate session_id format (M204)
+  if ! validate_session_id "$session_id"; then
+    return 1
+  fi
 
   local lock_file
   lock_file=$(get_lock_file "$task_id")
