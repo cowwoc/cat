@@ -189,11 +189,34 @@ git branch -d <branch-name>
 
 ## Error Recovery
 
+### CRITICAL: Worktree Location During Error Recovery (M101)
+
+**When handling errors (especially merge conflicts), verify you're in the correct worktree:**
+
+```bash
+# BEFORE any error recovery:
+pwd
+git branch --show-current
+```
+
+**Expected:** Task worktree (`/workspace/.worktrees/<task>`) on task branch
+**WRONG:** Main worktree (`/workspace`) on main branch
+
+**Common mistake:** After conflict resolution attempts (abort, reset), agent ends up in main
+worktree and makes edits there. This corrupts main and other parallel tasks.
+
+**Recovery if in wrong location:**
+```bash
+cd /workspace/.worktrees/<task-name>  # Return to task worktree
+pwd  # Verify
+```
+
 ### Merge Conflict
-1. Identify conflicting files
-2. Show conflict markers to user
-3. Request resolution guidance
-4. Apply resolution and continue
+1. **Verify worktree location first** (`pwd` should NOT be `/workspace`)
+2. Identify conflicting files
+3. Show conflict markers to user
+4. Request resolution guidance
+5. Apply resolution and continue
 
 ### Verification Failure
 1. Identify failing tests/build
