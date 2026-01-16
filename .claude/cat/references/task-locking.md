@@ -20,13 +20,13 @@ worktree=<path>
 created_iso=<iso-timestamp>
 ```
 
-### Heartbeat-Based Leases
+### Persistent Locks
 
-Locks use a heartbeat mechanism to handle crashed sessions:
+Locks persist until explicitly released:
 
-- **Heartbeat interval**: 2 minutes (recommended refresh during long operations)
-- **Stale threshold**: 5 minutes without heartbeat
-- **Stale locks**: Automatically claimable by other sessions
+- **No automatic expiration**: Locks never expire on their own
+- **Explicit release required**: Owner session must release, or user must manually remove stale locks
+- **User-driven cleanup**: If a session crashes, user must explicitly clear the lock via `/cat:cleanup`
 
 ### Atomic Operations
 
@@ -41,8 +41,7 @@ Lock acquisition uses atomic file operations:
 ### /cat:execute-task
 
 1. **Acquire lock** after task identification (step: `acquire_lock`)
-2. **Refresh heartbeat** during long operations
-3. **Release lock** in cleanup step
+2. **Release lock** in cleanup step
 
 ### /cat:spawn-subagent
 
@@ -51,8 +50,7 @@ Lock acquisition uses atomic file operations:
 
 ### /cat:merge-subagent
 
-1. **Refresh heartbeat** during merge operations
-2. Lock released by parent's cleanup
+1. Lock released by parent's cleanup
 
 ### session-unlock.sh Hook
 
@@ -68,14 +66,11 @@ task-lock.sh acquire "1.0-parse-tokens" "$SESSION_ID" "$WORKTREE_PATH"
 # Check lock status
 task-lock.sh check "1.0-parse-tokens"
 
-# Refresh heartbeat
-task-lock.sh heartbeat "1.0-parse-tokens" "$SESSION_ID"
-
 # Release lock
 task-lock.sh release "1.0-parse-tokens" "$SESSION_ID"
 
-# Cleanup stale locks
-task-lock.sh cleanup --stale-minutes 5
+# Force release (user action for crashed sessions)
+task-lock.sh force-release "1.0-parse-tokens"
 
 # List all locks
 task-lock.sh list
@@ -88,7 +83,7 @@ task-lock.sh list
 | Simultaneous task execution | Lock acquisition fails for second instance |
 | STATE.md corruption | Only lock holder writes state |
 | Worktree conflicts | Lock acquired before worktree creation |
-| Orphaned locks | Session-end cleanup + stale detection |
+| Orphaned locks | Session-end cleanup + user-driven force release |
 
 ## Concurrent Execution Patterns
 
@@ -113,9 +108,9 @@ Instance B receives error message with lock owner information.
 ### Recovery: Crashed Session
 
 ```
-Instance A: Acquires lock, crashes (no heartbeat update)
-... 5 minutes pass ...
-Instance B: Acquires lock (stale lock detected, overwritten)
+Instance A: Acquires lock, crashes
+User: Runs /cat:cleanup or task-lock.sh force-release
+Instance B: Acquires lock (previous lock removed by user)
 ```
 
 ## Troubleshooting
@@ -124,20 +119,24 @@ Instance B: Acquires lock (stale lock detected, overwritten)
 
 1. Wait for other instance to complete
 2. Check `/cat:status` for task state
-3. If session crashed, wait 5 minutes for stale detection
-4. Emergency: `task-lock.sh cleanup --stale-minutes 0`
+3. If session crashed, use `/cat:cleanup` to remove stale locks
+4. Force release: `task-lock.sh force-release <task-id>`
 
 ### Lock not released after completion
 
 1. Check `session-unlock.sh` hook is registered
 2. Verify SESSION_ID available to cleanup
 3. Manual release: `task-lock.sh release <task-id> <session-id>`
+4. Force release: `task-lock.sh force-release <task-id>`
 
-### Stale locks accumulating
+### Stale locks from crashed sessions
 
-Run periodic cleanup:
+Use `/cat:cleanup` command to list and remove stale locks:
 ```bash
-task-lock.sh cleanup --stale-minutes 10
+/cat:cleanup
 ```
 
-Or via `/cat:cleanup` command.
+Or manually force-release specific locks:
+```bash
+task-lock.sh force-release "1.0-task-name"
+```
