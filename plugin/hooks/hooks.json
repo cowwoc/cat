@@ -90,6 +90,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/get-status-output.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/precompute-config.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
