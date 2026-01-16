@@ -131,31 +131,29 @@ Exit command.
 Before proceeding, acquire an exclusive lock to prevent multiple Claude instances from executing the
 same task simultaneously.
 
-**MANDATORY STOP POINT (M057):** First verify SESSION_ID is available:
+**MANDATORY STOP POINT (M057):** First verify SESSION_ID is available in context.
 
-```bash
-echo "SESSION_ID: ${SESSION_ID:-NOT SET}"
-```
+**How to get SESSION_ID:**
+1. Look for `Session ID: {uuid}` in the SessionStart system-reminder at conversation start
+2. Extract the UUID (e.g., `5d3a593f-718d-4b8f-8830-e97e2c646713`)
+3. Use that value in the commands below by substituting it directly
 
-**If SESSION_ID is "NOT SET":**
+**If no "Session ID:" appears in the conversation context:**
 1. **STOP EXECUTION IMMEDIATELY** - Do NOT proceed to worktree creation
-2. Inform user: "SESSION_ID not set. The echo-session-id.sh hook must be registered."
+2. Inform user: "Session ID not found in context. The echo-session-id.sh hook may not be registered."
 3. Instruct: "Run `/cat:register-hook` to register required hooks, then restart Claude Code."
 4. **EXIT this command** - Do not continue with any further steps
 
-**Only if SESSION_ID is set**, proceed with lock acquisition:
+**Only if SESSION_ID is found in context**, proceed with lock acquisition.
+
+Substitute the actual session ID UUID into these commands:
 
 ```bash
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-
-# Acquire lock (SESSION_ID verified above)
-if [[ -z "${SESSION_ID:-}" ]]; then
-  echo "ERROR: SESSION_ID not set - should have stopped earlier"
-  exit 1
-fi
+SESSION_ID="<substitute-actual-uuid-from-context>"
 
 # Attempt to acquire lock
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+LOCK_RESULT=$("/home/node/.config/claude/plugins/cache/claude-code-cat/cat/1.2/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
@@ -174,10 +172,10 @@ echo "Lock acquired for task: $TASK_ID"
 
 **Heartbeat during long operations:**
 
-For operations that take more than 2 minutes, refresh the heartbeat:
+For operations that take more than 2 minutes, refresh the heartbeat (substitute actual SESSION_ID):
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "$TASK_ID" "$SESSION_ID"
+"/home/node/.config/claude/plugins/cache/claude-code-cat/cat/1.2/scripts/task-lock.sh" heartbeat "$TASK_ID" "$SESSION_ID"
 ```
 
 </step>
@@ -563,9 +561,9 @@ git worktree remove "$WORKTREE_PATH" --force
 # Optionally delete branch if autoCleanupWorktrees is true
 git branch -d "{task-branch}" 2>/dev/null || true
 
-# Release task lock
+# Release task lock (substitute actual SESSION_ID from context)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "$SESSION_ID"
+"/home/node/.config/claude/plugins/cache/claude-code-cat/cat/1.2/scripts/task-lock.sh" release "$TASK_ID" "$SESSION_ID"
 echo "Lock released for task: $TASK_ID"
 ```
 
