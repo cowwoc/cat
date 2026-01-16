@@ -2,7 +2,7 @@
 
 ## Status
 status: in_progress
-progress: 26%
+progress: 28%
 started: 2026-01-20
 
 ## Summary
@@ -23,6 +23,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - remove-box-rendering-infrastructure
 - find-next-task-script
 - hide-tool-calls-during-execution
+- cleanup-display-redesign
 
 ## Tasks Pending
 - fix-config-documentation
@@ -63,4 +64,3 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - dynamic-box-sizing
 - status-display-redesign
 - add-display-redesign
-- cleanup-display-redesign
