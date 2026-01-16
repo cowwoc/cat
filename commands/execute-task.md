@@ -1117,7 +1117,9 @@ The main agent is an ORCHESTRATOR. All phases MUST be delegated to subagents:
 
 **Subagent responsibilities (ALL substantive work):**
 - **Exploration subagent:** Read and analyze source code, report findings
-- **Planning subagent:** Produce three approach options (conservative/balanced/aggressive), write specifications
+- **Planning subagent (two stages):**
+  - Stage 1: Produce high-level outlines for three approaches (lightweight)
+  - Stage 2: (resumed) Produce detailed spec for selected approach
 - **Implementation subagent:** Write/edit source code, tests, fix bugs
 
 **Orchestration Enforcement (A014):**
@@ -1132,21 +1134,39 @@ Before any file read or code analysis, ask: "Should a subagent do this?"
 | Write test code | ❌ No | Delegate to implementation subagent |
 | Present approval gate | ✅ Yes | Orchestration action |
 
-**Correct workflow pattern:**
+**Correct workflow pattern (two-stage planning for token efficiency):**
 
 ```
 1. Main agent spawns EXPLORATION subagent: "Find all X and report findings"
 2. Exploration subagent returns: "Found X at locations A, B, C with patterns..."
-3. Main agent spawns PLANNING subagent: "Given findings, produce three approach options"
-4. Planning subagent returns approaches in PLAN.md format:
-   - Conservative: [minimal scope, low risk]
-   - Balanced: [reasonable scope, medium risk]
-   - Aggressive: [comprehensive, high risk]
-5. Main agent selects approach based on user preference or presents choice
-6. Main agent spawns IMPLEMENTATION subagent: "Execute the [selected] approach"
-7. Implementation subagent returns: "Completed. Commits: ..."
-8. Main agent presents approval gate to user
+
+PLANNING STAGE 1 (lightweight):
+3. Main agent spawns PLANNING subagent: "Produce HIGH-LEVEL outlines for three approaches"
+4. Planning subagent returns brief summaries (save agent_id for resumption):
+   - Conservative: [1-2 sentence scope, risk: LOW]
+   - Balanced: [1-2 sentence scope, risk: MEDIUM]
+   - Aggressive: [1-2 sentence scope, risk: HIGH]
+   - agent_id: {uuid} ← SAVE THIS
+
+APPROACH SELECTION:
+5. Main agent selects approach (auto-select if preference matches, else ask user)
+
+PLANNING STAGE 2 (detailed):
+6. Main agent RESUMES planning subagent (using saved agent_id):
+   "User selected [approach]. Now produce the DETAILED implementation spec."
+7. Planning subagent returns comprehensive PLAN.md with execution steps
+
+IMPLEMENTATION:
+8. Main agent spawns IMPLEMENTATION subagent: "Execute this spec mechanically"
+9. Implementation subagent returns: "Completed. Commits: ..."
+10. Main agent presents approval gate to user
 ```
+
+**Why two-stage planning:**
+- Stage 1 uses ~5K tokens (outlines only)
+- Selection happens with minimal context
+- Stage 2 uses ~20K tokens (detailed spec)
+- Total: ~25K vs ~60K if all three approaches were fully detailed
 
 **Anti-pattern (M088):** Main agent reading source files "to understand the code" - delegate to exploration subagent.
 

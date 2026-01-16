@@ -97,15 +97,37 @@ Display with visual formatting:
 
 Use AskUserQuestion with options: "Conservative", "Balanced", "Aggressive"
 
-### 5. Record Choice
+### 5. Record Choice and Resume Planning Agent
 
 Update STATE.md with selected approach:
 ```yaml
 - **Approach Selected:** [approach name]
 - **Selection Reason:** [user choice | auto-selected based on preferences]
+- **Planning Agent ID:** [agent_id from Stage 1]
 ```
 
-Pass approach to subagent prompt for execution.
+**Resume planning agent for Stage 2 (detailed spec):**
+
+```
+Use the Task tool with resume parameter:
+- resume: {agent_id from Stage 1}
+- prompt: "User selected the [Conservative|Balanced|Aggressive] approach.
+   Now produce the DETAILED implementation spec with:
+   - Specific files to modify
+   - Exact code changes
+   - Step-by-step execution plan
+   - Verification commands
+   The implementation subagent must be able to execute this mechanically
+   without making any decisions."
+```
+
+The resumed agent has full context from Stage 1 exploration, so it can produce
+a comprehensive spec without re-reading the codebase.
+
+**Why resume instead of new agent:**
+- Preserves ~10-20K tokens of codebase context from exploration
+- No need to re-explain the problem or findings
+- Faster and more accurate detailed planning
 
 ## Example Presentations
 

@@ -11,158 +11,173 @@ Select the appropriate template based on work type.
 
 ## Feature Template
 
+### Stage 1: Approach Outlines (lightweight, ~5K tokens)
+
 ```markdown
 # Plan: [Task Name]
 
 ## Goal
-[What this feature accomplishes]
+[1-2 sentences: what this feature accomplishes]
 
-## Approaches
+## Approach Outlines
 
-### Conservative
-[Minimal changes, safest path, may leave some technical debt]
-- **Scope:** [what's included/excluded]
+### 🛡️ Conservative
+[1-2 sentences describing minimal scope approach]
 - **Risk:** LOW
-- **Tradeoff:** [what you give up]
+- **Tradeoff:** [brief - what you give up]
 
-### Balanced
-[Reasonable scope, moderate risk, good tradeoffs]
-- **Scope:** [what's included/excluded]
+### ⚖️ Balanced
+[1-2 sentences describing moderate scope approach]
 - **Risk:** MEDIUM
-- **Tradeoff:** [what you give up]
+- **Tradeoff:** [brief - what you give up]
 
-### Aggressive
-[Comprehensive solution, higher risk, addresses root causes]
-- **Scope:** [what's included/excluded]
+### ⚔️ Aggressive
+[1-2 sentences describing comprehensive approach]
 - **Risk:** HIGH
-- **Tradeoff:** [what you give up]
+- **Tradeoff:** [brief - what you give up]
+```
 
+### Stage 2: Detailed Spec (after selection, ~20K tokens)
+
+```markdown
 ## Selected Approach
-[To be filled after user selection or auto-selection based on preference]
+[Conservative | Balanced | Aggressive]
 
-## Risk Assessment
-- **Risk Level:** LOW | MEDIUM | HIGH
+## Detailed Implementation
+
+### Risk Assessment
+- **Risk Level:** [from selected approach]
 - **Concerns:** [potential issues]
 - **Mitigation:** [how to address]
 
-## Files to Modify
-- path/to/file1.ext - [reason]
-- path/to/file2.ext - [reason]
+### Files to Modify
+- path/to/file1.ext - [specific change]
+- path/to/file2.ext - [specific change]
 
-## Dependencies
+### Dependencies
 - [task-name] - [why needed]
 
-## Acceptance Criteria
+### Acceptance Criteria
 - [ ] Criterion 1
 - [ ] Criterion 2
 
-## Execution Steps
-1. Step 1
-2. Step 2
-3. Step 3
+### Execution Steps
+1. **Step 1:** [action]
+   - Files: [paths]
+   - Action: [specific implementation - what to do, how, what to avoid]
+   - Verify: [command to prove it worked]
+2. **Step 2:** [action]
+   ...
 ```
 
 ---
 
 ## Bugfix Template
 
+### Stage 1: Approach Outlines
+
 ```markdown
 # Plan: [Task Name]
 
 ## Problem
-[Description of the bug]
+[1-2 sentences describing the bug]
 
 ## Root Cause
-[Analysis of why the bug occurs]
+[1-2 sentences - analysis or "to be determined"]
 
-## Fix Approaches
+## Fix Approach Outlines
 
-### Conservative
-[Minimal fix, patches the symptom, low risk]
-- **Scope:** [what's fixed]
+### 🛡️ Conservative
+[1 sentence - patches symptom]
 - **Risk:** LOW
 - **Tradeoff:** [may not address root cause]
 
-### Balanced
-[Fixes root cause in affected area]
-- **Scope:** [what's fixed]
+### ⚖️ Balanced
+[1 sentence - fixes root cause locally]
 - **Risk:** MEDIUM
 - **Tradeoff:** [scope limitation]
 
-### Aggressive
-[Comprehensive fix, addresses related issues]
-- **Scope:** [what's fixed]
+### ⚔️ Aggressive
+[1 sentence - comprehensive fix]
 - **Risk:** HIGH
 - **Tradeoff:** [larger change surface]
+```
 
+### Stage 2: Detailed Spec
+
+```markdown
 ## Selected Approach
-[To be filled after selection]
+[Conservative | Balanced | Aggressive]
 
-## Risk Assessment
-- **Risk Level:** LOW | MEDIUM | HIGH
+## Detailed Fix
+
+### Risk Assessment
+- **Risk Level:** [from selected]
 - **Regression Risk:** [what could break]
 - **Mitigation:** [how to verify]
 
-## Files to Modify
-- path/to/file.ext - [change description]
+### Files to Modify
+- path/to/file.ext - [specific change]
 
-## Test Cases
-- [ ] Test case 1
-- [ ] Test case 2
+### Test Cases
+- [ ] Original bug scenario - now passes
+- [ ] Edge cases - still work
 
-## Execution Steps
-1. Step 1
-2. Step 2
+### Execution Steps
+1. **Step 1:** [action with specific code changes]
+   - Verify: [test command]
 ```
 
 ---
 
 ## Refactor Template
 
+### Stage 1: Approach Outlines
+
 ```markdown
 # Plan: [Task Name]
 
 ## Current State
-[What exists now]
+[1-2 sentences - what exists now]
 
 ## Target State
-[What it should become]
+[1-2 sentences - what it should become]
 
-## Rationale
-[Why this refactor is needed]
+## Refactor Approach Outlines
 
-## Refactor Approaches
-
-### Conservative
-[Rename/reorganize only, no behavior changes]
-- **Scope:** [what's refactored]
+### 🛡️ Conservative
+[1 sentence - rename/reorganize only]
 - **Risk:** LOW
 - **Tradeoff:** [limited improvement]
 
-### Balanced
-[Improve structure and fix obvious issues]
-- **Scope:** [what's refactored]
+### ⚖️ Balanced
+[1 sentence - improve structure]
 - **Risk:** MEDIUM
 - **Tradeoff:** [some areas untouched]
 
-### Aggressive
-[Complete redesign of the target area]
-- **Scope:** [what's refactored]
+### ⚔️ Aggressive
+[1 sentence - complete redesign]
 - **Risk:** HIGH
-- **Tradeoff:** [large change, more testing needed]
+- **Tradeoff:** [large change surface]
+```
 
+### Stage 2: Detailed Spec
+
+```markdown
 ## Selected Approach
-[To be filled after selection]
+[Conservative | Balanced | Aggressive]
 
-## Files to Modify
-- path/to/file.ext - [change description]
+## Detailed Refactor
 
-## Risk Assessment
-- **Risk Level:** LOW | MEDIUM | HIGH
-- **Breaking Changes:** [API changes, behavior changes]
-- **Mitigation:** [incremental approach, tests]
+### Risk Assessment
+- **Risk Level:** [from selected]
+- **Breaking Changes:** [API/behavior changes]
+- **Mitigation:** [tests, incremental steps]
 
-## Execution Steps
-1. Step 1
-2. Step 2
+### Files to Modify
+- path/to/file.ext - [specific change]
+
+### Execution Steps
+1. **Step 1:** [action with before/after patterns]
+   - Verify: [tests pass]
 ```
