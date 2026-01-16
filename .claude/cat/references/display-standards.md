@@ -20,8 +20,25 @@ depends on context - some output contexts render markdown properly, others show 
 **Bold Text Rules:**
 - `**bold**` works in main conversation output when NOT inside code blocks
 - **CRITICAL**: Blank line + 4+ spaces = code block mode = bold breaks
-- Use exactly 3-space indentation to preserve markdown rendering
+- **SOLUTION**: Use zero-width space (U+200B) lines before deeply-indented content
+  - ZWSP lines appear completely blank but aren't treated as "blank" by markdown
+  - This allows 6+ space indentation while preserving bold rendering
 - When bold might not render, use UPPERCASE instead: `CHECKPOINT` not `**Checkpoint**`
+
+**Zero-Width Space (ZWSP) Spacer Lines:** {#zwsp-spacer}
+A line containing only U+200B (zero-width space) is not treated as a "blank line" by CommonMark.
+This means content after it can use 4+ space indentation without triggering code block mode.
+
+```
+Content line 1
+<ZWSP>                   ← line with single U+200B (invisible, 0 width)
+      Deeply indented - **bold works**
+```
+
+**How to type ZWSP:** Copy from here: `​` (between backticks) or use Unicode input.
+The character is invisible but present. Editors may show it as a special marker.
+
+Use ZWSP spacers in box displays where visual separation is needed before indented content.
 
 **Guideline:** Output status displays directly as plain text (not inside code blocks) to ensure
 markdown renders correctly. When in doubt about rendering context, use UPPERCASE for emphasis.
@@ -104,11 +121,13 @@ Output format (do NOT wrap in ```):
 
 ⏸️ **NO EXECUTABLE TASKS AVAILABLE**
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-   Task `task-name` is locked by another session.
-
-   **Blocked tasks:**
-   - task-a
-   - task-b
+​
+      Task `task-name` is locked by another session.
+​
+      **Blocked tasks:**
+      - task-a
+      - task-b
+​
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
 **Checkpoint:**
@@ -117,13 +136,15 @@ Output format (do NOT wrap in ```):
 
 ✅ **CHECKPOINT: Task Complete**
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-   **Quest:** task-name
-   **Approach:** Selected approach description
-
-   ────────────────────────────────────────────────────────────────────────────────────────────
-   **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)
-   ────────────────────────────────────────────────────────────────────────────────────────────
-   **Branch:** task-branch-name
+​
+      **Quest:** task-name
+      **Approach:** Selected approach description
+​
+      ────────────────────────────────────────────────────────────────────────────────────────────
+      **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)
+      ────────────────────────────────────────────────────────────────────────────────────────────
+      **Branch:** task-branch-name
+​
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
 **Fork in the Road (Wizard-Style):** {#fork-in-the-road}
@@ -194,9 +215,11 @@ Output format (do NOT wrap in ```):
 
 🗺️ YOUR ADVENTURE - Project Name
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-   📊 Progress: [████████████████░░░░] **78%**
-   🏆 **72/92** tasks complete
-   ⚙️ Mode: Interactive
+​
+      📊 Progress: [████████████████░░░░] **78%**
+      🏆 **72/92** tasks complete
+      ⚙️ Mode: Interactive
+​
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ## Progress Bar Format {#progress-bar-format}
@@ -244,25 +267,38 @@ v1.0: Description [█████░░░░░░░░░░░░░░░]
 
 Use markdown formatting and emojis for hierarchy instead of box nesting.
 
+**Indentation levels:**
+- Outer box content: 6 spaces
+- Inner box border: 6 spaces
+- Inner box content: 7 spaces (1 space inside border)
+- Task details under version: 10 spaces (7 + 3)
+
+**CRITICAL**: Use ZWSP lines (not blank lines) before deeply-indented content to preserve
+bold rendering. See "Zero-Width Space (ZWSP) Spacer Lines" above.
+
 Output format (do NOT wrap in ```):
 
 🗺️ PROJECT STATUS
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-
-   📦 v0: Major Version Name
-   ╭────────────────────────────────────────────────────────────────────────────────────────╮
-   ☑️ v0.1: Minor description (5/5)
-   ☑️ v0.2: Another minor (9/9)
-
-   🔄 **v0.3: Current minor** (3/5)
-      🔳 pending-task-1
-      🔳 pending-task-2
-   🔳 v0.4: Future minor (0/4)
-   ╰────────────────────────────────────────────────────────────────────────────────────────╯
-
+​
+      📊 Overall: [████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] **38%**
+      🏆 **35/92** tasks complete
+​
+      📦 v0: Major Version Name
+      ╭────────────────────────────────────────────────────────────────────────────────────────╮
+       ☑️ v0.1: Minor description (5/5)
+       ☑️ v0.2: Another minor (9/9)
+​
+       🔄 **v0.3: Current minor** (3/5)
+          🔳 pending-task-1
+          🔳 pending-task-2
+       🔳 v0.4: Future minor (0/4)
+      ╰────────────────────────────────────────────────────────────────────────────────────────╯
+​
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
-Note: Nested boxes use rounded corners (`╭╮╰╯`) and are indented by 3 spaces.
+Note: Lines that appear blank above contain U+200B (zero-width space). These prevent code block
+mode from triggering on the following indented lines while remaining invisible.
 
 ## Status Symbols {#status-symbols}
 

@@ -346,6 +346,78 @@ Output format (do NOT wrap in ```):
 
 </step>
 
+<step name="validate_requirements_coverage">
+
+**MANDATORY: Validate all requirements are covered before execution.**
+
+This step ensures 100% requirements traceability before implementation begins.
+
+**Extract requirements from PLAN.md:**
+
+```bash
+# Extract REQ-* IDs from ## Requirements section
+REQUIREMENTS=$(grep -oE 'REQ-[0-9]+' "$TASK_PATH/PLAN.md" | sort -u)
+REQ_COUNT=$(echo "$REQUIREMENTS" | wc -l)
+echo "Found $REQ_COUNT requirements"
+```
+
+**Extract covered requirements from ## Requirements Traceability:**
+
+```bash
+# Extract requirements mentioned in Covered By column
+COVERED=$(grep -A100 '### Requirements Traceability' "$TASK_PATH/PLAN.md" | \
+          grep -oE 'REQ-[0-9]+' | sort -u)
+COVERED_COUNT=$(echo "$COVERED" | wc -l)
+echo "Covered requirements: $COVERED_COUNT"
+```
+
+**Identify uncovered requirements:**
+
+```bash
+# Find requirements without traceability
+UNCOVERED=$(comm -23 <(echo "$REQUIREMENTS") <(echo "$COVERED"))
+UNCOVERED_COUNT=$(echo "$UNCOVERED" | grep -c 'REQ-' || echo 0)
+```
+
+**If uncovered requirements exist:**
+
+```
+❌ REQUIREMENTS COVERAGE VALIDATION FAILED
+
+Uncovered requirements: {UNCOVERED_COUNT}
+{list of REQ-* IDs without traceability}
+
+Each requirement MUST be linked to at least one execution step
+in the Requirements Traceability table.
+
+Options:
+1. Update PLAN.md to add traceability for missing requirements
+2. Remove requirements that are out of scope for this task
+3. Override and proceed (--override-coverage)
+```
+
+Use AskUserQuestion:
+- header: "Coverage Gate"
+- question: "Requirements coverage validation failed. How to proceed?"
+- options:
+  - "Update plan" - I'll add the missing traceability
+  - "Override" - Proceed without full coverage (not recommended)
+  - "Abort" - Stop execution
+
+**If all requirements covered:**
+
+```
+✓ Requirements coverage: {REQ_COUNT}/{REQ_COUNT} (100%)
+Proceeding to task size analysis.
+```
+
+**Skip conditions:**
+- Task has no `## Requirements` section (legacy tasks)
+- User provided `--override-coverage` flag
+- Task type is `bugfix` or `refactor` (requirements optional)
+
+</step>
+
 <step name="analyze_task_size">
 
 **MANDATORY: Analyze task complexity BEFORE execution.**
@@ -498,8 +570,8 @@ See [display-standards.md § Fork in the Road](.claude/cat/references/display-st
 and [choose-approach skill](skills/choose-approach/SKILL.md) for full format.
 
 ```
-╭─ 🔀 FORK IN THE ROAD ─────────────────────────────────────────────╮
-
+🔀 FORK IN THE ROAD
+╭─────────────────────────────────────────────────────────────────╮
    Task: {task-name}
    Risk: {LOW|MEDIUM|HIGH}
 
@@ -1141,17 +1213,18 @@ when output as plain text, but shows as literal asterisks inside triple-backtick
 
 Output format (do NOT wrap in ```):
 
-╭─ ✅ **CHECKPOINT: Task Complete** ────────────────────────────────────────────────────────────────╮
-
-   **Quest:** {task-name}
-   **Approach:** {selected approach from choose_approach step}
-
-   ─────────────────────────────────────────────────────────────────────────────────────────────────
-   **Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)
-   ─────────────────────────────────────────────────────────────────────────────────────────────────
-   **Branch:** {task-branch}
-
-╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
+✅ **CHECKPOINT: Task Complete**
+╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+​
+      **Quest:** {task-name}
+      **Approach:** {selected approach from choose_approach step}
+​
+      ────────────────────────────────────────────────────────────────────────────────────────────
+      **Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)
+      ────────────────────────────────────────────────────────────────────────────────────────────
+      **Branch:** {task-branch}
+​
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
 **Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
 Users review the task branch which contains merged subagent work, not the internal subagent branch.
