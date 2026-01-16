@@ -6,7 +6,7 @@ allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 
 <objective>
 Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
-and `conventions/` directory for Claude-facing coding standards.
+`.claude/rules/` for always-loaded conventions, and `.claude/cat/conventions/` for on-demand standards.
 </objective>
 
 <execution_context>
@@ -66,7 +66,7 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 <step name="new_setup" condition="New project">
 
 ```bash
-mkdir -p .claude/cat/conventions
+mkdir -p .claude/rules .claude/cat/conventions
 ```
 
 **Deep questioning flow:**
@@ -188,7 +188,7 @@ grep -rl "## Objective\|## Tasks" . --include="*.md" 2>/dev/null | head -30
 <step name="existing_create" condition="Existing codebase">
 
 ```bash
-mkdir -p .claude/cat/conventions
+mkdir -p .claude/rules .claude/cat/conventions
 ```
 
 Create PROJECT.md with inferred state (existing capabilities → Validated requirements).
@@ -431,25 +431,40 @@ Append to PROJECT.md (after Key Decisions):
 
 ## Conventions
 
-Claude-facing coding standards live in `.claude/cat/conventions/`. Place files here that define:
-- Code style rules (naming, formatting, patterns)
-- Testing standards and requirements
-- Architecture guidelines
-- Language-specific conventions
+Coding standards are split between two locations based on loading behavior:
+
+### Always-Loaded: `.claude/rules/`
+
+Rules loaded automatically every session (main agent and subagents). Use for:
+- Critical safety rules (e.g., "never delete production data")
+- Cross-cutting conventions that apply to all work (naming, formatting, patterns)
+- Project-wide constraints that must never be forgotten
+- `conventions.md` - Index pointing to on-demand conventions (see below)
+
+Keep minimal - everything here costs context on every session.
+
+### On-Demand: `.claude/cat/conventions/`
+
+Standards loaded only when needed (similar to SKILL.md files). Use for:
+- Language-specific conventions (java.md, typescript.md, etc.)
+- Domain-specific guidelines (api-design.md, database.md)
+- Testing standards for specific frameworks
+- Detailed style guides
 
 **Structure:**
 ```
+.claude/rules/
+└── conventions.md        # Always-loaded index pointing to on-demand conventions
+
 .claude/cat/conventions/
-├── INDEX.md              # Summary with links to load sub-conventions on demand
-├── common.md             # Cross-cutting conventions
 ├── {language}.md         # Language-specific (java.md, typescript.md, etc.)
 ├── testing.md            # Testing standards
 └── {domain}/             # Optional subdirectories for complex domains
     └── {topic}.md
 ```
 
-**INDEX.md purpose:** Provides a table of contents so agents can load only the conventions they need,
-minimizing context usage. Each entry should have a one-line description of when to load it.
+**conventions.md purpose:** Always-loaded index that tells agents which on-demand conventions exist
+and when to load them. Each entry should have a one-line description of when to load it.
 
 **Content guidelines:**
 - Optimized for AI consumption (concise, unambiguous, examples over prose)
@@ -484,7 +499,7 @@ Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
 
 **New projects:**
 ```
-Initialized: PROJECT.md, ROADMAP.md, cat-config.json, conventions/
+Initialized: PROJECT.md, ROADMAP.md, cat-config.json, rules/, conventions/
 Next: /clear -> /cat:add-major-version
 ```
 
@@ -599,7 +614,8 @@ Use the **explore_at_your_own_pace** box from PRE-COMPUTED INIT BOXES.
 | Deep questioning completed | ✓ | If no planning |
 | PROJECT.md captures context | ✓ | ✓ (inferred) |
 | ROADMAP.md created | ✓ | ✓ (with history) |
-| conventions/ directory | ✓ | ✓ |
+| .claude/rules/ directory | ✓ | ✓ |
+| .claude/cat/conventions/ directory | ✓ | ✓ |
 | Task dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
