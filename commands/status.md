@@ -62,6 +62,21 @@ Store gate status for each version:
 - `entry_gate_blocking`: string (unmet condition, if any)
 - `exit_gate_progress`: string (e.g., "2/3 conditions met")
 
+**Also check for exit gate tasks:**
+
+For each version, check if PLAN.md contains `## Exit Gate Tasks`:
+```bash
+for version_dir in .claude/cat/v*/v*.*; do
+  plan_file="$version_dir/PLAN.md"
+  [ -f "$plan_file" ] && grep -A 10 "^## Exit Gate Tasks" "$plan_file" 2>/dev/null
+done
+```
+
+Exit gate tasks cannot execute until all non-gating tasks in the version are complete.
+Track for each exit gate task:
+- `is_exit_gate`: true
+- `non_gating_incomplete`: count of incomplete non-gating tasks
+
 </step>
 
 <step name="render">
@@ -181,6 +196,12 @@ If any versions have unsatisfied entry gates, list them:
 🚧 v1.0 - waiting on: Major 0 completion
 🚧 v1.2 - waiting on: manual approval
 
+If any tasks are exit gate tasks waiting on non-gating tasks, list them:
+
+**🚧 EXIT GATE TASKS WAITING:**
+🚧 v0.5/validate-spring-framework-parsing - waiting on: 4 non-gating tasks
+   📋 Incomplete: fix-contextual-keyword-declarations, fix-lambda-arrow-in-parenthesized-context, ...
+
 To override an entry gate for a specific task:
 ```
 /cat:execute-task {version}-{task} --override-gate
@@ -233,6 +254,7 @@ The status output should be:
 - [ ] NEXT STEPS table renders with bold [**1**] and [**2**]
 - [ ] Legend displayed (including 🚧 Gate Waiting)
 - [ ] Blocked tasks and gate-blocked versions listed (if any)
+- [ ] Exit gate tasks waiting on non-gating tasks shown with 🚧 indicator
 - [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions
 
 </success_criteria>
