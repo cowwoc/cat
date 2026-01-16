@@ -73,30 +73,24 @@ Store gate status for each version:
 Claude Code shows all Bash tool invocations in the terminal. To display clean output without
 tool call wrappers, output the styled text directly as part of your response.
 
-**CRITICAL: Markdown rendering rules:**
-- Text inside code fences (```) does NOT render markdown (bold shows as `**text**`)
-- Text outside code fences DOES render markdown (**text** becomes bold)
-- Use code fences only for box-drawing that needs alignment
-- Put bold elements (current version, options) OUTSIDE code fences
+**CRITICAL: No vertical borders - use horizontal borders only.**
+
+Per display-standards.md, avoid vertical borders (`║`, `│`) because emoji width varies across
+terminals. Horizontal-only borders eliminate padding calculation problems.
 
 **Use this exact format (substitute actual values):**
 
-```
-╔═══════════════════════════════════════════════════════════════════╗
-║  🗺️ YOUR ADVENTURE - {PROJECT_NAME}                               ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║  📊 Progress: [████████████░░░░░░░░] {PERCENT}%                   ║
-║  🏆 {COMPLETED}/{TOTAL} tasks complete                            ║
-║                                                                   ║
-║  ⚙️ Mode: {Interactive|YOLO}                                      ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
-```
+═══════════════════════════════════════════════════════════════════
+🗺️ **YOUR ADVENTURE** - {PROJECT_NAME}
+═══════════════════════════════════════════════════════════════════
 
-Note: Bold markers inside code fences do not render. The box-drawing provides visual emphasis.
+📊 Progress: [████████████████░░░░] **{PERCENT}%**
+🏆 **{COMPLETED}/{TOTAL}** tasks complete
+⚙️ Mode: {Interactive|YOLO}
 
-┌─ 📦 v{N}: {Major Version Name} ───────────────────────────────────┐
+═══════════════════════════════════════════════════════════════════
+
+┌─ 📦 v{N}: {Major Version Name} ─────────────────────────────────┐
 
 ☑️ v{N}.{M}: {Minor description} ({completed}/{total})
 ☑️ v{N}.{M}: {Another completed minor} ({completed}/{total})
@@ -110,17 +104,16 @@ Note: Bold markers inside code fences do not render. The box-drawing provides vi
 🔳 v{N}.{M}: {Future minor} ({completed}/{total})
    🚧 Entry gate: waiting on v{N}.{M-1} completion
 
-└───────────────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────────────┘
 
 **Gate status indicators (show inline with version when applicable):**
 
 For versions with unsatisfied entry gates:
-```
+
 🚧 v{N}.{M}: {Minor description} ({completed}/{total})
    🚧 Entry gate: waiting on {unmet condition}
-```
 
-For current/in-progress versions, show exit gate progress (outside code fence for bold):
+For current/in-progress versions, show exit gate progress:
 
 🔄 **v{N}.{M}: {Current minor}** ({completed}/{total}) | Exit: 2/3 conditions
 
