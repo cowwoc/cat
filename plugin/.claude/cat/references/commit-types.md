@@ -38,7 +38,7 @@ Use ONLY these types when committing in a CAT-managed project:
 |---------------|-------------|----------|
 | `.claude/cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
 | `.claude/cat/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
-| `.claude/cat/retrospectives/` | `planning:` | mistakes.json, retrospectives.json |
+| `.claude/cat/retrospectives/` | `config:` | mistakes.json, retrospectives.json (Claude-facing) |
 | `.claude/hooks/`, `.claude/settings.json` | `config:` | hooks, Claude Code settings |
 | `CLAUDE.md`, skills, workflows | `config:` | Claude-facing behavior rules |
 | `README.md`, `docs/`, API docs | `docs:` | User-facing documentation |
