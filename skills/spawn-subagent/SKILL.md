@@ -49,11 +49,6 @@ These are ABSOLUTE rules. Violation will be detected and blocked.
 **Why explicit in prompt:** Hooks can block commands, but subagents may try alternatives. Stating
 prohibitions in the prompt prevents wasted effort on blocked approaches.
 
-## Prerequisites
-
-**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this skill.
-All bash commands below use this value directly.
-
 ## When to Use
 
 - Task has a well-defined PLAN.md ready for execution
@@ -303,13 +298,12 @@ ON COMPLETION, write .completion.json with cumulative totals:
 If compaction occurred, the pre-compaction tokens are NOT lost - they must be
 preserved and added to post-compaction usage for accurate reporting.
 
-HOW TO MEASURE (M099 - subagents measure their own tokens):
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-cat > /tmp/token_count.jq << 'EOF'
-[.[] | select(.type == "assistant") | .message.usage | select(. != null) |
-  (.input_tokens + .output_tokens)] | add // 0
-EOF
-TOKENS=$(jq -s -f /tmp/token_count.jq "$SESSION_FILE")
+HOW TO MEASURE (M099):
+# Your session ID is in CAT SESSION INSTRUCTIONS at startup: "Session ID: xxx"
+MY_SESSION_ID="<session-id-from-startup>"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${MY_SESSION_ID}.jsonl"
+TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
+  select(. != null) | (.input_tokens + .output_tokens)] | add // 0' "$SESSION_FILE")
 echo "Measured tokens: $TOKENS"
 ```
 
