@@ -86,6 +86,18 @@ This workflow has 17 steps. Display progress at each step using the format from
 
 </execution_context>
 
+<conditional_context>
+
+**Load on demand when specific scenarios occur:**
+
+| Scenario | Load Workflow |
+|----------|---------------|
+| Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/version-completion.md |
+| Task discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/duplicate-task.md |
+| Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/token-warning.md |
+
+</conditional_context>
+
 <context>
 
 Task path: $ARGUMENTS
@@ -707,39 +719,17 @@ This helps calibrate estimation factors over time and identify patterns in under
 
 **Evaluate token metrics for decomposition:**
 
-**If compaction events > 0:**
+**→ Load token-warning.md workflow if compaction events > 0 or tokens exceed threshold.**
 
-Present strong recommendation:
+See `.claude/cat/workflows/token-warning.md` for:
+- Compaction event warning and user decision
+- High token usage informational warning
+- Decomposition recommendations
+- Token estimate variance check (M099)
 
-```
-⚠️ CONTEXT COMPACTION DETECTED
-
-The subagent experienced {N} compaction event(s). This indicates:
-- Context window was exhausted during execution
-- Quality may have degraded as context was summarized
-- Task may be too large for single-subagent execution
-
-RECOMMENDATION: Decompose remaining work into smaller tasks.
-```
-
-Use AskUserQuestion:
-- header: "Token Warning"
-- question: "Task triggered context compaction. Decomposition is strongly recommended:"
-- options:
-  - "Decompose" - Split into smaller tasks via /cat:decompose-task (Recommended)
-  - "Continue anyway" - Accept potential quality impact
-  - "Abort" - Stop and review work quality
-
-**If tokens >= targetContextUsage threshold (from cat-config.json) but no compaction:**
-
-Informational warning:
-
-```
-📊 HIGH TOKEN USAGE: {N} tokens ({percentage}% of context)
-
-The subagent used significant context (threshold: {targetContextUsage}%).
-Consider decomposing similar tasks in the future.
-```
+**Quick reference:**
+- Compaction events > 0 → Strong decomposition recommendation with user choice
+- High tokens, no compaction → Informational warning only
 
 </step>
 
@@ -1396,7 +1386,15 @@ If found (and lockable):
 ---
 ```
 
-If no more tasks (all completed, blocked, or locked):
+If no more tasks in the current minor version (all completed, blocked, or locked):
+
+**→ Load version-completion.md workflow for full handling.**
+
+See `.claude/cat/workflows/version-completion.md` for:
+- Minor version completion check and celebration
+- Stakeholder review prompt
+- Major version completion check
+- Next steps guidance
 
 ```
 ---
@@ -1669,46 +1667,16 @@ Task ID: v1.0-parse-lambdas
 
 <duplicate_task_handling>
 
-**Detecting Duplicate Tasks**
+**→ Load duplicate-task.md workflow when task is discovered to be duplicate.**
 
-During task execution, you may discover the task is a duplicate - another task already
-implemented the same functionality.
+See `.claude/cat/workflows/duplicate-task.md` for full handling including:
+- Signs of a duplicate task
+- Verification process
+- STATE.md resolution format
+- Commit message format (no Task ID footer)
+- Cleanup and next task flow
 
-**Signs of a duplicate:**
-1. Investigation reveals the functionality already exists
-2. Tests for this task's scenarios already pass
-3. Another task addressed the same root cause
-
-**How to handle:**
-
-1. **Stop execution** - skip worktree creation and implementation
-2. **Verify** - test the specific scenarios from this task's PLAN.md
-3. **Identify original** - find which task/commit implemented the fix
-4. **Update STATE.md** with duplicate resolution:
-
-```yaml
-- **Status:** completed
-- **Progress:** 100%
-- **Resolution:** duplicate
-- **Duplicate Of:** v{major}.{minor}-{original-task-name}
-- **Completed:** {date}
-```
-
-5. **Commit STATE.md only** (no Task ID footer):
-
-```bash
-git commit -m "config: close duplicate task {task-name}
-
-Duplicate of {original-task} (commit {hash}).
-Verification confirmed all scenarios from PLAN.md pass.
-"
-```
-
-6. **Release lock and cleanup** - same as normal task completion
-7. **Offer next task** - continue to next executable task
-
-**Important:** Duplicate tasks omit the `Task ID:` footer (reserved for implementation commits).
-See [task-resolution.md](../references/task-resolution.md) for details.
+**Quick reference:** Set `resolution: duplicate` and `Duplicate Of: v{major}.{minor}-{original-task}` in STATE.md.
 
 </duplicate_task_handling>
 
