@@ -28,8 +28,8 @@ Display progress at each step using this format:
 ✅ Completed: result summary
 ```
 
-Steps: 1. Verify completion, 2. Extract commits, 3. Parse metrics, 4. Read work products, 5. Extract
-status, 6. Report metrics to user, 7. Update STATE.md, 8. Prepare for merge
+Steps: 1. Verify completion, 2. Extract commits, 3. Parse metrics, 4. Extract discovered issues,
+5. Read work products, 6. Extract status, 7. Report metrics to user, 8. Update STATE.md, 9. Prepare for merge
 
 ### 1. Verify Subagent Completion
 
@@ -104,7 +104,41 @@ fi
 entries. The jq `add` over ALL entries captures the true total token consumption, enabling
 accurate comparison against estimates.
 
-### 4. Read Subagent Work Products
+### 4. Extract Discovered Issues
+
+If curiosity was medium or high, the subagent may have noted issues in `.completion.json`:
+
+```bash
+COMPLETION_FILE="${WORKTREE}/.completion.json"
+ISSUES=$(jq -r '.discoveredIssues // []' "$COMPLETION_FILE")
+ISSUE_COUNT=$(echo "$ISSUES" | jq 'length')
+
+if [ "$ISSUE_COUNT" -gt 0 ]; then
+  echo "Discovered issues: $ISSUE_COUNT"
+  echo "$ISSUES" | jq -r '.[] | "- [\(.severity)] \(.file):\(.line) - \(.description)"'
+fi
+```
+
+**Issue format in .completion.json:**
+```json
+{
+  "discoveredIssues": [
+    {
+      "file": "src/parser/Lexer.java",
+      "line": 142,
+      "type": "code-quality",
+      "severity": "medium",
+      "description": "Duplicate token validation logic could be extracted",
+      "benefitCost": 2.5
+    }
+  ]
+}
+```
+
+**Important:** The main agent handles these issues based on the `patience` setting (see
+execute-task.md handle_discovered_issues step). This skill only extracts them.
+
+### 5. Read Subagent Work Products
 
 ```bash
 cd "${WORKTREE}"
@@ -116,7 +150,7 @@ git diff --name-only origin/HEAD..HEAD
 git diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
 ```
 
-### 5. Extract Subagent Status
+### 6. Extract Subagent Status
 
 If subagent maintained a STATE.md or status file:
 
@@ -128,7 +162,7 @@ cat "${WORKTREE}/.claude/cat/tasks/${TASK}/STATE.md"
 cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null
 ```
 
-### 6. MANDATORY: Report Token Metrics to User
+### 7. MANDATORY: Report Token Metrics to User
 
 **CRITICAL (M096): Verify token values before reporting - never estimate or guess.**
 
@@ -173,6 +207,8 @@ or session file. Claiming "subagent used X tokens" without verification is a mea
 - Commits: 5
 - Files changed: 12
 - Lines: +450 / -120
+
+**Discovered Issues:** 2 (will be handled by main agent based on patience setting)
 ```
 
 **Why mandatory:** Users cannot observe subagent execution. This report is the only visibility
@@ -187,7 +223,7 @@ The subagent experienced context pressure and may have produced lower quality ou
 Consider invoking /cat:decompose-task for similar tasks in the future.
 ```
 
-### 7. Update Parent STATE.md
+### 8. Update Parent STATE.md
 
 Record collection results in parent's tracking:
 
@@ -211,7 +247,7 @@ subagents:
     reported_to_user: true  # MANDATORY - metrics must be shown to user
 ```
 
-### 8. Prepare for Merge
+### 9. Prepare for Merge
 
 ```bash
 # Ensure subagent branch is up to date
