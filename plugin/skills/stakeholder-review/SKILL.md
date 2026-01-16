@@ -31,6 +31,7 @@ perspectives (architecture, security, quality, testing, performance) before user
 | ux | @stakeholders/ux.md | Usability, accessibility, interaction design |
 | sales | @stakeholders/sales.md | Customer value, competitive positioning |
 | marketing | @stakeholders/marketing.md | Positioning, messaging, go-to-market |
+| legal | @stakeholders/legal.md | Licensing, compliance, IP, data privacy |
 
 ## Process
 
@@ -72,6 +73,7 @@ fi
 - **ux**: Run if UI/frontend files changed
 - **sales**: Run if user-facing features changed
 - **marketing**: Run if public APIs or user-visible features changed
+- **legal**: Run if LICENSE, third-party dependencies, data handling, or terms of service changed
 
 </step>
 
@@ -185,6 +187,7 @@ for review in reviews:
 | ux | {status} | {count} | {count} | {count} |
 | sales | {status} | {count} | {count} | {count} |
 | marketing | {status} | {count} | {count} | {count} |
+| legal | {status} | {count} | {count} | {count} |
 
 ### Critical Concerns (Must Fix)
 {list of critical concerns with locations and recommendations}
@@ -252,7 +255,8 @@ Return structured result for integration with work:
     "performance": {"status": "...", "concerns": [...]},
     "ux": {"status": "...", "concerns": [...]},
     "sales": {"status": "...", "concerns": [...]},
-    "marketing": {"status": "...", "concerns": [...]}
+    "marketing": {"status": "...", "concerns": [...]},
+    "legal": {"status": "...", "concerns": [...]}
   },
   "aggregated_concerns": {
     "critical": [...],

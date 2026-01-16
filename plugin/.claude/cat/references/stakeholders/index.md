@@ -15,6 +15,7 @@ Multi-perspective code review through specialized stakeholder agents.
 | ux | User experience | Usability, accessibility, interaction design, user feedback |
 | sales | Sales readiness | Customer value, competitive positioning, demo-readiness, objections |
 | marketing | Market readiness | Positioning, messaging, target audience, go-to-market strategy |
+| legal | Legal compliance | Licensing, IP, regulatory compliance, contracts, data privacy |
 
 ## Stakeholder Modes
 
@@ -33,9 +34,9 @@ Stakeholders run in research mode **automatically** during:
 
 | Command | Trigger | What Happens |
 |---------|---------|--------------|
-| `/cat:add` (major version) | After discuss step | All 9 stakeholders research the domain in parallel |
-| `/cat:add` (minor version) | After discuss step | All 9 stakeholders research the domain in parallel |
-| `/cat:research` | Manual invocation | All 9 stakeholders research specific topic |
+| `/cat:add` (major version) | After discuss step | All 10 stakeholders research the domain in parallel |
+| `/cat:add` (minor version) | After discuss step | All 10 stakeholders research the domain in parallel |
+| `/cat:research` | Manual invocation | All 10 stakeholders research specific topic |
 
 **Research output** is merged into the `## Research` section of PLAN.md.
 
@@ -45,8 +46,8 @@ Stakeholders run in review mode during:
 
 | Command | Trigger | What Happens |
 |---------|---------|--------------|
-| `/cat:work` | After implementation complete | All 9 stakeholders review code in parallel |
-| `/cat:stakeholder-review` | Manual invocation | All 9 stakeholders review specified changes |
+| `/cat:work` | After implementation complete | All 10 stakeholders review code in parallel |
+| `/cat:stakeholder-review` | Manual invocation | All 10 stakeholders review specified changes |
 
 **Review output** determines if implementation can proceed to merge.
 
@@ -63,6 +64,7 @@ Stakeholders run in review mode during:
 | **ux** | UX patterns, usability considerations, accessibility requirements | Broken flows, missing feedback, accessibility barriers |
 | **sales** | Customer value, competitive positioning, objection handling | Value delivery, demo-readiness, competitive disadvantage |
 | **marketing** | Positioning, messaging, target audience, go-to-market | Marketability, differentiation, naming, launch readiness |
+| **legal** | Licensing, compliance requirements, IP considerations, liability | License violations, regulatory non-compliance, IP infringement, data privacy |
 
 ## Review Process
 
