@@ -1580,13 +1580,13 @@ the AskUserQuestion approval prompt, use the `cat:render-diff` skill to display 
 git log ${BASE_BRANCH}..HEAD --oneline
 
 # Render diff using the render-diff skill (4-column table format)
-git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh"
+git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
 ```
 
 See [render-diff SKILL.md](../skills/render-diff/SKILL.md) for format details and features.
 
 **SELF-CHECK before showing approval gate (M201):**
-- [ ] Did I run render-diff.sh (NOT plain `git diff`)?
+- [ ] Did I run render-diff.py (NOT plain `git diff`)?
 - [ ] Does output have box characters (╭╮╰╯│)?
 - [ ] Is output in 4-column format (Old | Symbol | New | Content)?
 

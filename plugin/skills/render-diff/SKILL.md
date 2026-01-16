@@ -15,13 +15,13 @@ Each hunk is rendered as a self-contained box with file header, making diffs eas
 Pipe git diff output to the script:
 
 ```bash
-git diff main..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh"
+git diff main..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
 ```
 
 Or provide a diff file:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh" diff-output.txt
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" diff-output.txt
 ```
 
 ## Configuration
@@ -119,7 +119,7 @@ Appears once at end, showing only symbols used:
 
 **Input:**
 ```bash
-git diff main..HEAD | render-diff.sh
+git diff main..HEAD | render-diff.py
 ```
 
 **Output (multiple hunks in same file):**
@@ -157,7 +157,7 @@ git diff main..HEAD | render-diff.sh
 ```bash
 # Generate diff for review
 git diff "${BASE_BRANCH}..HEAD" | \
-  "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh" > /tmp/review-diff.txt
+  "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" > /tmp/review-diff.txt
 
 # Display for approval
 cat /tmp/review-diff.txt
