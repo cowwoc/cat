@@ -176,7 +176,7 @@ Adventures are more fun when you're not worried about falling:
 | Command | What It Does |
 |---------|--------------|
 | `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
-| `/cat:update-preferences` | Change your adventurer style |
+| `/cat:update-config` | Change your adventurer style |
 | `/cat:remove-task` | Remove a quest from the map |
 
 ---
