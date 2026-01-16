@@ -1,10 +1,19 @@
 # State
 
-- **Status:** pending
-- **Progress:** 0%
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** not-applicable
 - **Dependencies:** []
+- **Completed:** 2026-01-22
 - **Last Updated:** 2026-01-22
 
 ## Notes
 
-Goal: Remove box-drawing logic from skill file. A PreToolUse hook will compute and inject the formatted output, so the skill only needs to define WHAT to display, not HOW to render it.
+Skill has box-drawing characters but they are fixed-width templates showing expected output format:
+- Lines 289-303, 475-488: Selection/review summary boxes
+- Lines 494-504: Issue severity boxes
+
+These are fixed-width templates (56 chars) that Claude fills in with values. No dynamic width
+calculation needed - alignment is consistent because width is pre-defined.
+
+No changes needed - the pattern here is different from computed-width boxes.
