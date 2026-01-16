@@ -1,220 +1,241 @@
 ---
 name: cat:research
 description: Research how to implement a task before planning
-argument-hint: "[major.minor/task-name or topic]"
+argument-hint: "[major.minor or major]"
 allowed-tools:
   - Read
+  - Write
   - Bash
   - Glob
   - Grep
-  - Write
+  - Task
   - WebFetch
   - WebSearch
 ---
 
 <objective>
 
-Comprehensive research on HOW to implement something before planning.
+Manually trigger stakeholder research for a version.
 
-Use this for niche/complex domains where Claude's training data is sparse or outdated. Research
-discovers:
-- What libraries exist for this problem
-- What architecture patterns experts use
-- What the standard stack looks like
-- What problems people commonly hit
-- What NOT to hand-roll (use existing solutions)
+This command runs the same stakeholder research that automatically runs during `/cat:add-major-version`
+and `/cat:add-minor-version`. Use it when:
+- Previous research is out-of-date
+- Research wasn't done during version creation
+- Deeper investigation is needed
+
+All 8 stakeholders research the version's topic in parallel, producing domain expertise from their
+respective perspectives.
 
 </objective>
 
 <when_to_use>
 
-**This command is for domains where Claude fails without research:**
-- 3D graphics (Three.js, Babylon.js, procedural generation)
-- Game development (physics engines, collision, AI, ECS patterns)
-- Audio/music (Web Audio, DSP, synthesis, MIDI)
-- Shaders (GLSL, Metal, compute shaders)
-- ML/AI integration (model serving, inference, vector DBs)
-- Real-time systems (WebSockets, WebRTC, CRDT sync)
-- Specialized frameworks with active ecosystems Claude may not know
+**Use when:**
+- Research from version creation is stale
+- You skipped research during `/cat:add-*-version`
+- The topic requires fresh investigation
+- You want to refresh expertise before implementation
 
-**Skip this for commodity domains:**
-- Standard auth (JWT, OAuth)
-- CRUD APIs
-- Forms and validation
-- Well-documented integrations (Stripe, SendGrid)
+**Don't use when:**
+- Version was just created (research already ran)
+- Topic is well-understood and stable
+- You need project-specific conventions (use codebase exploration instead)
 
 </when_to_use>
 
-<key_insight>
-
-The question isn't "which library should I use?"
-
-The question is "What do I not know that I don't know?"
-
-For niche domains:
-- What's the established architecture pattern?
-- What libraries form the standard stack?
-- What problems do people commonly hit?
-- What's SOTA vs what Claude thinks is SOTA?
-- What should NOT be hand-rolled?
-
-</key_insight>
-
 <execution_context>
 
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/architect.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/security.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/quality.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/tester.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/performance.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/ux.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/sales.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/marketing.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/research-pitfalls.md
 
 </execution_context>
 
 <process>
 
-<step name="identify_scope">
+<step name="identify_version">
 
-**Determine research scope:**
+**Parse $ARGUMENTS to identify version:**
 
-If $ARGUMENTS is a task path (major.minor/task-name):
-- Load the task's PLAN.md for context
-- Extract the domain/technology to research
+| Format | Example | Target |
+|--------|---------|--------|
+| major.minor | `1.2` | `.claude/cat/v1/v1.2/PLAN.md` |
+| major | `1` | `.claude/cat/v1/PLAN.md` |
 
-If $ARGUMENTS is a topic:
-- Use directly as research focus
+Read the target PLAN.md to extract:
+- **Topic**: From `## Focus` or version description
+- **Context**: Any existing research, scope, or constraints
 
-Present scope:
+```bash
+PLAN_PATH=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/PLAN.md"  # or v${MAJOR}/PLAN.md for major
 ```
-Research scope: [topic/technology]
 
-I'll investigate:
-1. Core technology - current state, setup, toolchain
-2. Ecosystem - standard libraries and stack
-3. Architecture - recommended patterns
-4. Pitfalls - common mistakes to avoid
-5. Don't hand-roll - existing solutions
+Present:
+```
+Research target: v[version]
+Topic: [extracted topic]
+
+I'll spawn 8 stakeholders to research [topic] in parallel,
+each acquiring domain expertise from their perspective.
 ```
 
 </step>
 
-<step name="research_domains">
+<step name="spawn_stakeholders">
 
-**Identify what needs researching:**
+**Spawn all 8 stakeholder research agents in parallel:**
 
-| Category | Questions to Answer |
-|----------|---------------------|
-| Core Technology | What version is current? What's the standard setup? |
-| Ecosystem/Stack | What libraries do experts pair with this? |
-| Architecture | How do experts structure this type of project? |
-| Common Pitfalls | What do beginners get wrong? |
-| Don't Hand-Roll | What problems have existing solutions? |
-| SOTA Updates | What's changed recently? |
+Use the `parallel-execute` skill or spawn 8 Task agents simultaneously:
 
-</step>
+```yaml
+agents:
+  - stakeholder: architect
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 
-<step name="execute_research">
+  - stakeholder: security
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 
-**Execute research systematically:**
+  - stakeholder: quality
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 
-**1. Official Documentation First:**
+  - stakeholder: tester
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 
-Use WebFetch for official docs:
-- Getting started guides
-- API references
-- Best practices sections
+  - stakeholder: performance
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 
-**2. WebSearch for Ecosystem Discovery:**
+  - stakeholder: ux
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 
-Use current year in queries:
+  - stakeholder: sales
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
+
+  - stakeholder: marketing
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 ```
-- "[technology] best practices {current_year}"
-- "[technology] recommended libraries {current_year}"
-- "[technology] common mistakes"
-- "[technology] vs [alternative] {current_year}"
-- "how to build [type of thing] with [technology]"
+
+Each agent:
+1. Receives the stakeholder definition file for their role
+2. Follows the Research Mode instructions
+3. Uses WebSearch and WebFetch to gather information
+4. Returns structured JSON with their findings
+
+</step>
+
+<step name="collect_results">
+
+**Collect and validate results from all stakeholders:**
+
+For each stakeholder response:
+- Parse the JSON output
+- Verify all required fields are present
+- Check confidence levels
+- Note any open questions
+
+Track completion:
+```
+Stakeholder research progress:
+✓ architect - HIGH confidence
+✓ security - MEDIUM confidence
+✓ quality - HIGH confidence
+✓ tester - HIGH confidence
+✓ performance - MEDIUM confidence
+✓ ux - HIGH confidence
+✓ sales - HIGH confidence
+✓ marketing - MEDIUM confidence
 ```
 
-**3. Cross-Verification (MANDATORY):**
-
-Every WebSearch finding MUST be verified:
-- Check official docs to confirm
-- Mark confidence level (HIGH if verified, MEDIUM if partially verified, LOW if WebSearch only)
-- Flag contradictions between sources
-
 </step>
 
-<step name="quality_check">
+<step name="aggregate_research">
 
-**Before finalizing, run through pitfalls checklist:**
+**Aggregate findings into PLAN.md Research section:**
 
-From research-pitfalls.md:
-
-- [ ] All enumerated items investigated (not just some)
-- [ ] Negative claims verified with official docs
-- [ ] Multiple sources cross-referenced for critical claims
-- [ ] URLs provided for authoritative sources
-- [ ] Publication dates checked (prefer recent/current)
-- [ ] Tool/environment-specific variations documented
-- [ ] Confidence levels assigned honestly
-- [ ] Assumptions distinguished from verified facts
-- [ ] "What might I have missed?" review completed
-
-</step>
-
-<step name="write_research">
-
-**Create RESEARCH.md:**
-
-If researching for a task, write to task directory:
-`.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/RESEARCH.md`
-
-Otherwise, write to project root:
-`.claude/cat/RESEARCH-{topic}.md`
+Read the existing PLAN.md, then add or update the `## Research` section:
 
 ```markdown
-# Research: [Topic]
+## Research
 
+**Topic:** [topic]
 **Date:** [YYYY-MM-DD]
-**Confidence:** [HIGH|MEDIUM|LOW]
+**Overall Confidence:** [lowest of all stakeholder confidences]
 
-## Standard Stack
+### Architect Perspective
+**Stack:** [recommendation with rationale]
+**Architecture:** [pattern and structure]
+**Build vs Use:** [what to build, what to use]
+[Sources: URLs]
 
-| Library | Purpose | Version | Why Standard |
-|---------|---------|---------|--------------|
-| [lib1] | [purpose] | [ver] | [reason] |
+### Security Perspective
+**Threats:** [topic-specific vulnerabilities]
+**Secure Patterns:** [how to implement securely]
+**Mistakes to Avoid:** [common security errors]
+[Sources: URLs]
 
-## Architecture Patterns
+### Quality Perspective
+**Patterns:** [idiomatic approaches]
+**Anti-Patterns:** [what to avoid]
+**Maintainability:** [organization and conventions]
+[Sources: URLs]
 
-**Recommended approach:**
-[Description with rationale]
+### Tester Perspective
+**Strategy:** [testing approach for topic]
+**Edge Cases:** [what to test]
+**Hard to Test:** [patterns for difficult cases]
+[Sources: URLs]
 
-**Project structure:**
+### Performance Perspective
+**Characteristics:** [scale and metrics]
+**Efficient Patterns:** [optimized approaches]
+**Pitfalls:** [deceptively slow operations]
+[Sources: URLs]
+
+### UX Perspective
+**Patterns:** [expected interactions]
+**Usability:** [what makes it easy vs hard]
+**Accessibility:** [inclusive design considerations]
+[Sources: URLs]
+
+### Sales Perspective
+**Value Proposition:** [customer problems solved, quantifiable value]
+**Competitive Positioning:** [differentiation, advantages]
+**Objection Handling:** [common concerns and responses]
+[Sources: URLs]
+
+### Marketing Perspective
+**Positioning:** [market category, how to position]
+**Messaging:** [what resonates with buyers]
+**Go-to-Market:** [launch strategy, channels]
+[Sources: URLs]
+
+### Open Questions
+- [Unresolved items from all stakeholders]
 ```
-[recommended organization]
-```
 
-## Don't Hand-Roll
-
-| Problem | Use Instead | Why |
-|---------|-------------|-----|
-| [problem] | [library] | [reason] |
-
-## Common Pitfalls
-
-1. **[Pitfall]**: [What goes wrong]
-   - Prevention: [How to avoid]
-
-## Code Examples
-
-```[language]
-// [Verified pattern from official docs]
-```
-
-## Sources
-
-- [URL 1] - [what it covers]
-- [URL 2] - [what it covers]
-
-## Open Questions
-
-- [Anything unresolved]
-```
+**Placement:** After `## Focus`/`## Vision`, before `## Scope`/`## Gates`.
 
 </step>
 
@@ -223,25 +244,23 @@ Otherwise, write to project root:
 **Present summary:**
 
 ```
-Research complete: [topic]
+Research complete: v[version] - [topic]
 
-**Key findings:**
-- Standard stack: [libraries]
-- Pattern: [architecture approach]
-- Don't hand-roll: [list]
-- Top pitfall: [most important warning]
+Stakeholder expertise acquired:
+├─ Architect: [key insight]
+├─ Security: [key insight]
+├─ Quality: [key insight]
+├─ Tester: [key insight]
+├─ Performance: [key insight]
+├─ UX: [key insight]
+├─ Sales: [key insight]
+└─ Marketing: [key insight]
 
-**Confidence:** [HIGH|MEDIUM|LOW]
+Overall confidence: [HIGH|MEDIUM|LOW]
+Saved to: [PLAN.md path]
 
-Saved to: [path to RESEARCH.md]
-
----
-
-## Next Steps
-
-This research will be loaded automatically when executing related tasks.
-
----
+This research will inform implementation to maximize quality,
+efficiency, and stakeholder satisfaction.
 ```
 
 </step>
@@ -250,16 +269,12 @@ This research will be loaded automatically when executing related tasks.
 
 <success_criteria>
 
-- [ ] Research scope identified
-- [ ] Official documentation consulted
-- [ ] WebSearch findings cross-verified
-- [ ] Quality checklist completed
-- [ ] RESEARCH.md created with:
-  - [ ] Standard stack documented
-  - [ ] Architecture patterns documented
-  - [ ] Don't hand-roll list
-  - [ ] Common pitfalls catalogued
-  - [ ] Confidence levels assigned
-  - [ ] Sources with URLs
+- [ ] Version identified and PLAN.md located
+- [ ] Topic extracted from version
+- [ ] All 8 stakeholders spawned in parallel
+- [ ] All 8 stakeholders returned results
+- [ ] Results aggregated into PLAN.md Research section
+- [ ] Confidence levels assigned
+- [ ] Sources documented
 
 </success_criteria>

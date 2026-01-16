@@ -191,11 +191,27 @@ for review in reviews:
 **Take action based on result:**
 
 **If REJECTED:**
+
+Behavior depends on trust level:
+
+| Trust | Rejection Behavior |
+|-------|-------------------|
+| `low` | Ask user: Fix / Override / Abort |
+| `medium` | Auto-loop to fix (up to 3 iterations) |
+
+Note: `trust: "high"` skips review entirely, so rejection handling doesn't apply.
+
+For `trust: "low"`:
 1. Present concerns to user with clear explanation
 2. Ask user how to proceed:
    - "Fix concerns" → Return to implementation phase with concern list
    - "Override and proceed" → Continue to user approval with concerns noted
    - "Abort task" → Stop execution
+
+For `trust: "medium"`:
+1. Automatically loop back to implementation phase with concern list
+2. No user prompt required
+3. Escalate to user only after 3 failed fix attempts
 
 **If CONCERNS:**
 1. Note concerns in task documentation
@@ -252,14 +268,17 @@ Implementation Phase
 
 ## When to Run (Automatic Triggering)
 
-Stakeholder review is **automatically triggered based on task characteristics**, not a global preference.
-This ensures high-risk changes always get reviewed regardless of user settings.
+Review triggering depends on trust level:
 
-**High-risk indicators** (any triggers review):
+| Trust | Action |
+|-------|--------|
+| `high` | Skip review (autonomous mode) |
+| `medium` | Run review |
+| `low` | Run review |
+
+**High-risk detection** (informational, for risk assessment display):
 - Risk section mentions "breaking change", "data loss", "security", "production"
 - Task modifies authentication, authorization, or payment code
 - Task touches 5+ files
 - Task modifies public APIs or interfaces
 - Task involves database schema changes
-
-**Note:** Reviews are always skipped when `yoloMode: true` (user explicitly chose autonomous mode).
