@@ -79,3 +79,4 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 
 ## Tasks Pending
 - branching-strategy-config
+- centralize-version-path-resolution
