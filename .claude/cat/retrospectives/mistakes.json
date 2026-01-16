@@ -3193,6 +3193,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When no tasks are available due to existing worktrees, explain the situation and suggest /cat:cleanup only if user believes worktrees are stale - NEVER offer to resume worktrees"
+    },
+    {
+      "id": "M240",
+      "timestamp": "2026-01-24T14:50:00Z",
+      "category": "git_operation_failure",
+      "description": "Squash deleted simplify-readme files that existed on base but not in worktree",
+      "root_cause": "Worktree was out of sync with base branch - soft reset stages deletions for files on base but missing from working tree",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/git-squash/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "soft reset",
+        "deletion",
+        "worktree",
+        "sync"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before committing after soft reset, check git diff --name-status HEAD | grep ^D for unexpected deletions. Restore any unintended deletions from base before committing."
     }
   ]
 }
