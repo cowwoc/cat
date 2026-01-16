@@ -62,16 +62,281 @@ tool calls from reviewers.
 
 ## Process
 
+<step name="analyze_context">
+
+**Context-Aware Stakeholder Selection**
+
+Analyze task context to determine which stakeholders are relevant, reducing token usage by skipping irrelevant reviewers.
+
+### Selection Algorithm
+
+```
+RESEARCH MODE (pre-implementation):
+1. Start with base set: [requirements] (always included)
+2. Detect task type from PLAN.md or commit messages
+3. Apply task type inclusions/exclusions
+4. Scan task description/goal for keywords
+5. Apply keyword inclusions
+6. Check version PLAN.md for focus keywords
+7. Apply version focus inclusions
+8. Output: selected_stakeholders, skipped_with_reasons
+
+REVIEW MODE (post-implementation):
+1. Start with research mode selection
+2. Get list of actually changed files
+3. For each file-based override rule:
+   - If condition matches, ADD stakeholder (even if context excluded it)
+4. Output: final_stakeholders, skipped_with_reasons, overridden_stakeholders
+```
+
+### Task Type Mappings
+
+Detect task type from PLAN.md `## Type` field or infer from commit messages/description:
+
+| Task Type | Include | Exclude |
+|-----------|---------|---------|
+| documentation | requirements | architect, security, quality, tester, performance, ux, sales, marketing |
+| refactor | architect, quality, tester | ux, sales, marketing |
+| bugfix | requirements, quality, tester, security | sales, marketing |
+| performance | performance, architect, tester | ux, sales, marketing |
+
+### Keyword Mappings
+
+Scan task description, goal, and PLAN.md for keywords:
+
+| Keywords | Include |
+|----------|---------|
+| "license", "compliance", "legal" | legal |
+| "UI", "frontend", "user interface" | ux |
+| "API", "endpoint", "public" | architect, security, marketing |
+| "internal", "tooling", "CLI" | architect, quality (exclude ux, sales, marketing) |
+| "security", "auth", "permission" | security |
+
+### Version Focus Mapping
+
+Check version PLAN.md for strategic focus:
+
+- If version PLAN.md mentions "commercialization" → include legal, sales, marketing
+
+### File-Based Overrides (Review Mode Only)
+
+In review mode, file changes can override context exclusions:
+
+| File Pattern | Add Stakeholder |
+|--------------|-----------------|
+| UI/frontend files (`**/ui/**`, `**/frontend/**`, `*.tsx`, `*.vue`) | ux |
+| Security-sensitive files (`**/auth/**`, `**/permission/**`, `**/security/**`) | security |
+| Test files (`*Test*`, `*Spec*`, `*_test*`) | tester |
+| Algorithm-heavy files (sort, search, optimize, process) | performance |
+| Only .md files changed | requirements only, exclude all others |
+| Only test files changed | tester, quality only |
+
+### User Override: Force Stakeholders
+
+Users can force specific stakeholders by adding to task PLAN.md:
+
+```markdown
+## Force Stakeholders
+- ux
+- legal
+```
+
+If `## Force Stakeholders` section exists, those stakeholders are ALWAYS included regardless of context analysis.
+
+### Implementation
+
+```bash
+# Initialize base selection
+SELECTED="requirements"
+SKIPPED=""
+OVERRIDDEN=""
+
+# Read task PLAN.md
+TASK_PLAN=$(cat .claude/cat/tasks/*/PLAN.md 2>/dev/null || echo "")
+
+# Check for forced stakeholders
+FORCED=$(echo "$TASK_PLAN" | sed -n '/## Force Stakeholders/,/^##/p' | grep '^ *-' | sed 's/^ *- *//')
+
+# Detect task type
+TASK_TYPE=$(echo "$TASK_PLAN" | grep -E '^## Type' -A1 | tail -1 | tr '[:upper:]' '[:lower:]' || echo "")
+if [[ -z "$TASK_TYPE" ]]; then
+    # Infer from commit messages or task name
+    TASK_TYPE=$(git log -1 --pretty=%s 2>/dev/null | grep -oE '^(fix|feat|refactor|docs|perf)' | head -1)
+    case "$TASK_TYPE" in
+        docs) TASK_TYPE="documentation" ;;
+        fix) TASK_TYPE="bugfix" ;;
+        perf) TASK_TYPE="performance" ;;
+    esac
+fi
+
+# Apply task type mappings
+case "$TASK_TYPE" in
+    documentation)
+        EXCLUDED="architect security quality tester performance ux sales marketing"
+        ;;
+    refactor)
+        SELECTED="$SELECTED architect quality tester"
+        EXCLUDED="ux sales marketing"
+        ;;
+    bugfix)
+        SELECTED="$SELECTED quality tester security"
+        EXCLUDED="sales marketing"
+        ;;
+    performance)
+        SELECTED="$SELECTED performance architect tester"
+        EXCLUDED="ux sales marketing"
+        ;;
+    *)
+        # Default: include core technical reviewers
+        SELECTED="$SELECTED architect security quality tester performance"
+        EXCLUDED=""
+        ;;
+esac
+
+# Scan for keywords in task description
+TASK_TEXT=$(echo "$TASK_PLAN" | tr '[:upper:]' '[:lower:]')
+
+if echo "$TASK_TEXT" | grep -qE 'license|compliance|legal'; then
+    SELECTED="$SELECTED legal"
+fi
+if echo "$TASK_TEXT" | grep -qE '\bui\b|frontend|user interface'; then
+    SELECTED="$SELECTED ux"
+fi
+if echo "$TASK_TEXT" | grep -qE '\bapi\b|endpoint|public'; then
+    SELECTED="$SELECTED architect security marketing"
+fi
+if echo "$TASK_TEXT" | grep -qE 'internal|tooling|\bcli\b'; then
+    SELECTED="$SELECTED architect quality"
+    EXCLUDED="$EXCLUDED ux sales marketing"
+fi
+if echo "$TASK_TEXT" | grep -qE 'security|auth|permission'; then
+    SELECTED="$SELECTED security"
+fi
+
+# Check version PLAN.md for focus
+VERSION_PLAN=$(cat .claude/cat/versions/*/PLAN.md 2>/dev/null || echo "")
+if echo "$VERSION_PLAN" | grep -qi 'commercialization'; then
+    SELECTED="$SELECTED legal sales marketing"
+fi
+
+# Add forced stakeholders
+for stakeholder in $FORCED; do
+    SELECTED="$SELECTED $stakeholder"
+done
+
+# Deduplicate and finalize selection
+SELECTED=$(echo "$SELECTED" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+```
+
+### File-Based Override Logic (Review Mode)
+
+```bash
+# Get changed files
+CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
+
+# Check for file-based overrides
+if echo "$CHANGED_FILES" | grep -qE '(ui/|frontend/|\.tsx$|\.vue$)'; then
+    if ! echo "$SELECTED" | grep -q 'ux'; then
+        SELECTED="$SELECTED ux"
+        OVERRIDDEN="$OVERRIDDEN ux:UI_file_changed"
+    fi
+fi
+
+if echo "$CHANGED_FILES" | grep -qE '(auth/|permission/|security/)'; then
+    if ! echo "$SELECTED" | grep -q 'security'; then
+        SELECTED="$SELECTED security"
+        OVERRIDDEN="$OVERRIDDEN security:security_file_changed"
+    fi
+fi
+
+if echo "$CHANGED_FILES" | grep -qE '(Test|Spec|_test)\.'; then
+    if ! echo "$SELECTED" | grep -q 'tester'; then
+        SELECTED="$SELECTED tester"
+        OVERRIDDEN="$OVERRIDDEN tester:test_file_changed"
+    fi
+fi
+
+if echo "$CHANGED_FILES" | grep -qE '(sort|search|optimize|process|algorithm)'; then
+    if ! echo "$SELECTED" | grep -q 'performance'; then
+        SELECTED="$SELECTED performance"
+        OVERRIDDEN="$OVERRIDDEN performance:algorithm_file_changed"
+    fi
+fi
+
+# Special case: only .md files changed
+if echo "$CHANGED_FILES" | grep -qvE '\.md$' | grep -q .; then
+    : # Non-md files exist, continue normally
+else
+    # Only markdown files - limit to requirements only
+    SELECTED="requirements"
+    SKIPPED="$SKIPPED architect:only_md_files security:only_md_files quality:only_md_files tester:only_md_files performance:only_md_files ux:only_md_files sales:only_md_files marketing:only_md_files legal:only_md_files"
+fi
+
+# Special case: only test files changed
+NON_TEST_FILES=$(echo "$CHANGED_FILES" | grep -vE '(Test|Spec|_test)\.' || true)
+if [[ -z "$NON_TEST_FILES" ]] && [[ -n "$CHANGED_FILES" ]]; then
+    SELECTED="requirements tester quality"
+    SKIPPED="$SKIPPED architect:only_test_files security:only_test_files performance:only_test_files ux:only_test_files sales:only_test_files marketing:only_test_files legal:only_test_files"
+fi
+```
+
+### Output Format
+
+After context analysis, display selection results:
+
+```
+╭─ STAKEHOLDER SELECTION
+│
+│  Stakeholder Review: {N} of 10 stakeholders selected
+│
+│  Running: requirements, architect, security, quality, tester
+│
+│  Skipped:
+│    - ux: No UI/frontend changes detected
+│    - legal: No licensing/compliance keywords in task
+│    - sales: Internal tooling task
+│    - marketing: Internal tooling task
+│    - performance: No algorithm-heavy code changes
+│
+╰─
+```
+
+If file-based overrides occurred:
+```
+│  Overrides (file-based):
+│    + ux: UI file changed (src/ui/TerminalRenderer.ts)
+│
+```
+
+### Skip Reason Mapping
+
+| Stakeholder | Skip Reason Examples |
+|-------------|---------------------|
+| ux | No UI/frontend changes detected |
+| legal | No licensing/compliance keywords in task |
+| sales | Internal tooling task / No user-facing features |
+| marketing | Internal tooling task / No public API changes |
+| performance | No algorithm-heavy code changes |
+| architect | Documentation-only task |
+| security | Documentation-only task / No source code changes |
+| quality | Documentation-only task |
+| tester | Documentation-only task |
+
+</step>
+
 <step name="prepare">
 
 **Prepare review context:**
 
+Uses stakeholders selected by the `analyze_context` step. The `SELECTED` variable contains
+the space-separated list of stakeholders to run.
+
 1. Identify files changed in implementation
 2. Get diff summary for reviewers
-3. Determine which stakeholders are relevant (skip if no applicable changes)
+3. Use stakeholder selection from analyze_context step
 
 ```bash
-# Get changed files
+# Get changed files (used for diff context, selection already done)
 CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
 
 # Detect primary language from file extensions
@@ -88,19 +353,23 @@ LANG_SUPPLEMENT=""
 if [[ -f ".claude/cat/references/stakeholders/lang/${PRIMARY_LANG}.md" ]]; then
     LANG_SUPPLEMENT=$(cat ".claude/cat/references/stakeholders/lang/${PRIMARY_LANG}.md")
 fi
+
+# SELECTED is populated by analyze_context step
+# Contains: space-separated stakeholder names (e.g., "requirements architect security quality tester")
+# SKIPPED contains: stakeholder:reason pairs for reporting
+# OVERRIDDEN contains: stakeholder:reason pairs for file-based overrides
 ```
 
-**Stakeholder relevance:**
-- **requirements**: Always run (verifies task satisfies claimed requirements)
-- **architect**: Always run if source files changed
-- **security**: Always run if source files changed
-- **quality**: Always run if source files changed
-- **tester**: Run if test files changed OR production code changed without tests
-- **performance**: Run if algorithm-heavy code changed
-- **ux**: Run if UI/frontend files changed
-- **sales**: Run if user-facing features changed
-- **marketing**: Run if public APIs or user-visible features changed
-- **legal**: Run if LICENSE, third-party dependencies, data handling, or terms of service changed
+**Stakeholder selection is now context-aware:**
+
+The `analyze_context` step determines which stakeholders run based on:
+1. Task type (documentation, refactor, bugfix, performance)
+2. Keywords in task description (license, UI, API, security, etc.)
+3. Version focus (commercialization triggers legal/sales/marketing)
+4. File-based overrides (review mode only)
+5. User-forced stakeholders via `## Force Stakeholders` in PLAN.md
+
+See `analyze_context` step for full selection rules and skip reasons.
 
 </step>
 
