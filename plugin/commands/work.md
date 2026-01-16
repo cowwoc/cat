@@ -1605,22 +1605,32 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
+**MANDATORY: Show diff BEFORE approval question (M160).**
+
+Users cannot make informed approval decisions without seeing actual code changes. Before presenting
+the AskUserQuestion approval prompt, display the full diff:
+
+```bash
+# Show commit summary
+git log ${BASE_BRANCH}..HEAD --oneline
+
+# Show full diff content
+git diff ${BASE_BRANCH}..HEAD
+```
+
+Display the diff output directly (not just file names or statistics). The user needs to see the
+actual code changes to approve or request modifications.
+
+**Anti-pattern (M160):** Presenting approval gate with only file change summary (names, line counts)
+without showing the actual diff content. Users reject approval because they cannot evaluate changes.
+
 Use AskUserQuestion with options:
 - header: "Next Step"
 - question: "What would you like to do?"
 - options:
   - "✓ Approve and merge" - Merge to main, continue to next task
-  - "🔍 Review changes first" - I'll examine the diff
   - "✏️ Request changes" - Need modifications before proceeding
   - "✗ Abort" - Discard work entirely
-
-**If "Review changes first":**
-Provide commands to review:
-```bash
-git log {main}..{task-branch} --oneline
-git diff {main}...{task-branch}
-```
-Wait for user to respond with approval.
 
 **If "Request changes":**
 
