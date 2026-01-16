@@ -93,9 +93,9 @@ if [[ "$TYPE" == "docs" ]]; then
 
     for pattern in "${CLAUDE_FACING_PATTERNS[@]}"; do
         if echo "$STAGED" | grep -q "$pattern"; then
-            output_hook_block "'docs:' used for Claude-facing file" \
-                "Files matching '$pattern' are Claude-facing (read by Claude for behavior)." \
-                "Use 'config:' instead of 'docs:'. Rule (M089): docs: = user-facing, config: = Claude-facing"
+            output_hook_block "Use 'config:' for Claude-facing files" \
+                "Files matching '$pattern' are read by Claude for behavior." \
+                "Rule: docs: = user-facing, config: = Claude-facing"
             exit 0
         fi
     done
@@ -127,8 +127,7 @@ if [[ "$TYPE" == "config" ]]; then
 
     for pattern in "${SOURCE_PATTERNS[@]}"; do
         if echo "$STAGED" | grep -qE "$pattern"; then
-            output_hook_block "'config:' used for source code" \
-                "Source code files should use: feature:, bugfix:, refactor:, test:, or performance:" \
+            output_hook_block "Use feature:, bugfix:, refactor:, test:, or performance: for source code" \
                 "config: is for configuration/tooling changes, not code changes"
             exit 0
         fi
@@ -145,9 +144,8 @@ if [[ "$TYPE" == "planning" ]]; then
 
     # planning: is only valid for version planning files
     if ! echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
-        output_hook_block "'planning:' used outside version planning" \
-            "planning: is for .claude/cat/v*/ version files (STATE.md, PLAN.md)" \
-            "Use 'config:' for other .claude/cat/ files"
+        output_hook_block "Use 'config:' for non-version .claude/cat/ files" \
+            "planning: is only for .claude/cat/v*/ version files (STATE.md, PLAN.md, CHANGELOG.md)"
         exit 0
     fi
 fi
@@ -161,9 +159,8 @@ if [[ "$TYPE" != "planning" ]]; then
 
     # Check if ANY staged file is in .claude/cat/v*/ (version planning files)
     if echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
-        output_hook_block "'$TYPE:' used for version planning files" \
-            "Files in .claude/cat/v*/ (STATE.md, PLAN.md, CHANGELOG.md) require 'planning:' type" \
-            "Change commit type from '$TYPE:' to 'planning:'"
+        output_hook_block "Use 'planning:' for version planning files" \
+            "Files in .claude/cat/v*/ (STATE.md, PLAN.md, CHANGELOG.md) require 'planning:' type"
         exit 0
     fi
 fi
