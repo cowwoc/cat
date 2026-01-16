@@ -7,10 +7,11 @@ Detailed workflow for executing a task from start to completion.
 - Task exists with STATE.md, PLAN.md
 - All task dependencies completed
 - Main agent in orchestration mode
+- **Task lock can be acquired** (not locked by another session)
 
 ## Workflow Steps
 
-### 1. Validate Task Ready
+### 1. Validate Task Ready and Acquire Lock
 
 ```
 Check STATE.md
@@ -21,9 +22,36 @@ Check STATE.md
     |
     +---> Minor Version Dependency: Met
     |
+    +---> Try to Acquire Lock (M097)
+    |         |
+    |         +---> If locked by another session: SKIP task, try next
+    |         |
+    |         +---> If lock acquired: Proceed
+    |
     v
 Proceed to execution
 ```
+
+**MANDATORY: Lock Check Before Proceeding (M097)**
+
+Before validating a task as executable, attempt to acquire its lock:
+
+```bash
+TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
+SESSION_ID="<from-context>"
+
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+
+if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
+  echo "⏸️ Task $TASK_ID is locked by another session"
+  # Skip this task, try next candidate
+fi
+```
+
+This prevents:
+- Offering tasks that another Claude instance is executing
+- Wasted exploration/planning on locked tasks
+- Confusion about task availability
 
 **Minor version dependency rules:**
 
@@ -38,6 +66,7 @@ A minor is complete when all its tasks have `status: completed`.
 If blocked:
 - Identify blocking task dependencies
 - Identify blocking minor version dependency
+- **Check if task is locked by another session**
 - Report to user or execute blockers first
 
 ### 2. Analyze Task Size and Auto-Decompose
