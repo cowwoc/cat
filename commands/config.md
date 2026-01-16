@@ -1,6 +1,8 @@
 ---
 name: cat:config
 description: Interactive wizard to customize your CAT adventure settings
+model: haiku
+context: fork
 allowed-tools:
   - Bash
   - Read

@@ -1,6 +1,8 @@
 ---
 name: cat:help
 description: Quick reference for all CAT commands and skills
+model: haiku
+context: fork
 ---
 
 <objective>

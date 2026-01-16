@@ -2,6 +2,8 @@
 name: cat:remove-minor-version
 description: Remove a minor version
 argument-hint: "[major.minor]"
+model: haiku
+context: fork
 allowed-tools:
   - Read
   - Write

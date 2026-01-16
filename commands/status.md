@@ -1,6 +1,8 @@
 ---
 name: cat:status
 description: Show hierarchy status with visual tree
+model: haiku
+context: fork
 allowed-tools:
   - Bash
 ---
