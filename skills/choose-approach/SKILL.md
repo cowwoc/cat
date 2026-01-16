@@ -126,11 +126,11 @@ Display with visual formatting (see display-standards.md for box standards):
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: LOW | Tradeoff: [from PLAN.md]                         ║
 ║                                                                   ║
-║  [B] ⚖️ Balanced                                                   ║
+║  [B] ⚖️ Balanced                                                  ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: MEDIUM | Tradeoff: [from PLAN.md]                      ║
 ║                                                                   ║
-║  [C] ⚔️ Aggressive  [⭐ if preference matches]                     ║
+║  [C] ⚔️ Aggressive  [⭐ if preference matches]                    ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: HIGH | Tradeoff: [from PLAN.md]                        ║
 ║                                                                   ║
