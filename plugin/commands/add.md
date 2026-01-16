@@ -366,7 +366,7 @@ Use appropriate template (Feature, Bugfix, or Refactor) from add-task.md referen
 
 <step name="task_update_parent">
 
-**Update parent minor STATE.md (MANDATORY):**
+**Update parent version STATE.md (MANDATORY):**
 
 Add the new task to the "Tasks Pending" list in STATE.md:
 
