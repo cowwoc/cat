@@ -131,13 +131,26 @@ Exit command.
 Before proceeding, acquire an exclusive lock to prevent multiple Claude instances from executing the
 same task simultaneously.
 
+**MANDATORY STOP POINT (M057):** First verify SESSION_ID is available:
+
+```bash
+echo "SESSION_ID: ${SESSION_ID:-NOT SET}"
+```
+
+**If SESSION_ID is "NOT SET":**
+1. **STOP EXECUTION IMMEDIATELY** - Do NOT proceed to worktree creation
+2. Inform user: "SESSION_ID not set. The echo-session-id.sh hook must be registered."
+3. Instruct: "Run `/cat:register-hook` to register required hooks, then restart Claude Code."
+4. **EXIT this command** - Do not continue with any further steps
+
+**Only if SESSION_ID is set**, proceed with lock acquisition:
+
 ```bash
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 
-# SESSION_ID is provided by echo-session-id.sh hook at startup
+# Acquire lock (SESSION_ID verified above)
 if [[ -z "${SESSION_ID:-}" ]]; then
-  echo "ERROR: SESSION_ID not set. Ensure echo-session-id.sh hook is registered."
-  echo "Register with: /cat:register-hook"
+  echo "ERROR: SESSION_ID not set - should have stopped earlier"
   exit 1
 fi
 
