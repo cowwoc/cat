@@ -162,51 +162,135 @@ box_no_tasks() {
 }
 
 box_progress() {
-    local current_phase="${1:-1}"
-    local phase_status="${2:-active}"
-    local detail="${3:-}"
+    local current_phase="${1:-1}"      # 1=Preparing, 2=Executing, 3=Reviewing, 4=Merging
+    local phase_status="${2:-active}"  # active, complete, failed
+    local tokens="${3:-}"              # Optional: e.g., "45K"
+    local commits="${4:-}"             # Optional: e.g., "3"
+    local review_status="${5:-}"       # Optional: e.g., "approved", "BLOCKED: security"
+    local merge_target="${6:-}"        # Optional: e.g., "main"
 
     # Phase names
     local -a phases=("Preparing" "Executing" "Reviewing" "Merging")
 
-    # Style E format:
-    # ✓ = Completed step
-    # ► = Current step (with ◀── current marker)
-    # ◦ = Pending step
+    # Symbols: ○ (pending), ● (complete), ◉ (active/current), ✗ (failed)
+    local connector="──────"
 
-    # Render each phase line
+    # Build the main progress line
+    local line=""
     for i in {1..4}; do
         local phase_name="${phases[$((i-1))]}"
         local symbol=""
-        local suffix=""
 
         if [[ $i -lt $current_phase ]]; then
             # Completed phases
-            symbol="✓"
-            suffix=""
+            symbol="●"
         elif [[ $i -eq $current_phase ]]; then
             # Current phase
             if [[ "$phase_status" == "complete" ]]; then
-                symbol="✓"
-                suffix="     ◀── current"
-                [[ -n "$detail" ]] && suffix="     ◀── $detail"
+                symbol="●"
             elif [[ "$phase_status" == "failed" ]]; then
                 symbol="✗"
-                suffix="     ◀── FAILED"
-                [[ -n "$detail" ]] && suffix="     ◀── $detail"
             else
-                symbol="►"
-                suffix="     ◀── current"
-                [[ -n "$detail" ]] && suffix="     ◀── $detail"
+                symbol="◉"
             fi
         else
             # Pending phases
-            symbol="◦"
-            suffix=""
+            symbol="○"
         fi
 
-        echo "  ${symbol} ${phase_name}${suffix}"
+        if [[ $i -eq 1 ]]; then
+            line="${symbol} ${phase_name}"
+        else
+            line="${line} ${connector} ${symbol} ${phase_name}"
+        fi
     done
+
+    echo "$line"
+
+    # Build second line with metrics if any are provided
+    # Metrics are positioned below their respective phases:
+    # - Tokens/commits below "Executing" (approx position 22)
+    # - Review status below "Reviewing" (approx position 42)
+    # - Merge target below "Merging" (approx position 62)
+
+    local has_metrics=false
+    [[ -n "$tokens" || -n "$commits" || -n "$review_status" || -n "$merge_target" ]] && has_metrics=true
+
+    if [[ "$has_metrics" == "true" ]]; then
+        # Calculate positions based on phase layout
+        # "● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging"
+        # Position of "Executing" text starts at ~22, "Reviewing" at ~45, "Merging" at ~68
+        # We want metrics centered under the phase names
+
+        local metrics_line=""
+        local executing_metric=""
+        local reviewing_metric=""
+        local merging_metric=""
+
+        # Build Executing metric (tokens + commits)
+        if [[ -n "$tokens" && -n "$commits" ]]; then
+            executing_metric="${tokens} · ${commits} commits"
+        elif [[ -n "$tokens" ]]; then
+            executing_metric="${tokens} tokens"
+        elif [[ -n "$commits" ]]; then
+            executing_metric="${commits} commits"
+        fi
+
+        # Build Reviewing metric
+        reviewing_metric="$review_status"
+
+        # Build Merging metric
+        if [[ -n "$merge_target" ]]; then
+            merging_metric="→ ${merge_target}"
+        fi
+
+        # Build the metrics line with proper spacing using printf
+        # Phase positions (approximate character positions of phase name starts):
+        # "● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging"
+        # Executing starts at ~22, Reviewing at ~45, Merging at ~68
+
+        local pos=0
+
+        # Start with spaces to reach Executing position (22 chars)
+        metrics_line=$(printf '%22s' "")
+        pos=22
+
+        # Add Executing metric
+        if [[ -n "$executing_metric" ]]; then
+            metrics_line="${metrics_line}${executing_metric}"
+            pos=$((pos + ${#executing_metric}))
+        fi
+
+        # Add spaces to reach Reviewing position (42)
+        if [[ $pos -lt 42 ]]; then
+            local pad=$((42 - pos))
+            metrics_line="${metrics_line}$(printf '%*s' "$pad" "")"
+            pos=42
+        fi
+
+        # Add Reviewing metric
+        if [[ -n "$reviewing_metric" ]]; then
+            metrics_line="${metrics_line}${reviewing_metric}"
+            pos=$((pos + ${#reviewing_metric}))
+        fi
+
+        # Add spaces to reach Merging position (62)
+        if [[ $pos -lt 62 ]]; then
+            local pad=$((62 - pos))
+            metrics_line="${metrics_line}$(printf '%*s' "$pad" "")"
+            pos=62
+        fi
+
+        # Add Merging metric
+        if [[ -n "$merging_metric" ]]; then
+            metrics_line="${metrics_line}${merging_metric}"
+        fi
+
+        # Only print if there's actually content (not just spaces)
+        if [[ -n "${executing_metric}${reviewing_metric}${merging_metric}" ]]; then
+            echo "$metrics_line"
+        fi
+    fi
 }
 
 # Main dispatcher
@@ -249,7 +333,13 @@ case "$BOX_TYPE" in
         echo "  scope-complete SCOPE_DESC" >&2
         echo "  blocked TASK_NAME BLOCKED_TASKS" >&2
         echo "  no-tasks" >&2
-        echo "  progress PHASE [STATUS] [DETAIL]  - Phase indicator (PHASE=1-4)" >&2
+        echo "  progress PHASE [STATUS] [TOKENS] [COMMITS] [REVIEW] [TARGET]" >&2
+        echo "          - Horizontal progress banner (PHASE=1-4)" >&2
+        echo "          - STATUS: active, complete, failed" >&2
+        echo "          - TOKENS: e.g., \"45K\"" >&2
+        echo "          - COMMITS: e.g., \"3\"" >&2
+        echo "          - REVIEW: e.g., \"approved\", \"BLOCKED: security\"" >&2
+        echo "          - TARGET: e.g., \"main\"" >&2
         exit 1
         ;;
 esac
