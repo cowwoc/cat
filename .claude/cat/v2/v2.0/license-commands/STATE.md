@@ -5,8 +5,7 @@ status: pending
 progress: 0%
 
 ## Dependencies
-- license-validation-server (needs API to validate against)
-- jwt-token-generation (needs token format for local validation)
+- External license server (provides validation API and JWT tokens)
 
 ## Provides
 - CLI interface for license management
