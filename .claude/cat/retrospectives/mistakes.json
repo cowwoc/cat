@@ -1298,6 +1298,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Always verify version status is not completed before suggesting it as a task target"
+    },
+    {
+      "id": "M169",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "documentation_violation",
+      "description": "Progress header displayed short task name instead of full task ID (missing version prefix)",
+      "root_cause": "Documentation used {task-name} placeholder instead of {major}.{minor}-{task-name} for header format",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "progress_header",
+        "task_id",
+        "version_prefix",
+        "display_format"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use full task ID format in progress header: {major}.{minor}-{task-name} (e.g., 2.0-fix-config-documentation)"
     }
   ]
 }
