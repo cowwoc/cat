@@ -160,10 +160,13 @@ if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   echo "ERROR: Task $TASK_ID is locked by another session: $OWNER"
   echo "Another Claude instance is already executing this task."
   echo ""
-  echo "Options:"
-  echo "  - Wait for the other instance to complete"
-  echo "  - Run /cat:status to see current state"
-  echo "  - Use cleanup --stale-minutes 0 to force release (DANGER: may corrupt state)"
+  echo "MANDATORY: Execute a DIFFERENT task instead."
+  echo "Run /cat:status to find other executable tasks."
+  echo ""
+  echo "DO NOT:"
+  echo "  - Wait for lock to expire (stale cleanup is for CRASHED sessions only)"
+  echo "  - Force release the lock (will corrupt the other instance's work)"
+  echo "  - Retry this task (will cause conflict)"
   exit 1
 fi
 
