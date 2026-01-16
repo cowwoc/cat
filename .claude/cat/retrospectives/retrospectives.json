@@ -1,6 +1,6 @@
 {
-  "last_retrospective": "2026-01-23T19:15:39-05:00",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-01-24T14:34:18-05:00",
+  "mistake_count_since_last": 0,
   "config": {
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
@@ -527,9 +527,54 @@
         "post_fix_mistakes": [],
         "verdict": "pending"
       }
+    },
+    {
+      "id": "A021",
+      "priority": "high",
+      "description": "ESCALATION: Approval gate diff display has 4 failures (M211, M231, M232) despite documentation. Hooks exist but agent bypasses by using Read tool instead. Consider: (1) PostToolUse hook that detects approval gate context without render-diff invocation, (2) Move render-diff to be ONLY way to get diff content.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-015",
+      "status": "open",
+      "created_date": "2026-01-24T14:34:30-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M211",
+        "M231",
+        "M232"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 4,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     }
   ],
   "retrospectives": [
+    {
+      "id": "R013",
+      "timestamp": "2026-01-24T14:34:18-05:00",
+      "trigger": "count_threshold",
+      "period_analyzed": "2026-01-23T19:15:39-05:00 to 2026-01-24T14:34:18-05:00",
+      "mistakes_analyzed": 15,
+      "summary": "80% protocol violations. Key patterns: worktree existence check (3), approval gate diff display (4), commit squashing (2). Prevention M238 added for worktree check.",
+      "findings": {
+        "category_breakdown": {
+          "protocol_violation": 12,
+          "assumption_without_verification": 1,
+          "git_operation_failure": 1,
+          "logical_error": 1
+        },
+        "key_patterns": [
+          "worktree_existence_check (M236, M238) - fixed in M238",
+          "approval_gate_diff_display (M211, M231, M232) - needs escalation",
+          "commit_squashing_before_approval (M224, M234) - hook exists"
+        ],
+        "new_patterns_identified": [
+          "worktree_existence_bypass"
+        ]
+      }
+    },
     {
       "id": "R012",
       "timestamp": "2026-01-23T19:15:39-05:00",
@@ -1343,6 +1388,27 @@
         "M227"
       ],
       "note": "LLM generates/modifies templates instead of using pre-computed handler output. Includes skill recommendations that bypass precomputation."
+    },
+    {
+      "pattern_id": "PATTERN-015",
+      "pattern": "approval_gate_diff_bypass",
+      "occurrences_total": 4,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-23T22:25:00Z",
+      "last_seen": "2026-01-24T14:15:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [],
+      "related_action_items": [
+        "A021"
+      ],
+      "related_mistakes": [
+        "M211",
+        "M231",
+        "M232"
+      ],
+      "note": "Agent bypasses render-diff requirement at approval gate by using Read tool, manual formatting, or summarizing instead of invoking the skill"
     }
   ]
 }
