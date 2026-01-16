@@ -35,7 +35,11 @@ Provides situational awareness for project progress.
 
 - Read `.claude/cat/PROJECT.md` for project name and overview
 - Read `.claude/cat/ROADMAP.md` for version structure
-- Read `.claude/cat/cat-config.json` for configuration
+- Read `.claude/cat/cat-config.json` for configuration and user preferences:
+  - `mode` (yolo/interactive)
+  - `adventureMode.preferences.approach` (conservative/balanced/aggressive)
+  - `adventureMode.preferences.stakeholderReview` (always/high-risk-only/never)
+  - `adventureMode.preferences.refactoring` (avoid/opportunistic/eager)
 
 </step>
 
@@ -74,52 +78,67 @@ For each STATE.md found, extract:
 
 <step name="render">
 
-**Render visual tree:**
+**Render adventure-style visual tree:**
 
 **Progress Bar Generation (MANDATORY):**
 
-See [progress-display.md § Progress Bar Format](.claude/cat/references/progress-display.md#progress-bar-format)
-for the standard algorithm and examples.
+Use `scripts/lib/progress.sh` library:
+
+```bash
+source "$(dirname "$0")/../scripts/lib/progress.sh"
+# Generate bar for percentage (0-100)
+_progress_bar 75  # Returns: [██████████████████░░] with gradient color
+```
+
+Features: 24-bit gradient (red→yellow→green), fractional blocks for precision, respects NO_COLOR.
 
 ```
-# [Project Name]
+╔═══════════════════════════════════════════════════════════════════╗
+║  🗺️  YOUR ADVENTURE - [Project Name]                              ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Progress: [██████████████████████████████████████░░░░░░░░░░░░░░] ║
+║            75% complete (15/20 tasks)                             ║
+║                                                                   ║
+║  Style: Balanced │ Mode: Interactive                              ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
 
-**Progress:** [===============>    ] 75% (15/20 tasks)
-**Mode:** [Interactive|YOLO]
+┌─ v1: [Name from ROADMAP] ───────────────────────────────────────┐
+│                                                                  │
+│  v1.0: [Description]                                             │
+│    ✓ parse-tokens                                                │
+│    → build-ast ← YOU ARE HERE                                    │
+│    ○ validate-ast                                                │
+│                                                                  │
+│  v1.1: [Description]                                             │
+│    ○ generate-ir                                                 │
+│    ○ optimize-ir (depends: generate-ir)                          │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 
-## v1: [Name from ROADMAP] (2/5 complete)
+┌─ v2: [Name from ROADMAP] ───────────────────────────────────────┐
+│                                                                  │
+│  v2.0: [Description]                                             │
+│    ○ emit-code                                                   │
+│    ○ format-output                                               │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
 
-### v1.0: [Description] (2/3)
-[x] parse-tokens
-[>] build-ast (in-progress)
-[ ] validate-ast
-
-### v1.1: [Description] (0/2)
-[ ] generate-ir
-[ ] optimize-ir (depends: generate-ir)
-
-## v2: [Name from ROADMAP] (Pending)
-
-### v2.0: [Description] (Pending)
-[ ] emit-code (pending)
-[ ] format-output (pending)
-
----
-
-**Current:** v1.0, Task: build-ast
-**Next executable:** validate-ast (after build-ast completes)
-
----
+───────────────────────────────────────────────────────────────────
+Current Quest: v1.0, Task: build-ast
+Next: validate-ast (after build-ast completes)
+───────────────────────────────────────────────────────────────────
 ```
 
 **Status symbols (MANDATORY for every task line):**
-- `[x]` - completed
-- `[>]` - in-progress
-- `[ ]` - pending
-- `[!]` - blocked (dependencies not met)
+- `✓` - completed
+- `→` with `← YOU ARE HERE` - in-progress (current task)
+- `○` - pending
+- `🚫` - blocked (dependencies not met)
 
-**CRITICAL**: Do NOT use list dash prefix with checkboxes. Use `[x] task` not `- [x] task`.
-The dash triggers markdown list rendering which strips checkbox syntax in CLI output.
+**CRITICAL**: Do NOT use list dash prefix with symbols. Use `✓ task` not `- ✓ task`.
+The dash triggers markdown list rendering which strips symbols in CLI output.
 
 **Color hints (if terminal supports):**
 - Green for completed
@@ -131,24 +150,23 @@ The dash triggers markdown list rendering which strips checkbox syntax in CLI ou
 
 <step name="blockers">
 
-**Identify blockers:**
+**Identify blocked tasks:**
 
 List any tasks that are blocked:
 - Show which dependencies are incomplete
 - Calculate when they could become unblocked
 
 ```
-## Blocked Tasks
-
-[!] **v1.1/optimize-ir** - waiting on: generate-ir
-[!] **v2.0/emit-code** - waiting on: v1 completion
+BLOCKED:
+🚫 v1.1/optimize-ir - waiting on: generate-ir
+🚫 v2.0/emit-code - waiting on: v1 completion
 ```
 
 </step>
 
 <step name="next">
 
-**Suggest next action:**
+**Suggest next action (adventure style):**
 
 Based on current state, suggest the most appropriate next command:
 
@@ -157,18 +175,23 @@ Based on current state, suggest the most appropriate next command:
 | Has executable task | `/cat:execute-task` |
 | All tasks complete for minor | `/cat:add-task` or `/cat:add-minor-version` |
 | All minors complete for major | `/cat:add-major-version` |
-| All complete | "Project complete!" |
+| All complete | "Quest complete!" |
 
 ```
----
-
-## Next Action
-
-`/cat:execute-task 1.0/build-ast`
-
-Or use `/cat:add-task` to add more work.
-
----
+╔═══════════════════════════════════════════════════════════════════╗
+║  🎯 NEXT STEPS                                                    ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  [A] Continue quest                                               ║
+║      /cat:execute-task 1.0-build-ast                              ║
+║                                                                   ║
+║  [B] Add new task                                                 ║
+║      /cat:add-task 1.0                                            ║
+║                                                                   ║
+║  [C] Update preferences                                           ║
+║      /cat:update-preferences                                      ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
 ```
 
 </step>
