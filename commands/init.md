@@ -359,9 +359,15 @@ Map responses to preference values:
 
 <step name="config">
 
+Get plugin version for config:
+```bash
+CAT_VERSION=$(jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json")
+```
+
 Create `.claude/cat/cat-config.json`:
 ```json
 {
+  "version": "[CAT_VERSION from above]",
   "mode": "[mode from step]",
   "initialized": "[date]",
   "source": "[new|existing]",

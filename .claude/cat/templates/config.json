@@ -1,4 +1,5 @@
 {
+  "version": "${CAT_VERSION}",
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,

@@ -16,6 +16,7 @@ CHANGELOG.md first. The skill ensures changelog, version files, and tags stay sy
 - Current branch is the version branch to release (e.g., `v1.4`)
 - All changes committed and tested
 - Both `package.json` and `.claude-plugin/plugin.json` have matching versions
+- `migrations/` directory exists with `registry.json` and `lib/utils.sh`
 
 ## Release Process
 
@@ -103,21 +104,62 @@ echo "package.json:" && jq '.version' package.json
 echo "plugin.json:" && jq '.version' .claude-plugin/plugin.json
 ```
 
-### 8. Update CHANGELOG.md for Next Version
+### 8. Create Migration Script for Next Version
+
+Create a placeholder migration script for the next version. This ensures the migration system can track
+version changes even if no structural changes are needed.
+
+```bash
+# Create migration script
+cat > "migrations/${NEXT_VERSION}.sh" << 'MIGRATION_EOF'
+#!/bin/bash
+set -euo pipefail
+
+# Migration to CAT ${NEXT_VERSION}
+#
+# Changes:
+# - (Document structural changes here, or "No structural changes" if none)
+
+trap 'echo "ERROR in ${NEXT_VERSION}.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
+
+source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
+
+# Add migration logic here if needed
+# Example: Rename a config field
+# jq '.newField = .oldField | del(.oldField)' .claude/cat/cat-config.json > tmp && mv tmp .claude/cat/cat-config.json
+
+log_success "Migration to ${NEXT_VERSION} completed (no structural changes)"
+MIGRATION_EOF
+
+chmod +x "migrations/${NEXT_VERSION}.sh"
+```
+
+### 9. Add Migration Registry Entry
+
+Add the new version to the migration registry:
+
+```bash
+# Add entry to registry
+jq --arg ver "$NEXT_VERSION" --arg script "${NEXT_VERSION}.sh" \
+  '.migrations += [{"version": $ver, "script": $script, "description": "Migration to " + $ver}]' \
+  migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
+```
+
+### 10. Update CHANGELOG.md for Next Version
 
 If the project has a CHANGELOG.md:
 
 1. Update the "Current Version" table to show NEXT_VERSION
 2. Add an empty version history section for NEXT_VERSION (to be filled during development)
 
-### 9. Commit Version Bump
+### 11. Commit Version Bump
 
 ```bash
-git add package.json .claude-plugin/plugin.json CHANGELOG.md
+git add package.json .claude-plugin/plugin.json CHANGELOG.md migrations/
 git commit -m "config: bump version to ${NEXT_VERSION}"
 ```
 
-### 10. Push Everything to Origin
+### 12. Push Everything to Origin
 
 ```bash
 # Push main branch with new commits
@@ -163,15 +205,28 @@ git checkout -b v1.5
 jq '.version = "1.5"' package.json > package.json.tmp && mv package.json.tmp package.json
 jq '.version = "1.5"' .claude-plugin/plugin.json > plugin.json.tmp && mv plugin.json.tmp .claude-plugin/plugin.json
 
-# 8. Update CHANGELOG for next version
+# 8. Create migration script for 1.5
+cat > migrations/1.5.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
+log_success "Migration to 1.5 completed (no structural changes)"
+EOF
+chmod +x migrations/1.5.sh
+
+# 9. Add migration registry entry
+jq '.migrations += [{"version": "1.5", "script": "1.5.sh", "description": "Migration to 1.5"}]' \
+  migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
+
+# 10. Update CHANGELOG for next version
 # - Update version table to 1.5
 # - Add empty v1.5 section to history
 
-# 9. Commit version bump
-git add package.json .claude-plugin/plugin.json CHANGELOG.md
+# 11. Commit version bump
+git add package.json .claude-plugin/plugin.json CHANGELOG.md migrations/
 git commit -m "config: bump version to 1.5"
 
-# 10. Push everything
+# 12. Push everything
 git push origin main
 git push origin v1.4                # push tag
 git push origin --delete v1.4       # delete remote branch
@@ -200,6 +255,8 @@ After release, verify:
 - [ ] Tag pushed: `git ls-remote --tags origin v{CURRENT_VERSION}`
 - [ ] On new branch: `git branch --show-current` shows `v{NEXT_VERSION}`
 - [ ] Versions updated: both files show `{NEXT_VERSION}`
+- [ ] Migration script exists: `ls migrations/{NEXT_VERSION}.sh`
+- [ ] Migration registered: `jq '.migrations[-1]' migrations/registry.json` shows `{NEXT_VERSION}`
 - [ ] Branch pushed: `git ls-remote --heads origin v{NEXT_VERSION}`
 
 ## Troubleshooting
@@ -257,8 +314,21 @@ git push origin "v${CURRENT_VERSION}"
 # 3. Bump version for next development cycle
 NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{print $1"."$2"."$3+1}')
 jq --arg v "$NEXT_VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
-# Add "In development" entry to CHANGELOG for next version
-git add package.json CHANGELOG.md
+
+# 4. Create migration script and registry entry
+cat > "migrations/${NEXT_VERSION}.sh" << EOF
+#!/bin/bash
+set -euo pipefail
+source "\${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
+log_success "Migration to ${NEXT_VERSION} completed (no structural changes)"
+EOF
+chmod +x "migrations/${NEXT_VERSION}.sh"
+jq --arg ver "$NEXT_VERSION" --arg script "${NEXT_VERSION}.sh" \
+  '.migrations += [{"version": $ver, "script": $script, "description": "Migration to " + $ver}]' \
+  migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
+
+# 5. Commit and push
+git add package.json CHANGELOG.md migrations/
 git commit -m "config: bump version to ${NEXT_VERSION}"
 git push origin main
 ```
