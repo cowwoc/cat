@@ -447,26 +447,12 @@ EOF
 
 **Present completion:**
 
+Check conversation context for "PRE-COMPUTED ADD DISPLAY" from the handler and output it exactly.
+If not found, use this fallback format:
+
 ```
-Task created:
-
-- Path: .claude/cat/v{major}/v{major}.{minor}/{task-name}/
-- Type: {task-type}
-- Dependencies: {deps or "None"}
-
----
-
-## Next Up
-
-**Execute this task:**
-
-`/cat:work {major}.{minor}/{task-name}`
-
-**Or add another:**
-
-`/cat:add`
-
----
+Task created: {task-name} in version {major}.{minor}
+Next: /cat:work {major}.{minor}-{task-name}
 ```
 
 </step>
@@ -1085,66 +1071,12 @@ EOF
 
 **Present completion:**
 
-**If VERSION_TYPE is "major":**
+Check conversation context for "PRE-COMPUTED ADD DISPLAY" from the handler and output it exactly.
+If not found, use this fallback format:
 
 ```
-Major version created:
-
-- Version: Major {major}
-- Vision: {vision summary}
-- Initial minor: {major}.0
-- Path: .claude/cat/v{major}/
-
----
-
-## Next Up
-
-**Add tasks to get started:**
-
-`/cat:add`
-
----
-```
-
-**If VERSION_TYPE is "minor":**
-
-```
-Minor version created:
-
-- Version: {major}.{minor}
-- Focus: {description}
-- Path: .claude/cat/v{major}/v{major}.{minor}/
-
----
-
-## Next Up
-
-**Add tasks to this minor version:**
-
-`/cat:add`
-
----
-```
-
-
-**If VERSION_TYPE is "patch":**
-
-```
-Patch version created:
-
-- Version: {major}.{minor}.{patch}
-- Focus: {description}
-- Path: .claude/cat/v{major}/v{major}.{minor}/v{major}.{minor}.{patch}/
-
----
-
-## Next Up
-
-**Add tasks to this patch version:**
-
-`/cat:add`
-
----
+{VERSION_TYPE} version created: {version}
+Next: /cat:add (to add tasks)
 ```
 
 </step>
