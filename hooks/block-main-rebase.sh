@@ -63,9 +63,10 @@ fi
 # Get current branch (try multiple methods)
 CURRENT_BRANCH=""
 
-# Method 1: Check if command changes to /workspace (main worktree)
+# Method 1: Check if command changes to /workspace (main worktree) exactly
 # This protects the main worktree's checkout state
-if echo "$COMMAND" | grep -qE "cd[[:space:]]+(/workspace|['\"]*/workspace['\"]*)"; then
+# Must match /workspace exactly, not /workspace/.worktrees/* or other subdirs
+if echo "$COMMAND" | grep -qE "cd[[:space:]]+(/workspace|['\"]*/workspace['\"]*)([[:space:]]|&&|;|$)"; then
 	# Check if command also includes git checkout (changing what's checked out in main worktree)
 	if echo "$COMMAND" | grep -qE "git[[:space:]]+checkout[[:space:]]"; then
 		# Extract the branch being checked out
