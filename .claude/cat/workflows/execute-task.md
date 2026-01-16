@@ -17,14 +17,27 @@ Check STATE.md
     |
     +---> Status: pending or in-progress
     |
-    +---> Dependencies: All completed
+    +---> Task Dependencies: All completed
+    |
+    +---> Minor Version Dependency: Met
     |
     v
 Proceed to execution
 ```
 
+**Minor version dependency rules:**
+
+| Scenario | Dependency |
+|----------|------------|
+| First minor of first major (v0.0) | None - always executable |
+| Subsequent minors (e.g., v0.5) | Previous minor must be complete (v0.4) |
+| First minor of new major (e.g., v1.0) | Last minor of previous major must be complete |
+
+A minor is complete when all its tasks have `status: completed`.
+
 If blocked:
-- Identify blocking dependencies
+- Identify blocking task dependencies
+- Identify blocking minor version dependency
 - Report to user or execute blockers first
 
 ### 2. Analyze Task Size and Auto-Decompose

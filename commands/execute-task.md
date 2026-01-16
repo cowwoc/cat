@@ -93,18 +93,30 @@ Read `.claude/cat/cat-config.json` to determine:
 **If $ARGUMENTS empty:**
 - Scan all tasks to find first executable:
   1. Status is `pending` or `in-progress`
-  2. All dependencies are `completed`
-  3. Parent minor version's dependencies are met
+  2. All task dependencies are `completed`
+  3. Minor version dependency is met (see below)
 
 ```bash
 # Find all task STATE.md files (depth 3 under major version = task level)
 find .claude/cat/v*/v*.* -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
+**Minor version dependency rules:**
+
+| Scenario | Dependency |
+|----------|------------|
+| First minor of first major (v0.0) | None - always executable |
+| Subsequent minors (e.g., v0.5) | Previous minor must be complete (v0.4) |
+| First minor of new major (e.g., v1.0) | Last minor of previous major must be complete |
+
+**To check if a minor is complete:**
+All tasks within that minor version must have `status: completed`.
+
 For each task, check:
 - Parse STATUS from STATE.md
 - Parse DEPENDENCIES from STATE.md
-- Verify each dependency task has status: completed
+- Verify each task dependency has status: completed
+- Verify minor version dependency is met (all tasks in dependency minor are completed)
 
 **If no executable task found:**
 

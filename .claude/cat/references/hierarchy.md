@@ -37,11 +37,30 @@ Creating MAJOR vs MINOR is a user decision:
 - **MAJOR**: Significant new capabilities
 - **MINOR**: Incremental improvements, fixes
 
-## Implicit Dependencies
+## Minor Version Dependencies
 
-- A minor version implicitly depends on the previous minor completing
-- Tasks within a minor depend on their explicit dependency list
-- Cross-minor dependencies are not supported (use minor version ordering)
+Minor versions have implicit sequential dependencies:
+
+| Scenario | Dependency |
+|----------|------------|
+| First minor of first major (e.g., v0.0) | None |
+| Subsequent minors in same major (e.g., v0.1, v0.2) | Previous minor (v0.0, v0.1) |
+| First minor of new major (e.g., v1.0) | Last minor of previous major |
+
+**Examples:**
+- `v0.0` → No dependencies (first version)
+- `v0.1` → Depends on `v0.0`
+- `v0.5` → Depends on `v0.4`
+- `v1.0` → Depends on `v0.9` (last minor of v0)
+- `v1.1` → Depends on `v1.0`
+
+**A minor version is executable when:**
+1. Its dependency minor version is completed (all tasks in that minor are completed)
+2. OR it has no dependency (first version)
+
+**Task-level dependencies:**
+- Tasks within a minor depend on their explicit dependency list in STATE.md
+- Cross-minor task dependencies are not supported (use minor version ordering instead)
 
 ## Example Path
 
