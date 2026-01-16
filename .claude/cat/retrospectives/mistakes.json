@@ -3115,6 +3115,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When squashing, group commits by type prefix. Keep docs/config separate from feature/refactor commits."
+    },
+    {
+      "id": "M236",
+      "timestamp": "2026-01-24T19:10:00Z",
+      "category": "protocol_violation",
+      "description": "Proceeded to work on task when worktree already existed with commits, without asking user",
+      "root_cause": "Workflow lacks check for existing worktree as indicator of in-progress work from another session",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/workflows/work.md",
+      "pattern_keywords": [
+        "worktree",
+        "existing",
+        "in-progress",
+        "resume"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When worktree already exists with commits, use AskUserQuestion with Skip this task (recommended), Resume, Start fresh, or Abort options"
     }
   ]
 }
