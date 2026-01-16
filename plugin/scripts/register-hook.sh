@@ -75,8 +75,8 @@ if [[ ! " $VALID_TRIGGERS " =~ " $TRIGGER " ]]; then
     exit 1
 fi
 
-# Determine paths
-CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+# Determine paths - fail-fast if CLAUDE_CONFIG_DIR not set
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:?CLAUDE_CONFIG_DIR environment variable must be set}"
 HOOKS_DIR="$CLAUDE_DIR/hooks"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 HOOK_PATH="$HOOKS_DIR/${HOOK_NAME}.sh"
