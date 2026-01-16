@@ -83,7 +83,7 @@ tool call wrappers, output the styled text directly as part of your response.
 ║  📊 Progress: [████████████░░░░░░░░] **{PERCENT}%**               ║
 ║  🏆 **{COMPLETED}/{TOTAL}** tasks complete                        ║
 ║                                                                   ║
-║  ⚙️ Mode: {Interactive|YOLO}                                       ║
+║  ⚙️ Mode: {Interactive|YOLO}                                      ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
