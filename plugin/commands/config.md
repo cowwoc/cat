@@ -360,8 +360,8 @@ Parse input to determine if major (single digit) or minor (X.Y format).
 
 Read the PLAN.md for selected version:
 ```bash
-cat .claude/cat/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
-cat .claude/cat/v{major}/PLAN.md 2>/dev/null
+cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
+cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
 Extract the `## Gates` section and display:

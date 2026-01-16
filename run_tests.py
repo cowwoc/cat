@@ -192,7 +192,7 @@ def test_add_handler():
         "version": "2.1",
         "version_type": "minor",
         "parent_info": "v2",
-        "path": ".claude/cat/v2/v2.1",
+        "path": ".claude/cat/issues/v2/v2.1",
     }
     result = handler.handle(version_context)
     runner.test("Version returns string", isinstance(result, str))
@@ -254,7 +254,7 @@ def test_status_handler():
     """Test status_handler."""
     runner.section("skill_handlers/status_handler")
 
-    from skill_handlers.status_handler import StatusHandler
+    from skill_handlers.status_handler import StatusHandler, collect_status_data
     handler = StatusHandler()
 
     # Test returns None without project_root
@@ -265,8 +265,38 @@ def test_status_handler():
     result = handler.handle({"project_root": "/nonexistent/path"})
     runner.test("Returns None with invalid path", result is None)
 
-    # Note: Full handler testing requires real CAT directory structure
-    # which is covered by pytest tests with fixtures
+    # Regression test for M223: must use issues/ subdirectory
+    # Create temp structure with issues/ subdirectory
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        cat_dir.mkdir(parents=True)
+        issues_dir = cat_dir / "issues"
+        issues_dir.mkdir()
+
+        # Create config files in cat_dir
+        (cat_dir / "PROJECT.md").write_text("# Test Project\n")
+        (cat_dir / "ROADMAP.md").write_text("# Roadmap\n")
+
+        # Create version structure in issues_dir
+        v1_dir = issues_dir / "v1"
+        v1_dir.mkdir()
+        v10_dir = v1_dir / "v1.0"
+        v10_dir.mkdir()
+        task_dir = v10_dir / "test-task"
+        task_dir.mkdir()
+        (task_dir / "STATE.md").write_text("Status: pending\n")
+        (task_dir / "PLAN.md").write_text("# Test Task\n")
+
+        # Test collect_status_data finds tasks in issues/
+        data = collect_status_data(issues_dir)
+        runner.test("M223 regression: finds tasks in issues/ dir",
+                    "error" not in data and data.get("overall", {}).get("total", 0) == 1)
+
+        # Test handler uses issues/ subdirectory
+        result = handler.handle({"project_root": str(tmp_path)})
+        runner.test("M223 regression: handler uses issues/ dir",
+                    result is not None and "test-task" in result)
 
 
 def test_help_handler():

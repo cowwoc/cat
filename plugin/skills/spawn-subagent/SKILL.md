@@ -191,7 +191,7 @@ Every subagent prompt MUST include these items based on past mistakes:
 **STATE.md Requirements (M076, M077, M085, M087, M092):**
 ```
 STATE.md UPDATE (required in SAME commit as implementation):
-- Path: .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
+- Path: .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md
 - Set: Status: completed
 - Set: Progress: 100%
 - Set: Resolution: implemented (MANDATORY - not optional)
@@ -791,11 +791,11 @@ Task prompt: |
   Implement feature X.
 
   COMMIT (all in same commit):
-  1. Update .claude/cat/v0/v1.2/task/feature-x/STATE.md:
+  1. Update .claude/cat/issues/v0/v0.1/feature-x/STATE.md:
      - Set status: completed
      - Set progress: 100%
      - Add completed: {date}
-  2. git add <implementation files> .claude/cat/v0/v1.2/task/feature-x/STATE.md
+  2. git add <implementation files> .claude/cat/issues/v0/v0.1/feature-x/STATE.md
   3. git commit -m "feature: add X"
 ```
 

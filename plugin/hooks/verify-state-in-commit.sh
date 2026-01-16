@@ -48,7 +48,7 @@ if ! echo "$COMMAND" | grep -qE '\-m\s+.*\b(bugfix|feature):'; then
     exit 0
 fi
 
-# Check if we're in a task worktree (has .claude/cat/v* structure)
+# Check if we're in a task worktree (has .claude/cat/issues/v* structure)
 TASK_STATE_FILE=""
 if [[ -d ".claude/cat" ]]; then
     # Find STATE.md relative to current directory

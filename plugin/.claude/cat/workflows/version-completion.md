@@ -10,7 +10,7 @@ Load this workflow when **all tasks in a minor version are completed** (no pendi
 
 ```bash
 # Count pending/in-progress tasks in this minor version
-PENDING_COUNT=$(find ".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task" -name "STATE.md" -exec grep -l 'Status.*pending\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
+PENDING_COUNT=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/task" -name "STATE.md" -exec grep -l 'Status.*pending\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
 
 if [[ "$PENDING_COUNT" -eq 0 ]]; then
   MINOR_COMPLETE=true
@@ -89,7 +89,7 @@ Use AskUserQuestion:
   - "View status first" - Show /cat:status before deciding
 
 **If "Run stakeholder review":**
-Invoke `/cat:stakeholder-review .claude/cat/v{major}/v{major}.{minor}`
+Invoke `/cat:stakeholder-review .claude/cat/issues/v{major}/v{major}.{minor}`
 
 **If "Skip review":**
 Continue with next steps.
@@ -102,7 +102,7 @@ Continue with next steps.
 
 ```bash
 # Count incomplete minor versions in this major
-INCOMPLETE_MINORS=$(find ".claude/cat/v${MAJOR}" -maxdepth 1 -name "v${MAJOR}.*" -type d | while read dir; do
+INCOMPLETE_MINORS=$(find ".claude/cat/issues/v${MAJOR}" -maxdepth 1 -name "v${MAJOR}.*" -type d | while read dir; do
   [ -f "$dir/STATE.md" ] && ! grep -q 'Status.*completed' "$dir/STATE.md" && echo "$dir"
 done | wc -l)
 

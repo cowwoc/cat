@@ -5,15 +5,15 @@ set -euo pipefail
 # Outputs JSON with all status metrics for rendering by Claude
 #
 # Usage: status-data.sh [CAT_DIR]
-#   CAT_DIR defaults to .claude/cat
+#   CAT_DIR defaults to .claude/cat/issues
 #
 # Directory structure:
-#   .claude/cat/vN/vN.M/{task-name}/STATE.md
-#   .claude/cat/vN/vN.M/{task-name}/PLAN.md
+#   .claude/cat/issues/vN/vN.M/{task-name}/STATE.md
+#   .claude/cat/issues/vN/vN.M/{task-name}/PLAN.md
 #
 # Fixed in M138: Support tasks directly in minor dirs (not in task/ subdir)
 
-CAT_DIR="${1:-.claude/cat}"
+CAT_DIR="${1:-.claude/cat/issues}"
 
 # Load project info
 PROJECT_NAME=$(grep -m1 "^# " "$CAT_DIR/PROJECT.md" 2>/dev/null | sed 's/^# //' || echo "Unknown Project")

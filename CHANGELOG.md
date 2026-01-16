@@ -6,7 +6,7 @@
 
 **Commercialization**
 
-*In development - see planned tasks in .claude/cat/v1/v2/*
+*In development - see planned tasks in .claude/cat/issues/v2/*
 
 ### 2026-01-20: v1.10
 
