@@ -1,9 +1,9 @@
 ---
-name: skill-design
+name: skill-builder
 description: "Use BEFORE creating or updating any skill - decomposes goal into forward steps via backward reasoning"
 ---
 
-# Skill Design
+# Skill Builder
 
 ## Purpose
 
@@ -407,6 +407,22 @@ Call `function_name(inputs)` to compute [result].
 For each item in collection:
   Call `function_name(item)`
 
+**MANDATORY CALCULATION GATE:**
+
+Before proceeding to Step 4, you MUST show:
+
+1. **List each item with its computed value:**
+   ```
+   [item]: [computation] = [result]
+   ```
+
+2. **State aggregate if applicable:**
+   ```
+   [aggregate] = [value]
+   ```
+
+**BLOCKING:** Do NOT proceed until calculations are written out.
+
 ### Step 4: [Recursive application]
 
 Call `recursive_function(root_structure)` to process all levels.
@@ -724,6 +740,131 @@ REQUIRES: display_width calculated for all items
   (see: emoji width calculation above)
 ```
 
+### Verification Gates (M191 Prevention)
+
+When a skill has steps that produce intermediate calculations or data that the final
+output depends on, add **verification gates** that require showing the intermediate
+work before proceeding.
+
+**Why gates matter**: Without explicit gates, agents may:
+- Mentally acknowledge a step without executing it
+- Write approximate output instead of calculated output
+- Skip straight to the final result, causing errors
+
+**Identify gate candidates during decomposition**:
+```
+GOAL: Output is correct
+  REQUIRES: Final output uses calculated values    ← Gate candidate
+    REQUIRES: Intermediate values are computed
+      REQUIRES: Input data is collected
+```
+
+When the decomposition shows a REQUIRES that transforms data (calculates, computes,
+derives), that transformation should have a gate that makes the result visible.
+
+**Gate format**:
+```markdown
+**MANDATORY CALCULATION GATE (reference):**
+
+Before proceeding to [next step], you MUST show explicit [calculations/results]:
+
+1. **List each [item] with its [derived value]:**
+   ```
+   [item1]: [explicit breakdown] = [result]
+   [item2]: [explicit breakdown] = [result]
+   ```
+
+2. **State the [aggregate value]:**
+   ```
+   [aggregate_name] = [value] (from [derivation])
+   ```
+
+**BLOCKING:** Do NOT [produce output] until these [calculations/results] are written out.
+[Explanation of what goes wrong if skipped].
+```
+
+**Gate placement in procedure**:
+- Place gates AFTER the calculation step, BEFORE the step that uses the results
+- Use "MANDATORY" and "BLOCKING" keywords
+- Reference a mistake ID if the gate prevents a known issue
+
+**Example - Box alignment gate**:
+```markdown
+### Step 3: Calculate maximum width
+
+Call `max_content_width(all_content_items)`.
+
+**MANDATORY CALCULATION GATE (M191):**
+
+Before proceeding to Step 4, you MUST show explicit width calculations:
+
+1. **List each content item with its display_width:**
+   ```
+   "Hello 👋": 7 chars + 1 emoji(2) = 8
+   "World":    5 chars = 5
+   ```
+
+2. **State max_content_width:**
+   ```
+   max_content_width = 8
+   ```
+
+**BLOCKING:** Do NOT render any box output until calculations are written out.
+Hand-writing approximate output without calculation causes alignment errors.
+
+### Step 4: Build output
+[Uses the calculated values from Step 3]
+```
+
+### Output Artifact Gates (M192 Prevention)
+
+**Critical insight**: Calculation gates alone are insufficient. When a skill produces structured
+output (boxes, tables, formatted text), the gate must require showing the **exact artifact strings**
+that will appear in the output, not just the numeric calculations.
+
+**The failure pattern (M192)**:
+1. Agent correctly calculates widths, counts, positions
+2. Agent understands the formula for constructing output
+3. Agent **re-types** the output from memory instead of copying calculated artifacts
+4. Output has subtle errors despite correct calculations
+
+**Solution**: Add a second gate that requires **explicit artifact construction**:
+
+```markdown
+### Step 4: Construct lines
+
+For each item, apply the formula and **record the exact result string**:
+
+```
+build_line("📊 Status", 20) = "│ 📊 Status          │"  (padding: 10)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              This exact string goes to output
+```
+
+**MANDATORY BUILD RESULTS GATE (M192):**
+
+Before writing final output, verify:
+- [ ] Each artifact (line, cell, row) has an explicit string recorded above
+- [ ] Padding/spacing counts are noted in parentheses
+- [ ] Final output will COPY these exact strings (no re-typing)
+
+**BLOCKING:** If Step 4 does not contain explicit artifact strings, STOP and complete
+Step 4 before proceeding. Re-typing output causes errors even when calculations are correct.
+```
+
+**Key distinctions**:
+| Calculation Gate (M191) | Artifact Gate (M192) |
+|------------------------|----------------------|
+| Shows numeric values | Shows exact output strings |
+| "max_width = 20" | `"│ content      │"` |
+| Prevents wrong math | Prevents wrong assembly |
+| Required BEFORE construction | Required AFTER construction, BEFORE output |
+
+**When to add artifact gates**:
+- Output has precise formatting (aligned columns, borders, spacing)
+- Small errors in spacing/padding break the result
+- The construction formula combines multiple values
+
 ### Recursive Structures
 
 For problems with recursive structure (e.g., nested boxes), the decomposition will
@@ -795,4 +936,9 @@ Procedure step:
 - [ ] Variable-length functions derived via min-case → increment → generalize
 - [ ] Functions listed in dependency order (no forward references)
 - [ ] Forward steps call functions (no duplicated logic)
+- [ ] **Calculation gates added for transformation steps** (M191)
+- [ ] **Artifact gates added when output has precise formatting** (M192)
+- [ ] Gates use MANDATORY and BLOCKING keywords
+- [ ] Calculation gates require explicit numeric results before construction
+- [ ] Artifact gates require explicit output strings before final assembly
 - [ ] Verification criteria exist for the goal

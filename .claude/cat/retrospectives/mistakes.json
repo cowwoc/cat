@@ -1905,6 +1905,59 @@
         "catches_variations": true
       },
       "correct_behavior": "When building multiple inner boxes at the same nesting level, first calculate the GLOBAL max_content_width across ALL sibling boxes, then build each sibling using that shared width"
+    },
+    {
+      "id": "M191",
+      "timestamp": "2026-01-22T10:35:00Z",
+      "category": "protocol_violation",
+      "description": "Rendered box output without explicit width calculations, causing misaligned vertical borders",
+      "root_cause": "Skipped mandatory calculation step in box-alignment skill - wrote approximate output instead of computing display_width for each content item",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "display_width",
+        "calculation",
+        "nested-box",
+        "sibling-alignment"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Show explicit display_width calculations for EVERY content item before rendering any box output"
+    },
+    {
+      "id": "M192",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment output had misaligned vertical borders - calculated widths correctly but hand-typed output instead of mechanically constructing lines",
+      "root_cause": "Skill allows agent to calculate correctly then render incorrectly by not enforcing that output MUST be copied from calculated build_line() results",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "display-width",
+        "hand-typed",
+        "copy-paste"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After calculating widths, write explicit build_line() results showing exact strings with padding, then copy those exact strings to final output"
     }
   ]
 }
