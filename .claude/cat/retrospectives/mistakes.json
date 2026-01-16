@@ -3283,6 +3283,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Output the ERROR message and STOP when pre-computed output is missing"
+    },
+    {
+      "id": "M243",
+      "timestamp": "2026-01-25T08:45:00Z",
+      "category": "protocol_violation",
+      "description": "Created custom Task Complete box with ad-hoc content instead of using pre-computed template, causing misaligned vertical lines",
+      "root_cause": "No pre-computed template existed for already-implemented task scenario",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/work_handler.py",
+      "pattern_keywords": [
+        "box-alignment",
+        "edge-case",
+        "plain-text-fallback",
+        "copy-paste"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M225",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use TASK_ALREADY_COMPLETE pre-computed template for tasks found already implemented"
     }
   ]
 }
