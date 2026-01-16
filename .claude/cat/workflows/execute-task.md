@@ -127,6 +127,29 @@ git branch -d {task-branch}
 git branch -d {subagent-branch}
 ```
 
+### 11. Update Changelogs
+
+Update minor and major version CHANGELOG.md files with completed task summary.
+
+**Minor version CHANGELOG.md** (`.claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md`):
+
+Add task entry to Tasks Completed table:
+```markdown
+| {task-name} | {commit-type} | {brief description from PLAN.md goal} |
+```
+
+**Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
+
+Update aggregate summary if this completes a minor version.
+
+> **NOTE**: Task changelog content is embedded in commit messages, not separate files.
+> See `templates/changelog.md` for full changelog format.
+
+If CHANGELOG.md doesn't exist yet, create it using the template format with:
+- Version header and pending status
+- Empty Tasks Completed table
+- Placeholder sections
+
 ## Error Recovery
 
 ### Subagent Failure

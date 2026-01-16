@@ -28,15 +28,18 @@ This is CAT's core execution command. It:
 7. Merges task branch to main
 8. Cleans up worktrees
 9. Updates STATE.md
-10. Offers next task
+10. Updates changelogs (minor/major CHANGELOG.md)
+11. Offers next task
 
 </objective>
 
 <execution_context>
 
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/execute-task.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/subagent-protocol.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/merge-and-cleanup.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/agent-architecture.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/commit-types.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/merge-subagent/SKILL.md
 
@@ -386,6 +389,25 @@ Task ID: v{major}.{minor}-{task-name}
 EOF
 )"
 ```
+
+</step>
+
+<step name="update_changelogs">
+
+**Update version changelogs:**
+
+1. **Minor version CHANGELOG.md** (`.claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md`):
+   - If file doesn't exist, create from template with pending status
+   - Add completed task to Tasks Completed table:
+     ```markdown
+     | {task-name} | {commit-type} | {goal from PLAN.md} |
+     ```
+
+2. **Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
+   - If file doesn't exist, create from template with pending status
+   - Update aggregate summary when minor version completes
+
+> See `templates/changelog.md` for full format. Task details are in commit messages.
 
 </step>
 
