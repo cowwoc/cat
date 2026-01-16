@@ -162,7 +162,7 @@ From research-pitfalls.md:
 **Create RESEARCH.md:**
 
 If researching for a task, write to task directory:
-`.claude/cat/v{major}/v{major}.{minor}/{task-name}/RESEARCH.md`
+`.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/RESEARCH.md`
 
 Otherwise, write to project root:
 `.claude/cat/RESEARCH-{topic}.md`

@@ -419,7 +419,7 @@ Minor version CHANGELOG.md should also be updated in the same commit for atomici
 
 ```bash
 # In task worktree - update STATE.md to completed
-# Edit .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+# Edit .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md:
 #   status: completed
 #   progress: 100%
 #   resolution: implemented
@@ -431,7 +431,7 @@ Minor version CHANGELOG.md should also be updated in the same commit for atomici
 #   | {task-name} | {commit-type} | {description from PLAN.md} | implemented |
 
 # Stage STATE.md and CHANGELOG.md with implementation
-git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git add .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
 git add .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md
 git commit --amend --no-edit  # Include in last implementation commit
 

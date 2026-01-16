@@ -357,7 +357,7 @@ EOF
 ```
 Task created:
 
-- Path: .claude/cat/v{major}/v{major}.{minor}/{task-name}/
+- Path: .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/
 - Type: {task-type}
 - Dependencies: {deps or "None"}
 
