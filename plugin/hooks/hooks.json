@@ -82,6 +82,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/detect-user-reported-issue.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/get-status-output.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
@@ -133,6 +141,10 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/block-lock-manipulation.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/compute-box-lines.sh"
           }
         ]
       },

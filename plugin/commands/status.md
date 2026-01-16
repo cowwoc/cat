@@ -8,128 +8,101 @@ allowed-tools:
   - Read
 ---
 
-<objective>
+# CAT Status Display
 
-Display the CAT hierarchy status with a visual tree showing all major versions, minor versions,
-and tasks with their current status.
+## Purpose
 
-</objective>
+User sees a correctly-aligned, complete project status display with actionable next steps.
 
-<process>
+---
 
-<step name="collect-data">
+## Prerequisites
 
-**Run the status script to collect project data:**
+- CAT project initialized (`.claude/cat` directory exists)
+- Status data collection script: `${CLAUDE_PLUGIN_ROOT}/scripts/status.sh`
+- Box rendering script: `${CLAUDE_PLUGIN_ROOT}/scripts/build-box-lines.py`
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/status.sh" .claude/cat
+---
+
+## Functions
+
+### select_emoji(minor) -> emoji
+
+Select status emoji for a minor version based on completion state.
+
+**Definition**:
+```
+if minor.completed == minor.total AND minor.total > 0:
+  return "☑️"
+if minor.inProgress is not empty OR minor.id == current.minor:
+  return "🔄"
+return "🔳"
 ```
 
-The script outputs JSON with this schema:
+**Additional states** (for tasks):
+- `🚫` = Blocked (task cannot proceed due to dependency)
+- `🚧` = Gate waiting (entry/exit conditions not met)
 
-```json
-{
-  "project": "Project Name",
-  "overall": {
-    "percent": 45,
-    "completed": 10,
-    "total": 22
-  },
-  "current": {
-    "minor": "v1.2",
-    "inProgressTask": "task-name",
-    "pendingTasks": ["task-a", "task-b"]
-  },
-  "majors": [
-    {"id": "v1", "name": "Major Version Name"}
-  ],
-  "minors": [
-    {
-      "id": "v1.2",
-      "major": "v1",
-      "description": "Minor description",
-      "completed": 3,
-      "total": 5,
-      "inProgress": "current-task",
-      "tasks": [{"name": "task-name", "status": "completed"}]
-    }
-  ]
-}
+### build_progress_bar(percent, width=25) -> string
+
+Generate visual progress bar.
+
+**Definition**:
+```
+filled = floor(percent * width / 100)
+empty = width - filled
+return "█"×filled + "░"×empty
 ```
 
-If the script outputs an error JSON, inform user to run `/cat:init`.
-
-</step>
-
-<step name="render-display">
-
-**Render the status display using closed-border format.**
-
-**MANDATORY:** Load `/cat:box-alignment` skill before rendering. Follow its procedure for proper alignment.
-
-**MANDATORY (M185): Use nested box procedure from box-alignment skill.**
-This display requires nested boxes (inner boxes for each major version inside outer box).
-Follow box-alignment skill section "Nested Boxes (M184)" - build inner boxes FIRST, then embed.
-
-**Nested Box Checklist (complete before output):**
-- [ ] Built separate table for EACH major version's inner box
-- [ ] Calculated inner box max_width for each major
-- [ ] Constructed complete inner box lines (top, content rows, bottom)
-- [ ] Verified each inner box has consistent width (top = content = bottom)
-- [ ] Embedded complete inner box lines as Content entries in outer table
-- [ ] Outer table includes: header rows, blank line, inner box 1 lines, blank line, inner box 2 lines, footer rows
-
-Using the JSON data, output this format:
-
+**Example**:
 ```
-╭────────────────────────────────────────────────────────────────────────╮
-│ 📊 Overall: [████████░░░░░░░░░░░░░░░░░] {percent}%                     │
-│ 🏆 {completed}/{total} tasks complete                                  │
-│                                                                        │
-│ ╭─ 📦 {major1.id}: {major1.name} ────────────────────────────────────╮ │
-│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})     │ │
-│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})     │ │
-│ ╰────────────────────────────────────────────────────────────────────╯ │
-│                                                                        │
-│ ╭─ 📦 {major2.id}: {major2.name} ────────────────────────────────────╮ │
-│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})     │ │
-│ │     🔄 {inProgressTask}                                            │ │
-│ │     🔳 {pendingTask}                                               │ │
-│ ╰────────────────────────────────────────────────────────────────────╯ │
-│                                                                        │
-│ 🎯 Active: {current.minor}                                             │
-│ 📋 Available: {pendingTasks.length} pending tasks                      │
-╰────────────────────────────────────────────────────────────────────────╯
+build_progress_bar(45, 25) = "███████████░░░░░░░░░░░░░░"
 ```
 
-**Structure rules:**
-- Outer box contains everything with closed borders
-- Each major version gets an inner closed box
-- Close each major's inner box BEFORE starting the next major
-- The active minor (with pending tasks) shows tasks indented below it
-- Completed majors can be collapsed (show only summary line if all minors complete)
-- Footer lines (🎯 Active, 📋 Available) appear inside the outer box at the bottom
+---
 
-**Emoji rules:**
-- ☑️ = Minor complete (completed == total && total > 0)
-- 🔄 = Current active minor OR in-progress task
-- 🔳 = Pending minor or task
-- 🚫 = Blocked (task cannot proceed)
-- 🚧 = Gate waiting (entry/exit conditions not met)
+## Procedure
 
-**Progress bar:** Use █ for filled, ░ for empty. Width = 25 characters.
+### Step 1: Require pre-computed display
 
-**Truncation:** Long task/version names should be truncated with `...`
-- Example: "very-long-task-na..." for names exceeding ~20 characters
-- Keep first N-3 characters, append `...`
+**MANDATORY:** Check conversation context for "PRE-COMPUTED STATUS DISPLAY".
 
-</step>
+The UserPromptSubmit hook pre-computes the entire status display to prevent alignment errors.
 
-<step name="next-steps">
+**If found**:
+1. Locate the box output between "PRE-COMPUTED STATUS DISPLAY" and "NEXT STEPS table"
+2. Output the pre-computed box **directly without preamble** (no "I can see...", no "Let me output...")
+3. Output the NEXT STEPS table EXACTLY as shown
+4. Output the legend
+5. Skip to Verification
 
-**After the status display, show:**
+**Silent output (M194):** Do NOT announce or explain the pre-computed content. Simply output it.
 
-**🚀 NEXT STEPS**
+**If NOT found**: **FAIL immediately** with:
+
+```
+ERROR: Pre-computed status display not found in context.
+
+The hook (precompute-status-display.sh) should have provided this.
+
+Troubleshooting:
+1. Check if hooks/precompute-status-display.sh exists in plugin
+2. Verify hook is registered in hooks.json
+3. Check for hook errors in output above
+4. Ensure .claude/cat directory exists (run /cat:init if needed)
+
+Do NOT attempt to render the status box manually - it will have alignment errors.
+```
+
+**Why fail-fast?** Box alignment requires precise emoji width calculations that
+LLMs cannot perform reliably. The hook uses Python's unicodedata module for
+accurate widths. Manual rendering defeats the purpose of extraction.
+
+### Step 2: Output next steps and legend
+
+**After the status box, output:**
+
+**NEXT STEPS**
 
 | Option | Action | Command |
 |--------|--------|---------|
@@ -140,16 +113,29 @@ Using the JSON data, output this format:
 
 **Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
 
-</step>
+---
 
-</process>
+## Verification
 
-<success_criteria>
-
-- [ ] JSON data collected from script
-- [ ] Nested box checklist completed (M185) - each major version has inner box
-- [ ] Closed-border status display rendered (following box-alignment skill)
-- [ ] NEXT STEPS table displayed
+- [ ] Status box displayed with all right-side `│` characters aligned vertically
+- [ ] Inner boxes (major versions) have consistent width with each other
+- [ ] NEXT STEPS table displayed with correct active version
 - [ ] Legend displayed
 
-</success_criteria>
+---
+
+## External Computation
+
+This skill relies on pre-computation via UserPromptSubmit hook to prevent alignment errors.
+
+**Hook**: `hooks/precompute-status-display.sh`
+**Trigger**: User invokes `/cat:status`
+**Output**: Complete rendered box via additionalContext
+
+The hook:
+1. Runs `status.sh` to collect JSON data
+2. Runs `build-box-lines.py` to compute exact line padding
+3. Returns pre-rendered display for direct output
+
+**Why pre-compute?** LLMs cannot reliably calculate emoji widths or character padding.
+Pre-computing ensures correct alignment every time.
