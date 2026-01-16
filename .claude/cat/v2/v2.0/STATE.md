@@ -2,7 +2,7 @@
 
 ## Status
 status: in_progress
-progress: 30%
+progress: 26%
 started: 2026-01-20
 
 ## Summary
@@ -21,9 +21,10 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - task-management-demo
 - simplify-display-formats
 - remove-box-rendering-infrastructure
+- find-next-task-script
+- hide-tool-calls-during-execution
 
 ## Tasks Pending
-- find-next-task-script
 - fix-config-documentation
 - multi-agent-demo
 - planning-research-demo
@@ -38,7 +39,6 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - offline-validation
 - jwt-token-generation
 - update-check-startup
-- hide-tool-calls-during-execution
 - streamline-task-not-found-error
 - fix-add-remove-parent-update-steps
 - default-to-task-creation
