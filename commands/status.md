@@ -18,6 +18,32 @@ Provides situational awareness for project progress.
 
 <process>
 
+<step name="read-emoji-widths">
+
+**Read emoji display widths:**
+
+```bash
+cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
+```
+
+This file contains measured emoji display widths for different terminals. Use the `default` section
+for width calculations. Store the widths in memory for use in the render step.
+
+Example structure:
+```json
+{
+  "default": {
+    "☑️": 2, "🔄": 2, "🔳": 2, "🚫": 2, "🚧": 2,
+    "📊": 2, "📦": 2, "🎯": 2, "📋": 2, "⚙️": 2, "🏆": 2,
+    "✓": 1, "✗": 1, "→": 1, "•": 1, "▸": 1
+  }
+}
+```
+
+**CRITICAL**: Do NOT hard-code emoji widths. Always read from this file as widths may vary.
+
+</step>
+
 <step name="collect-data">
 
 **Collect status data:**
@@ -90,10 +116,32 @@ Track for each exit gate task:
 Claude Code shows all Bash tool invocations in the terminal. To display clean output without
 tool call wrappers, output the styled text directly as part of your response.
 
-**CRITICAL: No vertical borders - use horizontal borders only.**
+**CRITICAL: Use emoji-widths.json for padding calculation.**
 
-Per display-standards.md, avoid vertical borders (`║`, `│`) because emoji width varies across
-terminals. Horizontal-only borders eliminate padding calculation problems.
+To align vertical borders (`│`) correctly, calculate the display width of each line using the
+emoji widths from the read-emoji-widths step. Then pad each line to a consistent total width.
+
+**Padding calculation algorithm:**
+
+1. **Define target width**: Use 72 characters for outer box, 56 for nested box
+2. **Calculate display width** of content (between `│` borders):
+   - Regular ASCII characters: width 1
+   - Box-drawing characters (`─│╭╮╰╯`): width 1
+   - Emojis: look up width from emoji-widths.json `default` section
+   - If emoji not in file: assume width 2
+3. **Calculate padding needed**: `target_width - 2 - display_width` (subtract 2 for `│` borders)
+4. **Construct line**: `│` + content + padding spaces + `│`
+
+**Example calculation:**
+```
+Line: "  ☑️ v0.1: Core parser (5/5)"
+- "  " = 2 chars
+- "☑️" = 2 (from emoji-widths.json)
+- " v0.1: Core parser (5/5)" = 25 chars
+- Total display width = 2 + 2 + 25 = 29
+- For nested box (width 56): padding = 56 - 2 - 29 = 25 spaces
+- Result: "│  ☑️ v0.1: Core parser (5/5)                         │"
+```
 
 **CRITICAL: Do NOT wrap output in code blocks (M125).**
 
