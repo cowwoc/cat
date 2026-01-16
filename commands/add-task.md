@@ -164,7 +164,20 @@ Use AskUserQuestion:
 
 If dependencies needed, list existing tasks in same minor version for selection.
 
-**5. Acceptance criteria:**
+**5. Blockers:**
+
+Use AskUserQuestion:
+- header: "Blocks"
+- question: "Does this task block any existing tasks? (Will add this task as a dependency to selected tasks)"
+- options:
+  - "No, doesn't block anything" - Continue
+  - "Yes, select tasks to block" - Show task list
+
+If blockers selected:
+- For each selected task, add this new task to their Dependencies list in STATE.md
+- This ensures those tasks won't execute until this task completes
+
+**6. Acceptance criteria:**
 
 Ask inline: "What are the acceptance criteria? How will we know this task is complete?"
 
