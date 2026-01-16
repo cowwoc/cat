@@ -21,34 +21,21 @@ trap 'echo "ERROR in validate-rebase-target.sh at line $LINENO: Command failed: 
 # ADDED: 2026-01-07 after agent used origin/main instead of local main
 # when user said "rebase on main"
 
-# Read JSON from stdin with timeout to prevent hanging
-JSON_INPUT=""
-if [ -t 0 ]; then
-	exit 0
-else
-	JSON_INPUT="$(timeout 5s cat 2>/dev/null)" || JSON_INPUT=""
-fi
-
 # Source JSON parsing library
-source "$CLAUDE_PROJECT_DIR/.claude/hooks/lib/json-parser.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/json-parser.sh"
 
-# Extract tool name and command from JSON
-TOOL_NAME=$(extract_json_value "$JSON_INPUT" "tool_name")
-COMMAND=$(extract_json_value "$JSON_INPUT" "command")
-
-# Fallback extraction if primary method fails
-if [ -z "$TOOL_NAME" ]; then
-	TOOL_NAME=$(echo "$JSON_INPUT" | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+# Initialize as Bash hook (reads stdin, parses JSON, extracts command)
+if ! init_bash_hook; then
+    echo '{}'
+    exit 0
 fi
 
-if [ -z "$COMMAND" ]; then
-	COMMAND=$(echo "$JSON_INPUT" | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-fi
-
-# Only process Bash tool calls
-if [ "$TOOL_NAME" != "Bash" ] && [ "$TOOL_NAME" != "bash" ]; then
-	echo '{}'
-	exit 0
+# Use HOOK_COMMAND from init_bash_hook
+COMMAND="$HOOK_COMMAND"
+if [[ -z "$COMMAND" ]]; then
+    echo '{}'
+    exit 0
 fi
 
 # Check if command contains git rebase with origin/ prefix

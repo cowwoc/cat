@@ -11,34 +11,13 @@ trap 'echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Unexpected error at line $LINENO"
 # Claude Code Hook: Post-Destructive Operation Verification
 # Reminds Claude to verify no important details were lost after destructive operations
 
-# Read JSON data from stdin with timeout to prevent hanging
-JSON_INPUT=""
-if [ -t 0 ]; then
-	# No input available - this is a configuration error
-	echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Expected JSON on stdin but none provided" >&2
-	echo "   This hook must receive JSON data via stdin from Claude Code" >&2
-	exit 0  # Non-blocking exit
-else
-	JSON_INPUT="$(timeout 5s cat 2>/dev/null)" || JSON_INPUT=""
-fi
-
-# Check if JSON input is empty
-if [[ -z "$JSON_INPUT" ]]; then
-	echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Empty JSON input received" >&2
-	echo "   Expected JSON structure with hook_event_name and message fields" >&2
-	exit 0  # Non-blocking exit
-fi
-
 # Source JSON parsing library
-source "$CLAUDE_PROJECT_DIR/.claude/hooks/lib/json-parser.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/json-parser.sh"
 
-# Parse all common fields at once
-parse_hook_json "$JSON_INPUT"
-
-# Check if hook event was extracted
-if [[ -z "$HOOK_EVENT" ]]; then
-	echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Could not extract hook_event_name from JSON" >&2
-	echo "   JSON received: ${JSON_INPUT:0:200}..." >&2
+# Initialize hook (reads stdin, parses JSON, sets HOOK_EVENT, SESSION_ID, USER_PROMPT, etc.)
+if ! init_hook; then
+	echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Failed to initialize hook" >&2
 	exit 0  # Non-blocking exit
 fi
 
@@ -48,7 +27,7 @@ if [[ "$HOOK_EVENT" != "UserPromptSubmit" ]]; then
 	exit 0
 fi
 
-# Use USER_PROMPT from parse_hook_json
+# Use USER_PROMPT from init_hook
 LAST_MESSAGE="$USER_PROMPT"
 
 # Check if message was extracted

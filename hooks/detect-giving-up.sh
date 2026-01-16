@@ -13,23 +13,13 @@ trap 'echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Unexpected error at line $LINENO"
 # Triggers: UserPromptSubmit event
 # Action: Inject persistence reminder if patterns detected
 
-# Read JSON data from stdin with timeout to prevent hanging
-JSON_INPUT=""
-if [ -t 0 ]; then
-	# No input available, exit gracefully
-	exit 0
-else
-	JSON_INPUT="$(timeout 5s cat 2>/dev/null)" || JSON_INPUT=""
-fi
-
-# Exit if no JSON input
-[[ -z "$JSON_INPUT" ]] && exit 0
-
 # Source JSON parsing library
 source "${CLAUDE_PLUGIN_ROOT}/hooks/lib/json-parser.sh"
 
-# Parse all common fields at once
-parse_hook_json "$JSON_INPUT"
+# Initialize hook (reads stdin, parses JSON, sets HOOK_EVENT, SESSION_ID, USER_PROMPT, etc.)
+if ! init_hook; then
+    exit 0
+fi
 
 # Only handle UserPromptSubmit events
 [[ "$HOOK_EVENT" != "UserPromptSubmit" ]] && exit 0
@@ -43,17 +33,15 @@ if [[ ${#USER_PROMPT} -gt $MAX_PROMPT_LENGTH ]]; then
 	USER_PROMPT="${USER_PROMPT:0:$MAX_PROMPT_LENGTH}"
 fi
 
-# Extract session ID from JSON input
-SESSION_ID_RAW=$(extract_json_value "$JSON_INPUT" "session_id")
-
+# Use SESSION_ID from init_hook (already extracted and exported)
 # Require session ID - fail fast if not provided
-if [[ -z "$SESSION_ID_RAW" ]]; then
+if [[ -z "$SESSION_ID" ]]; then
 	echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: session_id must be provided in hook JSON input" >&2
 	exit 0  # Non-blocking
 fi
 
 # Sanitize session ID to prevent directory traversal attacks
-SESSION_ID=$(echo "$SESSION_ID_RAW" | tr -cd 'a-zA-Z0-9_-')
+SESSION_ID=$(validate_session_id "$SESSION_ID")
 if [[ -z "$SESSION_ID" ]]; then
 	echo "⚠️  HOOK ERROR [$SCRIPT_PATH]: Invalid session_id (contains no valid characters)" >&2
 	exit 0  # Non-blocking
