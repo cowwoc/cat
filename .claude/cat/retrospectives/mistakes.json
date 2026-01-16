@@ -3336,6 +3336,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After rebase with amend/fixup, use git show <commit> --stat to verify target commit contains expected files before proceeding"
+    },
+    {
+      "id": "M245",
+      "timestamp": "2026-01-25T18:50:00Z",
+      "category": "protocol_violation",
+      "description": "After find-task.sh returned no executable tasks, manually searched for pending tasks and attempted to acquire a lock on a task that was already locked by another session",
+      "root_cause": "Did not trust find-task.sh results - attempted to work around the script correct determination that no tasks were available",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "find-task",
+        "no executable tasks",
+        "lock",
+        "manual search",
+        "bypass"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When find-task.sh returns no executable tasks, accept this result and report to user using NO_EXECUTABLE_TASKS box. Do not manually search for tasks or attempt lock acquisition."
     }
   ]
 }
