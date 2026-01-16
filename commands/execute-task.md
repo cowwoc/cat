@@ -898,6 +898,51 @@ Task ID: v1.0-parse-lambdas
 
 </commit_rules>
 
+<duplicate_task_handling>
+
+**Detecting Duplicate Tasks**
+
+During task execution, you may discover the task is a duplicate - another task already
+implemented the same functionality.
+
+**Signs of a duplicate:**
+1. Investigation reveals the functionality already exists
+2. Tests for this task's scenarios already pass
+3. Another task addressed the same root cause
+
+**How to handle:**
+
+1. **Stop execution** - don't create worktree or do implementation work
+2. **Verify** - test the specific scenarios from this task's PLAN.md
+3. **Identify original** - find which task/commit implemented the fix
+4. **Update STATE.md** with duplicate resolution:
+
+```yaml
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** duplicate
+- **Duplicate Of:** v{major}.{minor}-{original-task-name}
+- **Completed:** {date}
+```
+
+5. **Commit STATE.md only** (no Task ID footer):
+
+```bash
+git commit -m "config: close duplicate task {task-name}
+
+Duplicate of {original-task} (commit {hash}).
+Verification confirmed all scenarios from PLAN.md pass.
+"
+```
+
+6. **Release lock and cleanup** - same as normal task completion
+7. **Offer next task** - continue to next executable task
+
+**Important:** Duplicate tasks do NOT get a `Task ID:` footer because there's no implementation.
+See [task-resolution.md](../references/task-resolution.md) for details.
+
+</duplicate_task_handling>
+
 <success_criteria>
 
 - [ ] Task identified and loaded
