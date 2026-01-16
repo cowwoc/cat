@@ -55,14 +55,24 @@ git merge "v${CURRENT_VERSION}" --ff-only
 **If fast-forward fails**: The branches have diverged. Either rebase the version branch onto main first,
 or investigate why main has commits not in the version branch.
 
-### 4. Create Release Tag on Main
+### 4. Delete the Merged Version Branch
+
+```bash
+# Delete local branch (now that it's merged)
+git branch -d "v${CURRENT_VERSION}"
+```
+
+**Why delete?** Once merged and tagged, the version branch serves no purpose. Keeping it risks
+accidental commits that diverge from the tag, causing confusion.
+
+### 5. Create Release Tag on Main
 
 ```bash
 # Create annotated tag for current version
 git tag -a "v${CURRENT_VERSION}" -m "v${CURRENT_VERSION} release"
 ```
 
-### 5. Create Next Version Branch
+### 6. Create Next Version Branch
 
 ```bash
 # Calculate next version (increment patch)
@@ -73,7 +83,7 @@ echo "Next version: $NEXT_VERSION"
 git checkout -b "v${NEXT_VERSION}"
 ```
 
-### 6. Increment Version Numbers
+### 7. Increment Version Numbers
 
 Update both JSON files to the next version:
 
@@ -89,21 +99,21 @@ echo "package.json:" && jq '.version' package.json
 echo "plugin.json:" && jq '.version' .claude-plugin/plugin.json
 ```
 
-### 7. Update CHANGELOG.md for Next Version
+### 8. Update CHANGELOG.md for Next Version
 
 If the project has a CHANGELOG.md:
 
 1. Update the "Current Version" table to show NEXT_VERSION
 2. Add an empty version history section for NEXT_VERSION (to be filled during development)
 
-### 8. Commit Version Bump
+### 9. Commit Version Bump
 
 ```bash
 git add package.json .claude-plugin/plugin.json CHANGELOG.md
 git commit -m "config: bump version to ${NEXT_VERSION}"
 ```
 
-### 9. Push Everything to Origin
+### 10. Push Everything to Origin
 
 ```bash
 # Push main branch with new commits
@@ -111,6 +121,9 @@ git push origin main
 
 # Push the release tag
 git push origin "v${CURRENT_VERSION}"
+
+# Delete the remote version branch (now merged)
+git push origin --delete "v${CURRENT_VERSION}"
 
 # Push the new version branch
 git push -u origin "v${NEXT_VERSION}"
@@ -133,27 +146,31 @@ jq '.version' .claude-plugin/plugin.json  # "1.4"
 git checkout main
 git merge v1.4 --ff-only
 
-# 4. Create release tag
+# 4. Delete the merged version branch
+git branch -d v1.4
+
+# 5. Create release tag
 git tag -a v1.4 -m "v1.4 release"
 
-# 5. Create next version branch
+# 6. Create next version branch
 git checkout -b v1.5
 
-# 6. Increment versions
+# 7. Increment versions
 jq '.version = "1.5"' package.json > package.json.tmp && mv package.json.tmp package.json
 jq '.version = "1.5"' .claude-plugin/plugin.json > plugin.json.tmp && mv plugin.json.tmp .claude-plugin/plugin.json
 
-# 7. Update CHANGELOG for next version
+# 8. Update CHANGELOG for next version
 # - Update version table to 1.5
 # - Add empty v1.5 section to history
 
-# 8. Commit version bump
+# 9. Commit version bump
 git add package.json .claude-plugin/plugin.json CHANGELOG.md
 git commit -m "config: bump version to 1.5"
 
-# 9. Push everything
+# 10. Push everything
 git push origin main
-git push origin v1.4
+git push origin v1.4                # push tag
+git push origin --delete v1.4       # delete remote branch
 git push -u origin v1.5
 ```
 
