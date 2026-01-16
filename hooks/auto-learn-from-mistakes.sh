@@ -225,9 +225,10 @@ if [[ -z "$MISTAKE_TYPE" ]] && [[ -n "$LAST_ASSISTANT_MESSAGE" ]]; then
     MISTAKE_TYPE="critical_self_acknowledgment"
     MISTAKE_DETAILS=$(echo "$LAST_ASSISTANT_MESSAGE" | grep -iE "I made a critical|CRITICAL|catastrophic|devastating" | head -5)
   # Check for general mistake acknowledgments (medium priority)
-  elif echo "$LAST_ASSISTANT_MESSAGE" | grep -qiE "I (made|created) (a|an) (mistake|error)|this (was|is) (a|an) (mistake|error)|I accidentally"; then
+  # Includes: "My error", "I made a mistake", "this was an error", "I accidentally"
+  elif echo "$LAST_ASSISTANT_MESSAGE" | grep -qiE "My error|I (made|created) (a|an) (mistake|error)|this (was|is) (a|an) (mistake|error)|I accidentally"; then
     MISTAKE_TYPE="self_acknowledged_mistake"
-    MISTAKE_DETAILS=$(echo "$LAST_ASSISTANT_MESSAGE" | grep -iE "I (made|created).*(mistake|error)|this (was|is).*(mistake|error)|I accidentally" | head -5)
+    MISTAKE_DETAILS=$(echo "$LAST_ASSISTANT_MESSAGE" | grep -iE "My error|I (made|created).*(mistake|error)|this (was|is).*(mistake|error)|I accidentally" | head -5)
   fi
 fi
 
