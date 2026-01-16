@@ -126,6 +126,35 @@ get_task_status() {
         return 1
     fi
 
+    # Normalize known aliases to canonical values (M253)
+    case "$status" in
+        complete|done)
+            echo "WARNING: Non-canonical status '$status' in $state_file, use 'completed'" >&2
+            status="completed"
+            ;;
+        in_progress|active)
+            echo "WARNING: Non-canonical status '$status' in $state_file, use 'in-progress'" >&2
+            status="in-progress"
+            ;;
+    esac
+
+    # Validate against allowed status values (M253: fail-fast on unknown status)
+    local valid_statuses="pending in-progress completed blocked"
+    local is_valid=false
+    for valid in $valid_statuses; do
+        if [[ "$status" == "$valid" ]]; then
+            is_valid=true
+            break
+        fi
+    done
+
+    if [[ "$is_valid" == "false" ]]; then
+        echo "ERROR: Unknown status '$status' in $state_file" >&2
+        echo "Valid values: $valid_statuses" >&2
+        echo "Common typo: 'complete' should be 'completed'" >&2
+        return 1
+    fi
+
     echo "$status"
 }
 
