@@ -1,6 +1,6 @@
-# Progress Display Reference
+# Display Standards Reference
 
-Standard visual elements for displaying progress across CAT workflows.
+Standard visual elements for CAT workflows: boxes, menus, progress bars, and status displays.
 
 ## Box Display Format {#box-display-format}
 
@@ -126,6 +126,42 @@ padding_needed = CONTENT_WIDTH - display_width
 line = f"║  {text}{' ' * padding_needed}  ║"
 ```
 
+### Verification Requirement
+
+**MANDATORY**: Use a display width calculator to verify box alignment before committing changes.
+
+Visual inspection is insufficient because:
+- Emojis render at different widths in editors vs terminals
+- Variation selectors (U+FE0F) are invisible but affect width
+- Copy-paste can introduce hidden characters
+
+**Display width calculation:**
+```python
+import unicodedata
+
+def display_width(s):
+    """Calculate terminal display width of a string."""
+    width = 0
+    i = 0
+    while i < len(s):
+        c = s[i]
+        # Skip variation selectors (they don't add display width)
+        if c == '\uFE0F':
+            i += 1
+            continue
+        # Most emojis are 2 columns wide
+        if ord(c) >= 0x1F300:
+            width += 2
+        elif unicodedata.east_asian_width(c) in ('F', 'W'):
+            width += 2
+        else:
+            width += 1
+        i += 1
+    return width
+```
+
+**Verification**: Every line in a box MUST have the same display width (69 for full-width, 61 for menu).
+
 ### Common Status Boxes
 
 **Task Blocked:**
@@ -162,7 +198,7 @@ Note: Header has 1 emoji (✅) = remove 1 space from padding.
 ║  🔀 FORK IN THE ROAD                                              ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║  [A] 🛡️ Option A                                                   ║
+║  [A] 🛡️ Option A                                                  ║
 ║  [B] ⚔️ Option B                                                   ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝

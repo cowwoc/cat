@@ -38,7 +38,7 @@ If file doesn't exist, inform user to run `/cat:init` first.
 ```
 ╔═════════════════════════════════════════════════════════════╗
 ║                                                             ║
-║            ⚙️  ADVENTURE SETTINGS                           ║
+║            ⚙️  ADVENTURE SETTINGS                            ║
 ║                                                             ║
 ╠═════════════════════════════════════════════════════════════╣
 ║                                                             ║
@@ -53,7 +53,7 @@ If file doesn't exist, inform user to run `/cat:init` first.
 ║  │  Target:  {targetContextUsage}% before split       │     ║
 ║  └────────────────────────────────────────────────────┘     ║
 ║                                                             ║
-║  ⚔️ PLAY STYLE                                              ║
+║  ⚔️ PLAY STYLE                                               ║
 ║  ┌────────────────────────────────────────────────────┐     ║
 ║  │  Approach:    {approach || "balanced"}             │     ║
 ║  │  Reviews:     {stakeholderReview || "high-risk"}   │     ║
