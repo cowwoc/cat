@@ -97,6 +97,12 @@ Do NOT attempt to render the status box manually - it will have alignment errors
 LLMs cannot perform reliably. The hook uses Python's unicodedata module for
 accurate widths. Manual rendering defeats the purpose of extraction.
 
+**Anti-pattern (M242):** Do NOT attempt workarounds when pre-computed output is missing:
+- ❌ Running handler directly via `python3 -c` (fails: relative imports)
+- ❌ Calling handler functions manually (fails: missing context)
+- ❌ Building status display with Bash (fails: emoji alignment)
+- ✅ Output the ERROR message and STOP
+
 ### Step 2: Output next steps and legend
 
 **After the status box, output:**
