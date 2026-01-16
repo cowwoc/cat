@@ -351,15 +351,19 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 **Version Comparison Table Format**:
 
-After presenting validation results for ANY version, show comparison table:
+After presenting validation results for ANY version, show comparison table.
 
-```markdown
-| Version | Lines | Size | Reduction | Score | Status |
-|---------|-------|------|-----------|-------|--------|
-| **Original** | {lines} | {size} | baseline | N/A | Reference |
-| **V1** | {lines} | {size} | {%} | {score} | {✅/❌/✓applied} |
-| **V2** | {lines} | {size} | {%} | {score} | {✅/❌/✓applied} |
-| **V3** | {lines} | {size} | {%} | {score} | {✅/❌/✓applied} |
+**Note:** Use `/cat:render-box` skill for table rendering - emojis (✅/❌/✓) require
+emoji-aware width calculation for proper column alignment.
+
+```
+╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
+│ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
+├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
+│ **Original** │ {n}   │ {n}K │ baseline  │ N/A   │ Reference    │
+│ **V1**       │ {n}   │ {n}K │ {n}%      │ {n}   │ {✅/❌/✓}    │
+│ **V2**       │ {n}   │ {n}K │ {n}%      │ {n}   │ {✅/❌/✓}    │
+╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 
 **Status Legend**:
@@ -369,11 +373,13 @@ After presenting validation results for ANY version, show comparison table:
 
 **Example**:
 ```
-| Version | Lines | Size | Reduction | Score | Status |
-|---------|-------|------|-----------|-------|--------|
-| **Original** | 1,057 | 48K | baseline | N/A | Reference |
-| **V1** | 520 | 26K | 51% | 0.89 | ❌ rejected |
-| **V2** | 437 | 27K | 59% | 0.97 | ✓ applied |
+╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
+│ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
+├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
+│ **Original** │ 1,057 │ 48K  │ baseline  │ N/A   │ Reference    │
+│ **V1**       │ 520   │ 26K  │ 51%       │ 0.89  │ ❌ rejected  │
+│ **V2**       │ 437   │ 27K  │ 59%       │ 0.97  │ ✓ applied    │
+╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 
 ---

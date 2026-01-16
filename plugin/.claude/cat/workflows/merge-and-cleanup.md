@@ -53,15 +53,8 @@ If verification fails:
 Group and squash commits by conventional commit type:
 
 ```bash
-# BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
-TASK_STATE_PATH=".claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md"
-BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "$TASK_STATE_PATH" 2>/dev/null || echo "main")
-if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
-  BASE_BRANCH="main"
-fi
-
 # Interactive rebase to organize commits
-git rebase -i "${BASE_BRANCH}"
+git rebase -i main
 ```
 
 Target result:
@@ -89,7 +82,7 @@ Present to user:
 - Added 15 test cases
 
 ### Review
-To review: `git diff {base-branch}..{branch}`
+To review: `git diff main..{branch}`
 
 **Approve merge to main?**
 ```
@@ -116,22 +109,15 @@ git commit --amend --no-edit
 
 After approval and STATE.md update:
 ```bash
-# BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
-TASK_STATE_PATH=".claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md"
-BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "$TASK_STATE_PATH" 2>/dev/null || echo "main")
-if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
-  BASE_BRANCH="main"
-fi
-
-# Ensure base branch is up to date
-git checkout "${BASE_BRANCH}"
-git pull origin "${BASE_BRANCH}"
+# Ensure main is up to date
+git checkout main
+git pull origin main
 
 # Merge task branch (STATE.md already included)
 git merge {major}.{minor}-{task-name} --no-ff
 
 # Push to remote
-git push origin "${BASE_BRANCH}"
+git push origin main
 ```
 
 ### 8. Worktree Cleanup

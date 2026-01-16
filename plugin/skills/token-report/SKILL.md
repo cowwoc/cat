@@ -41,63 +41,113 @@ if [ ! -f "${SESSION_FILE}" ]; then
 fi
 ```
 
-### 2. Calculate Token Totals
+### 2. Extract Subagent Token Usage
+
+**Primary Metric:** Extract `totalTokens` from Task tool completions (matches CLI display).
 
 ```bash
-# Total input tokens
-INPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") |
-  .message.usage.input_tokens] | add // 0' "${SESSION_FILE}")
+# Extract Task tool completions with their descriptions and metrics
+# This jq command correlates Task invocations with their results via tool_use_id
 
-# Total output tokens
-OUTPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") |
-  .message.usage.output_tokens] | add // 0' "${SESSION_FILE}")
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
-# Combined total
-TOTAL_TOKENS=$((INPUT_TOKENS + OUTPUT_TOKENS))
+# Build lookup tables for Task invocations (description and type) by tool_use_id
+SUBAGENT_DATA=$(jq -s '
+  # Build map of tool_use_id -> {description, type} from Task invocations
+  (
+    [.[] | select(.type == "assistant") | .message.content[]? |
+     select(.type == "tool_use" and .name == "Task") |
+     {key: .id, value: {description: .input.description, type: (.input.subagent_type // "unknown")}}] | from_entries
+  ) as $task_map |
 
-# Cache creation tokens (if tracked)
-CACHE_CREATION=$(jq -s '[.[] | select(.type == "assistant") |
-  .message.usage.cache_creation_input_tokens] | add // 0' "${SESSION_FILE}")
+  # Extract Task completions with their metrics
+  [.[] | select(.type == "user" and .toolUseResult.totalTokens != null) |
+   ($task_map[.message.content[0].tool_use_id] // {description: "Unknown", type: "unknown"}) as $task_info |
+   {
+     tool_use_id: .message.content[0].tool_use_id,
+     description: $task_info.description,
+     subagent_type: $task_info.type,
+     totalTokens: .toolUseResult.totalTokens,
+     totalDurationMs: .toolUseResult.totalDurationMs,
+     totalToolUseCount: .toolUseResult.totalToolUseCount,
+     agentId: .toolUseResult.agentId,
+     status: .toolUseResult.status
+   }
+  ] |
 
-# Cache read tokens (if tracked)
-CACHE_READ=$(jq -s '[.[] | select(.type == "assistant") |
-  .message.usage.cache_read_input_tokens] | add // 0' "${SESSION_FILE}")
+  # Filter out non-Task tool results (other tools also have toolUseResult but no totalTokens)
+  map(select(.totalTokens > 0))
+' "${SESSION_FILE}")
+
+# Check if any subagent executions found
+SUBAGENT_COUNT=$(echo "$SUBAGENT_DATA" | jq 'length')
+
+if [ "$SUBAGENT_COUNT" -eq 0 ]; then
+  echo "No subagent executions found in session."
+  echo ""
+  echo "This skill extracts token metrics from Task tool completions."
+  echo "If you expected subagent data, verify:"
+  echo "  1. Session file exists: ${SESSION_FILE}"
+  echo "  2. Task tools were used in this session"
+  exit 0
+fi
 ```
 
-### 3. Count Compaction Events
+### 3. Format Token Report as Box-Drawing Table
 
-```bash
-# Compaction events indicate context window resets
-COMPACTION_COUNT=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
+Each subagent runs in its own independent context window. The "Context" column shows what
+percentage of that subagent's context limit was used.
 
-# Get timestamps of compactions
-COMPACTION_TIMES=$(jq -s '[.[] | select(.type == "summary") | .timestamp]' "${SESSION_FILE}")
-```
-
-### 4. Compare Against Threshold
-
-Reference: agent-architecture.md § Context Limit Constants
+**IMPORTANT:** Use `/cat:render-box` skill for table rendering. The table contains emojis (✓, ⚠)
+which require emoji-aware width calculation for proper column alignment.
 
 ```bash
 # Values from agent-architecture.md § Context Limit Constants
 CONTEXT_LIMIT=...
 SOFT_TARGET_PCT=...
-THRESHOLD_TOKENS=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
+HARD_LIMIT_PCT=...
+SOFT_TARGET=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
+HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
 
-# Calculate percentage used
-PERCENT_USED=$((TOTAL_TOKENS * 100 / CONTEXT_LIMIT))
+# Extract data for table rendering (JSON array)
+TABLE_DATA=$(echo "$SUBAGENT_DATA" | jq -r --argjson limit "$CONTEXT_LIMIT" --argjson soft "$SOFT_TARGET" --argjson hard "$HARD_LIMIT" '
+  [.[] |
+    (.totalTokens / 1000 | . * 10 | floor / 10 | tostring + "k") as $tokens_fmt |
+    (.totalTokens * 100 / $limit | floor) as $pct |
+    (if .totalTokens >= $hard then "⚠ EXCEEDED"
+     elif .totalTokens >= $soft then "⚠ HIGH"
+     else "✓ OK"
+     end) as $health |
+    ((.totalDurationMs / 1000 | floor) as $secs |
+     if $secs >= 60 then (($secs / 60 | floor | tostring) + "m " + (($secs % 60) | tostring) + "s")
+     else ($secs | tostring) + "s" end) as $duration_fmt |
+    (if (.description | length) > 28 then (.description[:25] + "...") else .description end) as $desc |
+    {
+      type: .subagent_type,
+      description: $desc,
+      tokens: $tokens_fmt,
+      context: ($pct | tostring) + "% " + $health,
+      duration: $duration_fmt
+    }
+  ]
+')
 
-# Determine status
-if [ "${TOTAL_TOKENS}" -ge "${THRESHOLD_TOKENS}" ]; then
-  STATUS="WARNING"
-elif [ "${TOTAL_TOKENS}" -ge $((THRESHOLD_TOKENS * 75 / 100)) ]; then
-  STATUS="CAUTION"
+# Calculate totals
+TOTAL_TOKENS=$(echo "$SUBAGENT_DATA" | jq '[.[].totalTokens] | add')
+TOTAL_DURATION=$(echo "$SUBAGENT_DATA" | jq '[.[].totalDurationMs] | add')
+TOTAL_TOKENS_FMT=$(echo "$TOTAL_TOKENS" | awk '{printf "%.1fk", $1/1000}')
+TOTAL_DURATION_SECS=$((TOTAL_DURATION / 1000))
+if [ "$TOTAL_DURATION_SECS" -ge 60 ]; then
+  TOTAL_DURATION_FMT="$((TOTAL_DURATION_SECS / 60))m $((TOTAL_DURATION_SECS % 60))s"
 else
-  STATUS="HEALTHY"
+  TOTAL_DURATION_FMT="${TOTAL_DURATION_SECS}s"
 fi
 ```
 
-### 5. Calculate Efficiency Metrics
+Use the extracted `TABLE_DATA` JSON with `/cat:render-box` to produce the final table output.
+See render-box skill for table rendering with proper emoji alignment.
+
+### 4. Calculate Efficiency Metrics
 
 ```bash
 # Messages in session
@@ -113,7 +163,7 @@ AVG_TOKENS_PER_MSG=$((TOTAL_TOKENS / MESSAGE_COUNT))
 IO_RATIO=$(echo "scale=2; ${INPUT_TOKENS} / ${OUTPUT_TOKENS}" | bc 2>/dev/null || echo "N/A")
 ```
 
-### 6. Generate Report
+### 5. Generate Report
 
 ```yaml
 token_report:
@@ -147,7 +197,7 @@ token_report:
   recommendations: []
 ```
 
-### 7. Generate Recommendations
+### 6. Generate Recommendations
 
 Based on analysis, provide actionable guidance:
 
@@ -176,23 +226,40 @@ recommendations:
 
 ## Examples
 
-### Healthy Session Report
+### Example Output
 
-```yaml
-token_report:
-  session_id: parser-sub-a1b2c3d4
-  status: HEALTHY
+```
+## Subagent Token Report
 
-  summary:
-    total_tokens: 45000
-    percent_used: 22.5%
-    compactions: 0
-    efficiency_score: 0.89
+╭─────────────────┬──────────────────────────────┬────────┬──────────────┬──────────╮
+│ Type            │ Description                  │ Tokens │ Context      │ Duration │
+├─────────────────┼──────────────────────────────┼────────┼──────────────┼──────────┤
+│ Explore         │ Explore session file format  │ 69.2k  │ 34% ✓ OK     │ 1m 7s    │
+│ Plan            │ Plan token measurement fix   │ 56.0k  │ 28% ✓ OK     │ 52s      │
+│ general-purpose │ Implement token fix          │ 45.0k  │ 22% ✓ OK     │ 43s      │
+├─────────────────┼──────────────────────────────┼────────┼──────────────┼──────────┤
+│                 │ TOTAL                        │ 170.2k │ -            │ 2m 42s   │
+╰─────────────────┴──────────────────────────────┴────────┴──────────────┴──────────╯
 
-  interpretation: |
-    Session is well within context limits.
-    Good efficiency with 3 commits per 15K tokens.
-    No intervention needed.
+Subagents: 3
+```
+
+### Example with Exceeded Subagent
+
+```
+## Subagent Token Report
+
+╭─────────────────┬──────────────────────────────┬────────┬────────────────┬──────────╮
+│ Type            │ Description                  │ Tokens │ Context        │ Duration │
+├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
+│ Explore         │ Explore codebase             │ 68.4k  │ 34% ✓ OK       │ 1m 7s    │
+│ general-purpose │ Implement large refactor     │ 170.0k │ 85% ⚠ EXCEEDED │ 3m 12s   │
+│ general-purpose │ Run tests                    │ 35.0k  │ 17% ✓ OK       │ 28s      │
+├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
+│                 │ TOTAL                        │ 273.4k │ -              │ 4m 47s   │
+╰─────────────────┴──────────────────────────────┴────────┴────────────────┴──────────╯
+
+Subagents: 3
 ```
 
 ### Warning Session Report
@@ -304,6 +371,7 @@ aggregate: 185000
 
 ## Related Skills
 
+- `cat:render-box` - Required for table output with emoji alignment
 - `cat:monitor-subagents` - Uses token reports for health checks
 - `cat:decompose-task` - Triggered by token warnings
 - `cat:collect-results` - Includes token metrics in collection
