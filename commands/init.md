@@ -353,7 +353,7 @@ AskUserQuestion: header="Patience", question="When your companion spots treasure
 ]
 
 Map responses to preference values:
-- Trust: short | medium | long
+- Trust: low | medium | high
 - Curiosity: low | medium | high
 - Patience: high | medium | low
 
@@ -373,7 +373,7 @@ Create `.claude/cat/cat-config.json`:
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "trust": "[short|medium|long]",
+  "trust": "[low|medium|high]",
   "verify": "changed",
   "curiosity": "[low|medium|high]",
   "patience": "[high|medium|low]"
@@ -387,7 +387,7 @@ Append to PROJECT.md (after Key Decisions):
 
 These preferences shape how CAT makes autonomous decisions:
 
-- **Trust Level:** [short|medium|long] - review frequency
+- **Trust Level:** [low|medium|high] - review frequency
 - **Curiosity:** [low|medium|high] - exploration beyond immediate task
 - **Patience:** [high|medium|low] - tolerance for opportunistic improvements
 

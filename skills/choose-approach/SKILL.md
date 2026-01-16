@@ -12,13 +12,13 @@ with intelligent recommendations based on task characteristics and user preferen
 
 **Show choice point when ALL conditions are met:**
 - PLAN.md has the three standard approaches (Conservative/Balanced/Aggressive)
-- User's `trust` setting is `short` or `medium`
+- User's `trust` setting is `low` or `medium`
 
 **Auto-select (skip user prompt) when:**
-- User's `trust` setting is `long` (high trust, autonomous decisions)
-- For `long` trust: auto-select Balanced approach unless task risk is HIGH
+- User's `trust` setting is `high` (high trust, autonomous decisions)
+- For `high` trust: auto-select Balanced approach unless task risk is HIGH
 
-**Present choice even with long trust when:**
+**Present choice even with high trust when:**
 - Task has HIGH risk level (user should confirm)
 - Approaches have significantly different architectural implications
 
@@ -26,11 +26,11 @@ with intelligent recommendations based on task characteristics and user preferen
 
 **The agent MUST respect the user's `trust` setting which controls when to present choices.**
 
-- `short` trust = Present options frequently, user guides most decisions
+- `low` trust = Present options frequently, user guides most decisions
 - `medium` trust = Present options for meaningful trade-offs only
-- `long` trust = Make autonomous decisions, only present for HIGH risk or significant architecture
+- `high` trust = Make autonomous decisions, only present for HIGH risk or significant architecture
 
-**When presenting options (short/medium trust or high-risk task):**
+**When presenting options (low/medium trust or high-risk task):**
 
 If there IS a compelling technical reason to recommend one approach:
 
@@ -56,7 +56,7 @@ Would you like to:
 - Use Balanced (targeted fix without overhead)
 ```
 
-**Anti-pattern:** Auto-selecting an approach when `trust: short` or `trust: medium` without
+**Anti-pattern:** Auto-selecting an approach when `trust: low` or `trust: medium` without
 presenting the choice to the user.
 
 ## Workflow
@@ -77,18 +77,18 @@ Read PLAN.md and extract:
 
 | Risk Level | Trust Setting | Decision |
 |------------|---------------|----------|
-| LOW/MEDIUM | `long` | Auto-select Balanced, log to STATE.md |
+| LOW/MEDIUM | `high` | Auto-select Balanced, log to STATE.md |
 | LOW/MEDIUM | `medium` | Present choice for meaningful trade-offs |
-| LOW/MEDIUM | `short` | Present choice (user guides decisions) |
+| LOW/MEDIUM | `low` | Present choice (user guides decisions) |
 | HIGH | Any | Present choice (user must confirm for high-risk) |
 
 ### 3. Auto-Selection or Recommendation
 
-**If auto-selecting (long trust with non-HIGH risk):**
+**If auto-selecting (high trust with non-HIGH risk):**
 
 ```
 ✓ Approach: Balanced
-  (Auto-selected: long trust setting, routine trade-off)
+  (Auto-selected: high trust setting, routine trade-off)
 ```
 
 Update PLAN.md "Selected Approach" section and proceed to implementation.
