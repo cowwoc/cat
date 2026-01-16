@@ -11,6 +11,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 ## Tasks Completed
 - tos-legal-review
 - remove-license-notice-startup
+- compact-stakeholder-review-output
 
 ## Tasks Pending
 - pricing-page
@@ -23,7 +24,6 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - offline-validation
 - jwt-token-generation
 - update-check-startup
-- compact-stakeholder-review-output
 - compact-token-report
 - hide-tool-calls-during-execution
 - streamline-task-not-found-error

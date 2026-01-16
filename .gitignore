@@ -1,6 +1,7 @@
 .idea/
 .claude/locks/
 .claude/backups/
+.worktrees/
 node_modules/
 plugin/node_modules/
 
