@@ -20,7 +20,10 @@ CLAUDE_FACING_PATTERNS = [
     "workflows/",
     "commands/",
     "retrospectives/",
-    "mistakes.json",
+    "mistakes.json",      # Legacy single file
+    "mistakes-",          # Split files: mistakes-YYYY-MM.json
+    "retrospectives-",    # Split files: retrospectives-YYYY-MM.json
+    "index.json",         # Retrospective index
 ]
 
 SOURCE_PATTERNS = [

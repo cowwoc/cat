@@ -17,9 +17,8 @@ if [[ ! -d "${CLAUDE_PROJECT_DIR}/.planning" ]]; then
     exit 0
 fi
 
-RETRO_DIR="${CLAUDE_PROJECT_DIR}/.planning/retrospectives"
-RETRO_FILE="$RETRO_DIR/retrospectives.json"
-MISTAKES_FILE="$RETRO_DIR/mistakes.json"
+RETRO_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/retrospectives"
+INDEX_FILE="$RETRO_DIR/index.json"
 
 # Early exit if retrospectives directory doesn't exist
 if [[ ! -d "$RETRO_DIR" ]]; then
@@ -30,12 +29,12 @@ fi
 DEFAULT_TRIGGER_DAYS=14
 DEFAULT_MISTAKE_THRESHOLD=10
 
-# Read configuration and state using jq for reliable parsing
-if [[ -f "$RETRO_FILE" ]]; then
-    TRIGGER_DAYS=$(jq -r '.config.trigger_interval_days // empty' "$RETRO_FILE" 2>/dev/null)
-    MISTAKE_THRESHOLD=$(jq -r '.config.mistake_count_threshold // empty' "$RETRO_FILE" 2>/dev/null)
-    LAST_RETRO=$(jq -r '.last_retrospective // empty' "$RETRO_FILE" 2>/dev/null)
-    MISTAKE_COUNT=$(jq -r '.mistake_count_since_last // 0' "$RETRO_FILE" 2>/dev/null)
+# Read configuration and state from index.json
+if [[ -f "$INDEX_FILE" ]]; then
+    TRIGGER_DAYS=$(jq -r '.config.trigger_interval_days // empty' "$INDEX_FILE" 2>/dev/null)
+    MISTAKE_THRESHOLD=$(jq -r '.config.mistake_count_threshold // empty' "$INDEX_FILE" 2>/dev/null)
+    LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE" 2>/dev/null)
+    MISTAKE_COUNT=$(jq -r '.mistake_count_since_last // 0' "$INDEX_FILE" 2>/dev/null)
 else
     TRIGGER_DAYS=""
     MISTAKE_THRESHOLD=""
@@ -53,13 +52,11 @@ TRIGGER_REASON=""
 
 # Check 1: Time-based trigger
 if [[ -z "$LAST_RETRO" || "$LAST_RETRO" == "null" ]]; then
-    # No retrospective ever run - check if we have any mistakes logged
-    if [[ -f "$MISTAKES_FILE" ]]; then
-        TOTAL_MISTAKES=$(jq '.mistakes | length' "$MISTAKES_FILE" 2>/dev/null || echo "0")
-        if [[ "$TOTAL_MISTAKES" -gt 0 ]]; then
-            RETRO_DUE=true
-            TRIGGER_REASON="First retrospective with $TOTAL_MISTAKES logged mistakes"
-        fi
+    # No retrospective ever run - check if we have any mistakes logged in split files
+    TOTAL_MISTAKES=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s '[.[].mistakes[]] | length' 2>/dev/null || echo "0")
+    if [[ "$TOTAL_MISTAKES" -gt 0 ]]; then
+        RETRO_DUE=true
+        TRIGGER_REASON="First retrospective with $TOTAL_MISTAKES logged mistakes"
     fi
 else
     # Calculate days since last retrospective

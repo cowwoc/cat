@@ -33,16 +33,21 @@ triggers:
 ### 1. Check Trigger Conditions
 
 ```bash
-RETRO_FILE=".claude/cat/retrospectives/retrospectives.json"
+RETRO_DIR=".claude/cat/retrospectives"
+INDEX_FILE="$RETRO_DIR/index.json"
 
-# Get config and state
-INTERVAL=$(jq -r '.config.trigger_interval_days' "$RETRO_FILE")
-THRESHOLD=$(jq -r '.config.mistake_count_threshold' "$RETRO_FILE")
-LAST_RETRO=$(jq -r '.last_retrospective' "$RETRO_FILE")
-MISTAKES_SINCE=$(jq -r '.mistake_count_since_last' "$RETRO_FILE")
+# Get config and state from index.json
+INTERVAL=$(jq -r '.config.trigger_interval_days' "$INDEX_FILE")
+THRESHOLD=$(jq -r '.config.mistake_count_threshold' "$INDEX_FILE")
+LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
+MISTAKES_SINCE=$(jq -r '.mistake_count_since_last' "$INDEX_FILE")
 
 # Calculate days since last retrospective
-LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
+if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
+  LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
+else
+  LAST_EPOCH=0
+fi
 NOW_EPOCH=$(date +%s)
 DAYS_SINCE=$(( (NOW_EPOCH - LAST_EPOCH) / 86400 ))
 
@@ -62,11 +67,16 @@ fi
 ### 2. Gather Mistakes for Analysis
 
 ```bash
-MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
-
-# Get mistakes since last retrospective
-MISTAKES_TO_ANALYZE=$(jq --arg last "$LAST_RETRO" \
-  '[.[] | select(.timestamp > $last)]' "$MISTAKES_FILE")
+# Aggregate ALL mistakes since last retrospective across all split files
+if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
+  MISTAKES_TO_ANALYZE=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
+    jq -s --arg last "$LAST_RETRO" \
+    '[.[].mistakes[] | select(.timestamp > $last)]')
+else
+  # No previous retrospective - analyze all mistakes
+  MISTAKES_TO_ANALYZE=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
+    jq -s '[.[].mistakes[]]')
+fi
 
 MISTAKE_COUNT=$(echo "$MISTAKES_TO_ANALYZE" | jq 'length')
 echo "Analyzing $MISTAKE_COUNT mistakes since $LAST_RETRO"
@@ -77,12 +87,12 @@ echo "Analyzing $MISTAKE_COUNT mistakes since $LAST_RETRO"
 ```yaml
 category_analysis:
   query: |
-    jq --arg last "$LAST_RETRO" '
-      [.[] | select(.timestamp > $last)]
-      | group_by(.category)
+    # Use pre-aggregated MISTAKES_TO_ANALYZE from step 2
+    echo "$MISTAKES_TO_ANALYZE" | jq '
+      group_by(.category)
       | map({category: .[0].category, count: length, ids: [.[].id]})
       | sort_by(-.count)
-    ' "$MISTAKES_FILE"
+    '
 
   output_format:
     - category: protocol_violation
@@ -102,13 +112,13 @@ effectiveness_check:
   for_each_action_item:
     # Find mistakes matching this action's pattern AFTER completion
     query: |
-      COMPLETED=$(jq -r --arg id "A004" '.action_items[] | select(.id == $id) | .completed_date' "$RETRO_FILE")
-      PATTERN=$(jq -r --arg id "A004" '.action_items[] | select(.id == $id) | .pattern_id' "$RETRO_FILE")
+      COMPLETED=$(jq -r --arg id "A004" '.action_items[] | select(.id == $id) | .completed_date' "$INDEX_FILE")
+      PATTERN=$(jq -r --arg id "A004" '.action_items[] | select(.id == $id) | .pattern_id' "$INDEX_FILE")
 
-      # Count post-fix mistakes
-      POST_FIX=$(jq --arg pattern "$PATTERN" --arg completed "$COMPLETED" \
-        '[.[] | select(.pattern_keywords | contains([$pattern])) | select(.timestamp > $completed)] | length' \
-        "$MISTAKES_FILE")
+      # Count post-fix mistakes across all split files
+      POST_FIX=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
+        jq -s --arg pattern "$PATTERN" --arg completed "$COMPLETED" \
+        '[.[].mistakes[] | select(.pattern_keywords | contains([$pattern])) | select(.timestamp > $completed)] | length')
 
     verdicts:
       effective: post_fix_count == 0
@@ -203,24 +213,36 @@ escalation:
     status: "open"
 ```
 
-### 8. Update retrospectives.json
+### 8. Update index.json and Create Retrospective Record
 
 ```bash
-# Create retrospective record
-RETRO_ID="R$(printf '%03d' $(($(jq '.retrospectives | length' "$RETRO_FILE") + 1)))"
+# Get current year-month for retrospective split file
+YEAR_MONTH=$(date +%Y-%m)
+RETRO_SPLIT_FILE="$RETRO_DIR/retrospectives-${YEAR_MONTH}.json"
 TIMESTAMP=$(date -Iseconds)
 
-# Build retrospective entry
+# Initialize retrospective split file if needed
+if [ ! -f "$RETRO_SPLIT_FILE" ]; then
+  echo "{\"period\":\"$YEAR_MONTH\",\"retrospectives\":[]}" > "$RETRO_SPLIT_FILE"
+  # Add to index
+  jq --arg f "retrospectives-${YEAR_MONTH}.json" \
+    'if (.files.retrospectives | index($f)) then . else .files.retrospectives += [$f] | .files.retrospectives |= sort end' \
+    "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
+fi
+
+# Get next retrospective ID across all split files
+MAX_RETRO_NUM=$(cat "$RETRO_DIR"/retrospectives-*.json 2>/dev/null | \
+  jq -s '[.[].retrospectives[].id] | map(select(startswith("R")) | ltrimstr("R") | tonumber) | max // 0')
+RETRO_ID="R$(printf '%03d' $((MAX_RETRO_NUM + 1)))"
+
+# Build and append retrospective entry to split file
 jq --arg id "$RETRO_ID" \
    --arg ts "$TIMESTAMP" \
    --arg trigger "$TRIGGER_TYPE" \
    --arg period "${LAST_RETRO} to ${TIMESTAMP}" \
    --argjson count "$MISTAKE_COUNT" \
    --argjson findings "$FINDINGS_JSON" \
-   '
-   .last_retrospective = $ts |
-   .mistake_count_since_last = 0 |
-   .retrospectives = [{
+   '.retrospectives += [{
      id: $id,
      timestamp: $ts,
      trigger: $trigger,
@@ -228,8 +250,12 @@ jq --arg id "$RETRO_ID" \
      mistakes_analyzed: $count,
      summary: "...",
      findings: $findings
-   }] + .retrospectives
-   ' "$RETRO_FILE" > "$RETRO_FILE.tmp" && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
+   }]' "$RETRO_SPLIT_FILE" > "$RETRO_SPLIT_FILE.tmp" && mv "$RETRO_SPLIT_FILE.tmp" "$RETRO_SPLIT_FILE"
+
+# Update index.json with new state
+jq --arg ts "$TIMESTAMP" \
+   '.last_retrospective = $ts | .mistake_count_since_last = 0' \
+   "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
 ```
 
 ### 9. Present Action Items for Execution
@@ -322,19 +348,21 @@ escalation: "ESCALATE-2026-01-08-001"
 
 ## Integration with learn-from-mistakes
 
-At the end of `learn-from-mistakes` Step 11 (Record Learning), add:
+At the end of `learn-from-mistakes` Step 12 (Update Retrospective Counter), add:
 
 ```yaml
 trigger_check:
   action: "Check if retrospective is needed"
   command: |
+    INDEX_FILE=".claude/cat/retrospectives/index.json"
+
     # Increment mistake counter
-    jq '.mistake_count_since_last += 1' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
-      && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
+    jq '.mistake_count_since_last += 1' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
+      && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
 
     # Check thresholds
-    MISTAKES=$(jq '.mistake_count_since_last' "$RETRO_FILE")
-    THRESHOLD=$(jq '.config.mistake_count_threshold' "$RETRO_FILE")
+    MISTAKES=$(jq '.mistake_count_since_last' "$INDEX_FILE")
+    THRESHOLD=$(jq '.config.mistake_count_threshold' "$INDEX_FILE")
     if [[ $MISTAKES -ge $THRESHOLD ]]; then
       echo "RETROSPECTIVE THRESHOLD REACHED ($MISTAKES >= $THRESHOLD)"
       echo "Run: /cat:run-retrospective"
