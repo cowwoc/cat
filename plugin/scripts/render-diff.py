@@ -502,9 +502,12 @@ class DiffParser:
         return result
 
 
-def load_config() -> dict:
-    """Load configuration from cat-config.json."""
-    project_dir = os.environ.get('CLAUDE_PROJECT_DIR', '.')
+def load_config(project_dir: str = '.') -> dict:
+    """Load configuration from cat-config.json.
+
+    Args:
+        project_dir: Project root directory containing .claude/cat/
+    """
     config_path = Path(project_dir) / '.claude' / 'cat' / 'cat-config.json'
 
     if config_path.exists():
@@ -528,15 +531,17 @@ def main():
 Examples:
   git diff main..HEAD | render-diff.py
   render-diff.py diff-output.txt
+  render-diff.py --project-dir /path/to/project diff-output.txt
         '''
     )
     parser.add_argument('file', nargs='?', help='Diff file to read (default: stdin)')
     parser.add_argument('--width', '-w', type=int, help='Terminal width (default: from config or 50)')
+    parser.add_argument('--project-dir', '-p', default='.', help='Project root directory (default: current directory)')
 
     args = parser.parse_args()
 
     # Load config
-    config = load_config()
+    config = load_config(args.project_dir)
 
     # Determine width
     width = args.width or config.get('terminalWidth', 50)

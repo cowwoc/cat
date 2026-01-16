@@ -141,8 +141,8 @@ Read `.claude/cat/cat-config.json` to determine:
 For programmatic task discovery, use the `find-task.sh` script:
 
 ```bash
-# Find next available task (CLAUDE_PROJECT_DIR required by script)
-RESULT=$(CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR}" "${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" --session-id "$SESSION_ID")
+# Find next available task
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" "${CLAUDE_PROJECT_DIR}" --session-id "$SESSION_ID")
 
 # Parse result
 if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
@@ -229,7 +229,7 @@ TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 # Session ID is auto-substituted
 
 # Try to acquire lock
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
@@ -1971,7 +1971,7 @@ fi
 
 # 3. Release task lock (ALWAYS)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
 echo "✓ Lock released for task: $TASK_ID"
 ```
 
@@ -1979,10 +1979,10 @@ echo "✓ Lock released for task: $TASK_ID"
 
 ```bash
 # ❌ WRONG - fallback rm triggers block_lock_manipulation hook
-task-lock.sh release "$TASK_ID" "${CLAUDE_SESSION_ID}" || rm -f .claude/cat/locks/*.lock
+task-lock.sh release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}" || rm -f .claude/cat/locks/*.lock
 
 # ✅ CORRECT - just call task-lock.sh, handle errors separately
-task-lock.sh release "$TASK_ID" "${CLAUDE_SESSION_ID}"
+task-lock.sh release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 The `block_lock_manipulation` handler checks the ENTIRE command string for `rm ... .claude/cat/locks`.
@@ -2115,7 +2115,7 @@ For each candidate task:
 NEXT_TASK_ID="${MAJOR}.${MINOR}-${NEXT_TASK_NAME}"
 
 # Try to acquire lock for next task
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   # This task is locked, try the next candidate
@@ -2199,7 +2199,7 @@ Replace placeholders based on scope type.
 Release the lock (user will re-acquire when they invoke the command):
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 Use the **TASK_COMPLETE_LOW_TRUST** box from PRE-COMPUTED WORK BOXES.
