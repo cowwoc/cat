@@ -71,6 +71,40 @@ project/
 - Always provide meaningful error messages
 - Log errors with context (what failed, why, how to fix)
 
+### Fail-Fast Principle
+
+**MANDATORY:** Prefer failing immediately with a clear error over using fallback values.
+
+**Why:**
+- Silent fallbacks mask configuration errors and can cause catastrophic failures
+- Example: Falling back to "main" when the base branch should be "v1.10" causes merges to wrong branch
+- Fail-fast errors are easier to debug than mysterious wrong behavior
+
+**Pattern:**
+```bash
+# ❌ WRONG: Silent fallback
+BASE_BRANCH=$(cat "$CONFIG_FILE" 2>/dev/null || echo "main")
+
+# ✅ CORRECT: Fail-fast with clear error
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "ERROR: Config file not found: $CONFIG_FILE" >&2
+  echo "Solution: Run /cat:work to create worktree properly." >&2
+  exit 1
+fi
+BASE_BRANCH=$(cat "$CONFIG_FILE")
+```
+
+**When fallbacks ARE acceptable:**
+- User-facing defaults (e.g., terminal width defaults to 80)
+- Non-critical display settings
+- Optional enhancements
+
+**When fallbacks are NOT acceptable:**
+- Branch names (wrong branch = wrong merge target)
+- File paths (wrong path = data loss or corruption)
+- Security settings (wrong default = vulnerability)
+- Any value that affects data integrity
+
 ## Testing
 
 - Java: TestNG for unit tests, integration tests with embedded servers

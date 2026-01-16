@@ -110,9 +110,10 @@ git commit --amend --no-edit
 After approval and STATE.md update, merge from within the task worktree (no checkout needed):
 
 ```bash
-# From task worktree - detect base branch
-TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-BASE_BRANCH=$(git config --get "branch.${TASK_BRANCH}.cat-base" 2>/dev/null || echo "main")
+# From task worktree - detect base branch from worktree metadata (fail-fast if missing)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+[[ ! -f "$CAT_BASE_FILE" ]] && echo "ERROR: cat-base file missing. Recreate worktree." && exit 1
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
 # Fast-forward base branch to current HEAD
 git push . "HEAD:${BASE_BRANCH}"

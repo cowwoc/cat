@@ -64,8 +64,13 @@ git reset --hard "$BACKUP"
 
 ### Rebase onto base branch
 ```bash
-# Detect base branch (for CAT tasks)
-BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
+# Detect base branch from worktree metadata (fail-fast if missing)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+  echo "ERROR: cat-base file not found. Recreate worktree with /cat:work." >&2
+  exit 1
+fi
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
 git rebase "$BASE_BRANCH"
 ```
