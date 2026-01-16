@@ -153,6 +153,27 @@ rm -rf "$TASK_PATH"
 
 </step>
 
+<step name="update_dependents">
+
+**Update tasks that depended on this task:**
+
+For each task in the same minor version:
+- Check if their Dependencies list includes the removed task
+- If so, remove it from their Dependencies list in STATE.md
+- If the task was blocking them and now has no unmet dependencies, it becomes executable
+
+```bash
+# Find and update tasks that listed this as a dependency
+find .claude/cat/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
+    if grep -q "Dependencies:.*$TASK_NAME" "$d/STATE.md" 2>/dev/null; then
+        # Remove this task from Dependencies list
+        sed -i "s/$TASK_NAME, //g; s/, $TASK_NAME//g; s/$TASK_NAME//g" "$d/STATE.md"
+    fi
+done
+```
+
+</step>
+
 <step name="update_parent">
 
 **Update parent minor STATE.md:**

@@ -286,17 +286,21 @@ Clean up worktree and branch, mark task as pending.
 
 <step name="squash_commits">
 
-**Squash commits by type:**
+**Squash commits by category:**
 
-Group commits by conventional commit type:
+Group commits into two categories:
+
+**Implementation commits** (squashed together):
 - `feature:` - features
 - `bugfix:` - bug fixes
 - `test:` - tests
 - `refactor:` - refactoring
 - `docs:` - documentation
+
+**Infrastructure commits** (squashed separately):
 - `config:` - configuration and maintenance
 
-Create one squashed commit per type:
+Create one squashed commit per category:
 
 ```bash
 # Example: squash all feat commits
@@ -359,7 +363,12 @@ git branch -d "{task-branch}" 2>/dev/null || true
    - Recalculate progress based on minor completion
    - Update status if all minors complete
 
-4. **Task CHANGELOG.md:**
+4. **Dependent tasks:**
+   - Find all tasks in the same minor version that list this task in Dependencies
+   - For each dependent task, check if ALL its dependencies are now completed
+   - If all dependencies met, the task is now executable (no longer blocked)
+
+5. **Task CHANGELOG.md:**
    Update with comprehensive documentation of what was accomplished:
 
    ```markdown
