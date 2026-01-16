@@ -1590,6 +1590,216 @@
         "catches_variations": true
       },
       "correct_behavior": "Build calculation table from exact final content using copy-paste workflow, then verify output matches table before completing"
+    },
+    {
+      "id": "M179",
+      "timestamp": "2026-01-22T14:30:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment failed: output written independently from table, negative Pad values ignored, nested boxes omitted",
+      "root_cause": "Built calculation table but wrote output independently instead of copy-pasting from table Content column. Also ignored negative Pad values which indicated max_width was wrong.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "copy-paste",
+        "negative-pad",
+        "table-source"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M178",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Copy-paste exact Content from table for each row, append exact Pad spaces. If Pad is negative, stop and recalculate max_width."
+    },
+    {
+      "id": "M180",
+      "timestamp": "2026-01-22T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment borders misaligned due to iterative table building instead of complete-then-output",
+      "root_cause": "Built calculation table iteratively with recalculations mid-stream instead of completing fully first, causing content drift between table and output",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "table",
+        "iterative",
+        "padding",
+        "border"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete the ENTIRE calculation table first, verify all Pad >= 0 and max_width is stated, THEN output directly from table"
+    },
+    {
+      "id": "M181",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment failed - character count miscalculation in table caused right border misalignment",
+      "root_cause": "Built calculation table but miscounted characters in Chars column, causing incorrect Width and Pad values despite following table workflow",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "character-count",
+        "verification-gate",
+        "spot-check"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Add spot-check step to verification gate: pick longest line and verify character count by listing each character with position number"
+    },
+    {
+      "id": "M182",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment right borders misaligned due to character count errors in multiple lines",
+      "root_cause": "Spot-check verification only required checking ONE line (the longest), but character counting errors occurred in OTHER lines that were not verified",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "character-count",
+        "spot-check",
+        "verification"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Verify ALL lines by listing each character with position number - sampling is insufficient, only exhaustive verification guarantees alignment"
+    },
+    {
+      "id": "M183",
+      "timestamp": "2026-01-22T12:45:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment failed - filled Pad column iteratively while building table instead of completing Width column first",
+      "root_cause": "Skill procedure showed completed table as example without explicit sequential passes, allowing iterative table-building with mid-stream max_width recalculations",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "passes",
+        "max_width",
+        "iterative",
+        "sequential"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M182",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Follow 5 passes in order: (1) Fill Content/Chars/Emojis/Width for ALL rows, (2) Find max_width, (3) Fill Pad, (4) Verify, (5) Output"
+    },
+    {
+      "id": "M184",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "logical_error",
+      "description": "Nested box alignment failed - inner box borders not self-consistent before embedding in outer box",
+      "root_cause": "Built one flat table mixing inner content and outer content instead of building inner boxes first with their own tables, then embedding completed inner box lines",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "nested-box",
+        "box-alignment",
+        "inner-outer",
+        "self-consistency"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Build inner boxes FIRST with their own tables, verify inner box self-consistency (top/bottom/content all same width), THEN embed complete inner box lines as Content entries in outer table"
+    },
+    {
+      "id": "M185",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Status display rendered without nested inner boxes for major versions",
+      "root_cause": "Ignored mandatory nested box procedure (M184) and anti-pattern warning in box-alignment skill",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+      "pattern_keywords": [
+        "nested-box",
+        "status-display",
+        "box-alignment",
+        "inner-box"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Follow nested box procedure: build inner boxes first with separate tables, then embed complete inner box lines into outer table"
+    },
+    {
+      "id": "M186",
+      "timestamp": "2026-01-22T10:30:00Z",
+      "category": "protocol_violation",
+      "description": "Nested box output had misaligned vertical borders - skipped inner box construction phase",
+      "root_cause": "Attempted single-pass calculation and render instead of two-pass (plan then render) approach for nested boxes",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "nested-box",
+        "alignment",
+        "two-pass",
+        "inner-box"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete Pass 1 (all tables, all inner box line construction) entirely before Pass 2 (mechanical output from tables)"
     }
   ]
 }
