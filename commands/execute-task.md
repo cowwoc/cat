@@ -174,15 +174,23 @@ Set status to `in-progress` and record start time.
 
 **Execute the PLAN.md:**
 
-**Determine execution strategy based on task complexity:**
+**MANDATORY: Always spawn subagent for implementation.**
 
-| Complexity | Strategy |
-|------------|----------|
-| Simple (1-2 files, <20 lines) | Execute directly in main context |
-| Medium (3-5 files, moderate changes) | Spawn single subagent |
-| Complex (many files, large changes) | Consider decomposition first |
+Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
-**For subagent execution:**
+| Task Size | Strategy |
+|-----------|----------|
+| Any task | Spawn subagent via `/cat:spawn-subagent` |
+| Large/complex | Consider `/cat:decompose-task` first, then spawn |
+
+**Why subagents are mandatory (not optimization):**
+- Fresh context = peak quality (no accumulated noise)
+- Token tracking enables proactive decomposition
+- Branch isolation provides safe rollback
+- Main agent context preserved for orchestration
+- Prevents quality degradation from context pressure
+
+**Subagent execution workflow:**
 
 1. Invoke `/cat:spawn-subagent` skill with:
    - Task path
@@ -199,13 +207,6 @@ Set status to `in-progress` and record start time.
    - Get execution summary
    - Get token usage report
    - Get any issues encountered
-
-**For direct execution:**
-
-1. Change to worktree directory
-2. Execute each step from PLAN.md
-3. Commit changes per step with appropriate type
-4. Track files modified
 
 **Error Handling:**
 
