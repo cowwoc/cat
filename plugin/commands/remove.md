@@ -18,6 +18,28 @@ appropriate workflow based on user selection.
 
 </objective>
 
+<terminology>
+
+**CRITICAL DISAMBIGUATION (M250):**
+
+When user says "abort task", this is AMBIGUOUS:
+- "Abort" could mean: cleanup worktree/branch while KEEPING task in planning (most common intent)
+- "Remove" means: delete task from planning structure entirely
+
+**If user uses "abort", "cancel", or "stop" with a task name:**
+
+Use AskUserQuestion FIRST:
+- header: "Clarify Intent"
+- question: "What do you want to do with task '{task-name}'?"
+- options:
+  - "Cleanup worktree/branch only (keep in planning)" - Use /cat:cleanup to remove worktree and branch
+  - "Remove from planning entirely" - Proceed with this remove workflow
+
+**This skill (/cat:remove) is for PERMANENT removal from planning.**
+**For worktree/branch cleanup, use /cat:cleanup instead.**
+
+</terminology>
+
 <process>
 
 <step name="verify">
