@@ -22,21 +22,21 @@ The approved design from conversation:
 │ │ v2.0: Licensing & Billing (52/66)                                  │   │
 │ │    ☑️ v2.0.1: Legal & Branding (3/3)                               │   │
 │ │                                                                    │   │
-│ │    🔄 v2.0.2: License Server (2/6)                                 │   │
-│ │       ☑️ license-validation-server                                 │   │
-│ │       ☑️ license-validation-server-jetty-setup                     │   │
-│ │       🔳 license-validation-server-api                             │   │
-│ │       🚫 license-validation-server-persistence (blocked by: api)   │   │
-│ │       🚫 license-validation-server-security (blocked by: api)      │   │
-│ │       🔳 license-validation-server-docker                          │   │
+│ │    🔄 v2.0.2: Feature Gates (2/6)                                  │   │
+│ │       ☑️ tier-feature-mapping                                      │   │
+│ │       ☑️ feature-gate-middleware                                   │   │
+│ │       🔳 validate-license-integration                              │   │
+│ │       🚫 login-command (blocked by: validate-license)              │   │
+│ │       🚫 upgrade-prompts (blocked by: validate-license)            │   │
+│ │       🔳 update-check-startup                                      │   │
 │ │                                                                    │   │
-│ │    🔳 v2.0.3: Billing Integration (0/3)                            │   │
+│ │    🔳 v2.0.3: Polish (0/3)                                         │   │
 │ │    🔳 v2.0.4: Demos & Docs (0/4)                                   │   │
 │ │                                                                    │   │
 │ │ 🔳 v2.1: Pluggable Issue Trackers (0/3)                            │   │
 │ ╰────────────────────────────────────────────────────────────────────╯   │
 │                                                                          │
-│ 📋 Next: /cat:work v2.0.2-license-validation-server-api                  │
+│ 📋 Next: /cat:work v2.0.2-validate-license-integration                   │
 ╰──────────────────────────────────────────────────────────────────────────╯
 ```
 
