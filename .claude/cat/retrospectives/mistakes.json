@@ -2746,6 +2746,59 @@
         "catches_variations": true
       },
       "correct_behavior": "When working on tasks, use /cat:work to create an isolated worktree. Never edit source files directly on base branches (v*.*, main, master, develop)."
+    },
+    {
+      "id": "M221",
+      "timestamp": "2026-01-23T12:00:00Z",
+      "category": "detection_gap",
+      "description": "Validator allowed scope modifiers like refactor(hooks): but project format does not permit them",
+      "root_cause": "Validator regex explicitly allowed optional scope modifiers with (\\(.+\\))? but commit-types.md specifies format as {type}: {description} with no scope",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
+      "pattern_keywords": [
+        "commit",
+        "scope",
+        "validator",
+        "regex",
+        "format"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Commit format is {type}: {description} - no scope modifiers like (scope) allowed"
+    },
+    {
+      "id": "M222",
+      "timestamp": "2026-01-23T10:30:00Z",
+      "category": "bash_error",
+      "description": "Called find-task.sh without setting required CLAUDE_PROJECT_DIR environment variable",
+      "root_cause": "work.md documentation showed find-task.sh invocation without explicitly passing CLAUDE_PROJECT_DIR",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "CLAUDE_PROJECT_DIR",
+        "find-task.sh",
+        "environment variable",
+        "script invocation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pass CLAUDE_PROJECT_DIR explicitly when invoking find-task.sh: CLAUDE_PROJECT_DIR=\"${CLAUDE_PROJECT_DIR}\" find-task.sh ..."
     }
   ]
 }
