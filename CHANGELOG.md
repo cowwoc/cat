@@ -21,7 +21,7 @@ Introduces the "fun AND reliable" philosophy with adventure-style workflow enhan
 
 **Skills:**
 - `choose-approach` - Present approach options at task forks with recommendations
-- `update-config` - Modify adventure style preferences after init
+- `update-config` - Interactive wizard to customize CAT settings
 
 **Workflow Enhancements:**
 - Enhanced approval gate with adventure-style checkpoint display
