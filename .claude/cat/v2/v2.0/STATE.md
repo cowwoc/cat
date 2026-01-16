@@ -61,3 +61,4 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - skill-builder-rewrite-render-box
 - refactor-status-scripts-to-python
 - dynamic-box-sizing
+- status-display-redesign
