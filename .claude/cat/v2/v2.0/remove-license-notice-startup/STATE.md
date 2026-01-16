@@ -1,11 +1,7 @@
-# Task State: remove-license-notice-startup
+# State
 
-## Status
-status: completed
-progress: 100%
-
-## Dependencies
-- None
-
-## Provides
-- Cleaner startup experience without license notice
+- **Status:** completed
+- **Progress:** 100%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-23
+- **Resolution:** implemented

@@ -1,14 +1,8 @@
-# Task State: tos-legal-review
+# State
 
-## Status
-status: completed
-progress: 100%
-started: 2026-01-19T08:01:00Z
-completed: 2026-01-19T08:15:00Z
-resolution: implemented
-
-## Dependencies
-- None (foundational task)
-
-## Provides
-- Legally reviewed LICENSE.md for commercial release
+- **Status:** completed
+- **Progress:** 100%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-19
+- **Resolution:** implemented
+- **Completed:** 2026-01-19 08:15
