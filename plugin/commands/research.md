@@ -82,15 +82,24 @@ This skill uses pre-computed utilities from research_handler.py:
 
 <step name="identify_version">
 
-**Parse $ARGUMENTS to identify version:**
+**Parse $ARGUMENTS to identify version or task:**
 
 | Format | Example | Target |
 |--------|---------|--------|
 | major.minor | `1.2` | `.claude/cat/issues/v1/v1.2/PLAN.md` |
 | major | `1` | `.claude/cat/issues/v1/PLAN.md` |
-| topic only | `payment-processor` | **FAIL - ask user for version** |
+| task-id | `payment-processor-integration` | `.claude/cat/issues/v{current}/v{current}.{minor}/{task-id}/PLAN.md` |
 
-**BLOCKING GATE (M228):** If no version number provided, use AskUserQuestion to request one:
+**BLOCKING GATE (M228):** Identify PLAN.md path before proceeding:
+
+1. **If version number provided:** Use version-based path
+2. **If task ID provided:** Search for task directory in current version:
+   ```bash
+   CURRENT_BRANCH=$(git branch --show-current)
+   # Extract version from branch (e.g., v2.0 from "v2.0" or "v2.0-feature")
+   find .claude/cat/issues -type d -name "$TASK_ID" -path "*/v${MAJOR}.${MINOR}/*"
+   ```
+3. **If neither found:** Use AskUserQuestion to request clarification:
 ```
 AskUserQuestion: "Which version should this research target?"
 Options: List existing versions from .claude/cat/issues/ OR "Create new version"
