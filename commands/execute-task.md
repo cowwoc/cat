@@ -102,8 +102,8 @@ Task path: $ARGUMENTS
 **MANDATORY FIRST STEP - Verify planning structure:**
 
 ```bash
-[ ! -d .claude/cat ] && echo "ERROR: No .claude/cat/ directory. Run /cat:new-project first." && exit 1
-[ ! -f .claude/cat/cat-config.json ] && echo "ERROR: No cat-config.json. Run /cat:new-project first." && exit 1
+[ ! -d .claude/cat ] && echo "ERROR: No .claude/cat/ directory. Run /cat:init first." && exit 1
+[ ! -f .claude/cat/cat-config.json ] && echo "ERROR: No cat-config.json. Run /cat:init first." && exit 1
 ```
 
 **Load configuration:**
