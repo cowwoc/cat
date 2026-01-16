@@ -14,13 +14,23 @@ CHANGELOG.md first. The skill ensures changelog, version files, and tags stay sy
 ## Prerequisites
 
 - Current branch is the version branch to release (e.g., `v1.4`)
-- All changes committed and tested
+- All changes committed
 - Both `package.json` and `.claude-plugin/plugin.json` have matching versions
 - `migrations/` directory exists with `registry.json` and `lib/utils.sh`
 
 ## Release Process
 
-### 1. Verify Version Consistency
+### 1. Run Tests
+
+Before releasing, ensure all tests pass:
+
+```bash
+npm test
+```
+
+**If tests fail**, fix the issues before proceeding. Do not release with failing tests.
+
+### 2. Verify Version Consistency
 
 Before releasing, verify both JSON files have the same version:
 
