@@ -86,13 +86,15 @@ tool call wrappers, output the styled text directly as part of your response.
 ║  🗺️ YOUR ADVENTURE - {PROJECT_NAME}                               ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║  📊 Progress: [████████████░░░░░░░░] **{PERCENT}%**               ║
-║  🏆 **{COMPLETED}/{TOTAL}** tasks complete                        ║
+║  📊 Progress: [████████████░░░░░░░░] {PERCENT}%                   ║
+║  🏆 {COMPLETED}/{TOTAL} tasks complete                            ║
 ║                                                                   ║
 ║  ⚙️ Mode: {Interactive|YOLO}                                      ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
+
+Note: Bold markers inside code fences do not render. The box-drawing provides visual emphasis.
 
 ┌─ 📦 v{N}: {Major Version Name} ───────────────────────────────────┐
 
@@ -118,10 +120,9 @@ For versions with unsatisfied entry gates:
    🚧 Entry gate: waiting on {unmet condition}
 ```
 
-For current/in-progress versions, show exit gate progress:
-```
+For current/in-progress versions, show exit gate progress (outside code fence for bold):
+
 🔄 **v{N}.{M}: {Current minor}** ({completed}/{total}) | Exit: 2/3 conditions
-```
 
 ═══════════════════════════════════════════════════════════════════
 🎯 **Current Quest:** v{N}.{M} - {Minor version description}
