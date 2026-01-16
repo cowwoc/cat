@@ -33,18 +33,26 @@ fi
 # Extract the type (everything before the colon)
 TYPE=$(echo "$MSG" | grep -oE "^[a-z]+" || echo "")
 
-# Check for common INVALID types (conventional commit shortcuts)
-case "$TYPE" in
-  feat|fix|chore|build|ci|perf)
-    echo "BLOCKED: Invalid commit type '$TYPE'"
-    echo ""
-    echo "Valid types: feature, bugfix, test, refactor, performance, docs, style, config, planning"
-    echo "NOT valid: feat, fix, chore, build, ci, perf (use full names)"
-    echo ""
-    echo "Change '$TYPE:' to the correct full type name."
-    exit 2
-    ;;
-esac
+# Valid commit types (allowlist)
+VALID_TYPES="feature|bugfix|test|refactor|performance|docs|style|config|planning"
+
+# Check if type is in allowlist (M098: use allowlist instead of denylist)
+if [[ -n "$TYPE" ]] && ! echo "$TYPE" | grep -qE "^($VALID_TYPES)$"; then
+  echo "BLOCKED: Invalid commit type '$TYPE'"
+  echo ""
+  echo "Valid types: feature, bugfix, test, refactor, performance, docs, style, config, planning"
+  echo ""
+  # Suggest correction for common mistakes
+  case "$TYPE" in
+    feat) echo "Did you mean 'feature:'?" ;;
+    fix) echo "Did you mean 'bugfix:'?" ;;
+    perf) echo "Did you mean 'performance:'?" ;;
+    security) echo "Security fixes should use 'bugfix:'" ;;
+    skill) echo "Skill changes should use 'config:' (Claude-facing docs)" ;;
+    chore|build|ci) echo "Use 'config:' for tooling/configuration changes" ;;
+  esac
+  exit 2
+fi
 
 # Check for docs: used on Claude-facing files (M089, M112)
 # Claude-facing files should use config:, not docs:
