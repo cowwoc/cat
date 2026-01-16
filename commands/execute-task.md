@@ -126,7 +126,7 @@ All bash commands below use this value directly.
 
 **If $ARGUMENTS provided:**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
-- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/{task-name}/`
+- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/`
 - **Try to acquire lock BEFORE loading task details** (see lock check below)
 - Load its STATE.md and PLAN.md
 
@@ -138,8 +138,8 @@ All bash commands below use this value directly.
   4. **Task is not locked by another session** (see lock check below)
 
 ```bash
-# Find all task STATE.md files (depth 3 under major version = task level)
-find .claude/cat/v*/v*.* -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
+# Find all task STATE.md files (task/ subdirectory contains task directories)
+find .claude/cat/v*/v*.*/task -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
 **MANDATORY: Lock Check Before Offering Task (M097)**
