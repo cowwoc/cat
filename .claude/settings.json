@@ -2,5 +2,18 @@
   "attribution": {
     "commit": "",
     "pr": ""
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/workspace/.claude/hooks/validate-state-md-format.sh"
+          }
+        ]
+      }
+    ]
   }
 }
