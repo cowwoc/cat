@@ -33,18 +33,18 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 <step name="display-format">
 
-**Use open-border format for configuration displays.**
+**Use closed-border format for configuration displays.**
 
-Open-border format uses left-side borders only, eliminating padding calculation issues:
+Follow `skills/box-alignment/SKILL.md` for proper alignment, using `${CLAUDE_PLUGIN_ROOT}/emoji-widths.json` for emoji display widths.
 
 ```
-╭─ ⚙️ SETTINGS
-│
-│  Trust: medium
-│  Verify: changed
-│  Curiosity: low
-│  Patience: high
-╰─
+╭─── ⚙️ SETTINGS ────────────────────────────────────────────────────╮
+│                                                                    │
+│  Trust: medium                                                     │
+│  Verify: changed                                                   │
+│  Curiosity: low                                                    │
+│  Patience: high                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 **MANDATORY (M140):** Output display text in your response BEFORE calling AskUserQuestion.
@@ -66,17 +66,17 @@ BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUse
 **Why this matters:** Users need visual context before making choices. Jumping directly to
 prompts without display creates confusion and poor UX.
 
-**Display settings screen in open-border format:**
+**Display settings screen in closed-border format:**
 
 ```
-╭─ ⚙️ CURRENT SETTINGS
-│
-│  🤝 Trust: {trust}
-│  ✅ Verify: {verify}
-│  🔍 Curiosity: {curiosity}
-│  ⏳ Patience: {patience}
-│  🧹 Cleanup: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}
-╰─
+╭─── ⚙️ CURRENT SETTINGS ────────────────────────────────────────────╮
+│                                                                    │
+│  🤝 Trust: {trust}                                                 │
+│  ✅ Verify: {verify}                                               │
+│  🔍 Curiosity: {curiosity}                                         │
+│  ⏳ Patience: {patience}                                           │
+│  🧹 Cleanup: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}        │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 </step>
@@ -117,13 +117,13 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
 ```
-╭─ 🐱 CAT BEHAVIOR
-│
-│  🤝 Trust: {trust}
-│  ✅ Verify: {verify}
-│  🔍 Curiosity: {curiosity}
-│  ⏳ Patience: {patience}
-╰─
+╭─── 🐱 CAT BEHAVIOR ────────────────────────────────────────────────╮
+│                                                                    │
+│  🤝 Trust: {trust}                                                 │
+│  ✅ Verify: {verify}                                               │
+│  🔍 Curiosity: {curiosity}                                         │
+│  ⏳ Patience: {patience}                                           │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 Then AskUserQuestion:
@@ -323,11 +323,11 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 Display gate overview:
 
 ```
-╭─ 📊 VERSION GATES
-│
-│  Gates control when work can start (entry) and
-│  when a version is considered complete (exit).
-╰─
+╭─── 📊 VERSION GATES ───────────────────────────────────────────────╮
+│                                                                    │
+│  Gates control when work can start (entry) and                     │
+│  when a version is considered complete (exit).                     │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 **Step 1: Select version to configure**
@@ -369,11 +369,11 @@ cat .claude/cat/v{major}/PLAN.md 2>/dev/null
 Extract the `## Gates` section and display:
 
 ```
-╭─ 🚧 GATES FOR {version}
-│
-│  Entry: {entry_conditions or "None configured"}
-│  Exit: {exit_conditions or "None configured"}
-╰─
+╭─── 🚧 GATES FOR {version} ─────────────────────────────────────────╮
+│                                                                    │
+│  Entry: {entry_conditions or "None configured"}                    │
+│  Exit: {exit_conditions or "None configured"}                      │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 **Step 3: Choose action**
@@ -449,12 +449,12 @@ Write the updated PLAN.md using the Write tool.
 Display confirmation:
 
 ```
-╭─ ✅ GATES UPDATED
-│
-│  Version: {version}
-│  Entry: {entry_summary}
-│  Exit: {exit_summary}
-╰─
+╭─── ✅ GATES UPDATED ───────────────────────────────────────────────╮
+│                                                                    │
+│  Version: {version}                                                │
+│  Entry: {entry_summary}                                            │
+│  Exit: {exit_summary}                                              │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
@@ -480,10 +480,10 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 Display confirmation:
 
 ```
-╭─ ✅ SETTING UPDATED
-│
-│  {setting}: {oldValue} → {newValue}
-╰─
+╭─── ✅ SETTING UPDATED ─────────────────────────────────────────────╮
+│                                                                    │
+│  {setting}: {oldValue} → {newValue}                                │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 **After confirming**: Return to the **parent menu** and re-display its options.
@@ -502,21 +502,21 @@ Examples:
 If changes were made:
 
 ```
-╭─ ✅ CONFIGURATION SAVED
-│
-│  Changes:
-│  - {change1}
-│  - {change2}
-╰─
+╭─── ✅ CONFIGURATION SAVED ─────────────────────────────────────────╮
+│                                                                    │
+│  Changes:                                                          │
+│  - {change1}                                                       │
+│  - {change2}                                                       │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 If no changes:
 
 ```
-╭─ ℹ️ NO CHANGES
-│
-│  Configuration unchanged.
-╰─
+╭─── ℹ️ NO CHANGES ──────────────────────────────────────────────────╮
+│                                                                    │
+│  Configuration unchanged.                                          │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 </step>

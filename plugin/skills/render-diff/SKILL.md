@@ -1,6 +1,6 @@
 ---
-name: cat:render-diff
-description: Transform raw git diff output into a 4-column table format for approval gate reviews
+name: render-diff
+description: "MANDATORY: Use for approval gate reviews - transforms git diff into 4-column table"
 ---
 
 # Render Diff

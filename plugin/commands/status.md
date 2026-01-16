@@ -63,38 +63,40 @@ If the script outputs an error JSON, inform user to run `/cat:init`.
 
 <step name="render-display">
 
-**Render the status display in open-border format:**
+**Render the status display using closed-border format.**
 
-Using the JSON data, output this format. **EVERY major version gets its own inner box with ╭─ and ╰─.**
+**MANDATORY:** Load `/cat:box-alignment` skill before rendering. Follow its procedure for proper alignment.
+
+Using the JSON data, output this format:
 
 ```
-╭─
-│ 📊 Overall: [████████░░░░░░░░░░░░░░░░░] {percent}%
-│ 🏆 {completed}/{total} tasks complete
-│
-│ ╭─ {emoji} {major1.id}: {major1.name}
-│ │
-│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})
-│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})
-│ ╰─
-│
-│ ╭─ {emoji} {major2.id}: {major2.name}
-│ │
-│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})
-│ │     🔄 {inProgressTask}
-│ │     🔳 {pendingTask}
-│ ╰─
-│
-│ 🎯 Active: {current.minor}
-│ 📋 Available: {pendingTasks.length} pending tasks
-╰─
+╭────────────────────────────────────────────────────────────────────────╮
+│ 📊 Overall: [████████░░░░░░░░░░░░░░░░░] {percent}%                     │
+│ 🏆 {completed}/{total} tasks complete                                  │
+│                                                                        │
+│ ╭─ 📦 {major1.id}: {major1.name} ────────────────────────────────────╮ │
+│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})     │ │
+│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})     │ │
+│ ╰────────────────────────────────────────────────────────────────────╯ │
+│                                                                        │
+│ ╭─ 📦 {major2.id}: {major2.name} ────────────────────────────────────╮ │
+│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})     │ │
+│ │     🔄 {inProgressTask}                                            │ │
+│ │     🔳 {pendingTask}                                               │ │
+│ ╰────────────────────────────────────────────────────────────────────╯ │
+│                                                                        │
+│ 🎯 Active: {current.minor}                                             │
+│ 📋 Available: {pendingTasks.length} pending tasks                      │
+╰────────────────────────────────────────────────────────────────────────╯
 ```
 
 **Structure rules:**
-- Each major version starts with `│ ╭─` and its minors are indented with `│ │`
-- Close each major's inner box with `│ ╰─` BEFORE starting the next major
+- Outer box contains everything with closed borders
+- Each major version gets an inner closed box
+- Close each major's inner box BEFORE starting the next major
 - The active minor (with pending tasks) shows tasks indented below it
 - Completed majors can be collapsed (show only summary line if all minors complete)
+- Footer lines (🎯 Active, 📋 Available) appear inside the outer box at the bottom
 
 **Emoji rules:**
 - ☑️ = Minor complete (completed == total && total > 0)
@@ -133,7 +135,7 @@ Using the JSON data, output this format. **EVERY major version gets its own inne
 <success_criteria>
 
 - [ ] JSON data collected from script
-- [ ] Open-border status display rendered
+- [ ] Closed-border status display rendered (following box-alignment skill)
 - [ ] NEXT STEPS table displayed
 - [ ] Legend displayed
 
