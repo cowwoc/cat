@@ -9,6 +9,29 @@ Detailed workflow for executing a task from start to completion.
 - Main agent in orchestration mode
 - **Task lock can be acquired** (not locked by another session)
 
+## CRITICAL: Worktree Isolation (M101)
+
+**ALL task implementation work MUST happen in the task worktree, NEVER in `/workspace` main.**
+
+```
+/workspace/                    ← MAIN WORKTREE - READ-ONLY during task execution
+├── .worktrees/
+│   └── 0.5-task-name/        ← TASK WORKTREE - All edits happen here
+│       └── parser/src/...
+└── parser/src/...            ← NEVER edit these files during task execution
+```
+
+**Rules:**
+1. After creating worktree, immediately `cd` to it and verify with `pwd`
+2. All file edits, git commits, and builds happen in the task worktree
+3. Return to `/workspace` ONLY for final merge and cleanup
+4. If confused about location, run `pwd` and `git branch --show-current`
+
+**Why:** Multiple parallel tasks create separate worktrees. Editing main worktree:
+- Corrupts other parallel tasks
+- Creates merge conflicts
+- Makes rollback impossible
+
 ## Workflow Steps
 
 ### 1. Validate Task Ready and Acquire Lock

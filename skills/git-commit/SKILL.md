@@ -203,6 +203,7 @@ Move function from line 45 to line 67
 
 ## Checklist Before Committing
 
+- [ ] **In correct worktree** (M101): `pwd` shows task worktree, NOT `/workspace`
 - [ ] Subject line is imperative mood ("Add", not "Added")
 - [ ] Subject line is specific (not "Update files")
 - [ ] Subject line is under 72 characters
@@ -210,6 +211,18 @@ Move function from line 45 to line 67
 - [ ] For squashed commits: synthesized meaningful summary
 - [ ] **Task ID footer included** (for CAT tasks): `Task ID: vX.Y-task-name`
 - [ ] Message would make sense in git history 6 months from now
+
+## Worktree Verification (M101)
+
+**Before committing in a CAT task, verify you're in the task worktree:**
+
+```bash
+# Quick verification
+pwd  # Should show /workspace/.worktrees/<task-name>, NOT /workspace
+git branch --show-current  # Should show task branch, NOT main
+```
+
+**If in wrong worktree:** Stop and navigate to the correct one before committing.
 
 ## Quick Test
 
