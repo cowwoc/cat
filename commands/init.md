@@ -332,28 +332,28 @@ Display welcome banner:
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
 
-AskUserQuestion: header="Approach", question="Development approach?", options=[
-  "🛡️ Conservative - targeted fixes, avoid refactoring, fewer files touched",
-  "⚖️ Balanced - you decide at each fork, CAT shows options (Recommended)",
-  "⚔️ Aggressive - root-cause solutions, refactor when it improves code"
+AskUserQuestion: header="Trust", question="How much autonomy should CAT have?", options=[
+  "🔍 Short leash - review frequently, confirm often",
+  "⚖️ Medium leash - review on significant changes (Recommended)",
+  "🚀 Long leash - trust CAT to make decisions, review less"
 ]
 
-AskUserQuestion: header="Review", question="When should CAT trigger stakeholder review?", options=[
-  "Always before merging",
-  "Only for high-risk or cross-module changes (Recommended)",
-  "Never - I'll request when needed"
+AskUserQuestion: header="Curiosity", question="How much should CAT explore beyond the immediate task?", options=[
+  "📦 Low - stay focused, minimal exploration",
+  "⚖️ Medium - explore related concerns when relevant (Recommended)",
+  "🔭 High - investigate root causes and broader patterns"
 ]
 
-AskUserQuestion: header="Refactoring", question="Refactoring appetite?", options=[
-  "Avoid - only fix what's broken",
-  "Opportunistic - clean up adjacent code when natural (Recommended)",
-  "Eager - improve code quality proactively"
+AskUserQuestion: header="Patience", question="How tolerant of opportunistic improvements?", options=[
+  "🎯 High patience - only change what's required",
+  "⚖️ Medium patience - clean up related code when natural (Recommended)",
+  "⚡ Low patience - actively improve code quality in touched files"
 ]
 
 Map responses to preference values:
-- Approach: conservative | balanced | aggressive
-- Stakeholder Review: always | high-risk-only | never
-- Refactoring: avoid | opportunistic | eager
+- Trust: short | medium | long
+- Curiosity: low | medium | high
+- Patience: high | medium | low
 
 </step>
 
@@ -368,13 +368,13 @@ Create `.claude/cat/cat-config.json`:
 ```json
 {
   "version": "[CAT_VERSION from above]",
-  "mode": "[mode from step]",
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "approach": "[conservative|balanced|aggressive]",
-  "stakeholderReview": "[always|high-risk-only|never]",
-  "refactoring": "[avoid|opportunistic|eager]"
+  "trust": "[short|medium|long]",
+  "verify": "changed",
+  "curiosity": "[low|medium|high]",
+  "patience": "[high|medium|low]"
 }
 ```
 
@@ -385,9 +385,9 @@ Append to PROJECT.md (after Key Decisions):
 
 These preferences shape how CAT makes autonomous decisions:
 
-- **Development Approach:** [conservative|balanced|aggressive]
-- **Stakeholder Review:** [always|high-risk-only|never]
-- **Refactoring Appetite:** [avoid|opportunistic|eager]
+- **Trust Level:** [short|medium|long] - review frequency
+- **Curiosity:** [low|medium|high] - exploration beyond immediate task
+- **Patience:** [high|medium|low] - tolerance for opportunistic improvements
 
 Update anytime with: `/cat:config`
 ```
@@ -411,11 +411,11 @@ Display completion banner:
 ║  ✨ YOUR ADVENTURE AWAITS                                         ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
-║  Style: [approach] │ Reviews: [stakeholderReview]                 ║
-║  Refactoring: [refactoring] │ Mode: [interactive|yolo]            ║
+║  Trust: [trust] │ Curiosity: [curiosity] │ Patience: [patience]   ║
+║  Mode: [interactive|yolo]                                         ║
 ║                                                                   ║
 ║  These preferences will guide autonomous decisions.               ║
-║  Change anytime with: /cat:config                     ║
+║  Change anytime with: /cat:config                                 ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```

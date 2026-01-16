@@ -208,9 +208,10 @@ cat-config.json:
   "yoloMode": false,            // Skip approval gates
   "contextLimit": 200000,       // Total context window
   "targetContextUsage": 40,     // Soft limit (40%)
-  "approach": "balanced",       // conservative | balanced | aggressive
-  "stakeholderReview": "high-risk-only", // always | high-risk-only | never
-  "refactoring": "opportunistic" // avoid | opportunistic | eager
+  "trust": "medium",            // short | medium | long (review frequency)
+  "verify": "changed",          // changed | all (verification scope)
+  "curiosity": "medium",        // low | medium | high (exploration level)
+  "patience": "medium"          // low | medium | high (refactoring tolerance)
 }
 ```
 
