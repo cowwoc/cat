@@ -276,20 +276,29 @@ On completion, subagent returns via `.completion.json`:
 
 ### 9. MANDATORY: Report Token Metrics to User
 
-**Subagents measure their own tokens and return them to main agent (M099).**
+**Use Claude Code Task tool output as authoritative token source (M146).**
 
-The subagent is responsible for measuring its token usage before completion:
-```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-cat > /tmp/token_count.jq << 'EOF'
-[.[] | select(.type == "assistant") | .message.usage | select(. != null) |
-  (.input_tokens + .output_tokens)] | add // 0
-EOF
-TOKENS=$(jq -s -f /tmp/token_count.jq "$SESSION_FILE")
+When the Task tool completes, Claude Code displays actual usage in the summary line:
+```
+● Task(description)
+  ⎿  Done (N tool uses · XK tokens · Nm Ns)
 ```
 
-Main agent reports ONLY measured values from subagent output. Never fabricate estimates.
-If subagent didn't report metrics, state "NOT MEASURED" - do not invent numbers.
+**Main agent MUST extract and report the token value from this line.** This is the authoritative
+measurement - do NOT use pre-execution estimates or subagent self-reports if they conflict.
+
+**Extraction:** Parse the `XK tokens` or `X tokens` value from the Task tool result summary.
+Example: `Done (14 tool uses · 27.8k tokens · 1m 18s)` → report 27,800 tokens.
+
+**Fallback only if Task tool summary is unavailable:** Read `.completion.json` or parse session file:
+```bash
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
+TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
+  select(. != null) | (.input_tokens + .output_tokens)] | add // 0' "$SESSION_FILE")
+```
+
+**Anti-pattern:** Using the pre-execution task size ESTIMATE from step 5 as the reported value.
+The estimate is for decomposition decisions. The Task tool output shows ACTUAL usage.
 
 **After collecting subagent results, ALWAYS present token metrics to user:**
 
