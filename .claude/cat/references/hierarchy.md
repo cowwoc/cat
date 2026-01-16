@@ -10,16 +10,18 @@
 └── v<n>/
     ├── STATE.md
     ├── PLAN.md
-    ├── CHANGELOG.md
+    ├── CHANGELOG.md          # Aggregates completed tasks
     └── v<n>.<m>/
         ├── STATE.md
         ├── PLAN.md
-        ├── CHANGELOG.md
+        ├── CHANGELOG.md      # Aggregates completed tasks
         └── task/<name>/
             ├── STATE.md
-            ├── PLAN.md
-            └── CHANGELOG.md
+            └── PLAN.md
 ```
+
+> **NOTE**: Task-level CHANGELOG.md is not created. Task changelog content is embedded
+> in commit messages (see commit message format in execute-task command).
 
 ## Version Semantics
 

@@ -358,7 +358,7 @@ task-name -> {
 ```
 
 > **NOTE**: This mapping takes PRIORITY over planning files. If a task has commits with
-> Task ID footers, use commit data for CHANGELOG.md. Only fall back to planning files
+> Task ID footers, use commit data for STATE.md metadata. Only fall back to planning files
 > if no commits are found for a task.
 
 </step>
@@ -369,7 +369,7 @@ task-name -> {
 
 > **CRITICAL**: When structured planning exists, CAT must import ALL existing data to create
 > self-contained task files. Do NOT create placeholder files that reference the old planning system.
-> Each CAT file (STATE.md, PLAN.md, CHANGELOG.md) must be complete and standalone.
+> Each CAT task file (STATE.md, PLAN.md) must be complete and standalone.
 
 > **NOTE**: Data from git commits with Task ID footers takes PRIORITY. Only use planning files
 > for tasks without commit mappings, or to supplement commit data with additional context.
@@ -434,7 +434,7 @@ For each task entry in changelog*.md:
 2. Extract `**Completion Date**:` or `**Completed**:` for date filtering
 3. Extract file paths from `**Files Created**:` (best for commit identification)
 4. Extract file paths from `**Files Modified**:` (fallback)
-5. Import Problem Solved, Solution Implemented, Test Coverage, Quality sections directly
+5. Import Problem Solved, Solution Implemented, Test Coverage, Quality sections into STATE.md
 
 **2. Categorize discovered files by content type:**
 
@@ -443,8 +443,8 @@ Read each discovered file and categorize based on content:
 | Content Indicators | Category | Maps To |
 |--------------------|----------|---------|
 | `## Objective`, `## Tasks`, `## Technical Approach`, `## Verification` | Task Definition | PLAN.md |
-| `## Accomplishments`, `## What Was Built`, `completed:`, YAML frontmatter with `duration:` | Completion Record | STATE.md + CHANGELOG.md |
-| `## Changes`, `## Files Modified` | Change History | CHANGELOG.md |
+| `## Accomplishments`, `## What Was Built`, `completed:`, YAML frontmatter with `duration:` | Completion Record | STATE.md |
+| `## Changes`, `## Files Modified` | Change History | STATE.md |
 
 **3. Build file mappings per task:**
 
@@ -465,11 +465,6 @@ When creating CAT task files, import content with these priorities:
 1. Import from completion record's YAML frontmatter or structured metadata
 2. Include: status, dates, dependencies, key-files, key-decisions, patterns, tags
 3. Fallback: Infer status from whether completion record exists
-
-**For CHANGELOG.md** (what was done):
-1. Import from completion record's body content
-2. Include: Accomplishments, Files Created/Modified, Technical Changes, Decisions Made
-3. Fallback: Search git history for commits mentioning task name
 
 </step>
 
@@ -612,7 +607,10 @@ For each major version in ROADMAP.md:
 mkdir -p ".claude/cat/v{major}/v{major}.{minor}/{task-name}"
 ```
 
-**Create STATE.md, PLAN.md, and CHANGELOG.md for each task using imported content.**
+**Create STATE.md and PLAN.md for each task using imported content.**
+
+> **NOTE**: Task CHANGELOG.md files are no longer created. Changelog content is embedded
+> in commit messages (for future tasks) or preserved in original planning files (for imports).
 
 ---
 
@@ -786,149 +784,6 @@ completed: N/A
 
 ---
 
-### CHANGELOG.md Template (What Was Done)
-
-**For COMPLETED tasks:**
-
-> **CRITICAL**: CHANGELOG.md must be comprehensive and self-contained.
-> It should fully document what was done, why, and how - matching the detail level
-> of well-written changelog entries. Do NOT create sparse summaries.
-
-> **DATA SOURCE PRIORITY**:
-> 1. **Git commits with Task ID footer** (AUTHORITATIVE) - use `git log --grep="Task ID: v{major}.{minor}-{task-name}"`
-> 2. **Planning files** (SUPPLEMENT) - changelog*.md, *-SUMMARY.md files
-> 3. **Inference from code** (FALLBACK) - only if no other source exists
-
-```markdown
-# Changelog: {task-name}
-
-**Completed**: {completion-date from git commit or planning file}
-
-## Commits
-[List all commits for this task - extracted from git log with Task ID footer]
-- `{commit-hash}` - {commit subject line}
-- `{commit-hash}` - {commit subject line}
-
-## Problem Solved
-[PRIORITY: Extract from commit message body if present]
-[FALLBACK: Import from ## Problem Solved, ## Problem in planning files]
-[REQUIREMENT: Explain WHY this task was needed - specific error counts, user impact, etc.]
-- [Specific problem with metrics if available, e.g., "318 parsing errors in Spring Framework"]
-- [Root cause, e.g., "Parser treated (a, b) as parenthesized expression"]
-
-## Solution Implemented
-[PRIORITY: Extract from commit message body]
-[FALLBACK: Import from ## Solution Implemented, ## What Was Built in planning files]
-[REQUIREMENT: Explain HOW the problem was solved - technical approach]
-- [Key implementation detail with method/class names]
-- [Algorithm or pattern used]
-- [Why this approach was chosen over alternatives]
-
-## Files Created
-[PRIORITY: Extract from git diff-tree for task commits (status 'A')]
-[FALLBACK: Import from ## Files Created in planning files]
-[REQUIREMENT: List ACTUAL file paths with descriptions]
-- `{path/to/NewFile.java}` - {purpose and key functionality}
-- `{path/to/NewTest.java}` - {N} test cases covering {scenarios}
-
-## Files Modified
-[PRIORITY: Extract from git diff-tree for task commits (status 'M')]
-[FALLBACK: Import from ## Files Modified in planning files]
-[REQUIREMENT: List ACTUAL file paths with what changed]
-- `{path/to/ExistingFile.java}` - {specific methods/functions changed and why}
-
-## Technical Details
-[REQUIREMENT: Include implementation specifics that would help understand the code]
-- Method signatures added/modified
-- Key algorithms or patterns introduced
-- Integration points with existing code
-
-## Test Coverage
-[PRIORITY: Infer from test files in git diff-tree]
-[FALLBACK: Import from ## Test Coverage in planning files]
-[REQUIREMENT: List specific test scenarios, not just "tests added"]
-- {Specific scenario 1, e.g., "Multi-parameter lambdas with inferred types"}
-- {Specific scenario 2, e.g., "Regression test for parenthesized expressions"}
-
-## Quality
-[REQUIREMENT: Include actual metrics]
-- {N} new tests passing
-- {N} total tests in affected modules
-- Build status and any notable quality metrics
-
-## Decisions Made
-[Import from commit messages or ## Key Decisions in planning files]
-[REQUIREMENT: Include rationale, not just the decision]
-- {Decision}: {Rationale}
-
----
-*Source: git commits {commit-hash-list}*
-*Supplemented from: {planning-file-path if used}*
-```
-
-**Finding commits for a task:**
-```bash
-git log --oneline --grep="Task ID: v{major}.{minor}-{task-name}"
-```
-
-**For LEGACY tasks (completed before CAT initialization, no Task ID footers):**
-
-When no Task ID footers exist in commits, create comprehensive files using planning data:
-
-```markdown
-# Changelog: {task-name}
-
-**Completed**: {date from planning files}
-
-## Note
-This task was completed before CAT initialization. Commit-level details are not available.
-See planning files for original documentation.
-
-## Problem Solved
-[Import FULL content from planning files - do NOT summarize]
-{Copy entire Problem Solved / Problem section from planning file}
-
-## Solution Implemented
-[Import FULL content from planning files - do NOT summarize]
-{Copy entire Solution Implemented / What Was Built section from planning file}
-
-## Files Created
-[Import from planning files]
-- `{path}` - {description}
-
-## Files Modified
-[Import from planning files]
-- `{path}` - {description}
-
-## Test Coverage
-[Import from planning files]
-- {scenario}
-
-## Quality
-[Import from planning files]
-- {metrics}
-
----
-*Imported from: {planning-file-path}*
-*Note: Pre-CAT task - no Task ID commit footers available*
-```
-
-> **CRITICAL**: For legacy tasks, import the FULL content from planning files.
-> Do NOT create sparse summaries. The goal is to make CAT files self-contained.
-
-**For PENDING tasks:**
-
-```markdown
-# Changelog: {task-name}
-
-No changes yet - task pending.
-
----
-*See PLAN.md for task definition*
-```
-
----
-
 **Task status determination:**
 - Completion record exists with `completed:` date → `status: completed`, `progress: 100%`
 - Git branch exists matching task name → `status: in-progress`, `progress: 50%`
@@ -1060,7 +915,6 @@ Task directories created:
 - [ ] Task directories created for all tasks
 - [ ] **PLAN.md imported with full content** (objective, tasks, approach, verification)
 - [ ] **STATE.md imported with rich metadata** (status, dependencies, key-files, decisions)
-- [ ] **CHANGELOG.md imported with completion details** (accomplishments, files, technical changes)
 - [ ] No placeholder files that reference old planning system
 - [ ] cat-config.json created with mode
 - [ ] All committed to git

@@ -131,7 +131,7 @@ Present task overview:
 ```
 ## Task: {task-name}
 
-**Location:** Major {major}, Minor {minor}
+**Version:** {major}.{minor}
 **Status:** {status}
 **Progress:** {progress}%
 
@@ -369,63 +369,18 @@ git branch -d "{task-branch}" 2>/dev/null || true
    - For each dependent task, check if ALL its dependencies are now completed
    - If all dependencies met, the task is now executable (no longer blocked)
 
-5. **Task CHANGELOG.md:**
-   Update with comprehensive documentation of what was accomplished:
-
-   ```markdown
-   # Changelog: {task-name}
-
-   **Completed**: {YYYY-MM-DD}
-
-   ## Problem Solved
-   [What wasn't working or was missing - the WHY]
-   - {Problem 1}
-   - {Problem 2 if applicable}
-
-   ## Solution Implemented
-   [How the problem was solved - the approach]
-   - {Implementation detail 1}
-   - {Implementation detail 2}
-
-   ## Files Created
-   [Actual file paths with descriptions]
-   - `{path/to/NewFile.java}` - {purpose}
-   - `{path/to/TestFile.java}` - {N} tests
-
-   ## Files Modified
-   [Actual file paths with what changed]
-   - `{path/to/File.java}` - {what was changed}
-
-   ## Test Coverage
-   [Scenarios covered by tests]
-   - {Scenario 1}
-   - {Scenario 2}
-
-   ## Quality
-   - {N} tests passing
-   - Zero Checkstyle/PMD violations
-   - Build successful
-
-   ```
-
-   **CRITICAL**:
-   - Include actual file paths, not placeholders
-   - Document the WHY (problem) and HOW (solution), not just WHAT was done
-   - All task commits must include `Task ID: v{major}.{minor}-{task-name}` footer
-   - To find commits: `git log --oneline --grep="Task ID: v{major}.{minor}-{task-name}"`
-
 </step>
 
 <step name="commit_metadata">
 
-**Commit metadata updates:**
+**Commit STATE.md updates:**
 
 ```bash
 git add .claude/cat/
 git commit -m "$(cat <<'EOF'
 docs: complete task {task-name}
 
-Updates STATE.md and CHANGELOG.md for Major {major}, Minor {minor}.
+Updates STATE.md for Major {major}, Minor {minor}.
 
 Task ID: v{major}.{minor}-{task-name}
 EOF
@@ -514,6 +469,55 @@ After each execution step:
 
 **Always stage files individually.**
 
+**Enhanced Commit Message Format (replaces task CHANGELOG.md):**
+
+The final squashed commit message MUST include changelog content. The commit diff
+implies Files Modified, Files Created, and Test Coverage - do NOT duplicate these.
+
+```
+{type}: {concise description}
+
+## Problem Solved
+[WHY this task was needed - what wasn't working or was missing]
+- {Problem 1}
+- {Problem 2 if applicable}
+
+## Solution Implemented
+[HOW the problem was solved - the approach taken]
+- {Key implementation detail 1}
+- {Key implementation detail 2}
+
+## Decisions Made (optional)
+- {Decision}: {rationale}
+
+## Known Limitations (optional)
+- {Limitation}: {why accepted or deferred}
+
+## Deviations from Plan (optional)
+- {Deviation}: {reason and impact}
+
+Task ID: v{major}.{minor}-{task-name}
+```
+
+**Example:**
+```
+feature: add lambda expression parsing
+
+## Problem Solved
+- Parser failed on multi-parameter lambdas: `(a, b) -> a + b`
+- 318 parsing errors in Spring Framework codebase
+
+## Solution Implemented
+- Added lookahead in parsePostfix() to detect lambda arrow
+- Reused existing parameter parsing for lambda parameters
+- Handles both inferred and explicit type parameters
+
+## Decisions Made
+- Reuse parameter parsing: Maintains consistency with method parameters
+
+Task ID: v1.0-parse-lambdas
+```
+
 </commit_rules>
 
 <success_criteria>
@@ -527,7 +531,6 @@ After each execution step:
 - [ ] Branch merged to main
 - [ ] Worktree cleaned up
 - [ ] STATE.md files updated
-- [ ] CHANGELOG.md updated
 - [ ] Next task offered
 
 </success_criteria>

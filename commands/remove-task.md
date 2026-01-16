@@ -134,7 +134,7 @@ Use AskUserQuestion:
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove task '{task-name}' from {major}.{minor}?\n\nThis will delete:\n- STATE.md\n- PLAN.md\n- CHANGELOG.md"
+- question: "Remove task '{task-name}' from {major}.{minor}?\n\nThis will delete:\n- STATE.md\n- PLAN.md"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort

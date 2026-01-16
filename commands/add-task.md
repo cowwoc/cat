@@ -24,7 +24,6 @@ window (target: 40% of limit).
 
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-state.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-plan.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/questioning.md
 
 </execution_context>
@@ -326,20 +325,6 @@ mkdir -p "$TASK_PATH"
 
 </step>
 
-<step name="create_changelog">
-
-**Create empty CHANGELOG.md:**
-
-```markdown
-# Changelog
-
-## {task-name} - Pending
-
-*Changelog will be populated when task is executed.*
-```
-
-</step>
-
 <step name="update_parent">
 
 **Update parent minor STATE.md:**
@@ -417,7 +402,6 @@ Task created:
 - [ ] Discussion captured task details
 - [ ] STATE.md created with correct dependencies
 - [ ] PLAN.md created with appropriate template
-- [ ] CHANGELOG.md initialized
 - [ ] Parent STATE.md updated
 - [ ] All committed to git
 

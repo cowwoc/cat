@@ -64,16 +64,18 @@ The plugin enables a main agent to orchestrate multiple subagents working concur
 └── v<major>/
     ├── STATE.md                            # Major version state
     ├── PLAN.md                             # Major version plan (business-level)
-    ├── CHANGELOG.md                        # Major version changelog
+    ├── CHANGELOG.md                        # Major version changelog (aggregates tasks)
     └── v<major>.<minor>/
         ├── STATE.md                        # Minor version state
         ├── PLAN.md                         # Minor version plan (feature-level)
-        ├── CHANGELOG.md                    # Minor version changelog
+        ├── CHANGELOG.md                    # Minor version changelog (aggregates tasks)
         └── <task-name>/
             ├── STATE.md                    # Task state
-            ├── PLAN.md                     # Task plan (technical-level)
-            └── CHANGELOG.md                # Task changelog
+            └── PLAN.md                     # Task plan (technical-level)
 ```
+
+> **NOTE**: Task-level CHANGELOG.md files are not created. Task changelog content is embedded
+> in commit messages instead (see commit message format in execute-task command).
 
 ### Example Path
 
@@ -244,42 +246,44 @@ Provide templates appropriate to the work type:
 2. Step 2
 ```
 
-### CHANGELOG.md (Task Completion Record)
+### Task Commit Message Format (Replaces Task CHANGELOG.md)
 
-Records what was accomplished, files changed, and commits merged to main.
+Task changelog content is embedded in commit messages instead of separate CHANGELOG.md files.
+The commit diff implies Files Created, Files Modified, and Test Coverage - these are not duplicated.
 
-```markdown
-# Changelog: {task-name}
+```
+{type}: {concise description}
 
-## Summary
-One-line description of what was accomplished
+## Problem Solved
+[WHY this task was needed]
+- Problem 1
+- Problem 2 if applicable
 
-## Changes
-- What was done (bullet list)
-- Another accomplishment
+## Solution Implemented
+[HOW the problem was solved]
+- Key implementation detail 1
+- Key implementation detail 2
 
-## Files
+## Decisions Made (optional)
+- Decision: rationale
 
-### Created
-- path/to/new/file.java
+## Known Limitations (optional)
+- Limitation: why accepted
 
-### Modified
-- path/to/existing/file.java
+## Deviations from Plan (optional)
+- Deviation: reason and impact
 
-## Technical Details
-Implementation specifics worth noting for future reference
-
-## Decisions
-- Decision made during implementation
-- Rationale for approach taken
-
----
-*Completed: YYYY-MM-DD*
+Task ID: v{major}.{minor}-{task-name}
 ```
 
 **Notes:**
 - All task commits include `Task ID: v{major}.{minor}-{task-name}` footer
 - Find commits for any task: `git log --oneline --grep="Task ID: v{major}.{minor}-{task-name}"`
+
+### Minor/Major Version CHANGELOG.md
+
+Minor and major versions have CHANGELOG.md files that aggregate completed tasks.
+These are created during version completion to summarize multiple task commits.
 
 ### ROADMAP.md
 
@@ -587,11 +591,8 @@ Interactive wizard that:
    - Key decisions, patterns established
    - Metadata (subsystem, tags, affects)
 
-   **CHANGELOG.md** - Import completion details:
-   - Summary of accomplishments
-   - Files created/modified
-   - Technical details, Decisions made
-   - **Commits merged to main** (MANDATORY - search git history)
+   > **NOTE**: Task CHANGELOG.md files are not created during import.
+   > Completion details are preserved in STATE.md and in commit messages.
 
 7. Sets task status based on discovered data:
    - Completion record exists with `completed:` date → `status: completed`, `progress: 100%`
