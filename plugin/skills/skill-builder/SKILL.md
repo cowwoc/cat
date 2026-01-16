@@ -414,23 +414,15 @@ Simply output the content. The user doesn't need to know about internal computat
 
 If NOT found: **FAIL immediately**.
 
-First, detect the likely cause:
-
 ```bash
-if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
-  echo "ERROR: Pre-computed results not found."
-  echo ""
-  echo "Hooks are configured but not running. This usually means:"
-  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
-  echo ""
-  echo "Solution: Restart Claude Code, then run the skill again."
-else
+"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "results" "the skill"
+if [[ $? -eq 0 ]]; then
   echo "ERROR: Pre-computed results not found."
   echo "Hook precompute-{skill-name}.sh should have provided these."
 fi
 ```
 
-Output the appropriate error and STOP. Do NOT attempt manual computation.
+Output the error and STOP. Do NOT attempt manual computation.
 
 ### Step 2: [Gather inputs] (only if no extraction)
 
@@ -1372,19 +1364,10 @@ If found:
 
 If NOT found: **FAIL immediately**.
 
-First, detect the likely cause:
-
 ```bash
-if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "results" "the skill"
+if [[ $? -eq 0 ]]; then
   echo "ERROR: Pre-computed results not found."
-  echo ""
-  echo "Hooks are configured but not running. This usually means:"
-  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
-  echo ""
-  echo "Solution: Restart Claude Code, then run the skill again."
-else
-  echo "ERROR: Pre-computed results not found in context."
-  echo ""
   echo "The handler ({skill-name}_handler.py) should have provided these."
   echo "Check:"
   echo "1. Handler is registered in skill_handlers/__init__.py"
@@ -1393,7 +1376,7 @@ else
 fi
 ```
 
-Output the appropriate error and STOP. Do NOT attempt manual computation.
+Output the error and STOP. Do NOT attempt manual computation.
 ```
 
 **Why fail-fast?** Manual computation was extracted precisely because agents
