@@ -273,29 +273,30 @@ On completion, subagent returns via `.completion.json`:
 
 ### 9. MANDATORY: Report Token Metrics to User
 
-**Use Claude Code Task tool output as authoritative token source (M146).**
+**Invoke `/cat:collect-results` to get authoritative token metrics (M146).**
 
-When the Task tool completes, Claude Code displays actual usage in the summary line:
-```
-● Task(description)
-  ⎿  Done (N tool uses · XK tokens · Nm Ns)
-```
+After the Task tool completes, invoke `/cat:collect-results` to extract accurate token usage.
+This skill reads the session file and returns structured JSON with actual metrics.
 
-**Main agent MUST extract and report the token value from this line.** This is the authoritative
-measurement - do NOT use pre-execution estimates or subagent self-reports if they conflict.
+**MANDATORY: Use skill-derived metrics, NOT estimates or manual parsing.**
 
-**Extraction:** Parse the `XK tokens` or `X tokens` value from the Task tool result summary.
-Example: `Done (14 tool uses · 27.8k tokens · 1m 18s)` → report 27,800 tokens.
-
-**Fallback only if Task tool summary is unavailable:** Read `.completion.json` or parse session file:
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
-  select(. != null) | (.input_tokens + .output_tokens)] | add // 0' "$SESSION_FILE")
+# Invoke the collect-results skill to get authoritative metrics
+/cat:collect-results
 ```
+
+The skill returns:
+- `tokensUsed`: Actual tokens from session file (authoritative)
+- `compactionEvents`: Number of context compaction events
+- `commits`: List of commits made by subagent
+- `filesChanged`: Files modified with line counts
+
+**Anti-pattern:** Manually parsing the Task tool output summary line (e.g., "Done (14 tool uses ·
+27.8k tokens)"). This is unreliable - agents often ignore manual parsing instructions and report
+pre-execution estimates instead. Always invoke the skill.
 
 **Anti-pattern:** Using the pre-execution task size ESTIMATE from step 5 as the reported value.
-The estimate is for decomposition decisions. The Task tool output shows ACTUAL usage.
+The estimate is for decomposition decisions. The skill output shows ACTUAL usage.
 
 **After collecting subagent results, ALWAYS present token metrics to user:**
 
