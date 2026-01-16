@@ -141,7 +141,7 @@ feature: add login form with validation
 - Email/password form with client-side validation
 - Server-side validation with descriptive messages
 
-Task ID: v2.1-implement-user-auth
+Task ID: v1.1-implement-user-auth
 ```
 
 **MANDATORY**: Include `Task ID: v{major}.{minor}-{task-name}` as the last line.
