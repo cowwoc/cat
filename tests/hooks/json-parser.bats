@@ -244,14 +244,14 @@ teardown() {
 
 @test "output_hook_warning: produces valid JSON with additionalContext" {
     local json_output
-    json_output=$(output_hook_warning "Test warning" 2>/dev/null)
+    json_output=$(output_hook_warning "TestEvent" "Test warning" 2>/dev/null)
 
     echo "$json_output" | jq -e '.hookSpecificOutput.additionalContext' > /dev/null
 }
 
 @test "output_hook_warning: includes message in context" {
     local json_output
-    json_output=$(output_hook_warning "Warning message here" 2>/dev/null)
+    json_output=$(output_hook_warning "TestEvent" "Warning message here" 2>/dev/null)
 
     local context=$(echo "$json_output" | jq -r '.hookSpecificOutput.additionalContext')
     [[ "$context" == *"Warning message"* ]]

@@ -3,6 +3,14 @@
 
 load '../test_helper'
 
+# Test UUIDs (valid format)
+UUID_1="11111111-1111-1111-1111-111111111111"
+UUID_2="22222222-2222-2222-2222-222222222222"
+UUID_3="33333333-3333-3333-3333-333333333333"
+UUID_A="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+UUID_B="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+UUID_ORIG="00000000-0000-0000-0000-000000000001"
+
 setup() {
     setup_test_dir
     TASK_LOCK="$SCRIPTS_DIR/task-lock.sh"
@@ -17,7 +25,7 @@ teardown() {
 # ============================================================================
 
 @test "acquire: creates lock file for new task" {
-    run "$TASK_LOCK" acquire "test-task" "session-123"
+    run "$TASK_LOCK" acquire "test-task" "$UUID_1"
 
     [ "$status" -eq 0 ]
     assert_json_field "$output" '.status' 'acquired'
@@ -27,23 +35,23 @@ teardown() {
 }
 
 @test "acquire: lock file contains correct session_id" {
-    "$TASK_LOCK" acquire "test-task" "session-abc-123" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
     local lock_file="$TEST_TEMP_DIR/.claude/cat/locks/test-task.lock"
-    assert_file_contains "$lock_file" "session_id=session-abc-123"
+    assert_file_contains "$lock_file" "session_id=$UUID_1"
 }
 
 @test "acquire: lock file contains worktree when provided" {
-    "$TASK_LOCK" acquire "test-task" "session-123" "/path/to/worktree" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" "/path/to/worktree" > /dev/null
 
     local lock_file="$TEST_TEMP_DIR/.claude/cat/locks/test-task.lock"
     assert_file_contains "$lock_file" "worktree=/path/to/worktree"
 }
 
 @test "acquire: idempotent for same session" {
-    "$TASK_LOCK" acquire "test-task" "session-123" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
-    run "$TASK_LOCK" acquire "test-task" "session-123"
+    run "$TASK_LOCK" acquire "test-task" "$UUID_1"
 
     [ "$status" -eq 0 ]
     assert_json_field "$output" '.status' 'acquired'
@@ -51,19 +59,19 @@ teardown() {
 }
 
 @test "acquire: fails when locked by different session" {
-    "$TASK_LOCK" acquire "test-task" "session-111" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
-    run "$TASK_LOCK" acquire "test-task" "session-222"
+    run "$TASK_LOCK" acquire "test-task" "$UUID_2"
 
     [ "$status" -eq 1 ]
     assert_json_field "$output" '.status' 'locked'
-    assert_json_field "$output" '.owner' 'session-111'
+    assert_json_field "$output" '.owner' "$UUID_1"
 }
 
 @test "acquire: returns guidance to find another task" {
-    "$TASK_LOCK" acquire "test-task" "session-111" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
-    run "$TASK_LOCK" acquire "test-task" "session-222"
+    run "$TASK_LOCK" acquire "test-task" "$UUID_2"
 
     assert_json_field "$output" '.action' 'FIND_ANOTHER_TASK'
     [[ "$output" == *"Do NOT investigate"* ]]
@@ -74,9 +82,9 @@ teardown() {
 # ============================================================================
 
 @test "release: removes lock when owned by session" {
-    "$TASK_LOCK" acquire "test-task" "session-123" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
-    run "$TASK_LOCK" release "test-task" "session-123"
+    run "$TASK_LOCK" release "test-task" "$UUID_1"
 
     [ "$status" -eq 0 ]
     assert_json_field "$output" '.status' 'released'
@@ -84,9 +92,9 @@ teardown() {
 }
 
 @test "release: fails when owned by different session" {
-    "$TASK_LOCK" acquire "test-task" "session-111" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
-    run "$TASK_LOCK" release "test-task" "session-222"
+    run "$TASK_LOCK" release "test-task" "$UUID_2"
 
     [ "$status" -eq 1 ]
     assert_json_field "$output" '.status' 'error'
@@ -95,7 +103,7 @@ teardown() {
 }
 
 @test "release: succeeds when no lock exists" {
-    run "$TASK_LOCK" release "nonexistent-task" "session-123"
+    run "$TASK_LOCK" release "nonexistent-task" "$UUID_1"
 
     [ "$status" -eq 0 ]
     assert_json_field "$output" '.status' 'released'
@@ -106,7 +114,7 @@ teardown() {
 # ============================================================================
 
 @test "force-release: removes lock regardless of owner" {
-    "$TASK_LOCK" acquire "test-task" "session-111" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
 
     run "$TASK_LOCK" force-release "test-task"
 
@@ -116,11 +124,11 @@ teardown() {
 }
 
 @test "force-release: reports previous owner" {
-    "$TASK_LOCK" acquire "test-task" "session-original" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_ORIG" > /dev/null
 
     run "$TASK_LOCK" force-release "test-task"
 
-    [[ "$output" == *"session-original"* ]]
+    [[ "$output" == *"$UUID_ORIG"* ]]
 }
 
 # ============================================================================
@@ -135,18 +143,18 @@ teardown() {
 }
 
 @test "check: reports locked with details" {
-    "$TASK_LOCK" acquire "test-task" "session-123" "/work/tree" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" "/work/tree" > /dev/null
 
     run "$TASK_LOCK" check "test-task"
 
     [ "$status" -eq 0 ]
     assert_json_field "$output" '.locked' 'true'
-    assert_json_field "$output" '.session_id' 'session-123'
+    assert_json_field "$output" '.session_id' "$UUID_1"
     assert_json_field "$output" '.worktree' '/work/tree'
 }
 
 @test "check: includes lock age" {
-    "$TASK_LOCK" acquire "test-task" "session-123" > /dev/null
+    "$TASK_LOCK" acquire "test-task" "$UUID_1" > /dev/null
     sleep 1
 
     run "$TASK_LOCK" check "test-task"
@@ -168,8 +176,8 @@ teardown() {
 }
 
 @test "list: returns all locks" {
-    "$TASK_LOCK" acquire "task-1" "session-a" > /dev/null
-    "$TASK_LOCK" acquire "task-2" "session-b" > /dev/null
+    "$TASK_LOCK" acquire "task-1" "$UUID_A" > /dev/null
+    "$TASK_LOCK" acquire "task-2" "$UUID_B" > /dev/null
 
     run "$TASK_LOCK" list
 
@@ -184,11 +192,11 @@ teardown() {
 # ============================================================================
 
 @test "acquire: sanitizes task_id with slashes" {
-    run "$TASK_LOCK" acquire "v1/v1/my-task" "session-123"
+    run "$TASK_LOCK" acquire "v1/v1/my-task" "$UUID_1"
 
     [ "$status" -eq 0 ]
     # Slashes should be replaced with dashes
-    [ -f "$TEST_TEMP_DIR/.claude/cat/locks/v1-v1.0-my-task.lock" ]
+    [ -f "$TEST_TEMP_DIR/.claude/cat/locks/v1-v1-my-task.lock" ]
 }
 
 # ============================================================================
@@ -222,9 +230,9 @@ teardown() {
 
 @test "acquire: only one lock file exists after concurrent access" {
     # Start two acquire attempts in parallel
-    "$TASK_LOCK" acquire "race-task" "session-1" > /dev/null 2>&1 &
+    "$TASK_LOCK" acquire "race-task" "$UUID_1" > /dev/null 2>&1 &
     local pid1=$!
-    "$TASK_LOCK" acquire "race-task" "session-2" > /dev/null 2>&1 &
+    "$TASK_LOCK" acquire "race-task" "$UUID_2" > /dev/null 2>&1 &
     local pid2=$!
 
     wait $pid1 || true
@@ -240,5 +248,5 @@ teardown() {
     # The lock should belong to exactly one session
     local session_id
     session_id=$(grep "^session_id=" "$TEST_TEMP_DIR/.claude/cat/locks/race-task.lock" | cut -d= -f2)
-    [[ "$session_id" == "session-1" ]] || [[ "$session_id" == "session-2" ]]
+    [[ "$session_id" == "$UUID_1" ]] || [[ "$session_id" == "$UUID_2" ]]
 }
