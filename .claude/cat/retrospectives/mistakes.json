@@ -104,5 +104,33 @@
       "catches_variations": true
     },
     "correct_behavior": "Use /cat:register-hook skill when creating hooks. It guides proper hook type selection and provides correct implementation patterns."
+  },
+  {
+    "id": "M095",
+    "timestamp": "2026-01-15T16:19:00Z",
+    "category": "git_operation_failure",
+    "description": "Used soft reset squash workflow for mid-history commits, losing commits after squash range",
+    "root_cause": "git-squash skill workflow assumed commits at branch tip; used branch -f main HEAD which discards commits after the squash range when squashing mid-history",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/skills/git-squash/SKILL.md",
+    "pattern_keywords": [
+      "git",
+      "squash",
+      "mid-history",
+      "soft-reset",
+      "branch-f",
+      "lost-commits"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Check if commits are at branch tip; use interactive rebase workflow for mid-history squashes"
   }
 ]
