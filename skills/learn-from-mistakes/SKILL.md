@@ -432,19 +432,22 @@ else
 fi
 ```
 
-**If triggered, invoke the retrospective skill:**
+**If triggered, MUST use AskUserQuestion (M071):**
 
 ```yaml
 retrospective_trigger:
   condition: mistakes >= threshold OR days >= interval
-  action: "Invoke /cat:run-retrospective"
-  workflow:
-    - Analyze mistakes since last retrospective
-    - Check action item effectiveness
-    - Derive new action items
-    - Create escalations for ineffective fixes
-    - Present action items for execution
+  action: "Use AskUserQuestion to offer user choice"
+  mandatory_prompt:
+    question: "Retrospective threshold exceeded ({count}/{threshold}). Run retrospective now?"
+    options:
+      - "Run now" - Invoke /cat:run-retrospective immediately
+      - "Later" - Inform user to run /cat:run-retrospective when ready
+      - "Skip this cycle" - Reset counter without running
 ```
+
+**Anti-pattern (M071):** Printing "retrospective should be triggered" without using AskUserQuestion
+to give user explicit choice. User must be prompted with options, not just informed.
 
 ## Examples
 
