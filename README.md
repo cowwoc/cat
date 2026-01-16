@@ -194,8 +194,6 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 
 ```json
 {
-  "contextLimit": 200000,
-  "targetContextUsage": 40,
   "trust": "medium",
   "verify": "changed",
   "curiosity": "low",
@@ -208,8 +206,6 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `contextLimit` | number | `200000` | Total context window size in tokens |
-| `targetContextUsage` | number | `40` | Soft limit percentage for task size |
 | `trust` | string | `medium` | Autonomy level (controls review and approval behavior) |
 | `verify` | string | `changed` | What verification runs before checkpoints |
 | `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
@@ -221,11 +217,8 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 - `medium` — Auto-fixes review issues. Presents meaningful choices.
 - `high` — Full autonomy. Skips review. Auto-merges.
 
-**contextLimit** — The maximum tokens available in your model's context window. Used to calculate
-when tasks need decomposition.
-
-**targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
-200K (80K tokens), CAT warns that the task may need decomposition.
+**Context Limits** — Context limits are fixed values. See `agent-architecture.md` § Context Limit Constants
+for the technical specification.
 
 **trust** — How much trust you place in CAT to make decisions:
 - `low` — CAT presents options frequently; you guide most decisions

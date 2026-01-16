@@ -244,8 +244,8 @@ Task path: $ARGUMENTS
 
 Read `.claude/cat/cat-config.json` to determine:
 - `trust` - trust level (high = skip approval gates)
-- `contextLimit` - total context window size
-- `targetContextUsage` - soft limit for task size
+
+**Note:** Context limits are fixed (not configurable). See agent-architecture.md for details.
 
 </step>
 
@@ -604,15 +604,18 @@ Output format (do NOT wrap in ```):
 - Complex logic requiring exploration
 - Estimated steps > 10
 
-**Calculate threshold from config:**
+**Calculate threshold and hard limit (fixed values):**
 
 ```bash
-# Read from cat-config.json
-CONTEXT_LIMIT=$(jq -r '.contextLimit // 200000' .claude/cat/cat-config.json)
-TARGET_USAGE=$(jq -r '.targetContextUsage // 40' .claude/cat/cat-config.json)
-THRESHOLD=$((CONTEXT_LIMIT * TARGET_USAGE / 100))
+# Values from agent-architecture.md § Context Limit Constants
+CONTEXT_LIMIT=...
+SOFT_TARGET_PCT=...
+HARD_LIMIT_PCT=...
+SOFT_TARGET=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
+HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
 
-echo "Context threshold: ${THRESHOLD} tokens (${TARGET_USAGE}% of ${CONTEXT_LIMIT})"
+echo "Soft target: ${SOFT_TARGET} tokens (${SOFT_TARGET_PCT}% of ${CONTEXT_LIMIT})"
+echo "Hard limit: ${HARD_LIMIT} tokens (${HARD_LIMIT_PCT}% of ${CONTEXT_LIMIT})"
 ```
 
 **Estimate task size:**
@@ -639,17 +642,48 @@ echo "Estimated tokens: ${ESTIMATED_TOKENS}"
 
 This estimate will be compared against actual subagent token usage to detect estimation errors.
 
-**If estimated size > threshold:**
+**Hard Limit Enforcement (A018):**
+
+```bash
+if [ "${ESTIMATED_TOKENS}" -ge "${HARD_LIMIT}" ]; then
+  echo "🛑 TASK EXCEEDS HARD LIMIT - MANDATORY DECOMPOSITION"
+  echo "Estimated: ${ESTIMATED_TOKENS} tokens"
+  echo "Hard limit: ${HARD_LIMIT} tokens (80% of context)"
+  echo "Decomposition is REQUIRED. Do NOT spawn subagent."
+  # MANDATORY: invoke /cat:decompose-task
+fi
+```
+
+**If estimated size >= hard limit (80%):**
 
 ```
-⚠️ TASK SIZE EXCEEDS CONTEXT THRESHOLD
+🛑 TASK EXCEEDS HARD LIMIT - MANDATORY DECOMPOSITION
 
 Estimated tokens: ~{estimate}
-Threshold: {THRESHOLD} ({TARGET_USAGE}% of {CONTEXT_LIMIT})
+Hard limit: {HARD_LIMIT} (80% of {CONTEXT_LIMIT})
 
-AUTO-DECOMPOSITION TRIGGERED
-Invoking /cat:decompose-task to split into smaller tasks...
+MANDATORY: Task MUST be decomposed before execution.
+Invoking /cat:decompose-task...
 ```
+
+Invoke `/cat:decompose-task` automatically. Do NOT proceed with single subagent.
+
+**If estimated size > soft threshold but < hard limit:**
+
+```
+⚠️ TASK SIZE EXCEEDS SOFT THRESHOLD
+
+Estimated tokens: ~{estimate}
+Soft threshold: {THRESHOLD} ({TARGET_USAGE}% of {CONTEXT_LIMIT})
+Hard limit: {HARD_LIMIT} (80% of {CONTEXT_LIMIT})
+
+RECOMMENDATION: Consider decomposing for optimal quality.
+Proceeding is allowed but may result in quality degradation.
+```
+
+Ask user whether to decompose or proceed.
+
+**If estimated size <= soft threshold:**
 
 Invoke `/cat:decompose-task` automatically, then proceed with parallel execution.
 
@@ -972,6 +1006,100 @@ Invoke `/cat:learn-from-mistakes` with:
 - Compaction events: {N}
 
 This helps calibrate estimation factors over time and identify patterns in underestimation.
+
+</step>
+
+<step name="aggregate_token_report">
+
+**Aggregate token usage across all subagents (multi-subagent tasks):**
+
+For tasks that spawned multiple subagents (parallel execution or decomposed tasks), aggregate
+token metrics from all `.completion.json` files.
+
+```bash
+# Values from agent-architecture.md § Context Limit Constants
+CONTEXT_LIMIT=...
+HARD_LIMIT_PCT=...
+HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
+
+# Find all subagent completion files for this task
+TASK_WORKTREES=$(find .worktrees -name ".completion.json" -path "*${TASK_ID}*" 2>/dev/null)
+
+# Aggregate metrics
+TOTAL_TOKENS=0
+TOTAL_EXCEEDED=0
+
+echo "## Aggregate Token Report"
+echo ""
+echo "| Subagent | Type | Tokens | % of Limit | Status |"
+echo "|----------|------|--------|------------|--------|"
+
+for completion_file in $TASK_WORKTREES; do
+  SUBAGENT_NAME=$(dirname "$completion_file" | xargs basename)
+  TOKENS=$(jq -r '.tokensUsed // 0' "$completion_file")
+  # Get subagent type from completion.json or parse from directory name
+  SUBAGENT_TYPE=$(jq -r '.subagentType // "implementation"' "$completion_file")
+  PERCENT=$((TOKENS * 100 / CONTEXT_LIMIT))
+  TOTAL_TOKENS=$((TOTAL_TOKENS + TOKENS))
+
+  if [ "$TOKENS" -ge "$HARD_LIMIT" ]; then
+    STATUS="EXCEEDED"
+    TOTAL_EXCEEDED=$((TOTAL_EXCEEDED + 1))
+  elif [ "$TOKENS" -ge "$((HARD_LIMIT * 90 / 100))" ]; then
+    STATUS="WARNING"
+  else
+    STATUS="OK"
+  fi
+
+  echo "| $SUBAGENT_NAME | $SUBAGENT_TYPE | $TOKENS | ${PERCENT}% | $STATUS |"
+done
+
+echo ""
+echo "**Total tokens:** $TOTAL_TOKENS"
+echo "**Subagents exceeded hard limit:** $TOTAL_EXCEEDED"
+```
+
+**If any subagent exceeded hard limit:**
+
+```bash
+if [ "$TOTAL_EXCEEDED" -gt 0 ]; then
+  echo ""
+  echo "⚠️ CONTEXT LIMIT VIOLATIONS DETECTED"
+  echo ""
+  echo "$TOTAL_EXCEEDED subagent(s) exceeded the 80% hard limit."
+  echo "Triggering learn-from-mistakes for each violation..."
+
+  # For each exceeded subagent, invoke learn-from-mistakes
+  for completion_file in $TASK_WORKTREES; do
+    TOKENS=$(jq -r '.tokensUsed // 0' "$completion_file")
+    if [ "$TOKENS" -ge "$HARD_LIMIT" ]; then
+      SUBAGENT_NAME=$(dirname "$completion_file" | xargs basename)
+      # Invoke /cat:learn-from-mistakes with A018 reference
+      echo "Recording violation: $SUBAGENT_NAME used $TOKENS tokens (limit: $HARD_LIMIT)"
+    fi
+  done
+fi
+```
+
+**Output format for aggregate report:**
+
+```
+## Aggregate Token Report
+
+| Subagent | Type | Tokens | % of Limit | Status |
+|----------|------|--------|------------|--------|
+| task-sub-a1b2c3d4 | exploration | 65,000 | 32% | OK |
+| task-sub-e5f6g7h8 | implementation | 170,000 | 85% | EXCEEDED |
+| task-sub-i9j0k1l2 | planning | 45,000 | 22% | OK |
+
+**Total tokens:** 280,000
+**Subagents exceeded hard limit:** 1
+
+⚠️ CONTEXT LIMIT VIOLATIONS DETECTED
+
+1 subagent(s) exceeded the 80% hard limit.
+Triggering learn-from-mistakes for each violation...
+```
 
 </step>
 
@@ -2066,11 +2194,14 @@ See `.claude/cat/workflows/duplicate-task.md` for full handling including:
 - [ ] Task identified and loaded
 - [ ] **Entry gate evaluated (blocked if unmet, unless --override-gate)**
 - [ ] **Task size analyzed (estimate vs threshold)**
+- [ ] **Pre-spawn validation: estimate < hard limit (A018)**
 - [ ] **If oversized: auto-decomposition triggered**
 - [ ] **If decomposed: parallel execution plan generated**
 - [ ] Worktree(s) created with correct branch(es)
 - [ ] PLAN.md executed successfully via subagent(s)
 - [ ] **Token metrics collected and reported to user**
+- [ ] **Aggregate token report generated (multi-subagent tasks)**
+- [ ] **Context limit violations flagged and learn-from-mistakes triggered**
 - [ ] **Compaction events evaluated (decomposition offered if > 0)**
 - [ ] **Stakeholder review passed (or concerns addressed)**
 - [ ] Approval gate passed (if interactive)

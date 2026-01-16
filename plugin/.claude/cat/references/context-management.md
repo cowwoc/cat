@@ -117,14 +117,9 @@ Subagents get **fresh context** (200K tokens, 0% used) - peak performance for au
 - **Recommendation:** Within limits
 ```
 
-## Configuration
+## Fixed Constants
 
-```json
-{
-  "contextLimit": 200000,
-  "targetContextUsage": 40
-}
-```
+Context limits are fixed architectural values, not user-configurable. See `agent-architecture.md` § Context Limit Constants.
 
 ## Summary
 
