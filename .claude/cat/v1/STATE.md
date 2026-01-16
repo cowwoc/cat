@@ -1,4 +1,4 @@
-# Major Version 2 State: Multi-Agent Architecture
+# Major Version 1 State: Multi-Agent Architecture
 
 ## Status
 status: in_progress
