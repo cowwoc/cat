@@ -163,6 +163,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-main-agent-edit.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [

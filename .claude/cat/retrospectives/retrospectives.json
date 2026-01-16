@@ -32,9 +32,9 @@
       "description": "Add verification in learn-from-mistakes: if prevention_type is documentation and similar documentation already exists, BLOCK recording and require escalation to hook/code_fix",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-002",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-16T14:36:13-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-16T14:38:11-05:00",
       "related_mistakes": [
         "M093"
       ],
@@ -51,9 +51,9 @@
       "description": "Consider PreToolUse hook to warn when main agent uses Edit tool on source files (not .claude/, STATE.md, PLAN.md)",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-003",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-16T14:36:13-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-16T14:38:11-05:00",
       "related_mistakes": [
         "M097"
       ],
