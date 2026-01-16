@@ -43,7 +43,7 @@ their vision rather than interrogating for technical details.
 **Verify planning structure exists:**
 
 ```bash
-[ ! -d .claude/cat ] && echo "ERROR: No planning structure. Run /cat:new-project first." && exit 1
+[ ! -d .claude/cat ] && echo "ERROR: No planning structure. Run /cat:init first." && exit 1
 [ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "ERROR: No major versions exist. Run /cat:add-major-version first." && exit 1
 ```
 
