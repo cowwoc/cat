@@ -477,26 +477,47 @@ Look for:
   (Auto-selected: [reason - e.g., "single viable approach" or "matches conservative style"])
 ```
 
-**If choice needed, display fork:**
+**If choice needed, display fork using wizard-style format:**
+
+See [display-standards.md § Fork in the Road](.claude/cat/references/display-standards.md#fork-in-the-road)
+and [choose-approach skill](skills/choose-approach/SKILL.md) for full format.
 
 ```
-╔═══════════════════════════════════════════════════════════════════╗
-║  🔀 FORK IN THE ROAD                                              ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║  Task: {task-name}                                                ║
-║                                                                   ║
-║  [A] [Approach Name]  [⭐ RECOMMENDED if applicable]              ║
-║      [Description]                                                ║
-║      [If recommended: Why: {reason}]                              ║
-║                                                                   ║
-║  [B] [Approach Name]                                              ║
-║      [Description]                                                ║
-║                                                                   ║
-║  [C] 🔍 Research first                                            ║
-║      Analyze the codebase before committing                       ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+═══════════════════════════════════════════════════════════════════
+🔀 FORK IN THE ROAD
+═══════════════════════════════════════════════════════════════════
+
+Task: {task-name}
+Risk: {LOW|MEDIUM|HIGH}
+
+CHOOSE YOUR PATH
+───────────────────────────────────────────────────────────────────
+
+[A] 🛡️ Conservative
+    {scope description}
+    Risk: LOW | Scope: {N} files | ~{N}K tokens
+
+[B] ⚖️ Balanced
+    {scope description}
+    Risk: MEDIUM | Scope: {N} files | ~{N}K tokens
+
+[C] ⚔️ Aggressive
+    {scope description}
+    Risk: HIGH | Scope: {N} files | ~{N}K tokens
+
+───────────────────────────────────────────────────────────────────
+ANALYSIS
+───────────────────────────────────────────────────────────────────
+
+⭐ QUICK WIN: [{letter}] {approach name}
+   {rationale for immediate completion}
+
+🏆 LONG-TERM: [{letter}] {approach name}
+   {rationale for project health over time}
+
+{Note if they differ}
+
+═══════════════════════════════════════════════════════════════════
 ```
 
 Use AskUserQuestion to capture selection.
