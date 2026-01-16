@@ -6,11 +6,11 @@ Version 1.0
 
 | Tier | Price | Who it's for |
 |------|-------|--------------|
-| **Indie** | Free | Solo builders — full CAT, single user |
+| **Indie** | Free | Solo developers — full CAT, single user |
 | **Team** | $19/seat/month | 1-50 seats — adds collaboration features |
 | **Enterprise** | $49/seat/month | 50+ seats — adds compliance & integrations |
 
-**Indie is free forever** - Working alone? Building a side project? Learning?
+**Indie is free** - Working alone? Building a side project? Learning?
 You get full CAT functionality at no cost. No time limits, no feature crippling.
 
 **Team unlocks collaboration** - When you need task locking (so two devs don't
