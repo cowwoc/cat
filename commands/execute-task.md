@@ -326,7 +326,19 @@ git branch "$TASK_BRANCH" "$MAIN_BRANCH" 2>/dev/null || true
 WORKTREE_PATH="../.worktrees/$TASK_BRANCH"
 git worktree add "$WORKTREE_PATH" "$TASK_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
+
+# MANDATORY: Change to worktree directory
+cd "$WORKTREE_PATH"
+pwd  # Verify we're in the worktree
 ```
+
+**CRITICAL: Main agent MUST work from worktree directory**
+
+After creating the worktree, `cd` into it and stay there for the remainder of task execution. This ensures:
+- All file edits happen in the correct isolated context
+- Git commands operate on the task branch
+- STATE.md updates go to the worktree copy (not main workspace)
+- No confusion between main workspace and worktree file paths
 
 **Update task STATE.md:**
 
@@ -579,17 +591,29 @@ Use `/cat:git-squash` skill for safe squashing.
 
 <step name="merge">
 
-**Merge task branch to main:**
+**Return to main workspace and merge:**
+
+**MANDATORY: cd back to main workspace before merging.**
+
+We've been working in the worktree directory. To merge, return to the main workspace (where `main` is checked out):
 
 ```bash
-git checkout {main}
-git merge --no-ff {task-branch} -m "$(cat <<'EOF'
-Merge {major}.{minor}-{task-name}
+# Return to main workspace
+cd /workspace  # Or wherever CLAUDE_PROJECT_DIR is
+pwd  # Verify we're in main workspace (not worktree)
+git branch  # Should show main (or master)
+```
 
-{Summary from PLAN.md goal}
+**Then merge the task branch:**
+
+```bash
+git merge --ff-only {task-branch} -m "$(cat <<'EOF'
+{commit-type}: {summary from PLAN.md goal}
 EOF
 )"
 ```
+
+**Note:** Use `--ff-only` for linear history (not `--no-ff`). See M047.
 
 Handle merge conflicts:
 1. Identify conflicting files
