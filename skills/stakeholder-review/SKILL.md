@@ -236,26 +236,16 @@ Implementation Phase
   Merge to main
 ```
 
-## Configuration
+## When to Run (Automatic Triggering)
 
-Stakeholder review frequency is controlled via `stakeholderReview` in `cat-config.json`:
-
-```json
-{
-  "yoloMode": false,
-  "stakeholderReview": "high-risk-only"
-}
-```
-
-| Value | Behavior |
-|-------|----------|
-| `always` | Run stakeholder review on every task |
-| `high-risk-only` | Only review tasks with high-risk indicators (default) |
-| `never` | Skip stakeholder reviews entirely |
+Stakeholder review is **automatically triggered based on task characteristics**, not a global preference.
+This ensures high-risk changes always get reviewed regardless of user settings.
 
 **High-risk indicators** (any triggers review):
 - Risk section mentions "breaking change", "data loss", "security", "production"
 - Task modifies authentication, authorization, or payment code
 - Task touches 5+ files
+- Task modifies public APIs or interfaces
+- Task involves database schema changes
 
-**Note:** Reviews are always skipped when `yoloMode: true`.
+**Note:** Reviews are always skipped when `yoloMode: true` (user explicitly chose autonomous mode).

@@ -205,27 +205,38 @@ STATE.md UPDATE (required in SAME commit as implementation):
 - Include STATE.md in git add before commit
 ```
 
-**Approach Style (from cat-config.json `approach` preference, for PLANNING subagents):**
+**Leash Setting (from cat-config.json `leash` preference, for PLANNING subagents):**
 ```bash
-APPROACH_PREF=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
+LEASH_PREF=$(jq -r '.leash // "medium"' .claude/cat/cat-config.json)
 ```
 
 | Value | Include in Planning Prompt |
 |-------|---------------------------|
-| `conservative` | "Favor the safest path. Minimize scope. Avoid architectural changes. Prefer incremental fixes." |
-| `balanced` | "Balance safety and thoroughness. Address the core issue without over-engineering." |
-| `aggressive` | "Favor comprehensive solutions. Address root causes. Prefer clean architecture over minimal changes." |
+| `short` | "Present multiple options for the user to choose from. Include conservative, balanced, and comprehensive approaches." |
+| `medium` | "Present options for meaningful trade-offs. For routine decisions, proceed with the balanced approach." |
+| `long` | "Make autonomous decisions. Only present options when the choice has significant architectural implications." |
 
-**Refactoring Scope (from cat-config.json `refactoring` preference, for IMPLEMENTATION subagents):**
+**Curiosity Setting (from cat-config.json `curiosity` preference, for IMPLEMENTATION subagents):**
 ```bash
-REFACTOR_PREF=$(jq -r '.refactoring // "opportunistic"' .claude/cat/cat-config.json)
+CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
 ```
 
 | Value | Include in Implementation Prompt |
 |-------|----------------------------------|
-| `avoid` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
-| `opportunistic` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
-| `eager` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
+| `low` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
+| `medium` | "You MAY note obvious issues encountered while working (same function/class). Log them but don't fix unless trivial." |
+| `high` | "Actively note code quality issues in files you touch. Log them for future tasks." |
+
+**Patience Setting (from cat-config.json `patience` preference, for handling discovered issues):**
+```bash
+PATIENCE_PREF=$(jq -r '.patience // "high"' .claude/cat/cat-config.json)
+```
+
+| Value | Include in Implementation Prompt |
+|-------|----------------------------------|
+| `low` | "Fix discovered issues immediately as part of this task." |
+| `medium` | "Log discovered issues as tasks for the current version." |
+| `high` | "Log discovered issues for future versions based on priority (benefit/cost)." |
 
 **Parser Test Requirements (M079, for parser tasks only):**
 ```
