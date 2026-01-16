@@ -24,7 +24,7 @@ window (target: 40% of limit).
 
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-state.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-plan.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/questioning.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/questioning.md
 
 </execution_context>
 
