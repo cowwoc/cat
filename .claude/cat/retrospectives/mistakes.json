@@ -184,5 +184,32 @@
       "catches_variations": true
     },
     "correct_behavior": "Spawn subagent for ALL code changes including merge conflict resolution - no exceptions for small fixes"
+  },
+  {
+    "id": "M098",
+    "timestamp": "2026-01-16T14:34:30-05:00",
+    "category": "protocol_violation",
+    "description": "Used invalid commit types 'security:' and 'skill:' - valid types are feature, bugfix, test, refactor, performance, docs, style, config, planning",
+    "root_cause": "Assumed commit type was valid without consulting commit-types.md - hook only had denylist, not allowlist",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "hook",
+    "prevention_path": "/workspace/cat/hooks/validate-commit-type.sh",
+    "pattern_keywords": [
+      "commit",
+      "type",
+      "security",
+      "skill",
+      "invalid"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use only valid commit types: feature, bugfix, test, refactor, performance, docs, style, config, planning. Security fixes use bugfix:, skill changes use config:"
   }
 ]
