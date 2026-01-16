@@ -202,7 +202,6 @@ Action required: {what user needs to do}
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/merge-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/stakeholder-review/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/choose-approach/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
 
 </execution_context>
@@ -500,9 +499,6 @@ Output format (do NOT wrap in ```):
 **Goal:**
 {goal from PLAN.md}
 
-**Approach:**
-{approach from PLAN.md}
-
 </step>
 
 <step name="validate_requirements_coverage">
@@ -697,100 +693,118 @@ Continue to choose_approach step.
 
 <step name="choose_approach">
 
-**Present approach options if task has multiple viable paths:**
+**Present approach choice if conditions warrant:**
 
-This step implements the "Fork in the Road" experience. It only presents choices when:
+This step implements the "Fork in the Road" experience. It presents choices when:
+- Trust is NOT high (low or medium)
 - PLAN.md has 2+ genuinely different approaches
-- User's stored preferences don't clearly favor one path
-- Approaches have meaningfully different tradeoffs
+- User's config doesn't clearly predict one path (< 85% confidence)
 
-**Load user preferences:**
+**Step 1: Check trust level**
 
 ```bash
-# Read behavior preferences (1.9+)
-USER_CURIOSITY=$(jq -r '.curiosity // "medium"' .claude/cat/cat-config.json)
-USER_PATIENCE=$(jq -r '.patience // "medium"' .claude/cat/cat-config.json)
+TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
+if [[ "$TRUST_LEVEL" == "high" ]]; then
+  echo "✓ Trust: high - auto-selecting best approach based on config"
+  # Skip to auto-selection
+fi
 ```
 
-**Analyze PLAN.md for approaches:**
+**Step 2: Extract approaches from PLAN.md**
 
-Look for:
-- "## Approach" or "## Approaches" section
-- "## Alternatives" section
-- Risk Assessment section
+Look for `## Approaches` section with subsections like:
+```markdown
+## Approaches
 
-**Decision matrix:**
+### A: [Name]
+- Risk: LOW|MEDIUM|HIGH
+- Scope: N files
+- Description...
 
-| Task Pattern | Curiosity Level | Action |
-|--------------|-----------------|--------|
-| Single approach | Any | Auto-proceed |
-| Low risk, obvious | Any | Auto-proceed |
-| High complexity | Any | Show choice, recommend "Research first" |
-| Multiple approaches | low | Show choice, recommend safer path |
-| Multiple approaches | high | Show choice, recommend comprehensive path |
-| Multiple approaches | medium | Show choice, no recommendation |
-
-**If auto-proceed:**
-
-```
-✓ Approach: [approach name]
-  (Auto-selected: [reason - e.g., "single viable approach" or "matches conservative style"])
+### B: [Name]
+...
 ```
 
-**If choice needed, display fork using wizard-style format:**
+If only one approach exists or no Approaches section:
+```
+✓ Single approach identified - proceeding automatically
+```
+Skip to create_worktree.
 
-See [display-standards.md § Fork in the Road](.claude/cat/references/display-standards.md#fork-in-the-road)
-and [choose-approach skill](skills/choose-approach/SKILL.md) for full format.
+**Step 3: Calculate confidence scores**
+
+For each approach, calculate alignment with user's config:
+
+| Config Setting | Approach Characteristic | Alignment |
+|----------------|------------------------|-----------|
+| trust: low | Risk: LOW | +1.0 |
+| trust: low | Risk: MEDIUM | +0.3 |
+| trust: low | Risk: HIGH | +0.0 |
+| trust: medium | Risk: LOW | +0.5 |
+| trust: medium | Risk: MEDIUM | +1.0 |
+| trust: medium | Risk: HIGH | +0.5 |
+| curiosity: low | Scope: minimal/focused | +1.0 |
+| curiosity: medium | Scope: moderate/balanced | +1.0 |
+| curiosity: high | Scope: comprehensive/broad | +1.0 |
+
+**Confidence calculation:**
+```
+score = (trust_alignment + curiosity_alignment) / 2
+confidence = max_score / sum_of_all_scores * 100
+```
+
+**Step 4: Decision logic**
+
+```
+if max_confidence >= 85%:
+  auto_select(highest_scoring_approach)
+  display: "✓ Approach: [name] (auto-selected: {confidence}% config alignment)"
+else:
+  present_wizard()
+```
+
+**Step 5: Present wizard (if needed)**
+
+Display fork using wizard-style format:
 
 ```
 🔀 FORK IN THE ROAD
 ╭─────────────────────────────────────────────────────────────────╮
    Task: {task-name}
-   Risk: {LOW|MEDIUM|HIGH}
+
+   Multiple viable paths - how would you prefer to proceed?
 
    CHOOSE YOUR PATH
    ─────────────────────────────────────────────────────────────────
 
-   [A] 🛡️ Conservative
-       {scope description}
-       Risk: LOW | Scope: {N} files | ~{N}K tokens
+   [A] {approach-name}
+       {description}
+       Risk: {level} | Scope: {N} files | Config alignment: {N}%
 
-   [B] ⚖️ Balanced
-       {scope description}
-       Risk: MEDIUM | Scope: {N} files | ~{N}K tokens
+   [B] {approach-name}
+       {description}
+       Risk: {level} | Scope: {N} files | Config alignment: {N}%
 
-   [C] ⚔️ Aggressive
-       {scope description}
-       Risk: HIGH | Scope: {N} files | ~{N}K tokens
-
-   ─────────────────────────────────────────────────────────────────
-   ANALYSIS
-   ─────────────────────────────────────────────────────────────────
-
-   ⭐ QUICK WIN: [{letter}] {approach name}
-      {rationale for immediate completion}
-
-   🏆 LONG-TERM: [{letter}] {approach name}
-      {rationale for project health over time}
-
-   {Note if they differ}
+   [C] {approach-name} (if exists)
+       ...
 
 ╰─────────────────────────────────────────────────────────────────╯
 ```
 
-Use AskUserQuestion to capture selection.
+Use AskUserQuestion to capture selection:
+- header: "Approach"
+- question: "Which approach would you like to use?"
+- options: [List of approaches with alignment percentages]
 
-**Record choice in STATE.md:**
+**Step 6: Record selection**
 
 Add to task's STATE.md:
 ```yaml
 - **Approach Selected:** [approach name]
-- **Selection Reason:** [user choice | auto-selected: reason]
+- **Selection Reason:** [user choice | auto-selected: {confidence}% alignment]
 ```
 
-**Pass to subagent:**
-
-The selected approach will be included in the subagent prompt to guide implementation.
+Pass selected approach to subagent prompt to guide implementation.
 
 </step>
 
@@ -872,7 +886,7 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
 2. Invoke `/cat:spawn-subagent` skill with:
    - Task path
-   - PLAN.md contents (with Selected Approach filled in)
+   - PLAN.md contents
    - Worktree path
    - Token tracking enabled
    - Curiosity instruction (determines issue reporting, NOT fixing)
@@ -1424,7 +1438,6 @@ Output format (do NOT wrap in ```):
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                              │
 │  **Task:** {task-name}                                                                       │
-│  **Approach:** {selected approach from choose_approach step}                                 │
 │                                                                                              │
 ├──────────────────────────────────────────────────────────────────────────────────────────────┤
 │  **Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)                          │
@@ -1882,39 +1895,31 @@ Before any file read or code analysis, ask: "Should a subagent do this?"
 | Write test code | ❌ No | Delegate to implementation subagent |
 | Present approval gate | ✅ Yes | Orchestration action |
 
-**Correct workflow pattern (two-stage planning for token efficiency):**
+**Correct workflow pattern:**
 
 ```
 1. Main agent spawns EXPLORATION subagent: "Find all X and report findings"
 2. Exploration subagent returns: "Found X at locations A, B, C with patterns..."
 
-PLANNING STAGE 1 (lightweight):
-3. Main agent spawns PLANNING subagent: "Produce HIGH-LEVEL outlines for three approaches"
-4. Planning subagent returns brief summaries (save agent_id for resumption):
-   - Conservative: [1-2 sentence scope, risk: LOW]
-   - Balanced: [1-2 sentence scope, risk: MEDIUM]
-   - Aggressive: [1-2 sentence scope, risk: HIGH]
-   - agent_id: {uuid} ← SAVE THIS
-
-APPROACH SELECTION:
-5. Main agent selects approach (auto-select if preference matches, else ask user)
-
-PLANNING STAGE 2 (detailed):
-6. Main agent RESUMES planning subagent (using saved agent_id):
-   "User selected [approach]. Now produce the DETAILED implementation spec."
-7. Planning subagent returns comprehensive PLAN.md with execution steps
+PLANNING:
+3. Main agent spawns PLANNING subagent: "Produce detailed implementation plan"
+4. Planning subagent returns comprehensive PLAN.md with:
+   - Risk assessment
+   - Files to modify
+   - Execution steps
+   - Acceptance criteria
 
 IMPLEMENTATION:
-8. Main agent spawns IMPLEMENTATION subagent: "Execute this spec mechanically"
-9. Implementation subagent returns: "Completed. Commits: ..."
-10. Main agent presents approval gate to user
+5. Main agent spawns IMPLEMENTATION subagent: "Execute this spec mechanically"
+6. Implementation subagent returns: "Completed. Commits: ..."
+7. Main agent presents approval gate to user
 ```
 
-**Why two-stage planning:**
-- Stage 1 uses ~5K tokens (outlines only)
-- Selection happens with minimal context
-- Stage 2 uses ~20K tokens (detailed spec)
-- Total: ~25K vs ~60K if all three approaches were fully detailed
+**Config settings drive behavior directly:**
+- Trust: Controls approval gates and auto-selection thresholds
+- Verify: Controls pre-commit verification scope
+- Curiosity: Controls issue discovery breadth
+- Patience: Controls when discovered issues are addressed
 
 **Anti-pattern (M088):** Main agent reading source files "to understand the code" - delegate to exploration subagent.
 
