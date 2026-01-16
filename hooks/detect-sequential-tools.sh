@@ -13,9 +13,10 @@ trap 'echo "ERROR in detect-sequential-tools.sh at line $LINENO: Command failed:
 # - Warns after 2+ sequential independent tool calls
 # - Provides specific batching guidance
 
-# Load helper scripts
-source /workspace/.claude/scripts/session-helper.sh
-source /workspace/.claude/scripts/json-output.sh
+# Load helper scripts from local lib directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/session-helper.sh"
+source "$SCRIPT_DIR/lib/json-output.sh"
 
 # Parse hook input
 INPUT=$(cat)
@@ -141,7 +142,7 @@ See: CLAUDE.md § Performance Optimization Requirements
   echo "{\"last_tool_time\": $CURRENT_TIME, \"sequential_count\": 0, \"last_tool_names\": []}" > "$STATE_FILE"
 
   # Output warning using helper
-  output_hook_warning "ToolUse" "$MESSAGE"
+  output_hook_warning "$MESSAGE"
 fi
 
 exit 0
