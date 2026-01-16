@@ -130,7 +130,13 @@ def main():
             f"<system-reminder>\n{output}\n</system-reminder>"
             for output in outputs
         )
-        response = {"additionalContext": combined}
+        # Use hookSpecificOutput format (same as PostToolUse) for proper delivery
+        response = {
+            "hookSpecificOutput": {
+                "hookEventName": "UserPromptSubmit",
+                "additionalContext": combined
+            }
+        }
         print(json.dumps(response))
     else:
         print("{}")
