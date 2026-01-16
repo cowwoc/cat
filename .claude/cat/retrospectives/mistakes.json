@@ -344,5 +344,32 @@
       "catches_variations": true
     },
     "correct_behavior": "Commit type reflects WHAT changed (bugfix, feature, refactor), not WHERE the file is. File location only determines default type for ambiguous changes."
+  },
+  {
+    "id": "M135",
+    "timestamp": "2026-01-19T14:30:00Z",
+    "category": "assumption_without_verification",
+    "description": "Used incorrect glob pattern for finding task STATE.md files, assuming task/ subdirectory existed when project uses flat structure",
+    "root_cause": "Documentation-reality mismatch: workflow documentation shows task/ subdirectory pattern but CAT own project structure places tasks directly under minor versions",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+    "pattern_keywords": [
+      "task-path",
+      "STATE.md",
+      "find-task",
+      "glob-pattern",
+      "directory-structure"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Task directories are directly under minor versions: .claude/cat/v{major}/v{major}.{minor}/{task-name}/ - NO task/ subdirectory."
   }
 ]
