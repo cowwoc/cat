@@ -1,11 +1,6 @@
 ---
-description: >
-  Guide for formatting Claude-facing documentation with proper line wrapping and YAML multi-line
-  syntax
-tags:
-  - documentation
-  - formatting
-  - yaml
+name: format-documentation
+description: "Guide for formatting Claude-facing documentation with proper line wrapping and YAML multi-line syntax"
 ---
 
 # Format Documentation Skill

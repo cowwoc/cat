@@ -1456,6 +1456,35 @@
         "catches_variations": true
       },
       "correct_behavior": "Call task-lock.sh release without fallback rm commands. If CLAUDE_SESSION_ID unavailable, extract session ID from system reminders."
+    },
+    {
+      "id": "M174",
+      "timestamp": "2026-01-22T12:30:00Z",
+      "category": "protocol_violation",
+      "description": "Status display box borders misaligned - inner box closing lines had 76 width instead of 75, did not follow box-alignment skill procedure",
+      "root_cause": "Loaded status skill but did not load/follow box-alignment skill it references. Typed box output incrementally instead of: collect all lines → calculate widths → pad → output",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md and ${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box",
+        "alignment",
+        "emoji",
+        "width",
+        "status",
+        "border",
+        "padding"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M166",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When outputting closed-border boxes: (1) Load box-alignment skill, (2) Collect ALL content lines first, (3) Calculate display width for each using emoji-widths.json, (4) Find max width, (5) Pad all lines to max, (6) Only then output"
     }
   ]
 }
