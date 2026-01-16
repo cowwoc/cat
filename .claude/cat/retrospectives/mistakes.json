@@ -371,7 +371,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Task directories are directly under minor versions: .claude/cat/v{major}/v{major}.{minor}/{task-name}/ - NO task/ subdirectory."
+      "correct_behavior": "Task directories are directly under minor versions: .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/ - NO task/ subdirectory."
     },
     {
       "id": "M136",
@@ -1226,8 +1226,8 @@
       "id": "M166",
       "timestamp": "2026-01-22T02:21:00Z",
       "category": "protocol_violation",
-      "description": "Used docs: commit type for .claude/cat/v*/ planning files instead of planning:",
-      "root_cause": "Hook blocked docs: but did not enforce that planning: MUST be used for version files. Chose wrong type based on file extension (.md) rather than location (.claude/cat/v*/)",
+      "description": "Used docs: commit type for .claude/cat/issues/v*/ planning files instead of planning:",
+      "root_cause": "Hook blocked docs: but did not enforce that planning: MUST be used for version files. Chose wrong type based on file extension (.md) rather than location (.claude/cat/issues/v*/)",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "hook",
@@ -1246,7 +1246,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Use planning: commit type for all files in .claude/cat/v*/ directory"
+      "correct_behavior": "Use planning: commit type for all files in .claude/cat/issues/v*/ directory"
     },
     {
       "id": "M167",
@@ -2019,7 +2019,7 @@
       "timestamp": "2026-01-22T14:35:00Z",
       "category": "detection_gap",
       "description": "Commit type hook recommended config: for version planning files instead of planning:, requiring two correction cycles",
-      "root_cause": "Hook check order: docs: check recommended config: for any .claude/ file without first checking if files were .claude/cat/v*/ which need planning:",
+      "root_cause": "Hook check order: docs: check recommended config: for any .claude/ file without first checking if files were .claude/cat/issues/v*/ which need planning:",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "hook",
@@ -2039,7 +2039,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Hook should check for .claude/cat/v*/ files first and recommend planning: before falling back to config: for other Claude-facing files"
+      "correct_behavior": "Hook should check for .claude/cat/issues/v*/ files first and recommend planning: before falling back to config: for other Claude-facing files"
     },
     {
       "id": "M196",

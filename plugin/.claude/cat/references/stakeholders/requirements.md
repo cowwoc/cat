@@ -91,7 +91,7 @@ Satisfies section?"*
 
 1. **Read the task's PLAN.md** to extract the `## Satisfies` section (list of REQ-XXX IDs)
 2. **Read the parent minor version's PLAN.md** to get the full requirement descriptions
-   - Path: `.claude/cat/v{major}/v{major}.{minor}/PLAN.md`
+   - Path: `.claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md`
    - Extract the Requirements table with ID, description, priority, and acceptance criteria
 3. **For each claimed requirement**:
    - Locate the requirement definition in the minor version PLAN.md
@@ -139,7 +139,7 @@ For each requirement in PLAN.md:
   "stakeholder": "requirements",
   "approval": "APPROVED|CONCERNS|REJECTED",
   "task_claims": ["REQ-001", "REQ-003"],
-  "version_requirements_source": ".claude/cat/v1/v1/PLAN.md",
+  "version_requirements_source": ".claude/cat/issues/v1/v1.0/PLAN.md",
   "requirements_checked": [
     {
       "id": "REQ-001",

@@ -205,7 +205,7 @@ Create ROADMAP.md:
 
 Create task directories:
 ```bash
-mkdir -p ".claude/cat/v{major}/v{major}.{minor}/{task-name}"
+mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{task-name}"
 ```
 
 **PLAN.md** (from task definition source):
@@ -574,7 +574,7 @@ Output this banner:
 3. Create the task directory structure:
 ```bash
 TASK_NAME="[sanitized-task-name]"
-mkdir -p ".claude/cat/v0/v0.0/${TASK_NAME}"
+mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 ```
 
 4. Create initial PLAN.md for the task:
@@ -621,7 +621,7 @@ git commit -m "docs: add first task - ${TASK_NAME}"
 ╭─── ✅ FIRST TASK CREATED ──────────────────────────────────────────╮
 │                                                                    │
 │  Task: {task-name}                                                 │
-│  Location: .claude/cat/v0/v0.0/{task-name}/                        │
+│  Location: .claude/cat/issues/v0/v0.0/{task-name}/                  │
 │                                                                    │
 │  Files created:                                                    │
 │  - PLAN.md - What needs to be done                                 │

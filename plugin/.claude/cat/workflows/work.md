@@ -577,20 +577,20 @@ Minor version CHANGELOG.md should also be updated in the same commit for atomici
 
 ```bash
 # In task worktree - update STATE.md to completed
-# Edit .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+# Edit .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md:
 #   status: completed
 #   progress: 100%
 #   resolution: implemented
 #   completed: {date}
 
 # In task worktree - update minor version CHANGELOG.md
-# Edit .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md:
+# Edit .claude/cat/issues/v{major}/v{major}.{minor}/CHANGELOG.md:
 # Add task entry to Tasks Completed table:
 #   | {task-name} | {commit-type} | {description from PLAN.md} | implemented |
 
 # Stage STATE.md and CHANGELOG.md with implementation
-git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
-git add .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md
+git add .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git add .claude/cat/issues/v{major}/v{major}.{minor}/CHANGELOG.md
 git commit --amend --no-edit  # Include in last implementation commit
 
 # Detect base branch from worktree metadata (fail-fast if missing)
@@ -657,7 +657,7 @@ This step handles only:
 Before setting a minor version's STATE.md to `status: completed`, verify all nested tasks are complete:
 
 ```bash
-MINOR_PATH=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}"
+MINOR_PATH=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}"
 TOTAL_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec test -f {}/STATE.md \; -print 2>/dev/null | wc -l)
 COMPLETED_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec grep -l "^status: completed" {}/STATE.md \; 2>/dev/null | wc -l)
 
@@ -677,7 +677,7 @@ fi
 Before setting a major version's STATE.md to `status: completed`, verify all nested minor versions are complete:
 
 ```bash
-MAJOR_PATH=".claude/cat/v${MAJOR}"
+MAJOR_PATH=".claude/cat/issues/v${MAJOR}"
 TOTAL_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec test -f {}/STATE.md \; -print 2>/dev/null | wc -l)
 COMPLETED_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec grep -l "^status: completed" {}/STATE.md \; 2>/dev/null | wc -l)
 
@@ -692,7 +692,7 @@ fi
 
 **Anti-pattern (M150):** Marking major version complete without verifying all nested minor versions are complete.
 
-**Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
+**Major version CHANGELOG.md** (`.claude/cat/issues/v{major}/CHANGELOG.md`):
 
 Update aggregate summary only when a minor version completes (all tasks done).
 
