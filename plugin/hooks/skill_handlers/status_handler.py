@@ -123,12 +123,7 @@ def get_task_status(state_file: Path) -> str:
     except Exception:
         return "pending"
 
-    # Try "Status: <value>" format
-    match = re.search(r'^[Ss]tatus:\s*(.+)$', content, re.MULTILINE)
-    if match:
-        return match.group(1).strip()
-
-    # Try "- **Status:** <value>" format
+    # Format: "- **Status:** <value>"
     match = re.search(r'^\- \*\*Status:\*\*\s*(.+)$', content, re.MULTILINE)
     if match:
         return match.group(1).strip()

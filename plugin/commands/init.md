@@ -231,7 +231,10 @@ mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{task-name}"
 ```markdown
 # Task State: {task-name}
 ## Status
-status: completed | progress: 100% | started: DATE | completed: DATE
+- **Status:** completed
+- **Progress:** 100%
+- **Started:** DATE
+- **Completed:** DATE
 ## Commits
 - `{hash}` ({date}) - {subject}
 ## Dependencies
@@ -343,7 +346,7 @@ After importing the project structure, research is needed for pending versions.
 
 ```bash
 # Find all pending minor versions
-PENDING_VERSIONS=$(find .claude/cat -name "STATE.md" -exec grep -l "status: pending" {} \; \
+PENDING_VERSIONS=$(find .claude/cat -name "STATE.md" -exec grep -l "\*\*Status:\*\*.*pending" {} \; \
   | sed 's|.claude/cat/||; s|/STATE.md||' \
   | grep -E "v[0-9]+/v[0-9]+\.[0-9]+" \
   | sed 's|v\([0-9]*\)/v\([0-9]*\.[0-9]*\)|\2|' \
@@ -599,8 +602,8 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 # Task State: {task-name}
 
 ## Status
-status: pending
-progress: 0%
+- **Status:** pending
+- **Progress:** 0%
 
 ## Dependencies
 - None

@@ -223,7 +223,7 @@ try_acquire_lock() {
     local result
     # Capture output regardless of exit code - task-lock.sh returns valid JSON even on failure
     # The JSON contains the actual status (locked, acquired, error) which callers must check
-    result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$task_id" "$SESSION_ID" 2>/dev/null) || true
+    result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$PROJECT_DIR" "$task_id" "$SESSION_ID" 2>/dev/null) || true
 
     # If result is empty, something went very wrong
     if [[ -z "$result" ]]; then
