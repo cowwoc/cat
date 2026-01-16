@@ -19,287 +19,26 @@ Provides situational awareness for project progress.
 
 <process>
 
+<step name="render-status">
 
-<step name="collect-data">
-
-**Collect status data:**
+**Run the status script and output the result:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/status-data.sh" .claude/cat
+"${CLAUDE_PLUGIN_ROOT}/scripts/status.sh" .claude/cat
 ```
 
-This outputs JSON with:
-- `project_name`: Project name from PROJECT.md
-- `percent`: Overall completion percentage
-- `completed`/`total`: Task counts
-- `current_minor`: The current minor version being worked on
-- `first_pending`: Next executable task name
-- `in_progress_task`: Currently in-progress task (if any)
-- `recent_tasks[]`: Array of 3 most recently completed tasks with:
-  - `task`: Task ID (e.g., "v0.3-fix-parser")
-  - `relative`: Relative time (e.g., "12 mins ago", "1 hr ago")
-  - `tokens`: Token usage formatted (e.g., "45K")
-- `majors[]`: Array of major versions with nested minors and their stats
-- `pending_tasks[]`: List of pending tasks in current minor
+This script handles BOTH data collection AND rendering with correct Unicode display widths.
+It outputs a properly formatted box display directly.
 
 If the script fails with "No planning structure found", inform user to run `/cat:init`.
 
-**MANDATORY: Use ONLY the data from status-data.sh and the gate collection below.**
-If the script output seems incomplete (e.g., empty pending_tasks despite work remaining), that indicates
-a script bug - report it after rendering. Never run additional bash commands to "supplement" the data.
-
-**Additionally, collect gate status:**
-
-For each version, read its PLAN.md and extract the `## Gates` section:
-```bash
-# For each minor version, check gates
-for version_dir in .claude/cat/v*/v*.*; do
-  plan_file="$version_dir/PLAN.md"
-  [ -f "$plan_file" ] && grep -A 20 "^## Gates" "$plan_file" 2>/dev/null
-done
-```
-
-Parse gate conditions and evaluate their status:
-- For entry gates: check if conditions are met
-- For exit gates: count how many conditions are satisfied
-
-Store gate status for each version:
-- `entry_gate_satisfied`: boolean
-- `entry_gate_blocking`: string (unmet condition, if any)
-- `exit_gate_progress`: string (e.g., "2/3 conditions met")
-
-**Also check for exit gate tasks:**
-
-Exit gate tasks are identified by the `[task]` prefix in the `### Exit` section of PLAN.md.
-For each version, parse exit gate tasks:
-```bash
-for version_dir in .claude/cat/v*/v*.*; do
-  plan_file="$version_dir/PLAN.md"
-  # Look for [task] prefix in Exit section
-  [ -f "$plan_file" ] && sed -n '/^### Exit/,/^###\|^##/p' "$plan_file" | grep -E '^\s*-\s*\[task\]' 2>/dev/null
-done
-```
-
-Exit gate tasks cannot execute until all non-gating tasks in the version are complete.
-Track for each exit gate task:
-- `is_exit_gate`: true
-- `non_gating_incomplete`: count of incomplete non-gating tasks
+**Output the script result directly to the user** - do not modify or reformat it.
 
 </step>
 
-<step name="detect-terminal">
+<step name="next-steps">
 
-**Detect terminal type (one-time per session):**
-
-If this is the first box rendering in the session, detect the terminal:
-
-```bash
-if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
-elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
-elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
-elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
-else echo "${TERM_PROGRAM:-default}"; fi
-```
-
-Store the detected terminal type for use in padding calculations.
-
-</step>
-
-<step name="load-emoji-widths">
-
-**Load emoji widths for detected terminal:**
-
-Read the emoji widths file:
-
-```bash
-cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
-```
-
-Extract the width map for the detected terminal from `.terminals[terminal]`, falling back to `.default`.
-
-**Width reference (most terminals use these values):**
-
-| Emoji | Width |
-|-------|-------|
-| 🔄 ☑️ 🔳 🚫 🚧 📊 📦 🎯 📋 ⚙️ 🏆 🧠 🐱 🧹 🤝 ✅ 🔍 👀 🔭 ⏳ ⚡ 🔒 ✨ ⚠️ | 2 |
-| ✓ ✗ → • ▸ ▹ ◆ ⚠ █ ░ ─ │ ╭ ╮ ╰ ╯ ├ ┤ | 1 |
-| ASCII characters (letters, numbers, space, punctuation) | 1 |
-
-</step>
-
-<step name="render">
-
-**Render visual status tree:**
-
-**IMPORTANT: Output styled text DIRECTLY - do NOT use Bash tool for rendering.**
-
-Claude Code shows all Bash tool invocations in the terminal. To display clean output without
-tool call wrappers, output the styled text directly as part of your response.
-
-**Calculate padding inline using the emoji widths from the previous step.**
-
-For each content line:
-1. Count each emoji occurrence and multiply by its width (usually 2)
-2. Count all other characters (ASCII, box drawing) as width 1
-3. Sum = display width
-4. Padding needed = target width - 2 (borders) - display width
-5. Construct: `│` + content + (padding × spaces) + `│`
-
-**MANDATORY (M129/M136/M140):** Verify ALL lines have identical display width before output.
-
-**ALIGNMENT ENFORCEMENT (M141) - MANDATORY VALIDATION STEP:**
-
-**CRITICAL (4th recurrence - M136→M137→M140→M141):** Previous documentation-based instructions were
-ignored. This step now requires a MANDATORY Bash tool invocation before ANY status output.
-
-**YOU MUST COMPLETE THESE SUB-STEPS IN ORDER:**
-
-**Sub-step A: Write draft to temp file**
-```bash
-cat > /tmp/status-draft.txt << 'STATUSEOF'
-{YOUR COMPLETE STATUS OUTPUT HERE - all lines from ╭ to ╰}
-STATUSEOF
-```
-
-**Sub-step B: Run validation (MANDATORY Bash invocation)**
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/validate-status-alignment.sh" < /tmp/status-draft.txt
-```
-
-**Sub-step C: Check validation result**
-- If output shows "PASS": Proceed to output the content from /tmp/status-draft.txt
-- If output shows "ERROR" or "ALIGNMENT ERRORS": Fix issues and repeat from Sub-step A
-- **DO NOT output status display if validation was not run or failed**
-
-**Why this enforcement exists:** Skills M136, M137, M140 all added documentation saying "validate
-before output" but agents skipped the validation step. This restructured approach requires you to
-actually invoke Bash with the validation script - the tool call is tracked and verifiable.
-
-The validation script checks:
-- All lines start and end with `│` borders
-- Inner box lines have BOTH inner and outer right borders (│...│ pattern)
-- Inner box top/bottom have correct corner + outer border (╮...│ or ╯...│)
-
-**PRE-OUTPUT CHECKLIST (must complete before rendering):**
-1. Every line inside boxes ends with `│` (right border)
-2. Inner box lines have BOTH inner `│` AND outer `│` borders
-3. No line has floating `│` characters disconnected from content
-4. All lines between top `╭` and bottom `╰` are exactly 70 characters display width
-
-**CRITICAL STRUCTURE (M140):**
-- Outer box width: 70 display characters (including both `│` borders)
-- Inner box width: 57 display characters (nested inside outer)
-- Gap between inner right `│` and outer right `│`: 7 spaces
-
-Every line inside the outer box MUST look like ONE of these patterns:
-```
-│  {content padded to 66 chars}  │          <- Level 0 (no inner box)
-│  ╭─{55 dashes}─╮       │                  <- Inner box top
-│  │  {content padded to 51 chars}  │       │  <- Level 1 (inside inner box)
-│  ╰─{55 dashes}─╯       │                  <- Inner box bottom
-```
-
-**Nesting levels:**
-
-| Level | Format | Interior Width |
-|-------|--------|----------------|
-| 0 | `│{padded_content}│` | 68 |
-| 1 | `│  │{padded_content}│          │` | 52 |
-
-**Example calculation with EXACT character breakdown (M140):**
-
-For a Level 1 line (inside inner box), the structure is:
-```
-│  │  ☑️ v0.1: Core parser (5/5)                       │       │
-^  ^  ^                                                ^       ^
-|  |  |                                                |       |
-|  |  +-- Content starts here                          |       +-- Outer right border (pos 70)
-|  +-- Inner left border (pos 4)                       +-- Inner right border (pos 63)
-+-- Outer left border (pos 1)
-```
-
-Character count verification:
-- Position 1: `│` (outer left) = 1
-- Position 2-3: `  ` (2 spaces) = 2
-- Position 4: `│` (inner left) = 1
-- Position 5-62: Content area (58 display chars including padding)
-- Position 63: `│` (inner right) = 1
-- Position 64-69: `       ` (7 spaces) = 7
-- Position 70: `│` (outer right) = 1
-- **TOTAL: 70 display characters**
-
-Content example: `  ☑️ v0.1: Core parser (5/5)`
-- `  ` = 2 spaces = 2
-- `☑️` = 1 emoji = 2 (display width)
-- ` v0.1: Core parser (5/5)` = 25 chars = 25
-- Content display width = 29
-- Available content area = 58 - 1 (inner right │) = 57
-- Padding needed = 57 - 29 = 28 spaces
-
-Result: `│  │  ☑️ v0.1: Core parser (5/5)                            │       │`
-
-**Assemble final output:**
-
-Combine padded lines with static border lines:
-- Top: `╭─── 🐱 CAT - {name} ───...───╮`
-- Divider: `├───...───┤`
-- Bottom: `╰───...───╯`
-- Empty: `│` + spaces + `│`
-
-**CRITICAL: Do NOT wrap output in code blocks (M125).**
-
-Markdown bold (`**text**`) renders correctly when output directly, but shows as literal asterisks
-inside triple-backtick code blocks. Output the status display as plain text, NOT inside ``` blocks.
-
-**CRITICAL: Keep version info and metrics on the SAME LINE.**
-
-Do not manually wrap lines. Let version description, counts, and gate status all appear on one line.
-The box width should accommodate the content, not force line breaks.
-
-**Use this exact format (substitute actual values):**
-
-╭─── 🐱 CAT - {PROJECT_NAME} ─────────────────────────────────────────╮
-│                                                                    │
-│  📊 Overall: [████████████████████████████████████░░░░░░░░░] {P}%  │
-│  🏆 {COMPLETED}/{TOTAL} tasks complete                             │
-│                                                                    │
-├──── Recent Activity ───────────────────────────────────────────────┤
-│  ✓ {task-id-1}                        {relative-time}  {tokens}    │
-│  ✓ {task-id-2}                        {relative-time}  {tokens}    │
-│  ✓ {task-id-3}                        {relative-time}  {tokens}    │
-├────────────────────────────────────────────────────────────────────┤
-│                                                                    │
-│  ╭─── 📦 v{N}: {Major Version Name} ───────────────────────╮       │
-│  │                                                         │       │
-│  │  ☑️ v{N}.{M}: {Minor description} ({completed}/{total}) │       │
-│  │                                                         │       │
-│  │  🔄 v{N}.{M}: {Current minor} ({c}/{t}) | Exit: {X}/{Y} │       │
-│  │    🔳 {pending-task-1}                                  │       │
-│  │    🔳 {pending-task-2}                                  │       │
-│  │    📋 ... and {N} more pending tasks                    │       │
-│  │                                                         │       │
-│  │  🔳 v{N}.{M}: {Future minor} ({completed}/{total})      │       │
-│  │    🚧 Entry gate: waiting on v{N}.{M-1}                 │       │
-│  │                                                         │       │
-│  ╰─────────────────────────────────────────────────────────╯       │
-│                                                                    │
-├────────────────────────────────────────────────────────────────────┤
-│  🎯 Active: v{N}.{M} - {Minor version description}                 │
-│  📋 Available: {N} pending tasks                                   │
-├────────────────────────────────────────────────────────────────────┤
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-
-**Gate status indicators (show inline with version when applicable):**
-
-For versions with unsatisfied entry gates:
-
-│  │  🚧 v{N}.{M}: {Minor description} ({c}/{t})             │       │
-│  │    🚧 Entry gate: waiting on {unmet condition}          │       │
-
-For current/in-progress versions, show exit gate progress inline:
-
-│  │  🔄 v{N}.{M}: {Current minor} ({c}/{t}) | Exit: 2/3     │       │
+**After the status display, show the NEXT STEPS table:**
 
 **🚀 NEXT STEPS**
 
@@ -312,117 +51,6 @@ For current/in-progress versions, show exit gate progress inline:
 
 **Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
 
-**Progress bar format:** Use block characters: `█` for filled, `░` for empty.
-The bar should be **45 characters** wide (filled + empty = 45) to match the border width.
-Example for 80%: `[████████████████████████████████████░░░░░░░░░]` (36 filled + 9 empty)
-This represents **overall project progress** across all versions.
-
-**Recent Activity section:**
-
-Display up to 3 recently completed tasks from the `recent_tasks[]` array. If no recent tasks exist
-(new project), omit the section entirely.
-
-Format each task as a single line with columns aligned:
-```
-│  ✓ {task-id}                        {relative}  {tokens}    │
-```
-
-Column widths:
-- Task ID: left-aligned, padded to 35 chars
-- Relative time: right-aligned, 12 chars (e.g., "12 mins ago")
-- Tokens: right-aligned, 6 chars (e.g., "45K")
-
-Example with real values:
-```
-├──── Recent Activity ───────────────────────────────────────────────┤
-│  ✓ v0.3-fix-parser-edge-case         12 mins ago     45K tokens   │
-│  ✓ v0.3-add-lambda-support           1 hr ago        62K tokens   │
-│  ✓ v0.2-refactor-lexer               3 hrs ago       38K tokens   │
-├────────────────────────────────────────────────────────────────────┤
-```
-
-**Status symbols (emoji):**
-- ☑️ completed (for done tasks and 100% complete minor versions)
-- 🔄 in-progress (for current minor version AND any actively running task)
-- 🔳 pending (no unsatisfied entry gate)
-- 🚫 blocked (task-level dependencies not met)
-- 🚧 gate waiting (entry gate not satisfied - applies to ALL such versions, not just immediate next)
-
-**CRITICAL: Entry gate evaluation algorithm:**
-For EACH version after the current 🔄 version:
-1. Check if its entry gate is satisfied (predecessor complete?)
-2. If NOT satisfied → use 🚧 (regardless of position in sequence)
-3. If satisfied → use 🔳
-Do NOT use 🔳 for versions whose entry gates depend on incomplete predecessors.
-
-**Task display rules (CRITICAL):**
-- **Completed versions (☑️):** Summary line only, no tasks
-- **Current/in-progress version (🔄):** Show up to 5 pending tasks, then "📋 ... and {N} more"
-- **Blocked versions (🚧):** Summary line + gate blocking message ONLY, no individual tasks
-- **Future pending versions (🔳):** Summary line only, no tasks
-
-**Only the CURRENT active version (marked 🔄) displays its pending tasks.**
-
-**Key point:** Output this text directly in your response. Do NOT wrap it in Bash tool calls.
-The visual structure renders correctly in the terminal without needing ANSI escape codes.
-
-**When a task is actively in progress, show it like:**
-
-│  │  🔄 v{N}.{M}: {Current minor} ({completed}/{total})   │       │
-│  │    🔄 {in-progress-task}                              │       │
-│  │    🔳 {pending-task-1}                                │       │
-│  │    🔳 {pending-task-2}                                │       │
-
-</step>
-
-<step name="blockers">
-
-**Identify blocked tasks and versions:**
-
-If any tasks are blocked by dependencies, list them:
-
-**🚫 BLOCKED TASKS:**
-🚫 v1.1/optimize-ir - waiting on: generate-ir
-🚫 v2.0/emit-code - waiting on: v1.5-core-complete
-
-If any versions have unsatisfied entry gates, list them:
-
-**🚧 ENTRY GATES NOT MET:**
-🚧 v0.6 - waiting on: v0.5 completion
-🚧 v1.0 - waiting on: Major 0 completion
-🚧 v1.2 - waiting on: manual approval
-
-If any tasks are exit gate tasks waiting on non-gating tasks, list them:
-
-**🚧 EXIT GATE TASKS WAITING:**
-🚧 v0.5/validate-spring-framework-parsing - waiting on: 4 non-gating tasks
-   📋 Incomplete: fix-contextual-keyword-declarations, fix-lambda-arrow-in-parenthesized-context, ...
-
-To override an entry gate for a specific task:
-```
-/cat:work {version}-{task} --override-gate
-```
-
-To configure gates:
-```
-/cat:config → 📊 Version Gates
-```
-
-</step>
-
-<step name="next">
-
-**Adapt NEXT STEPS based on state:**
-
-The table options change based on current state:
-
-| State | Option 1 | Option 2 |
-|-------|----------|----------|
-| Has pending tasks | Execute a task | Add new task |
-| All tasks complete for minor | Add new task | Add minor version |
-| All minor versions complete for major | Add minor version | Add major version |
-| All complete | 🎉 All tasks complete! | (no options needed) |
-
 </step>
 
 </process>
@@ -430,33 +58,32 @@ The table options change based on current state:
 <output_format>
 
 The status output should be:
-1. Compact but informative
-2. Easy to scan visually
-3. Show progress at all levels
-4. Highlight current position
-5. Suggest next action
+1. Generated by the status.sh script (NOT by LLM rendering)
+2. Followed by NEXT STEPS table
+3. Followed by Legend
 
 </output_format>
 
 <success_criteria>
 
-- [ ] All major versions displayed
-- [ ] All minor versions under each major displayed
-- [ ] All tasks with correct status emojis (☑️ 🔄 🔳 🚫 🚧)
-- [ ] Gate status shown for versions with entry/exit gates
-- [ ] Versions with unsatisfied entry gates show 🚧 indicator
-- [ ] Progress bar accurate
-- [ ] Current minor version bolded with **markdown**
-- [ ] NEXT STEPS table renders with bold [**1**] and [**2**]
-- [ ] Legend displayed (including 🚧 Gate Waiting)
-- [ ] Output is NOT wrapped in code blocks (``` breaks bold rendering)
-- [ ] Blocked tasks and gate-blocked versions listed (if any)
-- [ ] Exit gate tasks waiting on non-gating tasks shown with 🚧 indicator
-- [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions
-- [ ] **BORDER ALIGNMENT**: Padding calculated inline using emoji widths (no external script)
-- [ ] **BORDER ALIGNMENT**: Every line inside boxes has BOTH left and right `│` borders
-- [ ] **BORDER ALIGNMENT**: Task lines have emoji prefix (🔳, 🔄, etc.) - never bare text
-- [ ] **VALIDATION (M141)**: validate-status-alignment.sh was invoked via Bash tool BEFORE output
-- [ ] **VALIDATION (M141)**: Script returned "PASS" before status display was output
+- [ ] Script executed successfully
+- [ ] Box display shown (from script output)
+- [ ] NEXT STEPS table displayed
+- [ ] Legend displayed
 
 </success_criteria>
+
+<history>
+
+This skill was simplified in M142 (2026-01-19) to fix the 5th recurrence of status alignment issues
+(M136→M137→M140→M141→M142).
+
+**Root cause:** LLMs cannot reliably calculate character-level padding for Unicode text.
+
+**Solution:** Move ALL rendering to a bash script that uses Python for width calculation.
+The skill now just runs the script and outputs the result.
+
+Previous versions had complex inline padding calculations, PRE-OUTPUT CHECKLISTs, and validation
+steps - all of which failed because they still relied on LLM padding calculations.
+
+</history>
