@@ -2,6 +2,8 @@
 name: cat:remove-task
 description: Remove a task
 argument-hint: "[major.minor-task-name]"
+model: haiku
+context: fork
 allowed-tools:
   - Read
   - Write
