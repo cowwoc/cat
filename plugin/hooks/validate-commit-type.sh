@@ -135,8 +135,8 @@ if [[ "$TYPE" == "config" ]]; then
     done
 fi
 
-# Check for planning: vs config: in .claude/cat/ (M133, M156)
-# .claude/cat/v*/ planning files can use planning: or config:
+# Check for planning: vs config: in .claude/cat/ (M133, M156, M166)
+# .claude/cat/v*/ planning files MUST use planning:
 # Other .claude/cat/ files should use config:
 if [[ "$TYPE" == "planning" ]]; then
     STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
@@ -148,6 +148,22 @@ if [[ "$TYPE" == "planning" ]]; then
         output_hook_block "'planning:' used outside version planning" \
             "planning: is for .claude/cat/v*/ version files (STATE.md, PLAN.md)" \
             "Use 'config:' for other .claude/cat/ files"
+        exit 0
+    fi
+fi
+
+# M166: Enforce planning: for .claude/cat/v*/ files (not just block docs:)
+# When committing version planning files, MUST use planning: type
+if [[ "$TYPE" != "planning" ]]; then
+    STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
+    ADD_FILES=$(echo "$COMMAND" | grep -oE 'git add [^&|;]+' | sed 's/git add //' | tr ' ' '\n' || echo "")
+    STAGED=$(printf '%s\n%s' "$STAGED" "$ADD_FILES")
+
+    # Check if ANY staged file is in .claude/cat/v*/ (version planning files)
+    if echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
+        output_hook_block "'$TYPE:' used for version planning files" \
+            "Files in .claude/cat/v*/ (STATE.md, PLAN.md, CHANGELOG.md) require 'planning:' type" \
+            "Change commit type from '$TYPE:' to 'planning:'"
         exit 0
     fi
 fi
