@@ -1,6 +1,6 @@
 ---
 name: git-squash
-description: Safely squash multiple commits into one with automatic backup and verification
+description: Use instead of `git rebase -i` for squashing - ensures unified commit messages (not concatenated)
 ---
 
 # Git Squash Skill
