@@ -12,10 +12,10 @@
 
 ## Tasks Completed
 
-| Task | Type | Resolution | Description |
-|------|------|------------|-------------|
-| {task-name} | {type} | implemented | {brief description} |
-| {dup-task} | - | duplicate of {orig-task} | {what it duplicated} |
+| Task | Type | Description | Resolution |
+|------|------|-------------|------------|
+| {task-name} | {type} | {brief description} | implemented |
+| {dup-task} | - | {what it duplicated} | duplicate of {orig-task} |
 
 **Resolution types:**
 - `implemented` - Task completed normally with its own commit
