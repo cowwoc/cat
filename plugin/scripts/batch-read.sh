@@ -106,7 +106,7 @@ progress_step "Finding files matching pattern: $PATTERN"
 GREP_ARGS=(-r -l)
 
 if [[ -n "$FILE_TYPE" ]]; then
-  GREP_ARGS+=(--include="*.${FILE_TYPE}")
+  GREP_CMD="$GREP_CMD --include=*.${FILE_TYPE}"
   echo "  File type filter: *.$FILE_TYPE"
 fi
 

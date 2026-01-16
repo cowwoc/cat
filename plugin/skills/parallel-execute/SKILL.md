@@ -64,26 +64,26 @@ action: spawn 2 subagents for wave_1
 
 **Progress Output (MANDATORY):**
 
-Display sub-task-based progress for parallel execution:
+Display wave-based progress for parallel execution:
 ```
 ═══════════════════════════════════════════════════
-Sub-task N/M: Spawning K subagents (P% overall | Xs elapsed)
+Wave N/M: Spawning K subagents (P% overall | Xs elapsed)
 ═══════════════════════════════════════════════════
 [Subagent 1/K] task-name-a... spawned
 [Subagent 2/K] task-name-b... spawned
 
-Sub-task N/M: Monitoring K subagents (P% | Xs elapsed | ~Ys remaining)
+Wave N/M: Monitoring K subagents (P% | Xs elapsed | ~Ys remaining)
   ✓ task-name-a: complete (12s, 45K tokens)
   ⏳ task-name-b: running (8s elapsed)
 
-Sub-task N/M: Collecting results (P% | Xs elapsed)
+Wave N/M: Collecting results (P% | Xs elapsed)
   ✓ task-name-a: merged
   ✓ task-name-b: merged
 
-✅ Sub-task N/M complete: 2/2 subagents merged
+✅ Wave N/M complete: 2/2 subagents merged
 ```
 
-Steps per sub-task: 1. Spawn subagents, 2. Monitor progress, 3. Collect results, 4. Merge branches
+Steps per wave: 1. Spawn subagents, 2. Monitor progress, 3. Collect results, 4. Merge branches
 
 ### 1. Identify Parallelizable Tasks
 

@@ -39,6 +39,40 @@ This is CAT's core execution command. It:
 
 </objective>
 
+<progress_output>
+
+**MANDATORY: Display progress at each major step.**
+
+This workflow has 14 major steps. Display progress at each step using this format:
+
+```
+[Step N/14] Step description (P% | Xs elapsed | ~Ys remaining)
+✅ Step completed: result summary
+```
+
+**Major steps for progress tracking:**
+1. Verify planning structure
+2. Find/load task
+3. Acquire task lock
+4. Load task details
+5. Analyze task size
+6. Create worktree and branch
+7. Execute task (spawn subagent)
+8. Collect subagent results
+9. Evaluate token usage
+10. Run stakeholder review
+11. User approval gate
+12. Squash commits
+13. Merge to main
+14. Update state and changelog
+
+**Track timing:**
+- Record start time at command begin: `START_TIME=$(date +%s)`
+- Calculate elapsed at each step: `ELAPSED=$(($(date +%s) - START_TIME))`
+- Estimate remaining based on average step time
+
+</progress_output>
+
 <execution_context>
 
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/execute-task.md
