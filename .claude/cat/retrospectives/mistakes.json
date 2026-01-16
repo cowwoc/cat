@@ -815,6 +815,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Squash commits by type BEFORE presenting approval gate. Users should review clean, squashed commit history."
+    },
+    {
+      "id": "M152",
+      "timestamp": "2026-01-19T22:25:00Z",
+      "category": "protocol_violation",
+      "description": "Accepted concatenated commit message after squash instead of amending to unified message",
+      "root_cause": "git-squash skill lacked explicit instruction to check and amend concatenated messages after squash",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.worktrees/2.0-expand-exploration-subagent-role/skills/git-squash/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "commit_message",
+        "concatenated",
+        "amend",
+        "unified"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After squashing, check commit message with git log -1. If concatenated, amend with unified message describing what the combined change accomplishes."
     }
   ]
 }
