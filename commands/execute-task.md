@@ -643,10 +643,19 @@ not in a separate docs commit:
 ```bash
 # Update task STATE.md before committing implementation
 TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
-
-# Set status to completed and update progress
-# This change must be staged and committed WITH the implementation code
 ```
+
+**Required STATE.md fields for completion (M092):**
+
+```markdown
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** implemented
+- **Dependencies:** [any-dependencies]
+- **Completed:** {YYYY-MM-DD}
+```
+
+Resolution field is MANDATORY. Valid values: `implemented`, `duplicate`, `obsolete`.
 
 **Why:** STATE.md reflects task completion. Separating it from the implementation:
 - Creates disconnected commits that require extra squash/rebase
