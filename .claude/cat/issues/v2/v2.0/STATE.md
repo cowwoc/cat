@@ -69,13 +69,13 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - update-graphics-tagline
 - work-box-hook-precomputation
 - research-executive-summary
+- license-validation-server-jetty-setup
 
 ## Tasks Pending
 - split-retrospective-files-by-time
 - optimize-git-squash
 - move-planning-to-issues-subdir
 - license-validation-server
-- license-validation-server-jetty-setup
 - license-validation-server-api
 - license-validation-server-persistence
 - license-validation-server-security
