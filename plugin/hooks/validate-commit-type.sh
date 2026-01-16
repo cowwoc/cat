@@ -68,8 +68,9 @@ if [[ -n "$TYPE" ]] && ! echo "$TYPE" | grep -qE "^($VALID_TYPES)$"; then
     exit 0
 fi
 
-# Check for docs: used on Claude-facing files (M089, M112, M156)
+# Check for docs: used on Claude-facing files (M089, M112, M156, M193)
 # Claude-facing files should use config:, not docs:
+# EXCEPT: .claude/cat/v*/ files should use planning:
 if [[ "$TYPE" == "docs" ]]; then
     # Get staged files - but note: for "git add X && git commit", the add hasn't run yet!
     # So also extract files from git add commands in the same command string (M156)
@@ -78,6 +79,14 @@ if [[ "$TYPE" == "docs" ]]; then
     # Extract files from "git add" in the command (handles "git add X && git commit")
     ADD_FILES=$(echo "$COMMAND" | grep -oE 'git add [^&|;]+' | sed 's/git add //' | tr ' ' '\n' || echo "")
     STAGED=$(printf '%s\n%s' "$STAGED" "$ADD_FILES")
+
+    # M193: Check for version planning files FIRST (more specific than general .claude/)
+    # These require planning:, not config:
+    if echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
+        output_hook_block "Use 'planning:' for version planning files" \
+            "Files in .claude/cat/v*/ (STATE.md, PLAN.md, CHANGELOG.md) require 'planning:' type"
+        exit 0
+    fi
 
     # Claude-facing file patterns (should use config:, not docs:)
     CLAUDE_FACING_PATTERNS=(
@@ -107,6 +116,13 @@ if [[ "$TYPE" == "config" ]]; then
     STAGED=$(git diff --cached --name-only 2>/dev/null || echo "")
     ADD_FILES=$(echo "$COMMAND" | grep -oE 'git add [^&|;]+' | sed 's/git add //' | tr ' ' '\n' || echo "")
     STAGED=$(printf '%s\n%s' "$STAGED" "$ADD_FILES")
+
+    # M193: Check for version planning files FIRST - these need planning:, not config:
+    if echo "$STAGED" | grep -qE "\.claude/cat/v[0-9]"; then
+        output_hook_block "Use 'planning:' for version planning files" \
+            "Files in .claude/cat/v*/ (STATE.md, PLAN.md, CHANGELOG.md) require 'planning:' type"
+        exit 0
+    fi
 
     # Source code patterns that should NOT use config:
     SOURCE_PATTERNS=(
