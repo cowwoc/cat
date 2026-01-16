@@ -145,7 +145,13 @@ For each content line:
 4. Padding needed = target width - 2 (borders) - display width
 5. Construct: `│` + content + (padding × spaces) + `│`
 
-**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
+**MANDATORY (M129/M136):** Verify ALL lines have identical display width before output.
+
+**PRE-OUTPUT CHECKLIST (must complete before rendering):**
+1. Every line inside boxes ends with `│` (right border)
+2. Inner box lines have BOTH inner `│` AND outer `│` borders
+3. No line has floating `│` characters disconnected from content
+4. All lines between top `╭` and bottom `╰` are exactly 70 characters display width
 
 **Nesting levels:**
 
@@ -187,8 +193,8 @@ The box width should accommodate the content, not force line breaks.
 
 ╭─── 🐱 CAT - {PROJECT_NAME} ─────────────────────────────────────────╮
 │                                                                    │
-│  📊 Overall: [████████████████████████████████████░░░░░░░░░] **{PERCENT}%**
-│  🏆 **{COMPLETED}/{TOTAL}** tasks complete                         │
+│  📊 Overall: [████████████████████████████████████░░░░░░░░░] {P}%  │
+│  🏆 {COMPLETED}/{TOTAL} tasks complete                             │
 │                                                                    │
 ├──── Recent Activity ───────────────────────────────────────────────┤
 │  ✓ {task-id-1}                        {relative-time}  {tokens}    │
@@ -196,25 +202,23 @@ The box width should accommodate the content, not force line breaks.
 │  ✓ {task-id-3}                        {relative-time}  {tokens}    │
 ├────────────────────────────────────────────────────────────────────┤
 │                                                                    │
-│  ╭─── 📦 v{N}: {Major Version Name} ────────────────────╮          │
-│  │                                                      │          │
-│  │  ☑️ v{N}.{M}: {Minor description} ({completed}/{total})         │
-│  │  ☑️ v{N}.{M}: {Another completed minor} ({completed}/{total})   │
-│  │                                                      │          │
-│  │  🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total}) | Exit: {X}/{Y}
-│  │    🔳 {pending-task-1}                               │          │
-│  │    🔳 {pending-task-2}                               │          │
-│  │    🔳 {pending-task-3}                               │          │
-│  │    📋 ... and {N} more pending tasks                 │          │
-│  │                                                      │          │
-│  │  🔳 v{N}.{M}: {Future minor} ({completed}/{total})   │          │
-│  │    🚧 Entry gate: waiting on v{N}.{M-1} completion   │          │
-│  │                                                      │          │
-│  ╰──────────────────────────────────────────────────────╯          │
+│  ╭─── 📦 v{N}: {Major Version Name} ───────────────────────╮       │
+│  │                                                         │       │
+│  │  ☑️ v{N}.{M}: {Minor description} ({completed}/{total}) │       │
+│  │                                                         │       │
+│  │  🔄 v{N}.{M}: {Current minor} ({c}/{t}) | Exit: {X}/{Y} │       │
+│  │    🔳 {pending-task-1}                                  │       │
+│  │    🔳 {pending-task-2}                                  │       │
+│  │    📋 ... and {N} more pending tasks                    │       │
+│  │                                                         │       │
+│  │  🔳 v{N}.{M}: {Future minor} ({completed}/{total})      │       │
+│  │    🚧 Entry gate: waiting on v{N}.{M-1}                 │       │
+│  │                                                         │       │
+│  ╰─────────────────────────────────────────────────────────╯       │
 │                                                                    │
 ├────────────────────────────────────────────────────────────────────┤
-│  🎯 **Active Task:** v{N}.{M} - {Minor version description}        │
-│  📋 **Available tasks:** {N} pending                               │
+│  🎯 Active: v{N}.{M} - {Minor version description}                 │
+│  📋 Available: {N} pending tasks                                   │
 ├────────────────────────────────────────────────────────────────────┤
 │                                                                    │
 ╰────────────────────────────────────────────────────────────────────╯
@@ -223,12 +227,12 @@ The box width should accommodate the content, not force line breaks.
 
 For versions with unsatisfied entry gates:
 
-│  │  🚧 v{N}.{M}: {Minor description} ({completed}/{total})   │          │
-│  │    🚧 Entry gate: waiting on {unmet condition}            │          │
+│  │  🚧 v{N}.{M}: {Minor description} ({c}/{t})             │       │
+│  │    🚧 Entry gate: waiting on {unmet condition}          │       │
 
 For current/in-progress versions, show exit gate progress inline:
 
-│  │  🔄 **v{N}.{M}: {Current minor}** ({completed}/{total}) | Exit: 2/3 conditions
+│  │  🔄 v{N}.{M}: {Current minor} ({c}/{t}) | Exit: 2/3     │       │
 
 **🚀 NEXT STEPS**
 
@@ -297,10 +301,10 @@ The visual structure renders correctly in the terminal without needing ANSI esca
 
 **When a task is actively in progress, show it like:**
 
-│  │  🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total})
-│  │    🔄 {in-progress-task}                              │          │
-│  │    🔳 {pending-task-1}                                │          │
-│  │    🔳 {pending-task-2}                                │          │
+│  │  🔄 v{N}.{M}: {Current minor} ({completed}/{total})   │       │
+│  │    🔄 {in-progress-task}                              │       │
+│  │    🔳 {pending-task-1}                                │       │
+│  │    🔳 {pending-task-2}                                │       │
 
 </step>
 
