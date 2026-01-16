@@ -77,6 +77,7 @@ means users cannot verify the actual file state, run tests, or validate the impl
 **ALWAYS**: Execute every step in sequence; if step doesn't apply, note why and continue
 
 Skills exist to enforce consistent processes. Shortcuts defeat their purpose.
+
 INSTRUCTIONS
 )
 

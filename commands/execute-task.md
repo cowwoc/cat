@@ -790,6 +790,23 @@ VERIFY_LEVEL=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
 echo "Verification level: $VERIFY_LEVEL"
 ```
 
+**MANDATORY (M110): Check for actual source changes first:**
+
+```bash
+# Check if any source files changed (not just STATE.md or CHANGELOG.md)
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+SOURCE_CHANGES=$(git diff --name-only ${MAIN_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
+
+if [[ -z "$SOURCE_CHANGES" ]]; then
+  echo "⚡ VERIFICATION: SKIPPED (no source files changed)"
+  echo "Only metadata files changed (.claude/cat/, CHANGELOG.md)"
+  # Skip to stakeholder_review
+fi
+```
+
+**Skip verification for validation-only tasks** that don't modify source code (e.g., running
+parser against external files). Verification is only meaningful when source files changed.
+
 | verify | Action |
 |--------|--------|
 | `none` | Skip verification entirely (fastest iteration) |
