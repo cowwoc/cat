@@ -2,14 +2,43 @@
 
 ## Version History
 
-### 2026-01-13: v1.5
+### 2026-01-14: v1.5
 
-**Orchestration Boundaries and Commit Validation**
+**Quality Gates, Progress Indicators, and Workflow Stability**
 
-- **Main Agent Boundaries (M063)**: New section in execute-task.md enforcing that main agent is
-  orchestrator only - all code implementation must be delegated to subagents
-- **Commit Type Validation Hook**: New validate-commit-type.sh hook that blocks invalid commit types
-  (feat, fix, chore) and enforces CAT standard types (feature, bugfix, test, etc.)
+Major release with multi-perspective stakeholder reviews, visual progress indicators, and extensive
+workflow stability improvements.
+
+**New Features:**
+- **Multi-Perspective Stakeholder Review**: New `stakeholder-review` skill providing architect, security,
+  quality, tester, and performance perspectives before code approval
+- **Progress Indicators**: Long-running workflows now display progress bars for file operations,
+  verification steps, and batch processing
+- **Duplicate Task Resolution**: Automatic detection and handling of duplicate or obsolete tasks
+- **Escalation Requirements**: When prevention rules already exist for a mistake type, escalation is
+  required for pattern-level analysis
+- **Main Agent Boundaries (M063)**: Main agent is orchestrator only - all code implementation must be
+  delegated to subagents
+
+**Bugfixes:**
+- **STATE.md Verification (M085)**: Approval gates now verify STATE.md is committed before presentation
+- **Lock Denial Guidance (M084)**: Clear instructions when task lock acquisition fails
+- **Lock Expiration (M065)**: Removed automatic expiration - requires explicit user cleanup
+- **Plugin Paths**: Replaced hardcoded paths with `CLAUDE_PLUGIN_ROOT` for portability
+
+**Workflow Improvements:**
+- **RCA A/B Testing**: Root cause analysis method comparison for effectiveness tracking
+- **Skill Workflow Compliance**: SessionStart hook enforces complete skill execution
+- **Release Plugin Skill**: Streamlined version release process with branch deletion
+- **Validation-Driven Skills**: Restored shrink-doc and compare-docs with validation requirements
+- **Worktree Directory**: Main agent must work from worktree, not project root
+- **STATE.md Commit Rules**: Refined ordering and verification via hooks (M070, M076, M077)
+
+**Documentation:**
+- Contributing section clarifying project scope and plugin boundaries
+- STATE.md template expanded with optional sections
+- Parser test anti-patterns (M062)
+- Spawn-subagent updated to use Task tool
 
 ### 2026-01-13: v1.3
 
