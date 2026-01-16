@@ -154,6 +154,16 @@ Before outputting ANY status display, you MUST verify alignment using this syste
 1. **Use ONLY the pre-computed template lines below** - do NOT freeform construct lines
 2. **Copy the template EXACTLY**, substituting only the placeholder values
 3. **Count characters for EACH line** you output to verify 70 display width
+4. **Run validation script** on your proposed output before displaying:
+
+```bash
+echo "YOUR_PROPOSED_OUTPUT" | "${CLAUDE_PLUGIN_ROOT}/scripts/validate-status-alignment.sh"
+```
+
+If validation fails, fix the alignment issues before outputting. The script checks:
+- All lines start and end with `│` borders
+- Inner box lines have BOTH inner and outer right borders (│...│ pattern)
+- Inner box top/bottom have correct corner + outer border (╮...│ or ╯...│)
 
 **PRE-OUTPUT CHECKLIST (must complete before rendering):**
 1. Every line inside boxes ends with `│` (right border)
