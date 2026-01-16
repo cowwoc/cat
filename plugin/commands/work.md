@@ -2161,22 +2161,11 @@ esac
 
 **If trust >= medium and next task found (within scope):**
 
-```
-╭─── ✓ Task Complete ────────────────────────────────────────╮
-│                                                            │
-│  **{task-name}** merged to main.                           │
-│                                                            │
-├────────────────────────────────────────────────────────────┤
-│  **Next:** {next-task-name}                                │
-│  {goal from PLAN.md}                                       │
-│                                                            │
-│  Auto-continuing in 3s...                                  │
-│  • Type "stop" to pause after this task                    │
-│  • Type "abort" to cancel immediately                      │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from PRE-COMPUTED WORK BOXES.
+Replace placeholders with actual values:
+- `{task-name}` → completed task name
+- `{next-task-name}` → next task name
+- `{goal from PLAN.md}` → goal line from next task's PLAN.md
 
 **Brief pause for user intervention:**
 
@@ -2192,17 +2181,8 @@ the work session gracefully.
 
 **If scope complete (no more tasks within scope):**
 
-```
-╭─── ✓ Scope Complete ───────────────────────────────────────╮
-│                                                            │
-│  **{scope description}** - all tasks complete!             │
-│                                                            │
-│  {For minor: "v0.5 complete"}                              │
-│  {For major: "v0.x complete"}                              │
-│  {For all: "All versions complete!"}                       │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Use the **SCOPE_COMPLETE** box from PRE-COMPUTED WORK BOXES.
+Replace placeholders based on scope type.
 
 **If trust == low and next task found:**
 
@@ -2212,20 +2192,8 @@ Release the lock (user will re-acquire when they invoke the command):
 "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-```
-╭─── ✓ Task Complete ────────────────────────────────────────╮
-│                                                            │
-│  **{task-name}** merged to main.                           │
-│                                                            │
-├────────────────────────────────────────────────────────────┤
-│  **Next Up:** {next-task-name}                             │
-│  {goal from PLAN.md}                                       │
-│                                                            │
-│  `/cat:work` to continue                                   │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Use the **TASK_COMPLETE_LOW_TRUST** box from PRE-COMPUTED WORK BOXES.
+Replace placeholders with actual values.
 
 If no more tasks in the current minor version (all completed, blocked, or locked):
 
