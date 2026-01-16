@@ -28,11 +28,12 @@ teardown() {
     [ -z "$result" ]
 }
 
-@test "extract_json_value: handles nested JSON" {
+@test "extract_json_value: returns nested object as JSON string" {
     local json='{"outer": {"inner": "value"}}'
     local result=$(extract_json_value "$json" "outer")
-    # Should return empty or the object - jq returns the object as string
-    [ -n "$result" ] || [ -z "$result" ]  # Either is valid
+    # jq returns nested objects as JSON string representation
+    [[ "$result" == *"inner"* ]]
+    [[ "$result" == *"value"* ]]
 }
 
 # ============================================================================
