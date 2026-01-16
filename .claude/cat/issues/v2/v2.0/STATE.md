@@ -77,6 +77,7 @@ Prepare CAT for commercial release with pricing tiers and license key system.
 - update-graphics-tagline
 - work-box-hook-precomputation
 - split-retrospective-files-by-time
+- fix-hierarchy-docs
 
 ## Tasks Pending
 - relocate-stakeholders-dir
