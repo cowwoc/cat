@@ -48,16 +48,16 @@ class AutoLearnMistakesHandler:
             return None
 
         # Build suggestion
-        todowrite_content = f"LFM: Investigate {mistake_type} from {tool_name}"
-        todowrite_active = f"Investigating {mistake_type} mistake"
+        task_subject = f"LFM: Investigate {mistake_type} from {tool_name}"
+        task_active_form = f"Investigating {mistake_type} mistake"
 
         return {
             "additionalContext": f"""📚 MISTAKE DETECTED: {mistake_type}
 
-**MANDATORY**: Check TodoWrite for existing entry, add if not present:
-- content: "{todowrite_content}"
-- status: "pending"
-- activeForm: "{todowrite_active}"
+**MANDATORY**: Use TaskCreate to track this investigation:
+- subject: "{task_subject}"
+- description: "Investigate {mistake_type} detected during {tool_name} execution"
+- activeForm: "{task_active_form}"
 
 **Context**: Detected {mistake_type} during {tool_name} execution.
 **Details**: {mistake_details[:500] if mistake_details else 'N/A'}"""
