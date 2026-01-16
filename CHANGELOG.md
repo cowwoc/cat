@@ -2,6 +2,12 @@
 
 ## Version History
 
+### In Development: v2.0
+
+**Commercialization**
+
+*In development - see planned tasks in .claude/cat/v1/v2.1/*
+
 ### 2026-01-20: v1.10
 
 **Workflow Refinements & Display Improvements**
