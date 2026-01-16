@@ -58,8 +58,8 @@ You figure out:
 **Verify planning structure exists:**
 
 ```bash
-[ ! -d .claude/cat ] && echo "ERROR: No planning structure. Run /cat:new-project first." && exit 1
-[ ! -f .claude/cat/ROADMAP.md ] && echo "ERROR: No ROADMAP.md. Run /cat:new-project first." && exit 1
+[ ! -d .claude/cat ] && echo "ERROR: No planning structure. Run /cat:init first." && exit 1
+[ ! -f .claude/cat/ROADMAP.md ] && echo "ERROR: No ROADMAP.md. Run /cat:init first." && exit 1
 ```
 
 </step>

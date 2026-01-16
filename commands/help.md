@@ -23,7 +23,7 @@ Output ONLY the reference content below. Do NOT add:
 
 ## Quick Start
 
-1. `/cat:new-project` - Initialize project with PROJECT.md and ROADMAP.md
+1. `/cat:init` - Initialize project structure (new or existing codebase)
 2. `/cat:add-major-version` - Create first major version structure
 3. `/cat:add-task 1.0` - Add tasks to minor version 1.0
 4. `/cat:execute-task` - Execute the next available task
@@ -56,17 +56,12 @@ MAJOR -> MINOR -> TASK
 
 ### Project Initialization
 
-**`/cat:new-project`**
-Initialize a new CAT project.
+**`/cat:init`**
+Initialize CAT planning structure (new or existing project).
 - Creates PROJECT.md, ROADMAP.md, cat-config.json
 - Asks for workflow mode (Interactive/YOLO)
-- Deep questioning to gather project context
-
-**`/cat:existing-project`**
-Add CAT structure to an existing codebase.
-- Detects existing code patterns
-- Infers current state as validated requirements
-- Creates planning structure reflecting existing work
+- For new projects: Deep questioning to gather project context
+- For existing codebases: Detects patterns and infers current state
 
 ### Task Execution
 
@@ -144,7 +139,7 @@ Remove an entire major version.
 
 ## Workflow Modes
 
-Set during `/cat:new-project` in cat-config.json:
+Set during `/cat:init` in cat-config.json:
 
 **Interactive Mode** (default)
 - Approval gates at task completion
@@ -178,7 +173,7 @@ Change anytime by editing `.claude/cat/cat-config.json`
 
 **Starting a new project:**
 ```
-/cat:new-project
+/cat:init
 /cat:add-major-version
 /cat:add-task 1.0
 /cat:execute-task
