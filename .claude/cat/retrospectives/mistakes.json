@@ -493,8 +493,8 @@
     "root_cause": "Skill requires complex inline padding calculations with nested border structure. Documentation-level prevention (PRE-OUTPUT CHECKLIST) was not followed. Validation script from M137 exists but is not integrated into skill workflow.",
     "rca_method": "C",
     "rca_method_name": "causal-barrier",
-    "prevention_type": "skill",
-    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+    "prevention_type": "validation",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md and ${CLAUDE_PROJECT_DIR}/plugin/scripts/validate-status-alignment.sh",
     "pattern_keywords": [
       "status",
       "display",
