@@ -357,6 +357,36 @@ CRITICAL: Test expected values MUST be manually derived:
 **Why**: Subagents may use placeholder technique incorrectly - copying actual output without verification
 creates tests that pass but don't validate correctness.
 
+### Do NOT let subagent create tests that only check isSuccess()
+
+Parser tests MUST verify AST structure, not just parsing success:
+
+```bash
+# ❌ WRONG - Only checks parsing succeeded
+claude --prompt "Add tests for new parser feature.
+@Test
+public void testNewFeature() {
+    ParseResult result = parser.parse(source);
+    requireThat(result.isSuccess(), ...).isTrue();  // INADEQUATE!
+}"
+
+# ✅ CORRECT - Verifies expected AST structure
+claude --prompt "Add tests for new parser feature.
+@Test
+public void testNewFeature() {
+    ParseResult result = parser.parse(source);
+    requireThat(result.isSuccess(), ...).isTrue();
+    NodeArena actual = result.arena();
+    NodeArena expected = new NodeArena();
+    // Build expected AST with exact node types and positions
+    expected.allocateNode(NodeType.X, startPos, endPos);
+    requireThat(actual, \"actual\").isEqualTo(expected);
+}"
+```
+
+**Why (M062)**: Tests that only check `isSuccess()` provide false confidence - parsing can succeed
+but produce incorrect AST. The `isEqualTo(expected)` pattern catches structural errors.
+
 ### Do NOT spawn dependent tasks simultaneously
 
 ```bash
