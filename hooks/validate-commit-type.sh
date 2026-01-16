@@ -20,8 +20,9 @@ MSG=""
 if [[ "$COMMAND" =~ -m[[:space:]]+[\"\']([^\"\']+)[\"\'] ]]; then
   MSG="${BASH_REMATCH[1]}"
 elif [[ "$COMMAND" =~ -m[[:space:]]+\"?\$\(cat ]]; then
-  # HEREDOC pattern - extract the first line after EOF
-  MSG=$(echo "$COMMAND" | grep -oP "(?<=EOF\n)[^\n]+" | head -1 || echo "")
+  # HEREDOC pattern - extract the first line after EOF (or 'EOF)
+  # The content appears after the EOF marker on a new line
+  MSG=$(printf '%s' "$COMMAND" | sed -n "/<<'*EOF/,/^EOF/{/<<'*EOF/d;/^EOF/d;p;}" | head -1 || echo "")
 fi
 
 # If no message found, allow (might be interactive or --amend without -m)
