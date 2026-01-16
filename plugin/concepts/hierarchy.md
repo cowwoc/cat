@@ -1,5 +1,7 @@
 # CAT Hierarchy: MAJOR > MINOR > TASK
 
+> **See also:** [version-paths.md](version-paths.md) for path construction functions and patterns.
+
 ## Structure
 
 ```
