@@ -210,8 +210,33 @@ For each task, check:
 - Parse STATUS from STATE.md
 - Parse DEPENDENCIES from STATE.md
 - Verify each task dependency has status: completed
+- **Check if task is an exit gate task** (see below)
 - **Evaluate entry gate from version PLAN.md**
 - **Try to acquire lock (skip if locked by another session)**
+
+**Exit Gate Task Dependency Check:**
+
+If the version's PLAN.md contains a `## Exit Gate Tasks` section, tasks listed there have an implicit
+dependency on ALL other tasks in the same version. Exit gate tasks can only execute when every
+non-exit-gate task in the version is completed.
+
+Example PLAN.md structure:
+```markdown
+## Exit Gate Tasks
+- validate-spring-framework-parsing
+```
+
+For a task listed in `## Exit Gate Tasks`:
+1. Get all tasks in the same minor version
+2. Exclude tasks that are also in the exit gate list
+3. If ANY non-exit-gate task has status other than `completed`, this task is blocked
+
+Display if blocked:
+```
+⏸️ Task {task-name} blocked by exit gate rule:
+   🚧 Waiting on: {count} non-gating tasks to complete
+   📋 Pending: {list of incomplete non-gating tasks}
+```
 
 **If entry gate not satisfied for a task:**
 
@@ -235,6 +260,7 @@ No executable tasks found.
 Possible reasons:
 - All tasks completed
 - Remaining tasks have unmet dependencies
+- Exit gate tasks waiting for non-gating tasks to complete
 - Entry gates not satisfied
 - All eligible tasks are locked by other sessions
 - No tasks defined yet
