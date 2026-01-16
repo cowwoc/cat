@@ -590,6 +590,46 @@ This step handles only:
 1. Parent STATE.md progress rollup (minor/major)
 2. Major version CHANGELOG.md (if minor version completes)
 
+**MANDATORY: Validate Before Marking Minor Version Complete (M150)**
+
+Before setting a minor version's STATE.md to `status: completed`, verify all nested tasks are complete:
+
+```bash
+MINOR_PATH=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}"
+TOTAL_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec test -f {}/STATE.md \; -print 2>/dev/null | wc -l)
+COMPLETED_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec grep -l "^status: completed" {}/STATE.md \; 2>/dev/null | wc -l)
+
+if [[ "$COMPLETED_TASKS" -lt "$TOTAL_TASKS" ]]; then
+  echo "⚠️ Cannot mark minor complete: $((TOTAL_TASKS - COMPLETED_TASKS))/$TOTAL_TASKS tasks still pending"
+  # Do NOT update minor STATE.md to completed
+else
+  # Safe to mark minor version as completed
+  # Update minor STATE.md: status: completed
+fi
+```
+
+**Anti-pattern (M150):** Marking minor version complete without verifying all nested tasks are complete.
+
+**MANDATORY: Validate Before Marking Major Version Complete (M150)**
+
+Before setting a major version's STATE.md to `status: completed`, verify all nested minor versions are complete:
+
+```bash
+MAJOR_PATH=".claude/cat/v${MAJOR}"
+TOTAL_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec test -f {}/STATE.md \; -print 2>/dev/null | wc -l)
+COMPLETED_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec grep -l "^status: completed" {}/STATE.md \; 2>/dev/null | wc -l)
+
+if [[ "$COMPLETED_MINORS" -lt "$TOTAL_MINORS" ]]; then
+  echo "⚠️ Cannot mark major complete: $((TOTAL_MINORS - COMPLETED_MINORS))/$TOTAL_MINORS minor versions still pending"
+  # Do NOT update major STATE.md to completed
+else
+  # Safe to mark major version as completed
+  # Update major STATE.md: status: completed
+fi
+```
+
+**Anti-pattern (M150):** Marking major version complete without verifying all nested minor versions are complete.
+
 **Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
 
 Update aggregate summary only when a minor version completes (all tasks done).
