@@ -102,16 +102,16 @@ EOF
 
 progress_step "Finding files matching pattern: $PATTERN"
 
-# Build grep command
-GREP_CMD="grep -r -l"
+# Build grep arguments as array (safe from injection)
+GREP_ARGS=(-r -l)
 
 if [[ -n "$FILE_TYPE" ]]; then
-  GREP_CMD="$GREP_CMD --include=*.${FILE_TYPE}"
+  GREP_ARGS+=(--include="*.${FILE_TYPE}")
   echo "  File type filter: *.$FILE_TYPE"
 fi
 
-# Find files containing pattern
-if ! MATCHING_FILES=$(eval "$GREP_CMD \"$PATTERN\" . 2>/dev/null | head -n $MAX_FILES"); then
+# Find files containing pattern (no eval - safe from command injection)
+if ! MATCHING_FILES=$(grep "${GREP_ARGS[@]}" -- "$PATTERN" . 2>/dev/null | head -n "$MAX_FILES"); then
   FILES_FOUND=0
   output_result "error" "No files found matching pattern: $PATTERN"
 fi

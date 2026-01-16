@@ -90,6 +90,29 @@ if [[ -f "$HOOK_PATH" ]]; then
     exit 1
 fi
 
+# Validate script content
+# 1. Must start with shebang
+if [[ ! "$SCRIPT_CONTENT" =~ ^#!/ ]]; then
+    echo "{\"status\": \"error\", \"message\": \"Script must start with shebang (e.g., #!/bin/bash)\"}"
+    exit 1
+fi
+
+# 2. Syntax check via bash -n
+TEMP_SCRIPT=$(mktemp)
+echo "$SCRIPT_CONTENT" > "$TEMP_SCRIPT"
+if ! bash -n "$TEMP_SCRIPT" 2>/dev/null; then
+    rm -f "$TEMP_SCRIPT"
+    echo "{\"status\": \"error\", \"message\": \"Script has syntax errors. Run 'bash -n' to check.\"}"
+    exit 1
+fi
+rm -f "$TEMP_SCRIPT"
+
+# 3. Warn about potentially dangerous patterns (but don't block)
+DANGEROUS_PATTERNS="curl.*\|.*bash|wget.*\|.*sh|rm -rf /[^.]|eval.*\$|exec.*<"
+if echo "$SCRIPT_CONTENT" | grep -qE "$DANGEROUS_PATTERNS"; then
+    echo "⚠️  Warning: Script contains potentially dangerous patterns. Review carefully." >&2
+fi
+
 # Write hook script
 echo "$SCRIPT_CONTENT" > "$HOOK_PATH"
 chmod +x "$HOOK_PATH"
