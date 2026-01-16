@@ -95,13 +95,13 @@ Before squashing/merging, update task STATE.md to completed in the task branch:
 
 ```bash
 # In task worktree - update STATE.md
-# .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+# .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
 #   status: completed
 #   progress: 100%
 #   completed: {date}
 
 # Include in implementation commit
-git add .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 git commit --amend --no-edit
 ```
 
@@ -148,10 +148,10 @@ git branch -d {major}.{minor}-{task-name}-sub-*
 Update minor and major STATE.md progress (task STATE.md already updated in step 6):
 
 - Minor STATE.md: recalculate progress based on completed tasks
-- Major STATE.md: recalculate progress based on completed minor versions
+- Major STATE.md: recalculate progress based on completed minors
 - ROADMAP.md: update if version status changed
 
-### 10. Update Changelogs
+### 11. Update Changelogs
 
 Update minor/major CHANGELOG.md to include completed task summary.
 
@@ -160,7 +160,7 @@ Update minor/major CHANGELOG.md to include completed task summary.
 
 ## Yolo Mode Differences
 
-In Yolo mode, steps 5-6 are automatic:
+In Yolo mode, steps 5-7 are automatic:
 - No user approval required
 - Immediate merge after verification passes
 - Cleanup proceeds without pause
