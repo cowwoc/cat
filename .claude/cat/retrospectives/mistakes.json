@@ -371,5 +371,34 @@
       "catches_variations": true
     },
     "correct_behavior": "Task directories are directly under minor versions: .claude/cat/v{major}/v{major}.{minor}/{task-name}/ - NO task/ subdirectory."
+  },
+  {
+    "id": "M136",
+    "timestamp": "2026-01-19T12:30:00Z",
+    "category": "protocol_violation",
+    "description": "Status display output had 5 vertical alignment issues - missing closing borders and floating disconnected border characters",
+    "root_cause": "Template in status.md skill had inconsistent borders, and M129 verification step was skipped during output",
+    "rca_method": "B",
+    "rca_method_name": "taxonomy",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/plugin/commands/status.md",
+    "pattern_keywords": [
+      "status",
+      "display",
+      "alignment",
+      "border",
+      "emoji",
+      "width",
+      "padding"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Verify all lines have consistent borders using the PRE-OUTPUT CHECKLIST before rendering status display"
   }
 ]
