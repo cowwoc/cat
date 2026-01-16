@@ -54,14 +54,14 @@ TASK_PLAN=".claude/cat/tasks/${MAJOR}.${MINOR}-${TASK_NAME}/PLAN.md"
 
 ### 4. Configure Session Tracking
 
-Create session file for token tracking:
+Create session tracking files:
 
 ```bash
-# Session file location
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+# Write session ID to worktree for monitoring script
+echo "${SESSION_ID}" > "${WORKTREE_PATH}/.session_id"
 
-# Record spawn event
-echo '{"type":"spawn","parent_session":"'${PARENT_SESSION}'","task":"'${TASK_NAME}'","timestamp":"'$(date -Iseconds)'"}' >> "${SESSION_FILE}"
+# Session file location (for reference)
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 ```
 
 ### 5. Launch Subagent
@@ -70,13 +70,20 @@ echo '{"type":"spawn","parent_session":"'${PARENT_SESSION}'","task":"'${TASK_NAM
 # Change to worktree and launch Claude Code
 cd "${WORKTREE_PATH}"
 
-# Launch with task context - MUST include completion report requirement
+# Launch with task context - MUST include completion marker requirement
 claude --resume "${SESSION_ID}" \
   --prompt "Execute PLAN.md at ${TASK_PLAN}.
-On completion, output JSON completion report:
-{\"status\": \"success|failure\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}
-Calculate tokens from session file using jq (see agent-architecture.md)."
+
+COMPLETION REQUIREMENT:
+When finished, write completion marker to worktree:
+  echo '{\"status\":\"success\",\"tokensUsed\":N,\"compactionEvents\":N,\"summary\":\"...\"}' > .completion.json
+
+Calculate tokens: jq -s '[.[] | select(.type == \"assistant\") | .message.usage | (.input_tokens + .output_tokens)] | add' \"/home/node/.config/claude/projects/-workspace/\${SESSION_ID}.jsonl\"
+Count compactions: jq -s '[.[] | select(.type == \"summary\")] | length' same-file"
 ```
+
+**CRITICAL**: The `.completion.json` marker enables lightweight monitoring. Without it, the parent
+must parse session files to detect completion.
 
 ### 6. Record Spawn in Parent STATE.md
 
@@ -101,21 +108,25 @@ subagents:
 # Parent agent spawning subagent for parser task
 TASK="1.2-implement-parser"
 UUID="a1b2c3d4"
+WORKTREE=".worktrees/${TASK}-sub-${UUID}"
 
-git worktree add -b "${TASK}-sub-${UUID}" ".worktrees/${TASK}-sub-${UUID}" HEAD
+git worktree add -b "${TASK}-sub-${UUID}" "${WORKTREE}" HEAD
 
-# Launch subagent with completion report requirement
-cd ".worktrees/${TASK}-sub-${UUID}"
+# Write session ID for monitoring script
+echo "${SESSION_ID}" > "${WORKTREE}/.session_id"
+
+# Launch subagent with completion marker requirement
+cd "${WORKTREE}"
 claude --prompt "Execute task 1.2 PLAN.md.
-On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}"
+On completion: echo '{\"status\":\"success\",\"tokensUsed\":N,\"compactionEvents\":N,\"summary\":\"...\"}' > .completion.json"
 ```
 
 ### Spawn with Token Budget
 
 ```bash
-# Include token budget and completion report requirement
+# Include token budget and completion marker requirement
 claude --prompt "Execute task 1.2 PLAN.md. Token budget: 80,000 tokens.
-On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}"
+On completion: echo '{\"status\":\"success\",\"tokensUsed\":N,\"compactionEvents\":N,\"summary\":\"...\"}' > .completion.json"
 ```
 
 ## Anti-Patterns
@@ -126,9 +137,9 @@ On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactio
 # ❌ Spawning with vague instructions
 claude --prompt "Work on the parser"
 
-# ✅ Spawning with concrete plan and completion report requirement
+# ✅ Spawning with concrete plan and completion marker requirement
 claude --prompt "Execute PLAN.md at .claude/cat/tasks/1.2-implement-parser/PLAN.md.
-On completion, output JSON: {\"status\": \"...\", \"tokensUsed\": N, \"compactionEvents\": N, \"summary\": \"...\"}"
+On completion: echo '{\"status\":\"success\",...}' > .completion.json"
 ```
 
 ### Do NOT assume subagent will infer implementation details
