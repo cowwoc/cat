@@ -16,21 +16,15 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/json-parser.sh"
 
-# Read tool input from stdin
-INPUT=""
-if [ -t 0 ]; then
+# Initialize as Bash hook (reads stdin, parses JSON, extracts command)
+if ! init_bash_hook; then
     echo '{}'
     exit 0
-else
-    INPUT="$(timeout 5s cat 2>/dev/null)" || INPUT=""
 fi
 
-# Extract command and tool name
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
-
-# Only check Bash commands
-if [[ "$TOOL_NAME" != "Bash" ]] || [[ -z "$COMMAND" ]]; then
+# Use HOOK_COMMAND from init_bash_hook
+COMMAND="$HOOK_COMMAND"
+if [[ -z "$COMMAND" ]]; then
     echo '{}'
     exit 0
 fi

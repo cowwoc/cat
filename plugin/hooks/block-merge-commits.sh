@@ -37,21 +37,15 @@ If main has diverged from your branch:
 EOF
 fi
 
-# Read tool input from stdin (Claude Code passes JSON via stdin)
-INPUT=""
-if [ -t 0 ]; then
+# Initialize as Bash hook (reads stdin, parses JSON, extracts command)
+if ! init_bash_hook; then
     echo '{}'
     exit 0
-else
-    INPUT="$(timeout 5s cat 2>/dev/null)" || INPUT=""
 fi
 
-# Extract the command from tool input
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null || echo "")
-
-# Only check Bash commands
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
-if [[ "$TOOL_NAME" != "Bash" ]] || [[ -z "$COMMAND" ]]; then
+# Use HOOK_COMMAND from init_bash_hook
+COMMAND="$HOOK_COMMAND"
+if [[ -z "$COMMAND" ]]; then
     echo '{}'
     exit 0
 fi

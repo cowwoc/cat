@@ -23,7 +23,7 @@ if ! init_bash_hook; then
 fi
 
 # Check for rm commands targeting lock files
-if echo "$BASH_COMMAND" | grep -qE 'rm\s+(-[frivI]+\s+)*.*\.claude/cat/locks'; then
+if echo "$HOOK_COMMAND" | grep -qE 'rm\s+(-[frivI]+\s+)*.*\.claude/cat/locks'; then
     output_hook_block "BLOCKED: Direct deletion of lock files is not allowed.
 
 Lock files exist to prevent concurrent task execution. Deleting them directly
@@ -42,7 +42,7 @@ NEVER delete lock files directly. The task-lock.sh script handles all lock opera
 fi
 
 # Also block force removal of the entire locks directory
-if echo "$BASH_COMMAND" | grep -qE 'rm\s+(-[frivI]+\s+)*.*\.claude/cat/locks/?(\s|$|")'; then
+if echo "$HOOK_COMMAND" | grep -qE 'rm\s+(-[frivI]+\s+)*.*\.claude/cat/locks/?(\s|$|")'; then
     output_hook_block "BLOCKED: Cannot remove the locks directory. Use /cat:cleanup to safely remove stale locks."
     exit 0
 fi
