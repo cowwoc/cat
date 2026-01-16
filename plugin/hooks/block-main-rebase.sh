@@ -38,8 +38,65 @@ if [[ -z "$COMMAND" ]]; then
     exit 0
 fi
 
-# Check if command contains git rebase
+# Convert to lowercase for matching
 COMMAND_LOWER=$(echo "$COMMAND" | tr '[:upper:]' '[:lower:]')
+
+# Check if command is a git checkout/switch that would change branch in main worktree
+# M205: Block ANY checkout in main worktree, not just checkout+rebase combinations
+if echo "$COMMAND_LOWER" | grep -qE "(^|[;&|])[[:space:]]*git[[:space:]]+(checkout|switch)[[:space:]]"; then
+	# Check if this targets the main worktree (/workspace)
+	# Matches: cd /workspace && git checkout, or just git checkout from /workspace
+	IS_MAIN_WORKTREE=false
+
+	# Check if command explicitly cd's to /workspace
+	if echo "$COMMAND" | grep -qE "cd[[:space:]]+(/workspace|['\"]*/workspace['\"]*)([[:space:]]|&&|;|$)"; then
+		IS_MAIN_WORKTREE=true
+	fi
+
+	# Check if current directory IS /workspace (main worktree)
+	if [[ "$PWD" == "/workspace" ]]; then
+		# Make sure we're not in a worktree subdirectory
+		GIT_COMMON_DIR=$(git rev-parse --git-common-dir 2>/dev/null || echo "")
+		GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || echo "")
+		if [[ "$GIT_COMMON_DIR" == "$GIT_DIR" || "$GIT_COMMON_DIR" == ".git" ]]; then
+			IS_MAIN_WORKTREE=true
+		fi
+	fi
+
+	if $IS_MAIN_WORKTREE; then
+		# Extract the branch being checked out
+		CHECKOUT_TARGET=$(echo "$COMMAND" | sed -n 's/.*git[[:space:]]\+\(checkout\|switch\)[[:space:]]\+\([^[:space:];&|]*\).*/\2/p' | head -1)
+
+		# Allow: checkout files (with -- prefix), checkout -b (create branch)
+		# Block: checkout <branch-name> that would change HEAD
+		if [[ -n "$CHECKOUT_TARGET" && "$CHECKOUT_TARGET" != "--" && "$CHECKOUT_TARGET" != "-b" && "$CHECKOUT_TARGET" != "-B" ]]; then
+			cat << EOF >&2
+
+🚨 GIT CHECKOUT IN MAIN WORKTREE BLOCKED (M205)
+═══════════════════════════════════════════════════════════════
+
+❌ Attempted: git checkout $CHECKOUT_TARGET in main worktree
+✅ Correct:   Use task worktrees - never change main worktree's branch
+
+WHY THIS IS BLOCKED:
+• The main worktree (/workspace) should keep its current branch
+• Task worktrees exist precisely to avoid touching main workspace state
+• Changing main worktree's branch disrupts operations and breaks assumptions
+
+WHAT TO DO INSTEAD:
+• For task work: Use the task worktree at /workspace/.worktrees/<branch>
+• For cleanup: Delete the worktree directory, don't checkout in main
+• For merging: Use fast-forward merge, not checkout
+
+═══════════════════════════════════════════════════════════════
+EOF
+			output_hook_block "Blocked (M205): Cannot checkout '$CHECKOUT_TARGET' in main worktree. Use task worktrees instead."
+			exit 0
+		fi
+	fi
+fi
+
+# Check if command contains git rebase
 if ! echo "$COMMAND_LOWER" | grep -qE "(^|[;&|])[[:space:]]*git[[:space:]]+rebase"; then
 	echo '{}'
 	exit 0

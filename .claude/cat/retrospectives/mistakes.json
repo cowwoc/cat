@@ -2283,6 +2283,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Pass task_id as combined format (e.g., 2.0-taskname) and session_id as valid UUID"
+    },
+    {
+      "id": "M205",
+      "timestamp": "2026-01-22T15:30:00-05:00",
+      "category": "protocol_violation",
+      "description": "Ran git checkout v2.0 in main worktree (/workspace) during task abort cleanup, violating M154 rule",
+      "root_cause": "ACTION module failure - executed git checkout in wrong directory during cleanup. Cleanup should only delete worktree, not change main workspace branch state.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/block-main-rebase.sh",
+      "pattern_keywords": [
+        "git-checkout",
+        "main-worktree",
+        "cleanup",
+        "M154"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "During task cleanup, only delete the worktree directory. Never run git checkout in main worktree (/workspace). Main worktree should keep its current branch unchanged."
     }
   ]
 }
