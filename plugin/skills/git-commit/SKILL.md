@@ -187,7 +187,7 @@ Task ID: v1.1-implement-user-auth
 
 ### Commit Type Separation (MANDATORY)
 
-**Keep one commit type per commit.** Each commit should have ONE type.
+**NEVER mix commit types in a single commit.** Each commit should have ONE type.
 
 ```
 # WRONG - Mixed types in one commit
