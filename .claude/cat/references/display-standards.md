@@ -92,6 +92,8 @@ When calculating padding for lines with emojis:
 - Count each emoji as **2 characters**
 - Subtract emoji display width from available content space
 
+All emojis (with or without VS16) render as **2 display cells** in terminals.
+
 ### Box Template
 
 ```
@@ -145,13 +147,13 @@ def display_width(s):
     i = 0
     while i < len(s):
         c = s[i]
-        # Skip variation selectors (handled by lookahead below)
+        # Skip variation selectors (invisible)
         if c == '\uFE0F':
             i += 1
             continue
         # Check if next char is VS16 (emoji presentation selector)
         has_vs16 = (i + 1 < len(s) and s[i + 1] == '\uFE0F')
-        # Emoji presentation (VS16) or high codepoint emoji = 2 columns
+        # Emoji (high codepoint or with VS16) = 2 columns
         if has_vs16 or ord(c) >= 0x1F300:
             width += 2
         elif unicodedata.east_asian_width(c) in ('F', 'W'):
@@ -215,13 +217,10 @@ Note: Header has 1 emoji (✅) = remove 1 space from padding.
 ```
 
 **Not accounting for emoji width (WRONG):**
-```
-║  ⏸️ NO EXECUTABLE TASKS                                           ║
-```
-The emoji displays as 2 chars but only counts as 1 in string length. Remove 1 space:
-```
-║  ⏸️ NO EXECUTABLE TASKS                                          ║
-```
+
+When calculating padding, remember that emojis display as 2 cells but may have
+different `len()` values depending on VS16 presence. Always use the `display_width()`
+function to calculate actual terminal width, not `len()`.
 
 **Mixing border styles within one box (WRONG):**
 ```
