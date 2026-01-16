@@ -366,9 +366,29 @@ Use appropriate template (Feature, Bugfix, or Refactor) from add-task.md referen
 
 <step name="task_update_parent">
 
-**Update parent minor STATE.md:**
+**Update parent minor STATE.md (MANDATORY):**
 
-Recalculate progress and update task count.
+Add the new task to the "Tasks Pending" list in STATE.md:
+
+```bash
+VERSION_STATE=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+
+# Add task to Tasks Pending section
+# Find the "## Tasks Pending" line and append the new task
+if grep -q "^## Tasks Pending" "$VERSION_STATE"; then
+  # Add task name to the pending list
+  sed -i "/^## Tasks Pending/a - $TASK_NAME" "$VERSION_STATE"
+else
+  # If no Tasks Pending section exists, create it
+  echo -e "\n## Tasks Pending\n- $TASK_NAME" >> "$VERSION_STATE"
+fi
+```
+
+**Verify the update:**
+
+```bash
+grep -q "$TASK_NAME" "$VERSION_STATE" || echo "ERROR: Task not added to STATE.md"
+```
 
 </step>
 

@@ -23,3 +23,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - offline-validation
 - jwt-token-generation
 - update-check-startup
+- compact-stakeholder-review-output
+- compact-token-report
+- hide-tool-calls-during-execution
+- streamline-task-not-found-error

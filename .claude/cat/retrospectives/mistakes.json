@@ -1109,6 +1109,36 @@
         "catches_variations": true
       },
       "correct_behavior": "Filter out completed versions before presenting task target options. Only versions with status pending or in-progress should be offered."
+    },
+    {
+      "id": "M163",
+      "timestamp": "2026-01-21T11:05:00Z",
+      "category": "protocol_violation",
+      "description": "Created tasks via /cat:add without updating parent STATE.md Tasks Pending list",
+      "root_cause": "Vague workflow step task_update_parent said 'update task count' without specifying to add task names to pending list",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "taxonomy_module": "PLANNING",
+      "taxonomy_failure_mode": "Incomplete workflow execution - skipped mandatory step",
+      "taxonomy_failure_type": "FALSE_NEGATIVE",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/add.md",
+      "pattern_keywords": [
+        "add",
+        "task",
+        "STATE.md",
+        "pending",
+        "parent"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After creating task STATE.md and PLAN.md, always add task name to parent version STATE.md Tasks Pending list"
     }
   ]
 }
