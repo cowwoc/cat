@@ -151,16 +151,16 @@ Update minor and major STATE.md progress (task STATE.md already updated in step 
 - Major STATE.md: recalculate progress based on completed minor versions
 - ROADMAP.md: update if version status changed
 
-### 11. Update Changelogs
+### 10. Update Changelogs
 
 Update minor/major CHANGELOG.md to include completed task summary.
 
 > **NOTE**: Task changelog content is embedded in commit messages, not separate files.
 > Minor/major version CHANGELOG.md files aggregate completed tasks.
 
-## High Trust Mode Differences
+## Yolo Mode Differences
 
-When trust is high, steps 5-7 are automatic:
+In Yolo mode, steps 5-6 are automatic:
 - No user approval required
 - Immediate merge after verification passes
 - Cleanup proceeds without pause
