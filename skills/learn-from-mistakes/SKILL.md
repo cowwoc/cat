@@ -312,16 +312,9 @@ jq --argjson new '{...new entry...}' '. += [$new]' \
   && mv .claude/cat/retrospectives/mistakes.json.tmp .claude/cat/retrospectives/mistakes.json
 ```
 
-**Commit the learning:**
+### 10. Update Retrospective Counter and Commit
 
-```bash
-git add .claude/cat/retrospectives/mistakes.json
-git commit -m "docs: record learning ${NEXT_ID} - {short description}"
-```
-
-### 10. Check Retrospective Trigger
-
-**MANDATORY: After recording each mistake, check if retrospective is needed.**
+**MANDATORY: Update counter and commit BOTH files together.**
 
 ```bash
 RETRO_FILE=".claude/cat/retrospectives/retrospectives.json"
@@ -330,7 +323,11 @@ RETRO_FILE=".claude/cat/retrospectives/retrospectives.json"
 jq '.mistake_count_since_last += 1' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
   && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
 
-# Get current values
+# Commit BOTH files together (mistakes.json + retrospectives.json)
+git add .claude/cat/retrospectives/mistakes.json .claude/cat/retrospectives/retrospectives.json
+git commit -m "docs: record learning ${NEXT_ID} - {short description}"
+
+# Get current values to check trigger
 MISTAKES=$(jq '.mistake_count_since_last' "$RETRO_FILE")
 THRESHOLD=$(jq '.config.mistake_count_threshold' "$RETRO_FILE")
 LAST_RETRO=$(jq -r '.last_retrospective' "$RETRO_FILE")
