@@ -571,6 +571,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use status.sh script for ALL rendering. Script uses Python for Unicode width calculation. LLM just runs script and outputs result - no padding calculations by LLM."
+    },
+    {
+      "id": "M143",
+      "timestamp": "2026-01-19T11:28:19Z",
+      "category": "documentation_violation",
+      "description": "Status script output shown only in Bash tool result (collapsed by Claude Code), not in response text",
+      "root_cause": "Skill instruction was ambiguous - said output result to user but did not specify to use Read tool to avoid collapsed Bash output",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+      "pattern_keywords": [
+        "bash-collapse",
+        "output-display",
+        "status-skill",
+        "read-tool"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Write script output to temp file, then use Read tool to display it (avoids Claude Code collapsing large Bash outputs)"
     }
   ]
 }

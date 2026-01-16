@@ -21,18 +21,20 @@ Provides situational awareness for project progress.
 
 <step name="render-status">
 
-**Run the status script and output the result:**
+**Run the status script and capture output to a temp file:**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/status.sh" .claude/cat
+"${CLAUDE_PLUGIN_ROOT}/scripts/status.sh" .claude/cat > /tmp/cat-status-output.txt 2>&1
 ```
 
 This script handles BOTH data collection AND rendering with correct Unicode display widths.
-It outputs a properly formatted box display directly.
 
 If the script fails with "No planning structure found", inform user to run `/cat:init`.
 
-**Output the script result directly to the user** - do not modify or reformat it.
+**Then use the Read tool to read `/tmp/cat-status-output.txt` and display its contents.**
+
+IMPORTANT: Do NOT rely on the Bash tool result display - Claude Code collapses large outputs.
+The status MUST be shown via Read tool so users can see it without expanding collapsed output.
 
 </step>
 
@@ -85,5 +87,8 @@ The skill now just runs the script and outputs the result.
 
 Previous versions had complex inline padding calculations, PRE-OUTPUT CHECKLISTs, and validation
 steps - all of which failed because they still relied on LLM padding calculations.
+
+**M143 update (2026-01-19):** Changed to write script output to temp file, then use Read tool.
+Claude Code collapses large Bash tool results, so output must be shown via Read tool instead.
 
 </history>
