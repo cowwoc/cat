@@ -1,6 +1,6 @@
 # <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Coding That Ships on Schedule
 
-> *"Build on solid ground, not a house of cards."*
+**Agents that land on their feet** - A Claude Code plugin for structured project execution with multi-agent orchestration.
 
 ```
 MAJOR VERSION -> MINOR VERSION -> TASK
@@ -16,47 +16,12 @@ MAJOR VERSION -> MINOR VERSION -> TASK
 | **Reduced Rework** | Built-in verification catches issues before code review |
 | **Team Alignment** | Shared preferences and quality gates across projects |
 
----
-
-## The Problem: AI Coding Without Structure
-
-<p align="center">
-  <img src="docs/problem.png" alt="The problem with AI projects" width="600"/>
-</p>
-
-**For Engineering Leaders:** AI tools promise 10x productivity, but deliver unpredictable results. One developer gets magic, another gets chaos. Progress is invisible until something breaks.
-
-**For Teams:** AI assistants forget context, ignore conventions, and make inconsistent decisions. Every session starts from scratch. Code quality varies wildly.
-
-**CAT solves this.** You define your standards once. CAT enforces them consistently across every developer, every task, every session. Work progresses when you approve it. Nothing changes while you're away.
-
----
-
-## See It In Action
-
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=IvRLJq989og&t=167s">
-    <img src="docs/video-thumbnail.png" alt="Watch CAT in action - click to play video" width="600"/>
-  </a>
-  <br/>
-  <em>See how CAT transforms chaotic AI coding into structured, reliable progress.</em>
-</p>
-
----
-
-## Getting Started
-
-<p align="center">
-  <a href="#getting-started"><img src="docs/choose-path.svg" alt="Choose Your Path" width="500"/></a>
-</p>
-
-<p align="center">
-  <a href="#quick-start"><b>[A] Quick Start</b></a> ·
-  <a href="#how-cat-works"><b>[B] How It Works</b></a> ·
-  <a href="#commands"><b>[C] Commands</b></a>
-</p>
-
----
+- **Hierarchical planning** - Break work into Major > Minor > Task levels
+- **Token-aware execution** - Tasks sized to fit within context limits
+- **Multi-agent orchestration** - Subagents execute in isolated worktrees
+- **Quality gates** - Approval checkpoints prevent runaway changes
+- **Automatic state tracking** - Never lose progress between sessions
+- **Continuous improvement** - Learns from mistakes and runs regular retrospectives
 
 ## Quick Start
 
@@ -122,184 +87,10 @@ Your answers shape how CAT makes decisions throughout your project.
 
 CAT organizes work into three levels:
 
-<p align="center">
-  <a href="#hierarchical-planning">
-    <img src="docs/hierarchy.svg" alt="Hierarchy" width="500"/>
-  </a>
-</p>
-
-- **Major versions** are your milestones (v1: "Core Features", v2: "Polish & Performance")
-- **Minor versions** group related work (v1.0: "Authentication", v1.1: "User Profiles")
-- **Tasks** are individual units of work sized to fit in a single session
-
-### Team Preferences
-
-During `/cat:init`, you configure preferences that apply consistently across your team:
-
-| Preference | What It Controls |
-|------------|------------------|
-| **Trust** | How much autonomy CAT has to make decisions |
-| **Verify** | What verification runs before presenting changes |
-| **Curiosity** | Whether CAT notes optimization opportunities beyond the task |
-| **Patience** | When CAT acts on discovered opportunities |
-
-**For Teams:** These preferences become your team's coding standards. Every developer, every project, every session follows the same rules.
-
-### The Workflow: Task Lifecycle
-
-<p align="center">
-  <a href="#the-workflow-task-lifecycle">
-    <img src="docs/task-lifecycle.svg" alt="Task Lifecycle" width="500"/>
-  </a>
-</p>
-
-Each task follows this path:
-
-1. **Planning** → PLAN.md defines the task objectives
-2. **Approach Selection** → At forks in the road, you choose the path
-3. **Execution** → Subagent works in isolation (no risk to your main branch)
-4. **Verification** → Build, test, lint—all must pass
-5. **Review** → Optional stakeholder council weighs in
-6. **Checkpoint** → You approve or request changes
-7. **Completion** → Merged to main, progress saved
-
-### Built-In Reliability
-
-CAT includes safeguards that protect your codebase and ensure consistent delivery:
-
-| Feature | Business Value |
-|---------|----------------|
-| **Token-Aware Tasks** | Tasks sized to complete successfully, reducing failed sessions |
-| **Isolated Worktrees** | Each task runs separately — no risk to your main branch |
-| **Automatic State Tracking** | Resume instantly after interruptions — no lost progress |
-| **Learn from Mistakes** | CAT analyzes failures and prevents the same issues recurring |
-| **Quality Gates** | Multi-perspective reviews catch bugs before they reach production |
-
----
-
-## Commands
-
-### Your Main Actions
-
-| Command | What It Does |
-|---------|--------------|
-| `/cat:init` | Initialize project structure |
-| `/cat:status` | View project status and progress |
-| `/cat:work [scope]` | Execute tasks (see below) |
-| `/cat:help` | Quick reference for all commands |
-
-**`/cat:work` scope options:**
-
-| Scope | Example | What Happens |
-|-------|---------|--------------|
-| (none) | `/cat:work` | Work through ALL incomplete tasks |
-| major | `/cat:work 0` | Complete all tasks in v0.x |
-| minor | `/cat:work 0.5` | Complete all tasks in v0.5 |
-| task | `/cat:work 0.5-auth` | Complete single task only |
-
-When trust >= medium, CAT auto-continues to the next task within scope.
-
-### Building Your Map
-
-| Command | What It Does |
-|---------|--------------|
-| `/cat:add [description]` | Add a task or version. With description, creates task directly |
-| `/cat:research` | Research before committing to an approach |
-
-### Housekeeping
-
-| Command | What It Does |
-|---------|--------------|
-| `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
-| `/cat:config` | Change your preferences |
-| `/cat:learn` | Analyze and learn from mistakes |
-| `/cat:remove` | Remove a task or version |
-
----
-
-## Configuration
-
-Your CAT settings live in `.claude/cat/cat-config.json`:
-
-```json
-{
-  "trust": "medium",
-  "verify": "changed",
-  "curiosity": "low",
-  "patience": "high",
-  "terminalWidth": 120
-}
-```
-
-### Options Reference
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `trust` | string | `medium` | Autonomy level (controls review and approval behavior) |
-| `verify` | string | `changed` | What verification runs before checkpoints |
-| `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
-| `patience` | string | `high` | When CAT acts on discovered opportunities |
-| `terminalWidth` | number | `120` | Display width in characters for output formatting |
-| `autoRemoveWorktrees` | boolean | `true` | Auto-cleanup worktrees on task completion |
-
-**trust** — How much trust you place in CAT to make decisions:
-- `low` — CAT presents options frequently; you guide most decisions
-- `medium` — CAT presents options for meaningful trade-offs; handles routine choices
-- `high` — CAT decides autonomously; only presents HIGH risk or architectural choices
-
-**verify** — What verification CAT runs before presenting changes:
-- `none` — No verification; fastest iteration
-- `changed` — Verify modified file/module only; balanced confidence
-- `all` — Verify entire project; highest confidence before checkpoint
-
-**curiosity** — Whether CAT notices optimization opportunities while working:
-- `low` — Stays focused; only completes the assigned task
-- `medium` — Notes obvious issues in touched files; documents but doesn't act
-- `high` — Actively explores for improvements; documents opportunities found
-
-**patience** — When CAT acts on opportunities discovered during work:
-- `low` — Acts immediately on high-priority discoveries (benefit/cost > 3)
-- `medium` — Defers most discoveries; acts on critical issues only
-- `high` — Defers all discoveries to backlog; maximum focus on current task
-
-**terminalWidth** — Display width in characters for output formatting:
-- `120` — Desktop/Laptop (Recommended). Optimized for wide monitors
-- `50` — Mobile. Optimized for phones and narrow screens
-- `40-200` — Custom. Any value in this range is valid
-
-### Stakeholder Reviews
-
-When `verify` is `changed` or `all`, CAT runs multi-perspective stakeholder reviews before merge:
-
-| Stakeholder | Focus |
-|-------------|-------|
-| **requirements** | Verifies task satisfies its claimed requirements from PLAN.md |
-| **architect** | System design, module boundaries, API design, dependencies |
-| **security** | Vulnerabilities, injection, auth, input validation |
-| **quality** | Code duplication, complexity, maintainability, obvious bugs |
-| **tester** | Test coverage, missing tests, edge cases |
-| **performance** | Algorithm complexity, memory usage, blocking operations |
-| **ux** | Usability, accessibility, interaction design |
-| **sales** | Customer value, competitive positioning, demo-readiness |
-| **marketing** | Positioning, messaging, go-to-market readiness |
-
----
-
-## Skills Reference
-
-Skills are specialized abilities CAT can invoke. Most run automatically, but some
-you can call directly:
-
-### Git Operations
-`git-commit` · `git-squash` · `git-rebase` · `git-amend` · `git-merge-linear`
-
-### Multi-Agent Coordination
-`spawn-subagent` · `monitor-subagents` · `collect-results` · `merge-subagent` · `parallel-execute`
-
-### Quality & Learning
-`stakeholder-review` · `learn-from-mistakes` · `run-retrospective` · `decompose-task`
-
----
+| Command | Description |
+|---------|-------------|
+| `/cat:cleanup` | Clean up abandoned worktrees, lock files, and orphaned branches from crashed sessions. |
+| `/cat:research [topic]` | Research implementation approaches before planning. Use for moderate/high complexity features where the best approach isn't obvious. |
 
 ## Project Structure
 
@@ -329,14 +120,24 @@ your-project/
 
 ## Tips for Success
 
-**Start small** — Begin with one major version and a few tasks. Expand as you
-find your rhythm.
+```json
+{
+  "yoloMode": false,
+  "contextLimit": 200000,
+  "targetContextUsage": 40,
+  "autoCleanupWorktrees": true
+}
+```
 
 **Check status** — Run `/cat:status` often. It shows where you are and
 suggests next steps.
 
-**Scout unfamiliar territory** — Use `/cat:research` before tackling complex
-features in unknown domains.
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `yoloMode` | boolean | `false` | When `true`, skips approval gates and auto-proceeds. When `false`, requires user approval at each task completion. |
+| `contextLimit` | number | `200000` | Total context window size in tokens. Set based on your Claude model's limit. |
+| `targetContextUsage` | number | `40` | Target maximum context usage as a percentage (40 = 40%). Tasks are sized to stay within this limit. At 200K context, 40 means ~80K tokens per task. |
+| `autoCleanupWorktrees` | boolean | `true` | When `true`, automatically removes worktrees and task branches after successful merge. When `false`, keeps them for manual inspection. |
 
 **Clear the fog** — Run `/clear` between tasks to start fresh with full context.
 
@@ -357,7 +158,70 @@ Contributions are welcome when they:
 
 Open an issue to discuss before investing significant effort.
 
----
+### Task Management
+| Skill | Description |
+|-------|-------------|
+| `decompose-task` | Split oversized task into smaller tasks |
+| `token-report` | Generate detailed token usage report |
+| `run-retrospective` | Run scheduled retrospective analysis |
+
+### Development
+| Skill | Description |
+|-------|-------------|
+| `tdd-implementation` | Test-driven development workflow |
+| `learn-from-mistakes` | Analyze mistakes and implement prevention |
+| `batch-read` | Read multiple files efficiently (50-70% faster) |
+| `grep-and-read` | Find and read files in one operation |
+
+### Utilities
+| Skill | Description |
+|-------|-------------|
+| `safe-rm` | Safely remove files without breaking shell |
+| `validate-git-safety` | Validate git operations won't affect protected branches |
+
+## Task Lifecycle
+
+```
+PENDING → IN-PROGRESS → COMPLETED
+   │           │            │
+   │           │            └── Merged to main, worktree cleaned
+   │           └── Executing in isolated worktree
+   └── Dependencies not yet met
+```
+
+1. **Task Created** - PLAN.md defines what to do
+2. **Dependencies Check** - Waits for required tasks to complete
+3. **Worktree Created** - Isolated git worktree for safe execution
+4. **Execution** - Subagent or direct execution
+5. **Approval Gate** - User reviews changes (interactive mode)
+6. **Commit Squash** - Implementation commits (feature, bugfix, test, refactor, docs) squashed together; config commits squashed separately
+7. **Merge** - Task branch merged to main
+8. **Cleanup** - Worktree removed, STATE.md updated
+
+## Status Indicators
+
+When viewing `/cat:status`:
+
+| Symbol | Meaning |
+|--------|---------|
+| `[x]` | Completed |
+| `[>]` | In progress |
+| `[ ]` | Pending |
+| `[!]` | Blocked (dependencies not met) |
+
+## Tips
+
+- **Start small** - Begin with one major version and a few tasks
+- **Clear `/clear`** - Run `/clear` between tasks for fresh context
+- **Check status** - Use `/cat:status` to see where you are
+- **Research first** - Use `/cat:research` for unfamiliar domains before planning
+- **YOLO wisely** - Only enable YOLO mode for well-understood, low-risk work
+
+## Uninstall
+
+```bash
+/plugin uninstall cat
+```
 
 ## License
 
