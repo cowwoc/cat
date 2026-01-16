@@ -81,3 +81,15 @@ def5678 config: mark add-nested-annotation-type-support complete
 ```
 
 Use `test:` type ONLY for standalone test changes (no production code).
+
+**Bugfixes with tests**: Tests written as part of a bugfix (TDD or otherwise) belong in the SAME commit
+as the fix. The tests verify the fix works - they are part of the implementation, not separate artifacts.
+
+```
+# ❌ WRONG - separate commits for test and fix
+abc1234 test: add test for comment handling
+def5678 bugfix: fix comment parsing
+
+# ✅ CORRECT - single commit with test and fix
+abc1234 bugfix: fix comment parsing (includes tests)
+```
