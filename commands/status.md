@@ -64,11 +64,13 @@ Store gate status for each version:
 
 **Also check for exit gate tasks:**
 
-For each version, check if PLAN.md contains `## Exit Gate Tasks`:
+Exit gate tasks are identified by the `[task]` prefix in the `### Exit` section of PLAN.md.
+For each version, parse exit gate tasks:
 ```bash
 for version_dir in .claude/cat/v*/v*.*; do
   plan_file="$version_dir/PLAN.md"
-  [ -f "$plan_file" ] && grep -A 10 "^## Exit Gate Tasks" "$plan_file" 2>/dev/null
+  # Look for [task] prefix in Exit section
+  [ -f "$plan_file" ] && sed -n '/^### Exit/,/^###\|^##/p' "$plan_file" | grep -E '^\s*-\s*\[task\]' 2>/dev/null
 done
 ```
 

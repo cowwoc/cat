@@ -216,19 +216,29 @@ For each task, check:
 
 **Exit Gate Task Dependency Check:**
 
-If the version's PLAN.md contains a `## Exit Gate Tasks` section, tasks listed there have an implicit
-dependency on ALL other tasks in the same version. Exit gate tasks can only execute when every
-non-exit-gate task in the version is completed.
+Exit gate tasks are identified by the `[task]` prefix in the `### Exit` section of PLAN.md. Tasks
+marked with this prefix have an implicit dependency on ALL other tasks in the same version and can
+only execute when every non-exit-gate task is completed.
 
 Example PLAN.md structure:
 ```markdown
-## Exit Gate Tasks
-- validate-spring-framework-parsing
+## Gates
+
+### Entry
+- Previous version (v0.4) complete
+
+### Exit
+- [task] validate-spring-framework-parsing
 ```
 
-For a task listed in `## Exit Gate Tasks`:
+**Parsing exit gate tasks:**
+1. Read the `### Exit` section under `## Gates`
+2. Look for lines matching `- [task] {task-name}`
+3. Extract task names (strip the `[task]` prefix)
+
+For a task marked with `[task]` in the Exit section:
 1. Get all tasks in the same minor version
-2. Exclude tasks that are also in the exit gate list
+2. Exclude tasks that are also marked as exit gate tasks
 3. If ANY non-exit-gate task has status other than `completed`, this task is blocked
 
 Display if blocked:
