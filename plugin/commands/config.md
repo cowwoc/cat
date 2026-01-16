@@ -114,15 +114,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
-```
-╭─── 🐱 CAT BEHAVIOR ────────────────────────────────────────────────╮
-│                                                                    │
-│  🤝 Trust: {trust}                                                 │
-│  ✅ Verify: {verify}                                               │
-│  🔍 Curiosity: {curiosity}                                         │
-│  ⏳ Patience: {patience}                                           │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **CURRENT_SETTINGS** box from PRE-COMPUTED CONFIG BOXES.
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -318,15 +310,7 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 
 **📊 Version Gates configuration:**
 
-Display gate overview:
-
-```
-╭─── 📊 VERSION GATES ───────────────────────────────────────────────╮
-│                                                                    │
-│  Gates control when work can start (entry) and                     │
-│  when a version is considered complete (exit).                     │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **VERSION_GATES_OVERVIEW** box from PRE-COMPUTED CONFIG BOXES.
 
 **Step 1: Select version to configure**
 
@@ -364,15 +348,8 @@ cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and display:
-
-```
-╭─── 🚧 GATES FOR {version} ─────────────────────────────────────────╮
-│                                                                    │
-│  Entry: {entry_conditions or "None configured"}                    │
-│  Exit: {exit_conditions or "None configured"}                      │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from PRE-COMPUTED CONFIG BOXES.
+Replace `{version}` and gate descriptions with actual values.
 
 **Step 3: Choose action**
 
@@ -444,16 +421,8 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Display confirmation:
-
-```
-╭─── ✅ GATES UPDATED ───────────────────────────────────────────────╮
-│                                                                    │
-│  Version: {version}                                                │
-│  Entry: {entry_summary}                                            │
-│  Exit: {exit_summary}                                              │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **GATES_UPDATED** box from PRE-COMPUTED CONFIG BOXES.
+Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
 
@@ -475,14 +444,8 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Display confirmation:
-
-```
-╭─── ✅ SETTING UPDATED ─────────────────────────────────────────────╮
-│                                                                    │
-│  {setting}: {oldValue} → {newValue}                                │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **SETTING_UPDATED** box from PRE-COMPUTED CONFIG BOXES.
+Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
 
 **After confirming**: Return to the **parent menu** and re-display its options.
 
@@ -499,23 +462,11 @@ Examples:
 
 If changes were made:
 
-```
-╭─── ✅ CONFIGURATION SAVED ─────────────────────────────────────────╮
-│                                                                    │
-│  Changes:                                                          │
-│  - {change1}                                                       │
-│  - {change2}                                                       │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **CONFIGURATION_SAVED** box from PRE-COMPUTED CONFIG BOXES.
 
 If no changes:
 
-```
-╭─── ℹ️ NO CHANGES ──────────────────────────────────────────────────╮
-│                                                                    │
-│  Configuration unchanged.                                          │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **NO_CHANGES** box from PRE-COMPUTED CONFIG BOXES.
 
 </step>
 
