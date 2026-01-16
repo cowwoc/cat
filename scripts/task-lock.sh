@@ -174,33 +174,39 @@ force_release_lock() {
   return 0
 }
 
-# List all locks
+# List all locks (optimized: single jq call instead of O(n))
 list_locks() {
   ensure_lock_dir
 
-  local locks_json="[]"
   local now
   now=$(current_timestamp)
 
+  # Collect all lock data in a simple format first (no jq in loop)
+  local lock_data=""
   for lock_file in "$LOCK_DIR"/*.lock; do
     [[ ! -f "$lock_file" ]] && continue
 
-    local task_id session_id created_at
+    local task_id session_id created_at age
     task_id=$(basename "$lock_file" .lock)
     session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
     created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
+    age=$((now - created_at))
 
-    local entry
-    entry=$(jq -n \
-      --arg task "$task_id" \
-      --arg session "$session_id" \
-      --argjson age "$((now - created_at))" \
-      '{task: $task, session: $session, age_seconds: $age}')
-
-    locks_json=$(echo "$locks_json" | jq --argjson entry "$entry" '. += [$entry]')
+    # Accumulate as tab-separated values
+    lock_data+="${task_id}\t${session_id}\t${age}\n"
   done
 
-  echo "$locks_json"
+  # Single jq call to construct entire JSON array
+  if [[ -z "$lock_data" ]]; then
+    echo "[]"
+  else
+    printf "%b" "$lock_data" | jq -R -s '
+      split("\n") | map(select(length > 0)) | map(
+        split("\t") | {task: .[0], session: .[1], age_seconds: (.[2] | tonumber)}
+      )
+    '
+  fi
+
   return 0
 }
 
