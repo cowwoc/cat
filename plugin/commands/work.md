@@ -1644,6 +1644,30 @@ Use AskUserQuestion with options:
 When presenting approval, say "merge v{major}.{minor} task to {base-branch}" NOT "merge to v{base-branch}"
 which conflates the branch name with the task's version.
 
+**MANDATORY: Include subtask context for decomposed tasks (M251).**
+
+When presenting approval for a subtask (task created by decomposition), provide context:
+
+1. **Identify as subtask**: "This is subtask 1 of 6 from decomposed task `centralize-version-path-resolution`"
+2. **List remaining subtasks**: Show pending subtasks so user understands full scope
+3. **Note dependencies**: Indicate which subtasks are now unblocked
+
+Example approval context for decomposed tasks:
+
+```
+This completes subtask 1 of 6 from decomposed task `parent-task-name`.
+
+Remaining subtasks (Phase 2 - can run in parallel):
+- update-add-command-paths (pending)
+- update-remove-command-paths (pending)
+- update-work-command-paths (pending)
+- update-research-skills-paths (pending)
+- update-python-handler-paths (pending)
+```
+
+**Why this matters:** Without subtask context, users may think the work is complete when it's only
+one piece of a larger decomposition. This leads to confusion about scope and progress.
+
 **If "Request changes":**
 
 Capture user feedback and spawn implementation subagent to address concerns.
