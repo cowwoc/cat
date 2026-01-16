@@ -108,7 +108,7 @@ MAJOR -> MINOR -> TASK
 
 Initialize CAT planning structure (new or existing project).
 - Creates PROJECT.md, ROADMAP.md, cat-config.json
-- Asks for workflow mode (Interactive/YOLO)
+- Asks for trust level (how much autonomy your partner has)
 - For new projects: Deep questioning to gather project context
 - For existing codebases: Detects patterns and infers current state
 - Offers guided first-task creation after setup
@@ -162,17 +162,13 @@ Initialize CAT planning structure (new or existing project).
 
 Set during `/cat:init` in cat-config.json:
 
-**Interactive Mode** (default)
-- Approval gates at task completion
-- User confirms before merge to main
-- Pauses for review opportunities
+**Trust Levels**
 
-**YOLO Mode**
-- Skips approval gates
-- Auto-merges on task completion
-- Continuous execution
+- **Low** - Check in often, verify each move
+- **Medium** (default) - Trust routine calls, review key decisions
+- **High** - Full autonomy, auto-merges on task completion
 
-Change anytime by editing `.claude/cat/cat-config.json`
+Change anytime with `/cat:config` or edit `.claude/cat/cat-config.json`
 
 ## Task Naming Rules
 
