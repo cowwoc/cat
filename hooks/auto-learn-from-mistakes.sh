@@ -35,6 +35,9 @@ trap 'echo "ERROR in auto-learn-from-mistakes.sh at line $LINENO: Command failed
 #   - 2026-01-08: Fixed Pattern 7 and Pattern 11 false positives - added exclusions for
 #                 git log output (commit hashes, headers, indented messages), diff lines,
 #                 and JSON content
+#   - 2026-01-16: Fixed Pattern 13/13b false positives (M100) - parse errors in stderr
+#                 are now only flagged if the command actually failed (non-zero exit code).
+#                 Benign jq stderr output no longer triggers mistake detection.
 
 # Read input from stdin (hook context JSON for PostToolUse)
 HOOK_CONTEXT=$(cat)
@@ -46,6 +49,10 @@ TOOL_NAME=$(echo "$HOOK_CONTEXT" | jq -r '.tool_name // "unknown"')
 TOOL_STDOUT=$(echo "$HOOK_CONTEXT" | jq -r '.tool_response.stdout // ""')
 TOOL_STDERR=$(echo "$HOOK_CONTEXT" | jq -r '.tool_response.stderr // ""')
 TOOL_RESULT="${TOOL_STDOUT}${TOOL_STDERR}"
+
+# Extract exit code for success/failure determination
+# Some patterns should only trigger on actual failures, not benign stderr output
+TOOL_EXIT_CODE=$(echo "$HOOK_CONTEXT" | jq -r '.tool_response.exit_code // 0')
 
 # Extract session ID for conversation log access
 SESSION_ID=$(echo "$HOOK_CONTEXT" | jq -r '.session_id // ""')
@@ -189,13 +196,16 @@ fi
 # Pattern 13: Parse errors (HIGH)
 # Detects jq parse errors, JSON parse errors, XML parse errors, etc.
 # These often indicate function signature mismatches or malformed data
-if echo "$TOOL_RESULT" | grep -qiE "parse error.*Invalid|parse error.*Unexpected|jq: error|JSON.parse.*SyntaxError|Invalid JSON|malformed JSON|Unexpected token|Unexpected end of"; then
+# NOTE: Only trigger if command actually failed (non-zero exit code)
+# Parse errors in stderr are benign if the overall command succeeded (M100)
+if [[ "$TOOL_EXIT_CODE" != "0" ]] && echo "$TOOL_RESULT" | grep -qiE "parse error.*Invalid|parse error.*Unexpected|jq: error|JSON.parse.*SyntaxError|Invalid JSON|malformed JSON|Unexpected token|Unexpected end of"; then
   MISTAKE_TYPE="parse_error"
   MISTAKE_DETAILS=$(echo "$TOOL_RESULT" | grep -B3 -A5 -iE "parse error|jq: error|JSON|SyntaxError|Invalid|malformed|Unexpected" | head -20)
 fi
 
 # Pattern 13b: jq-specific parse errors with line/column info
-if echo "$TOOL_RESULT" | grep -qiE "parse error.*at line [0-9]+|Invalid literal at line"; then
+# NOTE: Only trigger if command actually failed (non-zero exit code) (M100)
+if [[ "$TOOL_EXIT_CODE" != "0" ]] && echo "$TOOL_RESULT" | grep -qiE "parse error.*at line [0-9]+|Invalid literal at line"; then
   MISTAKE_TYPE="parse_error"
   MISTAKE_DETAILS=$(echo "$TOOL_RESULT" | grep -B3 -A5 -iE "parse error|Invalid literal" | head -20)
 fi
