@@ -76,6 +76,19 @@ Use Read tool on /tmp/config-box.txt
 Then in your response, output the box contents before calling AskUserQuestion
 ```
 
+**Anti-pattern (M149): NEVER manually type box characters.**
+```
+# ❌ WRONG - manually typing box in text output
+╭─── ⚙️ SETTINGS ───────────────────────────────────╮
+│  Some setting value                               │  ← LLM cannot align these
+╰───────────────────────────────────────────────────╯
+
+# ✅ CORRECT - use config-box.sh script, then Read and output
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" settings ... > /tmp/config-box.txt
+# Then Read tool on /tmp/config-box.txt
+```
+Why: LLMs miscalculate Unicode character widths (emojis, special chars). ALWAYS use scripts.
+
 </step>
 
 <step name="display-settings">
