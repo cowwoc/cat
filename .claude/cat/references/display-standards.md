@@ -153,15 +153,18 @@ Nested boxes use 2-space indentation. Size boxes to fit their content.
 ╰────────────────────────────────────────────────────────────────╯
 ```
 
-### Section Dividers
+### Section Dividers {#section-dividers}
 
-For separating sections within a box (no title):
+For separating sections within a box, connect dividers to the vertical borders:
 
 ```
-│  ──────────────────────────────────────────────────────────  │
-│  Section content here                                        │
-│  ──────────────────────────────────────────────────────────  │
+├────────────────────────────────────────────────────────────────────┤
+│  Section content here                                              │
+├────────────────────────────────────────────────────────────────────┤
 ```
+
+Use `├` (left tee) and `┤` (right tee) to connect horizontal dividers to vertical borders.
+This creates distinct visual sections and looks more polished than floating lines.
 
 ### Border Characters
 
@@ -171,6 +174,7 @@ For separating sections within a box (no title):
 | `│` | Vertical border (single-line) |
 | `╭` `╮` | Top corners (rounded) - ALL boxes |
 | `╰` `╯` | Bottom corners (rounded) - ALL boxes |
+| `├` `┤` | Internal divider connectors (left/right tee) |
 
 **Standard width**: 70 characters total for small boxes, 96 for full-width boxes.
 
@@ -209,9 +213,9 @@ Output format (do NOT wrap in ```):
 │  **Quest:** task-name                                              │
 │  **Approach:** Selected approach description                       │
 │                                                                    │
-│  ────────────────────────────────────────────────────────────────  │
+├────────────────────────────────────────────────────────────────────┤
 │  **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)        │
-│  ────────────────────────────────────────────────────────────────  │
+├────────────────────────────────────────────────────────────────────┤
 │  **Branch:** task-branch-name                                      │
 │                                                                    │
 ╰────────────────────────────────────────────────────────────────────╯
