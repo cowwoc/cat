@@ -290,7 +290,23 @@ Present changes → User responds
 ### 13. Final Merge
 
 After approval:
+
+**CRITICAL (M070): Update STATE.md BEFORE squashing (same commit as implementation)**
+
+Per commit-types.md, task STATE.md changes must be in the SAME commit as implementation.
+Update STATE.md to completed in the task branch BEFORE squashing:
+
 ```bash
+# In task worktree - update STATE.md to completed
+# Edit .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+#   status: completed
+#   progress: 100%
+#   completed: {date}
+
+# Stage STATE.md with implementation
+git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git commit --amend --no-edit  # Include in last implementation commit
+
 # Squash commits by type
 git rebase -i main  # Group by feature, bugfix, refactor, etc.
 
@@ -298,6 +314,8 @@ git rebase -i main  # Group by feature, bugfix, refactor, etc.
 git checkout main
 git merge {task-branch}
 ```
+
+**Anti-pattern (M070):** Committing STATE.md update as separate "planning:" commit after merge.
 
 ### 14. Cleanup
 
