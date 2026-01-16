@@ -130,6 +130,29 @@ cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null
 
 ### 6. MANDATORY: Report Token Metrics to User
 
+**CRITICAL (M096): Verify token values before reporting - never estimate or guess.**
+
+Before presenting metrics, verify you have ACTUAL measured values:
+
+```bash
+# Verify .completion.json exists and contains numeric values
+if [ -f "$COMPLETION_FILE" ]; then
+  TOTAL=$(jq -r '.tokensUsed // 0' "$COMPLETION_FILE")
+  if [ "$TOTAL" -gt 0 ]; then
+    echo "Token metrics verified from .completion.json"
+  else
+    echo "WARNING: No token data in .completion.json - parsing session file"
+    # Fall back to session file parsing (see step 3)
+  fi
+fi
+
+# Sanity check: implementation subagents typically use 30K-150K tokens
+# If value seems unreasonably low (< 10K for implementation), verify source
+```
+
+**Anti-pattern (M096):** Presenting token metrics without actually reading them from `.completion.json`
+or session file. Claiming "subagent used X tokens" without verification is a measurement bug.
+
 **Before updating state, present token metrics to user:**
 
 ```
