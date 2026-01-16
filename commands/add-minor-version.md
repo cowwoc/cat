@@ -164,6 +164,106 @@ Loop until "Create it" selected.
 
 </step>
 
+<step name="define_requirements">
+
+**Define requirements for this minor version:**
+
+Requirements are the contract for what this version must deliver. Tasks will reference these
+requirements via their `Satisfies` field. A minor version cannot be marked complete until all
+must-have requirements are satisfied by completed tasks.
+
+**1. Gather requirements:**
+
+Ask inline (FREEFORM): "List the requirements for this minor version. For each, include:
+- A brief description
+- Priority (must-have, should-have, nice-to-have)
+- How to verify it's done (acceptance criteria)"
+
+**2. Assign requirement IDs:**
+
+For each requirement from user input, assign sequential IDs: REQ-001, REQ-002, etc.
+
+**3. Confirm requirements:**
+
+Present the requirements table:
+```
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| REQ-001 | {description} | {priority} | {criteria} |
+| REQ-002 | {description} | {priority} | {criteria} |
+```
+
+Use AskUserQuestion:
+- header: "Requirements"
+- question: "Are these requirements correct?"
+- options:
+  - "Looks good" - Finalize requirements
+  - "Add more" - I have additional requirements
+  - "Edit" - Let me modify these
+  - "Skip requirements" - Define requirements later
+
+If "Skip requirements":
+- Note: Requirements can be added later by editing PLAN.md
+- Include empty Requirements section with placeholder
+
+**Store requirements for inclusion in PLAN.md.**
+
+</step>
+
+<step name="research">
+
+**Run parallel stakeholder research:**
+
+Spawn 8 stakeholder agents in parallel using `parallel-execute` skill with `mode: research`:
+
+```yaml
+stakeholders:
+  - architect: "Research stack selection and architecture patterns for {focus summary}"
+  - security: "Research security risks and secure patterns for {focus summary}"
+  - quality: "Research quality patterns and anti-patterns for {focus summary}"
+  - tester: "Research testing strategies and edge cases for {focus summary}"
+  - performance: "Research performance characteristics and pitfalls for {focus summary}"
+  - ux: "Research UX patterns and usability considerations for {focus summary}"
+  - sales: "Research customer value, competitive positioning, and objection handling for {focus summary}"
+  - marketing: "Research positioning, messaging, and go-to-market for {focus summary}"
+```
+
+**Each agent receives:**
+- Focus summary from discuss step
+- Key items list from discuss step
+- `mode: research` parameter
+- Reference to their stakeholder definition file
+
+**Aggregate findings:**
+
+Collect JSON responses from all stakeholders and merge into a unified research structure:
+
+```yaml
+research:
+  stack:
+    # From architect
+  architecture:
+    # From architect
+  security:
+    # From security
+  quality:
+    # From quality
+  testing:
+    # From tester
+  performance:
+    # From performance
+  ux:
+    # From ux
+  sources:
+    # Combined from all stakeholders
+  openQuestions:
+    # Combined from all stakeholders
+```
+
+**Store research findings for inclusion in PLAN.md.**
+
+</step>
+
 <step name="configure_gates">
 
 **Configure entry and exit gates:**
@@ -272,11 +372,28 @@ mkdir -p "$MINOR_PATH/task"
 ```markdown
 # Plan: Version {major}.{minor}
 
-## Focus
+## Overview
 {focus from discussion}
 
-## Scope
-{scope type from discussion}
+## Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+{requirements from define_requirements step, one row per requirement}
+{If skipped: | - | *No requirements defined yet* | - | - |}
+
+## Research
+
+*Populated by stakeholder research. If empty, run `/cat:research`.*
+
+### Stack
+{stack recommendations from research step, or placeholder}
+
+### Architecture
+{architecture recommendations from research step, or placeholder}
+
+### Pitfalls
+{pitfalls from research step, or placeholder}
 
 ## Gates
 
@@ -288,7 +405,7 @@ mkdir -p "$MINOR_PATH/task"
 {exit gate conditions from configure_gates step, one per line with "- " prefix}
 {If no conditions: "- All tasks complete"}
 
-## Tasks
+## Tasks Overview
 *No tasks defined yet. Use `/cat:add-task {major}.{minor}` to add tasks.*
 
 ## Goals
@@ -383,9 +500,10 @@ Minor version created:
 - [ ] Target major version validated
 - [ ] Next minor version number determined
 - [ ] Discussion captured focus and scope
+- [ ] Requirements defined (or explicitly skipped)
 - [ ] Entry and exit gates configured
 - [ ] Directory structure created
-- [ ] STATE.md, PLAN.md (with Gates section), CHANGELOG.md created
+- [ ] STATE.md, PLAN.md (with Requirements and Gates sections), CHANGELOG.md created
 - [ ] ROADMAP.md updated
 - [ ] Parent STATE.md updated
 - [ ] All committed to git
