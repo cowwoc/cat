@@ -6,12 +6,12 @@
 # Prevents multiple Claude instances from executing the same task simultaneously.
 #
 # Usage:
-#   task-lock.sh acquire <task-id> <session-id>
-#   task-lock.sh update <task-id> <session-id> <worktree>
-#   task-lock.sh release <task-id> <session-id>
-#   task-lock.sh force-release <task-id>
-#   task-lock.sh check <task-id>
-#   task-lock.sh list
+#   task-lock.sh acquire <project-dir> <task-id> <session-id> [worktree]
+#   task-lock.sh update <project-dir> <task-id> <session-id> <worktree>
+#   task-lock.sh release <project-dir> <task-id> <session-id>
+#   task-lock.sh force-release <project-dir> <task-id>
+#   task-lock.sh check <project-dir> <task-id>
+#   task-lock.sh list <project-dir>
 #
 # Lock file format (.claude/cat/locks/<task-id>.lock):
 #   session_id=<uuid>
@@ -25,7 +25,7 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 # CONFIGURATION
 # ============================================================================
 
-LOCK_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}/.claude/cat/locks"
+PROJECT_DIR=""  # Required: set via --project-dir
 
 # ============================================================================
 # FUNCTIONS
@@ -303,52 +303,76 @@ list_locks() {
 
 usage() {
   cat << 'EOF'
-Usage: task-lock.sh <command> [args]
+Usage: task-lock.sh <command> <project-dir> [args]
 
 Commands:
-  acquire <task-id> <session-id> [worktree]  - Acquire lock for task
-  update <task-id> <session-id> <worktree>   - Update lock with worktree path (must own lock)
-  release <task-id> <session-id>             - Release lock (only if owned by session)
-  force-release <task-id>                    - Force release lock (user action, any owner)
-  check <task-id>                            - Check if task is locked
-  list                                       - List all locks
+  acquire <project-dir> <task-id> <session-id> [worktree]  - Acquire lock for task
+  update <project-dir> <task-id> <session-id> <worktree>   - Update lock with worktree path
+  release <project-dir> <task-id> <session-id>             - Release lock (only if owned)
+  force-release <project-dir> <task-id>                    - Force release lock (any owner)
+  check <project-dir> <task-id>                            - Check if task is locked
+  list <project-dir>                                       - List all locks
+
+Arguments:
+  project-dir    Project root directory (contains .claude/cat/)
+  task-id        Task identifier (e.g., "2.0-fix-parser")
+  session-id     Claude session UUID
+  worktree       Optional worktree path
 
 Locks are persistent and never expire automatically.
 Use 'force-release' to remove stale locks from crashed sessions.
-
-Environment:
-  CLAUDE_PROJECT_DIR  - Project root (default: current directory)
-
-Lock files stored in: $LOCK_DIR/
 EOF
+}
+
+# Helper to validate project directory
+validate_project_dir() {
+  local dir="$1"
+  if [[ -z "$dir" ]]; then
+    echo '{"status":"error","message":"project-dir is required"}'
+    exit 1
+  fi
+  if [[ ! -d "$dir/.claude/cat" ]]; then
+    echo '{"status":"error","message":"Not a CAT project: '"$dir"' (no .claude/cat directory)"}'
+    exit 1
+  fi
+  PROJECT_DIR="$dir"
+  LOCK_DIR="$PROJECT_DIR/.claude/cat/locks"
 }
 
 case "${1:-}" in
   acquire)
-    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: acquire <task-id> <session-id> [worktree]"}'; exit 1; }
-    acquire_lock "$2" "$3" "${4:-}"
+    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: acquire <project-dir> <task-id> <session-id> [worktree]"}'; exit 1; }
+    validate_project_dir "$2"
+    acquire_lock "$3" "$4" "${5:-}"
     ;;
   update)
-    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: update <task-id> <session-id> <worktree>"}'; exit 1; }
-    update_lock "$2" "$3" "$4"
+    [[ $# -lt 5 ]] && { echo '{"status":"error","message":"Usage: update <project-dir> <task-id> <session-id> <worktree>"}'; exit 1; }
+    validate_project_dir "$2"
+    update_lock "$3" "$4" "$5"
     ;;
   release)
-    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: release <task-id> <session-id>"}'; exit 1; }
-    release_lock "$2" "$3"
+    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: release <project-dir> <task-id> <session-id>"}'; exit 1; }
+    validate_project_dir "$2"
+    release_lock "$3" "$4"
     ;;
   force-release)
-    [[ $# -lt 2 ]] && { echo '{"status":"error","message":"Usage: force-release <task-id>"}'; exit 1; }
-    force_release_lock "$2"
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: force-release <project-dir> <task-id>"}'; exit 1; }
+    validate_project_dir "$2"
+    force_release_lock "$3"
     ;;
   check)
-    [[ $# -lt 2 ]] && { echo '{"status":"error","message":"Usage: check <task-id>"}'; exit 1; }
-    check_lock "$2"
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: check <project-dir> <task-id>"}'; exit 1; }
+    validate_project_dir "$2"
+    check_lock "$3"
     ;;
   list)
+    [[ $# -lt 2 ]] && { echo '{"status":"error","message":"Usage: list <project-dir>"}'; exit 1; }
+    validate_project_dir "$2"
     list_locks
     ;;
   -h|--help|help)
     usage
+    exit 0
     ;;
   *)
     echo '{"status":"error","message":"Unknown command. Use --help for usage."}'

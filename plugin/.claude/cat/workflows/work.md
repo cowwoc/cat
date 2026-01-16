@@ -91,7 +91,7 @@ Before validating a task as executable, attempt to acquire its lock:
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 # Session ID is auto-substituted as ${CLAUDE_SESSION_ID}
 
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   echo "⏸️ Task $TASK_ID is locked by another session"
@@ -190,7 +190,7 @@ git worktree add ../cat-worktree-{task-name} -b {major}.{minor}-{task-name}
 
 # MANDATORY: Update lock with worktree path (M196)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/{major}.{minor}-{task-name}"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" update "$TASK_ID" "${CLAUDE_SESSION_ID}" "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" update "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}" "$WORKTREE_PATH"
 
 # MANDATORY: Change to worktree directory for task execution
 cd ../cat-worktree-{task-name}
