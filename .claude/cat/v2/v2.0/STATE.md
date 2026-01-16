@@ -28,10 +28,8 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 
 ## Tasks Pending
 - add-handler-tests
+- fix-work-box-alignment
 - fix-config-documentation
-- multi-agent-demo
-- planning-research-demo
-- git-safety-demo
 - complete-patch-version-support
 - update-graphics-tagline
 - license-validation-server
