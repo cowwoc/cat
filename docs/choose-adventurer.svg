@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 180">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 180">
   <defs>
     <linearGradient id="headerGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:#2d3748"/>
@@ -10,26 +10,26 @@
     </linearGradient>
   </defs>
   <!-- Main box -->
-  <rect x="2" y="2" width="496" height="176" rx="8" fill="url(#bodyGrad2)" stroke="#4a5568" stroke-width="2"/>
+  <rect x="2" y="2" width="596" height="176" rx="8" fill="url(#bodyGrad2)" stroke="#4a5568" stroke-width="2"/>
   <!-- Header -->
-  <rect x="2" y="2" width="496" height="32" rx="8" fill="url(#headerGrad2)"/>
-  <rect x="2" y="26" width="496" height="10" fill="url(#headerGrad2)"/>
-  <line x1="2" y1="34" x2="498" y2="34" stroke="#4a5568" stroke-width="1"/>
+  <rect x="2" y="2" width="596" height="32" rx="8" fill="url(#headerGrad2)"/>
+  <rect x="2" y="26" width="596" height="10" fill="url(#headerGrad2)"/>
+  <line x1="2" y1="34" x2="598" y2="34" stroke="#4a5568" stroke-width="1"/>
   <!-- Header text -->
-  <text x="250" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR ADVENTURER</text>
+  <text x="300" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR ADVENTURER</text>
   <!-- Question -->
-  <text x="250" y="60" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="13">How do you like to work?</text>
+  <text x="300" y="60" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="13">How do you command your companion?</text>
   <!-- Options -->
   <text x="30" y="95" fill="#68d391" font-family="monospace" font-size="13" font-weight="bold">[A]</text>
-  <text x="70" y="95" fill="#e2e8f0" font-family="monospace" font-size="13">Conservative</text>
-  <text x="190" y="95" fill="#718096" font-family="monospace" font-size="12">- Careful, thorough, minimize risk</text>
+  <text x="70" y="95" fill="#e2e8f0" font-family="monospace" font-size="13">Cautious Commander</text>
+  <text x="230" y="95" fill="#718096" font-family="monospace" font-size="12">- check in often, verify each move</text>
 
   <text x="30" y="120" fill="#63b3ed" font-family="monospace" font-size="13" font-weight="bold">[B]</text>
-  <text x="70" y="120" fill="#e2e8f0" font-family="monospace" font-size="13">Balanced</text>
-  <text x="190" y="120" fill="#718096" font-family="monospace" font-size="12">- Pragmatic tradeoffs</text>
-  <text x="340" y="120" fill="#f6e05e" font-family="monospace" font-size="11">(recommended)</text>
+  <text x="70" y="120" fill="#e2e8f0" font-family="monospace" font-size="13">Balanced Leader</text>
+  <text x="230" y="120" fill="#718096" font-family="monospace" font-size="12">- trust routine, review key decisions</text>
+  <text x="505" y="120" fill="#f6e05e" font-family="monospace" font-size="11">(recommended)</text>
 
   <text x="30" y="145" fill="#f6ad55" font-family="monospace" font-size="13" font-weight="bold">[C]</text>
-  <text x="70" y="145" fill="#e2e8f0" font-family="monospace" font-size="13">Aggressive</text>
-  <text x="190" y="145" fill="#718096" font-family="monospace" font-size="12">- Move fast, refactor freely</text>
+  <text x="70" y="145" fill="#e2e8f0" font-family="monospace" font-size="13">Autonomous Ally</text>
+  <text x="230" y="145" fill="#718096" font-family="monospace" font-size="12">- let companion lead, intervene rarely</text>
 </svg>
