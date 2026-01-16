@@ -228,17 +228,17 @@ Output directly with inline padding (add "(current)" after matching level):
 │  🐱─┈       LOW {current}                                  │
 │             Low trust. CAT presents options frequently:    │
 │             where to place code, which approach to take.   │
-│             ✦ Best for: Learning, strong preferences      │
+│             ✦ Best for: Learning, strong preferences       │
 │                                                            │
 │  🐱─ ─ ┈    MEDIUM {current}                               │
 │             Moderate trust. CAT handles routine decisions  │
 │             but presents options for meaningful trade-offs.│
-│             ✦ Best for: Balanced control and efficiency   │
+│             ✦ Best for: Balanced control and efficiency    │
 │                                                            │
 │  🐱─ ─ ─ ─ ┈ HIGH {current}                                │
 │             Full autonomy. CAT runs without stopping.      │
 │             Makes decisions without asking. Auto-merges.   │
-│             ✦ Best for: Trusted workflows, batch process. │
+│             ✦ Best for: Trusted workflows, batch process.  │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 ```
@@ -274,17 +274,17 @@ Output directly with inline padding (add "(current)" after matching level):
 │  ⚡ NONE {current}                                         │
 │     No verification before commit. Fastest iteration       │
 │     but wont catch any errors automatically.               │
-│     ✦ Best for: Rapid prototyping, manual verification    │
+│     ✦ Best for: Rapid prototyping, manual verification     │
 │                                                            │
 │  📦 CHANGED {current}                                      │
 │     Verify modified file/module only. Catches most         │
 │     regressions without verifying the full project.        │
-│     ✦ Best for: Most workflows                            │
+│     ✦ Best for: Most workflows                             │
 │                                                            │
 │  🔒 ALL {current}                                          │
 │     Verify the entire project before each commit.          │
 │     Slowest but highest confidence.                        │
-│     ✦ Best for: Critical code, integration changes        │
+│     ✦ Best for: Critical code, integration changes         │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 ```
@@ -320,17 +320,17 @@ Output directly with inline padding (add "(current)" after matching level):
 │  🎯 LOW {current}                                          │
 │     Task-only. Complete exactly whats required,            │
 │     nothing more. Dont look for improvements.              │
-│     ✦ Best for: Minimal scope, predictable output         │
+│     ✦ Best for: Minimal scope, predictable output          │
 │                                                            │
 │  👀 MEDIUM {current}                                       │
 │     Opportunistic. Notice obvious issues encountered       │
 │     while working (bugs, deprecated syntax).               │
-│     ✦ Best for: Balanced thoroughness                     │
+│     ✦ Best for: Balanced thoroughness                      │
 │                                                            │
 │  🔭 HIGH {current}                                         │
 │     Proactive. Actively examine related code for           │
 │     patterns, tech debt, or optimization opportunities.    │
-│     ✦ Best for: Comprehensive improvement                 │
+│     ✦ Best for: Comprehensive improvement                  │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 ```
@@ -366,17 +366,17 @@ Output directly with inline padding (add "(current)" after matching level):
 │  ⚡ LOW {current}                                          │
 │     Act immediately. Address improvements as part of       │
 │     the current task. Scope expands but work is done.      │
-│     ✦ Best for: Comprehensive fixes, avoiding tech debt   │
+│     ✦ Best for: Comprehensive fixes, avoiding tech debt    │
 │                                                            │
 │  📋 MEDIUM {current}                                       │
 │     Defer to current version. Log improvements as          │
 │     separate tasks within the current version.             │
-│     ✦ Best for: Focused tasks with nearby follow-up       │
+│     ✦ Best for: Focused tasks with nearby follow-up        │
 │                                                            │
 │  📅 HIGH {current}                                         │
 │     Defer by priority. Schedule improvements to future     │
 │     versions based on benefit/cost ratio.                  │
-│     ✦ Best for: Surgical tasks, controlled scope          │
+│     ✦ Best for: Surgical tasks, controlled scope           │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 ```
