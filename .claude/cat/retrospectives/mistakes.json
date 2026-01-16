@@ -1430,6 +1430,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Reference SKILL.md for usage documentation, not PLAN.md. Use the skill via its script/command, not by reading the plan."
+    },
+    {
+      "id": "M173",
+      "timestamp": "2026-01-22T13:20:00Z",
+      "category": "protocol_violation",
+      "description": "Lock release failed: used fallback rm command pattern that triggered block-lock-manipulation.sh hook",
+      "root_cause": "Used defensive fallback pattern || rm -f that triggered hook because hook checks entire command string. Also CLAUDE_SESSION_ID may not be available in all environments.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "lock-release",
+        "fallback-command",
+        "hook-trigger",
+        "session-id"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Call task-lock.sh release without fallback rm commands. If CLAUDE_SESSION_ID unavailable, extract session ID from system reminders."
     }
   ]
 }
