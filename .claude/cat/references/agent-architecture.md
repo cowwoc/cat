@@ -56,7 +56,7 @@ Main agent uses worktrees ONLY for:
 
 Subagents read session file:
 ```
-/home/node/.config/claude/projects/-workspace/{SESSION_ID}.jsonl
+/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl
 ```
 
 Collect:
@@ -79,7 +79,7 @@ Collect:
 
 **How to calculate**:
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
 # Total tokens
 TOTAL=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |

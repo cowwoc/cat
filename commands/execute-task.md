@@ -119,13 +119,8 @@ Read `.claude/cat/cat-config.json` to determine:
 
 **Identify task to execute:**
 
-**IMPORTANT: Verify SESSION_ID first (required for lock checks).**
-
-Look for `Session ID: {uuid}` in the SessionStart system-reminder at conversation start.
-If no SESSION_ID is found:
-1. Inform user: "Session ID not found in context. The echo-session-id.sh hook may not be registered."
-2. Instruct: "Run `/cat:register-hook` to register required hooks, then restart Claude Code."
-3. **EXIT this command**
+**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this command.
+All bash commands below use this value directly.
 
 **If $ARGUMENTS provided:**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
@@ -152,10 +147,10 @@ BEFORE offering it as available:
 
 ```bash
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-SESSION_ID="<substitute-actual-uuid-from-context>"
+# Session ID is auto-substituted
 
 # Try to acquire lock
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
@@ -1005,7 +1000,7 @@ git branch -d "{task-branch}" 2>/dev/null || true
 
 # Release task lock (substitute actual SESSION_ID from context)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "$SESSION_ID"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "${CLAUDE_SESSION_ID}"
 echo "Lock released for task: $TASK_ID"
 ```
 
@@ -1091,7 +1086,7 @@ For each candidate task:
 NEXT_TASK_ID="${MAJOR}.${MINOR}-${NEXT_TASK_NAME}"
 
 # Try to acquire lock for next task
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$NEXT_TASK_ID" "$SESSION_ID")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   # This task is locked, try the next candidate
@@ -1100,7 +1095,7 @@ fi
 
 # Lock acquired - we can offer this task
 # Release it immediately since user will /clear and re-acquire
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "$SESSION_ID"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 If found (and lockable):

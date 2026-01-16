@@ -61,9 +61,9 @@ Before validating a task as executable, attempt to acquire its lock:
 
 ```bash
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-SESSION_ID="<from-context>"
+# Session ID is auto-substituted as ${CLAUDE_SESSION_ID}
 
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "$SESSION_ID")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   echo "⏸️ Task $TASK_ID is locked by another session"
@@ -280,7 +280,7 @@ On completion, subagent returns via `.completion.json`:
 
 The subagent is responsible for measuring its token usage before completion:
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 cat > /tmp/token_count.jq << 'EOF'
 [.[] | select(.type == "assistant") | .message.usage | select(. != null) |
   (.input_tokens + .output_tokens)] | add // 0
