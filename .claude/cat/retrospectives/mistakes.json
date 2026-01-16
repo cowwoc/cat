@@ -2680,6 +2680,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Handler should parse both -m \"message\" format AND HEREDOC format to validate commit types"
+    },
+    {
+      "id": "M219",
+      "timestamp": "2026-01-23T11:45:00-05:00",
+      "category": "tool_misuse",
+      "description": "Used EDITOR instead of GIT_EDITOR for commit message editor during interactive rebase, causing concatenated messages instead of unified message",
+      "root_cause": "Git uses GIT_EDITOR specifically for commit messages during rebase operations. The EDITOR variable is not consulted for this purpose. The git-squash skill documented the wrong environment variable.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/SKILL.md",
+      "pattern_keywords": [
+        "git",
+        "rebase",
+        "squash",
+        "GIT_EDITOR",
+        "EDITOR",
+        "commit-message"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use GIT_EDITOR=/tmp/msg-editor.sh (not EDITOR) when running interactive rebase to ensure the custom commit message editor is used"
     }
   ]
 }
