@@ -253,6 +253,21 @@ On completion, subagent returns via `.completion.json`:
 
 ### 9. MANDATORY: Report Token Metrics to User
 
+**Subagents measure their own tokens and return them to main agent (M099).**
+
+The subagent is responsible for measuring its token usage before completion:
+```bash
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+cat > /tmp/token_count.jq << 'EOF'
+[.[] | select(.type == "assistant") | .message.usage | select(. != null) |
+  (.input_tokens + .output_tokens)] | add // 0
+EOF
+TOKENS=$(jq -s -f /tmp/token_count.jq "$SESSION_FILE")
+```
+
+Main agent reports ONLY measured values from subagent output. Never fabricate estimates.
+If subagent didn't report metrics, state "NOT MEASURED" - do not invent numbers.
+
 **After collecting subagent results, ALWAYS present token metrics to user:**
 
 ```
