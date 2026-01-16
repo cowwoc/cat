@@ -72,21 +72,21 @@ Display with visual formatting:
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  🔀 FORK IN THE ROAD                                              ║
+║  🔀 FORK IN THE ROAD                                               ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Task: [task-name]                                                ║
 ║  Risk: [HIGH - requires confirmation]                             ║
 ║                                                                   ║
-║  [A] 🛡️ Conservative  [⭐ if preference matches]                   ║
+║  [A] 🛡️ Conservative  [⭐ if preference matches]                    ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: LOW | Tradeoff: [from PLAN.md]                         ║
 ║                                                                   ║
-║  [B] ⚖️ Balanced                                                   ║
+║  [B] ⚖️ Balanced                                                    ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: MEDIUM | Tradeoff: [from PLAN.md]                      ║
 ║                                                                   ║
-║  [C] ⚔️ Aggressive  [⭐ if preference matches]                      ║
+║  [C] ⚔️ Aggressive  [⭐ if preference matches]                       ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: HIGH | Tradeoff: [from PLAN.md]                        ║
 ║                                                                   ║
@@ -135,18 +135,18 @@ a comprehensive spec without re-reading the codebase.
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  🔀 FORK IN THE ROAD                                              ║
+║  🔀 FORK IN THE ROAD                                               ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Task: implement-incremental-parsing                              ║
 ║                                                                   ║
-║  [A] 🏗️ Full implementation                                       ║
+║  [A] 🏗️ Full implementation                                        ║
 ║      Build complete solution upfront                              ║
 ║                                                                   ║
-║  [B] 📦 Incremental approach                                      ║
+║  [B] 📦 Incremental approach                                       ║
 ║      Start simple, expand as needed                               ║
 ║                                                                   ║
-║  [C] 🔍 Research first  ⭐ RECOMMENDED                             ║
+║  [C] 🔍 Research first  ⭐ RECOMMENDED                              ║
 ║      Analyze existing parser architecture before committing       ║
 ║      Why: High complexity task with architectural implications    ║
 ║                                                                   ║
@@ -157,19 +157,19 @@ a comprehensive spec without re-reading the codebase.
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  🔀 FORK IN THE ROAD                                              ║
+║  🔀 FORK IN THE ROAD                                               ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Task: rename-parser-methods-for-consistency                      ║
 ║                                                                   ║
-║  [A] ⚡ Direct rename  ⭐ RECOMMENDED                               ║
+║  [A] ⚡ Direct rename  ⭐ RECOMMENDED                                ║
 ║      Find-and-replace across codebase                             ║
 ║      Why: Mechanical change, low risk, clear scope                ║
 ║                                                                   ║
-║  [B] 🏗️ Refactor with deprecation                                 ║
+║  [B] 🏗️ Refactor with deprecation                                  ║
 ║      Add new names, deprecate old, migrate gradually              ║
 ║                                                                   ║
-║  [C] 🔍 Research first                                            ║
+║  [C] 🔍 Research first                                             ║
 ║      Check for dynamic references or reflection usage             ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
@@ -179,20 +179,20 @@ a comprehensive spec without re-reading the codebase.
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  🔀 FORK IN THE ROAD                                              ║
+║  🔀 FORK IN THE ROAD                                               ║
 ╠═══════════════════════════════════════════════════════════════════╣
 ║                                                                   ║
 ║  Task: split-parser-into-multiple-classes                         ║
 ║                                                                   ║
-║  [A] 🏗️ Interface-based extraction                                ║
+║  [A] 🏗️ Interface-based extraction                                 ║
 ║      Cleaner abstraction, more upfront work                       ║
 ║      Best for: Long-term maintainability                          ║
 ║                                                                   ║
-║  [B] 📦 Package-private access                                    ║
+║  [B] 📦 Package-private access                                     ║
 ║      Faster to implement, tighter coupling                        ║
 ║      Best for: Quick delivery, internal-only use                  ║
 ║                                                                   ║
-║  [C] 🔍 Research first                                            ║
+║  [C] 🔍 Research first                                             ║
 ║      Analyze usage patterns before deciding                       ║
 ║                                                                   ║
 ║  Your project style is "Balanced" - either A or B fits.           ║

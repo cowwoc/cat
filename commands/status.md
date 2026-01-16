@@ -57,11 +57,11 @@ tool call wrappers, output the styled text directly as part of your response.
 
 ```
 ╔════════════════════════════════════════════════════════════════════╗
-║  🗺️ YOUR ADVENTURE - {PROJECT_NAME}                                  ║
+║  🗺️ YOUR ADVENTURE - {PROJECT_NAME}                                ║
 ╠════════════════════════════════════════════════════════════════════╣
 ║                                                                    ║
-║  📊 Progress: [████████████░░░░░░░░] **{PERCENT}%**                    ║
-║  🏆 **{COMPLETED}/{TOTAL}** tasks complete                             ║
+║  📊 Progress: [████████████░░░░░░░░] **{PERCENT}%**                ║
+║  🏆 **{COMPLETED}/{TOTAL}** tasks complete                         ║
 ║                                                                    ║
 ║  ⚙️ Mode: {Interactive|YOLO}                                       ║
 ║                                                                    ║
