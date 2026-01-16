@@ -35,14 +35,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ============================================================================
-# COLLECT SUBAGENT STATUS
+# COLLECT SUBAGENT STATUS (optimized: collect data first, single jq call at end)
 # ============================================================================
 
-SUBAGENTS_JSON="[]"
 TOTAL=0
 RUNNING=0
 COMPLETE=0
 WARNING=0
+
+# Collect subagent data as tab-separated values (avoids O(n) jq calls in loop)
+SUBAGENT_DATA=""
 
 # Find all subagent worktrees
 while IFS= read -r worktree_line; do
@@ -69,10 +71,10 @@ while IFS= read -r worktree_line; do
     STATUS="complete"
     COMPLETE=$((COMPLETE + 1))
 
-    # Read completion data
-    COMPLETION_DATA=$(cat "$COMPLETION_FILE" 2>/dev/null || echo '{}')
-    TOKENS=$(echo "$COMPLETION_DATA" | jq -r '.tokensUsed // 0' 2>/dev/null || echo "0")
-    COMPACTIONS=$(echo "$COMPLETION_DATA" | jq -r '.compactionEvents // 0' 2>/dev/null || echo "0")
+    # Read completion data (single jq call for both fields)
+    COMPLETION_DATA=$(jq -r '[.tokensUsed // 0, .compactionEvents // 0] | @tsv' "$COMPLETION_FILE" 2>/dev/null || echo "0\t0")
+    TOKENS=$(echo "$COMPLETION_DATA" | cut -f1)
+    COMPACTIONS=$(echo "$COMPLETION_DATA" | cut -f2)
   else
     # No completion marker - check session file for running status
     STATUS="running"
@@ -87,12 +89,14 @@ while IFS= read -r worktree_line; do
       SESSION_FILE="${SESSION_BASE}/${SESSION_ID}.jsonl"
 
       if [[ -f "$SESSION_FILE" ]]; then
-        # Calculate tokens (fast jq aggregation)
-        TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
-          (.input_tokens + .output_tokens)] | add // 0' "$SESSION_FILE" 2>/dev/null || echo "0")
-
-        # Count compaction events
-        COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "$SESSION_FILE" 2>/dev/null || echo "0")
+        # Calculate tokens and compactions in single jq call
+        TOKEN_DATA=$(jq -s '
+          [
+            ([.[] | select(.type == "assistant") | .message.usage | (.input_tokens + .output_tokens)] | add // 0),
+            ([.[] | select(.type == "summary")] | length)
+          ] | @tsv' "$SESSION_FILE" 2>/dev/null || echo "0\t0")
+        TOKENS=$(echo "$TOKEN_DATA" | cut -f1)
+        COMPACTIONS=$(echo "$TOKEN_DATA" | cut -f2)
       fi
     fi
 
@@ -104,20 +108,28 @@ while IFS= read -r worktree_line; do
     fi
   fi
 
-  # Build subagent JSON entry
-  SUBAGENT_ENTRY=$(jq -n \
-    --arg id "$SUBAGENT_ID" \
-    --arg task "$TASK_NAME" \
-    --arg status "$STATUS" \
-    --arg worktree "$WORKTREE_PATH" \
-    --argjson tokens "$TOKENS" \
-    --argjson compactions "$COMPACTIONS" \
-    '{id: $id, task: $task, status: $status, tokens: $tokens, compactions: $compactions, worktree: $worktree}')
-
-  # Append to array
-  SUBAGENTS_JSON=$(echo "$SUBAGENTS_JSON" | jq --argjson entry "$SUBAGENT_ENTRY" '. += [$entry]')
+  # Accumulate as tab-separated values (no jq in loop)
+  SUBAGENT_DATA+="${SUBAGENT_ID}\t${TASK_NAME}\t${STATUS}\t${TOKENS}\t${COMPACTIONS}\t${WORKTREE_PATH}\n"
 
 done < <(git worktree list --porcelain 2>/dev/null | grep "^worktree" || true)
+
+# Build subagents JSON array with single jq call
+if [[ -z "$SUBAGENT_DATA" ]]; then
+  SUBAGENTS_JSON="[]"
+else
+  SUBAGENTS_JSON=$(printf "%b" "$SUBAGENT_DATA" | jq -R -s '
+    split("\n") | map(select(length > 0)) | map(
+      split("\t") | {
+        id: .[0],
+        task: .[1],
+        status: .[2],
+        tokens: (.[3] | tonumber),
+        compactions: (.[4] | tonumber),
+        worktree: .[5]
+      }
+    )
+  ')
+fi
 
 # ============================================================================
 # OUTPUT RESULT
