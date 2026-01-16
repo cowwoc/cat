@@ -2,9 +2,10 @@
 
 > *"Build on solid ground, not a house of cards."*
 
-<p align="center">
-  <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="CAT Overview" width="500"/></a>
-</p>
+```
+MAJOR VERSION -> MINOR VERSION -> TASK
+     v1/            v1.0/          setup-auth/
+```
 
 **CAT transforms chaotic AI coding sessions into predictable, reliable delivery.** Your team gets consistent results, trackable progress, and code that passes review the first time.
 
@@ -102,8 +103,12 @@ Your answers shape how CAT makes decisions throughout your project.
 /cat:work
 ```
 
-CAT spawns a subagent in an isolated worktree, executes the task, and presents
-you with results at a checkpoint:
+| Command | Description |
+|---------|-------------|
+| `/cat:init` | Initialize CAT structure (new or existing project). Guided wizard creates PROJECT.md, ROADMAP.md, and config. |
+| `/cat:execute-task [id]` | Execute a task. Creates worktree, runs work, handles approval gate, merges to main. ID format: `1.0-task-name` |
+| `/cat:status` | Show visual tree of all versions and tasks with progress bars and status indicators. |
+| `/cat:help` | Display complete command and skill reference. |
 
 <p align="center">
   <a href="#quick-start"><img src="docs/checkpoint.svg" alt="Checkpoint" width="500"/></a>
@@ -303,17 +308,21 @@ After `/cat:init`, your project gains a planning structure:
 ```
 your-project/
 └── .claude/cat/
-    ├── PROJECT.md          # Project overview
-    ├── ROADMAP.md          # The big picture
-    ├── cat-config.json     # Your preferences
-    └── v1/                 # Major version 1
-        ├── STATE.md        # Chapter progress
-        ├── PLAN.md         # Chapter objectives
-        └── v1.0/           # Minor version
-            ├── STATE.md    # Section progress
-            └── setup-auth/ # Individual task
-                ├── STATE.md
-                └── PLAN.md
+    ├── PROJECT.md              # Project overview, goals, requirements
+    ├── ROADMAP.md              # High-level version summaries
+    ├── cat-config.json         # Plugin configuration
+    └── v1/                     # Major version 1
+        ├── STATE.md            # Major version state & progress
+        ├── PLAN.md             # Business-level objectives
+        ├── CHANGELOG.md        # What was accomplished
+        └── v1.0/               # Version 1.0 (major 1, minor 0)
+            ├── STATE.md        # Minor version state
+            ├── PLAN.md         # Feature-level plan
+            ├── CHANGELOG.md    # Minor changelog
+            └── setup-auth/     # Individual task
+                ├── STATE.md    # Task state (pending/in-progress/completed)
+                ├── PLAN.md     # Detailed execution steps
+                └── CHANGELOG.md # What the task accomplished
 ```
 
 ---
