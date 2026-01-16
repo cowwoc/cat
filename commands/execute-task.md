@@ -409,8 +409,9 @@ This step implements the "Fork in the Road" experience. It only presents choices
 **Load user preferences:**
 
 ```bash
-# Read approach preference
-USER_APPROACH=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
+# Read behavior preferences (1.9+)
+USER_CURIOSITY=$(jq -r '.curiosity // "medium"' .claude/cat/cat-config.json)
+USER_PATIENCE=$(jq -r '.patience // "medium"' .claude/cat/cat-config.json)
 ```
 
 **Analyze PLAN.md for approaches:**
@@ -422,14 +423,14 @@ Look for:
 
 **Decision matrix:**
 
-| Task Pattern | User Style | Action |
-|--------------|------------|--------|
+| Task Pattern | Curiosity Level | Action |
+|--------------|-----------------|--------|
 | Single approach | Any | Auto-proceed |
 | Low risk, obvious | Any | Auto-proceed |
 | High complexity | Any | Show choice, recommend "Research first" |
-| Multiple approaches | Conservative | Show choice, recommend safer path |
-| Multiple approaches | Aggressive | Show choice, recommend comprehensive path |
-| Multiple approaches | Balanced | Show choice, no recommendation |
+| Multiple approaches | low | Show choice, recommend safer path |
+| Multiple approaches | high | Show choice, recommend comprehensive path |
+| Multiple approaches | medium | Show choice, no recommendation |
 
 **If auto-proceed:**
 
@@ -538,30 +539,30 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
 1. Read preferences and include in subagent prompt:
    ```bash
-   APPROACH_PREF=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
-   REFACTOR_PREF=$(jq -r '.refactoring // "opportunistic"' .claude/cat/cat-config.json)
+   CURIOSITY=$(jq -r '.curiosity // "medium"' .claude/cat/cat-config.json)
+   PATIENCE=$(jq -r '.patience // "medium"' .claude/cat/cat-config.json)
    ```
 
-   **Approach instruction** (for planning subagent):
-   | Preference | Planning Subagent Instruction |
-   |------------|-------------------------------|
-   | `conservative` | "Favor the safest path. Minimize scope. Avoid architectural changes. Prefer incremental fixes over comprehensive rewrites." |
-   | `balanced` | "Balance safety and thoroughness. Address the core issue without over-engineering. Include reasonable improvements." |
-   | `aggressive` | "Favor comprehensive solutions. Address root causes. Include related improvements. Prefer clean architecture over minimal changes." |
+   **Curiosity instruction** (for planning subagent):
+   | Level | Planning Subagent Instruction |
+   |-------|-------------------------------|
+   | `low` | "Stay focused on the immediate task. Minimize scope. Avoid exploring tangential issues." |
+   | `medium` | "Balance focus with reasonable exploration. Investigate directly related concerns." |
+   | `high` | "Explore thoroughly. Investigate root causes and related patterns. Consider broader implications." |
 
-   **Refactoring instruction** (for implementation subagent):
-   | Preference | Implementation Subagent Instruction |
-   |------------|-------------------------------------|
-   | `avoid` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
-   | `opportunistic` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
-   | `eager` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
+   **Patience instruction** (for implementation subagent):
+   | Level | Implementation Subagent Instruction |
+   |-------|-------------------------------------|
+   | `high` | "Do NOT modify code outside the immediate task scope. Only change what's explicitly required." |
+   | `medium` | "You MAY clean up obviously related code (same function/class) when low-risk and natural." |
+   | `low` | "Actively improve code quality in files you touch. Fix style issues, add missing docs, improve naming." |
 
 2. Invoke `/cat:spawn-subagent` skill with:
    - Task path
    - PLAN.md contents (with Selected Approach filled in)
    - Worktree path
    - Token tracking enabled
-   - Approach instruction (for planning) or Refactoring instruction (for implementation)
+   - Curiosity instruction (for planning) or Patience instruction (for implementation)
 
 3. Monitor subagent via `/cat:monitor-subagents`:
    - Check for compaction events
@@ -696,17 +697,17 @@ Consider decomposing similar tasks in the future.
 ```bash
 # Read preferences
 YOLO_MODE=$(jq -r '.yoloMode // false' .claude/cat/cat-config.json)
-REVIEW_PREF=$(jq -r '.stakeholderReview // "high-risk-only"' .claude/cat/cat-config.json)
+TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 ```
 
 | Condition | Action |
 |-----------|--------|
 | `yoloMode: true` | Skip review |
-| `stakeholderReview: "never"` | Skip review |
-| `stakeholderReview: "always"` | Run review |
-| `stakeholderReview: "high-risk-only"` | Check PLAN.md Risk Assessment |
+| `trust: "long"` | Skip review (high trust) |
+| `trust: "short"` | Run review always |
+| `trust: "medium"` | Check task risk assessment |
 
-**For "high-risk-only":** Read the task's PLAN.md Risk Assessment section. Run review if ANY of:
+**For medium trust:** Read the task's PLAN.md Risk Assessment section. Run review if ANY of:
 - Risk section mentions "breaking change", "data loss", "security", "production"
 - Task modifies authentication, authorization, or payment code
 - Task touches 5+ files
