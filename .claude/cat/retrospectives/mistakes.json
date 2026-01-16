@@ -1958,6 +1958,61 @@
         "catches_variations": true
       },
       "correct_behavior": "After calculating widths, write explicit build_line() results showing exact strings with padding, then copy those exact strings to final output"
+    },
+    {
+      "id": "M193",
+      "timestamp": "2026-01-22T15:33:18Z",
+      "category": "logical_error",
+      "description": "Shell script used ${#var} (byte length) instead of display_width for emoji-containing header, causing misaligned inner box borders",
+      "root_cause": "precompute-status-display.sh calculated header width using bash ${#HEADER} which counts bytes, not display width, while body lines used Python's accurate display_width calculation",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/precompute-status-display.sh",
+      "pattern_keywords": [
+        "emoji",
+        "display_width",
+        "box",
+        "alignment",
+        "shell",
+        "bash"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use display_width function (via Python) for any string width calculation when the string may contain emojis or multi-byte characters"
+    },
+    {
+      "id": "M194",
+      "timestamp": "2026-01-22T15:35:44Z",
+      "category": "prompt_engineering",
+      "description": "Agent output verbose preamble before pre-computed status display instead of outputting it directly",
+      "root_cause": "Skill template lacked explicit instruction to output pre-computed content silently without preamble or commentary",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "verbosity",
+        "preamble",
+        "pre-computed",
+        "silent",
+        "output"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output pre-computed content directly without announcing or explaining it"
     }
   ]
 }
