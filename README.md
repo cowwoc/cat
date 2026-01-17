@@ -59,7 +59,7 @@ You tell CAT your style once. It learns what matters to you. Then it handles the
 CAT will ask about your project and your preferences:
 
 <p align="center">
-  <a href="#quick-start"><img src="docs/choose-adventurer.svg" alt="Choose Your Adventurer" width="500"/></a>
+  <a href="#quick-start"><img src="docs/choose-companion.svg" alt="Choose Your Companion" width="500"/></a>
 </p>
 
 Your answers shape how CAT makes decisions throughout your project.
