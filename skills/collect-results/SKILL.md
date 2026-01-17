@@ -187,9 +187,13 @@ fi
 **Anti-pattern (M096):** Presenting token metrics without actually reading them from `.completion.json`
 or session file. Claiming "subagent used X tokens" without verification is a measurement bug.
 
-**Before updating state, present token metrics to user:**
+**Before updating state, present token metrics to user.**
 
-```
+**CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
+when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
+
+Output format (do NOT wrap in ```):
+
 ## Subagent Execution Report
 
 **Subagent:** a1b2c3d4
@@ -209,7 +213,6 @@ or session file. Claiming "subagent used X tokens" without verification is a mea
 - Lines: +450 / -120
 
 **Discovered Issues:** 2 (will be handled by main agent based on patience setting)
-```
 
 **Why mandatory:** Users cannot observe subagent execution. This report is the only visibility
 into what happened during subagent execution and whether quality may have degraded.
