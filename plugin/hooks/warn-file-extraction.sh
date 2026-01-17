@@ -65,7 +65,7 @@ if [[ "$FILE_EXTRACTION" == "true" ]]; then
     fi
     touch "$RATE_LIMIT_KEY"
 
-    output_hook_warning "
+    output_hook_warning "PreToolUse" "
 ================================================================
   WARNING: File Extraction from Commit Detected
 ================================================================

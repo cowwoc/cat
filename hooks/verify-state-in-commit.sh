@@ -86,7 +86,7 @@ fi
 # Check if STATE.md shows completed status
 STATE_CONTENT=$(cat "$TASK_STATE_FILE" 2>/dev/null || echo "")
 if ! echo "$STATE_CONTENT" | grep -qE '\*\*Status:\*\*\s*completed'; then
-    output_hook_warning "
+    output_hook_warning "PreToolUse" "
 ⚠️  STATE.md is staged but status is not 'completed'
 
 **Current content preview:**
