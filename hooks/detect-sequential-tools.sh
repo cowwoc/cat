@@ -15,6 +15,7 @@ trap 'echo "ERROR in detect-sequential-tools.sh at line $LINENO: Command failed:
 
 # Load helper scripts from local lib directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/json-parser.sh"
 source "$SCRIPT_DIR/lib/session-helper.sh"
 source "$SCRIPT_DIR/lib/json-output.sh"
 
@@ -30,7 +31,13 @@ fi
 # Extract tool information and session ID
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool.name // empty')
 TOOL_COUNT=$(echo "$INPUT" | jq -r '.tool.count // 1')
-SESSION_ID=$(get_required_session_id "$INPUT")
+SESSION_ID_RAW=$(get_required_session_id "$INPUT")
+# Sanitize session ID for safe use in file paths (prevents path traversal)
+SESSION_ID=$(validate_session_id "$SESSION_ID_RAW")
+if [[ -z "$SESSION_ID" ]]; then
+  echo "ERROR: Invalid session ID format" >&2
+  exit 1
+fi
 STATE_FILE="/tmp/sequential-tool-tracker-$SESSION_ID.json"
 CURRENT_TIME=$(date +%s)
 

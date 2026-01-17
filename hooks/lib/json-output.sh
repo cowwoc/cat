@@ -42,14 +42,6 @@ output_hook_warning() {
 	}'
 }
 
-# Output hook error message (does NOT block - use output_hook_block to block)
-# Args: event_name message_content
-output_hook_error() {
-	local event="$1"
-	local message="$2"
-	output_hook_message "$event" "$message"
-}
-
 # Output hook block message and deny permission (PreToolUse hooks ONLY)
 # This ACTUALLY BLOCKS the action via Claude Code's permission system
 #
@@ -84,56 +76,4 @@ output_hook_block() {
 				"permissionDecisionReason": $reason
 			}
 		}'
-}
-
-# Output JSON error message and exit
-# Args: error_message
-json_error() {
-	local message="$1"
-	jq -n \
-		--arg msg "$message" \
-		'{
-			"status": "error",
-			"message": $msg
-		}'
-	exit 1
-}
-
-# Output JSON success message
-# Args: message additional_fields_json
-#
-# USAGE:
-#   json_success "Operation completed"
-#   json_success "Operation completed" '{"key": "value"}'
-#
-# NOTE: The second argument MUST be valid JSON (an object).
-#       Common mistake: passing key=value pairs instead of JSON.
-#       WRONG: json_success "msg" "key=value"
-#       RIGHT: json_success "msg" '{"key": "value"}'
-#
-json_success() {
-	local message="$1"
-	local additional="${2-}"
-
-	# Use empty object if no additional fields provided
-	if [[ -z "$additional" ]]; then
-		additional='{}'
-	fi
-
-	# Validate that additional is valid JSON before using it
-	if ! echo "$additional" | jq empty 2>/dev/null; then
-		echo "ERROR in json_success: Second argument is not valid JSON" >&2
-		echo "  Received: $additional" >&2
-		echo "  Expected: A JSON object like '{\"key\": \"value\"}'" >&2
-		echo "  Common mistake: Passing key=value pairs instead of JSON" >&2
-		# Output error JSON instead of crashing
-		jq -n \
-			--arg msg "json_success called with invalid JSON: $additional" \
-			'{"status": "error", "message": $msg}'
-		return 1
-	fi
-
-	echo "$additional" | jq \
-		--arg msg "$message" \
-		'. + {"status": "success", "message": $msg}'
 }

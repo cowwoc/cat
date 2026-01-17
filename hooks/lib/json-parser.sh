@@ -88,34 +88,6 @@ extract_json_bool() {
     echo "$json" | grep -o "\"$key\"[[:space:]]*:[[:space:]]*\(true\|false\)" | sed "s/\"$key\"[[:space:]]*:[[:space:]]*//" || true
 }
 
-# Cache for parsed JSON to avoid redundant extractions
-declare -gA _JSON_CACHE 2>/dev/null || true
-
-# Extract and cache JSON value for multiple accesses
-# Usage: extract_json_cached "$json" "key"
-# Benefits: Use this when extracting multiple fields from same JSON
-extract_json_cached() {
-    local json="$1"
-    local key="$2"
-    local cache_key="${json:0:100}:$key"  # Use first 100 chars as cache key
-
-    # Check if associative arrays are supported and cache exists
-    if declare -p _JSON_CACHE &>/dev/null && [[ -n "${_JSON_CACHE[$cache_key]:-}" ]]; then
-        echo "${_JSON_CACHE[$cache_key]}"
-        return 0
-    fi
-
-    local value
-    value=$(extract_json_value "$json" "$key")
-
-    # Cache if supported
-    if declare -p _JSON_CACHE &>/dev/null; then
-        _JSON_CACHE[$cache_key]="$value"
-    fi
-
-    echo "$value"
-}
-
 # Parse all common hook JSON fields at once (optimized - single jq call when available)
 # Usage: parse_hook_json "$JSON_INPUT"
 # Sets global variables: HOOK_EVENT, SESSION_ID, USER_PROMPT, TOOL_NAME, TOOL_INPUT_JSON
@@ -177,45 +149,6 @@ validate_session_id() {
     echo "$session_id_raw" | tr -cd 'a-zA-Z0-9_-'
 }
 
-# Create hookSpecificOutput JSON
-# Usage: create_hook_output "event_name" "message"
-# Returns: Properly formatted JSON for hook output
-create_hook_output() {
-    local event_name="$1"
-    local message="$2"
-
-    jq -n --arg event "$event_name" --arg msg "$message" '{
-        "hookSpecificOutput": {
-            "hookEventName": $event,
-            "additionalContext": $msg
-        }
-    }'
-}
-
-# Check if jq is available, fallback to basic parsing
-check_jq() {
-    if command -v jq &>/dev/null; then
-        return 0
-    else
-        return 1
-    fi
-}
-
-# Safe JSON extraction using jq if available, fallback otherwise
-# Usage: safe_json_get "$json" ".key.subkey"
-safe_json_get() {
-    local json="$1"
-    local path="$2"
-
-    if check_jq; then
-        echo "$json" | jq -r "$path // empty" 2>/dev/null || echo ""
-    else
-        # Basic fallback - only supports simple keys
-        local key="${path#.}"
-        extract_json_value "$json" "$key"
-    fi
-}
-
 # ============================================================================
 # Standard Hook Initialization
 # ============================================================================
@@ -273,14 +206,3 @@ init_bash_hook() {
     export HOOK_COMMAND
     return 0
 }
-
-# ============================================================================
-# Hook Output Functions
-# ============================================================================
-# Output functions are defined in lib/json-output.sh
-# Source it here for backward compatibility with existing hooks
-
-_JSON_PARSER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$_JSON_PARSER_DIR/json-output.sh" ]]; then
-    source "$_JSON_PARSER_DIR/json-output.sh"
-fi

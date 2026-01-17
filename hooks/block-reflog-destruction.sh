@@ -10,9 +10,10 @@ trap 'echo "ERROR in block-reflog-destruction.sh at line $LINENO: Command failed
 # PREVENTS: Premature destruction of reflog which is the primary recovery mechanism
 # for history-rewriting operations (filter-branch, rebase, reset).
 
-# Source the CAT hook library for consistent messaging
+# Source the CAT hook libraries
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/json-parser.sh"
+source "${SCRIPT_DIR}/lib/json-output.sh"
 
 # Initialize as Bash hook (reads stdin, parses JSON, extracts command)
 if ! init_bash_hook; then

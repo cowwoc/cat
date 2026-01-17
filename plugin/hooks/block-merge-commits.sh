@@ -20,9 +20,10 @@
 set -euo pipefail
 trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
-# Source the CAT hook library for consistent messaging
+# Source the CAT hook libraries
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/json-parser.sh"
+source "${SCRIPT_DIR}/lib/json-output.sh"
 
 # Check if MERGE_HEAD exists (merge in progress)
 if git rev-parse -q --verify MERGE_HEAD > /dev/null 2>&1; then
