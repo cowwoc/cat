@@ -52,6 +52,31 @@ Refactor  parser         to use visitor pattern
 - No period at end
 - Capitalize first word
 
+### 4. Don't List Modified Files
+
+The commit diff already shows which files were changed. Describe WHAT changed conceptually, not WHERE.
+
+```
+# WRONG - Subject line lists files
+Update Parser.java and Lexer.java for comment handling
+
+# WRONG - Body has "Files updated" section
+config: update display standards
+
+Files updated:
+- commands/status.md
+- skills/collect-results/SKILL.md
+- .claude/cat/references/display-standards.md
+
+# CORRECT - Describes what changed
+Fix comment handling in member declarations
+
+# CORRECT - Body describes changes, not files
+config: update display standards
+
+Standardize fork display format and checkpoint messaging.
+```
+
 ## Structure for Complex Changes
 
 ```
@@ -199,6 +224,13 @@ Combined work
 # Too Technical
 Change variable name from x to userCount
 Move function from line 45 to line 67
+
+# Listing Modified Files (the diff already shows this)
+Update Parser.java, Lexer.java, and TokenType.java
+
+Files updated:
+- commands/status.md
+- skills/collect-results/SKILL.md
 ```
 
 ## Checklist Before Committing
@@ -208,6 +240,7 @@ Move function from line 45 to line 67
 - [ ] Subject line is specific (not "Update files")
 - [ ] Subject line is under 72 characters
 - [ ] Body explains WHAT and WHY, not HOW
+- [ ] No file names listed (the diff already shows which files changed)
 - [ ] For squashed commits: synthesized meaningful summary
 - [ ] **Task ID footer included** (for CAT tasks): `Task ID: vX.Y-task-name`
 - [ ] Message would make sense in git history 6 months from now
