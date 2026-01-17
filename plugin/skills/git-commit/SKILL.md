@@ -75,7 +75,7 @@ Refactor  parser         to use visitor pattern
 - No period at end
 - Capitalize first word
 
-### 4. Describe Changes Conceptually
+### 4. Don't List Modified Files
 
 The commit diff already shows which files were changed. Describe WHAT changed conceptually, not WHERE.
 
@@ -89,7 +89,7 @@ config: update display standards
 Files updated:
 - commands/status.md
 - skills/collect-results/SKILL.md
-- concepts/display-standards.md
+- .claude/cat/references/display-standards.md
 
 # CORRECT - Describes what changed
 Fix comment handling in member declarations
