@@ -262,23 +262,23 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, display:
-```
-╭─ 📊 Default gates configured for {N} versions ────────────────────╮
+After applying defaults, display (ZWSP lines appear blank but contain U+200B):
 
-   Entry gates: Work proceeds sequentially
-   • Each minor waits for previous minor to complete
-   • Each major waits for previous major to complete
-
-   Exit gates: Standard completion criteria
-   • Minor versions: all tasks must complete
-   • Major versions: all minor versions must complete
-
-   To customize gates for any version:
-   → /cat:config → 📊 Version Gates
-
+📊 Default gates configured for {N} versions
+╭───────────────────────────────────────────────────────────────────╮
+​
+      Entry gates: Work proceeds sequentially
+      • Each minor waits for previous minor to complete
+      • Each major waits for previous major to complete
+​
+      Exit gates: Standard completion criteria
+      • Minor versions: all tasks must complete
+      • Major versions: all minor versions must complete
+​
+      To customize gates for any version:
+      → /cat:config → 📊 Version Gates
+​
 ╰───────────────────────────────────────────────────────────────────╯
-```
 
 **If "Configure per version":**
 
@@ -307,6 +307,97 @@ Then:
 
 </step>
 
+<step name="existing_research" condition="Existing codebase">
+
+**Run parallel stakeholder research on imported project:**
+
+After importing the project structure, run research to inform future work.
+
+**Extract project context:**
+- Read PROJECT.md for project description, goals, constraints
+- Read ROADMAP.md for upcoming work
+- Identify the primary technology stack from detection step
+
+**Spawn 6 stakeholder agents in parallel using `parallel-execute` skill with `mode: research`:**
+
+```yaml
+stakeholders:
+  - architect: "Research architecture patterns and stack recommendations for {project description}"
+  - security: "Research security risks and secure patterns for {technology stack}"
+  - quality: "Research quality patterns and anti-patterns for {technology stack}"
+  - tester: "Research testing strategies for {project type}"
+  - performance: "Research performance characteristics for {technology stack}"
+  - ux: "Research UX patterns for {project type}"
+```
+
+**Each agent receives:**
+- Project description from PROJECT.md
+- Detected technology stack
+- Current project stage (MVP/Early/Active/Maintenance)
+- `mode: research` parameter
+- Reference to their stakeholder definition file
+
+**Aggregate and store findings:**
+
+Create `.claude/cat/RESEARCH.md` with aggregated findings:
+
+```markdown
+# Project Research
+
+**Generated:** {timestamp}
+**Project:** {project name}
+**Stack:** {detected stack}
+
+## Stack Recommendations
+{From architect}
+
+## Architecture Patterns
+{From architect}
+
+## Security Considerations
+{From security}
+
+## Quality Patterns
+{From quality}
+
+## Testing Strategy
+{From tester}
+
+## Performance Considerations
+{From performance}
+
+## UX Guidelines
+{From ux}
+
+## Sources
+{Combined URLs from all stakeholders}
+```
+
+**Also update pending task PLAN.md files:**
+
+For each pending task, add a `## Research` section referencing the relevant portions
+of the project-level research.
+
+Display completion (ZWSP lines appear blank but contain U+200B):
+
+🔬 PROJECT RESEARCH COMPLETE
+╭───────────────────────────────────────────────────────────────────╮
+​
+      6 stakeholders analyzed your project in parallel:
+      ✓ Architect: Stack & architecture patterns
+      ✓ Security: Risk assessment & secure patterns
+      ✓ Quality: Best practices & anti-patterns
+      ✓ Tester: Testing strategy & edge cases
+      ✓ Performance: Efficiency considerations
+      ✓ UX: Usability & accessibility patterns
+​
+      Research saved to: .claude/cat/RESEARCH.md
+      Task PLAN.md files updated with relevant findings.
+​
+╰───────────────────────────────────────────────────────────────────╯
+
+</step>
+
 <!-- COMMON STEPS -->
 
 <step name="mode">
@@ -319,17 +410,17 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 
 **Choose Your Companion - Capture development style preferences**
 
-Display welcome banner:
-```
-╭─ 🎮 CHOOSE YOUR COMPANION ────────────────────────────────────────╮
+Display welcome banner (ZWSP lines appear blank but contain U+200B):
 
-   Every adventurer has a style. These questions shape how your
-   AI companion navigates the coding quest ahead.
-
-   Choose wisely - your preferences guide every decision.
-
+🎮 CHOOSE YOUR COMPANION
+╭───────────────────────────────────────────────────────────────────╮
+​
+      Every adventurer has a style. These questions shape how your
+      AI companion navigates the coding quest ahead.
+​
+      Choose wisely - your preferences guide every decision.
+​
 ╰───────────────────────────────────────────────────────────────────╯
-```
 
 AskUserQuestion: header="Trust", question="How do you command your companion?", options=[
   "🛡️ Cautious Commander - check in often, verify each move",
@@ -404,22 +495,22 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Display completion banner:
-```
-╭─ ⚔️ YOUR QUEST BEGINS ────────────────────────────────────────────╮
+Display completion banner (ZWSP lines appear blank but contain U+200B):
 
-   COMPANION PROFILE
-   ─────────────────────────────────────────────────────────────────
-   Command Style:  [trust]
-   Exploration:    [curiosity]
-   Opportunity:    [patience]
-   Quest Mode:     [interactive|yolo]
-
-   Your companion awaits your command.
-   Reforge your style anytime: /cat:config
-
+⚔️ YOUR QUEST BEGINS
+╭───────────────────────────────────────────────────────────────────╮
+​
+      COMPANION PROFILE
+      ─────────────────────────────────────────────────────────────────
+      Command Style:  [trust]
+      Exploration:    [curiosity]
+      Opportunity:    [patience]
+      Quest Mode:     [interactive|yolo]
+​
+      Your companion awaits your command.
+      Reforge your style anytime: /cat:config
+​
 ╰───────────────────────────────────────────────────────────────────╯
-```
 
 **New projects:**
 ```
