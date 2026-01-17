@@ -20,7 +20,6 @@ Use Test-Driven Development for features that benefit from upfront behavior spec
 
 ```
 ╭─ TDD STATE MACHINE ───────────────────────────────────────────────────────────────╮
-├───────────────────────────────────────────────────────────────────────────────────┤
 
    [START] ──► [RED] ──► [GREEN] ──► [REFACTOR] ──► [VERIFY] ──► [COMPLETE]
                │  ▲       │           │              │
