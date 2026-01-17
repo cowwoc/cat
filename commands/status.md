@@ -97,31 +97,35 @@ terminals. Horizontal-only borders eliminate padding calculation problems.
 
 **Use this exact format (substitute actual values):**
 
-═══════════════════════════════════════════════════════════════════
-🗺️ **YOUR ADVENTURE** - {PROJECT_NAME}
-═══════════════════════════════════════════════════════════════════
+╭─ 🗺️ YOUR ADVENTURE - {PROJECT_NAME} ─────────────────────────────╮
+├───────────────────────────────────────────────────────────────────┤
 
-📊 Overall: [███████████████████████████████████░░░░░░░░░░] **{PERCENT}%**
-🏆 **{COMPLETED}/{TOTAL}** tasks complete
-⚙️ Mode: {Interactive|YOLO}
+   📊 Overall: [███████████████████████████████████░░░░░░░░░░] **{PERCENT}%**
+   🏆 **{COMPLETED}/{TOTAL}** tasks complete
+   ⚙️ Mode: {Interactive|YOLO}
 
-═══════════════════════════════════════════════════════════════════
+   ┌─ 📦 v{N}: {Major Version Name} ────────────────────────────────┐
 
-┌─ 📦 v{N}: {Major Version Name} ─────────────────────────────────┐
+   ☑️ v{N}.{M}: {Minor description} ({completed}/{total})
+   ☑️ v{N}.{M}: {Another completed minor} ({completed}/{total})
 
-☑️ v{N}.{M}: {Minor description} ({completed}/{total})
-☑️ v{N}.{M}: {Another completed minor} ({completed}/{total})
+   🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total})
+      🔳 {pending-task-1}
+      🔳 {pending-task-2}
+      🔳 {pending-task-3}
+      📋 ... and {N} more pending tasks
 
-🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total})
-   🔳 {pending-task-1}
-   🔳 {pending-task-2}
-   🔳 {pending-task-3}
-   📋 ... and {N} more pending tasks
+   🔳 v{N}.{M}: {Future minor} ({completed}/{total})
+      🚧 Entry gate: waiting on v{N}.{M-1} completion
 
-🔳 v{N}.{M}: {Future minor} ({completed}/{total})
-   🚧 Entry gate: waiting on v{N}.{M-1} completion
+   └────────────────────────────────────────────────────────────────┘
 
-└─────────────────────────────────────────────────────────────────┘
+   ─────────────────────────────────────────────────────────────────
+   🎯 **Current Quest:** v{N}.{M} - {Minor version description}
+   📋 **Available tasks:** {N} pending
+   ─────────────────────────────────────────────────────────────────
+
+╰───────────────────────────────────────────────────────────────────╯
 
 **Gate status indicators (show inline with version when applicable):**
 
@@ -133,11 +137,6 @@ For versions with unsatisfied entry gates:
 For current/in-progress versions, show exit gate progress:
 
 🔄 **v{N}.{M}: {Current minor}** ({completed}/{total}) | Exit: 2/3 conditions
-
-═══════════════════════════════════════════════════════════════════
-🎯 **Current Quest:** v{N}.{M} - {Minor version description}
-📋 **Available tasks:** {N} pending
-═══════════════════════════════════════════════════════════════════
 
 **🚀 NEXT STEPS**
 
@@ -158,8 +157,16 @@ This represents **overall project progress** across all versions.
 **Status symbols (emoji):**
 - ☑️ completed (for done tasks and 100% complete minors)
 - 🔄 in-progress (for current minor version AND any actively running task)
-- 🔳 pending
-- 🚫 blocked (dependencies not met)
+- 🔳 pending (no unsatisfied entry gate)
+- 🚫 blocked (task-level dependencies not met)
+- 🚧 gate waiting (entry gate not satisfied - applies to ALL such versions, not just immediate next)
+
+**CRITICAL: Entry gate evaluation algorithm:**
+For EACH version after the current 🔄 version:
+1. Check if its entry gate is satisfied (predecessor complete?)
+2. If NOT satisfied → use 🚧 (regardless of position in sequence)
+3. If satisfied → use 🔳
+Do NOT use 🔳 for versions whose entry gates depend on incomplete predecessors.
 
 **Task display rules (CRITICAL):**
 - **Completed versions (☑️):** Summary line only, no tasks
