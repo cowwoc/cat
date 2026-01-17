@@ -277,15 +277,32 @@ CODE STYLE:
 - Tests for bugfixes belong in SAME commit as the fix
 ```
 
-**Token Tracking Requirements (for accurate estimate comparison):**
+**Token Tracking Requirements (A017 - CRITICAL):**
+
+**MAIN AGENT MUST include session ID in prompt** - subagents cannot measure tokens without it.
+
+Include this block in EVERY subagent prompt:
 ```
-TOKEN TRACKING (MANDATORY - required for estimate validation):
+TOKEN MEASUREMENT (required):
+Session ID: {paste actual session ID from your CAT SESSION INSTRUCTIONS}
+Session file: /home/node/.config/claude/projects/-workspace/{SESSION_ID}.jsonl
+
+On completion, measure tokens:
+TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
+  select(. != null) | (.input_tokens + .output_tokens)] | add // 0' "$SESSION_FILE")
+```
+
+**Why explicit session ID?** Subagents don't receive CAT SESSION INSTRUCTIONS automatically.
+Without the session ID, token measurement fails and reports show "NOT MEASURED" (M099, M109, M123).
+
+**Token tracking requirements:**
 - Track cumulative token usage across the ENTIRE session
 - If context compaction occurs, PRESERVE pre-compaction token count
 - Write TOTAL tokens (pre-compaction + post-compaction) to .completion.json
 - Include: inputTokens, outputTokens, tokensUsed (total), compactionEvents count
 
-ON COMPLETION, write .completion.json with cumulative totals:
+**On completion**, write .completion.json with cumulative totals:
+```json
 {
   "status": "success|partial|failed",
   "tokensUsed": {CUMULATIVE_TOTAL},
@@ -294,18 +311,10 @@ ON COMPLETION, write .completion.json with cumulative totals:
   "compactionEvents": {COUNT},
   "summary": "..."
 }
+```
 
 If compaction occurred, the pre-compaction tokens are NOT lost - they must be
 preserved and added to post-compaction usage for accurate reporting.
-
-HOW TO MEASURE (M099):
-# Your session ID is in CAT SESSION INSTRUCTIONS at startup: "Session ID: xxx"
-MY_SESSION_ID="<session-id-from-startup>"
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${MY_SESSION_ID}.jsonl"
-TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
-  select(. != null) | (.input_tokens + .output_tokens)] | add // 0' "$SESSION_FILE")
-echo "Measured tokens: $TOKENS"
-```
 
 **Verification:**
 
@@ -319,7 +328,8 @@ Before invoking Task tool, confirm:
 | Parser test style notes | Parser tasks | M079 |
 | Exact code examples | Non-trivial changes | M062 |
 | Fail-fast conditions | All tasks | spawn-subagent core |
-| Token tracking instructions | All tasks | spawn-subagent core |
+| **Session ID in prompt** | All tasks | A017, M099, M109, M123 |
+| Token measurement instructions | All tasks | spawn-subagent core |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
 
