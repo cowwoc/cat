@@ -2,9 +2,41 @@
 
 ## Version History
 
-### v1.9
+### 2026-01-17: v1.9
 
-*In development*
+**Display Standards & Workflow Hardening**
+
+Comprehensive display standardization, test infrastructure, and workflow stability improvements.
+
+**New Features:**
+- **Fork-in-the-Road Wizard**: Improved approach selection with wizard-style presentation
+- **Exit Gate Dependencies**: Task dependencies for exit gate validation
+- **Test Framework**: Added bats test framework with 66+ tests for hooks and scripts
+- **Language Supplements**: Stakeholder reviews can load language-specific guidance
+
+**Configuration:**
+- New settings schema: `trust`, `verify`, `curiosity`, `patience` replace previous options
+- Worktree isolation protection (M101) prevents commits to wrong worktree
+- Task lock checking before offering tasks (M097)
+- Hook to block direct lock file deletion (M096)
+- Commit message guidance: don't list modified files (redundant with diff)
+- Require failing test cases for bugfix tasks
+- Strengthen token measurement requirements (A017)
+
+**Bugfixes:**
+- Fix bold rendering in display templates (M125)
+- Fix box formatting for display standard compliance
+- Fix subagent token measurement session ID issue (M109)
+- Fix inconsistent task path patterns (M108)
+- Fix parse_error false positives when command succeeds (M100)
+- Fix HEREDOC message extraction in commit type validation
+- Fix emoji display width calculations in box templates
+- Fix docs vs config validation for Claude-facing files
+
+**Documentation:**
+- Display standards with markdown rendering rules (A018)
+- Simplified emoji width handling
+- Task locking protocol documentation
 
 ### 2026-01-15: v1.8
 
