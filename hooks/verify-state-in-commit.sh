@@ -15,6 +15,7 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/json-parser.sh"
+source "${SCRIPT_DIR}/lib/json-output.sh"
 
 # Initialize as Bash hook (reads stdin, parses JSON, extracts command)
 if ! init_bash_hook; then
