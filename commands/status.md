@@ -95,21 +95,30 @@ tool call wrappers, output the styled text directly as part of your response.
 Per display-standards.md, avoid vertical borders (`║`, `│`) because emoji width varies across
 terminals. Horizontal-only borders eliminate padding calculation problems.
 
+**CRITICAL: Do NOT wrap output in code blocks (M125).**
+
+Markdown bold (`**text**`) renders correctly when output directly, but shows as literal asterisks
+inside triple-backtick code blocks. Output the status display as plain text, NOT inside ``` blocks.
+
+**CRITICAL: Keep version info and metrics on the SAME LINE.**
+
+Do not manually wrap lines. Let version description, counts, and gate status all appear on one line.
+The box width should accommodate the content, not force line breaks.
+
 **Use this exact format (substitute actual values):**
 
-╭─ 🗺️ YOUR ADVENTURE - {PROJECT_NAME} ─────────────────────────────╮
-├───────────────────────────────────────────────────────────────────┤
+╭─ 🗺️ YOUR ADVENTURE - {PROJECT_NAME} ───────────────────────────────────────────────────────────╮
 
-   📊 Overall: [███████████████████████████████████░░░░░░░░░░] **{PERCENT}%**
+   📊 Overall: [████████████████████████████████████░░░░░░░░░] **{PERCENT}%**
    🏆 **{COMPLETED}/{TOTAL}** tasks complete
    ⚙️ Mode: {Interactive|YOLO}
 
-   ┌─ 📦 v{N}: {Major Version Name} ────────────────────────────────┐
+   ┌─ 📦 v{N}: {Major Version Name} ─────────────────────────────────────────────────────────────┐
 
    ☑️ v{N}.{M}: {Minor description} ({completed}/{total})
    ☑️ v{N}.{M}: {Another completed minor} ({completed}/{total})
 
-   🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total})
+   🔄 **v{N}.{M}: {Current minor description}** ({completed}/{total}) | Exit: {X}/{Y} conditions
       🔳 {pending-task-1}
       🔳 {pending-task-2}
       🔳 {pending-task-3}
@@ -118,14 +127,14 @@ terminals. Horizontal-only borders eliminate padding calculation problems.
    🔳 v{N}.{M}: {Future minor} ({completed}/{total})
       🚧 Entry gate: waiting on v{N}.{M-1} completion
 
-   └────────────────────────────────────────────────────────────────┘
+   └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
-   ─────────────────────────────────────────────────────────────────
+   ──────────────────────────────────────────────────────────────────────────────────────────────
    🎯 **Current Quest:** v{N}.{M} - {Minor version description}
    📋 **Available tasks:** {N} pending
-   ─────────────────────────────────────────────────────────────────
+   ──────────────────────────────────────────────────────────────────────────────────────────────
 
-╰───────────────────────────────────────────────────────────────────╯
+╰────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 **Gate status indicators (show inline with version when applicable):**
 
@@ -134,7 +143,7 @@ For versions with unsatisfied entry gates:
 🚧 v{N}.{M}: {Minor description} ({completed}/{total})
    🚧 Entry gate: waiting on {unmet condition}
 
-For current/in-progress versions, show exit gate progress:
+For current/in-progress versions, show exit gate progress inline:
 
 🔄 **v{N}.{M}: {Current minor}** ({completed}/{total}) | Exit: 2/3 conditions
 
@@ -259,9 +268,10 @@ The status output should be:
 - [ ] Gate status shown for versions with entry/exit gates
 - [ ] Versions with unsatisfied entry gates show 🚧 indicator
 - [ ] Progress bar accurate
-- [ ] Current minor version bolded
+- [ ] Current minor version bolded with **markdown**
 - [ ] NEXT STEPS table renders with bold [**1**] and [**2**]
 - [ ] Legend displayed (including 🚧 Gate Waiting)
+- [ ] Output is NOT wrapped in code blocks (``` breaks bold rendering)
 - [ ] Blocked tasks and gate-blocked versions listed (if any)
 - [ ] Exit gate tasks waiting on non-gating tasks shown with 🚧 indicator
 - [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions

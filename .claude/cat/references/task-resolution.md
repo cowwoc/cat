@@ -153,6 +153,33 @@ case "$RESOLUTION" in
 esac
 ```
 
+## Validation Task Completion (M126)
+
+**MANDATORY**: Validation tasks with non-zero errors are NOT complete until either:
+1. **All errors are resolved** (0 errors), OR
+2. **New tasks are created** for each remaining error category
+
+Validation tasks (like `validate-spring-framework-parsing`) exist to verify parser/tool behavior
+against real-world codebases. When validation reveals errors:
+
+| Scenario | Action |
+|----------|--------|
+| 0 errors | Mark task complete with `Resolution: implemented` |
+| N errors remain | Create new tasks for error categories, mark validation task blocked by them |
+
+**Anti-pattern:** Documenting remaining errors as "known limitations" and marking complete.
+
+**Correct pattern:**
+1. Run validation, find N errors
+2. Categorize errors by root cause
+3. Create new task for each error category
+4. Update validation task dependencies to include new tasks
+5. Validation task remains pending/blocked until new tasks complete
+6. Re-run validation after fixes
+
+**User decides** what constitutes acceptable limitations. Never unilaterally close a validation task
+with errors remaining - create the tasks and let user prioritize or close them as won't-fix.
+
 ## Common Patterns
 
 ### Same Error, Different Root Cause

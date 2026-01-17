@@ -325,9 +325,13 @@ Read the task's:
 - Parent major's `STATE.md` - for context
 
 Present task overview with visual progress bar
-(see [display-standards.md § Progress Bar Format](.claude/cat/references/display-standards.md#progress-bar-format)):
+(see [display-standards.md § Progress Bar Format](.claude/cat/references/display-standards.md#progress-bar-format)).
 
-```
+**CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
+when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
+
+Output format (do NOT wrap in ```):
+
 ## Task: {task-name}
 
 **Version:** {major}.{minor}
@@ -339,7 +343,6 @@ Present task overview with visual progress bar
 
 **Approach:**
 {approach from PLAN.md}
-```
 
 </step>
 
@@ -347,9 +350,10 @@ Present task overview with visual progress bar
 
 **MANDATORY: Analyze task complexity BEFORE execution.**
 
-Read the task's PLAN.md and estimate context requirements:
+Read the task's PLAN.md and estimate context requirements.
 
-```
+Output format (do NOT wrap in ```):
+
 ## Task Size Analysis
 
 **Indicators of large task:**
@@ -358,7 +362,6 @@ Read the task's PLAN.md and estimate context requirements:
 - Multiple test suites required
 - Complex logic requiring exploration
 - Estimated steps > 10
-```
 
 **Calculate threshold from config:**
 
@@ -657,9 +660,10 @@ If execution fails:
 
 **MANDATORY: Collect results and report token metrics to user.**
 
-After subagent completes, invoke `/cat:collect-results` and present metrics:
+After subagent completes, invoke `/cat:collect-results` and present metrics.
 
-```
+Output format (do NOT wrap in ```):
+
 ## Subagent Execution Report
 
 **Task:** {task-name}
@@ -675,7 +679,6 @@ After subagent completes, invoke `/cat:collect-results` and present metrics:
 - Commits: {N}
 - Files changed: {N}
 - Lines: +{added} / -{removed}
-```
 
 **Why mandatory:** Users cannot observe subagent execution. Token metrics are the only visibility
 into execution quality. Compaction events indicate potential quality degradation.
@@ -1132,22 +1135,24 @@ Resolution field is MANDATORY. Valid values: `implemented`, `duplicate`, `obsole
 
 **Anti-pattern (M076):** Committing STATE.md separately as "docs: complete task {name}".
 
-Present work summary with adventure-style checkpoint:
+Present work summary with adventure-style checkpoint.
 
-```
-╭─ ✅ CHECKPOINT: Task Complete ────────────────────────────────────╮
-├───────────────────────────────────────────────────────────────────┤
+**CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
+when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
 
-   Quest: {task-name}
-   Approach: {selected approach from choose_approach step}
+Output format (do NOT wrap in ```):
 
-   ────────────────────────────┬────────────────────────────────────
-   Time: {N} minutes           │  Tokens: {N} ({percentage}% of context)
-   ────────────────────────────┴────────────────────────────────────
-   Branch: {task-branch}
+╭─ ✅ **CHECKPOINT: Task Complete** ────────────────────────────────────────────────────────────────╮
 
-╰───────────────────────────────────────────────────────────────────╯
-```
+   **Quest:** {task-name}
+   **Approach:** {selected approach from choose_approach step}
+
+   ─────────────────────────────────────────────────────────────────────────────────────────────────
+   **Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)
+   ─────────────────────────────────────────────────────────────────────────────────────────────────
+   **Branch:** {task-branch}
+
+╰───────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 **Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
 Users review the task branch which contains merged subagent work, not the internal subagent branch.

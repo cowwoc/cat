@@ -130,45 +130,48 @@ Consider these factors for long-term analysis:
 
 ### 5. Present Fork in the Road
 
-Display with wizard-style formatting (see [display-standards.md § Fork in the Road](.claude/cat/references/display-standards.md#fork-in-the-road)):
+Display with wizard-style formatting (see [display-standards.md § Fork in the Road](.claude/cat/references/display-standards.md#fork-in-the-road)).
 
-```
+**CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
+when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
+
+Output format (do NOT wrap in ```):
+
 ═══════════════════════════════════════════════════════════════════
-🔀 FORK IN THE ROAD
+🔀 **FORK IN THE ROAD**
 ═══════════════════════════════════════════════════════════════════
 
-Task: {task-name}
-Risk: {LOW|MEDIUM|HIGH}
+**Task:** {task-name}
+**Risk:** {LOW|MEDIUM|HIGH}
 
-CHOOSE YOUR PATH
+**Choose Your Path**
 ───────────────────────────────────────────────────────────────────
 
-[A] 🛡️ Conservative
+[A] 🛡️ **Conservative**
     {scope from PLAN.md}
     Risk: LOW | Scope: {N} files | ~{N}K tokens
 
-[B] ⚖️ Balanced
+[B] ⚖️ **Balanced**
     {scope from PLAN.md}
     Risk: MEDIUM | Scope: {N} files | ~{N}K tokens
 
-[C] ⚔️ Aggressive
+[C] ⚔️ **Aggressive**
     {scope from PLAN.md}
     Risk: HIGH | Scope: {N} files | ~{N}K tokens
 
 ───────────────────────────────────────────────────────────────────
-ANALYSIS
+**Analysis**
 ───────────────────────────────────────────────────────────────────
 
-⭐ QUICK WIN: [{letter}] {approach name}
+⭐ **Quick Win:** [{letter}] {approach name}
    {1-2 sentence rationale for immediate completion}
 
-🏆 LONG-TERM: [{letter}] {approach name}
+🏆 **Long-Term:** [{letter}] {approach name}
    {1-2 sentence rationale for project health over time}
 
 {Note if they differ, explaining why}
 
 ═══════════════════════════════════════════════════════════════════
-```
 
 Use AskUserQuestion with options: "Conservative", "Balanced", "Aggressive"
 
@@ -208,37 +211,38 @@ a comprehensive spec without re-reading the codebase.
 
 ### High Complexity Task (Research Recommended)
 
-```
+Example output (do NOT wrap in ```):
+
 ═══════════════════════════════════════════════════════════════════
-🔀 FORK IN THE ROAD
+🔀 **FORK IN THE ROAD**
 ═══════════════════════════════════════════════════════════════════
 
-Task: implement-incremental-parsing
-Risk: HIGH
+**Task:** implement-incremental-parsing
+**Risk:** HIGH
 
-CHOOSE YOUR PATH
+**Choose Your Path**
 ───────────────────────────────────────────────────────────────────
 
-[A] 🏗️ Full implementation
+[A] 🏗️ **Full implementation**
     Build complete solution upfront
     Risk: HIGH | Scope: 12 files | ~45K tokens
 
-[B] 📦 Incremental approach
+[B] 📦 **Incremental approach**
     Start simple, expand as needed
     Risk: MEDIUM | Scope: 5 files | ~20K tokens
 
-[C] 🔍 Research first
+[C] 🔍 **Research first**
     Analyze existing parser architecture before committing
     Risk: LOW | Scope: 0 files | ~8K tokens
 
 ───────────────────────────────────────────────────────────────────
-ANALYSIS
+**Analysis**
 ───────────────────────────────────────────────────────────────────
 
-⭐ QUICK WIN: [C] Research first
+⭐ **Quick Win:** [C] Research first
    Lowest risk. Gathers information before committing to an approach.
 
-🏆 LONG-TERM: [B] Incremental approach
+🏆 **Long-Term:** [B] Incremental approach
    Allows validation at each step. Prevents over-engineering by
    expanding scope only when needed.
 
@@ -247,41 +251,41 @@ incremental approach is better long-term as it builds understanding
 while making progress.
 
 ═══════════════════════════════════════════════════════════════════
-```
 
 ### Mechanical Refactor (Same Recommendation)
 
-```
+Example output (do NOT wrap in ```):
+
 ═══════════════════════════════════════════════════════════════════
-🔀 FORK IN THE ROAD
+🔀 **FORK IN THE ROAD**
 ═══════════════════════════════════════════════════════════════════
 
-Task: rename-parser-methods-for-consistency
-Risk: LOW
+**Task:** rename-parser-methods-for-consistency
+**Risk:** LOW
 
-CHOOSE YOUR PATH
+**Choose Your Path**
 ───────────────────────────────────────────────────────────────────
 
-[A] ⚡ Direct rename
+[A] ⚡ **Direct rename**
     Find-and-replace across codebase
     Risk: LOW | Scope: 8 files | ~6K tokens
 
-[B] 🏗️ Refactor with deprecation
+[B] 🏗️ **Refactor with deprecation**
     Add new names, deprecate old, migrate gradually
     Risk: LOW | Scope: 12 files | ~15K tokens
 
-[C] 🔍 Research first
+[C] 🔍 **Research first**
     Check for dynamic references or reflection usage
     Risk: LOW | Scope: 0 files | ~3K tokens
 
 ───────────────────────────────────────────────────────────────────
-ANALYSIS
+**Analysis**
 ───────────────────────────────────────────────────────────────────
 
-⭐ QUICK WIN: [A] Direct rename
+⭐ **Quick Win:** [A] Direct rename
    Mechanical change with clear scope. Fast and low risk.
 
-🏆 LONG-TERM: [A] Direct rename
+🏆 **Long-Term:** [A] Direct rename
    No external consumers need migration. Deprecation adds complexity
    without benefit for internal-only code.
 
@@ -289,42 +293,42 @@ Same recommendation: Direct rename is both fastest and best for
 project health. Deprecation would add unnecessary maintenance burden.
 
 ═══════════════════════════════════════════════════════════════════
-```
 
 ### Architecture Decision (Different Recommendations)
 
-```
+Example output (do NOT wrap in ```):
+
 ═══════════════════════════════════════════════════════════════════
-🔀 FORK IN THE ROAD
+🔀 **FORK IN THE ROAD**
 ═══════════════════════════════════════════════════════════════════
 
-Task: split-parser-into-multiple-classes
-Risk: MEDIUM
+**Task:** split-parser-into-multiple-classes
+**Risk:** MEDIUM
 
-CHOOSE YOUR PATH
+**Choose Your Path**
 ───────────────────────────────────────────────────────────────────
 
-[A] 🛡️ Conservative
+[A] 🛡️ **Conservative**
     Extract to package-private classes, minimal API changes
     Risk: LOW | Scope: 4 files | ~12K tokens
 
-[B] ⚖️ Balanced
+[B] ⚖️ **Balanced**
     Create internal interface, extract implementations
     Risk: MEDIUM | Scope: 6 files | ~18K tokens
 
-[C] ⚔️ Aggressive
+[C] ⚔️ **Aggressive**
     Full public API with plugin architecture
     Risk: HIGH | Scope: 10 files | ~35K tokens
 
 ───────────────────────────────────────────────────────────────────
-ANALYSIS
+**Analysis**
 ───────────────────────────────────────────────────────────────────
 
-⭐ QUICK WIN: [A] Conservative
+⭐ **Quick Win:** [A] Conservative
    Achieves immediate goal (smaller files) with minimal risk.
    No API changes required.
 
-🏆 LONG-TERM: [B] Balanced
+🏆 **Long-Term:** [B] Balanced
    Internal interface establishes pattern for future extraction.
    Plugin architecture ([C]) is over-engineering for internal parser.
 
@@ -332,7 +336,6 @@ Different recommendations: Conservative is fastest, but Balanced
 prevents repeating this refactor when the next extraction is needed.
 
 ═══════════════════════════════════════════════════════════════════
-```
 
 ## Integration with execute-task
 
