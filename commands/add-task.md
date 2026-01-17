@@ -20,6 +20,20 @@ window (target: 40% of limit).
 
 </objective>
 
+<main_branch_requirement>
+
+**CRITICAL:** The main branch must always build and pass all tests without disabling any default build
+checks (linters, static analysis, etc.).
+
+When creating bugfix tasks with TDD failing tests:
+- Tests are created and verified to fail during task creation
+- Tests are then **disabled** with `@Test(enabled = false)` and a task reference comment
+- Tests are **re-enabled** when the fix is implemented during task execution
+
+If the current main branch does not pass builds/tests, create a task to fix it before other work.
+
+</main_branch_requirement>
+
 <execution_context>
 
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-state.md
@@ -253,11 +267,53 @@ mkdir -p "$TASK_PATH"
 
 **For Bugfix tasks:**
 
+During task creation (this workflow), the agent MUST:
+1. **Create failing test case(s)** that reproduce the production bug
+2. **Run the test(s)** and verify they fail
+3. **Disable the test(s)** with `@Test(enabled = false)` (or equivalent) and a JavaDoc comment
+   referencing the task that will enable them
+4. **Commit the disabled test(s)** as part of task creation
+5. **Include the test details** in the Failing Tests section below
+
+**CRITICAL:** The main branch must always build and pass all tests. Failing tests are disabled during
+task creation and re-enabled when the fix is implemented during task execution.
+
+This follows TDD principles: the failing test proves the bug exists and will prove when it's fixed.
+Creating tests during task creation (not later) ensures the bug is captured while context is fresh.
+
 ```markdown
 # Plan: {task-name}
 
 ## Problem
 {problem description}
+
+## Failing Tests (Created During Task Creation)
+
+**Test file:** path/to/test/file.ext
+**Test method:** shouldHandleXWhenY (or similar descriptive name)
+**Commit:** {short hash} - test: add disabled failing test for {bug description}
+
+```{language}
+/**
+ * {Test description}
+ * <p>
+ * <b>TDD RED:</b> This test reproduces a production bug and is disabled until the fix is implemented.
+ *
+ * @see <a href=".claude/cat/v0/vX.Y/task/{task-name}">Task to fix this</a>
+ */
+@Test(enabled = false)  // Re-enable during task execution
+public void shouldHandleXWhenY()
+{
+    // Minimal test case that reproduces the bug
+    {actual test code}
+}
+```
+
+**Verification run (from task creation):**
+```bash
+{command to run test}
+# Result: FAILED with error: "{actual error message observed}"
+```
 
 ## Root Cause
 {analysis of cause - may be "To be determined during execution"}
@@ -272,16 +328,30 @@ mkdir -p "$TASK_PATH"
 
 ## Execution Steps
 
-### Step 1: {action name}
-**Files:** path/to/file.ext
-**Action:** {Specific fix - what to change, why this fixes it, what to avoid}
-**Verify:** {Test or check to prove bug is fixed}
-**Done:** {Bug no longer reproducible}
+### Step 1: Re-enable and verify failing test
+**Files:** path/to/test/file.ext
+**Action:** Remove `@Test(enabled = false)`, run test to confirm it still fails
+**Verify:** Test fails with expected error message from task creation
+**Done:** Failing test re-enabled and confirmed
 
-## Test Cases
-- [ ] Original bug scenario - now passes
-- [ ] Related edge cases - still work
-- [ ] Regression tests - still pass
+### Step 2: {fix action name}
+**Files:** path/to/source.ext
+**Action:** {Specific fix - what to change, why this fixes it, what to avoid}
+**Verify:** Run test suite - previously failing test now passes
+**Done:** Bug fixed, test passes
+
+### Step 3: Verify no regressions
+**Files:** (full test suite)
+**Action:** Run complete test suite to verify no regressions
+**Verify:** All tests pass
+**Done:** No regressions introduced
+
+## Acceptance Criteria
+- [ ] Failing test case reproduces bug (committed during task creation)
+- [ ] Fix implemented
+- [ ] Previously failing test now passes
+- [ ] All existing tests still pass
+- [ ] Related edge cases covered
 ```
 
 **For Refactor tasks:**
