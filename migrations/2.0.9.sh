@@ -6,20 +6,15 @@ set -euo pipefail
 # Changes:
 # - Replaces approach/stakeholderReview/refactoring with trust/verify/curiosity/patience
 # - Renames autoCleanupWorktrees to autoRemoveWorktrees
-# - Stakeholder review is now automatically triggered based on task characteristics
 #
 # Migration mapping:
 #   approach: conservative -> trust: low, curiosity: low
 #   approach: balanced -> trust: medium, curiosity: medium
-#   approach: aggressive -> trust: high, curiosity: high
+#   approach: aggressive -> trust: medium, curiosity: high (NOT trust: high, reviews still run)
 #
-#   stakeholderReview: always -> trust: low (if not set by approach)
-#   stakeholderReview: high-risk-only -> trust: medium (if not set by approach)
-#   stakeholderReview: never -> trust: high (if not set by approach)
-#
-#   refactoring: avoid -> curiosity: low, patience: high
-#   refactoring: opportunistic -> curiosity: medium, patience: medium
-#   refactoring: eager -> curiosity: high, patience: low
+#   refactoring: avoid -> patience: high
+#   refactoring: opportunistic -> patience: medium
+#   refactoring: eager -> patience: low
 #
 # New defaults: trust: medium, verify: changed, curiosity: low, patience: high
 
@@ -42,6 +37,12 @@ if jq -e '.trust' "$config_file" > /dev/null 2>&1; then
     exit 0
 fi
 
+# Skip if no old settings to migrate
+if ! jq -e '.approach or .stakeholderReview or .refactoring' "$config_file" > /dev/null 2>&1; then
+    log_migration "No old settings found (approach/stakeholderReview/refactoring), skipping"
+    exit 0
+fi
+
 log_migration "Migrating configuration to new behavior settings..."
 
 # Create backup before migration
@@ -49,10 +50,9 @@ backup_cat_dir "pre-1.0.9-migration"
 
 # Read old values
 approach=$(jq -r '.approach // "balanced"' "$config_file")
-stakeholder_review=$(jq -r '.stakeholderReview // "high-risk-only"' "$config_file")
 refactoring=$(jq -r '.refactoring // "opportunistic"' "$config_file")
 
-log_migration "Old settings: approach=$approach, stakeholderReview=$stakeholder_review, refactoring=$refactoring"
+log_migration "Old settings: approach=$approach, refactoring=$refactoring"
 
 # Determine new values based on old settings
 # Start with defaults
@@ -61,7 +61,7 @@ verify="changed"
 curiosity="low"
 patience="high"
 
-# Map approach -> trust + curiosity
+# Map approach -> trust and curiosity
 case "$approach" in
     conservative)
         trust="low"
@@ -72,51 +72,29 @@ case "$approach" in
         curiosity="medium"
         ;;
     aggressive)
-        trust="high"
+        # aggressive approach means auto-fix but still run reviews
+        trust="medium"
         curiosity="high"
+        log_migration "approach=aggressive -> trust=medium, curiosity=high"
         ;;
 esac
 
-# stakeholderReview influences trust if approach didn't set it strongly
-# Use the more conservative (lower) trust if there's a conflict
-case "$stakeholder_review" in
-    always)
-        # If approach was aggressive but reviews were always, use medium trust
-        if [[ "$trust" == "high" ]]; then
-            trust="medium"
-        fi
-        ;;
-    never)
-        # If approach was conservative but reviews were never, stay conservative
-        # (conservative wins for safety)
-        ;;
-esac
-
-# Map refactoring -> curiosity + patience
+# Map refactoring -> patience
 case "$refactoring" in
     avoid)
-        # More conservative curiosity setting wins
-        if [[ "$curiosity" != "low" ]]; then
-            curiosity="low"
-        fi
         patience="high"
         ;;
     opportunistic)
-        # Keep curiosity from approach, set patience to medium
         patience="medium"
         ;;
     eager)
-        # More aggressive curiosity setting wins
-        if [[ "$curiosity" == "low" ]]; then
-            curiosity="medium"
-        fi
         patience="low"
         ;;
 esac
 
 log_migration "New settings: trust=$trust, verify=$verify, curiosity=$curiosity, patience=$patience"
 
-# Update config file
+# Update config file - remove old settings, add new ones
 tmp_file="${config_file}.tmp"
 jq --arg trust "$trust" \
    --arg verify "$verify" \
