@@ -12,12 +12,18 @@ depends on context - some output contexts render markdown properly, others show 
 - Multi-line formatted blocks with clear structure
 - Text mixed with emojis and unicode box-drawing characters
 
-**Where markdown shows raw syntax:**
+**Where markdown shows raw syntax (M113/M125):**
 - Inside triple-backtick code blocks (``` ... ```)
 - Bash tool output
+- Some terminal contexts with mixed emoji/unicode content
+
+**Bold Text Rules:**
+- `**bold**` works in main conversation output when NOT inside code blocks
+- When bold might not render, use UPPERCASE instead: `CHECKPOINT` not `**Checkpoint**`
+- For emphasis in headers, prefer: emojis + UPPERCASE over markdown bold
 
 **Guideline:** Output status displays directly as plain text (not inside code blocks) to ensure
-**bold** markdown renders correctly. Do NOT wrap visual displays in triple backticks.
+markdown renders correctly. When in doubt about rendering context, use UPPERCASE for emphasis.
 
 ## Core Principle: No Vertical Borders {#no-vertical-borders}
 
