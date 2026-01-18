@@ -164,49 +164,88 @@ Loop until "Create it" selected.
 
 </step>
 
-<step name="define_requirements">
+<step name="derive_requirements">
 
-**Define requirements for this minor version:**
+**Derive requirements from focus using backward thinking:**
 
-Requirements are the contract for what this version must deliver. Tasks will reference these
-requirements via their `Satisfies` field. A minor version cannot be marked complete until all
-must-have requirements are satisfied by completed tasks.
+Requirements capture what must be true for the stated focus/goals to be achieved. Rather than
+asking the user to list requirements manually, CAT derives them by thinking backward.
 
-**1. Gather requirements:**
+**1. For each key item from the discuss step, derive requirements:**
 
-Ask inline (FREEFORM): "List the requirements for this minor version. For each, include:
-- A brief description
-- Priority (must-have, should-have, nice-to-have)
-- How to verify it's done (acceptance criteria)"
+Apply backward thinking:
 
-**2. Assign requirement IDs:**
-
-For each requirement from user input, assign sequential IDs: REQ-001, REQ-002, etc.
-
-**3. Confirm requirements:**
-
-Present the requirements table:
 ```
+Focus: "{focus text}"
+Key Items: [item1, item2, ...]
+  ↓ Ask: "What must be true for each of these to work?"
+  ↓
+Derived requirements (what the system must do)
+```
+
+**Example derivation:**
+```
+Focus: "Add form validation"
+Key Items: ["email validation", "password strength", "error messages"]
+  ↓ Backward thinking
+Requirements:
+  - REQ-001: Email fields must validate format before submission
+  - REQ-002: Password fields must enforce minimum strength rules
+  - REQ-003: Validation errors must display inline with clear messages
+  - REQ-004: Form must prevent submission until all validations pass
+```
+
+**2. Generate requirements with structure:**
+
+For each derived requirement, assign:
+- **ID:** Sequential REQ-001, REQ-002, etc.
+- **Description:** What must be true (derived from backward analysis)
+- **Priority:** must-have | should-have | nice-to-have
+- **Acceptance Criteria:** How to verify it's done
+
+**Priority assignment heuristic:**
+- **must-have:** Without this, the focus cannot be achieved
+- **should-have:** Significantly improves the outcome
+- **nice-to-have:** Enhances but not essential
+
+**3. Present derived requirements for review:**
+
+```
+## Derived Requirements (from backward analysis)
+
+Based on your stated focus, here's what must be true:
+
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
-| REQ-001 | {description} | {priority} | {criteria} |
-| REQ-002 | {description} | {priority} | {criteria} |
+| REQ-001 | {derived description} | must-have | {criteria} |
+| REQ-002 | {derived description} | should-have | {criteria} |
 ```
 
 Use AskUserQuestion:
-- header: "Requirements"
-- question: "Are these requirements correct?"
+- header: "Requirements Review"
+- question: "I derived these requirements from your focus. How do they look?"
 - options:
-  - "Looks good" - Finalize requirements
-  - "Add more" - I have additional requirements
-  - "Edit" - Let me modify these
-  - "Skip requirements" - Define requirements later
+  - "Looks good" - Accept derived requirements
+  - "Add more" - I see gaps you missed
+  - "Remove some" - Some of these aren't needed
+  - "Skip for now" - Define requirements later
 
-If "Skip requirements":
+**If "Add more":**
+- Ask: "What additional requirements should be included?"
+- Add to requirements list with next sequential IDs
+- Return to review
+
+**If "Remove some":**
+- Present list of requirements
+- Ask which to remove
+- Remove selected, renumber remaining
+- Return to review
+
+**If "Skip for now":**
 - Note: Requirements can be added later by editing PLAN.md
-- Include empty Requirements section with placeholder
+- Include placeholder in Requirements section
 
-**Store requirements for inclusion in PLAN.md.**
+**Store final requirements for inclusion in PLAN.md.**
 
 </step>
 
@@ -500,7 +539,7 @@ Minor version created:
 - [ ] Target major version validated
 - [ ] Next minor version number determined
 - [ ] Discussion captured focus and scope
-- [ ] Requirements defined (or explicitly skipped)
+- [ ] Requirements derived from focus using backward thinking (or explicitly skipped)
 - [ ] Entry and exit gates configured
 - [ ] Directory structure created
 - [ ] STATE.md, PLAN.md (with Requirements and Gates sections), CHANGELOG.md created
