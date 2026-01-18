@@ -13,8 +13,9 @@
 
 set -euo pipefail
 
-# Emojis used in CAT status displays
+# Emojis used in CAT status displays and config
 EMOJIS=(
+    # Status indicators
     "☑️"    # Completed (check box)
     "🔄"    # In progress
     "🔳"    # Pending
@@ -26,11 +27,29 @@ EMOJIS=(
     "📋"    # Clipboard/tasks
     "⚙️"    # Settings/mode
     "🏆"    # Trophy/count
+    # Config settings
+    "🧠"    # Context/brain
+    "🐱"    # CAT behavior
+    "🧹"    # Cleanup
+    "🤝"    # Trust
+    "✅"    # Verify
+    "🔍"    # Curiosity (low)
+    "👀"    # Curiosity (medium)
+    "🔭"    # Curiosity (high)
+    "⏳"    # Patience
+    "⚡"    # Fast/none
+    "🔒"    # Secure/all
+    "✨"    # Sparkles
+    "⚠️"    # Warning (with variation selector)
+    # Simple characters
     "✓"     # Simple checkmark
     "✗"     # Simple X
     "→"     # Arrow
     "•"     # Bullet
     "▸"     # Triangle
+    "▹"     # Triangle hollow
+    "◆"     # Diamond
+    "⚠"     # Warning (without variation selector)
 )
 
 JSON_OUTPUT=false
