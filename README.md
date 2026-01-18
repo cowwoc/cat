@@ -1,6 +1,6 @@
-# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Agents that land on their feet
+# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: Your Coding Partner That Grows With You
 
-> *"Every great project needs structure. CAT keeps you in control while handling the complexity."*
+> *"Build on solid ground, not a house of cards."*
 
 <p align="center">
   <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="CAT Overview" width="500"/></a>
@@ -337,8 +337,11 @@ Open an issue to discuss before investing significant effort.
 
 CAT Source-Available Commercial License — see [LICENSE.md](LICENSE.md)
 
-Free for personal use and small organizations (< $100K/year revenue).
-Commercial use requires a paid license.
+**Indie** (Free) — Full CAT for solo builders
+**Team** ($19/seat/mo) — Collaboration features for teams of 1-50
+**Enterprise** ($49/seat/mo) — Compliance and integrations at scale
+
+See [PRICING.md](docs/PRICING.md) for details.
 
 ---
 
