@@ -141,13 +141,37 @@ All bash commands below use this value directly.
 | Argument Format | Example | Behavior |
 |-----------------|---------|----------|
 | (none) | `/cat:work` | Work on first available task in first incomplete minor version |
-| `major.minor` | `/cat:work 0.5` | Work on first available task in v0.5 |
-| `major.minor-task` | `/cat:work 0.5-parse-tokens` | Work on specific task |
+| `major` | `/cat:work 0` | Work through ALL minors in major v0 (v0.0 → v0.1 → ...) |
+| `major.minor` | `/cat:work 0.5` | Work through ALL tasks in v0.5 |
+| `major.minor-task` | `/cat:work 0.5-parse-tokens` | Work on specific task only |
 | `--override-gate` | `/cat:work 0.5 --override-gate` | Skip entry gate check |
 
-**If $ARGUMENTS is a version (major.minor format, no task name):**
+**Scope tracking (stored in memory during session):**
+
+```bash
+# Track execution scope for auto-continue decisions
+WORK_SCOPE="task"      # "task" | "minor" | "major" | "all"
+WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for task
+```
+
+| Argument | WORK_SCOPE | WORK_TARGET | Continue Until |
+|----------|------------|-------------|----------------|
+| (none) | `all` | - | All tasks in all versions complete |
+| `0` | `major` | `0` | All tasks in v0.x complete |
+| `0.5` | `minor` | `0.5` | All tasks in v0.5 complete |
+| `0.5-task` | `task` | `0.5-task` | Single task complete |
+
+**If $ARGUMENTS is a major version (single number, e.g., "0", "1"):**
+- Set `WORK_SCOPE="major"` and `WORK_TARGET="{major}"`
+- Find first incomplete minor in that major (v{major}.0, v{major}.1, ...)
+- Find first executable task in that minor
+- After task completes, continue to next task in minor, then next minor in major
+
+**If $ARGUMENTS is a minor version (major.minor format, e.g., "0.5"):**
+- Set `WORK_SCOPE="minor"` and `WORK_TARGET="{major}.{minor}"`
 - Find the first executable task in that specific minor version
 - Tasks are ordered by: in-progress first, then pending by dependency order
+- After task completes, continue to next task in same minor until all complete
 
 **If $ARGUMENTS is a task ID (major.minor-task-name format):**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
@@ -1476,7 +1500,39 @@ TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 | `medium` | Auto-continue to next task immediately (no prompt) |
 | `low` | Show next task, wait for user to invoke `/cat:work` |
 
-**If trust >= medium and next task found:**
+**Scope-aware task selection:**
+
+When finding the next task, respect the original WORK_SCOPE:
+
+| WORK_SCOPE | Next Task Selection |
+|------------|---------------------|
+| `task` | **STOP** - single task complete, don't continue |
+| `minor` | Find next task in same minor version only |
+| `major` | Find next task in same minor, or first task in next minor within same major |
+| `all` | Find next task anywhere (current minor → next minor → next major) |
+
+```bash
+case "$WORK_SCOPE" in
+  "task")
+    # Single task mode - do not auto-continue
+    NEXT_TASK=""
+    ;;
+  "minor")
+    # Find next task only within v{WORK_TARGET}
+    NEXT_TASK=$(find_next_task_in_minor "$WORK_TARGET")
+    ;;
+  "major")
+    # Find next task in current minor, or advance to next minor in v{WORK_TARGET}.x
+    NEXT_TASK=$(find_next_task_in_major "$WORK_TARGET")
+    ;;
+  "all")
+    # Find next task anywhere
+    NEXT_TASK=$(find_next_task_globally)
+    ;;
+esac
+```
+
+**If trust >= medium and next task found (within scope):**
 
 ```
 ╭─── ✓ Task Complete ───────────────────────────────────────╮
@@ -1490,6 +1546,20 @@ TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 ```
 
 Then **loop back to find_task step** with the next task, continuing execution without user intervention.
+
+**If scope complete (no more tasks within scope):**
+
+```
+╭─── ✓ Scope Complete ──────────────────────────────────────╮
+│                                                            │
+│  **{scope description}** - all tasks complete!             │
+│                                                            │
+│  {For minor: "v0.5 complete"}                              │
+│  {For major: "v0.x complete"}                              │
+│  {For all: "All versions complete!"}                       │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 **If trust == low and next task found:**
 

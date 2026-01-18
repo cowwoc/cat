@@ -67,15 +67,24 @@ Initialize CAT planning structure (new or existing project).
 
 ### Task Execution
 
-**`/cat:work [id]`** (id format: `major.minor-task-name`)
-Execute the next available task.
-- Creates worktree and task branch
-- Spawns subagent for execution
+**`/cat:work [scope]`**
+Work on tasks with automatic progression.
+
+| Scope Format | Example | Behavior |
+|--------------|---------|----------|
+| (none) | `/cat:work` | Work through all incomplete tasks |
+| major | `/cat:work 0` | Work through all tasks in v0.x |
+| minor | `/cat:work 0.5` | Work through all tasks in v0.5 |
+| task | `/cat:work 0.5-parse` | Work on single specific task |
+
+**Features:**
+- Auto-continues to next task when trust >= medium
+- Creates worktree and task branch per task
+- Spawns subagent for isolated execution
 - Monitors token usage
-- Runs approval gate (interactive mode)
+- Runs approval gate (when trust < high)
 - Squashes commits by type
-- Merges to main
-- Cleans up worktrees
+- Merges to main and cleans up
 
 ### Status
 
