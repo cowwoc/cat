@@ -419,7 +419,7 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 Output welcome banner directly with inline padding:
 
 ```
-╭─── 🎮 CHOOSE YOUR COMPANION ────────────────────────────────────╮
+╭─── 🎮 CHOOSE YOUR COMPANION ─────────────────────────────────────╮
 │                                                                  │
 │  Every developer has a style. These questions shape how your     │
 │  AI companion approaches the work ahead.                         │
@@ -504,7 +504,7 @@ git commit -m "docs: initialize CAT planning structure"
 Output completion banner directly with inline padding:
 
 ```
-╭─── 🚀 CAT INITIALIZED ──────────────────────────────────────────╮
+╭─── 🚀 CAT INITIALIZED ───────────────────────────────────────────╮
 │                                                                  │
 │  COMPANION PROFILE                                               │
 │  ─────────────────────────────────────────────────────────────   │
@@ -549,7 +549,7 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 Output guidance banner directly with inline padding:
 
 ```
-╭─── 📋 FIRST TASK WALKTHROUGH ─────────────────────────────────────╮
+╭─── 📋 FIRST TASK WALKTHROUGH ──────────────────────────────────────╮
 │                                                                    │
 │  Great! Lets create your first task together.                      │
 │  Ill ask a few questions to understand what you want to build.     │
@@ -612,7 +612,7 @@ git commit -m "docs: add first task - ${TASK_NAME}"
 7. Output completion banner directly with inline padding:
 
 ```
-╭─── ✅ FIRST TASK CREATED ─────────────────────────────────────────╮
+╭─── ✅ FIRST TASK CREATED ──────────────────────────────────────────╮
 │                                                                    │
 │  Task: {task-name}                                                 │
 │  Location: .claude/cat/v0/v0.0/{task-name}/                        │
@@ -637,7 +637,7 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 Output directly with inline padding:
 
 ```
-╭─── 👋 ALL SET ────────────────────────────────────────────────────╮
+╭─── 👋 ALL SET ─────────────────────────────────────────────────────╮
 │                                                                    │
 │  Your project is ready. When you want to start:                    │
 │                                                                    │
@@ -654,7 +654,7 @@ Output directly with inline padding:
 Output directly with inline padding:
 
 ```
-╭─── 👋 EXPLORE AT YOUR OWN PACE ───────────────────────────────────╮
+╭─── 👋 EXPLORE AT YOUR OWN PACE ────────────────────────────────────╮
 │                                                                    │
 │  Essential commands to get started:                                │
 │                                                                    │
