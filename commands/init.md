@@ -644,5 +644,6 @@ Display (ZWSP lines appear blank but contain U+200B):
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
 | Git committed | ✓ | ✓ |
+| First task guide offered | ✓ | ✓ |
 
 </success_criteria>

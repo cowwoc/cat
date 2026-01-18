@@ -23,13 +23,61 @@ Output ONLY the reference content below. Do NOT add:
 
 **CAT** enables hierarchical project planning with multi-agent task execution.
 
-## Quick Start
+---
 
-1. `/cat:init` - Initialize project structure (new or existing codebase)
-2. `/cat:add` - Add versions and tasks (interactive)
-3. `/cat:work` - Execute the next available task
+## Essential Commands (Start Here)
 
-## Hierarchy Structure
+These three commands cover 90% of daily use:
+
+| Command | What It Does |
+|---------|--------------|
+| `/cat:init` | Set up a new or existing project |
+| `/cat:status` | See what's happening and what to do next |
+| `/cat:work` | Execute the next available task |
+
+**Minimum viable workflow:**
+```
+/cat:init    →    /cat:add    →    /cat:work
+   ↑                                    │
+   └────────── /cat:status ─────────────┘
+```
+
+---
+
+## Planning Commands
+
+Use these when you need to structure your work:
+
+| Command | What It Does |
+|---------|--------------|
+| `/cat:add` | Add tasks, minor versions, or major versions |
+| `/cat:remove` | Remove tasks or versions (with safety checks) |
+| `/cat:config` | Change workflow mode, trust level, preferences |
+
+---
+
+## Advanced Commands
+
+Power user features for complex workflows:
+
+| Command | What It Does |
+|---------|--------------|
+| `/cat:research` | Run stakeholder research on pending versions |
+| `/cat:cleanup` | Clean up abandoned worktrees and stale locks |
+| `/cat:spawn-subagent` | Launch isolated subagent for a task |
+| `/cat:monitor-subagents` | Check status of running subagents |
+| `/cat:collect-results` | Gather results from completed subagents |
+| `/cat:merge-subagent` | Merge subagent branch into task branch |
+| `/cat:token-report` | Generate token usage report |
+| `/cat:decompose-task` | Split oversized task into smaller tasks |
+| `/cat:parallel-execute` | Orchestrate multiple subagents concurrently |
+
+---
+
+## Full Reference
+
+<details>
+<summary>📁 Hierarchy Structure</summary>
 
 ```
 MAJOR -> MINOR -> TASK
@@ -53,21 +101,22 @@ MAJOR -> MINOR -> TASK
 
 > Task changelog content is embedded in commit messages (see work commit format).
 
-## Core Commands
+</details>
 
-### Project Initialization
+<details>
+<summary>⚙️ /cat:init Details</summary>
 
-**`/cat:init`**
 Initialize CAT planning structure (new or existing project).
 - Creates PROJECT.md, ROADMAP.md, cat-config.json
 - Asks for workflow mode (Interactive/YOLO)
 - For new projects: Deep questioning to gather project context
 - For existing codebases: Detects patterns and infers current state
+- Offers guided first-task creation after setup
 
-### Task Execution
+</details>
 
-**`/cat:work [scope]`**
-Work on tasks with automatic progression.
+<details>
+<summary>🔨 /cat:work Scope Options</summary>
 
 | Scope Format | Example | Behavior |
 |--------------|---------|----------|
@@ -85,46 +134,29 @@ Work on tasks with automatic progression.
 - Squashes commits by type
 - Merges to main and cleans up
 
-### Status
+</details>
 
-**`/cat:status`**
-Show complete hierarchy status.
-- Visual tree of all versions and tasks
-- Progress bar and percentages
-- Current position highlighted
-- Blocked tasks explained
-- Next action suggested
+<details>
+<summary>📋 Task Naming Rules</summary>
 
-### Adding Structure
+- Lowercase letters and hyphens only
+- Maximum 50 characters
+- Must be unique within minor version
 
-**`/cat:add`**
-Unified command for adding tasks or versions.
-- Asks what to add: Task, Minor version, or Major version
-- For tasks: Discussion workflow generates PLAN.md
-- For versions: Handles number conflicts with insert/renumber option
-- Validates names and checks uniqueness
+**Valid:** `parse-tokens`, `fix-memory-leak`, `add-user-auth`
+**Invalid:** `Parse_Tokens`, `fix memory leak`, `add-very-long-task-name-that-exceeds-limit`
 
-### Removing Structure
+</details>
 
-**`/cat:remove`**
-Unified command for removing tasks or versions.
-- Asks what to remove: Task, Minor version, or Major version
-- Validates no work in progress
-- Checks for dependencies
-- Confirms with user before removal
+<details>
+<summary>🌿 Branch Naming</summary>
 
-## CAT-Specific Skills
+| Type | Pattern | Example |
+|------|---------|---------|
+| Task | `{major}.{minor}-{task-name}` | `1.0-parse-tokens` |
+| Subagent | `{major}.{minor}-{task-name}-sub-{uuid}` | `1.0-parse-tokens-sub-a1b2c3` |
 
-| Skill | Description |
-|-------|-------------|
-| `/cat:spawn-subagent` | Launch subagent with task context and token tracking |
-| `/cat:monitor-subagents` | Check status of running subagents |
-| `/cat:collect-results` | Gather results from completed subagents |
-| `/cat:merge-subagent` | Merge subagent branch into task branch |
-| `/cat:token-report` | Generate token usage report |
-| `/cat:decompose-task` | Split oversized task into smaller tasks |
-| `/cat:learn-from-mistakes` | Analyze mistakes with conversation length as factor |
-| `/cat:parallel-execute` | Orchestrate multiple subagents concurrently |
+</details>
 
 ## Workflow Modes
 
