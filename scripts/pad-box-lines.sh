@@ -28,6 +28,11 @@ if [[ ! -f "$WIDTHS_FILE" ]]; then
     exit 1
 fi
 
+# Check if running in WSL
+is_wsl() {
+    [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null
+}
+
 # Detect current terminal and map to emoji-widths.json key
 detect_terminal() {
     # Windows Terminal sets WT_SESSION
@@ -36,52 +41,79 @@ detect_terminal() {
         return
     fi
 
-    # Check TERM_PROGRAM for common terminals
-    case "${TERM_PROGRAM:-}" in
-        "vscode"|"VSCode")
-            echo "VS Code"
-            return
-            ;;
-        "iTerm.app")
-            echo "iTerm2"
-            return
-            ;;
-        "Apple_Terminal")
-            echo "macOS Terminal"
-            return
-            ;;
-        "Hyper")
-            echo "Hyper"
-            return
-            ;;
-        "WarpTerminal")
-            echo "Warp"
-            return
-            ;;
-    esac
+    # VS Code
+    if [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then
+        echo "vscode"
+        return
+    fi
 
-    # Check for other terminal-specific env vars
+    # iTerm2
+    if [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]] || [[ -n "${ITERM_SESSION_ID:-}" ]]; then
+        echo "iTerm.app"
+        return
+    fi
+
+    # Apple Terminal
+    if [[ "${TERM_PROGRAM:-}" == "Apple_Terminal" ]]; then
+        echo "Apple_Terminal"
+        return
+    fi
+
+    # Konsole
     if [[ -n "${KONSOLE_VERSION:-}" ]]; then
-        echo "Konsole"
+        echo "konsole"
         return
     fi
 
-    if [[ -n "${GNOME_TERMINAL_SCREEN:-}" ]]; then
-        echo "GNOME Terminal"
+    # GNOME Terminal
+    if [[ -n "${GNOME_TERMINAL_SCREEN:-}" ]] || [[ -n "${VTE_VERSION:-}" ]]; then
+        echo "gnome-terminal"
         return
     fi
 
+    # Kitty
     if [[ -n "${KITTY_WINDOW_ID:-}" ]]; then
-        echo "Kitty"
+        echo "kitty"
         return
     fi
 
-    if [[ -n "${ALACRITTY_SOCKET:-}" || -n "${ALACRITTY_LOG:-}" ]]; then
+    # WezTerm
+    if [[ -n "${WEZTERM_PANE:-}" ]]; then
+        echo "WezTerm"
+        return
+    fi
+
+    # Alacritty
+    if [[ -n "${ALACRITTY_SOCKET:-}" ]] || [[ -n "${ALACRITTY_LOG:-}" ]]; then
         echo "Alacritty"
         return
     fi
 
-    # Use default section
+    # ConEmu
+    if [[ -n "${ConEmuPID:-}" ]]; then
+        echo "ConEmu"
+        return
+    fi
+
+    # Hyper
+    if [[ "${TERM_PROGRAM:-}" == "Hyper" ]]; then
+        echo "Hyper"
+        return
+    fi
+
+    # WSL: assume Windows Terminal (most common)
+    if is_wsl; then
+        echo "Windows Terminal"
+        return
+    fi
+
+    # Fallback: use TERM_PROGRAM if set
+    if [[ -n "${TERM_PROGRAM:-}" ]]; then
+        echo "$TERM_PROGRAM"
+        return
+    fi
+
+    # Final fallback
     echo "default"
 }
 
@@ -129,7 +161,7 @@ def char_width:
   else
     # Check for combined emoji (char + variation selector)
     # These are stored as the combined string in the widths file
-    error("Unknown character width for: \($char) (codepoint: \($char | explode)). Add to emoji-widths.json")
+    error("Unknown character: \($char)\nTerminal: \(if $terminal == "default" then "unknown" else $terminal end)\n\nTo contribute width data for your terminal:\n  1. Download: https://github.com/cowsay-agent-template/cat/blob/main/scripts/measure-emoji-widths.sh\n  2. Run: ./measure-emoji-widths.sh\n  3. Submit your emoji-widths.json: https://github.com/cowsay-agent-template/cat/issues")
   end;
 
 # Calculate display width of entire string
@@ -154,7 +186,7 @@ def display_width:
     elif is_ascii then 1
     else
       # Unknown non-ASCII character - fail fast
-      error("Unknown character width for: \(.) - Add to emoji-widths.json")
+      error("Unknown character: \(.)\nTerminal: \(if $terminal == "default" then "unknown" else $terminal end)\n\nTo contribute width data for your terminal:\n  1. Download: https://github.com/cowsay-agent-template/cat/blob/main/scripts/measure-emoji-widths.sh\n  2. Run: ./measure-emoji-widths.sh\n  3. Submit your emoji-widths.json: https://github.com/cowsay-agent-template/cat/issues")
     end
   ) | add // 0;
 
