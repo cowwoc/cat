@@ -59,6 +59,10 @@ This outputs JSON with:
 - `current_minor`: The current minor version being worked on
 - `first_pending`: Next executable task name
 - `in_progress_task`: Currently in-progress task (if any)
+- `recent_tasks[]`: Array of 3 most recently completed tasks with:
+  - `task`: Task ID (e.g., "v0.3-fix-parser")
+  - `relative`: Relative time (e.g., "12 mins ago", "1 hr ago")
+  - `tokens`: Token usage formatted (e.g., "45K")
 - `majors[]`: Array of major versions with nested minors and their stats
 - `pending_tasks[]`: List of pending tasks in current minor
 
@@ -161,6 +165,12 @@ The box width should accommodate the content, not force line breaks.
 │  🏆 **{COMPLETED}/{TOTAL}** tasks complete                         │
 │  ⚙️ Mode: {Interactive|YOLO}                                       │
 │                                                                    │
+├──── Recent Activity ───────────────────────────────────────────────┤
+│  ✓ {task-id-1}                        {relative-time}  {tokens}    │
+│  ✓ {task-id-2}                        {relative-time}  {tokens}    │
+│  ✓ {task-id-3}                        {relative-time}  {tokens}    │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
 │  ╭─── 📦 v{N}: {Major Version Name} ────────────────────╮          │
 │  │                                                      │          │
 │  │  ☑️ v{N}.{M}: {Minor description} ({completed}/{total})         │
@@ -210,6 +220,30 @@ For current/in-progress versions, show exit gate progress inline:
 The bar should be **45 characters** wide (filled + empty = 45) to match the border width.
 Example for 80%: `[████████████████████████████████████░░░░░░░░░]` (36 filled + 9 empty)
 This represents **overall project progress** across all versions.
+
+**Recent Activity section:**
+
+Display up to 3 recently completed tasks from the `recent_tasks[]` array. If no recent tasks exist
+(new project), omit the section entirely.
+
+Format each task as a single line with columns aligned:
+```
+│  ✓ {task-id}                        {relative}  {tokens}    │
+```
+
+Column widths:
+- Task ID: left-aligned, padded to 35 chars
+- Relative time: right-aligned, 12 chars (e.g., "12 mins ago")
+- Tokens: right-aligned, 6 chars (e.g., "45K")
+
+Example with real values:
+```
+├──── Recent Activity ───────────────────────────────────────────────┤
+│  ✓ v0.3-fix-parser-edge-case         12 mins ago     45K tokens   │
+│  ✓ v0.3-add-lambda-support           1 hr ago        62K tokens   │
+│  ✓ v0.2-refactor-lexer               3 hrs ago       38K tokens   │
+├────────────────────────────────────────────────────────────────────┤
+```
 
 **Status symbols (emoji):**
 - ☑️ completed (for done tasks and 100% complete minors)

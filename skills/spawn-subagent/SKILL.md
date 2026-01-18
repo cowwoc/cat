@@ -196,7 +196,8 @@ STATE.md UPDATE (required in SAME commit as implementation):
 - Set: Status: completed
 - Set: Progress: 100%
 - Set: Resolution: implemented (MANDATORY - not optional)
-- Set: Completed: {YYYY-MM-DD}
+- Set: Completed: {YYYY-MM-DD HH:MM}
+- Set: Tokens Used: {tokensUsed from .completion.json}
 - Include STATE.md in git add before commit
 ```
 
