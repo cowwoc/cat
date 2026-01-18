@@ -35,28 +35,31 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 **Display settings screen:**
 
-**IMPORTANT: Output styled text DIRECTLY - do NOT use Bash tool for rendering.**
+**IMPORTANT: Use pad-box-lines.sh for all banner output with emojis.**
 
-```
-╭─── ⚙️ CAT SETTINGS ───────────────────────────────────────╮
-│                                                            │
-│  🧠 CONTEXT LIMITS                                         │
-│     Window:  {contextLimit} tokens                         │
-│     Target:  {targetContextUsage}% before split            │
-│                                                            │
-│  🐱 BEHAVIOR                                               │
-│     Trust:     {trust || "medium"}                         │
-│     Verify:    {verify || "changed"}                       │
-│     Curiosity: {curiosity || "low"}                        │
-│     Patience:  {patience || "high"}                        │
-│                                                            │
-│  🧹 CLEANUP                                                │
-│     Auto-remove: {autoRemoveWorktrees ? "On" : "Off"}      │
-│                                                            │
-│  📊 VERSION GATES                                          │
-│     Configure entry/exit conditions for versions           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+Display settings overview using pad-box-lines.sh:
+```bash
+echo "╭─── ⚙️ CAT SETTINGS ───────────────────────────────────────╮"
+echo '[
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🧠 CONTEXT LIMITS", "width": 56, "nest": 0},
+  {"content": "     Window:  {contextLimit} tokens", "width": 56, "nest": 0},
+  {"content": "     Target:  {targetContextUsage}% before split", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🐱 BEHAVIOR", "width": 56, "nest": 0},
+  {"content": "     Trust:     {trust}", "width": 56, "nest": 0},
+  {"content": "     Verify:    {verify}", "width": 56, "nest": 0},
+  {"content": "     Curiosity: {curiosity}", "width": 56, "nest": 0},
+  {"content": "     Patience:  {patience}", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🧹 CLEANUP", "width": 56, "nest": 0},
+  {"content": "     Auto-remove: {autoRemove}", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  📊 VERSION GATES", "width": 56, "nest": 0},
+  {"content": "     Configure entry/exit conditions for versions", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
 
 </step>
@@ -133,28 +136,32 @@ AskUserQuestion:
 
 **🤝 Trust — How much you trust CAT to make decisions**
 
-Display (add "(current)" after the level name if it matches current config):
-```
-╭─── 🤝 TRUST LEVEL ────────────────────────────────────────╮
-│  How much freedom does CAT have to roam?                   │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  🐱─┈  LOW {trust == 'low' ? '(current)' : ''}             │
-│     Low trust. CAT presents options frequently:            │
-│     where to place code, which approach to take.           │
-│     ✦ Best for: Learning, strong preferences               │
-│                                                            │
-│  🐱─ ─ ┈  MEDIUM {trust == 'medium' ? '(current)' : ''}    │
-│     Moderate trust. CAT handles routine decisions          │
-│     but presents options for meaningful trade-offs.        │
-│     ✦ Best for: Balanced control and efficiency            │
-│                                                            │
-│  🐱─ ─ ─ ─ ┈  HIGH {trust == 'high' ? '(current)' : ''}    │
-│     Full autonomy. CAT runs without stopping.              │
-│     Makes decisions without asking. Tasks auto-merge.      │
-│     ✦ Best for: Trusted workflows, batch processing        │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+Display using pad-box-lines.sh (add "(current)" after matching level):
+```bash
+echo "╭─── 🤝 TRUST LEVEL ────────────────────────────────────────╮"
+echo '[
+  {"content": "  How much freedom does CAT have to roam?", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "├────────────────────────────────────────────────────────────┤"
+echo '[
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🐱─┈  LOW {current}", "width": 56, "nest": 0},
+  {"content": "     Low trust. CAT presents options frequently:", "width": 56, "nest": 0},
+  {"content": "     where to place code, which approach to take.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Learning, strong preferences", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🐱─ ─ ┈  MEDIUM {current}", "width": 56, "nest": 0},
+  {"content": "     Moderate trust. CAT handles routine decisions", "width": 56, "nest": 0},
+  {"content": "     but presents options for meaningful trade-offs.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Balanced control and efficiency", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🐱─ ─ ─ ─ ┈  HIGH {current}", "width": 56, "nest": 0},
+  {"content": "     Full autonomy. CAT runs without stopping.", "width": 56, "nest": 0},
+  {"content": "     Makes decisions without asking. Tasks auto-merge.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Trusted workflows, batch processing", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
 
 AskUserQuestion:
