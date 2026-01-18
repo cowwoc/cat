@@ -58,6 +58,8 @@ Use widths from `.terminals[detected_terminal]` or `.default`. Most terminals us
 3. Padding = target width - 2 (borders) - display width
 4. Output directly: `│` + content + spaces + `│`
 
+**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
+
 </step>
 
 <step name="display-settings">
