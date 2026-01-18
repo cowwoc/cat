@@ -1,0 +1,34 @@
+{
+  "$schema": "./emoji-widths.schema.json",
+  "$comment": "Emoji display widths by terminal. Run scripts/measure-emoji-widths.sh to contribute.",
+  "emojis": {
+    "completed": "☑️",
+    "in_progress": "🔄",
+    "pending": "🔳",
+    "blocked": "🚫",
+    "gate_waiting": "🚧",
+    "progress": "📊",
+    "package": "📦",
+    "target": "🎯",
+    "clipboard": "📋",
+    "settings": "⚙️",
+    "trophy": "🏆",
+    "checkmark": "✓",
+    "xmark": "✗",
+    "arrow": "→",
+    "bullet": "•",
+    "triangle": "▸"
+  },
+  "terminals": {
+    "Windows Terminal": {
+      "☑️": 2, "🔄": 2, "🔳": 2, "🚫": 2, "🚧": 2,
+      "📊": 2, "📦": 2, "🎯": 2, "📋": 2, "⚙️": 2, "🏆": 2,
+      "✓": 1, "✗": 1, "→": 1, "•": 1, "▸": 1
+    }
+  },
+  "default": {
+    "☑️": 2, "🔄": 2, "🔳": 2, "🚫": 2, "🚧": 2,
+    "📊": 2, "📦": 2, "🎯": 2, "📋": 2, "⚙️": 2, "🏆": 2,
+    "✓": 1, "✗": 1, "→": 1, "•": 1, "▸": 1
+  }
+}

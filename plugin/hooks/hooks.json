@@ -48,6 +48,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-session-instructions.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-emoji-widths.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

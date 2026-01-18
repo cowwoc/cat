@@ -43,44 +43,68 @@ Use ZWSP spacers in box displays where visual separation is needed before indent
 **Guideline:** Output status displays directly as plain text (not inside code blocks) to ensure
 markdown renders correctly. When in doubt about rendering context, use UPPERCASE for emphasis.
 
-## Core Principle: No Vertical Borders {#no-vertical-borders}
+## Vertical Borders {#vertical-borders}
 
-**MANDATORY**: Avoid vertical borders (`║`, `│`) in content areas.
+Use vertical borders (`│`) on both sides of box content to create complete enclosed boxes.
 
-**Rationale**: Emoji display width varies across terminals and editors. Vertical borders require
-precise padding calculation which is unreliable with emojis. Content areas use indentation only.
-
-**Exception**: The `│` character may be used as a separator between metrics on a single line
-when connected to horizontal borders with `┬` and `┴` characters.
+**Note**: Emoji display width varies across terminals. The `emoji-widths.json` file contains
+measured widths for common OS/terminal combinations. When precise alignment is needed, use
+these measurements to calculate padding.
 
 ## Box Display Format {#box-display-format}
 
-Use single-line borders with rounded corners. Emojis go OUTSIDE the box (before the title line).
+Use single-line borders with rounded corners. Titles are embedded in the top border.
+
+### Title Embedding
+
+Titles go **inside** the top border, centered with dashes on both sides:
+
+```
+╭─── 🗺️ Title Text Here ────────────────────────────────╮
+```
+
+**Rules:**
+- 3 dashes before title, space, title text, space, remaining dashes
+- Emojis are allowed in titles
+- Title should be centered visually
+
+### Indentation Levels
+
+Use 2-space indentation per nesting level:
+- Level 0: Outer box border
+- Level 1: Content inside outer box (2 spaces)
+- Level 2: Nested box border (2 spaces)
+- Level 3: Content inside nested box (4 spaces)
+- Level 4: Sub-content (6 spaces)
 
 ### Primary Boxes (Status, Checkpoints, Forks)
 
 ```
-🗺️ TITLE TEXT HERE
-╭──────────────────────────────────────────────────────────────────╮
-   Content line here
-   Another line with 🎯 emoji - no padding needed
-╰──────────────────────────────────────────────────────────────────╯
+╭─── 🗺️ TITLE TEXT HERE ────────────────────────────────╮
+│                                                        │
+│  Content line here                                     │
+│  Another line with 🎯 emoji                            │
+│                                                        │
+╰────────────────────────────────────────────────────────╯
 ```
 
 ### Nested Boxes
 
-Use rounded corners for nested boxes too. Indent nested boxes by 3 spaces.
+Nested boxes use 2-space indentation. Size boxes to fit their content.
 
 ```
-🗺️ OUTER TITLE
-╭──────────────────────────────────────────────────────────────────╮
-
-   📦 NESTED TITLE
-   ╭───────────────────────────────────────────────────────────╮
-      Nested content here
-   ╰───────────────────────────────────────────────────────────╯
-
-╰──────────────────────────────────────────────────────────────────╯
+╭─── 🗺️ OUTER TITLE ────────────────────────────────────────────╮
+│                                                                │
+│  📊 Overall stats line                                         │
+│                                                                │
+│  ╭─── 📦 Nested Section ─────────────────────────────╮         │
+│  │                                                   │         │
+│  │  ☑️ Nested content here                           │         │
+│  │  🔄 Another nested item                           │         │
+│  │                                                   │         │
+│  ╰───────────────────────────────────────────────────╯         │
+│                                                                │
+╰────────────────────────────────────────────────────────────────╯
 ```
 
 ### Section Dividers
@@ -88,9 +112,9 @@ Use rounded corners for nested boxes too. Indent nested boxes by 3 spaces.
 For separating sections within a box (no title):
 
 ```
-   ──────────────────────────────────────────────────────────────
-   Section content here
-   ──────────────────────────────────────────────────────────────
+│  ──────────────────────────────────────────────────────────  │
+│  Section content here                                        │
+│  ──────────────────────────────────────────────────────────  │
 ```
 
 ### Border Characters
@@ -98,6 +122,7 @@ For separating sections within a box (no title):
 | Character | Purpose |
 |-----------|---------|
 | `─` | Horizontal border (single-line) |
+| `│` | Vertical border (single-line) |
 | `╭` `╮` | Top corners (rounded) - ALL boxes |
 | `╰` `╯` | Bottom corners (rounded) - ALL boxes |
 
@@ -119,33 +144,31 @@ Since borders contain only dashes, alignment is trivial - use the same number of
 
 Output format (do NOT wrap in ```):
 
-⏸️ **NO EXECUTABLE TASKS AVAILABLE**
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-​
-      Task `task-name` is locked by another session.
-​
-      **Blocked tasks:**
-      - task-a
-      - task-b
-​
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─── ⏸️ NO EXECUTABLE TASKS AVAILABLE ──────────────────────────────╮
+│                                                                    │
+│  Task `task-name` is locked by another session.                    │
+│                                                                    │
+│  **Blocked tasks:**                                                │
+│  - task-a                                                          │
+│  - task-b                                                          │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 **Checkpoint:**
 
 Output format (do NOT wrap in ```):
 
-✅ **CHECKPOINT: Task Complete**
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-​
-      **Quest:** task-name
-      **Approach:** Selected approach description
-​
-      ────────────────────────────────────────────────────────────────────────────────────────────
-      **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)
-      ────────────────────────────────────────────────────────────────────────────────────────────
-      **Branch:** task-branch-name
-​
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─── ✅ CHECKPOINT: Task Complete ──────────────────────────────────╮
+│                                                                    │
+│  **Quest:** task-name                                              │
+│  **Approach:** Selected approach description                       │
+│                                                                    │
+│  ────────────────────────────────────────────────────────────────  │
+│  **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)        │
+│  ────────────────────────────────────────────────────────────────  │
+│  **Branch:** task-branch-name                                      │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 **Fork in the Road (Wizard-Style):** {#fork-in-the-road}
 
@@ -213,14 +236,13 @@ Example where they're the same:
 
 Output format (do NOT wrap in ```):
 
-🗺️ YOUR ADVENTURE - Project Name
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-​
-      📊 Progress: [████████████████░░░░] **78%**
-      🏆 **72/92** tasks complete
-      ⚙️ Mode: Interactive
-​
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─── 🗺️ YOUR ADVENTURE - Project Name ──────────────────────────────╮
+│                                                                    │
+│  📊 Progress: [████████████████░░░░] **78%**                       │
+│  🏆 **72/92** tasks complete                                       │
+│  ⚙️ Mode: Interactive                                              │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 ## Progress Bar Format {#progress-bar-format}
 
@@ -265,40 +287,35 @@ v1.0: Description [█████░░░░░░░░░░░░░░░]
 
 ## Visual Hierarchy {#visual-hierarchy}
 
-Use markdown formatting and emojis for hierarchy instead of box nesting.
+Use markdown formatting, emojis, and nested boxes for visual hierarchy.
 
-**Indentation levels:**
-- Outer box content: 6 spaces
-- Inner box border: 6 spaces
-- Inner box content: 7 spaces (1 space inside border)
-- Task details under version: 10 spaces (7 + 3)
-
-**CRITICAL**: Use ZWSP lines (not blank lines) before deeply-indented content to preserve
-bold rendering. See "Zero-Width Space (ZWSP) Spacer Lines" above.
+**Indentation levels (2-space increments):**
+- Level 0: Outer box border
+- Level 1: Content inside outer box (2 spaces after `│`)
+- Level 2: Nested box border (2 spaces after `│`)
+- Level 3: Content inside nested box (4 spaces after outer `│`)
+- Level 4: Sub-content (6 spaces after outer `│`)
 
 Output format (do NOT wrap in ```):
 
-🗺️ PROJECT STATUS
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-​
-      📊 Overall: [████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] **38%**
-      🏆 **35/92** tasks complete
-​
-      📦 v0: Major Version Name
-      ╭────────────────────────────────────────────────────────────────────────────────────────╮
-       ☑️ v0.1: Minor description (5/5)
-       ☑️ v0.2: Another minor (9/9)
-​
-       🔄 **v0.3: Current minor** (3/5)
-          🔳 pending-task-1
-          🔳 pending-task-2
-       🔳 v0.4: Future minor (0/4)
-      ╰────────────────────────────────────────────────────────────────────────────────────────╯
-​
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
-
-Note: Lines that appear blank above contain U+200B (zero-width space). These prevent code block
-mode from triggering on the following indented lines while remaining invisible.
+╭─── 🗺️ PROJECT STATUS ─────────────────────────────────────────────╮
+│                                                                    │
+│  📊 Overall: [████████████████░░░░░░░░░░░░░░░░░░░░░░░] **38%**     │
+│  🏆 **35/92** tasks complete                                       │
+│                                                                    │
+│  ╭─── 📦 v0: Major Version Name ────────────────────────╮          │
+│  │                                                      │          │
+│  │  ☑️ v0.1: Minor description (5/5)                    │          │
+│  │  ☑️ v0.2: Another minor (9/9)                        │          │
+│  │                                                      │          │
+│  │  🔄 **v0.3: Current minor** (3/5)                    │          │
+│  │    🔳 pending-task-1                                 │          │
+│  │    🔳 pending-task-2                                 │          │
+│  │  🔳 v0.4: Future minor (0/4)                         │          │
+│  │                                                      │          │
+│  ╰──────────────────────────────────────────────────────╯          │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 ## Status Symbols {#status-symbols}
 
@@ -312,50 +329,43 @@ mode from triggering on the following indented lines while remaining invisible.
 
 ## Anti-Patterns {#anti-patterns}
 
-**Using vertical borders in content areas (WRONG):**
+**Using double-line borders (WRONG):**
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
 ║  🎯 Title with emoji                                              ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
-This requires padding calculation that breaks with emoji width variations.
-
-**Putting emojis on border lines (WRONG):**
-```
-╭─ 🎯 Title with emoji ────────────────────────────────────────────╮
-   Content here
-╰──────────────────────────────────────────────────────────────────╯
-```
-Emoji width affects dash count needed, making alignment fragile.
+Use single-line borders with rounded corners (`╭╮╰╯│─`) instead.
 
 **Correct approach:**
 ```
-🎯 Title with emoji
-╭──────────────────────────────────────────────────────────────────╮
-   Content without vertical borders
-╰──────────────────────────────────────────────────────────────────╯
+╭─── 🎯 Title with emoji ───────────────────────────────────────────╮
+│                                                                    │
+│  Content here                                                      │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 ```
-Emoji is outside the box - borders are pure dashes.
 
-**Trying to align columns with emojis (WRONG):**
+**Trying to align columns with emojis without measurement (WRONG):**
 ```
 ☑️ Task A     | Complete
 🔄 Task B     | In Progress
 ```
-Emoji widths vary, so columns won't align.
+Emoji widths vary by terminal. Use `emoji-widths.json` for padding or avoid tabular alignment.
 
-**Correct approach:**
+**Correct approaches:**
 ```
 ☑️ Task A - Complete
 🔄 Task B - In Progress
 ```
+Or use measured emoji widths from `emoji-widths.json` for precise padding.
 
 ## Migration Notes
 
 When updating existing displays:
-1. Replace double-line borders (`═`) with single-line (`─`)
-2. Use rounded corners (`╭╮╰╯`) for ALL boxes (outer and nested)
-3. Move emojis/titles INSIDE the box, not on border lines
-4. Remove vertical borders from content areas
-5. Indent content with spaces instead of padding
-6. Borders should be pure dashes (no embedded text)
+1. Replace double-line borders (`═║╔╗╚╝`) with single-line (`─│╭╮╰╯`)
+2. Use rounded corners (`╭╮╰╯`) for ALL boxes
+3. Embed titles in top border: `╭─── 🎯 Title ───╮`
+4. Add vertical borders (`│`) on both sides of content
+5. Use 2-space indentation per nesting level
+6. Size boxes to fit their content (not full-width)
