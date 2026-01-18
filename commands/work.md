@@ -41,32 +41,108 @@ This is CAT's core execution command. It:
 
 <progress_output>
 
-**MANDATORY: Display progress at each major step.**
+**MANDATORY: Display phase-based progress throughout execution.**
 
-This workflow has 17 steps. Display progress at each step using the format from
-[display-standards.md § Step Progress Format](.claude/cat/references/display-standards.md#step-progress-format):
-1. Verify planning structure
-2. Find/load task
-3. Acquire task lock
-4. Load task details
-5. Analyze task size
-6. Choose approach (fork in the road)
-7. Create worktree and branch
-8. Execute task (spawn subagent)
-9. Collect subagent results
-10. Evaluate token usage
-11. Handle discovered issues (patience setting)
-12. Verify changes (based on verify setting)
-13. Run stakeholder review
-14. Squash commits
-15. User approval gate
-16. Merge to main
-17. Update state and changelog
+This workflow has 4 phases. Display a persistent progress header that updates as phases complete.
 
-**Track timing:**
-- Record start time at command begin: `START_TIME=$(date +%s)`
-- Calculate elapsed at each step: `ELAPSED=$(($(date +%s) - START_TIME))`
-- Estimate remaining based on average step time
+**Phase mapping:**
+
+| Phase | Steps Included | Complete When |
+|-------|----------------|---------------|
+| Preparing | verify, find_task, acquire_lock, load_task, validate_requirements, analyze_task_size, choose_approach, create_worktree | Worktree created, ready to execute |
+| Executing | execute, collect_and_report, token_check, handle_discovered_issues, verify_changes | Subagent complete, changes verified |
+| Reviewing | stakeholder_review, approval_gate | Review passed, user approved |
+| Merging | squash_commits, merge, cleanup, update_state, commit_metadata, update_changelogs, next_task | Merged to main, cleanup done |
+
+**Progress symbols:**
+
+| Symbol | Meaning |
+|--------|---------|
+| `▸` | Phase active or complete |
+| `▹` | Phase pending (not started) |
+| `◆` | Operation currently running |
+| `✓` | Success |
+| `✗` | Failure/blocked |
+
+**Display format (output directly, NOT in code blocks):**
+
+At workflow start, display the header and initial state:
+
+╭─────────────────────────────────────────────────────────────────╮
+│  CAT ► {task-name}                                              │
+╰─────────────────────────────────────────────────────────────────╯
+
+▸ Preparing ◆
+▹ Executing
+▹ Reviewing
+▹ Merging
+
+──────────────────────────────────────────────────────────────────
+
+**Update display at phase transitions:**
+
+When Preparing completes:
+```
+▸ Preparing ✓
+▸ Executing ◆ subagent {id} running...
+▹ Reviewing
+▹ Merging
+```
+
+When subagent completes (show metrics inline):
+```
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ◆ stakeholder review...
+▹ Merging
+```
+
+When Reviewing completes:
+```
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ✓ approved
+▸ Merging ◆
+```
+
+**On success (final state):**
+
+╭─────────────────────────────────────────────────────────────────╮
+│  CAT ► {task-name}                                         ✓    │
+╰─────────────────────────────────────────────────────────────────╯
+
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ✓ approved
+▸ Merging ✓ → main
+
+Next: {next-task-name} (run `/cat:work` to continue)
+
+──────────────────────────────────────────────────────────────────
+
+**On failure (show context inline):**
+
+╭─────────────────────────────────────────────────────────────────╮
+│  CAT ► {task-name}                                         ✗    │
+╰─────────────────────────────────────────────────────────────────╯
+
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ✗ BLOCKED: {reason}
+    → {specific issue and location}
+
+Action required: {what user needs to do}
+
+──────────────────────────────────────────────────────────────────
+
+**Key principles:**
+
+1. **Task always visible** - Header box shows task name throughout
+2. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
+3. **Metrics that matter** - Tokens and commits shown inline when available
+4. **State at a glance** - Triangle symbols show progress instantly
+5. **Failure context inline** - Shows what went wrong immediately
+6. **Next action clear** - On success, suggests next task
 
 </progress_output>
 
