@@ -18,31 +18,6 @@ Provides situational awareness for project progress.
 
 <process>
 
-<step name="read-emoji-widths">
-
-**Read emoji display widths:**
-
-```bash
-cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
-```
-
-This file contains measured emoji display widths for different terminals. Use the `default` section
-for width calculations. Store the widths in memory for use in the render step.
-
-Example structure:
-```json
-{
-  "default": {
-    "☑️": 2, "🔄": 2, "🔳": 2, "🚫": 2, "🚧": 2,
-    "📊": 2, "📦": 2, "🎯": 2, "📋": 2, "⚙️": 2, "🏆": 2,
-    "✓": 1, "✗": 1, "→": 1, "•": 1, "▸": 1
-  }
-}
-```
-
-**CRITICAL**: Do NOT hard-code emoji widths. Always read from this file as widths may vary.
-
-</step>
 
 <step name="collect-data">
 
@@ -120,32 +95,50 @@ Track for each exit gate task:
 Claude Code shows all Bash tool invocations in the terminal. To display clean output without
 tool call wrappers, output the styled text directly as part of your response.
 
-**CRITICAL: Use emoji-widths.json for padding calculation.**
+**CRITICAL: Use pad-status-lines.sh for ALL lines that need borders.**
 
-To align vertical borders (`│`) correctly, calculate the display width of each line using the
-emoji widths from the read-emoji-widths step. Then pad each line to a consistent total width.
+Do NOT manually calculate padding. The script handles emoji widths automatically.
 
-**Padding calculation algorithm:**
+**Step 3a: Build JSON array of all content lines**
 
-1. **Define target width**: Use 72 characters for outer box, 56 for nested box
-2. **Calculate display width** of content (between `│` borders):
-   - Regular ASCII characters: width 1
-   - Box-drawing characters (`─│╭╮╰╯`): width 1
-   - Emojis: look up width from emoji-widths.json `default` section
-   - If emoji not in file: assume width 2
-3. **Calculate padding needed**: `target_width - 2 - display_width` (subtract 2 for `│` borders)
-4. **Construct line**: `│` + content + padding spaces + `│`
+Collect ALL lines that need borders into a JSON array. Each line object has:
+- `content`: Text content (without `│` borders)
+- `width`: Target box width (72 for outer box, 56 for nested box)
+- `nest`: Nesting level:
+  - `0`: Outer box only (`│content│`)
+  - `1`: Inside nested box (`│  │content│          │`)
+  - `2`: Outer box with nested prefix (`│  content          │`)
 
-**Example calculation:**
+**Step 3b: Call padding script in batch**
+
+```bash
+echo '<json_array>' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-status-lines.sh"
 ```
-Line: "  ☑️ v0.1: Core parser (5/5)"
-- "  " = 2 chars
-- "☑️" = 2 (from emoji-widths.json)
-- " v0.1: Core parser (5/5)" = 25 chars
-- Total display width = 2 + 2 + 25 = 29
-- For nested box (width 56): padding = 56 - 2 - 29 = 25 spaces
-- Result: "│  ☑️ v0.1: Core parser (5/5)                         │"
+
+Example input:
+```json
+[
+  {"content": "  📊 Overall: [████░░░] **75%**", "width": 68, "nest": 0},
+  {"content": "  ☑️ v0.1: Core parser (5/5)", "width": 52, "nest": 1},
+  {"content": "    🔳 pending-task-1", "width": 52, "nest": 1}
+]
 ```
+
+Example output (use directly in your response):
+```
+│  📊 Overall: [████░░░] **75%**                                    │
+│  │  ☑️ v0.1: Core parser (5/5)                        │          │
+│  │    🔳 pending-task-1                               │          │
+```
+
+**Step 3c: Assemble final output**
+
+Combine the padded lines with static border lines (top, bottom, dividers) to create the
+complete display. Static lines don't need the script:
+- Top: `╭─── 🐱 CAT - {name} ───...───╮`
+- Divider: `├───...───┤`
+- Bottom: `╰───...───╯`
+- Empty: `│` + spaces + `│`
 
 **CRITICAL: Do NOT wrap output in code blocks (M125).**
 
@@ -357,5 +350,8 @@ The status output should be:
 - [ ] Blocked tasks and gate-blocked versions listed (if any)
 - [ ] Exit gate tasks waiting on non-gating tasks shown with 🚧 indicator
 - [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions
+- [ ] **BORDER ALIGNMENT**: All content lines processed through pad-status-lines.sh script
+- [ ] **BORDER ALIGNMENT**: Every line inside boxes has BOTH left and right `│` borders
+- [ ] **BORDER ALIGNMENT**: Task lines have emoji prefix (🔳, 🔄, etc.) - never bare text
 
 </success_criteria>
