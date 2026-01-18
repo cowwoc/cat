@@ -1539,13 +1539,29 @@ esac
 │                                                            │
 │  **{task-name}** merged to main.                           │
 │                                                            │
-│  Auto-continuing to next task...                           │
-│  **{next-task-name}** - {goal from PLAN.md}                │
+│  ────────────────────────────────────────────────────────  │
+│  **Next:** {next-task-name}                                │
+│  {goal from PLAN.md}                                       │
+│                                                            │
+│  Auto-continuing in 3s...                                  │
+│  • Type "stop" to pause after this task                    │
+│  • Type "abort" to cancel immediately                      │
+│  ────────────────────────────────────────────────────────  │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 ```
 
-Then **loop back to find_task step** with the next task, continuing execution without user intervention.
+**Brief pause for user intervention:**
+
+After displaying the message, pause briefly (3 seconds conceptually) to allow user to type:
+- **"stop"** or **"pause"** → Complete current display, do NOT start next task
+- **"abort"** or **"cancel"** → Stop immediately, release locks, clean up
+
+If no input received, **loop back to find_task step** with the next task, continuing execution.
+
+**Note:** In practice, this is a conceptual pause. The agent displays the message and checks if the user
+has sent a follow-up message before proceeding. If user says "stop", the agent acknowledges and ends
+the work session gracefully.
 
 **If scope complete (no more tasks within scope):**
 
