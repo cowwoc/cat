@@ -51,6 +51,52 @@ Use vertical borders (`│`) on both sides of box content to create complete enc
 measured widths for common OS/terminal combinations. When precise alignment is needed, use
 these measurements to calculate padding.
 
+### Padding Calculation Algorithm {#padding-algorithm}
+
+To align right vertical borders correctly when content contains emojis:
+
+**Step 1: Read emoji widths**
+```bash
+cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
+```
+Use the `default` section for width lookups. **CRITICAL**: Do NOT hard-code emoji widths.
+
+**Step 2: Calculate display width of content**
+For each character in the content (excluding the `│` borders):
+- Regular ASCII characters: width 1
+- Box-drawing characters (`─│╭╮╰╯`): width 1
+- Emojis: look up width from emoji-widths.json `default` section
+- If emoji not found in file: assume width 2
+
+**Step 3: Calculate padding**
+```
+padding_spaces = target_box_width - 2 - display_width
+```
+(Subtract 2 for the left and right `│` borders)
+
+**Step 4: Construct the line**
+```
+│ + content + (padding_spaces × space) + │
+```
+
+**Example:**
+```
+Content: "  ☑️ v0.1: Core parser (5/5)"
+Display width calculation:
+  - "  " = 2 chars (width 2)
+  - "☑️" = lookup in emoji-widths.json → width 2
+  - " v0.1: Core parser (5/5)" = 25 chars (width 25)
+  - Total display width = 2 + 2 + 25 = 29
+
+For a 56-character nested box:
+  - Padding = 56 - 2 - 29 = 25 spaces
+  - Result: "│  ☑️ v0.1: Core parser (5/5)                         │"
+```
+
+**Standard box widths:**
+- Outer box: 72 characters
+- Nested box: 56 characters
+
 ## Box Display Format {#box-display-format}
 
 Use single-line borders with rounded corners. Titles are embedded in the top border.
@@ -351,14 +397,13 @@ Use single-line borders with rounded corners (`╭╮╰╯│─`) instead.
 ☑️ Task A     | Complete
 🔄 Task B     | In Progress
 ```
-Emoji widths vary by terminal. Use `emoji-widths.json` for padding or avoid tabular alignment.
+Emoji widths vary by terminal. **MUST** use `emoji-widths.json` for padding calculation.
 
-**Correct approaches:**
-```
-☑️ Task A - Complete
-🔄 Task B - In Progress
-```
-Or use measured emoji widths from `emoji-widths.json` for precise padding.
+**Correct approach - use padding algorithm:**
+1. Read emoji widths from `emoji-widths.json`
+2. Calculate display width of each line
+3. Pad to consistent total width
+4. See [Padding Calculation Algorithm](#padding-algorithm) for details
 
 ## Migration Notes
 
