@@ -718,7 +718,7 @@ and [choose-approach skill](skills/choose-approach/SKILL.md) for full format.
 
    {Note if they differ}
 
-╰───────────────────────────────────────────────────────────────────╯
+╰─────────────────────────────────────────────────────────────────╯
 ```
 
 Use AskUserQuestion to capture selection.
