@@ -237,5 +237,32 @@
       "catches_variations": true
     },
     "correct_behavior": "Use full commit types: feature, bugfix, test, refactor, performance, docs, style, config, planning"
+  },
+  {
+    "id": "M100",
+    "timestamp": "2026-01-18T12:00:00Z",
+    "category": "detection_gap",
+    "description": "Hook validate-commit-type.sh failed to detect feat:/fix: because HEREDOC parsing was checked after simple quotes pattern, causing incorrect match",
+    "root_cause": "Regex ordering bug: -m \"$(cat <<EOF\" matched the simple quotes pattern first, extracting \"$(cat <<\" as the message instead of falling through to HEREDOC branch",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "code_fix",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/hooks/validate-commit-type.sh",
+    "pattern_keywords": [
+      "hook",
+      "regex",
+      "HEREDOC",
+      "commit-type",
+      "detection"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Check HEREDOC pattern before simple quotes pattern in commit message extraction"
   }
 ]
