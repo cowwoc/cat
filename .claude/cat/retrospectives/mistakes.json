@@ -247,7 +247,7 @@
     "rca_method": "C",
     "rca_method_name": "causal-barrier",
     "prevention_type": "code_fix",
-    "prevention_path": "${CLAUDE_PROJECT_DIR}/hooks/validate-commit-type.sh",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/cat/commands/{config,init,status,work}.md",
     "pattern_keywords": [
       "hook",
       "regex",
