@@ -187,7 +187,6 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 
 ```json
 {
-  "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
   "trust": "medium",
@@ -201,17 +200,17 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `yoloMode` | boolean | `false` | Skip all approval gates when `true` |
 | `contextLimit` | number | `200000` | Total context window size in tokens |
 | `targetContextUsage` | number | `40` | Soft limit percentage for task size |
-| `trust` | string | `medium` | How much you trust CAT to decide autonomously |
+| `trust` | string | `medium` | Autonomy level (controls review and approval behavior) |
 | `verify` | string | `changed` | What verification runs before checkpoints |
 | `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
 
-**yoloMode**
-- `false` (Interactive) — Checkpoints after each task, you review and approve changes
-- `true` (YOLO) — Automatic progression, skips approval checkpoints
+**trust**
+- `low` — Asks before fixing review issues. Presents options frequently.
+- `medium` — Auto-fixes review issues. Presents meaningful choices.
+- `high` — Full autonomy. Skips review. Auto-merges.
 
 **contextLimit** — The maximum tokens available in your model's context window. Used to calculate
 when tasks need decomposition.
