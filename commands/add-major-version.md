@@ -168,6 +168,92 @@ Loop until "Create it" selected.
 
 </step>
 
+<step name="derive_requirements">
+
+**Derive requirements from goals using backward thinking:**
+
+Requirements capture what must be true for the stated goals to be achieved. Rather than asking
+the user to list requirements manually, CAT derives them by thinking backward from each goal.
+
+**1. For each goal from the discuss step, derive requirements:**
+
+Apply backward thinking to each goal:
+
+```
+Goal: "{goal text}"
+  ↓ Ask: "What must be true for this to work? What are the prerequisites?"
+  ↓
+Derived requirements (what the system must do to achieve this goal)
+```
+
+**Example derivation:**
+```
+Goal: "Users can authenticate securely"
+  ↓ Backward thinking
+Requirements:
+  - REQ-001: User passwords must be hashed with a secure algorithm
+  - REQ-002: Authentication sessions must use rotating tokens
+  - REQ-003: Failed login attempts must be rate-limited
+  - REQ-004: Password reset flow must verify user identity
+```
+
+**2. Generate requirements with structure:**
+
+For each derived requirement, assign:
+- **ID:** Sequential REQ-001, REQ-002, etc.
+- **Description:** What must be true (derived from goal analysis)
+- **Priority:** must-have | should-have | nice-to-have
+- **Source Goal:** Which goal this requirement supports
+- **Acceptance Criteria:** How to verify it's done
+
+**Priority assignment heuristic:**
+- **must-have:** Without this, the goal cannot be achieved
+- **should-have:** Significantly improves goal achievement
+- **nice-to-have:** Enhances but not essential
+
+**3. Present derived requirements for review:**
+
+```
+## Derived Requirements (from backward analysis)
+
+Based on your stated goals, here's what must be true for them to be achieved:
+
+| ID | Requirement | Priority | Source Goal | Acceptance Criteria |
+|----|-------------|----------|-------------|---------------------|
+| REQ-001 | {derived description} | must-have | Goal 1 | {criteria} |
+| REQ-002 | {derived description} | should-have | Goal 1 | {criteria} |
+| REQ-003 | {derived description} | must-have | Goal 2 | {criteria} |
+```
+
+Use AskUserQuestion:
+- header: "Requirements Review"
+- question: "I derived these requirements from your goals. How do they look?"
+- options:
+  - "Looks good" - Accept derived requirements
+  - "Add more" - I see gaps you missed
+  - "Remove some" - Some of these aren't needed
+  - "Edit" - Let me modify the details
+
+**If "Add more":**
+- Ask: "What additional requirements should be included?"
+- Add to requirements list with next sequential IDs
+- Return to review
+
+**If "Remove some":**
+- Present list of requirements with checkboxes
+- Ask which to remove
+- Remove selected, renumber remaining
+- Return to review
+
+**If "Edit":**
+- Present requirements one at a time
+- Allow modification of description, priority, or criteria
+- Return to review
+
+**Store final requirements for inclusion in PLAN.md.**
+
+</step>
+
 <step name="research">
 
 **Run parallel stakeholder research:**
@@ -344,6 +430,12 @@ mkdir -p "$MAJOR_PATH/v$NEXT_MAJOR.0/task"
 ## Scope
 {scope assessment}
 
+## Requirements
+
+| ID | Requirement | Priority | Source Goal | Acceptance Criteria |
+|----|-------------|----------|-------------|---------------------|
+{requirements from derive_requirements step, one row per requirement}
+
 ## Gates
 
 ### Entry
@@ -507,9 +599,10 @@ Major version created:
 
 - [ ] Next major version number determined
 - [ ] Deep discussion captured vision and scope
+- [ ] Requirements derived from goals using backward thinking
 - [ ] Entry and exit gates configured
 - [ ] Major directory structure created
-- [ ] Major STATE.md, PLAN.md (with Gates section), CHANGELOG.md created
+- [ ] Major STATE.md, PLAN.md (with Requirements and Gates sections), CHANGELOG.md created
 - [ ] Initial minor version (X.0) created with inherited gates
 - [ ] ROADMAP.md updated with new major section
 - [ ] All committed to git
