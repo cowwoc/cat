@@ -199,7 +199,7 @@ For current/in-progress versions, show exit gate progress inline:
 
 | Option | Action | Command |
 |--------|--------|---------|
-| [**1**] | Execute a task | `/cat:execute-task {version}-<task-name>` |
+| [**1**] | Execute a task | `/cat:work {version}-<task-name>` |
 | [**2**] | Add new task | `/cat:add-task {version}` |
 
 ---
@@ -270,7 +270,7 @@ If any tasks are exit gate tasks waiting on non-gating tasks, list them:
 
 To override an entry gate for a specific task:
 ```
-/cat:execute-task {version}-{task} --override-gate
+/cat:work {version}-{task} --override-gate
 ```
 
 To configure gates:

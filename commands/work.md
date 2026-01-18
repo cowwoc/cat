@@ -1,7 +1,7 @@
 ---
-name: cat:execute-task
-description: Execute task (continues incomplete work)
-argument-hint: "[major.minor-task-name] [--override-gate]"
+name: cat:work
+description: Work on tasks (auto-continues when trust >= medium)
+argument-hint: "[version | taskId] [--override-gate]"
 allowed-tools:
   - Read
   - Write
@@ -72,7 +72,7 @@ This workflow has 17 steps. Display progress at each step using the format from
 
 <execution_context>
 
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/execute-task.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/work.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/merge-and-cleanup.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/agent-architecture.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/subagent-delegation.md
@@ -136,14 +136,28 @@ Read `.claude/cat/cat-config.json` to determine:
 **Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this command.
 All bash commands below use this value directly.
 
-**If $ARGUMENTS provided:**
+**Argument parsing:**
+
+| Argument Format | Example | Behavior |
+|-----------------|---------|----------|
+| (none) | `/cat:work` | Work on first available task in first incomplete minor version |
+| `major.minor` | `/cat:work 0.5` | Work on first available task in v0.5 |
+| `major.minor-task` | `/cat:work 0.5-parse-tokens` | Work on specific task |
+| `--override-gate` | `/cat:work 0.5 --override-gate` | Skip entry gate check |
+
+**If $ARGUMENTS is a version (major.minor format, no task name):**
+- Find the first executable task in that specific minor version
+- Tasks are ordered by: in-progress first, then pending by dependency order
+
+**If $ARGUMENTS is a task ID (major.minor-task-name format):**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
 - Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/`
 - **Try to acquire lock BEFORE loading task details** (see lock check below)
 - Load its STATE.md and PLAN.md
 
 **If $ARGUMENTS empty:**
-- Scan all tasks to find first executable:
+- Find the first incomplete minor version (scan v0.0, v0.1, ... until one has pending tasks)
+- Scan tasks in that minor to find first executable:
   1. Status is `pending` or `in-progress`
   2. All task dependencies are `completed`
   3. Version entry gate is satisfied (see below)
@@ -268,7 +282,7 @@ Display the blocking gate condition:
    🚧 Waiting on: {unmet condition}
 
 To override and work on this task anyway, explicitly request:
-   /cat:execute-task {major}.{minor}-{task-name} --override-gate
+   /cat:work {major}.{minor}-{task-name} --override-gate
 ```
 
 Continue scanning for next eligible task. Only if user explicitly provides `--override-gate`
@@ -1447,29 +1461,57 @@ if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   continue
 fi
 
-# Lock acquired - we can offer this task
-# Release it immediately since user will /clear and re-acquire
+# Lock acquired - keep it for auto-continue or release for manual
+```
+
+**Auto-continue behavior (trust >= medium):**
+
+```bash
+TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
+```
+
+| Trust Level | Behavior |
+|-------------|----------|
+| `high` | Auto-continue to next task immediately (no prompt) |
+| `medium` | Auto-continue to next task immediately (no prompt) |
+| `low` | Show next task, wait for user to invoke `/cat:work` |
+
+**If trust >= medium and next task found:**
+
+```
+╭─── ✓ Task Complete ───────────────────────────────────────╮
+│                                                            │
+│  **{task-name}** merged to main.                           │
+│                                                            │
+│  Auto-continuing to next task...                           │
+│  **{next-task-name}** - {goal from PLAN.md}                │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+Then **loop back to find_task step** with the next task, continuing execution without user intervention.
+
+**If trust == low and next task found:**
+
+Release the lock (user will re-acquire when they invoke the command):
+
+```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-If found (and lockable):
-
 ```
----
-
-## Task Complete
-
-**{task-name}** merged to main.
-
-## Next Up
-
-**{next-task-name}** - {goal from PLAN.md}
-
-<sub>`/clear` first -> fresh context window</sub>
-
-`/cat:execute-task {major}.{minor}/{next-task-name}`
-
----
+╭─── ✓ Task Complete ───────────────────────────────────────╮
+│                                                            │
+│  **{task-name}** merged to main.                           │
+│                                                            │
+│  ────────────────────────────────────────────────────────  │
+│  **Next Up:** {next-task-name}                             │
+│  {goal from PLAN.md}                                       │
+│                                                            │
+│  `/cat:work` to continue                                   │
+│  ────────────────────────────────────────────────────────  │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 If no more tasks in the current minor version (all completed, blocked, or locked):

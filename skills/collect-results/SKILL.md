@@ -136,7 +136,7 @@ fi
 ```
 
 **Important:** The main agent handles these issues based on the `patience` setting (see
-execute-task.md handle_discovered_issues step). This skill only extracts them.
+work.md handle_discovered_issues step). This skill only extracts them.
 
 ### 5. Read Subagent Work Products
 

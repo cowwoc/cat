@@ -89,7 +89,7 @@ Current status: in-progress
 Progress: [==========>         ] {progress}%
 
 Options:
-1. Complete the task first with /cat:execute-task
+1. Complete the task first with /cat:work
 2. Manually reset status to 'pending' in STATE.md if you want to discard work
 ```
 

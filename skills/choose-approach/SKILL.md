@@ -337,12 +337,12 @@ prevents repeating this refactor when the next extraction is needed.
 
 ═══════════════════════════════════════════════════════════════════
 
-## Integration with execute-task
+## Integration with work
 
-This skill is called by `execute-task` after loading the task but before spawning the subagent:
+This skill is called by `work` after loading the task but before spawning the subagent:
 
 ```
-execute-task flow:
+work flow:
   1. Load task (STATE.md, PLAN.md)
   2. Check size (decompose if needed)
   3. → choose-approach skill ← (this skill)

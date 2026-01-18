@@ -28,7 +28,7 @@ Output ONLY the reference content below. Do NOT add:
 1. `/cat:init` - Initialize project structure (new or existing codebase)
 2. `/cat:add-major-version` - Create first major version structure
 3. `/cat:add-task 1.0` - Add tasks to minor version 1.0
-4. `/cat:execute-task` - Execute the next available task
+4. `/cat:work` - Execute the next available task
 
 ## Hierarchy Structure
 
@@ -52,7 +52,7 @@ MAJOR -> MINOR -> TASK
             └── PLAN.md           # Technical-level plan
 ```
 
-> Task changelog content is embedded in commit messages (see execute-task commit format).
+> Task changelog content is embedded in commit messages (see work commit format).
 
 ## Core Commands
 
@@ -67,7 +67,7 @@ Initialize CAT planning structure (new or existing project).
 
 ### Task Execution
 
-**`/cat:execute-task [id]`** (id format: `major.minor-task-name`)
+**`/cat:work [id]`** (id format: `major.minor-task-name`)
 Execute the next available task.
 - Creates worktree and task branch
 - Spawns subagent for execution
@@ -178,7 +178,7 @@ Change anytime by editing `.claude/cat/cat-config.json`
 /cat:init
 /cat:add-major-version
 /cat:add-task 1.0
-/cat:execute-task
+/cat:work
 ```
 
 **Checking progress:**

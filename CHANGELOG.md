@@ -89,7 +89,7 @@ Introduces the "fun AND reliable" philosophy with adventure-style workflow enhan
 
 **Workflow Enhancements:**
 - Enhanced approval gate with adventure-style checkpoint display
-- 15-step execute-task flow (added approach selection)
+- 15-step work flow (added approach selection)
 - Progress bars show user style and preferences
 
 **Documentation:**
@@ -217,7 +217,7 @@ CAT v2.0 is a complete reimagining of the plugin, introducing:
 
 **Commands:**
 - `/cat:init` - Initialize CAT structure (new or existing project)
-- `/cat:execute-task` - Execute task (continues incomplete work)
+- `/cat:work` - Execute task (continues incomplete work)
 - `/cat:status` - Show hierarchy status with visual tree
 - `/cat:add-task`, `/cat:add-minor-version`, `/cat:add-major-version`
 - `/cat:remove-task`, `/cat:remove-minor-version`, `/cat:remove-major-version`
