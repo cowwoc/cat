@@ -154,7 +154,7 @@ Major enhancement enabling proactive task decomposition and parallel subagent ex
 **New Features:**
 - **Auto-decomposition**: Tasks exceeding context threshold (default 40% of 200K = 80K tokens) are
   automatically decomposed before execution
-- **Parallel execution**: Independent subtasks spawn concurrent subagents in wave-based execution
+- **Parallel execution**: Independent subtasks spawn concurrent subagents in sub-task-based execution
 - **Task size estimation**: Pre-execution analysis estimates token requirements from PLAN.md
 - **Mandatory token reporting**: Subagent execution reports always show token usage and compaction events
 
