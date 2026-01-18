@@ -455,6 +455,33 @@ prevention_action:
         Each milestone = potential decomposition point.
 ```
 
+**BLOCKING GATE (M134/A022) - Prevention File Edit Verification:**
+
+BEFORE proceeding to "Record Learning", you MUST complete this gate:
+
+1. **List EVERY file you edited in Step 9:**
+   - File 1: _______________
+   - File 2: _______________
+   (Add more lines as needed)
+
+2. **Verification check:**
+   - [ ] At least ONE file path is listed above
+   - [ ] Each listed file was ACTUALLY edited (not just read)
+   - [ ] The edit tool was used, not just planned
+
+3. **BLOCKING CONDITION:**
+   If the file list above is BLANK or contains only placeholders:
+   - **STOP IMMEDIATELY**
+   - Go back to Step 9
+   - Make an ACTUAL edit to implement prevention
+   - Return here and fill in the file path(s)
+   - Only then proceed to Record Learning
+
+4. **Why this gate exists (M134/M135):**
+   Recording `prevention_implemented: true` without editing a file is FALSE.
+   The prevention_path in the JSON entry MUST match a file listed above.
+   If they don't match, the learning system is corrupted.
+
 ### 10. Verify Prevention Works
 
 ```yaml
@@ -489,6 +516,10 @@ prevention_path_validation:
 
   # Rule: prevention_path MUST be a real file path that was actually modified
   # "Behavioral change" without enforcement is NOT prevention - it WILL recur
+
+  # (A022) BLOCKING: prevention_path must match a file listed in the BLOCKING GATE above
+  # If prevention_path doesn't match what you edited, STOP and fix before recording
+  # Recording with mismatched path corrupts the learning system
 ```
 
 **If you cannot identify a real file to change, you have NOT implemented prevention.**

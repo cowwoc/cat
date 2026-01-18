@@ -60,11 +60,57 @@ Use widths from `.terminals[detected_terminal]` or `.default`. Most terminals us
 
 **MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
 
+**MANDATORY (M133) - Header line formula:** For lines like `╭─── ✓ Title ───...╮`:
+```
+target = 60
+prefix = "╭─── "  (5 chars)
+suffix = "╮"      (1 char)
+content_width = (emoji_count × emoji_width) + text_length  # e.g., ✓=1, text=22 → 23
+trailing_dashes = target - prefix - content_width - 1 - suffix  # -1 for space after content
+```
+
+**MANDATORY (A020) - Box Rendering Verification Protocol:**
+
+Before outputting ANY box, complete this verification checklist:
+
+1. **Character Width Lookup** - For EVERY special character in the box:
+   - Look up width in emoji-widths.json `.terminals[detected_terminal]` or `.default`
+   - Characters NOT in emoji-widths.json: STOP and report - do not guess width
+   - Common widths: emojis (🧠🐱✨) = 2, marks (✓•→✦) = varies (check file!)
+
+2. **Line-by-Line Verification** - For EACH line in the box:
+   ```
+   Line: "│  🧠 CONTEXT LIMITS                                         │"
+   Count: │(1) + space(1) + space(1) + 🧠(2) + space(1) + "CONTEXT LIMITS"(14) + spaces(37) + │(1) = 58
+   With borders: 58 + 2 = 60 ✓
+   ```
+
+3. **Pre-Output Checklist:**
+   - [ ] All special characters found in emoji-widths.json
+   - [ ] Every line calculated to exactly target width (60)
+   - [ ] Header line trailing dashes calculated using formula above
+   - [ ] Footer line is exactly `╰` + 58×`─` + `╯`
+
+4. **If ANY check fails:** STOP. Fix the issue. Do not output partial boxes.
+
+**Anti-pattern (M136):** Using characters (like ✦) without verifying they exist in emoji-widths.json.
+If a character is missing, add it to emoji-widths.json FIRST with verified width.
+
 </step>
 
 <step name="display-settings">
 
-**MANDATORY (M130): Output settings display BEFORE any AskUserQuestion call.**
+**MANDATORY (M130/A021) - Display-Before-Prompt Protocol:**
+
+BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
+
+**Verification sequence:**
+1. Have I output a settings/info box in THIS step? If NO → output box first
+2. Only AFTER box is displayed → call AskUserQuestion
+3. If you find yourself about to call AskUserQuestion without a preceding box → STOP
+
+**Why this matters:** Users need visual context before making choices. Jumping directly to
+prompts without display creates confusion and poor UX.
 
 **Display settings screen:**
 
@@ -99,6 +145,8 @@ For each line: display width = (emoji count × 2) + (other chars × 1). Pad to 5
 </step>
 
 <step name="main-menu">
+
+**CHECKPOINT (M132): Verify settings box was displayed in previous step. If not, STOP and output it now.**
 
 **Present main menu using AskUserQuestion:**
 
