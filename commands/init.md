@@ -512,15 +512,14 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Display guidance banner (ZWSP lines appear blank but contain U+200B):
+Display guidance banner:
 
-📋 FIRST TASK WALKTHROUGH
-╭───────────────────────────────────────────────────────────────────╮
-​
-      Great! Let's create your first task together.
-      I'll ask a few questions to understand what you want to build.
-​
-╰───────────────────────────────────────────────────────────────────╯
+╭─── 📋 FIRST TASK WALKTHROUGH ─────────────────────────────────────╮
+│                                                                    │
+│  Great! Let's create your first task together.                    │
+│  I'll ask a few questions to understand what you want to build.   │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -576,17 +575,16 @@ git commit -m "docs: add first task - ${TASK_NAME}"
 
 7. Display completion and offer to start work:
 
-✅ FIRST TASK CREATED
-╭───────────────────────────────────────────────────────────────────╮
-​
-      Task: {task-name}
-      Location: .claude/cat/v0/v0.0/{task-name}/
-​
-      Files created:
-      • PLAN.md - What needs to be done
-      • STATE.md - Progress tracking
-​
-╰───────────────────────────────────────────────────────────────────╯
+╭─── ✅ FIRST TASK CREATED ─────────────────────────────────────────╮
+│                                                                    │
+│  Task: {task-name}                                                 │
+│  Location: .claude/cat/v0/v0.0/{task-name}/                        │
+│                                                                    │
+│  Files created:                                                    │
+│  • PLAN.md - What needs to be done                                 │
+│  • STATE.md - Progress tracking                                    │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
@@ -597,37 +595,32 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 - Invoke `/cat:work` skill to begin task execution
 
 **If "No, I'll start later":**
-Display (ZWSP lines appear blank but contain U+200B):
 
-👋 ALL SET
-╭───────────────────────────────────────────────────────────────────╮
-​
-      Your project is ready. When you want to start:
-​
-      → /cat:work         Execute your first task
-      → /cat:status       See project overview
-      → /cat:add          Add more tasks or versions
-      → /cat:help         Full command reference
-​
-╰───────────────────────────────────────────────────────────────────╯
+╭─── 👋 ALL SET ────────────────────────────────────────────────────╮
+│                                                                    │
+│  Your project is ready. When you want to start:                   │
+│                                                                    │
+│  → /cat:work         Execute your first task                      │
+│  → /cat:status       See project overview                         │
+│  → /cat:add          Add more tasks or versions                   │
+│  → /cat:help         Full command reference                       │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 **If "No, I'll explore" (from initial question):**
 
-Display (ZWSP lines appear blank but contain U+200B):
-
-👋 EXPLORE AT YOUR OWN PACE
-╭───────────────────────────────────────────────────────────────────╮
-​
-      Essential commands to get started:
-​
-      → /cat:status       See what's happening
-      → /cat:add          Add versions and tasks
-      → /cat:work         Execute tasks
-      → /cat:help         Full command reference
-​
-      Tip: Run /cat:status anytime to see suggested next steps.
-​
-╰───────────────────────────────────────────────────────────────────╯
+╭─── 👋 EXPLORE AT YOUR OWN PACE ───────────────────────────────────╮
+│                                                                    │
+│  Essential commands to get started:                               │
+│                                                                    │
+│  → /cat:status       See what's happening                         │
+│  → /cat:add          Add versions and tasks                       │
+│  → /cat:work         Execute tasks                                │
+│  → /cat:help         Full command reference                       │
+│                                                                    │
+│  Tip: Run /cat:status anytime to see suggested next steps.        │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 
 </step>
 
