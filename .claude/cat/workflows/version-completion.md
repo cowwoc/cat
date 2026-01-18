@@ -155,8 +155,7 @@ Use AskUserQuestion:
 
 ```
 Use `/cat:status` to see overall progress.
-Use `/cat:add-task` to add more tasks.
-Use `/cat:add-minor-version` to add a new minor version.
+Use `/cat:add` to add more tasks or versions.
 ```
 
 ---

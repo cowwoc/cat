@@ -26,9 +26,8 @@ Output ONLY the reference content below. Do NOT add:
 ## Quick Start
 
 1. `/cat:init` - Initialize project structure (new or existing codebase)
-2. `/cat:add-major-version` - Create first major version structure
-3. `/cat:add-task 1.0` - Add tasks to minor version 1.0
-4. `/cat:work` - Execute the next available task
+2. `/cat:add` - Add versions and tasks (interactive)
+3. `/cat:work` - Execute the next available task
 
 ## Hierarchy Structure
 
@@ -98,42 +97,21 @@ Show complete hierarchy status.
 
 ### Adding Structure
 
-**`/cat:add-task [major.minor]`**
-Add a task to a minor version.
-- Discussion workflow generates PLAN.md
-- Validates task name (lowercase, hyphens, max 50 chars)
-- Checks uniqueness within minor version
-
-**`/cat:add-minor-version [major]`**
-Add a minor version to a major.
-- Creates directory structure
-- Updates ROADMAP.md
-
-**`/cat:add-major-version`**
-Add a new major version.
-- Deep questioning for vision and scope
-- Creates major with initial minor (X.0)
-- Updates ROADMAP.md
+**`/cat:add`**
+Unified command for adding tasks or versions.
+- Asks what to add: Task, Minor version, or Major version
+- For tasks: Discussion workflow generates PLAN.md
+- For versions: Handles number conflicts with insert/renumber option
+- Validates names and checks uniqueness
 
 ### Removing Structure
 
-**`/cat:remove-task [id]`** (id format: `major.minor-task-name`)
-Remove a task.
+**`/cat:remove`**
+Unified command for removing tasks or versions.
+- Asks what to remove: Task, Minor version, or Major version
 - Validates no work in progress
-- Checks for dependent tasks
-- Confirms with user
-
-**`/cat:remove-minor-version [major.minor]`**
-Remove a minor version.
-- Validates no incomplete tasks
-- Warns about implicit dependencies
-- Confirms with user
-
-**`/cat:remove-major-version [major]`**
-Remove an entire major version.
-- Validates no incomplete work
-- Extra confirmation required
-- Provides git recovery instructions
+- Checks for dependencies
+- Confirms with user before removal
 
 ## CAT-Specific Skills
 
@@ -185,8 +163,7 @@ Change anytime by editing `.claude/cat/cat-config.json`
 **Starting a new project:**
 ```
 /cat:init
-/cat:add-major-version
-/cat:add-task 1.0
+/cat:add          # Select "Major version", then "Task"
 /cat:work
 ```
 
@@ -197,16 +174,12 @@ Change anytime by editing `.claude/cat/cat-config.json`
 
 **Adding more work:**
 ```
-/cat:add-task 1.0          # Add to existing minor
-/cat:add-minor-version 1   # Add new minor to major
-/cat:add-major-version     # Add new major version
+/cat:add          # Interactive: choose Task, Minor, or Major
 ```
 
 **Removing planned work:**
 ```
-/cat:remove-task 1.0/task-name
-/cat:remove-minor-version 1.0
-/cat:remove-major-version 1
+/cat:remove       # Interactive: choose Task, Minor, or Major
 ```
 
 ## Configuration Options

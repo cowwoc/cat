@@ -33,8 +33,8 @@ Stakeholders run in research mode **automatically** during:
 
 | Command | Trigger | What Happens |
 |---------|---------|--------------|
-| `/cat:add-major-version` | After discuss step | All 9 stakeholders research the domain in parallel |
-| `/cat:add-minor-version` | After discuss step | All 9 stakeholders research the domain in parallel |
+| `/cat:add` (major version) | After discuss step | All 9 stakeholders research the domain in parallel |
+| `/cat:add` (minor version) | After discuss step | All 9 stakeholders research the domain in parallel |
 | `/cat:research` | Manual invocation | All 9 stakeholders research specific topic |
 
 **Research output** is merged into the `## Research` section of PLAN.md.

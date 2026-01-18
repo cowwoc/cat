@@ -488,14 +488,146 @@ Display completion banner (ZWSP lines appear blank but contain U+200B):
 **New projects:**
 ```
 Initialized: PROJECT.md, ROADMAP.md, cat-config.json
-Next: /clear -> /cat:add-major-version
+Next: /clear -> /cat:add
 ```
 
 **Existing codebases:**
 ```
 Initialized with [N] majors, [N] minors, [N] tasks
-Next: /clear -> /cat:work {task} OR /cat:add-task
+Next: /clear -> /cat:work {task} OR /cat:add
 ```
+
+</step>
+
+<step name="first_task_guide">
+
+**Offer guided first-task creation**
+
+After initialization completes, offer to walk user through creating their first task:
+
+AskUserQuestion: header="First Task", question="Would you like me to walk you through creating your first task?", options=[
+  "Yes, guide me (Recommended)" - Interactive walkthrough of first task,
+  "No, I'll explore" - Exit with pointers to /cat:help and /cat:status
+]
+
+**If "Yes, guide me":**
+
+Display guidance banner (ZWSP lines appear blank but contain U+200B):
+
+📋 FIRST TASK WALKTHROUGH
+╭───────────────────────────────────────────────────────────────────╮
+​
+      Great! Let's create your first task together.
+      I'll ask a few questions to understand what you want to build.
+​
+╰───────────────────────────────────────────────────────────────────╯
+
+1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
+   "[Let user describe in their own words]" - FREEFORM
+]
+
+2. Based on the response, determine if a major/minor version exists:
+   - If no major version exists: Create Major 0 with Minor 0.0
+   - If major exists but no minor: Create appropriate minor version
+
+3. Create the task directory structure:
+```bash
+TASK_NAME="[sanitized-task-name]"
+mkdir -p ".claude/cat/v0/v0.0/${TASK_NAME}"
+```
+
+4. Create initial PLAN.md for the task:
+```markdown
+# Task Plan: {task-name}
+
+## Objective
+[From user's description]
+
+## Tasks
+- [ ] [Broken down from objective]
+
+## Technical Approach
+[To be determined during implementation]
+
+## Verification
+- [ ] [Success criteria]
+```
+
+5. Create initial STATE.md:
+```markdown
+# Task State: {task-name}
+
+## Status
+status: pending
+progress: 0%
+
+## Dependencies
+- None
+
+## Provides
+- [What this task delivers]
+```
+
+6. Commit the new task:
+```bash
+git add ".claude/cat/"
+git commit -m "docs: add first task - ${TASK_NAME}"
+```
+
+7. Display completion and offer to start work:
+
+✅ FIRST TASK CREATED
+╭───────────────────────────────────────────────────────────────────╮
+​
+      Task: {task-name}
+      Location: .claude/cat/v0/v0.0/{task-name}/
+​
+      Files created:
+      • PLAN.md - What needs to be done
+      • STATE.md - Progress tracking
+​
+╰───────────────────────────────────────────────────────────────────╯
+
+AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
+  "Yes, let's go! (Recommended)" - Run /cat:work immediately,
+  "No, I'll start later" - Exit with /cat:work pointer
+]
+
+**If "Yes, let's go!":**
+- Invoke `/cat:work` skill to begin task execution
+
+**If "No, I'll start later":**
+Display (ZWSP lines appear blank but contain U+200B):
+
+👋 ALL SET
+╭───────────────────────────────────────────────────────────────────╮
+​
+      Your project is ready. When you want to start:
+​
+      → /cat:work         Execute your first task
+      → /cat:status       See project overview
+      → /cat:add          Add more tasks or versions
+      → /cat:help         Full command reference
+​
+╰───────────────────────────────────────────────────────────────────╯
+
+**If "No, I'll explore" (from initial question):**
+
+Display (ZWSP lines appear blank but contain U+200B):
+
+👋 EXPLORE AT YOUR OWN PACE
+╭───────────────────────────────────────────────────────────────────╮
+​
+      Essential commands to get started:
+​
+      → /cat:status       See what's happening
+      → /cat:add          Add versions and tasks
+      → /cat:work         Execute tasks
+      → /cat:help         Full command reference
+​
+      Tip: Run /cat:status anytime to see suggested next steps.
+​
+╰───────────────────────────────────────────────────────────────────╯
 
 </step>
 

@@ -67,11 +67,8 @@ Your answers shape how CAT makes decisions throughout your project.
 ### Step 3: Chart Your Course
 
 ```bash
-# Define your first major version (the big picture)
-/cat:add-major-version
-
-# Add tasks (optionally specify target version)
-/cat:add-task [version]
+# Add structure (versions and tasks)
+/cat:add
 
 # See your project status
 /cat:status
@@ -177,9 +174,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 
 | Command | What It Does |
 |---------|--------------|
-| `/cat:add-major-version` | Add a new milestone |
-| `/cat:add-minor-version` | Add a section within a milestone |
-| `/cat:add-task` | Add a task to complete |
+| `/cat:add` | Add a task or version (major/minor) |
 | `/cat:research` | Research before committing to an approach |
 
 ### Housekeeping
@@ -188,7 +183,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 |---------|--------------|
 | `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
 | `/cat:config` | Change your preferences |
-| `/cat:remove-task` | Remove a task |
+| `/cat:remove` | Remove a task or version |
 
 ---
 
