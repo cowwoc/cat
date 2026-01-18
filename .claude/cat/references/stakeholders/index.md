@@ -45,7 +45,7 @@ Stakeholders run in review mode during:
 
 | Command | Trigger | What Happens |
 |---------|---------|--------------|
-| `/cat:execute-task` | After implementation complete | All 9 stakeholders review code in parallel |
+| `/cat:work` | After implementation complete | All 9 stakeholders review code in parallel |
 | `/cat:stakeholder-review` | Manual invocation | All 9 stakeholders review specified changes |
 
 **Review output** determines if implementation can proceed to merge.

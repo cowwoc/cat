@@ -20,14 +20,14 @@ state.
 
 ## Concurrent Execution Safety
 
-This skill operates under the task lock held by `/cat:execute-task`. Refresh the lock heartbeat for
+This skill operates under the task lock held by `/cat:work`. Refresh the lock heartbeat for
 long-running merge operations:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "$TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-The task lock is released by `execute-task` cleanup step after all subagent work is merged.
+The task lock is released by `work` cleanup step after all subagent work is merged.
 
 ## Workflow
 
