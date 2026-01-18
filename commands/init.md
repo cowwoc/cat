@@ -309,90 +309,64 @@ Then:
 
 <step name="existing_research" condition="Existing codebase">
 
-**Run parallel stakeholder research on imported project:**
+**Trigger stakeholder research for pending versions:**
 
-After importing the project structure, run research to inform future work.
+After importing the project structure, research is needed for pending versions.
 
-**Extract project context:**
-- Read PROJECT.md for project description, goals, constraints
-- Read ROADMAP.md for upcoming work
-- Identify the primary technology stack from detection step
+**Find pending versions:**
 
-**Spawn 6 stakeholder agents in parallel using `parallel-execute` skill with `mode: research`:**
-
-```yaml
-stakeholders:
-  - architect: "Research architecture patterns and stack recommendations for {project description}"
-  - security: "Research security risks and secure patterns for {technology stack}"
-  - quality: "Research quality patterns and anti-patterns for {technology stack}"
-  - tester: "Research testing strategies for {project type}"
-  - performance: "Research performance characteristics for {technology stack}"
-  - ux: "Research UX patterns for {project type}"
+```bash
+# Find all pending minor versions
+PENDING_VERSIONS=$(find .claude/cat -name "STATE.md" -exec grep -l "status: pending" {} \; \
+  | sed 's|.claude/cat/||; s|/STATE.md||' \
+  | grep -E "v[0-9]+/v[0-9]+\.[0-9]+" \
+  | sed 's|v\([0-9]*\)/v\([0-9]*\.[0-9]*\)|\2|' \
+  | sort -V)
 ```
 
-**Each agent receives:**
-- Project description from PROJECT.md
-- Detected technology stack
-- Current project stage (MVP/Early/Active/Maintenance)
-- `mode: research` parameter
-- Reference to their stakeholder definition file
+**For each pending version, run stakeholder research:**
 
-**Aggregate and store findings:**
+Use AskUserQuestion:
+- header: "Research"
+- question: "Run stakeholder research for pending versions?"
+- options:
+  - "Yes, research all pending (Recommended)" - run /cat:research for each
+  - "Skip for now" - research later with /cat:research
 
-Create `.claude/cat/RESEARCH.md` with aggregated findings:
+**If "Yes, research all pending":**
 
+For each pending version in PENDING_VERSIONS:
+- Invoke `/cat:research {version}`
+- This spawns 8 stakeholder agents in parallel
+- Results are stored in the version's PLAN.md Research section
+
+Display progress:
+```
+Running stakeholder research for pending versions...
+├─ v1.2: Researching... ✓
+├─ v1.3: Researching... ✓
+└─ v2.0: Researching... ✓
+```
+
+**If "Skip for now":**
+
+Note in PROJECT.md:
 ```markdown
-# Project Research
-
-**Generated:** {timestamp}
-**Project:** {project name}
-**Stack:** {detected stack}
-
-## Stack Recommendations
-{From architect}
-
-## Architecture Patterns
-{From architect}
-
-## Security Considerations
-{From security}
-
-## Quality Patterns
-{From quality}
-
-## Testing Strategy
-{From tester}
-
-## Performance Considerations
-{From performance}
-
-## UX Guidelines
-{From ux}
-
-## Sources
-{Combined URLs from all stakeholders}
+## Notes
+- Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-**Also update pending task PLAN.md files:**
+Display (ZWSP lines appear blank but contain U+200B):
 
-For each pending task, add a `## Research` section referencing the relevant portions
-of the project-level research.
-
-Display completion (ZWSP lines appear blank but contain U+200B):
-
-🔬 PROJECT RESEARCH COMPLETE
+ℹ️ RESEARCH SKIPPED
 ╭───────────────────────────────────────────────────────────────────╮
 ​
-      6 stakeholders analyzed your project in parallel:
-      ✓ Architect: Stack & architecture patterns
-      ✓ Security: Risk assessment & secure patterns
-      ✓ Quality: Best practices & anti-patterns
-      ✓ Tester: Testing strategy & edge cases
-      ✓ Performance: Efficiency considerations
-      ✓ UX: Usability & accessibility patterns
+      Stakeholder research was skipped during import.
 ​
-      Research saved to: .claude/cat/RESEARCH.md
-      Task PLAN.md files updated with relevant findings.
+      To research a pending version later:
+      → /cat:research {version}
+​
+      Example: /cat:research 1.2
 ​
 ╰───────────────────────────────────────────────────────────────────╯
 
@@ -458,7 +432,6 @@ Create `.claude/cat/cat-config.json`:
 ```json
 {
   "version": "[CAT_VERSION from above]",
-  "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
   "trust": "[low|medium|high]",

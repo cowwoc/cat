@@ -2,20 +2,15 @@
 
 ## Operating Modes
 
-### Interactive Mode (Default)
-Stakeholder review and user approval required before merge to main.
+Controlled by `trust` setting in `cat-config.json`:
 
-### Yolo Mode
-All approval gates skipped. Tasks auto-proceed and auto-merge.
+| Trust | Mode | Behavior |
+|-------|------|----------|
+| `low` | Interactive | Review runs, asks user on rejection |
+| `medium` | Semi-autonomous | Review runs, auto-fixes on rejection |
+| `high` | Autonomous | Skips review, auto-merges |
 
-Enable via `cat-config.json`:
-```json
-{
-  "yoloMode": true
-}
-```
-
-## Approval Flow (Interactive Mode)
+## Approval Flow (trust: low/medium)
 
 ```
 Task work complete
@@ -73,13 +68,22 @@ Before user approval, implementation is reviewed by 5 stakeholder perspectives:
 
 **Configuration:**
 
-Stakeholder review frequency is controlled via `stakeholderReview` in cat-config.json:
+Stakeholder review is controlled via `trust` in cat-config.json:
 
-| Value | Behavior |
-|-------|----------|
-| `always` | Run on every task |
-| `high-risk-only` | Only tasks with risk indicators (default) |
-| `never` | Skip entirely |
+| Trust | Review Behavior |
+|-------|-----------------|
+| `high` | Skip review (autonomous mode) |
+| `medium` | Run review, auto-loop on rejection |
+| `low` | Run review, ask user on rejection |
+
+**Rejection behavior by trust level:**
+
+| Trust | Rejection Behavior |
+|-------|-------------------|
+| `low` | Ask user: Fix / Override / Abort |
+| `medium` | Auto-loop to fix (up to 3 iterations) |
+
+Note: `trust: "high"` skips review entirely.
 
 See [stakeholders/index.md](stakeholders/index.md) for detailed stakeholder definitions.
 

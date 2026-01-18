@@ -1,13 +1,3 @@
 .idea/
-.claude/cat/locks/
-.claude/cat/backups/
-.worktrees/
+.claude/locks/
 node_modules/
-plugin/node_modules/
-
-# Temp files
-*.tmp
-*.log
-
-# User-specific license configuration
-cat-config.local.json

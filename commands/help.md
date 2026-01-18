@@ -205,10 +205,9 @@ Change anytime by editing `.claude/cat/cat-config.json`
 cat-config.json:
 ```json
 {
-  "yoloMode": false,            // Skip approval gates
   "contextLimit": 200000,       // Total context window
   "targetContextUsage": 40,     // Soft limit (40%)
-  "trust": "medium",            // low | medium | high (review frequency)
+  "trust": "medium",            // low | medium | high (autonomy level)
   "verify": "changed",          // changed | all (verification scope)
   "curiosity": "medium",        // low | medium | high (exploration level)
   "patience": "medium"          // low | medium | high (refactoring tolerance)

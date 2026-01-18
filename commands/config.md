@@ -42,9 +42,6 @@ If file doesn't exist, inform user to run `/cat:init` first.
 ⚙️  ADVENTURE SETTINGS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎮 GAME MODE
-   {yoloMode ? "⚡ YOLO" : "🛡️ Interactive"}
-
 🧠 CONTEXT LIMITS
    Window:  {contextLimit} tokens
    Target:  {targetContextUsage}% before split
@@ -75,8 +72,6 @@ Show current values in descriptions using data from read-config step.
 - header: "Settings"
 - question: "What would you like to configure?"
 - options:
-  - label: "🎮 Game Mode"
-    description: "Currently: {yoloMode ? '⚡ YOLO' : '🛡️ Interactive'}"
   - label: "🧠 Context Limits"
     description: "Currently: {contextLimit}k / {targetContextUsage}%"
   - label: "🐱 CAT Behavior"
@@ -85,47 +80,6 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
-
-</step>
-
-<step name="game-mode">
-
-**🎮 Game Mode selection:**
-
-Display (add "(current)" after the mode name if it matches current config):
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎮 CHOOSE YOUR MODE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🛡️ INTERACTIVE {!yoloMode ? '(current)' : ''}
-   CAT pauses at key moments for your approval.
-   You review changes before they merge to main.
-
-   ✦ Best for: Learning CAT, important projects
-
-⚡ YOLO {yoloMode ? '(current)' : ''}
-   CAT runs autonomously without stopping.
-   Tasks complete and merge automatically.
-
-   ✦ Best for: Trusted workflows, batch processing
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-AskUserQuestion:
-- header: "Mode"
-- question: "Select your game mode:"
-- options:
-  - label: "🛡️ Interactive (Recommended)"
-    description: "Approval gates before merging"
-  - label: "⚡ YOLO"
-    description: "Autonomous execution, no gates"
-  - label: "← Back"
-    description: "Return to main menu"
-
-
-Map selection: Interactive → `yoloMode: false`, YOLO → `yoloMode: true`
 
 </step>
 
@@ -201,10 +155,10 @@ Display (add "(current)" after the level name if it matches current config):
    ✦ Best for: Balanced control and efficiency
 
 🐱─ ─ ─ ─ ┈  HIGH {trust == 'high' ? '(current)' : ''}
-   High trust. CAT decides most things autonomously.
-   Only presents options when genuinely ambiguous.
+   Full autonomy. CAT runs without stopping.
+   Skips stakeholder review. Tasks auto-merge.
 
-   ✦ Best for: Trusted workflows, reviewing outcomes
+   ✦ Best for: Trusted workflows, batch processing
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -214,11 +168,11 @@ AskUserQuestion:
 - question: "How much do you trust CAT to make decisions? (Current: {trust || 'medium'})"
 - options:
   - label: "Medium (Recommended)"
-    description: "Presents options for meaningful trade-offs"
+    description: "Auto-fixes review issues, presents meaningful choices"
   - label: "Low"
-    description: "Presents options frequently"
+    description: "Asks before fixing review issues, presents options frequently"
   - label: "High"
-    description: "Decides autonomously, rarely asks"
+    description: "Full autonomy, skips review, auto-merges"
   - label: "← Back"
     description: "Return to behavior menu"
 
@@ -613,7 +567,6 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 Examples:
 - Changed "Trust" → return to CAT Behavior menu
 - Changed "Context window size" → return to Context Limits menu
-- Changed "Game Mode" → return to main menu (no parent submenu)
 - Changed "Cleanup" → return to Cleanup/Gates menu
 
 </step>
@@ -652,19 +605,18 @@ No changes made. Settings unchanged.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `yoloMode` | boolean | false | Skip approval gates |
 | `contextLimit` | number | 200000 | Context window size |
 | `targetContextUsage` | number | 40 | Decomposition threshold (%) |
-| `trust` | string | "medium" | Trust level for CAT decisions |
+| `trust` | string | "medium" | Trust level (controls review and autonomy) |
 | `verify` | string | "changed" | What verification runs before commits |
 | `curiosity` | string | "low" | Exploration beyond immediate task |
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
 
 ### Trust Values
-- `low` — Low trust. CAT presents options frequently.
-- `medium` — Moderate trust. Options for meaningful trade-offs.
-- `high` — High trust. CAT decides autonomously.
+- `low` — Asks before fixing review issues. Presents options frequently.
+- `medium` — Auto-fixes review issues. Presents meaningful choices.
+- `high` — Full autonomy. Skips review. Auto-merges.
 
 ### Verify Values
 - `none` — No verification before commit.

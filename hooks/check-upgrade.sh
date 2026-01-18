@@ -112,13 +112,33 @@ fi
 # Update config version after successful migration
 set_config_version "$plugin_version"
 
-message="CAT UPGRADE COMPLETED
+# Check for PLAN.md files missing Research section
+missing_research=0
+missing_research_files=""
+if [[ -d ".claude/cat" ]]; then
+    while IFS= read -r plan_file; do
+        [[ -z "$plan_file" ]] && continue
+        if ! grep -q "^## Research" "$plan_file" 2>/dev/null; then
+            ((missing_research++)) || true
+            missing_research_files="${missing_research_files}\n  - ${plan_file}"
+        fi
+    done < <(find .claude/cat -name "PLAN.md" -type f 2>/dev/null)
+fi
 
-Upgraded: $config_version → $plugin_version
 
-Migrations applied:$migration_log
+# Output directly to user (visible in terminal)
+echo ""
+echo "CAT UPGRADED from version $config_version to $plugin_version"
+if [[ $missing_research -gt 0 ]]; then
+    echo ""
+    echo "**Action Required:** $missing_research PLAN.md file(s) are missing Research sections."
+    echo "To populate with stakeholder research, run:"
+    echo "    /cat:research [version]"
+fi
+echo ""
 
-Backup available at: $backup_path"
+# Also send to Claude via additionalContext
+message="CAT upgraded from $config_version to $plugin_version. Backup at: $backup_path"
 
 jq -n --arg msg "$message" '{
     "hookSpecificOutput": {

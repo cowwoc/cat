@@ -123,7 +123,7 @@ Task path: $ARGUMENTS
 **Load configuration:**
 
 Read `.claude/cat/cat-config.json` to determine:
-- `yoloMode` - whether approval gates are skipped
+- `trust` - trust level (high = skip approval gates)
 - `contextLimit` - total context window size
 - `targetContextUsage` - soft limit for task size
 
@@ -1032,19 +1032,19 @@ Use AskUserQuestion to capture decision.
 **Skip conditions:**
 
 ```bash
-# Read preferences
-YOLO_MODE=$(jq -r '.yoloMode // false' .claude/cat/cat-config.json)
+# Read trust level
 TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 ```
 
-| Condition | Action |
-|-----------|--------|
-| `yoloMode: true` | Skip review |
-| `trust: "high"` | Skip review (high trust) |
-| `trust: "low"` | Run review always |
-| `trust: "medium"` | Check task risk assessment |
+**Review triggering:**
 
-**For medium trust:** Read the task's PLAN.md Risk Assessment section. Run review if ANY of:
+| Trust | Action |
+|-------|--------|
+| `high` | Skip review (autonomous mode) |
+| `medium` | Run review |
+| `low` | Run review |
+
+**High-risk detection:** Read the task's PLAN.md Risk Assessment section. Task is high-risk if ANY of:
 - Risk section mentions "breaking change", "data loss", "security", "production"
 - Task modifies authentication, authorization, or payment code
 - Task touches 5+ files
@@ -1084,6 +1084,17 @@ to identify concerns from multiple perspectives before presenting to user.
 
 **If REJECTED:**
 
+Behavior depends on trust level:
+
+| Trust | Rejection Behavior |
+|-------|-------------------|
+| `low` | Ask user: Fix / Override / Abort |
+| `medium` | Auto-loop to fix (up to 3 iterations) |
+
+Note: `trust: "high"` skips review entirely, so rejection handling doesn't apply.
+
+**For `trust: "low"` (user decides):**
+
 Present concerns to user:
 
 ```
@@ -1104,13 +1115,23 @@ Use AskUserQuestion:
   - "Override and proceed" - Continue to user approval with concerns noted
   - "Abort" - Stop task execution
 
-**If "Fix concerns":**
+**For `trust: "medium"` or `trust: "high"` (auto-fix):**
+
+```
+## Stakeholder Review: REJECTED (Auto-fixing)
+
+Iteration {N}/3 - Automatically addressing concerns...
+
+**Concerns being fixed:**
+{list concerns with locations}
+```
+
 - Record concerns in task context
-- Loop back to `execute` step
+- Loop back to `execute` step automatically (no user prompt)
 - Subagent receives concerns as additional requirements
 - Repeat until APPROVED or max iterations (3) reached
 
-**If max iterations reached:**
+**If max iterations reached (any trust level):**
 - Force escalation to user
 - Present all remaining concerns
 - User decides whether to override or abort
@@ -1140,7 +1161,7 @@ Proceed to approval_gate with stakeholder summary:
 
 **Approval gate (Interactive mode only):**
 
-Skip if `yoloMode: true` in config.
+Skip if `trust: "high"` in config.
 
 **MANDATORY: Verify commit exists before presenting approval (M072).**
 
@@ -1528,7 +1549,7 @@ If during execution you discover the plan needs modification:
 
 <user_review_checkpoint>
 
-**MANDATORY: User review before merge (unless yoloMode).**
+**MANDATORY: User review before merge (unless trust: "high").**
 
 Before merging any work to main:
 
