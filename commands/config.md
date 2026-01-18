@@ -38,27 +38,25 @@ If file doesn't exist, inform user to run `/cat:init` first.
 **IMPORTANT: Output styled text DIRECTLY - do NOT use Bash tool for rendering.**
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚙️  ADVENTURE SETTINGS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🧠 CONTEXT LIMITS
-   Window:  {contextLimit} tokens
-   Target:  {targetContextUsage}% before split
-
-🐱 CAT BEHAVIOR
-   Trust:     {trust || "medium"}
-   Verify:    {verify || "changed"}
-   Curiosity: {curiosity || "low"}
-   Patience:  {patience || "high"}
-
-🧹 CLEANUP
-   Auto-remove: {autoRemoveWorktrees ? "On" : "Off"}
-
-📊 VERSION GATES
-   Configure entry/exit conditions for versions
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ⚙️ ADVENTURE SETTINGS ─────────────────────────────────╮
+│                                                            │
+│  🧠 CONTEXT LIMITS                                         │
+│     Window:  {contextLimit} tokens                         │
+│     Target:  {targetContextUsage}% before split            │
+│                                                            │
+│  🐱 CAT BEHAVIOR                                           │
+│     Trust:     {trust || "medium"}                         │
+│     Verify:    {verify || "changed"}                       │
+│     Curiosity: {curiosity || "low"}                        │
+│     Patience:  {patience || "high"}                        │
+│                                                            │
+│  🧹 CLEANUP                                                │
+│     Auto-remove: {autoRemoveWorktrees ? "On" : "Off"}      │
+│                                                            │
+│  📊 VERSION GATES                                          │
+│     Configure entry/exit conditions for versions           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 </step>
@@ -137,30 +135,26 @@ AskUserQuestion:
 
 Display (add "(current)" after the level name if it matches current config):
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🤝 TRUST LEVEL
-   How much freedom does CAT have to roam?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🐱─┈  LOW {trust == 'low' ? '(current)' : ''}
-   Low trust. CAT presents options frequently:
-   where to place code, which approach to take, how to name things.
-
-   ✦ Best for: Learning, strong preferences, critical projects
-
-🐱─ ─ ┈  MEDIUM {trust == 'medium' ? '(current)' : ''}
-   Moderate trust. CAT handles routine decisions
-   but presents options for meaningful trade-offs.
-
-   ✦ Best for: Balanced control and efficiency
-
-🐱─ ─ ─ ─ ┈  HIGH {trust == 'high' ? '(current)' : ''}
-   Full autonomy. CAT runs without stopping.
-   Skips stakeholder review. Tasks auto-merge.
-
-   ✦ Best for: Trusted workflows, batch processing
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── 🤝 TRUST LEVEL ────────────────────────────────────────╮
+│  How much freedom does CAT have to roam?                   │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  🐱─┈  LOW {trust == 'low' ? '(current)' : ''}             │
+│     Low trust. CAT presents options frequently:            │
+│     where to place code, which approach to take.           │
+│     ✦ Best for: Learning, strong preferences               │
+│                                                            │
+│  🐱─ ─ ┈  MEDIUM {trust == 'medium' ? '(current)' : ''}    │
+│     Moderate trust. CAT handles routine decisions          │
+│     but presents options for meaningful trade-offs.        │
+│     ✦ Best for: Balanced control and efficiency            │
+│                                                            │
+│  🐱─ ─ ─ ─ ┈  HIGH {trust == 'high' ? '(current)' : ''}    │
+│     Full autonomy. CAT runs without stopping.              │
+│     Skips stakeholder review. Tasks auto-merge.            │
+│     ✦ Best for: Trusted workflows, batch processing        │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion:
@@ -186,30 +180,26 @@ Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "hig
 
 Display (add "(current)" after the level name if it matches current config):
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ VERIFICATION LEVEL
-   What does CAT check before commit?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⚡ NONE {verify == 'none' ? '(current)' : ''}
-   No verification before commit. Fastest iteration
-   but won't catch any errors automatically.
-
-   ✦ Best for: Rapid prototyping, manual verification
-
-📦 CHANGED {verify == 'changed' ? '(current)' : ''}
-   Verify modified file/module only. Catches most
-   regressions without verifying the full project.
-
-   ✦ Best for: Most workflows
-
-🔒 ALL {verify == 'all' ? '(current)' : ''}
-   Verify the entire project before each commit.
-   Slowest but highest confidence.
-
-   ✦ Best for: Critical code, integration changes
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ✅ VERIFICATION LEVEL ─────────────────────────────────╮
+│  What does CAT check before commit?                        │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ⚡ NONE {verify == 'none' ? '(current)' : ''}             │
+│     No verification before commit. Fastest iteration       │
+│     but won't catch any errors automatically.              │
+│     ✦ Best for: Rapid prototyping, manual verification     │
+│                                                            │
+│  📦 CHANGED {verify == 'changed' ? '(current)' : ''}       │
+│     Verify modified file/module only. Catches most         │
+│     regressions without verifying the full project.        │
+│     ✦ Best for: Most workflows                             │
+│                                                            │
+│  🔒 ALL {verify == 'all' ? '(current)' : ''}               │
+│     Verify the entire project before each commit.          │
+│     Slowest but highest confidence.                        │
+│     ✦ Best for: Critical code, integration changes         │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion:
@@ -235,30 +225,26 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 Display (add "(current)" after the level name if it matches current config):
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔍 CURIOSITY LEVEL
-   How much does CAT look beyond the task?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 LOW {curiosity == 'low' ? '(current)' : ''}
-   Task-only. Complete exactly what's required,
-   nothing more. Don't look for improvements.
-
-   ✦ Best for: Minimal scope, predictable output
-
-👀 MEDIUM {curiosity == 'medium' ? '(current)' : ''}
-   Opportunistic. Notice obvious issues encountered
-   while working (bugs, deprecated syntax).
-
-   ✦ Best for: Balanced thoroughness
-
-🔭 HIGH {curiosity == 'high' ? '(current)' : ''}
-   Proactive. Actively examine related code for
-   patterns, tech debt, or optimization opportunities.
-
-   ✦ Best for: Comprehensive improvement
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── 🔍 CURIOSITY LEVEL ────────────────────────────────────╮
+│  How much does CAT look beyond the task?                   │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  🎯 LOW {curiosity == 'low' ? '(current)' : ''}            │
+│     Task-only. Complete exactly what's required,           │
+│     nothing more. Don't look for improvements.             │
+│     ✦ Best for: Minimal scope, predictable output          │
+│                                                            │
+│  👀 MEDIUM {curiosity == 'medium' ? '(current)' : ''}      │
+│     Opportunistic. Notice obvious issues encountered       │
+│     while working (bugs, deprecated syntax).               │
+│     ✦ Best for: Balanced thoroughness                      │
+│                                                            │
+│  🔭 HIGH {curiosity == 'high' ? '(current)' : ''}          │
+│     Proactive. Actively examine related code for           │
+│     patterns, tech debt, or optimization opportunities.    │
+│     ✦ Best for: Comprehensive improvement                  │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion:
@@ -284,30 +270,26 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 Display (add "(current)" after the level name if it matches current config):
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⏳ PATIENCE LEVEL
-   When does CAT act on what it finds?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-⚡ LOW {patience == 'low' ? '(current)' : ''}
-   Act immediately. Address improvements as part of
-   the current task. Scope expands but work is done.
-
-   ✦ Best for: Comprehensive fixes, avoiding tech debt
-
-📋 MEDIUM {patience == 'medium' ? '(current)' : ''}
-   Defer to current version. Log improvements as
-   separate tasks within the current version.
-
-   ✦ Best for: Focused tasks with nearby follow-up
-
-📅 HIGH {patience == 'high' ? '(current)' : ''}
-   Defer by priority. Schedule improvements to future
-   versions based on benefit/cost ratio.
-
-   ✦ Best for: Surgical tasks, controlled scope
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ⏳ PATIENCE LEVEL ─────────────────────────────────────╮
+│  When does CAT act on what it finds?                       │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ⚡ LOW {patience == 'low' ? '(current)' : ''}             │
+│     Act immediately. Address improvements as part of       │
+│     the current task. Scope expands but work is done.      │
+│     ✦ Best for: Comprehensive fixes, avoiding tech debt    │
+│                                                            │
+│  📋 MEDIUM {patience == 'medium' ? '(current)' : ''}       │
+│     Defer to current version. Log improvements as          │
+│     separate tasks within the current version.             │
+│     ✦ Best for: Focused tasks with nearby follow-up        │
+│                                                            │
+│  📅 HIGH {patience == 'high' ? '(current)' : ''}           │
+│     Defer by priority. Schedule improvements to future     │
+│     versions based on benefit/cost ratio.                  │
+│     ✦ Best for: Surgical tasks, controlled scope           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion:
@@ -375,16 +357,13 @@ Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees:
 
 Display current gate overview:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 VERSION GATES
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Gates control when work can start and when it's done.
-Each version can have entry (start) and exit (done) gates.
-
-Major gates are inherited by all minor versions.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── 📊 VERSION GATES ──────────────────────────────────────╮
+│                                                            │
+│  Gates control when work can start and when it's done.     │
+│  Each version can have entry (start) and exit (done)       │
+│  gates. Major gates are inherited by all minor versions.   │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 **Step 1: Select version to configure**
@@ -425,31 +404,28 @@ cat .claude/cat/v{major}/PLAN.md 2>/dev/null
 
 Extract and display the `## Gates` section:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Gates for v{version}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-ENTRY (when can work start?):
-• {condition 1}
-• {condition 2}
-
-EXIT (when is it done?):
-• {condition 1}
-• {condition 2}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── 📊 Gates for v{version} ───────────────────────────────╮
+│                                                            │
+│  ENTRY (when can work start?):                             │
+│  • {condition 1}                                           │
+│  • {condition 2}                                           │
+│                                                            │
+│  EXIT (when is it done?):                                  │
+│  • {condition 1}                                           │
+│  • {condition 2}                                           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 If no gates section exists, display:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ No gates configured for v{version}
-
-Default behavior applies:
-• Entry: Previous version must complete
-• Exit: All tasks must complete
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ⚠️ No gates configured for v{version} ─────────────────╮
+│                                                            │
+│  Default behavior applies:                                 │
+│  • Entry: Previous version must complete                   │
+│  • Exit: All tasks must complete                           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 **Step 3: Choose action**
@@ -524,13 +500,12 @@ Write the updated PLAN.md using the Write tool.
 
 Display confirmation:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✓ Gates updated for v{version}
-
-Entry: {summary of entry conditions}
-Exit:  {summary of exit conditions}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ✓ Gates updated for v{version} ────────────────────────╮
+│                                                            │
+│  Entry: {summary of entry conditions}                      │
+│  Exit:  {summary of exit conditions}                       │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
@@ -554,12 +529,11 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 **Confirm change and return to parent menu:**
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✓ Setting updated
-
-   {setting}: {oldValue} → {newValue}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ✓ Setting updated ─────────────────────────────────────╮
+│                                                            │
+│  {setting}: {oldValue} → {newValue}                        │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 **After confirming**: Return to the **parent menu** and re-display its options.
@@ -577,24 +551,22 @@ Examples:
 
 If changes were made:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✨ CONFIGURATION SAVED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Changes applied:
-• {setting1}: {old} → {new}
-• {setting2}: {old} → {new}
-
-Your adventure continues with new settings!
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭─── ✨ CONFIGURATION SAVED ────────────────────────────────╮
+│                                                            │
+│  Changes applied:                                          │
+│  • {setting1}: {old} → {new}                               │
+│  • {setting2}: {old} → {new}                               │
+│                                                            │
+│  Your adventure continues with new settings!               │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 If no changes:
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-No changes made. Settings unchanged.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+╭────────────────────────────────────────────────────────────╮
+│  No changes made. Settings unchanged.                      │
+╰────────────────────────────────────────────────────────────╯
 ```
 
 </step>
