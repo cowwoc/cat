@@ -203,7 +203,7 @@ For current/in-progress versions, show exit gate progress inline:
 | Option | Action | Command |
 |--------|--------|---------|
 | [**1**] | Execute a task | `/cat:work {version}-<task-name>` |
-| [**2**] | Add new task | `/cat:add-task {version}` |
+| [**2**] | Add new task | `/cat:add` |
 
 ---
 
