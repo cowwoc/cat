@@ -211,5 +211,31 @@
       "catches_variations": true
     },
     "correct_behavior": "Use only valid commit types: feature, bugfix, test, refactor, performance, docs, style, config, planning. Security fixes use bugfix:, skill changes use config:"
+  },
+  {
+    "id": "M099",
+    "timestamp": "2026-01-18T02:27:44Z",
+    "category": "assumption_without_verification",
+    "description": "Used invalid commit types 'fix:' and 'feat:' instead of 'bugfix:' and 'feature:'",
+    "root_cause": "Assumed conventional commit abbreviations were valid without checking CAT standards",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "hook",
+    "prevention_path": "~/.config/claude/settings.json (registered /workspace/cat/hooks/validate-commit-type.sh)",
+    "pattern_keywords": [
+      "commit-type",
+      "feat",
+      "fix",
+      "conventional-commits"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use full commit types: feature, bugfix, test, refactor, performance, docs, style, config, planning"
   }
 ]
