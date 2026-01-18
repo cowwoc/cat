@@ -393,14 +393,29 @@ Commit:
 
 **Progress Output (MANDATORY):**
 
-Display progress at each step using this format:
+Display spawning progress using visible feedback symbols:
+
+**At spawn start:**
 ```
-[Step N/6] Step description (P% | Xs elapsed | ~Ys remaining)
-✅ Completed: result summary
+◆ Spawning subagent: {task-id}...
+  → Worktree: {worktree-path}
+  → Branch: {branch-name}
 ```
 
-Steps: 1. Generate IDs, 2. Create worktree, 3. Prepare context, 4. Configure tracking, 5. Launch
-subagent, 6. Confirm launch
+**On successful launch:**
+```
+✓ Subagent launched: {subagent-id}
+  → Session: {session-id}
+  → Estimated tokens: {N}K
+```
+
+**On failure:**
+```
+✗ Spawn failed: {error-reason}
+  → {specific error details}
+```
+
+These symbols match the phase-based progress format used in `/cat:work`.
 
 ### 1. Generate Subagent Identifiers
 
