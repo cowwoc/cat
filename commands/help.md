@@ -50,7 +50,7 @@ Use these when you need to structure your work:
 
 | Command | What It Does |
 |---------|--------------|
-| `/cat:add` | Add tasks, minor versions, or major versions |
+| `/cat:add [description]` | Add tasks, minor versions, or major versions. With description, creates task directly |
 | `/cat:remove` | Remove tasks or versions (with safety checks) |
 | `/cat:config` | Change workflow mode, trust level, preferences |
 
@@ -206,7 +206,8 @@ Change anytime by editing `.claude/cat/cat-config.json`
 
 **Adding more work:**
 ```
-/cat:add          # Interactive: choose Task, Minor, or Major
+/cat:add                       # Interactive: choose Task, Minor, or Major
+/cat:add make install easier   # Quick: creates task with description
 ```
 
 **Removing planned work:**
