@@ -174,7 +174,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 
 | Command | What It Does |
 |---------|--------------|
-| `/cat:add` | Add a task or version (major/minor) |
+| `/cat:add [description]` | Add a task or version. With description, creates task directly |
 | `/cat:research` | Research before committing to an approach |
 
 ### Housekeeping

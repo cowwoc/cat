@@ -8,12 +8,16 @@ allowed-tools:
   - Glob
   - AskUserQuestion
   - Skill
+args: "[description]"
 ---
 
 <objective>
 
 Unified command for adding tasks or versions to the CAT planning structure. Routes to the appropriate
 workflow based on user selection.
+
+**Shortcut:** When invoked with a description argument (e.g., `/cat:add make installation easier`),
+treats the argument as a task description and skips directly to task creation workflow.
 
 </objective>
 
@@ -43,6 +47,19 @@ workflow based on user selection.
 
 </step>
 
+<step name="check_args">
+
+**Check if description argument was provided:**
+
+If the command was invoked with arguments (e.g., `/cat:add make installation easier`):
+- Capture the full argument string as TASK_DESCRIPTION
+- Skip directly to step: task_ask_type (bypassing select_type and the freeform description question)
+
+If no arguments provided:
+- Continue to step: select_type
+
+</step>
+
 <step name="select_type">
 
 **Ask what to add:**
@@ -62,7 +79,7 @@ Use AskUserQuestion:
 **Route based on selection:**
 
 **If "Task":**
-- Continue to add_task workflow (step: task_select_version)
+- Continue to add_task workflow (step: task_gather_intent)
 
 **If "Minor version":**
 - Continue to add_minor workflow (step: minor_select_major)
@@ -74,23 +91,115 @@ Use AskUserQuestion:
 
 <!-- ========== TASK WORKFLOW ========== -->
 
-<step name="task_select_version">
+<step name="task_gather_intent">
 
-**Determine target minor version:**
+**Gather task intent BEFORE selecting version:**
 
-List available minor versions:
+The goal is to understand what the user wants to accomplish first, then intelligently suggest which
+version it belongs to.
+
+**If TASK_DESCRIPTION already set (from command args):**
+- Skip the freeform question
+- Continue directly to step: task_ask_type
+
+**Otherwise, ask for description (FREEFORM):**
+
+Ask inline: "What do you want to accomplish? Describe the task you have in mind."
+
+Capture as TASK_DESCRIPTION, then continue to step: task_ask_type.
+
+</step>
+
+<step name="task_ask_type">
+
+**Ask task type:**
+
+Use AskUserQuestion:
+- header: "Task Type"
+- question: "What type of work is this?"
+- options:
+  - "Feature" - Add new functionality
+  - "Bugfix" - Fix a problem
+  - "Refactor" - Improve code structure
+  - "Performance" - Improve speed/efficiency
+
+Capture as TASK_TYPE.
+
+</step>
+
+<step name="task_analyze_versions">
+
+**Analyze existing versions and suggest best fit:**
+
+**1. Read all minor version PLAN.md files:**
+
+```bash
+# Get all minor versions
+VERSIONS=$(find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | sort -V)
+```
+
+For each version, read its PLAN.md to extract:
+- Goals/objectives
+- Requirements (REQ-XXX descriptions)
+- Current focus area
+
+**2. Build version summaries:**
+
+Create a mental map of each version's focus:
+- Extract the "## Goals" or "## Objectives" section
+- Extract requirement descriptions from "## Requirements"
+- Note the overall theme/domain
+
+**3. Compare task to version focuses:**
+
+Analyze TASK_DESCRIPTION against each version's focus:
+- Keyword matching (e.g., "parser" matches parser-focused versions)
+- Domain alignment (e.g., UI task matches UI-focused versions)
+- Scope fit (bugfix in active development version vs new feature in upcoming version)
+
+**4. Rank versions by fit:**
+
+Score each version based on:
+- Topic alignment (high weight)
+- Version status - prefer active/pending over completed (medium weight)
+- Logical grouping with existing tasks (low weight)
+
+</step>
+
+<step name="task_suggest_version">
+
+**Present intelligent version recommendation:**
+
+Based on analysis, present options with the best match first:
+
+**If clear best match exists:**
+
+Use AskUserQuestion:
+- header: "Suggested Version"
+- question: "Based on your task description, I recommend adding this to version {best_match}
+  ({brief_reason}). Which version should this task be added to?"
+- options:
+  - "{best_match} (Recommended)" - {version_focus_summary}
+  - "{second_match}" - {version_focus_summary} (if applicable)
+  - "Show all versions" - See complete list
+  - "Create new minor" - This doesn't fit existing versions
+
+**If "Show all versions" selected:**
+
+List all available minor versions with their focus summaries:
 
 ```bash
 find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | \
-    sed 's|.claude/cat/v\([0-9]*\)/v\1\.\([0-9]*\)|\1.\2|' | sort -V
+    sed 's|.*/v\([0-9]*\)/v\1\.\([0-9]*\)|\1.\2|' | sort -V
 ```
 
 Use AskUserQuestion:
-- header: "Target Version"
-- question: "Which minor version should this task be added to?"
-- options: [List of available versions] + "Create new minor version"
+- header: "All Versions"
+- question: "Select a version for this task:"
+- options: [List of all versions with focus summaries] + "Create new minor version"
 
-If "Create new minor version" -> go to step: minor_select_major
+**If no versions exist or "Create new minor version" selected:**
+- Go to step: minor_select_major
 
 </step>
 
@@ -139,26 +248,12 @@ If validation fails, prompt user for different name.
 
 <step name="task_discuss">
 
-**Gather task context through discussion:**
+**Gather additional task context:**
 
-**1. What is this task? (FREEFORM):**
+Note: Task description and type were already captured in task_gather_intent step.
+Use TASK_DESCRIPTION and TASK_TYPE from that step.
 
-Ask inline: "Describe what this task should accomplish."
-
-**2. Task type:**
-
-Use AskUserQuestion:
-- header: "Task Type"
-- question: "What type of work is this?"
-- options:
-  - "Feature" - Add new functionality
-  - "Bugfix" - Fix a problem
-  - "Refactor" - Improve code structure
-  - "Performance" - Improve speed/efficiency
-  - "Documentation" - Add/update docs
-  - "Test" - Add/improve tests
-
-**3. Scope:**
+**1. Scope:**
 
 Use AskUserQuestion:
 - header: "Scope"
@@ -178,7 +273,7 @@ Use AskUserQuestion:
 
 If "Split into multiple tasks" -> guide user to define multiple tasks, loop this command.
 
-**4. Dependencies:**
+**2. Dependencies:**
 
 Use AskUserQuestion:
 - header: "Dependencies"
@@ -189,7 +284,7 @@ Use AskUserQuestion:
 
 If dependencies needed, list existing tasks in same minor version for selection.
 
-**5. Blockers:**
+**3. Blockers:**
 
 Use AskUserQuestion:
 - header: "Blocks"
@@ -200,7 +295,7 @@ Use AskUserQuestion:
 
 If blockers selected, add this new task to their Dependencies list in STATE.md.
 
-**6. Acceptance criteria:**
+**4. Acceptance criteria:**
 
 Ask inline: "What are the acceptance criteria? How will we know this task is complete?"
 
