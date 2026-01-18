@@ -1327,7 +1327,8 @@ TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** [any-dependencies]
-- **Completed:** {YYYY-MM-DD}
+- **Completed:** {YYYY-MM-DD HH:MM}
+- **Tokens Used:** {N}
 ```
 
 Resolution field is MANDATORY. Valid values: `implemented`, `duplicate`, `obsolete`.
