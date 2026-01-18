@@ -138,10 +138,10 @@ Invoking /cat:decompose-task...
 
 ```
 Parallel Execution Plan:
-  Wave 1: [1.2a-parser-lexer, 1.2c-parser-tests] (concurrent)
-  Wave 2: [1.2b-parser-ast] (after wave 1)
+  Sub-task 1: [1.2a-parser-lexer, 1.2c-parser-tests] (concurrent)
+  Sub-task 2: [1.2b-parser-ast] (after sub-task 1)
 
-Spawning 2 subagents for wave 1...
+Spawning 2 subagents for sub-task 1...
 ```
 
 **If estimated_tokens <= threshold:**
