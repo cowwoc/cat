@@ -95,7 +95,7 @@ Track for each exit gate task:
 Claude Code shows all Bash tool invocations in the terminal. To display clean output without
 tool call wrappers, output the styled text directly as part of your response.
 
-**CRITICAL: Use pad-status-lines.sh for ALL lines that need borders.**
+**CRITICAL: Use pad-box-lines.sh for ALL lines that need borders.**
 
 Do NOT manually calculate padding. The script handles emoji widths automatically.
 
@@ -112,7 +112,7 @@ Collect ALL lines that need borders into a JSON array. Each line object has:
 **Step 3b: Call padding script in batch**
 
 ```bash
-echo '<json_array>' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-status-lines.sh"
+echo '<json_array>' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
 ```
 
 Example input:
@@ -350,7 +350,7 @@ The status output should be:
 - [ ] Blocked tasks and gate-blocked versions listed (if any)
 - [ ] Exit gate tasks waiting on non-gating tasks shown with 🚧 indicator
 - [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions
-- [ ] **BORDER ALIGNMENT**: All content lines processed through pad-status-lines.sh script
+- [ ] **BORDER ALIGNMENT**: All content lines processed through pad-box-lines.sh script
 - [ ] **BORDER ALIGNMENT**: Every line inside boxes has BOTH left and right `│` borders
 - [ ] **BORDER ALIGNMENT**: Task lines have emoji prefix (🔳, 🔄, etc.) - never bare text
 
