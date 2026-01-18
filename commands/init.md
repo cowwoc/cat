@@ -16,36 +16,31 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 
 <banner_output_instructions>
 
-**CRITICAL: Use pad-box-lines.sh for ALL banner output with emojis.**
+**Detect terminal and load emoji widths once per session (if not already done):**
 
-Do NOT output static banner templates. Use the padding script for consistent emoji widths.
-
-**Pattern for banner output:**
-
-1. Build JSON array of content lines (without `│` borders)
-2. Call script: `echo '<json>' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"`
-3. Output top border, script result, bottom border
-
-**JSON format:**
-```json
-[
-  {"content": "  Text with 📋 emoji", "width": 68, "nest": 0}
-]
-```
-- `width`: 68 for standard banners
-- `nest`: 0 for simple box (adds `│` on both sides)
-
-**Example:**
 ```bash
-# Top border (static)
-echo "╭─── 📋 TITLE ─────────────────────────────────────────────────────╮"
-# Content (via script)
-echo '[{"content": "  Line 1 text", "width": 68, "nest": 0}, {"content": "  Line 2 text", "width": 68, "nest": 0}]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-# Empty line (static)
-echo "│                                                                    │"
-# Bottom border (static)
-echo "╰────────────────────────────────────────────────────────────────────╯"
+if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
+elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
+elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
+elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
+else echo "${TERM_PROGRAM:-default}"; fi
 ```
+
+Then read emoji widths: `cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"`
+
+**Emoji width reference (most terminals):**
+- Width 2: 🚀 📋 📊 🎮 ✅ ℹ️ 👋 🛡️ ⚔️ 🏹 🎯 🗺️ 🔮 📜 ⚖️ 💎 ✨
+- Width 1: ✓ → • ─ │ ╭ ╮ ╰ ╯ and all ASCII
+
+**Calculate padding inline:**
+1. Count emojis × their width (usually 2)
+2. Count other chars × 1
+3. Padding = target width - 2 (borders) - display width
+4. Output directly: `│` + content + spaces + `│`
+
+**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
+
+**Standard banner width:** 70 chars (68 interior + 2 borders)
 
 </banner_output_instructions>
 
@@ -297,25 +292,23 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, display banner using pad-box-lines.sh (see banner_output_instructions):
+After applying defaults, output banner directly with inline padding:
 
-```bash
-echo "╭─── 📊 Default gates configured for {N} versions ────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Entry gates: Work proceeds sequentially", "width": 68, "nest": 0},
-  {"content": "  • Each minor waits for previous minor to complete", "width": 68, "nest": 0},
-  {"content": "  • Each major waits for previous major to complete", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Exit gates: Standard completion criteria", "width": 68, "nest": 0},
-  {"content": "  • Minor versions: all tasks must complete", "width": 68, "nest": 0},
-  {"content": "  • Major versions: all minor versions must complete", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  To customize gates for any version:", "width": 68, "nest": 0},
-  {"content": "  → /cat:config → 📊 Version Gates", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+```
+╭─── 📊 Default gates configured for {N} versions ────────────────╮
+│                                                                  │
+│  Entry gates: Work proceeds sequentially                         │
+│  • Each minor waits for previous minor to complete               │
+│  • Each major waits for previous major to complete               │
+│                                                                  │
+│  Exit gates: Standard completion criteria                        │
+│  • Minor versions: all tasks must complete                       │
+│  • Major versions: all minor versions must complete              │
+│                                                                  │
+│  To customize gates for any version:                             │
+│  → /cat:config → 📊 Version Gates                                │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
 ```
 
 **If "Configure per version":**
@@ -394,21 +387,19 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Display banner using pad-box-lines.sh:
+Output banner directly with inline padding:
 
-```bash
-echo "╭─── ℹ️ RESEARCH SKIPPED ──────────────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Stakeholder research was skipped during import.", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  To research a pending version later:", "width": 68, "nest": 0},
-  {"content": "  → /cat:research {version}", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Example: /cat:research 1.2", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+```
+╭─── ℹ️ RESEARCH SKIPPED ──────────────────────────────────────────╮
+│                                                                  │
+│  Stakeholder research was skipped during import.                 │
+│                                                                  │
+│  To research a pending version later:                            │
+│  → /cat:research {version}                                       │
+│                                                                  │
+│  Example: /cat:research 1.2                                      │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
 ```
 
 </step>
@@ -425,19 +416,17 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 
 **Choose Your Companion - Capture development style preferences**
 
-Display welcome banner using pad-box-lines.sh:
+Output welcome banner directly with inline padding:
 
-```bash
-echo "╭─── 🎮 CHOOSE YOUR COMPANION ────────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Every developer has a style. These questions shape how your", "width": 68, "nest": 0},
-  {"content": "  AI companion approaches the work ahead.", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Choose wisely - your preferences guide every decision.", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+```
+╭─── 🎮 CHOOSE YOUR COMPANION ────────────────────────────────────╮
+│                                                                  │
+│  Every developer has a style. These questions shape how your     │
+│  AI companion approaches the work ahead.                         │
+│                                                                  │
+│  Choose wisely - your preferences guide every decision.          │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion: header="Trust", question="How do you command your companion?", options=[
@@ -512,24 +501,22 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Display completion banner using pad-box-lines.sh:
+Output completion banner directly with inline padding:
 
-```bash
-echo "╭─── 🚀 CAT INITIALIZED ──────────────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  COMPANION PROFILE", "width": 68, "nest": 0},
-  {"content": "  ─────────────────────────────────────────────────────────", "width": 68, "nest": 0},
-  {"content": "  Command Style:  [trust]", "width": 68, "nest": 0},
-  {"content": "  Exploration:    [curiosity]", "width": 68, "nest": 0},
-  {"content": "  Opportunity:    [patience]", "width": 68, "nest": 0},
-  {"content": "  Mode:           [interactive|yolo]", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Your companion awaits your command.", "width": 68, "nest": 0},
-  {"content": "  Reforge your style anytime: /cat:config", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+```
+╭─── 🚀 CAT INITIALIZED ──────────────────────────────────────────╮
+│                                                                  │
+│  COMPANION PROFILE                                               │
+│  ─────────────────────────────────────────────────────────────   │
+│  Command Style:  [trust]                                         │
+│  Exploration:    [curiosity]                                     │
+│  Opportunity:    [patience]                                      │
+│  Mode:           [interactive|yolo]                              │
+│                                                                  │
+│  Your companion awaits your command.                             │
+│  Reforge your style anytime: /cat:config                         │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
 ```
 
 **New projects:**
@@ -559,17 +546,15 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Display guidance banner using pad-box-lines.sh:
+Output guidance banner directly with inline padding:
 
-```bash
-echo "╭─── 📋 FIRST TASK WALKTHROUGH ─────────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Great! Lets create your first task together.", "width": 68, "nest": 0},
-  {"content": "  Ill ask a few questions to understand what you want to build.", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+```
+╭─── 📋 FIRST TASK WALKTHROUGH ─────────────────────────────────────╮
+│                                                                    │
+│  Great! Lets create your first task together.                      │
+│  Ill ask a few questions to understand what you want to build.     │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
@@ -624,21 +609,19 @@ git add ".claude/cat/"
 git commit -m "docs: add first task - ${TASK_NAME}"
 ```
 
-7. Display completion and offer to start work using pad-box-lines.sh:
+7. Output completion banner directly with inline padding:
 
-```bash
-echo "╭─── ✅ FIRST TASK CREATED ─────────────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Task: {task-name}", "width": 68, "nest": 0},
-  {"content": "  Location: .claude/cat/v0/v0.0/{task-name}/", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Files created:", "width": 68, "nest": 0},
-  {"content": "  • PLAN.md - What needs to be done", "width": 68, "nest": 0},
-  {"content": "  • STATE.md - Progress tracking", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+```
+╭─── ✅ FIRST TASK CREATED ─────────────────────────────────────────╮
+│                                                                    │
+│  Task: {task-name}                                                 │
+│  Location: .claude/cat/v0/v0.0/{task-name}/                        │
+│                                                                    │
+│  Files created:                                                    │
+│  • PLAN.md - What needs to be done                                 │
+│  • STATE.md - Progress tracking                                    │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
@@ -651,40 +634,38 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 
 **If "No, I'll start later":**
 
-Display using pad-box-lines.sh:
-```bash
-echo "╭─── 👋 ALL SET ────────────────────────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Your project is ready. When you want to start:", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  → /cat:work         Execute your first task", "width": 68, "nest": 0},
-  {"content": "  → /cat:status       See project overview", "width": 68, "nest": 0},
-  {"content": "  → /cat:add          Add more tasks or versions", "width": 68, "nest": 0},
-  {"content": "  → /cat:help         Full command reference", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+Output directly with inline padding:
+
+```
+╭─── 👋 ALL SET ────────────────────────────────────────────────────╮
+│                                                                    │
+│  Your project is ready. When you want to start:                    │
+│                                                                    │
+│  → /cat:work         Execute your first task                       │
+│  → /cat:status       See project overview                          │
+│  → /cat:add          Add more tasks or versions                    │
+│  → /cat:help         Full command reference                        │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 **If "No, I'll explore" (from initial question):**
 
-Display using pad-box-lines.sh:
-```bash
-echo "╭─── 👋 EXPLORE AT YOUR OWN PACE ───────────────────────────────────╮"
-echo '[
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Essential commands to get started:", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  → /cat:status       See whats happening", "width": 68, "nest": 0},
-  {"content": "  → /cat:add          Add versions and tasks", "width": 68, "nest": 0},
-  {"content": "  → /cat:work         Execute tasks", "width": 68, "nest": 0},
-  {"content": "  → /cat:help         Full command reference", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0},
-  {"content": "  Tip: Run /cat:status anytime to see suggested next steps.", "width": 68, "nest": 0},
-  {"content": "", "width": 68, "nest": 0}
-]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-echo "╰────────────────────────────────────────────────────────────────────╯"
+Output directly with inline padding:
+
+```
+╭─── 👋 EXPLORE AT YOUR OWN PACE ───────────────────────────────────╮
+│                                                                    │
+│  Essential commands to get started:                                │
+│                                                                    │
+│  → /cat:status       See whats happening                           │
+│  → /cat:add          Add versions and tasks                        │
+│  → /cat:work         Execute tasks                                 │
+│  → /cat:help         Full command reference                        │
+│                                                                    │
+│  Tip: Run /cat:status anytime to see suggested next steps.         │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
 ```
 
 </step>
