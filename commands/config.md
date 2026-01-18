@@ -624,7 +624,7 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 Output directly with inline padding:
 
 ```
-╭─── ✓ Setting updated ─────────────────────────────────────╮
+╭─── ✓ Setting updated ──────────────────────────────────────╮
 │                                                            │
 │  {setting}: {oldValue} → {newValue}                        │
 │                                                            │

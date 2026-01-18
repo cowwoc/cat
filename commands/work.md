@@ -1626,7 +1626,7 @@ esac
 **If trust >= medium and next task found (within scope):**
 
 ```
-╭─── ✓ Task Complete ───────────────────────────────────────╮
+╭─── ✓ Task Complete ────────────────────────────────────────╮
 │                                                            │
 │  **{task-name}** merged to main.                           │
 │                                                            │
@@ -1657,7 +1657,7 @@ the work session gracefully.
 **If scope complete (no more tasks within scope):**
 
 ```
-╭─── ✓ Scope Complete ──────────────────────────────────────╮
+╭─── ✓ Scope Complete ───────────────────────────────────────╮
 │                                                            │
 │  **{scope description}** - all tasks complete!             │
 │                                                            │
@@ -1677,7 +1677,7 @@ Release the lock (user will re-acquire when they invoke the command):
 ```
 
 ```
-╭─── ✓ Task Complete ───────────────────────────────────────╮
+╭─── ✓ Task Complete ────────────────────────────────────────╮
 │                                                            │
 │  **{task-name}** merged to main.                           │
 │                                                            │
