@@ -159,8 +159,19 @@ Adventures are more fun when you're not worried about falling:
 |---------|--------------|
 | `/cat:init` | Start a new adventure (creates project structure) |
 | `/cat:status` | View your adventure map with progress |
-| `/cat:work` | Begin or continue a quest |
+| `/cat:work [scope]` | Begin or continue quests (see below) |
 | `/cat:help` | Quick reference for all commands |
+
+**`/cat:work` scope options:**
+
+| Scope | Example | What Happens |
+|-------|---------|--------------|
+| (none) | `/cat:work` | Work through ALL incomplete tasks |
+| major | `/cat:work 0` | Complete all tasks in v0.x |
+| minor | `/cat:work 0.5` | Complete all tasks in v0.5 |
+| task | `/cat:work 0.5-auth` | Complete single task only |
+
+When trust >= medium, CAT auto-continues to the next task within scope.
 
 ### Building Your Map
 
