@@ -264,5 +264,32 @@
       "catches_variations": true
     },
     "correct_behavior": "Check HEREDOC pattern before simple quotes pattern in commit message extraction"
+  },
+  {
+    "id": "M132",
+    "timestamp": "2026-01-18T20:29:20Z",
+    "category": "logical_error",
+    "description": "Incorrectly classified ✦ (U+2726) as width 2 emoji when it is width 1 symbol, causing ✦ lines to be 1 char short",
+    "root_cause": "No systematic method to distinguish emojis (width 2) from symbols (width 1) - assumed decorative chars were emojis",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "skill",
+    "prevention_path": "/workspace/cat/commands/config.md",
+    "pattern_keywords": [
+      "unicode-width",
+      "emoji",
+      "symbol",
+      "display-width",
+      "EAW"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": true,
+    "recurrence_of": "M131",
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Check Unicode East Asian Width property: only W/F = width 2; N/Na/A = width 1. ✦ is EAW=N (Neutral)"
   }
 ]
