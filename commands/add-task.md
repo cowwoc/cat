@@ -196,6 +196,41 @@ Ask inline: "What are the acceptance criteria? How will we know this task is com
 
 </step>
 
+<step name="select_requirements">
+
+**Select requirements this task satisfies:**
+
+Requirements are defined in the parent minor version's PLAN.md. Each task should indicate which
+requirements (if any) it helps satisfy.
+
+**1. Read parent version requirements:**
+
+```bash
+VERSION_PLAN=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
+# Extract Requirements table from PLAN.md
+```
+
+**2. Present requirements for selection:**
+
+If requirements exist in parent PLAN.md:
+
+Use AskUserQuestion:
+- header: "Satisfies"
+- question: "Which requirements does this task satisfy? (Select all that apply)"
+- multiSelect: true
+- options: [List of REQ-XXX: description from parent PLAN.md] + "None - infrastructure/setup task"
+
+If no requirements defined in parent:
+- Note: "No requirements defined in v$MAJOR.$MINOR. Task will have Satisfies: None"
+- Satisfies = None
+
+**3. Store selected requirements:**
+
+Store the list of requirement IDs (e.g., ["REQ-001", "REQ-003"]) or "None" for inclusion in
+the task's PLAN.md.
+
+</step>
+
 <step name="create_structure">
 
 **Create task directory structure:**
@@ -233,6 +268,11 @@ mkdir -p "$TASK_PATH"
 
 ## Goal
 {goal from discussion}
+
+## Satisfies
+{List of requirement IDs from select_requirements step, or "None"}
+- REQ-001
+- REQ-003
 
 ## Approach
 {approach - synthesized from discussion}
@@ -286,6 +326,10 @@ Creating tests during task creation (not later) ensures the bug is captured whil
 
 ## Problem
 {problem description}
+
+## Satisfies
+{List of requirement IDs from select_requirements step, or "None"}
+- REQ-002
 
 ## Failing Tests (Created During Task Creation)
 
@@ -364,6 +408,10 @@ public void shouldHandleXWhenY()
 
 ## Target State
 {what it should become}
+
+## Satisfies
+{List of requirement IDs from select_requirements step, or "None" for tech debt}
+- REQ-001
 
 ## Rationale
 {why this refactor is needed}
@@ -470,8 +518,9 @@ Task created:
 - [ ] Target version selected or created
 - [ ] Task name validated (format and uniqueness)
 - [ ] Discussion captured task details
+- [ ] Requirements selected (or explicitly set to None)
 - [ ] STATE.md created with correct dependencies
-- [ ] PLAN.md created with appropriate template
+- [ ] PLAN.md created with appropriate template and Satisfies field
 - [ ] Parent STATE.md updated
 - [ ] All committed to git
 

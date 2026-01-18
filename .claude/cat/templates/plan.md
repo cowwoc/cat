@@ -9,6 +9,55 @@ Select the appropriate template based on work type.
 
 ---
 
+## Minor Version PLAN.md Template
+
+Minor version PLAN.md defines the requirements for all tasks within that version.
+Tasks reference these requirements via their `Satisfies` field.
+
+```markdown
+# Plan: v{major}.{minor} - [Version Name]
+
+## Overview
+[1-2 sentences: what this version accomplishes]
+
+## Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| REQ-001 | [requirement description] | must-have | [how to verify] |
+| REQ-002 | [requirement description] | should-have | [how to verify] |
+| REQ-003 | [requirement description] | nice-to-have | [how to verify] |
+
+## Research
+
+*Populated by stakeholder research during version planning. If empty, run `/cat:research`.*
+
+### Stack
+| Library | Purpose | Version | Rationale |
+|---------|---------|---------|-----------|
+| [lib] | [why needed] | [ver] | [why this one] |
+
+### Architecture
+- **Pattern:** [recommended pattern]
+- **Integration:** [how it fits existing code]
+
+### Pitfalls
+- [pitfall 1]: [prevention]
+- [pitfall 2]: [prevention]
+
+## Tasks Overview
+[Brief description of how tasks divide the work for this version]
+```
+
+---
+
+## Task Templates
+
+All task templates include a `Satisfies` field referencing requirements from the parent
+minor version's PLAN.md. Tasks may satisfy zero or more requirements.
+
+---
+
 ## Feature Template
 
 ### Stage 1: Approach Outlines (lightweight, ~5K tokens)
@@ -18,6 +67,11 @@ Select the appropriate template based on work type.
 
 ## Goal
 [1-2 sentences: what this feature accomplishes]
+
+## Satisfies
+[List requirement IDs from parent minor version PLAN.md, or "None" for infrastructure tasks]
+- REQ-001
+- REQ-002
 
 ## Approach Outlines
 
@@ -84,6 +138,10 @@ and executable without external dependencies (e.g., external codebases, third-pa
 
 ## Problem
 [1-2 sentences describing the bug]
+
+## Satisfies
+[List requirement IDs from parent minor version PLAN.md, or "None" for standalone fixes]
+- REQ-001
 
 ## Reproduction Code
 \`\`\`
@@ -156,6 +214,10 @@ code_that_fails();
 
 ## Target State
 [1-2 sentences - what it should become]
+
+## Satisfies
+[List requirement IDs from parent minor version PLAN.md, or "None" for tech debt]
+- REQ-001
 
 ## Refactor Approach Outlines
 

@@ -31,6 +31,27 @@
 | MINOR | Bugfixes and smaller additions | 0-based |
 | TASK | Atomic unit of work | Named (lowercase-hyphens) |
 
+## Requirements Flow
+
+Requirements are defined at the **minor version level** and traced to tasks:
+
+```
+Minor PLAN.md                    Task PLAN.md
+┌─────────────────────┐         ┌─────────────────────┐
+│ ## Requirements     │         │ ## Satisfies        │
+│ | REQ-001 | ...     │ ◄────── │ - REQ-001           │
+│ | REQ-002 | ...     │         │ - REQ-003           │
+│ | REQ-003 | ...     │         └─────────────────────┘
+└─────────────────────┘
+```
+
+**Key rules:**
+- Requirements live in minor version PLAN.md (not task level)
+- Tasks reference requirements via `## Satisfies` field (zero or more)
+- A minor version cannot complete until all must-have requirements are satisfied (implicit check)
+- The Requirements stakeholder verifies tasks satisfy their claimed requirements
+- Exit gates are for additional user-defined conditions, not requirements
+
 ## Version Decisions
 
 Creating MAJOR vs MINOR is a user decision:
