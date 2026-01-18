@@ -503,10 +503,10 @@ If decomposition created independent subtasks:
 - 1.2b-parser-ast (after 1.2a)
 - 1.2c-parser-tests
 
-**Wave 1 (parallel):** 1.2a-parser-lexer, 1.2c-parser-tests
-**Wave 2 (after wave 1):** 1.2b-parser-ast
+**Sub-task 1 (parallel):** 1.2a-parser-lexer, 1.2c-parser-tests
+**Sub-task 2 (after sub-task 1):** 1.2b-parser-ast
 
-Spawning {N} subagents for wave 1...
+Spawning {N} subagents for sub-task 1...
 ```
 
 Use `/cat:parallel-execute` skill to spawn multiple subagents.

@@ -169,7 +169,7 @@ git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed pare
 
 ### 8. Generate Parallel Execution Plan
 
-**MANDATORY: Analyze dependencies and create wave-based execution plan.**
+**MANDATORY: Analyze dependencies and create sub-task-based execution plan.**
 
 After decomposition, determine which subtasks can run concurrently:
 
@@ -186,27 +186,27 @@ subtasks:
     dependencies: []
     estimated_tokens: 20000
 
-# Wave-based parallel plan
+# Sub-task-based parallel plan
 parallel_execution_plan:
-  wave_1:
+  sub_task_1:
     # Tasks with no dependencies - can run concurrently
     tasks: [1.2a-parser-lexer, 1.2c-parser-tests]
     max_concurrent: 2
     reason: "Both have no dependencies, can execute in parallel"
 
-  wave_2:
-    # Tasks that depend on wave_1 completion
+  sub_task_2:
+    # Tasks that depend on sub_task_1 completion
     tasks: [1.2b-parser-ast]
-    depends_on: [wave_1]
-    reason: "Depends on 1.2a-parser-lexer from wave_1"
+    depends_on: [sub_task_1]
+    reason: "Depends on 1.2a-parser-lexer from sub_task_1"
 
 execution_order:
-  1. Spawn subagents for wave_1 tasks (parallel)
-  2. Monitor and collect wave_1 results
-  3. Merge wave_1 branches
-  4. Spawn subagents for wave_2 tasks (parallel)
-  5. Monitor and collect wave_2 results
-  6. Merge wave_2 branches
+  1. Spawn subagents for sub_task_1 tasks (parallel)
+  2. Monitor and collect sub_task_1 results
+  3. Merge sub_task_1 branches
+  4. Spawn subagents for sub_task_2 tasks (parallel)
+  5. Monitor and collect sub_task_2 results
+  6. Merge sub_task_2 branches
 ```
 
 **Output parallel plan to STATE.md:**
@@ -214,18 +214,18 @@ execution_order:
 ```markdown
 ## Parallel Execution Plan
 
-### Wave 1 (Concurrent)
+### Sub-task 1 (Concurrent)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2a-parser-lexer | 25K | None |
 | 1.2c-parser-tests | 20K | None |
 
-### Wave 2 (After Wave 1)
+### Sub-task 2 (After Sub-task 1)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2b-parser-ast | 30K | 1.2a-parser-lexer |
 
-**Total waves:** 2
+**Total sub-tasks:** 2
 **Max concurrent subagents:** 2
 ```
 
@@ -244,7 +244,7 @@ conflict_check:
 
   # If overlap exists:
   conflict_resolution:
-    move_conflicting_task_to_next_wave: true
+    move_conflicting_task_to_next_sub_task: true
 ```
 
 ### 9. Mark Original Task as Decomposed
@@ -254,7 +254,7 @@ conflict_check:
 echo "---
 status: DECOMPOSED
 decomposed_into: [1.2a, 1.2b, 1.2c]
-parallel_plan: wave_1=[1.2a, 1.2c], wave_2=[1.2b]
+parallel_plan: sub_task_1=[1.2a, 1.2c], sub_task_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
 ```
 

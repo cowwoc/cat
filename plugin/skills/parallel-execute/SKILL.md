@@ -33,9 +33,9 @@ execute-task → analyze_task_size → (exceeds threshold) → decompose-task �
 1. `execute-task` estimates task size > threshold (e.g., 80K tokens)
 2. `execute-task` auto-invokes `decompose-task`
 3. `decompose-task` creates subtasks and generates parallel execution plan
-4. `decompose-task` identifies wave-based parallelization
-5. `execute-task` auto-invokes `parallel-execute` with the wave plan
-6. `parallel-execute` spawns subagents for each wave
+4. `decompose-task` identifies sub-task-based parallelization
+5. `execute-task` auto-invokes `parallel-execute` with the sub-task plan
+6. `parallel-execute` spawns subagents for each sub-task
 
 **Example auto-trigger flow:**
 
@@ -53,37 +53,37 @@ decomposed_into:
 
 # Parallel plan generated
 parallel_plan:
-  wave_1: [1.2a, 1.2c]  # Independent, run concurrently
-  wave_2: [1.2b]         # Depends on 1.2a
+  sub_task_1: [1.2a, 1.2c]  # Independent, run concurrently
+  sub_task_2: [1.2b]         # Depends on 1.2a
 
 # Auto-parallel execution
-action: spawn 2 subagents for wave_1
+action: spawn 2 subagents for sub_task_1
 ```
 
 ## Workflow
 
 **Progress Output (MANDATORY):**
 
-Display wave-based progress for parallel execution:
+Display sub-task-based progress for parallel execution:
 ```
 ═══════════════════════════════════════════════════
-Wave N/M: Spawning K subagents (P% overall | Xs elapsed)
+Sub-task N/M: Spawning K subagents (P% overall | Xs elapsed)
 ═══════════════════════════════════════════════════
 [Subagent 1/K] task-name-a... spawned
 [Subagent 2/K] task-name-b... spawned
 
-Wave N/M: Monitoring K subagents (P% | Xs elapsed | ~Ys remaining)
+Sub-task N/M: Monitoring K subagents (P% | Xs elapsed | ~Ys remaining)
   ✓ task-name-a: complete (12s, 45K tokens)
   ⏳ task-name-b: running (8s elapsed)
 
-Wave N/M: Collecting results (P% | Xs elapsed)
+Sub-task N/M: Collecting results (P% | Xs elapsed)
   ✓ task-name-a: merged
   ✓ task-name-b: merged
 
-✅ Wave N/M complete: 2/2 subagents merged
+✅ Sub-task N/M complete: 2/2 subagents merged
 ```
 
-Steps per wave: 1. Spawn subagents, 2. Monitor progress, 3. Collect results, 4. Merge branches
+Steps per sub-task: 1. Spawn subagents, 2. Monitor progress, 3. Collect results, 4. Merge branches
 
 ### 1. Identify Parallelizable Tasks
 
