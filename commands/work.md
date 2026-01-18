@@ -66,6 +66,8 @@ This workflow has 4 phases. Display a persistent progress header that updates as
 
 **Display format (output directly, NOT in code blocks):**
 
+**MANDATORY (M129):** Verify ALL box lines have identical display width before output. Count explicitly.
+
 At workflow start, display the header and initial state:
 
 ╭─────────────────────────────────────────────────────────────────╮

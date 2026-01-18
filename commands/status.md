@@ -5,6 +5,7 @@ model: haiku
 context: fork
 allowed-tools:
   - Bash
+  - Read
 ---
 
 <objective>
@@ -86,6 +87,46 @@ Track for each exit gate task:
 
 </step>
 
+<step name="detect-terminal">
+
+**Detect terminal type (one-time per session):**
+
+If this is the first box rendering in the session, detect the terminal:
+
+```bash
+if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
+elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
+elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
+elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
+else echo "${TERM_PROGRAM:-default}"; fi
+```
+
+Store the detected terminal type for use in padding calculations.
+
+</step>
+
+<step name="load-emoji-widths">
+
+**Load emoji widths for detected terminal:**
+
+Read the emoji widths file:
+
+```bash
+cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
+```
+
+Extract the width map for the detected terminal from `.terminals[terminal]`, falling back to `.default`.
+
+**Width reference (most terminals use these values):**
+
+| Emoji | Width |
+|-------|-------|
+| 🔄 ☑️ 🔳 🚫 🚧 📊 📦 🎯 📋 ⚙️ 🏆 🧠 🐱 🧹 🤝 ✅ 🔍 👀 🔭 ⏳ ⚡ 🔒 ✨ ⚠️ | 2 |
+| ✓ ✗ → • ▸ ▹ ◆ ⚠ █ ░ ─ │ ╭ ╮ ╰ ╯ ├ ┤ | 1 |
+| ASCII characters (letters, numbers, space, punctuation) | 1 |
+
+</step>
+
 <step name="render">
 
 **Render visual status tree:**
@@ -95,46 +136,38 @@ Track for each exit gate task:
 Claude Code shows all Bash tool invocations in the terminal. To display clean output without
 tool call wrappers, output the styled text directly as part of your response.
 
-**CRITICAL: Use pad-box-lines.sh for ALL lines that need borders.**
+**Calculate padding inline using the emoji widths from the previous step.**
 
-Do NOT manually calculate padding. The script handles emoji widths automatically.
+For each content line:
+1. Count each emoji occurrence and multiply by its width (usually 2)
+2. Count all other characters (ASCII, box drawing) as width 1
+3. Sum = display width
+4. Padding needed = target width - 2 (borders) - display width
+5. Construct: `│` + content + (padding × spaces) + `│`
 
-**Step 3a: Build JSON array of all content lines**
+**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
 
-Collect ALL lines that need borders into a JSON array. Each line object has:
-- `content`: Text content (without `│` borders)
-- `width`: Target box width (72 for outer box, 56 for nested box)
-- `nest`: Nesting level:
-  - `0`: Outer box only (`│content│`)
-  - `1`: Inside nested box (`│  │content│          │`)
-  - `2`: Outer box with nested prefix (`│  content          │`)
+**Nesting levels:**
 
-**Step 3b: Call padding script in batch**
+| Level | Format | Interior Width |
+|-------|--------|----------------|
+| 0 | `│{padded_content}│` | 68 |
+| 1 | `│  │{padded_content}│          │` | 52 |
 
-```bash
-echo '<json_array>' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
-```
+**Example calculation:**
 
-Example input:
-```json
-[
-  {"content": "  📊 Overall: [████░░░] **75%**", "width": 68, "nest": 0},
-  {"content": "  ☑️ v0.1: Core parser (5/5)", "width": 52, "nest": 1},
-  {"content": "    🔳 pending-task-1", "width": 52, "nest": 1}
-]
-```
+Content: `  ☑️ v0.1: Core parser (5/5)`
+- `  ` = 2 chars = 2
+- `☑️` = 1 emoji = 2
+- ` v0.1: Core parser (5/5)` = 25 chars = 25
+- Display width = 29
+- For level 1 (target 52): padding = 52 - 29 = 23 spaces
 
-Example output (use directly in your response):
-```
-│  📊 Overall: [████░░░] **75%**                                    │
-│  │  ☑️ v0.1: Core parser (5/5)                        │          │
-│  │    🔳 pending-task-1                               │          │
-```
+Result: `│  │  ☑️ v0.1: Core parser (5/5)                       │          │`
 
-**Step 3c: Assemble final output**
+**Assemble final output:**
 
-Combine the padded lines with static border lines (top, bottom, dividers) to create the
-complete display. Static lines don't need the script:
+Combine padded lines with static border lines:
 - Top: `╭─── 🐱 CAT - {name} ───...───╮`
 - Divider: `├───...───┤`
 - Bottom: `╰───...───╯`
@@ -350,7 +383,7 @@ The status output should be:
 - [ ] Blocked tasks and gate-blocked versions listed (if any)
 - [ ] Exit gate tasks waiting on non-gating tasks shown with 🚧 indicator
 - [ ] Pending tasks shown ONLY for current 🔄 version, NOT for blocked 🚧 versions
-- [ ] **BORDER ALIGNMENT**: All content lines processed through pad-box-lines.sh script
+- [ ] **BORDER ALIGNMENT**: Padding calculated inline using emoji widths (no external script)
 - [ ] **BORDER ALIGNMENT**: Every line inside boxes has BOTH left and right `│` borders
 - [ ] **BORDER ALIGNMENT**: Task lines have emoji prefix (🔳, 🔄, etc.) - never bare text
 
