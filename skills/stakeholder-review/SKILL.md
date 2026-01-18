@@ -22,11 +22,15 @@ perspectives (architecture, security, quality, testing, performance) before user
 
 | Stakeholder | Reference | Focus |
 |-------------|-----------|-------|
+| requirements | @stakeholders/requirements.md | Requirement satisfaction verification |
 | architect | @stakeholders/architect.md | System design, module boundaries, APIs |
 | security | @stakeholders/security.md | Vulnerabilities, input validation |
 | quality | @stakeholders/quality.md | Code quality, complexity, duplication |
 | tester | @stakeholders/tester.md | Test coverage, edge cases |
 | performance | @stakeholders/performance.md | Efficiency, resource usage |
+| ux | @stakeholders/ux.md | Usability, accessibility, interaction design |
+| sales | @stakeholders/sales.md | Customer value, competitive positioning |
+| marketing | @stakeholders/marketing.md | Positioning, messaging, go-to-market |
 
 ## Process
 
@@ -59,11 +63,15 @@ fi
 ```
 
 **Stakeholder relevance:**
+- **requirements**: Always run (verifies task satisfies claimed requirements)
 - **architect**: Always run if source files changed
 - **security**: Always run if source files changed
 - **quality**: Always run if source files changed
 - **tester**: Run if test files changed OR production code changed without tests
 - **performance**: Run if algorithm-heavy code changed
+- **ux**: Run if UI/frontend files changed
+- **sales**: Run if user-facing features changed
+- **marketing**: Run if public APIs or user-visible features changed
 
 </step>
 
@@ -168,11 +176,15 @@ for review in reviews:
 
 | Stakeholder | Status | Critical | High | Medium |
 |-------------|--------|----------|------|--------|
+| requirements | {status} | {count} | {count} | {count} |
 | architect | {status} | {count} | {count} | {count} |
 | security | {status} | {count} | {count} | {count} |
 | quality | {status} | {count} | {count} | {count} |
 | tester | {status} | {count} | {count} | {count} |
 | performance | {status} | {count} | {count} | {count} |
+| ux | {status} | {count} | {count} | {count} |
+| sales | {status} | {count} | {count} | {count} |
+| marketing | {status} | {count} | {count} | {count} |
 
 ### Critical Concerns (Must Fix)
 {list of critical concerns with locations and recommendations}
@@ -232,11 +244,15 @@ Return structured result for integration with work:
 {
   "review_status": "APPROVED|CONCERNS|REJECTED",
   "stakeholder_results": {
+    "requirements": {"status": "...", "concerns": [...]},
     "architect": {"status": "...", "concerns": [...]},
     "security": {"status": "...", "concerns": [...]},
     "quality": {"status": "...", "concerns": [...]},
     "tester": {"status": "...", "concerns": [...]},
-    "performance": {"status": "...", "concerns": [...]}
+    "performance": {"status": "...", "concerns": [...]},
+    "ux": {"status": "...", "concerns": [...]},
+    "sales": {"status": "...", "concerns": [...]},
+    "marketing": {"status": "...", "concerns": [...]}
   },
   "aggregated_concerns": {
     "critical": [...],
@@ -268,13 +284,20 @@ Implementation Phase
 
 ## When to Run (Automatic Triggering)
 
-Review triggering depends on trust level:
+Review triggering depends on verify level (NOT trust level):
 
-| Trust | Action |
-|-------|--------|
-| `high` | Skip review (autonomous mode) |
-| `medium` | Run review |
-| `low` | Run review |
+| Verify | Action |
+|--------|--------|
+| `none` | Skip all stakeholder reviews |
+| `changed` | Run stakeholder reviews |
+| `all` | Run stakeholder reviews |
+
+```bash
+VERIFY_LEVEL=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
+if [[ "$VERIFY_LEVEL" == "none" ]]; then
+  # Skip stakeholder review entirely
+fi
+```
 
 **High-risk detection** (informational, for risk assessment display):
 - Risk section mentions "breaking change", "data loss", "security", "production"

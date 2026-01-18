@@ -151,7 +151,7 @@ Display (add "(current)" after the level name if it matches current config):
 │                                                            │
 │  🐱─ ─ ─ ─ ┈  HIGH {trust == 'high' ? '(current)' : ''}    │
 │     Full autonomy. CAT runs without stopping.              │
-│     Skips stakeholder review. Tasks auto-merge.            │
+│     Makes decisions without asking. Tasks auto-merge.      │
 │     ✦ Best for: Trusted workflows, batch processing        │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯

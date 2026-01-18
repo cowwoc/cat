@@ -249,9 +249,21 @@ when tasks need decomposition.
 - `medium` — Defers most discoveries; acts on critical issues only
 - `high` — Defers all discoveries to backlog; maximum focus on current task
 
-**Note:** Stakeholder review (architect, security, quality, tester, performance) runs automatically
-based on task characteristics—not a global setting. High-risk indicators like security changes,
-5+ files touched, or public API modifications trigger the review council.
+### Stakeholder Reviews
+
+When `verify` is `changed` or `all`, CAT runs multi-perspective stakeholder reviews before merge:
+
+| Stakeholder | Focus |
+|-------------|-------|
+| **requirements** | Verifies task satisfies its claimed requirements from PLAN.md |
+| **architect** | System design, module boundaries, API design, dependencies |
+| **security** | Vulnerabilities, injection, auth, input validation |
+| **quality** | Code duplication, complexity, maintainability, obvious bugs |
+| **tester** | Test coverage, missing tests, edge cases |
+| **performance** | Algorithm complexity, memory usage, blocking operations |
+| **ux** | Usability, accessibility, interaction design |
+| **sales** | Customer value, competitive positioning, demo-readiness |
+| **marketing** | Positioning, messaging, go-to-market readiness |
 
 ---
 
