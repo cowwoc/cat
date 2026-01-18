@@ -18,7 +18,7 @@
   <!-- Header text with checkmark -->
   <text x="250" y="24" text-anchor="middle" fill="#f0fff4" font-family="monospace" font-size="14" font-weight="bold">✓ CHECKPOINT: Task Complete</text>
   <!-- Task info -->
-  <text x="30" y="60" fill="#a0aec0" font-family="monospace" font-size="12">Quest:</text>
+  <text x="30" y="60" fill="#a0aec0" font-family="monospace" font-size="12">Task:</text>
   <text x="90" y="60" fill="#e2e8f0" font-family="monospace" font-size="12">setup-authentication</text>
   <text x="30" y="80" fill="#a0aec0" font-family="monospace" font-size="12">Time:</text>
   <text x="90" y="80" fill="#e2e8f0" font-family="monospace" font-size="12">12 minutes</text>

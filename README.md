@@ -1,9 +1,9 @@
 # <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Agents that land on their feet
 
-> *"Every great project is an adventure. CAT makes sure you enjoy the journey."*
+> *"Every great project needs structure. CAT keeps you in control while handling the complexity."*
 
 <p align="center">
-  <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="Your Quest" width="500"/></a>
+  <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="CAT Overview" width="500"/></a>
 </p>
 
 ---
@@ -17,14 +17,14 @@
 This is what herding cats feels like. Brilliant, forgetful, easily distracted cats.
 **CAT flips this around.**
 
-You tell CAT your style once. It learns what matters to you. Then it handles the routine stuff automatically while presenting you with meaningful choices at genuine decision points. It's an adventure where you're the author — the plot moves when you say so, and nobody rewrites act two while you're getting coffee.
+You tell CAT your style once. It learns what matters to you. Then it handles the routine stuff automatically while presenting you with meaningful choices at genuine decision points. You're in control — work progresses when you say so, and nothing changes while you're away.
 
 ---
 
-## Your Adventure Awaits
+## Getting Started
 
 <p align="center">
-  <a href="#your-adventure-awaits"><img src="docs/choose-path.svg" alt="Choose Your Path" width="500"/></a>
+  <a href="#getting-started"><img src="docs/choose-path.svg" alt="Choose Your Path" width="500"/></a>
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@ You tell CAT your style once. It learns what matters to you. Then it handles the
 
 ## Quick Start
 
-### Step 1: Join the Adventure
+### Step 1: Install CAT
 
 ```bash
 # Add the plugin marketplace
@@ -50,7 +50,7 @@ You tell CAT your style once. It learns what matters to you. Then it handles the
 /cat:help
 ```
 
-### Step 2: Initialize Your Quest
+### Step 2: Initialize Your Project
 
 ```bash
 /cat:init
@@ -73,11 +73,11 @@ Your answers shape how CAT makes decisions throughout your project.
 # Add tasks (optionally specify target version)
 /cat:add-task [version]
 
-# See your adventure map
+# See your project status
 /cat:status
 ```
 
-### Step 4: Begin the Quest
+### Step 4: Start Working
 
 ```bash
 /cat:work
@@ -96,7 +96,7 @@ you with results at a checkpoint:
 
 ### The Map: Hierarchical Planning
 
-Every adventure needs a map. CAT organizes work into three levels:
+CAT organizes work into three levels:
 
 <p align="center">
   <a href="#the-map-hierarchical-planning">
@@ -106,11 +106,11 @@ Every adventure needs a map. CAT organizes work into three levels:
 
 - **Major versions** are your milestones (v1: "Core Features", v2: "Polish & Performance")
 - **Minor versions** group related work (v1.0: "Authentication", v1.1: "User Profiles")
-- **Tasks** are individual quests sized to fit in a single session
+- **Tasks** are individual units of work sized to fit in a single session
 
 ### The Compass: Your Preferences
 
-During `/cat:init`, you choose your adventurer style:
+During `/cat:init`, you configure your preferences:
 
 | Preference | What it Controls |
 |------------|------------------|
@@ -121,17 +121,17 @@ During `/cat:init`, you choose your adventurer style:
 
 These aren't just settings—they're how CAT learns to think like you.
 
-### The Journey: Task Lifecycle
+### The Workflow: Task Lifecycle
 
 <p align="center">
-  <a href="#the-journey-task-lifecycle">
+  <a href="#the-workflow-task-lifecycle">
     <img src="docs/task-lifecycle.svg" alt="Task Lifecycle" width="500"/>
   </a>
 </p>
 
 Each task follows this path:
 
-1. **Planning** → PLAN.md defines the quest objectives
+1. **Planning** → PLAN.md defines the task objectives
 2. **Approach Selection** → At forks in the road, you choose the path
 3. **Execution** → Subagent works in isolation (no risk to your main branch)
 4. **Verification** → Build, test, lint—all must pass
@@ -141,7 +141,7 @@ Each task follows this path:
 
 ### The Safety Net: Reliability Features
 
-Adventures are more fun when you're not worried about falling:
+Reliability features keep your project safe:
 
 - **Token-Aware Tasks** → Tasks sized to fit within context limits
 - **Isolated Worktrees** → Each task runs in its own git worktree
@@ -157,9 +157,9 @@ Adventures are more fun when you're not worried about falling:
 
 | Command | What It Does |
 |---------|--------------|
-| `/cat:init` | Start a new adventure (creates project structure) |
-| `/cat:status` | View your adventure map with progress |
-| `/cat:work [scope]` | Begin or continue quests (see below) |
+| `/cat:init` | Initialize project structure |
+| `/cat:status` | View project status and progress |
+| `/cat:work [scope]` | Execute tasks (see below) |
 | `/cat:help` | Quick reference for all commands |
 
 **`/cat:work` scope options:**
@@ -177,24 +177,24 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 
 | Command | What It Does |
 |---------|--------------|
-| `/cat:add-major-version` | Add a new chapter to your story |
-| `/cat:add-minor-version` | Add a section within a chapter |
-| `/cat:add-task` | Add a quest to tackle |
-| `/cat:research` | Scout ahead before committing to a path |
+| `/cat:add-major-version` | Add a new milestone |
+| `/cat:add-minor-version` | Add a section within a milestone |
+| `/cat:add-task` | Add a task to complete |
+| `/cat:research` | Research before committing to an approach |
 
 ### Housekeeping
 
 | Command | What It Does |
 |---------|--------------|
 | `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
-| `/cat:config` | Change your adventurer style |
-| `/cat:remove-task` | Remove a quest from the map |
+| `/cat:config` | Change your preferences |
+| `/cat:remove-task` | Remove a task |
 
 ---
 
 ## Configuration
 
-Your adventure settings live in `.claude/cat/cat-config.json`:
+Your CAT settings live in `.claude/cat/cat-config.json`:
 
 ```json
 {
@@ -273,12 +273,12 @@ you can call directly:
 
 ## Project Structure
 
-After `/cat:init`, your project gains an adventure journal:
+After `/cat:init`, your project gains a planning structure:
 
 ```
 your-project/
 └── .claude/cat/
-    ├── PROJECT.md          # Your quest overview
+    ├── PROJECT.md          # Project overview
     ├── ROADMAP.md          # The big picture
     ├── cat-config.json     # Your preferences
     └── v1/                 # Major version 1
@@ -293,12 +293,12 @@ your-project/
 
 ---
 
-## Tips for a Successful Adventure
+## Tips for Success
 
 **Start small** — Begin with one major version and a few tasks. Expand as you
 find your rhythm.
 
-**Check your map** — Run `/cat:status` often. It shows where you are and
+**Check status** — Run `/cat:status` often. It shows where you are and
 suggests next steps.
 
 **Scout unfamiliar territory** — Use `/cat:research` before tackling complex
@@ -318,7 +318,7 @@ poorly.
 
 Contributions are welcome when they:
 - Solve real problems encountered during structured project execution
-- Align with the existing adventure-style workflow
+- Align with the existing structured workflow
 - Maintain the focused nature of the tool
 
 Open an issue to discuss before investing significant effort.
