@@ -26,14 +26,75 @@ if [[ ! -f "$WIDTHS_FILE" ]]; then
     exit 1
 fi
 
+# Detect current terminal and map to emoji-widths.json key
+detect_terminal() {
+    # Windows Terminal sets WT_SESSION
+    if [[ -n "${WT_SESSION:-}" ]]; then
+        echo "Windows Terminal"
+        return
+    fi
+
+    # Check TERM_PROGRAM for common terminals
+    case "${TERM_PROGRAM:-}" in
+        "vscode"|"VSCode")
+            echo "VS Code"
+            return
+            ;;
+        "iTerm.app")
+            echo "iTerm2"
+            return
+            ;;
+        "Apple_Terminal")
+            echo "macOS Terminal"
+            return
+            ;;
+        "Hyper")
+            echo "Hyper"
+            return
+            ;;
+        "WarpTerminal")
+            echo "Warp"
+            return
+            ;;
+    esac
+
+    # Check for other terminal-specific env vars
+    if [[ -n "${KONSOLE_VERSION:-}" ]]; then
+        echo "Konsole"
+        return
+    fi
+
+    if [[ -n "${GNOME_TERMINAL_SCREEN:-}" ]]; then
+        echo "GNOME Terminal"
+        return
+    fi
+
+    if [[ -n "${KITTY_WINDOW_ID:-}" ]]; then
+        echo "Kitty"
+        return
+    fi
+
+    if [[ -n "${ALACRITTY_SOCKET:-}" || -n "${ALACRITTY_LOG:-}" ]]; then
+        echo "Alacritty"
+        return
+    fi
+
+    # Default fallback
+    echo "default"
+}
+
+TERMINAL=$(detect_terminal)
+
 # Read input JSON from stdin
 input=$(cat)
 
 # Process with jq - calculate display width and pad each line
-jq -r --slurpfile widths "$WIDTHS_FILE" '
+# Pass detected terminal as argument
+jq -r --slurpfile widths "$WIDTHS_FILE" --arg terminal "$TERMINAL" '
 # Function to get emoji width from widths file
+# Priority: terminal-specific > default > hardcoded fallback
 def emoji_width(char):
-  ($widths[0].default[char] // $widths[0].terminals["Windows Terminal"][char] // 2);
+  ($widths[0].terminals[$terminal][char] // $widths[0].default[char] // 2);
 
 # Function to calculate display width of a string
 def display_width:
