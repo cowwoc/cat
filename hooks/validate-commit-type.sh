@@ -17,12 +17,13 @@ fi
 # Extract commit message from -m flag
 # Handles: git commit -m "msg", git commit -m 'msg', git commit -m "$(cat <<...)"
 MSG=""
-if [[ "$COMMAND" =~ -m[[:space:]]+[\"\']([^\"\']+)[\"\'] ]]; then
-  MSG="${BASH_REMATCH[1]}"
-elif [[ "$COMMAND" =~ -m[[:space:]]+\"?\$\(cat ]]; then
-  # HEREDOC pattern - extract the first line after EOF (or 'EOF)
-  # The content appears after the EOF marker on a new line
+if [[ "$COMMAND" =~ -m[[:space:]]+\"?\$\(cat ]]; then
+  # HEREDOC pattern - check this FIRST (before simple quotes pattern)
+  # Extract the first line after EOF (or 'EOF)
   MSG=$(printf '%s' "$COMMAND" | sed -n "/<<'*EOF/,/^EOF/{/<<'*EOF/d;/^EOF/d;p;}" | head -1 || echo "")
+elif [[ "$COMMAND" =~ -m[[:space:]]+[\"\']([^\"\']+)[\"\'] ]]; then
+  # Simple quoted message: -m "msg" or -m 'msg'
+  MSG="${BASH_REMATCH[1]}"
 fi
 
 # If no message found, allow (might be interactive or --amend without -m)
