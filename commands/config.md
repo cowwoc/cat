@@ -185,28 +185,32 @@ Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "hig
 
 **✅ Verify — What verification CAT runs before committing**
 
-Display (add "(current)" after the level name if it matches current config):
-```
-╭─── ✅ VERIFICATION LEVEL ─────────────────────────────────╮
-│  What does CAT check before commit?                        │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  ⚡ NONE {verify == 'none' ? '(current)' : ''}             │
-│     No verification before commit. Fastest iteration       │
-│     but won't catch any errors automatically.              │
-│     ✦ Best for: Rapid prototyping, manual verification     │
-│                                                            │
-│  📦 CHANGED {verify == 'changed' ? '(current)' : ''}       │
-│     Verify modified file/module only. Catches most         │
-│     regressions without verifying the full project.        │
-│     ✦ Best for: Most workflows                             │
-│                                                            │
-│  🔒 ALL {verify == 'all' ? '(current)' : ''}               │
-│     Verify the entire project before each commit.          │
-│     Slowest but highest confidence.                        │
-│     ✦ Best for: Critical code, integration changes         │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+Display using pad-box-lines.sh (add "(current)" after matching level):
+```bash
+echo "╭─── ✅ VERIFICATION LEVEL ─────────────────────────────────╮"
+echo '[
+  {"content": "  What does CAT check before commit?", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "├────────────────────────────────────────────────────────────┤"
+echo '[
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  ⚡ NONE {current}", "width": 56, "nest": 0},
+  {"content": "     No verification before commit. Fastest iteration", "width": 56, "nest": 0},
+  {"content": "     but wont catch any errors automatically.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Rapid prototyping, manual verification", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  📦 CHANGED {current}", "width": 56, "nest": 0},
+  {"content": "     Verify modified file/module only. Catches most", "width": 56, "nest": 0},
+  {"content": "     regressions without verifying the full project.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Most workflows", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🔒 ALL {current}", "width": 56, "nest": 0},
+  {"content": "     Verify the entire project before each commit.", "width": 56, "nest": 0},
+  {"content": "     Slowest but highest confidence.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Critical code, integration changes", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
 
 AskUserQuestion:
@@ -230,28 +234,32 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 **🔍 Curiosity — How much CAT explores beyond the immediate task**
 
-Display (add "(current)" after the level name if it matches current config):
-```
-╭─── 🔍 CURIOSITY LEVEL ────────────────────────────────────╮
-│  How much does CAT look beyond the task?                   │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  🎯 LOW {curiosity == 'low' ? '(current)' : ''}            │
-│     Task-only. Complete exactly what's required,           │
-│     nothing more. Don't look for improvements.             │
-│     ✦ Best for: Minimal scope, predictable output          │
-│                                                            │
-│  👀 MEDIUM {curiosity == 'medium' ? '(current)' : ''}      │
-│     Opportunistic. Notice obvious issues encountered       │
-│     while working (bugs, deprecated syntax).               │
-│     ✦ Best for: Balanced thoroughness                      │
-│                                                            │
-│  🔭 HIGH {curiosity == 'high' ? '(current)' : ''}          │
-│     Proactive. Actively examine related code for           │
-│     patterns, tech debt, or optimization opportunities.    │
-│     ✦ Best for: Comprehensive improvement                  │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+Display using pad-box-lines.sh (add "(current)" after matching level):
+```bash
+echo "╭─── 🔍 CURIOSITY LEVEL ────────────────────────────────────╮"
+echo '[
+  {"content": "  How much does CAT look beyond the task?", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "├────────────────────────────────────────────────────────────┤"
+echo '[
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🎯 LOW {current}", "width": 56, "nest": 0},
+  {"content": "     Task-only. Complete exactly whats required,", "width": 56, "nest": 0},
+  {"content": "     nothing more. Dont look for improvements.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Minimal scope, predictable output", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  👀 MEDIUM {current}", "width": 56, "nest": 0},
+  {"content": "     Opportunistic. Notice obvious issues encountered", "width": 56, "nest": 0},
+  {"content": "     while working (bugs, deprecated syntax).", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Balanced thoroughness", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  🔭 HIGH {current}", "width": 56, "nest": 0},
+  {"content": "     Proactive. Actively examine related code for", "width": 56, "nest": 0},
+  {"content": "     patterns, tech debt, or optimization opportunities.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Comprehensive improvement", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
 
 AskUserQuestion:
@@ -275,28 +283,32 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 **⏳ Patience — When CAT acts on discovered opportunities**
 
-Display (add "(current)" after the level name if it matches current config):
-```
-╭─── ⏳ PATIENCE LEVEL ─────────────────────────────────────╮
-│  When does CAT act on what it finds?                       │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  ⚡ LOW {patience == 'low' ? '(current)' : ''}             │
-│     Act immediately. Address improvements as part of       │
-│     the current task. Scope expands but work is done.      │
-│     ✦ Best for: Comprehensive fixes, avoiding tech debt    │
-│                                                            │
-│  📋 MEDIUM {patience == 'medium' ? '(current)' : ''}       │
-│     Defer to current version. Log improvements as          │
-│     separate tasks within the current version.             │
-│     ✦ Best for: Focused tasks with nearby follow-up        │
-│                                                            │
-│  📅 HIGH {patience == 'high' ? '(current)' : ''}           │
-│     Defer by priority. Schedule improvements to future     │
-│     versions based on benefit/cost ratio.                  │
-│     ✦ Best for: Surgical tasks, controlled scope           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+Display using pad-box-lines.sh (add "(current)" after matching level):
+```bash
+echo "╭─── ⏳ PATIENCE LEVEL ─────────────────────────────────────╮"
+echo '[
+  {"content": "  When does CAT act on what it finds?", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "├────────────────────────────────────────────────────────────┤"
+echo '[
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  ⚡ LOW {current}", "width": 56, "nest": 0},
+  {"content": "     Act immediately. Address improvements as part of", "width": 56, "nest": 0},
+  {"content": "     the current task. Scope expands but work is done.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Comprehensive fixes, avoiding tech debt", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  📋 MEDIUM {current}", "width": 56, "nest": 0},
+  {"content": "     Defer to current version. Log improvements as", "width": 56, "nest": 0},
+  {"content": "     separate tasks within the current version.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Focused tasks with nearby follow-up", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0},
+  {"content": "  📅 HIGH {current}", "width": 56, "nest": 0},
+  {"content": "     Defer by priority. Schedule improvements to future", "width": 56, "nest": 0},
+  {"content": "     versions based on benefit/cost ratio.", "width": 56, "nest": 0},
+  {"content": "     ✦ Best for: Surgical tasks, controlled scope", "width": 56, "nest": 0},
+  {"content": "", "width": 56, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
 
 AskUserQuestion:
@@ -363,15 +375,18 @@ Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees:
 **📊 Version Gates configuration:**
 
 Display current gate overview:
+```bash
+echo "╭─── 📊 VERSION GATES ──────────────────────────────────────╮"
+echo '[
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  Gates control when work can start and when its done.", "width": 60, "nest": 0},
+  {"content": "  Each version can have entry (start) and exit (done)", "width": 60, "nest": 0},
+  {"content": "  gates. Major gates are inherited by all minor versions.", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭─── 📊 VERSION GATES ──────────────────────────────────────╮
-│                                                            │
-│  Gates control when work can start and when it's done.     │
-│  Each version can have entry (start) and exit (done)       │
-│  gates. Major gates are inherited by all minor versions.   │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
 **Step 1: Select version to configure**
 
@@ -409,31 +424,37 @@ cat .claude/cat/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract and display the `## Gates` section:
+Extract and display the `## Gates` section using pad-box-lines.sh:
+```bash
+echo "╭─── 📊 Gates for v{version} ───────────────────────────────╮"
+echo '[
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  ENTRY (when can work start?):", "width": 60, "nest": 0},
+  {"content": "  • {condition 1}", "width": 60, "nest": 0},
+  {"content": "  • {condition 2}", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  EXIT (when is it done?):", "width": 60, "nest": 0},
+  {"content": "  • {condition 1}", "width": 60, "nest": 0},
+  {"content": "  • {condition 2}", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭─── 📊 Gates for v{version} ───────────────────────────────╮
-│                                                            │
-│  ENTRY (when can work start?):                             │
-│  • {condition 1}                                           │
-│  • {condition 2}                                           │
-│                                                            │
-│  EXIT (when is it done?):                                  │
-│  • {condition 1}                                           │
-│  • {condition 2}                                           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
-If no gates section exists, display:
+If no gates section exists, display using pad-box-lines.sh:
+```bash
+echo "╭─── ⚠️ No gates configured for v{version} ─────────────────╮"
+echo '[
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  Default behavior applies:", "width": 60, "nest": 0},
+  {"content": "  • Entry: Previous version must complete", "width": 60, "nest": 0},
+  {"content": "  • Exit: All tasks must complete", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭─── ⚠️ No gates configured for v{version} ─────────────────╮
-│                                                            │
-│  Default behavior applies:                                 │
-│  • Entry: Previous version must complete                   │
-│  • Exit: All tasks must complete                           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
 **Step 3: Choose action**
 
@@ -505,15 +526,18 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Display confirmation:
+Display confirmation using pad-box-lines.sh:
+```bash
+echo "╭─── ✓ Gates updated for v{version} ────────────────────────╮"
+echo '[
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  Entry: {summary of entry conditions}", "width": 60, "nest": 0},
+  {"content": "  Exit:  {summary of exit conditions}", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭─── ✓ Gates updated for v{version} ────────────────────────╮
-│                                                            │
-│  Entry: {summary of entry conditions}                      │
-│  Exit:  {summary of exit conditions}                       │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
 
@@ -535,13 +559,17 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
+Display using pad-box-lines.sh:
+```bash
+echo "╭─── ✓ Setting updated ─────────────────────────────────────╮"
+echo '[
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  {setting}: {oldValue} → {newValue}", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭─── ✓ Setting updated ─────────────────────────────────────╮
-│                                                            │
-│  {setting}: {oldValue} → {newValue}                        │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
 **After confirming**: Return to the **parent menu** and re-display its options.
 
@@ -556,25 +584,31 @@ Examples:
 
 **Exit screen:**
 
-If changes were made:
+If changes were made, display using pad-box-lines.sh:
+```bash
+echo "╭─── ✨ CONFIGURATION SAVED ────────────────────────────────╮"
+echo '[
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  Changes applied:", "width": 60, "nest": 0},
+  {"content": "  • {setting1}: {old} → {new}", "width": 60, "nest": 0},
+  {"content": "  • {setting2}: {old} → {new}", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0},
+  {"content": "  Settings updated!", "width": 60, "nest": 0},
+  {"content": "", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭─── ✨ CONFIGURATION SAVED ────────────────────────────────╮
-│                                                            │
-│  Changes applied:                                          │
-│  • {setting1}: {old} → {new}                               │
-│  • {setting2}: {old} → {new}                               │
-│                                                            │
-│  Settings updated!                                         │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
 If no changes:
+```bash
+echo "╭────────────────────────────────────────────────────────────╮"
+echo '[
+  {"content": "  No changes made. Settings unchanged.", "width": 60, "nest": 0}
+]' | "${CLAUDE_PLUGIN_ROOT}/scripts/pad-box-lines.sh"
+echo "╰────────────────────────────────────────────────────────────╯"
 ```
-╭────────────────────────────────────────────────────────────╮
-│  No changes made. Settings unchanged.                      │
-╰────────────────────────────────────────────────────────────╯
-```
+Then output the result directly (not in a code block).
 
 </step>
 
