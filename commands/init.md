@@ -415,34 +415,34 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 
 <step name="behavior_style">
 
-**Choose Your Companion - Capture development style preferences**
+**Choose Your Partner - Capture development style preferences**
 
 Output welcome banner directly with inline padding:
 
 ```
-╭─── 🎮 CHOOSE YOUR COMPANION ─────────────────────────────────────╮
+╭─── 🎮 CHOOSE YOUR PARTNER ───────────────────────────────────────╮
 │                                                                  │
 │  Every developer has a style. These questions shape how your     │
-│  AI companion approaches the work ahead.                         │
+│  AI partner approaches the work ahead.                           │
 │                                                                  │
 │  Choose wisely - your preferences guide every decision.          │
 │                                                                  │
 ╰──────────────────────────────────────────────────────────────────╯
 ```
 
-AskUserQuestion: header="Trust", question="How do you command your companion?", options=[
+AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Cautious Commander - check in often, verify each move",
   "⚔️ Balanced Leader - trust routine calls, review key decisions (Recommended)",
-  "🏹 Autonomous Ally - let the companion lead, intervene only when critical"
+  "🏹 Autonomous Ally - let the partner lead, intervene only when critical"
 ]
 
-AskUserQuestion: header="Curiosity", question="How should your companion explore the dungeon?", options=[
+AskUserQuestion: header="Curiosity", question="How should your partner explore the dungeon?", options=[
   "🎯 Focused - stay on the task, ignore tangents",
   "🗺️ Observant Explorer - note interesting finds, but stay on mission (Recommended)",
   "🔮 Thorough Investigator - map every corner, document all discoveries"
 ]
 
-AskUserQuestion: header="Patience", question="When your companion spots treasure off the path...", options=[
+AskUserQuestion: header="Patience", question="When your partner spots treasure off the path...", options=[
   "📜 Log it for later - add to backlog, maintain focus",
   "⚖️ Quick assessment - grab low-hanging fruit, note the rest (Recommended)",
   "💎 Seize the moment - if it's valuable, claim it now"
@@ -533,15 +533,15 @@ Output completion banner directly with inline padding:
 ```
 ╭─── 🚀 CAT INITIALIZED ───────────────────────────────────────────╮
 │                                                                  │
-│  COMPANION PROFILE                                               │
+│  PARTNER PROFILE                                                 │
 │  ─────────────────────────────────────────────────────────────   │
-│  Command Style:  [trust]                                         │
+│  Working Style:  [trust]                                         │
 │  Exploration:    [curiosity]                                     │
 │  Opportunity:    [patience]                                      │
 │  Mode:           [interactive|yolo]                              │
 │                                                                  │
-│  Your companion awaits your command.                             │
-│  Reforge your style anytime: /cat:config                         │
+│  Your partner is ready. Let's build something solid.             │
+│  Adjust your style anytime: /cat:config                          │
 │                                                                  │
 ╰──────────────────────────────────────────────────────────────────╯
 ```

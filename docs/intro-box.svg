@@ -7,6 +7,6 @@
   </defs>
   <rect x="2" y="2" width="496" height="96" rx="8" fill="url(#boxGradient)" stroke="#4a5568" stroke-width="2"/>
   <text x="250" y="35" text-anchor="middle" fill="#e2e8f0" font-family="monospace" font-size="14" font-weight="bold">Your Goal: Build amazing software</text>
-  <text x="250" y="55" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="13">Your Companion: An AI that handles the tedious stuff</text>
+  <text x="250" y="55" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="13">Your Partner: An AI that handles the tedious stuff</text>
   <text x="250" y="75" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="13">Your Role: Make the decisions that matter</text>
 </svg>

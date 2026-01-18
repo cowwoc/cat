@@ -21,15 +21,15 @@
   <text x="250" y="60" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="12">How do you prefer to work together?</text>
   <!-- Options -->
   <text x="25" y="95" fill="#68d391" font-family="monospace" font-size="13" font-weight="bold">[A]</text>
-  <text x="58" y="95" fill="#e2e8f0" font-family="monospace" font-size="12">Hands-On</text>
+  <text x="58" y="95" fill="#e2e8f0" font-family="monospace" font-size="12">Cautious Commander</text>
   <text x="192" y="95" fill="#718096" font-family="monospace" font-size="12">- check in often, verify each move</text>
 
   <text x="25" y="120" fill="#63b3ed" font-family="monospace" font-size="13" font-weight="bold">[B]</text>
-  <text x="58" y="120" fill="#e2e8f0" font-family="monospace" font-size="12">Balanced</text>
+  <text x="58" y="120" fill="#e2e8f0" font-family="monospace" font-size="12">Balanced Leader</text>
   <text x="192" y="120" fill="#718096" font-family="monospace" font-size="12">- trust routine, review key decisions</text>
   <text x="58" y="134" fill="#f6e05e" font-family="monospace" font-size="12">(recommended)</text>
 
   <text x="25" y="159" fill="#f6ad55" font-family="monospace" font-size="13" font-weight="bold">[C]</text>
-  <text x="58" y="159" fill="#e2e8f0" font-family="monospace" font-size="12">Autonomous</text>
+  <text x="58" y="159" fill="#e2e8f0" font-family="monospace" font-size="12">Autonomous Ally</text>
   <text x="192" y="159" fill="#718096" font-family="monospace" font-size="12">- let partner lead, intervene rarely</text>
 </svg>
