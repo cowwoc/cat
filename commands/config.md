@@ -197,7 +197,22 @@ Display current settings, then AskUserQuestion:
 
 **🐱 CAT Behavior selection:**
 
-AskUserQuestion:
+**MANDATORY (M137) - Display behavior summary BEFORE prompting:**
+
+Output behavior overview box (target width 60):
+
+```
+╭─── 🐱 CAT BEHAVIOR ────────────────────────────────────────╮
+│                                                            │
+│  🤝 Trust:     {trust || 'medium'}                         │
+│  ✅ Verify:    {verify || 'changed'}                       │
+│  🔍 Curiosity: {curiosity || 'low'}                        │
+│  ⏳ Patience:  {patience || 'high'}                        │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+Then AskUserQuestion:
 - header: "Behavior"
 - question: "Which setting would you like to adjust?"
 - options (show current values in descriptions):
@@ -209,8 +224,6 @@ AskUserQuestion:
     description: "Currently: {curiosity || 'low'}"
   - label: "⏳ Patience"
     description: "Currently: {patience || 'high'}"
-  - label: "← Back"
-    description: "Return to main menu"
 
 </step>
 
