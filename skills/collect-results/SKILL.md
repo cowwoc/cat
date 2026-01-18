@@ -22,14 +22,30 @@ parent task branch.
 
 **Progress Output (MANDATORY):**
 
-Display progress at each step using this format:
+Display collection progress using visible feedback symbols:
+
+**On collection start:**
 ```
-[Step N/8] Step description (P% | Xs elapsed | ~Ys remaining)
-✅ Completed: result summary
+◆ Collecting results: {subagent-id}...
 ```
 
-Steps: 1. Verify completion, 2. Extract commits, 3. Parse metrics, 4. Extract discovered issues,
-5. Read work products, 6. Extract status, 7. Report metrics to user, 8. Update STATE.md, 9. Prepare for merge
+**On successful collection:**
+```
+✓ Subagent complete: {N}K tokens · {N} commits
+  → Files changed: {N}
+  → Status: {success|partial|failed}
+```
+
+**On collection with issues:**
+```
+⚠ Subagent complete with concerns: {N}K tokens · {N} commits
+  → Compaction events: {N}
+  → Discovered issues: {N}
+```
+
+These symbols match the phase-based progress format used in `/cat:work`.
+
+Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report to user, Update STATE.md
 
 ### 1. Verify Subagent Completion
 
