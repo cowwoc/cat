@@ -31,70 +31,40 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 </step>
 
-<step name="detect-terminal">
+<step name="box-rendering">
 
-**Detect terminal type (one-time per session):**
+**Use centralized box rendering scripts for all displays.**
 
-```bash
-if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
-elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
-elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
-elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
-else echo "${TERM_PROGRAM:-default}"; fi
-```
+LLMs cannot reliably calculate character-level padding for Unicode text (M142).
+All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 
-Store the detected terminal. Then read emoji widths:
+**Available config box scripts:**
 
 ```bash
-cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
+# config-box.sh - Renders all /cat:config boxes
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" BOX_TYPE [ARGS...]
+
+# Box types:
+#   settings CONTEXT_LIMIT TARGET_USAGE TRUST VERIFY CURIOSITY PATIENCE AUTO_REMOVE
+#   behavior TRUST VERIFY CURIOSITY PATIENCE
+#   trust CURRENT_LEVEL
+#   verify CURRENT_LEVEL
+#   curiosity CURRENT_LEVEL
+#   patience CURRENT_LEVEL
+#   version-gates
+#   gates-for VERSION ENTRY_CONDITIONS EXIT_CONDITIONS
+#   no-gates VERSION
+#   gates-updated VERSION ENTRY_SUMMARY EXIT_SUMMARY
+#   setting-updated SETTING OLD_VALUE NEW_VALUE
+#   saved CHANGES...
+#   no-changes
 ```
 
-Use widths from `.terminals[detected_terminal]` or `.default`. Most terminals use width 2 for emojis
-(🧠 🐱 🧹 📊 ⚙️ ✨ ⚠️ etc.) and width 1 for marks (✓ ✦ • →) and ASCII.
-
-**For all box rendering in this skill, calculate padding inline:**
-1. Count emojis × their width (usually 2)
-2. Count other chars × 1
-3. Padding = target width - 2 (borders) - display width
-4. Output directly: `│` + content + spaces + `│`
-
-**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
-
-**MANDATORY (M133) - Header line formula:** For lines like `╭─── ✓ Title ───...╮`:
-```
-target = 60
-prefix = "╭─── "  (5 chars)
-suffix = "╮"      (1 char)
-content_width = (emoji_count × emoji_width) + text_length  # e.g., ✓=1, text=22 → 23
-trailing_dashes = target - prefix - content_width - 1 - suffix  # -1 for space after content
-```
-
-**MANDATORY (A020) - Box Rendering Verification Protocol:**
-
-Before outputting ANY box, complete this verification checklist:
-
-1. **Character Width Lookup** - For EVERY special character in the box:
-   - Look up width in emoji-widths.json `.terminals[detected_terminal]` or `.default`
-   - Characters NOT in emoji-widths.json: STOP and report - do not guess width
-   - Common widths: emojis (🧠🐱✨) = 2, marks (✓•→✦) = varies (check file!)
-
-2. **Line-by-Line Verification** - For EACH line in the box:
-   ```
-   Line: "│  🧠 CONTEXT LIMITS                                         │"
-   Count: │(1) + space(1) + space(1) + 🧠(2) + space(1) + "CONTEXT LIMITS"(14) + spaces(37) + │(1) = 58
-   With borders: 58 + 2 = 60 ✓
-   ```
-
-3. **Pre-Output Checklist:**
-   - [ ] All special characters found in emoji-widths.json
-   - [ ] Every line calculated to exactly target width (60)
-   - [ ] Header line trailing dashes calculated using formula above
-   - [ ] Footer line is exactly `╰` + 58×`─` + `╯`
-
-4. **If ANY check fails:** STOP. Fix the issue. Do not output partial boxes.
-
-**Anti-pattern (M136):** Using characters (like ✦) without verifying they exist in emoji-widths.json.
-If a character is missing, add it to emoji-widths.json FIRST with verified width.
+**Workflow:**
+1. Run the appropriate box script
+2. Capture output to temp file: `> /tmp/config-box.txt`
+3. Use Read tool to read the file
+4. Output the contents VERBATIM
 
 </step>
 
@@ -114,33 +84,13 @@ prompts without display creates confusion and poor UX.
 
 **Display settings screen:**
 
-**Calculate padding inline using emoji widths from detect-terminal step.**
+Render settings box using script:
 
-Output the settings box directly (target width 60):
-
-```
-╭─── ⚙️ CAT SETTINGS ────────────────────────────────────────╮
-│                                                            │
-│  🧠 CONTEXT LIMITS                                         │
-│     Window:  {contextLimit} tokens                         │
-│     Target:  {targetContextUsage}% before split            │
-│                                                            │
-│  🐱 BEHAVIOR                                               │
-│     Trust:     {trust}                                     │
-│     Verify:    {verify}                                    │
-│     Curiosity: {curiosity}                                 │
-│     Patience:  {patience}                                  │
-│                                                            │
-│  🧹 CLEANUP                                                │
-│     Auto-remove: {autoRemove}                              │
-│                                                            │
-│  📊 VERSION GATES                                          │
-│     Configure entry/exit conditions for versions           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" settings {contextLimit} {targetContextUsage} {trust} {verify} {curiosity} {patience} {autoRemove} > /tmp/config-box.txt
 ```
 
-For each line: display width = (emoji count × 2) + (other chars × 1). Pad to 58 chars (60 - 2 borders).
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 </step>
 
@@ -201,18 +151,13 @@ Display current settings, then AskUserQuestion:
 
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
-Output behavior overview box (target width 60):
+Render behavior box using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" behavior {trust} {verify} {curiosity} {patience} > /tmp/config-box.txt
 ```
-╭─── 🐱 CAT BEHAVIOR ────────────────────────────────────────╮
-│                                                            │
-│  🤝 Trust:     {trust || 'medium'}                         │
-│  ✅ Verify:    {verify || 'changed'}                       │
-│  🔍 Curiosity: {curiosity || 'low'}                        │
-│  ⏳ Patience:  {patience || 'high'}                        │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -235,30 +180,13 @@ Then AskUserQuestion:
 
 **🤝 Trust — How much you trust CAT to make decisions**
 
-Output directly with inline padding (add "(current)" after matching level):
+Render trust box using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" trust {current_trust} > /tmp/config-box.txt
 ```
-╭─── 🤝 TRUST LEVEL ─────────────────────────────────────────╮
-│  How much autonomy should your partner have?               │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  🐱─┈       LOW {current}                                  │
-│             Low trust. CAT presents options frequently:    │
-│             where to place code, which approach to take.   │
-│             ✦ Best for: Learning, strong preferences       │
-│                                                            │
-│  🐱─ ─ ┈    MEDIUM {current}                               │
-│             Moderate trust. CAT handles routine decisions  │
-│             but presents options for meaningful trade-offs.│
-│             ✦ Best for: Balanced control and efficiency    │
-│                                                            │
-│  🐱─ ─ ─ ─ ┈ HIGH {current}                                │
-│             Full autonomy. CAT runs without stopping.      │
-│             Makes decisions without asking. Auto-merges.   │
-│             ✦ Best for: Trusted workflows, batch process.  │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 AskUserQuestion:
 - header: "Trust"
@@ -281,30 +209,13 @@ Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "hig
 
 **✅ Verify — What verification CAT runs before committing**
 
-Output directly with inline padding (add "(current)" after matching level):
+Render verify box using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" verify {current_verify} > /tmp/config-box.txt
 ```
-╭─── ✅ VERIFICATION LEVEL ──────────────────────────────────╮
-│  What does CAT check before commit?                        │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  ⚡ NONE {current}                                         │
-│     No verification before commit. Fastest iteration       │
-│     but wont catch any errors automatically.               │
-│     ✦ Best for: Rapid prototyping, manual verification     │
-│                                                            │
-│  📦 CHANGED {current}                                      │
-│     Verify modified file/module only. Catches most         │
-│     regressions without verifying the full project.        │
-│     ✦ Best for: Most workflows                             │
-│                                                            │
-│  🔒 ALL {current}                                          │
-│     Verify the entire project before each commit.          │
-│     Slowest but highest confidence.                        │
-│     ✦ Best for: Critical code, integration changes         │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 AskUserQuestion:
 - header: "Verify"
@@ -327,30 +238,13 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 **🔍 Curiosity — How much CAT explores beyond the immediate task**
 
-Output directly with inline padding (add "(current)" after matching level):
+Render curiosity box using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" curiosity {current_curiosity} > /tmp/config-box.txt
 ```
-╭─── 🔍 CURIOSITY LEVEL ─────────────────────────────────────╮
-│  How much does CAT look beyond the task?                   │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  🎯 LOW {current}                                          │
-│     Task-only. Complete exactly whats required,            │
-│     nothing more. Dont look for improvements.              │
-│     ✦ Best for: Minimal scope, predictable output          │
-│                                                            │
-│  👀 MEDIUM {current}                                       │
-│     Opportunistic. Notice obvious issues encountered       │
-│     while working (bugs, deprecated syntax).               │
-│     ✦ Best for: Balanced thoroughness                      │
-│                                                            │
-│  🔭 HIGH {current}                                         │
-│     Proactive. Actively examine related code for           │
-│     patterns, tech debt, or optimization opportunities.    │
-│     ✦ Best for: Comprehensive improvement                  │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 AskUserQuestion:
 - header: "Curiosity"
@@ -373,30 +267,13 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 **⏳ Patience — When CAT acts on discovered opportunities**
 
-Output directly with inline padding (add "(current)" after matching level):
+Render patience box using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" patience {current_patience} > /tmp/config-box.txt
 ```
-╭─── ⏳ PATIENCE LEVEL ──────────────────────────────────────╮
-│  When does CAT act on what it finds?                       │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  ⚡ LOW {current}                                          │
-│     Act immediately. Address improvements as part of       │
-│     the current task. Scope expands but work is done.      │
-│     ✦ Best for: Comprehensive fixes, avoiding tech debt    │
-│                                                            │
-│  📋 MEDIUM {current}                                       │
-│     Defer to current version. Log improvements as          │
-│     separate tasks within the current version.             │
-│     ✦ Best for: Focused tasks with nearby follow-up        │
-│                                                            │
-│  📅 HIGH {current}                                         │
-│     Defer by priority. Schedule improvements to future     │
-│     versions based on benefit/cost ratio.                  │
-│     ✦ Best for: Surgical tasks, controlled scope           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 AskUserQuestion:
 - header: "Patience"
@@ -444,17 +321,13 @@ Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees:
 
 **📊 Version Gates configuration:**
 
-Output gate overview directly with inline padding:
+Render gate overview using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" version-gates > /tmp/config-box.txt
 ```
-╭─── 📊 VERSION GATES ───────────────────────────────────────╮
-│                                                            │
-│  Gates control when work can start and when its done.      │
-│  Each version can have entry (start) and exit (done)       │
-│  gates. Major gates are inherited by all minor versions.   │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 **Step 1: Select version to configure**
 
@@ -492,33 +365,20 @@ cat .claude/cat/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract and display the `## Gates` section with inline padding:
+Extract the `## Gates` section and render using script:
 
-```
-╭─── 📊 Gates for v{version} ───────────────────────────────╮
-│                                                            │
-│  ENTRY (when can work start?):                             │
-│  • {condition 1}                                           │
-│  • {condition 2}                                           │
-│                                                            │
-│  EXIT (when is it done?):                                  │
-│  • {condition 1}                                           │
-│  • {condition 2}                                           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+```bash
+# If gates exist (pipe-separate multiple conditions)
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" gates-for {version} "{entry_conditions}" "{exit_conditions}" > /tmp/config-box.txt
 ```
 
 If no gates section exists:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" no-gates {version} > /tmp/config-box.txt
 ```
-╭─── ⚠️ No gates configured for v{version} ─────────────────╮
-│                                                            │
-│  Default behavior applies:                                 │
-│  • Entry: Previous version must complete                   │
-│  • Exit: All tasks must complete                           │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 **Step 3: Choose action**
 
@@ -590,16 +450,13 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Output confirmation directly with inline padding:
+Render confirmation using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" gates-updated {version} "{entry_summary}" "{exit_summary}" > /tmp/config-box.txt
 ```
-╭─── ✓ Gates updated for v{version} ────────────────────────╮
-│                                                            │
-│  Entry: {summary of entry conditions}                      │
-│  Exit:  {summary of exit conditions}                       │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
 
@@ -621,15 +478,13 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Output directly with inline padding:
+Render confirmation using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" setting-updated "{setting}" "{oldValue}" "{newValue}" > /tmp/config-box.txt
 ```
-╭─── ✓ Setting updated ──────────────────────────────────────╮
-│                                                            │
-│  {setting}: {oldValue} → {newValue}                        │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 **After confirming**: Return to the **parent menu** and re-display its options.
 
@@ -644,27 +499,19 @@ Examples:
 
 **Exit screen:**
 
-If changes were made, output directly with inline padding:
+If changes were made, render using script:
 
-```
-╭─── ✨ CONFIGURATION SAVED ─────────────────────────────────╮
-│                                                            │
-│  Changes applied:                                          │
-│  • {setting1}: {old} → {new}                               │
-│  • {setting2}: {old} → {new}                               │
-│                                                            │
-│  Settings updated!                                         │
-│                                                            │
-╰────────────────────────────────────────────────────────────╯
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" saved "{change1}" "{change2}" ... > /tmp/config-box.txt
 ```
 
 If no changes:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" no-changes > /tmp/config-box.txt
 ```
-╭────────────────────────────────────────────────────────────╮
-│  No changes made. Settings unchanged.                      │
-╰────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 </step>
 
