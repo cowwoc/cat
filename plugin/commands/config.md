@@ -17,46 +17,7 @@ users through modifying their preferences.
 
 </objective>
 
-<emoji_reference>
-
-**MANDATORY (M210): Use these exact emojis for each setting:**
-
-| Setting | Emoji | Display |
-|---------|-------|---------|
-| Trust | 🤝 | 🤝 Trust |
-| Verify | ✅ | ✅ Verify |
-| Curiosity | 🔍 | 🔍 Curiosity |
-| Patience | ⏳ | ⏳ Patience |
-
-**Copy-paste from this table when constructing displays manually.**
-
-</emoji_reference>
-
 <process>
-
-<step name="check-precomputed">
-
-**MANDATORY: Check for pre-computed display**
-
-Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
-
-**If found:**
-- Store the exact box text from the context
-- Continue to "read-config" step
-
-**If NOT found**: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "config display" "/cat:config"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed display not available."
-  echo "Handler config_handler.py may have failed."
-fi
-```
-
-Output the error and STOP. Do NOT attempt to construct boxes manually.
-
-</step>
 
 <step name="read-config">
 
@@ -70,18 +31,116 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 </step>
 
+<step name="detect-terminal">
+
+**Detect terminal type (one-time per session):**
+
+```bash
+if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
+elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
+elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
+elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
+else echo "${TERM_PROGRAM:-default}"; fi
+```
+
+Store the detected terminal. Then read emoji widths:
+
+```bash
+cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
+```
+
+Use widths from `.terminals[detected_terminal]` or `.default`. Most terminals use width 2 for emojis
+(🧠 🐱 🧹 📊 ⚙️ ✨ ⚠️ etc.) and width 1 for marks (✓ ✦ • →) and ASCII.
+
+**For all box rendering in this skill, calculate padding inline:**
+1. Count emojis × their width (usually 2)
+2. Count other chars × 1
+3. Padding = target width - 2 (borders) - display width
+4. Output directly: `│` + content + spaces + `│`
+
+**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
+
+**MANDATORY (M133) - Header line formula:** For lines like `╭─── ✓ Title ───...╮`:
+```
+target = 60
+prefix = "╭─── "  (5 chars)
+suffix = "╮"      (1 char)
+content_width = (emoji_count × emoji_width) + text_length  # e.g., ✓=1, text=22 → 23
+trailing_dashes = target - prefix - content_width - 1 - suffix  # -1 for space after content
+```
+
+**MANDATORY (A020) - Box Rendering Verification Protocol:**
+
+Before outputting ANY box, complete this verification checklist:
+
+1. **Character Width Lookup** - For EVERY special character in the box:
+   - Look up width in emoji-widths.json `.terminals[detected_terminal]` or `.default`
+   - Characters NOT in emoji-widths.json: STOP and report - do not guess width
+   - Common widths: emojis (🧠🐱✨) = 2, marks (✓•→✦) = varies (check file!)
+
+2. **Line-by-Line Verification** - For EACH line in the box:
+   ```
+   Line: "│  🧠 CONTEXT LIMITS                                         │"
+   Count: │(1) + space(1) + space(1) + 🧠(2) + space(1) + "CONTEXT LIMITS"(14) + spaces(37) + │(1) = 58
+   With borders: 58 + 2 = 60 ✓
+   ```
+
+3. **Pre-Output Checklist:**
+   - [ ] All special characters found in emoji-widths.json
+   - [ ] Every line calculated to exactly target width (60)
+   - [ ] Header line trailing dashes calculated using formula above
+   - [ ] Footer line is exactly `╰` + 58×`─` + `╯`
+
+4. **If ANY check fails:** STOP. Fix the issue. Do not output partial boxes.
+
+**Anti-pattern (M136):** Using characters (like ✦) without verifying they exist in emoji-widths.json.
+If a character is missing, add it to emoji-widths.json FIRST with verified width.
+
+</step>
+
 <step name="display-settings">
 
 **MANDATORY (M130/A021) - Display-Before-Prompt Protocol:**
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-**Output the PRE-COMPUTED CONFIG DISPLAY from context**
+**Verification sequence:**
+1. Have I output a settings/info box in THIS step? If NO → output box first
+2. Only AFTER box is displayed → call AskUserQuestion
+3. If you find yourself about to call AskUserQuestion without a preceding box → STOP
 
-Copy the exact box from the "PRE-COMPUTED CONFIG DISPLAY" context. Do NOT recompute or modify alignment.
+**Why this matters:** Users need visual context before making choices. Jumping directly to
+prompts without display creates confusion and poor UX.
 
-**Why pre-computed:** Agents miscalculate emoji widths, causing misaligned box borders.
-The handler config_handler.py calculates correct widths before the skill starts.
+**Display settings screen:**
+
+**Calculate padding inline using emoji widths from detect-terminal step.**
+
+Output the settings box directly (target width 60):
+
+```
+╭─── ⚙️ CAT SETTINGS ────────────────────────────────────────╮
+│                                                            │
+│  🧠 CONTEXT LIMITS                                         │
+│     Window:  {contextLimit} tokens                         │
+│     Target:  {targetContextUsage}% before split            │
+│                                                            │
+│  🐱 BEHAVIOR                                               │
+│     Trust:     {trust}                                     │
+│     Verify:    {verify}                                    │
+│     Curiosity: {curiosity}                                 │
+│     Patience:  {patience}                                  │
+│                                                            │
+│  🧹 CLEANUP                                                │
+│     Auto-remove: {autoRemove}                              │
+│                                                            │
+│  📊 VERSION GATES                                          │
+│     Configure entry/exit conditions for versions           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+For each line: display width = (emoji count × 2) + (other chars × 1). Pad to 58 chars (60 - 2 borders).
 
 </step>
 
@@ -96,23 +155,45 @@ Show current values in descriptions using data from read-config step.
 - header: "Settings"
 - question: "What would you like to configure?"
 - options:
+  - label: "🧠 Context Limits"
+    description: "Currently: {contextLimit}k / {targetContextUsage}%"
   - label: "🐱 CAT Behavior"
     description: "Currently: {trust} · {verify} · {curiosity} · {patience}"
   - label: "🧹 Cleanup"
     description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
-  - label: "📏 Display Width"
-    description: "Currently: {terminalWidth || 120} characters"
-  - label: "🔀 Completion Workflow"
-    description: "Currently: {completionWorkflow || 'merge'}"
   - label: "📊 Version Gates"
     description: "Entry/exit conditions for versions"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
-**Note:** Context limits are fixed and not configurable. See agent-architecture.md § Context Limit Constants.
-
 </step>
 
+<step name="context-limits">
+
+**🧠 Context Limits selection:**
+
+Display current settings, then AskUserQuestion:
+- header: "Context"
+- question: "What would you like to adjust?"
+- options (show current values in descriptions):
+  - label: "Context window size"
+    description: "Currently: {contextLimit} tokens"
+  - label: "Target usage threshold"
+    description: "Currently: {targetContextUsage}%"
+  - label: "← Back"
+    description: "Return to main menu"
+
+**For context limit** (prefix ONLY the option matching current contextLimit with "✅ "):
+- "200,000 tokens - Claude Opus (Recommended)"
+- "128,000 tokens - Claude Sonnet"
+- "Custom value"
+
+**For target usage** (prefix ONLY the option matching current targetContextUsage with "✅ "):
+- "30% - Conservative, lots of headroom"
+- "40% - Balanced (Recommended)"
+- "50% - Aggressive, maximize task size"
+
+</step>
 
 <step name="cat-behavior">
 
@@ -120,7 +201,18 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
-Use the **CURRENT_SETTINGS** box from PRE-COMPUTED CONFIG BOXES.
+Output behavior overview box (target width 60):
+
+```
+╭─── 🐱 CAT BEHAVIOR ────────────────────────────────────────╮
+│                                                            │
+│  🤝 Trust:     {trust || 'medium'}                         │
+│  ✅ Verify:    {verify || 'changed'}                       │
+│  🔍 Curiosity: {curiosity || 'low'}                        │
+│  ⏳ Patience:  {patience || 'high'}                        │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -143,7 +235,32 @@ Then AskUserQuestion:
 
 **🤝 Trust — How much you trust CAT to make decisions**
 
-Display current setting, then AskUserQuestion:
+Output directly with inline padding (add "(current)" after matching level):
+
+```
+╭─── 🤝 TRUST LEVEL ─────────────────────────────────────────╮
+│  How much autonomy should your partner have?               │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  🐱─┈       LOW {current}                                  │
+│             Low trust. CAT presents options frequently:    │
+│             where to place code, which approach to take.   │
+│             ✦ Best for: Learning, strong preferences       │
+│                                                            │
+│  🐱─ ─ ┈    MEDIUM {current}                               │
+│             Moderate trust. CAT handles routine decisions  │
+│             but presents options for meaningful trade-offs.│
+│             ✦ Best for: Balanced control and efficiency    │
+│                                                            │
+│  🐱─ ─ ─ ─ ┈ HIGH {current}                                │
+│             Full autonomy. CAT runs without stopping.      │
+│             Makes decisions without asking. Auto-merges.   │
+│             ✦ Best for: Trusted workflows, batch process.  │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+AskUserQuestion:
 - header: "Trust"
 - question: "How much do you trust CAT to make decisions? (Current: {trust || 'medium'})"
 - options:
@@ -164,7 +281,32 @@ Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "hig
 
 **✅ Verify — What verification CAT runs before committing**
 
-Display current setting, then AskUserQuestion:
+Output directly with inline padding (add "(current)" after matching level):
+
+```
+╭─── ✅ VERIFICATION LEVEL ──────────────────────────────────╮
+│  What does CAT check before commit?                        │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ⚡ NONE {current}                                         │
+│     No verification before commit. Fastest iteration       │
+│     but wont catch any errors automatically.               │
+│     ✦ Best for: Rapid prototyping, manual verification     │
+│                                                            │
+│  📦 CHANGED {current}                                      │
+│     Verify modified file/module only. Catches most         │
+│     regressions without verifying the full project.        │
+│     ✦ Best for: Most workflows                             │
+│                                                            │
+│  🔒 ALL {current}                                          │
+│     Verify the entire project before each commit.          │
+│     Slowest but highest confidence.                        │
+│     ✦ Best for: Critical code, integration changes         │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+AskUserQuestion:
 - header: "Verify"
 - question: "What verification should CAT run? (Current: {verify || 'changed'})"
 - options:
@@ -185,7 +327,32 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 **🔍 Curiosity — How much CAT explores beyond the immediate task**
 
-Display current setting, then AskUserQuestion:
+Output directly with inline padding (add "(current)" after matching level):
+
+```
+╭─── 🔍 CURIOSITY LEVEL ─────────────────────────────────────╮
+│  How much does CAT look beyond the task?                   │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  🎯 LOW {current}                                          │
+│     Task-only. Complete exactly whats required,            │
+│     nothing more. Dont look for improvements.              │
+│     ✦ Best for: Minimal scope, predictable output          │
+│                                                            │
+│  👀 MEDIUM {current}                                       │
+│     Opportunistic. Notice obvious issues encountered       │
+│     while working (bugs, deprecated syntax).               │
+│     ✦ Best for: Balanced thoroughness                      │
+│                                                            │
+│  🔭 HIGH {current}                                         │
+│     Proactive. Actively examine related code for           │
+│     patterns, tech debt, or optimization opportunities.    │
+│     ✦ Best for: Comprehensive improvement                  │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+AskUserQuestion:
 - header: "Curiosity"
 - question: "How much should CAT explore beyond the task? (Current: {curiosity || 'low'})"
 - options:
@@ -206,7 +373,32 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 **⏳ Patience — When CAT acts on discovered opportunities**
 
-Display current setting, then AskUserQuestion:
+Output directly with inline padding (add "(current)" after matching level):
+
+```
+╭─── ⏳ PATIENCE LEVEL ──────────────────────────────────────╮
+│  When does CAT act on what it finds?                       │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  ⚡ LOW {current}                                          │
+│     Act immediately. Address improvements as part of       │
+│     the current task. Scope expands but work is done.      │
+│     ✦ Best for: Comprehensive fixes, avoiding tech debt    │
+│                                                            │
+│  📋 MEDIUM {current}                                       │
+│     Defer to current version. Log improvements as          │
+│     separate tasks within the current version.             │
+│     ✦ Best for: Focused tasks with nearby follow-up        │
+│                                                            │
+│  📅 HIGH {current}                                         │
+│     Defer by priority. Schedule improvements to future     │
+│     versions based on benefit/cost ratio.                  │
+│     ✦ Best for: Surgical tasks, controlled scope           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+AskUserQuestion:
 - header: "Patience"
 - question: "When should CAT act on discovered opportunities? (Current: {patience || 'high'})"
 - options:
@@ -248,75 +440,21 @@ Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees:
 
 </step>
 
-<step name="terminal-width">
-
-**📏 Display Width selection:**
-
-AskUserQuestion:
-- header: "Display Width"
-- question: "What device are you primarily using?"
-- options:
-  - label: "🖥️ Desktop/Laptop (Recommended)"
-    description: "120 characters - optimized for wide monitors"
-  - label: "📱 Mobile"
-    description: "50 characters - optimized for phones and narrow screens"
-  - label: "⚙️ Custom value"
-    description: "Enter a specific width (40-200)"
-  - label: "← Back"
-    description: "Return to main menu"
-
-**Map selections:**
-- Desktop/Laptop → `terminalWidth: 120`
-- Mobile → `terminalWidth: 50`
-- Custom → prompt for value, validate 40-200
-
-**If Custom value selected:**
-
-AskUserQuestion:
-- header: "Custom Width"
-- question: "Enter terminal width (40-200):"
-- options: ["← Back"]
-
-Validate input is a number between 40-200. If invalid, show error and re-prompt.
-
-**Update config with safe jq pattern:**
-```bash
-jq '.terminalWidth = {value}' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
-  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
-```
-
-</step>
-
-<step name="completion-workflow">
-
-**🔀 Completion Workflow selection:**
-
-AskUserQuestion:
-- header: "Completion Workflow"
-- question: "How should completed tasks be integrated? (Current: {completionWorkflow || 'merge'})"
-- options:
-  - label: "🔀 Merge (Recommended)"
-    description: "Merge task branch directly to base branch after approval"
-  - label: "📝 Pull Request"
-    description: "Create a PR instead of merging directly"
-  - label: "← Back"
-    description: "Return to main menu"
-
-Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkflow: "pr"`
-
-**Update config with safe jq pattern:**
-```bash
-jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
-  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
-```
-
-</step>
-
 <step name="version-gates">
 
 **📊 Version Gates configuration:**
 
-Use the **VERSION_GATES_OVERVIEW** box from PRE-COMPUTED CONFIG BOXES.
+Output gate overview directly with inline padding:
+
+```
+╭─── 📊 VERSION GATES ───────────────────────────────────────╮
+│                                                            │
+│  Gates control when work can start and when its done.      │
+│  Each version can have entry (start) and exit (done)       │
+│  gates. Major gates are inherited by all minor versions.   │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 **Step 1: Select version to configure**
 
@@ -350,12 +488,37 @@ Parse input to determine if major (single digit) or minor (X.Y format).
 
 Read the PLAN.md for selected version:
 ```bash
-cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
-cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
+cat .claude/cat/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
+cat .claude/cat/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from PRE-COMPUTED CONFIG BOXES.
-Replace `{version}` and gate descriptions with actual values.
+Extract and display the `## Gates` section with inline padding:
+
+```
+╭─── 📊 Gates for v{version} ───────────────────────────────╮
+│                                                            │
+│  ENTRY (when can work start?):                             │
+│  • {condition 1}                                           │
+│  • {condition 2}                                           │
+│                                                            │
+│  EXIT (when is it done?):                                  │
+│  • {condition 1}                                           │
+│  • {condition 2}                                           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
+
+If no gates section exists:
+
+```
+╭─── ⚠️ No gates configured for v{version} ─────────────────╮
+│                                                            │
+│  Default behavior applies:                                 │
+│  • Entry: Previous version must complete                   │
+│  • Exit: All tasks must complete                           │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 **Step 3: Choose action**
 
@@ -427,8 +590,16 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Use the **GATES_UPDATED** box from PRE-COMPUTED CONFIG BOXES.
-Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
+Output confirmation directly with inline padding:
+
+```
+╭─── ✓ Gates updated for v{version} ────────────────────────╮
+│                                                            │
+│  Entry: {summary of entry conditions}                      │
+│  Exit:  {summary of exit conditions}                       │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
 
@@ -450,8 +621,15 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Use the **SETTING_UPDATED** box from PRE-COMPUTED CONFIG BOXES.
-Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
+Output directly with inline padding:
+
+```
+╭─── ✓ Setting updated ──────────────────────────────────────╮
+│                                                            │
+│  {setting}: {oldValue} → {newValue}                        │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 **After confirming**: Return to the **parent menu** and re-display its options.
 
@@ -466,13 +644,27 @@ Examples:
 
 **Exit screen:**
 
-If changes were made:
+If changes were made, output directly with inline padding:
 
-Use the **CONFIGURATION_SAVED** box from PRE-COMPUTED CONFIG BOXES.
+```
+╭─── ✨ CONFIGURATION SAVED ─────────────────────────────────╮
+│                                                            │
+│  Changes applied:                                          │
+│  • {setting1}: {old} → {new}                               │
+│  • {setting2}: {old} → {new}                               │
+│                                                            │
+│  Settings updated!                                         │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 If no changes:
 
-Use the **NO_CHANGES** box from PRE-COMPUTED CONFIG BOXES.
+```
+╭────────────────────────────────────────────────────────────╮
+│  No changes made. Settings unchanged.                      │
+╰────────────────────────────────────────────────────────────╯
+```
 
 </step>
 
@@ -482,14 +674,13 @@ Use the **NO_CHANGES** box from PRE-COMPUTED CONFIG BOXES.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
+| `contextLimit` | number | 200000 | Context window size |
+| `targetContextUsage` | number | 40 | Decomposition threshold (%) |
 | `trust` | string | "medium" | Trust level (controls review and autonomy) |
 | `verify` | string | "changed" | What verification runs before commits |
 | `curiosity` | string | "low" | Exploration beyond immediate task |
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
-| `completionWorkflow` | string | "merge" | Task completion behavior (merge or PR) |
-
-**Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
 ### Trust Values
 - `low` — Asks before fixing review issues. Presents options frequently.
@@ -510,10 +701,6 @@ Use the **NO_CHANGES** box from PRE-COMPUTED CONFIG BOXES.
 - `low` — Act immediately. Expand scope.
 - `medium` — Defer to current version.
 - `high` — Defer by priority to future versions.
-
-### Completion Workflow Values
-- `merge` — Merge task branch directly to base branch after approval (default).
-- `pr` — Create a pull request instead of merging directly.
 
 </configuration_reference>
 

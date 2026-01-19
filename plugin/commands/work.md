@@ -41,42 +41,11 @@ This is CAT's core execution command. It:
 
 <progress_output>
 
-**MANDATORY: Use pre-computed progress format from handler.**
+**MANDATORY: Display phase-based progress throughout execution.**
 
-Check conversation context for "PRE-COMPUTED WORK PROGRESS FORMAT" and render progress
-displays using those templates.
+This workflow has 4 phases. Display a persistent progress header that updates as phases complete.
 
-**CRITICAL: Copy-paste boxes verbatim from system-reminder (M246)**
-
-When the instructions say "Use the **XXX** box from PRE-COMPUTED WORK BOXES":
-1. Search conversation for "--- XXX ---" in the system-reminder
-2. Copy the ENTIRE box after that marker (all lines with ╭╮╰╯│ characters)
-3. Paste it EXACTLY - do NOT manually type or reconstruct it
-4. Only replace placeholder text like `{task-name}` with actual values
-
-**Why:** Box characters and emoji widths vary across terminals. Pre-computed boxes are tested
-for alignment; manually typed boxes will have misaligned vertical bars.
-
-The handler provides:
-
-- Header format template
-- Progress banner format with phase symbols
-- Example transitions for each phase
-- Success and failure display formats
-
-**If NOT found**: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "work boxes" "/cat:work"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed work boxes not found."
-  echo "Check that hooks/skill_handlers/work_handler.py exists."
-fi
-```
-
-Output the error and STOP.
-
-### Phase Mapping
+**Phase mapping:**
 
 | Phase | Steps Included | Complete When |
 |-------|----------------|---------------|
@@ -85,30 +54,113 @@ Output the error and STOP.
 | Reviewing | stakeholder_review, approval_gate | Review passed, user approved |
 | Merging | squash_commits, merge, cleanup, update_state, commit_metadata, update_changelogs, next_task | Merged to main, cleanup done |
 
-### Key Principles
+**Progress symbols:**
 
-1. **Use templates from handler** - Render progress inline using provided formats
-2. **Full task ID required** - Format: `{major}.{minor}-{task-name}`
-3. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
-4. **Update at transitions** - Display progress banner when phase changes
+| Symbol | Meaning |
+|--------|---------|
+| `▸` | Phase active or complete |
+| `▹` | Phase pending (not started) |
+| `◆` | Operation currently running |
+| `✓` | Success |
+| `✗` | Failure/blocked |
+
+**Display format (output directly, NOT in code blocks):**
+
+**MANDATORY (M129):** Verify ALL box lines have identical display width before output. Count explicitly.
+
+At workflow start, display the header and initial state:
+
+╭─────────────────────────────────────────────────────────────────╮
+│  CAT ► {task-name}                                              │
+╰─────────────────────────────────────────────────────────────────╯
+
+▸ Preparing ◆
+▹ Executing
+▹ Reviewing
+▹ Merging
+
+──────────────────────────────────────────────────────────────────
+
+**Update display at phase transitions:**
+
+When Preparing completes:
+```
+▸ Preparing ✓
+▸ Executing ◆ subagent {id} running...
+▹ Reviewing
+▹ Merging
+```
+
+When subagent completes (show metrics inline):
+```
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ◆ stakeholder review...
+▹ Merging
+```
+
+When Reviewing completes:
+```
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ✓ approved
+▸ Merging ◆
+```
+
+**On success (final state):**
+
+╭─────────────────────────────────────────────────────────────────╮
+│  CAT ► {task-name}                                         ✓    │
+╰─────────────────────────────────────────────────────────────────╯
+
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ✓ approved
+▸ Merging ✓ → main
+
+Next: {next-task-name} (run `/cat:work` to continue)
+
+──────────────────────────────────────────────────────────────────
+
+**On failure (show context inline):**
+
+╭─────────────────────────────────────────────────────────────────╮
+│  CAT ► {task-name}                                         ✗    │
+╰─────────────────────────────────────────────────────────────────╯
+
+▸ Preparing ✓
+▸ Executing ✓ {N}K tokens · {N} commits
+▸ Reviewing ✗ BLOCKED: {reason}
+    → {specific issue and location}
+
+Action required: {what user needs to do}
+
+──────────────────────────────────────────────────────────────────
+
+**Key principles:**
+
+1. **Task always visible** - Header box shows task name throughout
+2. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
+3. **Metrics that matter** - Tokens and commits shown inline when available
+4. **State at a glance** - Triangle symbols show progress instantly
+5. **Failure context inline** - Shows what went wrong immediately
+6. **Next action clear** - On success, suggests next task
 
 </progress_output>
 
 <execution_context>
 
-<!-- SKILL.md vs PLAN.md (A015/M172): Always reference SKILL.md for skill usage.
-     PLAN.md = what to build (task planning). SKILL.md = how to use it (authoritative). -->
-
-@${CLAUDE_PLUGIN_ROOT}/concepts/work.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/merge-and-cleanup.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/agent-architecture.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/subagent-delegation.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/commit-types.md
-@${CLAUDE_PLUGIN_ROOT}/templates/changelog.md
-@${CLAUDE_PLUGIN_ROOT}/skills/spawn-subagent/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/skills/stakeholder-review/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/work.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/merge-and-cleanup.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/agent-architecture.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/subagent-delegation.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/commit-types.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/merge-subagent/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/stakeholder-review/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/choose-approach/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
 
 </execution_context>
 
@@ -118,9 +170,9 @@ Output the error and STOP.
 
 | Scenario | Load Workflow |
 |----------|---------------|
-| Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/concepts/version-completion.md |
-| Task discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/concepts/duplicate-task.md |
-| Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/concepts/token-warning.md |
+| Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/version-completion.md |
+| Task discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/duplicate-task.md |
+| Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/token-warning.md |
 
 </conditional_context>
 
@@ -150,38 +202,14 @@ Task path: $ARGUMENTS
 
 Read `.claude/cat/cat-config.json` to determine:
 - `trust` - trust level (high = skip approval gates)
-
-**Note:** Context limits are fixed (not configurable). See agent-architecture.md for details.
+- `contextLimit` - total context window size
+- `targetContextUsage` - soft limit for task size
 
 </step>
 
 <step name="find_task">
 
 **Identify task to execute:**
-
-**Optional: Use find-task.sh script**
-
-For programmatic task discovery, use the `find-task.sh` script:
-
-```bash
-# Find next available task
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" "${CLAUDE_PROJECT_DIR}" --session-id "$SESSION_ID")
-
-# Parse result
-if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
-  TASK_ID=$(echo "$RESULT" | jq -r '.task_id')
-  TASK_PATH=$(echo "$RESULT" | jq -r '.task_path')
-  MAJOR=$(echo "$RESULT" | jq -r '.major')
-  MINOR=$(echo "$RESULT" | jq -r '.minor')
-  TASK_NAME=$(echo "$RESULT" | jq -r '.task_name')
-  echo "✓ Found task: $TASK_ID"
-else
-  echo "No executable tasks found"
-  echo "$RESULT" | jq -r '.message // .status'
-fi
-```
-
-The script handles argument parsing, version filtering, dependency checks, lock acquisition, and gate evaluation.
 
 **Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this command.
 All bash commands below use this value directly.
@@ -225,7 +253,7 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
 
 **If $ARGUMENTS is a task ID (major.minor-task-name format):**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
-- Validate task exists at `.claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/`
+- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/`
 - **Try to acquire lock BEFORE loading task details** (see lock check below)
 - Load its STATE.md and PLAN.md
 
@@ -238,8 +266,8 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
   4. **Task is not locked by another session** (see lock check below)
 
 ```bash
-# Find all task STATE.md files (tasks are directly under minor version directories)
-find .claude/cat/issues/v*/v*.*/ -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
+# Find all task STATE.md files (task/ subdirectory contains task directories)
+find .claude/cat/v*/v*.*/task -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
 **MANDATORY: Lock Check Before Offering Task (M097)**
@@ -252,7 +280,7 @@ TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 # Session ID is auto-substituted
 
 # Try to acquire lock
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
@@ -364,41 +392,22 @@ argument, skip the entry gate check for that specific task.
 
 **If no executable task found:**
 
-**MANDATORY: Copy-paste the exact box from system-reminder (M246)**
+```
+No executable tasks found.
 
-Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the PRE-COMPUTED WORK BOXES
-section. Copy the ENTIRE box structure verbatim - do NOT manually type it. Box characters and
-emoji widths vary across terminals; only the pre-computed version is guaranteed aligned.
-
-**MANDATORY: Accept find-task.sh results (M245)**
-
-When find-task.sh returns "no executable tasks", this is the CORRECT answer. Do NOT:
-- Manually search for pending tasks to work around this result
-- Try to acquire locks on tasks that the script already determined are unavailable
-- Second-guess the script's lock checking logic
-
-The script already checks all tasks for: status, dependencies, entry gates, AND locks.
-If it says no tasks are available, there are no tasks available.
-
-**Explain why no tasks are available** (provide one or more reasons):
-- Tasks blocked by dependencies (list the blocking tasks)
-- Tasks have existing worktrees (indicate likely in use by another session)
-- Tasks locked by another session
+Possible reasons:
 - All tasks completed
+- Remaining tasks have unmet dependencies
+- Exit gate tasks waiting for non-gating tasks to complete
+- Entry gates not satisfied
+- All eligible tasks are locked by other sessions
+- No tasks defined yet
 
-**Suggest `/cat:cleanup`** if worktrees exist:
-- Present as an option ONLY if user believes the worktrees are stale
-- Do NOT assume worktrees are stale or offer to investigate them
+Use /cat:status to see current state and gate status.
+Use /cat:add to add new tasks.
 
-**NEVER offer to resume existing worktrees (M239):**
-- Existing worktrees are treated as "in use by another session"
-- The correct response is to skip them and find alternative work
-- If no alternative work exists, inform user and suggest cleanup only if they believe worktrees are stale
-
-**If specific task requested but not found:**
-
-Use the **TASK_NOT_FOUND** box from PRE-COMPUTED WORK BOXES.
-Replace `{task-name}` and `{suggestion}` with actual values.
+If you believe locks are from crashed sessions, run /cat:cleanup.
+```
 
 Exit command.
 
@@ -432,7 +441,7 @@ Read the task's:
 - Parent major's `STATE.md` - for context
 
 Present task overview with visual progress bar
-(see display-standards.md § Progress Bar Format).
+(see [display-standards.md § Progress Bar Format](.claude/cat/references/display-standards.md#progress-bar-format)).
 
 **CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
@@ -448,6 +457,9 @@ Output format (do NOT wrap in ```):
 **Goal:**
 {goal from PLAN.md}
 
+**Approach:**
+{approach from PLAN.md}
+
 </step>
 
 <step name="validate_requirements_coverage">
@@ -455,14 +467,11 @@ Output format (do NOT wrap in ```):
 **MANDATORY: Validate all requirements are covered before execution.**
 
 This step ensures 100% requirements traceability before implementation begins.
-Requirements can be defined at any version level (major, minor, or patch), and this
-validation works regardless of which level the task's parent version is.
 
 **Extract requirements from PLAN.md:**
 
 ```bash
 # Extract REQ-* IDs from ## Requirements section
-# Works for any version level's PLAN.md (major, minor, or patch)
 REQUIREMENTS=$(grep -oE 'REQ-[0-9]+' "$TASK_PATH/PLAN.md" | sort -u)
 REQ_COUNT=$(echo "$REQUIREMENTS" | wc -l)
 echo "Found $REQ_COUNT requirements"
@@ -529,20 +538,6 @@ Proceeding to task size analysis.
 
 **MANDATORY: Analyze task complexity BEFORE execution.**
 
-**Option: Use Exploration Subagent**
-
-For cleaner UX, spawn an exploration subagent to handle preparation, exploration, and verification
-phases internally. This hides noisy tool calls (Bash, Read, Grep) from the user and returns
-structured JSON. See `spawn-subagent` skill → "Expanded Exploration Subagent" section.
-
-```bash
-# Spawn exploration subagent for preparation + exploration
-/cat:spawn-subagent --type exploration --task "$TASK_PATH"
-# Returns JSON with: status, preparation.estimatedTokens, findings, verification
-```
-
-**Alternative: Inline Analysis (current default)**
-
 Read the task's PLAN.md and estimate context requirements.
 
 Output format (do NOT wrap in ```):
@@ -556,18 +551,15 @@ Output format (do NOT wrap in ```):
 - Complex logic requiring exploration
 - Estimated steps > 10
 
-**Calculate threshold and hard limit (fixed values):**
+**Calculate threshold from config:**
 
 ```bash
-# Values from agent-architecture.md § Context Limit Constants
-CONTEXT_LIMIT=...
-SOFT_TARGET_PCT=...
-HARD_LIMIT_PCT=...
-SOFT_TARGET=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
-HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
+# Read from cat-config.json
+CONTEXT_LIMIT=$(jq -r '.contextLimit // 200000' .claude/cat/cat-config.json)
+TARGET_USAGE=$(jq -r '.targetContextUsage // 40' .claude/cat/cat-config.json)
+THRESHOLD=$((CONTEXT_LIMIT * TARGET_USAGE / 100))
 
-echo "Soft target: ${SOFT_TARGET} tokens (${SOFT_TARGET_PCT}% of ${CONTEXT_LIMIT})"
-echo "Hard limit: ${HARD_LIMIT} tokens (${HARD_LIMIT_PCT}% of ${CONTEXT_LIMIT})"
+echo "Context threshold: ${THRESHOLD} tokens (${TARGET_USAGE}% of ${CONTEXT_LIMIT})"
 ```
 
 **Estimate task size:**
@@ -594,59 +586,17 @@ echo "Estimated tokens: ${ESTIMATED_TOKENS}"
 
 This estimate will be compared against actual subagent token usage to detect estimation errors.
 
-**Hard Limit Enforcement (A018):**
-
-```bash
-if [ "${ESTIMATED_TOKENS}" -ge "${HARD_LIMIT}" ]; then
-  echo "🛑 TASK EXCEEDS HARD LIMIT - MANDATORY DECOMPOSITION"
-  echo "Estimated: ${ESTIMATED_TOKENS} tokens"
-  echo "Hard limit: ${HARD_LIMIT} tokens (80% of context)"
-  echo "Decomposition is REQUIRED. Do NOT spawn subagent."
-  # MANDATORY: invoke /cat:decompose-task
-fi
-```
-
-**If estimated size >= hard limit (80%):**
+**If estimated size > threshold:**
 
 ```
-🛑 TASK EXCEEDS HARD LIMIT - MANDATORY DECOMPOSITION
+⚠️ TASK SIZE EXCEEDS CONTEXT THRESHOLD
 
 Estimated tokens: ~{estimate}
-Hard limit: {HARD_LIMIT} (80% of {CONTEXT_LIMIT})
+Threshold: {THRESHOLD} ({TARGET_USAGE}% of {CONTEXT_LIMIT})
 
-MANDATORY: Task MUST be decomposed before execution.
-Invoking /cat:decompose-task...
+AUTO-DECOMPOSITION TRIGGERED
+Invoking /cat:decompose-task to split into smaller tasks...
 ```
-
-Invoke `/cat:decompose-task` automatically. Do NOT proceed with single subagent.
-
-**If estimated size > soft threshold but < hard limit:**
-
-```
-⚠️ TASK SIZE EXCEEDS SOFT THRESHOLD
-
-Estimated tokens: ~{estimate}
-Soft threshold: {THRESHOLD} ({TARGET_USAGE}% of {CONTEXT_LIMIT})
-Hard limit: {HARD_LIMIT} (80% of {CONTEXT_LIMIT})
-
-RECOMMENDATION: Consider decomposing for optimal quality.
-Proceeding is allowed but may result in quality degradation.
-```
-
-Use AskUserQuestion:
-- header: "Task Size"
-- question: "Task exceeds soft threshold ({TARGET_USAGE}% of context). How would you like to proceed?"
-- options:
-  - "Decompose into subtasks (Recommended)" - Invoke /cat:decompose-task to split into smaller tasks
-  - "Proceed anyway" - Continue with single subagent execution (may degrade quality)
-  - "Abort" - Stop and review task scope
-
-**If "Decompose into subtasks":**
-Invoke `/cat:decompose-task` automatically, then proceed with parallel execution.
-
-**If "Proceed anyway":**
-
-**If estimated size <= soft threshold:**
 
 Invoke `/cat:decompose-task` automatically, then proceed with parallel execution.
 
@@ -690,95 +640,100 @@ Continue to choose_approach step.
 
 <step name="choose_approach">
 
-**Present approach choice if conditions warrant:**
+**Present approach options if task has multiple viable paths:**
 
-This step implements the "Fork in the Road" experience. It presents choices when:
-- Trust is NOT high (low or medium)
+This step implements the "Fork in the Road" experience. It only presents choices when:
 - PLAN.md has 2+ genuinely different approaches
-- User's config doesn't clearly predict one path (< 85% confidence)
+- User's stored preferences don't clearly favor one path
+- Approaches have meaningfully different tradeoffs
 
-**Step 1: Check trust level**
+**Load user preferences:**
 
 ```bash
-TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
-if [[ "$TRUST_LEVEL" == "high" ]]; then
-  echo "✓ Trust: high - auto-selecting best approach based on config"
-  # Skip to auto-selection
-fi
+# Read behavior preferences (1.9+)
+USER_CURIOSITY=$(jq -r '.curiosity // "medium"' .claude/cat/cat-config.json)
+USER_PATIENCE=$(jq -r '.patience // "medium"' .claude/cat/cat-config.json)
 ```
 
-**Step 2: Extract approaches from PLAN.md**
+**Analyze PLAN.md for approaches:**
 
-Look for `## Approaches` section with subsections like:
-```markdown
-## Approaches
+Look for:
+- "## Approach" or "## Approaches" section
+- "## Alternatives" section
+- Risk Assessment section
 
-### A: [Name]
-- Risk: LOW|MEDIUM|HIGH
-- Scope: N files
-- Description...
+**Decision matrix:**
 
-### B: [Name]
-...
-```
+| Task Pattern | Curiosity Level | Action |
+|--------------|-----------------|--------|
+| Single approach | Any | Auto-proceed |
+| Low risk, obvious | Any | Auto-proceed |
+| High complexity | Any | Show choice, recommend "Research first" |
+| Multiple approaches | low | Show choice, recommend safer path |
+| Multiple approaches | high | Show choice, recommend comprehensive path |
+| Multiple approaches | medium | Show choice, no recommendation |
 
-If only one approach exists or no Approaches section:
-```
-✓ Single approach identified - proceeding automatically
-```
-Skip to create_worktree.
-
-**Step 3: Calculate confidence scores**
-
-For each approach, calculate alignment with user's config:
-
-| Config Setting | Approach Characteristic | Alignment |
-|----------------|------------------------|-----------|
-| trust: low | Risk: LOW | +1.0 |
-| trust: low | Risk: MEDIUM | +0.3 |
-| trust: low | Risk: HIGH | +0.0 |
-| trust: medium | Risk: LOW | +0.5 |
-| trust: medium | Risk: MEDIUM | +1.0 |
-| trust: medium | Risk: HIGH | +0.5 |
-| curiosity: low | Scope: minimal/focused | +1.0 |
-| curiosity: medium | Scope: moderate/balanced | +1.0 |
-| curiosity: high | Scope: comprehensive/broad | +1.0 |
-
-**Confidence calculation:**
-```
-score = (trust_alignment + curiosity_alignment) / 2
-confidence = max_score / sum_of_all_scores * 100
-```
-
-**Step 4: Decision logic**
+**If auto-proceed:**
 
 ```
-if max_confidence >= 85%:
-  auto_select(highest_scoring_approach)
-  display: "✓ Approach: [name] (auto-selected: {confidence}% config alignment)"
-else:
-  present_wizard()
+✓ Approach: [approach name]
+  (Auto-selected: [reason - e.g., "single viable approach" or "matches conservative style"])
 ```
 
-**Step 5: Present wizard (if needed)**
+**If choice needed, display fork using wizard-style format:**
 
-Use the **FORK_IN_THE_ROAD** box from PRE-COMPUTED WORK BOXES.
-Replace placeholders with actual approach data.
+See [display-standards.md § Fork in the Road](.claude/cat/references/display-standards.md#fork-in-the-road)
+and [choose-approach skill](skills/choose-approach/SKILL.md) for full format.
 
-Use AskUserQuestion to capture selection:
-- header: "Approach"
-- question: "Which approach would you like to use?"
-- options: [List of approaches with alignment percentages]
+```
+🔀 FORK IN THE ROAD
+╭─────────────────────────────────────────────────────────────────╮
+   Task: {task-name}
+   Risk: {LOW|MEDIUM|HIGH}
 
-**Step 6: Record selection**
+   CHOOSE YOUR PATH
+   ─────────────────────────────────────────────────────────────────
+
+   [A] 🛡️ Conservative
+       {scope description}
+       Risk: LOW | Scope: {N} files | ~{N}K tokens
+
+   [B] ⚖️ Balanced
+       {scope description}
+       Risk: MEDIUM | Scope: {N} files | ~{N}K tokens
+
+   [C] ⚔️ Aggressive
+       {scope description}
+       Risk: HIGH | Scope: {N} files | ~{N}K tokens
+
+   ─────────────────────────────────────────────────────────────────
+   ANALYSIS
+   ─────────────────────────────────────────────────────────────────
+
+   ⭐ QUICK WIN: [{letter}] {approach name}
+      {rationale for immediate completion}
+
+   🏆 LONG-TERM: [{letter}] {approach name}
+      {rationale for project health over time}
+
+   {Note if they differ}
+
+╰─────────────────────────────────────────────────────────────────╯
+```
+
+Use AskUserQuestion to capture selection.
+
+**Record choice in STATE.md:**
 
 Add to task's STATE.md:
 ```yaml
 - **Approach Selected:** [approach name]
-- **Selection Reason:** [user choice | auto-selected: {confidence}% alignment]
+- **Selection Reason:** [user choice | auto-selected: reason]
 ```
 
-Pass selected approach to subagent prompt to guide implementation.
+**Pass to subagent:**
+
+The selected approach will be included in the subagent prompt to guide implementation.
 
 </step>
 
@@ -789,33 +744,22 @@ Pass selected approach to subagent prompt to guide implementation.
 Branch naming: `{major}.{minor}-{task-name}`
 
 ```bash
-# Detect base branch (currently checked out branch in main worktree)
-BASE_BRANCH=$(git branch --show-current)
-echo "Base branch for task: $BASE_BRANCH"
+# Ensure we're on main branch
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
 
-# Create task branch from current branch (not hardcoded main)
+# Create branch if it doesn't exist
 TASK_BRANCH="{major}.{minor}-{task-name}"
-git branch "$TASK_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
+git branch "$TASK_BRANCH" "$MAIN_BRANCH" 2>/dev/null || true
 
 # Create worktree (use absolute path to avoid cwd dependency)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$TASK_BRANCH"
 git worktree add "$WORKTREE_PATH" "$TASK_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
 
-# Store base branch in worktree metadata (auto-deleted when worktree removed)
-echo "$BASE_BRANCH" > "$(git rev-parse --git-common-dir)/worktrees/$TASK_BRANCH/cat-base"
-
 # MANDATORY: Change to worktree directory
 cd "$WORKTREE_PATH"
 pwd  # Verify we're in the worktree
 ```
-
-**Base Branch Configuration:**
-
-The base branch is stored in the worktree's metadata directory at `.git/worktrees/<task>/cat-base`.
-This file is automatically deleted when the worktree is removed, preventing orphaned config entries.
-Tasks can be forked from any branch (main, v1.10, feature branches, etc.) and merge back to
-the same branch when complete.
 
 **CRITICAL: Main agent MUST work from worktree directory**
 
@@ -824,38 +768,6 @@ After creating the worktree, `cd` into it and stay there for the remainder of ta
 - Git commands operate on the task branch
 - STATE.md updates go to the worktree copy (not main workspace)
 - No confusion between main workspace and worktree file paths
-
-**Read Git Workflow Preferences (if configured):**
-
-```bash
-# Check if Git Workflow section exists in PROJECT.md
-WORKFLOW_SECTION=$(grep -A50 "^## Git Workflow" .claude/cat/PROJECT.md 2>/dev/null | head -50)
-
-if [[ -n "$WORKFLOW_SECTION" ]]; then
-  # Extract branching strategy
-  BRANCH_STRATEGY=$(echo "$WORKFLOW_SECTION" | grep -oP "(?<=branchingStrategy.*:\s*\")[^\"]+|(?<=Strategy:\s)\w+" | head -1 || echo "feature")
-
-  # Extract merge method preference
-  MERGE_METHOD=$(echo "$WORKFLOW_SECTION" | grep "MUST use" | grep -oP "(fast-forward|merge commit|squash)" | head -1 || echo "fast-forward")
-
-  echo "Git workflow configured:"
-  echo "  Branching: $BRANCH_STRATEGY"
-  echo "  Merge: $MERGE_METHOD"
-
-  # For version-branch strategy, verify we're branching from correct version branch
-  if [[ "$BRANCH_STRATEGY" == "version" ]]; then
-    EXPECTED_BASE="v${MAJOR}.${MINOR}"
-    if [[ "$BASE_BRANCH" != "$EXPECTED_BASE" && "$BASE_BRANCH" != "main" && ! "$BASE_BRANCH" =~ ^v[0-9]+\.[0-9]+$ ]]; then
-      echo "⚠️ WARNING: Git workflow configured for version branches"
-      echo "   Expected base: $EXPECTED_BASE or a version branch"
-      echo "   Actual base: $BASE_BRANCH"
-      echo "   Task will still proceed, but verify this is intentional."
-    fi
-  fi
-else
-  echo "No Git Workflow section in PROJECT.md - using defaults"
-fi
-```
 
 **Update task STATE.md:**
 
@@ -903,7 +815,7 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
 2. Invoke `/cat:spawn-subagent` skill with:
    - Task path
-   - PLAN.md contents
+   - PLAN.md contents (with Selected Approach filled in)
    - Worktree path
    - Token tracking enabled
    - Curiosity instruction (determines issue reporting, NOT fixing)
@@ -992,107 +904,13 @@ This helps calibrate estimation factors over time and identify patterns in under
 
 </step>
 
-<step name="aggregate_token_report">
-
-**Aggregate token usage across all subagents (multi-subagent tasks):**
-
-For tasks that spawned multiple subagents (parallel execution or decomposed tasks), aggregate
-token metrics from all `.completion.json` files.
-
-```bash
-# Values from agent-architecture.md § Context Limit Constants
-CONTEXT_LIMIT=...
-HARD_LIMIT_PCT=...
-HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
-
-# Find all subagent completion files for this task
-TASK_WORKTREES=$(find .worktrees -name ".completion.json" -path "*${TASK_ID}*" 2>/dev/null)
-
-# Aggregate metrics
-TOTAL_TOKENS=0
-TOTAL_EXCEEDED=0
-
-echo "## Aggregate Token Report"
-echo ""
-echo "| Subagent | Type | Tokens | % of Limit | Status |"
-echo "|----------|------|--------|------------|--------|"
-
-for completion_file in $TASK_WORKTREES; do
-  SUBAGENT_NAME=$(dirname "$completion_file" | xargs basename)
-  TOKENS=$(jq -r '.tokensUsed // 0' "$completion_file")
-  # Get subagent type from completion.json or parse from directory name
-  SUBAGENT_TYPE=$(jq -r '.subagentType // "implementation"' "$completion_file")
-  PERCENT=$((TOKENS * 100 / CONTEXT_LIMIT))
-  TOTAL_TOKENS=$((TOTAL_TOKENS + TOKENS))
-
-  if [ "$TOKENS" -ge "$HARD_LIMIT" ]; then
-    STATUS="EXCEEDED"
-    TOTAL_EXCEEDED=$((TOTAL_EXCEEDED + 1))
-  elif [ "$TOKENS" -ge "$((HARD_LIMIT * 90 / 100))" ]; then
-    STATUS="WARNING"
-  else
-    STATUS="OK"
-  fi
-
-  echo "| $SUBAGENT_NAME | $SUBAGENT_TYPE | $TOKENS | ${PERCENT}% | $STATUS |"
-done
-
-echo ""
-echo "**Total tokens:** $TOTAL_TOKENS"
-echo "**Subagents exceeded hard limit:** $TOTAL_EXCEEDED"
-```
-
-**If any subagent exceeded hard limit:**
-
-```bash
-if [ "$TOTAL_EXCEEDED" -gt 0 ]; then
-  echo ""
-  echo "⚠️ CONTEXT LIMIT VIOLATIONS DETECTED"
-  echo ""
-  echo "$TOTAL_EXCEEDED subagent(s) exceeded the 80% hard limit."
-  echo "Triggering learn-from-mistakes for each violation..."
-
-  # For each exceeded subagent, invoke learn-from-mistakes
-  for completion_file in $TASK_WORKTREES; do
-    TOKENS=$(jq -r '.tokensUsed // 0' "$completion_file")
-    if [ "$TOKENS" -ge "$HARD_LIMIT" ]; then
-      SUBAGENT_NAME=$(dirname "$completion_file" | xargs basename)
-      # Invoke /cat:learn-from-mistakes with A018 reference
-      echo "Recording violation: $SUBAGENT_NAME used $TOKENS tokens (limit: $HARD_LIMIT)"
-    fi
-  done
-fi
-```
-
-**Output format for aggregate report:**
-
-```
-## Aggregate Token Report
-
-| Subagent | Type | Tokens | % of Limit | Status |
-|----------|------|--------|------------|--------|
-| task-sub-a1b2c3d4 | exploration | 65,000 | 32% | OK |
-| task-sub-e5f6g7h8 | implementation | 170,000 | 85% | EXCEEDED |
-| task-sub-i9j0k1l2 | planning | 45,000 | 22% | OK |
-
-**Total tokens:** 280,000
-**Subagents exceeded hard limit:** 1
-
-⚠️ CONTEXT LIMIT VIOLATIONS DETECTED
-
-1 subagent(s) exceeded the 80% hard limit.
-Triggering learn-from-mistakes for each violation...
-```
-
-</step>
-
 <step name="token_check">
 
 **Evaluate token metrics for decomposition:**
 
 **→ Load token-warning.md workflow if compaction events > 0 or tokens exceed threshold.**
 
-See `concepts/token-warning.md` for:
+See `.claude/cat/workflows/token-warning.md` for:
 - Compaction event warning and user decision
 - High token usage informational warning
 - Decomposition recommendations
@@ -1212,15 +1030,8 @@ echo "Verification level: $VERIFY_LEVEL"
 
 ```bash
 # Check if any source files changed (not just STATE.md or CHANGELOG.md)
-# Read base branch from worktree metadata (set during worktree creation)
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-  echo "ERROR: Base branch file not found: $CAT_BASE_FILE"
-  echo "This worktree was not created properly. Recreate with /cat:work."
-  exit 1
-fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
-SOURCE_CHANGES=$(git diff --name-only ${BASE_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+SOURCE_CHANGES=$(git diff --name-only ${MAIN_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
 
 if [[ -z "$SOURCE_CHANGES" ]]; then
   echo "⚡ VERIFICATION: SKIPPED (no source files changed)"
@@ -1260,7 +1071,7 @@ CHANGED_FILES=$(git diff --name-only origin/HEAD..HEAD)
 
 **Approach:**
 1. Identify changed files from git diff
-2. Detect project type (see [build-verification.md](../concepts/build-verification.md) for detection logic)
+2. Detect project type (see build-verification.md for detection logic)
 3. Run project-appropriate targeted tests for those files/modules
 4. Report results
 
@@ -1480,72 +1291,14 @@ Proceed to approval_gate with stakeholder summary:
 
 Skip if `trust: "high"` in config.
 
-### Pre-Approval Checklist (MANDATORY - A010)
-
-**BLOCKING: Do NOT present approval until ALL items are verified.**
-
-Before presenting the approval gate, complete this checklist in order:
-
-| # | Check | How to Verify | Fix if Failed |
-|---|-------|---------------|---------------|
-| 1 | Commits squashed by type | `git log --oneline ${BASE_BRANCH}..HEAD` shows 1-2 commits | Use `/cat:git-squash` skill |
-| 2 | STATE.md status = completed | `grep "Status:" STATE.md` shows `completed` | Edit STATE.md |
-| 3 | STATE.md progress = 100% | `grep "Progress:" STATE.md` shows `100%` | Edit STATE.md |
-| 4 | STATE.md in commit | `git diff --name-only ${BASE_BRANCH}..HEAD \| grep STATE.md` | Amend commit to include |
-| 5 | Diff content ready | `git diff ${BASE_BRANCH}..HEAD` output captured | Run diff command |
-
-**Anti-patterns this checklist prevents:**
-- M151: Approval with unsquashed commits
-- M153: Approval with STATE.md at 90% in-progress
-- M157: Approval without squashing first
-- M160/M161: Approval without showing diff
-
-```bash
-# Run all checks in one script
-BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base")
-TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
-
-# Check 1: Commit count (should be 1-2 after squash)
-COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD)
-if [[ "$COMMIT_COUNT" -gt 3 ]]; then
-  echo "FAIL: $COMMIT_COUNT commits - need to squash first"
-  exit 1
-fi
-
-# Check 2 & 3: STATE.md status and progress
-if ! grep -q "Status.*completed" "$TASK_STATE"; then
-  echo "FAIL: STATE.md status not 'completed'"
-  exit 1
-fi
-if ! grep -q "Progress.*100%" "$TASK_STATE"; then
-  echo "FAIL: STATE.md progress not '100%'"
-  exit 1
-fi
-
-# Check 4: STATE.md in commit
-if ! git diff --name-only ${BASE_BRANCH}..HEAD | grep -q "STATE.md"; then
-  echo "FAIL: STATE.md not in commit"
-  exit 1
-fi
-
-echo "PASS: All pre-approval checks passed"
-```
-
 **MANDATORY: Verify commit exists before presenting approval (M072).**
 
 Users cannot review uncommitted changes. Before presenting the approval gate:
 
 ```bash
-# Verify there are commits on the task branch that aren't on base branch
-# Read base branch from worktree metadata (set during worktree creation)
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-  echo "ERROR: Base branch file not found: $CAT_BASE_FILE"
-  echo "This worktree was not created properly. Recreate with /cat:work."
-  exit 1
-fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
-COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD 2>/dev/null || echo "0")
+# Verify there are commits on the task branch that aren't on main
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+COMMIT_COUNT=$(git rev-list --count ${MAIN_BRANCH}..HEAD 2>/dev/null || echo "0")
 
 if [[ "$COMMIT_COUNT" -eq 0 ]]; then
   echo "ERROR: No commits on task branch. Commit changes before approval gate."
@@ -1561,7 +1314,7 @@ The user sees a summary but cannot `git diff` or review actual file contents.
 Before presenting approval gate, verify STATE.md is included:
 
 ```bash
-TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
 
 # Check if STATE.md was modified in the commits
 if ! git diff --name-only ${MAIN_BRANCH}..HEAD | grep -q "STATE.md"; then
@@ -1578,7 +1331,7 @@ not in a separate docs commit:
 
 ```bash
 # Update task STATE.md before committing implementation
-TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
 ```
 
 **Required STATE.md fields for completion (M092):**
@@ -1608,8 +1361,20 @@ Present work summary with checkpoint display.
 **CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
 
-Use the **CHECKPOINT_TASK_COMPLETE** box from PRE-COMPUTED WORK BOXES.
-Replace placeholders with actual values: `{task-name}`, `{N}`, `{percentage}`, `{task-branch}`.
+Output format (do NOT wrap in ```):
+
+✅ **CHECKPOINT: Task Complete**
+╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                              │
+│  **Task:** {task-name}                                                                       │
+│  **Approach:** {selected approach from choose_approach step}                                 │
+│                                                                                              │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│  **Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)                          │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│  **Branch:** {task-branch}                                                                   │
+│                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 
 **Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
 Users review the task branch which contains merged subagent work, not the internal subagent branch.
@@ -1617,229 +1382,25 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
-**MANDATORY: Show diff BEFORE approval question (M160/M201).**
-
-Users cannot make informed approval decisions without seeing actual code changes. Before presenting
-the AskUserQuestion approval prompt, use the `cat:render-diff` skill to display the diff:
-
-```bash
-# Show commit summary
-git log ${BASE_BRANCH}..HEAD --oneline
-
-# Render diff using the render-diff skill (4-column table format)
-git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
-```
-
-See [render-diff SKILL.md](../skills/render-diff/SKILL.md) for format details and features.
-
-**SELF-CHECK before showing approval gate (M201/M211):**
-- [ ] Did I run render-diff.py (NOT plain `git diff`)?
-- [ ] Did I present the VERBATIM output (not reformatted, summarized, or extracted)?
-- [ ] Does the output I showed have box characters (╭╮╰╯│)?
-- [ ] Is the output I showed in 4-column format (Old | Symbol | New | Content)?
-
-If any answer is NO, re-run using the render-diff skill command above.
-
-**CRITICAL (M211): Present render-diff output VERBATIM.**
-Copy-paste the exact Bash tool output into your response. Do NOT:
-- Extract portions into code blocks
-- Reformat into standard diff format
-- Summarize or paraphrase the changes
-- Create your own diff representation
-
-The user must see the ACTUAL render-diff output, not your interpretation of it.
-
-**CRITICAL (M231): Handle large diffs by showing ALL content.**
-When diff output is truncated or saved to a file due to size:
-1. Read the ENTIRE saved file using the Read tool (use offset/limit if needed for multiple reads)
-2. Present ALL file contents to the user, not just excerpts
-3. If output exceeds response limits, split across multiple messages
-4. NEVER summarize with "remaining diff shows..." - show the actual content
-5. Users MUST see every changed line to make informed approval decisions
-
-Anti-pattern: Reading only first 200 lines of a 115KB diff and summarizing the rest as "standard
-implementation". This defeats the purpose of showing the diff.
-
-**Anti-pattern (M160):** Presenting approval gate with only file change summary (names, line counts)
-without showing the actual diff content. Users reject approval because they cannot evaluate changes.
-
-**Anti-pattern (M170/M171/M201):** Using plain `git diff` or ad-hoc formats instead of render-diff skill.
-The render-diff skill provides 4-column table with box characters - plain diffs are NOT acceptable.
-
-**Anti-pattern (M172):** Referencing PLAN.md instead of SKILL.md for skill usage.
-- **PLAN.md** describes *what to build* (task planning document)
-- **SKILL.md** describes *how to use it* (authoritative usage documentation)
-- Always invoke skills via their scripts/commands, not by reading PLAN.md
-
 Use AskUserQuestion with options:
 - header: "Next Step"
 - question: "What would you like to do?"
 - options:
-  - "✓ Approve and merge" - Merge to base branch, continue to next task
+  - "✓ Approve and merge" - Merge to main, continue to next task
+  - "🔍 Review changes first" - I'll examine the diff
   - "✏️ Request changes" - Need modifications before proceeding
   - "✗ Abort" - Discard work entirely
 
-**CRITICAL (M248): Distinguish task version from base branch in approval messages.**
-
-- **Task version**: Extracted from task ID (e.g., `2.1-batch-finalization-subagent` → v2.1)
-- **Base branch**: The git branch being merged into (e.g., `v2.0`)
-
-When presenting approval, say "merge v{major}.{minor} task to {base-branch}" NOT "merge to v{base-branch}"
-which conflates the branch name with the task's version.
-
-**MANDATORY: Include subtask context for decomposed tasks (M251).**
-
-When presenting approval for a subtask (task created by decomposition), provide context:
-
-1. **Identify as subtask**: "This is subtask 1 of 6 from decomposed task `centralize-version-path-resolution`"
-2. **List remaining subtasks**: Show pending subtasks so user understands full scope
-3. **Note dependencies**: Indicate which subtasks are now unblocked
-
-Example approval context for decomposed tasks:
-
+**If "Review changes first":**
+Provide commands to review:
+```bash
+git log {main}..{task-branch} --oneline
+git diff {main}...{task-branch}
 ```
-This completes subtask 1 of 6 from decomposed task `parent-task-name`.
-
-Remaining subtasks (Phase 2 - can run in parallel):
-- update-add-command-paths (pending)
-- update-remove-command-paths (pending)
-- update-work-command-paths (pending)
-- update-research-skills-paths (pending)
-- update-python-handler-paths (pending)
-```
-
-**Why this matters:** Without subtask context, users may think the work is complete when it's only
-one piece of a larger decomposition. This leads to confusion about scope and progress.
+Wait for user to respond with approval.
 
 **If "Request changes":**
-
-Capture user feedback and spawn implementation subagent to address concerns.
-
-**MANDATORY: Main agent does NOT implement feedback directly (M063).**
-
-The main agent is an orchestrator. All code changes - including feedback fixes - MUST be delegated
-to a subagent with fresh context.
-
-**Step 1: Capture User Feedback**
-
-Use AskUserQuestion to collect specific feedback:
-- header: "Feedback"
-- question: "What changes would you like made?"
-- freeform: true (allow detailed text input)
-
-Wait for user to provide specific feedback about what needs to change.
-
-**Step 2: Gather Context for Subagent**
-
-```bash
-# Get current diff for context
-BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
-git diff ${BASE_BRANCH}..HEAD > /tmp/current-implementation.diff
-
-# Get task PLAN.md path
-TASK_PLAN=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/PLAN.md"
-
-# Get worktree path (already created in create_worktree step)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${TASK_BRANCH}"
-```
-
-**Step 3: Spawn Feedback Implementation Subagent**
-
-Invoke `/cat:spawn-subagent` with feedback context:
-
-```
-Task tool invocation:
-  description: "Address user feedback for ${TASK_NAME}"
-  subagent_type: "general-purpose"
-  prompt: |
-    ADDRESS USER FEEDBACK
-
-    WORKING DIRECTORY: ${WORKTREE_PATH}
-
-    USER FEEDBACK:
-    ${user_feedback_text}
-
-    EXISTING IMPLEMENTATION:
-    Review the current implementation diff below and apply the requested changes.
-
-    CURRENT DIFF:
-    ${contents of /tmp/current-implementation.diff}
-
-    TASK PLAN REFERENCE:
-    ${TASK_PLAN contents}
-
-    VERIFICATION:
-    1. Run build/tests as appropriate for project type
-    2. All must pass
-
-    FAIL-FAST CONDITIONS:
-    - If build fails after changes, report BLOCKED with error
-    - If feedback is unclear, report BLOCKED requesting clarification
-    - Do NOT attempt workarounds - report and stop
-
-    COMMIT:
-    After verification passes, commit with message:
-    "feature: address review feedback - {brief summary of changes}"
-```
-
-**Step 4: Collect Results**
-
-Invoke `/cat:collect-results` to gather:
-- Token usage from subagent
-- Commits made
-- Files changed
-- Any discovered issues
-
-Display subagent execution report to user (MANDATORY per token reporting requirements).
-
-**Step 5: Merge Feedback Changes to Task Branch**
-
-Invoke `/cat:merge-subagent` to:
-- Merge subagent branch into task branch
-- Clean up subagent worktree
-- Update tracking state
-
-**Step 6: RE-PRESENT Approval Gate**
-
-**MANDATORY: Loop back to approval gate with updated changes.**
-
-After merging feedback changes, the approval gate MUST be re-presented. This ensures:
-- User sees updated diff reflecting their requested changes
-- User explicitly approves final implementation
-- No changes merge without explicit approval
-
-Use the **CHECKPOINT_FEEDBACK_APPLIED** box from PRE-COMPUTED WORK BOXES.
-Replace placeholders with actual values.
-
-Then re-present approval options via AskUserQuestion:
-- header: "Next Step"
-- question: "Feedback has been applied. What would you like to do?"
-- options:
-  - "✓ Approve and merge" - Merge to main, continue to next task
-  - "🔍 Review changes first" - I'll examine the updated diff
-  - "✏️ Request more changes" - Need additional modifications
-  - "✗ Abort" - Discard all work
-
-**Loop Continuation:**
-
-If user selects "Request more changes", repeat Steps 1-6 with fresh feedback.
-
-**Maximum Iterations Safety:**
-
-Track feedback iterations. If iterations exceed 5:
-
-```
-⚠️ FEEDBACK ITERATION LIMIT
-
-5 feedback iterations completed without approval.
-
-Options:
-1. Continue with current implementation
-2. Abort and start fresh
-3. Override limit and continue iterations
-```
-
-Use AskUserQuestion to capture decision.
+Receive feedback and loop back to execute step.
 
 **If "Abort":**
 Clean up worktree and branch, mark task as pending.
@@ -1848,54 +1409,7 @@ Clean up worktree and branch, mark task as pending.
 
 <step name="squash_commits">
 
-**Apply Squash Preference from PROJECT.md:**
-
-```bash
-# Read squash policy from PROJECT.md
-SQUASH_POLICY=$(grep -A10 "### Squash Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "Strategy:" | sed 's/.*Strategy:\s*//' | head -1)
-
-# Also check cat-config.json for programmatic access
-if [[ -z "$SQUASH_POLICY" ]]; then
-  SQUASH_POLICY=$(jq -r '.gitWorkflow.squashPolicy // "by-type"' .claude/cat/cat-config.json 2>/dev/null)
-fi
-
-echo "Squash policy: $SQUASH_POLICY"
-
-case "$SQUASH_POLICY" in
-  "by-type"|"by type"|"Squash by type"|"Group commits by type prefix")
-    echo "Applying squash-by-type policy..."
-    # Continue with default category-based squashing below
-    ;;
-  "single"|"Single commit"|"Squash all commits into one")
-    echo "Applying single-commit policy..."
-    # Squash all into one commit instead of by category
-    SQUASH_ALL=true
-    ;;
-  "keep-all"|"keep all"|"Keep all commits")
-    echo "Skipping squash per PROJECT.md policy"
-    # Skip this step entirely
-    SKIP_SQUASH=true
-    ;;
-  *)
-    echo "Using default squash-by-type policy"
-    ;;
-esac
-```
-
-**If SKIP_SQUASH is true:** Skip to next step (merge).
-
-**If SQUASH_ALL is true:**
-```bash
-# Squash all commits into single commit
-COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD")
-if [[ "$COMMIT_COUNT" -gt 1 ]]; then
-  FIRST_MSG=$(git log --format="%s" "${BASE_BRANCH}..HEAD" | tail -1)
-  git reset --soft "$BASE_BRANCH"
-  git commit -m "$FIRST_MSG"
-fi
-```
-
-**Otherwise (default by-type squashing):**
+**Squash commits by category:**
 
 Group commits into two categories:
 
@@ -1922,182 +1436,34 @@ Use `/cat:git-squash` skill for safe squashing.
 
 <step name="merge">
 
-**Return to main workspace and complete task:**
+**Return to main workspace and merge:**
 
-**MANDATORY: cd back to main workspace before merging/PR.**
+**MANDATORY: cd back to main workspace before merging.**
 
-We've been working in the worktree directory. To merge or create PR, return to the main workspace:
+We've been working in the worktree directory. To merge, return to the main workspace (where `main` is checked out):
 
 ```bash
 # Return to main workspace
 cd /workspace  # Or wherever CLAUDE_PROJECT_DIR is
 pwd  # Verify we're in main workspace (not worktree)
+git branch  # Should show main (or master)
 ```
 
-**Read completion workflow config:**
+**Then merge the task branch:**
 
 ```bash
-COMPLETION_WORKFLOW=$(jq -r '.completionWorkflow // "merge"' .claude/cat/cat-config.json)
-echo "Completion workflow: $COMPLETION_WORKFLOW"
-```
-
-**CRITICAL (M154): Preserve the currently checked out branch.**
-
-The main workspace has whatever branch the user was working on (could be `main`, `v1.10`, a
-feature branch, etc.). Merge the task branch INTO that branch without switching branches:
-
-```bash
-# Check current branch (DO NOT CHANGE IT)
-CURRENT_BRANCH=$(git branch --show-current)
-echo "Base branch: $CURRENT_BRANCH"
-```
-
-**Anti-pattern (M154):** Using `git checkout main` or `git checkout <any-branch>` in the main
-workspace. This disrupts the user's working state. The task worktree exists precisely to avoid
-touching the main workspace's checked out branch.
-
-**Apply Merge Preference from PROJECT.md:**
-
-```bash
-# Read merge method from PROJECT.md
-MERGE_METHOD=$(grep -A10 "### Merge Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "MUST use" | grep -oP "(fast-forward|merge commit|squash)" | head -1)
-
-# Also check cat-config.json for programmatic access
-if [[ -z "$MERGE_METHOD" ]]; then
-  MERGE_METHOD=$(jq -r '.gitWorkflow.mergeStyle // "fast-forward"' .claude/cat/cat-config.json 2>/dev/null)
-fi
-
-echo "Merge method: $MERGE_METHOD"
-```
-
-**Branch on completion workflow:**
-
-**If completionWorkflow is "merge" (default):**
-
-Apply merge based on configured merge method:
-
-```bash
-case "$MERGE_METHOD" in
-  "fast-forward"|"ff-only")
-    git merge --ff-only {task-branch}
-    ;;
-  "merge-commit"|"merge commit"|"no-ff")
-    git merge --no-ff {task-branch} -m "$(cat <<'EOF'
-Merge task: {task-name}
-
+git merge --ff-only {task-branch} -m "$(cat <<'EOF'
 {commit-type}: {summary from PLAN.md goal}
 EOF
 )"
-    ;;
-  "squash")
-    git merge --squash {task-branch}
-    git commit -m "$(cat <<'EOF'
-{commit-type}: {summary from PLAN.md goal}
-EOF
-)"
-    ;;
-  *)
-    # Default to fast-forward
-    git merge --ff-only {task-branch}
-    ;;
-esac
 ```
 
-**Note:** Default is `--ff-only` for linear history (not `--no-ff`). See M047.
+**Note:** Use `--ff-only` for linear history (not `--no-ff`). See M047.
 
 Handle merge conflicts:
 1. Identify conflicting files
 2. Attempt automatic resolution
 3. If unresolvable, present to user
-
-**If completionWorkflow is "pr":**
-
-```bash
-# Push task branch to origin
-git push -u origin {task-branch}
-
-# Auto-detect git provider from remote URL
-REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-GIT_PROVIDER="unknown"
-
-if [[ "$REMOTE_URL" == *"github.com"* ]] || [[ "$REMOTE_URL" == *"github."* ]]; then
-    GIT_PROVIDER="github"
-elif [[ "$REMOTE_URL" == *"gitlab.com"* ]] || [[ "$REMOTE_URL" == *"gitlab."* ]]; then
-    GIT_PROVIDER="gitlab"
-elif [[ "$REMOTE_URL" == *"dev.azure.com"* ]] || [[ "$REMOTE_URL" == *"visualstudio.com"* ]]; then
-    GIT_PROVIDER="azure"
-elif [[ "$REMOTE_URL" == *"bitbucket.org"* ]] || [[ "$REMOTE_URL" == *"bitbucket."* ]]; then
-    GIT_PROVIDER="bitbucket"
-fi
-
-echo "Detected git provider: $GIT_PROVIDER"
-```
-
-**Create PR based on detected provider:**
-
-```bash
-PR_TITLE="{commit-type}: {summary from PLAN.md goal}"
-PR_BODY="## Summary
-{goal from PLAN.md}
-
-## Changes
-{list of key changes from commit messages}
-
-## Task
-Task ID: v{major}.{minor}-{task-name}
-
----
-*Created by CAT*"
-
-case "$GIT_PROVIDER" in
-    github)
-        # GitHub CLI
-        gh pr create --base {base-branch} --head {task-branch} \
-            --title "$PR_TITLE" --body "$PR_BODY"
-        ;;
-    gitlab)
-        # GitLab CLI (glab)
-        glab mr create --source-branch {task-branch} --target-branch {base-branch} \
-            --title "$PR_TITLE" --description "$PR_BODY"
-        ;;
-    azure)
-        # Azure DevOps CLI
-        az repos pr create --source-branch {task-branch} --target-branch {base-branch} \
-            --title "$PR_TITLE" --description "$PR_BODY"
-        ;;
-    bitbucket)
-        # Bitbucket - no official CLI, provide manual instructions
-        echo "⚠️ Bitbucket detected - no official CLI available"
-        echo "Create PR manually at: ${REMOTE_URL}/pull-requests/new"
-        echo "Source: {task-branch} → Target: {base-branch}"
-        ;;
-    *)
-        echo "⚠️ Unknown git provider - cannot auto-create PR"
-        echo "Remote URL: $REMOTE_URL"
-        echo "Create PR manually with:"
-        echo "  Source: {task-branch} → Target: {base-branch}"
-        ;;
-esac
-```
-
-Display PR URL to user:
-```
-✅ Pull request created: {PR_URL}
-
-The task branch has been pushed and a PR created.
-Review and merge the PR when ready.
-```
-
-**Supported providers:**
-| Provider | CLI | Auto-detect Pattern |
-|----------|-----|---------------------|
-| GitHub | `gh` | `github.com`, `github.*` |
-| GitLab | `glab` | `gitlab.com`, `gitlab.*` |
-| Azure DevOps | `az` | `dev.azure.com`, `visualstudio.com` |
-| Bitbucket | (manual) | `bitbucket.org`, `bitbucket.*` |
-
-**Note:** When using PR workflow, the cleanup step should NOT delete the task branch
-(it's needed for the PR). Set `autoRemoveWorktrees` behavior to keep the branch.
 
 </step>
 
@@ -2105,59 +1471,21 @@ Review and merge the PR when ready.
 
 **Clean up worktree and release lock:**
 
-**Cleanup runs for BOTH workflows** (merge and PR). The difference is branch handling:
-
-| Workflow | Worktree | Branch | Lock |
-|----------|----------|--------|------|
-| `merge` | Removed | Deleted | Released |
-| `pr` | Removed | **Preserved** (needed for PR) | Released |
-
 ```bash
-COMPLETION_WORKFLOW=$(jq -r '.completionWorkflow // "merge"' .claude/cat/cat-config.json)
-
-# 1. Remove worktree (ALWAYS - worktree is local working copy, not needed after task)
+# Remove worktree
 git worktree remove "$WORKTREE_PATH" --force
 
-# 2. Handle branch based on workflow
-if [[ "$COMPLETION_WORKFLOW" == "merge" ]]; then
-    # Merge workflow: branch already merged, safe to delete
-    git branch -d "{task-branch}" 2>/dev/null || true
-else
-    # PR workflow: branch must stay - it's the source for the pull request
-    echo "✓ Branch {task-branch} preserved (required for PR)"
-fi
+# Optionally delete branch if autoRemoveWorktrees is true
+git branch -d "{task-branch}" 2>/dev/null || true
 
-# 3. Release task lock (ALWAYS)
+# Release task lock (substitute actual SESSION_ID from context)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
-echo "✓ Lock released for task: $TASK_ID"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "${CLAUDE_SESSION_ID}"
+echo "Lock released for task: $TASK_ID"
 ```
-
-**Anti-pattern (M173): Do NOT add fallback rm commands to lock release.**
-
-```bash
-# ❌ WRONG - fallback rm triggers block_lock_manipulation hook
-task-lock.sh release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}" || rm -f .claude/cat/locks/*.lock
-
-# ✅ CORRECT - just call task-lock.sh, handle errors separately
-task-lock.sh release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
-```
-
-The `block_lock_manipulation` handler checks the ENTIRE command string for `rm ... .claude/cat/locks`.
-Adding `|| rm` as fallback causes the hook to block the entire command, even though the primary
-command (task-lock.sh) is safe.
-
-**If CLAUDE_SESSION_ID is unavailable:** Extract it from the system reminders at conversation start.
-Look for "Session ID: {uuid}" in the session instructions.
 
 **Note:** Lock is also released automatically by `session-unlock.sh` hook on session end, providing
 a safety net if the agent crashes or is interrupted.
-
-**PR workflow branch lifecycle:**
-1. Task completes → branch pushed to origin → PR created
-2. Cleanup runs → worktree removed, **branch preserved**
-3. PR reviewed and merged on hosting platform
-4. Branch can be deleted manually or via platform's "delete branch after merge" option
 
 </step>
 
@@ -2167,38 +1495,6 @@ a safety net if the agent crashes or is interrupted.
 
 **Note:** Task STATE.md was already updated and committed with the implementation (M076).
 This step handles the parent STATE.md rollup updates.
-
-### STATE.md Verification Checklist (A011)
-
-**MANDATORY: Verify these rules when updating any STATE.md file.**
-
-| Rule | Description | Anti-pattern |
-|------|-------------|--------------|
-| Valid status transitions | `pending` → `in-progress` → `completed` (no skipping) | M150: Jumping from pending to completed |
-| Progress matches status | `completed` requires `100%`, `in-progress` requires `< 100%` | M153: 90% with in-progress at approval |
-| Resolution required | `completed` status requires Resolution field | M092: Missing resolution |
-| Parent pending list | Adding task → add to parent's "Tasks Pending" list | M163: Task created without parent update |
-| Atomic updates | Task STATE.md updated in same commit as implementation | M076: Separate docs commit for STATE.md |
-
-**Verification script:**
-
-```bash
-# Verify task STATE.md before proceeding
-TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
-
-# Extract current values
-STATUS=$(grep -oP "Status:\s*\K\S+" "$TASK_STATE" || echo "unknown")
-PROGRESS=$(grep -oP "Progress:\s*\K[0-9]+" "$TASK_STATE" || echo "0")
-RESOLUTION=$(grep -oP "Resolution:\s*\K\S+" "$TASK_STATE" || echo "")
-
-# Validate consistency
-if [[ "$STATUS" == "completed" ]]; then
-  [[ "$PROGRESS" != "100" ]] && echo "ERROR: completed status requires 100% progress"
-  [[ -z "$RESOLUTION" ]] && echo "ERROR: completed status requires Resolution field"
-elif [[ "$STATUS" == "in-progress" ]]; then
-  [[ "$PROGRESS" == "100" ]] && echo "ERROR: in-progress status cannot have 100% progress"
-fi
-```
 
 1. **Minor STATE.md:**
    - Recalculate progress based on task completion
@@ -2223,7 +1519,7 @@ Only commit Minor/Major STATE.md updates here. Task STATE.md was already committ
 with the implementation per M076.
 
 ```bash
-git add .claude/cat/issues/v*/STATE.md .claude/cat/issues/v*/v*.*/STATE.md
+git add .claude/cat/v*/STATE.md .claude/cat/v*/v*.*/STATE.md
 git commit -m "$(cat <<'EOF'
 config: update progress for v{major}.{minor}
 
@@ -2238,14 +1534,14 @@ EOF
 
 **Update version changelogs:**
 
-1. **Minor version CHANGELOG.md** (`.claude/cat/issues/v{major}/v{major}.{minor}/CHANGELOG.md`):
+1. **Minor version CHANGELOG.md** (`.claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md`):
    - If file doesn't exist, create from template with pending status
    - Add completed task to Tasks Completed table:
      ```markdown
      | {task-name} | {commit-type} | {goal from PLAN.md} |
      ```
 
-2. **Major version CHANGELOG.md** (`.claude/cat/issues/v{major}/CHANGELOG.md`):
+2. **Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
    - If file doesn't exist, create from template with pending status
    - Update aggregate summary when minor version completes
 
@@ -2260,50 +1556,7 @@ EOF
 After cleanup, ALWAYS show user their available options. Never end with just "Task Complete" -
 user needs guidance on what to do next.
 
-**Version Boundary Detection:**
-
-Track completed task version (supports MAJOR, MAJOR.MINOR, or MAJOR.MINOR.PATCH schemes):
-```bash
-COMPLETED_MAJOR="{major from completed task}"
-COMPLETED_MINOR="{minor from completed task, empty if major-only scheme}"
-COMPLETED_PATCH="{patch from completed task, empty if no patch level}"
-```
-
-After find-task.sh returns next task, extract its version:
-```bash
-NEXT_MAJOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.major')
-NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
-NEXT_PATCH=$(echo "$NEXT_TASK_RESULT" | jq -r '.patch // empty')
-```
-
-**Boundary detection adapts to versioning scheme:**
-
-| Scheme | Boundary Crossed When |
-|--------|----------------------|
-| MAJOR only | `COMPLETED_MAJOR != NEXT_MAJOR` |
-| MAJOR.MINOR | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR` |
-| MAJOR.MINOR.PATCH | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR OR COMPLETED_PATCH != NEXT_PATCH` |
-
-**If BOUNDARY_CROSSED is true:**
-1. Use **VERSION_BOUNDARY_GATE** box from PRE-COMPUTED WORK BOXES
-2. Use AskUserQuestion:
-   - header: "Version Boundary"
-   - question: "All tasks in v{completed-version} complete. Continue to v{next-version}?"
-   - options:
-     - "Continue to next version" - Proceed with auto-continue
-     - "Exit to publish first" - Exit work loop for user to publish
-     - "Stop" - Exit work loop immediately
-
-**If user selects "Continue to next version":**
-Proceed with existing auto-continue logic.
-
-**If user selects "Exit to publish first" or "Stop":**
-Release lock, exit workflow gracefully.
-
-**If BOUNDARY_CROSSED is false (same version):**
-Proceed with existing auto-continue logic unchanged.
-
-**Auto-continue behavior conditionals:**
+**Find next executable task** (pending + dependencies met + not locked).
 
 **MANDATORY: Try to acquire lock before offering next task.**
 
@@ -2316,7 +1569,7 @@ For each candidate task:
 NEXT_TASK_ID="${MAJOR}.${MINOR}-${NEXT_TASK_NAME}"
 
 # Try to acquire lock for next task
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   # This task is locked, try the next candidate
@@ -2372,11 +1625,22 @@ esac
 
 **If trust >= medium and next task found (within scope):**
 
-Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from PRE-COMPUTED WORK BOXES.
-Replace placeholders with actual values:
-- `{task-name}` → completed task name
-- `{next-task-name}` → next task name
-- `{goal from PLAN.md}` → goal line from next task's PLAN.md
+```
+╭─── ✓ Task Complete ────────────────────────────────────────╮
+│                                                            │
+│  **{task-name}** merged to main.                           │
+│                                                            │
+├────────────────────────────────────────────────────────────┤
+│  **Next:** {next-task-name}                                │
+│  {goal from PLAN.md}                                       │
+│                                                            │
+│  Auto-continuing in 3s...                                  │
+│  • Type "stop" to pause after this task                    │
+│  • Type "abort" to cancel immediately                      │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 **Brief pause for user intervention:**
 
@@ -2392,25 +1656,46 @@ the work session gracefully.
 
 **If scope complete (no more tasks within scope):**
 
-Use the **SCOPE_COMPLETE** box from PRE-COMPUTED WORK BOXES.
-Replace placeholders based on scope type.
+```
+╭─── ✓ Scope Complete ───────────────────────────────────────╮
+│                                                            │
+│  **{scope description}** - all tasks complete!             │
+│                                                            │
+│  {For minor: "v0.5 complete"}                              │
+│  {For major: "v0.x complete"}                              │
+│  {For all: "All versions complete!"}                       │
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 **If trust == low and next task found:**
 
 Release the lock (user will re-acquire when they invoke the command):
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-Use the **TASK_COMPLETE_LOW_TRUST** box from PRE-COMPUTED WORK BOXES.
-Replace placeholders with actual values.
+```
+╭─── ✓ Task Complete ────────────────────────────────────────╮
+│                                                            │
+│  **{task-name}** merged to main.                           │
+│                                                            │
+├────────────────────────────────────────────────────────────┤
+│  **Next Up:** {next-task-name}                             │
+│  {goal from PLAN.md}                                       │
+│                                                            │
+│  `/cat:work` to continue                                   │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+╰────────────────────────────────────────────────────────────╯
+```
 
 If no more tasks in the current minor version (all completed, blocked, or locked):
 
 **→ Load version-completion.md workflow for full handling.**
 
-See `concepts/version-completion.md` for:
+See `.claude/cat/workflows/version-completion.md` for:
 - Minor version completion check and celebration
 - Stakeholder review prompt
 - Major version completion check
@@ -2540,31 +1825,39 @@ Before any file read or code analysis, ask: "Should a subagent do this?"
 | Write test code | ❌ No | Delegate to implementation subagent |
 | Present approval gate | ✅ Yes | Orchestration action |
 
-**Correct workflow pattern:**
+**Correct workflow pattern (two-stage planning for token efficiency):**
 
 ```
 1. Main agent spawns EXPLORATION subagent: "Find all X and report findings"
 2. Exploration subagent returns: "Found X at locations A, B, C with patterns..."
 
-PLANNING:
-3. Main agent spawns PLANNING subagent: "Produce detailed implementation plan"
-4. Planning subagent returns comprehensive PLAN.md with:
-   - Risk assessment
-   - Files to modify
-   - Execution steps
-   - Acceptance criteria
+PLANNING STAGE 1 (lightweight):
+3. Main agent spawns PLANNING subagent: "Produce HIGH-LEVEL outlines for three approaches"
+4. Planning subagent returns brief summaries (save agent_id for resumption):
+   - Conservative: [1-2 sentence scope, risk: LOW]
+   - Balanced: [1-2 sentence scope, risk: MEDIUM]
+   - Aggressive: [1-2 sentence scope, risk: HIGH]
+   - agent_id: {uuid} ← SAVE THIS
+
+APPROACH SELECTION:
+5. Main agent selects approach (auto-select if preference matches, else ask user)
+
+PLANNING STAGE 2 (detailed):
+6. Main agent RESUMES planning subagent (using saved agent_id):
+   "User selected [approach]. Now produce the DETAILED implementation spec."
+7. Planning subagent returns comprehensive PLAN.md with execution steps
 
 IMPLEMENTATION:
-5. Main agent spawns IMPLEMENTATION subagent: "Execute this spec mechanically"
-6. Implementation subagent returns: "Completed. Commits: ..."
-7. Main agent presents approval gate to user
+8. Main agent spawns IMPLEMENTATION subagent: "Execute this spec mechanically"
+9. Implementation subagent returns: "Completed. Commits: ..."
+10. Main agent presents approval gate to user
 ```
 
-**Config settings drive behavior directly:**
-- Trust: Controls approval gates and auto-selection thresholds
-- Verify: Controls pre-commit verification scope
-- Curiosity: Controls issue discovery breadth
-- Patience: Controls when discovered issues are addressed
+**Why two-stage planning:**
+- Stage 1 uses ~5K tokens (outlines only)
+- Selection happens with minimal context
+- Stage 2 uses ~20K tokens (detailed spec)
+- Total: ~25K vs ~60K if all three approaches were fully detailed
 
 **Anti-pattern (M088):** Main agent reading source files "to understand the code" - delegate to exploration subagent.
 
@@ -2680,7 +1973,7 @@ Task ID: v1.0-parse-lambdas
 
 **→ Load duplicate-task.md workflow when task is discovered to be duplicate.**
 
-See `concepts/duplicate-task.md` for full handling including:
+See `.claude/cat/workflows/duplicate-task.md` for full handling including:
 - Signs of a duplicate task
 - Verification process
 - STATE.md resolution format
@@ -2697,14 +1990,11 @@ See `concepts/duplicate-task.md` for full handling including:
 - [ ] Task identified and loaded
 - [ ] **Entry gate evaluated (blocked if unmet, unless --override-gate)**
 - [ ] **Task size analyzed (estimate vs threshold)**
-- [ ] **Pre-spawn validation: estimate < hard limit (A018)**
 - [ ] **If oversized: auto-decomposition triggered**
 - [ ] **If decomposed: parallel execution plan generated**
 - [ ] Worktree(s) created with correct branch(es)
 - [ ] PLAN.md executed successfully via subagent(s)
 - [ ] **Token metrics collected and reported to user**
-- [ ] **Aggregate token report generated (multi-subagent tasks)**
-- [ ] **Context limit violations flagged and learn-from-mistakes triggered**
 - [ ] **Compaction events evaluated (decomposition offered if > 0)**
 - [ ] **Stakeholder review passed (or concerns addressed)**
 - [ ] Approval gate passed (if interactive)

@@ -11,40 +11,12 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-<execution_context>
-
-@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
-
-</execution_context>
-
 <objective>
 
 Unified command for removing tasks or versions from the CAT planning structure. Routes to the
 appropriate workflow based on user selection.
 
 </objective>
-
-<terminology>
-
-**CRITICAL DISAMBIGUATION (M250):**
-
-When user says "abort task", this is AMBIGUOUS:
-- "Abort" could mean: cleanup worktree/branch while KEEPING task in planning (most common intent)
-- "Remove" means: delete task from planning structure entirely
-
-**If user uses "abort", "cancel", or "stop" with a task name:**
-
-Use AskUserQuestion FIRST:
-- header: "Clarify Intent"
-- question: "What do you want to do with task '{task-name}'?"
-- options:
-  - "Cleanup worktree/branch only (keep in planning)" - Use /cat:cleanup to remove worktree and branch
-  - "Remove from planning entirely" - Proceed with this remove workflow
-
-**This skill (/cat:remove) is for PERMANENT removal from planning.**
-**For worktree/branch cleanup, use /cat:cleanup instead.**
-
-</terminology>
 
 <process>
 
@@ -66,8 +38,7 @@ Use AskUserQuestion:
 - header: "Remove What?"
 - question: "What would you like to remove?"
 - options:
-  - "Task" - Remove a task from a minor or patch version
-  - "Patch version" - Remove a patch version from a minor
+  - "Task" - Remove a task from a minor version
   - "Minor version" - Remove a minor version from a major
   - "Major version" - Remove an entire major version
 
@@ -80,17 +51,11 @@ Use AskUserQuestion:
 **If "Task":**
 - Continue to remove_task workflow (step: task_select)
 
-**If "Patch version":**
-- Set VERSION_TYPE="patch", PARENT_TYPE="minor"
-- Continue to unified version removal workflow (step: version_select)
-
 **If "Minor version":**
-- Set VERSION_TYPE="minor", PARENT_TYPE="major"
-- Continue to unified version removal workflow (step: version_select)
+- Continue to remove_minor workflow (step: minor_select)
 
 **If "Major version":**
-- Set VERSION_TYPE="major", PARENT_TYPE="none"
-- Continue to unified version removal workflow (step: version_select)
+- Continue to remove_major workflow (step: major_select)
 
 </step>
 
@@ -103,7 +68,7 @@ Use AskUserQuestion:
 List all tasks:
 
 ```bash
-find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
+find .claude/cat/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
     [ -f "$d/STATE.md" ] || continue
     TASK_NAME=$(basename "$d")
     MAJOR=$(echo "$d" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
@@ -127,7 +92,7 @@ If "Cancel" -> exit command.
 **Validate task can be removed:**
 
 ```bash
-TASK_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
+TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
 
 [ ! -d "$TASK_PATH" ] && echo "ERROR: Task does not exist" && exit 1
 
@@ -171,7 +136,7 @@ If "No, keep it" -> exit command.
 **Check if other tasks depend on this one:**
 
 ```bash
-find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
+find .claude/cat/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
     -exec grep -l "Dependencies:.*$TASK_NAME" {}/STATE.md \; 2>/dev/null
 ```
 
@@ -212,7 +177,7 @@ rm -rf "$TASK_PATH"
 **Update tasks that depended on this task:**
 
 ```bash
-find .claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
+find .claude/cat/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
     if grep -q "Dependencies:.*$TASK_NAME" "$d/STATE.md" 2>/dev/null; then
         sed -i "s/$TASK_NAME, //g; s/, $TASK_NAME//g; s/$TASK_NAME//g" "$d/STATE.md"
     fi
@@ -223,30 +188,9 @@ done
 
 <step name="task_update_parent">
 
-**Update parent minor STATE.md - remove task from list:**
+**Update parent minor STATE.md:**
 
-```bash
-VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
-
-# Remove task from Tasks Pending section
-sed -i "/^- $TASK_NAME$/d" "$VERSION_STATE"
-
-# Also remove from Tasks Completed if present
-sed -i "/^| $TASK_NAME |/d" "$VERSION_STATE"
-
-# Recalculate progress
-TOTAL_TASKS=$(grep -c "^- " "$VERSION_STATE" 2>/dev/null || echo 0)
-COMPLETED_TASKS=$(grep -c "^| .* | completed |" "$VERSION_STATE" 2>/dev/null || echo 0)
-if [ "$TOTAL_TASKS" -gt 0 ]; then
-  PROGRESS=$((COMPLETED_TASKS * 100 / TOTAL_TASKS))
-else
-  PROGRESS=0
-fi
-sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
-
-# Verify task removed
-! grep -q "^- $TASK_NAME$" "$VERSION_STATE" || echo "ERROR: Task not removed from STATE.md"
-```
+Recalculate progress without the removed task.
 
 </step>
 
@@ -255,7 +199,7 @@ sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
 **Commit removal:**
 
 ```bash
-git add -A ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
+git add -A ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/"
 git commit -m "$(cat <<'EOF'
 docs: remove task {task-name} from {major}.{minor}
 
@@ -285,19 +229,166 @@ Use `/cat:status` to see current state.
 
 </step>
 
-<!-- ========== UNIFIED VERSION REMOVAL WORKFLOW ========== -->
-<!--
-  This workflow handles major, minor, and patch version removal with parameterization.
-  Variables set by route step:
-    VERSION_TYPE: "major" | "minor" | "patch"
-    PARENT_TYPE: "none" | "major" | "minor"
--->
+<!-- ========== MINOR VERSION REMOVAL WORKFLOW ========== -->
 
-<step name="version_select">
+<step name="minor_select">
 
-**Determine version to remove:**
+**Determine minor version to remove:**
 
-**If VERSION_TYPE is "major":**
+List all minor versions:
+
+```bash
+find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
+    VERSION=$(basename "$d" | sed 's/v//')
+    MAJOR=$(echo "$VERSION" | cut -d. -f1)
+    MINOR=$(echo "$VERSION" | cut -d. -f2)
+    TASK_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "task" 2>/dev/null | wc -l)
+    echo "$MAJOR.$MINOR ($TASK_COUNT tasks)"
+done | sort -V
+```
+
+Use AskUserQuestion:
+- header: "Select Minor Version"
+- question: "Which minor version do you want to remove?"
+- options: [List of versions] + "Cancel"
+
+If "Cancel" -> exit command.
+
+</step>
+
+<step name="minor_validate">
+
+**Validate minor version can be removed:**
+
+```bash
+MINOR_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR"
+
+[ ! -d "$MINOR_PATH" ] && echo "ERROR: Minor version does not exist" && exit 1
+```
+
+**Check for incomplete tasks:**
+
+```bash
+INCOMPLETE=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "task" \
+    -exec test -f {}/STATE.md \; \
+    -exec grep -l "Status: pending\|Status: in-progress" {}/STATE.md \; 2>/dev/null)
+```
+
+If incomplete tasks exist:
+
+Use AskUserQuestion:
+- header: "Incomplete Tasks"
+- question: "This minor version has incomplete tasks:\n\n{list}\n\nWhat would you like to do?"
+- options:
+  - "Remove anyway" - Force remove all tasks
+  - "Cancel" - Stop removal
+
+If "Cancel" -> exit command.
+
+</step>
+
+<step name="minor_check_dependencies">
+
+**Check if later minor versions depend on this completing:**
+
+If this is not the last minor version:
+
+Use AskUserQuestion:
+- header: "Dependency Warning"
+- question: "Minor version {major}.{minor+1} and later implicitly depend on this version. Removing may affect the roadmap. Continue?"
+- options:
+  - "Yes, remove anyway" - Proceed
+  - "No, cancel" - Abort
+
+</step>
+
+<step name="minor_confirm">
+
+**Final confirmation:**
+
+```bash
+TASK_COUNT=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "task" 2>/dev/null | wc -l)
+```
+
+Use AskUserQuestion:
+- header: "Confirm Removal"
+- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} tasks\n- All STATE.md, PLAN.md files"
+- options:
+  - "Yes, remove it" - Proceed
+  - "No, cancel" - Abort
+
+If "No, cancel" -> exit command.
+
+</step>
+
+<step name="minor_remove">
+
+**Remove minor version directory:**
+
+```bash
+rm -rf "$MINOR_PATH"
+```
+
+</step>
+
+<step name="minor_update_roadmap">
+
+**Update ROADMAP.md:**
+
+Remove the entry for this minor version.
+
+</step>
+
+<step name="minor_update_parent">
+
+**Update parent major STATE.md:**
+
+Recalculate progress without the removed minor version.
+
+</step>
+
+<step name="minor_commit">
+
+**Commit removal:**
+
+```bash
+git add -A ".claude/cat/v$MAJOR/"
+git add ".claude/cat/ROADMAP.md"
+git commit -m "$(cat <<'EOF'
+docs: remove minor version {major}.{minor}
+
+Minor version removed by user request.
+Removed {task_count} tasks.
+EOF
+)"
+```
+
+</step>
+
+<step name="minor_done">
+
+**Present completion:**
+
+```
+Minor version removed:
+
+- Version: {major}.{minor}
+- Tasks removed: {task_count}
+
+---
+
+Use `/cat:status` to see current state.
+
+---
+```
+
+</step>
+
+<!-- ========== MAJOR VERSION REMOVAL WORKFLOW ========== -->
+
+<step name="major_select">
+
+**Determine major version to remove:**
 
 ```bash
 [ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "ERROR: No major versions exist." && exit 1
@@ -320,104 +411,33 @@ Use AskUserQuestion:
 - question: "Which major version do you want to remove?"
 - options: [List of major versions with stats] + "Cancel"
 
-**If VERSION_TYPE is "minor":**
-
-List all minor versions:
-
-```bash
-find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
-    VERSION=$(basename "$d" | sed 's/v//')
-    MAJOR=$(echo "$VERSION" | cut -d. -f1)
-    MINOR=$(echo "$VERSION" | cut -d. -f2)
-    TASK_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "task" ! -name "v*" 2>/dev/null | wc -l)
-    echo "$MAJOR.$MINOR ($TASK_COUNT tasks)"
-done | sort -V
-```
-
-Use AskUserQuestion:
-- header: "Select Minor Version"
-- question: "Which minor version do you want to remove?"
-- options: [List of versions] + "Cancel"
-
-**If VERSION_TYPE is "patch":**
-
-List all patch versions:
-
-```bash
-find .claude/cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null | while read d; do
-    VERSION=$(basename "$d" | sed 's/v//')
-    MAJOR=$(echo "$VERSION" | cut -d. -f1)
-    MINOR=$(echo "$VERSION" | cut -d. -f2)
-    PATCH=$(echo "$VERSION" | cut -d. -f3)
-    TASK_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "pending")
-    echo "$MAJOR.$MINOR.$PATCH ($TASK_COUNT tasks, $STATUS)"
-done | sort -V
-```
-
-Use AskUserQuestion:
-- header: "Select Patch Version"
-- question: "Which patch version do you want to remove?"
-- options: [List of patch versions] + "Cancel"
-
 If "Cancel" -> exit command.
 
 </step>
 
-<step name="version_validate">
+<step name="major_validate">
 
-**Validate version can be removed:**
-
-**If VERSION_TYPE is "major":**
+**Validate major version can be removed:**
 
 ```bash
-VERSION_PATH=".claude/cat/issues/v$MAJOR"
-[ ! -d "$VERSION_PATH" ] && echo "ERROR: Major version does not exist" && exit 1
+MAJOR_PATH=".claude/cat/v$MAJOR"
+
+[ ! -d "$MAJOR_PATH" ] && echo "ERROR: Major version does not exist" && exit 1
 ```
 
-Check for incomplete work:
+**Check for incomplete work:**
 
 ```bash
-INCOMPLETE=$(find "$VERSION_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "task" | while read d; do
+INCOMPLETE=$(find "$MAJOR_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "task" | while read d; do
     [ -f "$d/STATE.md" ] && grep -q "Status: pending\|Status: in-progress" "$d/STATE.md" && echo "$d"
 done)
 ```
 
-**If VERSION_TYPE is "minor":**
-
-```bash
-VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
-[ ! -d "$VERSION_PATH" ] && echo "ERROR: Minor version does not exist" && exit 1
-```
-
-Check for incomplete tasks:
-
-```bash
-INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "task" ! -name "v*" \
-    -exec test -f {}/STATE.md \; \
-    -exec grep -l "Status: pending\|Status: in-progress" {}/STATE.md \; 2>/dev/null)
-```
-
-**If VERSION_TYPE is "patch":**
-
-```bash
-VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/v$MAJOR.$MINOR.$PATCH"
-[ ! -d "$VERSION_PATH" ] && echo "ERROR: Patch version does not exist" && exit 1
-```
-
-Check for incomplete tasks:
-
-```bash
-INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
-    -exec test -f {}/STATE.md \; \
-    -exec grep -l "Status: pending\|Status: in-progress" {}/STATE.md \; 2>/dev/null)
-```
-
-**If incomplete work/tasks exist:**
+If incomplete tasks exist:
 
 Use AskUserQuestion:
 - header: "Incomplete Work"
-- question: "This {VERSION_TYPE} version has incomplete work:\n\n{list}\n\nWhat would you like to do?"
+- question: "Major version {major} has incomplete work:\n\n{list}\n\nWhat would you like to do?"
 - options:
   - "Force remove everything" - Delete despite incomplete work
   - "Cancel" - Stop removal
@@ -426,11 +446,9 @@ If "Cancel" -> exit command.
 
 </step>
 
-<step name="version_check_dependencies">
+<step name="major_check_dependencies">
 
-**Check for dependencies:**
-
-**If VERSION_TYPE is "major":**
+**Check if later major versions depend on this:**
 
 ```bash
 LATER_MAJORS=$(find .claude/cat -name "STATE.md" -path ".claude/cat/v[$(($MAJOR+1))-9]*/STATE.md" \
@@ -446,63 +464,22 @@ Use AskUserQuestion:
   - "Yes, remove anyway" - Proceed
   - "No, cancel" - Abort
 
-**If VERSION_TYPE is "minor":**
-
-If this is not the last minor version:
-
-Use AskUserQuestion:
-- header: "Dependency Warning"
-- question: "Minor version {major}.{minor+1} and later implicitly depend on this version. Removing may affect the roadmap. Continue?"
-- options:
-  - "Yes, remove anyway" - Proceed
-  - "No, cancel" - Abort
-
-**If VERSION_TYPE is "patch":**
-
-```bash
-LATER_PATCHES=$(find ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" | \
-    sed "s|.*/v$MAJOR.$MINOR.||" | while read p; do
-        [ "$p" -gt "$PATCH" ] && echo "v$MAJOR.$MINOR.$p"
-    done)
-```
-
-If later patches exist:
-
-Use AskUserQuestion:
-- header: "Dependency Warning"
-- question: "Later patch versions exist:\n\n{list}\n\nRemoving v$MAJOR.$MINOR.$PATCH may affect version sequence. Continue?"
-- options:
-  - "Yes, remove anyway" - Proceed
-  - "No, cancel" - Abort
-
-If "No, cancel" -> exit command.
-
 </step>
 
-<step name="version_gather_stats">
+<step name="major_gather_stats">
 
-**Gather removal statistics (for major version only):**
-
-**If VERSION_TYPE is "major":**
+**Gather removal statistics:**
 
 ```bash
-MINOR_COUNT=$(ls -1d "$VERSION_PATH"/v$MAJOR.[0-9]* 2>/dev/null | wc -l)
-TASK_COUNT=$(find "$VERSION_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "task" 2>/dev/null | wc -l)
-```
-
-**If VERSION_TYPE is "minor" or "patch":**
-
-```bash
-TASK_COUNT=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "task" ! -name "v*" 2>/dev/null | wc -l)
+MINOR_COUNT=$(ls -1d "$MAJOR_PATH"/v$MAJOR.[0-9]* 2>/dev/null | wc -l)
+TASK_COUNT=$(find "$MAJOR_PATH" -mindepth 2 -maxdepth 2 -type d ! -name "v*" ! -name "task" 2>/dev/null | wc -l)
 ```
 
 </step>
 
-<step name="version_confirm">
+<step name="major_confirm">
 
-**Final confirmation:**
-
-**If VERSION_TYPE is "major":**
+**Final confirmation (extra serious for major version):**
 
 Use AskUserQuestion:
 - header: "CONFIRM MAJOR VERSION REMOVAL"
@@ -511,128 +488,31 @@ Use AskUserQuestion:
   - "Yes, permanently remove Major {major}" - Proceed with removal
   - "No, cancel" - Abort removal
 
-**If VERSION_TYPE is "minor":**
-
-Use AskUserQuestion:
-- header: "Confirm Removal"
-- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} tasks\n- All STATE.md, PLAN.md files"
-- options:
-  - "Yes, remove it" - Proceed
-  - "No, cancel" - Abort
-
-**If VERSION_TYPE is "patch":**
-
-Use AskUserQuestion:
-- header: "Confirm Removal"
-- question: "Remove patch version $MAJOR.$MINOR.$PATCH?\n\nThis will delete:\n- $TASK_COUNT tasks\n- All STATE.md, PLAN.md, CHANGELOG.md files"
-- options:
-  - "Yes, remove it" - Proceed
-  - "No, cancel" - Abort
-
 If "No, cancel" -> exit command.
 
 </step>
 
-<step name="version_remove">
+<step name="major_remove">
 
-**Remove version directory:**
+**Remove major version directory:**
 
 ```bash
-rm -rf "$VERSION_PATH"
+rm -rf "$MAJOR_PATH"
 ```
 
 </step>
 
-<step name="version_update_roadmap">
+<step name="major_update_roadmap">
 
 **Update ROADMAP.md:**
 
-```bash
-ROADMAP=".claude/cat/ROADMAP.md"
-```
-
-**If VERSION_TYPE is "major":**
-
 Remove the entire section for this major version.
 
-**If VERSION_TYPE is "minor":**
-
-```bash
-# Remove the minor version entry from ROADMAP.md
-# Format being removed: - **X.Y:** Description (STATUS)
-sed -i "/^- \*\*$MAJOR\.$MINOR:\*\*/d" "$ROADMAP"
-
-# Verify removal
-! grep -q "^- \*\*$MAJOR\.$MINOR:\*\*" "$ROADMAP" || echo "ERROR: Minor version entry not removed from ROADMAP.md"
-```
-
-**If VERSION_TYPE is "patch":**
-
-```bash
-# Remove the patch version entry from ROADMAP.md
-# Format being removed:   - **X.Y.Z:** Description (STATUS)
-sed -i "/^[[:space:]]*- \*\*$MAJOR\.$MINOR\.$PATCH:\*\*/d" "$ROADMAP"
-
-# Verify removal
-! grep -q "$MAJOR\.$MINOR\.$PATCH" "$ROADMAP" || echo "ERROR: Patch version entry not removed from ROADMAP.md"
-```
-
 </step>
 
-<step name="version_update_parent">
-
-**Update parent STATE.md (skip if VERSION_TYPE="major"):**
-
-**If VERSION_TYPE is "major":**
-- Skip to step: version_commit (no parent to update)
-
-**If VERSION_TYPE is "minor":**
-
-```bash
-PARENT_STATE=".claude/cat/issues/v$MAJOR/STATE.md"
-
-# Remove minor version from "## Minor Versions" section
-sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
-
-# Recalculate progress based on remaining minor versions
-TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$PARENT_STATE" 2>/dev/null || echo 0)
-COMPLETED_MINORS=0
-for minor_entry in $(grep "^- v$MAJOR\." "$PARENT_STATE" | sed 's/- v//'); do
-  MINOR_STATE=".claude/cat/issues/v$MAJOR/v$minor_entry/STATE.md"
-  if [ -f "$MINOR_STATE" ] && grep -q "\*\*Status:\*\*.*completed" "$MINOR_STATE"; then
-    COMPLETED_MINORS=$((COMPLETED_MINORS + 1))
-  fi
-done
-if [ "$TOTAL_MINORS" -gt 0 ]; then
-  PROGRESS=$((COMPLETED_MINORS * 100 / TOTAL_MINORS))
-else
-  PROGRESS=0
-fi
-sed -i "s/- \*\*Progress:\*\* .*$/- **Progress:** $PROGRESS%/" "$PARENT_STATE"
-
-# Verify minor removed
-! grep -q "^- v$MAJOR.$MINOR$" "$PARENT_STATE" || echo "ERROR: Minor version not removed from major STATE.md"
-```
-
-**If VERSION_TYPE is "patch":**
-
-```bash
-PARENT_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
-
-# Remove patch version from "## Patch Versions" section
-sed -i "/^- v$MAJOR.$MINOR.$PATCH$/d" "$PARENT_STATE"
-
-# Verify patch removed
-! grep -q "^- v$MAJOR.$MINOR.$PATCH$" "$PARENT_STATE" || echo "ERROR: Patch version not removed from minor STATE.md"
-```
-
-</step>
-
-<step name="version_commit">
+<step name="major_commit">
 
 **Commit removal:**
-
-**If VERSION_TYPE is "major":**
 
 ```bash
 git add -A ".claude/cat/"
@@ -645,41 +525,11 @@ EOF
 )"
 ```
 
-**If VERSION_TYPE is "minor":**
-
-```bash
-git add -A ".claude/cat/issues/v$MAJOR/"
-git add ".claude/cat/ROADMAP.md"
-git commit -m "$(cat <<'EOF'
-docs: remove minor version {major}.{minor}
-
-Minor version removed by user request.
-Removed {task_count} tasks.
-EOF
-)"
-```
-
-**If VERSION_TYPE is "patch":**
-
-```bash
-git add -A ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
-git add ".claude/cat/ROADMAP.md"
-git commit -m "$(cat <<'EOF'
-docs: remove patch version {major}.{minor}.{patch}
-
-Patch version removed by user request.
-Removed {task_count} tasks.
-EOF
-)"
-```
-
 </step>
 
-<step name="version_done">
+<step name="major_done">
 
 **Present completion:**
-
-**If VERSION_TYPE is "major":**
 
 ```
 Major version removed:
@@ -700,36 +550,6 @@ git revert HEAD  # Undo the removal commit
 ---
 ```
 
-**If VERSION_TYPE is "minor":**
-
-```
-Minor version removed:
-
-- Version: {major}.{minor}
-- Tasks removed: {task_count}
-
----
-
-Use `/cat:status` to see current state.
-
----
-```
-
-**If VERSION_TYPE is "patch":**
-
-```
-Patch version removed:
-
-- Version: {major}.{minor}.{patch}
-- Tasks removed: {task_count}
-
----
-
-Use `/cat:status` to see current state.
-
----
-```
-
 </step>
 
 </process>
@@ -745,16 +565,25 @@ Use `/cat:status` to see current state.
 - [ ] Parent STATE.md updated
 - [ ] Removal committed to git
 
-**For Version (Major/Minor/Patch):**
-- [ ] Version identified
-- [ ] Incomplete work handled (blocked or force-removed)
-- [ ] Dependencies/later versions checked and warned
-- [ ] Statistics gathered for user awareness
+**For Minor Version:**
+- [ ] Minor version identified
+- [ ] Incomplete tasks handled (blocked or force-removed)
+- [ ] Dependencies checked and warned
 - [ ] User confirmation obtained
-- [ ] Version directory removed
+- [ ] Minor version directory removed
 - [ ] ROADMAP.md updated
-- [ ] Parent STATE.md updated (if applicable)
+- [ ] Parent STATE.md updated
 - [ ] Removal committed to git
-- [ ] Recovery instructions provided (for major)
+
+**For Major Version:**
+- [ ] Major version identified
+- [ ] Incomplete work handled (blocked or force-removed)
+- [ ] Dependencies checked and warned
+- [ ] Statistics gathered for user awareness
+- [ ] User confirmation obtained (with extra warning)
+- [ ] Major version directory removed
+- [ ] ROADMAP.md updated
+- [ ] Removal committed to git
+- [ ] Recovery instructions provided
 
 </success_criteria>

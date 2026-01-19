@@ -1,30 +1,11 @@
 ---
 name: git-squash
-description: "MANDATORY: Use instead of `git rebase -i` for squashing - unified commit messages"
+description: Safely squash multiple commits into one with automatic backup and verification
 ---
 
 # Git Squash Skill
 
 **Purpose**: Safely squash multiple commits into one with automatic backup, verification, and cleanup.
-
-## Parallel Initial Investigation
-
-**OPTIMIZATION: Run initial git commands in parallel to reduce round-trips.**
-
-Before starting any squash workflow, gather information concurrently:
-
-```bash
-# Run these commands in parallel (use & and wait)
-git rev-parse HEAD &
-git status --porcelain &
-git log --oneline <base>..HEAD &
-git diff --stat <base>..HEAD &
-wait
-
-# All results now available for workflow selection
-```
-
-This reduces the initial investigation from 4+ sequential commands to a single parallel batch.
 
 ## Safety Pattern: Backup-Verify-Cleanup
 
@@ -33,37 +14,6 @@ This reduces the initial investigation from 4+ sequential commands to a single p
 2. Execute the squash
 3. **Verify immediately** - no changes lost or added
 4. Cleanup backup only after verification passes
-
-## Read PROJECT.md Squash Policy
-
-**Check PROJECT.md for configured squash preferences before proceeding.**
-
-```bash
-# Read squash policy from PROJECT.md
-SQUASH_POLICY=$(grep -A10 "### Squash Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "Strategy:" | sed 's/.*Strategy:\s*//' | head -1)
-
-if [[ "$SQUASH_POLICY" == *"keep all"* || "$SQUASH_POLICY" == *"Keep all"* || "$SQUASH_POLICY" == *"keep-all"* ]]; then
-  echo "⚠️ PROJECT.md configured for 'Keep all commits'"
-  echo "Squashing will override this preference."
-  echo ""
-  echo "Options:"
-  echo "  1. Proceed with squash (override PROJECT.md preference)"
-  echo "  2. Cancel to preserve commits as configured"
-  echo ""
-  echo "To proceed, continue with this skill."
-  echo "To honor PROJECT.md preference, abort the squash operation."
-fi
-
-if [[ "$SQUASH_POLICY" == *"single"* || "$SQUASH_POLICY" == *"Single"* ]]; then
-  echo "📋 PROJECT.md configured for 'Single commit' squashing"
-  echo "All commits will be squashed into one (not by type)."
-fi
-
-if [[ "$SQUASH_POLICY" == *"by-type"* || "$SQUASH_POLICY" == *"by type"* ]]; then
-  echo "📋 PROJECT.md configured for 'Squash by type'"
-  echo "Commits will be grouped by type prefix."
-fi
-```
 
 ## Workflow Selection
 
@@ -81,34 +31,6 @@ else
 fi
 ```
 
-## Planning Commit Pattern Detection
-
-**Detect common "feature + planning STATE.md update" pattern.**
-
-Before squashing, check if the commit sequence follows this pattern:
-1. Implementation commit(s): `feature:`, `bugfix:`, `refactor:`, etc.
-2. Final commit(s): `planning:` or `config:` with only `.claude/cat/issues/` changes
-
-**Detection logic:**
-```bash
-# Get the last commit's type and files
-LAST_COMMIT=$(git log -1 --format="%s" HEAD)
-LAST_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
-
-# Check if last commit is planning-only
-if [[ "$LAST_COMMIT" =~ ^planning: ]] && \
-   [[ "$LAST_FILES" =~ \.claude/cat/issues/ ]] && \
-   ! echo "$LAST_FILES" | grep -qv "\.claude/cat/"; then
-    echo "PATTERN DETECTED: Final commit is planning-only STATE.md update"
-    # This pattern indicates STATE.md should be preserved in squash
-fi
-```
-
-**When pattern detected:**
-- Extract final STATE.md content before squash
-- After squash, ensure STATE.md reflects final state (not intermediate)
-- Include planning changes in implementation commit per M076
-
 ## Quick Workflow (Commits at Branch Tip Only)
 
 **Use ONLY when squashing the most recent commits on a branch.**
@@ -124,28 +46,20 @@ git branch "$BACKUP"
 # 3. Verify clean working directory
 git status --porcelain  # Must be empty
 
-# 4. Check for unintended deletions (M238)
-# If base branch has files your branch doesn't, soft reset will stage deletions!
-echo "Files on base but not in branch (will be DELETED if you proceed):"
-git diff --name-status <base-commit>..HEAD | grep "^D" | cut -f2
-# If any unexpected files shown, sync with base first:
-#   git checkout <base-commit> -- <path-to-restore>
-
-# 5. Soft reset to base (parent of first commit to squash)
+# 4. Soft reset to base (parent of first commit to squash)
 git reset --soft <base-commit>
 
-# 6. Verify no UNINTENDED changes (check for unexpected deletions!)
+# 5. Verify no changes lost
 git diff --stat "$BACKUP"  # Must be empty
-git diff --name-status HEAD | grep "^D"  # Review any deletions!
 
-# 7. Create squashed commit (see git-commit skill for message guidance)
+# 6. Create squashed commit (see git-commit skill for message guidance)
 git commit -m "Unified message describing what code does"
 
-# 8. Verify result
+# 7. Verify result
 git diff "$BACKUP"  # Must be empty
 git rev-list --count <base-commit>..HEAD  # Must be 1
 
-# 9. Cleanup backup
+# 8. Cleanup backup
 git branch -D "$BACKUP"
 ```
 
@@ -178,9 +92,8 @@ EOF
 chmod +x /tmp/msg-editor.sh
 
 # 4. Run interactive rebase
-# NOTE: Use GIT_EDITOR (not EDITOR) - git uses GIT_EDITOR for commit messages during rebase
 BASE_COMMIT="<parent-of-first-commit>"
-GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh GIT_EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
+GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
 
 # 5. Verify no changes lost
 git diff "$BACKUP"  # Must be empty
@@ -191,87 +104,6 @@ rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 ```
 
 ## Critical Rules
-
-### Check for Unintended Deletions (M238)
-
-**CRITICAL: Worktrees may be out of sync with base branch updates.**
-
-When using `git reset --soft <base>`, the index reflects your working tree state. If the base
-branch has files your branch never received (e.g., new files added to base after your branch
-diverged), the soft reset will stage those files as DELETIONS.
-
-**Before committing after soft reset:**
-
-```bash
-# Check what will be deleted relative to base
-git diff --name-status HEAD | grep "^D"
-
-# If unexpected deletions appear, restore from base:
-git checkout <base> -- <path-to-unexpected-deleted-file>
-
-# Then amend the commit
-git commit --amend --no-edit
-```
-
-**Why this happens:**
-1. Branch created from older base commit
-2. New files added to base branch later
-3. Worktree never received these files (no merge/rebase from base)
-4. Soft reset stages "delete files that exist on base but not in working tree"
-
-### Preserve Commit Type Boundaries When Squashing
-
-**CRITICAL: Follow commit grouping rules from [commit-types.md](../../concepts/commit-types.md).**
-
-Key rules when squashing:
-- **Task STATE.md** → same commit as implementation (M076)
-- **Different commit types** (`feature:` vs `docs:`) → keep separate
-- **Related same-type commits** → can combine
-
-**Before squashing, analyze commit types:**
-
-```bash
-# List commits with their types
-git log --oneline <base>..HEAD | while read hash msg; do
-    type=$(echo "$msg" | cut -d: -f1)
-    echo "$type: $hash ${msg#*: }"
-done | sort -t: -k1
-
-# Group by type to determine squash strategy
-git log --format="%s" <base>..HEAD | cut -d: -f1 | sort | uniq -c
-```
-
-### Automatic STATE.md Preservation
-
-**CRITICAL: Preserve final STATE.md state when squashing planning commits.**
-
-When squashing commits that include STATE.md updates:
-
-1. **Before squash:** Record the final STATE.md content
-   ```bash
-   # Store final state before squash
-   TASK_STATE=".claude/cat/issues/v*/v*.*/*/STATE.md"
-   git show HEAD:$TASK_STATE > /tmp/final-state.md 2>/dev/null || true
-   ```
-
-2. **After squash:** Verify STATE.md wasn't reverted to intermediate state
-   ```bash
-   # Check if STATE.md was affected
-   if [[ -f /tmp/final-state.md ]]; then
-       # Compare current vs final
-       if ! diff -q "$TASK_STATE" /tmp/final-state.md >/dev/null 2>&1; then
-           echo "⚠️ STATE.md reverted to intermediate state - restoring final state"
-           cp /tmp/final-state.md "$TASK_STATE"
-           git add "$TASK_STATE"
-           git commit --amend --no-edit
-       fi
-   fi
-   ```
-
-**Why this matters:**
-- Squashing can revert STATE.md to earlier commit's version
-- Final state (status: completed, progress: 100%) must be preserved
-- Per M076: STATE.md belongs in same commit as implementation
 
 ### Use Correct Workflow for Commit Position
 
@@ -309,7 +141,7 @@ feature: add login form with validation
 - Email/password form with client-side validation
 - Server-side validation with descriptive messages
 
-Task ID: v1.1-implement-user-auth
+Task ID: v2.1-implement-user-auth
 ```
 
 **MANDATORY**: Include `Task ID: v{major}.{minor}-{task-name}` as the last line.
@@ -348,34 +180,6 @@ git rebase -i <base-commit>
 #   squash def456 Commit to combine (MOVED here)
 #   pick ghi789 Other commit (unchanged)
 ```
-
-### Conflict Pre-Computation for Non-Adjacent Commits
-
-**Before attempting to squash non-adjacent commits, analyze potential conflicts:**
-
-```bash
-# Identify files modified by multiple commits in the range
-echo "Conflict risk analysis:"
-git diff --name-only <base>..HEAD | while read file; do
-    commits=$(git log --oneline <base>..HEAD -- "$file" | wc -l)
-    if [[ $commits -gt 1 ]]; then
-        echo "  ⚠️ $file: modified by $commits commits"
-    fi
-done
-
-# Check for same-line modifications (highest risk)
-for file in $(git diff --name-only <base>..HEAD); do
-    git log -p <base>..HEAD -- "$file" | grep -E "^@@" | sort | uniq -d && \
-        echo "  🔴 $file: same lines modified by multiple commits - HIGH RISK"
-done
-```
-
-**Risk Levels:**
-| Risk | Pattern | Recommendation |
-|------|---------|----------------|
-| LOW | Different files per commit | Safe to squash |
-| MEDIUM | Same file, different lines | Usually safe |
-| HIGH | Same file, same lines | Manual resolution likely needed |
 
 ## Error Recovery
 

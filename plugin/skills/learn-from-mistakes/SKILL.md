@@ -232,12 +232,10 @@ rca_method: "C"
 
 **CAT-specific analysis checklist:**
 
-Reference: agent-architecture.md § Context Limit Constants
-
 ```yaml
 context_degradation_analysis:
   tokens_at_error: 95000
-  threshold_exceeded: true
+  threshold_exceeded: true  # > 80K
   threshold_exceeded_by: 15000
   compaction_events: 2
   errors_after_compaction: true
@@ -423,46 +421,29 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
-**Language requirements for documentation/prompt changes (M177):**
+**Language requirements for documentation/prompt changes:**
 
-When prevention involves updating documentation, prompts, or instructions, use **positive actionable
-language** that guides toward correct behavior rather than warning against mistakes.
-
-| Instead of (negative) | Use (positive) |
-|----------------------|----------------|
-| "Do NOT use approximate content" | "Copy-paste exact content from final output" |
-| "Never skip the verification step" | "Complete verification before proceeding" |
-| "Don't forget to commit" | "Commit changes before requesting review" |
-| "Avoid using placeholder text" | "Write final content first, then calculate" |
-
-**Why positive framing works better:**
-- Tells the agent what TO do (actionable) vs what to avoid (requires inference)
-- Creates clear mental model of correct behavior
-- Reduces cognitive load - no need to invert the instruction
-- Section titles should name the solution, not the problem (e.g., "Copy-Paste Workflow" not "Avoiding Content Mismatch")
-
-**Self-check before finalizing prevention text:**
-1. Does each instruction describe an action to take?
-2. Are section titles named after solutions, not problems?
-3. Would someone know exactly what to do after reading this?
-
-Keep negative language only when no actionable positive alternative exists (e.g., security warnings
-where the "don't" is the entire point).
+When prevention involves updating documentation, prompts, or instructions:
+- Use **positive actionable language** (what to do) instead of negative language (what not to do)
+- Convert "Do NOT do X" to "Do Y instead" where a clear alternative exists
+- Keep negative language only when no actionable positive alternative exists
+- Example: "Always collect results before merging" instead of "Do NOT merge without collection"
 
 **For context-related mistakes:**
 
 ```yaml
 prevention_action:
   if_context_related:
-    # Context limits are fixed - see agent-architecture.md § Context Limit Constants
     primary:
-      action: "Improve task size estimation"
-      rationale: "Better estimates prevent exceeding limits"
+      action: "Adjust token monitoring threshold"
+      current_threshold: 80000  # 40%
+      new_threshold: 60000      # 30%
+      rationale: "Earlier warning gives time to decompose"
 
     secondary:
       action: "Add quality checkpoint at 50% context"
       implementation: |
-        At 50% context, pause and verify:
+        At 50% context (100K tokens), pause and verify:
         - Is work quality consistent with early session?
         - Are earlier decisions still being referenced?
         - Should task be decomposed now?
@@ -544,12 +525,7 @@ prevention_path_validation:
 **If you cannot identify a real file to change, you have NOT implemented prevention.**
 Go back to step 9 and find a code/config/documentation fix.
 
-**Directory:** `.claude/cat/retrospectives/`
-
-**File Structure (v2.0 - time-based splits):**
-- `index.json` - Centralized config and file tracking
-- `mistakes-YYYY-MM.json` - Mistakes for each month
-- `retrospectives-YYYY-MM.json` - Retrospectives for each month
+**File:** `.claude/cat/retrospectives/mistakes.json`
 
 **CRITICAL PATH CHECKS**:
 
@@ -587,55 +563,20 @@ fi
 ```
 
 ```bash
-RETRO_DIR=".claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
+mkdir -p .claude/cat/retrospectives
+# Note: mistakes.json is an OBJECT with a .mistakes array, not a flat array
+[ -f .claude/cat/retrospectives/mistakes.json ] || echo '{"mistakes":[]}' > .claude/cat/retrospectives/mistakes.json
 
-# Get current year-month for file naming
-YEAR_MONTH=$(date +%Y-%m)
-MISTAKES_FILE="$RETRO_DIR/mistakes-${YEAR_MONTH}.json"
-
-mkdir -p "$RETRO_DIR"
-
-# Initialize index.json if needed
-if [ ! -f "$INDEX_FILE" ]; then
-  cat > "$INDEX_FILE" << 'EOF'
-{
-  "version": "2.0",
-  "config": {
-    "mistake_count_threshold": 5,
-    "trigger_interval_days": 7
-  },
-  "last_retrospective": null,
-  "mistake_count_since_last": 0,
-  "files": {
-    "mistakes": [],
-    "retrospectives": []
-  }
-}
-EOF
-fi
-
-# Initialize split file for current month if needed
-if [ ! -f "$MISTAKES_FILE" ]; then
-  echo "{\"period\":\"$YEAR_MONTH\",\"mistakes\":[]}" > "$MISTAKES_FILE"
-  # Add to index
-  jq --arg f "mistakes-${YEAR_MONTH}.json" \
-    'if (.files.mistakes | index($f)) then . else .files.mistakes += [$f] | .files.mistakes |= sort end' \
-    "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-fi
-
-# Get max ID across ALL split files (handles gaps correctly)
-MAX_NUM=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-  jq -s '[.[].mistakes[].id] | map(select(startswith("M")) | ltrimstr("M") | tonumber) | max // 0')
+# Use numeric max to avoid string sort issues (M99 vs M100)
+MAX_NUM=$(jq -r '.mistakes | map(.id) | map(select(startswith("M")) | ltrimstr("M") | tonumber) | max // 0' \
+  .claude/cat/retrospectives/mistakes.json)
 NEXT_NUM=$((MAX_NUM + 1))
 NEXT_ID=$(printf "M%03d" $NEXT_NUM)
 
-# Verify ID doesn't already exist across all files (safety check)
-if cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s -e --arg id "$NEXT_ID" \
-    '[.[].mistakes[] | select(.id == $id)] | length > 0' >/dev/null 2>&1; then
+# Verify ID doesn't already exist (safety check)
+if jq -e --arg id "$NEXT_ID" '.mistakes[] | select(.id == $id)' .claude/cat/retrospectives/mistakes.json >/dev/null 2>&1; then
   echo "ERROR: ID $NEXT_ID already exists! Finding next available..."
-  MAX_NUM=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[].id] | map(ltrimstr("M") | tonumber) | max')
+  MAX_NUM=$(jq -r '.mistakes | map(.id) | map(ltrimstr("M") | tonumber) | max' .claude/cat/retrospectives/mistakes.json)
   NEXT_NUM=$((MAX_NUM + 1))
   NEXT_ID=$(printf "M%03d" $NEXT_NUM)
 fi
@@ -710,66 +651,53 @@ fi
 | Shell compatibility | zsh vs bash differences | Document in CLAUDE.md (documentation) |
 | Ordering/timing | Operations in wrong sequence | Add explicit ordering (skill/process) |
 
-**Use jq to append to current month's split file:**
+**Use jq to append (safe for concurrent access):**
 
 ```bash
-# Append to current month's split file (mistakes-YYYY-MM.json)
+# mistakes.json is an object with .mistakes array, not a flat array
 jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
-  "$MISTAKES_FILE" > "$MISTAKES_FILE.tmp" \
-  && mv "$MISTAKES_FILE.tmp" "$MISTAKES_FILE"
+  .claude/cat/retrospectives/mistakes.json > .claude/cat/retrospectives/mistakes.json.tmp \
+  && mv .claude/cat/retrospectives/mistakes.json.tmp .claude/cat/retrospectives/mistakes.json
 ```
 
 ### 12. Update Retrospective Counter and Commit
 
-**MANDATORY: Update counter and commit files together.**
+**MANDATORY: Update counter and commit BOTH files together.**
 
 **VALIDATION CHECK**: Before incrementing, verify counter matches actual mistake count:
 
 ```bash
-RETRO_DIR=".claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
+RETRO_FILE=".claude/cat/retrospectives/retrospectives.json"
+MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
 
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-
-# Count actual mistakes since last retrospective across ALL split files
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  ACTUAL_COUNT=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s --arg date "$LAST_RETRO" \
-    '[.[].mistakes[] | select(.timestamp > $date)] | length')
-else
-  ACTUAL_COUNT=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[]] | length')
-fi
-
-COUNTER=$(jq '.mistake_count_since_last' "$INDEX_FILE")
+LAST_RETRO=$(jq -r '.last_retrospective' "$RETRO_FILE")
+ACTUAL_COUNT=$(jq --arg date "$LAST_RETRO" \
+  '[.mistakes[] | select(.timestamp > $date)] | length' "$MISTAKES_FILE")
+COUNTER=$(jq '.mistake_count_since_last' "$RETRO_FILE")
 
 # Warn if mismatch (counter should be ACTUAL_COUNT - 1 before we increment)
 if [[ $COUNTER -ne $((ACTUAL_COUNT - 1)) ]] && [[ $COUNTER -ne $ACTUAL_COUNT ]]; then
   echo "WARNING: Counter mismatch! Counter=$COUNTER, Actual mistakes since $LAST_RETRO=$ACTUAL_COUNT"
   echo "Fixing counter to match actual count..."
-  jq --argjson count "$ACTUAL_COUNT" '.mistake_count_since_last = $count' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
-    && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
+  jq --argjson count "$ACTUAL_COUNT" '.mistake_count_since_last = $count' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
+    && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
 else
-  jq '.mistake_count_since_last += 1' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
-    && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
+  jq '.mistake_count_since_last += 1' "$RETRO_FILE" > "$RETRO_FILE.tmp" \
+    && mv "$RETRO_FILE.tmp" "$RETRO_FILE"
 fi
 
-# Commit split file and index together
-git add "$MISTAKES_FILE" "$INDEX_FILE"
-git commit -m "config: record learning ${NEXT_ID} - {short description}"
+# Commit BOTH files together
+git add .claude/cat/retrospectives/mistakes.json .claude/cat/retrospectives/retrospectives.json
+git commit -m "docs: record learning ${NEXT_ID} - {short description}"
 
 # Get current values to check trigger
-MISTAKES=$(jq '.mistake_count_since_last' "$INDEX_FILE")
-THRESHOLD=$(jq '.config.mistake_count_threshold' "$INDEX_FILE")
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-INTERVAL=$(jq '.config.trigger_interval_days' "$INDEX_FILE")
+MISTAKES=$(jq '.mistake_count_since_last' "$RETRO_FILE")
+THRESHOLD=$(jq '.config.mistake_count_threshold' "$RETRO_FILE")
+LAST_RETRO=$(jq -r '.last_retrospective' "$RETRO_FILE")
+INTERVAL=$(jq '.config.trigger_interval_days' "$RETRO_FILE")
 
 # Calculate days since last retrospective
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
-else
-  LAST_EPOCH=0
-fi
+LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
 NOW_EPOCH=$(date +%s)
 DAYS_SINCE=$(( (NOW_EPOCH - LAST_EPOCH) / 86400 ))
 

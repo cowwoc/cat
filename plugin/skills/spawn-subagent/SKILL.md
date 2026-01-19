@@ -29,15 +29,15 @@ judgment calls.
 **Subagents inherit project hooks automatically** when running in the same project directory.
 However, subagents may not follow hook guidance if not explicitly reminded.
 
-**MANDATORY: Include key requirements in subagent prompt:**
+**MANDATORY: Include key prohibitions in subagent prompt:**
 
 ```
-CRITICAL REQUIREMENTS (enforced by hooks):
-- Always decompose code instead of adding PMD suppression annotations
-- Always use git merge --ff-only for linear history
-- Always use git-filter-repo instead of git filter-branch
-- Preserve .git/refs/original unless user explicitly requests deletion
-- Include tests for bugfixes in the SAME commit as the fix
+CRITICAL PROHIBITIONS (enforced by hooks):
+- NEVER add PMD suppression annotations - decompose code instead
+- NEVER use git merge --no-ff - use --ff-only for linear history
+- NEVER use git filter-branch - use git-filter-repo instead
+- NEVER delete .git/refs/original without explicit user request
+- Tests for bugfixes belong in SAME commit as the fix, not separate
 
 COMMIT SEPARATION (M089):
 - .claude/rules/ updates → separate config: commit (not bundled with bugfix/feature)
@@ -125,8 +125,8 @@ echo "Lock verified: $LOCK_FILE owned by current session"
 **Anti-pattern (M082):** Trusting lock script return value without verifying the actual lock file.
 Lock directory must be `.claude/cat/locks/` (NOT `/tmp/cat-locks/` or other paths).
 
-**After session restart (M083):** Re-run lock verification commands. Always re-verify state after
-restart - the filesystem may have changed while the session was inactive.
+**After session restart (M083):** Re-run lock verification commands. Do not rely on observations from
+before the restart - the filesystem may have changed while the session was inactive.
 
 ## Prompt Requirements: Zero Decision Delegation
 
@@ -153,15 +153,16 @@ restart - the filesystem may have changed while the session was inactive.
 # Always include:
 FAIL-FAST CONDITIONS:
 - If [specific condition], report "BLOCKED: [reason]" and stop
-- Report status and return to main agent for decisions
-- Main agent handles all workarounds and fallback choices
+- Do NOT attempt workarounds or fallback approaches
+- Do NOT make decisions about how to proceed
+- Return findings/status for main agent to decide next steps
 ```
 
-Subagents use fail-fast behavior: report BLOCKED and stop. Fallback decisions require user oversight.
+Subagents must never use fallback behaviors - those involve decisions that users can't supervise.
 
 ### Main Agent Responsibilities (BEFORE Spawning)
 
-1. **Read all relevant code** - Complete exploration before spawning
+1. **Read all relevant code** - Don't delegate exploration
 2. **Make architectural decisions** - Which pattern, which API, which approach
 3. **Resolve ambiguities** - If PLAN.md says "handle errors appropriately", decide HOW
 4. **Identify edge cases** - Subagent executes happy path unless told otherwise
@@ -191,7 +192,7 @@ Every subagent prompt MUST include these items based on past mistakes:
 **STATE.md Requirements (M076, M077, M085, M087, M092):**
 ```
 STATE.md UPDATE (required in SAME commit as implementation):
-- Path: .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md
+- Path: .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
 - Set: Status: completed
 - Set: Progress: 100%
 - Set: Resolution: implemented (MANDATORY - not optional)
@@ -218,12 +219,12 @@ CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
 
 | Value | Include in Implementation Prompt |
 |-------|----------------------------------|
-| `low` | "Focus ONLY on the assigned task. Report only task-related issues." |
-| `medium` | "While working, NOTE obvious issues in files you touch (same function/class). Report them in .completion.json. Fixing is handled by main agent." |
-| `high` | "Actively look for code quality issues, patterns, and improvement opportunities in files you touch. Report ALL findings in .completion.json. Fixing is handled by main agent." |
+| `low` | "Focus ONLY on the assigned task. Do NOT note or report issues outside the immediate scope." |
+| `medium` | "While working, NOTE obvious issues in files you touch (same function/class). Report them in .completion.json but do NOT fix them." |
+| `high` | "Actively look for code quality issues, patterns, and improvement opportunities in files you touch. Report ALL findings in .completion.json but do NOT fix them." |
 
-**IMPORTANT:** The implementor subagent reports discovered issues in `.completion.json`. Main agent
-handles fixes based on the patience setting.
+**IMPORTANT:** The implementor subagent NEVER fixes discovered issues directly. It reports them
+in `.completion.json` for the main agent to handle based on the patience setting.
 
 **Patience Setting — Main Agent Uses This (NOT passed to subagent):**
 
@@ -263,17 +264,18 @@ Do NOT include patience instructions in implementation subagent prompts.
 **Parser Test Requirements (M079, for parser tasks only):**
 ```
 PARSER TEST STYLE:
-- Use text blocks which are self-documenting (skip position comments)
-- Use isEqualTo(expected) for assertions
-- Derive expected values manually from source analysis
+- Do NOT add comments describing expected node positions
+- Text blocks are self-documenting
+- Use isEqualTo(expected) NOT isSuccess()/isNotNull()/isNotEmpty()
+- Derive expected values manually, do NOT copy from actual output
 ```
 
 **Code Style Requirements:**
 ```
 CODE STYLE:
-- Decompose code instead of adding @SuppressWarnings annotations
-- Rethrow caught exceptions as AssertionError (ensure visibility)
-- Include tests for bugfixes in the SAME commit as the fix
+- NEVER add @SuppressWarnings annotations - decompose code instead
+- NEVER swallow exceptions silently - rethrow as AssertionError
+- Tests for bugfixes belong in SAME commit as the fix
 ```
 
 **Token Tracking Requirements (A017 - CRITICAL):**
@@ -315,65 +317,6 @@ Without the session ID, token measurement fails and reports show "NOT MEASURED" 
 If compaction occurred, the pre-compaction tokens are NOT lost - they must be
 preserved and added to post-compaction usage for accurate reporting.
 
-**Context Limit Enforcement (A018):**
-
-**MANDATORY: Validate task size BEFORE spawning subagent.**
-
-```bash
-# Values from agent-architecture.md § Context Limit Constants
-CONTEXT_LIMIT=...
-SOFT_TARGET_PCT=...
-HARD_LIMIT_PCT=...
-SOFT_TARGET=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
-HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
-```
-
-**Limit Hierarchy:**
-
-| Limit | Percentage | Tokens (200K) | Purpose |
-|-------|------------|---------------|---------|
-| Soft target | 40% | 80,000 | Recommended task size for optimal quality |
-| Hard limit | 80% | 160,000 | Maximum allowed - MANDATORY decomposition above this |
-| Context limit | 100% | 200,000 | Absolute ceiling - compaction occurs |
-
-**Pre-Spawn Validation Requirement:**
-
-BEFORE spawning ANY subagent, the main agent MUST:
-
-1. Calculate estimated tokens for the task (from analyze_task_size)
-2. Use fixed HARD_LIMIT: 160,000 tokens (80% of 200K)
-3. Compare estimate against hard limit:
-   - If estimate >= HARD_LIMIT: **MANDATORY decomposition** (do NOT spawn)
-   - If estimate > soft target but < hard limit: Recommend decomposition (optional)
-   - If estimate <= soft target: Proceed with spawn
-
-```bash
-# Pre-spawn validation
-# Values from agent-architecture.md § Context Limit Constants
-CONTEXT_LIMIT=...
-HARD_LIMIT_PCT=...
-HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
-SOFT_TARGET=$((CONTEXT_LIMIT * 40 / 100))
-
-if [ "${ESTIMATED_TOKENS}" -ge "${HARD_LIMIT}" ]; then
-  echo "ERROR: Task estimate (${ESTIMATED_TOKENS}) exceeds hard limit (${HARD_LIMIT})"
-  echo "MANDATORY: Decompose task before spawning. Use /cat:decompose-task"
-  exit 1
-fi
-```
-
-**Post-Execution Limit Check:**
-
-After subagent completes (in collect_results), verify actual usage:
-
-```bash
-ACTUAL_TOKENS={from .completion.json}
-if [ "${ACTUAL_TOKENS}" -ge "${HARD_LIMIT}" ]; then
-  echo "EXCEEDED: Subagent used ${ACTUAL_TOKENS} tokens (hard limit: ${HARD_LIMIT})"
-  # Trigger learn-from-mistakes with A018 reference
-fi
-```
-
 **Verification:**
 
 Before invoking Task tool, confirm:
@@ -388,7 +331,6 @@ Before invoking Task tool, confirm:
 | Fail-fast conditions | All tasks | spawn-subagent core |
 | **Session ID in prompt** | All tasks | A017, M099, M109, M123 |
 | Token measurement instructions | All tasks | spawn-subagent core |
-| **Pre-spawn limit validation** | All tasks | A018 |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
 
@@ -495,7 +437,7 @@ WORKTREE_PATH=".worktrees/${WORKTREE_NAME}"
 
 # Verify task lock is held (should be acquired by work)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-LOCK_STATUS=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$TASK_ID" 2>/dev/null || echo '{}')
+LOCK_STATUS=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "$TASK_ID" 2>/dev/null || echo '{}')
 if ! echo "$LOCK_STATUS" | jq -e '.locked == true' > /dev/null 2>&1; then
   echo "WARNING: Task lock not held. Acquire lock via work first."
 fi
@@ -541,10 +483,10 @@ Task tool invocation:
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
-    CRITICAL REQUIREMENTS (enforced by hooks):
-    - Decompose code instead of adding PMD suppression annotations
-    - Use git merge --ff-only for linear history
-    - Include tests for bugfixes in SAME commit as the fix
+    CRITICAL PROHIBITIONS (enforced by hooks):
+    - NEVER add PMD suppression annotations
+    - NEVER use git merge --no-ff
+    - Tests for bugfixes belong in SAME commit as the fix
 
     VERIFICATION:
     1. Run tests: ./mvnw test -pl parser
@@ -628,9 +570,9 @@ Task tool invocation:
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
-    CRITICAL REQUIREMENTS:
-    - Decompose code instead of adding PMD suppression annotations
-    - Include tests in SAME commit as implementation
+    CRITICAL PROHIBITIONS:
+    - NEVER add PMD suppression annotations
+    - Tests belong in SAME commit as implementation
 
     EXACT CHANGES:
     1. Create src/Feature.java with: [code listing]
@@ -708,7 +650,7 @@ Task prompt: |
   2. Determine expected node types from Java grammar
   3. Use (0, 0) placeholders for positions initially
   4. VERIFY actual positions are correct before updating expected values
-  5. Always verify before copying actual output as expected values
+  5. NEVER copy actual output as expected values without verification
 ```
 
 **Why**: Subagents may use placeholder technique incorrectly - copying actual output without verification
@@ -791,11 +733,11 @@ Task prompt: |
   Implement feature X.
 
   COMMIT (all in same commit):
-  1. Update .claude/cat/issues/v0/v0.1/feature-x/STATE.md:
+  1. Update .claude/cat/v0/v1.2/task/feature-x/STATE.md:
      - Set status: completed
      - Set progress: 100%
      - Add completed: {date}
-  2. git add <implementation files> .claude/cat/issues/v0/v0.1/feature-x/STATE.md
+  2. git add <implementation files> .claude/cat/v0/v1.2/task/feature-x/STATE.md
   3. git commit -m "feature: add X"
 ```
 
@@ -871,160 +813,6 @@ Task prompt: |
 ```
 
 **Why**: Choosing between approaches is a decision. Decisions require user oversight.
-
-### Verify subagent findings through delegation, not direct investigation (M147)
-
-When a subagent returns findings (especially exploration results like "DUPLICATE" or "NOT FOUND"),
-the main agent must NOT investigate directly:
-
-```
-# ❌ WRONG - Main agent investigates subagent findings directly
-Subagent returns: "DUPLICATE: fix already exists in commit c2da15e"
-Main agent: "Let me verify by reading ExpressionParser.java..."
-Main agent: "Let me run the test to confirm..."
-
-# ✅ CORRECT - Spawn verification subagent if uncertain
-Subagent returns: "DUPLICATE: fix already exists in commit c2da15e"
-Main agent options:
-  1. ACCEPT finding and proceed with appropriate workflow (e.g., mark task as duplicate)
-  2. SPAWN a verification subagent with specific questions:
-     Task prompt: |
-       Verify that fix for lambda arrow in parenthesized context exists:
-       1. Check commit c2da15e7 - does it modify ExpressionParser.java?
-       2. Run test: ./mvnw test -Dtest="LambdaArrowEdgeCaseParserTest#shouldParseLambdaAfterMethodReferenceWithTrailingComments"
-       3. Report: VERIFIED or NOT_VERIFIED with evidence
-```
-
-**Why this matters:**
-- Reading files and running tests to verify subagent findings violates delegation boundaries
-- If you distrust subagent findings, the correct response is structured re-verification, not ad-hoc investigation
-- Direct investigation pattern ("Let me verify by reading the code myself") bypasses the subagent architecture
-
-**Decision tree for subagent findings:**
-1. Is the finding clear and actionable? → Accept and proceed with appropriate workflow
-2. Is there uncertainty about accuracy? → Spawn verification subagent with specific verification steps
-3. NEVER: Read code directly, run commands directly, or otherwise investigate outside the subagent framework
-
-## Expanded Exploration Subagent
-
-The exploration subagent handles three phases internally, hiding noisy tool calls from the user
-and returning a structured JSON result for clean display.
-
-### Three Phases
-
-| Phase | Responsibilities | Output |
-|-------|------------------|--------|
-| **Preparation** | Read PLAN.md, analyze task size, create worktree | `preparation` object with estimate and worktree path |
-| **Exploration** | Search codebase, find relevant code, check duplicates | `findings` object with locations and patterns |
-| **Verification** | Verify findings exist, run preliminary tests, confirm state | `verification` object with validation results |
-
-### Phase Details
-
-**Phase 1: Preparation**
-
-The exploration subagent performs task setup that would otherwise expose Bash/Read calls to user:
-
-1. Read task PLAN.md to understand scope
-2. Analyze task size using the estimation factors:
-   - Files to create: 5K tokens each
-   - Files to modify: 3K tokens each
-   - Test files: 4K tokens each
-   - Steps in PLAN.md: 2K tokens each
-   - Exploration needed: +10K tokens if uncertain
-3. Compare estimate against context threshold (contextLimit × targetContextUsage)
-4. Create worktree and branch if task proceeds
-
-**Phase 2: Exploration**
-
-Standard exploration responsibilities:
-
-1. Search codebase for relevant patterns
-2. Identify files to modify and their locations
-3. Check for duplicate functionality
-4. Map dependencies and impacts
-5. Note any blockers or concerns
-
-**Phase 3: Verification**
-
-Post-exploration validation before returning to main agent:
-
-1. Verify all reported file paths exist
-2. Confirm code patterns mentioned are accurate
-3. Run any preliminary checks (syntax, imports)
-4. Validate that findings are complete (no gaps)
-
-### Structured JSON Return Format
-
-The exploration subagent MUST return structured JSON for clean main agent display:
-
-```json
-{
-  "status": "READY|OVERSIZED|DUPLICATE|BLOCKED",
-  "preparation": {
-    "estimatedTokens": 45000,
-    // See agent-architecture.md § Context Limit Constants for context limits
-    "percentOfThreshold": 56,
-    "worktreePath": "/workspace/.worktrees/1.0-parse-lambdas",
-    "branch": "1.0-parse-lambdas"
-  },
-  "findings": {
-    "filesToModify": [
-      {"path": "src/Parser.java", "lines": "145-200", "reason": "Add lambda parsing"},
-      {"path": "src/Lexer.java", "lines": "50-60", "reason": "Add arrow token"}
-    ],
-    "filesToCreate": [
-      {"path": "src/LambdaNode.java", "reason": "AST node for lambdas"}
-    ],
-    "patterns": ["Visitor pattern for AST", "Recursive descent parsing"],
-    "duplicateCheck": "NOT_DUPLICATE",
-    "blockers": []
-  },
-  "verification": {
-    "allPathsExist": true,
-    "patternsConfirmed": true,
-    "preliminaryChecks": "PASSED",
-    "notes": []
-  }
-}
-```
-
-### Status Values
-
-| Status | Meaning | Main Agent Action |
-|--------|---------|-------------------|
-| `READY` | Task within threshold, ready to proceed | Continue to approach selection |
-| `OVERSIZED` | Estimated tokens exceed threshold | Trigger decomposition |
-| `DUPLICATE` | Task already implemented elsewhere | Mark as duplicate, skip |
-| `BLOCKED` | Cannot proceed (missing deps, etc.) | Present blocker to user |
-
-### Anti-Patterns
-
-```
-# ❌ WRONG - Main agent does preparation work inline
-Main agent: "Let me read the PLAN.md..."
-Main agent: "Now let me calculate the task size..."
-Main agent: "Creating worktree with git worktree add..."
-# User sees all this noisy output!
-
-# ✅ CORRECT - Exploration subagent handles it internally
-Main agent: "Spawning exploration subagent..."
-[Subagent runs preparation + exploration + verification internally]
-Main agent receives JSON: {"status": "READY", "preparation": {...}, ...}
-Main agent displays: "✓ Task size OK: ~45K tokens (56% of threshold)"
-# User sees clean summary only!
-```
-
-```
-# ❌ WRONG - Main agent investigates after exploration subagent returns
-Exploration subagent returns: {"filesToModify": ["Parser.java"]}
-Main agent: "Let me read Parser.java to understand the structure..."
-# Violates M088 - main agent should NOT read source files!
-
-# ✅ CORRECT - Trust exploration findings, pass to implementation
-Exploration subagent returns: {"filesToModify": ["Parser.java", lines: "145-200"]}
-Main agent: "Exploration complete. Spawning implementation subagent..."
-# Main agent trusts findings, doesn't re-investigate
-```
 
 ## Related Skills
 

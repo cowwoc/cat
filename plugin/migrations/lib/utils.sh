@@ -97,11 +97,11 @@ get_config_version() {
 
 # Get the version from plugin.json
 get_plugin_version() {
-    local plugin_file="${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT must be set}/plugin.json"
+    local plugin_file="${CLAUDE_PLUGIN_ROOT:-.}/plugin.json"
 
-    # Fallback to .claude-plugin subdirectory layout
+    # Fallback to .claude-plugin/plugin.json if CLAUDE_PLUGIN_ROOT not set
     if [[ ! -f "$plugin_file" ]]; then
-        plugin_file="${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"
+        plugin_file="${CLAUDE_PLUGIN_ROOT:-.}/.claude-plugin/plugin.json"
     fi
 
     if [[ ! -f "$plugin_file" ]]; then
@@ -170,7 +170,7 @@ is_cat_initialized() {
 get_pending_migrations() {
     local from_version="$1"
     local to_version="$2"
-    local registry_file="${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT must be set}/migrations/registry.json"
+    local registry_file="${CLAUDE_PLUGIN_ROOT:-.}/migrations/registry.json"
 
     if [[ ! -f "$registry_file" ]]; then
         return
@@ -201,7 +201,7 @@ get_pending_migrations() {
 run_migration() {
     local version="$1"
     local script="$2"
-    local script_path="${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT must be set}/migrations/$script"
+    local script_path="${CLAUDE_PLUGIN_ROOT:-.}/migrations/$script"
 
     if [[ ! -f "$script_path" ]]; then
         log_warning "Migration script not found: $script_path (skipping)"
