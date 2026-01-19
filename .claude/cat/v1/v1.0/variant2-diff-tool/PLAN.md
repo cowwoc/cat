@@ -52,3 +52,11 @@ Full diff rendering library with language-aware section detection, syntax highli
 - [ ] Detect file type from extension
 - [ ] Apply appropriate formatting rules per type
 - [ ] Fallback to code-style (no wrapping) for unknown types
+
+### Whitespace & Invisible Character Visibility
+- [ ] Show trailing whitespace explicitly: `line text····⏎` (using · or similar)
+- [ ] Distinguish tabs from spaces: `→` for tab, `·` for space (when relevant)
+- [ ] Mark line ending changes: `[LF→CRLF]` or `[CRLF→LF]`
+- [ ] Flag non-standard whitespace (non-breaking space, zero-width chars)
+- [ ] Whitespace-only changes get explicit callout: `[whitespace only]`
+- [ ] Option to toggle verbose whitespace display (default: show only when changed)
