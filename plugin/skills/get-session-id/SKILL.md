@@ -1,6 +1,7 @@
 ---
 name: get-session-id
-description: Reference for accessing session ID via ${CLAUDE_SESSION_ID} automatic substitution
+description: Session ID is automatically available via ${CLAUDE_SESSION_ID} substitution
+allowed-tools: None (automatic substitution)
 ---
 
 # Get Session ID Skill

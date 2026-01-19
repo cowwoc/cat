@@ -1,3 +1,9 @@
 .idea/
 .claude/locks/
+.claude/backups/
 node_modules/
+plugin/node_modules/
+
+# Temp files
+*.tmp
+*.log

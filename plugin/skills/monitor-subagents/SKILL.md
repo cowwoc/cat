@@ -45,21 +45,10 @@ Use the optimized monitoring script for minimal context impact:
 - `warning` - Tokens >= 80K (40% of context), consider intervention
 - `complete` - Completion marker (`.completion.json`) found in worktree
 
-**Token Metric Source:**
-
-The `tokens` field in monitor output comes from:
-1. `.completion.json` if subagent has completed (preferred)
-2. Session file parsing for running subagents (legacy method)
-
-For accurate token metrics on completed subagents, use `/cat:token-report` which extracts
-`totalTokens` from Task tool completions. This metric matches the CLI "Done" display and
-represents actual context processed, not cumulative API response tokens.
-
 ### 2. Interpret Results
 
 **If status = "warning":**
-- Subagent approaching context limits (>= 80K tokens)
-- For accurate current metrics, run `/cat:token-report`
+- Subagent approaching context limits
 - Consider collecting partial results with `collect-results`
 - May need to decompose remaining work
 

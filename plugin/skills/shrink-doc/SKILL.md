@@ -114,13 +114,13 @@ grep -c "Step 1:" CLAUDE.md  # Should be minimal
 
 When compressing `.claude/rules/*.md` or `docs/code-style/*-claude.md`:
 
-**Preserve style rule sections** (lines starting with `### `). These are intentionally-added
+**NEVER remove style rule sections** (lines starting with `### `). These are intentionally-added
 detection patterns and rules. Compression can:
 - ✅ Condense explanatory text within sections
 - ✅ Shorten verbose rationale paragraphs
 - ✅ Combine redundant examples
-- ❌ Deleting entire `### Section Name` blocks breaks detection
-- ❌ Removing detection patterns or code examples breaks detection
+- ❌ **NEVER** delete entire `### Section Name` blocks
+- ❌ **NEVER** remove detection patterns or code examples
 
 **Verification Required**: After compression, count section headers:
 ```bash
@@ -331,7 +331,8 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 **⚠️ CRITICAL REMINDER**: On second, third, etc. invocations:
 - ✅ **REUSE** `/tmp/original-{{filename}}` from first invocation
-- ✅ Always compare against original baseline (not intermediate versions)
+- ❌ **DO NOT** create `/tmp/original-{{filename}}-v2.md` or similar
+- ❌ **DO NOT** compare against intermediate compressed versions
 - The baseline is set ONCE on first invocation and REUSED for all subsequent invocations
 
 ---
@@ -351,35 +352,30 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 **Version Comparison Table Format**:
 
-After presenting validation results for ANY version, show comparison table.
+After presenting validation results for ANY version, show comparison table:
 
-**Table format:**
+```markdown
+| Version | Lines | Size | Reduction | Score | Status |
+|---------|-------|------|-----------|-------|--------|
+| **Original** | {lines} | {size} | baseline | N/A | Reference |
+| **V1** | {lines} | {size} | {%} | {score} | {✅/❌/✓applied} |
+| **V2** | {lines} | {size} | {%} | {score} | {✅/❌/✓applied} |
+| **V3** | {lines} | {size} | {%} | {score} | {✅/❌/✓applied} |
+```
 
-| Version      | Lines | Size | Reduction | Score | Status     |
-|--------------|-------|------|-----------|-------|------------|
-| **Original** | {n}   | {n}K | baseline  | N/A   | Reference  |
-| **V{n}**     | {n}   | {n}K | {n}%      | {n}   | {status}   |
-
-**Expected output format:**
-
-| Version      | Lines | Size | Reduction | Score | Status      |
-|--------------|-------|------|-----------|-------|-------------|
-| **Original** | {n}   | {n}K | baseline  | N/A   | Reference   |
-| **V1**       | {n}   | {n}K | {n}%      | {n}   | Rejected    |
-| **V2**       | {n}   | {n}K | {n}%      | {n}   | Applied     |
-
-**Status values**:
-- Approved = Score equals 1.0
-- Rejected = Score below 1.0
-- Applied = Currently applied to original file
+**Status Legend**:
+- ✅ = Approved (score = 1.0)
+- ❌ = Rejected (score < 1.0)
+- ✓ applied = Currently applied to original file
 
 **Example**:
-
-| Version      | Lines | Size | Reduction | Score | Status    |
-|--------------|-------|------|-----------|-------|-----------|
-| **Original** | 1,057 | 48K  | baseline  | N/A   | Reference |
-| **V1**       | 520   | 26K  | 51%       | 0.89  | Rejected  |
-| **V2**       | 437   | 27K  | 59%       | 0.97  | Applied   |
+```
+| Version | Lines | Size | Reduction | Score | Status |
+|---------|-------|------|-----------|-------|--------|
+| **Original** | 1,057 | 48K | baseline | N/A | Reference |
+| **V1** | 520 | 26K | 51% | 0.89 | ❌ rejected |
+| **V2** | 437 | 27K | 59% | 0.97 | ✓ applied |
+```
 
 ---
 
@@ -445,46 +441,33 @@ Re-invoking agent with feedback to fix issues...
 ```
 → Go to Step 6 (Iteration)
 
-**⚠️ MANDATORY: Score Validation Gate (M254)**
+**⚠️ CRITICAL: Verify Decision Logic Before Presenting**
 
-**BLOCKING REQUIREMENT**: Complete this validation BEFORE making any approval decision.
+Before presenting results to user, MANDATORY self-check:
 
-**Step 1: Extract exact score value**
-```
-SCORE={exact decimal from /compare-docs execution_equivalence_score}
-```
+```bash
+# Self-validation checklist
+if [ score == 1.0 ]; then
+  decision="APPROVE"
+elif [ score < 1.0 ]; then
+  decision="ITERATE"
+fi
 
-**Step 2: Perform explicit comparison**
-```
-THRESHOLD=1.0
-IS_EXACTLY_ONE=$(echo "$SCORE == $THRESHOLD" | bc -l)
-```
-
-**Step 3: Decision based ONLY on comparison result**
-```
-if [ "$IS_EXACTLY_ONE" -eq 1 ]; then
-  DECISION="APPROVE"
-else
-  DECISION="ITERATE"  # ANY value less than 1.0, including 0.99, 0.999, etc.
+# Verify no contradictions
+if [ stated_decision != expected_decision ]; then
+  ERROR: "Decision logic error detected"
+  FIX: "Recalculate thresholds"
 fi
 ```
 
-**Step 4: State decision with explicit score verification**
-```
-Score: {SCORE}/1.0
-Comparison: {SCORE} == 1.0 → {true|false}
-Decision: {DECISION}
-```
+**Common Mistakes**:
+❌ **WRONG**: "Score 0.97, close enough to 1.0" (0.97 < 1.0, must be perfect)
+✅ **CORRECT**: "Score 0.97 < 1.0, iterate to achieve perfect equivalence"
 
-**FAIL-FAST**: If DECISION=ITERATE, STOP. Do not ask user for approval. Proceed directly to Step 6 (Iteration Loop).
+❌ **WRONG**: "Score 0.99, good enough" (ignores 1.0 threshold)
+✅ **CORRECT**: "Score 0.99 < 1.0, iterate to eliminate any loss"
 
-**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough" scores. Only exact equality (score == 1.0) permits approval. No exceptions.
-
-**Anti-patterns (blocked by this gate)**:
-- ❌ "Score 0.97, close enough to 1.0" → BLOCKED (0.97 ≠ 1.0)
-- ❌ "Score 0.99, good enough" → BLOCKED (0.99 ≠ 1.0)
-- ❌ "Score 0.999, essentially perfect" → BLOCKED (0.999 ≠ 1.0)
-- ✅ "Score 1.0" → APPROVED (1.0 == 1.0)
+**Prevention**: Always verify threshold comparison matches stated score value before presenting.
 
 ---
 

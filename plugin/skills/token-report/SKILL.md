@@ -7,123 +7,304 @@ description: Generate detailed token usage report with threshold analysis and re
 
 ## Purpose
 
-Display a compact token usage report showing per-subagent breakdown with context utilization, health status, and duration. Essential for understanding session resource consumption at a glance.
+Analyze token consumption from session files to understand context utilization, detect concerning
+patterns, and provide recommendations for context management. Essential for CAT's proactive context
+window management strategy.
+
+## Prerequisites
+
+**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this skill.
+All bash commands below use this value directly.
 
 ## When to Use
 
-- Quick health check during any session
-- Periodic monitoring during long-running orchestration
-- After subagent completion to check overall consumption
-- Before deciding whether to decompose remaining work
-- Post-task retrospectives on efficiency
+- Periodic health checks during long-running orchestration
+- After subagent completion to analyze efficiency
+- When monitoring detects approaching context limits
+- To inform decomposition decisions
+- Post-task retrospectives on token efficiency
 
-## Step 1: Check for Pre-Computed Results (MANDATORY)
+## Workflow
 
-**CRITICAL**: This skill requires hook-based pre-computation. Check context for:
+### 1. Locate Session File
 
-```
-PRE-COMPUTED TOKEN REPORT:
-```
+Session file location (uses auto-substituted session ID):
 
-### If PRE-COMPUTED TOKEN REPORT is found:
+```bash
+# Session file location
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
-Output the table EXACTLY as provided. Do NOT modify alignment or recalculate values.
-
-**Example pre-computed output:**
-```
-╭───────────────────┬────────────────────────────────┬──────────┬──────────────────┬────────────╮
-│ Type              │ Description                    │ Tokens   │ Context          │ Duration   │
-├───────────────────┼────────────────────────────────┼──────────┼──────────────────┼────────────┤
-│ Explore           │ Explore codebase               │ 68.4k    │ 34%              │ 1m 7s      │
-│ general-purpose   │ Implement fix                  │ 90.0k    │ 45% ⚠️            │ 43s        │
-│ general-purpose   │ Refactor module                │ 170.0k   │ 85% 🚨            │ 3m 12s     │
-├───────────────────┼────────────────────────────────┼──────────┼──────────────────┼────────────┤
-│                   │ TOTAL                          │ 328.4k   │ -                │ 5m 2s      │
-╰───────────────────┴────────────────────────────────┴──────────┴──────────────────┴────────────╯
+# Verify file exists
+if [ ! -f "${SESSION_FILE}" ]; then
+  echo "ERROR: Session file not found for ${CLAUDE_SESSION_ID}"
+  exit 1
+fi
 ```
 
-### If PRE-COMPUTED TOKEN REPORT is NOT found:
+### 2. Calculate Token Totals
 
-**FAIL immediately** with this message:
+```bash
+# Total input tokens
+INPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") |
+  .message.usage.input_tokens] | add // 0' "${SESSION_FILE}")
 
+# Total output tokens
+OUTPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") |
+  .message.usage.output_tokens] | add // 0' "${SESSION_FILE}")
+
+# Combined total
+TOTAL_TOKENS=$((INPUT_TOKENS + OUTPUT_TOKENS))
+
+# Cache creation tokens (if tracked)
+CACHE_CREATION=$(jq -s '[.[] | select(.type == "assistant") |
+  .message.usage.cache_creation_input_tokens] | add // 0' "${SESSION_FILE}")
+
+# Cache read tokens (if tracked)
+CACHE_READ=$(jq -s '[.[] | select(.type == "assistant") |
+  .message.usage.cache_read_input_tokens] | add // 0' "${SESSION_FILE}")
 ```
-ERROR: Pre-computed token report not found.
 
-The hook precompute-token-report.sh should have provided the table data.
-Do NOT attempt manual computation - the alignment requires deterministic
-Python-based calculation.
+### 3. Count Compaction Events
 
-Possible causes:
-1. Session file not found
-2. No subagent data in session
-3. Hook execution failed
+```bash
+# Compaction events indicate context window resets
+COMPACTION_COUNT=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
 
-Try running /cat:token-report again or check session status.
+# Get timestamps of compactions
+COMPACTION_TIMES=$(jq -s '[.[] | select(.type == "summary") | .timestamp]' "${SESSION_FILE}")
 ```
 
-Do NOT proceed to manual extraction or table building.
+### 4. Compare Against Threshold
 
-## Table Format Reference
+**Critical Threshold: 40% of contextLimit = 80,000 tokens**
 
-The pre-computed table uses these specifications:
+```bash
+CONTEXT_LIMIT=200000  # Standard Claude context window
+THRESHOLD_PERCENT=40
+THRESHOLD_TOKENS=$((CONTEXT_LIMIT * THRESHOLD_PERCENT / 100))  # 80,000
 
-**Column widths (fixed):**
-| Column | Width | Content |
-|--------|-------|---------|
-| Type | 17 | Subagent type (truncated with ...) |
-| Description | 30 | Task description (truncated with ...) |
-| Tokens | 8 | Formatted count (68.4k, 1.5M) |
-| Context | 16 | Percentage with emoji indicator |
-| Duration | 10 | Formatted time (1m 7s) |
+# Calculate percentage used
+PERCENT_USED=$((TOTAL_TOKENS * 100 / CONTEXT_LIMIT))
 
-**Context indicators (INSIDE column):**
-| Context % | Display | Meaning |
-|-----------|---------|---------|
-| < 40% | "34%" | Healthy - plenty of headroom |
-| >= 40% and < 80% | "45% ⚠️" | Warning - above soft target |
-| >= 80% | "85% 🚨" | Critical - approaching limit |
+# Determine status
+if [ "${TOTAL_TOKENS}" -ge "${THRESHOLD_TOKENS}" ]; then
+  STATUS="WARNING"
+elif [ "${TOTAL_TOKENS}" -ge $((THRESHOLD_TOKENS * 75 / 100)) ]; then
+  STATUS="CAUTION"  # 30% (75% of 40%)
+else
+  STATUS="HEALTHY"
+fi
+```
 
-**Box characters:**
-- Top: `╭─┬─╮`
-- Divider: `├─┼─┤`
-- Bottom: `╰─┴─╯`
-- Sides: `│`
+### 5. Calculate Efficiency Metrics
 
-## Verification Checklist
+```bash
+# Messages in session
+MESSAGE_COUNT=$(jq -s '[.[] | select(.type == "assistant")] | length' "${SESSION_FILE}")
 
-Before outputting the table, verify:
+# Tool calls
+TOOL_CALLS=$(jq -s '[.[] | select(.type == "tool_use")] | length' "${SESSION_FILE}")
 
-- [ ] Pre-computed results found in context
-- [ ] Table copied exactly (no modifications)
-- [ ] All box characters preserved
-- [ ] Emoji indicators inside Context column
-- [ ] No additional computation performed
+# Average tokens per message
+AVG_TOKENS_PER_MSG=$((TOTAL_TOKENS / MESSAGE_COUNT))
+
+# Input/Output ratio
+IO_RATIO=$(echo "scale=2; ${INPUT_TOKENS} / ${OUTPUT_TOKENS}" | bc 2>/dev/null || echo "N/A")
+```
+
+### 6. Generate Report
+
+```yaml
+token_report:
+  session_id: abc123
+  generated_at: 2026-01-10T15:45:00Z
+
+  token_usage:
+    input_tokens: 45000
+    output_tokens: 20000
+    total_tokens: 65000
+    cache_creation_tokens: 5000
+    cache_read_tokens: 12000
+
+  context_analysis:
+    context_limit: 200000
+    tokens_used: 65000
+    percent_used: 32.5%
+    threshold: 80000 (40%)
+    headroom: 15000
+    status: HEALTHY
+
+  compaction:
+    events: 0
+    timestamps: []
+
+  efficiency:
+    messages: 45
+    tool_calls: 120
+    avg_tokens_per_message: 1444
+    input_output_ratio: 2.25
+
+  recommendations: []
+```
+
+### 7. Generate Recommendations
+
+Based on analysis, provide actionable guidance:
+
+```yaml
+recommendations:
+  # If approaching threshold
+  - type: CONTEXT_WARNING
+    condition: "tokens_used > 75% of threshold"
+    action: "Consider decomposing remaining work into new subagent"
+
+  # If compaction occurred
+  - type: COMPACTION_DETECTED
+    condition: "compaction_events > 0"
+    action: "Context was compacted. Review for lost context. Consider smaller task scope."
+
+  # If inefficient token usage
+  - type: HIGH_INPUT_RATIO
+    condition: "input_output_ratio > 5.0"
+    action: "High re-reading of context. Consider more targeted file reads."
+
+  # If many messages without progress
+  - type: LOW_EFFICIENCY
+    condition: "messages > 50 && commits == 0"
+    action: "Many messages without commits. May indicate confusion or scope issues."
+```
+
+## Examples
+
+### Healthy Session Report
+
+```yaml
+token_report:
+  session_id: parser-sub-a1b2c3d4
+  status: HEALTHY
+
+  summary:
+    total_tokens: 45000
+    percent_used: 22.5%
+    compactions: 0
+    efficiency_score: 0.89
+
+  interpretation: |
+    Session is well within context limits.
+    Good efficiency with 3 commits per 15K tokens.
+    No intervention needed.
+```
+
+### Warning Session Report
+
+```yaml
+token_report:
+  session_id: formatter-sub-b2c3d4e5
+  status: WARNING
+
+  summary:
+    total_tokens: 85000
+    percent_used: 42.5%
+    compactions: 1
+    efficiency_score: 0.32
+
+  interpretation: |
+    Session has exceeded 40% threshold.
+    One compaction event indicates context pressure.
+    Efficiency declining - likely re-reading same context.
+
+  recommendations:
+    - "Collect current results immediately"
+    - "Decompose remaining work into fresh subagent"
+    - "Review task scope for future similar work"
+```
+
+### Aggregate Report (Multiple Subagents)
+
+```yaml
+aggregate_token_report:
+  generated_at: 2026-01-10T16:00:00Z
+
+  subagents:
+    - id: a1b2c3d4
+      total: 65000
+      status: HEALTHY
+    - id: b2c3d4e5
+      total: 85000
+      status: WARNING
+    - id: c3d4e5f6
+      total: 35000
+      status: HEALTHY
+
+  aggregate:
+    total_tokens: 185000
+    average_per_subagent: 61667
+    highest_usage: b2c3d4e5 (85000)
+    total_compactions: 1
+
+  fleet_health: CAUTION
+  recommendation: "One subagent approaching limits. Monitor closely."
+```
 
 ## Anti-Patterns
 
-### Never attempt manual table construction
+### Always flag compaction events as concerns
+
+```yaml
+# ❌ Treating compaction as normal
+compaction_events: 3
+status: HEALTHY  # Wrong!
+
+# ✅ Compaction always indicates concern
+compaction_events: 3
+status: WARNING
+recommendation: "Multiple compactions indicate task is too large"
+```
+
+### Always provide contextual interpretation for numbers
+
+```yaml
+# ❌ Numbers without meaning
+tokens: 65000
+
+# ✅ Contextual interpretation
+tokens: 65000
+percent_of_limit: 32.5%
+status: HEALTHY
+headroom_remaining: 135000
+```
+
+### Warn proactively at 40% threshold
 
 ```bash
-# BAD - Manual jq extraction and formatting
-jq -s '...' "$SESSION_FILE"
-# Then manually building table rows
+# ❌ Warning only at limit
+if [ "${PERCENT}" -ge 100 ]; then
+  echo "WARNING"
+fi
 
-# GOOD - Use pre-computed results only
-# Output exactly what the hook provided
+# ✅ Proactive warning at 40%
+if [ "${PERCENT}" -ge 40 ]; then
+  echo "WARNING - approaching context limit"
+fi
 ```
 
-### Never modify pre-computed alignment
+### Analyze individually before aggregating
 
-```
-# BAD - "Fixing" spacing or alignment
-│ Type           │  # Wrong - modified padding
+```yaml
+# ❌ Only aggregate view
+total_fleet_tokens: 185000
+status: OK  # Misses individual issues
 
-# GOOD - Copy exactly as provided
-│ Type              │  # Correct - preserved padding
+# ✅ Individual + aggregate
+subagent_a: 65000 (HEALTHY)
+subagent_b: 85000 (WARNING)  # This needs attention!
+subagent_c: 35000 (HEALTHY)
+aggregate: 185000
 ```
 
 ## Related Skills
 
-- `cat:monitor-subagents` - Uses token data for health checks
-- `cat:decompose-task` - Triggered when context reaches critical levels
+- `cat:monitor-subagents` - Uses token reports for health checks
+- `cat:decompose-task` - Triggered by token warnings
+- `cat:collect-results` - Includes token metrics in collection
 - `cat:learn-from-mistakes` - Uses token data for context-related analysis
