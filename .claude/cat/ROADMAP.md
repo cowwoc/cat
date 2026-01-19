@@ -12,27 +12,20 @@ Project roadmap with version summaries. Minor versions group related tasks (2-8 
   - new-document-types
   - expand-exploration-subagent-role
 
-## Version 2: Commercialization (IN PROGRESS)
-- **2.0:** Billing (IN PROGRESS)
-  - feature-gate-middleware
+## Version 2: Commercialization (PENDING)
+- **2.0:** Licensing & Billing (PENDING)
+  - tos-legal-review
+  - pricing-page
+  - update-graphics-tagline
+  - license-validation-server
+  - license-commands
   - tier-feature-mapping
+  - stripe-billing-integration
+  - feature-gate-middleware
+  - offline-validation
+  - jwt-token-generation
+  - remove-license-notice-startup
   - update-check-startup
-- **2.1:** Pre-Demo Polish (PENDING)
-  - rename-task-to-issue
-  - suggest-issue-names
-  - acceptance-criteria-options
-  - research-new-issues
-  - centralize-emoji-widths
-  - show-task-header-at-approval-gate
-- **2.2:** Demos & Marketing (PENDING)
-  - task-management-demo
-  - git-safety-demo
-  - multi-agent-demo
-  - planning-research-demo
-- **2.3:** Pluggable Issue Trackers (PENDING)
-  - storage-abstraction-design
-  - local-file-backend
-  - github-issues-backend
 
 ## Version 3: Enterprise (PLANNED)
 - **3.0:** Enterprise Features (PENDING)
