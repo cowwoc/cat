@@ -1510,14 +1510,28 @@ Use `/cat:git-squash` skill for safe squashing.
 
 **MANDATORY: cd back to main workspace before merging.**
 
-We've been working in the worktree directory. To merge, return to the main workspace (where `main` is checked out):
+We've been working in the worktree directory. To merge, return to the main workspace:
 
 ```bash
 # Return to main workspace
 cd /workspace  # Or wherever CLAUDE_PROJECT_DIR is
 pwd  # Verify we're in main workspace (not worktree)
-git branch  # Should show main (or master)
 ```
+
+**CRITICAL (M154): Preserve the currently checked out branch.**
+
+The main workspace has whatever branch the user was working on (could be `main`, `v1.10`, a
+feature branch, etc.). Merge the task branch INTO that branch without switching branches:
+
+```bash
+# Check current branch (DO NOT CHANGE IT)
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Merging into: $CURRENT_BRANCH"
+```
+
+**Anti-pattern (M154):** Using `git checkout main` or `git checkout <any-branch>` in the main
+workspace. This disrupts the user's working state. The task worktree exists precisely to avoid
+touching the main workspace's checked out branch.
 
 **Then merge the task branch:**
 
