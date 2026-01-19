@@ -788,6 +788,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before marking a version STATE.md as completed, verify all nested items are complete (tasks for minor, minors for major). Validation happens once at completion time, not repeatedly when checking status."
+    },
+    {
+      "id": "M151",
+      "timestamp": "2026-01-19T22:20:00Z",
+      "category": "protocol_violation",
+      "description": "Presented approval gate with unsquashed commits - had 3 docs: commits that should have been squashed into 1",
+      "root_cause": "Workflow step order had squash_commits AFTER approval_gate, so commits were not squashed before user review",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.worktrees/2.0-expand-exploration-subagent-role/commands/execute-task.md",
+      "pattern_keywords": [
+        "squash",
+        "commits",
+        "approval_gate",
+        "step_order",
+        "workflow"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Squash commits by type BEFORE presenting approval gate. Users should review clean, squashed commit history."
     }
   ]
 }
