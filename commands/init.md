@@ -407,12 +407,6 @@ Output banner directly with inline padding:
 
 <!-- COMMON STEPS -->
 
-<step name="mode">
-
-AskUserQuestion: header="Mode", question="How to work?", options=["Interactive - confirm at each step", "YOLO - auto-approve"]
-
-</step>
-
 <step name="behavior_style">
 
 **Choose Your Partner - Capture development style preferences**
@@ -538,7 +532,6 @@ Output completion banner directly with inline padding:
 │  Working Style:  [trust]                                         │
 │  Exploration:    [curiosity]                                     │
 │  Opportunity:    [patience]                                      │
-│  Mode:           [interactive|yolo]                              │
 │                                                                  │
 │  Your partner is ready. Let's build something solid.             │
 │  Adjust your style anytime: /cat:config                          │

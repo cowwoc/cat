@@ -158,9 +158,9 @@ Update minor/major CHANGELOG.md to include completed task summary.
 > **NOTE**: Task changelog content is embedded in commit messages, not separate files.
 > Minor/major version CHANGELOG.md files aggregate completed tasks.
 
-## Yolo Mode Differences
+## High Trust Mode Differences
 
-In Yolo mode, steps 5-7 are automatic:
+When trust is high, steps 5-7 are automatic:
 - No user approval required
 - Immediate merge after verification passes
 - Cleanup proceeds without pause
