@@ -118,9 +118,9 @@
       "description": "ESCALATION: A001 commit type validation ineffective. Need semantic validation - the hook checks format but not semantic correctness (docs vs config vs planning).",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-001",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-19T16:13:29-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-19T16:18:04-05:00",
       "related_mistakes": [
         "M099",
         "M133",
@@ -142,9 +142,9 @@
       "description": "ESCALATION: Box alignment 6 recurrences despite fixes. Agents manually type boxes instead of using scripts. Need enforcement mechanism.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-006",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-19T16:13:29-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-19T16:18:04-05:00",
       "related_mistakes": [
         "M136",
         "M137",
