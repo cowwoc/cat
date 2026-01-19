@@ -2,6 +2,7 @@
   "version": "1.0.10",
   "contextLimit": 200000,
   "targetContextUsage": 40,
+  "terminalWidth": 50,
   "trust": "medium",
   "verify": "all",
   "curiosity": "high",
