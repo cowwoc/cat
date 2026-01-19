@@ -271,7 +271,7 @@ Example with real values:
 ```
 
 **Status symbols (emoji):**
-- ☑️ completed (for done tasks and 100% complete minors)
+- ☑️ completed (for done tasks and 100% complete minor versions)
 - 🔄 in-progress (for current minor version AND any actively running task)
 - 🔳 pending (no unsatisfied entry gate)
 - 🚫 blocked (task-level dependencies not met)
@@ -349,7 +349,7 @@ The table options change based on current state:
 |-------|----------|----------|
 | Has pending tasks | Execute a task | Add new task |
 | All tasks complete for minor | Add new task | Add minor version |
-| All minors complete for major | Add minor version | Add major version |
+| All minor versions complete for major | Add minor version | Add major version |
 | All complete | 🎉 All tasks complete! | (no options needed) |
 
 </step>
