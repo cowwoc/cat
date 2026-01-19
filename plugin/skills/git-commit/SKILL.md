@@ -75,7 +75,7 @@ Refactor  parser         to use visitor pattern
 - No period at end
 - Capitalize first word
 
-### 4. Don't List Modified Files
+### 4. Describe Changes Conceptually
 
 The commit diff already shows which files were changed. Describe WHAT changed conceptually, not WHERE.
 
@@ -187,7 +187,7 @@ Task ID: v1.1-implement-user-auth
 
 ### Commit Type Separation (MANDATORY)
 
-**NEVER mix commit types in a single commit.** Each commit should have ONE type.
+**Keep one commit type per commit.** Each commit should have ONE type.
 
 ```
 # WRONG - Mixed types in one commit
