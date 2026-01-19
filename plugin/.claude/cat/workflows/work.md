@@ -385,6 +385,103 @@ Present to user:
 - Branch for review
 - Test results
 
+**MANDATORY: Show Diff to User**
+
+Before asking for approval, display the changes using the configured terminal width:
+
+```bash
+# Read terminal width from config (default 50)
+WIDTH=$(jq -r '.terminalWidth // 50' .claude/cat/cat-config.json)
+```
+
+**Diff Format (Variant 2 - Isolated Changes):**
+
+Use this format which isolates only the changed phrases while preserving context:
+
+```
+## {Section Name} (lines {start}-{end})
+──────────────────────────────────────────────────
+
+  {unchanged context, wrapped to $WIDTH}
+
+- {removed text only}
++ {added text only}
+
+  {more unchanged context}
+
+──────────────────────────────────────────────────
+```
+
+**Example at 50 chars:**
+```
+## Governing Law (lines 234-238)
+──────────────────────────────────────────────────
+
+  This license shall be governed
+  by and construed in accordance
+  with the laws of
+
+- Delaware,
++ the jurisdiction in which the
++ Licensor resides,
+
+  without regard to its conflict
+  of law provisions.
+
+──────────────────────────────────────────────────
+```
+
+**Why this format:**
+- Unchanged context is unmarked (easy to skip)
+- Only actual changes get +/- markers
+- Works well when lines wrap at narrow widths
+- Clearer than marking entire wrapped lines
+
+**Structure: File by File, Section by Section**
+
+Show changes organized hierarchically:
+
+```
+╭─ Task Diff: {task-name} ────────────────────────╮
+│ Files: {count} │ +{added}/-{removed} lines      │
+╰─────────────────────────────────────────────────╯
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE 1/N: {filename}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## Section: {section name} (lines {start}-{end})
+──────────────────────────────────────────────────
+
+  {unchanged context}
+
+- {removed text}
++ {added text}
+
+  {unchanged context}
+
+──────────────────────────────────────────────────
+
+## Section: {next section} (lines {start}-{end})
+──────────────────────────────────────────────────
+
+  {context and changes...}
+
+──────────────────────────────────────────────────
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILE 2/N: {next filename}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{sections...}
+```
+
+**Section identification rules:**
+- For Markdown: Use headings (##) as section boundaries
+- For code: Use function/class definitions as boundaries
+- For config: Use top-level keys as boundaries
+- Include 2-3 lines of unchanged context around changes
+
 **CRITICAL: Approval Protocol**
 
 1. Use AskUserQuestion with explicit "Approve" / "Reject" options
