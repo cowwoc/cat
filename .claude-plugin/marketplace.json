@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "cat",
-      "source": "./",
+      "source": "./plugin",
       "description": "Multi-agent orchestration for Git-based projects"
     }
   ]
