@@ -148,7 +148,7 @@ git branch -d {major}.{minor}-{task-name}-sub-*
 Update minor and major STATE.md progress (task STATE.md already updated in step 6):
 
 - Minor STATE.md: recalculate progress based on completed tasks
-- Major STATE.md: recalculate progress based on completed minors
+- Major STATE.md: recalculate progress based on completed minor versions
 - ROADMAP.md: update if version status changed
 
 ### 11. Update Changelogs

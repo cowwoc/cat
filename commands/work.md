@@ -219,7 +219,7 @@ All bash commands below use this value directly.
 | Argument Format | Example | Behavior |
 |-----------------|---------|----------|
 | (none) | `/cat:work` | Work on first available task in first incomplete minor version |
-| `major` | `/cat:work 0` | Work through ALL minors in major v0 (v0.0 → v0.1 → ...) |
+| `major` | `/cat:work 0` | Work through ALL minor versions in v0 (v0.0 → v0.1 → ...) |
 | `major.minor` | `/cat:work 0.5` | Work through ALL tasks in v0.5 |
 | `major.minor-task` | `/cat:work 0.5-parse-tokens` | Work on specific task only |
 | `--override-gate` | `/cat:work 0.5 --override-gate` | Skip entry gate check |
@@ -331,7 +331,7 @@ Evaluate each entry condition:
 
 **If no `## Gates` section exists**, fall back to default rules:
 - First minor of first major (v0.0): No prerequisites
-- Subsequent minors (e.g., v0.5): Previous minor must be complete
+- Subsequent minor versions (e.g., v0.5): Previous minor version must be complete
 - First minor of new major (e.g., v1.0): Last minor of previous major must be complete
 
 For each task, check:
@@ -1502,7 +1502,7 @@ This step handles the parent STATE.md rollup updates.
 
 2. **Major STATE.md:**
    - Recalculate progress based on minor completion
-   - Update status if all minors complete
+   - Update status if all minor versions complete
 
 3. **Dependent tasks:**
    - Find all tasks in the same minor version that list this task in Dependencies

@@ -120,7 +120,7 @@ their requirements.
    - A major version cannot be complete if any minor has unsatisfied must-have requirements
 
 2. **Aggregate requirements coverage**:
-   - Report total requirements across all minors
+   - Report total requirements across all minor versions
    - Report satisfaction rate: `{satisfied}/{total} requirements met`
 
 3. **Block completion if any minor has unsatisfied must-have requirements**:

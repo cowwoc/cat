@@ -322,7 +322,7 @@ For each major version found, use AskUserQuestion:
 Then:
 - header: "Major {N} Exit"
 - question: "Exit gate for Major {N}?"
-- options: ["All minors complete", "Specific conditions", "No criteria"]
+- options: ["All minor versions complete", "Specific conditions", "No criteria"]
 
 For each minor version, use AskUserQuestion:
 - header: "v{X}.{Y} Entry"
@@ -547,7 +547,7 @@ Next: /clear -> /cat:add-major-version
 
 **Existing codebases:**
 ```
-Initialized with [N] majors, [N] minors, [N] tasks
+Initialized with [N] major versions, [N] minor versions, [N] tasks
 Next: /clear -> /cat:work {task} OR /cat:add
 ```
 

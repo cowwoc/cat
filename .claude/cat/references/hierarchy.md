@@ -65,7 +65,7 @@ Minor versions have implicit sequential dependencies:
 | Scenario | Dependency |
 |----------|------------|
 | First minor of first major (e.g., v0.0) | None |
-| Subsequent minors in same major (e.g., v0.1, v0.2) | Previous minor (v0.0, v0.1) |
+| Subsequent minor versions in same major (e.g., v0.1, v0.2) | Previous minor version (v0.0, v0.1) |
 | First minor of new major (e.g., v1.0) | Last minor of previous major |
 
 **Examples:**

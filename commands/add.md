@@ -429,7 +429,7 @@ ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -V
 Use AskUserQuestion:
 - header: "Target Major"
 - question: "Which major version should this minor be added to?"
-- options: [List of available majors] + "Create new major version"
+- options: [List of available major versions] + "Create new major version"
 
 If "Create new major version" -> go to step: major_find_next
 
@@ -708,7 +708,7 @@ Use AskUserQuestion:
 - header: "Version Conflict"
 - question: "Major version $REQUESTED_MAJOR already exists. What would you like to do?"
 - options:
-  - "Insert before it" - Create v$REQUESTED_MAJOR and renumber existing majors
+  - "Insert before it" - Create v$REQUESTED_MAJOR and renumber existing major versions
   - "Use next available ($NEXT_MAJOR)" - Skip to next free number
   - "Cancel" - Abort
 
