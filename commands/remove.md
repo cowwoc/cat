@@ -409,7 +409,7 @@ done
 Use AskUserQuestion:
 - header: "Select Major Version"
 - question: "Which major version do you want to remove?"
-- options: [List of majors with stats] + "Cancel"
+- options: [List of major versions with stats] + "Cancel"
 
 If "Cancel" -> exit command.
 
