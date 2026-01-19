@@ -369,13 +369,19 @@ This ensures:
 
 ### 12. Update State
 
-Update task STATE.md:
+**MANDATORY (M153): Set STATE.md to FINAL state before approval gate.**
+
+Files proposed for merge should reflect their final state. Update task STATE.md to completed:
+
 ```markdown
-- **Status:** in-progress
-- **Progress:** 90%
-- **Last Updated:** {timestamp}
-- **Note:** Subagent work merged, awaiting approval
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** implemented
+- **Completed:** {YYYY-MM-DD HH:MM}
+- **Tokens Used:** {N}
 ```
+
+This ensures the commit being approved already shows task completion.
 
 ### 13. Approval Gate (Interactive Mode)
 
