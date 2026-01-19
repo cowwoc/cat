@@ -77,7 +77,7 @@ Claude-facing coding standards live in `.claude/cat/conventions/`. Place files h
 .claude/cat/conventions/
 ├── INDEX.md              # Summary with links to load sub-conventions on demand
 ├── common.md             # Cross-cutting conventions
-├── {language}.md         # Language-specific (python.md, typescript.md, etc.)
+├── {language}.md         # Language-specific (java.md, typescript.md, etc.)
 ├── testing.md            # Testing standards
 └── {domain}/             # Optional subdirectories for complex domains
     └── {topic}.md
