@@ -680,6 +680,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Cross-check reported tokens against Claude Code tool output summary. When Task tool completes it shows actual usage - if reported value differs significantly, re-read subagent completion output."
+    },
+    {
+      "id": "M147",
+      "timestamp": "2026-01-19T20:38:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent investigated exploration subagent findings directly (ran tests, read source code) instead of spawning a verification subagent when uncertain about DUPLICATE finding",
+      "root_cause": "No documented pattern for handling uncertainty about subagent findings - distrust led to direct investigation instead of delegating verification",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/spawn-subagent/SKILL.md",
+      "pattern_keywords": [
+        "delegation",
+        "subagent",
+        "verification",
+        "direct-investigation",
+        "trust"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When uncertain about subagent findings: (1) ACCEPT and proceed with appropriate workflow, OR (2) SPAWN a verification subagent with specific questions. NEVER investigate directly by reading code or running tests."
     }
   ]
 }

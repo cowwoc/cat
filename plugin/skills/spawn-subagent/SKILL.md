@@ -814,6 +814,39 @@ Task prompt: |
 
 **Why**: Choosing between approaches is a decision. Decisions require user oversight.
 
+### Verify subagent findings through delegation, not direct investigation (M147)
+
+When a subagent returns findings (especially exploration results like "DUPLICATE" or "NOT FOUND"),
+the main agent must NOT investigate directly:
+
+```
+# ❌ WRONG - Main agent investigates subagent findings directly
+Subagent returns: "DUPLICATE: fix already exists in commit c2da15e"
+Main agent: "Let me verify by reading ExpressionParser.java..."
+Main agent: "Let me run the test to confirm..."
+
+# ✅ CORRECT - Spawn verification subagent if uncertain
+Subagent returns: "DUPLICATE: fix already exists in commit c2da15e"
+Main agent options:
+  1. ACCEPT finding and proceed with appropriate workflow (e.g., mark task as duplicate)
+  2. SPAWN a verification subagent with specific questions:
+     Task prompt: |
+       Verify that fix for lambda arrow in parenthesized context exists:
+       1. Check commit c2da15e7 - does it modify ExpressionParser.java?
+       2. Run test: ./mvnw test -Dtest="LambdaArrowEdgeCaseParserTest#shouldParseLambdaAfterMethodReferenceWithTrailingComments"
+       3. Report: VERIFIED or NOT_VERIFIED with evidence
+```
+
+**Why this matters:**
+- Reading files and running tests to verify subagent findings violates delegation boundaries
+- If you distrust subagent findings, the correct response is structured re-verification, not ad-hoc investigation
+- Direct investigation pattern ("Let me verify by reading the code myself") bypasses the subagent architecture
+
+**Decision tree for subagent findings:**
+1. Is the finding clear and actionable? → Accept and proceed with appropriate workflow
+2. Is there uncertainty about accuracy? → Spawn verification subagent with specific verification steps
+3. NEVER: Read code directly, run commands directly, or otherwise investigate outside the subagent framework
+
 ## Related Skills
 
 - `cat:monitor-subagents` - Check status of spawned subagents
