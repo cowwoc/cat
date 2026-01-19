@@ -39,7 +39,7 @@ Main agent handles merge conflicts when integrating subagent branches. User esca
 automatic resolution fails.
 
 ## 8. Quality Gates
-Every task passes through approval gates (unless Yolo mode):
+Every task passes through approval gates (unless trust is high):
 - Work review
 - Commit squashing by type
 - User approval before merge to main
