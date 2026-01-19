@@ -1,8 +1,11 @@
 # Task State: tos-legal-review
 
 ## Status
-status: pending
-progress: 0%
+status: completed
+progress: 100%
+started: 2026-01-19T08:01:00Z
+completed: 2026-01-19T08:15:00Z
+resolution: implemented
 
 ## Dependencies
 - None (foundational task)
