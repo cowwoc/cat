@@ -60,8 +60,6 @@ minor version's PLAN.md. Tasks may satisfy zero or more requirements.
 
 ## Feature Template
 
-### Stage 1: Approach Outlines (lightweight, ~5K tokens)
-
 ```markdown
 # Plan: [Task Name]
 
@@ -73,49 +71,23 @@ minor version's PLAN.md. Tasks may satisfy zero or more requirements.
 - REQ-001
 - REQ-002
 
-## Approach Outlines
-
-### 🛡️ Conservative
-[1-2 sentences describing minimal scope approach]
-- **Risk:** LOW
-- **Tradeoff:** [brief - what you give up]
-
-### ⚖️ Balanced
-[1-2 sentences describing moderate scope approach]
-- **Risk:** MEDIUM
-- **Tradeoff:** [brief - what you give up]
-
-### ⚔️ Aggressive
-[1-2 sentences describing comprehensive approach]
-- **Risk:** HIGH
-- **Tradeoff:** [brief - what you give up]
-```
-
-### Stage 2: Detailed Spec (after selection, ~20K tokens)
-
-```markdown
-## Selected Approach
-[Conservative | Balanced | Aggressive]
-
-## Detailed Implementation
-
-### Risk Assessment
-- **Risk Level:** [from selected approach]
+## Risk Assessment
+- **Risk Level:** [LOW | MEDIUM | HIGH]
 - **Concerns:** [potential issues]
 - **Mitigation:** [how to address]
 
-### Files to Modify
+## Files to Modify
 - path/to/file1.ext - [specific change]
 - path/to/file2.ext - [specific change]
 
-### Dependencies
+## Dependencies
 - [task-name] - [why needed]
 
-### Acceptance Criteria
+## Acceptance Criteria
 - [ ] Criterion 1
 - [ ] Criterion 2
 
-### Execution Steps
+## Execution Steps
 1. **Step 1:** [action]
    - Files: [paths]
    - Action: [specific implementation - what to do, how, what to avoid]
@@ -130,8 +102,6 @@ minor version's PLAN.md. Tasks may satisfy zero or more requirements.
 
 **MANDATORY (M122):** Bugfix plans MUST include reproduction code. Tasks must be self-contained
 and executable without external dependencies (e.g., external codebases, third-party repos).
-
-### Stage 1: Approach Outlines
 
 ```markdown
 # Plan: [Task Name]
@@ -157,45 +127,19 @@ code_that_fails();
 ## Root Cause
 [1-2 sentences - analysis or "to be determined"]
 
-## Fix Approach Outlines
-
-### 🛡️ Conservative
-[1 sentence - patches symptom]
-- **Risk:** LOW
-- **Tradeoff:** [may not address root cause]
-
-### ⚖️ Balanced
-[1 sentence - fixes root cause locally]
-- **Risk:** MEDIUM
-- **Tradeoff:** [scope limitation]
-
-### ⚔️ Aggressive
-[1 sentence - comprehensive fix]
-- **Risk:** HIGH
-- **Tradeoff:** [larger change surface]
-```
-
-### Stage 2: Detailed Spec
-
-```markdown
-## Selected Approach
-[Conservative | Balanced | Aggressive]
-
-## Detailed Fix
-
-### Risk Assessment
-- **Risk Level:** [from selected]
+## Risk Assessment
+- **Risk Level:** [LOW | MEDIUM | HIGH]
 - **Regression Risk:** [what could break]
 - **Mitigation:** [how to verify]
 
-### Files to Modify
+## Files to Modify
 - path/to/file.ext - [specific change]
 
-### Test Cases
+## Test Cases
 - [ ] Original bug scenario - now passes
 - [ ] Edge cases - still work
 
-### Execution Steps
+## Execution Steps
 1. **Step 1:** [action with specific code changes]
    - Verify: [test command]
 ```
@@ -203,8 +147,6 @@ code_that_fails();
 ---
 
 ## Refactor Template
-
-### Stage 1: Approach Outlines
 
 ```markdown
 # Plan: [Task Name]
@@ -219,41 +161,15 @@ code_that_fails();
 [List requirement IDs from parent minor version PLAN.md, or "None" for tech debt]
 - REQ-001
 
-## Refactor Approach Outlines
-
-### 🛡️ Conservative
-[1 sentence - rename/reorganize only]
-- **Risk:** LOW
-- **Tradeoff:** [limited improvement]
-
-### ⚖️ Balanced
-[1 sentence - improve structure]
-- **Risk:** MEDIUM
-- **Tradeoff:** [some areas untouched]
-
-### ⚔️ Aggressive
-[1 sentence - complete redesign]
-- **Risk:** HIGH
-- **Tradeoff:** [large change surface]
-```
-
-### Stage 2: Detailed Spec
-
-```markdown
-## Selected Approach
-[Conservative | Balanced | Aggressive]
-
-## Detailed Refactor
-
-### Risk Assessment
-- **Risk Level:** [from selected]
+## Risk Assessment
+- **Risk Level:** [LOW | MEDIUM | HIGH]
 - **Breaking Changes:** [API/behavior changes]
 - **Mitigation:** [tests, incremental steps]
 
-### Files to Modify
+## Files to Modify
 - path/to/file.ext - [specific change]
 
-### Execution Steps
+## Execution Steps
 1. **Step 1:** [action with before/after patterns]
    - Verify: [tests pass]
 ```

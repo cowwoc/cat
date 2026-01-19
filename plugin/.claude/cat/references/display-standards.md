@@ -276,7 +276,6 @@ Output format (do NOT wrap in ```):
 ╭─── ✅ CHECKPOINT: Task Complete ──────────────────────────────────╮
 │                                                                    │
 │  **Task:** task-name                                               │
-│  **Approach:** Selected approach description                       │
 │                                                                    │
 ├────────────────────────────────────────────────────────────────────┤
 │  **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)        │
