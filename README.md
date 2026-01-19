@@ -337,7 +337,7 @@ Open an issue to discuss before investing significant effort.
 
 CAT Source-Available Commercial License — see [LICENSE.md](LICENSE.md)
 
-**Indie** (Free) — Full CAT for solo builders
+**Indie** (Free) — Full CAT for solo developers
 **Team** ($19/seat/mo) — Collaboration features for teams of 1-50
 **Enterprise** ($49/seat/mo) — Compliance and integrations at scale
 
