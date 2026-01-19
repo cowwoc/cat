@@ -27,7 +27,7 @@ Use this when:
 echo "=== Git Worktrees ==="
 git worktree list
 
-# List task locks (new format in .claude/cat/locks/)
+# List task locks
 echo ""
 echo "=== Task Locks ==="
 if [[ -d .claude/cat/locks ]]; then
@@ -36,11 +36,6 @@ if [[ -d .claude/cat/locks ]]; then
 else
   echo "No task locks found"
 fi
-
-# List legacy lock files
-echo ""
-echo "=== Legacy Lock Files ==="
-ls -la .cat-*.lock 2>/dev/null || echo "No legacy lock files found"
 
 # List execution context files
 echo ""
@@ -62,9 +57,8 @@ Present findings to user.
 A worktree is likely abandoned if:
 - Its lock file references a session that's no longer active
 - The worktree directory exists but has no recent activity
-- The main project has a stale `.cat-change-*.lock` file
 
-**Check task locks (new format):**
+**Check task locks:**
 ```bash
 if [[ -d .claude/cat/locks ]]; then
   echo "=== Task Lock Status ==="
@@ -78,17 +72,6 @@ if [[ -d .claude/cat/locks ]]; then
     echo "  $task_id: session=$session, heartbeat_age=${heartbeat_age}s, stale=$is_stale"
   done
 fi
-```
-
-**Check legacy lock files:**
-```bash
-for lock in .cat-change-*.lock; do
-  if [[ -f "$lock" ]]; then
-    echo "Lock: $lock"
-    echo "  Session: $(cat "$lock")"
-    echo "  Age: $(stat -c %y "$lock" 2>/dev/null || stat -f %Sm "$lock")"
-  fi
-done
 ```
 </step>
 
@@ -139,10 +122,6 @@ For each abandoned artifact, confirm before removing:
 WORKTREE_PATH="<path>"
 git worktree remove "$WORKTREE_PATH" --force
 
-# Remove associated legacy lock file
-CHANGE_ID="<extracted-from-path>"  # e.g., "02-01" from ".worktrees/m1-02-01"
-rm -f ".cat-change-${CHANGE_ID}.lock"
-
 # Remove orphaned branch (AFTER worktree removal)
 BRANCH_NAME="<branch-from-worktree>"
 git branch -D "$BRANCH_NAME" 2>/dev/null || true
@@ -151,9 +130,8 @@ git branch -D "$BRANCH_NAME" 2>/dev/null || true
 **Order matters:**
 1. Clean up stale task locks FIRST (may be blocking worktree operations)
 2. Remove worktree (git won't delete a branch checked out in a worktree)
-3. Remove legacy lock files
-4. Delete orphaned branches
-5. Remove context file last
+3. Delete orphaned branches
+4. Remove context file last
 </step>
 
 <step name="verify">
@@ -165,11 +143,6 @@ echo "=== Verification ==="
 # Confirm no orphaned worktrees
 echo "Remaining worktrees:"
 git worktree list
-
-# Confirm no stale locks
-echo ""
-echo "Remaining lock files:"
-ls -la .cat-*.lock 2>/dev/null || echo "None"
 
 # Confirm branches cleaned
 echo ""
