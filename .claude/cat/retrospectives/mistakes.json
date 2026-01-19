@@ -597,6 +597,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Write script output to temp file, then use Read tool to display it (avoids Claude Code collapsing large Bash outputs)"
+    },
+    {
+      "id": "M144",
+      "timestamp": "2026-01-19T12:15:00Z",
+      "category": "documentation_violation",
+      "description": "Summarized status output instead of displaying exact file contents verbatim",
+      "root_cause": "Skill instruction 'display its contents' was ambiguous - could mean summarize OR verbatim output. M143 focused on Read tool usage but didn't specify verbatim requirement.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+      "pattern_keywords": [
+        "status",
+        "display",
+        "verbatim",
+        "summary",
+        "read-tool",
+        "output"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output file contents EXACTLY as shown in Read tool result - do not summarize or paraphrase"
     }
   ]
 }
