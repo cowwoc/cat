@@ -1,6 +1,6 @@
 # CAT Pricing
 
-> **CAT: Your Coding Partner That Grows With You**
+> **CAT: A Coding Partner You Can Count On**
 >
 > Build on solid ground, not a house of cards.
 
