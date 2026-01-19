@@ -1,8 +1,8 @@
-# Minor Version 2.1 State: Commercialization
+# Minor Version 2.0 State: Licensing & Billing
 
 ## Status
 status: pending
 progress: 0%
 
 ## Summary
-Implement pricing tiers, license key system, and documentation polish for commercial launch.
+Prepare CAT for commercial release with pricing tiers, license key system, and billing integration.

@@ -1,9 +1,9 @@
 {
   "version": "1.0.10",
-  "terminalWidth": 50,
+  "contextLimit": 200000,
+  "targetContextUsage": 40,
   "trust": "medium",
-  "verify": "all",
-  "curiosity": "high",
-  "patience": "medium",
-  "autoRemoveWorktrees": true
+  "verify": "changed",
+  "curiosity": "low",
+  "patience": "medium"
 }
