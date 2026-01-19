@@ -484,5 +484,34 @@
       "catches_variations": true
     },
     "correct_behavior": "Use 'config:' for .claude/cat/retrospectives/ files because mistakes.json and retrospectives.json are Claude-facing configuration that affects runtime behavior"
+  },
+  {
+    "id": "M140",
+    "timestamp": "2026-01-19T14:45:00Z",
+    "category": "protocol_violation",
+    "description": "Status display alignment failure - inner box lines missing outer borders, inconsistent padding despite M136/M137 documentation",
+    "root_cause": "Skill requires complex inline padding calculations with nested border structure. Documentation-level prevention (PRE-OUTPUT CHECKLIST) was not followed. Validation script from M137 exists but is not integrated into skill workflow.",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+    "pattern_keywords": [
+      "status",
+      "display",
+      "alignment",
+      "border",
+      "padding",
+      "nested",
+      "calculation"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": "M137",
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Follow exact template structure with position-by-position verification. Every line inside outer box must have outer │ on both ends. Inner box lines have BOTH inner │ AND outer │ borders."
   }
 ]
