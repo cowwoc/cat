@@ -291,5 +291,31 @@
       "catches_variations": true
     },
     "correct_behavior": "Check Unicode East Asian Width property: only W/F = width 2; N/Na/A = width 1. ✦ is EAW=N (Neutral)"
+  },
+  {
+    "id": "M133",
+    "timestamp": "2026-01-19T12:00:00Z",
+    "category": "protocol_violation",
+    "description": "Used docs: commit type for .claude/cat/ planning files instead of planning:",
+    "root_cause": "Did not mentally map .claude/cat/ file paths to planning: type. Defaulted to docs: because content was documentation-like rather than checking file location.",
+    "rca_method": "B",
+    "rca_method_name": "taxonomy",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/references/commit-types.md",
+    "pattern_keywords": [
+      "commit-type",
+      "docs",
+      "planning",
+      "file-location"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Check file location first: .claude/cat/ files → planning:, .claude/hooks/ → config:, user docs → docs:"
   }
 ]

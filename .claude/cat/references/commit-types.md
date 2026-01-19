@@ -32,14 +32,18 @@ Use ONLY these types when committing in a CAT-managed project:
 | `config` | Config, tooling, deps, **Claude-facing docs** | `config: update CLAUDE.md rules` |
 | `planning` | Planning system updates (ROADMAP, STATE) | `planning: add task 5 summary` |
 
-**Claude-facing vs User-facing docs (M089):**
+**Commit Type by File Location (M089, M133):**
 
-| File Type | Commit Type | Examples |
-|-----------|-------------|----------|
-| User-facing | `docs:` | README.md, API docs, user guides |
-| Claude-facing | `config:` | CLAUDE.md, hooks, skills, workflows, style rules |
+| File Location | Commit Type | Examples |
+|---------------|-------------|----------|
+| `.claude/cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
+| `.claude/cat/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
+| `.claude/cat/retrospectives/` | `planning:` | mistakes.json, retrospectives.json |
+| `.claude/hooks/`, `.claude/settings.json` | `config:` | hooks, Claude Code settings |
+| `CLAUDE.md`, skills, workflows | `config:` | Claude-facing behavior rules |
+| `README.md`, `docs/`, API docs | `docs:` | User-facing documentation |
 
-**Key test:** Who reads this file - humans or Claude? If Claude uses it for behavior, use `config:`.
+**Key test:** Is the file in `.claude/cat/`? → Use `planning:`. Is it Claude behavior config? → Use `config:`. Is it for end users? → Use `docs:`.
 
 ## Format
 
