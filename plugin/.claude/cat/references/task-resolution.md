@@ -73,7 +73,7 @@ git log --oneline --grep="Task ID: v0.5-fix-multi-param-lambda"
 When marking a task as duplicate, commit only the STATE.md update:
 
 ```bash
-git add .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
+git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 git commit -m "config: close duplicate task {task-name}
 
 Duplicate of {original-task-name} which was resolved in commit {hash}.
