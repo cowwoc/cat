@@ -253,7 +253,7 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
 
 **If $ARGUMENTS is a task ID (major.minor-task-name format):**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
-- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/task/{task-name}/`
+- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/{task-name}/`
 - **Try to acquire lock BEFORE loading task details** (see lock check below)
 - Load its STATE.md and PLAN.md
 
@@ -266,8 +266,8 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
   4. **Task is not locked by another session** (see lock check below)
 
 ```bash
-# Find all task STATE.md files (task/ subdirectory contains task directories)
-find .claude/cat/v*/v*.*/task -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
+# Find all task STATE.md files (tasks are directly under minor version directories)
+find .claude/cat/v*/v*.*/ -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
 **MANDATORY: Lock Check Before Offering Task (M097)**
