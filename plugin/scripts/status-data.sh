@@ -6,6 +6,12 @@ set -euo pipefail
 #
 # Usage: status-data.sh [CAT_DIR]
 #   CAT_DIR defaults to .claude/cat
+#
+# Directory structure:
+#   .claude/cat/vN/vN.M/{task-name}/STATE.md
+#   .claude/cat/vN/vN.M/{task-name}/PLAN.md
+#
+# Fixed in M138: Support tasks directly in minor dirs (not in task/ subdir)
 
 CAT_DIR="${1:-.claude/cat}"
 
@@ -35,35 +41,46 @@ relative_time() {
     fi
 }
 
+# Get task status from STATE.md
+# Supports format: "status: pending" (current) or "- **Status:** pending" (legacy)
+get_task_status() {
+    local state_file="$1"
+    [ -f "$state_file" ] || { echo "pending"; return; }
+
+    # Try current format first: "status: pending"
+    local st=$(grep -m1 -i "^status:" "$state_file" 2>/dev/null | sed 's/^[Ss]tatus:[[:space:]]*//')
+    if [ -z "$st" ]; then
+        # Fall back to legacy format: "- **Status:** pending"
+        st=$(grep -m1 "^\- \*\*Status:\*\*" "$state_file" 2>/dev/null | sed 's/.*\*\* //')
+    fi
+    [ -z "$st" ] && st="pending"
+    echo "$st"
+}
+
 # Collect recent completed tasks (returns JSON array)
 collect_recent_tasks() {
     local recent_tasks=()
 
-    # Find all completed task STATE.md files
-    for state_file in "$CAT_DIR"/v*/v*.*/task/*/STATE.md; do
+    # Find all completed task STATE.md files (tasks directly in minor dirs)
+    for state_file in "$CAT_DIR"/v*/v*.*/*/STATE.md; do
         [ -f "$state_file" ] || continue
 
         # Check if status is completed
-        local status=$(grep -m1 "^\- \*\*Status:\*\*" "$state_file" 2>/dev/null | sed 's/.*\*\* //')
-        [ "$status" = "completed" ] || continue
+        local task_status=$(get_task_status "$state_file")
+        [ "$task_status" = "completed" ] || continue
 
         # Extract task info
         local task_dir=$(dirname "$state_file")
         local task_name=$(basename "$task_dir")
         local version_dir=$(dirname "$task_dir")
-        version_dir=$(dirname "$version_dir")  # Go up past 'task' dir
         local version=$(basename "$version_dir")
 
-        # Get completion timestamp (prefer STATE.md field, fallback to git)
-        local completed=$(grep -m1 "^\- \*\*Completed:\*\*" "$state_file" 2>/dev/null | sed 's/.*\*\* //')
-        if [ -z "$completed" ] || [ "$completed" = "{{TIMESTAMP}}" ]; then
-            # Fallback: use git commit time of STATE.md
-            completed=$(git log -1 --format="%ci" -- "$state_file" 2>/dev/null | cut -d' ' -f1,2 || echo "")
-        fi
+        # Get completion timestamp from git
+        local completed=$(git log -1 --format="%ci" -- "$state_file" 2>/dev/null | cut -d' ' -f1,2 || echo "")
         [ -z "$completed" ] && continue
 
         # Get tokens used (if available)
-        local tokens=$(grep -m1 "^\- \*\*Tokens Used:\*\*" "$state_file" 2>/dev/null | sed 's/.*\*\* //' | tr -d ',')
+        local tokens=$(grep -m1 -i "^tokens.*:" "$state_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | tr -d ',')
         [ -z "$tokens" ] && tokens="0"
 
         # Convert to epoch for sorting
@@ -77,24 +94,30 @@ collect_recent_tasks() {
     printf '%s\n' "${recent_tasks[@]}" 2>/dev/null | sort -t'|' -k1 -rn | head -3
 }
 
-# Count tasks in a directory
+# Count tasks in a minor version directory
 count_tasks() {
-    local dir="$1"
+    local minor_dir="$1"
     local completed=0 pending=0 inprog=0 blocked=0
     local current=""
 
-    for task_dir in "$dir"/*/; do
+    for task_dir in "$minor_dir"/*/; do
         [ -d "$task_dir" ] || continue
-        local state_file="${task_dir}STATE.md"
-        [ -f "$state_file" ] || continue
+        local task_name=$(basename "$task_dir")
 
-        local st=$(grep -m1 "^\- \*\*Status:\*\*" "$state_file" 2>/dev/null | sed 's/.*\*\* //')
+        # Must have either STATE.md or PLAN.md to be a task
+        local state_file="${task_dir}STATE.md"
+        local plan_file="${task_dir}PLAN.md"
+        [ -f "$state_file" ] || [ -f "$plan_file" ] || continue
+
+        # Get status from STATE.md
+        local st=$(get_task_status "$state_file")
 
         case "$st" in
-            completed) ((completed++)) ;;
-            in-progress) ((inprog++)); current=$(basename "$task_dir") ;;
+            completed|done) ((completed++)) ;;
+            in-progress|active) ((inprog++)); current="$task_name" ;;
             pending) ((pending++)) ;;
             blocked) ((blocked++)) ;;
+            *) ((pending++)) ;;
         esac
     done
 
@@ -129,11 +152,9 @@ for major_dir in "$CAT_DIR"/v[0-9]*/; do
 
     for minor_dir in "$major_dir"v[0-9]*.[0-9]*/; do
         [ -d "$minor_dir" ] || continue
-        task_dir="${minor_dir}task"
-        [ -d "$task_dir" ] || continue
 
         minor=$(basename "$minor_dir")
-        read completed total current <<< "$(count_tasks "$task_dir")"
+        read completed total current <<< "$(count_tasks "$minor_dir")"
 
         MINOR_STATS[$minor]="$completed/$total"
         MINOR_DESCRIPTIONS[$minor]=$(get_minor_description "$minor")
@@ -143,7 +164,7 @@ for major_dir in "$CAT_DIR"/v[0-9]*/; do
     done
 done
 
-# Find current minor in version-sorted order (fixes v0.10 before v0.2 bug)
+# Find current minor in version-sorted order
 for minor in $(echo "${!MINOR_STATS[@]}" | tr ' ' '\n' | sort -V); do
     IFS='/' read comp tot <<< "${MINOR_STATS[$minor]}"
     if [[ -n "${MINOR_CURRENT[$minor]}" ]]; then
@@ -163,22 +184,28 @@ PENDING_TASKS=()
 IN_PROGRESS_TASK=""
 if [[ -n "$CURRENT_MINOR" ]]; then
     major="${CURRENT_MINOR%%.*}"
-    for task_dir in "$CAT_DIR/$major/$CURRENT_MINOR/task"/*/; do
-        [ -d "$task_dir" ] || continue
-        state_file="${task_dir}STATE.md"
-        [ -f "$state_file" ] || continue
+    minor_dir="$CAT_DIR/$major/$CURRENT_MINOR"
 
-        st=$(grep -m1 "^\- \*\*Status:\*\*" "$state_file" 2>/dev/null | sed 's/.*\*\* //')
+    for task_dir in "$minor_dir"/*/; do
+        [ -d "$task_dir" ] || continue
         task_name=$(basename "$task_dir")
 
+        # Must have either STATE.md or PLAN.md to be a task
+        state_file="${task_dir}STATE.md"
+        plan_file="${task_dir}PLAN.md"
+        [ -f "$state_file" ] || [ -f "$plan_file" ] || continue
+
+        # Skip infrastructure tasks
+        if [[ "$task_name" =~ ^(create-|extend-|extract-|split-) ]]; then
+            continue
+        fi
+
+        st=$(get_task_status "$state_file")
+
         if [ "$st" = "pending" ]; then
-            # Skip infrastructure tasks
-            if [[ "$task_name" =~ ^(create-|extend-|extract-|split-) ]]; then
-                continue
-            fi
             PENDING_TASKS+=("$task_name")
             [ -z "$FIRST_PENDING" ] && FIRST_PENDING="$task_name"
-        elif [ "$st" = "in-progress" ]; then
+        elif [ "$st" = "in-progress" ] || [ "$st" = "active" ]; then
             IN_PROGRESS_TASK="$task_name"
             FIRST_PENDING="$task_name"
         fi
@@ -206,7 +233,6 @@ while IFS='|' read -r epoch task_id completed tokens; do
     $first_recent || echo ","
     first_recent=false
     rel_time=$(relative_time "$completed")
-    # Format tokens as "45K" if >= 1000
     if [ "$tokens" -ge 1000 ] 2>/dev/null; then
         tokens_fmt="$((tokens / 1000))K"
     else
@@ -233,7 +259,6 @@ for major in $(echo "${!MAJOR_NAMES[@]}" | tr ' ' '\n' | sort -V); do
 
         IFS='/' read comp tot <<< "${MINOR_STATS[$minor]}"
         desc="${MINOR_DESCRIPTIONS[$minor]}"
-        # Escape quotes in description
         desc="${desc//\"/\\\"}"
         echo -n "{\"version\": \"$minor\", \"completed\": $comp, \"total\": $tot, \"description\": \"$desc\"}"
     done
