@@ -43,9 +43,9 @@ at genuine decision points.
 
 ## Pricing Plans
 
-### Indie — $0 / forever
+### Indie — Free for solo developers
 
-*For solo builders*
+*For solo developers*
 
 **Reliable, focused assistance:**
 - Does what you ask—nothing more
