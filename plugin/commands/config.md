@@ -121,6 +121,8 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {trust} · {verify} · {curiosity} · {patience}"
   - label: "🧹 Cleanup"
     description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
+  - label: "📏 Display Width"
+    description: "Currently: {terminalWidth || 120} characters"
   - label: "📊 Version Gates"
     description: "Entry/exit conditions for versions"
 
@@ -324,6 +326,53 @@ AskUserQuestion:
 
 
 Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees: false`
+
+</step>
+
+<step name="terminal-width">
+
+**📏 Display Width selection:**
+
+Render terminal-width box using script:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" terminal-width {current_terminalWidth} > /tmp/config-box.txt
+```
+
+Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+
+AskUserQuestion:
+- header: "Display Width"
+- question: "What device are you primarily using?"
+- options:
+  - label: "🖥️ Desktop/Laptop (Recommended)"
+    description: "120 characters - optimized for wide monitors"
+  - label: "📱 Mobile"
+    description: "50 characters - optimized for phones and narrow screens"
+  - label: "⚙️ Custom value"
+    description: "Enter a specific width (40-200)"
+  - label: "← Back"
+    description: "Return to main menu"
+
+**Map selections:**
+- Desktop/Laptop → `terminalWidth: 120`
+- Mobile → `terminalWidth: 50`
+- Custom → prompt for value, validate 40-200
+
+**If Custom value selected:**
+
+AskUserQuestion:
+- header: "Custom Width"
+- question: "Enter terminal width (40-200):"
+- options: ["← Back"]
+
+Validate input is a number between 40-200. If invalid, show error and re-prompt.
+
+**Update config with safe jq pattern:**
+```bash
+jq '.terminalWidth = {value}' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
+  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
+```
 
 </step>
 
