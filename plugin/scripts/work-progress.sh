@@ -10,7 +10,7 @@ set -euo pipefail
 #
 # Box types:
 #   header TASK_NAME [STATUS]           - Task header box
-#   checkpoint TASK_NAME APPROACH TIME TOKENS TOKEN_PCT BRANCH
+#   checkpoint TASK_NAME TIME TOKENS TOKEN_PCT BRANCH
 #   task-complete TASK_NAME [NEXT_TASK] [NEXT_GOAL]
 #   task-complete-auto TASK_NAME NEXT_TASK NEXT_GOAL
 #   scope-complete SCOPE_DESC
@@ -43,16 +43,14 @@ box_header() {
 
 box_checkpoint() {
     local task_name="${1:-task}"
-    local approach="${2:-Selected approach}"
-    local time="${3:-N}"
-    local tokens="${4:-N}"
-    local token_pct="${5:-N}"
-    local branch="${6:-task-branch}"
+    local time="${2:-N}"
+    local tokens="${3:-N}"
+    local token_pct="${4:-N}"
+    local branch="${5:-task-branch}"
 
     box_top "✅ CHECKPOINT: Task Complete"
     box_empty
     box_line "  Task: ${task_name}"
-    box_line "  Approach: ${approach}"
     box_empty
     box_divider
     box_line "  Time: ${time} minutes | Tokens: ${tokens} (${token_pct}% of context)"
@@ -188,7 +186,7 @@ case "$BOX_TYPE" in
         echo "" >&2
         echo "Box types:" >&2
         echo "  header TASK_NAME [STATUS]" >&2
-        echo "  checkpoint TASK_NAME APPROACH TIME TOKENS TOKEN_PCT BRANCH" >&2
+        echo "  checkpoint TASK_NAME TIME TOKENS TOKEN_PCT BRANCH" >&2
         echo "  task-complete TASK_NAME [NEXT_TASK] [NEXT_GOAL]" >&2
         echo "  task-complete-auto TASK_NAME NEXT_TASK NEXT_GOAL" >&2
         echo "  scope-complete SCOPE_DESC" >&2
