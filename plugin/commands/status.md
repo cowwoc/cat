@@ -145,13 +145,34 @@ For each content line:
 4. Padding needed = target width - 2 (borders) - display width
 5. Construct: `│` + content + (padding × spaces) + `│`
 
-**MANDATORY (M129/M136):** Verify ALL lines have identical display width before output.
+**MANDATORY (M129/M136/M140):** Verify ALL lines have identical display width before output.
+
+**ALIGNMENT ENFORCEMENT (M140) - BLOCKING GATE:**
+
+Before outputting ANY status display, you MUST verify alignment using this systematic approach:
+
+1. **Use ONLY the pre-computed template lines below** - do NOT freeform construct lines
+2. **Copy the template EXACTLY**, substituting only the placeholder values
+3. **Count characters for EACH line** you output to verify 70 display width
 
 **PRE-OUTPUT CHECKLIST (must complete before rendering):**
 1. Every line inside boxes ends with `│` (right border)
 2. Inner box lines have BOTH inner `│` AND outer `│` borders
 3. No line has floating `│` characters disconnected from content
 4. All lines between top `╭` and bottom `╰` are exactly 70 characters display width
+
+**CRITICAL STRUCTURE (M140):**
+- Outer box width: 70 display characters (including both `│` borders)
+- Inner box width: 57 display characters (nested inside outer)
+- Gap between inner right `│` and outer right `│`: 7 spaces
+
+Every line inside the outer box MUST look like ONE of these patterns:
+```
+│  {content padded to 66 chars}  │          <- Level 0 (no inner box)
+│  ╭─{55 dashes}─╮       │                  <- Inner box top
+│  │  {content padded to 51 chars}  │       │  <- Level 1 (inside inner box)
+│  ╰─{55 dashes}─╯       │                  <- Inner box bottom
+```
 
 **Nesting levels:**
 
@@ -160,16 +181,37 @@ For each content line:
 | 0 | `│{padded_content}│` | 68 |
 | 1 | `│  │{padded_content}│          │` | 52 |
 
-**Example calculation:**
+**Example calculation with EXACT character breakdown (M140):**
 
-Content: `  ☑️ v0.1: Core parser (5/5)`
-- `  ` = 2 chars = 2
-- `☑️` = 1 emoji = 2
+For a Level 1 line (inside inner box), the structure is:
+```
+│  │  ☑️ v0.1: Core parser (5/5)                       │       │
+^  ^  ^                                                ^       ^
+|  |  |                                                |       |
+|  |  +-- Content starts here                          |       +-- Outer right border (pos 70)
+|  +-- Inner left border (pos 4)                       +-- Inner right border (pos 63)
++-- Outer left border (pos 1)
+```
+
+Character count verification:
+- Position 1: `│` (outer left) = 1
+- Position 2-3: `  ` (2 spaces) = 2
+- Position 4: `│` (inner left) = 1
+- Position 5-62: Content area (58 display chars including padding)
+- Position 63: `│` (inner right) = 1
+- Position 64-69: `       ` (7 spaces) = 7
+- Position 70: `│` (outer right) = 1
+- **TOTAL: 70 display characters**
+
+Content example: `  ☑️ v0.1: Core parser (5/5)`
+- `  ` = 2 spaces = 2
+- `☑️` = 1 emoji = 2 (display width)
 - ` v0.1: Core parser (5/5)` = 25 chars = 25
-- Display width = 29
-- For level 1 (target 52): padding = 52 - 29 = 23 spaces
+- Content display width = 29
+- Available content area = 58 - 1 (inner right │) = 57
+- Padding needed = 57 - 29 = 28 spaces
 
-Result: `│  │  ☑️ v0.1: Core parser (5/5)                       │          │`
+Result: `│  │  ☑️ v0.1: Core parser (5/5)                            │       │`
 
 **Assemble final output:**
 
