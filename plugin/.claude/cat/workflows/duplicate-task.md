@@ -53,7 +53,7 @@ find .claude/cat/v*/v*.*/task -name "STATE.md" -exec grep -l "completed" {} \;
 Duplicate tasks do NOT get a `Task ID:` footer (reserved for implementation commits):
 
 ```bash
-git add .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
+git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 git commit -m "$(cat <<'EOF'
 config: close duplicate task {task-name}
 

@@ -192,7 +192,7 @@ Every subagent prompt MUST include these items based on past mistakes:
 **STATE.md Requirements (M076, M077, M085, M087, M092):**
 ```
 STATE.md UPDATE (required in SAME commit as implementation):
-- Path: .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/STATE.md
+- Path: .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 - Set: Status: completed
 - Set: Progress: 100%
 - Set: Resolution: implemented (MANDATORY - not optional)
