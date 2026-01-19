@@ -22,6 +22,9 @@ and `conventions/` directory for Claude-facing coding standards.
 LLMs cannot reliably calculate character-level padding for Unicode text (M142).
 All banners MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
 
+**Anti-pattern (M149): NEVER manually type box/banner characters.**
+LLMs miscalculate Unicode widths. ALWAYS use init-banner.sh, then Read tool.
+
 **Available banner scripts:**
 
 ```bash
