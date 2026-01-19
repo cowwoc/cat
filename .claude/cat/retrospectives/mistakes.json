@@ -513,5 +513,33 @@
       "catches_variations": true
     },
     "correct_behavior": "Follow exact template structure with position-by-position verification. Every line inside outer box must have outer │ on both ends. Inner box lines have BOTH inner │ AND outer │ borders."
+  },
+  {
+    "id": "M141",
+    "timestamp": "2026-01-19T11:11:48Z",
+    "category": "protocol_violation",
+    "description": "Status display alignment failure (4th recurrence) - validation script not invoked despite BLOCKING GATE instruction",
+    "root_cause": "Documentation-level prevention failed 3 times (M136→M137→M140). Instructions labeled 'MANDATORY' and 'BLOCKING GATE' have no enforcement mechanism - agents skip validation step because there is no automated check that blocks output if validation wasn't run.",
+    "rca_method": "A",
+    "rca_method_name": "5-whys",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+    "pattern_keywords": [
+      "status",
+      "alignment",
+      "validation",
+      "blocking-gate",
+      "enforcement",
+      "recurrence"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": "M140",
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "medium",
+      "catches_variations": true
+    },
+    "correct_behavior": "Write status output to /tmp/status-draft.txt, then invoke validate-status-alignment.sh via Bash tool, then only output if validation passes. The Bash tool invocation is trackable and verifiable."
   }
 ]

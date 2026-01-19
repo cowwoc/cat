@@ -147,20 +147,35 @@ For each content line:
 
 **MANDATORY (M129/M136/M140):** Verify ALL lines have identical display width before output.
 
-**ALIGNMENT ENFORCEMENT (M140) - BLOCKING GATE:**
+**ALIGNMENT ENFORCEMENT (M141) - MANDATORY VALIDATION STEP:**
 
-Before outputting ANY status display, you MUST verify alignment using this systematic approach:
+**CRITICAL (4th recurrence - M136→M137→M140→M141):** Previous documentation-based instructions were
+ignored. This step now requires a MANDATORY Bash tool invocation before ANY status output.
 
-1. **Use ONLY the pre-computed template lines below** - do NOT freeform construct lines
-2. **Copy the template EXACTLY**, substituting only the placeholder values
-3. **Count characters for EACH line** you output to verify 70 display width
-4. **Run validation script** on your proposed output before displaying:
+**YOU MUST COMPLETE THESE SUB-STEPS IN ORDER:**
 
+**Sub-step A: Write draft to temp file**
 ```bash
-echo "YOUR_PROPOSED_OUTPUT" | "${CLAUDE_PLUGIN_ROOT}/scripts/validate-status-alignment.sh"
+cat > /tmp/status-draft.txt << 'STATUSEOF'
+{YOUR COMPLETE STATUS OUTPUT HERE - all lines from ╭ to ╰}
+STATUSEOF
 ```
 
-If validation fails, fix the alignment issues before outputting. The script checks:
+**Sub-step B: Run validation (MANDATORY Bash invocation)**
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/validate-status-alignment.sh" < /tmp/status-draft.txt
+```
+
+**Sub-step C: Check validation result**
+- If output shows "PASS": Proceed to output the content from /tmp/status-draft.txt
+- If output shows "ERROR" or "ALIGNMENT ERRORS": Fix issues and repeat from Sub-step A
+- **DO NOT output status display if validation was not run or failed**
+
+**Why this enforcement exists:** Skills M136, M137, M140 all added documentation saying "validate
+before output" but agents skipped the validation step. This restructured approach requires you to
+actually invoke Bash with the validation script - the tool call is tracked and verifiable.
+
+The validation script checks:
 - All lines start and end with `│` borders
 - Inner box lines have BOTH inner and outer right borders (│...│ pattern)
 - Inner box top/bottom have correct corner + outer border (╮...│ or ╯...│)
@@ -441,5 +456,7 @@ The status output should be:
 - [ ] **BORDER ALIGNMENT**: Padding calculated inline using emoji widths (no external script)
 - [ ] **BORDER ALIGNMENT**: Every line inside boxes has BOTH left and right `│` borders
 - [ ] **BORDER ALIGNMENT**: Task lines have emoji prefix (🔳, 🔄, etc.) - never bare text
+- [ ] **VALIDATION (M141)**: validate-status-alignment.sh was invoked via Bash tool BEFORE output
+- [ ] **VALIDATION (M141)**: Script returned "PASS" before status display was output
 
 </success_criteria>
