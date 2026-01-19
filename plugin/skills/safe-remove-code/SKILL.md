@@ -34,9 +34,9 @@ When removing instrumentation, debugging code, or other patterns from multiple f
 - Need validation that files remain functional after removal
 - Pattern removal affects 5+ files
 
-### ❌ Do NOT Use When:
+### ❌ Use Edit Tool Instead When:
 
-- Removing code from single file (use Edit tool directly)
+- Removing code from single file (Edit tool is simpler)
 - Changes are complex refactoring (not simple removal)
 - Pattern varies significantly across files
 - Need to preserve some instances of pattern
@@ -396,7 +396,7 @@ If you discover files were gutted after removal:
 ### Step 1: Stop immediately
 
 ```bash
-# Don't make it worse - stop removal process
+# Preserve current state before further damage
 echo "STOP: Gutted files detected"
 ```
 
