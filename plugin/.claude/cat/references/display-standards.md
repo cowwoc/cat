@@ -2,6 +2,71 @@
 
 Standard visual elements for CAT workflows: status displays, progress bars, and visual hierarchy.
 
+## Centralized Box Rendering Library {#box-rendering-library}
+
+**CRITICAL (M142):** LLMs cannot reliably calculate character-level padding for Unicode text.
+All ASCII boxes with emojis MUST be rendered using the centralized scripts.
+
+### Available Scripts
+
+| Script | Purpose | Location |
+|--------|---------|----------|
+| `lib/box.sh` | Shared library with rendering functions | `${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh` |
+| `status.sh` | Status display generator | `${CLAUDE_PLUGIN_ROOT}/scripts/status.sh` |
+| `init-banner.sh` | Init command banners | `${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh` |
+| `config-box.sh` | Config command boxes | `${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh` |
+| `work-progress.sh` | Work command progress boxes | `${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh` |
+
+### Using the Shared Library
+
+Source the library and use its functions:
+
+```bash
+source "${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh"
+
+# Initialize with custom width (default: 74)
+box_init 66
+
+# Render boxes
+box_top "🎯 Title"
+box_empty
+box_line "  Content with emojis 🎉"
+box_empty
+box_bottom
+```
+
+### Available Functions
+
+| Function | Description |
+|----------|-------------|
+| `box_init WIDTH [INNER_WIDTH]` | Initialize box dimensions |
+| `display_width STRING` | Calculate display width (Python-based) |
+| `pad STRING TARGET` | Pad string to exact display width |
+| `box_top [TITLE]` | Print top border with optional title |
+| `box_bottom` | Print bottom border |
+| `box_divider` | Print horizontal divider |
+| `box_line CONTENT` | Print content line with borders |
+| `box_empty` | Print empty line |
+| `inner_top TITLE` | Print nested box top |
+| `inner_bottom` | Print nested box bottom |
+| `inner_line CONTENT` | Print nested box content line |
+| `inner_empty` | Print nested box empty line |
+| `progress_bar PERCENT [WIDTH]` | Generate progress bar string |
+
+### Workflow Pattern
+
+Commands should use this pattern:
+
+```bash
+# 1. Run the appropriate script
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" choose-partner > /tmp/banner.txt
+
+# 2. Use Read tool to read the file
+# 3. Output contents VERBATIM
+```
+
+This ensures proper Unicode width calculation regardless of terminal.
+
 ## Core Principle: Markdown Rendering Context {#markdown-rendering}
 
 Claude Code CLI renders markdown in the main conversation output. However, markdown rendering

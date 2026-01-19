@@ -17,31 +17,33 @@ Optional directories (conventions/, retrospectives/) are created when needed, no
 
 <banner_output_instructions>
 
-**Detect terminal and load emoji widths once per session (if not already done):**
+**Use centralized box rendering scripts for all banners.**
+
+LLMs cannot reliably calculate character-level padding for Unicode text (M142).
+All banners MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
+
+**Available banner scripts:**
 
 ```bash
-if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
-elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
-elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
-elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
-else echo "${TERM_PROGRAM:-default}"; fi
+# init-banner.sh - Renders all /cat:init banners
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" BANNER_TYPE [ARGS...]
+
+# Banner types:
+#   choose-partner          - "Choose Your Partner" welcome banner
+#   gates-configured N      - Default gates configured for N versions
+#   research-skipped        - Research skipped informational banner
+#   initialized T C P       - CAT initialized (trust, curiosity, patience)
+#   first-task-walkthrough  - First task walkthrough intro
+#   first-task-created N P  - First task created (name, path)
+#   all-set                 - All set, explore later
+#   explore-pace            - Explore at your own pace
 ```
 
-Then read emoji widths: `cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"`
-
-**Emoji width reference (most terminals):**
-- Width 2: 🚀 📋 📊 🎮 ✅ ℹ️ 👋 🛡️ ⚔️ 🏹 🎯 🗺️ 🔮 📜 ⚖️ 💎 ✨
-- Width 1: ✓ → • ─ │ ╭ ╮ ╰ ╯ and all ASCII
-
-**Calculate padding inline:**
-1. Count emojis × their width (usually 2)
-2. Count other chars × 1
-3. Padding = target width - 2 (borders) - display width
-4. Output directly: `│` + content + spaces + `│`
-
-**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
-
-**Standard banner width:** 70 chars (68 interior + 2 borders)
+**Workflow:**
+1. Run the appropriate banner script
+2. Capture output to temp file: `> /tmp/banner-output.txt`
+3. Use Read tool to read the file
+4. Output the contents VERBATIM
 
 </banner_output_instructions>
 
@@ -293,24 +295,13 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, output banner directly with inline padding:
+After applying defaults, render banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" gates-configured {N} > /tmp/banner.txt
 ```
-╭─── 📊 Default gates configured for {N} versions ────────────────╮
-│                                                                  │
-│  Entry gates: Work proceeds sequentially                         │
-│  • Each minor waits for previous minor to complete               │
-│  • Each major waits for previous major to complete               │
-│                                                                  │
-│  Exit gates: Standard completion criteria                        │
-│  • Minor versions: all tasks must complete                       │
-│  • Major versions: all minor versions must complete              │
-│                                                                  │
-│  To customize gates for any version:                             │
-│  → /cat:config → 📊 Version Gates                                │
-│                                                                  │
-╰──────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 **If "Configure per version":**
 
@@ -388,20 +379,13 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Output banner directly with inline padding:
+Render banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" research-skipped > /tmp/banner.txt
 ```
-╭─── ℹ️ RESEARCH SKIPPED ──────────────────────────────────────────╮
-│                                                                  │
-│  Stakeholder research was skipped during import.                 │
-│                                                                  │
-│  To research a pending version later:                            │
-│  → /cat:research {version}                                       │
-│                                                                  │
-│  Example: /cat:research 1.2                                      │
-│                                                                  │
-╰──────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 </step>
 
@@ -411,18 +395,13 @@ Output banner directly with inline padding:
 
 **Choose Your Partner - Capture development style preferences**
 
-Output welcome banner directly with inline padding:
+Render welcome banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" choose-partner > /tmp/banner.txt
 ```
-╭─── 🎮 CHOOSE YOUR PARTNER ───────────────────────────────────────╮
-│                                                                  │
-│  Every developer has a style. These questions shape how your     │
-│  AI partner approaches the work ahead.                           │
-│                                                                  │
-│  Choose wisely - your preferences guide every decision.          │
-│                                                                  │
-╰──────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Hands-On - check in often, verify each move",
@@ -523,22 +502,13 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Output completion banner directly with inline padding:
+Render completion banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" initialized [trust] [curiosity] [patience] > /tmp/banner.txt
 ```
-╭─── 🚀 CAT INITIALIZED ───────────────────────────────────────────╮
-│                                                                  │
-│  PARTNER PROFILE                                                 │
-│  ─────────────────────────────────────────────────────────────   │
-│  Working Style:  [trust]                                         │
-│  Exploration:    [curiosity]                                     │
-│  Opportunity:    [patience]                                      │
-│                                                                  │
-│  Your partner is ready. Let's build something solid.             │
-│  Adjust your style anytime: /cat:config                          │
-│                                                                  │
-╰──────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 **New projects:**
 ```
@@ -567,16 +537,13 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Output guidance banner directly with inline padding:
+Render guidance banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" first-task-walkthrough > /tmp/banner.txt
 ```
-╭─── 📋 FIRST TASK WALKTHROUGH ──────────────────────────────────────╮
-│                                                                    │
-│  Great! Lets create your first task together.                      │
-│  Ill ask a few questions to understand what you want to build.     │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -630,20 +597,13 @@ git add ".claude/cat/"
 git commit -m "docs: add first task - ${TASK_NAME}"
 ```
 
-7. Output completion banner directly with inline padding:
+7. Render completion banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" first-task-created "{task-name}" ".claude/cat/v0/v0.0/{task-name}/" > /tmp/banner.txt
 ```
-╭─── ✅ FIRST TASK CREATED ──────────────────────────────────────────╮
-│                                                                    │
-│  Task: {task-name}                                                 │
-│  Location: .claude/cat/v0/v0.0/{task-name}/                        │
-│                                                                    │
-│  Files created:                                                    │
-│  • PLAN.md - What needs to be done                                 │
-│  • STATE.md - Progress tracking                                    │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
@@ -655,39 +615,23 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 
 **If "No, I'll start later":**
 
-Output directly with inline padding:
+Render exit banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" all-set > /tmp/banner.txt
 ```
-╭─── 👋 ALL SET ─────────────────────────────────────────────────────╮
-│                                                                    │
-│  Your project is ready. When you want to start:                    │
-│                                                                    │
-│  → /cat:work         Execute your first task                       │
-│  → /cat:status       See project overview                          │
-│  → /cat:add          Add more tasks or versions                    │
-│  → /cat:help         Full command reference                        │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 **If "No, I'll explore" (from initial question):**
 
-Output directly with inline padding:
+Render explore banner using script:
 
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" explore-pace > /tmp/banner.txt
 ```
-╭─── 👋 EXPLORE AT YOUR OWN PACE ────────────────────────────────────╮
-│                                                                    │
-│  Essential commands to get started:                                │
-│                                                                    │
-│  → /cat:status       See whats happening                           │
-│  → /cat:add          Add versions and tasks                        │
-│  → /cat:work         Execute tasks                                 │
-│  → /cat:help         Full command reference                        │
-│                                                                    │
-│  Tip: Run /cat:status anytime to see suggested next steps.         │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-```
+
+Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 </step>
 

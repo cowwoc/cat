@@ -101,26 +101,29 @@ jq --arg id "$GAP_ID" \
      "test_written": false
    }]' "$GAPS_FILE" > "${GAPS_FILE}.tmp" && mv "${GAPS_FILE}.tmp" "$GAPS_FILE"
 
-# Alert the agent
-cat >&2 << EOF
+# Alert the agent using shared box library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../scripts/lib/box.sh"
+box_init 77
 
-🔍 DETECTION GAP IDENTIFIED
-╭─────────────────────────────────────────────────────────────────────────────╮
-   The user reported an issue that our validation didn't catch.
-   This is a DETECTION GAP requiring TDD workflow.
-
-   Pattern matched: "$MATCHED_PATTERN"
-   Gap ID: $GAP_ID
-
-   REQUIRED WORKFLOW (Test-Driven Bug Fix):
-   1. Write a FAILING test that reproduces the user's issue
-   2. Verify the test FAILS (proves it catches the bug)
-   3. Fix the code
-   4. Verify the test PASSES
-
-   Invoke: Skill: tdd-implementation
-╰─────────────────────────────────────────────────────────────────────────────╯
-
-EOF
+{
+    box_top "🔍 DETECTION GAP IDENTIFIED"
+    box_empty
+    box_line "  The user reported an issue that our validation didn't catch."
+    box_line "  This is a DETECTION GAP requiring TDD workflow."
+    box_empty
+    box_line "  Pattern matched: \"$MATCHED_PATTERN\""
+    box_line "  Gap ID: $GAP_ID"
+    box_empty
+    box_line "  REQUIRED WORKFLOW (Test-Driven Bug Fix):"
+    box_line "  1. Write a FAILING test that reproduces the user's issue"
+    box_line "  2. Verify the test FAILS (proves it catches the bug)"
+    box_line "  3. Fix the code"
+    box_line "  4. Verify the test PASSES"
+    box_empty
+    box_line "  Invoke: Skill: tdd-implementation"
+    box_empty
+    box_bottom
+} >&2
 
 exit 0

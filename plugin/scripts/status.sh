@@ -9,8 +9,9 @@ set -euo pipefail
 #
 # Created as prevention for M142 (5th recurrence of status alignment issues)
 # Root cause: LLMs cannot reliably calculate character-level padding
-# Solution: Script handles both data collection AND rendering using Python for width calculation
+# Solution: Script handles both data collection AND rendering using shared box library
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CAT_DIR="${1:-.claude/cat}"
 
 # Verify structure exists
@@ -20,144 +21,11 @@ if [ ! -d "$CAT_DIR" ]; then
     exit 1
 fi
 
-# === CONSTANTS ===
-BOX_WIDTH=74  # Total display width including borders
-INNER_BOX_WIDTH=59  # Width of nested version boxes
+# Source shared box rendering library
+source "${SCRIPT_DIR}/lib/box.sh"
 
-# === PYTHON HELPER FOR WIDTH CALCULATION ===
-# Uses Python for reliable Unicode width calculation
-display_width() {
-    python3 -c "
-import unicodedata
-s = '''$1'''
-width = 0
-i = 0
-while i < len(s):
-    char = s[i]
-    # Skip variation selector-16 (counted with previous emoji)
-    if char == '\ufe0f':
-        i += 1
-        continue
-    # Check if next char is VS16 - if so, current is emoji width 2
-    if i + 1 < len(s) and s[i+1] == '\ufe0f':
-        width += 2
-        i += 2
-        continue
-    ea = unicodedata.east_asian_width(char)
-    if ea in ('W', 'F'):
-        width += 2
-    else:
-        width += 1
-    i += 1
-print(width)
-"
-}
-
-# Pad string to exact display width
-pad() {
-    local str="$1"
-    local target="$2"
-    local current
-    current=$(display_width "$str")
-    local padding=$((target - current))
-
-    if [ $padding -gt 0 ]; then
-        printf '%s%*s' "$str" $padding ""
-    elif [ $padding -lt 0 ]; then
-        # String too long - truncate (shouldn't happen normally)
-        printf '%s' "$str"
-    else
-        printf '%s' "$str"
-    fi
-}
-
-# Print a content line with borders
-line() {
-    local content="$1"
-    local inner_width=$((BOX_WIDTH - 2))
-    local padded
-    padded=$(pad "$content" $inner_width)
-    printf '│%s│\n' "$padded"
-}
-
-# Print empty line
-empty() {
-    printf '│%*s│\n' $((BOX_WIDTH - 2)) ""
-}
-
-# Print horizontal divider
-divider() {
-    printf '├'
-    for ((i=0; i<BOX_WIDTH-2; i++)); do printf '─'; done
-    printf '┤\n'
-}
-
-# Print top border
-top() {
-    printf '╭'
-    for ((i=0; i<BOX_WIDTH-2; i++)); do printf '─'; done
-    printf '╮\n'
-}
-
-# Print bottom border
-bottom() {
-    printf '╰'
-    for ((i=0; i<BOX_WIDTH-2; i++)); do printf '─'; done
-    printf '╯\n'
-}
-
-# Print inner box top with title
-inner_top() {
-    local title="$1"
-    local title_part="─── ${title} "
-    local title_width
-    title_width=$(display_width "$title_part")
-
-    # Calculate remaining dashes for inner box width
-    local dash_count=$((INNER_BOX_WIDTH - 2 - title_width))
-    local dashes=""
-    for ((i=0; i<dash_count; i++)); do dashes="${dashes}─"; done
-
-    local inner="╭${title_part}${dashes}╮"
-    line "  ${inner}"
-}
-
-# Print inner box bottom
-inner_bottom() {
-    local dashes=""
-    for ((i=0; i<INNER_BOX_WIDTH-2; i++)); do dashes="${dashes}─"; done
-    line "  ╰${dashes}╯"
-}
-
-# Print inner box content line
-inner_line() {
-    local content="$1"
-    local inner_content_width=$((INNER_BOX_WIDTH - 4))  # -4 for "│  " and "│"
-    local padded
-    padded=$(pad "$content" $inner_content_width)
-    line "  │  ${padded}│"
-}
-
-# Print inner empty line
-inner_empty() {
-    local spaces=""
-    for ((i=0; i<INNER_BOX_WIDTH-2; i++)); do spaces="${spaces} "; done
-    line "  │${spaces}│"
-}
-
-# Progress bar
-progress_bar() {
-    local pct="$1"
-    local bar_width=45
-    local filled=$((pct * bar_width / 100))
-    local unfilled=$((bar_width - filled))
-
-    local bar="["
-    for ((i=0; i<filled; i++)); do bar="${bar}█"; done
-    for ((i=0; i<unfilled; i++)); do bar="${bar}░"; done
-    bar="${bar}]"
-    printf '%s' "$bar"
-}
+# Initialize box dimensions
+box_init 74 59
 
 # Get task status from STATE.md
 get_task_status() {
@@ -262,16 +130,16 @@ PERCENT=$((TOTAL_COMPLETED * 100 / TOTAL_TASKS))
 
 # === RENDER OUTPUT ===
 
-top
-empty
-line "  📊 Overall: $(progress_bar $PERCENT) ${PERCENT}%"
-line "  🏆 ${TOTAL_COMPLETED}/${TOTAL_TASKS} tasks complete"
-empty
-divider
+box_top
+box_empty
+box_line "  📊 Overall: $(progress_bar $PERCENT) ${PERCENT}%"
+box_line "  🏆 ${TOTAL_COMPLETED}/${TOTAL_TASKS} tasks complete"
+box_empty
+box_divider
 
 # Render major versions
 for major in $(echo "${!MAJOR_NAMES[@]}" | tr ' ' '\n' | sort -V); do
-    empty
+    box_empty
     inner_top "📦 ${major}: ${MAJOR_NAMES[$major]}"
     inner_empty
 
@@ -322,10 +190,10 @@ for major in $(echo "${!MAJOR_NAMES[@]}" | tr ' ' '\n' | sort -V); do
     inner_bottom
 done
 
-empty
-divider
-line "  🎯 Active: ${CURRENT_MINOR} - ${MINOR_DESC[$CURRENT_MINOR]:-}"
-line "  📋 Available: ${#PENDING_TASKS[@]} pending tasks"
-divider
-empty
-bottom
+box_empty
+box_divider
+box_line "  🎯 Active: ${CURRENT_MINOR} - ${MINOR_DESC[$CURRENT_MINOR]:-}"
+box_line "  📋 Available: ${#PENDING_TASKS[@]} pending tasks"
+box_divider
+box_empty
+box_bottom
