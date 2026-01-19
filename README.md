@@ -1,4 +1,4 @@
-# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: Your Coding Partner That Grows With You
+# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: A Coding Partner You Can Count On
 
 > *"Build on solid ground, not a house of cards."*
 
