@@ -45,6 +45,20 @@ Use ONLY these types when committing in a CAT-managed project:
 
 **Key test:** Is the file in `.claude/cat/`? → Use `planning:`. Is it Claude behavior config? → Use `config:`. Is it for end users? → Use `docs:`.
 
+**CAT Plugin Repo Structure (special case):**
+
+The CAT plugin repo separates plugin source from planning:
+
+| Location | Commit Type | What It Is |
+|----------|-------------|------------|
+| `plugin/` | `config:` | Plugin source code that ships to users |
+| `plugin/.claude/cat/references/` | `config:` | Plugin's bundled reference docs |
+| `plugin/commands/`, `plugin/skills/` | `config:` | Plugin commands and skills |
+| `.claude/cat/` (root) | `planning:` | CAT's own development planning |
+| `.claude/cat/v*/` (root) | `planning:` | CAT's version/task structure |
+
+**Key distinction:** Files in `plugin/` ship to users → `config:`. Files in root `.claude/cat/` are CAT's own planning → `planning:`.
+
 ## Format
 
 ```
