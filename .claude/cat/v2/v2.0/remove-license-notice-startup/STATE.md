@@ -1,8 +1,8 @@
 # Task State: remove-license-notice-startup
 
 ## Status
-status: pending
-progress: 0%
+status: completed
+progress: 100%
 
 ## Dependencies
 - None
