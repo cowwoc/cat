@@ -44,14 +44,46 @@ Map task context to relevant stakeholders:
 | File changes: only .md files | requirements | all others |
 | File changes: only test files | tester, quality | ux, sales, marketing |
 
+### Layered Selection Strategy
+
+Use both context-based and file-based selection as complementary layers:
+
+| Layer | When Applied | Purpose |
+|-------|--------------|---------|
+| Context-based | Always (research + review) | Sets baseline from intent |
+| File-based | Review mode only | Catches scope drift from reality |
+
+**Why keep both:**
+- Context captures intent but can be fooled by misleading descriptions
+- File changes are objective but only work post-implementation
+- Combined approach provides defense in depth
+
+**Example of layered value:**
+```
+Task: "Refactor internal CLI parser"
+Context-based: Skip ux, sales, marketing (internal tooling)
+But implementation touches: src/ui/TerminalRenderer.ts
+File-based override: Add ux back (UI file changed)
+```
+
 ### Selection Algorithm
 
+**Research mode (pre-implementation):**
 1. Start with base set: `[requirements]` (always included)
-2. Add stakeholders based on file-change rules (existing logic)
-3. Apply context-based inclusions from task description/type
-4. Apply context-based exclusions
-5. Check version PLAN.md focus for additional context
-6. Report final selection with rationale for any skipped stakeholders
+2. Apply context-based inclusions from task description/type/keywords
+3. Apply context-based exclusions
+4. Check version PLAN.md focus for additional inclusions
+5. Report selection with rationale
+
+**Review mode (post-implementation):**
+1. Start with base set: `[requirements]` (always included)
+2. Apply context-based inclusions/exclusions (same as research)
+3. Apply file-based overrides:
+   - If UI files changed → add ux (even if context excluded it)
+   - If security-sensitive files changed → add security
+   - If test files changed → add tester
+   - If algorithm-heavy files changed → add performance
+4. Report final selection, noting any file-based overrides
 
 ### Output Format
 
