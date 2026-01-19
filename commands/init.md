@@ -431,9 +431,9 @@ Output welcome banner directly with inline padding:
 ```
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
-  "🛡️ Cautious Commander - check in often, verify each move",
-  "⚔️ Balanced Leader - trust routine calls, review key decisions (Recommended)",
-  "🏹 Autonomous Ally - let the partner lead, intervene only when critical"
+  "🛡️ Hands-On - check in often, verify each move",
+  "⚔️ Balanced - trust routine calls, review key decisions (Recommended)",
+  "🏹 Autonomous - let the partner lead, step in when critical"
 ]
 
 AskUserQuestion: header="Curiosity", question="How should your partner explore the dungeon?", options=[
