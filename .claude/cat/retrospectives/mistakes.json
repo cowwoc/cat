@@ -317,5 +317,32 @@
       "catches_variations": true
     },
     "correct_behavior": "Check file location first: .claude/cat/ files → planning:, .claude/hooks/ → config:, user docs → docs:"
+  },
+  {
+    "id": "M134",
+    "timestamp": "2026-01-19T14:00:00Z",
+    "category": "documentation_violation",
+    "description": "Used config: commit type for bug fix in plugin/ because M133 said plugin/ → config:, but bug fixes should always use bugfix:",
+    "root_cause": "M133 prevention created oversimplified rule (plugin/ → config:) without clarifying that commit type reflects change purpose, not file location",
+    "rca_method": "C",
+    "rca_method_name": "causal-barrier",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/references/commit-types.md",
+    "pattern_keywords": [
+      "commit-type",
+      "bugfix",
+      "config",
+      "file-location",
+      "change-purpose"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Commit type reflects WHAT changed (bugfix, feature, refactor), not WHERE the file is. File location only determines default type for ambiguous changes."
   }
 ]
