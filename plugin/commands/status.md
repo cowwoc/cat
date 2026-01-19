@@ -38,6 +38,27 @@ IMPORTANT:
 - Do NOT summarize or paraphrase the file contents - output them EXACTLY as shown in the Read result.
 - The user expects to see the complete box drawing with all lines, not a summary.
 
+**MANDATORY OUTPUT TEMPLATE** (M145 - enforced after 2nd recurrence):
+
+Your response MUST follow this EXACT structure:
+
+```
+[Read tool result shows file contents]
+
+Your next message MUST be:
+
+╭────────────────────────────────────────────────────────────────────────╮
+│ [COPY ENTIRE BOX FROM READ RESULT - ALL LINES INCLUDING THIS ONE]     │
+╰────────────────────────────────────────────────────────────────────────╯
+
+---
+
+## 🚀 NEXT STEPS
+[then continue with next-steps section]
+```
+
+**VALIDATION**: Before outputting NEXT STEPS, verify your response contains the `╭` and `╰` box characters from the Read result. If it doesn't, you skipped the verbatim output step.
+
 </step>
 
 <step name="next-steps">
@@ -95,5 +116,9 @@ Claude Code collapses large Bash tool results, so output must be shown via Read 
 
 **M144 update (2026-01-19):** Clarified that file contents must be output VERBATIM, not summarized.
 "Display its contents" was ambiguous - agent summarized instead of echoing exact output.
+
+**M145 update (2026-01-19):** Added MANDATORY OUTPUT TEMPLATE with validation checkpoint.
+M144's "VERBATIM" instruction failed - agent still skipped output. Added structural template
+showing exact expected format, plus validation check for box characters before NEXT STEPS.
 
 </history>
