@@ -5,8 +5,8 @@ allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 ---
 
 <objective>
-Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
-and `conventions/` directory for Claude-facing coding standards.
+Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, and cat-config.json.
+Optional directories (conventions/, retrospectives/) are created when needed, not upfront.
 </objective>
 
 <execution_context>
@@ -71,7 +71,7 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 <step name="new_setup" condition="New project">
 
 ```bash
-mkdir -p .claude/cat/conventions
+mkdir -p .claude/cat
 ```
 
 **Deep questioning flow:**
@@ -193,7 +193,7 @@ grep -rl "## Objective\|## Tasks" . --include="*.md" 2>/dev/null | head -30
 <step name="existing_create" condition="Existing codebase">
 
 ```bash
-mkdir -p .claude/cat/conventions
+mkdir -p .claude/cat
 ```
 
 Create PROJECT.md with inferred state (existing capabilities → Validated requirements).
@@ -472,15 +472,16 @@ Create `.claude/cat/cat-config.json`:
 Append to PROJECT.md (after Key Decisions):
 ```markdown
 
-## Conventions
+## Conventions (Optional)
 
-Claude-facing coding standards live in `.claude/cat/conventions/`. Place files here that define:
+Claude-facing coding standards can be added to `.claude/cat/conventions/` when needed. Create this
+directory when you have project-specific rules to document:
 - Code style rules (naming, formatting, patterns)
 - Testing standards and requirements
 - Architecture guidelines
 - Language-specific conventions
 
-**Structure:**
+**Structure (create as needed):**
 ```
 .claude/cat/conventions/
 ├── INDEX.md              # Summary with links to load sub-conventions on demand
@@ -541,7 +542,7 @@ Output completion banner directly with inline padding:
 
 **New projects:**
 ```
-Initialized: PROJECT.md, ROADMAP.md, cat-config.json, conventions/
+Initialized: PROJECT.md, ROADMAP.md, cat-config.json
 Next: /clear -> /cat:add-major-version
 ```
 
@@ -699,7 +700,6 @@ Output directly with inline padding:
 | Deep questioning completed | ✓ | If no planning |
 | PROJECT.md captures context | ✓ | ✓ (inferred) |
 | ROADMAP.md created | ✓ | ✓ (with history) |
-| conventions/ directory | ✓ | ✓ |
 | Task dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
