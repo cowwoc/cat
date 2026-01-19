@@ -42,7 +42,7 @@ pip install --break-system-packages git-filter-repo
 
 ### MANDATORY: Always Use --partial Flag
 
-**NEVER run git-filter-repo without `--partial`**. Without it:
+**Always include the `--partial` flag with git-filter-repo**. Without it:
 - Reflog is expired (old commits unrecoverable)
 - Automatic `git gc` runs (objects permanently deleted)
 - No recovery possible after force-push
