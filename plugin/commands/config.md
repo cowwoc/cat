@@ -60,11 +60,21 @@ All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`
 #   no-changes
 ```
 
-**Workflow:**
-1. Run the appropriate box script
-2. Capture output to temp file: `> /tmp/config-box.txt`
-3. Use Read tool to read the file
-4. Output the contents VERBATIM
+**Workflow (MANDATORY):**
+1. Run the box script with output to temp file: `> /tmp/config-box.txt`
+2. Use the **Read tool** (NOT bash cat) to read `/tmp/config-box.txt`
+3. **Output the box contents as text in your response** (tool output alone is NOT visible to users)
+
+**Anti-pattern (M140):**
+```bash
+# ❌ WRONG - cat output only appears in tool result, not visible to user
+cat /tmp/config-box.txt
+# Then immediately calling AskUserQuestion
+
+# ✅ CORRECT - Read tool, then output text
+Use Read tool on /tmp/config-box.txt
+Then in your response, output the box contents before calling AskUserQuestion
+```
 
 </step>
 
