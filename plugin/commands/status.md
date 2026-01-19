@@ -31,10 +31,12 @@ This script handles BOTH data collection AND rendering with correct Unicode disp
 
 If the script fails with "No planning structure found", inform user to run `/cat:init`.
 
-**Then use the Read tool to read `/tmp/cat-status-output.txt` and display its contents.**
+**Then use the Read tool to read `/tmp/cat-status-output.txt` and output the EXACT contents VERBATIM.**
 
-IMPORTANT: Do NOT rely on the Bash tool result display - Claude Code collapses large outputs.
-The status MUST be shown via Read tool so users can see it without expanding collapsed output.
+IMPORTANT:
+- Do NOT rely on the Bash tool result display - Claude Code collapses large outputs.
+- Do NOT summarize or paraphrase the file contents - output them EXACTLY as shown in the Read result.
+- The user expects to see the complete box drawing with all lines, not a summary.
 
 </step>
 
@@ -90,5 +92,8 @@ steps - all of which failed because they still relied on LLM padding calculation
 
 **M143 update (2026-01-19):** Changed to write script output to temp file, then use Read tool.
 Claude Code collapses large Bash tool results, so output must be shown via Read tool instead.
+
+**M144 update (2026-01-19):** Clarified that file contents must be output VERBATIM, not summarized.
+"Display its contents" was ambiguous - agent summarized instead of echoing exact output.
 
 </history>
