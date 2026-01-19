@@ -456,5 +456,33 @@
       "catches_variations": true
     },
     "correct_behavior": "Use ONLY data from status-data.sh output. If script returns incomplete data, report the bug after rendering rather than manually supplementing."
+  },
+  {
+    "id": "M139",
+    "timestamp": "2026-01-19T05:45:00Z",
+    "category": "protocol_violation",
+    "description": "Used 'docs:' commit type for retrospectives/mistakes.json instead of 'config:' (Claude-facing configuration)",
+    "root_cause": "Did not consult commit-types.md before committing. Used 'docs:' by assumption instead of checking documented rules for .claude/cat/retrospectives/ files.",
+    "rca_method": "B",
+    "rca_method_name": "taxonomy",
+    "prevention_type": "skill",
+    "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/references/commit-types.md",
+    "pattern_keywords": [
+      "commit",
+      "type",
+      "docs",
+      "config",
+      "retrospectives",
+      "claude-facing"
+    ],
+    "prevention_implemented": true,
+    "prevention_verified": false,
+    "recurrence_of": null,
+    "prevention_quality": {
+      "verification_type": "positive",
+      "fragility": "low",
+      "catches_variations": true
+    },
+    "correct_behavior": "Use 'config:' for .claude/cat/retrospectives/ files because mistakes.json and retrospectives.json are Claude-facing configuration that affects runtime behavior"
   }
 ]
