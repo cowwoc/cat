@@ -761,6 +761,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use work-progress.sh to render box to temp file, then Read tool to output contents. NEVER manually type box characters."
+    },
+    {
+      "id": "M150",
+      "timestamp": "2026-01-19T17:30:00Z",
+      "category": "assumption_without_verification",
+      "description": "Claimed v2.0 is complete based on minor STATE.md without verifying actual task statuses - 4 of 5 tasks were still pending",
+      "root_cause": "No automated validation that minor version status is consistent with its task completion states",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "validation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/workflows/work.md",
+      "pattern_keywords": [
+        "version status",
+        "STATE.md",
+        "verification",
+        "task completion",
+        "inconsistent state"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before marking a version STATE.md as completed, verify all nested items are complete (tasks for minor, minors for major). Validation happens once at completion time, not repeatedly when checking status."
     }
   ]
 }
