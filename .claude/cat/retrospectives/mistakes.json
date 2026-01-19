@@ -653,6 +653,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After Read tool returns file contents, output the EXACT text in the response before proceeding to NEXT STEPS. Verify box characters are present."
+    },
+    {
+      "id": "M146",
+      "timestamp": "2026-01-19T08:20:00Z",
+      "category": "assumption_without_verification",
+      "description": "Reported 13K tokens for subagent when Claude Code showed actual usage was 27.8K tokens (214% of estimate)",
+      "root_cause": "Main agent used pre-execution task size ESTIMATE in approval gate instead of actual MEASURED tokens from subagent completion. Documentation at work.md line 291 says use only measured values but was not followed.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/workflows/work.md",
+      "pattern_keywords": [
+        "token_estimate",
+        "token_measurement",
+        "subagent",
+        "verification",
+        "approval_gate"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M096",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Cross-check reported tokens against Claude Code tool output summary. When Task tool completes it shows actual usage - if reported value differs significantly, re-read subagent completion output."
     }
   ]
 }
