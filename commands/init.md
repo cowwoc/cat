@@ -436,16 +436,16 @@ AskUserQuestion: header="Trust", question="How do you prefer to work together?",
   "🏹 Autonomous - let the partner lead, step in when critical"
 ]
 
-AskUserQuestion: header="Curiosity", question="How should your partner explore the dungeon?", options=[
+AskUserQuestion: header="Curiosity", question="How should your partner handle discoveries?", options=[
   "🎯 Focused - stay on the task, ignore tangents",
-  "🗺️ Observant Explorer - note interesting finds, but stay on mission (Recommended)",
-  "🔮 Thorough Investigator - map every corner, document all discoveries"
+  "🗺️ Observant - note interesting finds, but stay on mission (Recommended)",
+  "🔮 Thorough - explore every corner, document all discoveries"
 ]
 
-AskUserQuestion: header="Patience", question="When your partner spots treasure off the path...", options=[
-  "📜 Log it for later - add to backlog, maintain focus",
-  "⚖️ Quick assessment - grab low-hanging fruit, note the rest (Recommended)",
-  "💎 Seize the moment - if it's valuable, claim it now"
+AskUserQuestion: header="Patience", question="When your partner spots an opportunity...", options=[
+  "📜 Log it - add to backlog, maintain focus",
+  "⚖️ Quick wins - take easy improvements, note the rest (Recommended)",
+  "💎 Act now - if it's valuable, address it immediately"
 ]
 
 Map responses to preference values:
