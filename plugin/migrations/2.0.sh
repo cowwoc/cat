@@ -17,7 +17,7 @@ source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
 log_migration "Starting 2.0 migration: Research & Requirements sections"
 
 # Count files to process
-plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+plan_files=$(find .claude/cat -name "PLAN.md" -type f 2>/dev/null || true)
 total_count=$(echo "$plan_files" | grep -c "PLAN.md" || echo 0)
 
 if [[ "$total_count" -eq 0 ]]; then
@@ -135,7 +135,7 @@ while IFS= read -r plan_file; do
 
 done <<< "$plan_files"
 
-log_success "PLAN.md migration complete:"
+log_success "Migration 2.0 complete:"
 log_success "  - Research sections added: $research_added"
 log_success "  - Requirements sections added: $requirements_added"
 log_success "  - Traceability sections added: $traceability_added"
@@ -145,53 +145,6 @@ if [[ $research_added -gt 0 ]]; then
     log_migration ""
     log_migration "To populate Research sections with stakeholder findings:"
     log_migration "  /cat:research [version or task path]"
-fi
-
-# =============================================================================
-# Part 2: STATE.md Format Standardization (M224)
-# =============================================================================
-#
-# Converts old YAML-style format to bullet+bold markdown format:
-#   status: pending         -> - **Status:** pending
-#   progress: 0%            -> - **Progress:** 0%
-#   dependencies: []        -> - **Dependencies:** []
-#   started: DATE           -> - **Started:** DATE
-#   completed: DATE         -> - **Completed:** DATE
-
-log_migration ""
-log_migration "Starting STATE.md format standardization..."
-
-state_files=$(find .claude/cat/issues -name "STATE.md" -type f 2>/dev/null || true)
-state_count=$(echo "$state_files" | grep -c "STATE.md" 2>/dev/null || echo 0)
-
-if [[ "$state_count" -eq 0 ]]; then
-    log_migration "No STATE.md files found - skipping format migration"
-else
-    log_migration "Found $state_count STATE.md files to check"
-
-    states_fixed=0
-
-    while IFS= read -r state_file; do
-        [[ -z "$state_file" ]] && continue
-
-        # Check if file has old format (lowercase field: value at line start)
-        if grep -qE "^(status|progress|started|completed|dependencies):" "$state_file" 2>/dev/null; then
-            # Convert to new format
-            sed -i \
-                -e 's/^status: \(.*\)/- **Status:** \1/' \
-                -e 's/^progress: \(.*\)/- **Progress:** \1/' \
-                -e 's/^started: \(.*\)/- **Started:** \1/' \
-                -e 's/^completed: \(.*\)/- **Completed:** \1/' \
-                -e 's/^dependencies: \(.*\)/- **Dependencies:** \1/' \
-                "$state_file"
-
-            ((states_fixed++)) || true
-            log_migration "  Fixed format: $state_file"
-        fi
-    done <<< "$state_files"
-
-    log_success "STATE.md format migration complete:"
-    log_success "  - Files converted: $states_fixed"
 fi
 
 exit 0

@@ -5,23 +5,24 @@ description: Analyze and learn from mistakes
 
 <objective>
 
-Shortcut for `/cat:learn-from-mistakes`. This command MUST immediately invoke the skill.
+Invoke the `learn-from-mistakes` skill to perform root cause analysis on mistakes.
+
+This command is a shortcut for `/cat:learn-from-mistakes`.
 
 </objective>
 
-<execution>
+<process>
 
-**MANDATORY IMMEDIATE ACTION - Use Skill tool NOW:**
+<step name="invoke-skill">
+
+**Invoke the learn-from-mistakes skill:**
 
 ```
-Skill(skill="cat:learn-from-mistakes", args="{ARGUMENTS}")
+/cat:learn-from-mistakes {args}
 ```
 
-Do NOT perform ad-hoc analysis. Do NOT search for files first. Do NOT analyze the mistake yourself.
-The ONLY correct action is to invoke the skill using the Skill tool. The skill contains the full
-workflow for mistake analysis, prevention implementation, and recording.
+Pass any arguments provided to the skill.
 
-**Why this matters (M167):** Ad-hoc analysis skips prevention implementation and recording, causing
-mistakes to recur. The skill enforces the complete learning workflow.
+</step>
 
-</execution>
+</process>

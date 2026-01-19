@@ -3,8 +3,8 @@
 **Purpose**: Release a new version of a Claude Code plugin by merging to main, tagging, and preparing
 the next version branch.
 
-**CRITICAL**: Always use this skill for releases. Update CHANGELOG.md before running `git tag`.
-The skill ensures changelog, version files, and tags stay synchronized.
+**CRITICAL**: Always use this skill for releases. Never run `git tag` directly without updating
+CHANGELOG.md first. The skill ensures changelog, version files, and tags stay synchronized.
 
 **When to Use**:
 - When user says "release", "publish", "tag a new version", or similar
@@ -25,12 +25,10 @@ The skill ensures changelog, version files, and tags stay synchronized.
 Before releasing, ensure all tests pass:
 
 ```bash
-npm run test:all
+npm test
 ```
 
-This runs both BATS tests (shell scripts) and pytest tests (Python handlers).
-
-**If tests fail**, fix the issues before proceeding. All tests must pass before release.
+**If tests fail**, fix the issues before proceeding. Do not release with failing tests.
 
 ### 2. Verify Version Consistency
 
@@ -41,7 +39,7 @@ echo "package.json:" && jq '.version' package.json
 echo "plugin.json:" && jq '.version' .claude-plugin/plugin.json
 ```
 
-**If versions differ**, fix them before proceeding. Both files must match.
+**If versions don't match**, fix them before proceeding.
 
 ### 2. Update CHANGELOG.md for Current Version
 
@@ -91,15 +89,12 @@ git tag -a "v${CURRENT_VERSION}" -m "v${CURRENT_VERSION} release"
 
 ### 6. Create Next Version Branch
 
-**Note**: Do NOT create a tag for the next version. Tags are only created when releasing a version
-(step 5), not when starting a new version. The next version gets a branch only.
-
 ```bash
 # Calculate next version (increment patch)
 NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{print $1"."$2"."$3+1}')
 echo "Next version: $NEXT_VERSION"
 
-# Create and checkout new branch (NOT a tag)
+# Create and checkout new branch
 git checkout -b "v${NEXT_VERSION}"
 ```
 
@@ -254,14 +249,12 @@ git push -u origin v1.5
 v1.4 branch ──●──●──●─┐
                         │ merge --ff-only
                         ▼
-main ──────────────────●── tag v1.4 (RELEASED version gets tag)
+main ──────────────────●── (tag v1.4)
                         │
                         │ checkout -b v1.5
                         ▼
-v1.5 branch ─────────●── (bump version, commit - NO tag yet)
+v1.5 branch ─────────●── (bump version, commit)
 ```
-
-**Key principle**: Tags mark releases. The new version (v1.5) only gets a tag when IT is released.
 
 ## Verification Checklist
 

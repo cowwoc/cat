@@ -1,6 +1,6 @@
 {
   "name": "claude-code-cat",
-  "version": "2.0",
+  "version": "1.0.10",
   "description": "Multi-agent task orchestration with comprehensive planning and quality gates",
   "repository": {
     "type": "git",
@@ -18,10 +18,7 @@
   "scripts": {
     "test": "npx bats tests/**/*.bats",
     "test:scripts": "npx bats tests/scripts/*.bats",
-    "test:hooks": "npx bats tests/hooks/*.bats",
-    "test:handlers": "python3 -m pytest tests/handlers/ -v",
-    "test:handlers:cov": "python3 -m pytest tests/handlers/ -v --cov=plugin/hooks/skill_handlers --cov-report=term-missing",
-    "test:all": "npm run test && npm run test:handlers"
+    "test:hooks": "npx bats tests/hooks/*.bats"
   },
   "devDependencies": {
     "bats": "^1.13.0"

@@ -123,7 +123,7 @@ Mistakes assigned by ID modulo 3:
 
 ### Tracking Fields
 
-Add to each mistake entry in mistakes-YYYY-MM.json:
+Add to each mistake entry in mistakes.json:
 
 ```json
 {
@@ -184,12 +184,11 @@ At each milestone, run this analysis and make explicit decision:
 
 ```bash
 # Run at 30, 60, 90 mistake milestones
-RETRO_DIR=".claude/cat/retrospectives"
+MISTAKES_FILE=".claude/cat/retrospectives/mistakes.json"
 START_ID=86  # First A/B test mistake
 
-# Aggregate mistakes from all split files
-cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s --argjson start "$START_ID" '
-  [.[].mistakes[] | select((.id | ltrimstr("M") | tonumber) >= $start)] |
+jq --argjson start "$START_ID" '
+  [.mistakes[] | select((.id | ltrimstr("M") | tonumber) >= $start)] |
   group_by(.rca_method) |
   map({
     method: .[0].rca_method // "unassigned",
@@ -200,7 +199,7 @@ cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s --argjson start "$START_ID"
     complete_entries: [.[] | select(.rca_method != null and .prevention_implemented == true)] | length
   }) |
   sort_by(.method)
-'
+' "$MISTAKES_FILE"
 ```
 
 **Decision at each milestone:**

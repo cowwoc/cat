@@ -5,48 +5,47 @@ allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 ---
 
 <objective>
-Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
-`.claude/rules/` for always-loaded conventions, and `.claude/cat/conventions/` for on-demand standards.
+Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, and cat-config.json.
+Optional directories (conventions/, retrospectives/) are created when needed, not upfront.
 </objective>
 
 <execution_context>
-@${CLAUDE_PLUGIN_ROOT}/templates/project.md
-@${CLAUDE_PLUGIN_ROOT}/templates/roadmap.md
-@${CLAUDE_PLUGIN_ROOT}/templates/cat-config.json
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/project.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/roadmap.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/cat-config.json
 </execution_context>
 
+<banner_output_instructions>
 
-<process>
-
-<step name="check_precomputed_boxes">
-
-**MANDATORY:** Check context for "PRE-COMPUTED INIT BOXES".
-
-If found: Use those box templates exactly as provided. Replace only the {variable} placeholders with actual values.
-If NOT found: **FAIL immediately**.
+**Detect terminal and load emoji widths once per session (if not already done):**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "init boxes" "/cat:init"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed boxes not found."
-  echo "The init_handler.py should have provided box templates."
-  echo "Please report this issue - the handler may not be registered correctly."
-fi
+if [[ -n "${WT_SESSION:-}" ]]; then echo "Windows Terminal"
+elif [[ "${TERM_PROGRAM:-}" == "vscode" ]] || [[ -n "${VSCODE_INJECTION:-}" ]]; then echo "vscode"
+elif [[ "${TERM_PROGRAM:-}" == "iTerm.app" ]]; then echo "iTerm.app"
+elif [[ -f /proc/version ]] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then echo "Windows Terminal"
+else echo "${TERM_PROGRAM:-default}"; fi
 ```
 
-Output the error and STOP.
+Then read emoji widths: `cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"`
 
-**Box templates available:**
-- `default_gates_configured` - For version gate configuration (variable: {N})
-- `research_skipped` - When research is skipped (static)
-- `choose_your_partner` - Partner preference intro (static)
-- `cat_initialized` - Final init confirmation (variables: {trust}, {curiosity}, {patience})
-- `first_task_walkthrough` - Task walkthrough intro (static)
-- `first_task_created` - Task creation confirmation (variable: {task-name})
-- `all_set` - Exit with work pointer (static)
-- `explore_at_your_own_pace` - Exit with exploration pointer (static)
+**Emoji width reference (most terminals):**
+- Width 2: 🚀 📋 📊 🎮 ✅ ℹ️ 👋 🛡️ ⚔️ 🏹 🎯 🗺️ 🔮 📜 ⚖️ 💎 ✨
+- Width 1: ✓ → • ─ │ ╭ ╮ ╰ ╯ and all ASCII
 
-</step>
+**Calculate padding inline:**
+1. Count emojis × their width (usually 2)
+2. Count other chars × 1
+3. Padding = target width - 2 (borders) - display width
+4. Output directly: `│` + content + spaces + `│`
+
+**MANDATORY (M129):** Verify ALL lines have identical display width before output. Count explicitly.
+
+**Standard banner width:** 70 chars (68 interior + 2 borders)
+
+</banner_output_instructions>
+
+<process>
 
 <step name="verify">
 
@@ -72,7 +71,7 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 <step name="new_setup" condition="New project">
 
 ```bash
-mkdir -p .claude/rules .claude/cat/conventions
+mkdir -p .claude/cat
 ```
 
 **Deep questioning flow:**
@@ -194,7 +193,7 @@ grep -rl "## Objective\|## Tasks" . --include="*.md" 2>/dev/null | head -30
 <step name="existing_create" condition="Existing codebase">
 
 ```bash
-mkdir -p .claude/rules .claude/cat/conventions
+mkdir -p .claude/cat
 ```
 
 Create PROJECT.md with inferred state (existing capabilities → Validated requirements).
@@ -211,7 +210,7 @@ Create ROADMAP.md:
 
 Create task directories:
 ```bash
-mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{task-name}"
+mkdir -p ".claude/cat/v{major}/v{major}.{minor}/task/{task-name}"
 ```
 
 **PLAN.md** (from task definition source):
@@ -237,10 +236,7 @@ mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{task-name}"
 ```markdown
 # Task State: {task-name}
 ## Status
-- **Status:** completed
-- **Progress:** 100%
-- **Started:** DATE
-- **Completed:** DATE
+status: completed | progress: 100% | started: DATE | completed: DATE
 ## Commits
 - `{hash}` ({date}) - {subject}
 ## Dependencies
@@ -297,8 +293,24 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, use the **default_gates_configured** box from PRE-COMPUTED INIT BOXES.
-Replace `{N}` with the version count.
+After applying defaults, output banner directly with inline padding:
+
+```
+╭─── 📊 Default gates configured for {N} versions ────────────────╮
+│                                                                  │
+│  Entry gates: Work proceeds sequentially                         │
+│  • Each minor waits for previous minor to complete               │
+│  • Each major waits for previous major to complete               │
+│                                                                  │
+│  Exit gates: Standard completion criteria                        │
+│  • Minor versions: all tasks must complete                       │
+│  • Major versions: all minor versions must complete              │
+│                                                                  │
+│  To customize gates for any version:                             │
+│  → /cat:config → 📊 Version Gates                                │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
+```
 
 **If "Configure per version":**
 
@@ -337,7 +349,7 @@ After importing the project structure, research is needed for pending versions.
 
 ```bash
 # Find all pending minor versions
-PENDING_VERSIONS=$(find .claude/cat -name "STATE.md" -exec grep -l "\*\*Status:\*\*.*pending" {} \; \
+PENDING_VERSIONS=$(find .claude/cat -name "STATE.md" -exec grep -l "status: pending" {} \; \
   | sed 's|.claude/cat/||; s|/STATE.md||' \
   | grep -E "v[0-9]+/v[0-9]+\.[0-9]+" \
   | sed 's|v\([0-9]*\)/v\([0-9]*\.[0-9]*\)|\2|' \
@@ -365,7 +377,7 @@ Display progress:
 Running stakeholder research for pending versions...
 ├─ v1.2: Researching... ✓
 ├─ v1.3: Researching... ✓
-└─ v1.0: Researching... ✓
+└─ v2.0: Researching... ✓
 ```
 
 **If "Skip for now":**
@@ -376,7 +388,20 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Use the **research_skipped** box from PRE-COMPUTED INIT BOXES.
+Output banner directly with inline padding:
+
+```
+╭─── ℹ️ RESEARCH SKIPPED ──────────────────────────────────────────╮
+│                                                                  │
+│  Stakeholder research was skipped during import.                 │
+│                                                                  │
+│  To research a pending version later:                            │
+│  → /cat:research {version}                                       │
+│                                                                  │
+│  Example: /cat:research 1.2                                      │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
+```
 
 </step>
 
@@ -386,7 +411,17 @@ Use the **research_skipped** box from PRE-COMPUTED INIT BOXES.
 
 **Choose Your Partner - Capture development style preferences**
 
-Use the **choose_your_partner** box from PRE-COMPUTED INIT BOXES.
+Output welcome banner directly with inline padding:
+
+```
+╭─── 🎮 CHOOSE YOUR PARTNER ───────────────────────────────────────╮
+│                                                                  │
+│  Every developer has a style. These questions shape how your     │
+│  AI partner approaches the work ahead.                           │
+│                                                                  │
+│  Choose wisely - your preferences guide every decision.          │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
@@ -414,96 +449,6 @@ Map responses to preference values:
 
 </step>
 
-<step name="git_workflow">
-
-**Configure Git Workflow Preferences**
-
-This step captures the user's preferred git workflow through a conversational wizard.
-The answers are used to generate RFC 2119-formatted rules in PROJECT.md.
-
-**Step 1: Ask about branching strategy**
-
-AskUserQuestion: header="Branching Strategy", question="How do you organize your git branches?", options=[
-  "Main-only (Recommended for small projects)" - All work happens on main, no feature branches,
-  "Feature branches" - Short-lived branches for each task, merge to main when done,
-  "Version branches" - Long-lived branches for each version (v1.0, v2.0), tasks branch from version,
-  "Let me describe" - FREEFORM input for custom workflow
-]
-
-Map response to BRANCHING_STRATEGY:
-- "Main-only" -> "main-only"
-- "Feature branches" -> "feature"
-- "Version branches" -> "version"
-- "Let me describe" -> capture FREEFORM as CUSTOM_BRANCHING
-
-**Step 2: Ask about merge style (skip if main-only)**
-
-**If BRANCHING_STRATEGY is NOT "main-only":**
-
-AskUserQuestion: header="Merge Style", question="How do you prefer to integrate changes?", options=[
-  "Rebase + fast-forward (Recommended)" - Linear history, no merge commits,
-  "Merge commits" - Non-linear history, explicit merge points,
-  "Squash merge" - Each branch becomes single commit on target branch
-]
-
-Map response to MERGE_STYLE:
-- "Rebase + fast-forward" -> "fast-forward"
-- "Merge commits" -> "merge-commit"
-- "Squash merge" -> "squash"
-
-**If BRANCHING_STRATEGY is "main-only":**
-- Set MERGE_STYLE = "direct" (commits directly to main)
-
-**Step 3: Ask about commit squashing preference**
-
-AskUserQuestion: header="Commit Squashing", question="Before merging a branch, how should commits be handled?", options=[
-  "Squash by type (Recommended)" - Group commits by type (feature:, bugfix:, etc.),
-  "Single commit" - Squash all into one commit,
-  "Keep all commits" - Preserve complete commit history,
-  "Let me describe" - FREEFORM for custom squash rules
-]
-
-Map response to SQUASH_POLICY:
-- "Squash by type" -> "by-type"
-- "Single commit" -> "single"
-- "Keep all commits" -> "keep-all"
-- "Let me describe" -> capture FREEFORM as CUSTOM_SQUASH
-
-**Step 4: Iterative clarification loop**
-
-**Synthesize understanding based on captured preferences:**
-
-Generate a summary of the captured workflow:
-
-```
-Based on your answers, here's my understanding of your git workflow:
-
-**Branching:** {BRANCHING_STRATEGY description}
-**Merge Style:** {MERGE_STYLE description}
-**Squashing:** {SQUASH_POLICY description}
-```
-
-**Confirm understanding:**
-
-AskUserQuestion: header="Confirm Workflow", question="Did I understand your workflow correctly?", options=[
-  "Yes, that's correct" - Proceed to config step,
-  "No, let me clarify" - FREEFORM to provide corrections
-]
-
-**If "No, let me clarify":**
-- Capture clarification
-- Update understanding
-- Re-present synthesis
-- Loop until user confirms "Yes, that's correct"
-
-**Store captured values for config step:**
-- GIT_BRANCHING_STRATEGY
-- GIT_MERGE_STYLE
-- GIT_SQUASH_POLICY
-- GIT_CUSTOM_NOTES (if any FREEFORM input was provided)
-
-</step>
-
 <step name="config">
 
 Get plugin version for config:
@@ -515,268 +460,40 @@ Create `.claude/cat/cat-config.json`:
 ```json
 {
   "version": "[CAT_VERSION from above]",
+  "contextLimit": 200000,
+  "targetContextUsage": 40,
   "trust": "[low|medium|high]",
   "verify": "changed",
   "curiosity": "[low|medium|high]",
-  "patience": "[high|medium|low]",
-  "gitWorkflow": {
-    "branchingStrategy": "[main-only|feature|version]",
-    "mergeStyle": "[direct|fast-forward|merge-commit|squash]",
-    "squashPolicy": "[by-type|single|keep-all]"
-  }
+  "patience": "[high|medium|low]"
 }
-```
-
-**Generate Git Workflow section for PROJECT.md:**
-
-Based on the values captured in the git_workflow step, generate the Git Workflow section using
-RFC 2119 terminology (MUST, SHOULD, MAY).
-
-**Branching Strategy rules by type:**
-
-**If GIT_BRANCHING_STRATEGY is "main-only":**
-```markdown
-## Git Workflow
-
-### Branching Strategy
-
-| Branch Type | Pattern | Purpose |
-|-------------|---------|---------|
-| Main | `main` | All development happens here |
-
-**Rules:**
-- All commits MUST go directly to `main`
-- Feature branches SHOULD NOT be created
-- Long-running branches MUST NOT exist
-```
-
-**If GIT_BRANCHING_STRATEGY is "feature":**
-```markdown
-## Git Workflow
-
-### Branching Strategy
-
-| Branch Type | Pattern | Purpose |
-|-------------|---------|---------|
-| Main | `main` | Production-ready code |
-| Task | `{major}.{minor}-{task-name}` | Individual task work |
-
-**Rules:**
-- Task branches MUST be created from `main`
-- Task branches MUST be short-lived (merge within days, not weeks)
-- Task branches MUST be deleted after merge
-- Direct commits to `main` SHOULD be avoided
-```
-
-**If GIT_BRANCHING_STRATEGY is "version":**
-```markdown
-## Git Workflow
-
-### Branching Strategy
-
-| Branch Type | Pattern | Purpose |
-|-------------|---------|---------|
-| Main | `main` | Latest stable release |
-| Version | `v{major}.{minor}` | Long-lived development branches |
-| Task | `{major}.{minor}-{task-name}` | Individual task work |
-
-**Rules:**
-- Version branches MUST be created from `main` when starting a new version
-- Task branches MUST be created from their parent version branch
-- Task branches MUST merge back to their parent version branch
-- Version branches SHOULD merge to `main` only when version is complete
-- Direct commits to version branches SHOULD be avoided
-```
-
-**Merge Policy rules by type:**
-
-**If GIT_MERGE_STYLE is "direct":**
-```markdown
-### Merge Policy
-
-**Pre-merge requirements:**
-- Code MUST be tested before committing
-- Commit messages MUST follow project conventions
-
-**Merge method:**
-- Direct commits to `main` (no branches to merge)
-```
-
-**If GIT_MERGE_STYLE is "fast-forward":**
-```markdown
-### Merge Policy
-
-**Pre-merge requirements:**
-- Branch MUST be rebased onto target branch
-- All conflicts MUST be resolved before merge
-- CI checks SHOULD pass (if configured)
-
-**Merge method:**
-- MUST use fast-forward merge (`git merge --ff-only`)
-- Merge commits MUST NOT be created
-- Linear history MUST be maintained
-```
-
-**If GIT_MERGE_STYLE is "merge-commit":**
-```markdown
-### Merge Policy
-
-**Pre-merge requirements:**
-- Branch MAY have diverged from target
-- All conflicts MUST be resolved during merge
-
-**Merge method:**
-- MUST use merge commits (`git merge --no-ff`)
-- Merge commits SHOULD have descriptive messages
-- Branch history SHOULD be preserved
-```
-
-**If GIT_MERGE_STYLE is "squash":**
-```markdown
-### Merge Policy
-
-**Pre-merge requirements:**
-- Branch changes MUST be ready for single-commit summary
-- Commit message MUST describe all changes
-
-**Merge method:**
-- MUST use squash merge (`git merge --squash`)
-- All branch commits become one commit on target
-- Original commits MAY be lost from history
-```
-
-**Squash Policy rules by type:**
-
-**If GIT_SQUASH_POLICY is "by-type":**
-```markdown
-### Squash Policy
-
-**When:** Before merging branch to target
-**Strategy:** Group commits by type prefix
-
-**Rules:**
-- Implementation commits (feature:, bugfix:, refactor:) MUST be squashed together
-- Infrastructure commits (config:, docs:) SHOULD be squashed separately
-- Planning commits (planning:) SHOULD be included with implementation
-
-**Example:**
-```
-Before:
-- feature: add login form
-- feature: add validation
-- bugfix: fix button alignment
-- config: update dependencies
-
-After:
-- feature: add login form with validation and alignment fix
-- config: update dependencies
-```
-```
-
-**If GIT_SQUASH_POLICY is "single":**
-```markdown
-### Squash Policy
-
-**When:** Before merging branch to target
-**Strategy:** Squash all commits into one
-
-**Rules:**
-- All commits MUST be squashed into a single commit
-- Final commit message MUST summarize all changes
-- Individual commit messages MAY be preserved in body
-
-**Example:**
-```
-Before:
-- feature: add login form
-- feature: add validation
-- bugfix: fix button alignment
-
-After:
-- feature: add complete login functionality
-```
-```
-
-**If GIT_SQUASH_POLICY is "keep-all":**
-```markdown
-### Squash Policy
-
-**When:** N/A - commits preserved as-is
-**Strategy:** Keep all commits
-
-**Rules:**
-- Commits MUST NOT be squashed
-- Each commit SHOULD be atomic and meaningful
-- Commit history MUST be preserved through merge
-
-**Note:** This policy works best with merge-commit merge style.
-```
-
-**Add Commit Format section:**
-
-```markdown
-### Commit Format
-
-**Pattern:** `{type}: {description}`
-
-**Valid types:** feature, bugfix, test, refactor, performance, docs, style, config, planning
-
-**Rules:**
-- Commit type prefix MUST be lowercase
-- Description MUST be imperative mood ("add", not "added")
-- Description MUST NOT exceed 72 characters
-- Body MAY provide additional context
-- Task ID footer SHOULD be included for CAT tasks
-```
-
-**If GIT_CUSTOM_NOTES exists:**
-
-Append after commit format:
-```markdown
-### Custom Notes
-
-{GIT_CUSTOM_NOTES content}
 ```
 
 Append to PROJECT.md (after Key Decisions):
 ```markdown
 
-## Conventions
+## Conventions (Optional)
 
-Coding standards are split between two locations based on loading behavior:
+Claude-facing coding standards can be added to `.claude/cat/conventions/` when needed. Create this
+directory when you have project-specific rules to document:
+- Code style rules (naming, formatting, patterns)
+- Testing standards and requirements
+- Architecture guidelines
+- Language-specific conventions
 
-### Always-Loaded: `.claude/rules/`
-
-Rules loaded automatically every session (main agent and subagents). Use for:
-- Critical safety rules (e.g., "never delete production data")
-- Cross-cutting conventions that apply to all work (naming, formatting, patterns)
-- Project-wide constraints that must never be forgotten
-- `conventions.md` - Index pointing to on-demand conventions (see below)
-
-Keep minimal - everything here costs context on every session.
-
-### On-Demand: `.claude/cat/conventions/`
-
-Standards loaded only when needed (similar to SKILL.md files). Use for:
-- Language-specific conventions (java.md, typescript.md, etc.)
-- Domain-specific guidelines (api-design.md, database.md)
-- Testing standards for specific frameworks
-- Detailed style guides
-
-**Structure:**
+**Structure (create as needed):**
 ```
-.claude/rules/
-└── conventions.md        # Always-loaded index pointing to on-demand conventions
-
 .claude/cat/conventions/
+├── INDEX.md              # Summary with links to load sub-conventions on demand
+├── common.md             # Cross-cutting conventions
 ├── {language}.md         # Language-specific (java.md, typescript.md, etc.)
 ├── testing.md            # Testing standards
 └── {domain}/             # Optional subdirectories for complex domains
     └── {topic}.md
 ```
 
-**conventions.md purpose:** Always-loaded index that tells agents which on-demand conventions exist
-and when to load them. Each entry should have a one-line description of when to load it.
+**INDEX.md purpose:** Provides a table of contents so agents can load only the conventions they need,
+minimizing context usage. Each entry should have a one-line description of when to load it.
 
 **Content guidelines:**
 - Optimized for AI consumption (concise, unambiguous, examples over prose)
@@ -806,12 +523,26 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Use the **cat_initialized** box from PRE-COMPUTED INIT BOXES.
-Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
+Output completion banner directly with inline padding:
+
+```
+╭─── 🚀 CAT INITIALIZED ───────────────────────────────────────────╮
+│                                                                  │
+│  PARTNER PROFILE                                                 │
+│  ─────────────────────────────────────────────────────────────   │
+│  Working Style:  [trust]                                         │
+│  Exploration:    [curiosity]                                     │
+│  Opportunity:    [patience]                                      │
+│                                                                  │
+│  Your partner is ready. Let's build something solid.             │
+│  Adjust your style anytime: /cat:config                          │
+│                                                                  │
+╰──────────────────────────────────────────────────────────────────╯
+```
 
 **New projects:**
 ```
-Initialized: PROJECT.md, ROADMAP.md, cat-config.json, rules/, conventions/
+Initialized: PROJECT.md, ROADMAP.md, cat-config.json
 Next: /clear -> /cat:add-major-version
 ```
 
@@ -836,7 +567,16 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Use the **first_task_walkthrough** box from PRE-COMPUTED INIT BOXES.
+Output guidance banner directly with inline padding:
+
+```
+╭─── 📋 FIRST TASK WALKTHROUGH ──────────────────────────────────────╮
+│                                                                    │
+│  Great! Lets create your first task together.                      │
+│  Ill ask a few questions to understand what you want to build.     │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
+```
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -849,7 +589,7 @@ Use the **first_task_walkthrough** box from PRE-COMPUTED INIT BOXES.
 3. Create the task directory structure:
 ```bash
 TASK_NAME="[sanitized-task-name]"
-mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
+mkdir -p ".claude/cat/v0/v0.0/${TASK_NAME}"
 ```
 
 4. Create initial PLAN.md for the task:
@@ -874,8 +614,8 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 # Task State: {task-name}
 
 ## Status
-- **Status:** pending
-- **Progress:** 0%
+status: pending
+progress: 0%
 
 ## Dependencies
 - None
@@ -890,8 +630,20 @@ git add ".claude/cat/"
 git commit -m "docs: add first task - ${TASK_NAME}"
 ```
 
-7. Use the **first_task_created** box from PRE-COMPUTED INIT BOXES.
-   Replace `{task-name}` with the actual sanitized task name.
+7. Output completion banner directly with inline padding:
+
+```
+╭─── ✅ FIRST TASK CREATED ──────────────────────────────────────────╮
+│                                                                    │
+│  Task: {task-name}                                                 │
+│  Location: .claude/cat/v0/v0.0/{task-name}/                        │
+│                                                                    │
+│  Files created:                                                    │
+│  • PLAN.md - What needs to be done                                 │
+│  • STATE.md - Progress tracking                                    │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
+```
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
@@ -903,15 +655,37 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 
 **If "No, I'll start later":**
 
-Use the **all_set** box from PRE-COMPUTED INIT BOXES.
+Output directly with inline padding:
+
+```
+╭─── 👋 ALL SET ─────────────────────────────────────────────────────╮
+│                                                                    │
+│  Your project is ready. When you want to start:                    │
+│                                                                    │
+│  → /cat:work         Execute your first task                       │
+│  → /cat:status       See project overview                          │
+│  → /cat:add          Add more tasks or versions                    │
+│  → /cat:help         Full command reference                        │
+│                                                                    │
+╰────────────────────────────────────────────────────────────────────╯
+```
 
 **If "No, I'll explore" (from initial question):**
 
-Use the **explore_at_your_own_pace** box from PRE-COMPUTED INIT BOXES.
+Output directly with inline padding:
+
+```
+╭─── 👋 EXPLORE AT YOUR OWN PACE ────────────────────────────────────╮
+│                                                                    │
+│  Essential commands to get started:                                │
+│                                                                    │
+│  → /cat:status       See whats happening                           │
+│  → /cat:add          Add versions and tasks                        │
 │  → /cat:work         Execute tasks                                 │
 │  → /cat:help         Full command reference                        │
 │                                                                    │
 │  Tip: Run /cat:status anytime to see suggested next steps.         │
+│                                                                    │
 ╰────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -926,8 +700,6 @@ Use the **explore_at_your_own_pace** box from PRE-COMPUTED INIT BOXES.
 | Deep questioning completed | ✓ | If no planning |
 | PROJECT.md captures context | ✓ | ✓ (inferred) |
 | ROADMAP.md created | ✓ | ✓ (with history) |
-| .claude/rules/ directory | ✓ | ✓ |
-| .claude/cat/conventions/ directory | ✓ | ✓ |
 | Task dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
