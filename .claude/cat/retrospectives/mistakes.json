@@ -978,6 +978,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Always squash commits by type BEFORE presenting approval gate to user. Flow: changes complete → squash → present gate."
+    },
+    {
+      "id": "M158",
+      "timestamp": "2026-01-20T15:54:38Z",
+      "category": "protocol_violation",
+      "description": "box_header() used hardcoded space padding instead of pad() function, causing misaligned right borders when content contains emojis",
+      "root_cause": "Implementation subagent added manual spaces for positioning status character instead of using the centralized pad() function that handles emoji display width correctly",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/work-progress.sh",
+      "pattern_keywords": [
+        "box",
+        "alignment",
+        "emoji",
+        "padding",
+        "unicode",
+        "width"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M142",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use pad() or display_width() from box.sh for any content containing emojis or Unicode characters that need alignment"
     }
   ]
 }

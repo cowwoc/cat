@@ -27,18 +27,24 @@ box_header() {
     local task_name="${1:-task}"
     local status="${2:-}"
     local status_char=""
-    [[ "$status" == "success" ]] && status_char="✓"
-    [[ "$status" == "failed" ]] && status_char="✗"
+    [[ "$status" == "success" ]] && status_char=" ✓"
+    [[ "$status" == "failed" ]] && status_char=" ✗"
 
-    if [ -n "$status_char" ]; then
-        box_top
-        box_line "  CAT ► ${task_name}                                    ${status_char}"
-        box_bottom
+    # Style E format: header in rounded box
+    local content="  🐱 CAT › ${task_name}${status_char}"
+    local inner_width=$((BOX_WIDTH - 2))
+    local content_width
+    content_width=$(display_width "$content")
+    local padding=$((inner_width - content_width))
+
+    # Round corners: ╭ ╮ ╰ ╯
+    printf '╭%s╮\n' "$(printf '─%.0s' $(seq 1 $inner_width))"
+    if [ $padding -gt 0 ]; then
+        printf '│%s%*s│\n' "$content" $padding ""
     else
-        box_top
-        box_line "  CAT ► ${task_name}"
-        box_bottom
+        printf '│%s│\n' "$content"
     fi
+    printf '╰%s╯\n' "$(printf '─%.0s' $(seq 1 $inner_width))"
 }
 
 box_checkpoint() {
@@ -155,6 +161,54 @@ box_no_tasks() {
     box_bottom
 }
 
+box_progress() {
+    local current_phase="${1:-1}"
+    local phase_status="${2:-active}"
+    local detail="${3:-}"
+
+    # Phase names
+    local -a phases=("Preparing" "Executing" "Reviewing" "Merging")
+
+    # Style E format:
+    # ✓ = Completed step
+    # ► = Current step (with ◀── current marker)
+    # ◦ = Pending step
+
+    # Render each phase line
+    for i in {1..4}; do
+        local phase_name="${phases[$((i-1))]}"
+        local symbol=""
+        local suffix=""
+
+        if [[ $i -lt $current_phase ]]; then
+            # Completed phases
+            symbol="✓"
+            suffix=""
+        elif [[ $i -eq $current_phase ]]; then
+            # Current phase
+            if [[ "$phase_status" == "complete" ]]; then
+                symbol="✓"
+                suffix="     ◀── current"
+                [[ -n "$detail" ]] && suffix="     ◀── $detail"
+            elif [[ "$phase_status" == "failed" ]]; then
+                symbol="✗"
+                suffix="     ◀── FAILED"
+                [[ -n "$detail" ]] && suffix="     ◀── $detail"
+            else
+                symbol="►"
+                suffix="     ◀── current"
+                [[ -n "$detail" ]] && suffix="     ◀── $detail"
+            fi
+        else
+            # Pending phases
+            symbol="◦"
+            suffix=""
+        fi
+
+        echo "  ${symbol} ${phase_name}${suffix}"
+    done
+}
+
 # Main dispatcher
 BOX_TYPE="${1:-}"
 shift || true
@@ -181,6 +235,9 @@ case "$BOX_TYPE" in
     no-tasks)
         box_no_tasks
         ;;
+    progress)
+        box_progress "$@"
+        ;;
     *)
         echo "Usage: work-progress.sh BOX_TYPE [ARGS...]" >&2
         echo "" >&2
@@ -192,6 +249,7 @@ case "$BOX_TYPE" in
         echo "  scope-complete SCOPE_DESC" >&2
         echo "  blocked TASK_NAME BLOCKED_TASKS" >&2
         echo "  no-tasks" >&2
+        echo "  progress PHASE [STATUS] [DETAIL]  - Phase indicator (PHASE=1-4)" >&2
         exit 1
         ;;
 esac
