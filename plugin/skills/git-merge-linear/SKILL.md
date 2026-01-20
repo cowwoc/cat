@@ -39,29 +39,15 @@ fi
 # Get current branch
 TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# Detect base branch from STATE.md or git config
-STATE_FILE=$(find .claude/cat -name "STATE.md" -path "*/${TASK_BRANCH#*-}/STATE.md" 2>/dev/null | head -1)
-if [[ -f "$STATE_FILE" ]]; then
-  BASE_BRANCH=$(grep -oP 'base_branch:\s*\K\S+' "$STATE_FILE" 2>/dev/null || echo "")
+# Detect base branch from worktree metadata (fail-fast if missing)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+  echo "ERROR: cat-base file not found: $CAT_BASE_FILE"
+  echo "This worktree was not created properly. Recreate with /cat:work."
+  echo "Or set manually: echo '<base-branch>' > \"$CAT_BASE_FILE\""
+  exit 1
 fi
-
-# Fallback: check git tracking config
-if [[ -z "$BASE_BRANCH" ]]; then
-  BASE_BRANCH=$(git config --get "branch.${TASK_BRANCH}.cat-base" 2>/dev/null || echo "")
-fi
-
-# Fallback: find nearest ancestor branch
-if [[ -z "$BASE_BRANCH" ]]; then
-  for candidate in main master $(git branch --list "v[0-9]*" | tr -d ' *'); do
-    if git merge-base --is-ancestor "$candidate" HEAD 2>/dev/null; then
-      BASE_BRANCH="$candidate"
-      break
-    fi
-  done
-fi
-
-# Final fallback
-BASE_BRANCH="${BASE_BRANCH:-main}"
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
 echo "Task branch: $TASK_BRANCH"
 echo "Base branch: $BASE_BRANCH"
@@ -178,16 +164,13 @@ TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
 WORKTREE_PATH=$(pwd)
 
-# Detect base branch (check config, then find ancestor)
-BASE_BRANCH=$(git config --get "branch.${TASK_BRANCH}.cat-base" 2>/dev/null || echo "")
-if [[ -z "$BASE_BRANCH" ]]; then
-  for candidate in main master $(git branch --list "v[0-9]*" | tr -d ' *'); do
-    if git merge-base --is-ancestor "$candidate" HEAD 2>/dev/null; then
-      BASE_BRANCH="$candidate"; break
-    fi
-  done
+# Detect base branch from worktree metadata (fail-fast if missing)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+  echo "ERROR: cat-base file not found. Recreate worktree with /cat:work." >&2
+  exit 1
 fi
-BASE_BRANCH="${BASE_BRANCH:-main}"
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
 # Squash if multiple commits
 COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD")
@@ -226,8 +209,8 @@ git rebase "origin/$BASE_BRANCH"
 **Solution**: Use `--force` flag or manually clean up
 
 ### Issue 4: Wrong base branch detected
-**Cause**: Base branch detection failed
-**Solution**: Set explicitly with `git config branch.<task>.cat-base <base-branch>`
+**Cause**: Base branch detection failed (worktree metadata missing)
+**Solution**: Set explicitly with `echo "<base-branch>" > "$(git rev-parse --git-dir)/cat-base"`
 
 ## Success Criteria
 

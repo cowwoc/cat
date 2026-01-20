@@ -849,22 +849,33 @@ Pass selected approach to subagent prompt to guide implementation.
 Branch naming: `{major}.{minor}-{task-name}`
 
 ```bash
-# Ensure we're on main branch
-MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+# Detect base branch (currently checked out branch in main worktree)
+BASE_BRANCH=$(git branch --show-current)
+echo "Base branch for task: $BASE_BRANCH"
 
-# Create branch if it doesn't exist
+# Create task branch from current branch (not hardcoded main)
 TASK_BRANCH="{major}.{minor}-{task-name}"
-git branch "$TASK_BRANCH" "$MAIN_BRANCH" 2>/dev/null || true
+git branch "$TASK_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
 
 # Create worktree (use absolute path to avoid cwd dependency)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$TASK_BRANCH"
 git worktree add "$WORKTREE_PATH" "$TASK_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
 
+# Store base branch in worktree metadata (auto-deleted when worktree removed)
+echo "$BASE_BRANCH" > "$(git rev-parse --git-common-dir)/worktrees/$TASK_BRANCH/cat-base"
+
 # MANDATORY: Change to worktree directory
 cd "$WORKTREE_PATH"
 pwd  # Verify we're in the worktree
 ```
+
+**Base Branch Configuration:**
+
+The base branch is stored in the worktree's metadata directory at `.git/worktrees/<task>/cat-base`.
+This file is automatically deleted when the worktree is removed, preventing orphaned config entries.
+Tasks can be forked from any branch (main, v1.10, feature branches, etc.) and merge back to
+the same branch when complete.
 
 **CRITICAL: Main agent MUST work from worktree directory**
 
@@ -1229,8 +1240,15 @@ echo "Verification level: $VERIFY_LEVEL"
 
 ```bash
 # Check if any source files changed (not just STATE.md or CHANGELOG.md)
-MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
-SOURCE_CHANGES=$(git diff --name-only ${MAIN_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
+# Read base branch from worktree metadata (set during worktree creation)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+  echo "ERROR: Base branch file not found: $CAT_BASE_FILE"
+  echo "This worktree was not created properly. Recreate with /cat:work."
+  exit 1
+fi
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+SOURCE_CHANGES=$(git diff --name-only ${BASE_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
 
 if [[ -z "$SOURCE_CHANGES" ]]; then
   echo "⚡ VERIFICATION: SKIPPED (no source files changed)"
@@ -1495,9 +1513,16 @@ Skip if `trust: "high"` in config.
 Users cannot review uncommitted changes. Before presenting the approval gate:
 
 ```bash
-# Verify there are commits on the task branch that aren't on main
-MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
-COMMIT_COUNT=$(git rev-list --count ${MAIN_BRANCH}..HEAD 2>/dev/null || echo "0")
+# Verify there are commits on the task branch that aren't on base branch
+# Read base branch from worktree metadata (set during worktree creation)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+  echo "ERROR: Base branch file not found: $CAT_BASE_FILE"
+  echo "This worktree was not created properly. Recreate with /cat:work."
+  exit 1
+fi
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD 2>/dev/null || echo "0")
 
 if [[ "$COMMIT_COUNT" -eq 0 ]]; then
   echo "ERROR: No commits on task branch. Commit changes before approval gate."
