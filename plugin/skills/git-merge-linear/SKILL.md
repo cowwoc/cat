@@ -1,259 +1,237 @@
 ---
-name: git-merge-linear
-description: Merge task branch to main with linear history and pre/post-merge verification
+name: cat:git-merge-linear
+description: Merge task branch to base branch with linear history (works from task worktree)
 allowed-tools: Bash, Read
 ---
 
 # Git Linear Merge Skill
 
-**When to Use**:
-- After task branch has passed review
-- When merging completed task to main branch
+Merge task branch to its base branch while staying in the task worktree. Uses `git push . HEAD:<base>`
+to fast-forward the base branch without checking out.
+
+## When to Use
+
+- After task branch has passed review and user approval
+- When merging completed task to base branch (main, v1.10, etc.)
 - To maintain clean, linear git history
 
 ## Prerequisites
 
-Before using this skill, verify:
-- [ ] Task branch has exactly 1 commit (squashed)
-- [ ] All quality checks pass (build, tests, checkstyle, PMD)
-- [ ] User approval obtained for changes
-- [ ] Working directory is clean
+- [ ] User approval obtained
+- [ ] Working directory is clean (commit or stash changes)
+- [ ] You are in the task worktree (not main repo)
 
-## Skill Workflow
+## Workflow
 
-### Step 1: Validation
+### Step 1: Verify Location and Detect Base Branch
 
-**Verify Task Branch State**:
 ```bash
-# Ensure we're on main branch
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "main" ]]; then
-  echo "ERROR: Must be on main branch to merge"
-  echo "Current branch: $CURRENT_BRANCH"
+# Verify we're in a worktree (not main repo)
+WORKTREE_PATH=$(pwd)
+MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
+
+if [[ "$WORKTREE_PATH" == "$MAIN_REPO" ]]; then
+  echo "ERROR: Must run from task worktree, not main repo"
+  echo "Navigate to: /workspace/.worktrees/<task-name>"
   exit 1
 fi
 
-# Verify task branch exists
-TASK_BRANCH="<task-name>"
-if ! git rev-parse --verify "$TASK_BRANCH" >/dev/null 2>&1; then
-  echo "ERROR: Task branch '$TASK_BRANCH' not found"
-  exit 1
+# Get current branch
+TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Detect base branch from STATE.md or git config
+STATE_FILE=$(find .claude/cat -name "STATE.md" -path "*/${TASK_BRANCH#*-}/STATE.md" 2>/dev/null | head -1)
+if [[ -f "$STATE_FILE" ]]; then
+  BASE_BRANCH=$(grep -oP 'base_branch:\s*\K\S+' "$STATE_FILE" 2>/dev/null || echo "")
 fi
 
-# Count commits on task branch
-COMMIT_COUNT=$(git rev-list --count main.."$TASK_BRANCH")
-echo "Task branch has $COMMIT_COUNT commit(s)"
-
-if [[ "$COMMIT_COUNT" -ne 1 ]]; then
-  echo "ERROR: Task branch must have exactly 1 commit"
-  echo "Found: $COMMIT_COUNT commits"
-  echo ""
-  echo "SOLUTION: Squash commits first using:"
-  echo "  git checkout $TASK_BRANCH"
-  echo "  git rebase -i main"
-  exit 1
+# Fallback: check git tracking config
+if [[ -z "$BASE_BRANCH" ]]; then
+  BASE_BRANCH=$(git config --get "branch.${TASK_BRANCH}.cat-base" 2>/dev/null || echo "")
 fi
 
-echo "Task branch ready for merge"
+# Fallback: find nearest ancestor branch
+if [[ -z "$BASE_BRANCH" ]]; then
+  for candidate in main master $(git branch --list "v[0-9]*" | tr -d ' *'); do
+    if git merge-base --is-ancestor "$candidate" HEAD 2>/dev/null; then
+      BASE_BRANCH="$candidate"
+      break
+    fi
+  done
+fi
+
+# Final fallback
+BASE_BRANCH="${BASE_BRANCH:-main}"
+
+echo "Task branch: $TASK_BRANCH"
+echo "Base branch: $BASE_BRANCH"
+echo "Worktree: $WORKTREE_PATH"
+
+# Check for uncommitted changes
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "ERROR: Uncommitted changes detected"
+  echo "Commit or stash changes before merging"
+  exit 1
+fi
 ```
 
-### Step 2: Fast-Forward Merge
+### Step 2: Squash Commits (if needed)
 
-**Execute Linear Merge**:
 ```bash
-# Merge with --ff-only to ensure linear history
-git merge --ff-only "$TASK_BRANCH"
+# Count commits ahead of base branch
+COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD")
+echo "Commits to merge: $COMMIT_COUNT"
+
+if [[ "$COMMIT_COUNT" -eq 0 ]]; then
+  echo "ERROR: No commits to merge"
+  exit 1
+fi
+
+if [[ "$COMMIT_COUNT" -gt 1 ]]; then
+  echo "Squashing $COMMIT_COUNT commits into 1..."
+
+  # Get combined commit message from all commits
+  COMBINED_MSG=$(git log --reverse --format="- %s" "${BASE_BRANCH}..HEAD")
+  FIRST_MSG=$(git log -1 --format="%s" "${BASE_BRANCH}..HEAD" | head -1)
+
+  # Soft reset to base and create single commit
+  git reset --soft "$BASE_BRANCH"
+  git commit -m "$FIRST_MSG
+
+Changes:
+$COMBINED_MSG
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+
+  echo "Squashed into 1 commit"
+fi
+```
+
+### Step 3: Fast-Forward Base Branch (from worktree)
+
+```bash
+# Fast-forward base branch to current HEAD without checking out
+# This updates the base branch ref to point to our current commit
+git push . "HEAD:${BASE_BRANCH}"
 
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Fast-forward merge failed"
+  echo "ERROR: Fast-forward failed"
   echo ""
-  echo "This usually means main has moved ahead since task branch was created."
-  echo ""
-  echo "SOLUTION: Rebase task branch onto latest main:"
-  echo "  git merge --abort  # Cancel this merge"
-  echo "  git checkout $TASK_BRANCH"
-  echo "  git rebase main"
-  echo "  git checkout main"
-  echo "  git merge --ff-only $TASK_BRANCH"
+  echo "This usually means $BASE_BRANCH has moved ahead."
+  echo "Solution: Rebase onto $BASE_BRANCH first:"
+  echo "  git fetch origin $BASE_BRANCH"
+  echo "  git rebase origin/$BASE_BRANCH"
+  echo "  # Then retry merge"
   exit 1
 fi
 
-echo "Linear merge successful"
+echo "$BASE_BRANCH fast-forwarded to $(git rev-parse --short HEAD)"
 ```
 
-### Step 3: Verification
+### Step 4: Verify Merge
 
-**Verify Linear History**:
 ```bash
-# Check that history is linear (no merge commits)
-git log --oneline --graph -5
+# Verify base branch was updated
+BASE_SHA=$(git rev-parse "$BASE_BRANCH")
+HEAD_SHA=$(git rev-parse HEAD)
 
-# Verify the task commit is now on main
-LATEST_COMMIT=$(git log -1 --format=%s)
-echo "Latest commit on main: $LATEST_COMMIT"
-
-# Confirm no merge commit created
-if git log -1 --format=%p | grep -q " "; then
-  echo "WARNING: Merge commit detected! History is not linear."
-  echo "This should not happen with --ff-only"
+if [[ "$BASE_SHA" != "$HEAD_SHA" ]]; then
+  echo "ERROR: $BASE_BRANCH not at expected commit"
+  echo "$BASE_BRANCH: $BASE_SHA"
+  echo "HEAD: $HEAD_SHA"
   exit 1
 fi
 
-echo "Linear history verified"
-```
+echo "Verified: $BASE_BRANCH is at $(git rev-parse --short "$BASE_BRANCH")"
 
-### Step 4: Cleanup (Optional)
-
-**Remove Worktree and Delete Branch**:
-```bash
-# IMPORTANT: Remove worktree BEFORE deleting branch
-# Git prevents deleting a branch that's checked out in an active worktree
-TASK_WORKTREE="/path/to/tasks/$TASK_BRANCH/code"
-if [[ -d "$TASK_WORKTREE" ]]; then
-  git worktree remove "$TASK_WORKTREE"
-  rm -rf "/path/to/tasks/$TASK_BRANCH"
-  echo "Task worktree cleaned up"
-fi
-
-# Delete task branch (after worktree removal)
-git branch -d "$TASK_BRANCH"
-echo "Task branch deleted"
-```
-
-## Complete Workflow Script
-
-```bash
-#!/bin/bash
-set -euo pipefail
-
-TASK_BRANCH="$1"
-
-if [[ -z "$TASK_BRANCH" ]]; then
-  echo "Usage: merge-linear <task-branch-name>"
-  exit 1
-fi
-
-echo "=== Linear Merge: $TASK_BRANCH -> main ==="
+# Show final state
 echo ""
-
-# Step 1: Validation
-echo "Step 1: Validating task branch..."
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "main" ]]; then
-  echo "ERROR: Must be on main branch (currently on: $CURRENT_BRANCH)"
-  exit 1
-fi
-
-if ! git rev-parse --verify "$TASK_BRANCH" >/dev/null 2>&1; then
-  echo "ERROR: Branch '$TASK_BRANCH' not found"
-  exit 1
-fi
-
-COMMIT_COUNT=$(git rev-list --count main.."$TASK_BRANCH")
-if [[ "$COMMIT_COUNT" -ne 1 ]]; then
-  echo "ERROR: Task branch has $COMMIT_COUNT commits, need exactly 1"
-  echo "Run: git checkout $TASK_BRANCH && git rebase -i main"
-  exit 1
-fi
-
-echo "Validation passed"
-echo ""
-
-# Step 2: Fast-Forward Merge
-echo "Step 2: Merging with --ff-only..."
-if ! git merge --ff-only "$TASK_BRANCH"; then
-  echo ""
-  echo "ERROR: Fast-forward failed. Main has likely moved ahead."
-  echo "Rebase required:"
-  echo "  git merge --abort"
-  echo "  git checkout $TASK_BRANCH && git rebase main"
-  echo "  git checkout main && git merge --ff-only $TASK_BRANCH"
-  exit 1
-fi
-
-echo "Merge successful"
-echo ""
-
-# Step 3: Verification
-echo "Step 3: Verifying linear history..."
-git log --oneline --graph -3
-
-# Check for merge commit
-if git log -1 --format=%p | grep -q " "; then
-  echo "ERROR: Merge commit detected! This should not happen."
-  exit 1
-fi
-
-echo "Linear history confirmed"
-echo ""
-
-# Step 4: Cleanup (Optional - ask user)
-echo "Cleanup task branch? (y/n)"
-read -r CLEANUP
-if [[ "$CLEANUP" == "y" ]]; then
-  # IMPORTANT: Remove worktree BEFORE deleting branch
-  # Git prevents deleting a branch that's checked out in an active worktree
-  TASK_WORKTREE="/path/to/tasks/$TASK_BRANCH/code"
-  if [[ -d "$TASK_WORKTREE" ]]; then
-    git worktree remove "$TASK_WORKTREE" 2>/dev/null || true
-    rm -rf "/path/to/tasks/$TASK_BRANCH"
-    echo "Task worktree removed"
-  fi
-
-  git branch -d "$TASK_BRANCH"
-  echo "Task branch deleted"
-fi
-
-echo ""
-echo "=== Linear merge complete ==="
+echo "=== Merge Complete ==="
+git log --oneline -3 "$BASE_BRANCH"
 ```
 
-## Usage Examples
-
-### Standard Merge
+### Step 5: Cleanup Worktree and Branch
 
 ```bash
-# Ensure you're on main branch
-git checkout main
+# Navigate to main repo for cleanup
+cd "$MAIN_REPO"
 
-# Execute merge
-# Follow the step-by-step workflow in this skill
+# Remove worktree
+git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true
+
+# Delete task branch (now safe since worktree removed)
+git branch -D "$TASK_BRANCH" 2>/dev/null || true
+
+# Clean up empty worktrees directory
+rmdir /workspace/.worktrees 2>/dev/null || true
+
+echo "Cleanup complete"
 ```
 
-### With Validation Only
-```bash
-# Just validate without merging
-git rev-list --count main..{major}.{minor}-{task-name}
-# Should output: 1
-```
+## Single Command Version
 
-### Handling Rebase
+For experienced users, combine all steps (run from task worktree):
+
 ```bash
-# If fast-forward fails
-git checkout {major}.{minor}-{task-name}
-git rebase main
-git checkout main
-git merge --ff-only {major}.{minor}-{task-name}
+# Detect branches and paths
+TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
+WORKTREE_PATH=$(pwd)
+
+# Detect base branch (check config, then find ancestor)
+BASE_BRANCH=$(git config --get "branch.${TASK_BRANCH}.cat-base" 2>/dev/null || echo "")
+if [[ -z "$BASE_BRANCH" ]]; then
+  for candidate in main master $(git branch --list "v[0-9]*" | tr -d ' *'); do
+    if git merge-base --is-ancestor "$candidate" HEAD 2>/dev/null; then
+      BASE_BRANCH="$candidate"; break
+    fi
+  done
+fi
+BASE_BRANCH="${BASE_BRANCH:-main}"
+
+# Squash if multiple commits
+COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD")
+if [[ "$COMMIT_COUNT" -gt 1 ]]; then
+  FIRST_MSG=$(git log --format="%s" "${BASE_BRANCH}..HEAD" | tail -1)
+  git reset --soft "$BASE_BRANCH"
+  git commit -m "$FIRST_MSG"
+fi
+
+# Fast-forward base branch
+git push . "HEAD:${BASE_BRANCH}"
+
+# Cleanup
+cd "$MAIN_REPO"
+git worktree remove "$WORKTREE_PATH" --force 2>/dev/null
+git branch -D "$TASK_BRANCH" 2>/dev/null
 ```
 
 ## Common Issues
 
-### Issue 1: "Not possible to fast-forward"
-**Cause**: Main branch has moved ahead since task branch was created
-**Solution**: Rebase task branch onto main first
+### Issue 1: "failed to push some refs"
+**Cause**: Base branch has moved ahead since task branch was created
+**Solution**: Rebase task branch onto base first:
+```bash
+git fetch origin "$BASE_BRANCH"
+git rebase "origin/$BASE_BRANCH"
+# Then retry: git push . "HEAD:${BASE_BRANCH}"
+```
 
-### Issue 2: "Task branch has multiple commits"
-**Cause**: Forgot to squash commits
-**Solution**: Use interactive rebase to squash all commits into one
+### Issue 2: "not a valid ref"
+**Cause**: Branch name has special characters or doesn't exist
+**Solution**: Verify branch name with `git branch -a`
 
-### Issue 3: "Merge commit created despite --ff-only"
-**Cause**: This should never happen with --ff-only
-**Solution**: If it does, this is a bug - report immediately
+### Issue 3: Worktree removal fails
+**Cause**: Uncommitted changes or process using directory
+**Solution**: Use `--force` flag or manually clean up
+
+### Issue 4: Wrong base branch detected
+**Cause**: Base branch detection failed
+**Solution**: Set explicitly with `git config branch.<task>.cat-base <base-branch>`
 
 ## Success Criteria
 
-- Task branch merged to main
-- History remains linear (no merge commits)
-- Exactly 1 commit added to main
-- All validations passed
-- Task branch optionally cleaned up
+- [ ] Base branch points to task commit
+- [ ] Linear history maintained (no merge commits)
+- [ ] Task worktree removed
+- [ ] Task branch deleted
