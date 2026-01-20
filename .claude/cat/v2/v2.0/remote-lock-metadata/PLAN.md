@@ -4,6 +4,30 @@
 Display remote branch ownership information (last committer, commit date) when skipping tasks due to
 remote locks in /cat:work, and enhance /cat:cleanup to report stale remote locks without removing them.
 
+## Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| REQ-001 | *Define requirement* | must-have | *How to verify* |
+
+
+## Research
+
+*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
+
+### Stack
+| Library | Purpose | Version | Rationale |
+|---------|---------|---------|-----------|
+| *TBD* | *TBD* | *TBD* | *TBD* |
+
+### Architecture
+- **Pattern:** *TBD*
+- **Integration:** *TBD*
+
+### Pitfalls
+- *Run /cat:research to populate*
+
+
 ## Satisfies
 None (infrastructure task)
 
