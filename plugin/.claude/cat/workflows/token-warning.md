@@ -84,6 +84,10 @@ No action required - this is informational for future planning.
 - Lines: +{added} / -{removed}
 ```
 
+**Why this metric:** The `totalTokens` from `toolUseResult` represents actual context the subagent
+processed during execution. This is different from cumulative API tokens (`input_tokens +
+output_tokens` from message.usage) which only shows response overhead.
+
 ---
 
 ## Token Estimate Variance Check (M099)

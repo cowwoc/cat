@@ -927,109 +927,57 @@
     },
     {
       "id": "M156",
-      "timestamp": "2026-01-20T00:46:14Z",
-      "category": "bash_error",
-      "description": "status.sh crashes with 'bad array subscript' when accessing MINOR_DESC[$CURRENT_MINOR] with empty CURRENT_MINOR on Bash 5.2+",
-      "root_cause": "Script accessed associative array with empty key (MINOR_DESC[\"\"]) which throws error in Bash 5.2+. CURRENT_MINOR was empty because project had incorrect directory structure (task/ subdirectory instead of direct task dirs).",
+      "timestamp": "2026-01-20T14:30:00Z",
+      "category": "detection_gap",
+      "description": "Used docs: commit type for skill file changes instead of config:",
+      "root_cause": "PreToolUse hook checks git diff --cached before git add executes, so files from git add X && git commit are not seen",
       "rca_method": "A",
       "rca_method_name": "5-whys",
-      "prevention_type": "code_fix",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/status.sh",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/validate-commit-type.sh",
       "pattern_keywords": [
-        "bash",
-        "associative-array",
-        "empty-key",
-        "status.sh",
-        "CURRENT_MINOR",
-        "bash-5.2"
+        "commit-type",
+        "docs",
+        "config",
+        "skills",
+        "PreToolUse",
+        "git-add"
       ],
       "prevention_implemented": true,
-      "prevention_verified": true,
+      "prevention_verified": false,
       "recurrence_of": null,
       "prevention_quality": {
         "verification_type": "positive",
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Guard associative array access with empty key check: if [ -n \"$KEY\" ]; then ... fi. Bash 5.2+ throws 'bad array subscript' on arr[\"\"] even with :- default syntax."
+      "correct_behavior": "Use config: commit type for skill file changes. Hook now extracts files from git add commands in the command string."
     },
     {
       "id": "M157",
-      "timestamp": "2026-01-20T12:00:00Z",
+      "timestamp": "2026-01-20T14:45:00Z",
       "category": "protocol_violation",
-      "description": "Reported single subagent token estimate (~35K) instead of aggregating tokens across all subagents (exploration, planning, implementation x2)",
-      "root_cause": "Failed to execute aggregate_token_report step after collecting results from multiple subagents - workflow step existed but was not followed",
+      "description": "Presented approval gate without squashing commits by type first",
+      "root_cause": "Skipped squash step in approval flow despite documentation existing",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
-      "taxonomy_analysis": {
-        "module": "MEMORY",
-        "failure_mode": "Failed to recall aggregate_token_report step requirement",
-        "failure_type": "FALSE_NEGATIVE",
-        "cascading": {
-          "caused_downstream": false,
-          "is_symptom_of": "Not following workflow steps completely"
-        },
-        "corrective_feedback": "For multi-subagent tasks, ALWAYS execute aggregate_token_report before approval gate",
-        "intervention_point": "After collect_and_report step completes"
-      },
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/.worktrees/2.0-fork-from-current-branch/plugin/commands/work.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/references/approval-gates.md",
       "pattern_keywords": [
-        "token",
-        "aggregate",
-        "subagent",
-        "report",
-        "metrics"
-      ],
-      "prevention_implemented": true,
-      "prevention_verified": false,
-      "recurrence_of": null,
-      "prevention_quality": {
-        "verification_type": "positive",
-        "fragility": "low",
-        "catches_variations": true
-      },
-      "correct_behavior": "For multi-subagent tasks, execute aggregate_token_report step to display token table with all subagents BEFORE presenting approval gate. Never report single-subagent metrics for multi-subagent tasks."
-    },
-    {
-      "id": "M158",
-      "timestamp": "2026-01-20T12:45:00Z",
-      "category": "protocol_violation",
-      "description": "Did not re-squash commits after user requested changes - presented 3 separate commits instead of clean squashed history",
-      "root_cause": "Workflow says 'loop back to execute' after requested changes but doesn't explicitly require re-squashing before re-presenting approval gate",
-      "rca_method": "C",
-      "rca_method_name": "causal-barrier",
-      "causal_barrier_analysis": {
-        "selected_cause": "Workflow gap - no instruction to re-squash after user-requested changes",
-        "confidence": "HIGH",
-        "evidence": "Line 1633-1634 says loop back to execute but doesn't mention re-squashing",
-        "barriers": [
-          {
-            "barrier": "squash_commits step",
-            "existed": true,
-            "why_failed": "Only runs AFTER approval, not during change loop"
-          }
-        ],
-        "minimum_effective_barrier": "skill (level 5)"
-      },
-      "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/.worktrees/2.0-fork-from-current-branch/plugin/commands/work.md",
-      "pattern_keywords": [
+        "approval-gate",
         "squash",
-        "commits",
-        "request-changes",
-        "approval",
-        "iteration"
+        "commit-type",
+        "workflow"
       ],
       "prevention_implemented": true,
       "prevention_verified": false,
       "recurrence_of": null,
       "prevention_quality": {
         "verification_type": "positive",
-        "fragility": "low",
+        "fragility": "medium",
         "catches_variations": true
       },
-      "correct_behavior": "After making requested changes, squash all commits before re-presenting the approval gate. Users should review clean commit history."
+      "correct_behavior": "Always squash commits by type BEFORE presenting approval gate to user. Flow: changes complete → squash → present gate."
     }
   ]
 }

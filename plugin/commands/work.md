@@ -849,18 +849,12 @@ Pass selected approach to subagent prompt to guide implementation.
 Branch naming: `{major}.{minor}-{task-name}`
 
 ```bash
-# Capture current branch in main worktree as base for task branch
-BASE_BRANCH=$(git branch --show-current)
-if [ -z "$BASE_BRANCH" ]; then
-  # Detached HEAD - fall back to default branch
-  BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
-  echo "WARNING: Main worktree in detached HEAD state, using $BASE_BRANCH as base"
-fi
-echo "Base branch: $BASE_BRANCH"
+# Ensure we're on main branch
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
 
-# Create branch forked from current branch (not main)
+# Create branch if it doesn't exist
 TASK_BRANCH="{major}.{minor}-{task-name}"
-git branch "$TASK_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
+git branch "$TASK_BRANCH" "$MAIN_BRANCH" 2>/dev/null || true
 
 # Create worktree (use absolute path to avoid cwd dependency)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$TASK_BRANCH"
@@ -883,15 +877,6 @@ After creating the worktree, `cd` into it and stay there for the remainder of ta
 **Update task STATE.md:**
 
 Set status to `in-progress` and record start time.
-
-**MANDATORY: Record the base branch in STATE.md:**
-
-Add to STATE.md:
-```yaml
-- **Base Branch:** {BASE_BRANCH}
-```
-
-This records which branch the task was forked from, enabling correct diffs and merges.
 
 </step>
 
@@ -1021,14 +1006,6 @@ Invoke `/cat:learn-from-mistakes` with:
 - Compaction events: {N}
 
 This helps calibrate estimation factors over time and identify patterns in underestimation.
-
-**MANDATORY: Aggregate reporting for multi-subagent tasks (M157):**
-
-If this task spawned multiple subagents (exploration, planning, implementation, or parallel execution),
-you MUST execute the `aggregate_token_report` step BEFORE presenting the approval gate.
-
-**Blocking gate:** The approval gate MUST NOT be presented until aggregate token metrics are displayed.
-Single-subagent metrics (e.g., "~35K tokens") are INSUFFICIENT for multi-subagent tasks.
 
 </step>
 
@@ -1252,13 +1229,8 @@ echo "Verification level: $VERIFY_LEVEL"
 
 ```bash
 # Check if any source files changed (not just STATE.md or CHANGELOG.md)
-# BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
-TASK_STATE_PATH=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
-BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "$TASK_STATE_PATH" 2>/dev/null || echo "main")
-if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
-  BASE_BRANCH="main"
-fi
-SOURCE_CHANGES=$(git diff --name-only "${BASE_BRANCH}..HEAD" | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+SOURCE_CHANGES=$(git diff --name-only ${MAIN_BRANCH}..HEAD | grep -v "\.claude/cat/" | grep -v "CHANGELOG.md" | head -1)
 
 if [[ -z "$SOURCE_CHANGES" ]]; then
   echo "⚡ VERIFICATION: SKIPPED (no source files changed)"
@@ -1523,14 +1495,9 @@ Skip if `trust: "high"` in config.
 Users cannot review uncommitted changes. Before presenting the approval gate:
 
 ```bash
-# Verify there are commits on the task branch that aren't on base
-# BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
-TASK_STATE_PATH=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
-BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "$TASK_STATE_PATH" 2>/dev/null || echo "main")
-if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
-  BASE_BRANCH="main"
-fi
-COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD" 2>/dev/null || echo "0")
+# Verify there are commits on the task branch that aren't on main
+MAIN_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+COMMIT_COUNT=$(git rev-list --count ${MAIN_BRANCH}..HEAD 2>/dev/null || echo "0")
 
 if [[ "$COMMIT_COUNT" -eq 0 ]]; then
   echo "ERROR: No commits on task branch. Commit changes before approval gate."
@@ -1549,7 +1516,7 @@ Before presenting approval gate, verify STATE.md is included:
 TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
 
 # Check if STATE.md was modified in the commits
-if ! git diff --name-only "${BASE_BRANCH}..HEAD" | grep -q "STATE.md"; then
+if ! git diff --name-only ${MAIN_BRANCH}..HEAD | grep -q "STATE.md"; then
   echo "ERROR: STATE.md not in commit. Must update STATE.md in same commit as implementation."
   echo "Fix: Amend the implementation commit to include STATE.md update."
   # DO NOT present approval gate until fixed
@@ -1632,11 +1599,6 @@ Wait for user to respond with approval.
 
 **If "Request changes":**
 Receive feedback and loop back to execute step.
-
-**MANDATORY: Re-squash before re-presenting approval (M158).**
-
-After making requested changes, squash all commits before presenting the approval gate again.
-Users should review a clean commit history, not accumulated WIP commits from multiple iterations.
 
 **If "Abort":**
 Clean up worktree and branch, mark task as pending.
