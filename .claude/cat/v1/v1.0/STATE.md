@@ -1,9 +1,10 @@
 # Minor Version 2.0 State: Core Rewrite
 
 ## Status
-status: in_progress
-progress: 90%
+status: completed
+progress: 100%
 started: 2026-01-12
+completed: 2026-01-20
 last_updated: 2026-01-20
 
 ## Summary
@@ -15,10 +16,11 @@ Implemented new hierarchy, multi-agent orchestration, token-aware decomposition,
 - enforce-subagent-context-limits
 - expand-exploration-subagent-role
 - fix-subagent-token-measurement
+- fix-token-extraction
 - fork-from-current-branch
 - review-feedback-subagent
 - variant2-diff-tool
 - workflow-progress-display
 
 ## Tasks Pending
-- fix-token-extraction
+(none)
