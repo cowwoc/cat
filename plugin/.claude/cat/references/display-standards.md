@@ -2,10 +2,13 @@
 
 Standard visual elements for CAT workflows: status displays, progress bars, and visual hierarchy.
 
+**For emoji-aware rendering:** Use `/cat:render-box` skill when rendering boxes or tables with emojis.
+LLMs cannot reliably calculate padding for Unicode text (M142).
+
 ## Centralized Box Rendering Library {#box-rendering-library}
 
 **CRITICAL (M142):** LLMs cannot reliably calculate character-level padding for Unicode text.
-All ASCII boxes with emojis MUST be rendered using the centralized scripts.
+All ASCII boxes with emojis MUST be rendered using the centralized scripts or `/cat:render-box` skill.
 
 ### Available Scripts
 

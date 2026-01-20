@@ -70,19 +70,13 @@ the session JSONL file (potentially megabytes of conversation history).
 ### 2. Extract Commit History
 
 ```bash
-# BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
-BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "${TASK_STATE_PATH}" 2>/dev/null || echo "origin/HEAD")
-if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
-  BASE_BRANCH="origin/HEAD"
-fi
-
 cd "${WORKTREE}"
 
 # Get commits made by subagent (since branch creation)
-git log --oneline "${BASE_BRANCH}..HEAD"
+git log --oneline origin/HEAD..HEAD
 
 # Get detailed commit info
-git log --format="%H %s" "${BASE_BRANCH}..HEAD" > /tmp/subagent-commits.txt
+git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
 ```
 
 ### 3. Parse Token Metrics
@@ -105,26 +99,23 @@ if [ -f "$COMPLETION_FILE" ]; then
 fi
 ```
 
-**Fallback: Parse session file for cumulative totals** (spans all compactions):
+**Fallback: Use token-report skill** for accurate context-based metrics:
+
+If `.completion.json` is missing or has no token data, invoke `/cat:token-report` which extracts
+`totalTokens` from Task tool completions in the session file. This metric represents actual context
+processed (matching CLI "Done" display) rather than cumulative API response tokens.
 
 ```bash
 SESSION_ID=$(cat "${WORKTREE}/.session_id" 2>/dev/null)
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
-
-if [ -f "$SESSION_FILE" ]; then
-  # CUMULATIVE totals - parses ALL entries including those before compaction
-  INPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage.input_tokens] |
-    add // 0' "${SESSION_FILE}")
-  OUTPUT_TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage.output_tokens] |
-    add // 0' "${SESSION_FILE}")
-  TOTAL_TOKENS=$((INPUT_TOKENS + OUTPUT_TOKENS))
-  COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
+if [ -n "$SESSION_ID" ] && [ ! -f "$COMPLETION_FILE" ]; then
+  echo "NOTE: .completion.json missing. Token metrics available via /cat:token-report"
+  # The token-report skill extracts totalTokens from toolUseResult in session JSONL
 fi
 ```
 
-**Why cumulative matters:** When compaction occurs, the session file retains all pre-compaction
-entries. The jq `add` over ALL entries captures the true total token consumption, enabling
-accurate comparison against estimates.
+**Why totalTokens from toolUseResult?** The session file stores Task tool completion results with
+`totalTokens` which represents the full context the subagent processed. This matches the CLI
+"Done (X tool uses · XK tokens · Xm Xs)" display and is the correct metric for monitoring.
 
 ### 4. Extract Discovered Issues
 
@@ -166,10 +157,10 @@ work.md handle_discovered_issues step). This skill only extracts them.
 cd "${WORKTREE}"
 
 # List modified files
-git diff --name-only "${BASE_BRANCH}..HEAD"
+git diff --name-only origin/HEAD..HEAD
 
 # Get full diff for review
-git diff "${BASE_BRANCH}..HEAD" > /tmp/subagent-changes.diff
+git diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
 ```
 
 ### 6. Extract Subagent Status
