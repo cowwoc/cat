@@ -100,7 +100,6 @@ These preferences shape how CAT makes autonomous decisions:
 
 Update anytime with: `/cat:config`
 
-
 ## Related Documentation
 - [ROADMAP.md](ROADMAP.md) - Version roadmap
 - [cat-config.json](cat-config.json) - CAT configuration
