@@ -251,129 +251,159 @@ class WhitespaceMarker:
 
 
 class Variant2Formatter:
-    """Format diff output in variant 2 style."""
+    """Format diff output in variant 2 style (Proposal I - Inline Context Markers)."""
 
     # Box drawing characters
-    BOX_TOP_LEFT = '\u256D'      # rounded corner
-    BOX_TOP_RIGHT = '\u256E'
-    BOX_BOTTOM_LEFT = '\u2570'
-    BOX_BOTTOM_RIGHT = '\u256F'
-    BOX_HORIZONTAL = '\u2500'
-    BOX_VERTICAL = '\u2502'
-    BOX_HEAVY = '\u2501'         # heavy horizontal for file separators
-    BOX_LIGHT = '\u2500'         # light horizontal for section separators
+    BOX_TOP_LEFT = '\u250C'      # ┌
+    BOX_TOP_RIGHT = '\u2510'     # ┐
+    BOX_BOTTOM_LEFT = '\u2514'   # └
+    BOX_BOTTOM_RIGHT = '\u2518'  # ┘
+    BOX_HORIZONTAL = '\u2500'    # ─
+    BOX_VERTICAL = '\u2502'      # │
+
+    # Line number column width (5 chars for number + space + vertical bar)
+    LINE_NUM_WIDTH = 5
 
     def __init__(self, width: int = 50, task_name: str = ""):
         self.width = width
         self.task_name = task_name or "diff"
 
     def format_header(self, stats: DiffStats) -> str:
-        """Format the summary header box."""
-        title = f"Task Diff: {self.task_name}"
-        stats_line = f"Files: {stats.files_changed} | +{stats.lines_added}/-{stats.lines_removed} lines"
+        """Format the summary header box with task name and stats."""
+        # Inner content width (excluding border chars and padding spaces)
+        # Box is: │ content │ so inner content width = width - 4
+        content_width = self.width - 4
 
-        # Calculate inner width (accounting for borders and padding)
-        inner_width = self.width - 4  # 2 for borders, 2 for padding
+        # Format stats: "N files  +X / -Y"
+        stats_str = f"{stats.files_changed} files  +{stats.lines_added} / -{stats.lines_removed}"
 
-        # Build the box
+        # Task name left, stats right
+        # Available space for task name = content_width - len(stats_str) - spacing
+        spacing = 2  # minimum spacing between name and stats
+        task_display = self.task_name
+        max_task_len = content_width - len(stats_str) - spacing
+        if len(task_display) > max_task_len:
+            task_display = task_display[:max_task_len - 3] + "..."
+
+        # Build content line: task_name + padding + stats
+        content_padding = content_width - len(task_display) - len(stats_str)
+        content_line = task_display + (' ' * content_padding) + stats_str
+
+        # Build the box (top/bottom use width-2 for border chars only)
+        border_width = self.width - 2
         lines = []
-
-        # Top border with title
-        top_fill = inner_width - len(title) - 1
-        lines.append(f"{self.BOX_TOP_LEFT}{self.BOX_HORIZONTAL} {title} {self.BOX_HORIZONTAL * max(0, top_fill)}{self.BOX_TOP_RIGHT}")
-
-        # Stats line with padding
-        stats_padded = stats_line.ljust(inner_width)
-        lines.append(f"{self.BOX_VERTICAL} {stats_padded} {self.BOX_VERTICAL}")
-
-        # Bottom border
-        lines.append(f"{self.BOX_BOTTOM_LEFT}{self.BOX_HORIZONTAL * (inner_width + 2)}{self.BOX_BOTTOM_RIGHT}")
+        lines.append(f"{self.BOX_TOP_LEFT}{self.BOX_HORIZONTAL * border_width}{self.BOX_TOP_RIGHT}")
+        lines.append(f"{self.BOX_VERTICAL} {content_line} {self.BOX_VERTICAL}")
+        lines.append(f"{self.BOX_BOTTOM_LEFT}{self.BOX_HORIZONTAL * border_width}{self.BOX_BOTTOM_RIGHT}")
 
         return '\n'.join(lines)
 
-    def format_file_header(self, index: int, total: int, filepath: str) -> str:
-        """Format a file header separator."""
-        separator = self.BOX_HEAVY * self.width
-        header = f"FILE {index}/{total}: {filepath}"
-        return f"\n{separator}\n{header}\n{separator}\n"
+    def format_file_header(self, filepath: str) -> str:
+        """Format a file header separator: ── filename.ext ──────..."""
+        prefix = f"{self.BOX_HORIZONTAL}{self.BOX_HORIZONTAL} {filepath} "
+        remaining = self.width - len(prefix)
+        return f"\n{prefix}{self.BOX_HORIZONTAL * max(0, remaining)}"
 
-    def format_section_header(self, section: str, line_range: tuple) -> str:
-        """Format a section header."""
-        separator = self.BOX_LIGHT * self.width
-        return f"\n## Section: {section} (lines {line_range[0]}-{line_range[1]})\n{separator}\n"
+    def format_file_footer(self) -> str:
+        """Format a file footer: just dashes."""
+        return f"{self.BOX_HORIZONTAL * self.width}"
 
     def format_hunk(self, file: DiffFile, hunk: DiffHunk) -> str:
-        """Format a single diff hunk."""
-        lines = []
-        is_prose = file.file_type == FileType.PROSE
+        """Format a single diff hunk with inline line numbers."""
+        output_lines = []
 
-        # Track context for whitespace-only change detection
-        prev_removed = []
+        # Track current line number in the new file
+        current_line = hunk.new_start
+
+        # Track groups of deletions for proper line number display
+        in_deletion_group = False
+        deletion_group_first = True
 
         for line in hunk.lines:
             if not line:
+                # Empty line in diff = context line that was empty
+                formatted = self._format_context_line(current_line, '')
+                output_lines.append(formatted)
+                current_line += 1
+                in_deletion_group = False
+                deletion_group_first = True
                 continue
 
             prefix = line[0] if line else ' '
             content = line[1:] if len(line) > 1 else ''
 
             if prefix == '-':
-                prev_removed.append(content)
-                # Check if this is part of a whitespace-only change
-                # (will be determined when we see the + line)
+                # Removed line - show line number only for first in group
+                if deletion_group_first:
+                    formatted = self._format_removed_line(current_line, content)
+                    deletion_group_first = False
+                else:
+                    formatted = self._format_removed_line(None, content)
+                in_deletion_group = True
+                # Do NOT increment current_line for removed lines
+                output_lines.append(formatted)
             elif prefix == '+':
-                # Check for whitespace-only changes
-                ws_change = False
-                if prev_removed:
-                    old_content = prev_removed[-1]
-                    if WhitespaceMarker.is_whitespace_only_change(old_content, content):
-                        ws_change = True
-                        # Format both lines with whitespace markers
-                        lines.append(WhitespaceMarker.format_whitespace_change('- ', old_content))
-                        lines.append(WhitespaceMarker.format_whitespace_change('+ ', content))
-                        prev_removed.pop()
-                        continue
-
-                if not ws_change:
-                    # Output any pending removed lines
-                    for removed in prev_removed:
-                        lines.append(self._format_line('-', removed, is_prose))
-                    prev_removed.clear()
-                    lines.append(self._format_line('+', content, is_prose))
+                # Added line - no line number (they replace at same position)
+                formatted = self._format_added_line(content)
+                output_lines.append(formatted)
+                current_line += 1
+                in_deletion_group = False
+                deletion_group_first = True
             else:
-                # Context line - output any pending removed lines first
-                for removed in prev_removed:
-                    lines.append(self._format_line('-', removed, is_prose))
-                prev_removed.clear()
-                lines.append(self._format_line(' ', content, is_prose))
+                # Context line
+                formatted = self._format_context_line(current_line, content)
+                output_lines.append(formatted)
+                current_line += 1
+                in_deletion_group = False
+                deletion_group_first = True
 
-        # Output any remaining removed lines
-        for removed in prev_removed:
-            lines.append(self._format_line('-', removed, is_prose))
+        return '\n'.join(output_lines)
 
-        return '\n'.join(lines)
+    def _format_line_num(self, line_num: Optional[int]) -> str:
+        """Format line number column (5 chars right-aligned)."""
+        if line_num is None:
+            return ' ' * self.LINE_NUM_WIDTH
+        return f"{line_num:>{self.LINE_NUM_WIDTH}}"
 
-    def _format_line(self, prefix: str, content: str, is_prose: bool) -> str:
-        """Format a single line, wrapping prose but not code."""
-        # Check for suspicious whitespace
-        for char in WhitespaceMarker.SUSPICIOUS_WHITESPACE:
-            if char in content:
-                content = WhitespaceMarker.mark_whitespace(content, show_all=False)
-                break
+    def _format_context_line(self, line_num: int, content: str) -> str:
+        """Format a context line: '    1 │   content'"""
+        line_str = self._format_line_num(line_num)
+        return f"{line_str} {self.BOX_VERTICAL}   {content}"
 
-        if is_prose and len(prefix + content) > self.width:
-            # Wrap prose at configured width
-            wrapped = textwrap.wrap(content, width=self.width - 2,
-                                   break_long_words=False,
-                                   break_on_hyphens=True)
-            return '\n'.join(f"{prefix} {line}" for line in wrapped)
-        else:
-            # Code: preserve original formatting
-            return f"{prefix} {content}"
+    def _format_removed_line(self, line_num: Optional[int], content: str) -> str:
+        """Format a removed line: '    1 | - content' or '      | - content'"""
+        line_str = self._format_line_num(line_num)
+        return f"{line_str} {self.BOX_VERTICAL} - {content}"
 
-    def format_section_end(self) -> str:
-        """Format section end marker."""
-        return self.BOX_LIGHT * self.width
+    def _format_added_line(self, content: str) -> str:
+        """Format an added line: '      | + content'"""
+        line_str = self._format_line_num(None)
+        return f"{line_str} {self.BOX_VERTICAL} + {content}"
+
+    def format(self, files: list, stats: DiffStats) -> str:
+        """Format the complete diff output."""
+        output = []
+
+        # Header
+        output.append(self.format_header(stats))
+
+        # Process each file
+        for file in files:
+            output.append(self.format_file_header(file.display_path))
+
+            if file.is_binary:
+                output.append("  [Binary file - cannot display diff]")
+            else:
+                # Format all hunks for this file
+                for i, hunk in enumerate(file.hunks):
+                    if i > 0:
+                        # Add blank line between hunks
+                        output.append(f"{' ' * self.LINE_NUM_WIDTH} {self.BOX_VERTICAL} ")
+                    output.append(self.format_hunk(file, hunk))
+
+            output.append(self.format_file_footer())
+
+        return '\n'.join(output)
 
 
 class DiffParser:
@@ -578,39 +608,9 @@ Examples:
         print("No parseable changes found.", file=sys.stderr)
         sys.exit(0)
 
-    # Format output
+    # Format and print output
     formatter = Variant2Formatter(width=width, task_name=args.task_name)
-
-    # Print header
-    print(formatter.format_header(stats))
-
-    # Process each file
-    for idx, file in enumerate(files, 1):
-        print(formatter.format_file_header(idx, len(files), file.display_path))
-
-        if file.is_binary:
-            print("  [Binary file - cannot display diff]\n")
-            continue
-
-        # Group hunks by section
-        for hunk in file.hunks:
-            # Determine section
-            context_lines = [l for l in hunk.lines if l.startswith(' ')]
-            section = SectionDetector.find_section_for_hunk(
-                file.display_path,
-                hunk.section_header,
-                context_lines
-            )
-
-            # Print section header
-            line_range = hunk.get_line_range()
-            print(formatter.format_section_header(section, line_range))
-
-            # Print hunk content
-            print(formatter.format_hunk(file, hunk))
-
-            # Print section end
-            print(f"\n{formatter.format_section_end()}")
+    print(formatter.format(files, stats))
 
 
 if __name__ == '__main__':
