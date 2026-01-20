@@ -6,7 +6,6 @@ progress: 0%
 
 ## Dependencies
 - tier-feature-mapping (needs entitlement definitions)
-- jwt-token-generation (needs token validation)
 
 ## Provides
 - Tier-based feature enforcement

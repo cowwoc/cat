@@ -6,67 +6,52 @@ Cross-cutting rules that apply to all CAT development work.
 
 | Component Type | Language | Rationale |
 |----------------|----------|-----------|
-| Server-side code | **Java** | Type safety, enterprise ecosystem, crypto libraries |
+| Plugin logic | **Python** | Rich ecosystem, testability, Claude Code integration |
 | CLI tools/hooks | Bash | Claude Code plugin integration, Unix tooling |
 | Configuration | JSON | Standard, machine-readable |
 | Documentation | Markdown | Human-readable, version-controlled |
 
-### Server-Side Code (Java)
+### Plugin Code (Python)
 
-**MANDATORY:** All server-side components must be written in Java.
+Python is used for:
+- Hook handlers (PreToolUse, PostToolUse, etc.)
+- Skill handlers
+- Display formatting and output
+- Configuration management
+- Test suites
 
-This includes:
-- License validation server
-- JWT token generation and validation
-- API endpoints
-- Cryptographic operations (signing, verification)
-- Database interactions
-- Webhook handlers
+**Python Version:** 3.10+
 
-**Rationale:**
-- Strong type system catches errors at compile time
-- Mature cryptographic libraries (java.security, Bouncy Castle)
-- Enterprise-grade HTTP servers (Spring Boot, Jetty)
-- Better maintainability for complex business logic
-- Existing enterprise adoption and support
+**Testing Framework:** pytest (with unittest compatibility)
 
-**Java Version:** 25+ (latest LTS)
-
-**Testing Framework:** TestNG (preferred over JUnit for better parallel test execution and data-driven testing)
-
-**Build Tool:** Maven or Gradle (prefer Maven for consistency)
-
-### Client-Side/CLI (Bash)
+### CLI/Hooks (Bash)
 
 Bash scripts are appropriate for:
-- Claude Code hooks (PreToolUse, PostToolUse, etc.)
-- CLI wrappers that invoke Java services
-- Simple validation scripts
+- Claude Code hook entry points
 - Git operations
-- File manipulation
+- Simple file manipulation
+- Environment setup
 
 Bash scripts should NOT contain:
 - Complex business logic
-- Cryptographic operations (beyond calling Java services)
 - State management beyond simple files
 
 ## Code Organization
 
 ```
 project/
-├── server/                 # Java server-side code
-│   ├── src/main/java/
-│   ├── src/test/java/
-│   └── pom.xml
-├── hooks/                  # Bash hooks for Claude Code
-├── scripts/                # Bash utility scripts
-├── skills/                 # Skill definitions (Markdown)
-└── commands/               # Command definitions (Markdown)
+├── plugin/                 # CAT plugin source
+│   ├── hooks/              # Hook handlers (Python/Bash)
+│   ├── skills/             # Skill definitions (Markdown)
+│   ├── commands/           # Command definitions (Markdown)
+│   └── scripts/            # Utility scripts
+├── tests/                  # Test suites
+└── docs/                   # Documentation
 ```
 
 ## Error Handling
 
-- Java: Use checked exceptions for recoverable errors, unchecked for programming errors
+- Python: Use exceptions with meaningful messages; catch specific exceptions
 - Bash: Use `set -euo pipefail` and trap handlers
 - Always provide meaningful error messages
 - Log errors with context (what failed, why, how to fix)
@@ -107,7 +92,7 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 
 ## Testing
 
-- Java: TestNG for unit tests, integration tests with embedded servers
+- Python: pytest for unit tests
 - Bash: Bats (Bash Automated Testing System)
 - Minimum coverage: 80% for business logic
 - All edge cases must have tests
