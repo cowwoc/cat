@@ -76,12 +76,13 @@ COMPACTION_TIMES=$(jq -s '[.[] | select(.type == "summary") | .timestamp]' "${SE
 
 ### 4. Compare Against Threshold
 
-**Critical Threshold: 40% of contextLimit = 80,000 tokens**
+Reference: agent-architecture.md § Context Limit Constants
 
 ```bash
-CONTEXT_LIMIT=200000  # Standard Claude context window
-THRESHOLD_PERCENT=40
-THRESHOLD_TOKENS=$((CONTEXT_LIMIT * THRESHOLD_PERCENT / 100))  # 80,000
+# Values from agent-architecture.md § Context Limit Constants
+CONTEXT_LIMIT=...
+SOFT_TARGET_PCT=...
+THRESHOLD_TOKENS=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
 
 # Calculate percentage used
 PERCENT_USED=$((TOTAL_TOKENS * 100 / CONTEXT_LIMIT))
@@ -90,7 +91,7 @@ PERCENT_USED=$((TOTAL_TOKENS * 100 / CONTEXT_LIMIT))
 if [ "${TOTAL_TOKENS}" -ge "${THRESHOLD_TOKENS}" ]; then
   STATUS="WARNING"
 elif [ "${TOTAL_TOKENS}" -ge $((THRESHOLD_TOKENS * 75 / 100)) ]; then
-  STATUS="CAUTION"  # 30% (75% of 40%)
+  STATUS="CAUTION"
 else
   STATUS="HEALTHY"
 fi
@@ -127,10 +128,9 @@ token_report:
     cache_read_tokens: 12000
 
   context_analysis:
-    context_limit: 200000
+    # See agent-architecture.md § Context Limit Constants for context_limit and threshold values
     tokens_used: 65000
     percent_used: 32.5%
-    threshold: 80000 (40%)
     headroom: 15000
     status: HEALTHY
 

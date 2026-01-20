@@ -43,7 +43,7 @@ work → analyze_task_size → (exceeds threshold) → decompose-task → parall
 # work detects large task
 task: 1.2-implement-parser
 estimated_tokens: 120000
-threshold: 80000  # 40% of 200K
+# See agent-architecture.md § Context Limit Constants for threshold
 
 # Auto-decomposition triggered
 decomposed_into:

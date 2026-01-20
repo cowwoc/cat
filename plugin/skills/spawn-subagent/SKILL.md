@@ -315,6 +315,65 @@ Without the session ID, token measurement fails and reports show "NOT MEASURED" 
 If compaction occurred, the pre-compaction tokens are NOT lost - they must be
 preserved and added to post-compaction usage for accurate reporting.
 
+**Context Limit Enforcement (A018):**
+
+**MANDATORY: Validate task size BEFORE spawning subagent.**
+
+```bash
+# Values from agent-architecture.md § Context Limit Constants
+CONTEXT_LIMIT=...
+SOFT_TARGET_PCT=...
+HARD_LIMIT_PCT=...
+SOFT_TARGET=$((CONTEXT_LIMIT * SOFT_TARGET_PCT / 100))
+HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
+```
+
+**Limit Hierarchy:**
+
+| Limit | Percentage | Tokens (200K) | Purpose |
+|-------|------------|---------------|---------|
+| Soft target | 40% | 80,000 | Recommended task size for optimal quality |
+| Hard limit | 80% | 160,000 | Maximum allowed - MANDATORY decomposition above this |
+| Context limit | 100% | 200,000 | Absolute ceiling - compaction occurs |
+
+**Pre-Spawn Validation Requirement:**
+
+BEFORE spawning ANY subagent, the main agent MUST:
+
+1. Calculate estimated tokens for the task (from analyze_task_size)
+2. Use fixed HARD_LIMIT: 160,000 tokens (80% of 200K)
+3. Compare estimate against hard limit:
+   - If estimate >= HARD_LIMIT: **MANDATORY decomposition** (do NOT spawn)
+   - If estimate > soft target but < hard limit: Recommend decomposition (optional)
+   - If estimate <= soft target: Proceed with spawn
+
+```bash
+# Pre-spawn validation
+# Values from agent-architecture.md § Context Limit Constants
+CONTEXT_LIMIT=...
+HARD_LIMIT_PCT=...
+HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
+SOFT_TARGET=$((CONTEXT_LIMIT * 40 / 100))
+
+if [ "${ESTIMATED_TOKENS}" -ge "${HARD_LIMIT}" ]; then
+  echo "ERROR: Task estimate (${ESTIMATED_TOKENS}) exceeds hard limit (${HARD_LIMIT})"
+  echo "MANDATORY: Decompose task before spawning. Use /cat:decompose-task"
+  exit 1
+fi
+```
+
+**Post-Execution Limit Check:**
+
+After subagent completes (in collect_results), verify actual usage:
+
+```bash
+ACTUAL_TOKENS={from .completion.json}
+if [ "${ACTUAL_TOKENS}" -ge "${HARD_LIMIT}" ]; then
+  echo "EXCEEDED: Subagent used ${ACTUAL_TOKENS} tokens (hard limit: ${HARD_LIMIT})"
+  # Trigger learn-from-mistakes with A018 reference
+fi
+```
+
 **Verification:**
 
 Before invoking Task tool, confirm:
@@ -329,6 +388,7 @@ Before invoking Task tool, confirm:
 | Fail-fast conditions | All tasks | spawn-subagent core |
 | **Session ID in prompt** | All tasks | A017, M099, M109, M123 |
 | Token measurement instructions | All tasks | spawn-subagent core |
+| **Pre-spawn limit validation** | All tasks | A018 |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
 
@@ -902,7 +962,7 @@ The exploration subagent MUST return structured JSON for clean main agent displa
   "status": "READY|OVERSIZED|DUPLICATE|BLOCKED",
   "preparation": {
     "estimatedTokens": 45000,
-    "thresholdTokens": 80000,
+    // See agent-architecture.md § Context Limit Constants for context limits
     "percentOfThreshold": 56,
     "worktreePath": "/workspace/.worktrees/1.0-parse-lambdas",
     "branch": "1.0-parse-lambdas"
