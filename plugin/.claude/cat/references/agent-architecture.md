@@ -262,6 +262,38 @@ For multi-subagent tasks, generate aggregate token report:
 **Subagents exceeded hard limit:** 1
 ```
 
+## Base Branch Resolution (M157)
+
+**Single source of truth for BASE_BRANCH extraction pattern.**
+
+When working with task branches, resolve the base branch from STATE.md with validation:
+
+```bash
+# Reference: agent-architecture.md § Base Branch Resolution
+# Extract BASE_BRANCH with validation and sanitization
+BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "${TASK_STATE_PATH}" 2>/dev/null || echo "${FALLBACK}")
+
+# Validate: alphanumeric, dash, dot, slash, underscore only
+if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || \
+   ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
+  echo "WARNING: Invalid or non-existent BASE_BRANCH '$BASE_BRANCH', falling back to ${FALLBACK}"
+  BASE_BRANCH="${FALLBACK}"
+fi
+```
+
+**Variables:**
+- `TASK_STATE_PATH`: Path to task's STATE.md (context-dependent)
+- `FALLBACK`: Default branch if extraction fails
+  - Main worktree context: `main`
+  - Subagent/worktree context: `origin/HEAD`
+
+**Validation prevents:**
+- Command injection via malformed branch names
+- Git errors from non-existent branches
+- Inconsistent fallback behavior
+
+**Usage:** All git operations comparing against base branch (diff, log, merge) MUST use this pattern.
+
 ### Violation Handling Process
 
 When a subagent exceeds the hard limit:
