@@ -28,7 +28,7 @@ Task work complete
     [APPROVED]       Loop back
         |
         v
-Squash commits by type
+Squash commits by type (M157: EVERY time before presenting gate)
         |
         v
   USER APPROVAL GATE
