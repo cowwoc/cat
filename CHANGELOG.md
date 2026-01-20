@@ -6,14 +6,14 @@
 
 **Commercialization**
 
-*In development - see planned tasks in .claude/cat/v1/v2.1/*
+*In development - see planned tasks in .claude/cat/v1/v2/*
 
 ### 2026-01-20: v1.10
 
 **Workflow Refinements & Display Improvements**
 
-Final v2.0 release completing the core rewrite with workflow refinements, display improvements, and planning
-structure for v2.1 commercialization.
+Final v1.0 release completing the core rewrite with workflow refinements, display improvements, and planning
+structure for v1.1 commercialization.
 
 **New Features:**
 - **Review Feedback Loop**: Approval gate now spawns subagent for review feedback implementation
@@ -40,7 +40,7 @@ structure for v2.1 commercialization.
 - Fix commit type validation for retrospectives (M139)
 
 **Planning:**
-- v2.1 Commercialization: 12 tasks for licensing, legal, and enterprise features
+- v1.1 Commercialization: 12 tasks for licensing, legal, and enterprise features
 - Remote lock metadata support for distributed task coordination
 - Context-aware stakeholder selection
 
@@ -254,7 +254,7 @@ Stabilization release with workflow improvements and better context management.
 
 ### 2026-01-12: v1.0
 
-CAT v2.0 is a complete reimagining of the plugin, introducing:
+CAT v1.0 introduces multi-agent orchestration for AI-assisted software development:
 
 **Architecture:**
 - **MAJOR → MINOR → TASK** hierarchy
