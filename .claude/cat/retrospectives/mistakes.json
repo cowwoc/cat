@@ -895,6 +895,35 @@
         "catches_variations": true
       },
       "correct_behavior": "Merge task branch into whatever branch is currently checked out in main workspace without switching branches"
+    },
+    {
+      "id": "M155",
+      "timestamp": "2026-01-20T10:30:00Z",
+      "category": "protocol_violation",
+      "description": "Manually typed box characters in status display after status.sh script failed with 'bad array subscript' error",
+      "root_cause": "Cascading failure: (1) status.sh had bug where ((local_completed++)) without || true exits when incrementing from 0, (2) when script failed, agent improvised by manually typing boxes instead of reporting error and fixing script, violating M149",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/status.sh",
+      "pattern_keywords": [
+        "box",
+        "unicode",
+        "alignment",
+        "manual",
+        "script-error",
+        "improvisation",
+        "status"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M149",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a box-rendering script errors: (1) report the error to user, (2) fix the script bug, (3) NEVER manually type box characters. Scripts should be robust with || true after arithmetic operations that may evaluate to 0."
     }
   ]
 }
