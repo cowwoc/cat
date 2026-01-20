@@ -42,7 +42,12 @@ cat "${TASK_DIR}/STATE.md"
 if [ -d ".worktrees/${TASK}-sub-${UUID}" ]; then
   # Review commits made
   cd ".worktrees/${TASK}-sub-${UUID}"
-  git log --oneline origin/HEAD..HEAD
+  # BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
+  BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "${TASK_DIR}/STATE.md" 2>/dev/null || echo "origin/HEAD")
+  if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
+    BASE_BRANCH="origin/HEAD"
+  fi
+  git log --oneline "${BASE_BRANCH}..HEAD"
 fi
 ```
 
