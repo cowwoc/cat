@@ -1623,7 +1623,149 @@ git diff {main}...{task-branch}
 Wait for user to respond with approval.
 
 **If "Request changes":**
-Receive feedback and loop back to execute step.
+
+Capture user feedback and spawn implementation subagent to address concerns.
+
+**MANDATORY: Main agent does NOT implement feedback directly (M063).**
+
+The main agent is an orchestrator. All code changes - including feedback fixes - MUST be delegated
+to a subagent with fresh context.
+
+**Step 1: Capture User Feedback**
+
+Use AskUserQuestion to collect specific feedback:
+- header: "Feedback"
+- question: "What changes would you like made?"
+- freeform: true (allow detailed text input)
+
+Wait for user to provide specific feedback about what needs to change.
+
+**Step 2: Gather Context for Subagent**
+
+```bash
+# Get current diff for context
+BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
+git diff ${BASE_BRANCH}..HEAD > /tmp/current-implementation.diff
+
+# Get task PLAN.md path
+TASK_PLAN=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/PLAN.md"
+
+# Get worktree path (already created in create_worktree step)
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${TASK_BRANCH}"
+```
+
+**Step 3: Spawn Feedback Implementation Subagent**
+
+Invoke `/cat:spawn-subagent` with feedback context:
+
+```
+Task tool invocation:
+  description: "Address user feedback for ${TASK_NAME}"
+  subagent_type: "general-purpose"
+  prompt: |
+    ADDRESS USER FEEDBACK
+
+    WORKING DIRECTORY: ${WORKTREE_PATH}
+
+    USER FEEDBACK:
+    ${user_feedback_text}
+
+    EXISTING IMPLEMENTATION:
+    Review the current implementation diff below and apply the requested changes.
+
+    CURRENT DIFF:
+    ${contents of /tmp/current-implementation.diff}
+
+    TASK PLAN REFERENCE:
+    ${TASK_PLAN contents}
+
+    VERIFICATION:
+    1. Run build/tests as appropriate for project type
+    2. All must pass
+
+    FAIL-FAST CONDITIONS:
+    - If build fails after changes, report BLOCKED with error
+    - If feedback is unclear, report BLOCKED requesting clarification
+    - Do NOT attempt workarounds - report and stop
+
+    COMMIT:
+    After verification passes, commit with message:
+    "feature: address review feedback - {brief summary of changes}"
+```
+
+**Step 4: Collect Results**
+
+Invoke `/cat:collect-results` to gather:
+- Token usage from subagent
+- Commits made
+- Files changed
+- Any discovered issues
+
+Display subagent execution report to user (MANDATORY per token reporting requirements).
+
+**Step 5: Merge Feedback Changes to Task Branch**
+
+Invoke `/cat:merge-subagent` to:
+- Merge subagent branch into task branch
+- Clean up subagent worktree
+- Update tracking state
+
+**Step 6: RE-PRESENT Approval Gate**
+
+**MANDATORY: Loop back to approval gate with updated changes.**
+
+After merging feedback changes, the approval gate MUST be re-presented. This ensures:
+- User sees updated diff reflecting their requested changes
+- User explicitly approves final implementation
+- No changes merge without explicit approval
+
+Display updated checkpoint:
+
+```
+✅ **CHECKPOINT: Feedback Applied**
+╭──────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                              │
+│  **Task:** {task-name}                                                                       │
+│  **Feedback iteration:** {N}                                                                 │
+│                                                                                              │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│  **Feedback subagent:** {N}K tokens                                                          │
+│  **Total tokens (all iterations):** {total}K                                                 │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│  **Branch:** {task-branch}                                                                   │
+│                                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+Then re-present approval options via AskUserQuestion:
+- header: "Next Step"
+- question: "Feedback has been applied. What would you like to do?"
+- options:
+  - "✓ Approve and merge" - Merge to main, continue to next task
+  - "🔍 Review changes first" - I'll examine the updated diff
+  - "✏️ Request more changes" - Need additional modifications
+  - "✗ Abort" - Discard all work
+
+**Loop Continuation:**
+
+If user selects "Request more changes", repeat Steps 1-6 with fresh feedback.
+
+**Maximum Iterations Safety:**
+
+Track feedback iterations. If iterations exceed 5:
+
+```
+⚠️ FEEDBACK ITERATION LIMIT
+
+5 feedback iterations completed without approval.
+
+Options:
+1. Continue with current implementation
+2. Abort and start fresh
+3. Override limit and continue iterations
+```
+
+Use AskUserQuestion to capture decision.
 
 **If "Abort":**
 Clean up worktree and branch, mark task as pending.
