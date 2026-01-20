@@ -4,23 +4,6 @@
 
 Change /cat:work to fork task branches from whatever branch is currently checked out in the main worktree (instead of always forking from main), and merge back to that same branch when the task completes.
 
-## Research
-
-*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
-
-### Stack
-| Library | Purpose | Version | Rationale |
-|---------|---------|---------|-----------|
-| *TBD* | *TBD* | *TBD* | *TBD* |
-
-### Architecture
-- **Pattern:** *TBD*
-- **Integration:** *TBD*
-
-### Pitfalls
-- *Run /cat:research to populate*
-
-
 ## Type
 
 Feature
