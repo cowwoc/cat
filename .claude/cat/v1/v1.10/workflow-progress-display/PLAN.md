@@ -10,23 +10,6 @@ Add visual progress indicators to /cat:work that show the current task name and 
 | REQ-001 | *Define requirement* | must-have | *How to verify* |
 
 
-## Research
-
-*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
-
-### Stack
-| Library | Purpose | Version | Rationale |
-|---------|---------|---------|-----------|
-| *TBD* | *TBD* | *TBD* | *TBD* |
-
-### Architecture
-- **Pattern:** *TBD*
-- **Integration:** *TBD*
-
-### Pitfalls
-- *Run /cat:research to populate*
-
-
 ## Satisfies
 None - UX improvement task
 

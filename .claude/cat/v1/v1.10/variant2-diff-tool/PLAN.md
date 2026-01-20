@@ -10,23 +10,6 @@ Create a script/tool that converts git diff output to variant 2 format (isolated
 | REQ-001 | *Define requirement* | must-have | *How to verify* |
 
 
-## Research
-
-*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
-
-### Stack
-| Library | Purpose | Version | Rationale |
-|---------|---------|---------|-----------|
-| *TBD* | *TBD* | *TBD* | *TBD* |
-
-### Architecture
-- **Pattern:** *TBD*
-- **Integration:** *TBD*
-
-### Pitfalls
-- *Run /cat:research to populate*
-
-
 ## Satisfies
 - None (tooling improvement)
 
