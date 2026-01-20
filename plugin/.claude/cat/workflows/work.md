@@ -544,8 +544,10 @@ git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 git add .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md
 git commit --amend --no-edit  # Include in last implementation commit
 
-# Detect base branch
-BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
+# Detect base branch from worktree metadata (fail-fast if missing)
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+[[ ! -f "$CAT_BASE_FILE" ]] && echo "ERROR: cat-base file missing. Recreate worktree." && exit 1
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
 # Squash commits by type
 git rebase -i "$BASE_BRANCH"  # Group by feature, bugfix, refactor, etc.
@@ -563,7 +565,9 @@ git push . "HEAD:${BASE_BRANCH}"
 # INSTEAD: Rebase task branch onto base first
 
 # In task worktree:
-BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+[[ ! -f "$CAT_BASE_FILE" ]] && echo "ERROR: cat-base file missing. Recreate worktree." && exit 1
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 git fetch origin
 git rebase "origin/$BASE_BRANCH"  # Or use /cat:git-rebase skill
 
