@@ -1,4 +1,4 @@
-# Changelog: v2.1 - Commercialization
+# Changelog: v1.1 - Commercialization
 
 ## Status: in-progress
 
@@ -10,4 +10,4 @@
 
 ## Summary
 
-v2.1 focuses on commercialization readiness, ensuring licensing terms are clear and enforceable.
+v1.1 focuses on commercialization readiness, ensuring licensing terms are clear and enforceable.

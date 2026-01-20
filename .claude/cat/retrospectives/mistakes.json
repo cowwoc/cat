@@ -766,7 +766,7 @@
       "id": "M150",
       "timestamp": "2026-01-19T17:30:00Z",
       "category": "assumption_without_verification",
-      "description": "Claimed v2.0 is complete based on minor STATE.md without verifying actual task statuses - 4 of 5 tasks were still pending",
+      "description": "Claimed v1.0 is complete based on minor STATE.md without verifying actual task statuses - 4 of 5 tasks were still pending",
       "root_cause": "No automated validation that minor version status is consistent with its task completion states",
       "rca_method": "A",
       "rca_method_name": "5-whys",

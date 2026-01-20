@@ -371,7 +371,7 @@ Display progress:
 Running stakeholder research for pending versions...
 ├─ v1.2: Researching... ✓
 ├─ v1.3: Researching... ✓
-└─ v2.0: Researching... ✓
+└─ v1.0: Researching... ✓
 ```
 
 **If "Skip for now":**

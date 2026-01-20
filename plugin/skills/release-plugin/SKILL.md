@@ -89,12 +89,15 @@ git tag -a "v${CURRENT_VERSION}" -m "v${CURRENT_VERSION} release"
 
 ### 6. Create Next Version Branch
 
+**Note**: Do NOT create a tag for the next version. Tags are only created when releasing a version
+(step 5), not when starting a new version. The next version gets a branch only.
+
 ```bash
 # Calculate next version (increment patch)
 NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{print $1"."$2"."$3+1}')
 echo "Next version: $NEXT_VERSION"
 
-# Create and checkout new branch
+# Create and checkout new branch (NOT a tag)
 git checkout -b "v${NEXT_VERSION}"
 ```
 
@@ -249,12 +252,14 @@ git push -u origin v1.5
 v1.4 branch ──●──●──●─┐
                         │ merge --ff-only
                         ▼
-main ──────────────────●── (tag v1.4)
+main ──────────────────●── tag v1.4 (RELEASED version gets tag)
                         │
                         │ checkout -b v1.5
                         ▼
-v1.5 branch ─────────●── (bump version, commit)
+v1.5 branch ─────────●── (bump version, commit - NO tag yet)
 ```
+
+**Key principle**: Tags mark releases. The new version (v1.5) only gets a tag when IT is released.
 
 ## Verification Checklist
 
