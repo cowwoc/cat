@@ -544,32 +544,34 @@ git add .claude/cat/v{major}/v{major}.{minor}/{task-name}/STATE.md
 git add .claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md
 git commit --amend --no-edit  # Include in last implementation commit
 
-# Squash commits by type
-git rebase -i main  # Group by feature, bugfix, refactor, etc.
+# Detect base branch
+BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
 
-# Merge to main with linear history
-git checkout main
-git merge --ff-only {task-branch}
+# Squash commits by type
+git rebase -i "$BASE_BRANCH"  # Group by feature, bugfix, refactor, etc.
+
+# Merge to base branch from worktree (no checkout needed)
+git push . "HEAD:${BASE_BRANCH}"
 ```
 
 **Anti-pattern (M090):** Committing CHANGELOG.md as separate commit after merge.
 
-**If --ff-only fails (M081):** Main has diverged from task branch base.
+**If push fails (M081):** Base branch has diverged from task branch base.
 
 ```bash
-# DO NOT merge main into task branch (creates non-linear history)
-# INSTEAD: Rebase task branch onto main first
+# DO NOT merge base into task branch (creates non-linear history)
+# INSTEAD: Rebase task branch onto base first
 
 # In task worktree:
+BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
 git fetch origin
-git rebase origin/main  # Or use /cat:git-rebase skill
+git rebase "origin/$BASE_BRANCH"  # Or use /cat:git-rebase skill
 
-# Then merge with fast-forward
-git checkout main
-git merge --ff-only {task-branch}
+# Then merge with fast-forward from worktree
+git push . "HEAD:${BASE_BRANCH}"
 ```
 
-**Anti-pattern (M081):** Merging main INTO task branch creates merge commits and non-linear history.
+**Anti-pattern (M081):** Merging base INTO task branch creates merge commits and non-linear history.
 
 **Anti-pattern (M070):** Committing STATE.md update as separate "planning:" commit after merge.
 

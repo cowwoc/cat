@@ -62,10 +62,12 @@ git reset --hard "$BACKUP"
 
 ## Common Operations
 
-### Rebase onto main
+### Rebase onto base branch
 ```bash
-git checkout feature-branch
-git rebase main
+# Detect base branch (for CAT tasks)
+BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-base" 2>/dev/null || echo "main")
+
+git rebase "$BASE_BRANCH"
 ```
 
 ### Interactive rebase (reorder, edit, squash)
