@@ -254,10 +254,10 @@ class Variant2Formatter:
     """Format diff output in variant 2 style (Proposal I - Inline Context Markers)."""
 
     # Box drawing characters
-    BOX_TOP_LEFT = '\u250C'      # ┌
-    BOX_TOP_RIGHT = '\u2510'     # ┐
-    BOX_BOTTOM_LEFT = '\u2514'   # └
-    BOX_BOTTOM_RIGHT = '\u2518'  # ┘
+    BOX_TOP_LEFT = '\u256D'      # ╭
+    BOX_TOP_RIGHT = '\u256E'     # ╮
+    BOX_BOTTOM_LEFT = '\u2570'   # ╰
+    BOX_BOTTOM_RIGHT = '\u256F'  # ╯
     BOX_HORIZONTAL = '\u2500'    # ─
     BOX_VERTICAL = '\u2502'      # │
 
