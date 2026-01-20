@@ -7,23 +7,6 @@ Clarify in all relevant workflows that the main agent must decompose work so tha
 specified in cat-config.json. Add reporting of overall token usage across all subagents and
 trigger learn-from-mistakes if any subagent exceeds the limit.
 
-## Research
-
-*Populated by stakeholder research. Run `/cat:research` to fill, or add manually.*
-
-### Stack
-| Library | Purpose | Version | Rationale |
-|---------|---------|---------|-----------|
-| *TBD* | *TBD* | *TBD* | *TBD* |
-
-### Architecture
-- **Pattern:** *TBD*
-- **Integration:** *TBD*
-
-### Pitfalls
-- *Run /cat:research to populate*
-
-
 ## Type
 
 Feature
