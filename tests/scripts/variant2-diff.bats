@@ -312,6 +312,32 @@ def farewell():
     [[ "$output" == *"Files: 2"* ]]
 }
 
+@test "variant2-diff: handles multiple files in single diff from file" {
+    cat > "$TEST_TEMP_DIR/multi.diff" << 'EOF'
+diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -1,3 +1,3 @@
+ # File 1
+-old content
++new content
+diff --git a/file2.py b/file2.py
+--- a/file2.py
++++ b/file2.py
+@@ -1,3 +1,3 @@
+ def hello():
+-    print("hi")
++    print("hello")
+EOF
+
+    run python3 "$SCRIPTS_DIR/variant2-diff.py" --file "$TEST_TEMP_DIR/multi.diff" --task-name "multi-test"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Files: 2"* ]]
+    [[ "$output" == *"file1.md"* ]]
+    [[ "$output" == *"file2.py"* ]]
+}
+
 # ============================================================================
 # Section Detection Tests
 # ============================================================================
