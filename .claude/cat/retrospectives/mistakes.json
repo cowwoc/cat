@@ -924,6 +924,34 @@
         "catches_variations": true
       },
       "correct_behavior": "When a box-rendering script errors: (1) report the error to user, (2) fix the script bug, (3) NEVER manually type box characters. Scripts should be robust with || true after arithmetic operations that may evaluate to 0."
+    },
+    {
+      "id": "M156",
+      "timestamp": "2026-01-20T00:46:14Z",
+      "category": "bash_error",
+      "description": "status.sh crashes with 'bad array subscript' when accessing MINOR_DESC[$CURRENT_MINOR] with empty CURRENT_MINOR on Bash 5.2+",
+      "root_cause": "Script accessed associative array with empty key (MINOR_DESC[\"\"]) which throws error in Bash 5.2+. CURRENT_MINOR was empty because project had incorrect directory structure (task/ subdirectory instead of direct task dirs).",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/status.sh",
+      "pattern_keywords": [
+        "bash",
+        "associative-array",
+        "empty-key",
+        "status.sh",
+        "CURRENT_MINOR",
+        "bash-5.2"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Guard associative array access with empty key check: if [ -n \"$KEY\" ]; then ... fi. Bash 5.2+ throws 'bad array subscript' on arr[\"\"] even with :- default syntax."
     }
   ]
 }
