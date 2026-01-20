@@ -216,14 +216,14 @@ Change anytime with `/cat:config` or edit `.claude/cat/cat-config.json`
 cat-config.json:
 ```json
 {
-  "contextLimit": 200000,       // Total context window
-  "targetContextUsage": 40,     // Soft limit (40%)
   "trust": "medium",            // low | medium | high (autonomy level)
   "verify": "changed",          // changed | all (verification scope)
   "curiosity": "medium",        // low | medium | high (exploration level)
   "patience": "medium"          // low | medium | high (refactoring tolerance)
 }
 ```
+
+**Note:** Context limits are fixed at 200K/40%/80% - see agent-architecture.md for details.
 
 ## Getting Help
 

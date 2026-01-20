@@ -97,10 +97,7 @@ If blocked:
 **MANDATORY: Estimate task complexity before execution.**
 
 ```yaml
-# Read config
-context_limit: 200000  # from cat-config.json
-target_usage: 40       # percentage
-threshold: 80000       # context_limit * target_usage / 100
+# Context limits are fixed - see agent-architecture.md § Context Limit Constants
 
 # Estimate task size - INCLUDE ALL PHASES
 estimation_factors:
