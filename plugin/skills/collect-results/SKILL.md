@@ -70,13 +70,19 @@ the session JSONL file (potentially megabytes of conversation history).
 ### 2. Extract Commit History
 
 ```bash
+# BASE_BRANCH resolution: see agent-architecture.md § Base Branch Resolution
+BASE_BRANCH=$(grep -oP '(?<=\*\*Base Branch:\*\* ).*' "${TASK_STATE_PATH}" 2>/dev/null || echo "origin/HEAD")
+if ! echo "$BASE_BRANCH" | grep -qE '^[a-zA-Z0-9._/-]+$' || ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
+  BASE_BRANCH="origin/HEAD"
+fi
+
 cd "${WORKTREE}"
 
 # Get commits made by subagent (since branch creation)
-git log --oneline origin/HEAD..HEAD
+git log --oneline "${BASE_BRANCH}..HEAD"
 
 # Get detailed commit info
-git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
+git log --format="%H %s" "${BASE_BRANCH}..HEAD" > /tmp/subagent-commits.txt
 ```
 
 ### 3. Parse Token Metrics
@@ -160,10 +166,10 @@ work.md handle_discovered_issues step). This skill only extracts them.
 cd "${WORKTREE}"
 
 # List modified files
-git diff --name-only origin/HEAD..HEAD
+git diff --name-only "${BASE_BRANCH}..HEAD"
 
 # Get full diff for review
-git diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
+git diff "${BASE_BRANCH}..HEAD" > /tmp/subagent-changes.diff
 ```
 
 ### 6. Extract Subagent Status
