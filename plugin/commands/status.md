@@ -1,6 +1,6 @@
 ---
 name: cat:status
-description: Show hierarchy status with visual tree
+description: Display project progress - versions, tasks, and completion status
 model: haiku
 context: fork
 allowed-tools:
