@@ -23,7 +23,7 @@ and `/cat:add-minor-version`. Use it when:
 - Research wasn't done during version creation
 - Deeper investigation is needed
 
-All 8 stakeholders research the version's topic in parallel, producing domain expertise from their
+All 9 stakeholders research the version's topic in parallel, producing domain expertise from their
 respective perspectives.
 
 </objective>
@@ -54,6 +54,7 @@ respective perspectives.
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/ux.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/sales.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/marketing.md
+@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/legal.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/research-pitfalls.md
 
 </execution_context>
@@ -82,7 +83,7 @@ Present:
 Research target: v[version]
 Topic: [extracted topic]
 
-I'll spawn 8 stakeholders to research [topic] in parallel,
+I'll spawn 9 stakeholders to research [topic] in parallel,
 each acquiring domain expertise from their perspective.
 ```
 
@@ -90,9 +91,9 @@ each acquiring domain expertise from their perspective.
 
 <step name="spawn_stakeholders">
 
-**Spawn all 8 stakeholder research agents in parallel:**
+**Spawn all 9 stakeholder research agents in parallel:**
 
-Use the `parallel-execute` skill or spawn 8 Task agents simultaneously:
+Use the `parallel-execute` skill or spawn 9 Task agents simultaneously:
 
 ```yaml
 agents:
@@ -135,6 +136,11 @@ agents:
     mode: research
     topic: "[extracted topic]"
     context: "[version context]"
+
+  - stakeholder: legal
+    mode: research
+    topic: "[extracted topic]"
+    context: "[version context]"
 ```
 
 Each agent:
@@ -166,6 +172,7 @@ Stakeholder research progress:
 ✓ ux - HIGH confidence
 ✓ sales - HIGH confidence
 ✓ marketing - MEDIUM confidence
+✓ legal - HIGH confidence
 ```
 
 </step>
@@ -231,6 +238,13 @@ Read the existing PLAN.md, then add or update the `## Research` section:
 **Go-to-Market:** [launch strategy, channels]
 [Sources: URLs]
 
+### Legal Perspective
+**Licensing:** [license requirements and compatibility]
+**Compliance:** [applicable regulations and frameworks]
+**IP Considerations:** [patents, trademarks, copyrights]
+**Data Privacy:** [privacy requirements and obligations]
+[Sources: URLs]
+
 ### Open Questions
 - [Unresolved items from all stakeholders]
 ```
@@ -254,7 +268,8 @@ Stakeholder expertise acquired:
 ├─ Performance: [key insight]
 ├─ UX: [key insight]
 ├─ Sales: [key insight]
-└─ Marketing: [key insight]
+├─ Marketing: [key insight]
+└─ Legal: [key insight]
 
 Overall confidence: [HIGH|MEDIUM|LOW]
 Saved to: [PLAN.md path]
@@ -271,8 +286,8 @@ efficiency, and stakeholder satisfaction.
 
 - [ ] Version identified and PLAN.md located
 - [ ] Topic extracted from version
-- [ ] All 8 stakeholders spawned in parallel
-- [ ] All 8 stakeholders returned results
+- [ ] All 9 stakeholders spawned in parallel
+- [ ] All 9 stakeholders returned results
 - [ ] Results aggregated into PLAN.md Research section
 - [ ] Confidence levels assigned
 - [ ] Sources documented
