@@ -59,9 +59,15 @@ if [[ -z "$TASK_BRANCH" ]]; then
     exit 1
 fi
 
-# Detect base branch if not specified
+# Detect base branch if not specified (from worktree metadata, fail-fast if missing)
 if [[ -z "$BASE_BRANCH" ]]; then
-    BASE_BRANCH=$(git config --get "branch.${TASK_BRANCH}.cat-base" 2>/dev/null || echo "$BASE_BRANCH")
+    GIT_DIR=$(git rev-parse --git-dir)
+    CAT_BASE_FILE="${GIT_DIR}/worktrees/${TASK_BRANCH}/cat-base"
+    if [[ ! -f "$CAT_BASE_FILE" ]]; then
+        echo "{\"status\": \"error\", \"message\": \"cat-base file not found: $CAT_BASE_FILE. Recreate worktree with /cat:work.\"}"
+        exit 1
+    fi
+    BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 fi
 
 # Step 1: Validate we're on base branch
