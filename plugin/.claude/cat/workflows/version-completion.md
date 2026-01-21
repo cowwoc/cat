@@ -19,13 +19,14 @@ fi
 
 ### Check Requirements Satisfaction
 
-**MANDATORY**: Before marking a minor version complete, verify all requirements are satisfied.
+**MANDATORY**: Before marking a version complete, verify all requirements are satisfied.
 
 > **Note**: This check is implicit and always runs - it is not listed in the Exit gate section.
 > Exit gates are for user-defined additional conditions (tests passing, manual sign-off, etc.).
+> Requirements can be defined at any version level (major, minor, or patch).
 
-1. **Extract requirements from minor version PLAN.md**:
-   - Read `.claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/PLAN.md`
+1. **Extract requirements from version PLAN.md**:
+   - Read the version's PLAN.md (works for any level: major, minor, or patch)
    - Parse the Requirements table for all REQ-XXX IDs
 
 2. **Collect satisfied requirements from all tasks**:

@@ -14,9 +14,9 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - compact-stakeholder-review-output
 - compact-token-report
 - clarify-task-satisfies-parent
+- requirements-at-all-version-levels
 
 ## Tasks Pending
-- requirements-at-all-version-levels
 - complete-patch-version-support
 - pricing-page
 - update-graphics-tagline
