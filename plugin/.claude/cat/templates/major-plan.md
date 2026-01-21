@@ -6,6 +6,12 @@
 ## Scope
 [What this major version includes and excludes]
 
+## Requirements (Optional)
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| REQ-001 | [requirement description] | must-have | [how to verify] |
+
 ## Minor Versions
 [Brief overview of planned minor versions within this major]
 
@@ -15,7 +21,7 @@
 ## Gates
 
 ### Entry
-- Previous major version complete (or no prerequisites)
+- Previous version complete (or no prerequisites)
 
 ### Exit
 - All minor versions complete
