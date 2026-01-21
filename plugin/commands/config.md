@@ -134,6 +134,8 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}"
   - label: "📏 Display Width"
     description: "Currently: {terminalWidth || 120} characters"
+  - label: "🔀 Completion Workflow"
+    description: "Currently: {completionWorkflow || 'merge'}"
   - label: "📊 Version Gates"
     description: "Entry/exit conditions for versions"
 
@@ -363,6 +365,31 @@ jq '.terminalWidth = {value}' .claude/cat/cat-config.json > .claude/cat/cat-conf
 
 </step>
 
+<step name="completion-workflow">
+
+**🔀 Completion Workflow selection:**
+
+AskUserQuestion:
+- header: "Completion Workflow"
+- question: "How should completed tasks be integrated? (Current: {completionWorkflow || 'merge'})"
+- options:
+  - label: "🔀 Merge (Recommended)"
+    description: "Merge task branch directly to base branch after approval"
+  - label: "📝 Pull Request"
+    description: "Create a PR instead of merging directly"
+  - label: "← Back"
+    description: "Return to main menu"
+
+Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkflow: "pr"`
+
+**Update config with safe jq pattern:**
+```bash
+jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
+  && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
+```
+
+</step>
+
 <step name="version-gates">
 
 **📊 Version Gates configuration:**
@@ -572,6 +599,7 @@ Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 | `curiosity` | string | "low" | Exploration beyond immediate task |
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
+| `completionWorkflow` | string | "merge" | Task completion behavior (merge or PR) |
 
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
@@ -594,6 +622,10 @@ Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 - `low` — Act immediately. Expand scope.
 - `medium` — Defer to current version.
 - `high` — Defer by priority to future versions.
+
+### Completion Workflow Values
+- `merge` — Merge task branch directly to base branch after approval (default).
+- `pr` — Create a pull request instead of merging directly.
 
 </configuration_reference>
 
