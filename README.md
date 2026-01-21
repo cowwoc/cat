@@ -24,8 +24,8 @@ You tell CAT your style once. It learns what matters to you. Then it handles the
 ## See It In Action
 
 <p align="center">
-  <a href="https://youtu.be/IvRLJq989og?si=w3dd8CDBcXUA414V&t=65">
-    <img src="https://img.youtube.com/vi/IvRLJq989og/hqdefault.jpg" alt="Watch CAT in action" width="600"/>
+  <a href="https://www.youtube.com/watch?v=IvRLJq989og&t=167s">
+    <img src="docs/video-thumbnail.png" alt="Watch CAT in action - click to play video" width="600"/>
   </a>
   <br/>
   <em>See how CAT transforms chaotic AI coding into structured, reliable progress.</em>
