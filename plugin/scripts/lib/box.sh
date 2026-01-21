@@ -244,3 +244,167 @@ checkpoint_box() {
     box_empty
     box_bottom
 }
+
+# =============================================================================
+# SERVICE MODE
+# When executed directly (not sourced), parse arguments and render from JSON
+# =============================================================================
+
+# Pad cell content to exact display width (for table cells)
+_pad_cell() {
+    local content="$1"
+    local width="$2"
+    local display_w
+    display_w=$(display_width "$content")
+    local padding=$((width - display_w))
+    if [ $padding -lt 0 ]; then
+        padding=0
+    fi
+    printf '%s%*s' "$content" "$padding" ""
+}
+
+# Render a table from JSON data
+# JSON format: {"headers": [...], "rows": [[...], ...], "widths": [...], "footer": [...]}
+render_table_from_json() {
+    local json="$1"
+
+    # Extract data using jq
+    local num_cols
+    num_cols=$(echo "$json" | jq -r '.widths | length')
+
+    # Build top border
+    local top_border="╭"
+    local header_sep="├"
+    local footer_sep="├"
+    local bottom_border="╰"
+
+    for ((i=0; i<num_cols; i++)); do
+        local width
+        width=$(echo "$json" | jq -r ".widths[$i]")
+        local dash_str
+        dash_str=$(dashes "$width")
+
+        if [ $i -lt $((num_cols - 1)) ]; then
+            top_border="${top_border}${dash_str}┬"
+            header_sep="${header_sep}${dash_str}┼"
+            footer_sep="${footer_sep}${dash_str}┼"
+            bottom_border="${bottom_border}${dash_str}┴"
+        else
+            top_border="${top_border}${dash_str}╮"
+            header_sep="${header_sep}${dash_str}┤"
+            footer_sep="${footer_sep}${dash_str}┤"
+            bottom_border="${bottom_border}${dash_str}╯"
+        fi
+    done
+
+    # Print top border
+    echo "$top_border"
+
+    # Print header row
+    local header_line="│"
+    for ((i=0; i<num_cols; i++)); do
+        local header
+        header=$(echo "$json" | jq -r ".headers[$i]")
+        local width
+        width=$(echo "$json" | jq -r ".widths[$i]")
+        header_line="${header_line}$(_pad_cell " $header" "$width")│"
+    done
+    echo "$header_line"
+
+    # Print header separator
+    echo "$header_sep"
+
+    # Print data rows
+    local num_rows
+    num_rows=$(echo "$json" | jq -r '.rows | length')
+
+    for ((r=0; r<num_rows; r++)); do
+        local row_line="│"
+        for ((i=0; i<num_cols; i++)); do
+            local cell
+            cell=$(echo "$json" | jq -r ".rows[$r][$i]")
+            local width
+            width=$(echo "$json" | jq -r ".widths[$i]")
+            row_line="${row_line}$(_pad_cell " $cell" "$width")│"
+        done
+        echo "$row_line"
+    done
+
+    # Check for footer
+    local has_footer
+    has_footer=$(echo "$json" | jq -r 'if .footer then "yes" else "no" end')
+
+    if [ "$has_footer" = "yes" ]; then
+        # Print footer separator
+        echo "$footer_sep"
+
+        # Print footer row
+        local footer_line="│"
+        for ((i=0; i<num_cols; i++)); do
+            local cell
+            cell=$(echo "$json" | jq -r ".footer[$i]")
+            local width
+            width=$(echo "$json" | jq -r ".widths[$i]")
+            footer_line="${footer_line}$(_pad_cell " $cell" "$width")│"
+        done
+        echo "$footer_line"
+    fi
+
+    # Print bottom border
+    echo "$bottom_border"
+}
+
+# Render a simple box from JSON data
+# JSON format: {"title": "...", "lines": [...], "width": 74}
+render_box_from_json() {
+    local json="$1"
+
+    local title
+    title=$(echo "$json" | jq -r '.title // ""')
+    local width
+    width=$(echo "$json" | jq -r '.width // 74')
+
+    box_init "$width"
+    box_top "$title"
+    box_empty
+
+    # Print each line
+    local num_lines
+    num_lines=$(echo "$json" | jq -r '.lines | length')
+
+    for ((i=0; i<num_lines; i++)); do
+        local line
+        line=$(echo "$json" | jq -r ".lines[$i]")
+        box_line "  $line"
+    done
+
+    box_empty
+    box_bottom
+}
+
+# Service mode activation - only runs when script is executed, not sourced
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    case "${1:-}" in
+        table)
+            if [ -z "${2:-}" ]; then
+                echo "ERROR: JSON data required" >&2
+                exit 1
+            fi
+            render_table_from_json "$2"
+            ;;
+        box)
+            if [ -z "${2:-}" ]; then
+                echo "ERROR: JSON data required" >&2
+                exit 1
+            fi
+            render_box_from_json "$2"
+            ;;
+        *)
+            echo "Usage: box.sh <table|box> '<json>'" >&2
+            echo "" >&2
+            echo "Table JSON: {\"headers\": [...], \"widths\": [...], \"rows\": [[...], ...], \"footer\": [...]}" >&2
+            echo "Box JSON:   {\"title\": \"...\", \"lines\": [...], \"width\": 74}" >&2
+            exit 1
+            ;;
+    esac
+fi

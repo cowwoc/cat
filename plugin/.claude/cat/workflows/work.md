@@ -9,6 +9,32 @@ Detailed workflow for executing a task from start to completion.
 - Main agent in orchestration mode
 - **Task lock can be acquired** (not locked by another session)
 
+## Subagent Batching Standards
+
+**Hide tool calls by delegating batched operations to subagents.**
+
+Subagent internal tool calls are invisible to the parent conversation. Instead of 20+
+visible Read/Bash calls, users see 3-5 Task tool invocations with clean output.
+
+See `@references/workflow-output.md` for complete batching strategy.
+
+**Phase batches:**
+| Batch | Subagent | Operations |
+|-------|----------|------------|
+| Preparation | Exploration | Validate, analyze, create worktree |
+| Discovery | Exploration | Search codebase, check duplicates |
+| Planning | Plan | Make decisions, create spec |
+| Implementation | general-purpose | Execute spec, commit |
+| Review | general-purpose | Orchestrate reviewers |
+| Finalization | general-purpose | Merge, cleanup, update state |
+
+**Output pattern:**
+```
+◆ {Phase}...
+[Task tool - single collapsed block]
+✓ {Result summary}
+```
+
 ## CRITICAL: Worktree Isolation (M101)
 
 **ALL task implementation work MUST happen in the task worktree, NEVER in `/workspace` main.**
@@ -35,6 +61,8 @@ Detailed workflow for executing a task from start to completion.
 ## Workflow Steps
 
 ### 1. Validate Task Ready and Acquire Lock
+
+**Batched into Preparation subagent** - see Subagent Batching Standards above
 
 ```
 Check STATE.md
@@ -94,6 +122,8 @@ If blocked:
 
 ### 2. Analyze Task Size and Auto-Decompose
 
+**Batched into Preparation subagent** - see Subagent Batching Standards above
+
 **MANDATORY: Estimate task complexity before execution.**
 
 ```yaml
@@ -151,6 +181,8 @@ Proceeding with single subagent.
 Continue to create worktree step.
 
 ### 3. Create Task Worktree
+
+**Batched into Preparation subagent** - see Subagent Batching Standards above
 
 ```bash
 # Main agent creates task branch and worktree
@@ -273,6 +305,8 @@ On completion, subagent returns via `.completion.json`:
 
 ### 9. MANDATORY: Report Token Metrics to User
 
+**Uses collect-results skill** - already batched
+
 **Invoke `/cat:collect-results` to get authoritative token metrics (M146).**
 
 After the Task tool completes, invoke `/cat:collect-results` to extract accurate token usage.
@@ -339,6 +373,8 @@ Present AskUserQuestion with decomposition as recommended option.
 
 ### 10. Main Agent Merge
 
+**Batched into Finalization subagent** - see Subagent Batching Standards above
+
 ```bash
 # In task worktree
 git merge {subagent-branch} --ff-only
@@ -349,6 +385,8 @@ If conflicts:
 - Escalate to user if unresolved
 
 ### 11. Cleanup Subagent Resources
+
+**Batched into Finalization subagent** - see Subagent Batching Standards above
 
 **After merging subagent branch to task branch, cleanup BEFORE approval gate:**
 
@@ -367,6 +405,8 @@ This ensures:
 
 ### 12. Update State
 
+**Batched into Finalization subagent** - see Subagent Batching Standards above
+
 **MANDATORY (M153): Set STATE.md to FINAL state before approval gate.**
 
 Files proposed for merge should reflect their final state. Update task STATE.md to completed:
@@ -382,6 +422,8 @@ Files proposed for merge should reflect their final state. Update task STATE.md 
 This ensures the commit being approved already shows task completion.
 
 ### 13. Approval Gate (Interactive Mode)
+
+**Interactive - not batched** (needs user response)
 
 Present to user:
 - Summary of changes
@@ -520,6 +562,8 @@ Present changes → User responds
 
 ### 14. Final Merge
 
+**Batched into Finalization subagent** - see Subagent Batching Standards above
+
 After approval:
 
 **CRITICAL (M070/M090): Update STATE.md AND CHANGELOG.md BEFORE squashing (same commit as implementation)**
@@ -582,6 +626,8 @@ git push . "HEAD:${BASE_BRANCH}"
 
 ### 15. Cleanup
 
+**Batched into Finalization subagent** - see Subagent Batching Standards above
+
 ```bash
 # MANDATORY: Return to main workspace before removing worktree
 cd /workspace
@@ -593,6 +639,8 @@ git branch -d {task-branch}
 ```
 
 ### 16. Update Parent State (Rollup Only)
+
+**Batched into Finalization subagent** - see Subagent Batching Standards above
 
 **NOTE**: Minor version CHANGELOG.md was already updated in step 13 with the implementation commit.
 
