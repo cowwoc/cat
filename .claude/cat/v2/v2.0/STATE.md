@@ -13,10 +13,10 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - remove-license-notice-startup
 - compact-stakeholder-review-output
 - compact-token-report
+- clarify-task-satisfies-parent
 
 ## Tasks Pending
 - requirements-at-all-version-levels
-- clarify-task-satisfies-parent
 - complete-patch-version-support
 - pricing-page
 - update-graphics-tagline
