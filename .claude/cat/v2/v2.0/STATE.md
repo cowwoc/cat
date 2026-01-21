@@ -34,3 +34,5 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - fix-add-remove-parent-update-steps
 - default-to-task-creation
 - improve-skill-discoverability
+- simplify-display-formats
+- remove-box-rendering-infrastructure
