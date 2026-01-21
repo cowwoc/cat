@@ -69,6 +69,7 @@ Use AskUserQuestion:
 - question: "What would you like to add?"
 - options:
   - "Task" - Add a task to an existing minor version
+  - "Patch version" - Add a patch version to an existing minor
   - "Minor version" - Add a minor version to an existing major
   - "Major version" - Add a new major version
 
@@ -81,11 +82,17 @@ Use AskUserQuestion:
 **If "Task":**
 - Continue to add_task workflow (step: task_gather_intent)
 
+**If "Patch version":**
+- Set VERSION_TYPE="patch", PARENT_TYPE="minor", CHILD_TYPE="task"
+- Continue to unified version workflow (step: version_select_parent)
+
 **If "Minor version":**
-- Continue to add_minor workflow (step: minor_select_major)
+- Set VERSION_TYPE="minor", PARENT_TYPE="major", CHILD_TYPE="task"
+- Continue to unified version workflow (step: version_select_parent)
 
 **If "Major version":**
-- Continue to add_major workflow (step: major_find_next)
+- Set VERSION_TYPE="major", PARENT_TYPE="none", CHILD_TYPE="minor"
+- Continue to unified version workflow (step: version_find_next)
 
 </step>
 
@@ -441,13 +448,25 @@ Task created:
 
 </step>
 
-<!-- ========== MINOR VERSION WORKFLOW ========== -->
+<!-- ========== UNIFIED VERSION WORKFLOW ========== -->
+<!--
+  This workflow handles major, minor, and patch version creation with parameterization.
+  Variables set by route step:
+    VERSION_TYPE: "major" | "minor" | "patch"
+    PARENT_TYPE: "none" | "major" | "minor"
+    CHILD_TYPE: "minor" | "task" | "task"
+-->
 
-<step name="minor_select_major">
+<step name="version_select_parent">
 
-**Determine target major version:**
+**Determine target parent version (skip if VERSION_TYPE="major"):**
 
-Check if major versions exist:
+**If VERSION_TYPE is "major":**
+- Skip directly to step: version_find_next
+
+**If VERSION_TYPE is "minor":**
+- PARENT_LABEL = "major version"
+- List available major versions:
 
 ```bash
 [ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist."
@@ -455,9 +474,8 @@ Check if major versions exist:
 
 If no major versions exist:
 - Inform user: "No major versions exist. Creating one first."
-- Go to step: major_find_next
-
-List available major versions:
+- Set VERSION_TYPE="major", PARENT_TYPE="none"
+- Go to step: version_find_next
 
 ```bash
 ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -V
@@ -468,64 +486,153 @@ Use AskUserQuestion:
 - question: "Which major version should this minor be added to?"
 - options: [List of available major versions] + "Create new major version"
 
-If "Create new major version" -> go to step: major_find_next
+If "Create new major version":
+- Set VERSION_TYPE="major", PARENT_TYPE="none"
+- Go to step: version_find_next
 
-</step>
-
-<step name="minor_validate_major">
-
-**Validate selected major exists:**
-
-```bash
-MAJOR="{major}"
-MAJOR_PATH=".claude/cat/v$MAJOR"
-
-[ ! -d "$MAJOR_PATH" ] && echo "ERROR: Major version $MAJOR does not exist" && exit 1
-```
-
-</step>
-
-<step name="minor_ask_number">
-
-**Ask for minor version number:**
-
-**Find existing minors:**
+**If VERSION_TYPE is "patch":**
+- PARENT_LABEL = "minor version"
+- List available minor versions:
 
 ```bash
-EXISTING_MINORS=$(ls -1d "$MAJOR_PATH"/v$MAJOR.[0-9]* 2>/dev/null | \
-    sed "s|$MAJOR_PATH/v$MAJOR\.||" | sort -V)
-NEXT_MINOR=$(echo "$EXISTING_MINORS" | tail -1)
-if [ -z "$NEXT_MINOR" ]; then
-    NEXT_MINOR=0
-else
-    NEXT_MINOR=$((NEXT_MINOR + 1))
-fi
+find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while read d; do
+    VERSION=$(basename "$d" | sed 's/v//')
+    MAJOR=$(echo "$VERSION" | cut -d. -f1)
+    MINOR=$(echo "$VERSION" | cut -d. -f2)
+    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "pending")
+    PATCH_COUNT=$(find "$d" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" 2>/dev/null | wc -l)
+    echo "$MAJOR.$MINOR ($STATUS, $PATCH_COUNT patches)"
+done | sort -V
 ```
 
 Use AskUserQuestion:
+- header: "Target Minor Version"
+- question: "Which minor version should this patch be added to?"
+- options: [List of available minor versions] + "Cancel"
+
+If "Cancel" -> exit command.
+
+</step>
+
+<step name="version_validate_parent">
+
+**Validate selected parent exists (skip if VERSION_TYPE="major"):**
+
+**If VERSION_TYPE is "major":**
+- Skip to step: version_find_next
+
+**If VERSION_TYPE is "minor":**
+
+```bash
+MAJOR="{selected_major}"
+PARENT_PATH=".claude/cat/v$MAJOR"
+[ ! -d "$PARENT_PATH" ] && echo "ERROR: Major version $MAJOR does not exist" && exit 1
+```
+
+**If VERSION_TYPE is "patch":**
+
+```bash
+MAJOR="{major}"
+MINOR="{minor}"
+PARENT_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR"
+[ ! -d "$PARENT_PATH" ] && echo "ERROR: Minor version $MAJOR.$MINOR does not exist" && exit 1
+```
+
+</step>
+
+<step name="version_find_next">
+
+**Determine next version number:**
+
+**If VERSION_TYPE is "major":**
+
+```bash
+NEXT_NUMBER=$(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -V | tail -1)
+if [ -z "$NEXT_NUMBER" ]; then
+    NEXT_NUMBER=1
+else
+    NEXT_NUMBER=$((NEXT_NUMBER + 1))
+fi
+VERSION_LABEL="Major version"
+NEXT_VERSION="$NEXT_NUMBER"
+```
+
+**If VERSION_TYPE is "minor":**
+
+```bash
+EXISTING=$(ls -1d "$PARENT_PATH"/v$MAJOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PATH/v$MAJOR\.||" | sort -V)
+NEXT_NUMBER=$(echo "$EXISTING" | tail -1)
+if [ -z "$NEXT_NUMBER" ]; then
+    NEXT_NUMBER=0
+else
+    NEXT_NUMBER=$((NEXT_NUMBER + 1))
+fi
+VERSION_LABEL="Minor version"
+NEXT_VERSION="$MAJOR.$NEXT_NUMBER"
+```
+
+**If VERSION_TYPE is "patch":**
+
+```bash
+EXISTING=$(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PATH/v$MAJOR.$MINOR\.||" | sort -V)
+NEXT_NUMBER=$(echo "$EXISTING" | tail -1)
+if [ -z "$NEXT_NUMBER" ]; then
+    NEXT_NUMBER=1
+else
+    NEXT_NUMBER=$((NEXT_NUMBER + 1))
+fi
+VERSION_LABEL="Patch version"
+NEXT_VERSION="$MAJOR.$MINOR.$NEXT_NUMBER"
+```
+
+</step>
+
+<step name="version_ask_number">
+
+**Ask for version number:**
+
+Use AskUserQuestion:
 - header: "Version Number"
-- question: "Minor version number? (Next available: $MAJOR.$NEXT_MINOR)"
+- question: "{VERSION_LABEL} number? (Next available: $NEXT_VERSION)"
 - options:
-  - "Use $MAJOR.$NEXT_MINOR (Recommended)" - Auto-increment
+  - "Use $NEXT_VERSION (Recommended)" - Auto-increment
   - "Specify different number" - Enter custom number
 
 **If "Specify different number":**
 
-Ask inline: "Enter the minor version number:"
+Ask inline: "Enter the {VERSION_TYPE} version number:"
 
-Capture as REQUESTED_MINOR.
+Capture as REQUESTED_NUMBER.
 
 </step>
 
-<step name="minor_check_conflict">
+<step name="version_check_conflict">
 
 **Check if requested number conflicts:**
 
 If user specified a custom number:
 
+**If VERSION_TYPE is "major":**
+
 ```bash
-if [ -d "$MAJOR_PATH/v$MAJOR.$REQUESTED_MINOR" ]; then
-    echo "Version $MAJOR.$REQUESTED_MINOR already exists."
+if [ -d ".claude/cat/v$REQUESTED_NUMBER" ]; then
+    echo "Version $REQUESTED_NUMBER already exists."
+fi
+```
+
+**If VERSION_TYPE is "minor":**
+
+```bash
+if [ -d "$PARENT_PATH/v$MAJOR.$REQUESTED_NUMBER" ]; then
+    echo "Version $MAJOR.$REQUESTED_NUMBER already exists."
+fi
+```
+
+**If VERSION_TYPE is "patch":**
+
+```bash
+if [ -d "$PARENT_PATH/v$MAJOR.$MINOR.$REQUESTED_NUMBER" ]; then
+    echo "Patch version $MAJOR.$MINOR.$REQUESTED_NUMBER already exists."
 fi
 ```
 
@@ -533,54 +640,93 @@ fi
 
 Use AskUserQuestion:
 - header: "Version Conflict"
-- question: "Version $MAJOR.$REQUESTED_MINOR already exists. What would you like to do?"
+- question: "{VERSION_LABEL} {conflict_version} already exists. What would you like to do?"
 - options:
-  - "Insert before it" - Create $MAJOR.$REQUESTED_MINOR and renumber existing versions
-  - "Use next available ($MAJOR.$NEXT_MINOR)" - Skip to next free number
+  - "Insert before it" - Create at requested number and renumber existing versions
+  - "Use next available ($NEXT_VERSION)" - Skip to next free number
   - "Cancel" - Abort
 
 **If "Insert before it":**
-- Go to step: minor_renumber
+- Go to step: version_renumber
 
 **If "Use next available":**
-- Set MINOR = NEXT_MINOR
-- Continue to step: minor_discuss
+- Set version number to NEXT_NUMBER
+- Continue to step: version_discuss
 
 **If "Cancel":**
 - Exit command
 
 </step>
 
-<step name="minor_renumber">
+<step name="version_renumber">
 
-**Renumber existing minor versions:**
+**Renumber existing versions:**
 
-This is a significant operation. Renumber all minor versions >= REQUESTED_MINOR by +1.
+This is a significant operation. Renumber all versions >= REQUESTED_NUMBER by +1.
+
+**If VERSION_TYPE is "major":**
 
 ```bash
-# List versions to renumber (in reverse order to avoid conflicts)
-for v in $(ls -1d "$MAJOR_PATH"/v$MAJOR.[0-9]* 2>/dev/null | \
-    sed "s|$MAJOR_PATH/v$MAJOR\.||" | sort -rV); do
-    if [ "$v" -ge "$REQUESTED_MINOR" ]; then
+for v in $(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -rV); do
+    if [ "$v" -ge "$REQUESTED_NUMBER" ]; then
+        NEW_V=$((v + 1))
+        echo "Renumbering v$v -> v$NEW_V"
+        mv ".claude/cat/v$v" ".claude/cat/v$NEW_V"
+        find ".claude/cat/v$NEW_V" -name "*.md" -exec \
+            sed -i "s/v$v\./v$NEW_V./g; s/Major $v/Major $NEW_V/g" {} \;
+    fi
+done
+```
+
+**If VERSION_TYPE is "minor":**
+
+```bash
+for v in $(ls -1d "$PARENT_PATH"/v$MAJOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PATH/v$MAJOR\.||" | sort -rV); do
+    if [ "$v" -ge "$REQUESTED_NUMBER" ]; then
         NEW_V=$((v + 1))
         echo "Renumbering v$MAJOR.$v -> v$MAJOR.$NEW_V"
-        mv "$MAJOR_PATH/v$MAJOR.$v" "$MAJOR_PATH/v$MAJOR.$NEW_V"
-        # Update internal references in STATE.md and PLAN.md
-        find "$MAJOR_PATH/v$MAJOR.$NEW_V" -name "*.md" -exec \
+        mv "$PARENT_PATH/v$MAJOR.$v" "$PARENT_PATH/v$MAJOR.$NEW_V"
+        find "$PARENT_PATH/v$MAJOR.$NEW_V" -name "*.md" -exec \
             sed -i "s/v$MAJOR\.$v/v$MAJOR.$NEW_V/g" {} \;
+    fi
+done
+```
+
+**If VERSION_TYPE is "patch":**
+
+```bash
+for p in $(ls -1d "$PARENT_PATH"/v$MAJOR.$MINOR.[0-9]* 2>/dev/null | sed "s|$PARENT_PATH/v$MAJOR.$MINOR\.||" | sort -rV); do
+    if [ "$p" -ge "$REQUESTED_NUMBER" ]; then
+        NEW_P=$((p + 1))
+        echo "Renumbering v$MAJOR.$MINOR.$p -> v$MAJOR.$MINOR.$NEW_P"
+        mv "$PARENT_PATH/v$MAJOR.$MINOR.$p" "$PARENT_PATH/v$MAJOR.$MINOR.$NEW_P"
+        find "$PARENT_PATH/v$MAJOR.$MINOR.$NEW_P" -name "*.md" -exec \
+            sed -i "s/v$MAJOR\.$MINOR\.$p/v$MAJOR.$MINOR.$NEW_P/g" {} \;
     fi
 done
 ```
 
 **Update ROADMAP.md with new version numbers.**
 
-Set MINOR = REQUESTED_MINOR and continue.
+Set version number to REQUESTED_NUMBER and continue.
 
 </step>
 
-<step name="minor_discuss">
+<step name="version_discuss">
 
-**Gather minor version context through collaborative thinking:**
+**Gather version context through collaborative thinking:**
+
+**If VERSION_TYPE is "major":**
+
+Follow the discussion workflow:
+1. Vision - what to build/add/fix
+2. Explore features
+3. Sharpen core
+4. Find boundaries
+5. Dependencies
+6. Synthesize and confirm
+
+**If VERSION_TYPE is "minor":**
 
 **1. Open - Features First:**
 
@@ -604,95 +750,290 @@ Use AskUserQuestion:
 
 Present synthesis and confirm with user.
 
+**If VERSION_TYPE is "patch":**
+
+**1. Open - Purpose First:**
+
+Use AskUserQuestion:
+- header: "Patch Focus"
+- question: "What is the purpose of patch version $MAJOR.$MINOR.$PATCH?"
+- options: ["Bug fixes", "Hot fixes", "Security patches", "Let me describe"]
+
+**2. Explore specifics:**
+
+Based on response, ask follow-up questions using AskUserQuestion.
+
+**3. Scope:**
+
+Use AskUserQuestion:
+- header: "Scope"
+- question: "How urgent is this patch?"
+- options: ["Critical - production issue", "High - needs release soon", "Normal - next maintenance window", "Low - convenience fix"]
+
+**4. Synthesize and confirm:**
+
+Present synthesis and confirm with user.
+
 </step>
 
-<step name="minor_derive_requirements">
+<step name="version_derive_requirements">
 
-**Derive requirements from focus using backward thinking.**
+**Derive requirements from goals using backward thinking.**
 
-Apply backward thinking to each key item and generate REQ-001, REQ-002, etc.
+Apply backward thinking to each goal/focus item and generate REQ-001, REQ-002, etc.
 
 Present for review with AskUserQuestion.
 
 </step>
 
-<step name="minor_configure_gates">
+<step name="version_configure_gates">
 
 **Configure entry and exit gates.**
 
-Use AskUserQuestion for entry gate and exit gate configuration.
+**If VERSION_TYPE is "major":**
+- Major gates are inherited by all minor versions within.
+
+**If VERSION_TYPE is "minor":**
+- Use AskUserQuestion for entry gate and exit gate configuration.
+
+**If VERSION_TYPE is "patch":**
+- Patches typically have simpler gates focused on:
+  - Entry: Issue identified, reproduction confirmed
+  - Exit: Fix verified, regression tests pass
 
 </step>
 
-<step name="minor_create">
+<step name="version_create">
 
-**Create minor version structure:**
+**Create version structure:**
+
+**If VERSION_TYPE is "major":**
 
 ```bash
-MINOR_PATH="$MAJOR_PATH/v$MAJOR.$MINOR"
-mkdir -p "$MINOR_PATH/task"
+MAJOR=$VERSION_NUMBER
+VERSION_PATH=".claude/cat/v$MAJOR"
+mkdir -p "$VERSION_PATH/v$MAJOR.0/task"
 ```
 
-Create STATE.md, PLAN.md, and CHANGELOG.md.
+**Create major STATE.md:**
+
+```bash
+cat > "$VERSION_PATH/STATE.md" << EOF
+# Major Version $MAJOR State
+
+## Status
+- **Status:** pending
+- **Progress:** 0%
+- **Started:** $(date +%Y-%m-%d)
+- **Last Updated:** $(date +%Y-%m-%d)
+
+## Minor Versions
+- v$MAJOR.0
+
+## Summary
+$VERSION_DESCRIPTION
+EOF
+
+[ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
+```
+
+Create initial minor version (X.0) with its STATE.md, PLAN.md, and CHANGELOG.md.
+
+**If VERSION_TYPE is "minor":**
+
+```bash
+MINOR=$VERSION_NUMBER
+VERSION_PATH="$PARENT_PATH/v$MAJOR.$MINOR"
+mkdir -p "$VERSION_PATH/task"
+```
+
+Create STATE.md, PLAN.md, and CHANGELOG.md for minor version.
+
+**If VERSION_TYPE is "patch":**
+
+```bash
+PATCH=$VERSION_NUMBER
+VERSION_PATH="$PARENT_PATH/v$MAJOR.$MINOR.$PATCH"
+mkdir -p "$VERSION_PATH"
+```
+
+**Create STATE.md:**
+
+```bash
+cat > "$VERSION_PATH/STATE.md" << EOF
+# Patch Version $MAJOR.$MINOR.$PATCH State
+
+## Status
+- **Status:** pending
+- **Progress:** 0%
+- **Started:** $(date +%Y-%m-%d)
+- **Last Updated:** $(date +%Y-%m-%d)
+
+## Tasks Pending
+(No tasks yet)
+
+## Tasks Completed
+(None)
+
+## Summary
+$VERSION_DESCRIPTION
+EOF
+
+[ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Patch STATE.md not created"
+```
+
+**Create PLAN.md:**
+
+```bash
+cat > "$VERSION_PATH/PLAN.md" << EOF
+# Patch Version $MAJOR.$MINOR.$PATCH Plan
+
+## Goals
+$VERSION_GOALS
+
+## Requirements
+$VERSION_REQUIREMENTS
+
+## Entry Gate
+$ENTRY_GATE
+
+## Exit Gate
+$EXIT_GATE
+EOF
+
+[ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Patch PLAN.md not created"
+```
+
+**Create CHANGELOG.md:**
+
+```bash
+cat > "$VERSION_PATH/CHANGELOG.md" << EOF
+# Patch $MAJOR.$MINOR.$PATCH Changelog
+
+## [Unreleased]
+
+### Fixed
+- (pending changes)
+
+---
+*Patch started: $(date +%Y-%m-%d)*
+EOF
+
+[ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Patch CHANGELOG.md not created"
+```
 
 </step>
 
-<step name="minor_update_roadmap">
+<step name="version_update_roadmap">
 
-**Update ROADMAP.md with new minor version entry:**
+**Update ROADMAP.md with new version entry:**
 
 ```bash
 ROADMAP=".claude/cat/ROADMAP.md"
+```
 
-# Format: - **X.Y:** Description (PENDING)
-# Insert under the correct major version section
+**If VERSION_TYPE is "major":**
 
-# Find the major version line and append minor entry after it
+```bash
+cat >> "$ROADMAP" << EOF
+
+## Version $MAJOR: $VERSION_TITLE (PLANNED)
+- **$MAJOR.0:** Initial Release (PENDING)
+EOF
+
+grep -q "## Version $MAJOR:" "$ROADMAP" || echo "ERROR: Major version section not added to ROADMAP.md"
+```
+
+**If VERSION_TYPE is "minor":**
+
+```bash
 if grep -q "^## Version $MAJOR:" "$ROADMAP"; then
-  # Find the line number of the major version header
   LINE_NUM=$(grep -n "^## Version $MAJOR:" "$ROADMAP" | cut -d: -f1)
-  # Insert after the header (before next section or at section end)
-  sed -i "$((LINE_NUM + 1))a - **$MAJOR.$MINOR:** $MINOR_DESCRIPTION (PENDING)" "$ROADMAP"
+  sed -i "$((LINE_NUM + 1))a - **$MAJOR.$MINOR:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
   echo "WARNING: Major version $MAJOR section not found in ROADMAP.md"
 fi
 
-# Verify update
 grep -q "$MAJOR.$MINOR" "$ROADMAP" || echo "WARNING: Minor not added to ROADMAP.md"
 ```
 
-</step>
-
-<step name="minor_update_parent">
-
-**Update parent major STATE.md - add minor version to list:**
+**If VERSION_TYPE is "patch":**
 
 ```bash
-MAJOR_STATE=".claude/cat/v$MAJOR/STATE.md"
-
-# Add minor to "## Minor Versions" section
-if grep -q "^## Minor Versions" "$MAJOR_STATE"; then
-  # Append minor version entry after the header
-  sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$MAJOR_STATE"
+if grep -q "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP"; then
+  LINE_NUM=$(grep -n "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP" | cut -d: -f1)
+  sed -i "$((LINE_NUM))a\\  - **$MAJOR.$MINOR.$PATCH:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
-  # Create section if it doesn't exist
-  echo -e "\n## Minor Versions\n- v$MAJOR.$MINOR" >> "$MAJOR_STATE"
+  echo "WARNING: Minor version $MAJOR.$MINOR entry not found in ROADMAP.md"
 fi
 
-# Verify update
-grep -q "v$MAJOR.$MINOR" "$MAJOR_STATE" || echo "ERROR: Minor version not added to major STATE.md"
+grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to ROADMAP.md"
 ```
 
 </step>
 
-<step name="minor_commit">
+<step name="version_update_parent">
 
-**Commit minor version creation:**
+**Update parent STATE.md (skip if VERSION_TYPE="major"):**
+
+**If VERSION_TYPE is "major":**
+- Skip to step: version_commit (no parent to update)
+
+**If VERSION_TYPE is "minor":**
 
 ```bash
-git add "$MINOR_PATH/"
+PARENT_STATE="$PARENT_PATH/STATE.md"
+
+if grep -q "^## Minor Versions" "$PARENT_STATE"; then
+  sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$PARENT_STATE"
+else
+  echo -e "\n## Minor Versions\n- v$MAJOR.$MINOR" >> "$PARENT_STATE"
+fi
+
+grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added to major STATE.md"
+```
+
+**If VERSION_TYPE is "patch":**
+
+```bash
+PARENT_STATE="$PARENT_PATH/STATE.md"
+
+if grep -q "^## Patch Versions" "$PARENT_STATE"; then
+  sed -i "/^## Patch Versions/a - v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE"
+else
+  echo -e "\n## Patch Versions\n- v$MAJOR.$MINOR.$PATCH" >> "$PARENT_STATE"
+fi
+
+grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version not added to minor STATE.md"
+```
+
+</step>
+
+<step name="version_commit">
+
+**Commit version creation:**
+
+**If VERSION_TYPE is "major":**
+
+```bash
+git add ".claude/cat/v$MAJOR/"
 git add ".claude/cat/ROADMAP.md"
-git add "$MAJOR_PATH/STATE.md"
+git commit -m "$(cat <<'EOF'
+docs: add major version {major}
+
+{One-line description of major version vision}
+
+Creates Major {major} with initial minor version {major}.0.
+EOF
+)"
+```
+
+**If VERSION_TYPE is "minor":**
+
+```bash
+git add "$VERSION_PATH/"
+git add ".claude/cat/ROADMAP.md"
+git add "$PARENT_PATH/STATE.md"
 git commit -m "$(cat <<'EOF'
 docs: add minor version {major}.{minor}
 
@@ -701,11 +1042,48 @@ EOF
 )"
 ```
 
+**If VERSION_TYPE is "patch":**
+
+```bash
+git add "$VERSION_PATH/"
+git add ".claude/cat/ROADMAP.md"
+git add "$PARENT_PATH/STATE.md"
+git commit -m "$(cat <<'EOF'
+docs: add patch version {major}.{minor}.{patch}
+
+{One-line description of patch version focus}
+EOF
+)"
+```
+
 </step>
 
-<step name="minor_done">
+<step name="version_done">
 
 **Present completion:**
+
+**If VERSION_TYPE is "major":**
+
+```
+Major version created:
+
+- Version: Major {major}
+- Vision: {vision summary}
+- Initial minor: {major}.0
+- Path: .claude/cat/v{major}/
+
+---
+
+## Next Up
+
+**Add tasks to get started:**
+
+`/cat:add`
+
+---
+```
+
+**If VERSION_TYPE is "minor":**
 
 ```
 Minor version created:
@@ -725,282 +1103,21 @@ Minor version created:
 ---
 ```
 
-</step>
 
-<!-- ========== MAJOR VERSION WORKFLOW ========== -->
-
-<step name="major_find_next">
-
-**Determine next major version number:**
-
-```bash
-NEXT_MAJOR=$(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -V | tail -1)
-if [ -z "$NEXT_MAJOR" ]; then
-    NEXT_MAJOR=1
-else
-    NEXT_MAJOR=$((NEXT_MAJOR + 1))
-fi
-```
-
-</step>
-
-<step name="major_ask_number">
-
-**Ask for major version number:**
-
-Use AskUserQuestion:
-- header: "Version Number"
-- question: "Major version number? (Next available: $NEXT_MAJOR)"
-- options:
-  - "Use $NEXT_MAJOR (Recommended)" - Auto-increment
-  - "Specify different number" - Enter custom number
-
-**If "Specify different number":**
-
-Ask inline: "Enter the major version number:"
-
-Capture as REQUESTED_MAJOR.
-
-</step>
-
-<step name="major_check_conflict">
-
-**Check if requested number conflicts:**
-
-If user specified a custom number:
-
-```bash
-if [ -d ".claude/cat/v$REQUESTED_MAJOR" ]; then
-    echo "Version $REQUESTED_MAJOR already exists."
-fi
-```
-
-**If version already exists:**
-
-Use AskUserQuestion:
-- header: "Version Conflict"
-- question: "Major version $REQUESTED_MAJOR already exists. What would you like to do?"
-- options:
-  - "Insert before it" - Create v$REQUESTED_MAJOR and renumber existing major versions
-  - "Use next available ($NEXT_MAJOR)" - Skip to next free number
-  - "Cancel" - Abort
-
-**If "Insert before it":**
-- Go to step: major_renumber
-
-**If "Use next available":**
-- Set MAJOR = NEXT_MAJOR
-- Continue to step: major_discuss
-
-**If "Cancel":**
-- Exit command
-
-</step>
-
-<step name="major_renumber">
-
-**Renumber existing major versions:**
-
-This is a significant operation. Renumber all major versions >= REQUESTED_MAJOR by +1.
-
-```bash
-# List versions to renumber (in reverse order to avoid conflicts)
-for v in $(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | sort -rV); do
-    if [ "$v" -ge "$REQUESTED_MAJOR" ]; then
-        NEW_V=$((v + 1))
-        echo "Renumbering v$v -> v$NEW_V"
-        mv ".claude/cat/v$v" ".claude/cat/v$NEW_V"
-        # Update internal references - need to update both major and minor version refs
-        find ".claude/cat/v$NEW_V" -name "*.md" -exec \
-            sed -i "s/v$v\./v$NEW_V./g; s/Major $v/Major $NEW_V/g" {} \;
-    fi
-done
-```
-
-**Update ROADMAP.md with new version numbers.**
-
-Set MAJOR = REQUESTED_MAJOR and continue.
-
-</step>
-
-<step name="major_discuss">
-
-**Gather major version context through collaborative thinking:**
-
-Follow the discussion workflow from add-major-version.md:
-1. Vision - what to build/add/fix
-2. Explore features
-3. Sharpen core
-4. Find boundaries
-5. Dependencies
-6. Synthesize and confirm
-
-</step>
-
-<step name="major_derive_requirements">
-
-**Derive requirements from goals using backward thinking.**
-
-Requirements can now be defined at the major version level. Apply backward thinking to each
-goal and generate REQ-001, REQ-002, etc.
-
-Present for review with AskUserQuestion.
-
-**Save requirements for PLAN.md:**
-
-Store the derived requirements (MAJOR_REQUIREMENTS) to be written to the major version's
-PLAN.md in the major_create step. Format as markdown table rows:
+**If VERSION_TYPE is "patch":**
 
 ```
-| REQ-001 | [description] | [priority] | [acceptance criteria] |
-```
+Patch version created:
 
-</step>
-
-<step name="major_configure_gates">
-
-**Configure entry and exit gates for major version.**
-
-Major gates are inherited by all minor versions within.
-
-</step>
-
-<step name="major_create">
-
-**Create major version structure:**
-
-```bash
-MAJOR_PATH=".claude/cat/v$MAJOR"
-mkdir -p "$MAJOR_PATH/v$MAJOR.0/task"
-```
-
-**Create major version STATE.md:**
-
-```bash
-# Create major STATE.md
-cat > "$MAJOR_PATH/STATE.md" << EOF
-# Major Version $MAJOR State
-
-## Status
-- **Status:** pending
-- **Progress:** 0%
-- **Started:** $(date +%Y-%m-%d)
-- **Last Updated:** $(date +%Y-%m-%d)
-
-## Minor Versions
-- v$MAJOR.0
-
-## Summary
-$MAJOR_DESCRIPTION
-EOF
-
-# Verify file created
-[ -f "$MAJOR_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
-```
-
-**Create major version PLAN.md (with optional requirements):**
-
-```bash
-# Create major PLAN.md using template
-cat > "$MAJOR_PATH/PLAN.md" << EOF
-# Plan: Version $MAJOR
-
-## Vision
-$MAJOR_VISION
-
-## Scope
-$MAJOR_SCOPE
-
-## Requirements (Optional)
-
-| ID | Requirement | Priority | Acceptance Criteria |
-|----|-------------|----------|---------------------|
-$MAJOR_REQUIREMENTS
-
-## Minor Versions
-[Brief overview of planned minor versions within this major]
-
-- **v$MAJOR.0** - Initial release
-
-## Gates
-
-### Entry
-- Previous major version complete (or no prerequisites)
-
-### Exit
-- All minor versions complete
-- Vision requirements satisfied
-EOF
-
-# Verify file created
-[ -f "$MAJOR_PATH/PLAN.md" ] || echo "ERROR: Major PLAN.md not created"
-```
-
-**Note:** Major versions now have both STATE.md and PLAN.md. Requirements defined at the major
-level can be satisfied by tasks in any minor version within.
-
-Create initial minor version (X.0) with its STATE.md, PLAN.md, and CHANGELOG.md.
-
-</step>
-
-<step name="major_update_roadmap">
-
-**Update ROADMAP.md with new major version section:**
-
-```bash
-ROADMAP=".claude/cat/ROADMAP.md"
-
-# Add new major version section at the end of the roadmap
-# Format matches existing sections in ROADMAP.md
-
-cat >> "$ROADMAP" << EOF
-
-## Version $MAJOR: $MAJOR_TITLE (PLANNED)
-- **$MAJOR.0:** Initial Release (PENDING)
-EOF
-
-# Verify update
-grep -q "## Version $MAJOR:" "$ROADMAP" || echo "ERROR: Major version section not added to ROADMAP.md"
-```
-
-</step>
-
-<step name="major_commit">
-
-**Commit major version creation:**
-
-```bash
-git add ".claude/cat/v$MAJOR/"
-git add ".claude/cat/ROADMAP.md"
-git commit -m "$(cat <<'EOF'
-docs: add major version {major}
-
-{One-line description of major version vision}
-
-Creates Major {major} with initial minor version {major}.0.
-EOF
-)"
-```
-
-</step>
-
-<step name="major_done">
-
-**Present completion:**
-
-```
-Major version created:
-
-- Version: Major {major}
-- Vision: {vision summary}
-- Initial minor: {major}.0
-- Path: .claude/cat/v{major}/
+- Version: {major}.{minor}.{patch}
+- Focus: {description}
+- Path: .claude/cat/v{major}/v{major}.{minor}/v{major}.{minor}.{patch}/
 
 ---
 
 ## Next Up
 
-**Add tasks to get started:**
+**Add tasks to this patch version:**
 
 `/cat:add`
 
@@ -1022,23 +1139,15 @@ Major version created:
 - [ ] Parent STATE.md updated
 - [ ] All committed to git
 
-**For Minor Version:**
-- [ ] Target major version validated
+**For Version (Major/Minor/Patch):**
+- [ ] Parent version validated (if applicable)
 - [ ] Version number determined (with renumbering if needed)
-- [ ] Discussion captured focus and scope
+- [ ] Discussion captured focus/scope/vision
 - [ ] Requirements derived
 - [ ] Gates configured
 - [ ] Directory structure created
 - [ ] Files created and ROADMAP.md updated
-- [ ] All committed to git
-
-**For Major Version:**
-- [ ] Version number determined (with renumbering if needed)
-- [ ] Deep discussion captured vision and scope
-- [ ] Requirements derived
-- [ ] Gates configured
-- [ ] Major and initial minor structure created
-- [ ] ROADMAP.md updated
+- [ ] Parent STATE.md updated (if applicable)
 - [ ] All committed to git
 
 </success_criteria>
