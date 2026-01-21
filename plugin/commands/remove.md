@@ -188,9 +188,30 @@ done
 
 <step name="task_update_parent">
 
-**Update parent minor STATE.md:**
+**Update parent minor STATE.md - remove task from list:**
 
-Recalculate progress without the removed task.
+```bash
+VERSION_STATE=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+
+# Remove task from Tasks Pending section
+sed -i "/^- $TASK_NAME$/d" "$VERSION_STATE"
+
+# Also remove from Tasks Completed if present
+sed -i "/^| $TASK_NAME |/d" "$VERSION_STATE"
+
+# Recalculate progress
+TOTAL_TASKS=$(grep -c "^- " "$VERSION_STATE" 2>/dev/null || echo 0)
+COMPLETED_TASKS=$(grep -c "^| .* | completed |" "$VERSION_STATE" 2>/dev/null || echo 0)
+if [ "$TOTAL_TASKS" -gt 0 ]; then
+  PROGRESS=$((COMPLETED_TASKS * 100 / TOTAL_TASKS))
+else
+  PROGRESS=0
+fi
+sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
+
+# Verify task removed
+! grep -q "^- $TASK_NAME$" "$VERSION_STATE" || echo "ERROR: Task not removed from STATE.md"
+```
 
 </step>
 
@@ -333,17 +354,50 @@ rm -rf "$MINOR_PATH"
 
 <step name="minor_update_roadmap">
 
-**Update ROADMAP.md:**
+**Update ROADMAP.md - remove minor version entry:**
 
-Remove the entry for this minor version.
+```bash
+ROADMAP=".claude/cat/ROADMAP.md"
+
+# Remove the minor version entry from ROADMAP.md
+# Format being removed: - **X.Y:** Description (STATUS)
+sed -i "/^- \*\*$MAJOR\.$MINOR:\*\*/d" "$ROADMAP"
+
+# Verify removal
+! grep -q "^- \*\*$MAJOR\.$MINOR:\*\*" "$ROADMAP" || echo "ERROR: Minor version entry not removed from ROADMAP.md"
+```
 
 </step>
 
 <step name="minor_update_parent">
 
-**Update parent major STATE.md:**
+**Update parent major STATE.md - remove minor version from list:**
 
-Recalculate progress without the removed minor version.
+```bash
+MAJOR_STATE=".claude/cat/v$MAJOR/STATE.md"
+
+# Remove minor version from "## Minor Versions" section
+sed -i "/^- v$MAJOR.$MINOR$/d" "$MAJOR_STATE"
+
+# Recalculate progress based on remaining minor versions
+TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$MAJOR_STATE" 2>/dev/null || echo 0)
+COMPLETED_MINORS=0
+for minor_entry in $(grep "^- v$MAJOR\." "$MAJOR_STATE" | sed 's/- v//'); do
+  MINOR_STATE=".claude/cat/v$MAJOR/v$minor_entry/STATE.md"
+  if [ -f "$MINOR_STATE" ] && grep -q "status:.*completed" "$MINOR_STATE"; then
+    COMPLETED_MINORS=$((COMPLETED_MINORS + 1))
+  fi
+done
+if [ "$TOTAL_MINORS" -gt 0 ]; then
+  PROGRESS=$((COMPLETED_MINORS * 100 / TOTAL_MINORS))
+else
+  PROGRESS=0
+fi
+sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$MAJOR_STATE"
+
+# Verify minor removed
+! grep -q "^- v$MAJOR.$MINOR$" "$MAJOR_STATE" || echo "ERROR: Minor version not removed from major STATE.md"
+```
 
 </step>
 
