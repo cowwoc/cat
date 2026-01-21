@@ -90,7 +90,8 @@ All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`
 #   task-complete-auto TASK_NAME NEXT_TASK NEXT_GOAL
 #   scope-complete SCOPE_DESC
 #   blocked TASK_NAME BLOCKED_TASKS
-#   no-tasks
+#   no-tasks                            - Compact 4-line box for no executable tasks
+#   task-not-found TASK_NAME [SUGGESTION] - Compact 4-5 line box for specific task not found
 #   progress PHASE [STATUS] [TOKENS] [COMMITS] [REVIEW] [TARGET]
 #       - Horizontal progress banner (PHASE=1-4)
 #       - STATUS: active, complete, failed
@@ -453,22 +454,26 @@ argument, skip the entry gate check for that specific task.
 
 **If no executable task found:**
 
+Use compact box rendering (5 lines or fewer):
+
+```bash
+# General case: no executable tasks
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" no-tasks > /tmp/work-box.txt
 ```
-No executable tasks found.
 
-Possible reasons:
-- All tasks completed
-- Remaining tasks have unmet dependencies
-- Exit gate tasks waiting for non-gating tasks to complete
-- Entry gates not satisfied
-- All eligible tasks are locked by other sessions
-- No tasks defined yet
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
 
-Use /cat:status to see current state and gate status.
-Use /cat:add to add new tasks.
+**If specific task requested but not found:**
 
-If you believe locks are from crashed sessions, run /cat:cleanup.
+```bash
+# Task not found - with optional fuzzy match suggestion
+TASK_NAME="requested-task-name"
+SUGGESTION=""  # Set if fuzzy match found a close task name
+
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" task-not-found "$TASK_NAME" "$SUGGESTION" > /tmp/work-box.txt
 ```
+
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
 
 Exit command.
 
