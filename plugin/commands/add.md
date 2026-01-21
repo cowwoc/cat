@@ -131,38 +131,51 @@ Capture as TASK_TYPE.
 
 **Analyze existing versions and suggest best fit:**
 
-**1. Read all minor version PLAN.md files:**
+**1. Read all minor version STATE.md and PLAN.md files:**
 
 ```bash
 # Get all minor versions
 VERSIONS=$(find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | sort -V)
 ```
 
-For each version, read its PLAN.md to extract:
-- Goals/objectives
-- Requirements (REQ-XXX descriptions)
-- Current focus area
+For each version:
+- Read STATE.md to check completion status
+- Read PLAN.md to extract goals/objectives and requirements
 
-**2. Build version summaries:**
+**2. FILTER OUT COMPLETED VERSIONS (MANDATORY):**
 
-Create a mental map of each version's focus:
+**Completed versions MUST NOT be offered as task targets.** Check each version's STATE.md:
+
+```bash
+# Check if version is completed
+VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "pending")
+if [[ "$VERSION_STATUS" == "completed" ]]; then
+  # SKIP this version - do not include in options
+  continue
+fi
+```
+
+Only versions with status `pending` or `in-progress` should be presented as options.
+
+**3. Build version summaries (for non-completed versions only):**
+
+Create a mental map of each eligible version's focus:
 - Extract the "## Goals" or "## Objectives" section
 - Extract requirement descriptions from "## Requirements"
 - Note the overall theme/domain
 
-**3. Compare task to version focuses:**
+**4. Compare task to version focuses:**
 
-Analyze TASK_DESCRIPTION against each version's focus:
+Analyze TASK_DESCRIPTION against each eligible version's focus:
 - Keyword matching (e.g., "parser" matches parser-focused versions)
 - Domain alignment (e.g., UI task matches UI-focused versions)
 - Scope fit (bugfix in active development version vs new feature in upcoming version)
 
-**4. Rank versions by fit:**
+**5. Rank versions by fit:**
 
 Score each version based on:
 - Topic alignment (high weight)
-- Version status - prefer active/pending over completed (medium weight)
-- Logical grouping with existing tasks (low weight)
+- Logical grouping with existing tasks (medium weight)
 
 </step>
 
