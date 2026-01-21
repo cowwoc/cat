@@ -33,6 +33,46 @@
 The delegation boundary exists for quality and traceability, not efficiency.
 "Quick fixes" bypass fresh context and create untraceable changes.
 
+### Work Request Handling
+
+**Default behavior:** When a user requests work, the main agent proposes task creation first.
+
+This ensures all work is tracked in the planning structure. The agent should respond:
+
+> "I'll create a task for this so it's tracked properly. Let me add it via `/cat:add`."
+
+**Trust-level variations:**
+
+| Trust Level | Behavior |
+|-------------|----------|
+| `low` | Always ask before any work, even trivial changes |
+| `medium` | Propose task creation for non-trivial work; ask for trivial |
+| `high` | Create task automatically via `/cat:add`, then proceed to `/cat:work` |
+
+**Trivial work definition:**
+- Single-line changes (typos, import fixes, obvious corrections)
+- Changes affecting only 1 file
+- No logic changes, purely cosmetic
+
+**User override:** User can bypass with phrases like "just do it", "quick fix", or "no task needed".
+When overridden, the agent should still warn: "Working directly without task tracking."
+
+**Example interactions:**
+
+User: "Fix the bug where parsing fails on empty input"
+Agent (medium trust): "I'll create a task for this so it's tracked properly. Running `/cat:add fix parsing failure on empty input`..."
+
+User: "Fix the typo in README"
+Agent (medium trust): "This looks like a trivial fix. Should I create a task for tracking, or just fix it directly?"
+
+User: "Just fix it"
+Agent: "Working directly without task tracking. [proceeds to fix]"
+
+**What this does NOT change:**
+- `/cat:work` workflow remains unchanged
+- Subagent delegation rules remain unchanged
+- Main agent still does not write production code directly
+
 ### Worktree Usage
 
 Main agent uses worktrees ONLY for:
