@@ -26,6 +26,10 @@ The flexible-version-schema task focused on infrastructure (parsing) but skipped
   - Add patch_delete, patch_update_parent, patch_update_roadmap steps
 - plugin/commands/status.md (possibly)
   - Ensure patch versions display correctly
+- README.md
+  - Update version documentation to reflect MAJOR[.MINOR[.PATCH]] flexible schema
+  - Update hierarchy section to mention optional patch level
+  - Ensure project structure example shows patch version possibility
 
 ## Test Cases
 - [ ] `/cat:add` shows "Patch version" option
@@ -33,6 +37,7 @@ The flexible-version-schema task focused on infrastructure (parsing) but skipped
 - [ ] Patch version appears in parent minor STATE.md
 - [ ] Removing a patch version cleans up correctly
 - [ ] Status command displays patch versions
+- [ ] README.md documents flexible MAJOR[.MINOR[.PATCH]] versioning
 
 ## Execution Steps
 1. **Add "Patch version" option to add.md select_type**
@@ -53,7 +58,13 @@ The flexible-version-schema task focused on infrastructure (parsing) but skipped
    - patch_update_roadmap: Update ROADMAP.md
    - Verify: All steps have explicit bash commands with verification
 
-4. **Test full workflow**
+4. **Update README.md documentation**
+   - Review "Hierarchical Planning" section for version schema accuracy
+   - Update to show MAJOR[.MINOR[.PATCH]] flexibility
+   - Update "Project Structure" example to show optional patch level
+   - Verify: README reflects flexible versioning, not just MAJOR.MINOR
+
+5. **Test full workflow**
    - Create v2.0.1 patch version
    - Verify directory structure and STATE.md updates
    - Remove patch version
