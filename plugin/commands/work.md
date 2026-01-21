@@ -43,6 +43,20 @@ This is CAT's core execution command. It:
 
 **MANDATORY: Display phase-based progress throughout execution.**
 
+### Header Box (MANDATORY - Display FIRST)
+
+At workflow start, display the task header box BEFORE any progress lines:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" > /tmp/work-box.txt
+```
+
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
+
+Only after the header is displayed, proceed to show the horizontal progress banner.
+
+### Progress Banner (Display after Header)
+
 This workflow has 4 phases. Display a persistent horizontal progress banner that updates as phases complete.
 
 **Phase mapping:**
@@ -100,14 +114,6 @@ All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`
 #       - REVIEW: e.g., "approved", "BLOCKED: security"
 #       - TARGET: e.g., "main"
 ```
-
-At workflow start, display the header:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" > /tmp/work-box.txt
-```
-
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
 
 **Anti-pattern (M149): NEVER manually type box characters.**
 
