@@ -78,6 +78,22 @@ means users cannot verify the actual file state, run tests, or validate the impl
 
 Skills exist to enforce consistent processes. Shortcuts defeat their purpose.
 
+### Work Request Handling
+**DEFAULT BEHAVIOR**: When user requests work, propose task creation via `/cat:add` first.
+
+**Response pattern**: "I'll create a task for this so it's tracked properly."
+
+**Trust-level behavior** (read from .claude/cat/cat-config.json):
+- **low**: Always ask before any work
+- **medium**: Propose task for non-trivial work; ask permission for trivial fixes
+- **high**: Create task automatically, proceed to /cat:work
+
+**Trivial work**: Single-line changes, typos, 1-file cosmetic fixes only.
+
+**User override phrases**: "just do it", "quick fix", "no task needed" → work directly with warning.
+
+**Anti-pattern**: Starting to write code without first creating or selecting a task.
+
 INSTRUCTIONS
 )
 
