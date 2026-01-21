@@ -1,0 +1,128 @@
+{
+  "$schema": "./tiers.schema.json",
+  "version": "1.0.0",
+  "tiers": {
+    "indie": {
+      "name": "Indie",
+      "description": "For individual developers",
+      "features": [
+        "single-agent-execution",
+        "basic-task-management",
+        "local-worktrees",
+        "basic-commit-hooks",
+        "status-command",
+        "init-command"
+      ]
+    },
+    "team": {
+      "name": "Team",
+      "description": "For small teams",
+      "features": [
+        "multi-agent-orchestration",
+        "parallel-task-execution",
+        "stakeholder-reviews",
+        "token-usage-tracking",
+        "learn-from-mistakes",
+        "task-decomposition",
+        "all-commands",
+        "all-skills"
+      ],
+      "includes": "indie"
+    },
+    "enterprise": {
+      "name": "Enterprise",
+      "description": "For organizations with compliance needs",
+      "features": [
+        "audit-logging",
+        "custom-hooks",
+        "compliance-export",
+        "human-review-gates",
+        "priority-support",
+        "sla-guarantees"
+      ],
+      "includes": "team"
+    }
+  },
+  "features": {
+    "single-agent-execution": {
+      "description": "Execute tasks with single subagent",
+      "category": "execution"
+    },
+    "multi-agent-orchestration": {
+      "description": "Coordinate multiple subagents",
+      "category": "execution"
+    },
+    "parallel-task-execution": {
+      "description": "Run independent tasks concurrently",
+      "category": "execution"
+    },
+    "basic-task-management": {
+      "description": "Create and track tasks",
+      "category": "planning"
+    },
+    "task-decomposition": {
+      "description": "Auto-decompose oversized tasks",
+      "category": "planning"
+    },
+    "local-worktrees": {
+      "description": "Isolated git worktrees for tasks",
+      "category": "isolation"
+    },
+    "stakeholder-reviews": {
+      "description": "Multi-perspective code review",
+      "category": "quality"
+    },
+    "token-usage-tracking": {
+      "description": "Monitor and report token consumption",
+      "category": "monitoring"
+    },
+    "learn-from-mistakes": {
+      "description": "Retrospective analysis and improvement",
+      "category": "quality"
+    },
+    "basic-commit-hooks": {
+      "description": "Pre-commit validation hooks",
+      "category": "hooks"
+    },
+    "custom-hooks": {
+      "description": "User-defined hook scripts",
+      "category": "hooks"
+    },
+    "audit-logging": {
+      "description": "Detailed operation audit trail",
+      "category": "compliance"
+    },
+    "compliance-export": {
+      "description": "Export audit data for compliance",
+      "category": "compliance"
+    },
+    "human-review-gates": {
+      "description": "Mandatory human approval points",
+      "category": "compliance"
+    },
+    "status-command": {
+      "description": "View project status",
+      "category": "commands"
+    },
+    "init-command": {
+      "description": "Initialize CAT structure",
+      "category": "commands"
+    },
+    "all-commands": {
+      "description": "Access to all CAT commands",
+      "category": "commands"
+    },
+    "all-skills": {
+      "description": "Access to all CAT skills",
+      "category": "skills"
+    },
+    "priority-support": {
+      "description": "Priority support channel",
+      "category": "support"
+    },
+    "sla-guarantees": {
+      "description": "Service level agreements",
+      "category": "support"
+    }
+  }
+}
