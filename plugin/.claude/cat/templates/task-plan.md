@@ -13,7 +13,7 @@ Select the appropriate template based on task type.
 [1-2 sentences: what this feature accomplishes]
 
 ## Satisfies
-[List requirement IDs from parent minor version PLAN.md, or "None" for infrastructure tasks]
+[List requirement IDs from parent version PLAN.md, or "None" for infrastructure tasks]
 - REQ-001
 
 ## Approaches (optional - include if multiple viable paths exist)
