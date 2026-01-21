@@ -1,6 +1,6 @@
 ---
 name: git-amend
-description: "MANDATORY: Use instead of `git commit --amend` - verifies HEAD and push status first"
+description: Use instead of `git commit --amend` - verifies HEAD and checks push status first
 ---
 
 # Git Amend Skill
