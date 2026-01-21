@@ -1634,16 +1634,23 @@ Use `/cat:git-squash` skill for safe squashing.
 
 <step name="merge">
 
-**Return to main workspace and merge:**
+**Return to main workspace and complete task:**
 
-**MANDATORY: cd back to main workspace before merging.**
+**MANDATORY: cd back to main workspace before merging/PR.**
 
-We've been working in the worktree directory. To merge, return to the main workspace:
+We've been working in the worktree directory. To merge or create PR, return to the main workspace:
 
 ```bash
 # Return to main workspace
 cd /workspace  # Or wherever CLAUDE_PROJECT_DIR is
 pwd  # Verify we're in main workspace (not worktree)
+```
+
+**Read completion workflow config:**
+
+```bash
+COMPLETION_WORKFLOW=$(jq -r '.completionWorkflow // "merge"' .claude/cat/cat-config.json)
+echo "Completion workflow: $COMPLETION_WORKFLOW"
 ```
 
 **CRITICAL (M154): Preserve the currently checked out branch.**
@@ -1654,14 +1661,16 @@ feature branch, etc.). Merge the task branch INTO that branch without switching 
 ```bash
 # Check current branch (DO NOT CHANGE IT)
 CURRENT_BRANCH=$(git branch --show-current)
-echo "Merging into: $CURRENT_BRANCH"
+echo "Base branch: $CURRENT_BRANCH"
 ```
 
 **Anti-pattern (M154):** Using `git checkout main` or `git checkout <any-branch>` in the main
 workspace. This disrupts the user's working state. The task worktree exists precisely to avoid
 touching the main workspace's checked out branch.
 
-**Then merge the task branch:**
+**Branch on completion workflow:**
+
+**If completionWorkflow is "merge" (default):**
 
 ```bash
 git merge --ff-only {task-branch} -m "$(cat <<'EOF'
@@ -1677,27 +1686,137 @@ Handle merge conflicts:
 2. Attempt automatic resolution
 3. If unresolvable, present to user
 
+**If completionWorkflow is "pr":**
+
+```bash
+# Push task branch to origin
+git push -u origin {task-branch}
+
+# Auto-detect git provider from remote URL
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+GIT_PROVIDER="unknown"
+
+if [[ "$REMOTE_URL" == *"github.com"* ]] || [[ "$REMOTE_URL" == *"github."* ]]; then
+    GIT_PROVIDER="github"
+elif [[ "$REMOTE_URL" == *"gitlab.com"* ]] || [[ "$REMOTE_URL" == *"gitlab."* ]]; then
+    GIT_PROVIDER="gitlab"
+elif [[ "$REMOTE_URL" == *"dev.azure.com"* ]] || [[ "$REMOTE_URL" == *"visualstudio.com"* ]]; then
+    GIT_PROVIDER="azure"
+elif [[ "$REMOTE_URL" == *"bitbucket.org"* ]] || [[ "$REMOTE_URL" == *"bitbucket."* ]]; then
+    GIT_PROVIDER="bitbucket"
+fi
+
+echo "Detected git provider: $GIT_PROVIDER"
+```
+
+**Create PR based on detected provider:**
+
+```bash
+PR_TITLE="{commit-type}: {summary from PLAN.md goal}"
+PR_BODY="## Summary
+{goal from PLAN.md}
+
+## Changes
+{list of key changes from commit messages}
+
+## Task
+Task ID: v{major}.{minor}-{task-name}
+
+---
+*Created by CAT (CAT)*"
+
+case "$GIT_PROVIDER" in
+    github)
+        # GitHub CLI
+        gh pr create --base {base-branch} --head {task-branch} \
+            --title "$PR_TITLE" --body "$PR_BODY"
+        ;;
+    gitlab)
+        # GitLab CLI (glab)
+        glab mr create --source-branch {task-branch} --target-branch {base-branch} \
+            --title "$PR_TITLE" --description "$PR_BODY"
+        ;;
+    azure)
+        # Azure DevOps CLI
+        az repos pr create --source-branch {task-branch} --target-branch {base-branch} \
+            --title "$PR_TITLE" --description "$PR_BODY"
+        ;;
+    bitbucket)
+        # Bitbucket - no official CLI, provide manual instructions
+        echo "⚠️ Bitbucket detected - no official CLI available"
+        echo "Create PR manually at: ${REMOTE_URL}/pull-requests/new"
+        echo "Source: {task-branch} → Target: {base-branch}"
+        ;;
+    *)
+        echo "⚠️ Unknown git provider - cannot auto-create PR"
+        echo "Remote URL: $REMOTE_URL"
+        echo "Create PR manually with:"
+        echo "  Source: {task-branch} → Target: {base-branch}"
+        ;;
+esac
+```
+
+Display PR URL to user:
+```
+✅ Pull request created: {PR_URL}
+
+The task branch has been pushed and a PR created.
+Review and merge the PR when ready.
+```
+
+**Supported providers:**
+| Provider | CLI | Auto-detect Pattern |
+|----------|-----|---------------------|
+| GitHub | `gh` | `github.com`, `github.*` |
+| GitLab | `glab` | `gitlab.com`, `gitlab.*` |
+| Azure DevOps | `az` | `dev.azure.com`, `visualstudio.com` |
+| Bitbucket | (manual) | `bitbucket.org`, `bitbucket.*` |
+
+**Note:** When using PR workflow, the cleanup step should NOT delete the task branch
+(it's needed for the PR). Set `autoRemoveWorktrees` behavior to keep the branch.
+
 </step>
 
 <step name="cleanup">
 
 **Clean up worktree and release lock:**
 
+**Cleanup runs for BOTH workflows** (merge and PR). The difference is branch handling:
+
+| Workflow | Worktree | Branch | Lock |
+|----------|----------|--------|------|
+| `merge` | Removed | Deleted | Released |
+| `pr` | Removed | **Preserved** (needed for PR) | Released |
+
 ```bash
-# Remove worktree
+COMPLETION_WORKFLOW=$(jq -r '.completionWorkflow // "merge"' .claude/cat/cat-config.json)
+
+# 1. Remove worktree (ALWAYS - worktree is local working copy, not needed after task)
 git worktree remove "$WORKTREE_PATH" --force
 
-# Optionally delete branch if autoRemoveWorktrees is true
-git branch -d "{task-branch}" 2>/dev/null || true
+# 2. Handle branch based on workflow
+if [[ "$COMPLETION_WORKFLOW" == "merge" ]]; then
+    # Merge workflow: branch already merged, safe to delete
+    git branch -d "{task-branch}" 2>/dev/null || true
+else
+    # PR workflow: branch must stay - it's the source for the pull request
+    echo "✓ Branch {task-branch} preserved (required for PR)"
+fi
 
-# Release task lock (substitute actual SESSION_ID from context)
+# 3. Release task lock (ALWAYS)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "$TASK_ID" "${CLAUDE_SESSION_ID}"
-echo "Lock released for task: $TASK_ID"
+echo "✓ Lock released for task: $TASK_ID"
 ```
 
 **Note:** Lock is also released automatically by `session-unlock.sh` hook on session end, providing
 a safety net if the agent crashes or is interrupted.
+
+**PR workflow branch lifecycle:**
+1. Task completes → branch pushed to origin → PR created
+2. Cleanup runs → worktree removed, **branch preserved**
+3. PR reviewed and merged on hosting platform
+4. Branch can be deleted manually or via platform's "delete branch after merge" option
 
 </step>
 
