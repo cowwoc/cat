@@ -44,12 +44,7 @@ parse_version() {
 get_task_dir() {
     local version="$1"
     local task_name="$2"
-    # Fail-fast: require cat_dir argument
-    if [[ -z "${3:-}" ]]; then
-        echo "ERROR: get_task_dir requires cat_dir as third argument" >&2
-        return 1
-    fi
-    local cat_dir="$3"
+    local cat_dir="${3:-.claude/cat}"
 
     parse_version "$version"
 
@@ -65,12 +60,7 @@ get_task_dir() {
 # Get version directory path (without task)
 get_version_dir() {
     local version="$1"
-    # Fail-fast: require cat_dir argument
-    if [[ -z "${2:-}" ]]; then
-        echo "ERROR: get_version_dir requires cat_dir as second argument" >&2
-        return 1
-    fi
-    local cat_dir="$2"
+    local cat_dir="${2:-.claude/cat}"
 
     parse_version "$version"
 
