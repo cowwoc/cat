@@ -43,7 +43,7 @@ This is CAT's core execution command. It:
 
 **MANDATORY: Display phase-based progress throughout execution.**
 
-This workflow has 4 phases. Display a persistent progress header that updates as phases complete.
+This workflow has 4 phases. Display a persistent horizontal progress banner that updates as phases complete.
 
 **Phase mapping:**
 
@@ -54,17 +54,23 @@ This workflow has 4 phases. Display a persistent progress header that updates as
 | Reviewing | stakeholder_review, approval_gate | Review passed, user approved |
 | Merging | squash_commits, merge, cleanup, update_state, commit_metadata, update_changelogs, next_task | Merged to main, cleanup done |
 
-**Progress symbols:**
+**Progress symbols (horizontal layout):**
 
 | Symbol | Meaning |
 |--------|---------|
-| `▸` | Phase active or complete |
-| `▹` | Phase pending (not started) |
-| `◆` | Operation currently running |
-| `✓` | Success |
-| `✗` | Failure/blocked |
+| `○` | Pending (empty circle) |
+| `●` | Complete (filled circle) |
+| `◉` | Current/Active (fisheye) |
+| `✗` | Failed |
 
-**Display format (output directly, NOT in code blocks):**
+**Horizontal progress banner format:**
+
+Phases are connected horizontally with dashes. Metrics appear on a second line below their relevant phases.
+
+```
+● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
+                      45K tokens
+```
 
 **Use centralized box rendering scripts for all progress displays.**
 
@@ -85,6 +91,13 @@ All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`
 #   scope-complete SCOPE_DESC
 #   blocked TASK_NAME BLOCKED_TASKS
 #   no-tasks
+#   progress PHASE [STATUS] [TOKENS] [COMMITS] [REVIEW] [TARGET]
+#       - Horizontal progress banner (PHASE=1-4)
+#       - STATUS: active, complete, failed
+#       - TOKENS: e.g., "45K"
+#       - COMMITS: e.g., "3"
+#       - REVIEW: e.g., "approved", "BLOCKED: security"
+#       - TARGET: e.g., "main"
 ```
 
 At workflow start, display the header:
@@ -111,39 +124,40 @@ Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
 Why: LLMs miscalculate Unicode character widths (emojis, special chars). The right-side
 vertical bars will NOT align. ALWAYS use scripts + Read tool pattern.
 
-Then output the phase indicators (plain text, no box calculation needed):
+**Display progress banner using the script:**
 
-▸ Preparing ◆
-▹ Executing
-▹ Reviewing
-▹ Merging
+```bash
+# Starting state (phase 1 active):
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 1 active
+# Output:
+# ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
+```
 
 ──────────────────────────────────────────────────────────────────
 
 **Update display at phase transitions:**
 
-When Preparing completes:
-```
-▸ Preparing ✓
-▸ Executing ◆ subagent {id} running...
-▹ Reviewing
-▹ Merging
+When Preparing completes, Executing starts:
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 2 active
+# Output:
+# ● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
 ```
 
-When subagent completes (show metrics inline):
-```
-▸ Preparing ✓
-▸ Executing ✓ {N}K tokens · {N} commits
-▸ Reviewing ◆ stakeholder review...
-▹ Merging
+When subagent completes (show metrics):
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 3 active "75K" "3"
+# Output:
+# ● Preparing ────── ● Executing ────── ◉ Reviewing ────── ○ Merging
+#                       75K · 3 commits
 ```
 
 When Reviewing completes:
-```
-▸ Preparing ✓
-▸ Executing ✓ {N}K tokens · {N} commits
-▸ Reviewing ✓ approved
-▸ Merging ◆
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 4 active "75K" "3" "approved"
+# Output:
+# ● Preparing ────── ● Executing ────── ● Reviewing ────── ◉ Merging
+#                       75K · 3 commits    approved
 ```
 
 **On success (final state):**
@@ -152,12 +166,14 @@ When Reviewing completes:
 "${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" success > /tmp/work-box.txt
 ```
 
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by phase indicators:
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by:
 
-▸ Preparing ✓
-▸ Executing ✓ {N}K tokens · {N} commits
-▸ Reviewing ✓ approved
-▸ Merging ✓ → main
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 4 complete "75K" "3" "approved" "main"
+# Output:
+# ● Preparing ────── ● Executing ────── ● Reviewing ────── ● Merging
+#                       75K · 3 commits    approved            → main
+```
 
 Next: {next-task-name} (run `/cat:work` to continue)
 
@@ -169,12 +185,14 @@ Next: {next-task-name} (run `/cat:work` to continue)
 "${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" failed > /tmp/work-box.txt
 ```
 
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by phase indicators:
+Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by:
 
-▸ Preparing ✓
-▸ Executing ✓ {N}K tokens · {N} commits
-▸ Reviewing ✗ BLOCKED: {reason}
-    → {specific issue and location}
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 3 failed "75K" "3" "BLOCKED: security"
+# Output:
+# ● Preparing ────── ● Executing ────── ✗ Reviewing ────── ○ Merging
+#                       75K · 3 commits    BLOCKED: security
+```
 
 Action required: {what user needs to do}
 
@@ -184,10 +202,11 @@ Action required: {what user needs to do}
 
 1. **Task always visible** - Header box shows task name throughout
 2. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
-3. **Metrics that matter** - Tokens and commits shown inline when available
-4. **State at a glance** - Triangle symbols show progress instantly
-5. **Failure context inline** - Shows what went wrong immediately
-6. **Next action clear** - On success, suggests next task
+3. **Horizontal layout** - All phases visible at once with connected flow
+4. **Metrics below phases** - Tokens, commits, review status positioned under relevant phases
+5. **State at a glance** - Circle symbols show progress instantly
+6. **Failure context inline** - Shows what went wrong immediately
+7. **Next action clear** - On success, suggests next task
 
 </progress_output>
 
