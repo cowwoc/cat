@@ -536,11 +536,14 @@ Output format (do NOT wrap in ```):
 **MANDATORY: Validate all requirements are covered before execution.**
 
 This step ensures 100% requirements traceability before implementation begins.
+Requirements can be defined at any version level (major, minor, or patch), and this
+validation works regardless of which level the task's parent version is.
 
 **Extract requirements from PLAN.md:**
 
 ```bash
 # Extract REQ-* IDs from ## Requirements section
+# Works for any version level's PLAN.md (major, minor, or patch)
 REQUIREMENTS=$(grep -oE 'REQ-[0-9]+' "$TASK_PATH/PLAN.md" | sort -u)
 REQ_COUNT=$(echo "$REQUIREMENTS" | wc -l)
 echo "Found $REQ_COUNT requirements"

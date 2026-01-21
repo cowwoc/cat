@@ -318,23 +318,27 @@ Ask inline: "What are the acceptance criteria? How will we know this task is com
 
 **Select requirements this task satisfies:**
 
+Requirements can be defined at any version level (major, minor, or patch). This step reads
+requirements from the parent version's PLAN.md, regardless of which level that is.
+
 **1. Read parent version requirements:**
 
 ```bash
+# VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
 VERSION_PLAN=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
 ```
 
 **2. Present requirements for selection:**
 
-If requirements exist in parent PLAN.md:
+If requirements exist in the parent version's PLAN.md:
 
 Use AskUserQuestion:
 - header: "Satisfies"
 - question: "Which requirements does this task satisfy? (Select all that apply)"
 - multiSelect: true
-- options: [List of REQ-XXX from parent PLAN.md] + "None - infrastructure/setup task"
+- options: [List of REQ-XXX from parent version PLAN.md] + "None - infrastructure/setup task"
 
-If no requirements defined in parent: Satisfies = None
+If no requirements defined in parent version: Satisfies = None
 
 </step>
 
@@ -837,9 +841,19 @@ Follow the discussion workflow from add-major-version.md:
 
 **Derive requirements from goals using backward thinking.**
 
-Apply backward thinking to each goal and generate REQ-001, REQ-002, etc.
+Requirements can now be defined at the major version level. Apply backward thinking to each
+goal and generate REQ-001, REQ-002, etc.
 
 Present for review with AskUserQuestion.
+
+**Save requirements for PLAN.md:**
+
+Store the derived requirements (MAJOR_REQUIREMENTS) to be written to the major version's
+PLAN.md in the major_create step. Format as markdown table rows:
+
+```
+| REQ-001 | [description] | [priority] | [acceptance criteria] |
+```
 
 </step>
 
@@ -884,7 +898,46 @@ EOF
 [ -f "$MAJOR_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
 ```
 
-**Note:** Major versions only need STATE.md. PLAN.md and CHANGELOG.md are for minor versions.
+**Create major version PLAN.md (with optional requirements):**
+
+```bash
+# Create major PLAN.md using template
+cat > "$MAJOR_PATH/PLAN.md" << EOF
+# Plan: Version $MAJOR
+
+## Vision
+$MAJOR_VISION
+
+## Scope
+$MAJOR_SCOPE
+
+## Requirements (Optional)
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+$MAJOR_REQUIREMENTS
+
+## Minor Versions
+[Brief overview of planned minor versions within this major]
+
+- **v$MAJOR.0** - Initial release
+
+## Gates
+
+### Entry
+- Previous major version complete (or no prerequisites)
+
+### Exit
+- All minor versions complete
+- Vision requirements satisfied
+EOF
+
+# Verify file created
+[ -f "$MAJOR_PATH/PLAN.md" ] || echo "ERROR: Major PLAN.md not created"
+```
+
+**Note:** Major versions now have both STATE.md and PLAN.md. Requirements defined at the major
+level can be satisfied by tasks in any minor version within.
 
 Create initial minor version (X.0) with its STATE.md, PLAN.md, and CHANGELOG.md.
 
