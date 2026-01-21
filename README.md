@@ -1,4 +1,4 @@
-# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: A Coding Partner You Can Count On
+# <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Coding That Ships on Schedule
 
 > *"Build on solid ground, not a house of cards."*
 
@@ -6,18 +6,28 @@
   <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="CAT Overview" width="500"/></a>
 </p>
 
+**CAT transforms chaotic AI coding sessions into predictable, reliable delivery.** Your team gets consistent results, trackable progress, and code that passes review the first time.
+
+| Benefit | Impact |
+|---------|--------|
+| **Predictable Progress** | Track completion across versions, tasks, and milestones |
+| **Consistent Quality** | Every developer follows the same structured workflow |
+| **Reduced Rework** | Built-in verification catches issues before code review |
+| **Team Alignment** | Shared preferences and quality gates across projects |
+
 ---
 
-## The Problem with AI Projects
+## The Problem: AI Coding Without Structure
 
 <p align="center">
   <img src="docs/problem.png" alt="The problem with AI projects" width="600"/>
 </p>
 
-This is what herding cats feels like. Brilliant, forgetful, easily distracted cats.
-**CAT flips this around.**
+**For Engineering Leaders:** AI tools promise 10x productivity, but deliver unpredictable results. One developer gets magic, another gets chaos. Progress is invisible until something breaks.
 
-You tell CAT your style once. It learns what matters to you. Then it handles the routine stuff automatically while presenting you with meaningful choices at genuine decision points. You're in control — work progresses when you say so, and nothing changes while you're away.
+**For Teams:** AI assistants forget context, ignore conventions, and make inconsistent decisions. Every session starts from scratch. Code quality varies wildly.
+
+**CAT solves this.** You define your standards once. CAT enforces them consistently across every developer, every task, every session. Work progresses when you approve it. Nothing changes while you're away.
 
 ---
 
@@ -117,18 +127,18 @@ CAT organizes work into three levels:
 - **Minor versions** group related work (v1.0: "Authentication", v1.1: "User Profiles")
 - **Tasks** are individual units of work sized to fit in a single session
 
-### Your Style
+### Team Preferences
 
-During `/cat:init`, you configure your preferences:
+During `/cat:init`, you configure preferences that apply consistently across your team:
 
-| Preference | What it Controls |
+| Preference | What It Controls |
 |------------|------------------|
-| **Trust** | How much you trust CAT to make decisions autonomously |
-| **Verify** | What verification CAT runs before checkpoints |
-| **Curiosity** | Whether CAT notices optimization opportunities beyond the task |
+| **Trust** | How much autonomy CAT has to make decisions |
+| **Verify** | What verification runs before presenting changes |
+| **Curiosity** | Whether CAT notes optimization opportunities beyond the task |
 | **Patience** | When CAT acts on discovered opportunities |
 
-These aren't just settings—they're how CAT learns to think like you.
+**For Teams:** These preferences become your team's coding standards. Every developer, every project, every session follows the same rules.
 
 ### The Workflow: Task Lifecycle
 
@@ -148,15 +158,17 @@ Each task follows this path:
 6. **Checkpoint** → You approve or request changes
 7. **Completion** → Merged to main, progress saved
 
-### The Safety Net: Reliability Features
+### Built-In Reliability
 
-Reliability features keep your project safe:
+CAT includes safeguards that protect your codebase and ensure consistent delivery:
 
-- **Token-Aware Tasks** → Tasks sized to fit within context limits
-- **Isolated Worktrees** → Each task runs in its own git worktree
-- **Automatic State Tracking** → Never lose progress between sessions
-- **Learn from Mistakes** → CAT analyzes failures and prevents repeats
-- **Quality Gates** → Multi-perspective reviews catch issues early
+| Feature | Business Value |
+|---------|----------------|
+| **Token-Aware Tasks** | Tasks sized to complete successfully, reducing failed sessions |
+| **Isolated Worktrees** | Each task runs separately — no risk to your main branch |
+| **Automatic State Tracking** | Resume instantly after interruptions — no lost progress |
+| **Learn from Mistakes** | CAT analyzes failures and prevents the same issues recurring |
+| **Quality Gates** | Multi-perspective reviews catch bugs before they reach production |
 
 ---
 
@@ -223,14 +235,6 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 | `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
 | `terminalWidth` | number | `120` | Display width in characters for output formatting |
-
-**trust**
-- `low` — Asks before fixing review issues. Presents options frequently.
-- `medium` — Auto-fixes review issues. Presents meaningful choices.
-- `high` — Full autonomy. Skips review. Auto-merges.
-
-**Context Limits** — Context limits are fixed values. See `agent-architecture.md` § Context Limit Constants
-for the technical specification.
 
 **trust** — How much trust you place in CAT to make decisions:
 - `low` — CAT presents options frequently; you guide most decisions
@@ -349,12 +353,8 @@ Open an issue to discuss before investing significant effort.
 
 CAT Source-Available Commercial License — see [LICENSE.md](LICENSE.md)
 
-**Indie** (Free) — Full CAT for solo developers
-**Team** ($19/seat/mo) — Collaboration features for teams of 1-50
-**Enterprise** ($49/seat/mo) — Compliance and integrations at scale
-
-See [PRICING.md](docs/PRICING.md) for details.
+**Free for solo developers.** See [pricing](docs/PRICING.md) for team and enterprise options.
 
 ---
 
-<p align="center"><em>Now go build something amazing.</em> 🐱</p>
+<p align="center"><em>Now go build something amazing.</em></p>
