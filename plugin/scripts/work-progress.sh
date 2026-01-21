@@ -16,6 +16,7 @@ set -euo pipefail
 #   scope-complete SCOPE_DESC
 #   blocked TASK_NAME REASON
 #   no-tasks
+#   task-not-found TASK_NAME [SUGGESTION]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/box.sh"
@@ -143,21 +144,24 @@ box_blocked() {
 }
 
 box_no_tasks() {
-    box_top "⏸️ NO EXECUTABLE TASKS"
+    # Compact 5-line box for no executable tasks
+    box_top "✗ No executable tasks"
     box_empty
-    box_line "  No executable tasks found."
+    box_line "  Run /cat:status to see available tasks"
+    box_bottom
+}
+
+box_task_not_found() {
+    local task_name="${1:-task}"
+    local suggestion="${2:-}"
+
+    # Compact 5-line box for specific task not found
+    box_top "✗ Task \"${task_name}\" not found"
     box_empty
-    box_line "  Possible reasons:"
-    box_line "  - All tasks completed"
-    box_line "  - Remaining tasks have unmet dependencies"
-    box_line "  - Exit gate tasks waiting for non-gating tasks"
-    box_line "  - Entry gates not satisfied"
-    box_line "  - All eligible tasks are locked"
-    box_line "  - No tasks defined yet"
-    box_empty
-    box_line "  Use /cat:status to see current state."
-    box_line "  Use /cat:add to add new tasks."
-    box_empty
+    if [ -n "$suggestion" ]; then
+        box_line "  Did you mean: ${suggestion}?"
+    fi
+    box_line "  Run /cat:status to see all tasks"
     box_bottom
 }
 
@@ -319,6 +323,9 @@ case "$BOX_TYPE" in
     no-tasks)
         box_no_tasks
         ;;
+    task-not-found)
+        box_task_not_found "$@"
+        ;;
     progress)
         box_progress "$@"
         ;;
@@ -333,6 +340,7 @@ case "$BOX_TYPE" in
         echo "  scope-complete SCOPE_DESC" >&2
         echo "  blocked TASK_NAME BLOCKED_TASKS" >&2
         echo "  no-tasks" >&2
+        echo "  task-not-found TASK_NAME [SUGGESTION]" >&2
         echo "  progress PHASE [STATUS] [TOKENS] [COMMITS] [REVIEW] [TARGET]" >&2
         echo "          - Horizontal progress banner (PHASE=1-4)" >&2
         echo "          - STATUS: active, complete, failed" >&2

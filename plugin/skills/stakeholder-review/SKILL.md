@@ -33,6 +33,33 @@ perspectives (architecture, security, quality, testing, performance) before user
 | marketing | @stakeholders/marketing.md | Positioning, messaging, go-to-market |
 | legal | @stakeholders/legal.md | Licensing, compliance, IP, data privacy |
 
+## Progress Output
+
+This skill orchestrates multiple stakeholder reviewers as subagents. Each reviewer's
+internal tool calls are invisible - users see only the Task tool invocations and
+aggregated results.
+
+**On start:**
+```
+◆ Running stakeholder review...
+```
+
+**During execution:** Task tool invocations appear for each reviewer spawn, but their
+internal file reads and analysis are invisible.
+
+**On completion:**
+```
+✓ Review complete: {APPROVED|CONCERNS|REJECTED}
+  → requirements: ✓
+  → architect: ✓
+  → security: ⚠ 1 HIGH
+  → tester: ✓
+  → performance: ✓
+```
+
+The aggregated result provides all necessary information without exposing 50+ internal
+tool calls from reviewers.
+
 ## Process
 
 <step name="prepare">
