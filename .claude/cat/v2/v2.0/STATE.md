@@ -27,3 +27,5 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - compact-token-report
 - hide-tool-calls-during-execution
 - streamline-task-not-found-error
+- fix-add-remove-parent-update-steps
+- default-to-task-creation
