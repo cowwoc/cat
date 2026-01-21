@@ -2,7 +2,7 @@
 
 ## Status
 status: in_progress
-progress: 19%
+progress: 30%
 started: 2026-01-20
 
 ## Summary
@@ -15,10 +15,11 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - compact-token-report
 - clarify-task-satisfies-parent
 - requirements-at-all-version-levels
+- pricing-page
+- polish-readme-for-smb
 
 ## Tasks Pending
 - complete-patch-version-support
-- pricing-page
 - update-graphics-tagline
 - license-validation-server
 - license-commands
