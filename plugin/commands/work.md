@@ -1523,6 +1523,57 @@ Proceed to approval_gate with stakeholder summary:
 
 Skip if `trust: "high"` in config.
 
+### Pre-Approval Checklist (MANDATORY - A010)
+
+**BLOCKING: Do NOT present approval until ALL items are verified.**
+
+Before presenting the approval gate, complete this checklist in order:
+
+| # | Check | How to Verify | Fix if Failed |
+|---|-------|---------------|---------------|
+| 1 | Commits squashed by type | `git log --oneline ${BASE_BRANCH}..HEAD` shows 1-2 commits | Use `/cat:git-squash` skill |
+| 2 | STATE.md status = completed | `grep "Status:" STATE.md` shows `completed` | Edit STATE.md |
+| 3 | STATE.md progress = 100% | `grep "Progress:" STATE.md` shows `100%` | Edit STATE.md |
+| 4 | STATE.md in commit | `git diff --name-only ${BASE_BRANCH}..HEAD \| grep STATE.md` | Amend commit to include |
+| 5 | Diff content ready | `git diff ${BASE_BRANCH}..HEAD` output captured | Run diff command |
+
+**Anti-patterns this checklist prevents:**
+- M151: Approval with unsquashed commits
+- M153: Approval with STATE.md at 90% in-progress
+- M157: Approval without squashing first
+- M160/M161: Approval without showing diff
+
+```bash
+# Run all checks in one script
+BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base")
+TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
+
+# Check 1: Commit count (should be 1-2 after squash)
+COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD)
+if [[ "$COMMIT_COUNT" -gt 3 ]]; then
+  echo "FAIL: $COMMIT_COUNT commits - need to squash first"
+  exit 1
+fi
+
+# Check 2 & 3: STATE.md status and progress
+if ! grep -q "Status.*completed" "$TASK_STATE"; then
+  echo "FAIL: STATE.md status not 'completed'"
+  exit 1
+fi
+if ! grep -q "Progress.*100%" "$TASK_STATE"; then
+  echo "FAIL: STATE.md progress not '100%'"
+  exit 1
+fi
+
+# Check 4: STATE.md in commit
+if ! git diff --name-only ${BASE_BRANCH}..HEAD | grep -q "STATE.md"; then
+  echo "FAIL: STATE.md not in commit"
+  exit 1
+fi
+
+echo "PASS: All pre-approval checks passed"
+```
+
 **MANDATORY: Verify commit exists before presenting approval (M072).**
 
 Users cannot review uncommitted changes. Before presenting the approval gate:
@@ -1859,6 +1910,38 @@ a safety net if the agent crashes or is interrupted.
 
 **Note:** Task STATE.md was already updated and committed with the implementation (M076).
 This step handles the parent STATE.md rollup updates.
+
+### STATE.md Verification Checklist (A011)
+
+**MANDATORY: Verify these rules when updating any STATE.md file.**
+
+| Rule | Description | Anti-pattern |
+|------|-------------|--------------|
+| Valid status transitions | `pending` → `in-progress` → `completed` (no skipping) | M150: Jumping from pending to completed |
+| Progress matches status | `completed` requires `100%`, `in-progress` requires `< 100%` | M153: 90% with in-progress at approval |
+| Resolution required | `completed` status requires Resolution field | M092: Missing resolution |
+| Parent pending list | Adding task → add to parent's "Tasks Pending" list | M163: Task created without parent update |
+| Atomic updates | Task STATE.md updated in same commit as implementation | M076: Separate docs commit for STATE.md |
+
+**Verification script:**
+
+```bash
+# Verify task STATE.md before proceeding
+TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
+
+# Extract current values
+STATUS=$(grep -oP "Status:\s*\K\S+" "$TASK_STATE" || echo "unknown")
+PROGRESS=$(grep -oP "Progress:\s*\K[0-9]+" "$TASK_STATE" || echo "0")
+RESOLUTION=$(grep -oP "Resolution:\s*\K\S+" "$TASK_STATE" || echo "")
+
+# Validate consistency
+if [[ "$STATUS" == "completed" ]]; then
+  [[ "$PROGRESS" != "100" ]] && echo "ERROR: completed status requires 100% progress"
+  [[ -z "$RESOLUTION" ]] && echo "ERROR: completed status requires Resolution field"
+elif [[ "$STATUS" == "in-progress" ]]; then
+  [[ "$PROGRESS" == "100" ]] && echo "ERROR: in-progress status cannot have 100% progress"
+fi
+```
 
 1. **Minor STATE.md:**
    - Recalculate progress based on task completion
