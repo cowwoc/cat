@@ -1,6 +1,6 @@
 {
-  "last_retrospective": "2026-01-19T16:13:29-05:00",
-  "mistake_count_since_last": 15,
+  "last_retrospective": "2026-01-21T14:40:12-05:00",
+  "mistake_count_since_last": 0,
   "config": {
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
@@ -118,7 +118,7 @@
       "description": "ESCALATION: A001 commit type validation ineffective. Need semantic validation - the hook checks format but not semantic correctness (docs vs config vs planning).",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-001",
-      "status": "implemented",
+      "status": "escalated",
       "created_date": "2026-01-19T16:13:29-05:00",
       "completed_date": "2026-01-19T16:18:04-05:00",
       "related_mistakes": [
@@ -130,9 +130,13 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 5,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 3,
+        "post_fix_mistakes": [
+          "M148",
+          "M156",
+          "M157"
+        ],
+        "verdict": "ineffective"
       },
       "escalation_of": "A001"
     },
@@ -142,7 +146,7 @@
       "description": "ESCALATION: Box alignment 6 recurrences despite fixes. Agents manually type boxes instead of using scripts. Need enforcement mechanism.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-006",
-      "status": "implemented",
+      "status": "escalated",
       "created_date": "2026-01-19T16:13:29-05:00",
       "completed_date": "2026-01-19T16:18:04-05:00",
       "related_mistakes": [
@@ -155,14 +159,139 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 6,
+        "mistakes_after": 4,
+        "post_fix_mistakes": [
+          "M149",
+          "M155",
+          "M158",
+          "M164"
+        ],
+        "verdict": "ineffective"
+      },
+      "escalation_of": "A005"
+    },
+    {
+      "id": "A008",
+      "priority": "high",
+      "description": "ESCALATION: A006 commit type validation still ineffective. Implement PostToolUse hook on Bash git commit that validates commit message format and blocks non-standard types",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-001",
+      "status": "open",
+      "created_date": "2026-01-21T14:40:12-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M148",
+        "M156",
+        "M157"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 3,
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
       },
-      "escalation_of": "A005"
+      "escalation_of": "A006"
+    },
+    {
+      "id": "A009",
+      "priority": "high",
+      "description": "ESCALATION: A007 box rendering still ignored (4 more mistakes). Add PreToolUse hook that blocks any Bash echo/printf containing box-drawing characters (│╭╮╰╯─) with message to use render scripts",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-006",
+      "status": "open",
+      "created_date": "2026-01-21T14:40:12-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M149",
+        "M155",
+        "M158",
+        "M164"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 4,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      },
+      "escalation_of": "A007"
+    },
+    {
+      "id": "A010",
+      "priority": "medium",
+      "description": "Add approval gate checklist to work.md: (1) commits squashed by type, (2) STATE.md at 100% completed, (3) diff displayed to user. Block gate if any precondition fails",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-007",
+      "status": "open",
+      "created_date": "2026-01-21T14:40:12-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M151",
+        "M153",
+        "M157",
+        "M160",
+        "M161"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 5,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A011",
+      "priority": "medium",
+      "description": "Add STATE.md update checklist to work.md with mandatory verification: (1) status transitions valid, (2) progress matches completion, (3) parent pending list updated",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-008",
+      "status": "open",
+      "created_date": "2026-01-21T14:40:12-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M150",
+        "M153",
+        "M163"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 3,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     }
   ],
   "retrospectives": [
+    {
+      "id": "R005",
+      "timestamp": "2026-01-21T14:40:12-05:00",
+      "trigger": "count_threshold",
+      "period_analyzed": "2026-01-19T16:13:29-05:00 to 2026-01-21T14:40:12-05:00",
+      "mistakes_analyzed": 18,
+      "summary": "18 mistakes analyzed. 16 protocol violations. Two prior escalations (A006, A007) still ineffective - requires enforcement hooks. Two new patterns identified: approval_gate_workflow (5), state_md_management (3).",
+      "findings": {
+        "category_breakdown": {
+          "protocol_violation": 16,
+          "assumption_without_verification": 1,
+          "detection_gap": 1
+        },
+        "effectiveness_verdicts": {
+          "A006": "ineffective (3 post-fix)",
+          "A007": "ineffective (4 post-fix)"
+        },
+        "new_patterns": [
+          "PATTERN-007",
+          "PATTERN-008"
+        ],
+        "escalations": [
+          "A008 (from A006)",
+          "A009 (from A007)"
+        ],
+        "new_action_items": [
+          "A010",
+          "A011"
+        ]
+      }
+    },
     {
       "id": "R008",
       "timestamp": "2026-01-19T16:13:29-05:00",
@@ -385,6 +514,52 @@
         ],
         "escalations": []
       }
+    }
+  ],
+  "patterns": [
+    {
+      "pattern_id": "PATTERN-007",
+      "pattern": "approval_gate_workflow",
+      "occurrences_total": 5,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-20T00:00:00Z",
+      "last_seen": "2026-01-21T14:40:12-05:00",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [],
+      "related_action_items": [
+        "A008"
+      ],
+      "related_mistakes": [
+        "M151",
+        "M153",
+        "M157",
+        "M160",
+        "M161"
+      ],
+      "note": "Approval gate presented without proper preconditions (squash, STATE.md status, diff display)"
+    },
+    {
+      "pattern_id": "PATTERN-008",
+      "pattern": "state_md_management",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-20T00:00:00Z",
+      "last_seen": "2026-01-21T14:40:12-05:00",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [],
+      "related_action_items": [
+        "A009"
+      ],
+      "related_mistakes": [
+        "M150",
+        "M153",
+        "M163"
+      ],
+      "note": "STATE.md not properly updated (progress, pending lists, final status)"
     }
   ]
 }
