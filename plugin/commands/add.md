@@ -635,13 +635,49 @@ Create STATE.md, PLAN.md, and CHANGELOG.md.
 
 <step name="minor_update_roadmap">
 
-**Update ROADMAP.md with new minor version entry.**
+**Update ROADMAP.md with new minor version entry:**
+
+```bash
+ROADMAP=".claude/cat/ROADMAP.md"
+
+# Format: - **X.Y:** Description (PENDING)
+# Insert under the correct major version section
+
+# Find the major version line and append minor entry after it
+if grep -q "^## Version $MAJOR:" "$ROADMAP"; then
+  # Find the line number of the major version header
+  LINE_NUM=$(grep -n "^## Version $MAJOR:" "$ROADMAP" | cut -d: -f1)
+  # Insert after the header (before next section or at section end)
+  sed -i "$((LINE_NUM + 1))a - **$MAJOR.$MINOR:** $MINOR_DESCRIPTION (PENDING)" "$ROADMAP"
+else
+  echo "WARNING: Major version $MAJOR section not found in ROADMAP.md"
+fi
+
+# Verify update
+grep -q "$MAJOR.$MINOR" "$ROADMAP" || echo "WARNING: Minor not added to ROADMAP.md"
+```
 
 </step>
 
 <step name="minor_update_parent">
 
-**Update parent major STATE.md.**
+**Update parent major STATE.md - add minor version to list:**
+
+```bash
+MAJOR_STATE=".claude/cat/v$MAJOR/STATE.md"
+
+# Add minor to "## Minor Versions" section
+if grep -q "^## Minor Versions" "$MAJOR_STATE"; then
+  # Append minor version entry after the header
+  sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$MAJOR_STATE"
+else
+  # Create section if it doesn't exist
+  echo -e "\n## Minor Versions\n- v$MAJOR.$MINOR" >> "$MAJOR_STATE"
+fi
+
+# Verify update
+grep -q "v$MAJOR.$MINOR" "$MAJOR_STATE" || echo "ERROR: Minor version not added to major STATE.md"
+```
 
 </step>
 
@@ -824,14 +860,55 @@ MAJOR_PATH=".claude/cat/v$MAJOR"
 mkdir -p "$MAJOR_PATH/v$MAJOR.0/task"
 ```
 
-Create Major STATE.md, PLAN.md, CHANGELOG.md.
-Create initial minor version (X.0).
+**Create major version STATE.md:**
+
+```bash
+# Create major STATE.md
+cat > "$MAJOR_PATH/STATE.md" << EOF
+# Major Version $MAJOR State
+
+## Status
+- **Status:** pending
+- **Progress:** 0%
+- **Started:** $(date +%Y-%m-%d)
+- **Last Updated:** $(date +%Y-%m-%d)
+
+## Minor Versions
+- v$MAJOR.0
+
+## Summary
+$MAJOR_DESCRIPTION
+EOF
+
+# Verify file created
+[ -f "$MAJOR_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
+```
+
+**Note:** Major versions only need STATE.md. PLAN.md and CHANGELOG.md are for minor versions.
+
+Create initial minor version (X.0) with its STATE.md, PLAN.md, and CHANGELOG.md.
 
 </step>
 
 <step name="major_update_roadmap">
 
-**Update ROADMAP.md with new major version section.**
+**Update ROADMAP.md with new major version section:**
+
+```bash
+ROADMAP=".claude/cat/ROADMAP.md"
+
+# Add new major version section at the end of the roadmap
+# Format matches existing sections in ROADMAP.md
+
+cat >> "$ROADMAP" << EOF
+
+## Version $MAJOR: $MAJOR_TITLE (PLANNED)
+- **$MAJOR.0:** Initial Release (PENDING)
+EOF
+
+# Verify update
+grep -q "## Version $MAJOR:" "$ROADMAP" || echo "ERROR: Major version section not added to ROADMAP.md"
+```
 
 </step>
 
