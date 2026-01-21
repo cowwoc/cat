@@ -1083,6 +1083,32 @@
         "catches_variations": true
       },
       "correct_behavior": "After running git diff, OUTPUT the result as markdown text with ## Changes for Approval header and diff code block, not just tool results"
+    },
+    {
+      "id": "M162",
+      "timestamp": "2026-01-21T15:30:00Z",
+      "category": "protocol_violation",
+      "description": "Offered completed version v1.10 as task target option when adding new task",
+      "root_cause": "Workflow said to 'prefer active/pending over completed' but did not explicitly exclude completed versions from task target options",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/add.md",
+      "pattern_keywords": [
+        "add-task",
+        "version-selection",
+        "completed-version",
+        "filter"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Filter out completed versions before presenting task target options. Only versions with status pending or in-progress should be offered."
     }
   ]
 }
