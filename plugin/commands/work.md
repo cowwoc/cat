@@ -45,13 +45,12 @@ This is CAT's core execution command. It:
 
 ### Header Box (MANDATORY - Display FIRST)
 
-At workflow start, display the task header box BEFORE any progress lines:
+At workflow start, display the task header BEFORE any progress lines:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" > /tmp/work-box.txt
 ```
-
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+```
 
 Only after the header is displayed, proceed to show the horizontal progress banner.
 
@@ -82,104 +81,72 @@ This workflow has 4 phases. Display a persistent horizontal progress banner that
 Phases are connected horizontally with dashes. Metrics appear on a second line below their relevant phases.
 
 ```
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+
 ● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
                       45K tokens
 ```
 
-**Use centralized box rendering scripts for all progress displays.**
+**Output formats directly** - Open-border boxes use left-side borders only (no alignment issues).
 
-LLMs cannot reliably calculate character-level padding for Unicode text (M142).
-All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
-
-**Available work progress scripts:**
-
-```bash
-# work-progress.sh - Renders all /cat:work boxes
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" BOX_TYPE [ARGS...]
-
-# Box types:
-#   header TASK_NAME [STATUS]           - Task header box (status: success|failed)
-#   checkpoint TASK_NAME APPROACH TIME TOKENS TOKEN_PCT BRANCH
-#   task-complete TASK_NAME [NEXT_TASK] [NEXT_GOAL]
-#   task-complete-auto TASK_NAME NEXT_TASK NEXT_GOAL
-#   scope-complete SCOPE_DESC
-#   blocked TASK_NAME BLOCKED_TASKS
-#   no-tasks                            - Compact 4-line box for no executable tasks
-#   task-not-found TASK_NAME [SUGGESTION] - Compact 4-5 line box for specific task not found
-#   progress PHASE [STATUS] [TOKENS] [COMMITS] [REVIEW] [TARGET]
-#       - Horizontal progress banner (PHASE=1-4)
-#       - STATUS: active, complete, failed
-#       - TOKENS: e.g., "45K"
-#       - COMMITS: e.g., "3"
-#       - REVIEW: e.g., "approved", "BLOCKED: security"
-#       - TARGET: e.g., "main"
-```
-
-**Anti-pattern (M149): NEVER manually type box characters.**
+**Progress banner format:**
 
 ```
-# ❌ WRONG - manually typing box in text output
-╭─── ✓ Task Complete ───────────────────────────────╮
-│  task-name merged to main.                        │  ← LLM cannot align these
-╰───────────────────────────────────────────────────╯
-
-# ✅ CORRECT - render to file, then Read and output
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" task-complete "task-name" > /tmp/work-box.txt
-# Then use Read tool on /tmp/work-box.txt
+◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
 ```
 
-Why: LLMs miscalculate Unicode character widths (emojis, special chars). The right-side
-vertical bars will NOT align. ALWAYS use scripts + Read tool pattern.
+Symbols: `○` pending, `●` complete, `◉` active, `✗` failed
 
-**Display progress banner using the script:**
+**Starting state (phase 1 active):**
 
-```bash
-# Starting state (phase 1 active):
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 1 active
-# Output:
-# ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
+```
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+
+◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
 ```
 
 ──────────────────────────────────────────────────────────────────
 
 **Update display at phase transitions:**
 
+Header remains visible above progress banner throughout. Only the progress line updates:
+
 When Preparing completes, Executing starts:
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 2 active
-# Output:
-# ● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
+```
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+
+● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
 ```
 
 When subagent completes (show metrics):
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 3 active "75K" "3"
-# Output:
-# ● Preparing ────── ● Executing ────── ◉ Reviewing ────── ○ Merging
-#                       75K · 3 commits
+```
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+
+● Preparing ────── ● Executing ────── ◉ Reviewing ────── ○ Merging
+                       75K · 3 commits
 ```
 
 When Reviewing completes:
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 4 active "75K" "3" "approved"
-# Output:
-# ● Preparing ────── ● Executing ────── ● Reviewing ────── ◉ Merging
-#                       75K · 3 commits    approved
+```
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+
+● Preparing ────── ● Executing ────── ● Reviewing ────── ◉ Merging
+                       75K · 3 commits    approved
 ```
 
 **On success (final state):**
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" success > /tmp/work-box.txt
 ```
+🐱 > {task-name} > PASSED
+────────────────────────────────────────────────────────────────────
 
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 4 complete "75K" "3" "approved" "main"
-# Output:
-# ● Preparing ────── ● Executing ────── ● Reviewing ────── ● Merging
-#                       75K · 3 commits    approved            → main
+● Preparing ────── ● Executing ────── ● Reviewing ────── ● Merging
+                       75K · 3 commits    approved            → main
 ```
 
 Next: {next-task-name} (run `/cat:work` to continue)
@@ -188,17 +155,12 @@ Next: {next-task-name} (run `/cat:work` to continue)
 
 **On failure (show context inline):**
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" header "{task-name}" failed > /tmp/work-box.txt
 ```
+🐱 > {task-name} > FAILED
+────────────────────────────────────────────────────────────────────
 
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM, followed by:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" progress 3 failed "75K" "3" "BLOCKED: security"
-# Output:
-# ● Preparing ────── ● Executing ────── ✗ Reviewing ────── ○ Merging
-#                       75K · 3 commits    BLOCKED: security
+● Preparing ────── ● Executing ────── ✗ Reviewing ────── ○ Merging
+                       75K · 3 commits    BLOCKED: security
 ```
 
 Action required: {what user needs to do}
@@ -460,26 +422,26 @@ argument, skip the entry gate check for that specific task.
 
 **If no executable task found:**
 
-Use compact box rendering (5 lines or fewer):
+Output this box:
 
-```bash
-# General case: no executable tasks
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" no-tasks > /tmp/work-box.txt
 ```
-
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
+╭─ ℹ️ No executable tasks
+│
+│  Run /cat:status to see available tasks
+╰─
+```
 
 **If specific task requested but not found:**
 
-```bash
-# Task not found - with optional fuzzy match suggestion
-TASK_NAME="requested-task-name"
-SUGGESTION=""  # Set if fuzzy match found a close task name
+Output this box (include suggestion if fuzzy match found):
 
-"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" task-not-found "$TASK_NAME" "$SUGGESTION" > /tmp/work-box.txt
 ```
-
-Then use Read tool on `/tmp/work-box.txt` and output contents VERBATIM.
+╭─ ❓ Task "{task-name}" not found
+│
+│  Did you mean: {suggestion}?
+│  Run /cat:status to see all tasks
+╰─
+```
 
 Exit command.
 
