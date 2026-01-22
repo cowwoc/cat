@@ -65,24 +65,36 @@ If the script outputs an error JSON, inform user to run `/cat:init`.
 
 **Render the status display in open-border format:**
 
-Using the JSON data, output this format:
+Using the JSON data, output this format. **EVERY major version gets its own inner box with ╭─ and ╰─.**
 
 ```
 ╭─
 │ 📊 Overall: [████████░░░░░░░░░░░░░░░░░] {percent}%
 │ 🏆 {completed}/{total} tasks complete
 │
-│ ╭─ 📦 {major.id}: {major.name}
+│ ╭─ {emoji} {major1.id}: {major1.name}
 │ │
 │ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})
-│ │    🔄 {inProgressTask}
-│ │    🔳 {pendingTask}
+│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})
+│ ╰─
+│
+│ ╭─ {emoji} {major2.id}: {major2.name}
+│ │
+│ │  {emoji} {minor.id}: {minor.description} ({completed}/{total})
+│ │     🔄 {inProgressTask}
+│ │     🔳 {pendingTask}
 │ ╰─
 │
 │ 🎯 Active: {current.minor}
 │ 📋 Available: {pendingTasks.length} pending tasks
 ╰─
 ```
+
+**Structure rules:**
+- Each major version starts with `│ ╭─` and its minors are indented with `│ │`
+- Close each major's inner box with `│ ╰─` BEFORE starting the next major
+- The active minor (with pending tasks) shows tasks indented below it
+- Completed majors can be collapsed (show only summary line if all minors complete)
 
 **Emoji rules:**
 - ☑️ = Minor complete (completed == total && total > 0)
