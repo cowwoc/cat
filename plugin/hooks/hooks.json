@@ -94,7 +94,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/predict-batch-opportunity.sh"
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-read-pretool-output.py"
           }
         ]
       },
@@ -148,7 +148,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/detect-sequential-tools.sh"
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-read-posttool-output.py"
           }
         ]
       }
