@@ -21,6 +21,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - task-management-demo
 
 ## Tasks Pending
+- find-next-task-script
 - fix-config-documentation
 - multi-agent-demo
 - planning-research-demo
