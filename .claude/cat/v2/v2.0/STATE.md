@@ -23,6 +23,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - remove-box-rendering-infrastructure
 
 ## Tasks Pending
+- merge-and-cleanup-script
 - find-next-task-script
 - fix-config-documentation
 - multi-agent-demo
