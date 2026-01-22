@@ -10,3 +10,4 @@ Prepare CAT for commercial release with pricing tiers, license key system, billi
 
 ## Minor Versions
 - v2.0: Licensing & Billing (in_progress)
+- v2.1: GitHub Integration (pending)
