@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-skill-dispatcher.py - Unified UserPromptSubmit hook for CAT skills
+get-skill-output.py - Unified UserPromptSubmit hook for CAT skills
 
 TRIGGER: UserPromptSubmit
 
