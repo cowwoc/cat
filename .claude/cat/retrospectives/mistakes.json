@@ -2336,6 +2336,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Output the ERROR message exactly as shown when pre-computed display is not found, then STOP"
+    },
+    {
+      "id": "M207",
+      "timestamp": "2026-01-22T10:30:00Z",
+      "category": "protocol_violation",
+      "description": "Used docs: commit type for CAT planning structure changes instead of planning:",
+      "root_cause": "Skill template in /cat:add used docs: instead of planning: in commit examples",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/commands/add.md",
+      "pattern_keywords": [
+        "commit-type",
+        "planning",
+        "docs",
+        "cat-add"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use planning: commit type for all .claude/cat/ file changes"
     }
   ]
 }
