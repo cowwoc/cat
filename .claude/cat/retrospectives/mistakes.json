@@ -2257,6 +2257,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When extraction_verification shows extraction_required: true, proceed with hook-based approach WITHOUT adding HOWEVER exceptions. The methodology determination is final."
+    },
+    {
+      "id": "M204",
+      "timestamp": "2026-01-22T14:54:00Z",
+      "category": "tool_misuse",
+      "description": "Called task-lock.sh with arguments in wrong order, passing task name as session_id",
+      "root_cause": "task-lock.sh did not validate session_id format, allowing non-UUID values that indicated argument order mistake",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "validation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/task-lock.sh",
+      "pattern_keywords": [
+        "task-lock",
+        "session_id",
+        "UUID",
+        "argument-order"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pass task_id as combined format (e.g., 2.0-taskname) and session_id as valid UUID"
     }
   ]
 }
