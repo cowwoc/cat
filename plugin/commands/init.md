@@ -26,8 +26,8 @@ If found: Use those box templates exactly as provided. Replace only the {variabl
 If NOT found: **FAIL** with this error message:
 ```
 ERROR: Pre-computed boxes not found in context.
-The get-init-output.sh hook should have provided box templates.
-Please report this issue - the hook may not be registered correctly.
+The init_handler.py should have provided box templates.
+Please report this issue - the handler may not be registered correctly.
 ```
 
 **Box templates available:**
