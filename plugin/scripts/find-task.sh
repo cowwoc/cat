@@ -201,6 +201,7 @@ check_dependencies() {
 }
 
 # Try to acquire lock for a task
+# Returns the actual status from task-lock.sh (acquired, locked, or error)
 try_acquire_lock() {
     local task_id="$1"
 
@@ -210,10 +211,16 @@ try_acquire_lock() {
     fi
 
     local result
-    if ! result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$task_id" "$SESSION_ID" 2>/dev/null); then
-        echo '{"status":"error","message":"Lock acquisition failed"}'
+    # Capture output regardless of exit code - task-lock.sh returns valid JSON even on failure
+    # The JSON contains the actual status (locked, acquired, error) which callers must check
+    result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$task_id" "$SESSION_ID" 2>/dev/null) || true
+
+    # If result is empty, something went very wrong
+    if [[ -z "$result" ]]; then
+        echo '{"status":"error","message":"Lock acquisition returned empty result"}'
         return 1
     fi
+
     echo "$result"
 }
 
@@ -326,9 +333,11 @@ find_task_in_minor() {
         fi
 
         # Try to acquire lock
-        local lock_result
+        local lock_result lock_status
         lock_result=$(try_acquire_lock "$task_id")
-        if [[ $(echo "$lock_result" | jq -r '.status') == "locked" ]]; then
+        lock_status=$(echo "$lock_result" | jq -r '.status')
+        # Skip if not acquired (locked by another session, or error)
+        if [[ "$lock_status" != "acquired" ]]; then
             continue
         fi
 
