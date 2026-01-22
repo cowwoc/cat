@@ -354,6 +354,7 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 After presenting validation results for ANY version, show comparison table.
 
 **Note:** Use ASCII status indicators for reliable column alignment without emoji width calculation.
+Follow `skills/box-alignment/SKILL.md` for proper table alignment.
 
 **Table format:**
 ```

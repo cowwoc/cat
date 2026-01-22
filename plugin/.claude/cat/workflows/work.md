@@ -485,7 +485,7 @@ Use this format which isolates only the changed phrases while preserving context
 
 **Structure: File by File, Section by Section**
 
-Show changes organized hierarchically:
+Show changes organized hierarchically. For the header box alignment, follow `skills/box-alignment/SKILL.md`.
 
 ```
 ╭─ Task Diff: {task-name} ────────────────────────╮

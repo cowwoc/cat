@@ -20,6 +20,8 @@ Use Test-Driven Development for features that benefit from upfront behavior spec
 
 ## TDD State Machine
 
+For closed-border box alignment, follow `skills/box-alignment/SKILL.md`.
+
 ```
 ╭─ TDD STATE MACHINE ───────────────────────────────────────────────────────────────╮
 

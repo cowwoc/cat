@@ -166,4 +166,4 @@ cat /tmp/review-diff.txt
 ## Related Skills
 
 - `cat:stakeholder-review` - Uses render-diff for showing changes to reviewers
-- `cat:render-box` - Box rendering library used internally
+- `cat:box-alignment` - Box alignment procedures for closed-border rendering

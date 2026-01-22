@@ -92,6 +92,9 @@ Phases are connected horizontally with dashes. Metrics appear on a second line b
 
 **Output formats directly** - Open-border boxes use left-side borders only (no alignment issues).
 
+**Closed-border boxes** (with right-side `│`) require proper alignment. Follow the procedure in
+`skills/box-alignment/SKILL.md`: collect all lines first, calculate max width, pad each line, then output.
+
 **CRITICAL: Header + Progress Always Together (M162)**
 
 Every progress display MUST include both the header AND the progress line. Never show the progress
