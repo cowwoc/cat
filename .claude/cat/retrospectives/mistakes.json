@@ -1512,6 +1512,58 @@
         "catches_variations": true
       },
       "correct_behavior": "Calculate display width for EVERY line explicitly, show the calculation with actual numbers, then determine max width"
+    },
+    {
+      "id": "M176",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment vertical borders misaligned despite loading box-alignment skill",
+      "root_cause": "Showed calculations in output text instead of using thinking block for systematic verification - calculations were displayed but not verified before outputting box",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "vertical-border",
+        "emoji-width",
+        "thinking-block"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M175",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete BLOCKING GATE after Step 4 - spot-check emoji-heavy line calculation before proceeding to output"
+    },
+    {
+      "id": "M177",
+      "timestamp": "2026-01-22T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment table built with approximate content instead of exact final content",
+      "root_cause": "Built calculation table with simplified/estimated content, then output different actual content, causing width mismatch",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "calculation-table",
+        "content-mismatch",
+        "approximate"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Write final output content first, then copy-paste exact strings into calculation table Content column"
     }
   ]
 }

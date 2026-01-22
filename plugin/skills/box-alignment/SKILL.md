@@ -41,49 +41,41 @@ Closed borders require all lines to have equal display width so right-side `│`
 
 ## Procedure for Closed Borders
 
-**MANDATORY: Use your thinking block to execute these steps. Do NOT output the box until all
-calculations are complete in thinking.**
+**MANDATORY: Build a calculation table before outputting any box.**
 
-### Step 1: List All Content Lines (in thinking)
+Work through this procedure step-by-step. Do NOT output calculations to the user—only output the
+final box. The table is for your internal use to ensure correct alignment.
 
-Write out every line that will appear in the box:
+### Step 1: Build the Calculation Table (internal)
 
-```
-Line 1: "📊 Overall: 45%"
-Line 2: "🏆 10/22 tasks"
-Line 3: "Settings saved"
-```
+Create this table with EVERY line that will appear in the box:
 
-### Step 2: Calculate Display Width for Each Line (in thinking)
+| # | Content (exact) | Chars | Emojis | Width | Pad |
+|---|-----------------|-------|--------|-------|-----|
+| 1 | `📊 Overall: 45%` | 14 | 📊(2) | 16 | 0 |
+| 2 | `🏆 10/22 tasks` | 12 | 🏆(2) | 14 | 2 |
+| 3 | `Settings saved` | 14 | — | 14 | 2 |
 
-**Formula:** `len(non-emoji chars) + sum(emoji widths from SessionStart)`
+**Column definitions:**
+- **Content**: Exact text between `│ ` and ` │` (copy-paste, don't paraphrase)
+- **Chars**: Count of non-emoji characters (letters, digits, spaces, punctuation)
+- **Emojis**: List each emoji with its width from SessionStart
+- **Width**: Chars + sum of emoji widths
+- **Pad**: max_width − this_width (fill in after finding max)
 
-```
-Line 1: "📊 Overall: 45%" → 14 chars + 📊(2) = 16
-Line 2: "🏆 10/22 tasks"  → 12 chars + 🏆(2) = 14
-Line 3: "Settings saved"  → 14 chars + 0    = 14
-```
+**Max width: 16** (largest value in Width column)
 
-**Alternative formula:** `len(string) + (emoji_width - 1)` per emoji
-(Equivalent result, use whichever is easier to compute.)
+### Step 2: Verify Line Count (internal)
 
-### Step 3: Find Maximum Width (in thinking)
+Before proceeding, verify completeness:
 
-```
-max_display_width = max(16, 14, 14) = 16
-```
+- Lines in table: **3**
+- Content lines in final box: **3**
+- **Match? YES** → proceed / **NO** → add missing lines to table
 
-### Step 4: Calculate Padding for Each Line (in thinking)
+### Step 3: Output the Box (this is the only visible output)
 
-```
-Line 1: 16 - 16 = 0 spaces
-Line 2: 16 - 14 = 2 spaces
-Line 3: 16 - 14 = 2 spaces
-```
-
-### Step 5: Output Complete Box
-
-Only NOW output the box, applying the calculated padding:
+Apply padding from the Pad column to each line:
 
 ```
 ╭──────────────────╮
@@ -93,14 +85,22 @@ Only NOW output the box, applying the calculated padding:
 ╰──────────────────╯
 ```
 
-## Verification Checklist
+**Border width:** max_width + 4 (for `│ ` prefix and ` │` suffix)
 
-Before outputting, verify in your thinking block:
+---
 
-- [ ] All content lines listed explicitly
-- [ ] Display width calculated for EVERY line using SessionStart emoji widths
-- [ ] Maximum width identified from calculations
-- [ ] Padding calculated for each line: `max - line_width`
+**Why use a table? (M175, M176)**
+
+Previous failures occurred when calculations were done "mentally" or estimated.
+The table format:
+- Forces enumeration of every line (omissions become obvious)
+- Makes width calculations systematic and precise
+- Catches errors before output, not after
+
+The table is internal work—only output the final box to the user.
+
+**Debugging:** When extended thinking is enabled, the calculation table is visible in the thinking
+trace and can be reviewed to diagnose alignment issues.
 
 ## Common Mistakes
 
@@ -115,47 +115,53 @@ Correct: 4 non-emoji chars + 🐱(2) = 6
 │ Dog    │   <- misaligned because emoji width wasn't used
 ```
 
-### Skipping the Thinking Block (M175)
+### Skipping the Calculation Table (M175, M176)
 
 ```
-# WRONG - calculating "in your head" while outputting
-"I'll just eyeball which line is longest..."
+# WRONG - estimating without systematic calculation
+"The second line looks longest, I'll use that as max..."
 
-# Result: misaligned box because you didn't systematically calculate
+# WRONG - showing partial calculations
+"Line 1 is about 16 chars, line 2 is about 14..."
+
+# Result: misaligned box because widths weren't precisely calculated
 ```
 
-**MUST use thinking block** to write out each line's calculation explicitly.
-This prevents estimation errors, especially when:
+**Always build the full table.** This catches errors that estimation misses, especially when:
 - Lines have different emoji counts
 - Lines have similar visual length
-- There are many lines
+- There are many lines (easy to miss one)
+
+### Copy-Paste Workflow (M177)
+
+Use this workflow to ensure table calculations match final output:
+
+1. **Write final content first** - Draft the exact text that will appear in each line
+2. **Copy-paste into table** - Select and paste each line into the Content column
+3. **Calculate from pasted content** - Count characters in the pasted strings
+4. **Output the same content** - Use the exact strings from your table in the final box
+
+**Why copy-paste matters:** The Content column and final output must be identical strings.
+Typing similar content separately risks differences (e.g., `v1.1: (8/8)` vs
+`v1.1: Core Rewrite (8/8)` → 11-character width difference).
 
 ## Example with Emojis
 
 Given SessionStart widths: `🐱=2, ✅=2`
 
-**In thinking block, calculate:**
+**Build the calculation table (internal work, not shown to user):**
 
-```
-Lines:
-1. "🐱 CAT initialized"
-2. "✅ Trust: high"
-3. "Settings saved"
+| # | Content | Chars | Emojis | Width | Pad |
+|---|---------|-------|--------|-------|-----|
+| 1 | `🐱 CAT initialized` | 16 | 🐱(2) | 18 | 0 |
+| 2 | `✅ Trust: high` | 12 | ✅(2) | 14 | 4 |
+| 3 | `Settings saved` | 14 | — | 14 | 4 |
 
-Display widths (non-emoji chars + emoji widths):
-1. 16 chars + 🐱(2) = 18
-2. 12 chars + ✅(2) = 14
-3. 14 chars + 0     = 14
+**Max width: 18**
 
-max = 18
+**Line count check:** 3 table rows, 3 box lines ✓
 
-Padding:
-1. 18 - 18 = 0 spaces
-2. 18 - 14 = 4 spaces
-3. 18 - 14 = 4 spaces
-```
-
-**Then output:**
+**Output:**
 
 ```
 ╭────────────────────╮
