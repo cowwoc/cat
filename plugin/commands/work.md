@@ -41,26 +41,48 @@ This is CAT's core execution command. It:
 
 <progress_output>
 
-**MANDATORY: Display phase-based progress throughout execution.**
+**MANDATORY: Use work-progress.sh script for ALL progress display (A012).**
 
-### Header Box (MANDATORY - Display FIRST)
+### Using work-progress.sh
 
-At workflow start, display the task header BEFORE any progress lines.
+The `work-progress.sh` script ensures correct header + progress output. **Do NOT manually type progress
+displays** - use this script to prevent M164/M165/M169 mistakes.
 
-**CRITICAL: Use full task ID** (e.g., `2.0-fix-config-documentation`), not just task name (`fix-config-documentation`).
+```bash
+# Display progress at each phase transition
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "${TASK_ID}" <phase> [metrics]
+
+# Phases: preparing, executing, reviewing, merging, passed, failed
+# TASK_ID must be full format: {major}.{minor}-{task-name}
+```
+
+**Examples:**
+
+```bash
+# Starting workflow (Preparing phase)
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" preparing
+
+# After subagent starts (Executing phase with token count)
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" executing "45K tokens"
+
+# After review completes
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" reviewing "75K · 3 commits"
+
+# Task complete
+"${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh" "2.0-fix-config-documentation" passed "75K · approved"
+```
+
+**Output format (rendered by script):**
 
 ```
-🐱 > {major}.{minor}-{task-name}
+🐱 > 2.0-fix-config-documentation
 ────────────────────────────────────────────────────────────────────
+
+● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
+                     45K tokens
 ```
 
-Only after the header is displayed, proceed to show the horizontal progress banner.
-
-### Progress Banner (Display after Header)
-
-This workflow has 4 phases. Display a persistent horizontal progress banner that updates as phases complete.
-
-**Phase mapping:**
+### Phase Mapping
 
 | Phase | Steps Included | Complete When |
 |-------|----------------|---------------|
@@ -69,7 +91,7 @@ This workflow has 4 phases. Display a persistent horizontal progress banner that
 | Reviewing | stakeholder_review, approval_gate | Review passed, user approved |
 | Merging | squash_commits, merge, cleanup, update_state, commit_metadata, update_changelogs, next_task | Merged to main, cleanup done |
 
-**Progress symbols (horizontal layout):**
+### Progress Symbols
 
 | Symbol | Meaning |
 |--------|---------|
@@ -78,115 +100,31 @@ This workflow has 4 phases. Display a persistent horizontal progress banner that
 | `◉` | Current/Active (fisheye) |
 | `✗` | Failed |
 
-**Horizontal progress banner format:**
+**Anti-patterns (M164/M165/M169):**
+- Manually typing header or progress lines
+- Skipping progress display entirely
+- Using partial task ID (e.g., "fix-config" instead of "2.0-fix-config-documentation")
 
-Phases are connected horizontally with dashes. Metrics appear on a second line below their relevant phases.
+### When to Update Progress
 
-```
-🐱 > {major}.{minor}-{task-name}
-────────────────────────────────────────────────────────────────────
+Call `work-progress.sh` at each phase transition:
 
-● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
-                      45K tokens
-```
-
-**Output formats directly** - Open-border boxes use left-side borders only (no alignment issues).
-
-**Closed-border boxes** (with right-side `│`) require proper alignment. Follow the procedure in
-`skills/box-alignment/SKILL.md`: collect all lines first, calculate max width, pad each line, then output.
-
-**CRITICAL: Header + Progress Always Together (M162)**
-
-Every progress display MUST include both the header AND the progress line. Never show the progress
-line without the header above it - the header identifies which task the progress refers to.
-
-```
-🐱 > {major}.{minor}-{task-name}
-────────────────────────────────────────────────────────────────────
-
-◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
-```
-
-Symbols: `○` pending, `●` complete, `◉` active, `✗` failed
-
-**Starting state (phase 1 active):**
-
-```
-🐱 > {major}.{minor}-{task-name}
-────────────────────────────────────────────────────────────────────
-
-◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
-```
-
-──────────────────────────────────────────────────────────────────
-
-**Update display at phase transitions:**
-
-Header remains visible above progress banner throughout. Only the progress line updates:
-
-When Preparing completes, Executing starts:
-```
-🐱 > {major}.{minor}-{task-name}
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
-```
-
-When subagent completes (show metrics):
-```
-🐱 > {major}.{minor}-{task-name}
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ◉ Reviewing ────── ○ Merging
-                       75K · 3 commits
-```
-
-When Reviewing completes:
-```
-🐱 > {major}.{minor}-{task-name}
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ● Reviewing ────── ◉ Merging
-                       75K · 3 commits    approved
-```
-
-**On success (final state):**
-
-```
-🐱 > {major}.{minor}-{task-name} > PASSED
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ● Reviewing ────── ● Merging
-                       75K · 3 commits    approved            → main
-```
-
-Next: {next-task-name} (run `/cat:work` to continue)
-
-──────────────────────────────────────────────────────────────────
-
-**On failure (show context inline):**
-
-```
-🐱 > {major}.{minor}-{task-name} > FAILED
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ✗ Reviewing ────── ○ Merging
-                       75K · 3 commits    BLOCKED: security
-```
-
-Action required: {what user needs to do}
-
-──────────────────────────────────────────────────────────────────
+| Event | Command |
+|-------|---------|
+| Workflow starts | `work-progress.sh "$TASK_ID" preparing` |
+| Worktree created, subagent starting | `work-progress.sh "$TASK_ID" executing` |
+| Subagent complete | `work-progress.sh "$TASK_ID" executing "75K tokens"` |
+| Review starting | `work-progress.sh "$TASK_ID" reviewing "75K · 3 commits"` |
+| User approved | `work-progress.sh "$TASK_ID" merging "75K · approved"` |
+| Task complete | `work-progress.sh "$TASK_ID" passed "75K · approved"` |
+| Task failed | `work-progress.sh "$TASK_ID" failed` |
 
 **Key principles:**
 
-1. **Task always visible** - Header box shows task name throughout
-2. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
-3. **Horizontal layout** - All phases visible at once with connected flow
-4. **Metrics below phases** - Tokens, commits, review status positioned under relevant phases
-5. **State at a glance** - Circle symbols show progress instantly
-6. **Failure context inline** - Shows what went wrong immediately
-7. **Next action clear** - On success, suggests next task
+1. **Always use the script** - Never manually type header or progress lines
+2. **Full task ID required** - Script validates format `{major}.{minor}-{task-name}`
+3. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
+4. **Metrics optional** - Pass as third argument when relevant data available
 
 </progress_output>
 
