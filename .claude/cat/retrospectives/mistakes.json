@@ -1166,6 +1166,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Display header box FIRST using work-progress.sh header, then show progress line updates"
+    },
+    {
+      "id": "M165",
+      "timestamp": "2026-01-22T00:10:00Z",
+      "category": "protocol_violation",
+      "description": "Displayed progress banner without mandatory header box above it",
+      "root_cause": "Did not verify header was displayed before showing progress banner - ambiguous documentation showed progress line both with and without header",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "progress_banner",
+        "header",
+        "display",
+        "M162"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always display header box (🐱 > task-name with underline) before any progress banner"
     }
   ]
 }
