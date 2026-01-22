@@ -221,7 +221,7 @@ def generate_all_boxes(width: int = DEFAULT_WIDTH) -> dict:
         [
             "                                                                  ",
             "  Task: {task-name}                                               ",
-            "  Location: .claude/cat/issues/v0/v0.0/{task-name}/                ",
+            "  Location: .claude/cat/v0/v0.0/{task-name}/                      ",
             "                                                                  ",
             "  Files created:                                                  ",
             "  - PLAN.md - What needs to be done                               ",
