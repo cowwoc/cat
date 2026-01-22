@@ -31,63 +31,24 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 </step>
 
-<step name="box-rendering">
+<step name="display-format">
 
-**Use centralized box rendering scripts for all displays.**
+**Use open-border format for configuration displays.**
 
-LLMs cannot reliably calculate character-level padding for Unicode text (M142).
-All boxes MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
+Open-border format uses left-side borders only, eliminating padding calculation issues:
 
-**Available config box scripts:**
-
-```bash
-# config-box.sh - Renders all /cat:config boxes
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" BOX_TYPE [ARGS...]
-
-# Box types:
-#   settings CONTEXT_LIMIT TARGET_USAGE TRUST VERIFY CURIOSITY PATIENCE AUTO_REMOVE
-#   behavior TRUST VERIFY CURIOSITY PATIENCE
-#   trust CURRENT_LEVEL
-#   verify CURRENT_LEVEL
-#   curiosity CURRENT_LEVEL
-#   patience CURRENT_LEVEL
-#   version-gates
-#   gates-for VERSION ENTRY_CONDITIONS EXIT_CONDITIONS
-#   no-gates VERSION
-#   gates-updated VERSION ENTRY_SUMMARY EXIT_SUMMARY
-#   setting-updated SETTING OLD_VALUE NEW_VALUE
-#   saved CHANGES...
-#   no-changes
+```
+╭─ ⚙️ SETTINGS
+│
+│  Trust: medium
+│  Verify: changed
+│  Curiosity: low
+│  Patience: high
+╰─
 ```
 
-**Workflow (MANDATORY):**
-1. Run the box script with output to temp file: `> /tmp/config-box.txt`
-2. Use the **Read tool** (NOT bash cat) to read `/tmp/config-box.txt`
-3. **Output the box contents as text in your response** (tool output alone is NOT visible to users)
-
-**Anti-pattern (M140):**
-```bash
-# ❌ WRONG - cat output only appears in tool result, not visible to user
-cat /tmp/config-box.txt
-# Then immediately calling AskUserQuestion
-
-# ✅ CORRECT - Read tool, then output text
-Use Read tool on /tmp/config-box.txt
-Then in your response, output the box contents before calling AskUserQuestion
-```
-
-**Anti-pattern (M149): NEVER manually type box characters.**
-```
-# ❌ WRONG - manually typing box in text output
-╭─── ⚙️ SETTINGS ───────────────────────────────────╮
-│  Some setting value                               │  ← LLM cannot align these
-╰───────────────────────────────────────────────────╯
-
-# ✅ CORRECT - use config-box.sh script, then Read and output
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" settings ... > /tmp/config-box.txt
-# Then Read tool on /tmp/config-box.txt
-```
-Why: LLMs miscalculate Unicode character widths (emojis, special chars). ALWAYS use scripts.
+**MANDATORY (M140):** Output display text in your response BEFORE calling AskUserQuestion.
+Users need visual context before making choices.
 
 </step>
 
@@ -105,15 +66,18 @@ BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUse
 **Why this matters:** Users need visual context before making choices. Jumping directly to
 prompts without display creates confusion and poor UX.
 
-**Display settings screen:**
+**Display settings screen in open-border format:**
 
-Render settings box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" settings {trust} {verify} {curiosity} {patience} {autoRemove} > /tmp/config-box.txt
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+╭─ ⚙️ CURRENT SETTINGS
+│
+│  🤝 Trust: {trust}
+│  ✅ Verify: {verify}
+│  🔍 Curiosity: {curiosity}
+│  ⏳ Patience: {patience}
+│  🧹 Cleanup: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'}
+╰─
+```
 
 </step>
 
@@ -152,13 +116,15 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
-Render behavior box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" behavior {trust} {verify} {curiosity} {patience} > /tmp/config-box.txt
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+╭─ 🐱 CAT BEHAVIOR
+│
+│  🤝 Trust: {trust}
+│  ✅ Verify: {verify}
+│  🔍 Curiosity: {curiosity}
+│  ⏳ Patience: {patience}
+╰─
+```
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -181,15 +147,7 @@ Then AskUserQuestion:
 
 **🤝 Trust — How much you trust CAT to make decisions**
 
-Render trust box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" trust {current_trust} > /tmp/config-box.txt
-```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
-
-AskUserQuestion:
+Display current setting, then AskUserQuestion:
 - header: "Trust"
 - question: "How much do you trust CAT to make decisions? (Current: {trust || 'medium'})"
 - options:
@@ -210,15 +168,7 @@ Map: Low → `trust: "low"`, Medium → `trust: "medium"`, High → `trust: "hig
 
 **✅ Verify — What verification CAT runs before committing**
 
-Render verify box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" verify {current_verify} > /tmp/config-box.txt
-```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
-
-AskUserQuestion:
+Display current setting, then AskUserQuestion:
 - header: "Verify"
 - question: "What verification should CAT run? (Current: {verify || 'changed'})"
 - options:
@@ -239,15 +189,7 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 **🔍 Curiosity — How much CAT explores beyond the immediate task**
 
-Render curiosity box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" curiosity {current_curiosity} > /tmp/config-box.txt
-```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
-
-AskUserQuestion:
+Display current setting, then AskUserQuestion:
 - header: "Curiosity"
 - question: "How much should CAT explore beyond the task? (Current: {curiosity || 'low'})"
 - options:
@@ -268,15 +210,7 @@ Map: Low → `curiosity: "low"`, Medium → `curiosity: "medium"`, High → `cur
 
 **⏳ Patience — When CAT acts on discovered opportunities**
 
-Render patience box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" patience {current_patience} > /tmp/config-box.txt
-```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
-
-AskUserQuestion:
+Display current setting, then AskUserQuestion:
 - header: "Patience"
 - question: "When should CAT act on discovered opportunities? (Current: {patience || 'high'})"
 - options:
@@ -321,14 +255,6 @@ Map: Auto-remove → `autoRemoveWorktrees: true`, Keep → `autoRemoveWorktrees:
 <step name="terminal-width">
 
 **📏 Display Width selection:**
-
-Render terminal-width box using script:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" terminal-width {current_terminalWidth} > /tmp/config-box.txt
-```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 AskUserQuestion:
 - header: "Display Width"
@@ -394,13 +320,15 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 
 **📊 Version Gates configuration:**
 
-Render gate overview using script:
+Display gate overview:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" version-gates > /tmp/config-box.txt
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+╭─ 📊 VERSION GATES
+│
+│  Gates control when work can start (entry) and
+│  when a version is considered complete (exit).
+╰─
+```
 
 **Step 1: Select version to configure**
 
@@ -438,20 +366,15 @@ cat .claude/cat/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and render using script:
+Extract the `## Gates` section and display:
 
-```bash
-# If gates exist (pipe-separate multiple conditions)
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" gates-for {version} "{entry_conditions}" "{exit_conditions}" > /tmp/config-box.txt
 ```
-
-If no gates section exists:
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" no-gates {version} > /tmp/config-box.txt
+╭─ 🚧 GATES FOR {version}
+│
+│  Entry: {entry_conditions or "None configured"}
+│  Exit: {exit_conditions or "None configured"}
+╰─
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 **Step 3: Choose action**
 
@@ -523,13 +446,16 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Render confirmation using script:
+Display confirmation:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" gates-updated {version} "{entry_summary}" "{exit_summary}" > /tmp/config-box.txt
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+╭─ ✅ GATES UPDATED
+│
+│  Version: {version}
+│  Entry: {entry_summary}
+│  Exit: {exit_summary}
+╰─
+```
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
 
@@ -551,13 +477,14 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Render confirmation using script:
+Display confirmation:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" setting-updated "{setting}" "{oldValue}" "{newValue}" > /tmp/config-box.txt
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+╭─ ✅ SETTING UPDATED
+│
+│  {setting}: {oldValue} → {newValue}
+╰─
+```
 
 **After confirming**: Return to the **parent menu** and re-display its options.
 
@@ -572,19 +499,25 @@ Examples:
 
 **Exit screen:**
 
-If changes were made, render using script:
+If changes were made:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" saved "{change1}" "{change2}" ... > /tmp/config-box.txt
+```
+╭─ ✅ CONFIGURATION SAVED
+│
+│  Changes:
+│  - {change1}
+│  - {change2}
+╰─
 ```
 
 If no changes:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" no-changes > /tmp/config-box.txt
 ```
-
-Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
+╭─ ℹ️ NO CHANGES
+│
+│  Configuration unchanged.
+╰─
+```
 
 </step>
 

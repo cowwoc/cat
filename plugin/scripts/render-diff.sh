@@ -13,8 +13,34 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source box rendering library for display_width and helpers
-source "${SCRIPT_DIR}/lib/box.sh"
+# Calculate display width of a string (handles Unicode, emojis, wide chars)
+display_width() {
+    local str="$1"
+    python3 -c "
+import unicodedata
+s = '''$str'''
+width = 0
+i = 0
+while i < len(s):
+    char = s[i]
+    # Skip variation selector-16 (counted with previous emoji)
+    if char == '\ufe0f':
+        i += 1
+        continue
+    # Check if next char is VS16 - if so, current is emoji width 2
+    if i + 1 < len(s) and s[i+1] == '\ufe0f':
+        width += 2
+        i += 2
+        continue
+    ea = unicodedata.east_asian_width(char)
+    if ea in ('W', 'F'):
+        width += 2
+    else:
+        width += 1
+    i += 1
+print(width)
+"
+}
 
 # Read terminal width from config
 CONFIG_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/cat/cat-config.json"
