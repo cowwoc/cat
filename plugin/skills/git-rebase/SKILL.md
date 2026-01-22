@@ -1,6 +1,6 @@
 ---
 name: git-rebase
-description: Use instead of `git rebase` directly - provides automatic backup, conflict handling, and verification
+description: "MANDATORY: Use instead of `git rebase` - provides automatic backup and conflict recovery"
 ---
 
 # Git Rebase Skill

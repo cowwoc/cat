@@ -1,13 +1,17 @@
+---
+name: box-alignment
+description: "MANDATORY: Load BEFORE rendering any box output"
+---
+
 # Box Alignment Skill
 
 ## Purpose
 
-Provide explicit procedures for rendering properly-aligned box output. This skill ensures right-side
-borders align vertically by calculating content width and applying padding before output.
+Render properly-aligned box output by calculating content width and applying padding before output.
 
 ## When to Use
 
-Reference this skill when rendering any box output with closed borders (right-side `│`).
+Use this skill when rendering any box output with closed borders (right-side `│`).
 
 **Open-border format** (left border only) does not require this skill - no alignment needed.
 
@@ -23,8 +27,6 @@ Reference this skill when rendering any box output with closed borders (right-si
 ╰─
 ```
 
-Open borders have no right-side border, so varying content lengths don't cause misalignment.
-
 ### Closed Border (Alignment Required)
 
 ```
@@ -35,15 +37,25 @@ Open borders have no right-side border, so varying content lengths don't cause m
 ╰────────────────────────────╯
 ```
 
-Closed borders require all lines to have equal width so right-side `│` characters align.
+Closed borders require all lines to have equal display width so right-side `│` characters align.
 
 ## Procedure for Closed Borders
 
 **MANDATORY: Follow these steps in order. Do NOT output lines as you compose them.**
 
-### Step 1: Collect All Content
+### Step 1: Get Emoji Widths
 
-Build a list of all content lines BEFORE any output. Do not output anything yet.
+At session start, emoji widths are provided in the format:
+```
+Emoji display widths for box alignment: ☑️=2, 🔄=2, 🔳=2, ...
+All other characters (ASCII, box-drawing │╭╮╰╯─) have width 1.
+```
+
+Use these values directly. No file lookup required.
+
+### Step 2: Collect All Content
+
+Build a list of all content lines BEFORE any output:
 
 ```
 lines = [
@@ -53,44 +65,44 @@ lines = [
 ]
 ```
 
-### Step 2: Calculate Maximum Width
+### Step 3: Calculate Display Width
 
-Find the longest line's character count:
+For each line, calculate its **display width** (not character count):
 
-```
-max_width = max(len(line) for line in lines)
-# Example: "Longer content line here" = 24 characters
-```
-
-### Step 3: Determine Box Width
-
-Add padding for visual spacing (typically 1 space on each side):
-
-```
-box_width = max_width + 2  # +1 left padding, +1 right padding
-# Example: 24 + 2 = 26
+```python
+def display_width(line, emoji_widths):
+    width = 0
+    for char in line:
+        if char in emoji_widths:
+            width += emoji_widths[char]  # e.g., 🐱=2
+        else:
+            width += 1  # ASCII, box-drawing, and other chars
+    return width
 ```
 
-### Step 4: Pad Each Line
+### Step 4: Determine Box Width
 
-For each content line, pad with spaces to reach `max_width`:
+Find the maximum display width across all lines:
+
+```
+max_display_width = max(display_width(line) for line in lines)
+box_width = max_display_width + 2  # +1 left padding, +1 right padding
+```
+
+### Step 5: Pad Each Line
+
+Pad each content line with spaces to reach `max_display_width`:
 
 ```
 padded_lines = []
 for line in lines:
-    padding_needed = max_width - len(line)
+    line_width = display_width(line)
+    padding_needed = max_display_width - line_width
     padded_line = line + (" " * padding_needed)
     padded_lines.append(padded_line)
 ```
 
-Result:
-```
-"Content line 1          "  (24 chars)
-"Content line 2          "  (24 chars)
-"Longer content line here"  (24 chars)
-```
-
-### Step 5: Output Complete Box
+### Step 6: Output Complete Box
 
 Only now output the box with consistent widths:
 
@@ -107,12 +119,20 @@ Only now output the box with consistent widths:
 Before outputting a closed box, verify:
 
 - [ ] All content lines collected (not outputting incrementally)
-- [ ] Maximum width calculated
-- [ ] All lines padded to same length
-- [ ] Top border width matches content width + 2 (for side borders)
+- [ ] Display width calculated for each line (using emoji widths from session context)
+- [ ] All lines padded to same display width
+- [ ] Top border width matches content display width + 2 (for side borders)
 - [ ] Bottom border width matches top border
 
 ## Common Mistakes
+
+### Using len() Instead of Display Width for Emojis
+
+```
+# WRONG - len("🐱") = 1 but display width = 2
+│ 🐱 Cat    │
+│ Dog      │   <- misaligned because emoji width wasn't accounted for
+```
 
 ### Outputting Lines Incrementally
 
@@ -130,36 +150,39 @@ Before outputting a closed box, verify:
 │ Much longer line here│
 ```
 
-### Inconsistent Border Width
+## Example with Emojis
 
+Given emoji widths: `🐱=2, ✅=2`
+
+Content:
 ```
-# WRONG - top/bottom don't match content
-╭────────╮
-│ Content line here │
-╰────────╯
-```
-
-## Special Cases
-
-### Content with Emojis
-
-Emojis typically display as 2 characters wide but count as 1 in string length.
-For emoji-heavy content, use display width calculation:
-
-- Most emojis: display width = 2
-- ASCII characters: display width = 1
-- Box-drawing characters (│╭╮╰╯─): display width = 1
-
-When content contains emojis, calculate `display_width` instead of `len()`:
-
-```
-display_width = sum(2 if is_emoji(c) else 1 for c in line)
+lines = [
+  "🐱 CAT initialized",
+  "✅ Trust: high",
+  "Settings saved"
+]
 ```
 
-### Nested Boxes
+Display width calculation:
+- "🐱 CAT initialized" = 2 + 1 + 3 + 1 + 11 = 18
+- "✅ Trust: high" = 2 + 1 + 6 + 1 + 4 = 14
+- "Settings saved" = 14
 
-For boxes inside boxes, the inner box content follows the same procedure.
-Calculate inner box dimensions first, then treat the rendered inner box as content for the outer box.
+max_display_width = 18
+
+Padding:
+- "🐱 CAT initialized" + 0 spaces
+- "✅ Trust: high" + 4 spaces
+- "Settings saved" + 4 spaces
+
+Output:
+```
+╭────────────────────╮
+│ 🐱 CAT initialized │
+│ ✅ Trust: high     │
+│ Settings saved     │
+╰────────────────────╯
+```
 
 ## Recommendation
 

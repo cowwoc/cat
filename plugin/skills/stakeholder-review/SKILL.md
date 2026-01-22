@@ -282,30 +282,32 @@ fi
 
 ### Output Format
 
-After context analysis, display selection results:
+After context analysis, display selection results using closed-border format.
+Follow `skills/box-alignment/SKILL.md` for proper alignment.
 
 ```
-╭─ STAKEHOLDER SELECTION
-│
-│  Stakeholder Review: {N} of 10 stakeholders selected
-│
-│  Running: requirements, architect, security, quality, tester
-│
-│  Skipped:
-│    - ux: No UI/frontend changes detected
-│    - legal: No licensing/compliance keywords in task
-│    - sales: Internal tooling task
-│    - marketing: Internal tooling task
-│    - performance: No algorithm-heavy code changes
-│
-╰─
+╭─── STAKEHOLDER SELECTION ──────────────────────────────╮
+│                                                        │
+│  Stakeholder Review: {N} of 10 stakeholders selected   │
+│                                                        │
+│  Running: requirements, architect, security,           │
+│           quality, tester                              │
+│                                                        │
+│  Skipped:                                              │
+│    - ux: No UI/frontend changes detected               │
+│    - legal: No licensing/compliance keywords           │
+│    - sales: Internal tooling task                      │
+│    - marketing: Internal tooling task                  │
+│    - performance: No algorithm-heavy code changes      │
+│                                                        │
+╰────────────────────────────────────────────────────────╯
 ```
 
-If file-based overrides occurred:
+If file-based overrides occurred, add inside the box:
 ```
-│  Overrides (file-based):
-│    + ux: UI file changed (src/ui/TerminalRenderer.ts)
-│
+│  Overrides (file-based):                               │
+│    + ux: UI file changed (src/ui/TerminalRenderer.ts)  │
+│                                                        │
 ```
 
 ### Skip Reason Mapping
@@ -465,39 +467,41 @@ for review in reviews:
 
 **Generate compact review report:**
 
-Output the review results directly using open-border format:
+Output the review results using closed-border format. Follow `skills/box-alignment/SKILL.md` for proper alignment, using `${CLAUDE_PLUGIN_ROOT}/emoji-widths.json` for emoji display widths.
 
 **Summary box:**
 
 ```
-╭─ STAKEHOLDER REVIEW
-│
-│  Task: {task-name}
-│
-│  Spawning reviewers...
-│  ├── requirements ✓
-│  ├── architect ✓
-│  ├── security ⚠ 1 HIGH
-│  └── tester ✗ 1 CRITICAL
-│
-│  Result: REJECTED (1 critical, 1 high)
-╰─
+╭─── STAKEHOLDER REVIEW ─────────────────────────────────╮
+│                                                        │
+│  Task: {task-name}                                     │
+│                                                        │
+├────────────────────────────────────────────────────────┤
+│  Spawning reviewers...                                 │
+│  ├── requirements ✓                                    │
+│  ├── architect ✓                                       │
+│  ├── security ⚠ 1 HIGH                                 │
+│  └── tester ✗ 1 CRITICAL                               │
+├────────────────────────────────────────────────────────┤
+│  Result: REJECTED (1 critical, 1 high)                 │
+│                                                        │
+╰────────────────────────────────────────────────────────╯
 ```
 
 **Concern boxes (if any):**
 
 ```
-╭─ CRITICAL
-│
-│  [Tester] No unit tests
-│    └─ src/
-╰─
+┌─ CRITICAL ─────────────────────────────────────────────┐
+│ [Tester] No unit tests                                 │
+│ └─ src/                                                │
+│                                                        │
+└────────────────────────────────────────────────────────┘
 
-╭─ HIGH
-│
-│  [Security] Input validation missing
-│    └─ api.js:42
-╰─
+┌─ HIGH ─────────────────────────────────────────────────┐
+│ [Security] Input validation missing                    │
+│ └─ api.js:42                                           │
+│                                                        │
+└────────────────────────────────────────────────────────┘
 ```
 
 **Status icons:**
