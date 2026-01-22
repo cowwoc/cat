@@ -138,3 +138,4 @@ The handler:
 
 **Why pre-compute?** LLMs cannot reliably calculate emoji widths or character padding.
 Pre-computing ensures correct alignment every time.
+
