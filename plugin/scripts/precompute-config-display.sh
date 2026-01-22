@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # precompute-config-display.sh - Generate properly aligned config display box
 #
-# USAGE: precompute-config-display.sh <project-dir>
+# USAGE: precompute-config-display.sh [config-path]
 #
-# Arguments:
-#   project-dir    Project root directory (contains .claude/cat/) - REQUIRED
+# If config-path not provided, looks for .claude/cat/cat-config.json in:
+# 1. CLAUDE_PROJECT_DIR
+# 2. Current directory
 #
 # OUTPUTS: Pre-computed box display with correct alignment
 
@@ -13,37 +14,33 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_SCRIPT="$SCRIPT_DIR/build-box-lines.py"
 
-# Show usage
-usage() {
-    cat << 'EOF'
-Usage: precompute-config-display.sh <project-dir>
+# Find config file
+find_config() {
+    local config_path="${1:-}"
 
-Arguments:
-  project-dir    Project root directory (contains .claude/cat/) - REQUIRED
+    if [[ -n "$config_path" ]] && [[ -f "$config_path" ]]; then
+        echo "$config_path"
+        return 0
+    fi
 
-Outputs:
-  Pre-computed box display with correct alignment for config settings
-EOF
+    if [[ -n "${CLAUDE_PROJECT_DIR:-}" ]] && [[ -f "${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json" ]]; then
+        echo "${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+        return 0
+    fi
+
+    if [[ -f ".claude/cat/cat-config.json" ]]; then
+        echo ".claude/cat/cat-config.json"
+        return 0
+    fi
+
+    return 1
 }
 
-# Validate arguments
-if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-    usage
-    exit 0
-fi
-
-PROJECT_DIR="$1"
-
-if [[ ! -d "$PROJECT_DIR/.claude/cat" ]]; then
-    echo "Error: Not a CAT project: '$PROJECT_DIR' (no .claude/cat directory)" >&2
+# Main
+CONFIG_PATH=$(find_config "${1:-}") || {
+    echo "Error: Cannot find cat-config.json" >&2
     exit 1
-fi
-
-CONFIG_PATH="$PROJECT_DIR/.claude/cat/cat-config.json"
-if [[ ! -f "$CONFIG_PATH" ]]; then
-    echo "Error: Cannot find cat-config.json at $CONFIG_PATH" >&2
-    exit 1
-fi
+}
 
 # Check Python script exists
 if [[ ! -f "$PYTHON_SCRIPT" ]]; then
