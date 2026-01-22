@@ -9,20 +9,21 @@ import re
 from . import register_handler
 
 VALID_COMMIT_TYPES = [
-    "feature",      # New feature (NOT "feat")
-    "bugfix",       # Bug fix (NOT "fix")
-    "docs",         # Documentation
-    "style",        # Formatting
-    "refactor",     # Code restructuring
-    "performance",  # Performance (NOT "perf")
-    "test",         # Tests
-    "config",       # Configuration changes
-    "planning",     # Planning documents
-    "revert",       # Revert commit
+    "feat",      # New feature
+    "fix",       # Bug fix
+    "docs",      # Documentation
+    "style",     # Formatting
+    "refactor",  # Code restructuring
+    "perf",      # Performance
+    "test",      # Tests
+    "build",     # Build system
+    "ci",        # CI configuration
+    "chore",     # Maintenance
+    "revert",    # Revert commit
+    "config",    # Configuration changes
+    "planning",  # Planning documents
+    "bugfix",    # Alternative for fix
 ]
-
-# Short forms that are NOT allowed (per commit-types.md)
-# feat, fix, chore, build, ci, perf
 
 
 class ValidateCommitTypeHandler:
@@ -34,42 +35,12 @@ class ValidateCommitTypeHandler:
             return None
 
         # Extract commit message from -m flag
-        # Check HEREDOC first (more specific pattern)
-        # Pattern 1: HEREDOC format: -m "$(cat <<'EOF'\nmessage\nEOF\n)"
-        heredoc_match = re.search(r'-m\s+"\$\(cat\s+<<[\'"]?EOF[\'"]?\s*\n(.+?)\nEOF', command, re.DOTALL)
-        if heredoc_match:
-            message = heredoc_match.group(1).strip()
-        else:
-            # Pattern 2: Simple -m "message" or -m 'message'
-            match = re.search(r'-m\s+["\']([^"\']+)["\']', command)
-            if match:
-                message = match.group(1)
-            else:
-                # -m flag present but couldn't parse - suspicious in Claude Code context
-                # Check if there's actually a -m flag we failed to parse
-                if re.search(r'-m\s+', command):
-                    return {
-                        "decision": "block",
-                        "reason": """**BLOCKED: Could not parse commit message format**
+        match = re.search(r'-m\s+["\']([^"\']+)["\']', command)
+        if not match:
+            # Could be using heredoc or other method
+            return None
 
-The commit uses -m flag but the message format is not recognized.
-Claude Code should use the standard HEREDOC format:
-
-```
-git commit -m "$(cat <<'EOF'
-type: description
-EOF
-)"
-```
-
-If this is a legitimate format that should be supported, update
-validate_commit_type.py to handle it."""
-                    }
-                # No -m flag at all (interactive mode) - unusual for Claude Code
-                return None
-
-        # Strip leading whitespace from each line (heredoc indentation)
-        message = '\n'.join(line.strip() for line in message.split('\n'))
+        message = match.group(1)
 
         # Check for conventional commit format
         type_match = re.match(r'^(\w+)(\(.+\))?:', message)
@@ -82,8 +53,8 @@ validate_commit_type.py to handle it."""
 
 Valid commit types: {', '.join(VALID_COMMIT_TYPES)}
 
-Example: feature: add user authentication
-         bugfix: resolve memory leak in parser"""
+Example: feat: add user authentication
+         fix: resolve memory leak in parser"""
                 }
 
         return None
