@@ -2040,6 +2040,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Hook should check for .claude/cat/v*/ files first and recommend planning: before falling back to config: for other Claude-facing files"
+    },
+    {
+      "id": "M196",
+      "timestamp": "2026-01-22T17:30:00Z",
+      "category": "logical_error",
+      "description": "find-task.sh reported lock_status:acquired for task locked by another session",
+      "root_cause": "try_acquire_lock masked actual locked status with generic error, and caller only checked for locked not for acquired",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/find-task.sh",
+      "pattern_keywords": [
+        "lock",
+        "find-task",
+        "status-check",
+        "false-positive"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "try_acquire_lock should pass through actual status from task-lock.sh, and caller should check for status==acquired (positive verification) not status==locked (negative verification)"
     }
   ]
 }
