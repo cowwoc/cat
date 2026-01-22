@@ -1324,6 +1324,87 @@
         "catches_variations": true
       },
       "correct_behavior": "Use full task ID format in progress header: {major}.{minor}-{task-name} (e.g., 2.0-fix-config-documentation)"
+    },
+    {
+      "id": "M169",
+      "timestamp": "2026-01-22T02:55:10Z",
+      "category": "protocol_violation",
+      "description": "Progress header showed partial task ID (remote-lock-metadata) instead of full ID (2.0-remote-lock-metadata)",
+      "root_cause": "Header format examples in work.md used {task-name} placeholder instead of explicit {major}.{minor}-{task-name} format",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "header",
+        "task-id",
+        "progress-banner",
+        "format"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use full task ID format {major}.{minor}-{task-name} in progress headers"
+    },
+    {
+      "id": "M170",
+      "timestamp": "2026-01-22T02:55:19Z",
+      "category": "protocol_violation",
+      "description": "Approval gate diff used ad-hoc summary format instead of Variant 2 Isolated Changes format",
+      "root_cause": "commands/work.md approval_gate step said to display diff but did not reference the Variant 2 format specification in workflows/work.md",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "diff",
+        "variant-2",
+        "approval-gate",
+        "format",
+        "isolated-changes"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display diff using Variant 2 Isolated Changes format with +/- markers for actual code changes, not ad-hoc summaries"
+    },
+    {
+      "id": "M171",
+      "timestamp": "2026-01-22T12:45:00Z",
+      "category": "protocol_violation",
+      "description": "Box drawing output had misaligned right-side vertical bars due to varying content lengths without padding",
+      "root_cause": "Skills show example box output without explicit procedure: (1) collect all lines, (2) find max width, (3) pad each line, (4) then output",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box",
+        "alignment",
+        "padding",
+        "border",
+        "width",
+        "closed-box"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "For closed-border boxes: collect all content lines first, calculate max width, pad each line to match, then output. Reference skills/box-alignment/SKILL.md."
     }
   ]
 }
