@@ -90,9 +90,15 @@ Phases are connected horizontally with dashes. Metrics appear on a second line b
 
 **Output formats directly** - Open-border boxes use left-side borders only (no alignment issues).
 
-**Progress banner format:**
+**CRITICAL: Header + Progress Always Together (M162)**
+
+Every progress display MUST include both the header AND the progress line. Never show the progress
+line without the header above it - the header identifies which task the progress refers to.
 
 ```
+🐱 > {task-name}
+────────────────────────────────────────────────────────────────────
+
 ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
 ```
 
