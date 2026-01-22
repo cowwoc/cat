@@ -93,13 +93,27 @@ class AutoLearnMistakesHandler:
     def _detect_mistake(self, tool_name: str, output: str, exit_code: int, assistant_msg: str) -> tuple:
         """Detect mistake type and details from output."""
 
+        # Filter out JSON/JSONL content to avoid false positives from session history
+        output = self._filter_json_content(output)
+
         # Pattern 1: Build failures
         if re.search(r"BUILD FAILURE|COMPILATION ERROR|compilation failure", output, re.I):
             return "build_failure", self._extract_context(output, r"error|failure", 5)
 
-        # Pattern 2: Test failures
-        if re.search(r"Tests run:.*Failures: [1-9]|test.*failed", output, re.I):
-            return "test_failure", self._extract_context(output, r"test.*failed|failure", 5)
+        # Pattern 2: Test failures (language-agnostic patterns)
+        # - "Tests run: X, Failures: Y" (JUnit/Maven/TestNG)
+        # - "X test(s) failed" or "X failures" with count
+        # - "FAIL:" or "FAILED" at line start (pytest, go test, etc.)
+        # - "test X ... FAILED" (pytest verbose)
+        if re.search(
+            r"Tests run:.*Failures: [1-9]|"  # JUnit-style
+            r"\d+\s+tests?\s+failed|"         # "2 tests failed"
+            r"\d+\s+failures?\b|"             # "2 failures"
+            r"^(FAIL:|FAILED\s)|"             # Line starts with FAIL
+            r"^\s*\S+\s+\.\.\.\s+FAILED",     # pytest verbose: "test_foo ... FAILED"
+            output, re.I | re.M
+        ):
+            return "test_failure", self._extract_context(output, r"fail|error", 5)
 
         # Pattern 3: Protocol violations
         if re.search(r"PROTOCOL VIOLATION|🚨.*VIOLATION", output):
@@ -194,6 +208,31 @@ class AutoLearnMistakesHandler:
                 return "self_acknowledged_mistake", "\n".join(details)
 
         return None, None
+
+    def _filter_json_content(self, output: str) -> str:
+        """Filter out JSON/JSONL content to avoid false positives.
+
+        Session history files contain serialized JSON with embedded text
+        that can trigger false pattern matches (e.g., 'test_failure' in
+        category reference tables).
+        """
+        lines = output.split('\n')
+        filtered = []
+        for line in lines:
+            stripped = line.strip()
+            # Skip JSONL lines (session history format)
+            if stripped.startswith('{') and (
+                '"type":' in stripped or
+                '"parentUuid":' in stripped or
+                '"sessionId":' in stripped
+            ):
+                continue
+            # Skip JSON array elements
+            if stripped.startswith('[{') or stripped.startswith('{"'):
+                if '"type":' in stripped or '"message":' in stripped:
+                    continue
+            filtered.append(line)
+        return '\n'.join(filtered)
 
     def _filter_git_noise(self, output: str) -> str:
         """Filter out git log output, JSON, diff lines."""
