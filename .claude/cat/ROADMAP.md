@@ -22,6 +22,10 @@ Project roadmap with version summaries. Minor versions group related tasks (2-8 
   - feature-gate-middleware
   - remove-license-notice-startup
   - update-check-startup
+- **2.1:** GitHub Integration (PENDING)
+  - github-storage-research
+  - github-storage-prototype
+  - github-storage-implementation
 
 ## Version 3: Enterprise (PLANNED)
 - **3.0:** Enterprise Features (PENDING)
