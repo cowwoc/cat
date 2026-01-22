@@ -1,6 +1,6 @@
 ---
 name: validate-git-safety
-description: Validate git operations won't affect protected branches or cause data loss
+description: "MANDATORY: Run before git push --force, rebase, or reset to verify safety"
 ---
 
 # Validate Git Safety Skill

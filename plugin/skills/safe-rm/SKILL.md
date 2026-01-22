@@ -1,6 +1,6 @@
 ---
 name: safe-rm
-description: Safely remove files and directories without breaking the shell session
+description: "MANDATORY: Use instead of rm -rf or rm -r to prevent shell session breakage"
 ---
 
 # Safe Remove Skill
