@@ -8,10 +8,7 @@
 # 4. Release the task lock
 #
 # Usage:
-#   merge-and-cleanup.sh <project-dir> <task-id> <session-id> [--worktree <path>]
-#
-# Required:
-#   project-dir    Project root directory (contains .claude/cat/) - MUST be first argument
+#   merge-and-cleanup.sh <task-id> <session-id> [--worktree <path>]
 #
 # Arguments:
 #   task-id        Task identifier (e.g., "2.0-fix-parser")
@@ -35,7 +32,7 @@ set -euo pipefail
 # ============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR=""  # Required: set via --project-dir
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}"
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:?CLAUDE_PLUGIN_ROOT must be set}"
 
 # ============================================================================
@@ -70,12 +67,11 @@ trap 'error_json 1 "Unexpected error at line $LINENO: $BASH_COMMAND"' ERR
 
 usage() {
   cat << 'EOF'
-Usage: merge-and-cleanup.sh <project-dir> <task-id> <session-id> [--worktree <path>]
+Usage: merge-and-cleanup.sh <task-id> <session-id> [--worktree <path>]
 
 Merge task branch to base branch and clean up resources.
 
 Arguments:
-  project-dir    Project root directory (contains .claude/cat/) - MUST be first argument
   task-id        Task identifier (e.g., "2.0-fix-parser")
   session-id     Claude session UUID
   --worktree     Optional worktree path (auto-detected if not provided)
@@ -168,25 +164,12 @@ TASK_ID=""
 SESSION_ID=""
 WORKTREE_PATH=""
 
-# First argument must be project-dir (unless help)
-if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [[ "$1" == "help" ]]; then
-  usage
-  exit 0
-fi
-
-PROJECT_DIR="$1"
-shift
-
-# Validate project directory immediately
-if [[ -z "$PROJECT_DIR" ]]; then
-  error_json 1 "project-dir is required as first argument"
-fi
-if [[ ! -d "$PROJECT_DIR/.claude/cat" ]]; then
-  error_json 1 "Not a CAT project: '$PROJECT_DIR' (no .claude/cat directory)"
-fi
-
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
     --worktree)
       if [[ $# -lt 2 ]]; then
         error_json 1 "Missing value for --worktree"
@@ -338,7 +321,7 @@ progress_step "Releasing task lock"
 LOCK_SCRIPT="${PLUGIN_ROOT}/scripts/task-lock.sh"
 
 if [[ -x "$LOCK_SCRIPT" ]]; then
-  LOCK_RESULT=$("$LOCK_SCRIPT" release "$PROJECT_DIR" "$TASK_ID" "$SESSION_ID" 2>&1) || {
+  LOCK_RESULT=$("$LOCK_SCRIPT" release "$TASK_ID" "$SESSION_ID" 2>&1) || {
     error_json 7 "Failed to release lock: $LOCK_RESULT"
   }
   LOCK_RELEASED=true
