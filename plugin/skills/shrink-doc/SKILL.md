@@ -353,9 +353,6 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 After presenting validation results for ANY version, show comparison table.
 
-**Note:** Use ASCII status indicators for reliable column alignment without emoji width calculation.
-Follow `skills/box-alignment/SKILL.md` for proper table alignment.
-
 **Table format:**
 ```
 ╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
@@ -372,15 +369,15 @@ Follow `skills/box-alignment/SKILL.md` for proper table alignment.
 │ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
 ├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
 │ **Original** │ {n}   │ {n}K │ baseline  │ N/A   │ Reference    │
-│ **V1**       │ {n}   │ {n}K │ {n}%      │ {n}   │ [REJECTED]   │
-│ **V2**       │ {n}   │ {n}K │ {n}%      │ {n}   │ [APPLIED]    │
+│ **V1**       │ {n}   │ {n}K │ {n}%      │ {n}   │ ❌ Rejected   │
+│ **V2**       │ {n}   │ {n}K │ {n}%      │ {n}   │ ✅ Applied    │
 ╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 
 **Status Legend**:
-- [APPROVED] = Approved (score = 1.0)
-- [REJECTED] = Rejected (score < 1.0)
-- [APPLIED] = Currently applied to original file
+- ✅ Approved = Approved (score = 1.0)
+- ❌ Rejected = Rejected (score < 1.0)
+- ✅ Applied = Currently applied to original file
 
 **Example**:
 ```
@@ -388,8 +385,8 @@ Follow `skills/box-alignment/SKILL.md` for proper table alignment.
 │ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
 ├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
 │ **Original** │ 1,057 │ 48K  │ baseline  │ N/A   │ Reference    │
-│ **V1**       │ 520   │ 26K  │ 51%       │ 0.89  │ [REJECTED]   │
-│ **V2**       │ 437   │ 27K  │ 59%       │ 0.97  │ [APPLIED]    │
+│ **V1**       │ 520   │ 26K  │ 51%       │ 0.89  │ ❌ Rejected   │
+│ **V2**       │ 437   │ 27K  │ 59%       │ 0.97  │ ✅ Applied    │
 ╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 
