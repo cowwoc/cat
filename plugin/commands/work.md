@@ -45,10 +45,12 @@ This is CAT's core execution command. It:
 
 ### Header Box (MANDATORY - Display FIRST)
 
-At workflow start, display the task header BEFORE any progress lines:
+At workflow start, display the task header BEFORE any progress lines.
+
+**CRITICAL: Use full task ID** (e.g., `2.0-fix-config-documentation`), not just task name (`fix-config-documentation`).
 
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 ```
 
@@ -81,7 +83,7 @@ This workflow has 4 phases. Display a persistent horizontal progress banner that
 Phases are connected horizontally with dashes. Metrics appear on a second line below their relevant phases.
 
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 
 ● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
@@ -96,7 +98,7 @@ Every progress display MUST include both the header AND the progress line. Never
 line without the header above it - the header identifies which task the progress refers to.
 
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 
 ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
@@ -107,7 +109,7 @@ Symbols: `○` pending, `●` complete, `◉` active, `✗` failed
 **Starting state (phase 1 active):**
 
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 
 ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
@@ -121,7 +123,7 @@ Header remains visible above progress banner throughout. Only the progress line 
 
 When Preparing completes, Executing starts:
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 
 ● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
@@ -129,7 +131,7 @@ When Preparing completes, Executing starts:
 
 When subagent completes (show metrics):
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 
 ● Preparing ────── ● Executing ────── ◉ Reviewing ────── ○ Merging
@@ -138,7 +140,7 @@ When subagent completes (show metrics):
 
 When Reviewing completes:
 ```
-🐱 > {task-name}
+🐱 > {major}.{minor}-{task-name}
 ────────────────────────────────────────────────────────────────────
 
 ● Preparing ────── ● Executing ────── ● Reviewing ────── ◉ Merging
@@ -148,7 +150,7 @@ When Reviewing completes:
 **On success (final state):**
 
 ```
-🐱 > {task-name} > PASSED
+🐱 > {major}.{minor}-{task-name} > PASSED
 ────────────────────────────────────────────────────────────────────
 
 ● Preparing ────── ● Executing ────── ● Reviewing ────── ● Merging
@@ -162,7 +164,7 @@ Next: {next-task-name} (run `/cat:work` to continue)
 **On failure (show context inline):**
 
 ```
-🐱 > {task-name} > FAILED
+🐱 > {major}.{minor}-{task-name} > FAILED
 ────────────────────────────────────────────────────────────────────
 
 ● Preparing ────── ● Executing ────── ✗ Reviewing ────── ○ Merging
