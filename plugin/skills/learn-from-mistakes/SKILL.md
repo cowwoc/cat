@@ -423,13 +423,31 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
-**Language requirements for documentation/prompt changes:**
+**Language requirements for documentation/prompt changes (M177):**
 
-When prevention involves updating documentation, prompts, or instructions:
-- Use **positive actionable language** (what to do) instead of negative language (what not to do)
-- Convert "Do NOT do X" to "Do Y instead" where a clear alternative exists
-- Keep negative language only when no actionable positive alternative exists
-- Example: "Always collect results before merging" instead of "Do NOT merge without collection"
+When prevention involves updating documentation, prompts, or instructions, use **positive actionable
+language** that guides toward correct behavior rather than warning against mistakes.
+
+| Instead of (negative) | Use (positive) |
+|----------------------|----------------|
+| "Do NOT use approximate content" | "Copy-paste exact content from final output" |
+| "Never skip the verification step" | "Complete verification before proceeding" |
+| "Don't forget to commit" | "Commit changes before requesting review" |
+| "Avoid using placeholder text" | "Write final content first, then calculate" |
+
+**Why positive framing works better:**
+- Tells the agent what TO do (actionable) vs what to avoid (requires inference)
+- Creates clear mental model of correct behavior
+- Reduces cognitive load - no need to invert the instruction
+- Section titles should name the solution, not the problem (e.g., "Copy-Paste Workflow" not "Avoiding Content Mismatch")
+
+**Self-check before finalizing prevention text:**
+1. Does each instruction describe an action to take?
+2. Are section titles named after solutions, not problems?
+3. Would someone know exactly what to do after reading this?
+
+Keep negative language only when no actionable positive alternative exists (e.g., security warnings
+where the "don't" is the entire point).
 
 **For context-related mistakes:**
 
