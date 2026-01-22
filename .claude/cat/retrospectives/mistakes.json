@@ -2201,6 +2201,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use render-diff skill: git diff ${BASE_BRANCH}..HEAD | \"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh\" to display diff with box characters and 4-column format"
+    },
+    {
+      "id": "M202",
+      "timestamp": "2026-01-22T14:15:00Z",
+      "category": "protocol_violation",
+      "description": "Presented approval gate with 2 unsquashed commits on task branch",
+      "root_cause": "Skipped squash_commits step - jumped directly from commit to approval_gate in work workflow",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-unsquashed-approval.sh",
+      "pattern_keywords": [
+        "squash",
+        "approval",
+        "commit",
+        "work",
+        "pre-approval"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run /cat:git-squash to squash commits by type BEFORE presenting approval gate"
     }
   ]
 }
