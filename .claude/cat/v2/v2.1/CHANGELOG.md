@@ -1,10 +1,10 @@
-# Changelog: v2.1 - GitHub Integration
+# Changelog: v2.1 - Pluggable Issue Trackers
 
 **Completed**: (pending)
 
 ## Summary
 
-Investigate moving planning metadata to GitHub-native storage.
+Add support for multiple issue tracker backends through a storage abstraction layer.
 
 ## Tasks Completed
 

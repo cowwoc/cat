@@ -6,9 +6,9 @@
 - **Last Updated:** 2026-01-22
 
 ## Tasks Pending
-- github-storage-research
-- github-storage-prototype
-- github-storage-implementation
+- storage-abstraction-design
+- local-file-backend
+- github-issues-backend
 
 ## Tasks Completed
 (None)
