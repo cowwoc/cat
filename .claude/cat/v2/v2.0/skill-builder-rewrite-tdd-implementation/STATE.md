@@ -1,10 +1,19 @@
 # State
 
-- **Status:** pending
-- **Progress:** 0%
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** not-applicable
 - **Dependencies:** []
+- **Completed:** 2026-01-22
 - **Last Updated:** 2026-01-22
 
 ## Notes
 
-Goal: Remove box-drawing logic from skill file. A PreToolUse hook will compute and inject the formatted output, so the skill only needs to define WHAT to display, not HOW to render it.
+Skill has a state machine diagram using box characters (lines 22-42):
+- TDD state machine showing: START -> RED -> GREEN -> REFACTOR -> VERIFY -> COMPLETE
+- Static documentation diagram, not dynamically computed
+
+This is instructional documentation showing the TDD workflow phases.
+No dynamic computation or alignment calculation involved.
+
+No changes needed - the box characters are static documentation art.
