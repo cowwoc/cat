@@ -17,13 +17,10 @@ CLAUDE_FACING_PATTERNS = [
     ".claude/",
     "hooks/",
     "skills/",
-    "concepts/",
+    "workflows/",
     "commands/",
     "retrospectives/",
-    "mistakes.json",      # Legacy single file
-    "mistakes-",          # Split files: mistakes-YYYY-MM.json
-    "retrospectives-",    # Split files: retrospectives-YYYY-MM.json
-    "index.json",         # Retrospective index
+    "mistakes.json",
 ]
 
 SOURCE_PATTERNS = [
