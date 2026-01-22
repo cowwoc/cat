@@ -1,6 +1,6 @@
 ---
-name: render-diff
-description: "MANDATORY: Use BEFORE showing ANY diff to user - transforms git diff into 4-column table with box characters (╭╮╰╯│). Required for approval gates, code reviews, change summaries."
+name: cat:render-diff
+description: Transform raw git diff output into a 4-column table format for approval gate reviews
 ---
 
 # Render Diff
@@ -10,45 +10,18 @@ description: "MANDATORY: Use BEFORE showing ANY diff to user - transforms git di
 Transform raw git diff output into a 4-column table format optimized for approval gate reviews.
 Each hunk is rendered as a self-contained box with file header, making diffs easy to review.
 
-## Pre-computed Output (MANDATORY for Approval Gates)
-
-**Check context for "PRE-COMPUTED RENDER-DIFF OUTPUT".**
-
-If found:
-1. Output the rendered diff content **directly** - no preamble, no Bash commands
-2. The content is already formatted with 4-column tables and box characters
-3. Do NOT wrap in code blocks or show any tool invocations
-
-If NOT found during an approval gate: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "diff output" "render-diff"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed diff not found. Check:"
-  echo "1. Handler is registered in skill_handlers/__init__.py"
-  echo "2. Handler file exists in plugin/hooks/skill_handlers/"
-  echo "3. Base branch is detectable from worktree/branch name"
-fi
-```
-
-Output the error and STOP. Do NOT attempt manual Bash computation.
-
-**Why this matters (M238):** Running `git diff | render-diff.py` via Bash shows the command
-execution to the user, breaking the clean output experience. Pre-computation hides the
-implementation details.
-
 ## Usage
 
 Pipe git diff output to the script:
 
 ```bash
-git diff main..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
+git diff main..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh"
 ```
 
 Or provide a diff file:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" diff-output.txt
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh" diff-output.txt
 ```
 
 ## Configuration
@@ -146,7 +119,7 @@ Appears once at end, showing only symbols used:
 
 **Input:**
 ```bash
-git diff main..HEAD | render-diff.py
+git diff main..HEAD | render-diff.sh
 ```
 
 **Output (multiple hunks in same file):**
@@ -181,32 +154,16 @@ git diff main..HEAD | render-diff.py
 
 ## Integration with Approval Gates
 
-### Complete File Coverage (MANDATORY)
-
-Before invoking render-diff, enumerate ALL changed files to ensure complete coverage:
-
 ```bash
-# Step 1: List all changed files
-git diff --name-only "${BASE_BRANCH}..HEAD"
-
-# Step 2: Generate diff for ALL files (no path filtering)
+# Generate diff for review
 git diff "${BASE_BRANCH}..HEAD" | \
-  "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" > /tmp/review-diff.txt
+  "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh" > /tmp/review-diff.txt
 
-# Step 3: Display for approval
+# Display for approval
 cat /tmp/review-diff.txt
-```
-
-**Anti-pattern**: Manually specifying paths based on memory. This leads to incomplete diffs.
-
-```bash
-# ❌ WRONG - manual path specification misses files
-git diff v2.0..HEAD -- plugin/scripts/ plugin/skills/
-
-# ✅ CORRECT - diff entire branch, no path filtering
-git diff v2.0..HEAD
 ```
 
 ## Related Skills
 
 - `cat:stakeholder-review` - Uses render-diff for showing changes to reviewers
+- `cat:render-box` - Box rendering library used internally
