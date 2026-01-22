@@ -2,73 +2,61 @@
 
 Standard visual elements for CAT workflows: status displays, progress bars, and visual hierarchy.
 
-**For emoji-aware rendering:** Use `/cat:render-box` skill when rendering boxes or tables with emojis.
-LLMs cannot reliably calculate padding for Unicode text (M142).
+## Design Principles
 
-## Centralized Box Rendering Library {#box-rendering-library}
+1. **Open borders with emojis** - For single-column content (status displays, checkpoints, messages)
+2. **Closed borders without emojis** - For multi-column tables (token reports, comparison tables)
+3. **No empty line before closing** - Open border format ends directly with `╰─`
 
-**CRITICAL (M142):** LLMs cannot reliably calculate character-level padding for Unicode text.
-All ASCII boxes with emojis MUST be rendered using the centralized scripts or `/cat:render-box` skill.
+## Display Formats {#display-formats}
 
-### Available Scripts
+### Open-Border Format (single column, emojis OK)
 
-| Script | Purpose | Location |
-|--------|---------|----------|
-| `lib/box.sh` | Shared library with rendering functions | `${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh` |
-| `status.sh` | Status display generator | `${CLAUDE_PLUGIN_ROOT}/scripts/status.sh` |
-| `init-banner.sh` | Init command banners | `${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh` |
-| `config-box.sh` | Config command boxes | `${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh` |
-| `work-progress.sh` | Work command progress boxes | `${CLAUDE_PLUGIN_ROOT}/scripts/work-progress.sh` |
+For status displays, checkpoints, and informational boxes. Uses left-side borders only, eliminating
+the need for padding calculation. Emojis are allowed since no alignment calculation is needed.
 
-### Using the Shared Library
-
-Source the library and use its functions:
-
-```bash
-source "${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh"
-
-# Initialize with custom width (default: 74)
-box_init 66
-
-# Render boxes
-box_top "🎯 Title"
-box_empty
-box_line "  Content with emojis 🎉"
-box_empty
-box_bottom
+```
+╭─ 📊 Title
+│
+│  Content with emojis is fine here
+│  No right border means no padding needed
+╰─
 ```
 
-### Available Functions
-
-| Function | Description |
-|----------|-------------|
-| `box_init WIDTH [INNER_WIDTH]` | Initialize box dimensions |
-| `display_width STRING` | Calculate display width (Python-based) |
-| `pad STRING TARGET` | Pad string to exact display width |
-| `box_top [TITLE]` | Print top border with optional title |
-| `box_bottom` | Print bottom border |
-| `box_divider` | Print horizontal divider |
-| `box_line CONTENT` | Print content line with borders |
-| `box_empty` | Print empty line |
-| `inner_top TITLE` | Print nested box top |
-| `inner_bottom` | Print nested box bottom |
-| `inner_line CONTENT` | Print nested box content line |
-| `inner_empty` | Print nested box empty line |
-| `progress_bar PERCENT [WIDTH]` | Generate progress bar string |
-
-### Workflow Pattern
-
-Commands should use this pattern:
-
-```bash
-# 1. Run the appropriate script
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" choose-partner > /tmp/banner.txt
-
-# 2. Use Read tool to read the file
-# 3. Output contents VERBATIM
+**Nested open-border:**
+```
+╭─
+│ Outer content
+│
+│ ╭─ Nested section
+│ │  Nested content
+│ ╰─
+╰─
 ```
 
-This ensures proper Unicode width calculation regardless of terminal.
+### Closed-Border Tables (multi-column, no emojis in cells)
+
+For tabular data like token reports. Uses full borders with fixed column widths.
+Emojis should NOT appear in table cells - use ASCII indicators instead for reliable alignment.
+Warning emojis can be placed OUTSIDE the table on the right side.
+
+```
+╭─────────────────┬──────────────────────────────┬────────┬──────────────┬──────────╮
+│ Type            │ Description                  │ Tokens │ Context      │ Duration │
+├─────────────────┼──────────────────────────────┼────────┼──────────────┼──────────┤
+│ Explore         │ Explore codebase             │ 68.4k  │ 34%          │ 1m 7s    │
+│ general-purpose │ Implement fix                │ 45.0k  │ 45% [HIGH]   │ 43s      │
+╰─────────────────┴──────────────────────────────┴────────┴──────────────┴──────────╯
+```
+
+**Table rules:**
+- Use fixed column widths defined by each skill
+- Use ASCII indicators (`[HIGH]`, `[EXCEEDED]`, etc.) instead of emojis in cells
+- Place warning emojis OUTSIDE the table if needed (after the closing `│`)
+- Truncate content with `...` if it exceeds column width
+
+**Truncation:** Keep first N-3 characters, append `...`
+- Example: "very-long-task-na..." for a 20-character limit
 
 ## Core Principle: Markdown Rendering Context {#markdown-rendering}
 
@@ -111,183 +99,117 @@ Use ZWSP spacers in box displays where visual separation is needed before indent
 **Guideline:** Output status displays directly as plain text (not inside code blocks) to ensure
 markdown renders correctly. When in doubt about rendering context, use UPPERCASE for emphasis.
 
-## Vertical Borders {#vertical-borders}
-
-Use vertical borders (`│`) on both sides of box content to create complete enclosed boxes.
-
-**Note**: Emoji display width varies across terminals. The `emoji-widths.json` file contains
-measured widths for common OS/terminal combinations. When precise alignment is needed, use
-these measurements to calculate padding.
-
-### Padding Calculation Algorithm {#padding-algorithm}
-
-To align right vertical borders correctly when content contains emojis:
-
-**Step 1: Read emoji widths**
-```bash
-cat "${CLAUDE_PLUGIN_ROOT}/emoji-widths.json"
-```
-Use the `default` section for width lookups. **CRITICAL**: Do NOT hard-code emoji widths.
-
-**Step 2: Calculate display width of content**
-For each character in the content (excluding the `│` borders):
-- Regular ASCII characters: width 1
-- Box-drawing characters (`─│╭╮╰╯`): width 1
-- Emojis: look up width from emoji-widths.json `default` section
-- If emoji not found in file: assume width 2
-
-**Step 3: Calculate padding**
-```
-padding_spaces = target_box_width - 2 - display_width
-```
-(Subtract 2 for the left and right `│` borders)
-
-**Step 4: Construct the line**
-```
-│ + content + (padding_spaces × space) + │
-```
-
-**Example:**
-```
-Content: "  ☑️ v0.1: Core parser (5/5)"
-Display width calculation:
-  - "  " = 2 chars (width 2)
-  - "☑️" = lookup in emoji-widths.json → width 2
-  - " v0.1: Core parser (5/5)" = 25 chars (width 25)
-  - Total display width = 2 + 2 + 25 = 29
-
-For a 56-character nested box:
-  - Padding = 56 - 2 - 29 = 25 spaces
-  - Result: "│  ☑️ v0.1: Core parser (5/5)                         │"
-```
-
-**Standard box widths:**
-- Outer box: 72 characters
-- Nested box: 56 characters
-
-## Box Display Format {#box-display-format}
-
-Use single-line borders with rounded corners. Titles are embedded in the top border.
-
-### Title Embedding
-
-Titles go **inside** the top border, centered with dashes on both sides:
-
-```
-╭─── 🗺️ Title Text Here ────────────────────────────────╮
-```
-
-**Rules:**
-- 3 dashes before title, space, title text, space, remaining dashes
-- Emojis are allowed in titles
-- Title should be centered visually
-
-### Indentation Levels
-
-Use 2-space indentation per nesting level:
-- Level 0: Outer box border
-- Level 1: Content inside outer box (2 spaces)
-- Level 2: Nested box border (2 spaces)
-- Level 3: Content inside nested box (4 spaces)
-- Level 4: Sub-content (6 spaces)
-
-### Primary Boxes (Status, Checkpoints, Forks)
-
-```
-╭─── 🗺️ TITLE TEXT HERE ────────────────────────────────╮
-│                                                        │
-│  Content line here                                     │
-│  Another line with 🎯 emoji                            │
-│                                                        │
-╰────────────────────────────────────────────────────────╯
-```
-
-### Nested Boxes
-
-Nested boxes use 2-space indentation. Size boxes to fit their content.
-
-```
-╭─── 🗺️ OUTER TITLE ────────────────────────────────────────────╮
-│                                                                │
-│  📊 Overall stats line                                         │
-│                                                                │
-│  ╭─── 📦 Nested Section ─────────────────────────────╮         │
-│  │                                                   │         │
-│  │  ☑️ Nested content here                           │         │
-│  │  🔄 Another nested item                           │         │
-│  │                                                   │         │
-│  ╰───────────────────────────────────────────────────╯         │
-│                                                                │
-╰────────────────────────────────────────────────────────────────╯
-```
-
-### Section Dividers {#section-dividers}
-
-For separating sections within a box, connect dividers to the vertical borders:
-
-```
-├────────────────────────────────────────────────────────────────────┤
-│  Section content here                                              │
-├────────────────────────────────────────────────────────────────────┤
-```
-
-Use `├` (left tee) and `┤` (right tee) to connect horizontal dividers to vertical borders.
-This creates distinct visual sections and looks more polished than floating lines.
-
-### Border Characters
+## Border Characters {#border-characters}
 
 | Character | Purpose |
 |-----------|---------|
 | `─` | Horizontal border (single-line) |
 | `│` | Vertical border (single-line) |
-| `╭` `╮` | Top corners (rounded) - ALL boxes |
-| `╰` `╯` | Bottom corners (rounded) - ALL boxes |
+| `╭` `╮` | Top corners (rounded) |
+| `╰` `╯` | Bottom corners (rounded) |
 | `├` `┤` | Internal divider connectors (left/right tee) |
+| `┬` `┴` | Table column separators (top/bottom tee) |
+| `┼` | Table intersection |
 
-**Standard width**: 70 characters total for small boxes, 96 for full-width boxes.
+## Progress Bar Format {#progress-bar-format}
 
-### Border Alignment {#border-alignment}
+**MANDATORY** for all progress displays.
 
-**CRITICAL**: Top and bottom borders must have identical width.
+### Algorithm
 
-For a box with total width W:
-- **Top**: `╭` + (W-2) dashes + `╮` = W chars
-- **Bottom**: `╰` + (W-2) dashes + `╯` = W chars
+1. Bar width: 20-25 characters inside brackets
+2. Filled characters: `█` for filled portion
+3. Empty characters: `░` for remaining
+4. Format: `[{filled}{empty}] {percent}%`
 
-Since borders contain only dashes, alignment is trivial - use the same number of dashes.
+### Calculation
+
+```
+filled_count = floor(percentage / 4)  # for 25-char bar
+empty_count = 25 - filled_count
+bar = "█" * filled_count + "░" * empty_count
+```
+
+### Examples
+
+| Percent | Progress Bar |
+|---------|--------------|
+| 0% | `[░░░░░░░░░░░░░░░░░░░░░░░░░] 0%` |
+| 25% | `[██████░░░░░░░░░░░░░░░░░░░] 25%` |
+| 50% | `[████████████░░░░░░░░░░░░░] 50%` |
+| 75% | `[██████████████████░░░░░░░] 75%` |
+| 100% | `[█████████████████████████] 100%` |
+
+## Status Symbols {#status-symbols}
+
+**For open-border displays (emojis allowed):**
+
+| Symbol | Meaning |
+|--------|---------|
+| ☑️ | Completed |
+| 🔄 | In Progress |
+| 🔳 | Pending |
+| 🚫 | Blocked |
+| 🚧 | Gate Waiting |
+
+**For table columns (ASCII indicators):**
+
+| Indicator | Meaning |
+|-----------|---------|
+| `[HIGH]` | Warning threshold reached |
+| `[EXCEEDED]` | Critical threshold reached |
+| `[REJECTED]` | Review rejected |
+| `[APPLIED]` | Action applied |
 
 ## Status Box Examples {#status-box-examples}
 
-**Task Blocked:**
+**Task Blocked (open-border):**
 
-Output format (do NOT wrap in ```):
+```
+╭─ ⏸️ NO EXECUTABLE TASKS AVAILABLE
+│
+│  Task `task-name` is locked by another session.
+│
+│  Blocked tasks:
+│  - task-a
+│  - task-b
+╰─
+```
 
-╭─── ⏸️ NO EXECUTABLE TASKS AVAILABLE ──────────────────────────────╮
-│                                                                    │
-│  Task `task-name` is locked by another session.                    │
-│                                                                    │
-│  **Blocked tasks:**                                                │
-│  - task-a                                                          │
-│  - task-b                                                          │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
+**Checkpoint (open-border):**
 
-**Checkpoint:**
+```
+╭─ ✅ CHECKPOINT: Task Complete
+│
+│  Task: task-name
+│
+│  Time: 12 minutes | Tokens: 45,000 (22% of context)
+│  Branch: task-branch-name
+╰─
+```
 
-Output format (do NOT wrap in ```):
+**Status Display (open-border with nested sections):**
 
-╭─── ✅ CHECKPOINT: Task Complete ──────────────────────────────────╮
-│                                                                    │
-│  **Task:** task-name                                               │
-│                                                                    │
-├────────────────────────────────────────────────────────────────────┤
-│  **Time:** 12 minutes | **Tokens:** 45,000 (22% of context)        │
-├────────────────────────────────────────────────────────────────────┤
-│  **Branch:** task-branch-name                                      │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
+```
+╭─
+│ 📊 Overall: [████████░░░░░░░░░░░░░░░░░] 38%
+│ 🏆 35/92 tasks complete
+│
+│ ╭─ 📦 v0: Major Version Name
+│ │
+│ │  ☑️ v0.1: Minor description (5/5)
+│ │  ☑️ v0.2: Another minor (9/9)
+│ │
+│ │  🔄 v0.3: Current minor (3/5)
+│ │    🔳 pending-task-1
+│ │    🔳 pending-task-2
+│ ╰─
+│
+│ 🎯 Active: v0.3
+╰─
+```
 
-**Fork in the Road (Wizard-Style):** {#fork-in-the-road}
+## Fork in the Road (Wizard-Style) {#fork-in-the-road}
 
 The fork-in-the-road display uses a wizard-style format that guides users through the decision.
 It separates two types of recommendations that may differ:
@@ -336,114 +258,6 @@ Output format (do NOT wrap in ```):
 
 ═══════════════════════════════════════════════════════════════════
 
-**When Quick Win and Long-Term differ:**
-
-This is common and expected. Quick Win optimizes for immediate task completion with minimal risk.
-Long-Term optimizes for project maintainability, establishing good patterns, or addressing root
-causes that prevent similar issues.
-
-Example where they differ:
-- Quick Win: Conservative (fixes this bug fast)
-- Long-Term: Balanced (establishes pattern to prevent similar bugs)
-
-Example where they're the same:
-- Both: Balanced (targeted fix that also improves the codebase)
-
-**Status Display (cat:status):**
-
-Output format (do NOT wrap in ```):
-
-╭─── 🐱 CAT - Project Name ──────────────────────────────────────────╮
-│                                                                    │
-│  📊 Progress: [████████████████░░░░] **78%**                       │
-│  🏆 **72/92** tasks complete                                       │
-│  ⚙️ Mode: Interactive                                              │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-
-## Progress Bar Format {#progress-bar-format}
-
-**MANDATORY** for all progress displays.
-
-### Algorithm
-
-1. Bar width: 20 characters inside brackets
-2. Filled characters: `█` for filled portion
-3. Empty characters: `░` for remaining
-4. Format: `[{filled}{empty}] {percent}%`
-
-### Calculation
-
-```
-filled_count = floor(percentage / 5)
-empty_count = 20 - filled_count
-bar = "█" * filled_count + "░" * empty_count
-```
-
-### Examples
-
-| Percent | Progress Bar |
-|---------|--------------|
-| 0% | `[░░░░░░░░░░░░░░░░░░░░] 0%` |
-| 25% | `[█████░░░░░░░░░░░░░░░] 25%` |
-| 50% | `[██████████░░░░░░░░░░] 50%` |
-| 75% | `[███████████████░░░░░] 75%` |
-| 100% | `[████████████████████] 100%` |
-
-### Usage Contexts
-
-**Project-level progress:**
-```
-📊 Progress: [███████████████░░░░░] 75% (15/20 tasks)
-```
-
-**Minor version progress:**
-```
-v1.0: Description [█████░░░░░░░░░░░░░░░] 25% (1/4 tasks)
-```
-
-## Visual Hierarchy {#visual-hierarchy}
-
-Use markdown formatting, emojis, and nested boxes for visual hierarchy.
-
-**Indentation levels (2-space increments):**
-- Level 0: Outer box border
-- Level 1: Content inside outer box (2 spaces after `│`)
-- Level 2: Nested box border (2 spaces after `│`)
-- Level 3: Content inside nested box (4 spaces after outer `│`)
-- Level 4: Sub-content (6 spaces after outer `│`)
-
-Output format (do NOT wrap in ```):
-
-╭─── 🗺️ PROJECT STATUS ─────────────────────────────────────────────╮
-│                                                                    │
-│  📊 Overall: [████████████████░░░░░░░░░░░░░░░░░░░░░░░] **38%**     │
-│  🏆 **35/92** tasks complete                                       │
-│                                                                    │
-│  ╭─── 📦 v0: Major Version Name ────────────────────────╮          │
-│  │                                                      │          │
-│  │  ☑️ v0.1: Minor description (5/5)                    │          │
-│  │  ☑️ v0.2: Another minor (9/9)                        │          │
-│  │                                                      │          │
-│  │  🔄 **v0.3: Current minor** (3/5)                    │          │
-│  │    🔳 pending-task-1                                 │          │
-│  │    🔳 pending-task-2                                 │          │
-│  │  🔳 v0.4: Future minor (0/4)                         │          │
-│  │                                                      │          │
-│  ╰──────────────────────────────────────────────────────╯          │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
-
-## Status Symbols {#status-symbols}
-
-| Symbol | Meaning |
-|--------|---------|
-| ☑️ | Completed |
-| 🔄 | In Progress |
-| 🔳 | Pending |
-| 🚫 | Blocked |
-| 🚧 | Gate Waiting |
-
 ## Anti-Patterns {#anti-patterns}
 
 **Using double-line borders (WRONG):**
@@ -454,34 +268,25 @@ Output format (do NOT wrap in ```):
 ```
 Use single-line borders with rounded corners (`╭╮╰╯│─`) instead.
 
-**Correct approach:**
+**Putting emojis in table columns (WRONG):**
 ```
-╭─── 🎯 Title with emoji ───────────────────────────────────────────╮
-│                                                                    │
-│  Content here                                                      │
-│                                                                    │
-╰────────────────────────────────────────────────────────────────────╯
+│ ⚠️ Warning  │ Status here │
+│ ✅ Success  │ Status here │
 ```
+Emoji widths vary by terminal. Use ASCII indicators in table cells, emojis outside.
 
-**Trying to align columns with emojis without measurement (WRONG):**
+**Correct approach for tables:**
 ```
-☑️ Task A     | Complete
-🔄 Task B     | In Progress
+│ Status       │ [HIGH]    │ ⚠️
+│ Status       │ [OK]      │
 ```
-Emoji widths vary by terminal. **MUST** use `emoji-widths.json` for padding calculation.
-
-**Correct approach - use padding algorithm:**
-1. Read emoji widths from `emoji-widths.json`
-2. Calculate display width of each line
-3. Pad to consistent total width
-4. See [Padding Calculation Algorithm](#padding-algorithm) for details
+Warning emoji outside the table on the right.
 
 ## Migration Notes
 
 When updating existing displays:
-1. Replace double-line borders (`═║╔╗╚╝`) with single-line (`─│╭╮╰╯`)
-2. Use rounded corners (`╭╮╰╯`) for ALL boxes
-3. Embed titles in top border: `╭─── 🎯 Title ───╮`
-4. Add vertical borders (`│`) on both sides of content
-5. Use 2-space indentation per nesting level
-6. Size boxes to fit their content (not full-width)
+1. Replace enclosed boxes with open-border format where possible
+2. Use ASCII indicators (`[HIGH]`, `[EXCEEDED]`) in table columns instead of emojis
+3. Place warning emojis outside tables on the right side
+4. Use fixed column widths for tables
+5. Truncate long content with `...`
