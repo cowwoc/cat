@@ -1800,6 +1800,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Complete Pass 1 (all tables, all inner box line construction) entirely before Pass 2 (mechanical output from tables)"
+    },
+    {
+      "id": "M187",
+      "timestamp": "2026-01-22T10:15:00Z",
+      "category": "protocol_violation",
+      "description": "Nested box rendering skipped Step N2 string construction - jumped from inner tables to outer table without explicitly constructing inner box line strings",
+      "root_cause": "Inner box lines were never explicitly constructed as strings - the procedure showed tables but never listed the actual complete line strings with borders, causing border characters to be miscounted",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "nested-box",
+        "inner-box-lines",
+        "string-construction",
+        "step-n2"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After building inner box table, explicitly list every inner box line as a complete string (with backticks) before proceeding to outer table"
     }
   ]
 }

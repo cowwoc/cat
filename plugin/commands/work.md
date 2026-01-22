@@ -130,6 +130,9 @@ Call `work-progress.sh` at each phase transition:
 
 <execution_context>
 
+<!-- SKILL.md vs PLAN.md (A015/M172): Always reference SKILL.md for skill usage.
+     PLAN.md = what to build (task planning). SKILL.md = how to use it (authoritative). -->
+
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/work.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/merge-and-cleanup.md
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/agent-architecture.md
@@ -1619,6 +1622,11 @@ See [render-diff SKILL.md](../skills/render-diff/SKILL.md) for format details an
 without showing the actual diff content. Users reject approval because they cannot evaluate changes.
 
 **Anti-pattern (M170/M171):** Using ad-hoc formats instead of the render-diff skill.
+
+**Anti-pattern (M172):** Referencing PLAN.md instead of SKILL.md for skill usage.
+- **PLAN.md** describes *what to build* (task planning document)
+- **SKILL.md** describes *how to use it* (authoritative usage documentation)
+- Always invoke skills via their scripts/commands, not by reading PLAN.md
 
 Use AskUserQuestion with options:
 - header: "Next Step"
