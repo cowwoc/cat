@@ -75,6 +75,39 @@ fi
 ```
 </step>
 
+<step name="scan_remote_staleness">
+**Scan remote branches for staleness:**
+
+```bash
+# Scan remote branches for CAT task patterns
+echo ""
+echo "Remote branch staleness (1-7 days idle):"
+echo "─────────────────────────────────────────"
+
+git fetch --prune 2>/dev/null || true
+
+for remote_branch in $(git branch -r 2>/dev/null | grep -E 'origin/[0-9]+\.[0-9]+-' | tr -d ' '); do
+  # Get commit age in seconds
+  COMMIT_DATE=$(git log -1 --format='%ct' "$remote_branch" 2>/dev/null)
+  NOW=$(date +%s)
+  AGE_SECONDS=$((NOW - COMMIT_DATE))
+  AGE_DAYS=$((AGE_SECONDS / 86400))
+
+  # Only report 1-7 days idle (per PLAN.md staleness logic)
+  if [ "$AGE_DAYS" -ge 1 ] && [ "$AGE_DAYS" -le 7 ]; then
+    AUTHOR=$(git log -1 --format='%an' "$remote_branch" 2>/dev/null)
+    RELATIVE=$(git log -1 --format='%cr' "$remote_branch" 2>/dev/null)
+    echo "  ⚠️ $remote_branch"
+    echo "     Last commit: $AUTHOR ($RELATIVE)"
+    echo "     Status: potentially stale"
+  fi
+done
+
+echo ""
+echo "Note: Remote locks are reported only, never auto-removed."
+```
+</step>
+
 <step name="check_uncommitted">
 **CRITICAL: Check for uncommitted work before cleanup:**
 
