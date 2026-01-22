@@ -1564,6 +1564,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Write final output content first, then copy-paste exact strings into calculation table Content column"
+    },
+    {
+      "id": "M178",
+      "timestamp": "2026-01-22T14:30:00Z",
+      "category": "logical_error",
+      "description": "Box alignment table calculations did not match actual output content - table had approximate values while output had different text",
+      "root_cause": "Built calculation table with placeholder content, then wrote different actual content in output. Table widths became invalid when content diverged.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "table-mismatch",
+        "content-divergence",
+        "copy-paste"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M177",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Build calculation table from exact final content using copy-paste workflow, then verify output matches table before completing"
     }
   ]
 }
