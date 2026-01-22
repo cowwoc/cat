@@ -2013,6 +2013,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Output pre-computed content directly without announcing or explaining it"
+    },
+    {
+      "id": "M195",
+      "timestamp": "2026-01-22T14:35:00Z",
+      "category": "detection_gap",
+      "description": "Commit type hook recommended config: for version planning files instead of planning:, requiring two correction cycles",
+      "root_cause": "Hook check order: docs: check recommended config: for any .claude/ file without first checking if files were .claude/cat/v*/ which need planning:",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/validate-commit-type.sh",
+      "pattern_keywords": [
+        "commit-type",
+        "hook",
+        "planning",
+        "config",
+        "recommendation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Hook should check for .claude/cat/v*/ files first and recommend planning: before falling back to config: for other Claude-facing files"
     }
   ]
 }
