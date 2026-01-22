@@ -1627,7 +1627,7 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
-**MANDATORY: Show diff BEFORE approval question (M160).**
+**MANDATORY: Show diff BEFORE approval question (M160/M201).**
 
 Users cannot make informed approval decisions without seeing actual code changes. Before presenting
 the AskUserQuestion approval prompt, use the `cat:render-diff` skill to display the diff:
@@ -1642,10 +1642,18 @@ git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh"
 
 See [render-diff SKILL.md](../skills/render-diff/SKILL.md) for format details and features.
 
+**SELF-CHECK before showing approval gate (M201):**
+- [ ] Did I run render-diff.sh (NOT plain `git diff`)?
+- [ ] Does output have box characters (╭╮╰╯│)?
+- [ ] Is output in 4-column format (Old | Symbol | New | Content)?
+
+If any answer is NO, re-run using the render-diff skill command above.
+
 **Anti-pattern (M160):** Presenting approval gate with only file change summary (names, line counts)
 without showing the actual diff content. Users reject approval because they cannot evaluate changes.
 
-**Anti-pattern (M170/M171):** Using ad-hoc formats instead of the render-diff skill.
+**Anti-pattern (M170/M171/M201):** Using plain `git diff` or ad-hoc formats instead of render-diff skill.
+The render-diff skill provides 4-column table with box characters - plain diffs are NOT acceptable.
 
 **Anti-pattern (M172):** Referencing PLAN.md instead of SKILL.md for skill usage.
 - **PLAN.md** describes *what to build* (task planning document)

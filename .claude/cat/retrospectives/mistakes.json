@@ -2174,6 +2174,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Strip trailing slash from glob results before concatenating paths: task_dir=\"${task_dir%/}\""
+    },
+    {
+      "id": "M201",
+      "timestamp": "2026-01-22T15:35:00Z",
+      "category": "protocol_violation",
+      "description": "Used plain git diff format in approval gate instead of render-diff skill which produces 4-column table with box characters",
+      "root_cause": "Agent ignored documented MANDATORY requirement in work.md to use render-diff skill, displaying plain diff instead",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "render-diff",
+        "approval gate",
+        "diff format",
+        "box characters",
+        "4-column"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use render-diff skill: git diff ${BASE_BRANCH}..HEAD | \"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.sh\" to display diff with box characters and 4-column format"
     }
   ]
 }
