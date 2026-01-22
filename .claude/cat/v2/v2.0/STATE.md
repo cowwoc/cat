@@ -19,6 +19,8 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - polish-readme-for-smb
 - showcase-template
 - task-management-demo
+- simplify-display-formats
+- remove-box-rendering-infrastructure
 
 ## Tasks Pending
 - find-next-task-script
@@ -41,5 +43,19 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - fix-add-remove-parent-update-steps
 - default-to-task-creation
 - improve-skill-discoverability
-- simplify-display-formats
-- remove-box-rendering-infrastructure
+- skill-builder-rewrite-status
+- skill-builder-rewrite-work
+- skill-builder-rewrite-config
+- skill-builder-rewrite-init
+- skill-builder-rewrite-cleanup
+- skill-builder-rewrite-research
+- skill-builder-rewrite-help
+- skill-builder-rewrite-skill-builder
+- skill-builder-rewrite-box-alignment
+- skill-builder-rewrite-render-diff
+- skill-builder-rewrite-stakeholder-review
+- skill-builder-rewrite-shrink-doc
+- skill-builder-rewrite-tdd-implementation
+- skill-builder-rewrite-token-report
+- skill-builder-rewrite-release-plugin
+- skill-builder-rewrite-render-box
