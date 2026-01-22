@@ -21,6 +21,15 @@ Subagents return errors immediately when:
 
 Never continue with invalid state.
 
+**Anti-pattern (M206):** When a skill or workflow says "FAIL immediately" or specifies error
+output, do NOT attempt to "helpfully" work around the failure by:
+- Manually performing what automated tooling should have done
+- Providing a simplified or degraded version of the output
+- Offering alternatives that bypass the required mechanism
+
+The fail-fast instruction exists because the workaround will produce incorrect results.
+Output the specified error message and STOP.
+
 ## 5. Token Awareness
 Work sized to fit context limits:
 - Default target: 40% of context (80K of 200K tokens)
