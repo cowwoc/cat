@@ -434,7 +434,7 @@ grep -q "$TASK_NAME" "$VERSION_STATE" || echo "ERROR: Task not added to STATE.md
 git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME/"
 git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 git commit -m "$(cat <<'EOF'
-docs: add task {task-name} to {major}.{minor}
+planning: add task {task-name} to {major}.{minor}
 
 {One-line description of task goal}
 EOF
@@ -1042,7 +1042,7 @@ grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version no
 git add ".claude/cat/v$MAJOR/"
 git add ".claude/cat/ROADMAP.md"
 git commit -m "$(cat <<'EOF'
-docs: add major version {major}
+planning: add major version {major}
 
 {One-line description of major version vision}
 
@@ -1058,7 +1058,7 @@ git add "$VERSION_PATH/"
 git add ".claude/cat/ROADMAP.md"
 git add "$PARENT_PATH/STATE.md"
 git commit -m "$(cat <<'EOF'
-docs: add minor version {major}.{minor}
+planning: add minor version {major}.{minor}
 
 {One-line description of minor version focus}
 EOF
@@ -1072,7 +1072,7 @@ git add "$VERSION_PATH/"
 git add ".claude/cat/ROADMAP.md"
 git add "$PARENT_PATH/STATE.md"
 git commit -m "$(cat <<'EOF'
-docs: add patch version {major}.{minor}.{patch}
+planning: add patch version {major}.{minor}.{patch}
 
 {One-line description of patch version focus}
 EOF
