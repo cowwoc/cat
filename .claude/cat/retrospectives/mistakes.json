@@ -2147,6 +2147,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Check git rev-list HEAD..BASE_BRANCH before squashing - if >0 commits, rebase first"
+    },
+    {
+      "id": "M200",
+      "timestamp": "2026-01-22T14:10:00Z",
+      "category": "bash_error",
+      "description": "find-task.sh produced double-slash paths (task-name//STATE.md) in error output because glob pattern */ includes trailing slash but code appended /STATE.md",
+      "root_cause": "Path concatenation oversight - glob pattern $dir/*/ produces paths with trailing slash, but code used $task_dir/STATE.md adding another slash",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/find-task.sh",
+      "pattern_keywords": [
+        "glob",
+        "trailing slash",
+        "path concatenation",
+        "bash",
+        "*/"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Strip trailing slash from glob results before concatenating paths: task_dir=\"${task_dir%/}\""
     }
   ]
 }
