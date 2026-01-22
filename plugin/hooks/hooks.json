@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/get-status-output.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/get-status-output.py"
           }
         ]
       },
