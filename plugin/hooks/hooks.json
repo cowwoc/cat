@@ -114,6 +114,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/precompute-token-report.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/get-help-output.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
