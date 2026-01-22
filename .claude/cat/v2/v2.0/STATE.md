@@ -19,6 +19,11 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - polish-readme-for-smb
 
 ## Tasks Pending
+- showcase-template
+- task-management-demo
+- multi-agent-demo
+- planning-research-demo
+- git-safety-demo
 - complete-patch-version-support
 - update-graphics-tagline
 - license-validation-server
