@@ -1,6 +1,6 @@
 {
   "last_retrospective": "2026-01-22T13:30:00Z",
-  "mistake_count_since_last": 0,
+  "mistake_count_since_last": 1,
   "config": {
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
@@ -200,7 +200,7 @@
       "description": "ESCALATION: A007 box rendering still ignored (4 more mistakes). Add PreToolUse hook that blocks any Bash echo/printf containing box-drawing characters (│╭╮╰╯─) with message to use render scripts",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-006",
-      "status": "implemented",
+      "status": "not_implemented",
       "created_date": "2026-01-21T14:40:12-05:00",
       "completed_date": "2026-01-21T14:47:40-05:00",
       "related_mistakes": [
@@ -218,7 +218,7 @@
           "M166",
           "M169"
         ],
-        "verdict": "ineffective"
+        "verdict": "not_implemented"
       },
       "escalation_of": "A007"
     },
@@ -269,12 +269,12 @@
     {
       "id": "A012",
       "priority": "high",
-      "description": "ESCALATION: A009 box rendering hook still ineffective (4 post-fix). Problem is not manual typing but SKIPPING display entirely. Need to validate header exists before progress output.",
+      "description": "ESCALATION: A009 was never actually implemented. Created work-progress.sh script to ensure correct header + progress display. Agents call script instead of manually typing.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-009",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-22T13:30:00Z",
-      "completed_date": null,
+      "completed_date": "2026-01-22T14:00:00Z",
       "related_mistakes": [
         "M164",
         "M165",
@@ -662,10 +662,12 @@
       "first_seen": "2026-01-22T00:00:00Z",
       "last_seen": "2026-01-22T13:00:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "fixed",
       "effectiveness": "pending",
       "preventions": [],
-      "related_action_items": [],
+      "related_action_items": [
+        "A012"
+      ],
       "related_mistakes": [
         "M164",
         "M165",

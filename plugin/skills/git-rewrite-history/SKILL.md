@@ -1,6 +1,6 @@
 ---
 name: git-rewrite-history
-description: Use instead of `git filter-branch` - uses safer git-filter-repo with --partial for recoverability
+description: "MANDATORY: Use instead of `git filter-branch` - safer git-filter-repo with recovery"
 ---
 
 # Git Rewrite History Skill

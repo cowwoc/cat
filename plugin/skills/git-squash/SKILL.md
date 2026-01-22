@@ -1,6 +1,6 @@
 ---
 name: git-squash
-description: Use instead of `git rebase -i` for squashing - ensures unified commit messages (not concatenated)
+description: "MANDATORY: Use instead of `git rebase -i` for squashing - unified commit messages"
 ---
 
 # Git Squash Skill
