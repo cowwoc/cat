@@ -1485,6 +1485,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When outputting closed-border boxes: (1) Load box-alignment skill, (2) Collect ALL content lines first, (3) Calculate display width for each using emoji-widths.json, (4) Find max width, (5) Pad all lines to max, (6) Only then output"
+    },
+    {
+      "id": "M175",
+      "timestamp": "2026-01-22T14:30:00Z",
+      "category": "protocol_violation",
+      "description": "Box alignment misaligned - eyeballed longest line instead of calculating all display widths",
+      "root_cause": "Skipped systematic calculation algorithm - visually estimated longest line instead of calculating display width for every line as required by box-alignment skill",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "display-width",
+        "emoji",
+        "calculation",
+        "eyeballing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Calculate display width for EVERY line explicitly, show the calculation with actual numbers, then determine max width"
     }
   ]
 }

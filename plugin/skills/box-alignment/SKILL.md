@@ -41,141 +41,122 @@ Closed borders require all lines to have equal display width so right-side `│`
 
 ## Procedure for Closed Borders
 
-**MANDATORY: Follow these steps in order. Do NOT output lines as you compose them.**
+**MANDATORY: Use your thinking block to execute these steps. Do NOT output the box until all
+calculations are complete in thinking.**
 
-### Step 1: Get Emoji Widths
+### Step 1: List All Content Lines (in thinking)
 
-At session start, emoji widths are provided in the format:
-```
-Emoji display widths for box alignment: ☑️=2, 🔄=2, 🔳=2, ...
-All other characters (ASCII, box-drawing │╭╮╰╯─) have width 1.
-```
-
-Use these values directly. No file lookup required.
-
-### Step 2: Collect All Content
-
-Build a list of all content lines BEFORE any output:
+Write out every line that will appear in the box:
 
 ```
-lines = [
-  "Content line 1",
-  "Content line 2",
-  "Longer content line here"
-]
+Line 1: "📊 Overall: 45%"
+Line 2: "🏆 10/22 tasks"
+Line 3: "Settings saved"
 ```
 
-### Step 3: Calculate Display Width
+### Step 2: Calculate Display Width for Each Line (in thinking)
 
-For each line, calculate its **display width** (not character count):
-
-```python
-def display_width(line, emoji_widths):
-    width = 0
-    for char in line:
-        if char in emoji_widths:
-            width += emoji_widths[char]  # e.g., 🐱=2
-        else:
-            width += 1  # ASCII, box-drawing, and other chars
-    return width
-```
-
-### Step 4: Determine Box Width
-
-Find the maximum display width across all lines:
+**Formula:** `len(non-emoji chars) + sum(emoji widths from SessionStart)`
 
 ```
-max_display_width = max(display_width(line) for line in lines)
-box_width = max_display_width + 2  # +1 left padding, +1 right padding
+Line 1: "📊 Overall: 45%" → 14 chars + 📊(2) = 16
+Line 2: "🏆 10/22 tasks"  → 12 chars + 🏆(2) = 14
+Line 3: "Settings saved"  → 14 chars + 0    = 14
 ```
 
-### Step 5: Pad Each Line
+**Alternative formula:** `len(string) + (emoji_width - 1)` per emoji
+(Equivalent result, use whichever is easier to compute.)
 
-Pad each content line with spaces to reach `max_display_width`:
-
-```
-padded_lines = []
-for line in lines:
-    line_width = display_width(line)
-    padding_needed = max_display_width - line_width
-    padded_line = line + (" " * padding_needed)
-    padded_lines.append(padded_line)
-```
-
-### Step 6: Output Complete Box
-
-Only now output the box with consistent widths:
+### Step 3: Find Maximum Width (in thinking)
 
 ```
-╭──────────────────────────╮
-│ Content line 1           │
-│ Content line 2           │
-│ Longer content line here │
-╰──────────────────────────╯
+max_display_width = max(16, 14, 14) = 16
+```
+
+### Step 4: Calculate Padding for Each Line (in thinking)
+
+```
+Line 1: 16 - 16 = 0 spaces
+Line 2: 16 - 14 = 2 spaces
+Line 3: 16 - 14 = 2 spaces
+```
+
+### Step 5: Output Complete Box
+
+Only NOW output the box, applying the calculated padding:
+
+```
+╭──────────────────╮
+│ 📊 Overall: 45%  │
+│ 🏆 10/22 tasks   │
+│ Settings saved   │
+╰──────────────────╯
 ```
 
 ## Verification Checklist
 
-Before outputting a closed box, verify:
+Before outputting, verify in your thinking block:
 
-- [ ] All content lines collected (not outputting incrementally)
-- [ ] Display width calculated for each line (using emoji widths from session context)
-- [ ] All lines padded to same display width
-- [ ] Top border width matches content display width + 2 (for side borders)
-- [ ] Bottom border width matches top border
+- [ ] All content lines listed explicitly
+- [ ] Display width calculated for EVERY line using SessionStart emoji widths
+- [ ] Maximum width identified from calculations
+- [ ] Padding calculated for each line: `max - line_width`
 
 ## Common Mistakes
 
-### Using len() Instead of Display Width for Emojis
+### Forgetting Emoji Width from SessionStart
 
 ```
-# WRONG - len("🐱") = 1 but display width = 2
-│ 🐱 Cat    │
-│ Dog      │   <- misaligned because emoji width wasn't accounted for
+# WRONG - counted emoji as width 1
+"🐱 Cat" → 5 chars, but 🐱=2 from SessionStart
+Correct: 4 non-emoji chars + 🐱(2) = 6
+
+│ 🐱 Cat │
+│ Dog    │   <- misaligned because emoji width wasn't used
 ```
 
-### Outputting Lines Incrementally
+### Skipping the Thinking Block (M175)
 
 ```
-# WRONG - outputs as you go, can't calculate max width
-│ Short          │
-│ Much longer line here│   <- misaligned!
+# WRONG - calculating "in your head" while outputting
+"I'll just eyeball which line is longest..."
+
+# Result: misaligned box because you didn't systematically calculate
 ```
 
-### Forgetting Padding
-
-```
-# WRONG - no padding applied
-│ Short│
-│ Much longer line here│
-```
+**MUST use thinking block** to write out each line's calculation explicitly.
+This prevents estimation errors, especially when:
+- Lines have different emoji counts
+- Lines have similar visual length
+- There are many lines
 
 ## Example with Emojis
 
-Given emoji widths: `🐱=2, ✅=2`
+Given SessionStart widths: `🐱=2, ✅=2`
 
-Content:
+**In thinking block, calculate:**
+
 ```
-lines = [
-  "🐱 CAT initialized",
-  "✅ Trust: high",
-  "Settings saved"
-]
-```
+Lines:
+1. "🐱 CAT initialized"
+2. "✅ Trust: high"
+3. "Settings saved"
 
-Display width calculation:
-- "🐱 CAT initialized" = 2 + 1 + 3 + 1 + 11 = 18
-- "✅ Trust: high" = 2 + 1 + 6 + 1 + 4 = 14
-- "Settings saved" = 14
+Display widths (non-emoji chars + emoji widths):
+1. 16 chars + 🐱(2) = 18
+2. 12 chars + ✅(2) = 14
+3. 14 chars + 0     = 14
 
-max_display_width = 18
+max = 18
 
 Padding:
-- "🐱 CAT initialized" + 0 spaces
-- "✅ Trust: high" + 4 spaces
-- "Settings saved" + 4 spaces
+1. 18 - 18 = 0 spaces
+2. 18 - 14 = 4 spaces
+3. 18 - 14 = 4 spaces
+```
 
-Output:
+**Then output:**
+
 ```
 ╭────────────────────╮
 │ 🐱 CAT initialized │
