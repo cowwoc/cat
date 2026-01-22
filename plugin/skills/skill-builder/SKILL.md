@@ -394,22 +394,39 @@ Recursive case:
 
 Steps call functions rather than duplicating logic.
 
-### Step 1: [Gather inputs]
+### Step 1: Require pre-computed results (if computation was extracted)
+
+**MANDATORY:** Check context for "PRE-COMPUTED [SKILL-NAME]".
+
+If found:
+1. Output the pre-computed content **directly without preamble or commentary**
+2. Skip to Step N (output/verification)
+
+**Silent output rule (M194):** When outputting pre-computed content, do NOT:
+- Announce "I can see the pre-computed display..."
+- Explain "Let me output this exactly as provided..."
+- Add any text before the pre-computed content
+
+Simply output the content. The user doesn't need to know about internal computation mechanisms.
+
+If NOT found: **FAIL** with:
+```
+ERROR: Pre-computed results not found.
+Hook precompute-{skill-name}.sh should have provided these.
+Do NOT attempt manual computation.
+```
+
+### Step 2: [Gather inputs] (only if no extraction)
 
 [Collect data needed by functions]
 
-### Step 2: [Apply function]
+### Step 3: [Apply function]
 
 Call `function_name(inputs)` to compute [result].
 
-### Step 3: [Iterate with function]
-
-For each item in collection:
-  Call `function_name(item)`
-
 **MANDATORY CALCULATION GATE:**
 
-Before proceeding to Step 4, you MUST show:
+Before proceeding, you MUST show:
 
 1. **List each item with its computed value:**
    ```
@@ -423,11 +440,7 @@ Before proceeding to Step 4, you MUST show:
 
 **BLOCKING:** Do NOT proceed until calculations are written out.
 
-### Step 4: [Recursive application]
-
-Call `recursive_function(root_structure)` to process all levels.
-
-### Step N: [Final assembly]
+### Step N: [Final assembly / output]
 
 [Combine results to achieve goal]
 
@@ -729,7 +742,28 @@ CONDITION: User is authenticated
     REQUIRES: Valid API key provided
 ```
 
-In the skill, present as alternatives or choose the primary path based on context.
+**IMPORTANT - Fail-Fast, Not Fallback:**
+
+When designing skills with multiple paths, distinguish between:
+
+1. **Legitimate alternatives** (user choice): Present options for user to select
+2. **Fallback patterns** (degraded operation): **AVOID** - these hide failures
+
+```
+# BAD - Fallback hides hook failure
+If pre-computed exists: use it
+Else: compute manually (error-prone!)
+
+# GOOD - Fail-fast exposes problems
+If pre-computed exists: use it
+Else: FAIL with "Hook failed - check precompute-status-display.sh"
+```
+
+**Why fail-fast is better:**
+- Fallback to manual computation defeats the purpose of extraction
+- Silent degradation makes debugging harder
+- Errors in fallback path are often worse than no output
+- Forces fixing the root cause (broken hook) rather than masking it
 
 ### Shared Dependencies
 
@@ -923,6 +957,170 @@ Procedure step:
   "Call build_box(root_contents) to construct the complete nested structure"
 ```
 
+### Extracting Computation to External Scripts (M192 Prevention)
+
+**Critical insight**: When a skill contains functions that perform deterministic computation
+(algorithms, formulas, calculations), these are candidates for extraction to external scripts
+that run via hooks. This prevents the agent from "computing in context" and re-typing results
+from memory.
+
+**Identify computation candidates during function extraction (Step 5):**
+
+```
+For each function identified, ask:
+1. Is the output deterministic given the inputs?
+2. Could the agent get the wrong result by "thinking" instead of computing?
+3. Does the function involve precise formatting, counting, or arithmetic?
+
+If YES to all three → Extract to external script
+```
+
+**Computation candidate signals**:
+| Signal | Example | Why Extract? |
+|--------|---------|--------------|
+| Counting characters/widths | `display_width(text)` | Agent may miscount emojis |
+| Arithmetic with variables | `padding = max - width` | Agent may compute incorrectly |
+| Building formatted strings | `"│ " + content + spaces + " │"` | Agent may mis-space |
+| Aggregating over collections | `max(widths)` | Agent may miss items |
+
+**Non-candidates** (keep in skill):
+| Type | Example | Why Keep? |
+|------|---------|-----------|
+| Reasoning/judgment | "Identify atomic conditions" | Requires understanding |
+| Pattern matching | "Find repeated subtrees" | Requires semantic analysis |
+| Decision making | "Choose appropriate level" | Requires context |
+
+**When computation candidates exist, generate three artifacts:**
+
+**1. External Script** (Python or Bash):
+```python
+# scripts/{skill-name}-compute.py
+# Implements the deterministic functions identified in Step 5
+
+def function_name(inputs):
+    # Exact algorithm from decomposition
+    return computed_result
+
+if __name__ == "__main__":
+    # Accept inputs, output JSON results
+    result = function_name(parse_inputs())
+    print(json.dumps(result))
+```
+
+**2. UserPromptSubmit Hook**:
+```bash
+# hooks/precompute-{skill-name}.sh
+# Runs when user invokes the skill, provides pre-computed results
+
+# Detect skill invocation
+if [[ ! "$USER_PROMPT" =~ /skill-name ]]; then
+    echo '{}'; exit 0
+fi
+
+# Run computation script
+RESULT=$(python3 "$PLUGIN_ROOT/scripts/{skill-name}-compute.py" "$INPUTS")
+
+# Return via additionalContext
+output_hook_message "UserPromptSubmit" "PRE-COMPUTED RESULT:\n$RESULT\n\nUse exactly as shown."
+```
+
+**Hook output formatting for multiline results:**
+
+When building multiline output strings in shell scripts, use backslash (`\`) line continuations
+to make the script more readable and debuggable:
+
+```bash
+# BAD - Hard to read, hard to debug
+OUTPUT=$(cat << EOF
+PRE-COMPUTED STATUS:
+
+${BOX_OUTPUT}
+
+Next steps: ${NEXT_STEPS}
+EOF
+)
+
+# GOOD - Readable with clear structure
+OUTPUT="PRE-COMPUTED STATUS:\n\n" \
+OUTPUT+="${BOX_OUTPUT}\n\n" \
+OUTPUT+="Next steps:\n" \
+OUTPUT+="${NEXT_STEPS}"
+
+# ALSO GOOD - Explicit line building
+OUTPUT=""
+OUTPUT+="PRE-COMPUTED STATUS:\n"
+OUTPUT+="\n"
+OUTPUT+="${BOX_OUTPUT}\n"
+OUTPUT+="\n"
+OUTPUT+="Next steps:\n"
+OUTPUT+="${NEXT_STEPS}"
+```
+
+**Benefits of explicit line building:**
+- Easier to see structure at a glance
+- Simpler to add/remove/reorder sections
+- Debugging shows which line caused issues
+- Git diffs are more meaningful
+
+**3. Skill Preamble** (add to generated skill - FAIL-FAST, not fallback):
+```markdown
+### Step 1: Require pre-computed results
+
+**MANDATORY:** Check context for "PRE-COMPUTED RESULT".
+
+If found: Use those values exactly as provided, skip to output step.
+
+If NOT found: **FAIL immediately** with message:
+```
+ERROR: Pre-computed results not found in context.
+
+The hook (precompute-{skill-name}.sh) should have provided these.
+Check:
+1. Hook is registered in hooks.json
+2. Hook script exists and is executable
+3. Hook ran without errors (check hook output above)
+
+Do NOT attempt manual computation - it will produce incorrect results.
+```
+
+**Why fail-fast?** Manual computation was extracted precisely because agents
+cannot do it reliably. Falling back to manual defeats the purpose and hides
+hook failures.
+```
+
+**Example - Box alignment extraction**:
+
+```
+Functions identified in Step 5:
+  display_width(text) → integer     ← COMPUTATION CANDIDATE
+  max_content_width(items) → int    ← COMPUTATION CANDIDATE
+  build_line(content, max) → string ← COMPUTATION CANDIDATE
+
+Generate:
+  1. scripts/build-box-lines.py     - implements all three functions
+  2. hooks/precompute-box-lines.sh  - runs script, returns via additionalContext
+  3. Skill preamble                 - REQUIRES pre-computed lines (fail-fast)
+
+Result: Agent receives exact computed strings, cannot corrupt them by re-typing.
+If hook fails, skill fails immediately - no silent degradation.
+```
+
+**Decision flow during Step 5**:
+```
+For each function:
+  Is it deterministic? ─────No────→ Keep in skill (reasoning required)
+         │
+        Yes
+         │
+  Could agent compute wrong? ─No─→ Keep in skill (trivial/reliable)
+         │
+        Yes
+         │
+  Extract to external script + hook
+         │
+  Skill REQUIRES pre-computed result (fail-fast if missing)
+```
+
 ---
 
 ## Checklist Before Finalizing Skill
@@ -936,6 +1134,11 @@ Procedure step:
 - [ ] Variable-length functions derived via min-case → increment → generalize
 - [ ] Functions listed in dependency order (no forward references)
 - [ ] Forward steps call functions (no duplicated logic)
+- [ ] **Computation candidates identified and extracted** (M192)
+- [ ] External script created for deterministic functions (if any)
+- [ ] UserPromptSubmit hook created to pre-compute (if any)
+- [ ] **Skill REQUIRES pre-computed results - FAIL-FAST if missing** (no fallback)
+- [ ] **No "if not found, continue to manual..." patterns** (fail-fast principle)
 - [ ] **Calculation gates added for transformation steps** (M191)
 - [ ] **Artifact gates added when output has precise formatting** (M192)
 - [ ] Gates use MANDATORY and BLOCKING keywords
