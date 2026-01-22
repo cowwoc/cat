@@ -5,7 +5,7 @@
 # dependency checks, lock checks, and gate evaluation.
 #
 # Usage:
-#   find-task.sh <project-dir> [--scope major|minor|task|all] [--target VERSION|TASK_ID] [--session-id ID] [--override-gate]
+#   find-task.sh [--scope major|minor|task|all] [--target VERSION|TASK_ID] [--session-id ID] [--override-gate]
 #
 # Output (JSON):
 #   {"status":"found|not_found|all_locked|gate_blocked","task_id":"2.0-task-name",...}
@@ -20,7 +20,7 @@ source "${SCRIPT_DIR}/lib/version-utils.sh"
 # CONFIGURATION
 # =============================================================================
 
-PROJECT_DIR=""  # Required: set via --project-dir
+CAT_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/cat"
 SESSION_ID=""
 SCOPE="all"  # all | major | minor | task
 TARGET=""
@@ -31,15 +31,6 @@ OVERRIDE_GATE=false
 # =============================================================================
 
 parse_args() {
-    # First argument must be project-dir
-    if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-        show_usage
-        exit 0
-    fi
-
-    PROJECT_DIR="$1"
-    shift
-
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --scope)
@@ -83,18 +74,17 @@ parse_args() {
 
 show_usage() {
     cat << 'EOF'
-Usage: find-task.sh <project-dir> [OPTIONS] [VERSION_OR_TASK]
+Usage: find-task.sh [OPTIONS] [VERSION_OR_TASK]
 
 Find the next executable task for /cat:work.
-
-Arguments:
-  project-dir        Project root directory (contains .claude/cat/) - REQUIRED first argument
 
 Options:
   --scope SCOPE      Search scope: all, major, minor, task (auto-detected from target)
   --target TARGET    Version or task ID to target
   --session-id ID    Session ID for lock acquisition
   --override-gate    Skip entry gate evaluation
+
+Arguments:
   VERSION_OR_TASK    Version (2, 2.0) or task ID (2.0-task-name)
 
 Output (JSON):
@@ -123,35 +113,6 @@ get_task_status() {
 
     if [[ -z "$status" ]]; then
         echo '{"error":"Status field not found","file":"'"$state_file"'"}' >&2
-        return 1
-    fi
-
-    # Normalize known aliases to canonical values (M253)
-    case "$status" in
-        complete|done)
-            echo "WARNING: Non-canonical status '$status' in $state_file, use 'completed'" >&2
-            status="completed"
-            ;;
-        in_progress|active)
-            echo "WARNING: Non-canonical status '$status' in $state_file, use 'in-progress'" >&2
-            status="in-progress"
-            ;;
-    esac
-
-    # Validate against allowed status values (M253: fail-fast on unknown status)
-    local valid_statuses="pending in-progress completed blocked"
-    local is_valid=false
-    for valid in $valid_statuses; do
-        if [[ "$status" == "$valid" ]]; then
-            is_valid=true
-            break
-        fi
-    done
-
-    if [[ "$is_valid" == "false" ]]; then
-        echo "ERROR: Unknown status '$status' in $state_file" >&2
-        echo "Valid values: $valid_statuses" >&2
-        echo "Common typo: 'complete' should be 'completed'" >&2
         return 1
     fi
 
@@ -240,7 +201,6 @@ check_dependencies() {
 }
 
 # Try to acquire lock for a task
-# Returns the actual status from task-lock.sh (acquired, locked, or error)
 try_acquire_lock() {
     local task_id="$1"
 
@@ -250,16 +210,10 @@ try_acquire_lock() {
     fi
 
     local result
-    # Capture output regardless of exit code - task-lock.sh returns valid JSON even on failure
-    # The JSON contains the actual status (locked, acquired, error) which callers must check
-    result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$PROJECT_DIR" "$task_id" "$SESSION_ID" 2>/dev/null) || true
-
-    # If result is empty, something went very wrong
-    if [[ -z "$result" ]]; then
-        echo '{"status":"error","message":"Lock acquisition returned empty result"}'
+    if ! result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$task_id" "$SESSION_ID" 2>/dev/null); then
+        echo '{"status":"error","message":"Lock acquisition failed"}'
         return 1
     fi
-
     echo "$result"
 }
 
@@ -298,7 +252,6 @@ check_exit_gate_rule() {
     # Check all tasks in version
     local pending_tasks=()
     for task_dir in "$version_dir"/*/; do
-        task_dir="${task_dir%/}"  # Strip trailing slash from glob
         [[ ! -d "$task_dir" ]] && continue
         local this_task
         this_task=$(basename "$task_dir")
@@ -330,7 +283,6 @@ find_task_in_minor() {
     local minor_dir="$1"
 
     for task_dir in "$minor_dir"/*/; do
-        task_dir="${task_dir%/}"  # Strip trailing slash from glob
         [[ ! -d "$task_dir" ]] && continue
         [[ ! -f "$task_dir/STATE.md" ]] && continue
 
@@ -373,20 +325,10 @@ find_task_in_minor() {
             fi
         fi
 
-        # Check for existing worktree (M237)
-        # If worktree exists, assume it's in use by another session - skip this task
-        local worktree_path="$PROJECT_DIR/.worktrees/$task_id"
-        if [[ -d "$worktree_path" ]]; then
-            # Skip this task - worktree indicates another session is working on it
-            continue
-        fi
-
         # Try to acquire lock
-        local lock_result lock_status
+        local lock_result
         lock_result=$(try_acquire_lock "$task_id")
-        lock_status=$(echo "$lock_result" | jq -r '.status')
-        # Skip if not acquired (locked by another session, or error)
-        if [[ "$lock_status" != "acquired" ]]; then
+        if [[ $(echo "$lock_result" | jq -r '.status') == "locked" ]]; then
             continue
         fi
 
@@ -409,7 +351,6 @@ find_first_incomplete_minor() {
 
         # Check if minor has any pending/in-progress tasks
         for task_dir in "$minor_dir"/*/; do
-            task_dir="${task_dir%/}"  # Strip trailing slash from glob
             [[ ! -f "$task_dir/STATE.md" ]] && continue
             local task_name
             task_name=$(basename "$task_dir")
@@ -464,14 +405,6 @@ find_next_task() {
             local blocking
             blocking=$(echo "$dep_result" | jq -c '.blocking')
             echo '{"status":"blocked","message":"Dependencies not satisfied","task_id":"'"$TARGET"'","blocking":'"$blocking"'}'
-            return 1
-        fi
-
-        # Check for existing worktree (M237)
-        # If worktree exists, it's in use by another session - report as unavailable
-        local worktree_path="$PROJECT_DIR/.worktrees/$TARGET"
-        if [[ -d "$worktree_path" ]]; then
-            echo '{"status":"existing_worktree","task_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","task_name":"'"$task_name"'","task_path":"'"$task_dir"'","worktree_path":"'"$worktree_path"'","message":"Task has existing worktree - likely in use by another session"}'
             return 1
         fi
 
@@ -570,19 +503,4 @@ find_next_task() {
 # =============================================================================
 
 parse_args "$@"
-
-# Validate required arguments
-if [[ -z "$PROJECT_DIR" ]]; then
-    echo '{"status":"error","message":"--project-dir is required"}'
-    exit 1
-fi
-
-if [[ ! -d "$PROJECT_DIR/.claude/cat" ]]; then
-    echo '{"status":"error","message":"Not a CAT project: '"$PROJECT_DIR"' (no .claude/cat directory)"}'
-    exit 1
-fi
-
-# Set derived paths
-CAT_DIR="$PROJECT_DIR/.claude/cat/issues"
-
 find_next_task
