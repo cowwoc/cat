@@ -259,6 +259,7 @@ check_exit_gate_rule() {
     # Check all tasks in version
     local pending_tasks=()
     for task_dir in "$version_dir"/*/; do
+        task_dir="${task_dir%/}"  # Strip trailing slash from glob
         [[ ! -d "$task_dir" ]] && continue
         local this_task
         this_task=$(basename "$task_dir")
@@ -290,6 +291,7 @@ find_task_in_minor() {
     local minor_dir="$1"
 
     for task_dir in "$minor_dir"/*/; do
+        task_dir="${task_dir%/}"  # Strip trailing slash from glob
         [[ ! -d "$task_dir" ]] && continue
         [[ ! -f "$task_dir/STATE.md" ]] && continue
 
@@ -360,6 +362,7 @@ find_first_incomplete_minor() {
 
         # Check if minor has any pending/in-progress tasks
         for task_dir in "$minor_dir"/*/; do
+            task_dir="${task_dir%/}"  # Strip trailing slash from glob
             [[ ! -f "$task_dir/STATE.md" ]] && continue
             local task_name
             task_name=$(basename "$task_dir")
