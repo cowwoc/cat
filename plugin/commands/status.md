@@ -67,6 +67,18 @@ If the script outputs an error JSON, inform user to run `/cat:init`.
 
 **MANDATORY:** Load `/cat:box-alignment` skill before rendering. Follow its procedure for proper alignment.
 
+**MANDATORY (M185): Use nested box procedure from box-alignment skill.**
+This display requires nested boxes (inner boxes for each major version inside outer box).
+Follow box-alignment skill section "Nested Boxes (M184)" - build inner boxes FIRST, then embed.
+
+**Nested Box Checklist (complete before output):**
+- [ ] Built separate table for EACH major version's inner box
+- [ ] Calculated inner box max_width for each major
+- [ ] Constructed complete inner box lines (top, content rows, bottom)
+- [ ] Verified each inner box has consistent width (top = content = bottom)
+- [ ] Embedded complete inner box lines as Content entries in outer table
+- [ ] Outer table includes: header rows, blank line, inner box 1 lines, blank line, inner box 2 lines, footer rows
+
 Using the JSON data, output this format:
 
 ```
@@ -135,6 +147,7 @@ Using the JSON data, output this format:
 <success_criteria>
 
 - [ ] JSON data collected from script
+- [ ] Nested box checklist completed (M185) - each major version has inner box
 - [ ] Closed-border status display rendered (following box-alignment skill)
 - [ ] NEXT STEPS table displayed
 - [ ] Legend displayed
