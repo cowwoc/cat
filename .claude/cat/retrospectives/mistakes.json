@@ -2092,6 +2092,34 @@
         "catches_variations": true
       },
       "correct_behavior": "After creating worktree, call task-lock.sh update to populate the worktree field in the lock file"
+    },
+    {
+      "id": "M198",
+      "timestamp": "2026-01-22T13:15:00Z",
+      "category": "protocol_violation",
+      "description": "Planning subagent recommended simplified rewrite without hooks when skill-builder methodology requires hook-based pre-computation for box-drawing alignment",
+      "root_cause": "Planning subagent delegation did not enforce verification against skill-builder extraction criteria table before recommending approach",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "planning",
+        "skill-builder",
+        "extraction",
+        "hooks",
+        "pre-computation",
+        "box-alignment"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before recommending approach for skill-builder rewrite, verify extraction criteria: if skill has counting/arithmetic/formatting/aggregation operations, extraction to hooks is REQUIRED regardless of content type (ASCII or emoji)"
     }
   ]
 }
