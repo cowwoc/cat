@@ -188,6 +188,10 @@ Continue to create worktree step.
 # Main agent creates task branch and worktree
 git worktree add ../cat-worktree-{task-name} -b {major}.{minor}-{task-name}
 
+# MANDATORY: Update lock with worktree path (M196)
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/{major}.{minor}-{task-name}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" update "$TASK_ID" "${CLAUDE_SESSION_ID}" "$WORKTREE_PATH"
+
 # MANDATORY: Change to worktree directory for task execution
 cd ../cat-worktree-{task-name}
 pwd  # Verify we're in the worktree
