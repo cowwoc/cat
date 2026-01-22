@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/skill-dispatcher.py"
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-skill-output.py"
           }
         ]
       }
