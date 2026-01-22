@@ -57,6 +57,7 @@ class UsedSymbols:
     space: bool = False
     tab: bool = False
     wrap: bool = False
+    bracket: bool = False
 
 
 @dataclass
@@ -145,6 +146,55 @@ def visualize_whitespace(line: str, used: UsedSymbols) -> str:
     return ''.join(result)
 
 
+def common_prefix_len(s1: str, s2: str) -> int:
+    """Find common prefix length between two strings."""
+    max_len = min(len(s1), len(s2))
+    for i in range(max_len):
+        if s1[i] != s2[i]:
+            return i
+    return max_len
+
+
+def common_suffix_len(s1: str, s2: str) -> int:
+    """Find common suffix length between two strings."""
+    max_len = min(len(s1), len(s2))
+    for i in range(1, max_len + 1):
+        if s1[-i] != s2[-i]:
+            return i - 1
+    return max_len
+
+
+def highlight_word_diff(old_line: str, new_line: str, is_old: bool, used: UsedSymbols) -> str:
+    """Apply word-level diff highlighting with [] brackets."""
+    prefix_len = common_prefix_len(old_line, new_line)
+    suffix_len = common_suffix_len(old_line, new_line)
+
+    old_len = len(old_line)
+    new_len = len(new_line)
+
+    old_diff_len = old_len - prefix_len - suffix_len
+    new_diff_len = new_len - prefix_len - suffix_len
+
+    # Skip if entire line changed or no meaningful diff
+    if prefix_len == 0 and suffix_len == 0:
+        return old_line if is_old else new_line
+
+    # Skip if diff portion is too small or too large
+    if old_diff_len <= 0 or new_diff_len <= 0:
+        return old_line if is_old else new_line
+
+    used.bracket = True
+
+    if is_old:
+        prefix = old_line[:prefix_len]
+        diff_part = old_line[prefix_len:prefix_len + old_diff_len]
+        suffix = old_line[prefix_len + old_diff_len:]
+        return f"{prefix}[{diff_part}]{suffix}"
+    else:
+        prefix = new_line[:prefix_len]
+        diff_part = new_line[prefix_len:prefix_len + new_diff_len]
+        suffix = new_line[prefix_len + new_diff_len:]
+        return f"{prefix}[{diff_part}]{suffix}"
 
 
 class DiffRenderer:
@@ -326,6 +376,8 @@ class DiffRenderer:
             legend_items.append("-  del")
         if self.used.plus:
             legend_items.append("+  add")
+        if self.used.bracket:
+            legend_items.append("[]  changed")
         if self.used.space:
             legend_items.append("·  space")
         if self.used.tab:
@@ -401,12 +453,15 @@ class DiffRenderer:
                         new_line += 1
                         i += 1
                     else:
-                        # Show full lines without inline highlighting
-                        self._print_row(str(old_line), '-', '', del_content)
+                        # Apply word-level diff
+                        highlighted_del = highlight_word_diff(del_content, add_content, True, self.used)
+                        highlighted_add = highlight_word_diff(del_content, add_content, False, self.used)
+
+                        self._print_row(str(old_line), '-', '', highlighted_del)
                         old_line += 1
                         i += 1
                         self.used.plus = True
-                        self._print_row('', '+', str(new_line), add_content)
+                        self._print_row('', '+', str(new_line), highlighted_add)
                         new_line += 1
                         i += 1
                 else:
@@ -502,32 +557,19 @@ class DiffParser:
         return result
 
 
-def load_config(project_dir: str = '.') -> dict:
-    """Load configuration with local override support.
+def load_config() -> dict:
+    """Load configuration from cat-config.json."""
+    project_dir = os.environ.get('CLAUDE_PROJECT_DIR', '.')
+    config_path = Path(project_dir) / '.claude' / 'cat' / 'cat-config.json'
 
-    Loading order (later overrides earlier):
-    1. Default values
-    2. cat-config.json (project settings)
-    3. cat-config.local.json (user overrides)
+    if config_path.exists():
+        try:
+            with open(config_path) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            pass
 
-    Args:
-        project_dir: Project root directory containing .claude/cat/
-    """
-    defaults = {"terminalWidth": 50}
-    config = defaults.copy()
-    config_dir = Path(project_dir) / '.claude' / 'cat'
-
-    # Load base config, then local config (local overrides base)
-    for filename in ['cat-config.json', 'cat-config.local.json']:
-        config_path = config_dir / filename
-        if config_path.exists():
-            try:
-                with open(config_path) as f:
-                    config.update(json.load(f))
-            except (json.JSONDecodeError, IOError):
-                pass
-
-    return config
+    return {}
 
 
 def main():
@@ -541,17 +583,15 @@ def main():
 Examples:
   git diff main..HEAD | render-diff.py
   render-diff.py diff-output.txt
-  render-diff.py --project-dir /path/to/project diff-output.txt
         '''
     )
     parser.add_argument('file', nargs='?', help='Diff file to read (default: stdin)')
     parser.add_argument('--width', '-w', type=int, help='Terminal width (default: from config or 50)')
-    parser.add_argument('--project-dir', '-p', default='.', help='Project root directory (default: current directory)')
 
     args = parser.parse_args()
 
     # Load config
-    config = load_config(args.project_dir)
+    config = load_config()
 
     # Determine width
     width = args.width or config.get('terminalWidth', 50)
