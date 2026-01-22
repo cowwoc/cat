@@ -2044,6 +2044,23 @@ TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 echo "✓ Lock released for task: $TASK_ID"
 ```
 
+**Anti-pattern (M173): Do NOT add fallback rm commands to lock release.**
+
+```bash
+# ❌ WRONG - fallback rm triggers block-lock-manipulation.sh hook
+task-lock.sh release "$TASK_ID" "${CLAUDE_SESSION_ID}" || rm -f .claude/cat/locks/*.lock
+
+# ✅ CORRECT - just call task-lock.sh, handle errors separately
+task-lock.sh release "$TASK_ID" "${CLAUDE_SESSION_ID}"
+```
+
+The `block-lock-manipulation.sh` hook checks the ENTIRE command string for `rm ... .claude/cat/locks`.
+Adding `|| rm` as fallback causes the hook to block the entire command, even though the primary
+command (task-lock.sh) is safe.
+
+**If CLAUDE_SESSION_ID is unavailable:** Extract it from the system reminders at conversation start.
+Look for "Session ID: {uuid}" in the session instructions.
+
 **Note:** Lock is also released automatically by `session-unlock.sh` hook on session end, providing
 a safety net if the agent crashes or is interrupted.
 
