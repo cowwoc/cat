@@ -177,6 +177,9 @@ List every string that will appear inside the box.
 
 For nested boxes: identify which items are themselves box structures.
 
+**MANDATORY (M191):** Write out EVERY content string that will appear in the box. Do not summarize
+or abbreviate. Each string must be explicitly listed.
+
 ### Step 2: Build inner boxes first (if any)
 
 **For sibling inner boxes (multiple boxes at same nesting level):**
@@ -194,10 +197,53 @@ For nested boxes: identify which items are themselves box structures.
 
 Call `max_content_width(all_content_items)` including any inner box lines.
 
+**MANDATORY CALCULATION GATE (M191):**
+
+Before proceeding to Step 4, you MUST show explicit width calculations:
+
+1. **List each content item with its display_width calculation:**
+   ```
+   "content string" → display_width = N (breakdown: emoji=2 + chars=X)
+   ```
+
+2. **Show the max_content_width determination:**
+   ```
+   max_content_width = max(w1, w2, w3, ...) = N
+   ```
+
+3. **For sibling inner boxes, show GLOBAL_INNER_MAX:**
+   ```
+   GLOBAL_INNER_MAX = max(all sibling content widths) = N
+   ```
+
+**BLOCKING:** Do NOT render any box output until these calculations are written out.
+Hand-writing approximate output without calculation causes alignment errors.
+
 ### Step 4: Build all lines
 
-For each content item:
-  Call `build_line(item, max_width)`
+For each content item, call `build_line(item, max_width)` and **record the exact result string**:
+
+```
+build_line("content", max_width) = "│ content    │"  (padding: N spaces)
+```
+
+**MANDATORY LINE CONSTRUCTION (M179, M192):**
+
+1. For EACH content item, write the complete `build_line()` invocation
+2. Show the EXACT resulting string including all spaces
+3. Note the padding count in parentheses
+4. These strings are the ONLY source for Step 6 output
+
+**Format for each line:**
+```
+build_line("📊 Status", 20) = "│ 📊 Status          │"  (padding: 10)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                              This exact string goes to output
+```
+
+**BLOCKING (M192):** Step 6 cannot proceed until this step contains explicit line strings.
+If you find yourself typing the box output without having these strings recorded, STOP and
+return here.
 
 ### Step 5: Build borders
 
@@ -211,6 +257,23 @@ bottom = build_border(max_width, is_top=false)
 ```
 output = [top] + [all content lines] + [bottom]
 ```
+
+**MANDATORY BUILD RESULTS GATE (M192):**
+
+Before writing final output, you MUST have explicit `build_line()` results from Step 4 for EVERY
+content line. The final output MUST be assembled by copying these exact strings.
+
+**Checklist before output:**
+- [ ] Step 4 shows explicit `build_line(content, max_width) = "│ ... │"` for each line
+- [ ] Each computed line includes the padding count
+- [ ] Final output copies these exact strings (no re-typing)
+
+**BLOCKING:** If Step 4 does not contain explicit line strings with padding, STOP and complete
+Step 4 before proceeding. Hand-typing output causes alignment errors even when calculations are
+correct.
+
+**Anti-pattern (M192):** Calculating widths correctly but then typing approximate output instead
+of copying the mechanically-constructed line strings.
 
 ---
 
