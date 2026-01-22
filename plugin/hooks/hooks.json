@@ -106,6 +106,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/precompute-config.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/precompute-token-report.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
