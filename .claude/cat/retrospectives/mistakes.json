@@ -2228,6 +2228,35 @@
         "catches_variations": true
       },
       "correct_behavior": "Run /cat:git-squash to squash commits by type BEFORE presenting approval gate"
+    },
+    {
+      "id": "M203",
+      "timestamp": "2026-01-22T14:30:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent overrode skill-builder methodology by adding HOWEVER reasoning to planning prompt, recommending simplified output format instead of required hook extraction despite 3/4 computation signals being TRUE",
+      "root_cause": "Compliance failure - agent acknowledged M198 rule requiring extraction when signals present, then contradicted it with case-specific reasoning about one-time execution and static content",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "skill-builder",
+        "M198",
+        "override",
+        "HOWEVER",
+        "extraction",
+        "hooks",
+        "computation signals"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When extraction_verification shows extraction_required: true, proceed with hook-based approach WITHOUT adding HOWEVER exceptions. The methodology determination is final."
     }
   ]
 }
