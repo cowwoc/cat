@@ -1,12 +1,10 @@
 """
 Handler for /cat:status precomputation.
 
-This handler reuses the logic from get-status-output.py.
+Collects project status data and renders the display box.
 """
 
-import json
-import os
-import subprocess
+import re
 import sys
 from pathlib import Path
 
@@ -58,6 +56,171 @@ def build_inner_box(header: str, content_items: list, forced_width: int = None) 
     return [inner_top] + lines + [inner_bottom]
 
 
+def get_task_status(state_file: Path) -> str:
+    """Get task status from STATE.md file."""
+    if not state_file.exists():
+        return "pending"
+
+    try:
+        content = state_file.read_text()
+    except Exception:
+        return "pending"
+
+    # Try "Status: <value>" format
+    match = re.search(r'^[Ss]tatus:\s*(.+)$', content, re.MULTILINE)
+    if match:
+        return match.group(1).strip()
+
+    # Try "- **Status:** <value>" format
+    match = re.search(r'^\- \*\*Status:\*\*\s*(.+)$', content, re.MULTILINE)
+    if match:
+        return match.group(1).strip()
+
+    return "pending"
+
+
+def collect_status_data(cat_dir: Path) -> dict:
+    """Collect project status data from CAT directory structure."""
+    if not cat_dir.is_dir():
+        return {"error": "No planning structure found. Run /cat:init to initialize."}
+
+    # Get project name
+    project_file = cat_dir / "PROJECT.md"
+    project_name = "Unknown Project"
+    if project_file.exists():
+        try:
+            content = project_file.read_text()
+            match = re.search(r'^# (.+)$', content, re.MULTILINE)
+            if match:
+                project_name = match.group(1)
+        except Exception:
+            pass
+
+    # Read roadmap for descriptions
+    roadmap_file = cat_dir / "ROADMAP.md"
+    roadmap_content = ""
+    if roadmap_file.exists():
+        try:
+            roadmap_content = roadmap_file.read_text()
+        except Exception:
+            pass
+
+    majors = []
+    minors = []
+    total_completed = 0
+    total_tasks = 0
+    current_minor = ""
+    in_progress_task = ""
+    pending_tasks = []
+
+    # Iterate over major version directories
+    for major_dir in sorted(cat_dir.glob("v[0-9]*")):
+        if not major_dir.is_dir():
+            continue
+
+        major_id = major_dir.name
+        major_num = major_id[1:]  # Remove 'v' prefix
+
+        # Get major name from roadmap
+        major_name = f"Version {major_num}"
+        match = re.search(rf'^## Version {re.escape(major_num)}: (.+)$', roadmap_content, re.MULTILINE)
+        if match:
+            major_name = match.group(1)
+
+        majors.append({"id": major_id, "name": major_name})
+
+        # Iterate over minor version directories
+        for minor_dir in sorted(major_dir.glob("v[0-9]*.[0-9]*")):
+            if not minor_dir.is_dir():
+                continue
+
+            minor_id = minor_dir.name
+            minor_num = minor_id[1:]  # Remove 'v' prefix
+
+            local_completed = 0
+            local_total = 0
+            local_inprog = ""
+            tasks = []
+
+            # Iterate over task directories
+            for task_dir in sorted(minor_dir.iterdir()):
+                if not task_dir.is_dir():
+                    continue
+
+                task_name = task_dir.name
+                state_file = task_dir / "STATE.md"
+                plan_file = task_dir / "PLAN.md"
+
+                if not state_file.exists() and not plan_file.exists():
+                    continue
+
+                status = get_task_status(state_file)
+                local_total += 1
+                tasks.append({"name": task_name, "status": status})
+
+                if status in ("completed", "done"):
+                    local_completed += 1
+                elif status in ("in-progress", "active"):
+                    local_inprog = task_name
+
+            # Get minor description from roadmap
+            desc = ""
+            match = re.search(rf'^\- \*\*{re.escape(minor_num)}:\*\*\s*([^(]+)', roadmap_content, re.MULTILINE)
+            if match:
+                desc = match.group(1).strip()
+
+            total_completed += local_completed
+            total_tasks += local_total
+
+            # Determine current minor
+            if not current_minor:
+                if local_inprog:
+                    current_minor = minor_id
+                    in_progress_task = local_inprog
+                elif local_completed < local_total:
+                    current_minor = minor_id
+
+            minors.append({
+                "id": minor_id,
+                "major": major_id,
+                "description": desc,
+                "completed": local_completed,
+                "total": local_total,
+                "inProgress": local_inprog,
+                "tasks": tasks
+            })
+
+    # Collect pending tasks for current minor
+    if current_minor:
+        for minor in minors:
+            if minor["id"] == current_minor:
+                for task in minor["tasks"]:
+                    if task["status"] == "pending":
+                        pending_tasks.append(task["name"])
+                break
+
+    # Calculate percentage
+    if total_tasks == 0:
+        total_tasks = 1
+    percent = total_completed * 100 // total_tasks
+
+    return {
+        "project": project_name,
+        "overall": {
+            "percent": percent,
+            "completed": total_completed,
+            "total": total_tasks
+        },
+        "current": {
+            "minor": current_minor,
+            "inProgressTask": in_progress_task,
+            "pendingTasks": pending_tasks
+        },
+        "majors": majors,
+        "minors": minors
+    }
+
+
 class StatusHandler:
     """Handler for /cat:status skill."""
 
@@ -67,7 +230,6 @@ class StatusHandler:
             return None
 
         project_root = context.get("project_root")
-        plugin_root = context.get("plugin_root")
 
         if not project_root:
             return None
@@ -76,32 +238,19 @@ class StatusHandler:
         if not cat_dir.is_dir():
             return None
 
-        status_script = Path(plugin_root) / "scripts" / "get-status-data.sh"
-        if not status_script.exists():
-            return None
+        # Collect status data directly in Python
+        status_data = collect_status_data(cat_dir)
 
-        # Run status script to get JSON data
-        try:
-            result = subprocess.run(
-                [str(status_script), str(cat_dir)],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            status_json = json.loads(result.stdout)
-        except (subprocess.TimeoutExpired, json.JSONDecodeError, Exception):
-            return None
-
-        if 'error' in status_json:
+        if 'error' in status_data:
             return None
 
         # Extract data
-        project = status_json.get('project', 'Project')
-        percent = status_json.get('overall', {}).get('percent', 0)
-        completed = status_json.get('overall', {}).get('completed', 0)
-        total = status_json.get('overall', {}).get('total', 0)
-        active_minor = status_json.get('current', {}).get('minor', 'none')
-        pending_tasks = status_json.get('current', {}).get('pendingTasks', [])
+        project = status_data.get('project', 'Project')
+        percent = status_data.get('overall', {}).get('percent', 0)
+        completed = status_data.get('overall', {}).get('completed', 0)
+        total = status_data.get('overall', {}).get('total', 0)
+        active_minor = status_data.get('current', {}).get('minor', 'none')
+        pending_tasks = status_data.get('current', {}).get('pendingTasks', [])
         pending_count = len(pending_tasks)
 
         # Build progress bar
@@ -114,8 +263,8 @@ class StatusHandler:
         content_items.append('')
 
         # Inner boxes for major versions
-        majors = status_json.get('majors', [])
-        minors = status_json.get('minors', [])
+        majors = status_data.get('majors', [])
+        minors = status_data.get('minors', [])
 
         for major in majors:
             major_id = major.get('id', '')
