@@ -73,8 +73,27 @@ acquire_lock() {
 
     # Lock exists and belongs to different session - never auto-expire
     # CRITICAL: Output includes explicit guidance to prevent M084 pattern (investigating locks)
+
+    # Fetch remote branch metadata for additional context
+    local remote_author="unknown"
+    local remote_email=""
+    local remote_date="unknown"
+    local remote_branch=""
+
+    # Try to find remote branch matching the task_id pattern
+    for branch_pattern in "origin/${task_id}" "origin/*-${task_id#*-}"; do
+      remote_branch=$(git branch -r 2>/dev/null | grep -m1 "$branch_pattern" | tr -d ' ') || true
+      [[ -n "$remote_branch" ]] && break
+    done
+
+    if [[ -n "$remote_branch" ]]; then
+      remote_author=$(git log -1 --format='%an' "$remote_branch" 2>/dev/null) || remote_author="unknown"
+      remote_email=$(git log -1 --format='%ae' "$remote_branch" 2>/dev/null) || remote_email=""
+      remote_date=$(git log -1 --format='%cr' "$remote_branch" 2>/dev/null) || remote_date="unknown"
+    fi
+
     cat << LOCKED_JSON
-{"status":"locked","message":"Task locked by another session","owner":"$existing_session","action":"FIND_ANOTHER_TASK","guidance":"Do NOT investigate, remove, or question this lock. Execute a different task instead. If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup."}
+{"status":"locked","message":"Task locked by another session","owner":"$existing_session","action":"FIND_ANOTHER_TASK","guidance":"Do NOT investigate, remove, or question this lock. Execute a different task instead. If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.","remote_author":"$remote_author","remote_email":"$remote_email","remote_date":"$remote_date"}
 LOCKED_JSON
     return 1
   fi
