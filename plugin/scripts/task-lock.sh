@@ -7,6 +7,7 @@
 #
 # Usage:
 #   task-lock.sh acquire <task-id> <session-id>
+#   task-lock.sh update <task-id> <session-id> <worktree>
 #   task-lock.sh release <task-id> <session-id>
 #   task-lock.sh force-release <task-id>
 #   task-lock.sh check <task-id>
@@ -120,6 +121,47 @@ EOF
     echo '{"status":"locked","message":"Lock acquired by another process during race"}'
     return 1
   fi
+}
+
+# Update lock metadata (only if owned by this session)
+update_lock() {
+  local task_id="$1"
+  local session_id="$2"
+  local worktree="$3"
+
+  local lock_file
+  lock_file=$(get_lock_file "$task_id")
+
+  if [[ ! -f "$lock_file" ]]; then
+    echo '{"status":"error","message":"No lock exists to update"}'
+    return 1
+  fi
+
+  local existing_session
+  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+
+  if [[ "$existing_session" != "$session_id" ]]; then
+    echo "{\"status\":\"error\",\"message\":\"Lock owned by different session: $existing_session\"}"
+    return 1
+  fi
+
+  # Read existing values
+  local created_at created_iso
+  created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
+  created_iso=$(grep "^created_iso=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+
+  # Write updated lock file atomically
+  local temp_lock="${lock_file}.$$"
+  cat > "$temp_lock" << EOF
+session_id=${session_id}
+created_at=${created_at}
+worktree=${worktree}
+created_iso=${created_iso}
+EOF
+
+  mv -f "$temp_lock" "$lock_file"
+  echo "{\"status\":\"updated\",\"message\":\"Lock updated with worktree\",\"worktree\":\"$worktree\"}"
+  return 0
 }
 
 # Release lock (only if owned by this session)
@@ -239,6 +281,7 @@ Usage: task-lock.sh <command> [args]
 
 Commands:
   acquire <task-id> <session-id> [worktree]  - Acquire lock for task
+  update <task-id> <session-id> <worktree>   - Update lock with worktree path (must own lock)
   release <task-id> <session-id>             - Release lock (only if owned by session)
   force-release <task-id>                    - Force release lock (user action, any owner)
   check <task-id>                            - Check if task is locked
@@ -258,6 +301,10 @@ case "${1:-}" in
   acquire)
     [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: acquire <task-id> <session-id> [worktree]"}'; exit 1; }
     acquire_lock "$2" "$3" "${4:-}"
+    ;;
+  update)
+    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: update <task-id> <session-id> <worktree>"}'; exit 1; }
+    update_lock "$2" "$3" "$4"
     ;;
   release)
     [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: release <task-id> <session-id>"}'; exit 1; }
