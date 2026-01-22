@@ -7,14 +7,7 @@ description: Generate detailed token usage report with threshold analysis and re
 
 ## Purpose
 
-Display a compact token usage report for the current session showing per-subagent breakdown with
-context utilization, health status, and duration. Essential for understanding session resource
-consumption at a glance.
-
-## Prerequisites
-
-**Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this skill.
-All bash commands below use this value directly.
+Display a compact token usage report showing per-subagent breakdown with context utilization, health status, and duration. Essential for understanding session resource consumption at a glance.
 
 ## When to Use
 
@@ -24,180 +17,110 @@ All bash commands below use this value directly.
 - Before deciding whether to decompose remaining work
 - Post-task retrospectives on efficiency
 
-## Workflow
+## Step 1: Check for Pre-Computed Results (MANDATORY)
 
-### 1. Extract Session Metrics
-
-Extract key metrics from the session file in a single pass.
-
-```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-
-# Verify session file exists
-if [ ! -f "${SESSION_FILE}" ]; then
-    echo "ERROR: Session file not found"
-    exit 1
-fi
-
-# Extract subagent data in one jq pass
-SUBAGENT_DATA=$(jq -s '
-  # Find Task tool calls and their results
-  . as $all |
-  [range(length)] |
-  map(
-    . as $i |
-    $all[$i] |
-    select(.type == "assistant" and .message.content[]?.type == "tool_use" and .message.content[]?.name == "Task") |
-    {
-      index: $i,
-      task: (.message.content[] | select(.type == "tool_use" and .name == "Task")),
-      id: (.message.content[] | select(.type == "tool_use" and .name == "Task") | .id)
-    }
-  ) |
-  map(
-    . as $task |
-    ($all | map(select(.type == "user" and .toolUseResult.tool_use_id == $task.id)) | first) as $result |
-    {
-      type: ($task.task.input.prompt | split("\n")[0] | gsub("^## "; "") | .[0:25]),
-      description: (($task.task.input.description // "Subagent task") | .[0:28]),
-      tokens: ($result.toolUseResult.totalTokens // 0),
-      duration_ms: ($result.toolUseResult.durationMs // 0)
-    }
-  ) |
-  map(select(.tokens > 0))
-' "${SESSION_FILE}")
-```
-
-### 2. Format and Output Data
-
-Format the data as a readable table. The script outputs JSON; the skill renders the table.
-
-```bash
-CONTEXT_LIMIT=200000
-
-# Format subagent data as JSON for rendering
-echo "$SUBAGENT_DATA" | jq --argjson limit "$CONTEXT_LIMIT" '
-  # Format tokens (e.g., 68400 -> "68.4k")
-  def format_tokens:
-    if . >= 1000000 then "\(. / 1000000 | . * 10 | floor / 10)M"
-    elif . >= 1000 then "\(. / 1000 | . * 10 | floor / 10)k"
-    else "\(.)"
-    end;
-
-  # Format duration (ms -> "1m 7s" or "43s")
-  def format_duration:
-    (. / 1000 | floor) as $secs |
-    if $secs >= 60 then "\($secs / 60 | floor)m \($secs % 60)s"
-    else "\($secs)s"
-    end;
-
-  # Get context status with ASCII indicators
-  def context_status:
-    (. * 100 / $limit | floor) as $pct |
-    if $pct >= 80 then "\($pct)% [EXCEEDED]"
-    elif $pct >= 40 then "\($pct)% [HIGH]"
-    else "\($pct)%"
-    end;
-
-  # Calculate totals
-  ([.[].tokens] | add // 0) as $total_tokens |
-  ([.[].duration_ms] | add // 0) as $total_duration |
-
-  {
-    rows: [.[] | {
-      type: .type,
-      description: .description,
-      tokens: (.tokens | format_tokens),
-      context: (.tokens | context_status),
-      duration: (.duration_ms | format_duration)
-    }],
-    total_tokens: ($total_tokens | format_tokens),
-    total_duration: ($total_duration | format_duration)
-  }
-'
-```
-
-### 3. Render Table
-
-Using the JSON output, render a table.
-Add warning emoji OUTSIDE the box (right side) for exceeded rows:
+**CRITICAL**: This skill requires hook-based pre-computation. Check context for:
 
 ```
-╭─────────────────┬──────────────────────────────┬────────┬────────────────┬──────────╮
-│ Type            │ Description                  │ Tokens │ Context        │ Duration │
-├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
-│ Explore         │ Explore codebase             │ 68.4k  │ 34%            │ 1m 7s    │
-│ general-purpose │ Implement fix                │ 45.0k  │ 45% [HIGH]     │ 43s      │ ⚠️
-│ general-purpose │ Refactor module              │ 170.0k │ 85% [EXCEEDED] │ 3m 12s   │ 🚨
-├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
-│                 │ TOTAL                        │ 283.4k │ -              │ 5m 2s    │
-╰─────────────────┴──────────────────────────────┴────────┴────────────────┴──────────╯
+PRE-COMPUTED TOKEN REPORT:
 ```
 
-**Warning indicators (outside box):**
-- ⚠️ = Context >= 40% (high usage)
-- 🚨 = Context >= 80% (exceeded limit)
+### If PRE-COMPUTED TOKEN REPORT is found:
 
-**Column widths:** Type=17, Description=30, Tokens=8, Context=16, Duration=10
+Output the table EXACTLY as provided. Do NOT modify alignment or recalculate values.
 
-**Truncation:** Content exceeding column width should be truncated with `...`
-- Example: "general-purpose-impl..." for a 17-char Type column
-- Keep first N-3 characters, append `...`
-
-## Example Output
-
-Per-subagent breakdown table (warning emojis outside box for visibility):
-
+**Example pre-computed output:**
 ```
-╭─────────────────┬──────────────────────────────┬────────┬────────────────┬──────────╮
-│ Type            │ Description                  │ Tokens │ Context        │ Duration │
-├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
-│ Explore         │ Explore session file format  │ 69.2k  │ 34%            │ 1m 7s    │
-│ Plan            │ Plan token measurement fix   │ 56.0k  │ 28%            │ 52s      │
-│ general-purpose │ Implement token fix          │ 45.0k  │ 45% [HIGH]     │ 43s      │ ⚠️
-├─────────────────┼──────────────────────────────┼────────┼────────────────┼──────────┤
-│                 │ TOTAL                        │ 170.2k │ -              │ 2m 42s   │
-╰─────────────────┴──────────────────────────────┴────────┴────────────────┴──────────╯
+╭───────────────────┬────────────────────────────────┬──────────┬──────────────────┬────────────╮
+│ Type              │ Description                    │ Tokens   │ Context          │ Duration   │
+├───────────────────┼────────────────────────────────┼──────────┼──────────────────┼────────────┤
+│ Explore           │ Explore codebase               │ 68.4k    │ 34%              │ 1m 7s      │
+│ general-purpose   │ Implement fix                  │ 90.0k    │ 45% ⚠️            │ 43s        │
+│ general-purpose   │ Refactor module                │ 170.0k   │ 85% 🚨            │ 3m 12s     │
+├───────────────────┼────────────────────────────────┼──────────┼──────────────────┼────────────┤
+│                   │ TOTAL                          │ 328.4k   │ -                │ 5m 2s      │
+╰───────────────────┴────────────────────────────────┴──────────┴──────────────────┴────────────╯
 ```
 
-## Status Indicator Logic
+### If PRE-COMPUTED TOKEN REPORT is NOT found:
 
-The Context column reflects context health with minimal indicators:
+**FAIL immediately** with this message:
 
+```
+ERROR: Pre-computed token report not found.
+
+The hook precompute-token-report.sh should have provided the table data.
+Do NOT attempt manual computation - the alignment requires deterministic
+Python-based calculation.
+
+Possible causes:
+1. Session file not found
+2. No subagent data in session
+3. Hook execution failed
+
+Try running /cat:token-report again or check session status.
+```
+
+Do NOT proceed to manual extraction or table building.
+
+## Table Format Reference
+
+The pre-computed table uses these specifications:
+
+**Column widths (fixed):**
+| Column | Width | Content |
+|--------|-------|---------|
+| Type | 17 | Subagent type (truncated with ...) |
+| Description | 30 | Task description (truncated with ...) |
+| Tokens | 8 | Formatted count (68.4k, 1.5M) |
+| Context | 16 | Percentage with emoji indicator |
+| Duration | 10 | Formatted time (1m 7s) |
+
+**Context indicators (INSIDE column):**
 | Context % | Display | Meaning |
 |-----------|---------|---------|
-| < 40% | Just percentage (e.g., "34%") | Healthy - plenty of headroom |
-| >= 40% and < 80% | "45% [HIGH]" | Warning - above soft target, monitor usage |
-| >= 80% | "85% [EXCEEDED]" | Critical - approaching limit, consider decomposition |
+| < 40% | "34%" | Healthy - plenty of headroom |
+| >= 40% and < 80% | "45% ⚠️" | Warning - above soft target |
+| >= 80% | "85% 🚨" | Critical - approaching limit |
 
-Healthy status shows only the percentage - lack of warning implies success.
+**Box characters:**
+- Top: `╭─┬─╮`
+- Divider: `├─┼─┤`
+- Bottom: `╰─┴─╯`
+- Sides: `│`
 
-## Handling Missing Data
+## Verification Checklist
 
-The report gracefully handles missing data:
-- Missing subagent data shows empty table with headers
-- Zero tokens are filtered out
-- Duration shows "0s" for missing duration data
+Before outputting the table, verify:
+
+- [ ] Pre-computed results found in context
+- [ ] Table copied exactly (no modifications)
+- [ ] All box characters preserved
+- [ ] Emoji indicators inside Context column
+- [ ] No additional computation performed
 
 ## Anti-Patterns
 
-### Never show intermediate bash output
+### Never attempt manual table construction
 
 ```bash
-# BAD - Raw output clutters the display
-echo "Extracting metrics..."
-jq '.cachePerformance' "$SESSION_FILE"
-echo "Processing..."
+# BAD - Manual jq extraction and formatting
+jq -s '...' "$SESSION_FILE"
+# Then manually building table rows
 
-# GOOD - Silent extraction, show only final table
-SUBAGENT_DATA=$(jq -s '...' "$SESSION_FILE")
-# Then render table directly
+# GOOD - Use pre-computed results only
+# Output exactly what the hook provided
 ```
 
-### Keep output focused
+### Never modify pre-computed alignment
 
-The table format is designed to be concise. Avoid adding verbose explanations or
-extra whitespace around the table output.
+```
+# BAD - "Fixing" spacing or alignment
+│ Type           │  # Wrong - modified padding
+
+# GOOD - Copy exactly as provided
+│ Type              │  # Correct - preserved padding
+```
 
 ## Related Skills
 

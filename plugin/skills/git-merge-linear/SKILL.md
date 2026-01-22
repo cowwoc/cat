@@ -61,7 +61,33 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 ```
 
-### Step 2: Squash Commits (if needed)
+### Step 2: Check for Base Branch Divergence (MANDATORY - M199)
+
+**CRITICAL: Squashing without this check can delete commits added to base after worktree creation.**
+
+```bash
+# Check if base branch has commits not in our history
+DIVERGED_COMMITS=$(git rev-list --count "HEAD..${BASE_BRANCH}")
+
+if [[ "$DIVERGED_COMMITS" -gt 0 ]]; then
+  echo "ERROR: Base branch has diverged!"
+  echo ""
+  echo "$BASE_BRANCH has $DIVERGED_COMMITS commit(s) not in your branch."
+  echo "These commits would be LOST if you squash now."
+  echo ""
+  echo "Commits on $BASE_BRANCH not in HEAD:"
+  git log --oneline "HEAD..${BASE_BRANCH}"
+  echo ""
+  echo "Solution: Rebase onto $BASE_BRANCH first:"
+  echo "  git rebase $BASE_BRANCH"
+  echo "  # Then retry merge"
+  exit 1
+fi
+
+echo "Base branch has not diverged - safe to proceed"
+```
+
+### Step 3: Squash Commits (if needed)
 
 ```bash
 # Count commits ahead of base branch
@@ -93,7 +119,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 fi
 ```
 
-### Step 3: Fast-Forward Base Branch (from worktree)
+### Step 4: Fast-Forward Base Branch (from worktree)
 
 ```bash
 # Fast-forward base branch to current HEAD without checking out
@@ -114,7 +140,7 @@ fi
 echo "$BASE_BRANCH fast-forwarded to $(git rev-parse --short HEAD)"
 ```
 
-### Step 4: Verify Merge
+### Step 5: Verify Merge
 
 ```bash
 # Verify base branch was updated
@@ -136,7 +162,7 @@ echo "=== Merge Complete ==="
 git log --oneline -3 "$BASE_BRANCH"
 ```
 
-### Step 5: Cleanup Worktree and Branch
+### Step 6: Cleanup Worktree and Branch
 
 ```bash
 # Navigate to main repo for cleanup
@@ -171,6 +197,13 @@ if [[ ! -f "$CAT_BASE_FILE" ]]; then
   exit 1
 fi
 BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+
+# Check for divergence FIRST (M199)
+DIVERGED=$(git rev-list --count "HEAD..${BASE_BRANCH}")
+if [[ "$DIVERGED" -gt 0 ]]; then
+  echo "ERROR: Base branch has $DIVERGED commit(s) not in HEAD. Rebase first." >&2
+  exit 1
+fi
 
 # Squash if multiple commits
 COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD")
