@@ -193,6 +193,30 @@ Read `.claude/cat/cat-config.json` to determine:
 
 **Identify task to execute:**
 
+**Optional: Use find-task.sh script**
+
+For programmatic task discovery, use the `find-task.sh` script:
+
+```bash
+# Find next available task
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" --session-id "$SESSION_ID")
+
+# Parse result
+if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
+  TASK_ID=$(echo "$RESULT" | jq -r '.task_id')
+  TASK_PATH=$(echo "$RESULT" | jq -r '.task_path')
+  MAJOR=$(echo "$RESULT" | jq -r '.major')
+  MINOR=$(echo "$RESULT" | jq -r '.minor')
+  TASK_NAME=$(echo "$RESULT" | jq -r '.task_name')
+  echo "✓ Found task: $TASK_ID"
+else
+  echo "No executable tasks found"
+  echo "$RESULT" | jq -r '.message // .status'
+fi
+```
+
+The script handles argument parsing, version filtering, dependency checks, lock acquisition, and gate evaluation.
+
 **Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this command.
 All bash commands below use this value directly.
 
