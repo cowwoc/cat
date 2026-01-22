@@ -2066,6 +2066,32 @@
         "catches_variations": true
       },
       "correct_behavior": "try_acquire_lock should pass through actual status from task-lock.sh, and caller should check for status==acquired (positive verification) not status==locked (negative verification)"
+    },
+    {
+      "id": "M197",
+      "timestamp": "2026-01-22T17:30:00Z",
+      "category": "detection_gap",
+      "description": "Lock file worktree field empty after worktree creation because lock acquired before worktree exists",
+      "root_cause": "task-lock.sh lacked update command; workflow lacked step to update lock after worktree creation",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/task-lock.sh",
+      "pattern_keywords": [
+        "lock",
+        "worktree",
+        "update",
+        "metadata"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After creating worktree, call task-lock.sh update to populate the worktree field in the lock file"
     }
   ]
 }
