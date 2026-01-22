@@ -1,10 +1,20 @@
 # State
 
-- **Status:** pending
-- **Progress:** 0%
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** already-implemented
 - **Dependencies:** []
+- **Completed:** 2026-01-22
 - **Last Updated:** 2026-01-22
 
 ## Notes
 
-Goal: Remove box-drawing logic from skill file. A PreToolUse hook will compute and inject the formatted output, so the skill only needs to define WHAT to display, not HOW to render it.
+Skill already follows the pattern - uses render-diff.sh script for computation:
+- Claude pipes git diff output to the script
+- Script computes box layout with proper width calculations
+- Skill just documents the expected output format
+
+The box-drawing examples in SKILL.md are documentation showing what render-diff.sh produces,
+not templates for Claude to fill in.
+
+No changes needed - computation is already externalized to script.
