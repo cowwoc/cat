@@ -1,12 +1,16 @@
 # State
 
-- **Status:** pending
-- **Progress:** 0%
+- **Status:** completed
+- **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
+- **Completed:** 2026-01-22
 - **Last Updated:** 2026-01-22
 
 ## Notes
 
-Goal: Remove box-drawing logic from skill file. A PreToolUse hook will compute and inject the formatted output, so the skill only needs to define WHAT to display, not HOW to render it.
-
-**Analysis:** help.md is static reference content with no computation logic. It contains only markdown tables and text. No box-drawing logic exists to externalize. This task may not apply - consider removing or marking as N/A.
+Implemented skill-builder pattern:
+- Created precompute-help-display.sh hook (UserPromptSubmit trigger)
+- Hook pre-computes entire help output with ASCII diagrams (no Unicode box-drawing)
+- Simplified help.md to just output the pre-computed content
+- Registered hook in hooks.json
