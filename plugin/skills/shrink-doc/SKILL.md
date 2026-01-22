@@ -354,41 +354,32 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 After presenting validation results for ANY version, show comparison table.
 
 **Table format:**
-```
-╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
-│ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
-├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
-│ **Original** │ {n}   │ {n}K │ baseline  │ N/A   │ Reference    │
-│ **V{n}**     │ {n}   │ {n}K │ {n}%      │ {n}   │ {status}     │
-╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
-```
+
+| Version      | Lines | Size | Reduction | Score | Status     |
+|--------------|-------|------|-----------|-------|------------|
+| **Original** | {n}   | {n}K | baseline  | N/A   | Reference  |
+| **V{n}**     | {n}   | {n}K | {n}%      | {n}   | {status}   |
 
 **Expected output format:**
-```
-╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
-│ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
-├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
-│ **Original** │ {n}   │ {n}K │ baseline  │ N/A   │ Reference    │
-│ **V1**       │ {n}   │ {n}K │ {n}%      │ {n}   │ ❌ Rejected   │
-│ **V2**       │ {n}   │ {n}K │ {n}%      │ {n}   │ ✅ Applied    │
-╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
-```
 
-**Status Legend**:
-- ✅ Approved = Approved (score = 1.0)
-- ❌ Rejected = Rejected (score < 1.0)
-- ✅ Applied = Currently applied to original file
+| Version      | Lines | Size | Reduction | Score | Status      |
+|--------------|-------|------|-----------|-------|-------------|
+| **Original** | {n}   | {n}K | baseline  | N/A   | Reference   |
+| **V1**       | {n}   | {n}K | {n}%      | {n}   | Rejected    |
+| **V2**       | {n}   | {n}K | {n}%      | {n}   | Applied     |
+
+**Status values**:
+- Approved = Score equals 1.0
+- Rejected = Score below 1.0
+- Applied = Currently applied to original file
 
 **Example**:
-```
-╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
-│ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
-├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
-│ **Original** │ 1,057 │ 48K  │ baseline  │ N/A   │ Reference    │
-│ **V1**       │ 520   │ 26K  │ 51%       │ 0.89  │ ❌ Rejected   │
-│ **V2**       │ 437   │ 27K  │ 59%       │ 0.97  │ ✅ Applied    │
-╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
-```
+
+| Version      | Lines | Size | Reduction | Score | Status    |
+|--------------|-------|------|-----------|-------|-----------|
+| **Original** | 1,057 | 48K  | baseline  | N/A   | Reference |
+| **V1**       | 520   | 26K  | 51%       | 0.89  | Rejected  |
+| **V2**       | 437   | 27K  | 59%       | 0.97  | Applied   |
 
 ---
 
