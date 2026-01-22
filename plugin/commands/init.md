@@ -15,14 +15,6 @@ and `conventions/` directory for Claude-facing coding standards.
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/cat-config.json
 </execution_context>
 
-<banner_formats>
-
-**Closed-border banners** - Follow `skills/box-alignment/SKILL.md` for proper alignment.
-
-Use `${CLAUDE_PLUGIN_ROOT}/emoji-widths.json` for emoji display widths based on detected terminal type.
-All banners use closed-border format with right-side borders aligned.
-
-</banner_formats>
 
 <process>
 
