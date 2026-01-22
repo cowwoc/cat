@@ -1,6 +1,6 @@
 {
   "last_retrospective": "2026-01-22T12:34:16-05:00",
-  "mistake_count_since_last": 7,
+  "mistake_count_since_last": 8,
   "config": {
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
