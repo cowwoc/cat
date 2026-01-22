@@ -8,221 +8,319 @@ allowed-tools:
   - Read
 ---
 
-<objective>
-Identify and clean up abandoned CAT artifacts: worktrees, lock files, and orphaned branches.
+# CAT Cleanup
 
-Use this when:
+## Purpose
+
+All abandoned CAT artifacts (worktrees, locks, branches) are identified and cleaned up safely.
+
+---
+
+## When to Use
+
 - A previous session crashed or was cancelled
 - Lock files are blocking new execution
 - Orphaned worktrees are cluttering the filesystem
-</objective>
 
-<process>
+---
 
-<step name="survey">
-**Survey current state:**
+## Safety Rules
 
-```bash
-# List all worktrees
-echo "=== Git Worktrees ==="
-git worktree list
-
-# List task locks
-echo ""
-echo "=== Task Locks ==="
-if [[ -d .claude/cat/locks ]]; then
-  "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" list 2>/dev/null || \
-    ls -la .claude/cat/locks/*.lock 2>/dev/null || echo "No task locks found"
-else
-  echo "No task locks found"
-fi
-
-# List execution context files
-echo ""
-echo "=== Context Files ==="
-ls -la .cat-execution-context 2>/dev/null || echo "No context file found"
-
-# List CAT-related branches
-echo ""
-echo "=== CAT Branches ==="
-git branch -a | grep -E "(release/|worktree|\d+\.\d+-)" || echo "No CAT branches found"
-```
-
-Present findings to user.
-</step>
-
-<step name="identify_abandoned">
-**Identify abandoned artifacts:**
-
-A worktree is likely abandoned if:
-- Its lock file references a session that's no longer active
-- The worktree directory exists but has no recent activity
-
-**Check task locks:**
-```bash
-if [[ -d .claude/cat/locks ]]; then
-  echo "=== Task Lock Status ==="
-  for lock in .claude/cat/locks/*.lock; do
-    [[ ! -f "$lock" ]] && continue
-    task_id=$(basename "$lock" .lock)
-    status=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "$task_id" 2>/dev/null)
-    is_stale=$(echo "$status" | jq -r '.stale // false')
-    heartbeat_age=$(echo "$status" | jq -r '.heartbeat_age_seconds // 0')
-    session=$(echo "$status" | jq -r '.session_id // "unknown"')
-    echo "  $task_id: session=$session, heartbeat_age=${heartbeat_age}s, stale=$is_stale"
-  done
-fi
-```
-</step>
-
-<step name="scan_remote_staleness">
-**Scan remote branches for staleness:**
-
-```bash
-# Scan remote branches for CAT task patterns
-echo ""
-echo "Remote branch staleness (1-7 days idle):"
-echo "─────────────────────────────────────────"
-
-git fetch --prune 2>/dev/null || true
-
-for remote_branch in $(git branch -r 2>/dev/null | grep -E 'origin/[0-9]+\.[0-9]+-' | tr -d ' '); do
-  # Get commit age in seconds
-  COMMIT_DATE=$(git log -1 --format='%ct' "$remote_branch" 2>/dev/null)
-  NOW=$(date +%s)
-  AGE_SECONDS=$((NOW - COMMIT_DATE))
-  AGE_DAYS=$((AGE_SECONDS / 86400))
-
-  # Only report 1-7 days idle (per PLAN.md staleness logic)
-  if [ "$AGE_DAYS" -ge 1 ] && [ "$AGE_DAYS" -le 7 ]; then
-    AUTHOR=$(git log -1 --format='%an' "$remote_branch" 2>/dev/null)
-    RELATIVE=$(git log -1 --format='%cr' "$remote_branch" 2>/dev/null)
-    echo "  ⚠️ $remote_branch"
-    echo "     Last commit: $AUTHOR ($RELATIVE)"
-    echo "     Status: potentially stale"
-  fi
-done
-
-echo ""
-echo "Note: Remote locks are reported only, never auto-removed."
-```
-</step>
-
-<step name="check_uncommitted">
-**CRITICAL: Check for uncommitted work before cleanup:**
-
-**MANDATORY: Run git commands from main directory using `-C` flag. NEVER `cd` into a worktree that
-will be deleted - this makes the shell unusable after deletion.**
-
-For each worktree to be removed:
-```bash
-WORKTREE_PATH="<path-from-git-worktree-list>"
-
-# Check for uncommitted changes (use -C flag, NEVER cd into worktree)
-if [[ -n "$(git -C "$WORKTREE_PATH" status --porcelain)" ]]; then
-  echo "WARNING: Uncommitted changes in $WORKTREE_PATH"
-  git -C "$WORKTREE_PATH" status --short
-  echo ""
-  echo "Options:"
-  echo "1. Commit the changes first"
-  echo "2. Stash the changes: git -C $WORKTREE_PATH stash"
-  echo "3. Discard changes: git -C $WORKTREE_PATH checkout -- . (DESTRUCTIVE)"
-  echo "4. Skip this worktree"
-  # ASK USER before proceeding
-fi
-```
-
-**NEVER remove a worktree with uncommitted changes without explicit user approval.**
-</step>
-
-<step name="cleanup">
-**Perform cleanup (with user confirmation):**
-
-For each abandoned artifact, confirm before removing:
-
-**Clean up stale task locks:**
-```bash
-# Remove task locks older than 5 minutes without heartbeat
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" cleanup --stale-minutes 5
-
-# For emergency cleanup (DANGER: may interrupt active sessions):
-# "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" cleanup --stale-minutes 0
-```
-
-**Clean up worktrees:**
-```bash
-# Remove worktree (MUST be done BEFORE deleting its branch)
-WORKTREE_PATH="<path>"
-git worktree remove "$WORKTREE_PATH" --force
-
-# Remove orphaned branch (AFTER worktree removal)
-BRANCH_NAME="<branch-from-worktree>"
-git branch -D "$BRANCH_NAME" 2>/dev/null || true
-```
-
-**Order matters:**
-1. Clean up stale task locks FIRST (may be blocking worktree operations)
-2. Remove worktree (git won't delete a branch checked out in a worktree)
-3. Delete orphaned branches
-4. Remove context file last
-</step>
-
-<step name="verify">
-**Verify cleanup complete:**
-
-```bash
-echo "=== Verification ==="
-
-# Confirm no orphaned worktrees
-echo "Remaining worktrees:"
-git worktree list
-
-# Confirm branches cleaned
-echo ""
-echo "Remaining CAT branches:"
-git branch -a | grep -E "(release/|worktree)" || echo "None"
-
-echo ""
-echo "Cleanup complete"
-```
-</step>
-
-</process>
-
-<safety_rules>
-- NEVER `cd` into a worktree that will be deleted (use `git -C <path>` instead) - deleting a directory
-  you're in makes the shell unusable
+- NEVER cd into a worktree that will be deleted - use `git -C <path>` instead
 - ALWAYS check for uncommitted changes before removing worktrees
 - ALWAYS ask user before removing anything with uncommitted work
 - ALWAYS remove worktree BEFORE deleting its branch
 - NEVER force-delete branches that might have unmerged commits
-- List what will be removed and get confirmation before proceeding
-</safety_rules>
 
-<common_scenarios>
+---
 
-**Scenario 1: Session crashed mid-execution**
-```
-Symptoms: Lock file exists, worktree may have partial work
-Action: Check worktree for uncommitted changes, offer to commit or discard
-```
+## Procedure
 
-**Scenario 2: User cancelled and wants fresh start**
-```
-Symptoms: Multiple stale worktrees and lock files
-Action: Survey all, confirm cleanup of each
+### Step 1: Survey Current State
+
+Run all survey commands to gather current artifact state.
+
+**Worktrees:**
+```bash
+git worktree list
 ```
 
-**Scenario 3: Lock file blocking new execution**
-```
-Symptoms: "Change already being executed" error but no active session
-Action: Remove specific lock file after confirming no active work
-```
-
-**Scenario 4: Orphaned branches after worktree removal**
-```
-Symptoms: Branches exist but no worktrees reference them
-Action: List branches, confirm they have no unique commits, delete
+**Task locks:**
+```bash
+if [[ -d .claude/cat/locks ]]; then
+  "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" list 2>/dev/null
+else
+  echo "[]"
+fi
 ```
 
-</common_scenarios>
+**Context files:**
+```bash
+ls -la .cat-execution-context 2>/dev/null || echo "No context file"
+```
+
+**CAT branches:**
+```bash
+git branch -a | grep -E '(release/|worktree|[0-9]+\.[0-9]+-)' || echo "No CAT branches"
+```
+
+**Remote branch staleness (1-7 days idle):**
+```bash
+git fetch --prune 2>/dev/null
+for remote_branch in $(git branch -r 2>/dev/null | grep -E 'origin/[0-9]+\.[0-9]+-' | tr -d ' '); do
+  COMMIT_DATE=$(git log -1 --format='%ct' "$remote_branch" 2>/dev/null)
+  NOW=$(date +%s)
+  AGE_DAYS=$(( (NOW - COMMIT_DATE) / 86400 ))
+  if [ "$AGE_DAYS" -ge 1 ] && [ "$AGE_DAYS" -le 7 ]; then
+    AUTHOR=$(git log -1 --format='%an' "$remote_branch" 2>/dev/null)
+    RELATIVE=$(git log -1 --format='%cr' "$remote_branch" 2>/dev/null)
+    echo "STALE: $remote_branch (last: $AUTHOR, $RELATIVE)"
+  fi
+done
+```
+
+Present findings in this format:
+
+```
+## Survey Results
+
+### Worktrees
+- <path>: <branch> [<state>]
+
+### Task Locks
+- <task-id>: session=<id>, age=<seconds>s
+
+### CAT Branches
+- <branch-name>
+
+### Stale Remote Branches (1-7 days)
+- <branch>: last commit by <author>, <relative-time>
+
+### Context Files
+- <path> or "None found"
+```
+
+---
+
+### Step 2: Identify Abandoned Artifacts
+
+Analyze survey results to classify artifacts:
+
+**Abandoned worktree indicators:**
+- Lock file references session that is no longer active
+- Worktree directory exists but has no recent activity
+- No corresponding lock exists (orphaned)
+
+**Stale lock indicators:**
+- Lock age exceeds reasonable session duration (hours old)
+- No heartbeat updates (if heartbeat tracking enabled)
+
+For each lock, check status:
+```bash
+task_id="<from-survey>"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "$task_id"
+```
+
+The output shows: `{"locked":true,"session_id":"...","age_seconds":...,"worktree":"..."}`
+
+Present classification:
+
+```
+## Abandoned Artifacts
+
+### Likely Abandoned
+- <artifact>: <reason>
+
+### Possibly Active
+- <artifact>: <reason for caution>
+
+### Safe to Keep
+- <artifact>: <reason>
+```
+
+---
+
+### Step 3: Check for Uncommitted Work
+
+**CRITICAL: Use `git -C <path>` - NEVER cd into a worktree that will be deleted.**
+
+For each worktree identified as abandoned:
+
+```bash
+WORKTREE_PATH="<path-from-survey>"
+git -C "$WORKTREE_PATH" status --porcelain
+```
+
+If output is non-empty, there is uncommitted work.
+
+Present findings:
+
+```
+## Uncommitted Work Check
+
+### <worktree-path>
+Status: CLEAN | HAS UNCOMMITTED WORK
+
+If uncommitted:
+  Modified files:
+  - <file1>
+  - <file2>
+
+  Options:
+  1. Commit changes first
+  2. Stash: git -C <path> stash
+  3. Discard: git -C <path> checkout -- . (DESTRUCTIVE)
+  4. Skip this worktree
+```
+
+**BLOCKING: Do NOT proceed with removal until user confirms action for each worktree with uncommitted work.**
+
+---
+
+### Step 4: Get User Confirmation
+
+Present cleanup plan and request confirmation:
+
+```
+## Cleanup Plan
+
+### Will Remove (locks)
+- <lock-id>
+
+### Will Remove (worktrees)
+- <worktree-path> -> branch: <branch-name>
+
+### Will Remove (branches)
+- <branch-name>
+
+### Remote Branches (report only, not auto-removed)
+- <remote-branch>: <staleness-info>
+
+Confirm cleanup? (yes/no)
+```
+
+**BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
+
+---
+
+### Step 5: Execute Cleanup
+
+Execute in strict order. Errors should propagate - do not suppress with `|| true`.
+
+**Order matters:**
+1. Stale locks first (may be blocking worktree operations)
+2. Worktrees second (git won't delete branch checked out in worktree)
+3. Branches third (after worktrees released them)
+4. Context files last
+
+**Remove stale locks:**
+```bash
+task_id="<from-plan>"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" force-release "$task_id"
+```
+
+**Remove worktrees:**
+```bash
+WORKTREE_PATH="<from-plan>"
+git worktree remove "$WORKTREE_PATH" --force
+```
+
+**Remove orphaned branches:**
+```bash
+BRANCH_NAME="<from-plan>"
+git branch -D "$BRANCH_NAME"
+```
+
+**Remove context file (if applicable):**
+```bash
+rm .cat-execution-context
+```
+
+Report each action:
+
+```
+## Cleanup Progress
+
+- [x] Removed lock: <task-id>
+- [x] Removed worktree: <path>
+- [x] Removed branch: <branch>
+- [x] Removed context file
+```
+
+---
+
+### Step 6: Verify Cleanup
+
+Run verification commands:
+
+```bash
+echo "Remaining worktrees:"
+git worktree list
+
+echo "Remaining CAT branches:"
+git branch -a | grep -E '(release/|worktree|[0-9]+\.[0-9]+-)' || echo "None"
+
+echo "Remaining locks:"
+if [[ -d .claude/cat/locks ]]; then
+  ls .claude/cat/locks/*.lock 2>/dev/null || echo "None"
+else
+  echo "None"
+fi
+```
+
+Present verification:
+
+```
+## Verification
+
+### Remaining Worktrees
+- <main-worktree-only expected>
+
+### Remaining CAT Branches
+- None (or list if expected)
+
+### Remaining Locks
+- None (or list if expected)
+
+Cleanup complete.
+```
+
+---
+
+## Common Scenarios
+
+### Session crashed mid-execution
+
+**Symptoms:** Lock file exists, worktree may have partial work
+
+**Action:**
+1. Check worktree for uncommitted changes (Step 3)
+2. Offer to commit, stash, or discard
+3. Remove lock and worktree after user confirms
+
+### User cancelled and wants fresh start
+
+**Symptoms:** Multiple stale worktrees and lock files
+
+**Action:**
+1. Survey all artifacts (Step 1)
+2. Confirm cleanup of each (Step 4)
+3. Remove all confirmed artifacts (Step 5)
+
+### Lock file blocking new execution
+
+**Symptoms:** "Task locked by another session" error but no active session
+
+**Action:**
+1. Identify specific lock via survey
+2. Confirm no active work in associated worktree
+3. Force-release the specific lock
+
+### Orphaned branches after worktree removal
+
+**Symptoms:** Branches exist but no worktrees reference them
+
+**Action:**
+1. List branches (Step 1)
+2. Confirm they have no unique unmerged commits
+3. Delete branches
