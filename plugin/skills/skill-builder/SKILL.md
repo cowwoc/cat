@@ -990,6 +990,49 @@ If YES to all three → Extract to external script
 | Pattern matching | "Find repeated subtrees" | Requires semantic analysis |
 | Decision making | "Choose appropriate level" | Requires context |
 
+### MANDATORY: Planning Verification Checklist (M198)
+
+**BLOCKING:** Before recommending ANY approach for a skill-builder rewrite, complete this checklist:
+
+```yaml
+extraction_verification:
+  # Check each computation candidate signal against the skill
+  signals_present:
+    counting_chars_widths: true|false  # display_width, strlen, emoji counting
+    arithmetic_with_vars: true|false   # padding = max - width, calculations
+    building_formatted_strings: true|false  # "│ " + content + " │", table rows
+    aggregating_collections: true|false     # max(widths), sum, counts
+
+  # If ANY signal is true, extraction is REQUIRED
+  extraction_required: true|false
+
+  # Verify recommendation matches requirement
+  recommendation_valid:
+    if_extraction_required_and_recommending_simplified: INVALID
+    if_extraction_required_and_recommending_hooks: VALID
+    if_no_extraction_and_recommending_simplified: VALID
+```
+
+**Anti-pattern (M198):** Recommending "simplified rewrite without hooks" based on content type
+(ASCII vs emoji) rather than computation type. The extraction criteria are about WHAT OPERATIONS
+the skill performs (counting, arithmetic, formatting), NOT what characters appear in the output.
+
+**Example - Token-report skill:**
+```yaml
+# WRONG analysis (led to M198):
+"Table contents are ASCII-only, so hooks are overkill"
+
+# CORRECT analysis:
+signals_present:
+  counting_chars_widths: true      # Column widths must be calculated
+  arithmetic_with_vars: true       # padding = column_width - content_width
+  building_formatted_strings: true # "│ Type            │ Description..."
+  aggregating_collections: true    # Total tokens = sum of subagent tokens
+
+extraction_required: true  # 4/4 signals present
+recommendation: "Full hook-based pre-computation (Approach A)"
+```
+
 **When computation candidates exist, generate three artifacts:**
 
 **1. External Script** (Python or Bash):
