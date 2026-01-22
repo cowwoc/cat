@@ -1826,6 +1826,85 @@
         "catches_variations": true
       },
       "correct_behavior": "After building inner box table, explicitly list every inner box line as a complete string (with backticks) before proceeding to outer table"
+    },
+    {
+      "id": "M188",
+      "timestamp": "2026-01-22T11:30:00Z",
+      "category": "logical_error",
+      "description": "Nested box alignment failed due to two errors: (1) calculated border dashes using content_max instead of line_width-2, (2) forgot that suffix adds 1 space so total spaces before final bar = padding + 1",
+      "root_cause": "When constructing border lines, used content area width instead of accounting for corner characters. When rendering, wrote only padding spaces before │ instead of padding + 1 (the extra 1 from the ` │` suffix)",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "nested-box",
+        "border-middle",
+        "suffix-space",
+        "padding-plus-one"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M187",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use border_middle = line_width - 2 for dashes, and remember total spaces before final │ = padding + 1"
+    },
+    {
+      "id": "M189",
+      "timestamp": "2026-01-22T12:45:00Z",
+      "category": "protocol_violation",
+      "description": "Nested box alignment failed in /cat:status - skipped mandatory width tables and inner box string construction despite loading box-alignment skill",
+      "root_cause": "Procedural documentation allows skipping steps. Requirements-based documentation with verification gates is harder to skip because each requirement must be satisfied.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "nested-box",
+        "requirements",
+        "verification-gates",
+        "width-table"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M188",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Satisfy requirements R1-R11 with explicit verification gates before rendering any box output"
+    },
+    {
+      "id": "M190",
+      "timestamp": "2026-01-22T13:55:30Z",
+      "category": "protocol_violation",
+      "description": "Sibling inner boxes rendered with different widths causing misaligned vertical borders",
+      "root_cause": "box-alignment skill lacked sibling box width sharing rule - each inner box calculated its own max_width independently instead of using a shared global max across all siblings",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/box-alignment/SKILL.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "nested-boxes",
+        "sibling-boxes",
+        "display-width",
+        "border-alignment"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When building multiple inner boxes at the same nesting level, first calculate the GLOBAL max_content_width across ALL sibling boxes, then build each sibling using that shared width"
     }
   ]
 }
