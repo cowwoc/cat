@@ -1192,6 +1192,35 @@
         "catches_variations": true
       },
       "correct_behavior": "Always display header box (🐱 > task-name with underline) before any progress banner"
+    },
+    {
+      "id": "M166",
+      "timestamp": "2026-01-22T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Status display rendered v2.0 without inner box borders - each major must have its own ╭─/╰─ wrapper",
+      "root_cause": "Template showed one major example but did not explicitly state every major needs inner box structure",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+      "pattern_keywords": [
+        "status",
+        "display",
+        "box",
+        "border",
+        "major",
+        "minor",
+        "hierarchy"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Render each major version with its own inner box (╭─ and ╰─), closing the box before starting the next major"
     }
   ]
 }
