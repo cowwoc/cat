@@ -1221,6 +1221,83 @@
         "catches_variations": true
       },
       "correct_behavior": "Render each major version with its own inner box (╭─ and ╰─), closing the box before starting the next major"
+    },
+    {
+      "id": "M166",
+      "timestamp": "2026-01-22T02:21:00Z",
+      "category": "protocol_violation",
+      "description": "Used docs: commit type for .claude/cat/v*/ planning files instead of planning:",
+      "root_cause": "Hook blocked docs: but did not enforce that planning: MUST be used for version files. Chose wrong type based on file extension (.md) rather than location (.claude/cat/v*/)",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "/workspace/plugin/hooks/validate-commit-type.sh",
+      "pattern_keywords": [
+        "commit-type",
+        "planning",
+        "docs",
+        ".claude/cat"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use planning: commit type for all files in .claude/cat/v*/ directory"
+    },
+    {
+      "id": "M167",
+      "timestamp": "2026-01-22T02:22:00Z",
+      "category": "protocol_violation",
+      "description": "When /cat:learn invoked, performed ad-hoc analysis instead of invoking learn-from-mistakes skill as instructed",
+      "root_cause": "Read command instruction but substituted ad-hoc analysis for required skill invocation. Command doc said invoke skill but agent chose to analyze directly.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/commands/learn.md",
+      "pattern_keywords": [
+        "skill-invocation",
+        "cat:learn",
+        "ad-hoc",
+        "protocol"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When /cat:learn is invoked, immediately use Skill tool to invoke cat:learn-from-mistakes - no ad-hoc analysis"
+    },
+    {
+      "id": "M168",
+      "timestamp": "2026-01-22T02:30:48Z",
+      "category": "protocol_violation",
+      "description": "Recommended adding task to v1.10 which was already completed",
+      "root_cause": "Proceeded with task flow without verifying version filtering worked after bash syntax error",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/commands/add.md",
+      "pattern_keywords": [
+        "completed_version",
+        "version_status",
+        "filter_versions"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always verify version status is not completed before suggesting it as a task target"
     }
   ]
 }
