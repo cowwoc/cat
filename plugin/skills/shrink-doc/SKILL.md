@@ -353,20 +353,16 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 After presenting validation results for ANY version, show comparison table.
 
-**Note:** Use `/cat:render-box` skill for table rendering - emojis (✅/❌/✓) require
-emoji-aware width calculation for proper column alignment.
+**Note:** Use ASCII status indicators for reliable column alignment without emoji width calculation.
 
-**Render-box service usage:**
-```bash
-# Render validation table using box.sh service mode
-"${CLAUDE_PLUGIN_ROOT}/scripts/lib/box.sh" table '{
-  "headers": ["Version", "Lines", "Size", "Reduction", "Score", "Status"],
-  "widths": [14, 7, 6, 11, 7, 14],
-  "rows": [
-    ["**Original**", "{n}", "{n}K", "baseline", "N/A", "Reference"],
-    ["**V{n}**", "{n}", "{n}K", "{n}%", "{score}", "{status}"]
-  ]
-}'
+**Table format:**
+```
+╭──────────────┬───────┬──────┬───────────┬───────┬──────────────╮
+│ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
+├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
+│ **Original** │ {n}   │ {n}K │ baseline  │ N/A   │ Reference    │
+│ **V{n}**     │ {n}   │ {n}K │ {n}%      │ {n}   │ {status}     │
+╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 
 **Expected output format:**
@@ -375,15 +371,15 @@ emoji-aware width calculation for proper column alignment.
 │ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
 ├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
 │ **Original** │ {n}   │ {n}K │ baseline  │ N/A   │ Reference    │
-│ **V1**       │ {n}   │ {n}K │ {n}%      │ {n}   │ {✅/❌/✓}    │
-│ **V2**       │ {n}   │ {n}K │ {n}%      │ {n}   │ {✅/❌/✓}    │
+│ **V1**       │ {n}   │ {n}K │ {n}%      │ {n}   │ [REJECTED]   │
+│ **V2**       │ {n}   │ {n}K │ {n}%      │ {n}   │ [APPLIED]    │
 ╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 
 **Status Legend**:
-- ✅ = Approved (score = 1.0)
-- ❌ = Rejected (score < 1.0)
-- ✓ applied = Currently applied to original file
+- [APPROVED] = Approved (score = 1.0)
+- [REJECTED] = Rejected (score < 1.0)
+- [APPLIED] = Currently applied to original file
 
 **Example**:
 ```
@@ -391,8 +387,8 @@ emoji-aware width calculation for proper column alignment.
 │ Version      │ Lines │ Size │ Reduction │ Score │ Status       │
 ├──────────────┼───────┼──────┼───────────┼───────┼──────────────┤
 │ **Original** │ 1,057 │ 48K  │ baseline  │ N/A   │ Reference    │
-│ **V1**       │ 520   │ 26K  │ 51%       │ 0.89  │ ❌ rejected  │
-│ **V2**       │ 437   │ 27K  │ 59%       │ 0.97  │ ✓ applied    │
+│ **V1**       │ 520   │ 26K  │ 51%       │ 0.89  │ [REJECTED]   │
+│ **V2**       │ 437   │ 27K  │ 59%       │ 0.97  │ [APPLIED]    │
 ╰──────────────┴───────┴──────┴───────────┴───────┴──────────────╯
 ```
 

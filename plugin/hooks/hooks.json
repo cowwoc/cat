@@ -48,14 +48,6 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-session-instructions.sh"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-emoji-widths.sh"
-          }
-        ]
       }
     ],
     "UserPromptSubmit": [
@@ -133,10 +125,6 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/block-lock-manipulation.sh"
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/block-manual-box-chars.sh"
           }
         ]
       },

@@ -15,40 +15,14 @@ and `conventions/` directory for Claude-facing coding standards.
 @${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/cat-config.json
 </execution_context>
 
-<banner_output_instructions>
+<banner_formats>
 
-**Use centralized box rendering scripts for all banners.**
+**Open-border banners** - Output these formats directly (no scripts needed).
 
-LLMs cannot reliably calculate character-level padding for Unicode text (M142).
-All banners MUST be rendered using the scripts in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
+Banners use open-border format with emojis. No right border = no padding calculation needed.
+Simply output the exact text patterns shown in each step.
 
-**Anti-pattern (M149): NEVER manually type box/banner characters.**
-LLMs miscalculate Unicode widths. ALWAYS use init-banner.sh, then Read tool.
-
-**Available banner scripts:**
-
-```bash
-# init-banner.sh - Renders all /cat:init banners
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" BANNER_TYPE [ARGS...]
-
-# Banner types:
-#   choose-partner          - "Choose Your Partner" welcome banner
-#   gates-configured N      - Default gates configured for N versions
-#   research-skipped        - Research skipped informational banner
-#   initialized T C P       - CAT initialized (trust, curiosity, patience)
-#   first-task-walkthrough  - First task walkthrough intro
-#   first-task-created N P  - First task created (name, path)
-#   all-set                 - All set, explore later
-#   explore-pace            - Explore at your own pace
-```
-
-**Workflow:**
-1. Run the appropriate banner script
-2. Capture output to temp file: `> /tmp/banner-output.txt`
-3. Use Read tool to read the file
-4. Output the contents VERBATIM
-
-</banner_output_instructions>
+</banner_formats>
 
 <process>
 
@@ -298,13 +272,23 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, render banner using script:
+After applying defaults, output this banner (replace {N} with version count):
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" gates-configured {N} > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ 📊 Default gates configured for {N} versions
+│
+│  Entry gates: Work proceeds sequentially
+│  - Each minor waits for previous minor to complete
+│  - Each major waits for previous major to complete
+│
+│  Exit gates: Standard completion criteria
+│  - Minor versions: all tasks must complete
+│  - Major versions: all minor versions must complete
+│
+│  To customize gates for any version:
+│  → /cat:config → 📊 Version Gates
+╰─
+```
 
 **If "Configure per version":**
 
@@ -382,13 +366,19 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Render banner using script:
+Output this banner:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" research-skipped > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ ℹ️ RESEARCH SKIPPED
+│
+│  Stakeholder research was skipped during import.
+│
+│  To research a pending version later:
+│  → /cat:research {version}
+│
+│  Example: /cat:research 1.2
+╰─
+```
 
 </step>
 
@@ -398,13 +388,17 @@ Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
 
 **Choose Your Partner - Capture development style preferences**
 
-Render welcome banner using script:
+Output this banner:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" choose-partner > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ 🎮 CHOOSE YOUR PARTNER
+│
+│  Every developer has a style. These questions shape how your
+│  AI partner approaches the work ahead.
+│
+│  Choose wisely - your preferences guide every decision.
+╰─
+```
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Hands-On - check in often, verify each move",
@@ -502,13 +496,19 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Render completion banner using script:
+Output this banner (substitute actual values for trust, curiosity, patience):
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" initialized [trust] [curiosity] [patience] > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ 🚀 CAT INITIALIZED
+│
+│  🤝 Trust: {trust}
+│  🔍 Curiosity: {curiosity}
+│  ⏳ Patience: {patience}
+│
+│  Your partner is ready. Let's build something solid.
+│  Adjust anytime: /cat:config
+╰─
+```
 
 **New projects:**
 ```
@@ -537,13 +537,15 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Render guidance banner using script:
+Output this banner:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" first-task-walkthrough > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ 📋 FIRST TASK WALKTHROUGH
+│
+│  Great! Let's create your first task together.
+│  I'll ask a few questions to understand what you want to build.
+╰─
+```
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -597,13 +599,19 @@ git add ".claude/cat/"
 git commit -m "docs: add first task - ${TASK_NAME}"
 ```
 
-7. Render completion banner using script:
+7. Output this banner (substitute actual task-name and path):
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" first-task-created "{task-name}" ".claude/cat/v0/v0.0/{task-name}/" > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ ✅ FIRST TASK CREATED
+│
+│  Task: {task-name}
+│  Location: .claude/cat/v0/v0.0/{task-name}/
+│
+│  Files created:
+│  - PLAN.md - What needs to be done
+│  - STATE.md - Progress tracking
+╰─
+```
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
@@ -615,23 +623,37 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 
 **If "No, I'll start later":**
 
-Render exit banner using script:
+Output this banner:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" all-set > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ 👋 ALL SET
+│
+│  Your project is ready. When you want to start:
+│
+│  → /cat:work         Execute your first task
+│  → /cat:status       See project overview
+│  → /cat:add          Add more tasks or versions
+│  → /cat:help         Full command reference
+╰─
+```
 
 **If "No, I'll explore" (from initial question):**
 
-Render explore banner using script:
+Output this banner:
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/init-banner.sh" explore-pace > /tmp/banner.txt
 ```
-
-Then use Read tool on `/tmp/banner.txt` and output contents VERBATIM.
+╭─ 👋 EXPLORE AT YOUR OWN PACE
+│
+│  Essential commands to get started:
+│
+│  → /cat:status       See what's happening
+│  → /cat:add          Add versions and tasks
+│  → /cat:work         Execute tasks
+│  → /cat:help         Full command reference
+│
+│  Tip: Run /cat:status anytime to see suggested next steps.
+╰─
+```
 
 </step>
 
