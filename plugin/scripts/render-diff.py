@@ -57,7 +57,6 @@ class UsedSymbols:
     space: bool = False
     tab: bool = False
     wrap: bool = False
-    bracket: bool = False
 
 
 @dataclass
@@ -146,86 +145,6 @@ def visualize_whitespace(line: str, used: UsedSymbols) -> str:
     return ''.join(result)
 
 
-def common_prefix_len(s1: str, s2: str) -> int:
-    """Find common prefix length between two strings."""
-    max_len = min(len(s1), len(s2))
-    for i in range(max_len):
-        if s1[i] != s2[i]:
-            return i
-    return max_len
-
-
-def common_suffix_len(s1: str, s2: str) -> int:
-    """Find common suffix length between two strings."""
-    max_len = min(len(s1), len(s2))
-    for i in range(1, max_len + 1):
-        if s1[-i] != s2[-i]:
-            return i - 1
-    return max_len
-
-
-def is_word_char(c: str) -> bool:
-    """Check if character is part of a word/identifier."""
-    return c.isalnum() or c == '_'
-
-
-def expand_to_word_boundary(line: str, start: int, end: int) -> tuple[int, int]:
-    """Expand a range to include complete words at boundaries.
-
-    If start is in the middle of a word, expand left to word start.
-    If end is in the middle of a word, expand right to word end.
-    """
-    # Expand start leftward if in middle of word
-    while start > 0 and is_word_char(line[start - 1]) and is_word_char(line[start]):
-        start -= 1
-
-    # Expand end rightward if in middle of word
-    while end < len(line) and is_word_char(line[end - 1]) and is_word_char(line[end]):
-        end += 1
-
-    return start, end
-
-
-def highlight_word_diff(old_line: str, new_line: str, is_old: bool, used: UsedSymbols) -> str:
-    """Apply word-level diff highlighting with [] brackets.
-
-    Expands bracket boundaries to complete words to avoid splitting identifiers.
-    """
-    prefix_len = common_prefix_len(old_line, new_line)
-    suffix_len = common_suffix_len(old_line, new_line)
-
-    old_len = len(old_line)
-    new_len = len(new_line)
-
-    old_diff_len = old_len - prefix_len - suffix_len
-    new_diff_len = new_len - prefix_len - suffix_len
-
-    # Skip if entire line changed or no meaningful diff
-    if prefix_len == 0 and suffix_len == 0:
-        return old_line if is_old else new_line
-
-    # Skip if diff portion is too small or too large
-    if old_diff_len <= 0 or new_diff_len <= 0:
-        return old_line if is_old else new_line
-
-    # Expand to word boundaries for cleaner highlighting
-    if is_old:
-        start = prefix_len
-        end = prefix_len + old_diff_len
-        start, end = expand_to_word_boundary(old_line, start, end)
-        prefix = old_line[:start]
-        diff_part = old_line[start:end]
-        suffix = old_line[end:]
-    else:
-        start = prefix_len
-        end = prefix_len + new_diff_len
-        start, end = expand_to_word_boundary(new_line, start, end)
-        prefix = new_line[:start]
-        diff_part = new_line[start:end]
-        suffix = new_line[end:]
-
-    used.bracket = True
-    return f"{prefix}[{diff_part}]{suffix}"
 
 
 class DiffRenderer:
@@ -318,47 +237,6 @@ class DiffRenderer:
             f"{fill_char(BOX_HORIZONTAL, self.content_width + 1)}{BOX_T_LEFT}"
         )
 
-    def _find_wrap_point(self, content: str, max_width: int) -> int:
-        """Find safe wrap point that doesn't split inside [...] brackets.
-
-        Returns character index to wrap at, preserving bracket integrity.
-        """
-        if len(content) <= max_width:
-            return len(content)
-
-        # Track bracket nesting to avoid splitting inside [...]
-        bracket_depth = 0
-        last_safe_point = 0
-        current_width = 0
-
-        for i, char in enumerate(content):
-            # Calculate display width
-            ea = unicodedata.east_asian_width(char)
-            char_width = 2 if ea in ('W', 'F') else 1
-
-            if current_width + char_width > max_width - 1:  # -1 for wrap indicator
-                # Must wrap here or earlier
-                if bracket_depth == 0:
-                    return i
-                elif last_safe_point > 0:
-                    return last_safe_point
-                else:
-                    # No safe point found, wrap anyway (rare edge case)
-                    return i
-
-            current_width += char_width
-
-            if char == '[':
-                bracket_depth += 1
-            elif char == ']':
-                bracket_depth = max(0, bracket_depth - 1)
-
-            # Safe points are outside brackets
-            if bracket_depth == 0:
-                last_safe_point = i + 1
-
-        return len(content)
-
     def _print_row(self, old_num: str, symbol: str, new_num: str, content: str):
         """Print a content row, handling wrapping for long lines."""
         content_len = display_width(content)
@@ -372,20 +250,16 @@ class DiffRenderer:
                 f"{padded_content}{BOX_VERTICAL}"
             )
         else:
-            # Wrap long lines, preserving bracket integrity
+            # Wrap long lines
             self.used.wrap = True
-            wrap_point = self._find_wrap_point(content, self.content_width)
-            first_part = content[:wrap_point]
-            first_width = display_width(first_part)
-            # Pad to content_width - 1 to leave room for wrap indicator
-            padding = ' ' * max(0, self.content_width - 1 - first_width)
+            first_part = content[:self.content_width - 1]
             self.output.append(
                 f"{BOX_VERTICAL}{pad_num(old_num, COL_OLD)}{BOX_VERTICAL} {symbol} "
                 f"{BOX_VERTICAL}{pad_num(new_num, COL_NEW)}{BOX_VERTICAL} "
-                f"{first_part}{padding}↩{BOX_VERTICAL}"
+                f"{first_part}↩{BOX_VERTICAL}"
             )
 
-            remaining = content[wrap_point:]
+            remaining = content[self.content_width - 1:]
             while remaining:
                 part_len = display_width(remaining)
                 if part_len <= self.content_width:
@@ -397,16 +271,13 @@ class DiffRenderer:
                     )
                     remaining = ''
                 else:
-                    wrap_point = self._find_wrap_point(remaining, self.content_width)
-                    next_part = remaining[:wrap_point]
-                    next_width = display_width(next_part)
-                    padding = ' ' * max(0, self.content_width - 1 - next_width)
+                    next_part = remaining[:self.content_width - 1]
                     self.output.append(
                         f"{BOX_VERTICAL}{' ' * COL_OLD}{BOX_VERTICAL}   "
                         f"{BOX_VERTICAL}{' ' * COL_NEW}{BOX_VERTICAL} "
-                        f"{next_part}{padding}↩{BOX_VERTICAL}"
+                        f"{next_part}↩{BOX_VERTICAL}"
                     )
-                    remaining = remaining[wrap_point:]
+                    remaining = remaining[self.content_width - 1:]
 
     def _print_hunk_bottom(self):
         """Print hunk box bottom."""
@@ -455,8 +326,6 @@ class DiffRenderer:
             legend_items.append("-  del")
         if self.used.plus:
             legend_items.append("+  add")
-        if self.used.bracket:
-            legend_items.append("[]  changed")
         if self.used.space:
             legend_items.append("·  space")
         if self.used.tab:
@@ -532,15 +401,12 @@ class DiffRenderer:
                         new_line += 1
                         i += 1
                     else:
-                        # Apply word-level diff
-                        highlighted_del = highlight_word_diff(del_content, add_content, True, self.used)
-                        highlighted_add = highlight_word_diff(del_content, add_content, False, self.used)
-
-                        self._print_row(str(old_line), '-', '', highlighted_del)
+                        # Show full lines without inline highlighting
+                        self._print_row(str(old_line), '-', '', del_content)
                         old_line += 1
                         i += 1
                         self.used.plus = True
-                        self._print_row('', '+', str(new_line), highlighted_add)
+                        self._print_row('', '+', str(new_line), add_content)
                         new_line += 1
                         i += 1
                 else:
