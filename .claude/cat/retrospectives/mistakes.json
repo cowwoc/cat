@@ -2654,6 +2654,32 @@
         "catches_variations": true
       },
       "correct_behavior": "After committing implementation, continue /cat:work workflow: run stakeholder_review, present approval_gate for user review, ask user about merging, then complete merge_and_cleanup before marking task completed"
+    },
+    {
+      "id": "M218",
+      "timestamp": "2026-01-23T04:15:00Z",
+      "category": "detection_gap",
+      "description": "Commit type validation hook did not parse HEREDOC-style commit messages, allowing invalid type feat to pass",
+      "root_cause": "validate_commit_type.py only checked -m \"message\" format, returned None (allow) for unrecognized formats including HEREDOC which is the standard format per system prompt",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
+      "pattern_keywords": [
+        "commit",
+        "validation",
+        "heredoc",
+        "detection_gap"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Handler should parse both -m \"message\" format AND HEREDOC format to validate commit types"
     }
   ]
 }
