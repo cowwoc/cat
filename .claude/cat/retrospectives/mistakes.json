@@ -2851,6 +2851,32 @@
         "catches_variations": true
       },
       "correct_behavior": "STATE.md files must use bullet+bold format: '- **Status:** pending', '- **Progress:** 0%', etc. All scripts and handlers must parse this format."
+    },
+    {
+      "id": "M225",
+      "timestamp": "2026-01-23T16:00:00Z",
+      "category": "protocol_violation",
+      "description": "Task complete banner displayed with misaligned vertical lines due to agent retyping box instead of copy-pasting pre-computed output",
+      "root_cause": "work.md contained embedded box templates that conflicted with pre-computed boxes from work_handler.py. Agent used inline template instead of pre-computed output.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "box-alignment",
+        "pre-computed",
+        "copy-paste",
+        "embedded-template"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Skills must reference PRE-COMPUTED WORK BOXES instead of containing embedded box templates. Remove all inline boxes from skill files."
     }
   ]
 }
