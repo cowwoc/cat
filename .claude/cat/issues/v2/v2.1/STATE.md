@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- rename-stakeholders
 - rename-task-to-issue
 - suggest-issue-names
 - acceptance-criteria-options
