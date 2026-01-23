@@ -1,22 +1,25 @@
 ---
 name: skill-builder
-description: "Use BEFORE creating or updating any skill - decomposes goal into forward steps via backward reasoning"
+description: "Use BEFORE creating or updating any skill OR command - decomposes goal into forward steps via backward reasoning"
 ---
 
 # Skill Builder
 
 ## Purpose
 
-Design or update skills by reasoning backward from the goal to required preconditions,
+Design or update skills and commands by reasoning backward from the goal to required preconditions,
 then converting to forward-execution steps.
 
 ---
 
 ## When to Use
 
-- Creating a new skill
-- Updating an existing skill that has unclear or failing steps
+- Creating a new skill or command
+- Updating an existing skill or command that has unclear or failing steps
 - Any procedure where the goal is clear but the path is not
+
+**Note:** Both `skills/` and `commands/` are agent-facing prompt files that define behavior.
+Use skill-builder for BOTH types.
 
 ---
 
@@ -957,12 +960,18 @@ Procedure step:
   "Call build_box(root_contents) to construct the complete nested structure"
 ```
 
-### Extracting Computation to External Scripts (M192 Prevention)
+### Extracting Computation to Hook-Based Precomputation (M192/M215 Prevention)
 
 **Critical insight**: When a skill contains functions that perform deterministic computation
-(algorithms, formulas, calculations), these are candidates for extraction to external scripts
-that run via hooks. This prevents the agent from "computing in context" and re-typing results
-from memory.
+(algorithms, formulas, calculations), these MUST be extracted to hooks that run BEFORE the skill.
+The skill should NEVER invoke scripts directly - this shows Bash tools to users and defeats
+the purpose of extraction.
+
+**The correct pattern (see `plugin/hooks/skill_handlers/`):**
+1. Hook runs automatically when skill is invoked (via UserPromptSubmit or skill handler)
+2. Hook pre-computes ALL possible outputs the skill might need
+3. Hook returns pre-computed content via `additionalContext`
+4. Skill receives pre-computed content and outputs it directly (no script invocation)
 
 **Identify computation candidates during function extraction (Step 5):**
 
@@ -972,7 +981,7 @@ For each function identified, ask:
 2. Could the agent get the wrong result by "thinking" instead of computing?
 3. Does the function involve precise formatting, counting, or arithmetic?
 
-If YES to all three → Extract to external script
+If YES to all three → Extract to hook-based precomputation
 ```
 
 **Computation candidate signals**:
@@ -989,6 +998,21 @@ If YES to all three → Extract to external script
 | Reasoning/judgment | "Identify atomic conditions" | Requires understanding |
 | Pattern matching | "Find repeated subtrees" | Requires semantic analysis |
 | Decision making | "Choose appropriate level" | Requires context |
+
+**Anti-pattern (M215):** Skill invokes a script after reasoning completes.
+```
+# WRONG - Shows Bash tools to users, defeats extraction purpose
+1. Skill reasons about content
+2. Skill invokes render-output.py via Bash  ← User sees Bash tool
+3. Script returns formatted output
+4. Skill outputs result
+
+# CORRECT - Hook runs BEFORE skill, user sees nothing
+1. Hook detects skill invocation (via UserPromptSubmit or handler)
+2. Hook pre-computes ALL possible outputs
+3. Hook returns pre-computed content via additionalContext
+4. Skill receives pre-computed content, reasons about which to use, outputs directly
+```
 
 ### MANDATORY: Planning Verification Checklist (M198)
 
@@ -1028,6 +1052,49 @@ reasoning. Common override patterns to REJECT:
 exceptions. The methodology exists precisely because case-specific reasoning leads to errors.
 Frequency of execution, content type, and perceived complexity are NOT valid override reasons.
 
+**Anti-pattern (M214):** Conflating content generation with display rendering. These are independent:
+
+| Dimension | Question | If YES |
+|-----------|----------|--------|
+| Content | Does content require reasoning/judgment? | Content stays in skill |
+| Display | Does output need formatted rendering (boxes, tables, alignment)? | Rendering extracted to hook |
+
+**Common error:** "The content is reasoning-based, so extraction_required: false."
+**Correct analysis:** Content and display are orthogonal. Even if CONTENT requires reasoning,
+DISPLAY rendering (box characters, padding, alignment) is deterministic and should be extracted.
+
+**Correct workflow for mixed cases (hook pre-computes all variants):**
+1. Hook detects skill invocation
+2. Hook gathers all data that could be displayed (from files, state, etc.)
+3. Hook pre-renders ALL possible output variants
+4. Hook returns pre-computed variants via additionalContext
+5. Agent reasons about which variant(s) to use
+6. Agent outputs the selected pre-computed content directly
+
+**Example - research executive summary:**
+```yaml
+# WRONG analysis (led to M214):
+"The content requires reasoning (identifying approaches), so extraction_required: false"
+
+# WRONG workflow (led to M215):
+1. Agent reasons about stakeholder findings → produces approach data
+2. Agent calls render-research-summary.py via Bash  ← User sees Bash tool!
+3. Script returns formatted box output
+4. Agent outputs pre-rendered result
+
+# CORRECT analysis:
+content_generation: reasoning-based  # Selection/synthesis - stays in skill
+display_rendering: deterministic     # Box layout, alignment - extract to hook
+
+# CORRECT workflow:
+1. Hook detects /cat:research invocation
+2. Hook reads all stakeholder data from PLAN.md Research section
+3. Hook pre-renders executive summary boxes for each option/approach
+4. Hook returns ALL pre-rendered variants via additionalContext
+5. Agent reasons about findings, selects relevant pre-computed sections
+6. Agent outputs selected pre-computed content (no Bash invocation)
+```
+
 **Example - Token-report skill:**
 ```yaml
 # WRONG analysis (led to M198):
@@ -1044,103 +1111,224 @@ extraction_required: true  # 4/4 signals present
 recommendation: "Full hook-based pre-computation (Approach A)"
 ```
 
-**When computation candidates exist, generate three artifacts:**
+### Template-Based Precomputation (M216)
 
-**1. External Script** (Python or Bash):
+**For mixed cases where content is reasoning-based but output structure is known:**
+
+Even when the exact content is unknown until the skill reasons about it, the OUTPUT TYPE/STRUCTURE
+is often known ahead of time. The hook can pre-compute **templates** that the skill fills in.
+
+**Key insight:** You know:
+- The box will be N characters wide
+- Each line needs "│ " prefix and " │" suffix
+- The top/bottom borders use specific characters
+- Section headers follow a pattern
+
+**Template-based workflow:**
+1. Hook pre-computes structural elements at fixed width:
+   - Box borders (top, bottom, dividers)
+   - Line template with padding placeholder
+   - Section header templates
+2. Hook returns templates via additionalContext
+3. Skill reasons about content (option names, descriptions, etc.)
+4. Skill fills templates with content, extending to more lines as needed
+5. Skill outputs using pre-computed structural elements
+
+**Example - Research executive summary templates:**
+
 ```python
-# scripts/{skill-name}-compute.py
-# Implements the deterministic functions identified in Step 5
+# Hook pre-computes templates at fixed width (e.g., 76 chars inner width)
+BOX_WIDTH = 76
 
-def function_name(inputs):
-    # Exact algorithm from decomposition
-    return computed_result
-
-if __name__ == "__main__":
-    # Accept inputs, output JSON results
-    result = function_name(parse_inputs())
-    print(json.dumps(result))
+def precompute_templates():
+    return {
+        'top_border': '╭' + '─' * (BOX_WIDTH + 2) + '╮',
+        'bottom_border': '╰' + '─' * (BOX_WIDTH + 2) + '╯',
+        'divider': '├' + '─' * (BOX_WIDTH + 2) + '┤',
+        'line_template': '│ {content:<' + str(BOX_WIDTH) + '} │',
+        'header_template': '│ {icon} {title:<' + str(BOX_WIDTH - 4) + '} │',
+        'empty_line': '│' + ' ' * (BOX_WIDTH + 2) + '│',
+    }
 ```
 
-**2. UserPromptSubmit Hook**:
-```bash
-# hooks/precompute-{skill-name}.sh
-# Runs when user invokes the skill, provides pre-computed results
+**Skill uses templates:**
 
-# Detect skill invocation
-if [[ ! "$USER_PROMPT" =~ /skill-name ]]; then
-    echo '{}'; exit 0
-fi
+```markdown
+### Step 1: Require pre-computed templates
 
-# Run computation script
-RESULT=$(python3 "$PLUGIN_ROOT/scripts/{skill-name}-compute.py" "$INPUTS")
+**MANDATORY:** Check context for "PRE-COMPUTED RESEARCH TEMPLATES".
 
-# Return via additionalContext
-output_hook_message "UserPromptSubmit" "PRE-COMPUTED RESULT:\n$RESULT\n\nUse exactly as shown."
+Templates include:
+- `top_border`: Use once at start
+- `bottom_border`: Use once at end
+- `line_template`: Use for each content line (format with content)
+- `header_template`: Use for section headers
+- `divider`: Use between sections
+- `empty_line`: Use for visual spacing
+
+### Step 2: Reason about content
+
+Synthesize stakeholder findings to identify approaches, tradeoffs, etc.
+(This is the reasoning part that cannot be pre-computed.)
+
+### Step 3: Build output using templates
+
+For each line of content:
+1. Use `line_template.format(content=your_content)`
+2. If content exceeds width, wrap to multiple lines using same template
+
+Output structure:
+```
+{top_border}
+{header_template.format(icon='📋', title='Executive Summary')}
+{divider}
+{line_template.format(content='Option 1: ...')}
+{line_template.format(content='  Description: ...')}
+{empty_line}
+{line_template.format(content='Option 2: ...')}
+...
+{bottom_border}
+```
 ```
 
-**Hook output formatting for multiline results:**
+**Benefits of template approach:**
+- Borders/structure computed once with correct widths
+- Skill can extend to any number of lines
+- No risk of miscounting padding (template handles it)
+- Works when content is unknown but structure is known
 
-When building multiline output strings in shell scripts, use backslash (`\`) line continuations
-to make the script more readable and debuggable:
+**When to use each approach:**
 
-```bash
-# BAD - Hard to read, hard to debug
-OUTPUT=$(cat << EOF
-PRE-COMPUTED STATUS:
+| Scenario | Approach |
+|----------|----------|
+| All content known ahead of time | Full precomputation (status_handler pattern) |
+| Content unknown, structure known | Template precomputation |
+| Content unknown, structure varies | Plain text (avoid boxes) |
 
-${BOX_OUTPUT}
+**When computation candidates exist, generate two artifacts:**
 
-Next steps: ${NEXT_STEPS}
-EOF
-)
+**1. Skill Handler** (Python in `plugin/hooks/skill_handlers/`):
 
-# GOOD - Readable with clear structure
-OUTPUT="PRE-COMPUTED STATUS:\n\n" \
-OUTPUT+="${BOX_OUTPUT}\n\n" \
-OUTPUT+="Next steps:\n" \
-OUTPUT+="${NEXT_STEPS}"
+Create a handler that pre-computes ALL possible outputs before the skill runs.
+See `status_handler.py` for the canonical example.
 
-# ALSO GOOD - Explicit line building
-OUTPUT=""
-OUTPUT+="PRE-COMPUTED STATUS:\n"
-OUTPUT+="\n"
-OUTPUT+="${BOX_OUTPUT}\n"
-OUTPUT+="\n"
-OUTPUT+="Next steps:\n"
-OUTPUT+="${NEXT_STEPS}"
+```python
+# plugin/hooks/skill_handlers/{skill_name}_handler.py
+"""Handler for /cat:{skill-name} precomputation."""
+
+from pathlib import Path
+from . import register_handler
+
+class SkillNameHandler:
+    """Handler for /cat:{skill-name} skill."""
+
+    def handle(self, context: dict) -> str | None:
+        """Pre-compute all possible outputs before skill runs."""
+        project_root = context.get("project_root")
+        if not project_root:
+            return None
+
+        # 1. Gather all data the skill might need
+        data = self._collect_data(project_root)
+        if not data:
+            return None
+
+        # 2. Pre-render ALL possible output variants
+        variants = self._render_all_variants(data)
+
+        # 3. Return pre-computed content via additionalContext
+        return f"""PRE-COMPUTED {SKILL_NAME} OUTPUT:
+
+{variants['main_output']}
+
+VARIANT A (if applicable):
+{variants['variant_a']}
+
+VARIANT B (if applicable):
+{variants['variant_b']}
+
+INSTRUCTION: Output the appropriate pre-computed section. Do not recalculate."""
+
+    def _collect_data(self, project_root):
+        # Read files, gather state, etc.
+        pass
+
+    def _render_all_variants(self, data):
+        # Pre-render boxes, tables, formatted output
+        # Include ALL variants the skill might need
+        pass
+
+# Register handler - this makes it run when skill is invoked
+_handler = SkillNameHandler()
+register_handler("{skill-name}", _handler)
 ```
 
-**Benefits of explicit line building:**
-- Easier to see structure at a glance
-- Simpler to add/remove/reorder sections
-- Debugging shows which line caused issues
-- Git diffs are more meaningful
+**Key patterns from `status_handler.py`:**
+- `display_width(text)` - calculates terminal width with emoji support
+- `build_line(content, max_width)` - builds single box line with padding
+- `build_border(max_width, is_top)` - builds top/bottom border
+- `build_inner_box(header, content_items)` - builds nested box structures
 
-**3. Skill Preamble** (add to generated skill - FAIL-FAST, not fallback):
+**2. Skill Preamble** (add to generated skill - FAIL-FAST, not fallback):
+
 ```markdown
 ### Step 1: Require pre-computed results
 
-**MANDATORY:** Check context for "PRE-COMPUTED RESULT".
+**MANDATORY:** Check context for "PRE-COMPUTED {SKILL-NAME}".
 
-If found: Use those values exactly as provided, skip to output step.
+If found:
+1. Output the pre-computed content **directly without preamble**
+2. If skill requires reasoning to select variants, select appropriate section
+3. Skip to verification step
 
 If NOT found: **FAIL immediately** with message:
 ```
 ERROR: Pre-computed results not found in context.
 
-The hook (precompute-{skill-name}.sh) should have provided these.
+The handler ({skill-name}_handler.py) should have provided these.
 Check:
-1. Hook is registered in hooks.json
-2. Hook script exists and is executable
-3. Hook ran without errors (check hook output above)
+1. Handler is registered in skill_handlers/__init__.py
+2. Handler file exists in plugin/hooks/skill_handlers/
+3. Handler ran without errors
 
 Do NOT attempt manual computation - it will produce incorrect results.
 ```
 
 **Why fail-fast?** Manual computation was extracted precisely because agents
 cannot do it reliably. Falling back to manual defeats the purpose and hides
-hook failures.
+handler failures.
 ```
+
+**For mixed cases (reasoning + display):**
+
+When the skill requires reasoning to generate content but display is deterministic:
+
+```python
+# The hook pre-computes ALL possible display formats
+# The skill reasons about which to use and outputs directly
+
+def _render_all_variants(self, data):
+    variants = {}
+
+    # Pre-render each possible stakeholder perspective
+    for stakeholder in ['architect', 'security', 'performance', ...]:
+        variants[f'{stakeholder}_box'] = self._build_stakeholder_box(
+            data.get(stakeholder, {})
+        )
+
+    # Pre-render summary tables for different groupings
+    variants['by_priority'] = self._build_priority_table(data)
+    variants['by_category'] = self._build_category_table(data)
+
+    # Pre-render option comparison boxes
+    for i, option in enumerate(data.get('options', [])):
+        variants[f'option_{i}_box'] = self._build_option_box(option)
+
+    return variants
+```
+
+The skill then reasons about the data, decides what to show, and outputs
+the appropriate pre-computed sections.
 
 **Example - Box alignment extraction**:
 
@@ -1151,12 +1339,14 @@ Functions identified in Step 5:
   build_line(content, max) → string ← COMPUTATION CANDIDATE
 
 Generate:
-  1. scripts/build-box-lines.py     - implements all three functions
-  2. hooks/precompute-box-lines.sh  - runs script, returns via additionalContext
-  3. Skill preamble                 - REQUIRES pre-computed lines (fail-fast)
+  1. plugin/hooks/skill_handlers/box_handler.py
+     - Implements display_width, build_line, build_border
+     - Pre-computes complete box output
+     - Returns via additionalContext
+  2. Skill preamble - REQUIRES pre-computed output (fail-fast)
 
-Result: Agent receives exact computed strings, cannot corrupt them by re-typing.
-If hook fails, skill fails immediately - no silent degradation.
+Result: Agent receives exact pre-computed box, outputs directly.
+No Bash tools shown to user. If handler fails, skill fails immediately.
 ```
 
 **Decision flow during Step 5**:
@@ -1170,7 +1360,9 @@ For each function:
          │
         Yes
          │
-  Extract to external script + hook
+  Extract to skill handler (plugin/hooks/skill_handlers/)
+         │
+  Handler pre-computes ALL variants BEFORE skill runs
          │
   Skill REQUIRES pre-computed result (fail-fast if missing)
 ```
@@ -1188,9 +1380,10 @@ For each function:
 - [ ] Variable-length functions derived via min-case → increment → generalize
 - [ ] Functions listed in dependency order (no forward references)
 - [ ] Forward steps call functions (no duplicated logic)
-- [ ] **Computation candidates identified and extracted** (M192)
-- [ ] External script created for deterministic functions (if any)
-- [ ] UserPromptSubmit hook created to pre-compute (if any)
+- [ ] **Computation candidates identified and extracted to skill handler** (M192/M215)
+- [ ] Skill handler created in `plugin/hooks/skill_handlers/` for deterministic functions
+- [ ] Handler pre-computes ALL possible output variants BEFORE skill runs
+- [ ] **Skill NEVER invokes scripts via Bash** - user sees no tool calls (M215)
 - [ ] **Skill REQUIRES pre-computed results - FAIL-FAST if missing** (no fallback)
 - [ ] **No "if not found, continue to manual..." patterns** (fail-fast principle)
 - [ ] **Calculation gates added for transformation steps** (M191)

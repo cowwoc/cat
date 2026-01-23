@@ -53,3 +53,4 @@ from . import status_handler
 from . import work_handler
 from . import cleanup_handler
 from . import add_handler
+from . import research_handler
