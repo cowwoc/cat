@@ -10,14 +10,15 @@ The cache is a read-only copy that gets overwritten on plugin updates.
 
 After modifying any file that has associated tests, re-run those tests before committing.
 
-**Test locations:**
-- `plugin/hooks/bash_handlers/tests/` - Tests for bash command handlers
+**Files with tests:**
+
+| Source File | Test File |
+|-------------|-----------|
+| `plugin/hooks/bash_handlers/validate_commit_type.py` | `plugin/hooks/bash_handlers/tests/test_validate_commit_type.py` |
 
 **Running tests:**
 ```bash
-cd /workspace/plugin/hooks && python3 << 'PYEOF'
-# Simple test runner (see test files for implementation)
-PYEOF
+cd /workspace/plugin/hooks && python3 bash_handlers/tests/run_tests.py
 ```
 
 Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may need updating.
