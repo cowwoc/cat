@@ -1,12 +1,6 @@
-# Task State: feature-gate-middleware
+# State
 
-## Status
-status: pending
-progress: 0%
-
-## Dependencies
-- tier-feature-mapping (needs entitlement definitions)
-
-## Provides
-- Tier-based feature enforcement
-- Graceful upgrade prompts
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** [tier-feature-mapping, jwt-token-generation]
+- **Last Updated:** 2026-01-23

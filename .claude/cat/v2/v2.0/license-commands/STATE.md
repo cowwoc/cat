@@ -1,11 +1,6 @@
-# Task State: license-commands
+# State
 
-## Status
-status: pending
-progress: 0%
-
-## Dependencies
-- External license server (provides validation API and JWT tokens)
-
-## Provides
-- CLI interface for license management
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** [license-validation-server, jwt-token-generation]
+- **Last Updated:** 2026-01-23
