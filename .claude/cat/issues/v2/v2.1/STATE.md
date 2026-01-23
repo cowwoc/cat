@@ -1,9 +1,9 @@
 # Minor Version 2.1 State: Pre-Demo Polish
 
 ## Status
-status: pending
-progress: 0%
-dependencies: [v2.0]
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** [v2.0]
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.

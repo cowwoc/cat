@@ -1,9 +1,9 @@
 # Minor Version 2.2 State: Demos & Marketing
 
 ## Status
-status: pending
-progress: 0%
-dependencies: [v2.1]
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** [v2.1]
 
 ## Summary
 Record demo videos showcasing CAT features for marketing and documentation.
