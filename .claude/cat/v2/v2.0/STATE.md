@@ -62,3 +62,5 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - refactor-status-scripts-to-python
 - dynamic-box-sizing
 - status-display-redesign
+- add-display-redesign
+- cleanup-display-redesign
