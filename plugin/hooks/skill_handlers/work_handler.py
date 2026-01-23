@@ -33,7 +33,7 @@ def build_header_top(header: str, max_width: int) -> str:
 class WorkHandler:
     """Handler for /cat:work skill."""
 
-    def _build_task_complete_with_next(self, box_width: int) -> str:
+    def _build_task_complete_with_next(self) -> str:
         """Build Task Complete box for auto-continue mode (trust >= medium)."""
         header = "✓ Task Complete"
 
@@ -54,21 +54,27 @@ class WorkHandler:
 
         footer_content = [""]
 
+        # Collect all content to calculate max width
+        all_content = content_lines + separator_content + footer_content
+        content_widths = [display_width(c) for c in all_content]
+        header_width = display_width(header) + 5  # Account for "╭─── header ───╮" format
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
         lines = []
-        lines.append(build_header_top(header, box_width))
+        lines.append(build_header_top(header, max_width))
         for content in content_lines:
-            lines.append(build_line(content, box_width))
-        lines.append(build_separator(box_width))
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
         for content in separator_content:
-            lines.append(build_line(content, box_width))
-        lines.append(build_separator(box_width))
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
         for content in footer_content:
-            lines.append(build_line(content, box_width))
-        lines.append(build_border(box_width, is_top=False))
+            lines.append(build_line(content, max_width))
+        lines.append(build_border(max_width, is_top=False))
 
         return "\n".join(lines)
 
-    def _build_scope_complete(self, box_width: int) -> str:
+    def _build_scope_complete(self) -> str:
         """Build Scope Complete box."""
         header = "✓ Scope Complete"
 
@@ -82,15 +88,20 @@ class WorkHandler:
             "",
         ]
 
+        # Calculate max width from content
+        content_widths = [display_width(c) for c in content_lines]
+        header_width = display_width(header) + 5  # Account for "╭─── header ───╮" format
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
         lines = []
-        lines.append(build_header_top(header, box_width))
+        lines.append(build_header_top(header, max_width))
         for content in content_lines:
-            lines.append(build_line(content, box_width))
-        lines.append(build_border(box_width, is_top=False))
+            lines.append(build_line(content, max_width))
+        lines.append(build_border(max_width, is_top=False))
 
         return "\n".join(lines)
 
-    def _build_task_complete_low_trust(self, box_width: int) -> str:
+    def _build_task_complete_low_trust(self) -> str:
         """Build Task Complete box for low trust (user must invoke)."""
         header = "✓ Task Complete"
 
@@ -109,17 +120,23 @@ class WorkHandler:
 
         footer_content = [""]
 
+        # Collect all content to calculate max width
+        all_content = content_lines + separator_content + footer_content
+        content_widths = [display_width(c) for c in all_content]
+        header_width = display_width(header) + 5  # Account for "╭─── header ───╮" format
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
         lines = []
-        lines.append(build_header_top(header, box_width))
+        lines.append(build_header_top(header, max_width))
         for content in content_lines:
-            lines.append(build_line(content, box_width))
-        lines.append(build_separator(box_width))
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
         for content in separator_content:
-            lines.append(build_line(content, box_width))
-        lines.append(build_separator(box_width))
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
         for content in footer_content:
-            lines.append(build_line(content, box_width))
-        lines.append(build_border(box_width, is_top=False))
+            lines.append(build_line(content, max_width))
+        lines.append(build_border(max_width, is_top=False))
 
         return "\n".join(lines)
 
@@ -213,13 +230,13 @@ INSTRUCTION: Render progress displays inline using these templates. Update the b
 PRE-COMPUTED WORK BOXES (copy exactly when rendering):
 
 --- TASK_COMPLETE_WITH_NEXT_TASK ---
-{self._build_task_complete_with_next(58)}
+{self._build_task_complete_with_next()}
 
 --- SCOPE_COMPLETE ---
-{self._build_scope_complete(58)}
+{self._build_scope_complete()}
 
 --- TASK_COMPLETE_LOW_TRUST ---
-{self._build_task_complete_low_trust(58)}
+{self._build_task_complete_low_trust()}
 
 INSTRUCTION: Use the appropriate pre-computed box above. Replace placeholders ({{task-name}}, {{next-task-name}}, {{goal from PLAN.md}}, {{scope description}}) with actual values but keep box structure exact. Maintain spacing and alignment."""
 
