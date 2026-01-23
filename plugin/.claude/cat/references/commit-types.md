@@ -37,7 +37,7 @@ Use ONLY these types when committing in a CAT-managed project:
 | File Location | Commit Type | Examples |
 |---------------|-------------|----------|
 | `.claude/cat/*.md` | `planning:` | PROJECT.md, ROADMAP.md |
-| `.claude/cat/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
+| `.claude/cat/issues/v*/` | `planning:` | STATE.md, PLAN.md, CHANGELOG.md |
 | `.claude/cat/retrospectives/` | `config:` | mistakes.json, retrospectives.json (Claude-facing) |
 | `.claude/hooks/`, `.claude/settings.json` | `config:` | hooks, Claude Code settings |
 | `CLAUDE.md`, skills, workflows | `config:` | Claude-facing behavior rules |
@@ -66,7 +66,7 @@ The CAT plugin repo separates plugin source from planning:
 | `plugin/.claude/cat/references/` | `config:` | Plugin's bundled reference docs |
 | `plugin/commands/`, `plugin/skills/` | `config:` | Plugin commands and skills |
 | `.claude/cat/` (root) | `planning:` | CAT's own development planning |
-| `.claude/cat/v*/` (root) | `planning:` | CAT's version/task structure |
+| `.claude/cat/issues/v*/` (root) | `planning:` | CAT's version/task structure |
 
 **Key distinction:** Default type is based on location, but always override with the actual change type (bugfix, feature, refactor) when applicable. `config:` is for maintenance/settings changes, not all plugin file edits.
 

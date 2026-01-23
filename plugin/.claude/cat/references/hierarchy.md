@@ -102,7 +102,7 @@ dependent tasks.
 ## Example Path
 
 ```
-.claude/cat/v1/v1/parse-switch-statements/STATE.md
+.claude/cat/issues/v1/v1.0/parse-switch-statements/STATE.md
 ```
 
 Components:

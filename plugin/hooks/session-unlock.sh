@@ -7,7 +7,7 @@ set -euo pipefail
 trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
 # Get project directory from environment or use current directory
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}"
 
 # Configuration
 # CAT files MUST be inside .claude/cat/ directory
