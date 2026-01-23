@@ -118,7 +118,7 @@
       "description": "ESCALATION: A001 commit type validation ineffective. Need semantic validation - the hook checks format but not semantic correctness (docs vs config vs planning).",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-001",
-      "status": "escalated",
+      "status": "deferred",
       "created_date": "2026-01-19T16:13:29-05:00",
       "completed_date": "2026-01-19T16:18:04-05:00",
       "related_mistakes": [
@@ -138,7 +138,8 @@
         ],
         "verdict": "ineffective"
       },
-      "escalation_of": "A001"
+      "escalation_of": "A001",
+      "note": "Deferred: Semantic commit type validation (docs vs planning vs config based on file paths) is complex with low ROI. Better addressed through documentation in git-commit skill."
     },
     {
       "id": "A007",
@@ -442,9 +443,9 @@
       "description": "Protocol violations remain high (57% of mistakes). Consider PreToolUse hooks that validate protocol state before allowing operations (e.g., check commit count before approval gate).",
       "category": "protocol_violation",
       "pattern_id": null,
-      "status": "open",
+      "status": "resolved",
       "created_date": "2026-01-22T17:40:38-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-23T12:50:00-05:00",
       "related_mistakes": [
         "M201",
         "M202",
@@ -458,7 +459,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "note": "Resolved: warn-unsquashed-approval.sh already implements commit count check. Broader protocol validation would require case-by-case hooks."
     },
     {
       "id": "A018",
@@ -486,9 +488,9 @@
       "description": "Consider PreToolUse hook that warns when Edit tool targets skill SKILL.md files without prior /cat:skill-builder invocation in session",
       "category": "protocol_violation",
       "pattern_id": null,
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-23T12:07:04-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-23T12:45:00-05:00",
       "related_mistakes": [
         "M213",
         "M214",
@@ -500,7 +502,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "note": "Implemented warn-skill-edit-without-builder.sh hook"
     }
   ],
   "retrospectives": [
