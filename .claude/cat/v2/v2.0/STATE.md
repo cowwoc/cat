@@ -2,7 +2,7 @@
 
 ## Status
 status: in_progress
-progress: 86%
+progress: 87%
 started: 2026-01-20
 
 ## Summary
@@ -68,6 +68,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - tos-legal-review
 - update-graphics-tagline
 - work-box-hook-precomputation
+- research-executive-summary
 
 ## Tasks Pending
 - move-planning-to-issues-subdir
