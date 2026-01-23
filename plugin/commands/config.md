@@ -17,6 +17,21 @@ users through modifying their preferences.
 
 </objective>
 
+<emoji_reference>
+
+**MANDATORY (M210): Use these exact emojis for each setting:**
+
+| Setting | Emoji | Display |
+|---------|-------|---------|
+| Trust | 🤝 | 🤝 Trust |
+| Verify | ✅ | ✅ Verify |
+| Curiosity | 🔍 | 🔍 Curiosity |
+| Patience | ⏳ | ⏳ Patience |
+
+**Copy-paste from this table when constructing displays manually.**
+
+</emoji_reference>
+
 <process>
 
 <step name="check-precomputed">

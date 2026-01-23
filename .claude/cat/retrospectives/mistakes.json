@@ -2415,6 +2415,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use hookSpecificOutput format with hookEventName for all hook types that return additionalContext"
+    },
+    {
+      "id": "M210",
+      "timestamp": "2026-01-23T12:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Used wrong emoji (✅) for Trust setting instead of correct emoji (🤝) when constructing config display",
+      "root_cause": "Assumed emoji from memory instead of verifying against skill specification before outputting display",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/config.md",
+      "pattern_keywords": [
+        "emoji",
+        "display",
+        "config",
+        "trust",
+        "visual"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Copy-paste emojis from the emoji_reference table at top of config.md when constructing displays"
     }
   ]
 }
