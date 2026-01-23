@@ -79,25 +79,46 @@ for remote_branch in $(git branch -r 2>/dev/null | grep -E 'origin/[0-9]+\.[0-9]
 done
 ```
 
-Present findings in this format:
+**Invoke handler to generate display:**
+
+```json
+{
+  "handler": "cleanup",
+  "context": {
+    "phase": "survey",
+    "worktrees": [{"path": "<path>", "branch": "<branch>", "state": "<state>"}],
+    "locks": [{"task_id": "<id>", "session": "<session-id>", "age": <seconds>}],
+    "branches": ["<branch-name>"],
+    "stale_remotes": [{"branch": "<name>", "author": "<author>", "relative": "<time>"}],
+    "context_file": "<path-or-null>"
+  }
+}
+```
+
+Output the PRE-COMPUTED display exactly as provided. Example:
 
 ```
-## Survey Results
+╭─ 🔍 Survey Results ─────────────────────────────────╮
+│ ╭─ 📁 Worktrees ──────────────────────────────────╮ │
+│ │ /workspace/.worktrees/task: 2.0-task [prunable] │ │
+│ ╰─────────────────────────────────────────────────╯ │
+│                                                     │
+│ ╭─ 🔒 Task Locks ─────────────────────────────────╮ │
+│ │ 2.0-task: session=abc12345, age=3600s           │ │
+│ ╰─────────────────────────────────────────────────╯ │
+│                                                     │
+│ ╭─ 🌿 CAT Branches ───────────────────────────────╮ │
+│ │ 2.0-test-branch                                 │ │
+│ ╰─────────────────────────────────────────────────╯ │
+│                                                     │
+│ ╭─ ⏳ Stale Remotes (1-7 days) ───────────────────╮ │
+│ │ origin/old: Test, 3 days ago                    │ │
+│ ╰─────────────────────────────────────────────────╯ │
+│                                                     │
+│ 📝 Context: None                                    │
+╰─────────────────────────────────────────────────────╯
 
-### Worktrees
-- <path>: <branch> [<state>]
-
-### Task Locks
-- <task-id>: session=<id>, age=<seconds>s
-
-### CAT Branches
-- <branch-name>
-
-### Stale Remote Branches (1-7 days)
-- <branch>: last commit by <author>, <relative-time>
-
-### Context Files
-- <path> or "None found"
+Found: 1 worktrees, 1 locks, 1 branches, 1 stale remotes
 ```
 
 ---
@@ -179,22 +200,39 @@ If uncommitted:
 
 ### Step 4: Get User Confirmation
 
-Present cleanup plan and request confirmation:
+**Invoke handler to generate display:**
+
+```json
+{
+  "handler": "cleanup",
+  "context": {
+    "phase": "plan",
+    "locks_to_remove": ["<task-id>"],
+    "worktrees_to_remove": [{"path": "<path>", "branch": "<branch>"}],
+    "branches_to_remove": ["<branch-name>"],
+    "stale_remotes": [{"branch": "<name>", "staleness": "<info>"}]
+  }
+}
+```
+
+Output the PRE-COMPUTED display exactly as provided. Example:
 
 ```
-## Cleanup Plan
+╭─ 🧹 Cleanup Plan ───────────────────────────────────╮
+│ 🔒 Locks to Remove:                                 │
+│    • 2.0-task                                       │
+│                                                     │
+│ 📁 Worktrees to Remove:                             │
+│    • /workspace/.worktrees/task → 2.0-task-branch   │
+│                                                     │
+│ 🌿 Branches to Remove:                              │
+│    • 2.0-task-branch                                │
+│                                                     │
+│ ⏳ Stale Remotes (report only):                     │
+│    • origin/old: 3 days idle                        │
+╰─────────────────────────────────────────────────────╯
 
-### Will Remove (locks)
-- <lock-id>
-
-### Will Remove (worktrees)
-- <worktree-path> -> branch: <branch-name>
-
-### Will Remove (branches)
-- <branch-name>
-
-### Remote Branches (report only, not auto-removed)
-- <remote-branch>: <staleness-info>
+Total items to remove: 3
 
 Confirm cleanup? (yes/no)
 ```
@@ -268,21 +306,39 @@ else
 fi
 ```
 
-Present verification:
+**Invoke handler to generate display:**
+
+```json
+{
+  "handler": "cleanup",
+  "context": {
+    "phase": "verify",
+    "remaining_worktrees": ["<path>"],
+    "remaining_branches": ["<branch>"],
+    "remaining_locks": ["<lock-id>"],
+    "removed_counts": {"locks": <n>, "worktrees": <n>, "branches": <n>}
+  }
+}
+```
+
+Output the PRE-COMPUTED display exactly as provided. Example:
 
 ```
-## Verification
-
-### Remaining Worktrees
-- <main-worktree-only expected>
-
-### Remaining CAT Branches
-- None (or list if expected)
-
-### Remaining Locks
-- None (or list if expected)
-
-Cleanup complete.
+╭─ ✅ Cleanup Complete ───────────────────────────────╮
+│ Removed:                                            │
+│    • 1 lock(s)                                      │
+│    • 1 worktree(s)                                  │
+│    • 1 branch(es)                                   │
+│                                                     │
+│ 📁 Remaining Worktrees:                             │
+│    • /workspace (main)                              │
+│                                                     │
+│ 🌿 Remaining CAT Branches:                          │
+│    (none)                                           │
+│                                                     │
+│ 🔒 Remaining Locks:                                 │
+│    (none)                                           │
+╰─────────────────────────────────────────────────────╯
 ```
 
 ---
