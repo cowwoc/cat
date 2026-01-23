@@ -115,7 +115,7 @@ class WorkHandler:
             "**Next Up:** {next-task-name}",
             "{goal from PLAN.md}",
             "",
-            "`/cat:work` to continue",
+            "`/clear` then `/cat:work` to continue",
         ]
 
         footer_content = [""]

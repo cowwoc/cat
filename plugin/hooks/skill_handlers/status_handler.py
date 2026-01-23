@@ -535,7 +535,7 @@ class StatusHandler:
 NEXT STEPS table:
 | Option | Action | Command |
 |--------|--------|---------|
-| [**1**] | Execute a task | `/cat:work {active_minor}-<task-name>` |
+| [**1**] | Execute a task | `/clear` then `/cat:work {active_minor}-<task-name>` |
 | [**2**] | Add new task | `/cat:add` |
 
 Legend: ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
