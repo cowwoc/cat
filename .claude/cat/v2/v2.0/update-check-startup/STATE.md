@@ -1,11 +1,6 @@
-# Task State: update-check-startup
+# State
 
-## Status
-status: pending
-progress: 0%
-
-## Dependencies
-- None
-
-## Provides
-- Version update notification system
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-23
