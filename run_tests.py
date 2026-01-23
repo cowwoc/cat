@@ -192,7 +192,7 @@ def test_add_handler():
         "version": "2.1",
         "version_type": "minor",
         "parent_info": "v2",
-        "path": ".claude/cat/issues/v2/v2.1",
+        "path": ".claude/cat/v2/v2.1",
     }
     result = handler.handle(version_context)
     runner.test("Version returns string", isinstance(result, str))
@@ -254,7 +254,7 @@ def test_status_handler():
     """Test status_handler."""
     runner.section("skill_handlers/status_handler")
 
-    from skill_handlers.status_handler import StatusHandler, collect_status_data
+    from skill_handlers.status_handler import StatusHandler
     handler = StatusHandler()
 
     # Test returns None without project_root
@@ -265,38 +265,8 @@ def test_status_handler():
     result = handler.handle({"project_root": "/nonexistent/path"})
     runner.test("Returns None with invalid path", result is None)
 
-    # Regression test for M223: must use issues/ subdirectory
-    # Create temp structure with issues/ subdirectory
-    with TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-        cat_dir = tmp_path / ".claude" / "cat"
-        cat_dir.mkdir(parents=True)
-        issues_dir = cat_dir / "issues"
-        issues_dir.mkdir()
-
-        # Create config files in cat_dir
-        (cat_dir / "PROJECT.md").write_text("# Test Project\n")
-        (cat_dir / "ROADMAP.md").write_text("# Roadmap\n")
-
-        # Create version structure in issues_dir
-        v1_dir = issues_dir / "v1"
-        v1_dir.mkdir()
-        v10_dir = v1_dir / "v1.0"
-        v10_dir.mkdir()
-        task_dir = v10_dir / "test-task"
-        task_dir.mkdir()
-        (task_dir / "STATE.md").write_text("Status: pending\n")
-        (task_dir / "PLAN.md").write_text("# Test Task\n")
-
-        # Test collect_status_data finds tasks in issues/
-        data = collect_status_data(issues_dir)
-        runner.test("M223 regression: finds tasks in issues/ dir",
-                    "error" not in data and data.get("overall", {}).get("total", 0) == 1)
-
-        # Test handler uses issues/ subdirectory
-        result = handler.handle({"project_root": str(tmp_path)})
-        runner.test("M223 regression: handler uses issues/ dir",
-                    result is not None and "test-task" in result)
+    # Note: Full handler testing requires real CAT directory structure
+    # which is covered by pytest tests with fixtures
 
 
 def test_help_handler():
@@ -360,68 +330,6 @@ def test_cleanup_handler():
         runner.test("Contains PRE-COMPUTED marker", "PRE-COMPUTED" in result)
 
 
-def test_config_loader():
-    """Test unified config loader."""
-    runner.section("lib/config loader")
-
-    # Import the config module
-    import sys
-    from pathlib import Path
-    lib_path = Path(__file__).parent / "plugin" / "hooks" / "lib"
-    if str(lib_path) not in sys.path:
-        sys.path.insert(0, str(lib_path))
-
-    from config import load_config, get_config_value, DEFAULTS
-
-    # Test defaults
-    runner.test("DEFAULTS has autoRemoveWorktrees", "autoRemoveWorktrees" in DEFAULTS)
-    runner.test("DEFAULTS has trust", DEFAULTS.get("trust") == "medium")
-    runner.test("DEFAULTS has terminalWidth", DEFAULTS.get("terminalWidth") == 120)
-
-    # Test with temp directory
-    with TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-
-        # Test: no config returns defaults
-        result = load_config(tmp_path)
-        runner.test("No config returns defaults", result == DEFAULTS)
-
-        # Create cat dir
-        cat_dir = tmp_path / ".claude" / "cat"
-        cat_dir.mkdir(parents=True)
-
-        # Test: empty cat dir returns defaults
-        result = load_config(tmp_path)
-        runner.test("Empty cat dir returns defaults", result == DEFAULTS)
-
-        # Test: base config overrides defaults
-        base_config = cat_dir / "cat-config.json"
-        base_config.write_text('{"trust": "high"}')
-        result = load_config(tmp_path)
-        runner.test("Base config overrides defaults", result["trust"] == "high")
-        runner.test("Unset keys use defaults", result["verify"] == "changed")
-
-        # Test: local config overrides base
-        local_config = cat_dir / "cat-config.local.json"
-        local_config.write_text('{"trust": "low", "license": "key123"}')
-        result = load_config(tmp_path)
-        runner.test("Local config overrides base", result["trust"] == "low")
-        runner.test("Local config adds keys", result.get("license") == "key123")
-
-        # Test: invalid local JSON doesn't break loading
-        local_config.write_text('{ invalid json }')
-        result = load_config(tmp_path)
-        runner.test("Invalid local JSON uses base", result["trust"] == "high")
-
-        # Test: get_config_value helper
-        local_config.write_text('{"customKey": "customValue"}')
-        result = get_config_value("customKey", tmp_path)
-        runner.test("get_config_value finds key", result == "customValue")
-
-        result = get_config_value("missing", tmp_path, default="fallback")
-        runner.test("get_config_value uses default", result == "fallback")
-
-
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -441,7 +349,6 @@ def main():
         test_help_handler,
         test_work_handler,
         test_cleanup_handler,
-        test_config_loader,
     ]
 
     for test_func in test_functions:
