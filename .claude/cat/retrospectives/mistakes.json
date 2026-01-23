@@ -2362,6 +2362,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use planning: commit type for all .claude/cat/ file changes"
+    },
+    {
+      "id": "M208",
+      "timestamp": "2026-01-22T17:36:30Z",
+      "category": "protocol_violation",
+      "description": "After /cat:status skill failed-fast (correct), attempted manual data collection instead of stopping",
+      "root_cause": "Completion bias - attempted to work around infrastructure failure instead of following fail-fast protocol. Ignored explicit documentation stating Do NOT render manually.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "/workspace/plugin/commands/status.md",
+      "pattern_keywords": [
+        "protocol_violation",
+        "fail-fast",
+        "manual_rendering",
+        "completion_bias"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When PRE-COMPUTED STATUS DISPLAY not found in context: output error message, then STOP immediately. Do NOT attempt to gather data, read files, or render status manually."
     }
   ]
 }
