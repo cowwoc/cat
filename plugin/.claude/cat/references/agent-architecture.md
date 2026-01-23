@@ -230,6 +230,27 @@ HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))    # 160000
 | Hard limit | 80% | 160,000 | Maximum allowed - MANDATORY decomposition above |
 | Context limit | 100% | 200,000 | Absolute ceiling - compaction occurs |
 
+### Quality Degradation by Context Usage
+
+| Context Usage | Quality | Claude's State |
+|---------------|---------|----------------|
+| 0-30% | PEAK | Thorough, comprehensive |
+| 30-50% | GOOD | Confident, solid work |
+| 50-70% | DEGRADING | Efficiency mode begins |
+| 70%+ | POOR | Rushed, minimal |
+
+**The 40-50% inflection point:** Claude perceives context mounting and enters "completion mode."
+Result: Quality crash before reaching hard limit. This is why soft target is 40%, not 70%.
+
+### Task Sizing Guidelines
+
+| Task Complexity | Context/Task | Guideline |
+|-----------------|--------------|-----------|
+| Simple (CRUD, config) | ~10-15% | Can batch 3-4 per session |
+| Medium (business logic) | ~20-30% | 2-3 per session |
+| Complex (algorithms) | ~30-40% | 1-2 per session |
+| Very complex (migrations) | ~40-50% | 1 per session, consider decomposition |
+
 ### Main Agent Responsibilities
 
 **Pre-Spawn (BEFORE spawning any subagent):**
