@@ -9,21 +9,20 @@ import re
 from . import register_handler
 
 VALID_COMMIT_TYPES = [
-    "feat",      # New feature
-    "fix",       # Bug fix
-    "docs",      # Documentation
-    "style",     # Formatting
-    "refactor",  # Code restructuring
-    "perf",      # Performance
-    "test",      # Tests
-    "build",     # Build system
-    "ci",        # CI configuration
-    "chore",     # Maintenance
-    "revert",    # Revert commit
-    "config",    # Configuration changes
-    "planning",  # Planning documents
-    "bugfix",    # Alternative for fix
+    "feature",      # New feature (NOT "feat")
+    "bugfix",       # Bug fix (NOT "fix")
+    "docs",         # Documentation
+    "style",        # Formatting
+    "refactor",     # Code restructuring
+    "performance",  # Performance (NOT "perf")
+    "test",         # Tests
+    "config",       # Configuration changes
+    "planning",     # Planning documents
+    "revert",       # Revert commit
 ]
+
+# Short forms that are NOT allowed (per commit-types.md)
+# feat, fix, chore, build, ci, perf
 
 
 class ValidateCommitTypeHandler:
