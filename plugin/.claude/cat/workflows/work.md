@@ -659,14 +659,14 @@ Before setting a minor version's STATE.md to `status: completed`, verify all nes
 ```bash
 MINOR_PATH=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}"
 TOTAL_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec test -f {}/STATE.md \; -print 2>/dev/null | wc -l)
-COMPLETED_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec grep -l "^status: completed" {}/STATE.md \; 2>/dev/null | wc -l)
+COMPLETED_TASKS=$(find "$MINOR_PATH" -mindepth 1 -maxdepth 1 -type d -exec grep -l "\*\*Status:\*\*.*completed" {}/STATE.md \; 2>/dev/null | wc -l)
 
 if [[ "$COMPLETED_TASKS" -lt "$TOTAL_TASKS" ]]; then
   echo "⚠️ Cannot mark minor complete: $((TOTAL_TASKS - COMPLETED_TASKS))/$TOTAL_TASKS tasks still pending"
   # Do NOT update minor STATE.md to completed
 else
   # Safe to mark minor version as completed
-  # Update minor STATE.md: status: completed
+  # Update minor STATE.md: - **Status:** completed
 fi
 ```
 
@@ -674,12 +674,12 @@ fi
 
 **MANDATORY: Validate Before Marking Major Version Complete (M150)**
 
-Before setting a major version's STATE.md to `status: completed`, verify all nested minor versions are complete:
+Before setting a major version's STATE.md to `- **Status:** completed`, verify all nested minor versions are complete:
 
 ```bash
 MAJOR_PATH=".claude/cat/issues/v${MAJOR}"
 TOTAL_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec test -f {}/STATE.md \; -print 2>/dev/null | wc -l)
-COMPLETED_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec grep -l "^status: completed" {}/STATE.md \; 2>/dev/null | wc -l)
+COMPLETED_MINORS=$(find "$MAJOR_PATH" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" -exec grep -l "\*\*Status:\*\*.*completed" {}/STATE.md \; 2>/dev/null | wc -l)
 
 if [[ "$COMPLETED_MINORS" -lt "$TOTAL_MINORS" ]]; then
   echo "⚠️ Cannot mark major complete: $((TOTAL_MINORS - COMPLETED_MINORS))/$TOTAL_MINORS minor versions still pending"
