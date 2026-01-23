@@ -2931,6 +2931,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use skill-builder for skill modifications. Reference handler functions by name (e.g., build_scorecard) instead of embedding visual examples. Skills describe structure textually, handlers render it."
+    },
+    {
+      "id": "M228",
+      "timestamp": "2026-01-23T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Failed to update PLAN.md during /cat:research - skipped identify_version and update_plan steps entirely across 3 rounds of research",
+      "root_cause": "Skill workflow steps are documented but not enforced - agent can skip steps without detection",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/commands/research.md",
+      "pattern_keywords": [
+        "research",
+        "PLAN.md",
+        "update_plan",
+        "identify_version",
+        "wizard_selection"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Set RESEARCH_PLAN_PATH in identify_version step, update PLAN.md immediately after each wizard selection using Edit tool"
     }
   ]
 }
