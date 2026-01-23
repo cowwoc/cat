@@ -22,8 +22,8 @@ if [[ "$TOOL_NAME" != "Write" ]]; then
     exit 0
 fi
 
-# Only check STATE.md files in .claude/cat/issues/v*/v*.*/ (task STATE.md files)
-if [[ ! "$FILE_PATH" =~ \.claude/cat/issues/v[0-9]+/v[0-9]+\.[0-9]+/[^/]+/STATE\.md$ ]]; then
+# Only check STATE.md files in .claude/cat/v*/v*.*/ (task STATE.md files)
+if [[ ! "$FILE_PATH" =~ \.claude/cat/v[0-9]+/v[0-9]+\.[0-9]+/[^/]+/STATE\.md$ ]]; then
     echo '{"decision": "allow"}'
     exit 0
 fi
