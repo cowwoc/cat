@@ -51,3 +51,4 @@ from . import help_handler
 from . import token_report_handler
 from . import status_handler
 from . import work_handler
+from . import cleanup_handler
