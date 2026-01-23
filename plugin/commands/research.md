@@ -315,25 +315,17 @@ For rating circles, lookup from the <functions> section (do NOT type manually):
 - rating 2 → ●●○○○
 - rating 1 → ●○○○○
 
-**SCORECARD STRUCTURE (11 dimensions in 2 sections):**
+**SCORECARD STRUCTURE:** 11 dimensions in 2 sections:
+- **Row 1 (top-level):** Speed, Cost, Quality
+- **Row 2-4 (stakeholders):** Architect, Security, Tester, Performance, UX, Sales, Marketing, Legal
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│ RATING SCORECARD                                                   │
-├─────────────────────────────────────────────────────────────────────┤
-│ Speed        ●●●●○  Cost         ●●●○○  Quality     ●●●○○          │  ← TOP-LEVEL (3)
-├─────────────────────────────────────────────────────────────────────┤
-│ Architect    ●●●●○  Security     ●●●●●  Tester      ●●●○○          │  ← STAKEHOLDER (8)
-│ Performance  ●●●○○  UX           ●●●●○  Sales       ●●●●○          │
-│ Marketing    ●●●○○  Legal        ●●●●●                             │
-└─────────────────────────────────────────────────────────────────────┘
-```
+Use `build_scorecard(option["ratings"])` - this function renders the correct structure.
 
 For each option, display:
 1. Option header: "**Option N: {Name}**"
 2. Description: 1-2 sentences
 3. Providers: "Top Providers: {P1}, {P2}, {P3}"
-4. Scorecard: use `build_scorecard(option["ratings"])` - MUST show all 11 dimensions
+4. Scorecard: use `build_scorecard(option["ratings"])` - MUST include all 11 dimensions
 5. Best-fit: "Best when: {priorities}"
 
 After all options, display comparison table using `build_comparison_table(options)`.
