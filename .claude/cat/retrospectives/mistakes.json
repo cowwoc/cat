@@ -2388,6 +2388,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When PRE-COMPUTED STATUS DISPLAY not found in context: output error message, then STOP immediately. Do NOT attempt to gather data, read files, or render status manually."
+    },
+    {
+      "id": "M209",
+      "timestamp": "2026-01-22T23:45:00Z",
+      "category": "detection_gap",
+      "description": "UserPromptSubmit hook additionalContext not delivered to agent despite Success status",
+      "root_cause": "Known Claude Code bug (GitHub issues #12151, #13912) where plugin-based UserPromptSubmit hooks execute but output is silently discarded instead of being passed to agent context",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/auto_learn_mistakes.py",
+      "pattern_keywords": [
+        "UserPromptSubmit",
+        "additionalContext",
+        "hook",
+        "plugin",
+        "false_positive"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "For status command: skill correctly fails fast when pre-computed output missing. For false positives: filter JSON content and use precise test failure patterns that match actual test runner output, not embedded text"
     }
   ]
 }
