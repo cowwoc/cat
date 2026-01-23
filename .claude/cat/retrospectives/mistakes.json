@@ -2825,6 +2825,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When moving directories, search for all path references including Python Path objects, not just shell scripts. Run tests after path changes to verify all handlers work."
+    },
+    {
+      "id": "M224",
+      "timestamp": "2026-01-23T00:00:00Z",
+      "category": "documentation_violation",
+      "description": "STATE.md files created with wrong format (status: value) instead of correct format (- **Status:** value)",
+      "root_cause": "Multiple places in codebase referenced wrong format: find-task.sh, work.md, init.md, add.md, remove.md, status_handler.py. The task was created manually without following the template.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/find-task.sh",
+      "pattern_keywords": [
+        "state.md",
+        "status",
+        "format",
+        "parsing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "STATE.md files must use bullet+bold format: '- **Status:** pending', '- **Progress:** 0%', etc. All scripts and handlers must parse this format."
     }
   ]
 }
