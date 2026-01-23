@@ -12,7 +12,6 @@ from skill_handlers.work_handler import (
     WorkHandler,
     build_separator,
     build_header_top,
-    build_simple_box,
 )
 
 
@@ -342,80 +341,3 @@ class TestBuildTaskCompleteLowTrust:
         """Box has next up section."""
         result = handler._build_task_complete_low_trust(58)
         assert "Next Up" in result
-
-
-class TestBuildSimpleBox:
-    """Tests for build_simple_box function (M229 regression pattern)."""
-
-    def test_basic_box(self):
-        """Build basic box with icon and title."""
-        result = build_simple_box("📊", "Test Title", ["Content line"])
-        lines = result.split("\n")
-        assert lines[0].startswith("╭")
-        assert lines[0].endswith("╮")
-        assert "📊 Test Title" in lines[0]
-        assert lines[-1].startswith("╰")
-        assert lines[-1].endswith("╯")
-
-    def test_box_with_multiple_content_lines(self):
-        """Box contains all content lines."""
-        result = build_simple_box("✅", "Header", ["Line 1", "Line 2", "Line 3"])
-        assert "Line 1" in result
-        assert "Line 2" in result
-        assert "Line 3" in result
-
-    def test_content_lines_have_consistent_width(self):
-        """All content lines have consistent width (M229 regression test)."""
-        result = build_simple_box("📊", "TEST", [
-            "Short",
-            "Medium length content",
-            "Longer content line here"
-        ])
-        lines = result.split("\n")
-        content_lines = [l for l in lines if l.startswith("│ ")]
-        if content_lines:
-            widths = [len(l) for l in content_lines]
-            assert len(set(widths)) == 1, f"Inconsistent widths: {widths}"
-
-    def test_header_and_footer_same_width(self):
-        """Header and footer have consistent width."""
-        result = build_simple_box("✅", "TITLE", ["Content"])
-        lines = result.split("\n")
-        header_width = len(lines[0])
-        footer_width = len(lines[-1])
-        assert header_width == footer_width, f"Header ({header_width}) != Footer ({footer_width})"
-
-    def test_all_lines_same_width(self):
-        """All lines in box have consistent width (M229 regression test)."""
-        result = build_simple_box("🔧", "Settings", [
-            "Option 1: value",
-            "Option 2: longer value here",
-            "Option 3: x"
-        ])
-        lines = result.split("\n")
-        widths = [len(l) for l in lines]
-        assert len(set(widths)) == 1, f"Inconsistent line widths: {widths}"
-
-    def test_empty_content(self):
-        """Box handles empty content list."""
-        result = build_simple_box("ℹ️", "INFO", [])
-        lines = result.split("\n")
-        # Should have header and footer at minimum
-        assert len(lines) >= 2
-        assert lines[0].startswith("╭")
-        assert lines[-1].startswith("╰")
-
-    def test_emoji_icon(self):
-        """Box handles emoji icons correctly."""
-        result = build_simple_box("🐱", "CAT", ["Content"])
-        assert "🐱 CAT" in result
-
-    def test_long_content(self):
-        """Box handles long content lines."""
-        long_line = "A" * 100
-        result = build_simple_box("📊", "Test", [long_line])
-        assert long_line in result
-        lines = result.split("\n")
-        # All lines should still be same width
-        widths = [len(l) for l in lines]
-        assert len(set(widths)) == 1, f"Inconsistent widths with long content: {widths}"

@@ -137,7 +137,7 @@ class TestAddHandlerVersionDisplay:
             "version": "2.1",
             "version_type": "minor",
             "parent_info": "v2",
-            "path": ".claude/cat/issues/v2/v2.1",
+            "path": ".claude/cat/v2/v2.1",
         }
 
     def test_version_returns_string(self, handler, version_context):
@@ -168,7 +168,7 @@ class TestAddHandlerVersionDisplay:
     def test_version_contains_path(self, handler, version_context):
         """Version output contains path."""
         result = handler.handle(version_context)
-        assert "Path: .claude/cat/issues/v2/v2.1" in result
+        assert "Path: .claude/cat/v2/v2.1" in result
 
     def test_version_contains_next_command(self, handler, version_context):
         """Version output contains next command suggestion."""

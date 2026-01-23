@@ -67,20 +67,9 @@ def context_factory(project_root: Path, plugin_root: Path):
 
 @pytest.fixture
 def mock_cat_structure(tmp_path: Path) -> Path:
-    """Create a minimal CAT directory structure for testing.
-
-    Structure:
-      .claude/cat/PROJECT.md
-      .claude/cat/ROADMAP.md
-      .claude/cat/cat-config.json
-      .claude/cat/issues/   (version directories go here)
-    """
+    """Create a minimal CAT directory structure for testing."""
     cat_dir = tmp_path / ".claude" / "cat"
     cat_dir.mkdir(parents=True)
-
-    # Create issues subdirectory for version data
-    issues_dir = cat_dir / "issues"
-    issues_dir.mkdir()
 
     # Create PROJECT.md
     project_file = cat_dir / "PROJECT.md"
@@ -109,17 +98,11 @@ def mock_cat_structure(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def mock_version_with_tasks(mock_cat_structure: Path) -> Path:
-    """Create a version with sample tasks.
-
-    Structure:
-      .claude/cat/issues/v1/v1.0/parse-input/STATE.md
-      .claude/cat/issues/v1/v1.0/validate-data/STATE.md
-      .claude/cat/issues/v1/v1.0/output-results/STATE.md
-    """
-    issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
+    """Create a version with sample tasks."""
+    cat_dir = mock_cat_structure / ".claude" / "cat"
 
     # Create v1/v1.0 structure
-    v1_dir = issues_dir / "v1"
+    v1_dir = cat_dir / "v1"
     v1_dir.mkdir()
 
     v10_dir = v1_dir / "v1.0"
