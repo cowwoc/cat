@@ -1,11 +1,10 @@
 """
 Handler for /cat:status precomputation.
 
-Collects project status data and renders the display box.
+Collects project status data and renders the display box with ultra-compact layout.
 """
 
 import re
-import sys
 from pathlib import Path
 
 from . import register_handler
@@ -137,6 +136,41 @@ def get_task_status(state_file: Path) -> str:
     return "pending"
 
 
+def get_task_dependencies(state_file: Path) -> list:
+    """Get task dependencies from STATE.md file."""
+    if not state_file.exists():
+        return []
+
+    try:
+        content = state_file.read_text()
+    except Exception:
+        return []
+
+    # Try "## Dependencies" section with list items
+    # Format: - task-name (reason)
+    deps = []
+    match = re.search(r'^## Dependencies\s*\n((?:- .+\n?)+)', content, re.MULTILINE)
+    if match:
+        for line in match.group(1).strip().split('\n'):
+            dep_match = re.match(r'^- ([a-zA-Z0-9_-]+)', line)
+            if dep_match:
+                dep_name = dep_match.group(1)
+                # Filter out "None" as it's not a real dependency
+                if dep_name.lower() != 'none':
+                    deps.append(dep_name)
+        return deps
+
+    # Try "- **Dependencies:** [task1, task2]" format
+    match = re.search(r'^\- \*\*Dependencies:\*\*\s*\[([^\]]*)\]', content, re.MULTILINE)
+    if match:
+        dep_str = match.group(1).strip()
+        if dep_str:
+            deps = [d.strip() for d in dep_str.split(',') if d.strip()]
+        return deps
+
+    return []
+
+
 def collect_status_data(cat_dir: Path) -> dict:
     """Collect project status data from CAT directory structure."""
     if not cat_dir.is_dir():
@@ -169,7 +203,7 @@ def collect_status_data(cat_dir: Path) -> dict:
     total_tasks = 0
     current_minor = ""
     in_progress_task = ""
-    pending_tasks = []
+    next_task = ""
 
     # Iterate over major version directories
     for major_dir in sorted(cat_dir.glob("v[0-9]*")):
@@ -183,12 +217,22 @@ def collect_status_data(cat_dir: Path) -> dict:
         major_name = f"Version {major_num}"
         match = re.search(rf'^## Version {re.escape(major_num)}: (.+)$', roadmap_content, re.MULTILINE)
         if match:
-            major_name = match.group(1)
+            major_name = match.group(1).split('(')[0].strip()
 
-        majors.append({"id": major_id, "name": major_name})
+        # Check if major is completed from STATE.md
+        major_state_file = major_dir / "STATE.md"
+        major_status = "pending"
+        if major_state_file.exists():
+            major_status = get_task_status(major_state_file)
+
+        majors.append({
+            "id": major_id,
+            "name": major_name,
+            "status": major_status
+        })
 
         # Iterate over minor version directories
-        for minor_dir in sorted(major_dir.glob("v[0-9]*.[0-9]*")):
+        for minor_dir in sorted(major_dir.glob("v[0-9]*.[0-9]*"), key=lambda p: [int(x) for x in p.name[1:].split('.')]):
             if not minor_dir.is_dir():
                 continue
 
@@ -199,8 +243,9 @@ def collect_status_data(cat_dir: Path) -> dict:
             local_total = 0
             local_inprog = ""
             tasks = []
+            all_task_statuses = {}
 
-            # Iterate over task directories
+            # First pass: collect all task statuses
             for task_dir in sorted(minor_dir.iterdir()):
                 if not task_dir.is_dir():
                     continue
@@ -213,12 +258,41 @@ def collect_status_data(cat_dir: Path) -> dict:
                     continue
 
                 status = get_task_status(state_file)
+                all_task_statuses[task_name] = status
+
+            # Second pass: check dependencies and build task list
+            for task_dir in sorted(minor_dir.iterdir()):
+                if not task_dir.is_dir():
+                    continue
+
+                task_name = task_dir.name
+                state_file = task_dir / "STATE.md"
+                plan_file = task_dir / "PLAN.md"
+
+                if not state_file.exists() and not plan_file.exists():
+                    continue
+
+                status = get_task_status(state_file)
+                dependencies = get_task_dependencies(state_file)
                 local_total += 1
-                tasks.append({"name": task_name, "status": status})
+
+                # Check if blocked by incomplete dependencies
+                blocked_by = []
+                for dep in dependencies:
+                    dep_status = all_task_statuses.get(dep, "pending")
+                    if dep_status not in ("completed", "done"):
+                        blocked_by.append(dep)
+
+                tasks.append({
+                    "name": task_name,
+                    "status": status,
+                    "dependencies": dependencies,
+                    "blocked_by": blocked_by
+                })
 
                 if status in ("completed", "done"):
                     local_completed += 1
-                elif status in ("in-progress", "active"):
+                elif status in ("in-progress", "active", "in_progress"):
                     local_inprog = task_name
 
             # Get minor description from roadmap
@@ -230,13 +304,24 @@ def collect_status_data(cat_dir: Path) -> dict:
             total_completed += local_completed
             total_tasks += local_total
 
-            # Determine current minor
+            # Determine current minor and next task
             if not current_minor:
                 if local_inprog:
                     current_minor = minor_id
                     in_progress_task = local_inprog
                 elif local_completed < local_total:
                     current_minor = minor_id
+                    # Find first non-blocked pending task
+                    for task in tasks:
+                        if task["status"] == "pending" and not task["blocked_by"]:
+                            next_task = task["name"]
+                            break
+                    # If all pending tasks are blocked, just pick the first pending
+                    if not next_task:
+                        for task in tasks:
+                            if task["status"] == "pending":
+                                next_task = task["name"]
+                                break
 
             minors.append({
                 "id": minor_id,
@@ -247,15 +332,6 @@ def collect_status_data(cat_dir: Path) -> dict:
                 "inProgress": local_inprog,
                 "tasks": tasks
             })
-
-    # Collect pending tasks for current minor
-    if current_minor:
-        for minor in minors:
-            if minor["id"] == current_minor:
-                for task in minor["tasks"]:
-                    if task["status"] == "pending":
-                        pending_tasks.append(task["name"])
-                break
 
     # Calculate percentage
     if total_tasks == 0:
@@ -272,11 +348,30 @@ def collect_status_data(cat_dir: Path) -> dict:
         "current": {
             "minor": current_minor,
             "inProgressTask": in_progress_task,
-            "pendingTasks": pending_tasks
+            "nextTask": next_task
         },
         "majors": majors,
         "minors": minors
     }
+
+
+def collapse_completed_minors(minors: list) -> str:
+    """Collapse completed minors into a range string like 'v1.0 - v1.10 (81/81)'."""
+    if not minors:
+        return ""
+
+    # Sort by version number
+    sorted_minors = sorted(minors, key=lambda m: [int(x) for x in m["id"][1:].split('.')])
+
+    first = sorted_minors[0]["id"]
+    last = sorted_minors[-1]["id"]
+    total_completed = sum(m["completed"] for m in sorted_minors)
+    total_tasks = sum(m["total"] for m in sorted_minors)
+
+    if first == last:
+        return f"☑️ {first} ({total_completed}/{total_tasks})"
+    else:
+        return f"☑️ {first} - {last} ({total_completed}/{total_tasks})"
 
 
 class StatusHandler:
@@ -300,66 +395,125 @@ class StatusHandler:
             return None
 
         # Extract data
-        project = status_data.get('project', 'Project')
         percent = status_data.get('overall', {}).get('percent', 0)
         completed = status_data.get('overall', {}).get('completed', 0)
         total = status_data.get('overall', {}).get('total', 0)
-        active_minor = status_data.get('current', {}).get('minor', 'none')
-        pending_tasks = status_data.get('current', {}).get('pendingTasks', [])
-        pending_count = len(pending_tasks)
-
-        # Build progress bar
-        progress_bar = build_progress_bar(percent)
-
-        # Build content
-        content_items = []
-        content_items.append(f"\U0001F4CA Overall: [{progress_bar}] {percent}%")
-        content_items.append(f"\U0001F3C6 {completed}/{total} tasks complete")
-        content_items.append('')
-
-        # Inner boxes for major versions
+        active_minor = status_data.get('current', {}).get('minor', '')
+        in_progress_task = status_data.get('current', {}).get('inProgressTask', '')
+        next_task = status_data.get('current', {}).get('nextTask', '')
         majors = status_data.get('majors', [])
         minors = status_data.get('minors', [])
 
+        # Build content
+        content_items = []
+
+        # Progress bar merged with task count
+        progress_bar = build_progress_bar(percent)
+        content_items.append(f"📊 Overall: [{progress_bar}] {percent}% · {completed}/{total} tasks")
+        content_items.append('')
+
+        # Process each major version
         for major in majors:
             major_id = major.get('id', '')
             major_name = major.get('name', '')
+            major_status = major.get('status', 'pending')
 
             major_minors = [m for m in minors if m.get('major') == major_id]
 
+            # Check if all minors are complete
+            all_complete = all(
+                m.get('completed', 0) == m.get('total', 0) and m.get('total', 0) > 0
+                for m in major_minors
+            ) if major_minors else False
+
+            # Also check major status
+            if major_status in ("completed", "done"):
+                all_complete = True
+
             inner_content = []
-            for minor in major_minors:
-                minor_id = minor.get('id', '')
-                minor_desc = minor.get('description', '')
-                minor_completed = minor.get('completed', 0)
-                minor_total = minor.get('total', 0)
-                minor_in_progress = minor.get('inProgress', '')
 
-                if minor_completed == minor_total and minor_total > 0:
-                    emoji = '\u2611\ufe0f'
-                elif minor_in_progress or minor_id == active_minor:
-                    emoji = '\U0001F504'
-                else:
-                    emoji = '\U0001F533'
+            if all_complete and major_minors:
+                # Collapse completed major to single line
+                inner_content.append(collapse_completed_minors(major_minors))
+            else:
+                # Show individual minors
+                first_minor = True
+                for minor in major_minors:
+                    minor_id = minor.get('id', '')
+                    minor_desc = minor.get('description', '')
+                    minor_completed = minor.get('completed', 0)
+                    minor_total = minor.get('total', 0)
+                    minor_in_progress = minor.get('inProgress', '')
+                    tasks = minor.get('tasks', [])
 
-                if minor_desc:
-                    inner_content.append(f"{emoji} {minor_id}: {minor_desc} ({minor_completed}/{minor_total})")
-                else:
-                    inner_content.append(f"{emoji} {minor_id}: ({minor_completed}/{minor_total})")
+                    # Add empty line between minors (not before first)
+                    if not first_minor:
+                        inner_content.append('')
+                    first_minor = False
 
-                if minor_id == active_minor:
-                    for task in pending_tasks:
-                        if len(task) > 25:
-                            task = task[:22] + '...'
-                        inner_content.append(f"   \U0001F533 {task}")
+                    # Determine if this minor is complete
+                    is_complete = minor_completed == minor_total and minor_total > 0
+                    is_active = minor_id == active_minor
 
-            header = f"\U0001F4E6 {major_id}: {major_name}"
+                    # Only active version gets 🔄, parent minor (if exists) has no emoji
+                    if is_complete:
+                        emoji = '☑️'
+                    elif is_active:
+                        emoji = '🔄'
+                    else:
+                        emoji = '🔳'
+
+                    # Build minor line
+                    if minor_desc:
+                        inner_content.append(f"{emoji} {minor_id}: {minor_desc} ({minor_completed}/{minor_total})")
+                    else:
+                        inner_content.append(f"{emoji} {minor_id}: ({minor_completed}/{minor_total})")
+
+                    # Only show tasks for active minor
+                    if is_active:
+                        # Add empty line before tasks for visual separation
+                        if tasks:
+                            inner_content.append('')
+
+                        for task in tasks:
+                            task_name = task.get('name', '')
+                            task_status = task.get('status', 'pending')
+                            blocked_by = task.get('blocked_by', [])
+
+                            # Determine task emoji
+                            if task_status in ("completed", "done"):
+                                task_emoji = '☑️'
+                            elif task_status in ("in-progress", "active", "in_progress"):
+                                task_emoji = '🔄'
+                            elif blocked_by:
+                                task_emoji = '🚫'
+                            else:
+                                task_emoji = '🔳'
+
+                            # Build task line with full name (no truncation)
+                            # Only show blocked info for pending tasks that are actually blocked
+                            if blocked_by and task_status not in ("completed", "done"):
+                                blocked_str = ", ".join(blocked_by)
+                                inner_content.append(f"   {task_emoji} {task_name} (blocked by: {blocked_str})")
+                            else:
+                                inner_content.append(f"   {task_emoji} {task_name}")
+
+                        # Add empty line after tasks for visual separation
+                        if tasks:
+                            inner_content.append('')
+
+            header = f"📦 {major_id}: {major_name}"
             inner_box_lines = build_inner_box(header, inner_content)
             content_items.extend(inner_box_lines)
             content_items.append('')
 
-        content_items.append(f"\U0001F3AF Active: {active_minor}")
-        content_items.append(f"\U0001F4CB Available: {pending_count} pending tasks")
+        # Actionable footer
+        if in_progress_task:
+            content_items.append(f"📋 Current: /cat:work {active_minor}-{in_progress_task}")
+        elif next_task:
+            content_items.append(f"📋 Next: /cat:work {active_minor}-{next_task}")
+        else:
+            content_items.append("📋 No pending tasks available")
 
         # Compute outer box
         content_widths = [display_width(c) for c in content_items]
@@ -384,7 +538,7 @@ NEXT STEPS table:
 | [**1**] | Execute a task | `/cat:work {active_minor}-<task-name>` |
 | [**2**] | Add new task | `/cat:add` |
 
-Legend: \u2611\ufe0f Completed \u00b7 \U0001F504 In Progress \u00b7 \U0001F533 Pending \u00b7 \U0001F6AB Blocked \u00b7 \U0001F6A7 Gate Waiting
+Legend: ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
 
 INSTRUCTION: Output the above box and tables EXACTLY as shown. Do not recalculate."""
 
