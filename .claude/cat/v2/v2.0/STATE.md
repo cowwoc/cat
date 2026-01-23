@@ -27,6 +27,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - work-box-hook-precomputation
 
 ## Tasks Pending
+- centralize-emoji-widths
 - show-task-header-at-approval-gate
 - add-handler-tests
 - fix-work-box-alignment
