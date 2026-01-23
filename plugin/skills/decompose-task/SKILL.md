@@ -115,30 +115,34 @@ dependencies:
 
 Original task STATE.md:
 
-```yaml
+```markdown
 # 1.2-implement-parser/STATE.md
-status: decomposed
-decomposed_at: 2026-01-10T16:00:00Z
-reason: "Task exceeded context threshold (85K tokens used)"
 
-decomposed_into:
-  - 1.2a-parser-lexer
-  - 1.2b-parser-ast
-  - 1.2c-parser-semantic
+- **Status:** decomposed
+- **Progress:** 0%
+- **Decomposed At:** 2026-01-10T16:00:00Z
+- **Reason:** Task exceeded context threshold (85K tokens used)
 
-progress_preserved:
-  - Lexer implementation 80% complete in subagent work
-  - Will be merged to 1.2a branch
+## Decomposed Into
+- 1.2a-parser-lexer
+- 1.2b-parser-ast
+- 1.2c-parser-semantic
+
+## Progress Preserved
+- Lexer implementation 80% complete in subagent work
+- Will be merged to 1.2a branch
 ```
 
 New task STATE.md:
 
-```yaml
+```markdown
 # 1.2a-parser-lexer/STATE.md
-status: ready
-created_from: 1.2-implement-parser
-inherits_progress: true  # Will receive merge from parent subagent
-dependencies: []
+
+- **Status:** pending
+- **Progress:** 0%
+- **Created From:** 1.2-implement-parser
+- **Inherits Progress:** true (will receive merge from parent subagent)
+- **Dependencies:** []
 ```
 
 ### 7. Handle Existing Subagent Work
