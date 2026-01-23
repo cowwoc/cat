@@ -2372,7 +2372,7 @@
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "documentation",
-      "prevention_path": "/workspace/plugin/commands/status.md",
+      "prevention_path": "/workspace/plugin/hooks/inject-session-instructions.sh",
       "pattern_keywords": [
         "protocol_violation",
         "fail-fast",
