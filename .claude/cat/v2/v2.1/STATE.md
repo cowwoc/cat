@@ -9,6 +9,9 @@
 - storage-abstraction-design
 - local-file-backend
 - github-issues-backend
+- git-safety-demo
+- multi-agent-demo
+- planning-research-demo
 
 ## Tasks Completed
 (None)
