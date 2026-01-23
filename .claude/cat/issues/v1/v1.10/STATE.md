@@ -1,10 +1,10 @@
 # Patch Version 1.10 State: Workflow Completion
 
 ## Status
-status: complete
-progress: 100%
-started: 2026-01-17
-completed: 2026-01-20
+- **Status:** complete
+- **Progress:** 100%
+- **Started:** 2026-01-17
+- **Completed:** 2026-01-20
 last_updated: 2026-01-20
 
 ## Summary

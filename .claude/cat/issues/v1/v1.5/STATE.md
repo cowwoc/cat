@@ -1,10 +1,10 @@
 # Patch Version 1.5 State: Quality Gates
 
 ## Status
-status: complete
-progress: 100%
-started: 2026-01-13
-completed: 2026-01-13
+- **Status:** complete
+- **Progress:** 100%
+- **Started:** 2026-01-13
+- **Completed:** 2026-01-13
 last_updated: 2026-01-20
 
 ## Summary
