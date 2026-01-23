@@ -7,6 +7,25 @@ description: "MANDATORY: Use instead of `git rebase -i` for squashing - unified 
 
 **Purpose**: Safely squash multiple commits into one with automatic backup, verification, and cleanup.
 
+## Parallel Initial Investigation
+
+**OPTIMIZATION: Run initial git commands in parallel to reduce round-trips.**
+
+Before starting any squash workflow, gather information concurrently:
+
+```bash
+# Run these commands in parallel (use & and wait)
+git rev-parse HEAD &
+git status --porcelain &
+git log --oneline <base>..HEAD &
+git diff --stat <base>..HEAD &
+wait
+
+# All results now available for workflow selection
+```
+
+This reduces the initial investigation from 4+ sequential commands to a single parallel batch.
+
 ## Safety Pattern: Backup-Verify-Cleanup
 
 **ALWAYS follow this pattern:**
@@ -30,6 +49,34 @@ else
     echo "Commits in middle of history → Use Interactive Rebase Workflow"
 fi
 ```
+
+## Planning Commit Pattern Detection
+
+**Detect common "feature + planning STATE.md update" pattern.**
+
+Before squashing, check if the commit sequence follows this pattern:
+1. Implementation commit(s): `feature:`, `bugfix:`, `refactor:`, etc.
+2. Final commit(s): `planning:` or `config:` with only `.claude/cat/issues/` changes
+
+**Detection logic:**
+```bash
+# Get the last commit's type and files
+LAST_COMMIT=$(git log -1 --format="%s" HEAD)
+LAST_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+
+# Check if last commit is planning-only
+if [[ "$LAST_COMMIT" =~ ^planning: ]] && \
+   [[ "$LAST_FILES" =~ \.claude/cat/issues/ ]] && \
+   ! echo "$LAST_FILES" | grep -qv "\.claude/cat/"; then
+    echo "PATTERN DETECTED: Final commit is planning-only STATE.md update"
+    # This pattern indicates STATE.md should be preserved in squash
+fi
+```
+
+**When pattern detected:**
+- Extract final STATE.md content before squash
+- After squash, ensure STATE.md reflects final state (not intermediate)
+- Include planning changes in implementation commit per M076
 
 ## Quick Workflow (Commits at Branch Tip Only)
 
@@ -106,6 +153,38 @@ rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 
 ## Critical Rules
 
+### Automatic STATE.md Preservation
+
+**CRITICAL: Preserve final STATE.md state when squashing planning commits.**
+
+When squashing commits that include STATE.md updates:
+
+1. **Before squash:** Record the final STATE.md content
+   ```bash
+   # Store final state before squash
+   TASK_STATE=".claude/cat/issues/v*/v*.*/*/STATE.md"
+   git show HEAD:$TASK_STATE > /tmp/final-state.md 2>/dev/null || true
+   ```
+
+2. **After squash:** Verify STATE.md wasn't reverted to intermediate state
+   ```bash
+   # Check if STATE.md was affected
+   if [[ -f /tmp/final-state.md ]]; then
+       # Compare current vs final
+       if ! diff -q "$TASK_STATE" /tmp/final-state.md >/dev/null 2>&1; then
+           echo "⚠️ STATE.md reverted to intermediate state - restoring final state"
+           cp /tmp/final-state.md "$TASK_STATE"
+           git add "$TASK_STATE"
+           git commit --amend --no-edit
+       fi
+   fi
+   ```
+
+**Why this matters:**
+- Squashing can revert STATE.md to earlier commit's version
+- Final state (status: completed, progress: 100%) must be preserved
+- Per M076: STATE.md belongs in same commit as implementation
+
 ### Use Correct Workflow for Commit Position
 
 ```bash
@@ -181,6 +260,34 @@ git rebase -i <base-commit>
 #   squash def456 Commit to combine (MOVED here)
 #   pick ghi789 Other commit (unchanged)
 ```
+
+### Conflict Pre-Computation for Non-Adjacent Commits
+
+**Before attempting to squash non-adjacent commits, analyze potential conflicts:**
+
+```bash
+# Identify files modified by multiple commits in the range
+echo "Conflict risk analysis:"
+git diff --name-only <base>..HEAD | while read file; do
+    commits=$(git log --oneline <base>..HEAD -- "$file" | wc -l)
+    if [[ $commits -gt 1 ]]; then
+        echo "  ⚠️ $file: modified by $commits commits"
+    fi
+done
+
+# Check for same-line modifications (highest risk)
+for file in $(git diff --name-only <base>..HEAD); do
+    git log -p <base>..HEAD -- "$file" | grep -E "^@@" | sort | uniq -d && \
+        echo "  🔴 $file: same lines modified by multiple commits - HIGH RISK"
+done
+```
+
+**Risk Levels:**
+| Risk | Pattern | Recommendation |
+|------|---------|----------------|
+| LOW | Different files per commit | Safe to squash |
+| MEDIUM | Same file, different lines | Usually safe |
+| HIGH | Same file, same lines | Manual resolution likely needed |
 
 ## Error Recovery
 
