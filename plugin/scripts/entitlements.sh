@@ -14,19 +14,8 @@ if [[ ! -f "$TIERS_FILE" ]]; then
   exit 2
 fi
 
-TIER="${1:-}"
-FEATURE="${2:-}"
-
-if [[ -z "$TIER" ]]; then
-  echo "Usage: entitlements.sh <tier> [feature]" >&2
-  echo "Tiers: indie, team, enterprise" >&2
-  exit 1
-fi
-
-# Normalize tier to lowercase
-TIER=$(echo "$TIER" | tr '[:upper:]' '[:lower:]')
-
 # Get features for tier (including inherited)
+# Defined early so it can be used by --required-tier
 get_tier_features() {
   local tier="$1"
   local features=""
@@ -44,6 +33,39 @@ get_tier_features() {
 
   echo "$features" | sort -u | grep -v '^$'
 }
+
+TIER="${1:-}"
+FEATURE="${2:-}"
+
+if [[ -z "$TIER" ]]; then
+  echo "Usage: entitlements.sh <tier> [feature]" >&2
+  echo "       entitlements.sh --required-tier <feature>" >&2
+  echo "Tiers: indie, team, enterprise" >&2
+  exit 1
+fi
+
+# Handle --required-tier flag
+if [[ "$TIER" == "--required-tier" ]]; then
+  FEATURE="$2"
+  if [[ -z "$FEATURE" ]]; then
+    echo "Usage: entitlements.sh --required-tier <feature>" >&2
+    exit 1
+  fi
+
+  # Check each tier from lowest to highest
+  for check_tier in indie team enterprise; do
+    if get_tier_features "$check_tier" | grep -qx "$FEATURE"; then
+      echo "$check_tier"
+      exit 0
+    fi
+  done
+
+  echo "unknown"
+  exit 1
+fi
+
+# Normalize tier to lowercase
+TIER=$(echo "$TIER" | tr '[:upper:]' '[:lower:]')
 
 # Check if tier is valid
 if ! jq -e ".tiers.${TIER}" "$TIERS_FILE" > /dev/null 2>&1; then

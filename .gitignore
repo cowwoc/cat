@@ -8,3 +8,6 @@ plugin/node_modules/
 # Temp files
 *.tmp
 *.log
+
+# User-specific license configuration
+cat-config.local.json
