@@ -92,8 +92,9 @@ EOF
 chmod +x /tmp/msg-editor.sh
 
 # 4. Run interactive rebase
+# NOTE: Use GIT_EDITOR (not EDITOR) - git uses GIT_EDITOR for commit messages during rebase
 BASE_COMMIT="<parent-of-first-commit>"
-GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
+GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh GIT_EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
 
 # 5. Verify no changes lost
 git diff "$BACKUP"  # Must be empty
