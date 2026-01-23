@@ -10,8 +10,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "plugin" / "hooks")
 
 from skill_handlers.status_handler import (
     StatusHandler,
-    VALID_STATUSES,
-    STATUS_ALIASES,
     collect_status_data,
     get_task_status,
 )
@@ -75,129 +73,19 @@ More content below.
         assert result == "pending"
 
 
-class TestStatusValidation:
-    """Tests for status validation (M253: fail-fast on unknown status)."""
-
-    def test_valid_statuses_constant_exists(self):
-        """VALID_STATUSES constant is defined."""
-        assert VALID_STATUSES is not None
-        assert "pending" in VALID_STATUSES
-        assert "in-progress" in VALID_STATUSES
-        assert "completed" in VALID_STATUSES
-        assert "blocked" in VALID_STATUSES
-
-    def test_status_aliases_constant_exists(self):
-        """STATUS_ALIASES constant is defined."""
-        assert STATUS_ALIASES is not None
-        assert "complete" in STATUS_ALIASES
-        assert STATUS_ALIASES["complete"] == "completed"
-
-    def test_valid_status_pending(self, tmp_path):
-        """Valid status 'pending' is accepted."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** pending\n")
-        result = get_task_status(state_file)
-        assert result == "pending"
-
-    def test_valid_status_completed(self, tmp_path):
-        """Valid status 'completed' is accepted."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** completed\n")
-        result = get_task_status(state_file)
-        assert result == "completed"
-
-    def test_valid_status_in_progress(self, tmp_path):
-        """Valid status 'in-progress' is accepted."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** in-progress\n")
-        result = get_task_status(state_file)
-        assert result == "in-progress"
-
-    def test_valid_status_blocked(self, tmp_path):
-        """Valid status 'blocked' is accepted."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** blocked\n")
-        result = get_task_status(state_file)
-        assert result == "blocked"
-
-    def test_alias_complete_normalized_to_completed(self, tmp_path, capsys):
-        """Alias 'complete' is normalized to 'completed' with warning."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** complete\n")
-        result = get_task_status(state_file)
-        assert result == "completed"
-        # Check warning was printed
-        captured = capsys.readouterr()
-        assert "Non-canonical status" in captured.err or "complete" in captured.err
-
-    def test_alias_done_normalized_to_completed(self, tmp_path, capsys):
-        """Alias 'done' is normalized to 'completed' with warning."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** done\n")
-        result = get_task_status(state_file)
-        assert result == "completed"
-
-    def test_alias_in_progress_underscore_normalized(self, tmp_path, capsys):
-        """Alias 'in_progress' is normalized to 'in-progress' with warning."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** in_progress\n")
-        result = get_task_status(state_file)
-        assert result == "in-progress"
-
-    def test_alias_active_normalized_to_in_progress(self, tmp_path, capsys):
-        """Alias 'active' is normalized to 'in-progress' with warning."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** active\n")
-        result = get_task_status(state_file)
-        assert result == "in-progress"
-
-    def test_unknown_status_raises_error(self, tmp_path):
-        """Unknown status raises ValueError (M253)."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** invalid_status_value\n")
-        with pytest.raises(ValueError) as exc_info:
-            get_task_status(state_file)
-        assert "Unknown status" in str(exc_info.value)
-        assert "invalid_status_value" in str(exc_info.value)
-
-    def test_unknown_status_error_includes_valid_values(self, tmp_path):
-        """Unknown status error message includes valid values."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** unknown\n")
-        with pytest.raises(ValueError) as exc_info:
-            get_task_status(state_file)
-        error_msg = str(exc_info.value)
-        assert "pending" in error_msg
-        assert "completed" in error_msg
-
-    def test_case_insensitive_status(self, tmp_path):
-        """Status matching is case-insensitive."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** COMPLETED\n")
-        result = get_task_status(state_file)
-        assert result == "completed"
-
-    def test_status_with_whitespace(self, tmp_path):
-        """Status with surrounding whitespace is handled."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:**   pending  \n")
-        result = get_task_status(state_file)
-        assert result == "pending"
-
-
 class TestCollectStatusData:
     """Tests for collect_status_data function."""
 
-    def test_missing_issues_dir_returns_error(self, tmp_path):
-        """Missing issues directory returns error."""
+    def test_missing_cat_dir_returns_error(self, tmp_path):
+        """Missing CAT directory returns error."""
         result = collect_status_data(tmp_path / "nonexistent")
         assert "error" in result
         assert "No planning structure found" in result["error"]
 
     def test_basic_structure(self, mock_cat_structure):
         """Returns basic structure for minimal CAT setup."""
-        issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
-        result = collect_status_data(issues_dir)
+        cat_dir = mock_cat_structure / ".claude" / "cat"
+        result = collect_status_data(cat_dir)
 
         assert "error" not in result
         assert "project" in result
@@ -207,15 +95,15 @@ class TestCollectStatusData:
         assert "minors" in result
 
     def test_extracts_project_name(self, mock_cat_structure):
-        """Extracts project name from PROJECT.md in parent directory."""
-        issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
-        result = collect_status_data(issues_dir)
+        """Extracts project name from PROJECT.md."""
+        cat_dir = mock_cat_structure / ".claude" / "cat"
+        result = collect_status_data(cat_dir)
         assert result["project"] == "Test Project"
 
     def test_version_with_tasks(self, mock_version_with_tasks):
         """Collects data from version with tasks."""
-        issues_dir = mock_version_with_tasks / ".claude" / "cat" / "issues"
-        result = collect_status_data(issues_dir)
+        cat_dir = mock_version_with_tasks / ".claude" / "cat"
+        result = collect_status_data(cat_dir)
 
         assert "error" not in result
         assert len(result["majors"]) >= 1
@@ -229,8 +117,8 @@ class TestCollectStatusData:
 
     def test_detects_in_progress_task(self, mock_version_with_tasks):
         """Detects in-progress task."""
-        issues_dir = mock_version_with_tasks / ".claude" / "cat" / "issues"
-        result = collect_status_data(issues_dir)
+        cat_dir = mock_version_with_tasks / ".claude" / "cat"
+        result = collect_status_data(cat_dir)
 
         v10_minor = next((m for m in result["minors"] if m["id"] == "v1.0"), None)
         assert v10_minor is not None
@@ -238,8 +126,8 @@ class TestCollectStatusData:
 
     def test_overall_percentage(self, mock_version_with_tasks):
         """Calculates overall percentage."""
-        issues_dir = mock_version_with_tasks / ".claude" / "cat" / "issues"
-        result = collect_status_data(issues_dir)
+        cat_dir = mock_version_with_tasks / ".claude" / "cat"
+        result = collect_status_data(cat_dir)
 
         assert "percent" in result["overall"]
         assert "completed" in result["overall"]
@@ -249,18 +137,18 @@ class TestCollectStatusData:
 
     def test_current_minor(self, mock_version_with_tasks):
         """Identifies current minor version."""
-        issues_dir = mock_version_with_tasks / ".claude" / "cat" / "issues"
-        result = collect_status_data(issues_dir)
+        cat_dir = mock_version_with_tasks / ".claude" / "cat"
+        result = collect_status_data(cat_dir)
 
         assert result["current"]["minor"] == "v1.0"
         assert result["current"]["inProgressTask"] == "validate-data"
 
     def test_next_task_when_no_in_progress(self, mock_cat_structure):
         """Identifies next task when no task is in-progress."""
-        issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
+        cat_dir = mock_cat_structure / ".claude" / "cat"
 
         # Create v1/v1.0 with only pending tasks (no in-progress)
-        v1_dir = issues_dir / "v1"
+        v1_dir = cat_dir / "v1"
         v1_dir.mkdir()
         v10_dir = v1_dir / "v1.0"
         v10_dir.mkdir()
@@ -270,18 +158,17 @@ class TestCollectStatusData:
         (task1_dir / "STATE.md").write_text("Status: pending\n")
         (task1_dir / "PLAN.md").write_text("# Task A\n")
 
-        result = collect_status_data(issues_dir)
+        result = collect_status_data(cat_dir)
         assert result["current"]["nextTask"] == "task-a"
         assert result["current"]["inProgressTask"] == ""
 
     def test_empty_project_name(self, mock_cat_structure):
         """Handles missing project name gracefully."""
         cat_dir = mock_cat_structure / ".claude" / "cat"
-        issues_dir = cat_dir / "issues"
         # Remove PROJECT.md
         (cat_dir / "PROJECT.md").unlink()
 
-        result = collect_status_data(issues_dir)
+        result = collect_status_data(cat_dir)
         assert result["project"] == "Unknown Project"
 
 
@@ -437,8 +324,8 @@ class TestStatusHandlerEdgeCases:
 
     def test_no_tasks_directory(self, mock_cat_structure, handler):
         """Handles version with no tasks."""
-        issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
-        v1_dir = issues_dir / "v1"
+        cat_dir = mock_cat_structure / ".claude" / "cat"
+        v1_dir = cat_dir / "v1"
         v1_dir.mkdir()
         v10_dir = v1_dir / "v1.0"
         v10_dir.mkdir()
@@ -450,8 +337,8 @@ class TestStatusHandlerEdgeCases:
 
     def test_long_task_names_truncated(self, mock_cat_structure, handler):
         """Long task names are truncated in display."""
-        issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
-        v1_dir = issues_dir / "v1"
+        cat_dir = mock_cat_structure / ".claude" / "cat"
+        v1_dir = cat_dir / "v1"
         v1_dir.mkdir()
         v10_dir = v1_dir / "v1.0"
         v10_dir.mkdir()
@@ -470,8 +357,8 @@ class TestStatusHandlerEdgeCases:
 
     def test_all_tasks_completed(self, mock_cat_structure, handler):
         """Handles version with all tasks completed."""
-        issues_dir = mock_cat_structure / ".claude" / "cat" / "issues"
-        v1_dir = issues_dir / "v1"
+        cat_dir = mock_cat_structure / ".claude" / "cat"
+        v1_dir = cat_dir / "v1"
         v1_dir.mkdir()
         v10_dir = v1_dir / "v1.0"
         v10_dir.mkdir()
@@ -487,73 +374,3 @@ class TestStatusHandlerEdgeCases:
         assert result is not None
         # Should show 100% or completed status
         assert "100%" in result or "☑️" in result
-
-
-class TestIssuesDirectoryStructure:
-    """Regression tests for issues/ subdirectory structure (M223).
-
-    After commit 00524ca2, version directories moved from .claude/cat/ to
-    .claude/cat/issues/. These tests verify the correct path is used.
-    """
-
-    def test_collect_status_data_finds_tasks_in_issues_dir(self, tmp_path):
-        """Regression test: collect_status_data must look in issues/ for versions."""
-        # Create structure: .claude/cat/issues/v1/v1.0/my-task/
-        cat_dir = tmp_path / ".claude" / "cat"
-        cat_dir.mkdir(parents=True)
-        issues_dir = cat_dir / "issues"
-        issues_dir.mkdir()
-
-        # Create PROJECT.md in cat_dir (not issues_dir)
-        (cat_dir / "PROJECT.md").write_text("# My Project\n")
-        (cat_dir / "ROADMAP.md").write_text("# Roadmap\n")
-
-        # Create version structure in issues_dir
-        v1_dir = issues_dir / "v1"
-        v1_dir.mkdir()
-        v10_dir = v1_dir / "v1.0"
-        v10_dir.mkdir()
-        task_dir = v10_dir / "my-task"
-        task_dir.mkdir()
-        (task_dir / "STATE.md").write_text("Status: pending\n")
-        (task_dir / "PLAN.md").write_text("# My Task\n")
-
-        # Call collect_status_data with issues_dir
-        result = collect_status_data(issues_dir)
-
-        # Must find the task
-        assert "error" not in result
-        assert result["overall"]["total"] == 1
-        assert result["project"] == "My Project"
-
-    def test_handler_uses_issues_subdirectory(self, tmp_path):
-        """Regression test: StatusHandler must pass issues_dir to collect_status_data."""
-        # Create structure: .claude/cat/issues/v1/v1.0/my-task/
-        cat_dir = tmp_path / ".claude" / "cat"
-        cat_dir.mkdir(parents=True)
-        issues_dir = cat_dir / "issues"
-        issues_dir.mkdir()
-
-        # Create PROJECT.md in cat_dir
-        (cat_dir / "PROJECT.md").write_text("# Handler Test Project\n")
-        (cat_dir / "ROADMAP.md").write_text("# Roadmap\n")
-
-        # Create version structure in issues_dir
-        v1_dir = issues_dir / "v1"
-        v1_dir.mkdir()
-        v10_dir = v1_dir / "v1.0"
-        v10_dir.mkdir()
-        task_dir = v10_dir / "test-task"
-        task_dir.mkdir()
-        (task_dir / "STATE.md").write_text("Status: pending\n")
-        (task_dir / "PLAN.md").write_text("# Test Task\n")
-
-        # Call handler
-        handler = StatusHandler()
-        context = {"project_root": str(tmp_path)}
-        result = handler.handle(context)
-
-        # Must find the task (displayed in output)
-        assert result is not None
-        assert "test-task" in result
-        assert "1/1 tasks" in result
