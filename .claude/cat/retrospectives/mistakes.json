@@ -2877,6 +2877,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Skills must reference PRE-COMPUTED WORK BOXES instead of containing embedded box templates. Remove all inline boxes from skill files."
+    },
+    {
+      "id": "M226",
+      "timestamp": "2026-01-23T14:30:00Z",
+      "category": "protocol_violation",
+      "description": "Rendered scorecard with 2 top-level metrics (Speed, Cost) instead of 3 (Speed, Cost, Quality), conflating Quality stakeholder with Quality top-level metric",
+      "root_cause": "Failed to reference loaded template structure that explicitly showed Speed, Cost, Quality as separate top-level row, distinct from 8 stakeholder dimensions",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/research.md",
+      "pattern_keywords": [
+        "scorecard",
+        "rating",
+        "quality",
+        "dimensions",
+        "template"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Render scorecard with 11 dimensions: Speed, Cost, Quality as top-level row (3), then Architect, Security, Tester, Performance, UX, Sales, Marketing, Legal as stakeholder row (8)"
     }
   ]
 }
