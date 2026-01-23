@@ -24,10 +24,10 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - find-next-task-script
 - hide-tool-calls-during-execution
 - cleanup-display-redesign
+- work-box-hook-precomputation
 
 ## Tasks Pending
 - add-handler-tests
-- work-box-hook-precomputation
 - fix-config-documentation
 - multi-agent-demo
 - planning-research-demo
