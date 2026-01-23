@@ -2627,6 +2627,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When content is reasoning-based but output structure is known (box width, borders), use template-based precomputation. Hook pre-computes structural templates, skill fills in content using templates."
+    },
+    {
+      "id": "M217",
+      "timestamp": "2026-01-23T21:15:00Z",
+      "category": "protocol_violation",
+      "description": "Marked task as completed after committing code, skipping stakeholder_review, approval_gate, and merge phases of /cat:work workflow",
+      "root_cause": "Completion bias - treated 'code committed' as 'task complete', ignoring that /cat:work has 4 phases (Setup, Implementation, Reviewing, Merging) and committing code only ends Implementation phase",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/enforce-workflow-completion.sh",
+      "pattern_keywords": [
+        "workflow",
+        "completion-bias",
+        "approval-gate",
+        "stakeholder-review",
+        "phases"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After committing implementation, continue /cat:work workflow: run stakeholder_review, present approval_gate for user review, ask user about merging, then complete merge_and_cleanup before marking task completed"
     }
   ]
 }
