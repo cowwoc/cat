@@ -2,5 +2,5 @@
 
 - **Status:** pending
 - **Progress:** 0%
-- **Dependencies:** [github-storage-research]
+- **Dependencies:** [storage-abstraction-design]
 - **Last Updated:** 2026-01-22

@@ -1,15 +1,17 @@
-# Minor Version 2.1: GitHub Integration
+# Minor Version 2.1: Pluggable Issue Trackers
 
 ## Overview
-Investigate and implement moving planning metadata from .claude/cat directory to GitHub-native storage (Issues, Projects, Discussions).
+Add support for multiple issue tracker backends (local files, GitHub Issues, and others) through a storage abstraction layer.
 
 ## Requirements
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
-| REQ-001 | Evaluate GitHub storage options | must-have | Analysis document comparing Issues, Projects, Discussions |
-| REQ-002 | Prototype GitHub-based metadata | should-have | Working proof-of-concept |
-| REQ-003 | Migration path from file-based | should-have | Clear migration strategy documented |
+| REQ-001 | Design storage abstraction interface | must-have | Interface supports CRUD for versions/tasks |
+| REQ-002 | Local file backend (current behavior) | must-have | Existing .claude/cat storage works via abstraction |
+| REQ-003 | GitHub Issues backend | should-have | Can read/write planning metadata to GitHub Issues |
+| REQ-004 | Backend selection via config | must-have | cat-config.json specifies active backend |
+| REQ-005 | Extensible for future backends | nice-to-have | Clear pattern for adding Jira, Linear, etc. |
 
 ## Gates
 
@@ -18,4 +20,4 @@ Investigate and implement moving planning metadata from .claude/cat directory to
 
 ### Exit
 - All tasks complete
-- Decision made on GitHub integration approach
+- At least local + GitHub backends working
