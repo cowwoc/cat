@@ -26,6 +26,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - cleanup-display-redesign
 
 ## Tasks Pending
+- work-box-hook-precomputation
 - fix-config-documentation
 - multi-agent-demo
 - planning-research-demo
