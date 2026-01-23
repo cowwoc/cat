@@ -2394,11 +2394,11 @@
       "timestamp": "2026-01-22T23:45:00Z",
       "category": "detection_gap",
       "description": "UserPromptSubmit hook additionalContext not delivered to agent despite Success status",
-      "root_cause": "Known Claude Code bug (GitHub issues #12151, #13912) where plugin-based UserPromptSubmit hooks execute but output is silently discarded instead of being passed to agent context",
+      "root_cause": "UserPromptSubmit hook used wrong output format. Was using {\"additionalContext\": ...} but Claude Code expects {\"hookSpecificOutput\": {\"hookEventName\": \"...\", \"additionalContext\": ...}} format",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "code_fix",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/auto_learn_mistakes.py",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/get-skill-output.py",
       "pattern_keywords": [
         "UserPromptSubmit",
         "additionalContext",
@@ -2414,7 +2414,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "For status command: skill correctly fails fast when pre-computed output missing. For false positives: filter JSON content and use precise test failure patterns that match actual test runner output, not embedded text"
+      "correct_behavior": "Use hookSpecificOutput format with hookEventName for all hook types that return additionalContext"
     }
   ]
 }
