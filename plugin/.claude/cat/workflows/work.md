@@ -184,6 +184,46 @@ Continue to create worktree step.
 
 **Batched into Preparation subagent** - see Subagent Batching Standards above
 
+**MANDATORY: Check for existing worktree before creating (M236)**
+
+An existing worktree strongly indicates work is in progress by another session (the lock may be
+missing if that session crashed or ended abnormally). Before proceeding:
+
+```bash
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/{major}.{minor}-{task-name}"
+
+if [ -d "$WORKTREE_PATH" ]; then
+  # Check if there are commits on the task branch not on base
+  cd "$WORKTREE_PATH"
+  BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base" 2>/dev/null || echo "main")
+  COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD 2>/dev/null || echo "0")
+
+  if [ "$COMMIT_COUNT" -gt 0 ]; then
+    echo "⚠️ EXISTING WORKTREE WITH COMMITS DETECTED"
+    echo "Worktree: $WORKTREE_PATH"
+    echo "Commits ahead of base: $COMMIT_COUNT"
+    echo ""
+    echo "This indicates another session may have started work on this task."
+    # MUST use AskUserQuestion - do NOT proceed automatically
+  fi
+  cd -
+fi
+```
+
+**If worktree exists with commits, use AskUserQuestion:**
+- header: "Existing Work Detected"
+- question: "Worktree exists with {N} commit(s). How would you like to proceed?"
+- options:
+  - "Skip this task" - Find another task to work on (Recommended)
+  - "Resume" - Continue from existing work (keep commits)
+  - "Start fresh" - Delete worktree and start over (loses existing work)
+  - "Abort" - Stop and investigate manually
+
+**If "Skip this task":** Release the lock for this task and return to find_task step to find
+the next available task. This is the safest option when another session may still be active.
+
+**Only proceed to create worktree if it does NOT exist:**
+
 ```bash
 # Main agent creates task branch and worktree
 git worktree add ../cat-worktree-{task-name} -b {major}.{minor}-{task-name}
