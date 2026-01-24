@@ -132,6 +132,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-skill-edit-without-builder.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
