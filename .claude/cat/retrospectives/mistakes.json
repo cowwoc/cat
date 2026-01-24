@@ -2708,6 +2708,44 @@
         "catches_variations": true
       },
       "correct_behavior": "Use GIT_EDITOR=/tmp/msg-editor.sh (not EDITOR) when running interactive rebase to ensure the custom commit message editor is used"
+    },
+    {
+      "id": "M220",
+      "timestamp": "2026-01-23T13:30:00-05:00",
+      "category": "protocol_violation",
+      "description": "Applied changes directly to base branch v2.0 instead of working in an isolated worktree as required by CAT workflow",
+      "root_cause": "Session resumed after compaction without verifying worktree isolation. Task-related file edits were made directly on base branch.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "taxonomy_analysis": {
+        "module": "PLANNING",
+        "failure_mode": "Did not verify session state (worktree isolation) before beginning task work",
+        "failure_type": "FALSE_NEGATIVE",
+        "cascading": {
+          "caused_downstream": false,
+          "is_symptom_of": null
+        },
+        "corrective_feedback": "After session resume, verify worktree status before editing source files",
+        "intervention_point": "Before first Edit tool call on source files"
+      },
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-base-branch-edit.sh",
+      "pattern_keywords": [
+        "base-branch",
+        "worktree",
+        "isolation",
+        "v2.0",
+        "edit"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When working on tasks, use /cat:work to create an isolated worktree. Never edit source files directly on base branches (v*.*, main, master, develop)."
     }
   ]
 }
