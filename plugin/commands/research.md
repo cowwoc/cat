@@ -17,10 +17,12 @@ allowed-tools:
 <objective>
 
 Run stakeholder research for a version topic, presenting concerns first, then rated options
-with provider recommendations, and allowing user selection via wizard.
+with provider recommendations, and allowing user selection via wizard. After selection,
+offer recursive drill-down to help users choose specific providers/tools within their selected approach.
 
-**Observable goal:** User selects one approach from 2-4 options; PLAN.md updated with selected
-approach's context, providers, and stakeholder guidance.
+**Observable goal:** User selects one approach from 2-4 options; PLAN.md updated immediately;
+user offered drill-down into selected choice to compare specific providers/implementations;
+process repeats until user reaches desired specificity.
 
 </objective>
 
@@ -374,6 +376,9 @@ Do NOT wait for additional confirmation or ask "should I proceed?"
 
 <step name="update_plan">
 
+**ALWAYS update PLAN.md immediately after user selection, BEFORE offering drill-down.**
+
+
 **Update PLAN.md with ONLY the selected option's context:**
 
 Based on user's selection, write focused research to PLAN.md containing:
@@ -482,6 +487,95 @@ Based on user's selection, write focused research to PLAN.md containing:
 
 </step>
 
+<step name="offer_drilldown">
+
+**After updating PLAN.md, offer to drill down into the selected choice:**
+
+Determine if the selected option can be researched further. Drilldown is appropriate when:
+- The selection is a **category** (e.g., "Payment Aggregators", "Cloud Providers", "Auth Services")
+- The selection contains **multiple providers** that could each be researched
+- There are **sub-decisions** within the selected approach (tiers, plans, configurations)
+
+**Offer drill-down via AskUserQuestion:**
+
+```
+AskUserQuestion({
+  questions: [{
+    question: "Would you like to drill down into [Selected Option] to compare specific [providers/tools/implementations]?",
+    header: "Drill Down",
+    options: [
+      {
+        label: "Yes, research [specific category]",
+        description: "Compare specific options within [Selected Option] (e.g., [Example1] vs [Example2] vs [Example3])"
+      },
+      {
+        label: "No, this level of detail is sufficient",
+        description: "Proceed with the current selection and move to implementation planning"
+      }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**Examples of recursive drill-down paths:**
+
+| Level 1 | Level 2 | Level 3 | Level 4 |
+|---------|---------|---------|---------|
+| Payment Aggregators | Stripe vs Square vs PayPal | Stripe: Standard vs Connect vs Billing | Connect: Express vs Custom vs Standard |
+| Cloud Providers | AWS vs GCP vs Azure | AWS: ECS vs EKS vs Lambda | EKS: Fargate vs EC2 vs Anywhere |
+| Auth Services | Auth0 vs Cognito vs Firebase | Auth0: B2B vs B2C vs M2M | B2B: Organizations vs Enterprise |
+| Database Solutions | SQL vs NoSQL vs NewSQL | PostgreSQL vs MySQL vs SQL Server | PostgreSQL: RDS vs Aurora vs Supabase |
+| CI/CD Platforms | GitHub Actions vs GitLab vs Jenkins | GitHub Actions: Self-hosted vs Cloud | Cloud: Standard vs Large runners |
+
+**If user selects "Yes" - RECURSIVE LOOP:**
+
+1. **Narrow the topic**: `topic = "[Selected Option] for [original topic]"`
+2. **Track drill-down depth**: Maintain breadcrumb trail (e.g., "Payment → Aggregators → Stripe → Connect")
+3. **Return to `spawn_stakeholders`**: Research the narrowed topic with fresh stakeholder analysis
+4. **Present new options**: Specific providers/tools/configurations within the selected category
+5. **User selects**: Via wizard
+6. **Update PLAN.md**: Add new section with this level's selection details
+7. **Offer drill-down again**: Repeat until user declines or no further sub-options exist
+
+**PLAN.md Progressive Update Pattern:**
+
+At each drill-down level, append to the Research section:
+
+```markdown
+### Drill-Down Level [N]: [Category]
+
+**Selection Path:** [Level 1] → [Level 2] → [Level N]
+**Selected:** [Option Name]
+**Why:** [Brief rationale]
+
+#### Comparison at this level
+
+| Option | Score | Key Differentiator |
+|--------|-------|-------------------|
+| [Selected] | [X/55] | [Why chosen] |
+| [Alt 1] | [X/55] | [When to reconsider] |
+| [Alt 2] | [X/55] | [When to reconsider] |
+
+#### [Selected Option] Details
+
+- **Best for:** [Use case fit]
+- **Pricing:** [Relevant pricing info]
+- **Integration:** [Integration complexity]
+- **Limitations:** [Key constraints]
+```
+
+**If user selects "No":**
+- Proceed to `done` step
+- PLAN.md contains complete decision trail from highest to lowest level
+
+**Termination conditions (skip drill-down offer):**
+- Selection is a **specific product/tool** with no meaningful sub-options
+- Selection is a **configuration choice** (e.g., "self-hosted" vs "managed")
+- All providers at this level are **equivalent** for the use case
+
+</step>
+
 <step name="done">
 
 **Present brief confirmation (do NOT repeat detailed guidance):**
@@ -490,6 +584,7 @@ Based on user's selection, write focused research to PLAN.md containing:
 Research complete: v[version] - [topic]
 
 Selected approach: [Option Name]
+[If drilled down: "Specific choice: [Specific Selection]"]
 Implementation guidance saved to: [PLAN.md path]
 
 Ready to proceed with implementation planning.
@@ -515,9 +610,12 @@ The user can review the file for full details.
 - [ ] Side-by-side comparison table with totals presented
 - [ ] Options presented with tradeoffs AFTER concerns
 - [ ] User selected approach via wizard
-- [ ] PLAN.md updated with ONLY selected option's context
+- [ ] PLAN.md updated with ONLY selected option's context **immediately after selection**
 - [ ] PLAN.md includes rating summary table with explanations
 - [ ] PLAN.md includes provider recommendations with rationale
+- [ ] Drill-down offered if selection is a category with sub-options
+- [ ] If drill-down accepted: recursive research on narrowed topic
+- [ ] If drill-down accepted: PLAN.md updated with each level of selection
 - [ ] Guidance filtered to selected approach
 - [ ] Sources filtered to selected approach
 - [ ] Alternative approaches documented with providers and scores
