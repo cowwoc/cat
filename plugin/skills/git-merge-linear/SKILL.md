@@ -87,6 +87,44 @@ fi
 echo "Base branch has not diverged - safe to proceed"
 ```
 
+### Step 2b: Check for Base File Deletions (MANDATORY - M233)
+
+**CRITICAL: Even after rebase, incorrect conflict resolution can delete base branch files.**
+
+```bash
+# Check if task branch deletes files that exist in base branch
+DELETED_FILES=$(git diff --name-status "${BASE_BRANCH}..HEAD" | grep "^D" | cut -f2)
+
+if [[ -n "$DELETED_FILES" ]]; then
+  echo "WARNING: Task branch deletes files from base branch:"
+  echo "$DELETED_FILES"
+  echo ""
+
+  # Check if these are intentional deletions or rebase artifacts
+  # Files in .claude/cat/ or plugin/ directories are likely unintentional
+  SUSPICIOUS=$(echo "$DELETED_FILES" | grep -E "^(\.claude/cat/|plugin/)" || true)
+
+  if [[ -n "$SUSPICIOUS" ]]; then
+    echo "ERROR: Suspicious deletions detected in infrastructure paths:"
+    echo "$SUSPICIOUS"
+    echo ""
+    echo "These deletions are likely from incorrect rebase conflict resolution."
+    echo ""
+    echo "Solution: Re-rebase with correct conflict resolution:"
+    echo "  git reset --hard origin/${TASK_BRANCH}  # If remote has clean state"
+    echo "  # Or reset to merge-base and cherry-pick task commits"
+    echo "  git checkout ${BASE_BRANCH}"
+    echo "  git checkout -B ${TASK_BRANCH}"
+    echo "  # Then cherry-pick your actual task commits"
+    exit 1
+  fi
+
+  echo "Deletions appear intentional (not in infrastructure paths)"
+fi
+
+echo "No suspicious file deletions - safe to proceed"
+```
+
 ### Step 3: Squash Commits (if needed)
 
 ```bash
@@ -202,6 +240,15 @@ BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 DIVERGED=$(git rev-list --count "HEAD..${BASE_BRANCH}")
 if [[ "$DIVERGED" -gt 0 ]]; then
   echo "ERROR: Base branch has $DIVERGED commit(s) not in HEAD. Rebase first." >&2
+  exit 1
+fi
+
+# Check for suspicious file deletions (M233)
+SUSPICIOUS_DELETIONS=$(git diff --name-status "${BASE_BRANCH}..HEAD" | grep "^D" | cut -f2 | grep -E "^(\.claude/cat/|plugin/)" || true)
+if [[ -n "$SUSPICIOUS_DELETIONS" ]]; then
+  echo "ERROR: Task branch deletes infrastructure files from base:" >&2
+  echo "$SUSPICIOUS_DELETIONS" >&2
+  echo "Likely incorrect rebase conflict resolution. Re-rebase with correct resolution." >&2
   exit 1
 fi
 
