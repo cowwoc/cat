@@ -48,7 +48,7 @@ git worktree list
 **Task locks:**
 ```bash
 if [[ -d .claude/cat/locks ]]; then
-  "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" list 2>/dev/null
+  "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" list "${CLAUDE_PROJECT_DIR}" 2>/dev/null
 else
   echo "[]"
 fi
@@ -139,7 +139,7 @@ Analyze survey results to classify artifacts:
 For each lock, check status:
 ```bash
 task_id="<from-survey>"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "$task_id"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$task_id"
 ```
 
 The output shows: `{"locked":true,"session_id":"...","age_seconds":...,"worktree":"..."}`
@@ -254,7 +254,7 @@ Execute in strict order. Errors should propagate - do not suppress with `|| true
 **Remove stale locks:**
 ```bash
 task_id="<from-plan>"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" force-release "$task_id"
+"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" force-release "${CLAUDE_PROJECT_DIR}" "$task_id"
 ```
 
 **Remove worktrees:**
