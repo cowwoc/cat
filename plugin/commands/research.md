@@ -67,15 +67,15 @@ respective perspectives.
 
 | Format | Example | Target |
 |--------|---------|--------|
-| major.minor | `1.2` | `.claude/cat/v1/v1.2/PLAN.md` |
-| major | `1` | `.claude/cat/v1/PLAN.md` |
+| major.minor | `1.2` | `.claude/cat/issues/v1/v1.2/PLAN.md` |
+| major | `1` | `.claude/cat/issues/v1/PLAN.md` |
 
 Read the target PLAN.md to extract:
 - **Topic**: From `## Focus` or version description
 - **Context**: Any existing research, scope, or constraints
 
 ```bash
-PLAN_PATH=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/PLAN.md"  # or v${MAJOR}/PLAN.md for major
+PLAN_PATH=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/PLAN.md"  # or v${MAJOR}/PLAN.md for major
 ```
 
 Present:

@@ -104,7 +104,7 @@ Add `cat-config.local.json` to prevent accidental commit.
 ## Dependencies
 
 - tier-feature-mapping (completed) - provides tiers.json and entitlements.sh
-- JWT token format specification (Ed25519 signed, standard JWT structure)
+- jwt-token-generation (completed) - provides token format specification
 
 ## Test Cases
 

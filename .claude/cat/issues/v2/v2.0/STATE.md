@@ -1,15 +1,14 @@
-# Minor Version 2.0 State: Licensing
+# Minor Version 2.0 State: Billing
 
 ## Status
-- **Status:** in-progress
-- **Progress:** 98%
-- **Started:** 2026-01-20
+status: in_progress
+progress: 87%
+started: 2026-01-20
 
 ## Summary
-Prepare CAT for commercial release with pricing tiers and license key system.
+Prepare CAT for commercial release with pricing tiers, license key system, and billing integration.
 
 ## Tasks Completed
-- reorganize-plugin-layout
 - add-clear-guidance-to-next-steps
 - add-display-redesign
 - add-handler-tests
@@ -20,11 +19,9 @@ Prepare CAT for commercial release with pricing tiers and license key system.
 - compact-token-report
 - complete-patch-version-support
 - context-aware-stakeholders
-- conventions-directory-structure
 - default-to-task-creation
 - dynamic-box-sizing
 - emoji-aware-box-alignment
-- fail-fast-environment-variables
 - feature-gate-middleware
 - find-next-task-script
 - fix-add-remove-parent-update-steps
@@ -34,23 +31,20 @@ Prepare CAT for commercial release with pricing tiers and license key system.
 - hide-tool-calls-during-execution
 - improve-skill-discoverability
 - improve-video-link-visibility
-- local-config-override
+- jwt-token-generation
 - merge-and-cleanup-script
 - merge-or-pr-config
-- move-planning-to-issues-subdir
 - optimize-add-wizard-flow
-- optimize-git-squash
 - polish-readme-for-smb
 - pricing-page
 - refactor-status-scripts-to-python
 - remote-lock-metadata
 - remove-box-alignment-skill
 - remove-box-rendering-infrastructure
+- remove-license-notice-startup
 - rename-readme-sections
-- render-diff-precomputation
 - render-diff-skill
 - requirements-at-all-version-levels
-- research-executive-summary
 - showcase-template
 - simplify-display-formats
 - skill-builder-rewrite-cleanup
@@ -70,26 +64,21 @@ Prepare CAT for commercial release with pricing tiers and license key system.
 - skill-builder-rewrite-work
 - status-display-redesign
 - streamline-task-not-found-error
-- task-tools-integration
 - tier-feature-mapping
 - tos-legal-review
-- update-check-startup
 - update-graphics-tagline
 - work-box-hook-precomputation
-- split-retrospective-files-by-time
-- fix-hierarchy-docs
+- research-executive-summary
 
 ## Tasks Pending
-- relocate-stakeholders-dir
-- suggest-decomposition-at-soft-limit
-- branching-strategy-config
-- create-version-paths-reference
-- update-add-command-paths
-- update-remove-command-paths
-- update-work-command-paths
-- update-research-skills-paths
-- update-python-handler-paths
-- version-completion-approval-gate
-
-## Tasks Decomposed
-- centralize-version-path-resolution (decomposed into 6 subtasks above)
+- move-planning-to-issues-subdir
+- license-validation-server
+- license-validation-server-spring-setup
+- license-validation-server-api
+- license-validation-server-persistence
+- license-validation-server-security
+- license-validation-server-docker
+- license-commands
+- offline-validation
+- payment-processor-integration
+- update-check-startup

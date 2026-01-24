@@ -1,10 +1,10 @@
 # Patch Version 1.8 State: Version Migration
 
 ## Status
-- **Status:** complete
-- **Progress:** 100%
-- **Started:** 2026-01-15
-- **Completed:** 2026-01-15
+status: complete
+progress: 100%
+started: 2026-01-15
+completed: 2026-01-15
 last_updated: 2026-01-20
 
 ## Summary

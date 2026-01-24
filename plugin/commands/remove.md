@@ -75,7 +75,7 @@ Use AskUserQuestion:
 List all tasks:
 
 ```bash
-find .claude/cat/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
+find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | while read d; do
     [ -f "$d/STATE.md" ] || continue
     TASK_NAME=$(basename "$d")
     MAJOR=$(echo "$d" | sed 's|.*/v\([0-9]*\)/v[0-9]*\.[0-9]*/.*|\1|')
@@ -99,7 +99,7 @@ If "Cancel" -> exit command.
 **Validate task can be removed:**
 
 ```bash
-TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
+TASK_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
 
 [ ! -d "$TASK_PATH" ] && echo "ERROR: Task does not exist" && exit 1
 
@@ -143,7 +143,7 @@ If "No, keep it" -> exit command.
 **Check if other tasks depend on this one:**
 
 ```bash
-find .claude/cat/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
+find .claude/cat/issues/v*/v*.* -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
     -exec grep -l "Dependencies:.*$TASK_NAME" {}/STATE.md \; 2>/dev/null
 ```
 
@@ -184,7 +184,7 @@ rm -rf "$TASK_PATH"
 **Update tasks that depended on this task:**
 
 ```bash
-find .claude/cat/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
+find .claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR -mindepth 1 -maxdepth 1 -type d ! -name "v*" | while read d; do
     if grep -q "Dependencies:.*$TASK_NAME" "$d/STATE.md" 2>/dev/null; then
         sed -i "s/$TASK_NAME, //g; s/, $TASK_NAME//g; s/$TASK_NAME//g" "$d/STATE.md"
     fi
@@ -198,7 +198,7 @@ done
 **Update parent minor STATE.md - remove task from list:**
 
 ```bash
-VERSION_STATE=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
 # Remove task from Tasks Pending section
 sed -i "/^- $TASK_NAME$/d" "$VERSION_STATE"
@@ -227,7 +227,7 @@ sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$VERSION_STATE"
 **Commit removal:**
 
 ```bash
-git add -A ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/"
+git add -A ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
 git commit -m "$(cat <<'EOF'
 docs: remove task {task-name} from {major}.{minor}
 
@@ -343,7 +343,7 @@ If "Cancel" -> exit command.
 **If VERSION_TYPE is "major":**
 
 ```bash
-VERSION_PATH=".claude/cat/v$MAJOR"
+VERSION_PATH=".claude/cat/issues/v$MAJOR"
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Major version does not exist" && exit 1
 ```
 
@@ -358,7 +358,7 @@ done)
 **If VERSION_TYPE is "minor":**
 
 ```bash
-VERSION_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR"
+VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Minor version does not exist" && exit 1
 ```
 
@@ -373,7 +373,7 @@ INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "task"
 **If VERSION_TYPE is "patch":**
 
 ```bash
-VERSION_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/v$MAJOR.$MINOR.$PATCH"
+VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/v$MAJOR.$MINOR.$PATCH"
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Patch version does not exist" && exit 1
 ```
 
@@ -432,7 +432,7 @@ Use AskUserQuestion:
 **If VERSION_TYPE is "patch":**
 
 ```bash
-LATER_PATCHES=$(find ".claude/cat/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" | \
+LATER_PATCHES=$(find ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" | \
     sed "s|.*/v$MAJOR.$MINOR.||" | while read p; do
         [ "$p" -gt "$PATCH" ] && echo "v$MAJOR.$MINOR.$p"
     done)
@@ -561,7 +561,7 @@ sed -i "/^[[:space:]]*- \*\*$MAJOR\.$MINOR\.$PATCH:\*\*/d" "$ROADMAP"
 **If VERSION_TYPE is "minor":**
 
 ```bash
-PARENT_STATE=".claude/cat/v$MAJOR/STATE.md"
+PARENT_STATE=".claude/cat/issues/v$MAJOR/STATE.md"
 
 # Remove minor version from "## Minor Versions" section
 sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
@@ -570,7 +570,7 @@ sed -i "/^- v$MAJOR.$MINOR$/d" "$PARENT_STATE"
 TOTAL_MINORS=$(grep -c "^- v$MAJOR\." "$PARENT_STATE" 2>/dev/null || echo 0)
 COMPLETED_MINORS=0
 for minor_entry in $(grep "^- v$MAJOR\." "$PARENT_STATE" | sed 's/- v//'); do
-  MINOR_STATE=".claude/cat/v$MAJOR/v$minor_entry/STATE.md"
+  MINOR_STATE=".claude/cat/issues/v$MAJOR/v$minor_entry/STATE.md"
   if [ -f "$MINOR_STATE" ] && grep -q "status:.*completed" "$MINOR_STATE"; then
     COMPLETED_MINORS=$((COMPLETED_MINORS + 1))
   fi
@@ -589,7 +589,7 @@ sed -i "s/Progress:.*$/Progress:** $PROGRESS%/" "$PARENT_STATE"
 **If VERSION_TYPE is "patch":**
 
 ```bash
-PARENT_STATE=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+PARENT_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
 # Remove patch version from "## Patch Versions" section
 sed -i "/^- v$MAJOR.$MINOR.$PATCH$/d" "$PARENT_STATE"
@@ -620,7 +620,7 @@ EOF
 **If VERSION_TYPE is "minor":**
 
 ```bash
-git add -A ".claude/cat/v$MAJOR/"
+git add -A ".claude/cat/issues/v$MAJOR/"
 git add ".claude/cat/ROADMAP.md"
 git commit -m "$(cat <<'EOF'
 docs: remove minor version {major}.{minor}
@@ -634,7 +634,7 @@ EOF
 **If VERSION_TYPE is "patch":**
 
 ```bash
-git add -A ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/"
+git add -A ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/"
 git add ".claude/cat/ROADMAP.md"
 git commit -m "$(cat <<'EOF'
 docs: remove patch version {major}.{minor}.{patch}

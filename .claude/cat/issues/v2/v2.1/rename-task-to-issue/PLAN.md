@@ -33,11 +33,8 @@ None - terminology standardization
    - Files: .claude/cat/templates/, .claude/cat/references/
    - Verify: grep confirms replacement
 
-4. **Step 4:** Update and rename script files
-   - Rename: `find-task.sh` → `get-available-issues.sh`
-   - Rename: `task-lock.sh` → `issue-lock.sh`
+4. **Step 4:** Update any script files
    - Files: *.py, *.sh with task references
-   - Update all references to renamed scripts in skills/commands
    - Verify: Scripts still function correctly
 
 5. **Step 5:** Verify changelogs preserved
@@ -46,6 +43,4 @@ None - terminology standardization
 ## Acceptance Criteria
 - [ ] No mention of "task" in any file except changelogs
 - [ ] All "issue" terminology is grammatically correct
-- [ ] Scripts renamed: find-task.sh → get-available-issues.sh, task-lock.sh → issue-lock.sh
-- [ ] All references to old script names updated
 - [ ] Existing functionality unchanged

@@ -25,7 +25,7 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 # CONFIGURATION
 # ============================================================================
 
-LOCK_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/cat/locks"
+LOCK_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}/.claude/cat/locks"
 
 # ============================================================================
 # FUNCTIONS
