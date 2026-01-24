@@ -13,7 +13,12 @@ set -euo pipefail
 #
 # Fixed in M138: Support tasks directly in minor dirs (not in task/ subdir)
 
-CAT_DIR="${1:-.claude/cat/issues}"
+# Fail-fast: require CAT_DIR argument
+if [[ -z "${1:-}" ]]; then
+    echo '{"error": "CAT_DIR argument is required", "usage": "status-data.sh <cat-dir>"}' >&2
+    exit 1
+fi
+CAT_DIR="$1"
 
 # Load project info
 PROJECT_NAME=$(grep -m1 "^# " "$CAT_DIR/PROJECT.md" 2>/dev/null | sed 's/^# //' || echo "Unknown Project")
