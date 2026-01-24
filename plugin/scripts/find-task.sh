@@ -5,7 +5,7 @@
 # dependency checks, lock checks, and gate evaluation.
 #
 # Usage:
-#   find-task.sh [--scope major|minor|task|all] [--target VERSION|TASK_ID] [--session-id ID] [--override-gate]
+#   find-task.sh <project-dir> [--scope major|minor|task|all] [--target VERSION|TASK_ID] [--session-id ID] [--override-gate]
 #
 # Output (JSON):
 #   {"status":"found|not_found|all_locked|gate_blocked","task_id":"2.0-task-name",...}
@@ -20,7 +20,7 @@ source "${SCRIPT_DIR}/lib/version-utils.sh"
 # CONFIGURATION
 # =============================================================================
 
-CAT_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}/.claude/cat/issues"
+PROJECT_DIR=""  # Required: set via --project-dir
 SESSION_ID=""
 SCOPE="all"  # all | major | minor | task
 TARGET=""
@@ -31,6 +31,15 @@ OVERRIDE_GATE=false
 # =============================================================================
 
 parse_args() {
+    # First argument must be project-dir
+    if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+        show_usage
+        exit 0
+    fi
+
+    PROJECT_DIR="$1"
+    shift
+
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --scope)
@@ -74,17 +83,18 @@ parse_args() {
 
 show_usage() {
     cat << 'EOF'
-Usage: find-task.sh [OPTIONS] [VERSION_OR_TASK]
+Usage: find-task.sh <project-dir> [OPTIONS] [VERSION_OR_TASK]
 
 Find the next executable task for /cat:work.
+
+Arguments:
+  project-dir        Project root directory (contains .claude/cat/) - REQUIRED first argument
 
 Options:
   --scope SCOPE      Search scope: all, major, minor, task (auto-detected from target)
   --target TARGET    Version or task ID to target
   --session-id ID    Session ID for lock acquisition
   --override-gate    Skip entry gate evaluation
-
-Arguments:
   VERSION_OR_TASK    Version (2, 2.0) or task ID (2.0-task-name)
 
 Output (JSON):
@@ -515,4 +525,19 @@ find_next_task() {
 # =============================================================================
 
 parse_args "$@"
+
+# Validate required arguments
+if [[ -z "$PROJECT_DIR" ]]; then
+    echo '{"status":"error","message":"--project-dir is required"}'
+    exit 1
+fi
+
+if [[ ! -d "$PROJECT_DIR/.claude/cat" ]]; then
+    echo '{"status":"error","message":"Not a CAT project: '"$PROJECT_DIR"' (no .claude/cat directory)"}'
+    exit 1
+fi
+
+# Set derived paths
+CAT_DIR="$PROJECT_DIR/.claude/cat/issues"
+
 find_next_task
