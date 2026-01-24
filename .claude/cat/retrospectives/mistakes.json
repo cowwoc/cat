@@ -77,7 +77,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Before recording prevention, check if it already exists. If existing prevention failed, escalate to stronger level (documentation → hook/validation)"
+      "correct_behavior": "Before recording prevention, check if it already exists. If existing prevention failed, escalate to stronger level (documentation \u2192 hook/validation)"
     },
     {
       "id": "M094",
@@ -270,7 +270,7 @@
       "id": "M132",
       "timestamp": "2026-01-18T20:29:20Z",
       "category": "logical_error",
-      "description": "Incorrectly classified ✦ (U+2726) as width 2 emoji when it is width 1 symbol, causing ✦ lines to be 1 char short",
+      "description": "Incorrectly classified \u2726 (U+2726) as width 2 emoji when it is width 1 symbol, causing \u2726 lines to be 1 char short",
       "root_cause": "No systematic method to distinguish emojis (width 2) from symbols (width 1) - assumed decorative chars were emojis",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -291,7 +291,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Check Unicode East Asian Width property: only W/F = width 2; N/Na/A = width 1. ✦ is EAW=N (Neutral)"
+      "correct_behavior": "Check Unicode East Asian Width property: only W/F = width 2; N/Na/A = width 1. \u2726 is EAW=N (Neutral)"
     },
     {
       "id": "M133",
@@ -317,14 +317,14 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Check file location first: .claude/cat/ files → planning:, .claude/hooks/ → config:, user docs → docs:"
+      "correct_behavior": "Check file location first: .claude/cat/ files \u2192 planning:, .claude/hooks/ \u2192 config:, user docs \u2192 docs:"
     },
     {
       "id": "M134",
       "timestamp": "2026-01-19T14:00:00Z",
       "category": "documentation_violation",
-      "description": "Used config: commit type for bug fix in plugin/ because M133 said plugin/ → config:, but bug fixes should always use bugfix:",
-      "root_cause": "M133 prevention created oversimplified rule (plugin/ → config:) without clarifying that commit type reflects change purpose, not file location",
+      "description": "Used config: commit type for bug fix in plugin/ because M133 said plugin/ \u2192 config:, but bug fixes should always use bugfix:",
+      "root_cause": "M133 prevention created oversimplified rule (plugin/ \u2192 config:) without clarifying that commit type reflects change purpose, not file location",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
@@ -513,14 +513,14 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Follow exact template structure with position-by-position verification. Every line inside outer box must have outer │ on both ends. Inner box lines have BOTH inner │ AND outer │ borders."
+      "correct_behavior": "Follow exact template structure with position-by-position verification. Every line inside outer box must have outer \u2502 on both ends. Inner box lines have BOTH inner \u2502 AND outer \u2502 borders."
     },
     {
       "id": "M141",
       "timestamp": "2026-01-19T11:11:48Z",
       "category": "protocol_violation",
       "description": "Status display alignment failure (4th recurrence) - validation script not invoked despite BLOCKING GATE instruction",
-      "root_cause": "Documentation-level prevention failed 3 times (M136→M137→M140). Instructions labeled 'MANDATORY' and 'BLOCKING GATE' have no enforcement mechanism - agents skip validation step because there is no automated check that blocks output if validation wasn't run.",
+      "root_cause": "Documentation-level prevention failed 3 times (M136\u2192M137\u2192M140). Instructions labeled 'MANDATORY' and 'BLOCKING GATE' have no enforcement mechanism - agents skip validation step because there is no automated check that blocks output if validation wasn't run.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -548,7 +548,7 @@
       "timestamp": "2026-01-19T11:21:46Z",
       "category": "detection_gap",
       "description": "Status display alignment failure (5th recurrence) - validation script checks border presence but not display width equality",
-      "root_cause": "validate-status-alignment.sh only verifies borders exist (│ present) but does not validate that all lines have equal display width. Lines with different character counts pass validation despite visual misalignment. LLMs cannot reliably calculate character-level padding for Unicode text.",
+      "root_cause": "validate-status-alignment.sh only verifies borders exist (\u2502 present) but does not validate that all lines have equal display width. Lines with different character counts pass validation despite visual misalignment. LLMs cannot reliably calculate character-level padding for Unicode text.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "code_fix",
@@ -977,7 +977,7 @@
         "fragility": "medium",
         "catches_variations": true
       },
-      "correct_behavior": "Always squash commits by type BEFORE presenting approval gate to user. Flow: changes complete → squash → present gate."
+      "correct_behavior": "Always squash commits by type BEFORE presenting approval gate to user. Flow: changes complete \u2192 squash \u2192 present gate."
     },
     {
       "id": "M158",
@@ -1011,7 +1011,7 @@
       "id": "M159",
       "timestamp": "2026-01-20T11:22:37-05:00",
       "category": "protocol_violation",
-      "description": "Used wrong progress display format (▸/▹ symbols) instead of approved Style E (✓/►/◦ with ◀── current marker)",
+      "description": "Used wrong progress display format (\u25b8/\u25b9 symbols) instead of approved Style E (\u2713/\u25ba/\u25e6 with \u25c0\u2500\u2500 current marker)",
       "root_cause": "work-progress.sh implementation diverged from approved Style E specification without verification",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -1031,7 +1031,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Use Style E format: rounded box header with ✓/►/◦ symbols and ◀── current marker"
+      "correct_behavior": "Use Style E format: rounded box header with \u2713/\u25ba/\u25e6 symbols and \u25c0\u2500\u2500 current marker"
     },
     {
       "id": "M160",
@@ -1191,13 +1191,13 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Always display header box (🐱 > task-name with underline) before any progress banner"
+      "correct_behavior": "Always display header box (\ud83d\udc31 > task-name with underline) before any progress banner"
     },
     {
       "id": "M166",
       "timestamp": "2026-01-22T00:00:00Z",
       "category": "protocol_violation",
-      "description": "Status display rendered v2.0 without inner box borders - each major must have its own ╭─/╰─ wrapper",
+      "description": "Status display rendered v2.0 without inner box borders - each major must have its own \u256d\u2500/\u2570\u2500 wrapper",
       "root_cause": "Template showed one major example but did not explicitly state every major needs inner box structure",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -1220,7 +1220,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Render each major version with its own inner box (╭─ and ╰─), closing the box before starting the next major"
+      "correct_behavior": "Render each major version with its own inner box (\u256d\u2500 and \u2570\u2500), closing the box before starting the next major"
     },
     {
       "id": "M166",
@@ -1462,7 +1462,7 @@
       "timestamp": "2026-01-22T12:30:00Z",
       "category": "protocol_violation",
       "description": "Status display box borders misaligned - inner box closing lines had 76 width instead of 75, did not follow box-alignment skill procedure",
-      "root_cause": "Loaded status skill but did not load/follow box-alignment skill it references. Typed box output incrementally instead of: collect all lines → calculate widths → pad → output",
+      "root_cause": "Loaded status skill but did not load/follow box-alignment skill it references. Typed box output incrementally instead of: collect all lines \u2192 calculate widths \u2192 pad \u2192 output",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -1832,7 +1832,7 @@
       "timestamp": "2026-01-22T11:30:00Z",
       "category": "logical_error",
       "description": "Nested box alignment failed due to two errors: (1) calculated border dashes using content_max instead of line_width-2, (2) forgot that suffix adds 1 space so total spaces before final bar = padding + 1",
-      "root_cause": "When constructing border lines, used content area width instead of accounting for corner characters. When rendering, wrote only padding spaces before │ instead of padding + 1 (the extra 1 from the ` │` suffix)",
+      "root_cause": "When constructing border lines, used content area width instead of accounting for corner characters. When rendering, wrote only padding spaces before \u2502 instead of padding + 1 (the extra 1 from the ` \u2502` suffix)",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -1851,7 +1851,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Use border_middle = line_width - 2 for dashes, and remember total spaces before final │ = padding + 1"
+      "correct_behavior": "Use border_middle = line_width - 2 for dashes, and remember total spaces before final \u2502 = padding + 1"
     },
     {
       "id": "M189",
@@ -2420,7 +2420,7 @@
       "id": "M210",
       "timestamp": "2026-01-23T12:00:00Z",
       "category": "assumption_without_verification",
-      "description": "Used wrong emoji (✅) for Trust setting instead of correct emoji (🤝) when constructing config display",
+      "description": "Used wrong emoji (\u2705) for Trust setting instead of correct emoji (\ud83e\udd1d) when constructing config display",
       "root_cause": "Assumed emoji from memory instead of verifying against skill specification before outputting display",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -2448,7 +2448,7 @@
       "timestamp": "2026-01-23T03:36:29Z",
       "category": "protocol_violation",
       "description": "Manual task creation with invalid STATE.md format bypassed /cat:add command",
-      "root_cause": "Documentation in agent-architecture.md § Work Request Handling existed but was not enforced - agent manually created STATE.md files without using /cat:add, resulting in invalid YAML format instead of required bullet-point format",
+      "root_cause": "Documentation in agent-architecture.md \u00a7 Work Request Handling existed but was not enforced - agent manually created STATE.md files without using /cat:add, resulting in invalid YAML format instead of required bullet-point format",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "hook",
