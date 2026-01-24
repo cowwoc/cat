@@ -3010,6 +3010,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Squash all related commits (implementation + STATE.md updates) into a single commit BEFORE presenting the approval gate to user"
+    },
+    {
+      "id": "M230",
+      "timestamp": "2026-01-24T13:00:00Z",
+      "category": "protocol_violation",
+      "description": "Made plugin changes directly in main workspace instead of task worktree, causing separate commits that required manual squashing",
+      "root_cause": "Workflow allowed parent STATE.md rollup updates to happen in main workspace after merge, instead of requiring all changes happen in worktree before merge",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/.claude/cat/workflows/work.md",
+      "pattern_keywords": [
+        "worktree",
+        "workspace",
+        "squash",
+        "STATE.md",
+        "merge"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete ALL task-related changes (implementation + task STATE.md + parent STATE.md rollup) IN THE WORKTREE before merge, ensuring single squashed commit"
     }
   ]
 }

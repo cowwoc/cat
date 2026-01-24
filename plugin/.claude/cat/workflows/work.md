@@ -628,29 +628,26 @@ git push . "HEAD:${BASE_BRANCH}"
 
 **Anti-pattern (M070):** Committing STATE.md update as separate "planning:" commit after merge.
 
-### 15. Cleanup
+### 15. Update Parent State (Rollup Only) - IN WORKTREE
 
 **Batched into Finalization subagent** - see Subagent Batching Standards above
+
+**CRITICAL (M230): Parent STATE.md updates MUST happen IN THE WORKTREE before merge.**
+
+All related changes (implementation + task STATE.md + parent STATE.md rollup) must be committed
+together in the worktree. This ensures a single squashed commit contains all task-related updates.
+
+**Still in task worktree** (NOT main workspace):
 
 ```bash
-# MANDATORY: Return to main workspace before removing worktree
-cd /workspace
-pwd  # Verify we're in main workspace (not worktree)
-
-# Task worktree and branch (subagent already cleaned in step 10)
-git worktree remove ../cat-worktree-{task-name}
-git branch -d {task-branch}
+pwd  # Verify still in worktree: .worktrees/{task-branch}
 ```
 
-### 16. Update Parent State (Rollup Only)
-
-**Batched into Finalization subagent** - see Subagent Batching Standards above
-
-**NOTE**: Minor version CHANGELOG.md was already updated in step 13 with the implementation commit.
-
-This step handles only:
+This step handles:
 1. Parent STATE.md progress rollup (minor/major)
 2. Major version CHANGELOG.md (if minor version completes)
+
+**NOTE**: Minor version CHANGELOG.md was already updated in step 13 with the implementation commit.
 
 **MANDATORY: Validate Before Marking Minor Version Complete (M150)**
 
@@ -707,6 +704,32 @@ If CHANGELOG.md doesn't exist yet, create it using the template format with:
 - Version header and pending status
 - Empty Tasks Completed table with correct column order
 - Placeholder sections
+
+**Commit parent STATE.md updates in worktree:**
+
+```bash
+# Still in worktree - include parent STATE.md in the squashed commit
+git add .claude/cat/issues/v${MAJOR}/STATE.md
+git add .claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/STATE.md
+git commit --amend --no-edit  # Include in the same commit as implementation
+```
+
+**Anti-pattern (M230):** Updating parent STATE.md AFTER merge in main workspace. This creates a
+separate commit that requires manual squashing.
+
+### 16. Cleanup
+
+**Batched into Finalization subagent** - see Subagent Batching Standards above
+
+```bash
+# MANDATORY: Return to main workspace before removing worktree
+cd /workspace
+pwd  # Verify we're in main workspace (not worktree)
+
+# Task worktree and branch (subagent already cleaned in step 10)
+git worktree remove ../cat-worktree-{task-name}
+git branch -d {task-branch}
+```
 
 ## Error Recovery
 
