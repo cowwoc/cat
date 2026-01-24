@@ -1,9 +1,9 @@
 # Minor Version 2.0 State: Billing
 
 ## Status
-status: in_progress
-progress: 87%
-started: 2026-01-20
+- **Status:** in_progress
+- **Progress:** 87%
+- **Started:** 2026-01-20
 
 ## Summary
 Prepare CAT for commercial release with pricing tiers, license key system, and billing integration.
