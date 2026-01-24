@@ -9,6 +9,7 @@
 Record demo videos showcasing CAT features for marketing and documentation.
 
 ## Tasks Pending
+- simplify-readme
 - task-management-demo
 - git-safety-demo
 - multi-agent-demo
