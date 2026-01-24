@@ -93,20 +93,28 @@ git branch "$BACKUP"
 # 3. Verify clean working directory
 git status --porcelain  # Must be empty
 
-# 4. Soft reset to base (parent of first commit to squash)
+# 4. Check for unintended deletions (M238)
+# If base branch has files your branch doesn't, soft reset will stage deletions!
+echo "Files on base but not in branch (will be DELETED if you proceed):"
+git diff --name-status <base-commit>..HEAD | grep "^D" | cut -f2
+# If any unexpected files shown, sync with base first:
+#   git checkout <base-commit> -- <path-to-restore>
+
+# 5. Soft reset to base (parent of first commit to squash)
 git reset --soft <base-commit>
 
-# 5. Verify no changes lost
+# 6. Verify no UNINTENDED changes (check for unexpected deletions!)
 git diff --stat "$BACKUP"  # Must be empty
+git diff --name-status HEAD | grep "^D"  # Review any deletions!
 
-# 6. Create squashed commit (see git-commit skill for message guidance)
+# 7. Create squashed commit (see git-commit skill for message guidance)
 git commit -m "Unified message describing what code does"
 
-# 7. Verify result
+# 8. Verify result
 git diff "$BACKUP"  # Must be empty
 git rev-list --count <base-commit>..HEAD  # Must be 1
 
-# 8. Cleanup backup
+# 9. Cleanup backup
 git branch -D "$BACKUP"
 ```
 
@@ -152,6 +160,33 @@ rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 ```
 
 ## Critical Rules
+
+### Check for Unintended Deletions (M238)
+
+**CRITICAL: Worktrees may be out of sync with base branch updates.**
+
+When using `git reset --soft <base>`, the index reflects your working tree state. If the base
+branch has files your branch never received (e.g., new files added to base after your branch
+diverged), the soft reset will stage those files as DELETIONS.
+
+**Before committing after soft reset:**
+
+```bash
+# Check what will be deleted relative to base
+git diff --name-status HEAD | grep "^D"
+
+# If unexpected deletions appear, restore from base:
+git checkout <base> -- <path-to-unexpected-deleted-file>
+
+# Then amend the commit
+git commit --amend --no-edit
+```
+
+**Why this happens:**
+1. Branch created from older base commit
+2. New files added to base branch later
+3. Worktree never received these files (no merge/rebase from base)
+4. Soft reset stages "delete files that exist on base but not in working tree"
 
 ### Preserve Commit Type Boundaries When Squashing
 
