@@ -853,6 +853,82 @@ Hand-writing approximate output without calculation causes alignment errors.
 [Uses the calculated values from Step 3]
 ```
 
+### No Embedded Box Drawings in Skills (M217)
+
+**Critical rule**: Skills MUST NOT contain embedded box-drawing examples in their instructions or
+templates. Embedded boxes cause agents to manually render similar output instead of using handler
+functions.
+
+**Important distinction**: This rule applies to skills that **output boxes to users**. Documentation
+diagrams in skills that **do not produce boxes** (e.g., state machine diagrams in tdd-implementation,
+architecture flowcharts) are acceptable because:
+- They illustrate concepts for human readers, not templates for agent output
+- The agent is not asked to recreate or render them
+- They don't trigger the "copy this pattern" failure mode
+
+**The failure pattern:**
+1. Skill document shows example box output:
+   ```
+   ╭──────────────────────╮
+   │ Example Header       │
+   ├──────────────────────┤
+   │ Content here         │
+   ╰──────────────────────╯
+   ```
+2. Agent sees this pattern and attempts to recreate it manually
+3. Manual rendering produces misaligned, incorrect boxes
+4. Handler functions (which would produce correct output) go unused
+
+**Correct approach for skills that produce boxes:**
+
+1. **Reference handler functions, not visual examples:**
+   ```markdown
+   # BAD - Embedded box causes manual rendering
+   Display the result in this format:
+   ╭──────────────────────╮
+   │ {content}            │
+   ╰──────────────────────╯
+
+   # GOOD - References function without visual example
+   Use `build_box(content)` to render the result.
+   The function handles all alignment and border construction.
+   ```
+
+2. **For circle/rating patterns, use lookup tables not examples:**
+   ```markdown
+   # BAD - Embedded pattern causes manual typing
+   Display ratings like: ●●●●○ (4/5) or ●●○○○ (2/5)
+
+   # GOOD - Lookup table with explicit "do not type manually"
+   Rating circle patterns (do not hand-type, copy from table):
+   - 5 → ●●●●●
+   - 4 → ●●●●○
+   - 3 → ●●●○○
+   - 2 → ●●○○○
+   - 1 → ●○○○○
+   ```
+
+3. **For output format documentation, describe structure not rendering:**
+   ```markdown
+   # BAD - Shows rendered output
+   The status display looks like:
+   ╭────────────────────────────────╮
+   │ 📊 Progress: [████░░░░] 40%   │
+   ╰────────────────────────────────╯
+
+   # GOOD - Describes structure, references handler
+   The status display contains:
+   - Header with emoji and title
+   - Progress bar showing percentage
+   - All rendering via `build_status_box()` function
+   ```
+
+**Verification during skill creation:**
+- [ ] No box-drawing characters (╭╮╰╯│├┤┬┴┼─) appear in instruction examples
+- [ ] No formatted table examples with borders appear in skill text
+- [ ] Visual patterns (circles, bars, etc.) use lookup tables with "do not hand-type" warning
+- [ ] All display rendering references handler functions by name
+
 ### Output Artifact Gates (M192 Prevention)
 
 **Critical insight**: Calculation gates alone are insufficient. When a skill produces structured
@@ -1391,4 +1467,8 @@ For each function:
 - [ ] Gates use MANDATORY and BLOCKING keywords
 - [ ] Calculation gates require explicit numeric results before construction
 - [ ] Artifact gates require explicit output strings before final assembly
+- [ ] **No embedded box drawings in skill instructions or examples** (M217)
+- [ ] Box-drawing characters only appear in handler code, not skill text
+- [ ] Visual patterns use lookup tables with "do not hand-type" warnings
+- [ ] Display rendering references handler functions by name
 - [ ] Verification criteria exist for the goal

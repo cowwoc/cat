@@ -508,7 +508,7 @@
     {
       "id": "A020",
       "priority": "high",
-      "description": "Enforce template precomputation: Any skill with structured display (boxes, scorecards, tables) MUST have a Python handler that precomputes the output. Skills should not contain raw ASCII art or box templates.",
+      "description": "Enforce template precomputation: Any skill with structured display (boxes, scorecards, tables) MUST have a Python handler that precomputes the output. Skills should not contain raw ASCII art or box templates. NOTE: Documentation diagrams in skills that do NOT output boxes to users (e.g., state machines, flowcharts) are acceptable - the rule targets output templates, not illustrations.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-014",
       "status": "open",
