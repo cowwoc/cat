@@ -3090,6 +3090,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Use cat:render-diff skill: git diff ${BASE_BRANCH}..HEAD | \"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py\" and present verbatim output"
+    },
+    {
+      "id": "M234",
+      "timestamp": "2026-01-24T13:15:00Z",
+      "category": "protocol_violation",
+      "description": "Squashed all commits into single commit instead of preserving commit type boundaries",
+      "root_cause": "No documented convention that squashing should preserve commit type boundaries",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/git-squash/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "commit type",
+        "git history"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When squashing, group commits by type prefix. Keep docs/config separate from feature/refactor commits."
     }
   ]
 }
