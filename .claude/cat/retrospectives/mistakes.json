@@ -3220,6 +3220,43 @@
         "catches_variations": true
       },
       "correct_behavior": "Before committing after soft reset, check git diff --name-status HEAD | grep ^D for unexpected deletions. Restore any unintended deletions from base before committing."
+    },
+    {
+      "id": "M241",
+      "timestamp": "2026-01-24T16:45:00-05:00",
+      "category": "protocol_violation",
+      "description": "Attempted to switch from rebase to cherry-pick when encountering conflicts during git rebase",
+      "root_cause": "Treated rebase conflicts as signal to change approach rather than normal part of rebase workflow",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "taxonomy_analysis": {
+        "module": "PLANNING",
+        "failure_mode": "Incorrect strategy change under pressure",
+        "failure_type": "FALSE_POSITIVE",
+        "cascading": {
+          "caused_downstream": false,
+          "is_symptom_of": null
+        },
+        "corrective_feedback": "Conflicts during rebase are normal. Resolve and continue, do not switch approaches.",
+        "intervention_point": "When first conflict occurred"
+      },
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-rebase/SKILL.md",
+      "pattern_keywords": [
+        "rebase",
+        "cherry-pick",
+        "conflicts",
+        "git"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Persist through rebase conflicts by resolving each conflict and continuing. Never switch to cherry-pick mid-operation."
     }
   ]
 }
