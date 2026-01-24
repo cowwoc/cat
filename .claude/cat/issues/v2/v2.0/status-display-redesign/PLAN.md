@@ -24,7 +24,7 @@ The approved design from conversation:
 │ │                                                                    │   │
 │ │    🔄 v2.0.2: License Server (2/6)                                 │   │
 │ │       ☑️ license-validation-server                                 │   │
-│ │       ☑️ license-validation-server-spring-setup                    │   │
+│ │       ☑️ license-validation-server-jetty-setup                     │   │
 │ │       🔳 license-validation-server-api                             │   │
 │ │       🚫 license-validation-server-persistence (blocked by: api)   │   │
 │ │       🚫 license-validation-server-security (blocked by: api)      │   │
