@@ -146,9 +146,9 @@
       "description": "ESCALATION: Box alignment 6 recurrences despite fixes. Agents manually type boxes instead of using scripts. Need enforcement mechanism.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-006",
-      "status": "escalated",
+      "status": "resolved",
       "created_date": "2026-01-19T16:13:29-05:00",
-      "completed_date": "2026-01-19T16:18:04-05:00",
+      "completed_date": "2026-01-23T12:30:00-05:00",
       "related_mistakes": [
         "M136",
         "M137",
@@ -168,7 +168,8 @@
         ],
         "verdict": "ineffective"
       },
-      "escalation_of": "A005"
+      "escalation_of": "A005",
+      "note": "Resolved: Box rendering moved to Python handlers with precomputation. Agents no longer manually type boxes."
     },
     {
       "id": "A008",
@@ -201,9 +202,9 @@
       "description": "ESCALATION: A007 box rendering still ignored (4 more mistakes). Add PreToolUse hook that blocks any Bash echo/printf containing box-drawing characters (│╭╮╰╯─) with message to use render scripts",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-006",
-      "status": "not_implemented",
+      "status": "resolved",
       "created_date": "2026-01-21T14:40:12-05:00",
-      "completed_date": "2026-01-21T14:47:40-05:00",
+      "completed_date": "2026-01-23T12:30:00-05:00",
       "related_mistakes": [
         "M149",
         "M155",
@@ -221,7 +222,8 @@
         ],
         "verdict": "not_implemented"
       },
-      "escalation_of": "A007"
+      "escalation_of": "A007",
+      "note": "Resolved: No longer needed - precomputation handlers eliminate manual box rendering."
     },
     {
       "id": "A010",
@@ -296,9 +298,9 @@
       "description": "ESCALATION: 14 more box alignment failures. Restructured box-alignment skill with explicit 5-step sequential procedure. If still fails, remove manual box rendering entirely.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-011",
-      "status": "escalated",
+      "status": "resolved",
       "created_date": "2026-01-22T00:58:32-05:00",
-      "completed_date": "2026-01-22T00:58:32-05:00",
+      "completed_date": "2026-01-23T12:30:00-05:00",
       "related_mistakes": [
         "M174",
         "M175",
@@ -331,7 +333,8 @@
         ],
         "verdict": "ineffective"
       },
-      "escalation_of": "A012"
+      "escalation_of": "A012",
+      "note": "Resolved: Manual box rendering removed. Python handlers precompute all box output."
     },
     {
       "id": "A014",
@@ -339,9 +342,9 @@
       "description": "ESCALATION: A013 (5-step procedure) ineffective with 13 post-fix failures. LLMs fundamentally cannot reliably count characters. FINAL DECISION: Remove manual box rendering capability entirely - use only script-based rendering.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-011",
-      "status": "open",
+      "status": "resolved",
       "created_date": "2026-01-22T01:51:51-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-23T12:30:00-05:00",
       "related_mistakes": [
         "M174",
         "M175",
@@ -383,7 +386,8 @@
         ],
         "verdict": "not_implemented"
       },
-      "escalation_of": "A013"
+      "escalation_of": "A013",
+      "note": "Resolved: Box rendering now done by Python handlers with precomputation. render-box skill removed. Manual box rendering no longer possible."
     },
     {
       "id": "A015",
@@ -412,9 +416,9 @@
       "description": "ESCALATION: Box alignment failures persist (M175-M193). Current skill-level prevention ineffective. Convert to pre-computed Python script that generates aligned output, removing all manual rendering.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-006",
-      "status": "open",
+      "status": "resolved",
       "created_date": "2026-01-22T17:40:38-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-23T12:30:00-05:00",
       "related_mistakes": [
         "M175",
         "M178",
@@ -429,7 +433,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "note": "Resolved: Python handlers (status_handler.py, etc.) precompute aligned output. render-box skill removed."
     },
     {
       "id": "A017",
