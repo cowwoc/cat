@@ -1554,6 +1554,17 @@ Copy-paste the exact Bash tool output into your response. Do NOT:
 
 The user must see the ACTUAL render-diff output, not your interpretation of it.
 
+**CRITICAL (M231): Handle large diffs by showing ALL content.**
+When diff output is truncated or saved to a file due to size:
+1. Read the ENTIRE saved file using the Read tool (use offset/limit if needed for multiple reads)
+2. Present ALL file contents to the user, not just excerpts
+3. If output exceeds response limits, split across multiple messages
+4. NEVER summarize with "remaining diff shows..." - show the actual content
+5. Users MUST see every changed line to make informed approval decisions
+
+Anti-pattern: Reading only first 200 lines of a 115KB diff and summarizing the rest as "standard
+implementation". This defeats the purpose of showing the diff.
+
 **Anti-pattern (M160):** Presenting approval gate with only file change summary (names, line counts)
 without showing the actual diff content. Users reject approval because they cannot evaluate changes.
 
