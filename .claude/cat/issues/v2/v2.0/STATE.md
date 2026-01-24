@@ -71,6 +71,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - research-executive-summary
 - license-validation-server-jetty-setup
 - task-tools-integration
+- license-validation-server-persistence
 
 ## Tasks Pending
 - split-retrospective-files-by-time
@@ -78,7 +79,6 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - move-planning-to-issues-subdir
 - license-validation-server
 - license-validation-server-api
-- license-validation-server-persistence
 - license-validation-server-security
 - license-validation-server-docker
 - license-commands
