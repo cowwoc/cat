@@ -41,6 +41,11 @@ git branch -D "$BACKUP"
 
 ## Handling Conflicts
 
+**CRITICAL: Persist through conflicts. Never switch to cherry-pick mid-rebase (M241).**
+
+Rebase conflicts are normal and expected when branches have diverged. The solution is to resolve
+conflicts and continue, not to abandon rebase for cherry-picking.
+
 ```bash
 # When rebase stops due to conflict:
 
@@ -55,10 +60,28 @@ git add <resolved-files>
 # 4. Continue rebase
 git rebase --continue
 
+# 5. Repeat steps 1-4 for each conflicting commit
+
 # If you want to abort:
 git rebase --abort
 git reset --hard "$BACKUP"
 ```
+
+### "Skipped previously applied" Messages
+
+When rebasing, git may report "skipped previously applied commit" for commits whose changes already
+exist on the target branch (perhaps added via separate commits). This is normal - git detects
+content duplication and skips redundant commits. Continue the rebase.
+
+### Why Rebase Over Cherry-Pick
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Rebase | Preserves linear history, single operation | Must resolve conflicts sequentially |
+| Cherry-pick | Can select specific commits | Creates duplicate commits, complex history |
+
+**Rule:** Always complete a rebase. Cherry-pick is only appropriate for extracting a single commit
+to a different branch, not for integrating branch changes.
 
 ## Common Operations
 
