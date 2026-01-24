@@ -282,32 +282,10 @@ fi
 
 ### Output Format
 
-After context analysis, display selection results:
+After context analysis, use the **STAKEHOLDER_SELECTION** box from PRE-COMPUTED STAKEHOLDER BOXES.
+Replace placeholders with actual selection data.
 
-```
-╭─── STAKEHOLDER SELECTION ──────────────────────────────╮
-│                                                        │
-│  Stakeholder Review: {N} of 10 stakeholders selected   │
-│                                                        │
-│  Running: requirements, architect, security,           │
-│           quality, tester                              │
-│                                                        │
-│  Skipped:                                              │
-│    - ux: No UI/frontend changes detected               │
-│    - legal: No licensing/compliance keywords           │
-│    - sales: Internal tooling task                      │
-│    - marketing: Internal tooling task                  │
-│    - performance: No algorithm-heavy code changes      │
-│                                                        │
-╰────────────────────────────────────────────────────────╯
-```
-
-If file-based overrides occurred, add inside the box:
-```
-│  Overrides (file-based):                               │
-│    + ux: UI file changed (src/ui/TerminalRenderer.ts)  │
-│                                                        │
-```
+If file-based overrides occurred, add an "Overrides (file-based):" section inside the box.
 
 ### Skip Reason Mapping
 
@@ -468,40 +446,11 @@ for review in reviews:
 
 Output the review results:
 
-**Summary box:**
+**Summary box:** Use the **STAKEHOLDER_REVIEW** box from PRE-COMPUTED STAKEHOLDER BOXES.
+Replace placeholders with actual reviewer results.
 
-```
-╭─── STAKEHOLDER REVIEW ─────────────────────────────────╮
-│                                                        │
-│  Task: {task-name}                                     │
-│                                                        │
-├────────────────────────────────────────────────────────┤
-│  Spawning reviewers...                                 │
-│  ├── requirements ✓                                    │
-│  ├── architect ✓                                       │
-│  ├── security ⚠ 1 HIGH                                 │
-│  └── tester ✗ 1 CRITICAL                               │
-├────────────────────────────────────────────────────────┤
-│  Result: REJECTED (1 critical, 1 high)                 │
-│                                                        │
-╰────────────────────────────────────────────────────────╯
-```
-
-**Concern boxes (if any):**
-
-```
-┌─ CRITICAL ─────────────────────────────────────────────┐
-│ [Tester] No unit tests                                 │
-│ └─ src/                                                │
-│                                                        │
-└────────────────────────────────────────────────────────┘
-
-┌─ HIGH ─────────────────────────────────────────────────┐
-│ [Security] Input validation missing                    │
-│ └─ api.js:42                                           │
-│                                                        │
-└────────────────────────────────────────────────────────┘
-```
+**Concern boxes (if any):** Use the **CRITICAL_CONCERN** or **HIGH_CONCERN** boxes.
+Repeat as needed for each concern.
 
 **Status icons:**
 - `✓` - APPROVED

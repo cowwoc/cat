@@ -341,26 +341,12 @@ argument, skip the entry gate check for that specific task.
 
 **If no executable task found:**
 
-Output this box:
-
-```
-╭─ ℹ️ No executable tasks
-│
-│  Run /cat:status to see available tasks
-╰─
-```
+Use the **NO_EXECUTABLE_TASKS** box from PRE-COMPUTED WORK BOXES.
 
 **If specific task requested but not found:**
 
-Output this box (include suggestion if fuzzy match found):
-
-```
-╭─ ❓ Task "{task-name}" not found
-│
-│  Did you mean: {suggestion}?
-│  Run /cat:status to see all tasks
-╰─
-```
+Use the **TASK_NOT_FOUND** box from PRE-COMPUTED WORK BOXES.
+Replace `{task-name}` and `{suggestion}` with actual values.
 
 Exit command.
 
@@ -713,31 +699,8 @@ else:
 
 **Step 5: Present wizard (if needed)**
 
-Display fork using wizard-style format:
-
-```
-🔀 FORK IN THE ROAD
-╭─────────────────────────────────────────────────────────────────╮
-   Task: {task-name}
-
-   Multiple viable paths - how would you prefer to proceed?
-
-   CHOOSE YOUR PATH
-   ─────────────────────────────────────────────────────────────────
-
-   [A] {approach-name}
-       {description}
-       Risk: {level} | Scope: {N} files | Config alignment: {N}%
-
-   [B] {approach-name}
-       {description}
-       Risk: {level} | Scope: {N} files | Config alignment: {N}%
-
-   [C] {approach-name} (if exists)
-       ...
-
-╰─────────────────────────────────────────────────────────────────╯
-```
+Use the **FORK_IN_THE_ROAD** box from PRE-COMPUTED WORK BOXES.
+Replace placeholders with actual approach data.
 
 Use AskUserQuestion to capture selection:
 - header: "Approach"
@@ -1550,19 +1513,8 @@ Present work summary with checkpoint display.
 **CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
 
-Output format (do NOT wrap in ```):
-
-✅ **CHECKPOINT: Task Complete**
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                              │
-│  **Task:** {task-name}                                                                       │
-│                                                                                              │
-├──────────────────────────────────────────────────────────────────────────────────────────────┤
-│  **Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)                          │
-├──────────────────────────────────────────────────────────────────────────────────────────────┤
-│  **Branch:** {task-branch}                                                                   │
-│                                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+Use the **CHECKPOINT_TASK_COMPLETE** box from PRE-COMPUTED WORK BOXES.
+Replace placeholders with actual values: `{task-name}`, `{N}`, `{percentage}`, `{task-branch}`.
 
 **Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
 Users review the task branch which contains merged subagent work, not the internal subagent branch.
@@ -1718,23 +1670,8 @@ After merging feedback changes, the approval gate MUST be re-presented. This ens
 - User explicitly approves final implementation
 - No changes merge without explicit approval
 
-Display updated checkpoint:
-
-```
-✅ **CHECKPOINT: Feedback Applied**
-╭──────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                              │
-│  **Task:** {task-name}                                                                       │
-│  **Feedback iteration:** {N}                                                                 │
-│                                                                                              │
-├──────────────────────────────────────────────────────────────────────────────────────────────┤
-│  **Feedback subagent:** {N}K tokens                                                          │
-│  **Total tokens (all iterations):** {total}K                                                 │
-├──────────────────────────────────────────────────────────────────────────────────────────────┤
-│  **Branch:** {task-branch}                                                                   │
-│                                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────────────────────╯
-```
+Use the **CHECKPOINT_FEEDBACK_APPLIED** box from PRE-COMPUTED WORK BOXES.
+Replace placeholders with actual values.
 
 Then re-present approval options via AskUserQuestion:
 - header: "Next Step"
