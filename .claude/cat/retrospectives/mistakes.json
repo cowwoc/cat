@@ -3141,6 +3141,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When worktree already exists with commits, use AskUserQuestion with Skip this task (recommended), Resume, Start fresh, or Abort options"
+    },
+    {
+      "id": "M238",
+      "timestamp": "2026-01-24T14:45:00Z",
+      "category": "protocol_violation",
+      "description": "Continued working on task after noticing existing worktree instead of stopping to ask user",
+      "root_cause": "Completion bias - once task was identified by find-task.sh, treated subsequent checks (existing worktree) as informational rather than blocking, continuing to explore/verify work when protocol required stopping",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/find-task.sh",
+      "pattern_keywords": [
+        "worktree",
+        "existing",
+        "completion_bias",
+        "blocking_condition"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When find-task.sh detects an existing worktree for a task, skip that task (auto-discovery) or return existing_worktree status (specific task request). Agent should then find a different task or report no tasks available."
     }
   ]
 }

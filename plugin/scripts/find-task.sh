@@ -344,6 +344,14 @@ find_task_in_minor() {
             fi
         fi
 
+        # Check for existing worktree (M237)
+        # If worktree exists, assume it's in use by another session - skip this task
+        local worktree_path="$PROJECT_DIR/.worktrees/$task_id"
+        if [[ -d "$worktree_path" ]]; then
+            # Skip this task - worktree indicates another session is working on it
+            continue
+        fi
+
         # Try to acquire lock
         local lock_result lock_status
         lock_result=$(try_acquire_lock "$task_id")
@@ -427,6 +435,14 @@ find_next_task() {
             local blocking
             blocking=$(echo "$dep_result" | jq -c '.blocking')
             echo '{"status":"blocked","message":"Dependencies not satisfied","task_id":"'"$TARGET"'","blocking":'"$blocking"'}'
+            return 1
+        fi
+
+        # Check for existing worktree (M237)
+        # If worktree exists, it's in use by another session - report as unavailable
+        local worktree_path="$PROJECT_DIR/.worktrees/$TARGET"
+        if [[ -d "$worktree_path" ]]; then
+            echo '{"status":"existing_worktree","task_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","task_name":"'"$task_name"'","task_path":"'"$task_dir"'","worktree_path":"'"$worktree_path"'","message":"Task has existing worktree - likely in use by another session"}'
             return 1
         fi
 
