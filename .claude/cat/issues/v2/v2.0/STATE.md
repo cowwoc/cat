@@ -71,6 +71,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - research-executive-summary
 
 ## Tasks Pending
+- optimize-git-squash
 - move-planning-to-issues-subdir
 - license-validation-server
 - license-validation-server-spring-setup
