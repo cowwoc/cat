@@ -291,23 +291,8 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, output this banner (replace {N} with version count):
-
-```
-╭─── 📊 Default gates configured for {N} versions ───────────────────╮
-│                                                                    │
-│  Entry gates: Work proceeds sequentially                           │
-│  - Each minor waits for previous minor to complete                 │
-│  - Each major waits for previous major to complete                 │
-│                                                                    │
-│  Exit gates: Standard completion criteria                          │
-│  - Minor versions: all tasks must complete                         │
-│  - Major versions: all minor versions must complete                │
-│                                                                    │
-│  To customize gates for any version:                               │
-│  → /cat:config → 📊 Version Gates                                  │
-╰────────────────────────────────────────────────────────────────────╯
-```
+After applying defaults, use the **default_gates_configured** box from PRE-COMPUTED INIT BOXES.
+Replace `{N}` with the version count.
 
 **If "Configure per version":**
 
@@ -385,19 +370,7 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Output this banner:
-
-```
-╭─── ℹ️ RESEARCH SKIPPED ────────────────────────────────────────────╮
-│                                                                    │
-│  Stakeholder research was skipped during import.                   │
-│                                                                    │
-│  To research a pending version later:                              │
-│  → /cat:research {version}                                         │
-│                                                                    │
-│  Example: /cat:research 1.2                                        │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **research_skipped** box from PRE-COMPUTED INIT BOXES.
 
 </step>
 
@@ -407,16 +380,7 @@ Output this banner:
 
 **Choose Your Partner - Capture development style preferences**
 
-Output this banner:
-
-```
-╭─── 🎮 CHOOSE YOUR PARTNER ─────────────────────────────────────────╮
-│                                                                    │
-│  Every developer has a style. These questions shape how your       │
-│  AI partner approaches the work ahead.                             │
-│                                                                    │
-│  Choose wisely - your preferences guide every decision.            │
-╰────────────────────────────────────────────────────────────────────╯
+Use the **choose_your_partner** box from PRE-COMPUTED INIT BOXES.
 ```
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
@@ -515,19 +479,8 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Output this banner (substitute actual values for trust, curiosity, patience):
-
-```
-╭─── 🚀 CAT INITIALIZED ─────────────────────────────────────────────╮
-│                                                                    │
-│  🤝 Trust: {trust}                                                 │
-│  🔍 Curiosity: {curiosity}                                         │
-│  ⏳ Patience: {patience}                                           │
-│                                                                    │
-│  Your partner is ready. Let's build something solid.               │
-│  Adjust anytime: /cat:config                                       │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **cat_initialized** box from PRE-COMPUTED INIT BOXES.
+Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
 
 **New projects:**
 ```
@@ -556,15 +509,7 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Output this banner:
-
-```
-╭─── 📋 FIRST TASK WALKTHROUGH ──────────────────────────────────────╮
-│                                                                    │
-│  Great! Let's create your first task together.                     │
-│  I'll ask a few questions to understand what you want to build.    │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **first_task_walkthrough** box from PRE-COMPUTED INIT BOXES.
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -618,19 +563,8 @@ git add ".claude/cat/"
 git commit -m "docs: add first task - ${TASK_NAME}"
 ```
 
-7. Output this banner (substitute actual task-name and path):
-
-```
-╭─── ✅ FIRST TASK CREATED ──────────────────────────────────────────╮
-│                                                                    │
-│  Task: {task-name}                                                 │
-│  Location: .claude/cat/issues/v0/v0.0/{task-name}/                  │
-│                                                                    │
-│  Files created:                                                    │
-│  - PLAN.md - What needs to be done                                 │
-│  - STATE.md - Progress tracking                                    │
-╰────────────────────────────────────────────────────────────────────╯
-```
+7. Use the **first_task_created** box from PRE-COMPUTED INIT BOXES.
+   Replace `{task-name}` with the actual sanitized task name.
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
@@ -642,31 +576,11 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 
 **If "No, I'll start later":**
 
-Output this banner:
-
-```
-╭─── 👋 ALL SET ─────────────────────────────────────────────────────╮
-│                                                                    │
-│  Your project is ready. When you want to start:                    │
-│                                                                    │
-│  → /cat:work         Execute your first task                       │
-│  → /cat:status       See project overview                          │
-│  → /cat:add          Add more tasks or versions                    │
-│  → /cat:help         Full command reference                        │
-╰────────────────────────────────────────────────────────────────────╯
-```
+Use the **all_set** box from PRE-COMPUTED INIT BOXES.
 
 **If "No, I'll explore" (from initial question):**
 
-Output this banner:
-
-```
-╭─── 👋 EXPLORE AT YOUR OWN PACE ────────────────────────────────────╮
-│                                                                    │
-│  Essential commands to get started:                                │
-│                                                                    │
-│  → /cat:status       See what's happening                          │
-│  → /cat:add          Add versions and tasks                        │
+Use the **explore_at_your_own_pace** box from PRE-COMPUTED INIT BOXES.
 │  → /cat:work         Execute tasks                                 │
 │  → /cat:help         Full command reference                        │
 │                                                                    │
