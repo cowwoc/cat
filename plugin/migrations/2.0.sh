@@ -17,7 +17,7 @@ source "${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
 log_migration "Starting 2.0 migration: Research & Requirements sections"
 
 # Count files to process
-plan_files=$(find .claude/cat -name "PLAN.md" -type f 2>/dev/null || true)
+plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
 total_count=$(echo "$plan_files" | grep -c "PLAN.md" || echo 0)
 
 if [[ "$total_count" -eq 0 ]]; then

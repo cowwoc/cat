@@ -44,7 +44,7 @@ parse_version() {
 get_task_dir() {
     local version="$1"
     local task_name="$2"
-    local cat_dir="${3:-.claude/cat}"
+    local cat_dir="${3:-.claude/cat/issues}"
 
     parse_version "$version"
 
@@ -60,7 +60,7 @@ get_task_dir() {
 # Get version directory path (without task)
 get_version_dir() {
     local version="$1"
-    local cat_dir="${2:-.claude/cat}"
+    local cat_dir="${2:-.claude/cat/issues}"
 
     parse_version "$version"
 

@@ -20,7 +20,7 @@ source "${SCRIPT_DIR}/lib/version-utils.sh"
 # CONFIGURATION
 # =============================================================================
 
-CAT_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/cat"
+CAT_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}/.claude/cat/issues"
 SESSION_ID=""
 SCOPE="all"  # all | major | minor | task
 TARGET=""

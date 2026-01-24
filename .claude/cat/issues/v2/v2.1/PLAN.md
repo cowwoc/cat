@@ -9,7 +9,7 @@ Finalize all naming conventions and UI polish before recording demo videos. Chan
 - Polish command output display (emoji alignment, headers)
 
 ## Dependencies
-- Requires v2.0 (Licensing) complete
+- Requires v2.0 (Billing) complete
 
 ## Success Criteria
 - All user-facing terminology finalized

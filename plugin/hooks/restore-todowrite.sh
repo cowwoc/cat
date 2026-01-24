@@ -14,7 +14,7 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || echo ""
 
 # Default backup directory - can be customized per project
 # CAT files MUST be inside .claude/cat/ directory
-BACKUP_DIR="${CLAUDE_PROJECT_DIR:-.}/.claude/cat/backups/todowrite"
+BACKUP_DIR="${CLAUDE_PROJECT_DIR:?CLAUDE_PROJECT_DIR must be set}/.claude/cat/backups/todowrite"
 
 # Check if backup directory exists
 if [[ ! -d "$BACKUP_DIR" ]]; then

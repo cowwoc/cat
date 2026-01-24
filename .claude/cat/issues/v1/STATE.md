@@ -1,10 +1,10 @@
 # Major Version 1 State: Multi-Agent Architecture
 
 ## Status
-- **Status:** completed
-- **Progress:** 100%
-- **Started:** 2026-01-12
-- **Completed:** 2026-01-20
+status: completed
+progress: 100%
+started: 2026-01-12
+completed: 2026-01-20
 
 ## Summary
 Major rewrite introducing MAJOR → MINOR → TASK hierarchy, multi-agent orchestration, token-aware decomposition, and new commands/skills.

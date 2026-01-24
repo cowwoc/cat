@@ -171,10 +171,20 @@ def get_task_dependencies(state_file: Path) -> list:
     return []
 
 
-def collect_status_data(cat_dir: Path) -> dict:
-    """Collect project status data from CAT directory structure."""
-    if not cat_dir.is_dir():
+def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
+    """Collect project status data from CAT directory structure.
+
+    Args:
+        issues_dir: Path to .claude/cat/issues/ where version directories live
+        cat_dir: Optional path to .claude/cat/ where PROJECT.md and ROADMAP.md live.
+                 If not provided, uses issues_dir.parent
+    """
+    if not issues_dir.is_dir():
         return {"error": "No planning structure found. Run /cat:init to initialize."}
+
+    # Determine where config files are (parent of issues_dir)
+    if cat_dir is None:
+        cat_dir = issues_dir.parent
 
     # Get project name
     project_file = cat_dir / "PROJECT.md"
@@ -206,7 +216,7 @@ def collect_status_data(cat_dir: Path) -> dict:
     next_task = ""
 
     # Iterate over major version directories
-    for major_dir in sorted(cat_dir.glob("v[0-9]*")):
+    for major_dir in sorted(issues_dir.glob("v[0-9]*")):
         if not major_dir.is_dir():
             continue
 
@@ -388,8 +398,9 @@ class StatusHandler:
         if not cat_dir.is_dir():
             return None
 
-        # Collect status data directly in Python
-        status_data = collect_status_data(cat_dir)
+        # Collect status data from issues subdirectory
+        issues_dir = cat_dir / "issues"
+        status_data = collect_status_data(issues_dir)
 
         if 'error' in status_data:
             return None

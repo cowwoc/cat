@@ -230,7 +230,7 @@ Use AskUserQuestion:
 ```bash
 MAJOR="{major}"
 MINOR="{minor}"
-VERSION_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR"
+VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Version $MAJOR.$MINOR does not exist" && exit 1
 
@@ -264,7 +264,7 @@ if ! echo "$TASK_NAME" | grep -qE '^[a-z][a-z0-9-]{0,48}[a-z0-9]$'; then
 fi
 
 # Check uniqueness within minor version
-if [ -d ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
+if [ -d ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
     echo "ERROR: Task '$TASK_NAME' already exists in version $MAJOR.$MINOR"
     exit 1
 fi
@@ -355,7 +355,7 @@ requirements from the parent version's PLAN.md, regardless of which level that i
 
 ```bash
 # VERSION_PLAN is set to the parent version path (works for any level: major, minor, or patch)
-VERSION_PLAN=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
+VERSION_PLAN=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/PLAN.md"
 ```
 
 **2. Present requirements for selection:**
@@ -377,7 +377,7 @@ If no requirements defined in parent version: Satisfies = None
 **Create task structure:**
 
 ```bash
-TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
+TASK_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
 mkdir -p "$TASK_PATH"
 ```
 
@@ -405,7 +405,7 @@ Use appropriate template (Feature, Bugfix, or Refactor) from add-task.md referen
 Add the new task to the "Tasks Pending" list in STATE.md:
 
 ```bash
-VERSION_STATE=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
 # Add task to Tasks Pending section
 # Find the "## Tasks Pending" line and append the new task
@@ -431,8 +431,8 @@ grep -q "$TASK_NAME" "$VERSION_STATE" || echo "ERROR: Task not added to STATE.md
 **Commit task creation:**
 
 ```bash
-git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME/"
-git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
+git add ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME/"
+git add ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 git commit -m "$(cat <<'EOF'
 planning: add task {task-name} to {major}.{minor}
 
@@ -534,7 +534,7 @@ If "Cancel" -> exit command.
 
 ```bash
 MAJOR="{selected_major}"
-PARENT_PATH=".claude/cat/v$MAJOR"
+PARENT_PATH=".claude/cat/issues/v$MAJOR"
 [ ! -d "$PARENT_PATH" ] && echo "ERROR: Major version $MAJOR does not exist" && exit 1
 ```
 
@@ -543,7 +543,7 @@ PARENT_PATH=".claude/cat/v$MAJOR"
 ```bash
 MAJOR="{major}"
 MINOR="{minor}"
-PARENT_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR"
+PARENT_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 [ ! -d "$PARENT_PATH" ] && echo "ERROR: Minor version $MAJOR.$MINOR does not exist" && exit 1
 ```
 
@@ -624,7 +624,7 @@ If user specified a custom number:
 **If VERSION_TYPE is "major":**
 
 ```bash
-if [ -d ".claude/cat/v$REQUESTED_NUMBER" ]; then
+if [ -d ".claude/cat/issues/v$REQUESTED_NUMBER" ]; then
     echo "Version $REQUESTED_NUMBER already exists."
 fi
 ```
@@ -680,8 +680,8 @@ for v in $(ls -1d .claude/cat/v[0-9]* 2>/dev/null | sed 's|.claude/cat/v||' | so
     if [ "$v" -ge "$REQUESTED_NUMBER" ]; then
         NEW_V=$((v + 1))
         echo "Renumbering v$v -> v$NEW_V"
-        mv ".claude/cat/v$v" ".claude/cat/v$NEW_V"
-        find ".claude/cat/v$NEW_V" -name "*.md" -exec \
+        mv ".claude/cat/issues/v$v" ".claude/cat/issues/v$NEW_V"
+        find ".claude/cat/issues/v$NEW_V" -name "*.md" -exec \
             sed -i "s/v$v\./v$NEW_V./g; s/Major $v/Major $NEW_V/g" {} \;
     fi
 done
@@ -820,7 +820,7 @@ Present for review with AskUserQuestion.
 
 ```bash
 MAJOR=$VERSION_NUMBER
-VERSION_PATH=".claude/cat/v$MAJOR"
+VERSION_PATH=".claude/cat/issues/v$MAJOR"
 mkdir -p "$VERSION_PATH/v$MAJOR.0/task"
 ```
 
@@ -1025,7 +1025,7 @@ grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version no
 **If VERSION_TYPE is "major":**
 
 ```bash
-git add ".claude/cat/v$MAJOR/"
+git add ".claude/cat/issues/v$MAJOR/"
 git add ".claude/cat/ROADMAP.md"
 git commit -m "$(cat <<'EOF'
 planning: add major version {major}

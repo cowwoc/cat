@@ -202,7 +202,7 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
 
 **If $ARGUMENTS is a task ID (major.minor-task-name format):**
 - Parse as `major.minor-task-name` format (e.g., `1.0-parse-tokens`)
-- Validate task exists at `.claude/cat/v{major}/v{major}.{minor}/{task-name}/`
+- Validate task exists at `.claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/`
 - **Try to acquire lock BEFORE loading task details** (see lock check below)
 - Load its STATE.md and PLAN.md
 
@@ -216,7 +216,7 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
 
 ```bash
 # Find all task STATE.md files (tasks are directly under minor version directories)
-find .claude/cat/v*/v*.*/ -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
+find .claude/cat/issues/v*/v*.*/ -mindepth 2 -maxdepth 2 -name "STATE.md" 2>/dev/null
 ```
 
 **MANDATORY: Lock Check Before Offering Task (M097)**
@@ -1445,7 +1445,7 @@ Before presenting the approval gate, complete this checklist in order:
 ```bash
 # Run all checks in one script
 BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base")
-TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
 
 # Check 1: Commit count (should be 1-2 after squash)
 COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD)
@@ -1503,7 +1503,7 @@ The user sees a summary but cannot `git diff` or review actual file contents.
 Before presenting approval gate, verify STATE.md is included:
 
 ```bash
-TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
 
 # Check if STATE.md was modified in the commits
 if ! git diff --name-only ${MAIN_BRANCH}..HEAD | grep -q "STATE.md"; then
@@ -1520,7 +1520,7 @@ not in a separate docs commit:
 
 ```bash
 # Update task STATE.md before committing implementation
-TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}/STATE.md"
 ```
 
 **Required STATE.md fields for completion (M092):**
@@ -1647,7 +1647,7 @@ BASE_BRANCH=$(git config --get "branch.$(git rev-parse --abbrev-ref HEAD).cat-ba
 git diff ${BASE_BRANCH}..HEAD > /tmp/current-implementation.diff
 
 # Get task PLAN.md path
-TASK_PLAN=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/PLAN.md"
+TASK_PLAN=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/PLAN.md"
 
 # Get worktree path (already created in create_worktree step)
 WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${TASK_BRANCH}"
@@ -2026,7 +2026,7 @@ This step handles the parent STATE.md rollup updates.
 
 ```bash
 # Verify task STATE.md before proceeding
-TASK_STATE=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
 
 # Extract current values
 STATUS=$(grep -oP "Status:\s*\K\S+" "$TASK_STATE" || echo "unknown")
@@ -2065,7 +2065,7 @@ Only commit Minor/Major STATE.md updates here. Task STATE.md was already committ
 with the implementation per M076.
 
 ```bash
-git add .claude/cat/v*/STATE.md .claude/cat/v*/v*.*/STATE.md
+git add .claude/cat/issues/v*/STATE.md .claude/cat/issues/v*/v*.*/STATE.md
 git commit -m "$(cat <<'EOF'
 config: update progress for v{major}.{minor}
 
@@ -2080,14 +2080,14 @@ EOF
 
 **Update version changelogs:**
 
-1. **Minor version CHANGELOG.md** (`.claude/cat/v{major}/v{major}.{minor}/CHANGELOG.md`):
+1. **Minor version CHANGELOG.md** (`.claude/cat/issues/v{major}/v{major}.{minor}/CHANGELOG.md`):
    - If file doesn't exist, create from template with pending status
    - Add completed task to Tasks Completed table:
      ```markdown
      | {task-name} | {commit-type} | {goal from PLAN.md} |
      ```
 
-2. **Major version CHANGELOG.md** (`.claude/cat/v{major}/CHANGELOG.md`):
+2. **Major version CHANGELOG.md** (`.claude/cat/issues/v{major}/CHANGELOG.md`):
    - If file doesn't exist, create from template with pending status
    - Update aggregate summary when minor version completes
 
