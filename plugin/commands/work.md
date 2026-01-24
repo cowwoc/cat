@@ -343,6 +343,21 @@ argument, skip the entry gate check for that specific task.
 
 Use the **NO_EXECUTABLE_TASKS** box from PRE-COMPUTED WORK BOXES.
 
+**Explain why no tasks are available** (provide one or more reasons):
+- Tasks blocked by dependencies (list the blocking tasks)
+- Tasks have existing worktrees (indicate likely in use by another session)
+- Tasks locked by another session
+- All tasks completed
+
+**Suggest `/cat:cleanup`** if worktrees exist:
+- Present as an option ONLY if user believes the worktrees are stale
+- Do NOT assume worktrees are stale or offer to investigate them
+
+**NEVER offer to resume existing worktrees (M239):**
+- Existing worktrees are treated as "in use by another session"
+- The correct response is to skip them and find alternative work
+- If no alternative work exists, inform user and suggest cleanup only if they believe worktrees are stale
+
 **If specific task requested but not found:**
 
 Use the **TASK_NOT_FOUND** box from PRE-COMPUTED WORK BOXES.
