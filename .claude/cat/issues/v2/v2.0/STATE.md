@@ -75,7 +75,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - optimize-git-squash
 - move-planning-to-issues-subdir
 - license-validation-server
-- license-validation-server-spring-setup
+- license-validation-server-jetty-setup
 - license-validation-server-api
 - license-validation-server-persistence
 - license-validation-server-security
