@@ -123,6 +123,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/enforce-workflow-completion.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-skill-edit-without-builder.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
