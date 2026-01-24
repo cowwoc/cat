@@ -1,15 +1,21 @@
 #!/bin/bash
 # Hook: warn-base-branch-edit.sh
 # Type: PreToolUse (Edit)
-# Purpose: Warn when editing source files directly on base branch (M220)
+# Purpose: Warn when editing source files directly (A003/M097/M220)
 #
-# CAT workflow requires task work to happen in isolated worktrees.
-# This hook warns when editing source files on a base branch like v2.0, main, etc.
+# CAT workflow requires:
+# 1. Task work happens in isolated worktrees (M220)
+# 2. Main agent delegates source edits to subagents (A003/M097)
+#
+# This hook warns when editing source files outside proper workflow.
 #
 # Allowed without warning:
 # - .claude/ directory (orchestration files)
-# - STATE.md, PLAN.md files
+# - STATE.md, PLAN.md, CHANGELOG.md, ROADMAP.md files
+# - CLAUDE.md, PROJECT.md (project instructions)
 # - retrospectives/ directory
+# - mistakes.json, retrospectives.json
+# - hooks/, skills/ directories
 # - When in a task worktree (has cat-base file)
 
 set -euo pipefail
@@ -57,8 +63,13 @@ ALLOWED_PATTERNS=(
     "PLAN.md"
     "CHANGELOG.md"
     "ROADMAP.md"
+    "CLAUDE.md"
+    "PROJECT.md"
     "retrospectives/"
     "mistakes.json"
+    "retrospectives.json"
+    "hooks/"
+    "skills/"
 )
 
 for pattern in "${ALLOWED_PATTERNS[@]}"; do
@@ -91,7 +102,21 @@ If working on a task:
 If this is intentional infrastructure work (not a task), proceed.
 
 Proceeding with edit (warning only, not blocked)."
+    echo '{}'
+    exit 0
 fi
+
+# Not on base branch and not in worktree - warn about using subagents
+output_hook_warning "PreToolUse" "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097)
+
+File: $FILE_PATH
+
+Main agent should delegate source code edits to subagents.
+If you are the main CAT orchestrator, consider:
+1. Spawning a subagent for this edit
+2. Or confirming this is intentional (trivial fix, not during task execution)
+
+Proceeding with edit (warning only, not blocked)."
 
 echo '{}'
 exit 0
