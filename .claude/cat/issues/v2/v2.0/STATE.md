@@ -70,9 +70,9 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - work-box-hook-precomputation
 - research-executive-summary
 - license-validation-server-jetty-setup
+- task-tools-integration
 
 ## Tasks Pending
-- task-tools-integration
 - split-retrospective-files-by-time
 - optimize-git-squash
 - move-planning-to-issues-subdir
