@@ -44,11 +44,25 @@ Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
 - Store the exact box text from the context
 - Continue to "read-config" step
 
-**If NOT found:**
-- STOP immediately
-- Output error: "ERROR: Pre-computed display not available. Handler config_handler.py may have failed."
-- Do NOT attempt to construct boxes manually
-- This is a fail-fast requirement per skill-builder methodology
+**If NOT found**: **FAIL immediately**.
+
+First, detect the likely cause:
+
+```bash
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+  echo "ERROR: Pre-computed config display not found."
+  echo ""
+  echo "Hooks are configured but not running. This usually means:"
+  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
+  echo ""
+  echo "Solution: Restart Claude Code, then run /cat:config again."
+else
+  echo "ERROR: Pre-computed display not available."
+  echo "Handler config_handler.py may have failed."
+fi
+```
+
+Output the appropriate error and STOP. Do NOT attempt to construct boxes manually.
 
 </step>
 

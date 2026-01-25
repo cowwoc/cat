@@ -51,7 +51,25 @@ displays using those templates. The handler provides:
 - Example transitions for each phase
 - Success and failure display formats
 
-**If NOT found**: Display error and check that `hooks/skill_handlers/work_handler.py` exists.
+**If NOT found**: **FAIL immediately**.
+
+First, detect the likely cause:
+
+```bash
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+  echo "ERROR: Pre-computed work boxes not found."
+  echo ""
+  echo "Hooks are configured but not running. This usually means:"
+  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
+  echo ""
+  echo "Solution: Restart Claude Code, then run /cat:work again."
+else
+  echo "ERROR: Pre-computed work boxes not found."
+  echo "Check that hooks/skill_handlers/work_handler.py exists."
+fi
+```
+
+Output the appropriate error and STOP.
 
 ### Phase Mapping
 
