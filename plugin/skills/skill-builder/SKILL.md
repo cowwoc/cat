@@ -936,6 +936,9 @@ architecture flowcharts) are acceptable because:
 
 ### Output Artifact Gates (M192 Prevention)
 
+> **See also:** [workflow-output.md](../../concepts/workflow-output.md) for clean output standards
+> including pre-computation patterns and subagent batching strategies.
+
 **Critical insight**: Calculation gates alone are insufficient. When a skill produces structured
 output (boxes, tables, formatted text), the gate must require showing the **exact artifact strings**
 that will appear in the output, not just the numeric calculations.

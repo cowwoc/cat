@@ -1,11 +1,46 @@
-# Workflow Output Standards
+# Clean Output Standards
 
-## Core Principle: Subagent Batching
+## Core Principle
 
-Hide tool call noise by delegating batched operations to subagents. Subagent internal
+User-facing output should be clean, focused, and demo-ready. Hide internal implementation
+noise while showing meaningful progress and results.
+
+## Two Approaches to Clean Output
+
+### 1. Pre-Computation (Deterministic Outputs)
+
+For outputs with precise formatting requirements (boxes, tables, aligned text), extract
+computation to skill handlers.
+
+**Why?** Agents make errors on:
+- Emoji width calculations
+- Box border alignment
+- Padding/spacing arithmetic
+- Character counting
+
+**Pattern:**
+```
+Handler pre-computes → Skill outputs verbatim → User sees correct result
+```
+
+**Implementation:**
+1. Create handler in `plugin/hooks/skill_handlers/`
+2. Handler computes ALL output variants before skill runs
+3. Skill checks for "PRE-COMPUTED {NAME} OUTPUT" in context
+4. If not found: **FAIL immediately** (see error-handling.md)
+5. If found: Output the pre-computed result exactly
+
+**Checklist:**
+- [ ] Skill NEVER invokes scripts via Bash - user sees no tool calls
+- [ ] Skill REQUIRES pre-computed results - fail-fast if missing
+- [ ] No "if not found, compute manually..." fallback patterns
+
+### 2. Subagent Batching (Multi-Step Operations)
+
+For operations involving many tool calls, delegate to subagents. Subagent internal
 tool calls are invisible to the parent conversation.
 
-## Why Subagent Batching
+**Why?**
 
 | Approach | Visible Tool Calls | User Experience |
 |----------|-------------------|-----------------|
@@ -13,72 +48,99 @@ tool calls are invisible to the parent conversation.
 | Progress messaging | 20+ (contextualized) | Better, still noisy |
 | **Batched subagents** | 3-5 Task invocations | Clean, demo-ready |
 
-## Batching Strategy
-
-Aggregate overhead: Spawning a subagent has cost. Batch enough work to justify it.
-
 **Rule of thumb:** If a phase involves 3+ tool calls, delegate to a subagent.
 
-## Phase Batches for /cat:work
+**Pattern:**
+```
+Main agent shows progress indicator
+  └── Subagent executes (tool calls invisible)
+      └── Returns structured result
+Main agent shows result summary
+```
+
+## Phase Batching for /cat:work
 
 | Phase Batch | Operations Bundled | Returns |
 |-------------|-------------------|---------|
-| **Preparation** | Read STATE.md, PLAN.md, check deps, analyze size, create worktree | JSON: {ready, worktreePath, estimate} |
-| **Exploration** | Search codebase, find patterns, check duplicates | JSON: {findings, filesToModify} |
-| **Planning** | Make decisions, create implementation spec | JSON: {spec, approach, steps} |
-| **Implementation** | All code changes, tests, commits | JSON: {commits, filesChanged, tokens} |
-| **Review** | Spawn reviewers, aggregate results | JSON: {status, concerns} |
-| **Finalization** | Merge, cleanup worktree, update state | JSON: {merged, branch} |
+| **Preparation** | Read STATE.md, PLAN.md, check deps, create worktree | {ready, worktreePath, estimate} |
+| **Exploration** | Search codebase, find patterns, check duplicates | {findings, filesToModify} |
+| **Planning** | Make decisions, create implementation spec | {spec, approach, steps} |
+| **Implementation** | All code changes, tests, commits | {commits, filesChanged, tokens} |
+| **Review** | Spawn reviewers, aggregate results | {status, concerns} |
+| **Finalization** | Merge, cleanup worktree, update state | {merged, branch} |
 
-## Progress Indicators (Minimal)
+## Progress Indicators
 
-With subagent batching, only show:
-- `◆ {Phase}...` before Task invocation
+With pre-computation or subagent batching, only show:
+- `◆ {Phase}...` before operation
 - `✓ {Result summary}` after completion
 
-Example:
 ```
 ◆ Preparing task execution...
-[Task tool - collapsed]
 ✓ Ready: worktree at .worktrees/2.0-task-name, estimate 45K tokens
 
 ◆ Exploring codebase...
-[Task tool - collapsed]
 ✓ Found: 3 files to modify, no duplicates
 
 ◆ Implementing changes...
-[Task tool - collapsed]
 ✓ Complete: 2 commits, 5 files, 32K tokens
 ```
 
-## When NOT to Batch
+## When NOT to Batch/Pre-Compute
 
-- User approval gates (need interactive response)
-- Error handling that requires user decision
-- Final merge (may need conflict resolution)
+- **User approval gates** - Need interactive response
+- **Error handling** - May require user decision
+- **Final merge** - May need conflict resolution
+- **Debugging** - User may need to see individual steps
 
 ## Anti-Patterns
 
 ### Too Many Small Subagents
+
 ```
 # BAD: Overhead exceeds benefit
 ◆ Reading STATE.md...
 [Task tool]
 ◆ Reading PLAN.md...
 [Task tool]
+
+# GOOD: Batch related operations
+◆ Loading task context...
+[Single Task tool that reads both]
 ```
 
 ### Main Agent Doing Subagent Work
+
 ```
-# BAD: Main agent reads files directly
+# BAD: Main agent shows all tool calls
 ● Read(STATE.md)
 ● Read(PLAN.md)
 ● Bash(check dependencies)
+
+# GOOD: Delegate to subagent
+◆ Preparing execution context...
+[Task tool - internal calls invisible]
+✓ Context loaded, ready to proceed
 ```
 
-## Integration with Existing Subagent Types
+### Manual Computation When Handler Exists
 
-- **Exploration subagent**: Extended to handle preparation + exploration
-- **Planning subagent**: Handles decision-making, returns spec
-- **Implementation subagent**: Executes spec mechanically
-- **General-purpose**: Finalization, review orchestration
+```
+# BAD: Agent computes formatting manually
+Let me calculate the box width...
+[Makes arithmetic errors]
+
+# GOOD: Use pre-computed output
+[Outputs handler result verbatim]
+```
+
+## Choosing the Right Approach
+
+| Scenario | Approach |
+|----------|----------|
+| Formatted output (boxes, tables) | Pre-computation |
+| Multi-step data gathering | Subagent batching |
+| Simple file reads (1-2 files) | Direct execution |
+| User interaction required | Direct execution |
+| Deterministic transformation | Pre-computation |
+| Exploratory search | Subagent batching |

@@ -1,5 +1,7 @@
 # Version Path Resolution
 
+> **See also:** [hierarchy.md](hierarchy.md) for version semantics and dependency rules.
+
 ## Overview
 Centralized path resolution for flexible versioning schemes. All commands and skills should reference
 this document instead of hardcoding version path assumptions.
