@@ -1,8 +1,8 @@
 # Minor Version 2.0 State: Billing
 
 ## Status
-- **Status:** in_progress
-- **Progress:** 98%
+- **Status:** completed
+- **Progress:** 100%
 - **Started:** 2026-01-20
 
 ## Summary
@@ -75,6 +75,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - update-check-startup
 - update-graphics-tagline
 - work-box-hook-precomputation
+- split-retrospective-files-by-time
 
 ## Tasks Pending
-- split-retrospective-files-by-time
+(none)
