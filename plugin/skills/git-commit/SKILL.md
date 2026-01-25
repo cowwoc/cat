@@ -66,7 +66,7 @@ config: update display standards
 Files updated:
 - commands/status.md
 - skills/collect-results/SKILL.md
-- .claude/cat/references/display-standards.md
+- concepts/display-standards.md
 
 # CORRECT - Describes what changed
 Fix comment handling in member declarations

@@ -10,9 +10,9 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 </objective>
 
 <execution_context>
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/project.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/roadmap.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/cat-config.json
+@${CLAUDE_PLUGIN_ROOT}/templates/project.md
+@${CLAUDE_PLUGIN_ROOT}/templates/roadmap.md
+@${CLAUDE_PLUGIN_ROOT}/templates/cat-config.json
 </execution_context>
 
 
