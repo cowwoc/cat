@@ -825,6 +825,38 @@ After creating the worktree, `cd` into it and stay there for the remainder of ta
 - STATE.md updates go to the worktree copy (not main workspace)
 - No confusion between main workspace and worktree file paths
 
+**Read Git Workflow Preferences (if configured):**
+
+```bash
+# Check if Git Workflow section exists in PROJECT.md
+WORKFLOW_SECTION=$(grep -A50 "^## Git Workflow" .claude/cat/PROJECT.md 2>/dev/null | head -50)
+
+if [[ -n "$WORKFLOW_SECTION" ]]; then
+  # Extract branching strategy
+  BRANCH_STRATEGY=$(echo "$WORKFLOW_SECTION" | grep -oP "(?<=branchingStrategy.*:\s*\")[^\"]+|(?<=Strategy:\s)\w+" | head -1 || echo "feature")
+
+  # Extract merge method preference
+  MERGE_METHOD=$(echo "$WORKFLOW_SECTION" | grep "MUST use" | grep -oP "(fast-forward|merge commit|squash)" | head -1 || echo "fast-forward")
+
+  echo "Git workflow configured:"
+  echo "  Branching: $BRANCH_STRATEGY"
+  echo "  Merge: $MERGE_METHOD"
+
+  # For version-branch strategy, verify we're branching from correct version branch
+  if [[ "$BRANCH_STRATEGY" == "version" ]]; then
+    EXPECTED_BASE="v${MAJOR}.${MINOR}"
+    if [[ "$BASE_BRANCH" != "$EXPECTED_BASE" && "$BASE_BRANCH" != "main" && ! "$BASE_BRANCH" =~ ^v[0-9]+\.[0-9]+$ ]]; then
+      echo "⚠️ WARNING: Git workflow configured for version branches"
+      echo "   Expected base: $EXPECTED_BASE or a version branch"
+      echo "   Actual base: $BASE_BRANCH"
+      echo "   Task will still proceed, but verify this is intentional."
+    fi
+  fi
+else
+  echo "No Git Workflow section in PROJECT.md - using defaults"
+fi
+```
+
 **Update task STATE.md:**
 
 Set status to `in-progress` and record start time.
@@ -1816,7 +1848,54 @@ Clean up worktree and branch, mark task as pending.
 
 <step name="squash_commits">
 
-**Squash commits by category:**
+**Apply Squash Preference from PROJECT.md:**
+
+```bash
+# Read squash policy from PROJECT.md
+SQUASH_POLICY=$(grep -A10 "### Squash Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "Strategy:" | sed 's/.*Strategy:\s*//' | head -1)
+
+# Also check cat-config.json for programmatic access
+if [[ -z "$SQUASH_POLICY" ]]; then
+  SQUASH_POLICY=$(jq -r '.gitWorkflow.squashPolicy // "by-type"' .claude/cat/cat-config.json 2>/dev/null)
+fi
+
+echo "Squash policy: $SQUASH_POLICY"
+
+case "$SQUASH_POLICY" in
+  "by-type"|"by type"|"Squash by type"|"Group commits by type prefix")
+    echo "Applying squash-by-type policy..."
+    # Continue with default category-based squashing below
+    ;;
+  "single"|"Single commit"|"Squash all commits into one")
+    echo "Applying single-commit policy..."
+    # Squash all into one commit instead of by category
+    SQUASH_ALL=true
+    ;;
+  "keep-all"|"keep all"|"Keep all commits")
+    echo "Skipping squash per PROJECT.md policy"
+    # Skip this step entirely
+    SKIP_SQUASH=true
+    ;;
+  *)
+    echo "Using default squash-by-type policy"
+    ;;
+esac
+```
+
+**If SKIP_SQUASH is true:** Skip to next step (merge).
+
+**If SQUASH_ALL is true:**
+```bash
+# Squash all commits into single commit
+COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD")
+if [[ "$COMMIT_COUNT" -gt 1 ]]; then
+  FIRST_MSG=$(git log --format="%s" "${BASE_BRANCH}..HEAD" | tail -1)
+  git reset --soft "$BASE_BRANCH"
+  git commit -m "$FIRST_MSG"
+fi
+```
+
+**Otherwise (default by-type squashing):**
 
 Group commits into two categories:
 
@@ -1877,18 +1956,54 @@ echo "Base branch: $CURRENT_BRANCH"
 workspace. This disrupts the user's working state. The task worktree exists precisely to avoid
 touching the main workspace's checked out branch.
 
+**Apply Merge Preference from PROJECT.md:**
+
+```bash
+# Read merge method from PROJECT.md
+MERGE_METHOD=$(grep -A10 "### Merge Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "MUST use" | grep -oP "(fast-forward|merge commit|squash)" | head -1)
+
+# Also check cat-config.json for programmatic access
+if [[ -z "$MERGE_METHOD" ]]; then
+  MERGE_METHOD=$(jq -r '.gitWorkflow.mergeStyle // "fast-forward"' .claude/cat/cat-config.json 2>/dev/null)
+fi
+
+echo "Merge method: $MERGE_METHOD"
+```
+
 **Branch on completion workflow:**
 
 **If completionWorkflow is "merge" (default):**
 
+Apply merge based on configured merge method:
+
 ```bash
-git merge --ff-only {task-branch} -m "$(cat <<'EOF'
+case "$MERGE_METHOD" in
+  "fast-forward"|"ff-only")
+    git merge --ff-only {task-branch}
+    ;;
+  "merge-commit"|"merge commit"|"no-ff")
+    git merge --no-ff {task-branch} -m "$(cat <<'EOF'
+Merge task: {task-name}
+
 {commit-type}: {summary from PLAN.md goal}
 EOF
 )"
+    ;;
+  "squash")
+    git merge --squash {task-branch}
+    git commit -m "$(cat <<'EOF'
+{commit-type}: {summary from PLAN.md goal}
+EOF
+)"
+    ;;
+  *)
+    # Default to fast-forward
+    git merge --ff-only {task-branch}
+    ;;
+esac
 ```
 
-**Note:** Use `--ff-only` for linear history (not `--no-ff`). See M047.
+**Note:** Default is `--ff-only` for linear history (not `--no-ff`). See M047.
 
 Handle merge conflicts:
 1. Identify conflicting files
