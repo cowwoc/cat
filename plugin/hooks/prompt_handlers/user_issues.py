@@ -45,6 +45,12 @@ ISSUE_PATTERNS = [
     "wrong output",
     "wrong result",
     "incorrect result",
+    # M247: User message handling failures
+    "ignored",
+    "you ignored",
+    "didn't acknowledge",
+    "didn't respond to",
+    "expected behavior",
 ]
 
 
