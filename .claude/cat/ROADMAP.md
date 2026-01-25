@@ -13,11 +13,9 @@ Project roadmap with version summaries. Minor versions group related tasks (2-8 
   - expand-exploration-subagent-role
 
 ## Version 2: Commercialization (IN PROGRESS)
-- **2.0:** Billing (IN PROGRESS - 86%)
-  - license-validation-server (+ 5 subtasks)
-  - license-commands
-  - payment-processor-integration
-  - offline-validation
+- **2.0:** Billing (IN PROGRESS)
+  - feature-gate-middleware
+  - tier-feature-mapping
   - update-check-startup
 - **2.1:** Pre-Demo Polish (PENDING)
   - rename-task-to-issue

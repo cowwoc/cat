@@ -2,7 +2,7 @@
 
 - **Status:** completed
 - **Progress:** 100%
-- **Dependencies:** [tier-feature-mapping, jwt-token-generation]
+- **Dependencies:** [tier-feature-mapping]
 - **Last Updated:** 2026-01-23
 - **Resolution:** implemented
 - **Completed:** 2026-01-23 23:05
