@@ -225,6 +225,50 @@ class WorkHandler:
 
         return "\n".join(lines)
 
+    def _build_task_already_complete(self) -> str:
+        """Build Task Already Complete box for tasks found already implemented."""
+        header = "✓ Task Already Complete"
+
+        content_lines = [
+            "",
+            "**{task-name}** was already implemented.",
+            "Commit: {commit-hash}",
+            "",
+            "STATE.md updated to reflect completion.",
+            "",
+        ]
+
+        separator_content = [
+            "**Next:** {next-task-name}",
+            "{goal from PLAN.md}",
+            "",
+            "Auto-continuing in 3s...",
+            "• Type \"stop\" to pause after this task",
+            "• Type \"abort\" to cancel immediately",
+        ]
+
+        footer_content = [""]
+
+        # Collect all content to calculate max width
+        all_content = content_lines + separator_content + footer_content
+        content_widths = [display_width(c) for c in all_content]
+        header_width = display_width(header) + 5  # Account for "╭─── header ───╮" format
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
+        lines = []
+        lines.append(build_header_top(header, max_width))
+        for content in content_lines:
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
+        for content in separator_content:
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
+        for content in footer_content:
+            lines.append(build_line(content, max_width))
+        lines.append(build_border(max_width, is_top=False))
+
+        return "\n".join(lines)
+
     def _build_scope_complete(self) -> str:
         """Build Scope Complete box."""
         header = "✓ Scope Complete"
@@ -401,6 +445,9 @@ Typing similar-looking characters (like |) causes misalignment.
 
 --- TASK_COMPLETE_WITH_NEXT_TASK ---
 {self._build_task_complete_with_next()}
+
+--- TASK_ALREADY_COMPLETE ---
+{self._build_task_already_complete()}
 
 --- SCOPE_COMPLETE ---
 {self._build_scope_complete()}
