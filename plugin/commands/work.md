@@ -99,16 +99,16 @@ Output the error and STOP.
 <!-- SKILL.md vs PLAN.md (A015/M172): Always reference SKILL.md for skill usage.
      PLAN.md = what to build (task planning). SKILL.md = how to use it (authoritative). -->
 
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/work.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/merge-and-cleanup.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/agent-architecture.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/subagent-delegation.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/commit-types.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/spawn-subagent/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/merge-subagent/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/skills/stakeholder-review/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
+@${CLAUDE_PLUGIN_ROOT}/workflows/work.md
+@${CLAUDE_PLUGIN_ROOT}/workflows/merge-and-cleanup.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/agent-architecture.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/subagent-delegation.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/commit-types.md
+@${CLAUDE_PLUGIN_ROOT}/templates/changelog.md
+@${CLAUDE_PLUGIN_ROOT}/skills/spawn-subagent/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/skills/stakeholder-review/SKILL.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/index.md
 
 </execution_context>
 
@@ -118,9 +118,9 @@ Output the error and STOP.
 
 | Scenario | Load Workflow |
 |----------|---------------|
-| Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/version-completion.md |
-| Task discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/duplicate-task.md |
-| Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/.claude/cat/workflows/token-warning.md |
+| Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/workflows/version-completion.md |
+| Task discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/workflows/duplicate-task.md |
+| Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/workflows/token-warning.md |
 
 </conditional_context>
 
@@ -432,7 +432,7 @@ Read the task's:
 - Parent major's `STATE.md` - for context
 
 Present task overview with visual progress bar
-(see [display-standards.md § Progress Bar Format](.claude/cat/references/display-standards.md#progress-bar-format)).
+(see display-standards.md § Progress Bar Format).
 
 **CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
@@ -1049,7 +1049,7 @@ Triggering learn-from-mistakes for each violation...
 
 **→ Load token-warning.md workflow if compaction events > 0 or tokens exceed threshold.**
 
-See `.claude/cat/workflows/token-warning.md` for:
+See `workflows/token-warning.md` for:
 - Compaction event warning and user decision
 - High token usage informational warning
 - Decomposition recommendations
@@ -2241,7 +2241,7 @@ If no more tasks in the current minor version (all completed, blocked, or locked
 
 **→ Load version-completion.md workflow for full handling.**
 
-See `.claude/cat/workflows/version-completion.md` for:
+See `workflows/version-completion.md` for:
 - Minor version completion check and celebration
 - Stakeholder review prompt
 - Major version completion check
@@ -2511,7 +2511,7 @@ Task ID: v1.0-parse-lambdas
 
 **→ Load duplicate-task.md workflow when task is discovered to be duplicate.**
 
-See `.claude/cat/workflows/duplicate-task.md` for full handling including:
+See `workflows/duplicate-task.md` for full handling including:
 - Signs of a duplicate task
 - Verification process
 - STATE.md resolution format

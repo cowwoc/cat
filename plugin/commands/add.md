@@ -23,14 +23,14 @@ treats the argument as a task description and skips directly to task creation wo
 
 <execution_context>
 
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-state.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/task-plan.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/major-state.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/major-plan.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/minor-state.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/minor-plan.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/templates/changelog.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/questioning.md
+@${CLAUDE_PLUGIN_ROOT}/templates/task-state.md
+@${CLAUDE_PLUGIN_ROOT}/templates/task-plan.md
+@${CLAUDE_PLUGIN_ROOT}/templates/major-state.md
+@${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md
+@${CLAUDE_PLUGIN_ROOT}/templates/minor-state.md
+@${CLAUDE_PLUGIN_ROOT}/templates/minor-plan.md
+@${CLAUDE_PLUGIN_ROOT}/templates/changelog.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/questioning.md
 
 </execution_context>
 
