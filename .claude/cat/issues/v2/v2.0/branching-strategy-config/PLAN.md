@@ -40,9 +40,19 @@ None - workflow improvement
    - Provide actionable guidance: "Switch to branch vX.Y to work on this task"
    - Verify: Clear instructions shown to user
 
+5. **Step 5:** Add version completion merge prompt
+   - Files: plugin/commands/work.md
+   - When all tasks for a version are completed and version-branch strategy is configured:
+     - Detect that version tasks are all done
+     - Ask user if they want to merge version branch back to main/master
+     - If yes, offer to create new branch for next version
+   - Verify: Prompt appears after completing last task of a version
+
 ## Acceptance Criteria
 - [ ] /cat:init asks about branching strategy
 - [ ] Strategy saved to PROJECT.md
 - [ ] /cat:work validates branch before execution
 - [ ] Clear warnings when branch doesn't match task version
+- [ ] When version tasks complete, prompt to merge version branch to main/master
+- [ ] Offer to create new branch for next version after merge
 - [ ] Existing projects without strategy config continue to work (backward compatible)
