@@ -2,7 +2,7 @@
 
 ## Status
 - **Status:** in_progress
-- **Progress:** 87%
+- **Progress:** 98%
 - **Started:** 2026-01-20
 
 ## Summary
@@ -19,9 +19,11 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - compact-token-report
 - complete-patch-version-support
 - context-aware-stakeholders
+- conventions-directory-structure
 - default-to-task-creation
 - dynamic-box-sizing
 - emoji-aware-box-alignment
+- fail-fast-environment-variables
 - feature-gate-middleware
 - find-next-task-script
 - fix-add-remove-parent-update-steps
@@ -31,19 +33,23 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - hide-tool-calls-during-execution
 - improve-skill-discoverability
 - improve-video-link-visibility
+- local-config-override
 - merge-and-cleanup-script
 - merge-or-pr-config
+- move-planning-to-issues-subdir
 - optimize-add-wizard-flow
+- optimize-git-squash
 - polish-readme-for-smb
 - pricing-page
 - refactor-status-scripts-to-python
 - remote-lock-metadata
 - remove-box-alignment-skill
 - remove-box-rendering-infrastructure
-- remove-license-notice-startup
 - rename-readme-sections
+- render-diff-precomputation
 - render-diff-skill
 - requirements-at-all-version-levels
+- research-executive-summary
 - showcase-template
 - simplify-display-formats
 - skill-builder-rewrite-cleanup
@@ -63,18 +69,12 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - skill-builder-rewrite-work
 - status-display-redesign
 - streamline-task-not-found-error
+- task-tools-integration
 - tier-feature-mapping
 - tos-legal-review
+- update-check-startup
 - update-graphics-tagline
 - work-box-hook-precomputation
-- research-executive-summary
-- task-tools-integration
 
 ## Tasks Pending
-- local-config-override
-- render-diff-precomputation
-- conventions-directory-structure
 - split-retrospective-files-by-time
-- optimize-git-squash
-- move-planning-to-issues-subdir
-- update-check-startup
