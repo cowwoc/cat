@@ -412,12 +412,25 @@ If found:
 
 Simply output the content. The user doesn't need to know about internal computation mechanisms.
 
-If NOT found: **FAIL** with:
+If NOT found: **FAIL immediately**.
+
+First, detect the likely cause:
+
+```bash
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+  echo "ERROR: Pre-computed results not found."
+  echo ""
+  echo "Hooks are configured but not running. This usually means:"
+  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
+  echo ""
+  echo "Solution: Restart Claude Code, then run the skill again."
+else
+  echo "ERROR: Pre-computed results not found."
+  echo "Hook precompute-{skill-name}.sh should have provided these."
+fi
 ```
-ERROR: Pre-computed results not found.
-Hook precompute-{skill-name}.sh should have provided these.
-Do NOT attempt manual computation.
-```
+
+Output the appropriate error and STOP. Do NOT attempt manual computation.
 
 ### Step 2: [Gather inputs] (only if no extraction)
 
@@ -1357,17 +1370,30 @@ If found:
 2. If skill requires reasoning to select variants, select appropriate section
 3. Skip to verification step
 
-If NOT found: **FAIL immediately** with message:
+If NOT found: **FAIL immediately**.
+
+First, detect the likely cause:
+
+```bash
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+  echo "ERROR: Pre-computed results not found."
+  echo ""
+  echo "Hooks are configured but not running. This usually means:"
+  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
+  echo ""
+  echo "Solution: Restart Claude Code, then run the skill again."
+else
+  echo "ERROR: Pre-computed results not found in context."
+  echo ""
+  echo "The handler ({skill-name}_handler.py) should have provided these."
+  echo "Check:"
+  echo "1. Handler is registered in skill_handlers/__init__.py"
+  echo "2. Handler file exists in plugin/hooks/skill_handlers/"
+  echo "3. Handler ran without errors"
+fi
 ```
-ERROR: Pre-computed results not found in context.
 
-The handler ({skill-name}_handler.py) should have provided these.
-Check:
-1. Handler is registered in skill_handlers/__init__.py
-2. Handler file exists in plugin/hooks/skill_handlers/
-3. Handler ran without errors
-
-Do NOT attempt manual computation - it will produce incorrect results.
+Output the appropriate error and STOP. Do NOT attempt manual computation.
 ```
 
 **Why fail-fast?** Manual computation was extracted precisely because agents
