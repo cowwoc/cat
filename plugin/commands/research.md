@@ -64,17 +64,17 @@ This skill uses pre-computed utilities from research_handler.py:
 
 <execution_context>
 
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/index.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/architect.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/security.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/quality.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/tester.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/performance.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/ux.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/sales.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/marketing.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/stakeholders/legal.md
-@${CLAUDE_PLUGIN_ROOT}/.claude/cat/references/research-pitfalls.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/index.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/architect.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/security.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/quality.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/tester.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/performance.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/ux.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/sales.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/marketing.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/legal.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/research-pitfalls.md
 
 </execution_context>
 
