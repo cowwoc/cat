@@ -66,8 +66,11 @@ ALLOWED_PATTERNS=(
     "CLAUDE.md"
     "PROJECT.md"
     "retrospectives/"
-    "mistakes.json"
-    "retrospectives.json"
+    "mistakes.json"         # Legacy single file
+    "mistakes-"             # Split files: mistakes-YYYY-MM.json
+    "retrospectives.json"   # Legacy single file
+    "retrospectives-"       # Split files: retrospectives-YYYY-MM.json
+    "index.json"            # Retrospective index
     "hooks/"
     "skills/"
 )
