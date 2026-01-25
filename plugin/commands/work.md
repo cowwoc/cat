@@ -108,7 +108,7 @@ Output the error and STOP.
 @${CLAUDE_PLUGIN_ROOT}/skills/spawn-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md
 @${CLAUDE_PLUGIN_ROOT}/skills/stakeholder-review/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/index.md
+@${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md
 
 </execution_context>
 
