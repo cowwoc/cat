@@ -9,6 +9,7 @@
 Prepare CAT for commercial release with pricing tiers, license key system, and billing integration.
 
 ## Tasks Completed
+- reorganize-plugin-layout
 - add-clear-guidance-to-next-steps
 - add-display-redesign
 - add-handler-tests
@@ -78,7 +79,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - split-retrospective-files-by-time
 
 ## Tasks Pending
-- reorganize-plugin-layout
+- suggest-decomposition-at-soft-limit
 - branching-strategy-config
 - create-version-paths-reference
 - update-add-command-paths
