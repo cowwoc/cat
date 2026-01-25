@@ -106,6 +106,60 @@
         "catches_variations": true
       },
       "correct_behavior": "Say 'merge v{task-version} task to {base-branch}' to clearly distinguish task version from git branch"
+    },
+    {
+      "id": "M249",
+      "timestamp": "2026-01-25T17:05:00Z",
+      "category": "config",
+      "description": "render-diff.py produced illegible output for project.md due to default width of 50 being too narrow for markdown tables, causing excessive line wrapping",
+      "root_cause": "Default terminal width of 50 is too narrow for markdown tables and long content, causing excessive line wrapping that makes diffs illegible",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/render-diff.py",
+      "pattern_keywords": [
+        "render-diff",
+        "width",
+        "wrapping",
+        "markdown",
+        "table"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use default width of 80 for render-diff to accommodate wider content like markdown tables"
+    },
+    {
+      "id": "M250",
+      "timestamp": "2026-01-25T17:10:00Z",
+      "category": "assumption_without_verification",
+      "description": "Misinterpreted user intent: abort task meant cleanup worktree/branch only, but removed task from planning entirely",
+      "root_cause": "Ambiguous term abort was interpreted as remove without clarification. In CAT context, abort typically means cleanup execution artifacts while preserving planning entry.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/remove.md",
+      "pattern_keywords": [
+        "abort",
+        "remove",
+        "cleanup",
+        "worktree",
+        "disambiguation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user says abort/cancel/stop task, use AskUserQuestion to clarify: cleanup worktree/branch only vs remove from planning entirely"
     }
   ]
 }
