@@ -459,6 +459,34 @@ If no requirements defined in parent version: Satisfies = None
 
 <step name="task_create">
 
+**Apply Branching Strategy from PROJECT.md:**
+
+When creating a task, check PROJECT.md for branch naming conventions:
+
+```bash
+# Check if Git Workflow section exists in PROJECT.md
+BRANCH_PATTERN=$(grep -A20 "### Branching Strategy" .claude/cat/PROJECT.md 2>/dev/null | grep "Task" | grep -oP "Pattern.*\`\K[^\`]+" | head -1)
+
+# Also check cat-config.json for branching strategy
+BRANCH_STRATEGY=$(jq -r '.gitWorkflow.branchingStrategy // "feature"' .claude/cat/cat-config.json 2>/dev/null)
+
+if [[ -n "$BRANCH_PATTERN" ]]; then
+  # Apply pattern to task branch name
+  # Supported variables: {major}, {minor}, {version}, {task-name}
+  TASK_BRANCH=$(echo "$BRANCH_PATTERN" | sed "s/{major}/$MAJOR/g; s/{minor}/$MINOR/g; s/{version}/$MAJOR.$MINOR/g; s/{task-name}/$TASK_NAME/g")
+  echo "Branch pattern from PROJECT.md: $BRANCH_PATTERN"
+  echo "Task branch will be: $TASK_BRANCH"
+elif [[ "$BRANCH_STRATEGY" == "main-only" ]]; then
+  # No task branches for main-only workflow
+  TASK_BRANCH=""
+  echo "Main-only workflow: no task branch will be created"
+else
+  # Default: {major}.{minor}-{task-name}
+  TASK_BRANCH="$MAJOR.$MINOR-$TASK_NAME"
+  echo "Using default branch pattern: $TASK_BRANCH"
+fi
+```
+
 **Create task structure:**
 
 ```bash
