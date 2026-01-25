@@ -353,6 +353,16 @@ argument, skip the entry gate check for that specific task.
 
 Use the **NO_EXECUTABLE_TASKS** box from PRE-COMPUTED WORK BOXES.
 
+**MANDATORY: Accept find-task.sh results (M245)**
+
+When find-task.sh returns "no executable tasks", this is the CORRECT answer. Do NOT:
+- Manually search for pending tasks to work around this result
+- Try to acquire locks on tasks that the script already determined are unavailable
+- Second-guess the script's lock checking logic
+
+The script already checks all tasks for: status, dependencies, entry gates, AND locks.
+If it says no tasks are available, there are no tasks available.
+
 **Explain why no tasks are available** (provide one or more reasons):
 - Tasks blocked by dependencies (list the blocking tasks)
 - Tasks have existing worktrees (indicate likely in use by another session)
