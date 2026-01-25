@@ -53,23 +53,15 @@ displays using those templates. The handler provides:
 
 **If NOT found**: **FAIL immediately**.
 
-First, detect the likely cause:
-
 ```bash
-if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
-  echo "ERROR: Pre-computed work boxes not found."
-  echo ""
-  echo "Hooks are configured but not running. This usually means:"
-  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
-  echo ""
-  echo "Solution: Restart Claude Code, then run /cat:work again."
-else
+"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "work boxes" "/cat:work"
+if [[ $? -eq 0 ]]; then
   echo "ERROR: Pre-computed work boxes not found."
   echo "Check that hooks/skill_handlers/work_handler.py exists."
 fi
 ```
 
-Output the appropriate error and STOP.
+Output the error and STOP.
 
 ### Phase Mapping
 
