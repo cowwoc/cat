@@ -75,6 +75,7 @@ This skill uses pre-computed utilities from research_handler.py:
 @${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/marketing.md
 @${CLAUDE_PLUGIN_ROOT}/concepts/stakeholders/legal.md
 @${CLAUDE_PLUGIN_ROOT}/concepts/research-pitfalls.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
 
 </execution_context>
 
