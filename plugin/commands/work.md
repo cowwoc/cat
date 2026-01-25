@@ -1862,7 +1862,7 @@ PR_BODY="## Summary
 Task ID: v{major}.{minor}-{task-name}
 
 ---
-*Created by CAT (CAT)*"
+*Created by CAT*"
 
 case "$GIT_PROVIDER" in
     github)
