@@ -80,6 +80,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Search conversation for --- XXX --- marker in PRE-COMPUTED WORK BOXES, copy entire box verbatim, only replace placeholder text with actual values"
+    },
+    {
+      "id": "M248",
+      "timestamp": "2026-01-25T20:46:00Z",
+      "category": "protocol_violation",
+      "description": "Approval message said 'merge to v2.0' for a v2.1 task, conflating base branch name with task version",
+      "root_cause": "Approval message template conflates base branch name with task version - no guidance distinguishing them",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "approval",
+        "version",
+        "branch",
+        "conflate"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Say 'merge v{task-version} task to {base-branch}' to clearly distinguish task version from git branch"
     }
   ]
 }
