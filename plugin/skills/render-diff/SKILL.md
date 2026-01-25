@@ -1,6 +1,6 @@
 ---
 name: render-diff
-description: "MANDATORY: Use for approval gate reviews - transforms git diff into 4-column table"
+description: "MANDATORY: Use BEFORE showing ANY diff to user - transforms git diff into 4-column table with box characters (╭╮╰╯│). Required for approval gates, code reviews, change summaries."
 ---
 
 # Render Diff
@@ -9,6 +9,32 @@ description: "MANDATORY: Use for approval gate reviews - transforms git diff int
 
 Transform raw git diff output into a 4-column table format optimized for approval gate reviews.
 Each hunk is rendered as a self-contained box with file header, making diffs easy to review.
+
+## Pre-computed Output (MANDATORY for Approval Gates)
+
+**Check context for "PRE-COMPUTED RENDER-DIFF OUTPUT".**
+
+If found:
+1. Output the rendered diff content **directly** - no preamble, no Bash commands
+2. The content is already formatted with 4-column tables and box characters
+3. Do NOT wrap in code blocks or show any tool invocations
+
+If NOT found during an approval gate: **FAIL** with:
+```
+ERROR: Pre-computed diff not found in context.
+
+The render_diff_handler.py should have provided this.
+Check:
+1. Handler is registered in skill_handlers/__init__.py
+2. Handler file exists in plugin/hooks/skill_handlers/
+3. Base branch is detectable from worktree/branch name
+
+Do NOT attempt manual Bash computation during approval gates.
+```
+
+**Why this matters (M238):** Running `git diff | render-diff.py` via Bash shows the command
+execution to the user, breaking the clean output experience. Pre-computation hides the
+implementation details.
 
 ## Usage
 
@@ -154,13 +180,30 @@ git diff main..HEAD | render-diff.py
 
 ## Integration with Approval Gates
 
+### Complete File Coverage (MANDATORY)
+
+Before invoking render-diff, enumerate ALL changed files to ensure complete coverage:
+
 ```bash
-# Generate diff for review
+# Step 1: List all changed files
+git diff --name-only "${BASE_BRANCH}..HEAD"
+
+# Step 2: Generate diff for ALL files (no path filtering)
 git diff "${BASE_BRANCH}..HEAD" | \
   "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" > /tmp/review-diff.txt
 
-# Display for approval
+# Step 3: Display for approval
 cat /tmp/review-diff.txt
+```
+
+**Anti-pattern**: Manually specifying paths based on memory. This leads to incomplete diffs.
+
+```bash
+# ❌ WRONG - manual path specification misses files
+git diff v2.0..HEAD -- plugin/scripts/ plugin/skills/
+
+# ✅ CORRECT - diff entire branch, no path filtering
+git diff v2.0..HEAD
 ```
 
 ## Related Skills
