@@ -160,6 +160,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When user says abort/cancel/stop task, use AskUserQuestion to clarify: cleanup worktree/branch only vs remove from planning entirely"
+    },
+    {
+      "id": "M251",
+      "timestamp": "2026-01-25T21:45:00Z",
+      "category": "protocol_violation",
+      "description": "When presenting approval gate for subtask 1 of 6, did not mention it was a subtask or list the other pending subtasks for context",
+      "root_cause": "Approval gate template in work.md had no guidance for decomposed task context - template lacked section for subtask awareness",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "approval",
+        "subtask",
+        "decomposed",
+        "context",
+        "scope"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When presenting approval for a subtask: identify it as subtask N of M, name the parent task, list remaining subtasks with their status"
     }
   ]
 }
