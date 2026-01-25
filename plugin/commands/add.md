@@ -31,6 +31,7 @@ treats the argument as a task description and skips directly to task creation wo
 @${CLAUDE_PLUGIN_ROOT}/templates/minor-plan.md
 @${CLAUDE_PLUGIN_ROOT}/templates/changelog.md
 @${CLAUDE_PLUGIN_ROOT}/concepts/questioning.md
+@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
 
 </execution_context>
 
