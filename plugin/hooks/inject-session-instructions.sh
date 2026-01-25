@@ -44,9 +44,10 @@ MESSAGE=$(cat << 'INSTRUCTIONS'
 
 **When user input arrives mid-operation**:
 1. **STOP** current task analysis immediately
-2. Track with TaskCreate if needed (all issues, even just 2-3 items)
-3. If impacts current task → address now; else → add to end
-4. Acknowledge before continuing
+2. **ACKNOWLEDGE** the user's message in your response text
+3. Track with TaskCreate if needed (all issues, even just 2-3 items)
+4. If impacts current task → address now; else → add to end
+5. Continue only after acknowledgment
 
 **Common failure**: Continuing to analyze tool output while ignoring embedded user request.
 

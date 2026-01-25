@@ -52,6 +52,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Search conversation for --- XXX --- marker in PRE-COMPUTED WORK BOXES, copy entire box verbatim, only replace placeholder text with actual values"
+    },
+    {
+      "id": "M247",
+      "timestamp": "2026-01-25T14:10:00Z",
+      "category": "protocol_violation",
+      "description": "Ignored user's mid-operation message embedded in system-reminder, continued with task completion without acknowledging",
+      "root_cause": "Focused on task completion over user interaction; did not parse system-reminders for user messages mid-operation",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "user message",
+        "system-reminder",
+        "acknowledge",
+        "mid-operation",
+        "ignored"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user input arrives mid-operation: STOP, ACKNOWLEDGE the message in response text, then address or track before continuing"
     }
   ]
 }
