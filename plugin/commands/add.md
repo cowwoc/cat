@@ -338,9 +338,93 @@ List existing tasks in same minor version for selection using AskUserQuestion wi
 List existing tasks in same minor version for selection using AskUserQuestion with multiSelect.
 When blockers are selected, add this new task to their Dependencies list in STATE.md.
 
-**3. Acceptance criteria:**
+</step>
 
-Ask inline: "What are the acceptance criteria? How will we know this task is complete?"
+<step name="task_ask_acceptance_criteria">
+
+**Ask for acceptance criteria with context-aware options:**
+
+Based on TASK_TYPE captured earlier, present relevant options:
+
+**If TASK_TYPE is "Feature":**
+
+Use AskUserQuestion:
+- header: "Acceptance Criteria"
+- question: "What must be true for this feature to be complete? (Select all that apply)"
+- multiSelect: true
+- options:
+  - label: "Functionality works as described"
+    description: "Core feature behavior is implemented correctly"
+  - label: "Tests written and passing"
+    description: "Unit/integration tests cover the new functionality"
+  - label: "Documentation updated"
+    description: "README, docstrings, or user-facing docs reflect the change"
+  - label: "No regressions"
+    description: "Existing functionality continues to work"
+
+**If TASK_TYPE is "Bugfix":**
+
+Use AskUserQuestion:
+- header: "Acceptance Criteria"
+- question: "What must be true for this bug fix to be complete? (Select all that apply)"
+- multiSelect: true
+- options:
+  - label: "Bug no longer reproducible"
+    description: "The reported issue is fixed"
+  - label: "Regression test added"
+    description: "Test prevents this bug from recurring"
+  - label: "Root cause addressed"
+    description: "Fix addresses underlying issue, not just symptoms"
+  - label: "No new issues introduced"
+    description: "Fix doesn't create other problems"
+
+**If TASK_TYPE is "Refactor":**
+
+Use AskUserQuestion:
+- header: "Acceptance Criteria"
+- question: "What must be true for this refactor to be complete? (Select all that apply)"
+- multiSelect: true
+- options:
+  - label: "Behavior unchanged"
+    description: "External behavior remains identical"
+  - label: "All tests still pass"
+    description: "Existing test suite passes without modification"
+  - label: "Code quality improved"
+    description: "Measurable improvement in readability/maintainability"
+  - label: "Technical debt reduced"
+    description: "Addresses documented tech debt items"
+
+**If TASK_TYPE is "Performance":**
+
+Use AskUserQuestion:
+- header: "Acceptance Criteria"
+- question: "What must be true for this performance improvement to be complete? (Select all that apply)"
+- multiSelect: true
+- options:
+  - label: "Performance target met"
+    description: "Measurable improvement achieved (e.g., 2x faster)"
+  - label: "Benchmarks added"
+    description: "Performance tests verify the improvement"
+  - label: "No functionality regression"
+    description: "Features work correctly after optimization"
+  - label: "Resource usage acceptable"
+    description: "Memory/CPU usage within acceptable bounds"
+
+**Always include a "Custom" option in each set:**
+
+After the type-specific options, always add:
+- label: "Custom criteria"
+  description: "Enter your own acceptance criteria"
+
+**If "Custom criteria" selected:**
+
+Ask inline: "What are your custom acceptance criteria? How will we know this task is complete?"
+
+Append the custom response to the selected options.
+
+**Store results:**
+
+Capture selected criteria as ACCEPTANCE_CRITERIA (list of labels, possibly with custom text appended).
 
 </step>
 
