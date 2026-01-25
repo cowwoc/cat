@@ -25,6 +25,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use invoke-handler.py script or add hooks directory to sys.path before importing skill_handlers package"
+    },
+    {
+      "id": "M246",
+      "timestamp": "2026-01-25T19:10:00Z",
+      "category": "protocol_violation",
+      "description": "Manually typed NO_EXECUTABLE_TASKS box instead of copy-pasting pre-computed output from system-reminder, causing misaligned vertical bars",
+      "root_cause": "Instructions to use pre-computed boxes did not explicitly state to copy-paste from system-reminder context",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "box",
+        "pre-computed",
+        "copy-paste",
+        "alignment",
+        "emoji width"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Search conversation for --- XXX --- marker in PRE-COMPUTED WORK BOXES, copy entire box verbatim, only replace placeholder text with actual values"
     }
   ]
 }
