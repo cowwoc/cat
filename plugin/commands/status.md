@@ -77,21 +77,33 @@ The UserPromptSubmit hook pre-computes the entire status display to prevent alig
 
 **Silent output (M194):** Do NOT announce or explain the pre-computed content. Simply output it.
 
-**If NOT found**: **FAIL immediately** with:
+**If NOT found**: **FAIL immediately**.
 
+First, detect the likely cause:
+
+```bash
+# Check if hooks infrastructure exists but isn't running
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
+  echo "ERROR: Pre-computed status display not found."
+  echo ""
+  echo "Hooks are configured but not running. This usually means:"
+  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
+  echo ""
+  echo "Solution: Restart Claude Code, then run /cat:status again."
+elif [[ ! -d .claude/cat ]]; then
+  echo "ERROR: No CAT project found."
+  echo ""
+  echo "Solution: Run /cat:init to initialize."
+else
+  echo "ERROR: Pre-computed status display not found."
+  echo ""
+  echo "Troubleshooting:"
+  echo "1. Check for hook errors in output above"
+  echo "2. Verify plugin is installed: /plugin"
+fi
 ```
-ERROR: Pre-computed status display not found in context.
 
-The status handler should have provided this.
-
-Troubleshooting:
-1. Check if hooks/skill_handlers/status_handler.py exists in plugin
-2. Verify get-skill-output.py dispatcher is registered in hooks.json
-3. Check for hook errors in output above
-4. Ensure .claude/cat directory exists (run /cat:init if needed)
-
-Do NOT attempt to render the status box manually - it will have alignment errors.
-```
+Output the appropriate error and STOP. Do NOT attempt to render manually.
 
 **Why fail-fast?** Box alignment requires precise emoji width calculations that
 LLMs cannot perform reliably. The hook uses Python's unicodedata module for
