@@ -5,6 +5,7 @@ Collects project status data and renders the display box with ultra-compact layo
 """
 
 import re
+import sys
 from pathlib import Path
 
 from . import register_handler
@@ -13,55 +14,21 @@ from . import register_handler
 SCRIPT_DIR = Path(__file__).parent.parent
 PLUGIN_ROOT = SCRIPT_DIR.parent
 
+# Add scripts/lib to path for emoji_widths import
+_LIB_PATH = PLUGIN_ROOT / "scripts" / "lib"
+if str(_LIB_PATH) not in sys.path:
+    sys.path.insert(0, str(_LIB_PATH))
 
-# Emojis that display as width 2 in most terminals
-WIDTH_2_EMOJIS = {
-    '📊', '📦', '🎯', '📋', '⚙️', '🏆', '🧠', '🐱', '🧹', '🤝',
-    '✅', '🔍', '👀', '🔭', '⏳', '⚡', '🔒', '✨', '⚠️', '✦',
-    '☑️', '🔄', '🔳', '🚫', '🚧', '🚀'
-}
+# Import shared emoji width library
+from emoji_widths import EmojiWidths as _EmojiWidths
 
-# Single-character emojis (without variation selector) that are width 2
-WIDTH_2_SINGLE = {
-    '📊', '📦', '🎯', '📋', '🏆', '🧠', '🐱', '🧹', '🤝',
-    '✅', '🔍', '👀', '🔭', '⏳', '⚡', '🔒', '✨', '✦',
-    '🔄', '🔳', '🚫', '🚧', '🚀',
-    # Added for cleanup_handler
-    '📁', '🌿', '📝',
-}
+# Singleton instance for emoji width calculations
+_emoji_widths = _EmojiWidths(plugin_root=PLUGIN_ROOT)
 
 
 def display_width(text: str) -> int:
-    """Calculate terminal display width of a string."""
-    width = 0
-    i = 0
-    while i < len(text):
-        char = text[i]
-
-        # Check for two-character emoji sequences (char + variation selector)
-        if i + 1 < len(text):
-            two_char = text[i:i+2]
-            if two_char in WIDTH_2_EMOJIS:
-                width += 2
-                i += 2
-                continue
-
-        # Check for single-character width-2 emojis
-        if char in WIDTH_2_SINGLE:
-            width += 2
-            i += 1
-            continue
-
-        # Skip variation selectors (they don't add width)
-        if char == '\ufe0f':  # variation selector-16
-            i += 1
-            continue
-
-        # All other characters are width 1
-        width += 1
-        i += 1
-
-    return width
+    """Calculate terminal display width of a string using shared emoji_widths library."""
+    return _emoji_widths.display_width(text)
 
 
 def build_line(content: str, max_width: int) -> str:
