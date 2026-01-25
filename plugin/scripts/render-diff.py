@@ -503,21 +503,31 @@ class DiffParser:
 
 
 def load_config(project_dir: str = '.') -> dict:
-    """Load configuration from cat-config.json.
+    """Load configuration with local override support.
+
+    Loading order (later overrides earlier):
+    1. Default values
+    2. cat-config.json (project settings)
+    3. cat-config.local.json (user overrides)
 
     Args:
         project_dir: Project root directory containing .claude/cat/
     """
-    config_path = Path(project_dir) / '.claude' / 'cat' / 'cat-config.json'
+    defaults = {"terminalWidth": 50}
+    config = defaults.copy()
+    config_dir = Path(project_dir) / '.claude' / 'cat'
 
-    if config_path.exists():
-        try:
-            with open(config_path) as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError):
-            pass
+    # Load base config, then local config (local overrides base)
+    for filename in ['cat-config.json', 'cat-config.local.json']:
+        config_path = config_dir / filename
+        if config_path.exists():
+            try:
+                with open(config_path) as f:
+                    config.update(json.load(f))
+            except (json.JSONDecodeError, IOError):
+                pass
 
-    return {}
+    return config
 
 
 def main():

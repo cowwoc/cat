@@ -360,6 +360,68 @@ def test_cleanup_handler():
         runner.test("Contains PRE-COMPUTED marker", "PRE-COMPUTED" in result)
 
 
+def test_config_loader():
+    """Test unified config loader."""
+    runner.section("lib/config loader")
+
+    # Import the config module
+    import sys
+    from pathlib import Path
+    lib_path = Path(__file__).parent / "plugin" / "hooks" / "lib"
+    if str(lib_path) not in sys.path:
+        sys.path.insert(0, str(lib_path))
+
+    from config import load_config, get_config_value, DEFAULTS
+
+    # Test defaults
+    runner.test("DEFAULTS has autoRemoveWorktrees", "autoRemoveWorktrees" in DEFAULTS)
+    runner.test("DEFAULTS has trust", DEFAULTS.get("trust") == "medium")
+    runner.test("DEFAULTS has terminalWidth", DEFAULTS.get("terminalWidth") == 120)
+
+    # Test with temp directory
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+
+        # Test: no config returns defaults
+        result = load_config(tmp_path)
+        runner.test("No config returns defaults", result == DEFAULTS)
+
+        # Create cat dir
+        cat_dir = tmp_path / ".claude" / "cat"
+        cat_dir.mkdir(parents=True)
+
+        # Test: empty cat dir returns defaults
+        result = load_config(tmp_path)
+        runner.test("Empty cat dir returns defaults", result == DEFAULTS)
+
+        # Test: base config overrides defaults
+        base_config = cat_dir / "cat-config.json"
+        base_config.write_text('{"trust": "high"}')
+        result = load_config(tmp_path)
+        runner.test("Base config overrides defaults", result["trust"] == "high")
+        runner.test("Unset keys use defaults", result["verify"] == "changed")
+
+        # Test: local config overrides base
+        local_config = cat_dir / "cat-config.local.json"
+        local_config.write_text('{"trust": "low", "license": "key123"}')
+        result = load_config(tmp_path)
+        runner.test("Local config overrides base", result["trust"] == "low")
+        runner.test("Local config adds keys", result.get("license") == "key123")
+
+        # Test: invalid local JSON doesn't break loading
+        local_config.write_text('{ invalid json }')
+        result = load_config(tmp_path)
+        runner.test("Invalid local JSON uses base", result["trust"] == "high")
+
+        # Test: get_config_value helper
+        local_config.write_text('{"customKey": "customValue"}')
+        result = get_config_value("customKey", tmp_path)
+        runner.test("get_config_value finds key", result == "customValue")
+
+        result = get_config_value("missing", tmp_path, default="fallback")
+        runner.test("get_config_value uses default", result == "fallback")
+
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -379,6 +441,7 @@ def main():
         test_help_handler,
         test_work_handler,
         test_cleanup_handler,
+        test_config_loader,
     ]
 
     for test_func in test_functions:
