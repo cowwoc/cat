@@ -74,6 +74,7 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - license-validation-server-persistence
 
 ## Tasks Pending
+- local-config-override
 - render-diff-precomputation
 - conventions-directory-structure
 - split-retrospective-files-by-time
