@@ -187,6 +187,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When presenting approval for a subtask: identify it as subtask N of M, name the parent task, list remaining subtasks with their status"
+    },
+    {
+      "id": "M252",
+      "timestamp": "2026-01-25T18:50:00Z",
+      "category": "protocol_violation",
+      "description": "Worked on task directly in main worktree instead of creating isolated worktree via /cat:work",
+      "root_cause": "No enforcement prevents working on tasks in main worktree - relies on agent discipline only",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "worktree",
+        "isolation",
+        "main-branch",
+        "task-workflow"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use /cat:work to create isolated worktree before implementing task changes"
     }
   ]
 }

@@ -95,6 +95,25 @@ Skills exist to enforce consistent processes. Shortcuts defeat their purpose.
 
 **Anti-pattern**: Starting to write code without first creating or selecting a task.
 
+### Worktree Isolation (M252)
+**CRITICAL**: NEVER work on tasks in the main worktree. ALWAYS use isolated worktrees.
+
+**Correct flow**: `/cat:add` → `/cat:work` (creates worktree) → implement → merge back
+
+**Violation indicators**:
+- Working directly on v2.0 or main branch
+- No `.git/cat-base` file in current directory (not a task worktree)
+- Making task-related edits without first running `/cat:work`
+
+**Why isolation matters**:
+- Failed work doesn't pollute main branch
+- Parallel work on multiple tasks possible
+- Clean rollback if task is abandoned
+- Clear separation between planning and implementation
+
+**If you find yourself editing files for a task without having run `/cat:work`**: STOP.
+Create the task properly and use the worktree workflow.
+
 ### Fail-Fast Protocol
 **CRITICAL**: When a skill/workflow says "FAIL immediately" or outputs an error message, STOP.
 
