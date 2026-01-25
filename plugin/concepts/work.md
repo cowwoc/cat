@@ -777,60 +777,6 @@ git worktree remove ../cat-worktree-{task-name}
 git branch -d {task-branch}
 ```
 
-### 17. Version Boundary Gate (Next Task Selection)
-
-When auto-continuing to the next task, detect if the next task is in a different version:
-
-**Version Boundary Detection:**
-
-Supports all versioning schemes (MAJOR, MAJOR.MINOR, or MAJOR.MINOR.PATCH):
-
-> **See also:** [version-scheme.md](version-scheme.md) for scheme detection and boundary rules.
-
-```bash
-# Track completed task version (empty values for unused levels)
-COMPLETED_MAJOR="{major from completed task}"
-COMPLETED_MINOR="{minor from completed task, empty if major-only}"
-COMPLETED_PATCH="{patch from completed task, empty if no patch level}"
-
-# After finding next task
-NEXT_MAJOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.major')
-NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
-NEXT_PATCH=$(echo "$NEXT_TASK_RESULT" | jq -r '.patch // empty')
-```
-
-**Boundary detection adapts to versioning scheme:**
-
-| Scheme | Boundary Crossed When |
-|--------|----------------------|
-| MAJOR only | `COMPLETED_MAJOR != NEXT_MAJOR` |
-| MAJOR.MINOR | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR` |
-| MAJOR.MINOR.PATCH | Any component differs |
-
-**If BOUNDARY_CROSSED is true:**
-
-1. Display **VERSION_BOUNDARY_GATE** box showing:
-   - Completed version summary
-   - Tasks completed count
-   - Reminder to consider publishing/tagging
-   - Next version and task preview
-
-2. Present AskUserQuestion with options:
-   - "Continue to next version" - Proceed with auto-continue
-   - "Exit to publish first" - Exit work loop for user to publish/release
-   - "Stop" - Exit work loop immediately
-
-**Why this gate exists:**
-- Allows users to publish/release completed versions before moving on
-- Prevents accidentally starting work on a new version without releasing the previous one
-- Provides a natural checkpoint for git tagging and documentation updates
-
-**If user selects "Continue to next version":**
-Proceed with existing auto-continue logic.
-
-**If user selects "Exit to publish first" or "Stop":**
-Release lock, exit workflow gracefully.
-
 ## Error Recovery
 
 ### Subagent Failure
