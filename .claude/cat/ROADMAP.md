@@ -17,13 +17,9 @@ Project roadmap with version summaries. Minor versions group related tasks (2-8 
   - tos-legal-review
   - pricing-page
   - update-graphics-tagline
-  - license-validation-server
   - license-commands
   - tier-feature-mapping
-  - stripe-billing-integration
   - feature-gate-middleware
-  - offline-validation
-  - jwt-token-generation
   - remove-license-notice-startup
   - update-check-startup
 
