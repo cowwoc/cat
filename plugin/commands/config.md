@@ -46,23 +46,15 @@ Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
 
 **If NOT found**: **FAIL immediately**.
 
-First, detect the likely cause:
-
 ```bash
-if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
-  echo "ERROR: Pre-computed config display not found."
-  echo ""
-  echo "Hooks are configured but not running. This usually means:"
-  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
-  echo ""
-  echo "Solution: Restart Claude Code, then run /cat:config again."
-else
+"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "config display" "/cat:config"
+if [[ $? -eq 0 ]]; then
   echo "ERROR: Pre-computed display not available."
   echo "Handler config_handler.py may have failed."
 fi
 ```
 
-Output the appropriate error and STOP. Do NOT attempt to construct boxes manually.
+Output the error and STOP. Do NOT attempt to construct boxes manually.
 
 </step>
 

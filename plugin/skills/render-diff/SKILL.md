@@ -21,26 +21,17 @@ If found:
 
 If NOT found during an approval gate: **FAIL immediately**.
 
-First, detect the likely cause:
-
 ```bash
-if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
-  echo "ERROR: Pre-computed diff not found."
-  echo ""
-  echo "Hooks are configured but not running. This usually means:"
-  echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."
-  echo ""
-  echo "Solution: Restart Claude Code, then invoke render-diff again."
-else
-  echo "ERROR: Pre-computed diff not found."
-  echo "Check:"
+"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "diff output" "render-diff"
+if [[ $? -eq 0 ]]; then
+  echo "ERROR: Pre-computed diff not found. Check:"
   echo "1. Handler is registered in skill_handlers/__init__.py"
   echo "2. Handler file exists in plugin/hooks/skill_handlers/"
   echo "3. Base branch is detectable from worktree/branch name"
 fi
 ```
 
-Output the appropriate error and STOP. Do NOT attempt manual Bash computation.
+Output the error and STOP. Do NOT attempt manual Bash computation.
 
 **Why this matters (M238):** Running `git diff | render-diff.py` via Bash shows the command
 execution to the user, breaking the clean output experience. Pre-computation hides the
