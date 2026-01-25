@@ -1,8 +1,0 @@
-{
-  "version": "${CAT_VERSION}",
-  "autoRemoveWorktrees": true,
-  "trust": "medium",
-  "verify": "changed",
-  "curiosity": "low",
-  "patience": "high"
-}

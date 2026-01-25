@@ -78,4 +78,4 @@ Duplicate tasks have no commit with their own Task ID. To find the resolving com
 git log --oneline --grep="Task ID: v1.0-task-a"
 ```
 
-See [task-resolution.md](../concepts/task-resolution.md) for details.
+See [task-resolution.md](../references/task-resolution.md) for details.
