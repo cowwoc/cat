@@ -5,7 +5,7 @@ Plugin has nested directory structure with CAT resources under `plugin/.claude/c
 
 ## Target State
 Flatten the plugin structure by moving CAT resources directly to `plugin/`:
-- `plugin/.claude/cat/references/` → `plugin/concepts/` (rename for clarity)
+- `plugin/.claude/cat/references/` → `plugin/references/`
 - `plugin/.claude/cat/templates/` → `plugin/templates/`
 - `plugin/.claude/cat/workflows/` → `plugin/workflows/`
 - `plugin/.claude/cat/references/stakeholders/lang/` → `plugin/lang/`
@@ -21,11 +21,11 @@ None - infrastructure/organization task
 - **Mitigation:** Update all file path references, run tests to verify
 
 ## Files to Modify
-- Move+rename: `plugin/.claude/cat/references/` → `plugin/concepts/`
+- Move: `plugin/.claude/cat/references/` → `plugin/references/`
 - Move: `plugin/.claude/cat/templates/` → `plugin/templates/`
 - Move: `plugin/.claude/cat/workflows/` → `plugin/workflows/`
 - Move: `plugin/.claude/cat/references/stakeholders/lang/` → `plugin/lang/`
-- Update: Any files referencing old paths (including `references/` → `concepts/`)
+- Update: Any files referencing old paths
 
 ## Acceptance Criteria
 - [ ] Behavior unchanged - plugin functions identically
@@ -38,9 +38,9 @@ None - infrastructure/organization task
    - Files: `plugin/.claude/cat/references/stakeholders/lang/` → `plugin/lang/`
    - Verify: `ls plugin/lang/`
 
-2. **Step 2:** Move and rename references to concepts
-   - Files: `plugin/.claude/cat/references/` → `plugin/concepts/`
-   - Verify: `ls plugin/concepts/`
+2. **Step 2:** Move references directory
+   - Files: `plugin/.claude/cat/references/` → `plugin/references/`
+   - Verify: `ls plugin/references/`
 
 3. **Step 3:** Move templates directory
    - Files: `plugin/.claude/cat/templates/` → `plugin/templates/`
@@ -51,12 +51,8 @@ None - infrastructure/organization task
    - Verify: `ls plugin/workflows/`
 
 5. **Step 5:** Update path references in skills/hooks
-   - Files: Search for `.claude/cat/` and `references/` occurrences
-   - Update: `.claude/cat/references/` → `concepts/`
-   - Update: `.claude/cat/templates/` → `templates/`
-   - Update: `.claude/cat/workflows/` → `workflows/`
-   - Verify: `grep -r ".claude/cat" plugin/` returns nothing
-   - Verify: `grep -r "references/" plugin/` returns nothing (except stakeholders/)
+   - Files: Search for `.claude/cat/` references
+   - Verify: `grep -r ".claude/cat" plugin/`
 
 6. **Step 6:** Remove empty .claude directory
    - Files: `plugin/.claude/`
