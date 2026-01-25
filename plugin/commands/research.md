@@ -88,7 +88,7 @@ This skill uses pre-computed utilities from research_handler.py:
 |--------|---------|--------|
 | major.minor | `1.2` | `.claude/cat/issues/v1/v1.2/PLAN.md` |
 | major | `1` | `.claude/cat/issues/v1/PLAN.md` |
-| task-id | `payment-processor-integration` | `.claude/cat/issues/v{current}/v{current}.{minor}/{task-id}/PLAN.md` |
+| task-id | `feature-gate-middleware` | `.claude/cat/issues/v{current}/v{current}.{minor}/{task-id}/PLAN.md` |
 
 **BLOCKING GATE (M228):** Identify PLAN.md path before proceeding:
 
