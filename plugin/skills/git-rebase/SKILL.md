@@ -7,6 +7,29 @@ description: "MANDATORY: Use instead of `git rebase` - provides automatic backup
 
 **Purpose**: Safely rebase branches with automatic backup, conflict detection, and recovery guidance.
 
+## PROJECT.md Merge Policy Check
+
+**Check PROJECT.md for configured merge preferences before rebasing.**
+
+```bash
+# Check if Git Workflow section exists in PROJECT.md
+MERGE_POLICY=$(grep -A10 "### Merge Policy" .claude/cat/PROJECT.md 2>/dev/null)
+
+if echo "$MERGE_POLICY" | grep -qi "MUST.*merge commit"; then
+  echo "⚠️ WARNING: PROJECT.md prefers merge commits over rebase"
+  echo "Rebasing may conflict with configured workflow."
+  echo ""
+  echo "PROJECT.md specifies merge commits should be used, which preserves"
+  echo "branch history. Rebasing rewrites history to be linear."
+  echo ""
+  echo "Proceed only if you understand the implications:"
+  echo "  - Rebasing will create linear history (no merge commits)"
+  echo "  - This overrides the PROJECT.md preference"
+  echo ""
+  echo "To honor PROJECT.md preference, use 'git merge --no-ff' instead."
+fi
+```
+
 ## Safety Pattern: Backup-Verify-Cleanup
 
 **ALWAYS follow this pattern:**

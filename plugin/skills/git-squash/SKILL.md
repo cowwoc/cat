@@ -34,6 +34,37 @@ This reduces the initial investigation from 4+ sequential commands to a single p
 3. **Verify immediately** - no changes lost or added
 4. Cleanup backup only after verification passes
 
+## Read PROJECT.md Squash Policy
+
+**Check PROJECT.md for configured squash preferences before proceeding.**
+
+```bash
+# Read squash policy from PROJECT.md
+SQUASH_POLICY=$(grep -A10 "### Squash Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "Strategy:" | sed 's/.*Strategy:\s*//' | head -1)
+
+if [[ "$SQUASH_POLICY" == *"keep all"* || "$SQUASH_POLICY" == *"Keep all"* || "$SQUASH_POLICY" == *"keep-all"* ]]; then
+  echo "⚠️ PROJECT.md configured for 'Keep all commits'"
+  echo "Squashing will override this preference."
+  echo ""
+  echo "Options:"
+  echo "  1. Proceed with squash (override PROJECT.md preference)"
+  echo "  2. Cancel to preserve commits as configured"
+  echo ""
+  echo "To proceed, continue with this skill."
+  echo "To honor PROJECT.md preference, abort the squash operation."
+fi
+
+if [[ "$SQUASH_POLICY" == *"single"* || "$SQUASH_POLICY" == *"Single"* ]]; then
+  echo "📋 PROJECT.md configured for 'Single commit' squashing"
+  echo "All commits will be squashed into one (not by type)."
+fi
+
+if [[ "$SQUASH_POLICY" == *"by-type"* || "$SQUASH_POLICY" == *"by type"* ]]; then
+  echo "📋 PROJECT.md configured for 'Squash by type'"
+  echo "Commits will be grouped by type prefix."
+fi
+```
+
 ## Workflow Selection
 
 **CRITICAL: Choose workflow based on commit position.**
