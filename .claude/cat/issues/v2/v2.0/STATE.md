@@ -80,4 +80,12 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 ## Tasks Pending
 - reorganize-plugin-layout
 - branching-strategy-config
-- centralize-version-path-resolution
+- create-version-paths-reference
+- update-add-command-paths
+- update-remove-command-paths
+- update-work-command-paths
+- update-research-skills-paths
+- update-python-handler-paths
+
+## Tasks Decomposed
+- centralize-version-path-resolution (decomposed into 6 subtasks above)
