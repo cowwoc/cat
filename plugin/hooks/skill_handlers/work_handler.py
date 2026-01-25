@@ -335,6 +335,53 @@ class WorkHandler:
 
         return "\n".join(lines)
 
+    def _build_version_boundary_gate(self) -> str:
+        """Build Version Boundary Gate box for approval when crossing versions."""
+        header = "✓ Version Complete"
+
+        content_lines = [
+            "",
+            "**v{current-version}** is now complete!",
+            "",
+        ]
+
+        summary_content = [
+            "**Summary:**",
+            "• Tasks completed: {count}",
+            "",
+            "**Before continuing, consider:**",
+            "• Publishing/releasing this version",
+            "• Tagging the release in git",
+            "• Updating documentation",
+            "",
+        ]
+
+        next_version_content = [
+            "**Next Version:** v{next-version}",
+            "{next-task-name}",
+            "",
+        ]
+
+        # Collect all content to calculate max width
+        all_content = content_lines + summary_content + next_version_content
+        content_widths = [display_width(c) for c in all_content]
+        header_width = display_width(header) + 5  # Account for "╭─── header ───╮" format
+        max_width = max(max(content_widths) if content_widths else 0, header_width)
+
+        lines = []
+        lines.append(build_header_top(header, max_width))
+        for content in content_lines:
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
+        for content in summary_content:
+            lines.append(build_line(content, max_width))
+        lines.append(build_separator(max_width))
+        for content in next_version_content:
+            lines.append(build_line(content, max_width))
+        lines.append(build_border(max_width, is_top=False))
+
+        return "\n".join(lines)
+
     def handle(self, context: dict) -> str | None:
         """Provide progress format templates for the work skill."""
         user_prompt = context.get("user_prompt", "")
@@ -454,6 +501,9 @@ Typing similar-looking characters (like |) causes misalignment.
 
 --- TASK_COMPLETE_LOW_TRUST ---
 {self._build_task_complete_low_trust()}
+
+--- VERSION_BOUNDARY_GATE ---
+{self._build_version_boundary_gate()}
 
 INSTRUCTION: Copy-paste the box structure VERBATIM, then replace ONLY the placeholder text inside.
 Do NOT retype box characters - copy the entire box including │ and ─ characters exactly as shown."""
