@@ -11,6 +11,12 @@ allowed-tools:
   - AskUserQuestion
 ---
 
+<execution_context>
+
+@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
+
+</execution_context>
+
 <objective>
 
 Unified command for removing tasks or versions from the CAT planning structure. Routes to the

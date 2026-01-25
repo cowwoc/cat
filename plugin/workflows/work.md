@@ -1,3 +1,9 @@
+<execution_context>
+
+@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
+
+</execution_context>
+
 # Workflow: Execute Task
 
 ## Overview
