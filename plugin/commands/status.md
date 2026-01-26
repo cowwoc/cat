@@ -124,10 +124,6 @@ The handler:
 **Why pre-compute?** LLMs cannot reliably calculate emoji widths or character padding.
 Pre-computing ensures correct alignment every time.
 
-**Emoji Reference (for understanding output, NOT for manual use):**
-- `☑️` = Completed
-- `🔄` = In Progress
-- `🔳` = Pending
-- `🚫` = Blocked
-- `🚧` = Gate Waiting
+> **Note:** Emoji meanings are included in the pre-computed Legend line.
+> They are NOT documented separately here to prevent manual construction attempts.
 
