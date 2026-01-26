@@ -1,5 +1,19 @@
 # Project Instructions
 
+## Commit Types for Plugin Files
+
+**CRITICAL (M255):** Files in `plugin/` are Claude-facing instructions, NOT user-facing documentation.
+
+| Path | Commit Type | Reason |
+|------|-------------|--------|
+| `plugin/concepts/*.md` | `config:` | Claude reference docs |
+| `plugin/commands/*.md` | `config:` | Claude commands |
+| `plugin/skills/*/*.md` | `config:` | Claude skills |
+| `plugin/hooks/*.py` | `config:` | Plugin source code |
+| `README.md`, `docs/` | `docs:` | User-facing documentation |
+
+Use `docs:` ONLY for files end-users read (README, API docs, etc.).
+
 ## Plugin Development
 
 When editing CAT plugin files, always edit the source files in `/workspace/plugin/`, NOT the cached installation in `/home/node/.config/claude/plugins/cache/`.

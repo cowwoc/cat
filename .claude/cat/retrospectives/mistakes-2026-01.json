@@ -274,11 +274,11 @@
       "timestamp": "2026-01-26T21:45:00Z",
       "category": "documentation_violation",
       "description": "Used docs: commit type for plugin/concepts/ files which are Claude-facing, not user-facing. Should have used config:",
-      "root_cause": "Conflated markdown format with documentation purpose; commit-types.md had guidance but no enforcement hook",
+      "root_cause": "Conflated markdown format with documentation purpose; commit-types.md had guidance but was not specific to plugin/ directory structure",
       "rca_method": "A",
       "rca_method_name": "5-whys",
-      "prevention_type": "hook",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
       "pattern_keywords": [
         "commit-type",
         "docs",
@@ -292,10 +292,11 @@
       "recurrence_of": null,
       "prevention_quality": {
         "verification_type": "positive",
-        "fragility": "low",
+        "fragility": "medium",
         "catches_variations": true
       },
-      "correct_behavior": "Use config: for plugin/ files (Claude-facing), docs: only for user-facing docs (README, API docs)"
+      "correct_behavior": "Use config: for plugin/ files (Claude-facing), docs: only for user-facing docs (README, API docs)",
+      "note": "Hook enforcement not possible - plugin/ is repo-specific, validate_commit_type.py ships to all users"
     }
   ]
 }
