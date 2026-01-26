@@ -48,6 +48,46 @@ def build_border(max_width: int, is_top: bool) -> str:
         return "╰" + dashes + "╯"
 
 
+def build_header_box(header: str, content_lines: list[str], separator_indices: list[int] = None,
+                     min_width: int = None, prefix: str = None) -> str:
+    """Build a box with header and optional separators.
+
+    Args:
+        header: Header text to display
+        content_lines: Lines of content inside the box
+        separator_indices: Indices where separator lines should be inserted
+        min_width: Minimum box width (optional)
+        prefix: Header prefix (default "─── ", use "─ " for simpler style)
+    """
+    if separator_indices is None:
+        separator_indices = []
+    if prefix is None:
+        prefix = "─── "
+
+    # Calculate max width
+    content_widths = [display_width(c) for c in content_lines]
+    # Account for prefix in header width calculation
+    header_width = display_width(header) + len(prefix) + 1  # +1 for space before suffix dashes
+    max_width = max(max(content_widths) if content_widths else 0, header_width)
+    if min_width is not None:
+        max_width = max(max_width, min_width)
+
+    # Build header
+    suffix_dashes = "─" * (max_width - len(prefix) - display_width(header) + 1)
+    if len(suffix_dashes) < 1:
+        suffix_dashes = "─"
+    top = "╭" + prefix + header + " " + suffix_dashes + "╮"
+
+    lines = [top]
+    for i, content in enumerate(content_lines):
+        if i in separator_indices:
+            lines.append("├" + "─" * (max_width + 2) + "┤")
+        lines.append(build_line(content, max_width))
+
+    lines.append(build_border(max_width, is_top=False))
+    return "\n".join(lines)
+
+
 def build_progress_bar(percent: int, width: int = 25) -> str:
     """Build a progress bar string."""
     filled = percent * width // 100

@@ -5,7 +5,7 @@ Generates box displays for task and version creation completion.
 """
 
 from . import register_handler
-from .status_handler import display_width, build_line, build_border
+from .status_handler import build_header_box
 
 
 class AddHandler:
@@ -55,25 +55,8 @@ class AddHandler:
             f"Dependencies: {deps_str}",
         ]
 
-        # Calculate max width
         header = "\u2705 Task Created"
-        header_width = display_width(header) + 3  # "─ " prefix and " ─" suffix area
-        content_widths = [display_width(c) for c in content_items]
-        max_content_width = max(content_widths) if content_widths else 0
-        box_width = max(header_width, max_content_width, 40)
-
-        # Build the box with header
-        header_dashes = box_width - display_width(header) - 1
-        if header_dashes < 0:
-            header_dashes = 0
-        top_line = "\u256d\u2500 " + header + " " + "\u2500" * header_dashes + "\u256e"
-
-        lines = [build_line(c, box_width) for c in content_items]
-        bottom = build_border(box_width, is_top=False)
-
-        # Build final box
-        box_lines = [top_line] + lines + [bottom]
-        final_box = "\n".join(box_lines)
+        final_box = build_header_box(header, content_items, min_width=40, prefix="─ ")
 
         next_cmd = f"/cat:work {version}-{item_name}"
 
@@ -104,25 +87,8 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         if path:
             content_items.append(f"Path: {path}")
 
-        # Calculate max width
         header = "\u2705 Version Created"
-        header_width = display_width(header) + 3
-        content_widths = [display_width(c) for c in content_items]
-        max_content_width = max(content_widths) if content_widths else 0
-        box_width = max(header_width, max_content_width, 40)
-
-        # Build the box with header
-        header_dashes = box_width - display_width(header) - 1
-        if header_dashes < 0:
-            header_dashes = 0
-        top_line = "\u256d\u2500 " + header + " " + "\u2500" * header_dashes + "\u256e"
-
-        lines = [build_line(c, box_width) for c in content_items]
-        bottom = build_border(box_width, is_top=False)
-
-        # Build final box
-        box_lines = [top_line] + lines + [bottom]
-        final_box = "\n".join(box_lines)
+        final_box = build_header_box(header, content_items, min_width=40, prefix="─ ")
 
         return f"""OUTPUT TEMPLATE ADD DISPLAY (copy exactly):
 
