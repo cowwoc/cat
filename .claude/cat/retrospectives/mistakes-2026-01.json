@@ -515,6 +515,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Parent task status remains in-progress while subtasks execute. Parent transitions to completed only when ALL subtasks are completed. Use Decomposed: true field to track decomposition state, not an invalid status value."
+    },
+    {
+      "id": "M264",
+      "timestamp": "2026-01-26T15:45:00Z",
+      "category": "prompt_engineering",
+      "description": "When delegating skill to subagent, described principles instead of requiring skill invocation",
+      "root_cause": "Subagent prompt described manual steps instead of requiring the subagent to invoke the same skill and return its outputs",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/spawn-subagent/SKILL.md",
+      "pattern_keywords": [
+        "skill",
+        "delegation",
+        "principles",
+        "invoke",
+        "shrink-doc",
+        "subagent"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When delegating a skill, subagent must invoke the exact same skill and return its outputs to the parent agent"
     }
   ]
 }
