@@ -543,6 +543,35 @@
         "catches_variations": true
       },
       "correct_behavior": "When delegating a skill, subagent must invoke the exact same skill and return its outputs to the parent agent"
+    },
+    {
+      "id": "M265",
+      "timestamp": "2026-01-26T16:00:00Z",
+      "category": "prompt_engineering",
+      "description": "Main agent did not report per-file execution_equivalence_score values when presenting approval for batch skill delegation; only stated aggregate \"all files scored 1.0\"",
+      "root_cause": "Subagent returned aggregate postcondition summary, and main agent did not require or display per-file validation table",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/spawn-subagent/SKILL.md",
+      "pattern_keywords": [
+        "batch",
+        "per-file",
+        "postcondition",
+        "score",
+        "approval",
+        "shrink-doc",
+        "aggregate"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "For batch skill delegation: (1) Subagent must return per-file postcondition table, not aggregate summary. (2) Main agent must display per-file table at approval gate."
     }
   ]
 }
