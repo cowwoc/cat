@@ -26,7 +26,7 @@ are additionally enforced by hooks or explicit STOP instructions that block prog
 
 - **Step 5: Review Phase (Stakeholder Review)** — always invoke `cat:stakeholder-review-agent` except for config-driven
   exceptions (VERIFY=none or TRUST=high); do not skip based on perceived simplicity or short feedback cycles
-- **Step 7: Rebase and Squash Commits Before Review** — always squash before the approval gate; do not proceed to
+- **Step 7: Squash Commits by Topic Before Review** — always squash before the approval gate; do not proceed to
   Step 8 without completing this step
 - **Step 8: Rebase onto Target Branch Before Approval Gate** — always rebase the squashed branch onto the current tip
   of the target branch before the approval gate; do not proceed to Step 9 without completing this step
@@ -861,7 +861,7 @@ directly. In all cases, do NOT present options to the user or ask what to do dur
 fix subagents and continue.
 
 **CRITICAL: The auto-fix loop applies ONLY to spawning fix subagents. Steps 6, 7, 8, and 9 (Deferred Concern
-Review, Rebase and Squash, Rebase onto Target Branch, and Approval Gate) MUST still be executed after the loop
+Review, Squash Commits by Topic, Rebase onto Target Branch, and Approval Gate) MUST still be executed after the loop
 completes. The user must explicitly approve the merge via Step 9 when trust != "high".**
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
@@ -1107,7 +1107,7 @@ in Step 6.
 
 ## Step 6: Deferred Concern Review (Interactive Wizard)
 
-This step runs BEFORE the Rebase and Squash step (Step 7) and BEFORE the Approval Gate (Step 9), giving the user a
+This step runs BEFORE the Squash Commits by Topic step (Step 7) and BEFORE the Approval Gate (Step 9), giving the user a
 chance to review and adjust deferred concern handling before committing to the merge.
 
 ### Part A: Review HIGH/CRITICAL concern scheduling
@@ -1180,7 +1180,7 @@ Skip this step entirely and proceed to Step 7 if ANY of:
 - All deferred concerns are below `minSeverity` (they are silently ignored, not presented to the user)
 - `TRUST == "high"` (high-trust mode auto-creates issues per Step 5 and proceeds without user interaction)
 
-## Step 7: Rebase and Squash Commits Before Review (MANDATORY)
+## Step 7: Squash Commits by Topic Before Review (MANDATORY)
 
 **MANDATORY: Delegate rebase, squash, and STATE.md closure verification to a squash subagent.** This step must not be
 skipped — the approval gate (Step 9) checks that squash was executed and blocks proceeding if it was not.
@@ -1266,11 +1266,11 @@ and no explicit user approval is detected in session history.
 
 ### Pre-Gate Squash Verification (BLOCKING)
 
-Before presenting the approval gate, verify that Step 7 (Rebase and Squash) was executed. Squashing by topic
+Before presenting the approval gate, verify that Step 7 (Squash by Topic) was executed. Squashing by topic
 may produce 1-2 commits (e.g., one implementation commit + one config commit), so commit count alone does not
 determine completion. Instead, confirm that `/cat:git-squash` was invoked in Step 7.
 
-**If Step 7 was skipped:** STOP — return to Step 7 and complete the rebase and squash before proceeding.
+**If Step 7 was skipped:** STOP — return to Step 7 and complete the squash by topic before proceeding.
 
 **If Step 7 was completed:** Proceed to approval gate below.
 
