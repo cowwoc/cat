@@ -572,6 +572,34 @@
         "catches_variations": true
       },
       "correct_behavior": "For batch skill delegation: (1) Subagent must return per-file postcondition table, not aggregate summary. (2) Main agent must display per-file table at approval gate."
+    },
+    {
+      "id": "M266",
+      "timestamp": "2026-01-26T21:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Interpreted 'abort the task' as 'abandon permanently' without clarifying user intent",
+      "root_cause": "Assumed 'abort' meant permanent task abandonment without verifying; existing documentation in remove.md about ambiguous terminology was not followed",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/prompt_handlers/abort_clarification.py",
+      "pattern_keywords": [
+        "abort",
+        "abandon",
+        "cancel",
+        "ambiguous",
+        "terminology",
+        "clarification"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user says 'abort task', use AskUserQuestion to clarify: (1) stop working and keep pending, (2) cleanup worktree only, or (3) abandon permanently"
     }
   ]
 }
