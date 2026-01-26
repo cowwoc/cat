@@ -5,7 +5,7 @@
 Precompile all regex `Pattern.compile()` calls in `AutoLearnMistakes.java` as `private static final Pattern` constants
 to avoid repeated compilation cost on every hook invocation and improve readability.
 
-## Satisfies
+## Parent Requirements
 
 None
 

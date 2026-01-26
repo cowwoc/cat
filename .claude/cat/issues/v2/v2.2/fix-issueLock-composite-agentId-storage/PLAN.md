@@ -6,7 +6,7 @@ Fix the lock ownership comparison for subagents: `IssueLock.writeLockToTempFile(
 composite `agentId` (`sessionId/subagents/{nativeId}` for subagents). This causes subagents to be
 incorrectly blocked with `LOCKED_BY_OTHER_AGENT` when attempting to remove their own worktrees.
 
-## Satisfies
+## Parent Requirements
 None (infrastructure bugfix)
 
 ## Risk Assessment

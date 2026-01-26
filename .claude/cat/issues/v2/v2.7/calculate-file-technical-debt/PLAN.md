@@ -4,7 +4,7 @@
 Implement a jlink-bundled Java tool that calculates the technical debt score for a single file, applying the metric
 defined in `define-technical-debt-metric`.
 
-## Satisfies
+## Parent Requirements
 - REQ-002
 
 ## Risk Assessment

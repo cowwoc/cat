@@ -4,7 +4,7 @@
 Design the storage abstraction interface that allows CAT to work with multiple issue tracker backends (local files,
 GitHub, Jira, Linear, etc.).
 
-## Satisfies
+## Parent Requirements
 - REQ-001
 
 ## Risk Assessment

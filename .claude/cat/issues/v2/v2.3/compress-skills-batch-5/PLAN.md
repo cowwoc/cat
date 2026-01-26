@@ -6,7 +6,7 @@ Compress skill files batch 5 (files 37-45) using /cat:optimize-doc with equivale
 ## Parent Task
 compress-skills-md (decomposed)
 
-## Satisfies
+## Parent Requirements
 None - sub-issue of parent
 
 ## Risk Assessment

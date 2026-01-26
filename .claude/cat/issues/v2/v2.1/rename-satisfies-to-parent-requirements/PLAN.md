@@ -9,7 +9,7 @@ defined in the parent version's PLAN.md.
 All `## Satisfies` headings and prose references (field names, labels, backtick references) are renamed
 to `## Parent Requirements`, making it explicit that the section contains requirement IDs from the parent.
 
-## Satisfies
+## Parent Requirements
 None
 
 ## Risk Assessment
