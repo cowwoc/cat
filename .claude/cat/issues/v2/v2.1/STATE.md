@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- compress-md-files
 - deduplicate-embedded-content
 - subagent-doc-heavy-steps
 - unify-output-template-delivery
