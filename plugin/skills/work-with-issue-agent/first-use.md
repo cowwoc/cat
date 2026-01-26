@@ -145,22 +145,17 @@ Do NOT skip the banner or continue without it.
 
 ### Read PLAN.md and Identify Skills
 
-Read the execution steps from PLAN.md to understand what needs to be done:
-
 ```bash
-# Read PLAN.md execution steps
 PLAN_MD="${ISSUE_PATH}/PLAN.md"
-EXECUTION_STEPS=$(sed -n '/## Execution Steps/,/^## /p' "$PLAN_MD" | head -n -1)
-ISSUE_GOAL=$(sed -n '/## Goal/,/^## /p' "$PLAN_MD" | head -n -1 | tail -n +2)
 ```
 
-Scan execution steps for skill references that require spawning capability:
+Scan PLAN.md for skill references that require spawning capability at the main agent level:
 
 - `/cat:optimize-doc` - Document compression (spawns compare-docs subagent)
 - `/cat:compare-docs` - Document equivalence validation (spawns validation subagent)
 - `/cat:stakeholder-review-agent` - Code review (spawns reviewer subagents)
 
-**If execution steps reference these skills**, invoke them NOW at the main agent level using the Skill tool.
+**If PLAN.md references these skills** (detected via `grep -E "/cat:(optimize-doc|compare-docs|stakeholder-review-agent)" "$PLAN_MD"`), invoke them NOW at the main agent level using the Skill tool.
 
 Example: If PLAN.md says "Step 1: Invoke /cat:optimize-doc on file.md", then:
 
@@ -202,20 +197,21 @@ below). Extract the wave sections from PLAN.md and count items in each wave.
 
 ### Delegation Prompt Construction
 
-**Pass PLAN.md execution steps verbatim without interpretive summarization.**
+**Subagents read PLAN.md directly — do NOT relay its content into prompts.**
 
-When constructing the delegation prompt below, include execution steps from PLAN.md exactly as written.
-Do NOT add ad-hoc "Important Notes" or aggregate language that might conflict with PLAN.md's structure.
+Pass `PLAN_MD_PATH` so the subagent can read the Goal and Execution Waves/Steps sections itself.
+Do NOT extract and paste those sections into the prompt — that is the content relay anti-pattern.
 
-**Why:** If PLAN.md distinguishes Step 2 (path construction) from Step 3 (documentation references),
-that distinction is intentional. Adding aggregate language like "Replace ALL occurrences" can prime
-the subagent to treat distinct steps as a single operation, causing incomplete execution.
+**Why:** Subagents that receive a `PLAN_MD_PATH` and read PLAN.md themselves always see the authoritative
+content, preserving PLAN.md's structure exactly (distinct steps remain distinct, no re-summarization).
+Pasting content into prompts creates a stale copy that can diverge, wastes tokens, and risks
+interpretive distortion.
 
 **Pattern:**
-- ✅ Include `${EXECUTION_STEPS}` directly from PLAN.md
-- ✅ Trust PLAN.md structure - distinct steps should remain distinct
-- ❌ Do NOT add interpretive summaries or aggregate instructions
-- ❌ Do NOT synthesize "Important Notes" that restate steps differently
+- ✅ Pass `PLAN_MD_PATH: ${PLAN_MD}` and instruct the subagent to read Goal and Execution sections itself
+- ✅ Trust PLAN.md structure — subagents read it directly, no relay needed
+- ❌ Do NOT inline `${ISSUE_GOAL}` or Execution Waves content into the prompt
+- ❌ Do NOT add interpretive summaries or aggregate instructions that restate PLAN.md differently
 
 ### Commit-Before-Spawn Requirement
 
@@ -253,12 +249,10 @@ Task tool:
     TARGET_BRANCH: ${TARGET_BRANCH}
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
+    PLAN_MD_PATH: ${PLAN_MD}
 
-    ## Issue Goal (from PLAN.md)
-    ${ISSUE_GOAL}
-
-    ## Execution Waves (from PLAN.md)
-    [Include the ## Execution Waves section from PLAN.md, or ## Execution Steps for old-format plans]
+    Read the Goal section and Execution Waves (or Execution Steps) from PLAN_MD_PATH directly.
+    Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
 
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
@@ -356,14 +350,12 @@ Task tool:
     TARGET_BRANCH: ${TARGET_BRANCH}
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
+    PLAN_MD_PATH: ${PLAN_MD}
     ASSIGNED_WAVE: 1
-    ASSIGNED_ITEMS: [List of bullet items from ### Wave 1 section]
 
-    ## Issue Goal (from PLAN.md)
-    ${ISSUE_GOAL}
-
-    ## Execution Items for This Wave (from PLAN.md)
-    [Include ONLY the execution items belonging to this wave, verbatim from PLAN.md's ### Wave N section]
+    Read the Goal section from PLAN_MD_PATH. Then read ONLY the `### Wave 1` section from
+    PLAN_MD_PATH for your execution items. Do NOT read or execute items from other wave sections.
+    Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
 
     ## Pre-Invoked Skill Results
     [If skills were pre-invoked above, include their output here]
@@ -378,7 +370,7 @@ Task tool:
     ## Critical Requirements
     - You are working in an isolated worktree. Your changes will be merged back to the issue branch.
     - Verify you are on branch ${BRANCH} before making changes
-    - Execute ONLY the items assigned to your wave (ASSIGNED_ITEMS above)
+    - Execute ONLY the items assigned to your wave (ASSIGNED_WAVE above, read from PLAN.md)
     - Do NOT execute items from other waves
     - **STATE.md ownership:** You are [DETERMINED AUTOMATICALLY: if wave is the last one, "the STATE.md owner"
       else "NOT the STATE.md owner"]. [If owner: "Update STATE.md in your final commit: status: closed,
@@ -538,12 +530,6 @@ If skipping, output: "Verification skipped (verify: ${VERIFY})"
 
 ### Delegate Verification to Subagent
 
-Read the PLAN.md post-conditions and goal:
-
-```bash
-PLAN_CONTENT=$(cat "${ISSUE_PATH}/PLAN.md")
-```
-
 Spawn a verify subagent to check post-conditions and run E2E tests. The verify subagent writes detailed
 analysis to files and returns only a compact JSON summary:
 
@@ -560,13 +546,14 @@ Task tool:
     WORKTREE_PATH: ${WORKTREE_PATH}
     BRANCH: ${BRANCH}
     TARGET_BRANCH: ${TARGET_BRANCH}
+    PLAN_MD_PATH: ${PLAN_MD}
+
+    Read the Goal and Post-conditions sections from PLAN_MD_PATH directly.
+    Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
 
     ## Execution Result
     Commits: ${execution_commits_json}
     Files changed: ${files_changed}
-
-    ## PLAN.md Content
-    ${PLAN_CONTENT}
 
     ## Your Task
     1. Invoke the verify-implementation skill to check all PLAN.md post-conditions:
@@ -1344,7 +1331,11 @@ about what they are approving.
    git log --oneline ${TARGET_BRANCH}..HEAD
    ```
 
-3. **Display issue goal** (from PLAN.md)
+3. **Display issue goal** — extract the first non-empty line after `## Goal` in PLAN.md:
+   ```bash
+   ISSUE_GOAL=$(grep -A1 "^## Goal" "${ISSUE_PATH}/PLAN.md" | tail -n1)
+   ```
+   Display this to the user.
 
 4. **Display execution summary** (commits count, files changed)
 
