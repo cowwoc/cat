@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- unify-output-template-delivery
 - rename-precomputed-output
 - command-optimizer
 - shrink-doc-token-metrics
