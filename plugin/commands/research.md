@@ -32,18 +32,15 @@ This skill uses pre-computed utilities from research_handler.py:
 
 | Function | Purpose |
 |----------|---------|
-| `rating_to_circles(n)` | Convert 1-5 rating to ●●●●○ pattern |
+| `rating_to_circles(n)` | Convert 1-5 rating to circle pattern |
 | `sum_ratings(dict)` | Calculate (total, max) from ratings dict |
 | `build_scorecard(ratings)` | Build complete scorecard box for an option |
 | `build_comparison_table(options)` | Build side-by-side comparison |
 | `build_concerns_box(concerns)` | Build stakeholder concerns display |
 
-**Rating circle patterns (do not hand-type):**
-- 5 → ●●●●●
-- 4 → ●●●●○
-- 3 → ●●●○○
-- 2 → ●●○○○
-- 1 → ●○○○○
+> **Note (M256):** Rating circle patterns are rendered by the handler functions.
+> They are NOT documented here to prevent manual construction attempts.
+> Always use handler functions for visual output.
 
 </functions>
 

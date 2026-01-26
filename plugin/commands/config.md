@@ -19,16 +19,9 @@ users through modifying their preferences.
 
 <emoji_reference>
 
-**MANDATORY (M210): Use these exact emojis for each setting:**
-
-| Setting | Emoji | Display |
-|---------|-------|---------|
-| Trust | 🤝 | 🤝 Trust |
-| Verify | ✅ | ✅ Verify |
-| Curiosity | 🔍 | 🔍 Curiosity |
-| Patience | ⏳ | ⏳ Patience |
-
-**Copy-paste from this table when constructing displays manually.**
+> **Note (M256):** Setting emojis are rendered in the PRE-COMPUTED CONFIG DISPLAY.
+> They are NOT documented here to prevent manual construction attempts.
+> Always use the pre-computed display from the handler.
 
 </emoji_reference>
 

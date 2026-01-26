@@ -934,6 +934,68 @@ architecture flowcharts) are acceptable because:
 - [ ] Visual patterns (circles, bars, etc.) use lookup tables with "do not hand-type" warning
 - [ ] All display rendering references handler functions by name
 
+### Conditional Information Principle (M256)
+
+**Critical rule**: Information that is only useful when pre-computed output exists should BE IN the
+pre-computed output, not in the skill documentation.
+
+**The failure pattern:**
+1. Skill doc contains "reference" information (emoji meanings, circle patterns, formatting rules)
+2. Agent sees this reference material before executing
+3. Agent uses the reference to manually construct output instead of copy-pasting pre-computed content
+4. Manual construction produces incorrect results (emoji widths, alignment errors)
+
+**Where information belongs:**
+
+| Information Type | Location | Why |
+|------------------|----------|-----|
+| How to find/copy pre-computed output | Skill doc | Always needed |
+| What to do if pre-computed missing | Skill doc (FAIL instruction) | Always needed |
+| Emoji meanings (☑️, 🔄, 🔳) | Pre-computed Legend line | Only useful with pre-computed output |
+| Rating patterns (●●●●○) | Pre-computed output | Only useful with pre-computed output |
+| Box character reference | Handler code only | Never needed by skill |
+| Formatting rules (widths, padding) | Handler code only | Never needed by skill |
+
+**Correct pattern:**
+```markdown
+# GOOD - Skill doc says WHERE, not HOW
+
+### Step 1: Output pre-computed display
+
+**MANDATORY:** Check context for "PRE-COMPUTED {NAME}".
+
+If found: Output exactly as provided.
+If NOT found: FAIL immediately.
+
+> **Note:** Emoji meanings are included in the pre-computed Legend line.
+> They are NOT documented separately here to prevent manual construction attempts.
+```
+
+**Anti-pattern (teaching then forbidding):**
+```markdown
+# BAD - Provides reference that enables manual construction
+
+## Emoji Reference (for understanding output, NOT for manual use)
+
+| Status | Emoji |
+|--------|-------|
+| Completed | ☑️ |
+| In Progress | 🔄 |
+| Pending | 🔳 |
+
+**Do not construct manually!**
+
+# Problem: Agent sees the reference, uses it anyway
+```
+
+**Self-check during skill creation:**
+- [ ] Does the skill contain reference tables the agent shouldn't use directly?
+- [ ] Is there any "for reference only" or "do not use manually" information?
+- [ ] Could this information enable manual construction if pre-computed output is ignored?
+- [ ] Should this information be moved to the pre-computed output instead?
+
+If YES to any: Move the information to the pre-computed output or remove it entirely.
+
 ### Output Artifact Gates (M192 Prevention)
 
 > **See also:** [workflow-output.md](../../concepts/workflow-output.md) for clean output standards

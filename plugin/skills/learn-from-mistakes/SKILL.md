@@ -416,6 +416,65 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 
 **If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
 
+### 8b. Check for Misleading Documentation (M256)
+
+**CRITICAL: Documentation may have ACTIVELY MISLED the agent toward the wrong approach.**
+
+Beyond checking if prevention exists, check if documentation contains content that:
+- Teaches HOW to do something manually before saying "don't do it manually"
+- Provides implementation details the agent shouldn't use directly
+- Has reference information that only applies when pre-computed output exists
+- Contains examples or functions that prime the agent for incorrect behavior
+
+```yaml
+misleading_documentation_check:
+  questions:
+    - "Does the doc teach a skill/approach BEFORE saying not to use it?"
+    - "Are there 'reference' sections with info the agent might try to use?"
+    - "Does section ordering prime the agent for wrong approach?"
+    - "Is there info that should ONLY appear with pre-computed output?"
+
+  patterns_to_find:
+    - Functions/Prerequisites sections before Procedure
+    - "Reference" sections with usable implementation details
+    - Examples of manual construction in skills that use pre-computation
+    - Emoji/formatting references outside pre-computed output
+
+  if_misleading_content_found:
+    action: "Remove or relocate misleading content as part of prevention"
+    principle: |
+      If information is only needed when pre-computed output exists,
+      it should BE IN the pre-computed output, not the skill doc.
+      This prevents agents from attempting manual construction when
+      pre-computed output is missing.
+```
+
+**The "Conditional Information" Principle:**
+
+| Information Type | Where It Belongs |
+|------------------|------------------|
+| How to copy-paste pre-computed output | Skill doc (always needed) |
+| Emoji meanings, formatting rules | Pre-computed output (only needed when it exists) |
+| Implementation functions | Handler code only (never in skill doc) |
+| What to do if pre-computed missing | Skill doc (FAIL instruction) |
+
+**Example - M256 Pattern:**
+
+```yaml
+# WRONG: Skill doc teaches emoji selection
+## Functions
+### select_emoji(status) -> emoji
+if status == "completed": return "☑️"
+...
+## Procedure
+Step 1: Use pre-computed output...
+
+# RIGHT: Move emoji info to pre-computed output
+## Procedure
+Step 1: Use pre-computed output...
+# (Emoji reference appears IN the pre-computed content, not skill doc)
+```
+
 ### 9. Implement Prevention
 
 **MANDATORY: Take concrete action. Prevention without action changes nothing.**
