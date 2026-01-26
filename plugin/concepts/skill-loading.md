@@ -279,8 +279,10 @@ its own agent ID via `$0`. Using `${CLAUDE_SESSION_ID}` in a subagent context wr
 causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 
 **Flags:**
-- `disable-model-invocation: true` — excludes the skill from the model's skill listing. Use on user-facing variants
-  so the model never attempts to invoke the user slash-command variant.
+- `disable-model-invocation: true` — excludes the skill from the model's skill listing AND blocks invocation via the
+  Skill tool. Attempting to invoke such a skill via Skill tool produces:
+  `"Skill {name} cannot be used with Skill tool due to disable-model-invocation"`.
+  Use the `-agent` variant (e.g., `cat:add-agent` instead of `cat:add`) when the model must invoke the skill.
 - `user-invocable: false` — hides the skill from the slash command menu. Use on agent-facing variants so users
   never see the `cat:{skill-name}-agent` command.
 
@@ -292,6 +294,12 @@ causing skills to misbehave (e.g., first-use check passes for the wrong agent).
 # Agent-facing: caller-supplied (may be subagent)
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/skill-loader" add-agent "$0"`
 ```
+
+**CRITICAL:** `$0` receives the agent ID injected by SubagentStartHook as the first positional argument. It must be a
+`${CLAUDE_SESSION_ID}` (main agent) or `${CLAUDE_SESSION_ID}/subagents/{agent_id}` (subagent). Passing any other value
+(e.g., a branch name like `v2.1`, a session variable, or a user-supplied string) produces:
+`"catAgentId 'v2.1' does not match a valid format. Expected: UUID"`. Do NOT construct or substitute this value —
+pass `$0` directly and ensure the invoking context received it from SubagentStartHook.
 
 **Descriptions:**
 - User-facing: describe what the skill does in plain language (e.g., "Add a new issue or version to the project").
