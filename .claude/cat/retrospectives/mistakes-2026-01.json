@@ -625,6 +625,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use relative paths (plugin/skills/) when in worktree, not absolute paths (/workspace/plugin/)"
+    },
+    {
+      "id": "M268",
+      "timestamp": "2026-01-27T02:19:58Z",
+      "category": "tool_misuse",
+      "description": "render-diff.py used terminalWidth 50 instead of 120 because worktrees lack .local.json (gitignored)",
+      "root_cause": "render-diff.py defaults to cwd for config, but worktrees don't have cat-config.local.json since it's gitignored",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/render-diff.py",
+      "pattern_keywords": [
+        "worktree",
+        "config",
+        "gitignore",
+        "local",
+        "terminalWidth"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use CLAUDE_PROJECT_DIR environment variable for config lookup, which always points to main workspace with .local.json"
     }
   ]
 }

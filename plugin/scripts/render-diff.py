@@ -541,11 +541,14 @@ Examples:
     )
     parser.add_argument('file', nargs='?', help='Diff file to read (default: stdin)')
     parser.add_argument('--width', '-w', type=int, help='Terminal width (default: from config or 50)')
-    parser.add_argument('--project-dir', '-p', default='.', help='Project root directory (default: current directory)')
+    # Default to CLAUDE_PROJECT_DIR if available (handles worktrees correctly)
+    default_project_dir = os.environ.get('CLAUDE_PROJECT_DIR', '.')
+    parser.add_argument('--project-dir', '-p', default=default_project_dir,
+                        help='Project root directory (default: CLAUDE_PROJECT_DIR or current directory)')
 
     args = parser.parse_args()
 
-    # Load config
+    # Load config from project dir (CLAUDE_PROJECT_DIR has .local.json, worktrees don't)
     config = load_config(args.project_dir)
 
     # Determine width
