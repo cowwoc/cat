@@ -10,44 +10,132 @@
       "summary": "First retrospective covering 10 mistakes. Dominant category is protocol_violation (60%). Prevention types skew toward skill documentation (60%), with only 10% using stronger code_fix level. Key patterns: approval gate compliance, worktree isolation, threshold enforcement.",
       "findings": {
         "category_breakdown": [
-          {"category": "protocol_violation", "count": 6, "ids": ["M247", "M246", "M248", "M251", "M252", "M254"]},
-          {"category": "assumption_without_verification", "count": 1, "ids": ["M250"]},
-          {"category": "config", "count": 1, "ids": ["M249"]},
-          {"category": "detection_gap", "count": 1, "ids": ["M253"]},
-          {"category": "tool_misuse", "count": 1, "ids": ["M001"]}
+          {
+            "category": "protocol_violation",
+            "count": 6,
+            "ids": [
+              "M247",
+              "M246",
+              "M248",
+              "M251",
+              "M252",
+              "M254"
+            ]
+          },
+          {
+            "category": "assumption_without_verification",
+            "count": 1,
+            "ids": [
+              "M250"
+            ]
+          },
+          {
+            "category": "config",
+            "count": 1,
+            "ids": [
+              "M249"
+            ]
+          },
+          {
+            "category": "detection_gap",
+            "count": 1,
+            "ids": [
+              "M253"
+            ]
+          },
+          {
+            "category": "tool_misuse",
+            "count": 1,
+            "ids": [
+              "M001"
+            ]
+          }
         ],
         "prevention_type_breakdown": [
-          {"type": "skill", "count": 6, "ids": ["M247", "M246", "M248", "M250", "M251", "M254"]},
-          {"type": "code_fix", "count": 1, "ids": ["M001"]},
-          {"type": "config", "count": 1, "ids": ["M249"]},
-          {"type": "documentation", "count": 1, "ids": ["M252"]},
-          {"type": "validation", "count": 1, "ids": ["M253"]}
+          {
+            "type": "skill",
+            "count": 6,
+            "ids": [
+              "M247",
+              "M246",
+              "M248",
+              "M250",
+              "M251",
+              "M254"
+            ]
+          },
+          {
+            "type": "code_fix",
+            "count": 1,
+            "ids": [
+              "M001"
+            ]
+          },
+          {
+            "type": "config",
+            "count": 1,
+            "ids": [
+              "M249"
+            ]
+          },
+          {
+            "type": "documentation",
+            "count": 1,
+            "ids": [
+              "M252"
+            ]
+          },
+          {
+            "type": "validation",
+            "count": 1,
+            "ids": [
+              "M253"
+            ]
+          }
         ],
         "rca_method_breakdown": [
-          {"method": "taxonomy (B)", "count": 4},
-          {"method": "5-whys (A)", "count": 3},
-          {"method": "causal-barrier (C)", "count": 3}
+          {
+            "method": "taxonomy (B)",
+            "count": 4
+          },
+          {
+            "method": "5-whys (A)",
+            "count": 3
+          },
+          {
+            "method": "causal-barrier (C)",
+            "count": 3
+          }
         ],
         "patterns_identified": [
           {
             "pattern_id": "PATTERN-001",
             "pattern": "protocol_violation - approval gate compliance",
             "occurrences": 3,
-            "mistakes": ["M248", "M251", "M254"],
+            "mistakes": [
+              "M248",
+              "M251",
+              "M254"
+            ],
             "note": "Approval gates being executed without full compliance - wrong version names, missing context, wrong thresholds"
           },
           {
             "pattern_id": "PATTERN-002",
             "pattern": "protocol_violation - user message handling",
             "occurrences": 2,
-            "mistakes": ["M247", "M250"],
+            "mistakes": [
+              "M247",
+              "M250"
+            ],
             "note": "User messages embedded in system-reminders being ignored or misinterpreted"
           },
           {
             "pattern_id": "PATTERN-003",
             "pattern": "protocol_violation - worktree workflow",
             "occurrences": 1,
-            "mistakes": ["M252"],
+            "mistakes": [
+              "M252"
+            ],
             "note": "Task work being done in main worktree instead of isolated worktree"
           }
         ],
@@ -59,7 +147,11 @@
             "category": "protocol_violation",
             "pattern_id": "PATTERN-001",
             "status": "open",
-            "related_mistakes": ["M248", "M251", "M254"]
+            "related_mistakes": [
+              "M248",
+              "M251",
+              "M254"
+            ]
           },
           {
             "id": "A002",
@@ -67,7 +159,14 @@
             "description": "Review prevention type distribution - 60% skill-level prevention may be too weak. Consider escalating more preventions to hook or validation level",
             "category": "process",
             "status": "open",
-            "related_mistakes": ["M247", "M246", "M248", "M250", "M251", "M254"]
+            "related_mistakes": [
+              "M247",
+              "M246",
+              "M248",
+              "M250",
+              "M251",
+              "M254"
+            ]
           }
         ],
         "observations": [
@@ -75,6 +174,179 @@
           "No recurrences yet (all mistakes are new patterns)",
           "M252 used documentation-level prevention which may be too weak for protocol_violation category",
           "Strongest prevention (code_fix) only used once (M001)"
+        ]
+      }
+    },
+    {
+      "id": "R002",
+      "timestamp": "2026-01-26T16:09:25-05:00",
+      "trigger": "count_based",
+      "period_analyzed": "2026-01-26T00:38:39Z to 2026-01-26T16:00:00Z",
+      "mistakes_analyzed": 12,
+      "summary": "Second retrospective covering 12 mistakes. Dominant categories: prompt_engineering (33%) and protocol_violation (33%). Prevention type heavily skewed to skill-level (83%). Key pattern: subagent delegation gaps (4 mistakes). Escalation needed for recurring manual box construction issue.",
+      "findings": {
+        "category_breakdown": [
+          {
+            "category": "prompt_engineering",
+            "count": 4,
+            "ids": [
+              "M258",
+              "M260",
+              "M264",
+              "M265"
+            ]
+          },
+          {
+            "category": "protocol_violation",
+            "count": 4,
+            "ids": [
+              "M254",
+              "M256",
+              "M257",
+              "M262"
+            ]
+          },
+          {
+            "category": "tool_misuse",
+            "count": 2,
+            "ids": [
+              "M259",
+              "M261"
+            ]
+          },
+          {
+            "category": "documentation_violation",
+            "count": 1,
+            "ids": [
+              "M255"
+            ]
+          },
+          {
+            "category": "logical_error",
+            "count": 1,
+            "ids": [
+              "M263"
+            ]
+          }
+        ],
+        "prevention_type_breakdown": [
+          {
+            "type": "skill",
+            "count": 10,
+            "ids": [
+              "M254",
+              "M256",
+              "M257",
+              "M258",
+              "M260",
+              "M261",
+              "M262",
+              "M263",
+              "M264",
+              "M265"
+            ]
+          },
+          {
+            "type": "documentation",
+            "count": 1,
+            "ids": [
+              "M255"
+            ]
+          },
+          {
+            "type": "process",
+            "count": 1,
+            "ids": [
+              "M259"
+            ]
+          }
+        ],
+        "rca_method_breakdown": [
+          {
+            "method": "causal-barrier (C)",
+            "count": 5
+          },
+          {
+            "method": "5-whys (A)",
+            "count": 4
+          },
+          {
+            "method": "taxonomy (B)",
+            "count": 3
+          }
+        ],
+        "patterns_identified": [
+          {
+            "pattern_id": "PATTERN-004",
+            "pattern": "prompt_engineering - subagent delegation gaps",
+            "occurrences": 4,
+            "mistakes": [
+              "M258",
+              "M260",
+              "M264",
+              "M265"
+            ],
+            "note": "Subagent prompts missing: postcondition reporting (M258, M265), acceptance criteria (M260), skill invocation requirement (M264)"
+          },
+          {
+            "pattern_id": "PATTERN-005",
+            "pattern": "protocol_violation - pre-computed output compliance",
+            "occurrences": 2,
+            "mistakes": [
+              "M256",
+              "M257"
+            ],
+            "note": "Manual reconstruction of boxes/templates instead of copy-pasting pre-computed output - recurrence of M246 pattern"
+          }
+        ],
+        "action_items": [
+          {
+            "id": "A003",
+            "priority": "high",
+            "description": "Consolidate subagent delegation requirements into a single mandatory checklist in spawn-subagent skill - postconditions (M258, M265), acceptance criteria (M260), skill invocation (M264), per-file tables for batch ops",
+            "category": "prompt_engineering",
+            "pattern_id": "PATTERN-004",
+            "status": "implemented",
+            "related_mistakes": [
+              "M258",
+              "M260",
+              "M264",
+              "M265"
+            ],
+            "note": "All four items already added to spawn-subagent/SKILL.md checklist during individual mistake recording"
+          },
+          {
+            "id": "A004",
+            "priority": "medium",
+            "description": "Consider PreToolUse hook to detect manual box construction patterns and warn agent to use pre-computed templates",
+            "category": "protocol_violation",
+            "pattern_id": "PATTERN-005",
+            "status": "open",
+            "related_mistakes": [
+              "M246",
+              "M256",
+              "M257"
+            ],
+            "note": "M256/M257 are recurrences despite M246 prevention - skill-level prevention insufficient"
+          }
+        ],
+        "observations": [
+          "83% of preventions are skill-level (10/12) - weaker than recommended",
+          "PATTERN-005 (manual box construction) is a recurrence - M256/M257 occurred despite M246 prevention",
+          "spawn-subagent skill received 4 updates this period - consolidation needed",
+          "Causal-barrier (C) method used most frequently (5/12) - may indicate complex root causes",
+          "No code_fix or hook level preventions used this period - escalation needed per A002"
+        ],
+        "escalations": [
+          {
+            "id": "ESCALATE-2026-01-26-001",
+            "original_pattern": "PATTERN-005",
+            "original_prevention": "skill documentation in work.md (M246)",
+            "failure_analysis": "Skill-level prevention failed to prevent recurrence (M256, M257)",
+            "proposed_solution": "Escalate to hook-level prevention that detects box character patterns being typed vs copy-pasted",
+            "priority": "medium",
+            "status": "proposed"
+          }
         ]
       }
     }
