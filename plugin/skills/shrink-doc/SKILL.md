@@ -622,12 +622,22 @@ Each file MUST be validated individually with `/compare-docs`. Report results as
 
 **Anti-pattern (M265):** Summarizing batch results as "all files passed" or "all files scored 1.0" without showing per-file evidence. Aggregate statements are unverifiable.
 
-### Batch Workflow
+### Execution Models
 
-1. **Process each file through full workflow** (Steps 1-6)
-2. **Track per-file scores** in the table above
-3. **Iterate failed files** before reporting completion
-4. **Present final table** showing all files and their scores
+**Sequential** (single agent processes files one at a time):
+1. Process each file through full workflow (Steps 1-6)
+2. Track per-file scores in the table
+3. Iterate failed files before moving to next file
+4. Present final table after all files complete
+
+**Parallel** (multiple subagents via `/cat:parallel-execute`):
+1. Spawn one subagent per file, each running full shrink-doc workflow
+2. Each subagent manages its own baseline (`/tmp/original-{filename}`) and versions
+3. Collect results from all subagents
+4. Combine into single per-file table
+5. Files that fail validation iterate independently within their subagent
+
+**Parallel is preferred** for batch operations - files are independent and can be compressed concurrently. Use sequential only when resource constraints require it.
 
 ### Reporting to Parent Agent
 
