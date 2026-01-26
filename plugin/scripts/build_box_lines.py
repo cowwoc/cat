@@ -30,58 +30,31 @@ Example:
 import sys
 import json
 import argparse
+import os
 
-# Emojis that display as width 2 in most terminals
-WIDTH_2_EMOJIS = {
-    '📊', '📦', '🎯', '📋', '⚙️', '🏆', '🧠', '🐱', '🧹', '🤝',
-    '✅', '🔍', '👀', '🔭', '⏳', '⚡', '🔒', '✨', '⚠️', '✦',
-    '☑️', '🔄', '🔳', '🚫', '🚧', '🚀'
-}
+# Add lib directory to path for shared imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+from emoji_widths import display_width, get_emoji_widths
 
-# Single-character emojis (without variation selector) that are width 2
-WIDTH_2_SINGLE = {
-    '📊', '📦', '🎯', '📋', '🏆', '🧠', '🐱', '🧹', '🤝',
-    '✅', '🔍', '👀', '🔭', '⏳', '⚡', '🔒', '✨', '✦',
-    '🔄', '🔳', '🚫', '🚧', '🚀'
-}
+# Cache emoji widths at module level for efficiency
+_emoji_widths = None
+
+def _get_widths():
+    """Get cached emoji widths dict."""
+    global _emoji_widths
+    if _emoji_widths is None:
+        _emoji_widths = get_emoji_widths()
+    return _emoji_widths
 
 
-def display_width(text: str) -> int:
-    """Calculate terminal display width of a string."""
-    width = 0
-    i = 0
-    while i < len(text):
-        char = text[i]
-
-        # Check for two-character emoji sequences (char + variation selector)
-        if i + 1 < len(text):
-            two_char = text[i:i+2]
-            if two_char in WIDTH_2_EMOJIS:
-                width += 2
-                i += 2
-                continue
-
-        # Check for single-character width-2 emojis
-        if char in WIDTH_2_SINGLE:
-            width += 2
-            i += 1
-            continue
-
-        # Skip variation selectors (they don't add width)
-        if char == '\ufe0f':  # variation selector-16
-            i += 1
-            continue
-
-        # All other characters are width 1
-        width += 1
-        i += 1
-
-    return width
+def _display_width(text: str) -> int:
+    """Calculate terminal display width of a string using shared library."""
+    return display_width(text, _get_widths())
 
 
 def build_line(content: str, max_width: int) -> str:
     """Build a single box line with correct padding."""
-    content_width = display_width(content)
+    content_width = _display_width(content)
     padding = max_width - content_width
     return "│ " + content + " " * padding + " │"
 
@@ -120,7 +93,7 @@ def main():
         sys.exit(1)
 
     # Calculate widths
-    widths = [(c, display_width(c)) for c in contents]
+    widths = [(c, _display_width(c)) for c in contents]
     natural_max = max(w for _, w in widths)
     # --min-width sets minimum width; always expand to fit content
     max_content_width = max(args.min_width or 0, natural_max)

@@ -228,7 +228,7 @@ This technique prevents over-generalization and ensures the algorithm handles ed
 FUNCTIONS:
   display_width(text) → integer
     Purpose: Calculate terminal display width of text
-    Logic: Sum character widths (emoji=2, others=1)
+    Logic: Use lib/emoji_widths.py lookup for terminal-specific widths
     Used by: max_content_width, padding calculation
 
   max_content_width(contents[]) → integer
@@ -603,7 +603,7 @@ GOAL: Right borders align
         REQUIRES: max_content_width is known
           REQUIRES: display_width calculated for ALL content items  ← Repeated operation
             REQUIRES: emoji widths handled correctly
-              ATOMIC: Use width lookup (emoji → 2, other → 1)
+              ATOMIC: Use lib/emoji_widths.py lookup
         REQUIRES: content_width is known for THIS item
           REQUIRES: display_width calculated for this item          ← Same as above!
       REQUIRES: borders are fixed width (4)
@@ -613,7 +613,7 @@ GOAL: Right borders align
 ### Step 3: Leaf Nodes
 
 ```
-1. Width lookup table (emoji → 2, other → 1)
+1. Width lookup via lib/emoji_widths.py
 2. Border constants ("│ " = 2, " │" = 2)
 ```
 
@@ -677,11 +677,8 @@ All right-side │ characters align vertically.
 Calculate terminal display width of a string.
 
 ```
-width = 0
-for each char in text:
-  if char in [☑️, 🔄, 🔳, 📊, ...]: width += 2
-  else: width += 1
-return width
+Use lib/emoji_widths.py lookup for terminal-specific emoji widths.
+The library handles variation selectors and terminal detection automatically.
 ```
 
 ### max_content_width(contents[]) → integer

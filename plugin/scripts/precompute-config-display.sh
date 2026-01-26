@@ -111,9 +111,13 @@ BOTTOM=$(echo "$BOX_JSON" | jq -r '.bottom')
 # Header line = "╭─── " (5) + title + " " (1) + dashes + "╮" (1)
 
 TITLE="⚙️ CURRENT SETTINGS"
-# Calculate display width of title (emoji=2, others=1)
-# ⚙️ = 2, space = 1, "CURRENT SETTINGS" = 16, total = 19
-TITLE_DISPLAY_WIDTH=19
+# Calculate display width of title using shared emoji_widths library
+TITLE_DISPLAY_WIDTH=$(python3 -c "
+import sys
+sys.path.insert(0, '$SCRIPT_DIR/lib')
+from emoji_widths import display_width, get_emoji_widths
+print(display_width('$TITLE', get_emoji_widths()))
+")
 
 # Total inner width = max_width + 2 (for the spaces in "│ content │")
 INNER_WIDTH=$((MAX_WIDTH + 2))
