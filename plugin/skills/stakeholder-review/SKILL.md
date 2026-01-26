@@ -1,6 +1,6 @@
 ---
 name: cat:stakeholder-review
-description: Multi-perspective quality review gate with architect, security, quality, tester, and performance stakeholders
+description: Multi-perspective quality review gate with architect, security, design, testing, and performance stakeholders
 ---
 
 # Skill: stakeholder-review
@@ -10,7 +10,7 @@ Multi-perspective stakeholder review gate for implementation quality assurance.
 ## Purpose
 
 Run parallel stakeholder reviews of implementation changes to identify concerns from multiple
-perspectives (architecture, security, quality, testing, performance) before user approval.
+perspectives (architecture, security, design, testing, performance) before user approval.
 
 ## When to Use
 
@@ -25,8 +25,8 @@ perspectives (architecture, security, quality, testing, performance) before user
 | requirements | @stakeholders/requirements.md | Requirement satisfaction verification |
 | architect | @stakeholders/architect.md | System design, module boundaries, APIs |
 | security | @stakeholders/security.md | Vulnerabilities, input validation |
-| quality | @stakeholders/quality.md | Code quality, complexity, duplication |
-| tester | @stakeholders/tester.md | Test coverage, edge cases |
+| design | @stakeholders/design.md | Code quality, complexity, duplication |
+| testing | @stakeholders/testing.md | Test coverage, edge cases |
 | performance | @stakeholders/performance.md | Efficiency, resource usage |
 | ux | @stakeholders/ux.md | Usability, accessibility, interaction design |
 | sales | @stakeholders/sales.md | Customer value, competitive positioning |
@@ -53,7 +53,7 @@ internal file reads and analysis are invisible.
   → requirements: ✓
   → architect: ✓
   → security: ⚠ 1 HIGH
-  → tester: ✓
+  → testing: ✓
   → performance: ✓
 ```
 
@@ -95,10 +95,10 @@ Detect task type from PLAN.md `## Type` field or infer from commit messages/desc
 
 | Task Type | Include | Exclude |
 |-----------|---------|---------|
-| documentation | requirements | architect, security, quality, tester, performance, ux, sales, marketing |
-| refactor | architect, quality, tester | ux, sales, marketing |
-| bugfix | requirements, quality, tester, security | sales, marketing |
-| performance | performance, architect, tester | ux, sales, marketing |
+| documentation | requirements | architect, security, design, testing, performance, ux, sales, marketing |
+| refactor | architect, design, testing | ux, sales, marketing |
+| bugfix | requirements, design, testing, security | sales, marketing |
+| performance | performance, architect, testing | ux, sales, marketing |
 
 ### Keyword Mappings
 
@@ -109,7 +109,7 @@ Scan task description, goal, and PLAN.md for keywords:
 | "license", "compliance", "legal" | legal |
 | "UI", "frontend", "user interface" | ux |
 | "API", "endpoint", "public" | architect, security, marketing |
-| "internal", "tooling", "CLI" | architect, quality (exclude ux, sales, marketing) |
+| "internal", "tooling", "CLI" | architect, design (exclude ux, sales, marketing) |
 | "security", "auth", "permission" | security |
 
 ### Version Focus Mapping
@@ -126,10 +126,10 @@ In review mode, file changes can override context exclusions:
 |--------------|-----------------|
 | UI/frontend files (`**/ui/**`, `**/frontend/**`, `*.tsx`, `*.vue`) | ux |
 | Security-sensitive files (`**/auth/**`, `**/permission/**`, `**/security/**`) | security |
-| Test files (`*Test*`, `*Spec*`, `*_test*`) | tester |
+| Test files (`*Test*`, `*Spec*`, `*_test*`) | testing |
 | Algorithm-heavy files (sort, search, optimize, process) | performance |
 | Only .md files changed | requirements only, exclude all others |
-| Only test files changed | tester, quality only |
+| Only test files changed | testing, design only |
 
 ### User Override: Force Stakeholders
 
@@ -172,23 +172,23 @@ fi
 # Apply task type mappings
 case "$TASK_TYPE" in
     documentation)
-        EXCLUDED="architect security quality tester performance ux sales marketing"
+        EXCLUDED="architect security design testing performance ux sales marketing"
         ;;
     refactor)
-        SELECTED="$SELECTED architect quality tester"
+        SELECTED="$SELECTED architect design testing"
         EXCLUDED="ux sales marketing"
         ;;
     bugfix)
-        SELECTED="$SELECTED quality tester security"
+        SELECTED="$SELECTED design testing security"
         EXCLUDED="sales marketing"
         ;;
     performance)
-        SELECTED="$SELECTED performance architect tester"
+        SELECTED="$SELECTED performance architect testing"
         EXCLUDED="ux sales marketing"
         ;;
     *)
         # Default: include core technical reviewers
-        SELECTED="$SELECTED architect security quality tester performance"
+        SELECTED="$SELECTED architect security design testing performance"
         EXCLUDED=""
         ;;
 esac
@@ -206,7 +206,7 @@ if echo "$TASK_TEXT" | grep -qE '\bapi\b|endpoint|public'; then
     SELECTED="$SELECTED architect security marketing"
 fi
 if echo "$TASK_TEXT" | grep -qE 'internal|tooling|\bcli\b'; then
-    SELECTED="$SELECTED architect quality"
+    SELECTED="$SELECTED architect design"
     EXCLUDED="$EXCLUDED ux sales marketing"
 fi
 if echo "$TASK_TEXT" | grep -qE 'security|auth|permission'; then
@@ -250,9 +250,9 @@ if echo "$CHANGED_FILES" | grep -qE '(auth/|permission/|security/)'; then
 fi
 
 if echo "$CHANGED_FILES" | grep -qE '(Test|Spec|_test)\.'; then
-    if ! echo "$SELECTED" | grep -q 'tester'; then
-        SELECTED="$SELECTED tester"
-        OVERRIDDEN="$OVERRIDDEN tester:test_file_changed"
+    if ! echo "$SELECTED" | grep -q 'testing'; then
+        SELECTED="$SELECTED testing"
+        OVERRIDDEN="$OVERRIDDEN testing:test_file_changed"
     fi
 fi
 
@@ -269,13 +269,13 @@ if echo "$CHANGED_FILES" | grep -qvE '\.md$' | grep -q .; then
 else
     # Only markdown files - limit to requirements only
     SELECTED="requirements"
-    SKIPPED="$SKIPPED architect:only_md_files security:only_md_files quality:only_md_files tester:only_md_files performance:only_md_files ux:only_md_files sales:only_md_files marketing:only_md_files legal:only_md_files"
+    SKIPPED="$SKIPPED architect:only_md_files security:only_md_files design:only_md_files testing:only_md_files performance:only_md_files ux:only_md_files sales:only_md_files marketing:only_md_files legal:only_md_files"
 fi
 
 # Special case: only test files changed
 NON_TEST_FILES=$(echo "$CHANGED_FILES" | grep -vE '(Test|Spec|_test)\.' || true)
 if [[ -z "$NON_TEST_FILES" ]] && [[ -n "$CHANGED_FILES" ]]; then
-    SELECTED="requirements tester quality"
+    SELECTED="requirements testing design"
     SKIPPED="$SKIPPED architect:only_test_files security:only_test_files performance:only_test_files ux:only_test_files sales:only_test_files marketing:only_test_files legal:only_test_files"
 fi
 ```
@@ -298,8 +298,8 @@ If file-based overrides occurred, add an "Overrides (file-based):" section insid
 | performance | No algorithm-heavy code changes |
 | architect | Documentation-only task |
 | security | Documentation-only task / No source code changes |
-| quality | Documentation-only task |
-| tester | Documentation-only task |
+| design | Documentation-only task |
+| testing | Documentation-only task |
 
 </step>
 
@@ -334,7 +334,7 @@ if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
 fi
 
 # SELECTED is populated by analyze_context step
-# Contains: space-separated stakeholder names (e.g., "requirements architect security quality tester")
+# Contains: space-separated stakeholder names (e.g., "requirements architect security design testing")
 # SKIPPED contains: stakeholder:reason pairs for reporting
 # OVERRIDDEN contains: stakeholder:reason pairs for file-based overrides
 ```
@@ -395,7 +395,7 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
 
 ```json
 {
-  "stakeholder": "architect|security|quality|tester|performance",
+  "stakeholder": "architect|security|design|testing|performance",
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [...],
   "summary": "..."
@@ -508,8 +508,8 @@ Return structured result for integration with work:
     "requirements": {"status": "...", "concerns": [...]},
     "architect": {"status": "...", "concerns": [...]},
     "security": {"status": "...", "concerns": [...]},
-    "quality": {"status": "...", "concerns": [...]},
-    "tester": {"status": "...", "concerns": [...]},
+    "design": {"status": "...", "concerns": [...]},
+    "testing": {"status": "...", "concerns": [...]},
     "performance": {"status": "...", "concerns": [...]},
     "ux": {"status": "...", "concerns": [...]},
     "sales": {"status": "...", "concerns": [...]},

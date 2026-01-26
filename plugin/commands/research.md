@@ -64,8 +64,8 @@ This skill uses output template utilities from research_handler.py:
 @${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md
 @${CLAUDE_PLUGIN_ROOT}/stakeholders/architect.md
 @${CLAUDE_PLUGIN_ROOT}/stakeholders/security.md
-@${CLAUDE_PLUGIN_ROOT}/stakeholders/quality.md
-@${CLAUDE_PLUGIN_ROOT}/stakeholders/tester.md
+@${CLAUDE_PLUGIN_ROOT}/stakeholders/design.md
+@${CLAUDE_PLUGIN_ROOT}/stakeholders/testing.md
 @${CLAUDE_PLUGIN_ROOT}/stakeholders/performance.md
 @${CLAUDE_PLUGIN_ROOT}/stakeholders/ux.md
 @${CLAUDE_PLUGIN_ROOT}/stakeholders/sales.md
@@ -146,12 +146,12 @@ agents:
     topic: "[extracted topic]"
     context: "[version context]"
 
-  - stakeholder: quality
+  - stakeholder: design
     mode: research
     topic: "[extracted topic]"
     context: "[version context]"
 
-  - stakeholder: tester
+  - stakeholder: testing
     mode: research
     topic: "[extracted topic]"
     context: "[version context]"
@@ -205,8 +205,8 @@ Track completion:
 Stakeholder research progress:
 ✓ architect - HIGH confidence
 ✓ security - MEDIUM confidence
-✓ quality - HIGH confidence
-✓ tester - HIGH confidence
+✓ design - HIGH confidence
+✓ testing - HIGH confidence
 ✓ performance - MEDIUM confidence
 ✓ ux - HIGH confidence
 ✓ sales - HIGH confidence
@@ -276,7 +276,7 @@ For each option, prepare:
 **Stakeholder dimensions:**
 4. **Architect** - How well it addresses architectural concerns
 5. **Security** - How well it addresses security concerns
-6. **Tester** - How well it addresses testing concerns
+6. **Testing** - How well it addresses testing concerns
 7. **Performance** - How well it addresses performance concerns
 8. **UX** - How well it addresses user experience concerns
 9. **Sales** - How well it addresses sales/value concerns
@@ -290,7 +290,7 @@ For each option:
 - [ ] Cost rating is integer 1-5
 - [ ] Quality rating is integer 1-5
 - [ ] All 8 stakeholder ratings are integers 1-5
-- [ ] Total = Speed + Cost + Quality + Architect + Security + Tester + Performance + UX + Sales + Marketing + Legal
+- [ ] Total = Speed + Cost + Quality + Architect + Security + Testing + Performance + UX + Sales + Marketing + Legal
 - [ ] Max possible = 55 (11 dimensions × 5)
 ```
 

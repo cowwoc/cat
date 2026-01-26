@@ -9,8 +9,8 @@ Multi-perspective code review through specialized stakeholder agents.
 | requirements | Functional correctness | Specification compliance, missing functionality, incorrect behavior |
 | architect | System design | Module boundaries, dependencies, API design, stack selection |
 | security | Vulnerabilities | Injection, auth, input validation, resource limits |
-| quality | Code quality | Duplication, complexity, maintainability, bugs |
-| tester | Test coverage | Missing tests, edge cases, test quality |
+| design | Code quality | Duplication, complexity, maintainability, bugs |
+| testing | Test coverage | Missing tests, edge cases, test quality |
 | performance | Efficiency | Algorithm complexity, memory, resource usage |
 | ux | User experience | Usability, accessibility, interaction design, user feedback |
 | sales | Sales readiness | Customer value, competitive positioning, demo-readiness, objections |
@@ -58,8 +58,8 @@ Stakeholders run in review mode during:
 | **requirements** | Must-have requirements, acceptance criteria, verification approaches | Specification compliance, missing/incorrect functionality |
 | **architect** | Stack selection, architecture patterns, integration approaches | Module boundaries, API design, dependency direction |
 | **security** | Domain-specific risks, secure patterns, OWASP concerns | Injection, auth bypasses, data exposure |
-| **quality** | Best practices, anti-patterns, maintainability patterns | Duplication, complexity, dead code, obvious bugs |
-| **tester** | Testing strategies, edge cases to anticipate, test data needs | Missing tests, broken tests, coverage gaps |
+| **design** | Best practices, anti-patterns, maintainability patterns | Duplication, complexity, dead code, obvious bugs |
+| **testing** | Testing strategies, edge cases to anticipate, test data needs | Missing tests, broken tests, coverage gaps |
 | **performance** | Performance characteristics, efficient patterns, scaling concerns | Algorithm complexity, memory leaks, blocking operations |
 | **ux** | UX patterns, usability considerations, accessibility requirements | Broken flows, missing feedback, accessibility barriers |
 | **sales** | Customer value, competitive positioning, objection handling | Value delivery, demo-readiness, competitive disadvantage |
