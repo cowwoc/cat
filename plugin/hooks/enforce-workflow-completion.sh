@@ -33,9 +33,30 @@ TASK_DIR=$(dirname "$FILE_PATH")
 TASK_NAME=$(basename "$TASK_DIR")
 
 # Build warning message - use "approve" not "allow" per hook schema
-cat << EOF
-{
-  "decision": "approve",
-  "systemMessage": "⚠️ WORKFLOW COMPLETION CHECK (M217)\n\nYou are marking task '$TASK_NAME' as completed.\n\nBefore completing a task via /cat:work, verify ALL phases are done:\n\n1. **Setup** ✓ (worktree created, task loaded)\n2. **Implementation** ✓ (code written, tests pass, committed)\n3. **Reviewing** - Did you complete:\n   - [ ] stakeholder_review (run parallel stakeholder reviews)\n   - [ ] approval_gate (present changes for USER approval)\n4. **Merging** - Did you:\n   - [ ] Ask user if they want to merge\n   - [ ] Run squash_commits, merge, cleanup\n\nIf you skipped phases 3-4, STOP and return to the /cat:work workflow.\nCommitting code does NOT complete the task - user review and merge are required.\n\nIf this is a legitimate completion (all phases done), proceed with the edit."
-}
-EOF
+# Use jq to properly escape the multi-line message as JSON
+MESSAGE=$(cat << 'MSGEOF'
+⚠️ WORKFLOW COMPLETION CHECK (M217)
+
+You are marking task '$TASK_NAME' as completed.
+
+Before completing a task via /cat:work, verify ALL phases are done:
+
+1. **Setup** ✓ (worktree created, task loaded)
+2. **Implementation** ✓ (code written, tests pass, committed)
+3. **Reviewing** - Did you complete:
+   - [ ] stakeholder_review (run parallel stakeholder reviews)
+   - [ ] approval_gate (present changes for USER approval)
+4. **Merging** - Did you:
+   - [ ] Ask user if they want to merge
+   - [ ] Run squash_commits, merge, cleanup
+
+If you skipped phases 3-4, STOP and return to the /cat:work workflow.
+Committing code does NOT complete the task - user review and merge are required.
+
+If this is a legitimate completion (all phases done), proceed with the edit.
+MSGEOF
+)
+
+# Substitute task name and output as JSON
+MESSAGE="${MESSAGE//\$TASK_NAME/$TASK_NAME}"
+jq -n --arg msg "$MESSAGE" '{"decision": "approve", "systemMessage": $msg}'
