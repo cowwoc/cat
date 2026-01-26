@@ -32,7 +32,7 @@ See `@references/workflow-output.md` for complete batching strategy.
 | Planning | Plan | Make decisions, create spec |
 | Implementation | general-purpose | Execute spec, commit |
 | Review | general-purpose | Orchestrate reviewers |
-| Finalization | general-purpose | Merge, cleanup, update state |
+| Finalization | Main agent (direct) | Merge, cleanup, update state |
 
 **Output pattern:**
 ```
@@ -421,9 +421,23 @@ The subagent may have lost context and produced lower quality output.
 
 Present AskUserQuestion with decomposition as recommended option.
 
+## Why Finalization Uses Direct Execution (Not Subagent Batching)
+
+**Finalization phase (steps 10-16) uses direct execution instead of subagent batching.**
+
+Unlike Exploration, Planning, and Implementation phases:
+
+1. **Happens AFTER user approval** - User has already reviewed and approved all changes
+2. **Minimal tool calls** - Only 3-5 operations (merge, cleanup, state updates) vs 20+ in exploration
+3. **Low user benefit from hiding** - No noise to hide; operations are already approved
+4. **Better error handling** - Merge conflicts or cleanup failures should surface immediately for user intervention
+5. **Simplicity** - Direct execution is simpler than subagent overhead for post-approval cleanup
+
+**Result:** Users see straightforward cleanup steps after approval, not wrapped in a Task tool invocation.
+
 ### 10. Main Agent Merge
 
-**Batched into Finalization subagent** - see Subagent Batching Standards above
+**Direct execution** - Finalization steps run after user approval with minimal tool calls.
 
 ```bash
 # In task worktree
@@ -436,7 +450,7 @@ If conflicts:
 
 ### 11. Cleanup Subagent Resources
 
-**Batched into Finalization subagent** - see Subagent Batching Standards above
+**Direct execution** - Finalization steps run after user approval with minimal tool calls.
 
 **After merging subagent branch to task branch, cleanup BEFORE approval gate:**
 
@@ -455,7 +469,7 @@ This ensures:
 
 ### 12. Update State
 
-**Batched into Finalization subagent** - see Subagent Batching Standards above
+**Direct execution** - Finalization steps run after user approval with minimal tool calls.
 
 **MANDATORY (M153): Set STATE.md to FINAL state before approval gate.**
 
@@ -612,7 +626,7 @@ Present changes → User responds
 
 ### 14. Final Merge
 
-**Batched into Finalization subagent** - see Subagent Batching Standards above
+**Direct execution** - Finalization steps run after user approval with minimal tool calls.
 
 After approval:
 
@@ -676,7 +690,7 @@ git push . "HEAD:${BASE_BRANCH}"
 
 ### 15. Update Parent State (Rollup Only) - IN WORKTREE
 
-**Batched into Finalization subagent** - see Subagent Batching Standards above
+**Direct execution** - Finalization steps run after user approval with minimal tool calls.
 
 **CRITICAL (M230): Parent STATE.md updates MUST happen IN THE WORKTREE before merge.**
 
@@ -765,7 +779,7 @@ separate commit that requires manual squashing.
 
 ### 16. Cleanup
 
-**Batched into Finalization subagent** - see Subagent Batching Standards above
+**Direct execution** - Finalization steps run after user approval with minimal tool calls.
 
 ```bash
 # MANDATORY: Return to main workspace before removing worktree
