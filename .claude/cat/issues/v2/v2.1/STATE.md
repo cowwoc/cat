@@ -9,17 +9,26 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- deduplicate-embedded-content
+- subagent-doc-heavy-steps
 - unify-output-template-delivery
 - rename-precomputed-output
 - command-optimizer
 - shrink-doc-token-metrics
 - batch-finalization-subagent
 - rename-stakeholders
-- rename-task-to-issue
+- rename-task-scripts (from decomposed rename-task-to-issue)
+- rename-task-in-skills (from decomposed rename-task-to-issue)
+- rename-task-in-concepts (from decomposed rename-task-to-issue)
+- rename-task-in-commands (from decomposed rename-task-to-issue)
+- rename-task-remaining (from decomposed rename-task-to-issue)
 - suggest-issue-names
 - research-new-issues
 - centralize-emoji-widths
 - show-task-header-at-approval-gate
+
+## Tasks Decomposed
+- rename-task-to-issue → [rename-task-scripts, rename-task-in-skills, rename-task-in-concepts, rename-task-in-commands, rename-task-remaining]
 
 ## Tasks Completed
 - acceptance-criteria-options
