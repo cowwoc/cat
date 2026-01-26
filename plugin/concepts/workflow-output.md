@@ -67,7 +67,7 @@ Main agent shows result summary
 | **Planning** | Make decisions, create implementation spec | {spec, approach, steps} |
 | **Implementation** | All code changes, tests, commits | {commits, filesChanged, tokens} |
 | **Review** | Spawn reviewers, aggregate results | {status, concerns} |
-| **Finalization** | Merge, cleanup worktree, update state | {merged, branch} |
+| **Finalization** (Direct) | Merge, cleanup worktree, update state | {merged, branch} |
 
 ## Progress Indicators
 
