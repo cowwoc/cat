@@ -1,4 +1,4 @@
-# Minor Version 2.2 State: Demos & Marketing
+# v2.2 State: Demos & Marketing
 
 ## Status
 - **Status:** pending

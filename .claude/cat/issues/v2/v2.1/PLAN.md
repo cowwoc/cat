@@ -1,4 +1,4 @@
-# Minor Version 2.1: Pre-Demo Polish
+# v2.1: Pre-Demo Polish
 
 ## Objective
 Finalize all naming conventions and UI polish before recording demo videos. Changes here affect how the tool appears in marketing materials.

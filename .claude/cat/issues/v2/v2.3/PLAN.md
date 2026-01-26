@@ -1,4 +1,4 @@
-# Minor Version 2.1: Pluggable Issue Trackers
+# v2.3: Pluggable Issue Trackers
 
 ## Overview
 Add support for multiple issue tracker backends (local files, GitHub Issues, and others) through a storage abstraction layer.

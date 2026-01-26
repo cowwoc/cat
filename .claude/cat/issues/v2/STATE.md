@@ -1,4 +1,4 @@
-# Major Version 2 State: Commercialization
+# v2 State: Commercialization
 
 ## Status
 - **Status:** in_progress

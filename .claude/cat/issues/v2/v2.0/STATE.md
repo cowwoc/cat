@@ -1,4 +1,4 @@
-# Minor Version 2.0 State: Licensing
+# v2.0 State: Licensing
 
 ## Status
 - **Status:** in-progress

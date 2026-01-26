@@ -1,4 +1,4 @@
-# Minor Version 2.1 State: Pre-Demo Polish
+# v2.1 State: Pre-Demo Polish
 
 ## Status
 - **Status:** in-progress
