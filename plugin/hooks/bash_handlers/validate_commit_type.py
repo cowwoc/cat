@@ -86,6 +86,26 @@ Example: feature: add user authentication
          bugfix: resolve memory leak in parser"""
                 }
 
+            # Check for docs: on plugin/ files (should be config:)
+            # M255: plugin/ files are Claude-facing, not user-facing
+            if commit_type == "docs":
+                # Check if command mentions plugin/ files via git add or staged files
+                if re.search(r'plugin/', command):
+                    return {
+                        "decision": "block",
+                        "reason": """**BLOCKED: Wrong commit type for plugin/ files (M255)**
+
+`docs:` is for **user-facing** documentation (README.md, API docs).
+`plugin/` files are **Claude-facing** instructions.
+
+Use `config:` for plugin/ files:
+- plugin/concepts/*.md → config: (Claude reference docs)
+- plugin/commands/*.md → config: (Claude commands)
+- plugin/skills/*/*.md → config: (Claude skills)
+
+Example: config: update version-scheme.md documentation"""
+                    }
+
         return None
 
 
