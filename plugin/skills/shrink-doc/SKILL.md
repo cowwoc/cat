@@ -181,71 +181,28 @@ fi
 
 ### Step 3: Invoke Compression Agent
 
-Use Task tool with `subagent_type: "general-purpose"` and simple outcome-based prompt:
+**⚠️ ENCAPSULATION (M269)**: The compression algorithm is in a separate internal document.
+Do NOT attempt to compress manually - invoke the subagent which will read its own instructions.
 
-**Agent Prompt Template**:
+**Subagent invocation**:
+
 ```
-**Document Compression Task**
+Task tool:
+  subagent_type: "general-purpose"
+  description: "Compress {{arg}}"
+  prompt: |
+    Read the instructions at: plugin/skills/shrink-doc/COMPRESSION-AGENT.md
 
-**File**: {{arg}}
+    Then compress the following file according to those instructions:
+    - FILE_PATH: {{arg}}
+    - OUTPUT_PATH: /tmp/compressed-{{filename}}-v${VERSION}.md
 
-**Goal**: Compress while preserving **perfect execution equivalence** (score = 1.0).
-
-**Compression Target**: ~50% reduction is ideal, but lesser compression is acceptable. Perfect equivalence (1.0) is mandatory; compression amount is secondary.
-
----
-
-## What is Execution Equivalence?
-
-**Execution Equivalence** means: A reader following the compressed version will achieve the same results as someone following the original.
-
-**Preserve**:
-- **YAML frontmatter** (between `---` delimiters) - REQUIRED for slash commands
-- **Decision-affecting information**: Claims, requirements, constraints that affect what to do
-- **Relationship structure**: Temporal ordering (A before B), conditionals (IF-THEN), prerequisites, exclusions (A ⊥ B), escalations
-- **Control flow**: Explicit sequences, blocking checkpoints (STOP, WAIT), branching logic
-- **Executable details**: Commands, file paths, thresholds, specific values
-
-**Safe to remove**:
-- **Redundancy**: Repeated explanations of same concept
-- **Verbose explanations**: Long-winded descriptions that can be condensed
-- **Meta-commentary**: Explanatory comments about the document (NOT structural metadata like YAML frontmatter)
-- **Non-essential examples**: Examples that don't add new information
-- **Elaboration**: Extended justifications or background that don't affect decisions
-
----
-
-## Compression Approach
-
-**Focus on relationships**:
-- Keep explicit relationship statements (Prerequisites, Dependencies, Exclusions, Escalations)
-- Preserve temporal ordering (Step A→B)
-- Maintain conditional logic (IF-THEN-ELSE)
-- Keep constraint declarations (CANNOT coexist, MUST occur after)
-
-**Condense explanations**:
-- Remove "Why This Ordering Matters" verbose sections → keep ordering statement
-- Remove "Definition" sections that explain obvious terms
-- Combine related claims into single statements where possible
-- Use high-level principle statements instead of exhaustive enumeration (when appropriate)
-
----
-
-## Output
-
-Read `{{arg}}`, compress it, and **USE THE WRITE TOOL** to save the compressed version.
-
-**⚠️ CRITICAL**: You MUST actually write the file using the Write tool. Do NOT just describe
-or summarize the compressed content - physically create the file.
-
-**Target**: ~50% word reduction while maintaining execution equivalence.
+    Use the Write tool to save the compressed version.
 ```
 
-**Execute compression**:
-```bash
-# Invoke agent
-Task tool: general-purpose agent with above prompt
-```
+**Why separate documents (M269)**: The compression algorithm is intentionally NOT in this file.
+If you can see HOW to compress, you might bypass the skill and do it manually - which skips
+validation. The subagent reads COMPRESSION-AGENT.md; you (the orchestrator) only invoke and validate.
 
 ---
 

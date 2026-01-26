@@ -38,6 +38,49 @@ Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
+### 1b. Analyze Documentation Path (M269)
+
+**CRITICAL: Check if documentation PRIMED the agent for the wrong approach.**
+
+Using the session history from Step 1, identify all documents the agent read:
+
+```bash
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+
+# Find documents read
+echo "=== Documents Read ==="
+jq -r 'select(.type == "tool_use") | select(.name == "Read" or .name == "Skill") |
+  if .name == "Read" then .input.file_path
+  else "skill:" + .input.skill end' "$SESSION_FILE" 2>/dev/null | sort -u
+
+# Find skill invocations vs expected
+echo "=== Skill Invocations ==="
+jq -r 'select(.type == "tool_use" and .name == "Skill") |
+  .input.skill + " " + (.input.args // "")' "$SESSION_FILE" 2>/dev/null
+```
+
+**For each document, check for priming patterns:**
+
+| Pattern | Example | Risk |
+|---------|---------|------|
+| Algorithm before invocation | "How to compress: 1. Remove redundancy..." then "invoke skill" | Agent learns to bypass skill |
+| Output format exposure | "Expected: \| File \| Score \|..." | Agent fabricates output |
+| Cost/efficiency concerns | "This spawns 2 subagents..." | Agent takes shortcuts |
+| Internal prompts exposed | "Agent Prompt Template: ..." | Agent applies directly |
+
+**If priming found:**
+
+```yaml
+documentation_priming:
+  document: "{path to document}"
+  misleading_section: "{section name and line numbers}"
+  priming_type: "algorithm_exposure | output_format | cost_concern | internal_prompt"
+  how_it_misled: "Agent learned X, then applied it directly instead of invoking Y"
+  fix_required: "Move content to internal-only document / Remove section / Restructure"
+```
+
+**Reference:** See `plugin/concepts/documentation-priming.md` for detailed analysis patterns.
+
 ### 2. Document the Mistake
 
 ```yaml
@@ -68,156 +111,30 @@ SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 
 ### 4. Perform Root Cause Analysis
 
+**Reference:** See `plugin/concepts/rca-methods.md` for detailed method specifications.
+
 **A/B TEST IN PROGRESS** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
 
 **Method Assignment Rule:** Use mistake ID modulo 3:
-- IDs ending in 6,9,2,5,8 (mod 3 = 0) → Method A (5-Whys)
-- IDs ending in 7,0,3 (mod 3 = 1) → Method B (Taxonomy)
-- IDs ending in 8,1,4 (mod 3 = 2) → Method C (Causal Barrier)
+- IDs where `N mod 3 = 0` → Method A (5-Whys)
+- IDs where `N mod 3 = 1` → Method B (Taxonomy)
+- IDs where `N mod 3 = 2` → Method C (Causal Barrier)
 
----
+**Quick Reference:**
 
-#### Method A: 5-Whys (Control)
+| Method | Core Approach | When Best |
+|--------|---------------|-----------|
+| A: 5-Whys | Ask "why" 5 times iteratively | General mistakes, process issues |
+| B: Taxonomy | Classify into MEMORY/PLANNING/ACTION/REFLECTION/SYSTEM | Tool misuse, capability failures |
+| C: Causal Barrier | List candidates, verify cause vs symptom, analyze barriers | Compliance failures, repeated mistakes |
 
-Ask "why" iteratively until reaching fundamental cause (typically 5 levels):
-
-```yaml
-five_whys:
-  - why: "Why did this happen?"
-    answer: "Immediate cause of the mistake"
-  - why: "Why [previous answer]?"
-    answer: "Deeper contributing factor"
-  - why: "Why [previous answer]?"
-    answer: "Organizational or process factor"
-  - why: "Why [previous answer]?"
-    answer: "Systemic or environmental factor"
-  - why: "Why [previous answer]?"
-    answer: "Root cause - fundamental issue"
-
-root_cause: "The fundamental issue identified at deepest 'why'"
-category: "Select from category reference"
-rca_method: "A"
-```
-
-**Example:**
-
-```yaml
-five_whys:
-  - why: "Why was precedence implemented incorrectly?"
-    answer: "Subagent confused multiplication and addition handling"
-  - why: "Why was the subagent confused?"
-    answer: "Earlier context about precedence rules was not referenced"
-  - why: "Why wasn't earlier context referenced?"
-    answer: "Session had 95K tokens, approaching context limit"
-  - why: "Why were there 95K tokens in the session?"
-    answer: "Task scope was too large for single context window"
-  - why: "Why wasn't the task decomposed earlier?"
-    answer: "Token monitoring wasn't triggering at 40% threshold"
-
-root_cause: "Task exceeded safe context bounds without decomposition"
-category: "context_degradation"
-rca_method: "A"
-```
-
-**Check against common root cause patterns:**
+**Common root cause patterns to check:**
 - Assumption without verification?
 - Completion bias (rationalized ignoring rules)?
 - Memory reliance (didn't re-verify)?
 - Environment state mismatch?
 - Documentation ignored (rule existed)?
-
----
-
-#### Method B: Modular Error Taxonomy
-
-Based on [AgentErrorTaxonomy](https://arxiv.org/abs/2509.25370) (24% accuracy improvement).
-
-```yaml
-taxonomy_analysis:
-  # Step 1: Classify into module
-  module: MEMORY | PLANNING | ACTION | REFLECTION | SYSTEM
-  module_definitions:
-    MEMORY: "Failed to retain/recall earlier context"
-    PLANNING: "Poor task decomposition or sequencing"
-    ACTION: "Incorrect tool use or execution"
-    REFLECTION: "Failed to detect/correct own error"
-    SYSTEM: "Environment, tooling, or integration failure"
-
-  # Step 2: Identify failure mode within module
-  failure_mode: "What specific capability failed?"
-  failure_type: FALSE_POSITIVE | FALSE_NEGATIVE
-    # FALSE_POSITIVE = did something wrong
-    # FALSE_NEGATIVE = missed something
-
-  # Step 3: Check for cascading
-  cascading:
-    caused_downstream: true | false
-    is_symptom_of: null | "earlier failure description"
-
-  # Step 4: Corrective feedback
-  corrective_feedback: "What specific guidance would have prevented this?"
-  intervention_point: "At what step should intervention have occurred?"
-
-root_cause: "..."
-category: "..."
-rca_method: "B"
-```
-
----
-
-#### Method C: Causal Barrier Analysis
-
-Based on [causal reasoning research](https://www.infoq.com/articles/causal-reasoning-observability/).
-
-```yaml
-causal_barrier_analysis:
-  # Step 1: List ALL candidate causes
-  candidates:
-    - cause: "Knowledge gap - didn't know correct approach"
-      expected_symptoms: ["asked questions", "explored alternatives"]
-      observed: false
-      likelihood: LOW
-
-    - cause: "Compliance failure - knew rule, didn't follow"
-      expected_symptoms: ["rule exists in docs", "no confusion expressed"]
-      observed: true
-      likelihood: HIGH
-
-    - cause: "Tool limitation - tool couldn't do what was needed"
-      expected_symptoms: ["error messages", "tried alternatives"]
-      observed: false
-      likelihood: LOW
-
-  # Step 2: Select most likely cause
-  selected_cause: "Compliance failure"
-  confidence: HIGH | MEDIUM | LOW
-  evidence: "Rule documented in X, no exploration attempts observed"
-
-  # Step 3: Verify cause vs symptom
-  verification:
-    question: "If we fixed this, would the problem definitely not recur?"
-    answer: "Yes, if enforcement hook blocks the incorrect behavior"
-    is_root_cause: true  # If uncertain, this may be a symptom
-
-  # Step 4: Barrier analysis
-  barriers:
-    - barrier: "Documentation in CLAUDE.md"
-      existed: true
-      why_failed: "Agent did not read/follow it"
-
-    - barrier: "PreToolUse hook"
-      existed: false
-      should_exist: true
-      strength_if_added: "Would block incorrect behavior"
-
-  minimum_effective_barrier: "hook (level 2)"
-
-root_cause: "..."
-category: "..."
-rca_method: "C"
-```
-
----
+- **Documentation priming (M269)?** - Did docs teach wrong approach?
 
 **Record the method used** in the final JSON entry:
 
@@ -252,41 +169,19 @@ context_degradation_analysis:
 
 ### 6. Identify Prevention Level
 
-**Choose the strongest prevention level that addresses the root cause:**
+**Reference:** See `plugin/concepts/prevention-hierarchy.md` for detailed hierarchy and escalation rules.
 
-```yaml
-prevention_hierarchy:
-  - level: 1
-    type: code_fix
-    description: "Make incorrect behavior impossible in code"
-    examples: ["compile-time check", "type system enforcement", "API design"]
-  - level: 2
-    type: hook
-    description: "Automated enforcement via PreToolUse/PostToolUse hooks"
-    examples: ["block dangerous commands", "require confirmation", "validate state"]
-  - level: 3
-    type: validation
-    description: "Automated checks that catch mistakes early"
-    examples: ["build verification", "lint rules", "test assertions"]
-  - level: 4
-    type: config
-    description: "Configuration or threshold changes"
-    examples: ["lower context threshold", "adjust timeouts", "change defaults"]
-    cat_specific: true
-  - level: 5
-    type: skill
-    description: "Update skill documentation with explicit guidance"
-    examples: ["add anti-pattern section", "add checklist item", "clarify steps"]
-  - level: 6
-    type: process
-    description: "Change workflow steps or ordering"
-    examples: ["add mandatory checkpoint", "reorder operations", "add verification"]
-  - level: 7
-    type: documentation
-    description: "Document to prevent future occurrence"
-    examples: ["add to CLAUDE.md", "update style guide", "add comments"]
-    note: "Weakest prevention - escalate if documentation already exists"
-```
+**Quick Reference:**
+
+| Level | Type | Description |
+|-------|------|-------------|
+| 1 | code_fix | Make incorrect behavior impossible in code |
+| 2 | hook | Automated enforcement via PreToolUse/PostToolUse |
+| 3 | validation | Automated checks that catch mistakes early |
+| 4 | config | Configuration or threshold changes |
+| 5 | skill | Update skill documentation with explicit guidance |
+| 6 | process | Change workflow steps or ordering |
+| 7 | documentation | Document to prevent future occurrence (weakest) |
 
 **Key principle:** Lower level = stronger prevention. Always prefer level 1-3 over level 5-7.
 
@@ -726,48 +621,11 @@ fi
 }
 ```
 
-**Category Reference:**
+**Category and Prevention Type Reference:**
 
-| Category | Description |
-|----------|-------------|
-| protocol_violation | Violated documented workflow, skill steps, or mandatory instructions |
-| prompt_engineering | Subagent prompt lacked necessary instructions or constraints |
-| context_degradation | Quality degraded due to context window pressure or compaction |
-| tool_misuse | Used wrong tool, wrong flags, or misunderstood tool behavior |
-| assumption_without_verification | Claimed state without measurement or verification |
-| bash_error | Shell script error (syntax, reserved variables, compatibility) |
-| git_operation_failure | Git command failed or produced unexpected results |
-| build_failure | Compilation, checkstyle, PMD, or other build tool failure |
-| test_failure | Test assertion failure or incorrect test construction |
-| logical_error | Incorrect reasoning or misapplied rule |
-| detection_gap | Monitoring/hook failed to catch a problem |
-| architecture_issue | Structural or design-level mistake |
-| documentation_violation | Violated documented standard (not workflow protocol) |
-| giving_up | Presented options instead of implementing, or stopped prematurely |
+See `plugin/concepts/mistake-categories.md` for full category list, prevention types, and common root cause patterns.
 
-**Prevention Type Reference:**
-
-| Type | Level | Description | Example |
-|------|-------|-------------|---------|
-| code_fix | 1 | Make incorrect behavior impossible in code | Compile-time check, type system |
-| hook | 2 | Automated enforcement via PreToolUse/PostToolUse | Block dangerous commands |
-| validation | 3 | Automated check that catches mistakes early | Build verification, lint |
-| config | 4 | Configuration change that affects behavior | Threshold adjustment, settings |
-| skill | 5 | Update skill documentation with explicit guidance | Add anti-pattern section |
-| process | 6 | Change workflow steps or ordering | Add mandatory checkpoint |
-| documentation | 7 | Document to prevent future occurrence | Add to CLAUDE.md, style guide |
-
-**Common Root Cause Patterns (check during 5-whys):**
-
-| Pattern | Indicators | Typical Prevention |
-|---------|------------|-------------------|
-| Assumption without verification | "I assumed...", claimed state without measurement | Add verification step (hook/validation) |
-| Completion bias | Rationalized ignoring protocol to finish task | Strengthen enforcement (hook/code_fix) |
-| Memory reliance | Used memory instead of get-history/re-reading | Add verification requirement (process) |
-| Environment state mismatch | Wrong directory, stale data, wrong branch | Add state verification (hook/validation) |
-| Documentation ignored | Rule existed but wasn't followed | Escalate to hook/code_fix |
-| Shell compatibility | zsh vs bash differences | Document in CLAUDE.md (documentation) |
-| Ordering/timing | Operations in wrong sequence | Add explicit ordering (skill/process) |
+**Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse, assumption_without_verification, misleading_documentation (M269)
 
 **Use jq to append to current month's split file:**
 
