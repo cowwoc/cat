@@ -157,7 +157,7 @@ These are ABSOLUTE rules. Violation will be detected and blocked.
 
 ### For CAT Issues (`--issues`)
 - Issue has a well-defined PLAN.md ready for execution
-- **All ambiguities resolved** - main agent has made all decisions
+- **Pre-delegation work complete** - planning subagent has resolved ambiguities and produced execution plan
 - Issue is independent enough to execute in isolation
 - Parent agent needs to continue with other work
 
@@ -235,18 +235,17 @@ restart - the filesystem may have changed while the session was inactive.
 
 ## Main Agent Responsibilities (BEFORE Delegating)
 
-For issues using two-stage planning (lines 164-194), Stage 1 and Stage 2 planning subagents handle
-code exploration. The main agent's role is: choose an approach from Stage 1 options, pass the
-selection to Stage 2, and hand the resulting PLAN.md path to the implementation subagent.
+For ALL issue types, planning subagents handle the planning work. The main agent's role is limited to
+orchestration: invoke required skills before delegating, choose an approach from Stage 1 options,
+pass the selection to Stage 2, and hand the resulting PLAN.md path to the implementation subagent.
 
-For issues with an existing PLAN.md ready for execution:
+**New issues (no existing PLAN.md):** Use two-stage planning (see "Subagent Types and Two-Stage
+Planning" above). Stage 1 subagent produces high-level approach options; main agent selects one;
+Stage 2 subagent produces the detailed execution plan.
 
-1. **Make architectural decisions** - Which pattern, which API, which approach
-2. **Resolve ambiguities** - If PLAN.md says "handle errors appropriately", decide HOW
-3. **Identify edge cases** - Subagent executes happy path unless told otherwise
-4. **Write explicit examples** - Code snippets, not prose descriptions
-5. **Specify verification** - Exact test commands and expected output
-6. **Produce comprehensive execution plan** - Numbered steps the subagent follows mechanically
+**Issues with an existing PLAN.md:** Hand the PLAN.md path to a planning subagent. The planning
+subagent resolves ambiguities, identifies edge cases, and produces the detailed execution plan.
+The main agent does NOT make architectural decisions or resolve ambiguities directly.
 
 ## Comprehensive Execution Plan Format
 
