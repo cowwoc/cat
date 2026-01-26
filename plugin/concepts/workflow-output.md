@@ -123,16 +123,31 @@ With pre-computation or subagent batching, only show:
 ✓ Context loaded, ready to proceed
 ```
 
-### Manual Computation When Handler Exists
+### Manual Computation When Handler Exists (M256)
 
 ```
 # BAD: Agent computes formatting manually
 Let me calculate the box width...
 [Makes arithmetic errors]
 
-# GOOD: Use pre-computed output
-[Outputs handler result verbatim]
+# ALSO BAD: Agent "reconstructs" output instead of copy-pasting
+[Runs Bash commands to gather data]
+[Builds box manually using similar characters]
+[Emojis render as dots because agent used wrong characters]
+
+# GOOD: Use pre-computed output VERBATIM
+[Locates "PRE-COMPUTED" block in context]
+[Copy-pastes exact content without modification]
+[Emojis and box characters display correctly]
 ```
+
+**Self-check before outputting pre-computed content:**
+- [ ] Content starts with proper box characters (`╭─`, `╭──`)
+- [ ] Emojis are visible, not dots or `?` symbols
+- [ ] You copied (not retyped) the content
+- [ ] You did NOT run Bash/Read to gather data yourself
+
+**If checks fail:** You are reconstructing, not pasting. Find the PRE-COMPUTED block.
 
 ## Choosing the Right Approach
 

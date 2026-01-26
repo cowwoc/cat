@@ -297,6 +297,33 @@
       },
       "correct_behavior": "Use config: for plugin/ files (Claude-facing), docs: only for user-facing docs (README, API docs)",
       "note": "Hook enforcement not possible - plugin/ is repo-specific, validate_commit_type.py ships to all users"
+    },
+    {
+      "id": "M256",
+      "timestamp": "2026-01-26T15:00:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed status box instead of copy-pasting pre-computed output from hook, causing misaligned boxes and emojis rendering as dots",
+      "root_cause": "Agent ignored explicit instruction to output pre-computed content EXACTLY as shown, instead attempting manual reconstruction with incorrect characters",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/status.md",
+      "pattern_keywords": [
+        "pre-computed",
+        "copy-paste",
+        "emoji",
+        "box-alignment",
+        "verbatim"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When PRE-COMPUTED content exists in context, locate it and copy-paste EXACTLY without modification. Never attempt to reconstruct formatted output manually."
     }
   ]
 }
