@@ -68,7 +68,7 @@ public final class SkillDiscovery
    * @param scope the JVM scope providing environment paths and configuration
    * @throws NullPointerException if {@code scope} is null
    */
-  public SkillDiscovery(JvmScope scope)
+  private SkillDiscovery(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
