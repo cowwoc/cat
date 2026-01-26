@@ -82,8 +82,24 @@ def build_inner_box(header: str, content_items: list, forced_width: int = None) 
     return [inner_top] + lines + [inner_bottom]
 
 
+# Valid status values (canonical)
+# M253: Scripts must fail-fast on unknown status values
+VALID_STATUSES = {"pending", "in-progress", "completed", "blocked"}
+
+# Status aliases that get normalized to canonical values
+STATUS_ALIASES = {
+    "complete": "completed",      # Common typo
+    "done": "completed",          # Alternative
+    "in_progress": "in-progress", # Underscore variant
+    "active": "in-progress",      # Alternative
+}
+
+
 def get_task_status(state_file: Path) -> str:
-    """Get task status from STATE.md file."""
+    """Get task status from STATE.md file.
+
+    Returns canonical status value. Raises ValueError for unknown statuses (M253).
+    """
     if not state_file.exists():
         return "pending"
 
@@ -94,10 +110,30 @@ def get_task_status(state_file: Path) -> str:
 
     # Format: "- **Status:** <value>"
     match = re.search(r'^\- \*\*Status:\*\*\s*(.+)$', content, re.MULTILINE)
-    if match:
-        return match.group(1).strip()
+    if not match:
+        return "pending"
 
-    return "pending"
+    raw_status = match.group(1).strip().lower()
+
+    # Check if it's a valid canonical status
+    if raw_status in VALID_STATUSES:
+        return raw_status
+
+    # Check if it's a known alias and normalize
+    if raw_status in STATUS_ALIASES:
+        canonical = STATUS_ALIASES[raw_status]
+        # Log warning about non-canonical value (but don't fail)
+        print(f"WARNING: Non-canonical status '{raw_status}' in {state_file}, use '{canonical}'",
+              file=sys.stderr)
+        return canonical
+
+    # Unknown status - fail fast (M253)
+    valid_list = ", ".join(sorted(VALID_STATUSES))
+    raise ValueError(
+        f"Unknown status '{raw_status}' in {state_file}. "
+        f"Valid values: {valid_list}. "
+        f"Common typo: 'complete' should be 'completed'"
+    )
 
 
 def get_task_dependencies(state_file: Path) -> list:
@@ -254,7 +290,8 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
                 blocked_by = []
                 for dep in dependencies:
                     dep_status = all_task_statuses.get(dep, "pending")
-                    if dep_status not in ("completed", "done"):
+                    # Status values are normalized by get_task_status (M253)
+                    if dep_status != "completed":
                         blocked_by.append(dep)
 
                 tasks.append({
@@ -264,9 +301,10 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
                     "blocked_by": blocked_by
                 })
 
-                if status in ("completed", "done"):
+                # Status is now normalized by get_task_status (M253)
+                if status == "completed":
                     local_completed += 1
-                elif status in ("in-progress", "active", "in_progress"):
+                elif status == "in-progress":
                     local_inprog = task_name
 
             # Get minor description from roadmap
