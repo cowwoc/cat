@@ -29,6 +29,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+# Add lib directory to path for shared imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+from emoji_widths import display_width as _lib_display_width, get_emoji_widths
+
+# Cache emoji widths at module level for efficiency
+_emoji_widths = None
+
+def _get_widths():
+    """Get cached emoji widths dict."""
+    global _emoji_widths
+    if _emoji_widths is None:
+        _emoji_widths = get_emoji_widths()
+    return _emoji_widths
+
 
 # Box drawing characters
 BOX_TOP_LEFT = '╭'
@@ -78,27 +92,8 @@ class ParsedDiff:
 
 
 def display_width(s: str) -> int:
-    """Calculate display width of a string (handles Unicode, emojis, wide chars)."""
-    width = 0
-    i = 0
-    while i < len(s):
-        char = s[i]
-        # Skip variation selector-16 (counted with previous emoji)
-        if char == '\ufe0f':
-            i += 1
-            continue
-        # Check if next char is VS16 - if so, current is emoji width 2
-        if i + 1 < len(s) and s[i + 1] == '\ufe0f':
-            width += 2
-            i += 2
-            continue
-        ea = unicodedata.east_asian_width(char)
-        if ea in ('W', 'F'):
-            width += 2
-        else:
-            width += 1
-        i += 1
-    return width
+    """Calculate display width of a string using shared emoji_widths library."""
+    return _lib_display_width(s, _get_widths())
 
 
 def truncate_to_width(s: str, target_width: int) -> str:
