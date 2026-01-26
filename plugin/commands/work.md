@@ -1590,7 +1590,7 @@ Present work summary with checkpoint display.
 **CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
 
-Use the **CHECKPOINT_TASK_COMPLETE** box from PRE-COMPUTED WORK BOXES.
+Use the **CHECKPOINT_TASK_COMPLETE** box from OUTPUT TEMPLATE WORK BOXES.
 Replace placeholders with actual values: `{task-name}`, `{N}`, `{percentage}`, `{task-branch}`.
 
 **Anti-pattern (M089):** Presenting subagent branch (e.g., `task-sub-uuid`) instead of task branch.
@@ -1599,26 +1599,36 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
-**MANDATORY: Show diff BEFORE approval question (M160/M201).**
+**MANDATORY (M160/M201/M261): Show diff BEFORE approval question:**
 
-Users cannot make informed approval decisions without seeing actual code changes. Before presenting
-the AskUserQuestion approval prompt, use the `cat:render-diff` skill to display the diff:
+**CRITICAL (M261): Display diff DIRECTLY in response text, NOT inside Bash tool.**
+
+Bash tool output is collapsed - user cannot see diff without expanding. This defeats approval purpose.
+
+**Correct approach:**
+1. Run render-diff.py via Bash to capture output
+2. Copy the output
+3. Paste directly into your response text (outside any tool)
 
 ```bash
-# Show commit summary
-git log ${BASE_BRANCH}..HEAD --oneline
-
-# Render diff using the render-diff skill (4-column table format)
-git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
+# Step 1: Capture to variable or file
+DIFF_OUTPUT=$(git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py")
+echo "$DIFF_OUTPUT"
 ```
+
+Then copy-paste that output directly into your response.
 
 See [render-diff SKILL.md](../skills/render-diff/SKILL.md) for format details and features.
 
-**SELF-CHECK before showing approval gate (M201/M211):**
-- [ ] Did I run render-diff.py (NOT plain `git diff`)?
-- [ ] Did I present the VERBATIM output (not reformatted, summarized, or extracted)?
-- [ ] Does the output I showed have box characters (╭╮╰╯│)?
-- [ ] Is the output I showed in 4-column format (Old | Symbol | New | Content)?
+**SELF-CHECK (M201/M211/M261):**
+- [ ] Diff is visible in response text (NOT inside collapsed Bash tool)?
+- [ ] Ran render-diff.py (NOT plain git diff)?
+- [ ] Presented VERBATIM output?
+- [ ] Output has box characters (╭╮╰╯│)?
+- [ ] 4-column format?
+
+**If self-check fails:**
+Do NOT present approval. Re-run and display correctly.
 
 If any answer is NO, re-run using the render-diff skill command above.
 
