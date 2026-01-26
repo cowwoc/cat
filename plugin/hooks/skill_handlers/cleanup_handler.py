@@ -5,7 +5,7 @@ Generates box displays for survey results, cleanup plan, and verification.
 """
 
 from . import register_handler
-from .status_handler import display_width, build_line, build_border, build_inner_box
+from .status_handler import display_width, build_inner_box, build_header_box
 
 
 class CleanupHandler:
@@ -99,21 +99,7 @@ class CleanupHandler:
 
         # Build outer box with header
         header = "🔍 Survey Results"
-        content_widths = [display_width(c) for c in all_inner_boxes]
-        max_content_width = max(content_widths) if content_widths else 0
-        header_width = display_width(header) + 3
-        box_width = max(header_width, max_content_width, 50)
-
-        header_dashes = box_width - display_width(header) - 1
-        if header_dashes < 0:
-            header_dashes = 0
-        top_line = "╭─ " + header + " " + "─" * header_dashes + "╮"
-
-        lines = [build_line(c, box_width) for c in all_inner_boxes]
-        bottom = build_border(box_width, is_top=False)
-
-        box_lines = [top_line] + lines + [bottom]
-        final_box = "\n".join(box_lines)
+        final_box = build_header_box(header, all_inner_boxes, min_width=50, prefix="─ ")
 
         # Summary counts
         counts = f"Found: {len(worktrees)} worktrees, {len(locks)} locks, {len(branches)} branches, {len(stale_remotes)} stale remotes"
@@ -177,21 +163,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
 
         # Build outer box with header
         header = "🧹 Cleanup Plan"
-        content_widths = [display_width(c) for c in content_items]
-        max_content_width = max(content_widths) if content_widths else 0
-        header_width = display_width(header) + 3
-        box_width = max(header_width, max_content_width, 50)
-
-        header_dashes = box_width - display_width(header) - 1
-        if header_dashes < 0:
-            header_dashes = 0
-        top_line = "╭─ " + header + " " + "─" * header_dashes + "╮"
-
-        lines = [build_line(c, box_width) for c in content_items]
-        bottom = build_border(box_width, is_top=False)
-
-        box_lines = [top_line] + lines + [bottom]
-        final_box = "\n".join(box_lines)
+        final_box = build_header_box(header, content_items, min_width=50, prefix="─ ")
 
         # Count summary
         total = len(locks_to_remove) + len(worktrees_to_remove) + len(branches_to_remove)
@@ -255,21 +227,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
 
         # Build outer box with header
         header = "✅ Cleanup Complete"
-        content_widths = [display_width(c) for c in content_items]
-        max_content_width = max(content_widths) if content_widths else 0
-        header_width = display_width(header) + 3
-        box_width = max(header_width, max_content_width, 50)
-
-        header_dashes = box_width - display_width(header) - 1
-        if header_dashes < 0:
-            header_dashes = 0
-        top_line = "╭─ " + header + " " + "─" * header_dashes + "╮"
-
-        lines = [build_line(c, box_width) for c in content_items]
-        bottom = build_border(box_width, is_top=False)
-
-        box_lines = [top_line] + lines + [bottom]
-        final_box = "\n".join(box_lines)
+        final_box = build_header_box(header, content_items, min_width=50, prefix="─ ")
 
         return f"""OUTPUT TEMPLATE VERIFY DISPLAY (copy exactly):
 

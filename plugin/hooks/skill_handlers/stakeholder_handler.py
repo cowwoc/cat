@@ -5,34 +5,7 @@ Provides box templates for stakeholder selection and review output.
 """
 
 from . import register_handler
-from .status_handler import display_width, build_line, build_border
-
-
-def build_header_box(header: str, content_lines: list[str], separator_indices: list[int] = None) -> str:
-    """Build a box with header and optional separators."""
-    if separator_indices is None:
-        separator_indices = []
-
-    # Calculate max width
-    content_widths = [display_width(c) for c in content_lines]
-    header_width = display_width(header) + 5  # Account for "╭─── header ───╮"
-    max_width = max(max(content_widths) if content_widths else 0, header_width)
-
-    # Build header
-    prefix = "─── "
-    suffix_dashes = "─" * (max_width - len(prefix) - display_width(header) + 1)
-    if len(suffix_dashes) < 1:
-        suffix_dashes = "─"
-    top = "╭" + prefix + header + " " + suffix_dashes + "╮"
-
-    lines = [top]
-    for i, content in enumerate(content_lines):
-        if i in separator_indices:
-            lines.append("├" + "─" * (max_width + 2) + "┤")
-        lines.append(build_line(content, max_width))
-
-    lines.append(build_border(max_width, is_top=False))
-    return "\n".join(lines)
+from .status_handler import display_width, build_line, build_border, build_header_box
 
 
 def build_concern_box(severity: str, concerns: list[str]) -> str:
