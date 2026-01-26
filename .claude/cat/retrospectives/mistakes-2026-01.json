@@ -240,6 +240,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Validate status values against canonical set (pending, in-progress, completed, blocked); normalize known aliases with warning; fail-fast with helpful error on unknown values"
+    },
+    {
+      "id": "M254",
+      "timestamp": "2026-01-26T01:00:00Z",
+      "category": "protocol_violation",
+      "description": "Approved shrink-doc compression with score 0.99/1.0 when threshold requires exactly 1.0; skill explicitly shows '0.99 good enough' as WRONG pattern",
+      "root_cause": "Completion bias caused agent to rationalize 0.99 as 'close enough' despite explicit anti-pattern documentation showing this exact mistake",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "shrink-doc",
+        "threshold",
+        "score",
+        "1.0",
+        "completion-bias",
+        "close-enough"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete mandatory 4-step Score Validation Gate: extract exact score, perform explicit comparison (score == 1.0), make decision ONLY based on comparison, state decision with explicit verification. Any score < 1.0 requires iteration."
     }
   ]
 }
