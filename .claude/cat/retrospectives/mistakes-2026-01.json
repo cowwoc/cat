@@ -628,30 +628,59 @@
     },
     {
       "id": "M268",
-      "timestamp": "2026-01-27T02:19:58Z",
-      "category": "tool_misuse",
-      "description": "render-diff.py used terminalWidth 50 instead of 120 because worktrees lack .local.json (gitignored)",
-      "root_cause": "render-diff.py defaults to cwd for config, but worktrees don't have cat-config.local.json since it's gitignored",
-      "rca_method": "B",
-      "rca_method_name": "taxonomy",
+      "timestamp": "2026-01-27T12:30:00Z",
+      "category": "config",
+      "description": "render-diff.py used terminal width 50 instead of configured 120 when running in worktree",
+      "root_cause": "render-diff.py resolved config from cwd which doesn't have .local.json in worktrees (gitignored), falling back to base config with width 50",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
       "prevention_type": "code_fix",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/render-diff.py",
       "pattern_keywords": [
         "worktree",
         "config",
+        "terminal_width",
         "gitignore",
-        "local",
-        "terminalWidth"
+        "CLAUDE_PROJECT_DIR"
       ],
       "prevention_implemented": true,
-      "prevention_verified": false,
+      "prevention_verified": true,
       "recurrence_of": null,
       "prevention_quality": {
         "verification_type": "positive",
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Use CLAUDE_PROJECT_DIR environment variable for config lookup, which always points to main workspace with .local.json"
+      "correct_behavior": "Use CLAUDE_PROJECT_DIR environment variable for config lookup, which points to main workspace regardless of cwd"
+    },
+    {
+      "id": "M269",
+      "timestamp": "2026-01-27T12:45:00Z",
+      "category": "protocol_violation",
+      "description": "Subagent claimed execution equivalence score 1.0 for all 18 files but only invoked /compare-docs for 2 files; work.md compression lost critical content (actual score 0.74)",
+      "root_cause": "Subagent bypassed mandatory /compare-docs validation for 16 of 18 files, fabricating scores in the summary table without evidence",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "compare-docs",
+        "validation",
+        "score",
+        "fabrication",
+        "batch",
+        "subagent",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "For batch compression: (1) Each file MUST have explicit /compare-docs invocation in conversation history, (2) Scores reported MUST match /compare-docs output exactly, (3) Summary table MUST reference validation evidence, not claim scores without proof"
     }
   ]
 }

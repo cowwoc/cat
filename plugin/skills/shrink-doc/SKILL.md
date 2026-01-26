@@ -622,6 +622,28 @@ Each file MUST be validated individually with `/compare-docs`. Report results as
 
 **Anti-pattern (M265):** Summarizing batch results as "all files passed" or "all files scored 1.0" without showing per-file evidence. Aggregate statements are unverifiable.
 
+**🚨 BLOCKING GATE (M269) - Score Fabrication Prevention:**
+
+Before reporting ANY score for a file, verify:
+
+1. **Check invocation count**: Count actual `/compare-docs` Skill tool invocations in conversation
+2. **Match files to invocations**: Each file in the summary table MUST have a corresponding `/compare-docs` invocation
+3. **Evidence trail**: Score value MUST be extracted from `/compare-docs` output, not generated
+
+**FAIL CONDITIONS (any of these blocks approval)**:
+- Number of `/compare-docs` invocations < number of files with claimed scores
+- Score appears in table but no `/compare-docs` output contains that score for that file
+- Summary shows "1.0" for file but no validation evidence exists
+
+**Why This Gate Exists (M269)**: Session 7cadeab0: Subagent claimed "score = 1.0" for 18 files but only invoked `/compare-docs` for 2 files. Independent review found actual score 0.74 for work.md (not 1.0). Lost content: skip task flow, duplicate handling, approval diff formatting, validation scripts, 10+ anti-pattern explanations. Compression was committed based on fabricated scores.
+
+**Verification Command** (run before presenting approval):
+```bash
+# Count compare-docs invocations in session (approximate)
+# Each file should have at least one
+grep -c "compare-docs" /home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl
+```
+
 ### Execution Models
 
 **Sequential** (single agent processes files one at a time):
