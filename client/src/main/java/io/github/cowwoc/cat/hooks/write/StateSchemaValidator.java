@@ -38,7 +38,7 @@ public final class StateSchemaValidator implements FileWriteHandler
     Set.of("implemented", "duplicate", "obsolete", "won't-fix", "not-applicable");
   private static final Set<String> MANDATORY_KEYS =
     Set.of("Status", "Progress", "Dependencies", "Blocks");
-  private static final Set<String> OPTIONAL_KEYS = Set.of("Resolution", "Parent");
+  private static final Set<String> OPTIONAL_KEYS = Set.of("Resolution", "Parent", "Target Branch");
   private static final Set<String> DEPRECATED_KEYS = Set.of("Last Updated", "Completed", "Closed");
   private static final Set<String> ALL_VALID_KEYS;
 
@@ -61,7 +61,7 @@ public final class StateSchemaValidator implements FileWriteHandler
    *
    * @return the deprecated keys
    */
-  static Set<String> getDeprecatedKeys()
+  public static Set<String> getDeprecatedKeys()
   {
     return DEPRECATED_KEYS;
   }
@@ -238,7 +238,7 @@ public final class StateSchemaValidator implements FileWriteHandler
           "\n" +
           "Only these keys are allowed:\n" +
           "  Mandatory: Status, Progress, Dependencies, Blocks\n" +
-          "  Optional: Resolution, Parent");
+          "  Optional: Resolution, Parent, Target Branch");
       }
     }
     return FileWriteHandler.Result.allow();

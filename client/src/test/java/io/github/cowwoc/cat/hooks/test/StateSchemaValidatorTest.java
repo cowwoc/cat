@@ -18,6 +18,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 
 /**
  * Tests for {@link StateSchemaValidator}.
@@ -1088,6 +1089,81 @@ public final class StateSchemaValidatorTest
   }
 
   /**
+   * Verifies that the 'Target Branch' field (written by WorkPrepare) is accepted.
+   */
+  @Test
+  public void targetBranchFieldIsAccepted() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** in-progress
+        - **Progress:** 50%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Target Branch:** v2.1
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the 'Final commit' field (an unsupported agent-generated field) is rejected.
+   */
+  @Test
+  public void finalCommitFieldIsRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** closed
+        - **Progress:** 100%
+        - **Resolution:** implemented
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Final commit:** abc123
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Final commit'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that a STATE.md file containing the deprecated 'Completed' field is rejected.
    */
   @Test
@@ -1123,5 +1199,572 @@ public final class StateSchemaValidatorTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+  }
+
+  /**
+   * Verifies that field keys with leading whitespace are accepted (whitespace is stripped).
+   */
+  @Test
+  public void testFieldKeysWithLeadingWhitespace() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **  Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that field keys with trailing whitespace are accepted (whitespace is stripped).
+   */
+  @Test
+  public void testFieldKeysWithTrailingWhitespace() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status  :** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that field keys with internal whitespace are rejected.
+   */
+  @Test
+  public void testFieldKeysWithInternalWhitespaceInvalid() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Final Commit:** abc123
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'Final Commit'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that field keys with mixed whitespace (tabs and spaces) are accepted (whitespace is stripped).
+   */
+  @Test
+  public void testFieldKeysWithMixedWhitespace() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = "# State\n\n- **\tStatus\t:** open\n- **Progress:** 0%\n- **Dependencies:** []\n" +
+        "- **Blocks:** []";
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that lowercase 'status' field is case-sensitive and rejected.
+   */
+  @Test
+  public void testStatusFieldCaseInsensitivity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Status'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that lowercase 'progress' field is case-sensitive and rejected.
+   */
+  @Test
+  public void testProgressFieldCaseInsensitivity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Progress'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that lowercase 'dependencies' field is case-sensitive and rejected.
+   */
+  @Test
+  public void testDependenciesFieldCaseInsensitivity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Dependencies'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that lowercase 'blocks' field is case-sensitive and rejected.
+   */
+  @Test
+  public void testBlocksFieldCaseInsensitivity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing mandatory key 'Blocks'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that lowercase 'resolution' field is case-sensitive and rejected as non-standard.
+   */
+  @Test
+  public void testResolutionFieldCaseInsensitivity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** closed
+        - **Progress:** 100%
+        - **resolution:** implemented
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'resolution'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that lowercase 'parent' field is case-sensitive and rejected.
+   */
+  @Test
+  public void testParentFieldCaseInsensitivity() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **parent:** v2.1-parent-issue
+        - **Dependencies:** []
+        - **Blocks:** []
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'parent'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that deprecated 'Last Updated' combined with missing mandatory 'Status' reports the mandatory key first.
+   */
+  @Test
+  public void testDeprecatedKeyWithMissingMandatory() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Last Updated:** 2026-02-12
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Deprecated key 'Last Updated'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that deprecated 'Last Updated' combined with non-standard 'CustomField' reports deprecated first.
+   */
+  @Test
+  public void testDeprecatedKeyWithNonStandardKey() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Last Updated:** 2026-02-12
+        - **CustomField:** value
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Deprecated key 'Last Updated'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that multiple non-standard keys report the first one encountered.
+   */
+  @Test
+  public void testMultipleNonStandardKeysReportsFirst() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **CustomField1:** value1
+        - **CustomField2:** value2
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      String reason = result.reason();
+      // Should contain one of the custom fields mentioned
+      boolean hasCustomField = reason.contains("CustomField");
+      requireThat(hasCustomField, "shouldContainCustomField").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that non-standard key combined with invalid Progress value reports non-standard key first.
+   */
+  @Test
+  public void testNonStandardKeyWithInvalidValue() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** invalid
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **CustomField:** value
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key 'CustomField'");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that special characters in field keys (pipes, brackets, parentheses) are parsed but rejected.
+   */
+  @Test
+  public void testSpecialCharactersAreParsedButRejected() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      StateSchemaValidator validator = new StateSchemaValidator();
+
+      String content = """
+        # State
+
+        - **Status:** open
+        - **Progress:** 0%
+        - **Dependencies:** []
+        - **Blocks:** []
+        - **Field|Name:** value
+        """;
+
+      ObjectNode toolInput = mapper.createObjectNode();
+      toolInput.put("file_path", ".claude/cat/issues/v2/v2.1/test-issue/STATE.md");
+      toolInput.put("content", content);
+
+      FileWriteHandler.Result result = validator.check(toolInput, "session-123");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Non-standard key");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the set returned by getDeprecatedKeys() is unmodifiable.
+   */
+  @Test
+  public void testDeprecatedKeysReturnsUnmodifiableSet()
+  {
+    Set<String> deprecatedKeys = StateSchemaValidator.getDeprecatedKeys();
+
+    boolean isUnmodifiable = false;
+    try
+    {
+      deprecatedKeys.add("NewKey");
+    }
+    catch (UnsupportedOperationException _)
+    {
+      isUnmodifiable = true;
+    }
+
+    requireThat(isUnmodifiable, "isUnmodifiable").isTrue();
   }
 }
