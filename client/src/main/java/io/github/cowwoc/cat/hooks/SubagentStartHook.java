@@ -10,17 +10,20 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
 import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
-import io.github.cowwoc.cat.hooks.util.RulesDiscovery;
+import io.github.cowwoc.cat.hooks.session.InjectSubAgentRules;
+import io.github.cowwoc.cat.hooks.session.SubagentStartHandler;
 import io.github.cowwoc.cat.hooks.util.SkillDiscovery;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
- * SubagentStart hook handler.
+ * SubagentStart hook dispatcher.
+ * <p>
+ * Consolidates all subagent start handlers into a single Java dispatcher. Each handler contributes
+ * additional context for Claude and/or stderr messages for the user. The combined additional context from
+ * all handlers is output as a single hookSpecificOutput JSON response.
  * <p>
  * Injects the full model-invocable skill listing and audience-filtered CAT rules into subagent context
  * when a subagent starts. This ensures subagents know which skills are available and receive the
@@ -36,18 +39,39 @@ import java.util.List;
  */
 public final class SubagentStartHook implements HookHandler
 {
-  private final JvmScope scope;
+  private final List<SubagentStartHandler> handlers;
 
   /**
-   * Creates a new SubagentStartHook.
+   * Creates a new SubagentStartHook with the default handler list.
    *
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if {@code scope} is null
    */
   public SubagentStartHook(JvmScope scope)
   {
+    this(scope, List.of(
+      input -> SubagentStartHandler.Result.context(
+        InjectCatAgentId.getSubagentContext(input.getSessionId(), input.getAgentId())),
+      input -> SubagentStartHandler.Result.ofStderr(
+        new ClearSkillMarker(scope).clearSubagentMarker(
+          input.getSessionId(), input.getAgentId())),
+      input -> SubagentStartHandler.Result.ofContext(
+        SkillDiscovery.getSubagentSkillListing(scope)),
+      new InjectSubAgentRules(scope)));
+  }
+
+  /**
+   * Creates a new SubagentStartHook with custom handlers (for testing).
+   *
+   * @param scope    the JVM scope providing environment configuration
+   * @param handlers the handlers to run
+   * @throws NullPointerException if {@code scope} or {@code handlers} are null
+   */
+  public SubagentStartHook(JvmScope scope, List<SubagentStartHandler> handlers)
+  {
     requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
+    requireThat(handlers, "handlers").isNotNull();
+    this.handlers = handlers;
   }
 
   /**
@@ -61,22 +85,19 @@ public final class SubagentStartHook implements HookHandler
   }
 
   /**
-   * Processes the SubagentStart hook by injecting the agent ID, skill listing, and CAT rules as
-   * additional context.
+   * Processes the SubagentStart hook by running all subagent start handlers and combining their output.
    *
    * @param input  the hook input to process
    * @param output the hook output builder for creating responses
-   * @return the hook result containing JSON output with the agent ID, skill listing, and rules
-   * @throws NullPointerException if {@code input} or {@code output} are null
+   * @return the hook result containing JSON output with the combined context and warnings
+   * @throws NullPointerException     if {@code input} or {@code output} are null
+   * @throws IllegalArgumentException if {@code session_id} or {@code agent_id} are blank
    */
   @Override
   public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
-
-    StringBuilder combinedContext = new StringBuilder();
-    List<String> warnings = new ArrayList<>();
 
     String sessionId = input.getSessionId();
     if (sessionId.isBlank())
@@ -91,55 +112,21 @@ public final class SubagentStartHook implements HookHandler
         "agent_id is blank. SubagentStart hook requires a valid agent ID.");
     }
 
-    String clearWarning = new ClearSkillMarker(scope).clearSubagentMarker(sessionId, agentId);
-    if (!clearWarning.isEmpty())
-      warnings.add(clearWarning);
+    StringJoiner combinedContext = new StringJoiner("\n\n");
+    List<String> warnings = new ArrayList<>();
 
-    combinedContext.append(InjectCatAgentId.getSubagentContext(sessionId, agentId));
-
-    String skillListing = SkillDiscovery.getSubagentSkillListing(scope);
-    if (!skillListing.isEmpty())
+    for (SubagentStartHandler handler : handlers)
     {
-      if (!combinedContext.isEmpty())
-        combinedContext.append("\n\n");
-      combinedContext.append(skillListing);
+      SubagentStartHandler.Result result = handler.handle(input);
+      if (!result.stderr().isEmpty())
+        warnings.add(result.stderr());
+      if (!result.additionalContext().isEmpty())
+        combinedContext.add(result.additionalContext());
     }
 
-    String catRules = getCatRules(input);
-    if (!catRules.isEmpty())
-    {
-      if (!combinedContext.isEmpty())
-        combinedContext.append("\n\n");
-      combinedContext.append(catRules);
-    }
-
-    if (combinedContext.isEmpty())
+    if (combinedContext.length() == 0)
       return new HookResult(output.empty(), warnings);
     return new HookResult(output.additionalContext("SubagentStart",
       combinedContext.toString()), warnings);
-  }
-
-  /**
-   * Discovers and returns CAT rules applicable to this subagent.
-   *
-   * @param input the hook input containing the subagent type
-   * @return the filtered rule content, or empty string if no rules apply
-   */
-  private String getCatRules(HookInput input)
-  {
-    String subagentType = input.getString("subagent_type", "");
-    if (subagentType.isBlank())
-    {
-      Logger log = LoggerFactory.getLogger(SubagentStartHook.class);
-      log.debug("SubagentStart hook received blank subagent_type; rules requiring a specific " +
-        "subagent type will not match");
-    }
-
-    Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
-    // Rules with paths: restrictions are injected dynamically by InjectPathRules (PreToolUse hook)
-    // when matching files are accessed. For subagents, only non-paths rules are injected at start.
-    return RulesDiscovery.getCatRulesForAudience(rulesDir, scope.getYamlMapper(),
-      (rules, activeFiles) -> RulesDiscovery.filterForSubagent(rules, subagentType, activeFiles),
-      List.of());
   }
 }

@@ -5,6 +5,7 @@
  * See LICENSE.md in the project root for license terms.
  */
 package io.github.cowwoc.cat.hooks.session;
+
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.RulesDiscovery;
@@ -20,17 +21,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Discovers all rule files, filters to those with {@code mainAgent: true}, applies any {@code paths}
  * restrictions, and injects matching content as additional context.
  */
-public final class InjectCatRules implements SessionStartHandler
+public final class InjectMainAgentRules implements SessionStartHandler
 {
   private final JvmScope scope;
 
   /**
-   * Creates a new InjectCatRules handler.
+   * Creates a new InjectMainAgentRules handler.
    *
    * @param scope the JVM scope providing environment paths
    * @throws NullPointerException if {@code scope} is null
    */
-  public InjectCatRules(JvmScope scope)
+  public InjectMainAgentRules(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
