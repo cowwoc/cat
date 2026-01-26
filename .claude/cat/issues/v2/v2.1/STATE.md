@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- release-changelog-validation
 - compress-skills-md (from decomposed compress-md-files)
 - compress-commands-md (from decomposed compress-md-files)
 - compress-concepts-md (from decomposed compress-md-files)
