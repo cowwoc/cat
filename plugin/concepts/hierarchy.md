@@ -17,7 +17,7 @@
         ├── STATE.md
         ├── PLAN.md
         ├── CHANGELOG.md      # Aggregates completed tasks
-        └── task/<name>/
+        └── <task-name>/
             ├── STATE.md
             └── PLAN.md
 ```
@@ -32,6 +32,15 @@
 | MAJOR | New features or capabilities | 0-based (users typically start at 1) |
 | MINOR | Bugfixes and smaller additions | 0-based |
 | TASK | Atomic unit of work | Named (lowercase-hyphens) |
+
+## Versioning Schemes
+
+CAT supports multiple versioning schemes (MAJOR, MAJOR.MINOR, MAJOR.MINOR.PATCH).
+
+See [version-scheme.md](version-scheme.md) for:
+- Supported schemes and their structure
+- Scheme detection logic
+- Version boundary detection rules
 
 ## Requirements Flow
 
@@ -107,7 +116,9 @@ dependent tasks.
 .claude/cat/issues/v1/v1.0/parse-switch-statements/STATE.md
 ```
 
-Components:
+Components (using MAJOR.MINOR scheme):
 - Major version: 1
 - Minor version: 0
 - Task name: parse-switch-statements
+
+> **Note:** Path structure adapts to versioning scheme. See [version-scheme.md](version-scheme.md).
