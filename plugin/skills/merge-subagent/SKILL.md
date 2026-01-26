@@ -27,7 +27,7 @@ long-running merge operations:
 "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-The task lock is released by `work` cleanup step after all subagent work is merged.
+The task lock is released by `work` finalization step after all subagent work is merged.
 
 ## Workflow
 
