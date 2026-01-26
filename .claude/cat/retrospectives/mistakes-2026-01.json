@@ -600,6 +600,31 @@
         "catches_variations": true
       },
       "correct_behavior": "When user says 'abort task', use AskUserQuestion to clarify: (1) stop working and keep pending, (2) cleanup worktree only, or (3) abandon permanently"
+    },
+    {
+      "id": "M267",
+      "timestamp": "2026-01-27T19:58:00Z",
+      "category": "assumption_without_verification",
+      "description": "Created delegate skill file in /workspace/plugin/ instead of worktree-relative plugin/ path",
+      "root_cause": "Absolute paths to /workspace/ bypass worktree isolation when working in a worktree",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+      "pattern_keywords": [
+        "worktree",
+        "absolute_path",
+        "file_location"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use relative paths (plugin/skills/) when in worktree, not absolute paths (/workspace/plugin/)"
     }
   ]
 }
