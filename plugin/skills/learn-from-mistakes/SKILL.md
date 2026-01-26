@@ -379,7 +379,7 @@ prevention_type: hook
 prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/enforce-lock-protocol.sh"
 action: |
   Create hook that detects lock investigation patterns and blocks them.
-  Or: Modify task-lock.sh to output ONLY "find another task" guidance,
+  Or: Modify issue-lock.sh to output ONLY "find another task" guidance,
   removing any information that could be used to bypass the lock.
 ```
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# Tests for task-lock.sh - atomic task locking mechanism
+# Tests for issue-lock.sh - atomic task locking mechanism
 
 load '../test_helper'
 
@@ -13,7 +13,7 @@ UUID_ORIG="00000000-0000-0000-0000-000000000001"
 
 setup() {
     setup_test_dir
-    TASK_LOCK="$SCRIPTS_DIR/task-lock.sh"
+    TASK_LOCK="$SCRIPTS_DIR/issue-lock.sh"
 }
 
 teardown() {

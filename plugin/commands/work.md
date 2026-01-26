@@ -142,13 +142,13 @@ Read `.claude/cat/cat-config.json` to determine:
 
 **Identify task to execute:**
 
-**Optional: Use find-task.sh script**
+**Optional: Use get-available-issues.sh script**
 
-For programmatic task discovery, use the `find-task.sh` script:
+For programmatic task discovery, use the `get-available-issues.sh` script:
 
 ```bash
 # Find next available task
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/find-task.sh" "${CLAUDE_PROJECT_DIR}" --session-id "$SESSION_ID")
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" "${CLAUDE_PROJECT_DIR}" --session-id "$SESSION_ID")
 
 # Parse result
 if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
@@ -235,7 +235,7 @@ TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
 # Session ID is auto-substituted
 
 # Try to acquire lock
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
@@ -353,9 +353,9 @@ Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the PRE-COM
 section. Copy the ENTIRE box structure verbatim - do NOT manually type it. Box characters and
 emoji widths vary across terminals; only the pre-computed version is guaranteed aligned.
 
-**MANDATORY: Accept find-task.sh results (M245)**
+**MANDATORY: Accept get-available-issues.sh results (M245)**
 
-When find-task.sh returns "no executable tasks", this is the CORRECT answer. Do NOT:
+When get-available-issues.sh returns "no executable tasks", this is the CORRECT answer. Do NOT:
 - Manually search for pending tasks to work around this result
 - Try to acquire locks on tasks that the script already determined are unavailable
 - Second-guess the script's lock checking logic
@@ -1964,7 +1964,7 @@ Task tool invocation:
       Delete branch: git branch -d "{task-branch}"
 
     Release lock:
-      "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{TASK_ID}" "{SESSION_ID}"
+      "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{TASK_ID}" "{SESSION_ID}"
 
     STEP 3: UPDATE PARENT STATE
     Task STATE.md already committed with implementation.
@@ -2030,7 +2030,7 @@ COMPLETED_MINOR="{minor from completed task, empty if major-only scheme}"
 COMPLETED_PATCH="{patch from completed task, empty if no patch level}"
 ```
 
-After find-task.sh returns next task, extract its version:
+After get-available-issues.sh returns next task, extract its version:
 ```bash
 NEXT_MAJOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.major')
 NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
@@ -2451,6 +2451,77 @@ See `concepts/duplicate-task.md` for full handling including:
 **Quick reference:** Set `resolution: duplicate` and `Duplicate Of: v{major}.{minor}-{original-task}` in STATE.md.
 
 </duplicate_task_handling>
+
+<anti_pattern_index>
+**Configuration-Driven Behavior Summary:**
+
+| Config | Setting | Behavior |
+|--------|---------|----------|
+| trust | high | Skip approval gate, auto-continue, auto-select approach |
+| trust | medium | Auto-continue, auto-fix on rejection (3 iterations) |
+| trust | low | Wait for user, ask on rejection |
+| curiosity | low | "Focus ONLY on assigned task" |
+| curiosity | medium | "NOTE obvious issues, report in .completion.json" |
+| curiosity | high | "Actively look for issues, report ALL findings" |
+| patience | high | Future version backlog |
+| patience | medium | Current version backlog |
+| patience | low | Resume planner, re-execute |
+| verify | none | Skip verification |
+| verify | changed | Test changed modules only |
+| verify | all | Full project verification |
+
+**Anti-Pattern Codes (M### Series):**
+
+| Code | Issue | Prevention |
+|------|-------|------------|
+| M034 | Silent plan changes | Announce BEFORE implementing |
+| M035 | No user review | Always pause for review (unless trust:high) |
+| M047 | Non-linear merge | Default to --ff-only |
+| M063 | Main agent implementing | Delegate to subagent |
+| M072 | Approval without commit | Verify commit exists first |
+| M076 | Separate STATE.md commit | Include in implementation commit |
+| M085 | STATE.md not in commit | Verify before approval |
+| M088 | Main agent reading source | Delegate to exploration subagent |
+| M089 | Subagent branch in approval | Show task branch |
+| M091 | Main agent deciding patterns | Delegate to planning subagent |
+| M092 | Missing resolution field | Require for completed status |
+| M094 | Exit gate task runs early | Check all non-gate tasks complete |
+| M097 | No lock check before offer | Acquire lock first |
+| M099 | No token variance check | Compare actual vs estimate |
+| M110 | Verify when no source changes | Check for actual changes first |
+| M120 | No next steps | Always provide options |
+| M125 | Code blocks for output | Output directly without ``` |
+| M150 | Invalid status transition | pending→in-progress→completed |
+| M151 | Approval with unsquashed | Squash before approval |
+| M153 | 90% in-progress at approval | Must be 100% completed |
+| M154 | Checkout different branch | Merge INTO current branch |
+| M157 | No squash before approval | Run git-squash skill |
+| M160 | Summary only, no diff | Show actual diff content |
+| M161 | Approval without diff | Always show diff |
+| M163 | Task without parent update | Add to parent pending list |
+| M170 | Plain git diff | Use render-diff skill |
+| M171 | Ad-hoc diff format | Use render-diff skill |
+| M172 | PLAN.md for skill usage | Use SKILL.md (authoritative) |
+| M173 | Fallback rm on lock release | Just call issue-lock.sh |
+| M201 | Wrong diff format | Use render-diff.py |
+| M211 | Reformatted diff | Present VERBATIM |
+| M231 | Truncated large diff | Show ALL content |
+| M239 | Resume existing worktree | Skip, find alternative |
+| M245 | Ignore get-available-issues.sh | Accept script results |
+| M246 | Manual box characters | Copy-paste from template |
+| M248 | Confuse version/branch | Distinguish task version from base branch |
+| M251 | No subtask context | Include decomposition context |
+
+**Architecture Codes (A### Series):**
+
+| Code | Issue | Prevention |
+|------|-------|------------|
+| A010 | Pre-approval checklist skip | Complete ALL checks first |
+| A011 | STATE.md validation skip | Verify rules before update |
+| A014 | Orchestration boundary | Check "should subagent do this?" |
+| A015 | SKILL.md vs PLAN.md | SKILL.md for usage, PLAN.md for planning |
+| A018 | No hard limit enforcement | Mandatory decomposition at 80% |
+</anti_pattern_index>
 
 <success_criteria>
 

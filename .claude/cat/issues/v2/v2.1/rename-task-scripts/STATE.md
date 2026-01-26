@@ -1,8 +1,19 @@
-# State
+# rename-task-scripts
 
-- **Status:** in-progress
-- **Progress:** 0%
+- **Status:** completed
+- **Progress:** 100%
 - **Dependencies:** []
-- **Created From:** 2.1-rename-task-to-issue
-- **Last Updated:** 2026-01-26
-- **Started:** 2026-01-26 08:30
+- **Assignee:** (unassigned)
+- **Priority:** normal
+- **Resolution:** implemented
+- **Completed:** 2026-01-26
+
+## Changes
+
+Rename script files from "task" to "issue" terminology:
+- find-task.sh -> get-available-issues.sh
+- task-lock.sh -> issue-lock.sh
+
+## Notes
+
+Part of the task-to-issue rename initiative for v2.1.
