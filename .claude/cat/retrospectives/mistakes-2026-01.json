@@ -488,6 +488,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When script output contains ERROR: prefix, STOP immediately. Report the error to user. Do NOT continue processing the JSON result or subsequent workflow steps."
+    },
+    {
+      "id": "M263",
+      "timestamp": "2026-01-26T12:50:00Z",
+      "category": "logical_error",
+      "description": "Parent task STATE.md used invalid status decomposed instead of keeping in-progress until all subtasks complete. Skill documentation taught incorrect pattern.",
+      "root_cause": "decompose-task skill documentation showed status: decomposed as example, which is not a valid status value. Valid values are: pending, in-progress, completed, blocked.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/decompose-task/SKILL.md",
+      "pattern_keywords": [
+        "decomposed",
+        "parent-task",
+        "status",
+        "subtask",
+        "lifecycle"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Parent task status remains in-progress while subtasks execute. Parent transitions to completed only when ALL subtasks are completed. Use Decomposed: true field to track decomposition state, not an invalid status value."
     }
   ]
 }

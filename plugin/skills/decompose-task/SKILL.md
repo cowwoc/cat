@@ -119,13 +119,24 @@ dependencies:
 
 ### 6. Update STATE.md Files
 
+**Parent Task Status Lifecycle (M263):**
+
+When a task is decomposed, the parent task status follows this lifecycle:
+1. `pending` → `in-progress` (when decomposition starts)
+2. Remains `in-progress` while subtasks execute
+3. `in-progress` → `completed` (only when ALL subtasks are completed)
+
+**INVALID:** Using `status: decomposed` - this is NOT a valid status value.
+Valid values are: `pending`, `in-progress`, `completed`, `blocked`.
+
 Original task STATE.md:
 
 ```markdown
 # 1.2-implement-parser/STATE.md
 
-- **Status:** decomposed
+- **Status:** in-progress
 - **Progress:** 0%
+- **Decomposed:** true
 - **Decomposed At:** 2026-01-10T16:00:00Z
 - **Reason:** Task exceeded context threshold (85K tokens used)
 
@@ -138,6 +149,8 @@ Original task STATE.md:
 - Lexer implementation 80% complete in subagent work
 - Will be merged to 1.2a branch
 ```
+
+**Note:** Parent stays `in-progress` until ALL subtasks complete. Progress is calculated from subtask completion (e.g., 1/3 subtasks = 33%).
 
 New task STATE.md:
 
@@ -247,15 +260,22 @@ conflict_check:
     move_conflicting_task_to_next_sub_task: true
 ```
 
-### 9. Mark Original Task as Decomposed
+### 9. Update Original Task for Decomposition
+
+**STATE.md:** Keep status as `in-progress` (NOT `decomposed` - invalid status value per M263).
+
+**PLAN.md:** Add decomposition metadata:
 
 ```bash
-# Update original PLAN.md
+# Update original PLAN.md with decomposition info
 echo "---
-status: DECOMPOSED
+decomposed: true
 decomposed_into: [1.2a, 1.2b, 1.2c]
 parallel_plan: sub_task_1=[1.2a, 1.2c], sub_task_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
+
+# Update STATE.md - status stays in-progress, add Decomposed field
+# Parent transitions to 'completed' only when ALL subtasks complete
 ```
 
 ## Examples
