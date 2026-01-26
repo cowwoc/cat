@@ -1,19 +1,19 @@
 #!/bin/bash
-# task-lock.sh - Task-level locking for concurrent CAT execution
+# issue-lock.sh - Issue-level locking for concurrent CAT execution
 #
 # Provides atomic lock acquisition with persistent locks.
 # Locks never expire automatically - user must explicitly release or force-release.
-# Prevents multiple Claude instances from executing the same task simultaneously.
+# Prevents multiple Claude instances from executing the same issue simultaneously.
 #
 # Usage:
-#   task-lock.sh acquire <project-dir> <task-id> <session-id> [worktree]
-#   task-lock.sh update <project-dir> <task-id> <session-id> <worktree>
-#   task-lock.sh release <project-dir> <task-id> <session-id>
-#   task-lock.sh force-release <project-dir> <task-id>
-#   task-lock.sh check <project-dir> <task-id>
-#   task-lock.sh list <project-dir>
+#   issue-lock.sh acquire <project-dir> <issue-id> <session-id> [worktree]
+#   issue-lock.sh update <project-dir> <issue-id> <session-id> <worktree>
+#   issue-lock.sh release <project-dir> <issue-id> <session-id>
+#   issue-lock.sh force-release <project-dir> <issue-id>
+#   issue-lock.sh check <project-dir> <issue-id>
+#   issue-lock.sh list <project-dir>
 #
-# Lock file format (.claude/cat/locks/<task-id>.lock):
+# Lock file format (.claude/cat/locks/<issue-id>.lock):
 #   session_id=<uuid>
 #   created_at=<timestamp>
 #   worktree=<path>
@@ -36,9 +36,9 @@ ensure_lock_dir() {
 }
 
 get_lock_file() {
-  local task_id="$1"
-  # Sanitize task_id for filename (replace / with -)
-  local safe_id="${task_id//\//-}"
+  local issue_id="$1"
+  # Sanitize issue_id for filename (replace / with -)
+  local safe_id="${issue_id//\//-}"
   echo "${LOCK_DIR}/${safe_id}.lock"
 }
 
@@ -55,7 +55,7 @@ validate_session_id() {
   local session_id="$1"
   # Session IDs should be UUIDs: 8-4-4-4-12 hex pattern
   if [[ ! "$session_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
-    echo "{\"status\":\"error\",\"message\":\"Invalid session_id format: '$session_id'. Expected UUID. Did you swap task_id and session_id arguments?\"}"
+    echo "{\"status\":\"error\",\"message\":\"Invalid session_id format: '$session_id'. Expected UUID. Did you swap issue_id and session_id arguments?\"}"
     return 1
   fi
   return 0
@@ -64,7 +64,7 @@ validate_session_id() {
 # Acquire lock atomically
 # Returns: 0 if acquired, 1 if already locked by another session
 acquire_lock() {
-  local task_id="$1"
+  local issue_id="$1"
   local session_id="$2"
   local worktree="${3:-}"
 
@@ -75,7 +75,7 @@ acquire_lock() {
 
   ensure_lock_dir
   local lock_file
-  lock_file=$(get_lock_file "$task_id")
+  lock_file=$(get_lock_file "$issue_id")
 
   # Check if lock exists
   if [[ -f "$lock_file" ]]; then
@@ -97,8 +97,8 @@ acquire_lock() {
     local remote_date="unknown"
     local remote_branch=""
 
-    # Try to find remote branch matching the task_id pattern
-    for branch_pattern in "origin/${task_id}" "origin/*-${task_id#*-}"; do
+    # Try to find remote branch matching the issue_id pattern
+    for branch_pattern in "origin/${issue_id}" "origin/*-${issue_id#*-}"; do
       remote_branch=$(git branch -r 2>/dev/null | grep -m1 "$branch_pattern" | tr -d ' ') || true
       [[ -n "$remote_branch" ]] && break
     done
@@ -110,7 +110,7 @@ acquire_lock() {
     fi
 
     cat << LOCKED_JSON
-{"status":"locked","message":"Task locked by another session","owner":"$existing_session","action":"FIND_ANOTHER_TASK","guidance":"Do NOT investigate, remove, or question this lock. Execute a different task instead. If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.","remote_author":"$remote_author","remote_email":"$remote_email","remote_date":"$remote_date"}
+{"status":"locked","message":"Issue locked by another session","owner":"$existing_session","action":"FIND_ANOTHER_ISSUE","guidance":"Do NOT investigate, remove, or question this lock. Execute a different issue instead. If you believe this is a stale lock from a crashed session, ask the USER to run /cat:cleanup.","remote_author":"$remote_author","remote_email":"$remote_email","remote_date":"$remote_date"}
 LOCKED_JSON
     return 1
   fi
@@ -141,7 +141,7 @@ EOF
 
 # Update lock metadata (only if owned by this session)
 update_lock() {
-  local task_id="$1"
+  local issue_id="$1"
   local session_id="$2"
   local worktree="$3"
 
@@ -151,7 +151,7 @@ update_lock() {
   fi
 
   local lock_file
-  lock_file=$(get_lock_file "$task_id")
+  lock_file=$(get_lock_file "$issue_id")
 
   if [[ ! -f "$lock_file" ]]; then
     echo '{"status":"error","message":"No lock exists to update"}'
@@ -187,7 +187,7 @@ EOF
 
 # Release lock (only if owned by this session)
 release_lock() {
-  local task_id="$1"
+  local issue_id="$1"
   local session_id="$2"
 
   # Validate session_id format (M204)
@@ -196,7 +196,7 @@ release_lock() {
   fi
 
   local lock_file
-  lock_file=$(get_lock_file "$task_id")
+  lock_file=$(get_lock_file "$issue_id")
 
   if [[ ! -f "$lock_file" ]]; then
     echo '{"status":"released","message":"No lock exists"}'
@@ -218,13 +218,13 @@ release_lock() {
 
 # Check lock status
 check_lock() {
-  local task_id="$1"
+  local issue_id="$1"
 
   local lock_file
-  lock_file=$(get_lock_file "$task_id")
+  lock_file=$(get_lock_file "$issue_id")
 
   if [[ ! -f "$lock_file" ]]; then
-    echo '{"locked":false,"message":"Task not locked"}'
+    echo '{"locked":false,"message":"Issue not locked"}'
     return 0
   fi
 
@@ -243,10 +243,10 @@ check_lock() {
 
 # Force release lock (user action - ignores session ownership)
 force_release_lock() {
-  local task_id="$1"
+  local issue_id="$1"
 
   local lock_file
-  lock_file=$(get_lock_file "$task_id")
+  lock_file=$(get_lock_file "$issue_id")
 
   if [[ ! -f "$lock_file" ]]; then
     echo '{"status":"released","message":"No lock exists"}'
@@ -273,14 +273,14 @@ list_locks() {
   for lock_file in "$LOCK_DIR"/*.lock; do
     [[ ! -f "$lock_file" ]] && continue
 
-    local task_id session_id created_at age
-    task_id=$(basename "$lock_file" .lock)
+    local issue_id session_id created_at age
+    issue_id=$(basename "$lock_file" .lock)
     session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
     created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
     age=$((now - created_at))
 
     # Accumulate as tab-separated values
-    lock_data+="${task_id}\t${session_id}\t${age}\n"
+    lock_data+="${issue_id}\t${session_id}\t${age}\n"
   done
 
   # Single jq call to construct entire JSON array
@@ -289,7 +289,7 @@ list_locks() {
   else
     printf "%b" "$lock_data" | jq -R -s '
       split("\n") | map(select(length > 0)) | map(
-        split("\t") | {task: .[0], session: .[1], age_seconds: (.[2] | tonumber)}
+        split("\t") | {issue: .[0], session: .[1], age_seconds: (.[2] | tonumber)}
       )
     '
   fi
@@ -303,19 +303,19 @@ list_locks() {
 
 usage() {
   cat << 'EOF'
-Usage: task-lock.sh <command> <project-dir> [args]
+Usage: issue-lock.sh <command> <project-dir> [args]
 
 Commands:
-  acquire <project-dir> <task-id> <session-id> [worktree]  - Acquire lock for task
-  update <project-dir> <task-id> <session-id> <worktree>   - Update lock with worktree path
-  release <project-dir> <task-id> <session-id>             - Release lock (only if owned)
-  force-release <project-dir> <task-id>                    - Force release lock (any owner)
-  check <project-dir> <task-id>                            - Check if task is locked
-  list <project-dir>                                       - List all locks
+  acquire <project-dir> <issue-id> <session-id> [worktree]  - Acquire lock for issue
+  update <project-dir> <issue-id> <session-id> <worktree>   - Update lock with worktree path
+  release <project-dir> <issue-id> <session-id>             - Release lock (only if owned)
+  force-release <project-dir> <issue-id>                    - Force release lock (any owner)
+  check <project-dir> <issue-id>                            - Check if issue is locked
+  list <project-dir>                                        - List all locks
 
 Arguments:
   project-dir    Project root directory (contains .claude/cat/)
-  task-id        Task identifier (e.g., "2.0-fix-parser")
+  issue-id       Issue identifier (e.g., "2.0-fix-parser")
   session-id     Claude session UUID
   worktree       Optional worktree path
 
@@ -341,27 +341,27 @@ validate_project_dir() {
 
 case "${1:-}" in
   acquire)
-    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: acquire <project-dir> <task-id> <session-id> [worktree]"}'; exit 1; }
+    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: acquire <project-dir> <issue-id> <session-id> [worktree]"}'; exit 1; }
     validate_project_dir "$2"
     acquire_lock "$3" "$4" "${5:-}"
     ;;
   update)
-    [[ $# -lt 5 ]] && { echo '{"status":"error","message":"Usage: update <project-dir> <task-id> <session-id> <worktree>"}'; exit 1; }
+    [[ $# -lt 5 ]] && { echo '{"status":"error","message":"Usage: update <project-dir> <issue-id> <session-id> <worktree>"}'; exit 1; }
     validate_project_dir "$2"
     update_lock "$3" "$4" "$5"
     ;;
   release)
-    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: release <project-dir> <task-id> <session-id>"}'; exit 1; }
+    [[ $# -lt 4 ]] && { echo '{"status":"error","message":"Usage: release <project-dir> <issue-id> <session-id>"}'; exit 1; }
     validate_project_dir "$2"
     release_lock "$3" "$4"
     ;;
   force-release)
-    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: force-release <project-dir> <task-id>"}'; exit 1; }
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: force-release <project-dir> <issue-id>"}'; exit 1; }
     validate_project_dir "$2"
     force_release_lock "$3"
     ;;
   check)
-    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: check <project-dir> <task-id>"}'; exit 1; }
+    [[ $# -lt 3 ]] && { echo '{"status":"error","message":"Usage: check <project-dir> <issue-id>"}'; exit 1; }
     validate_project_dir "$2"
     check_lock "$3"
     ;;

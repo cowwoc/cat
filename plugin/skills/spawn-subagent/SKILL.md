@@ -495,7 +495,7 @@ WORKTREE_PATH=".worktrees/${WORKTREE_NAME}"
 
 # Verify task lock is held (should be acquired by work)
 TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-LOCK_STATUS=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$TASK_ID" 2>/dev/null || echo '{}')
+LOCK_STATUS=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$TASK_ID" 2>/dev/null || echo '{}')
 if ! echo "$LOCK_STATUS" | jq -e '.locked == true' > /dev/null 2>&1; then
   echo "WARNING: Task lock not held. Acquire lock via work first."
 fi

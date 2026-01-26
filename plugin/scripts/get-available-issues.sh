@@ -1,14 +1,14 @@
 #!/bin/bash
-# find-task.sh - Find next executable task for /cat:work
+# get-available-issues.sh - Find next executable issue for /cat:work
 #
-# Encapsulates task discovery logic: argument parsing, version filtering,
+# Encapsulates issue discovery logic: argument parsing, version filtering,
 # dependency checks, lock checks, and gate evaluation.
 #
 # Usage:
-#   find-task.sh <project-dir> [--scope major|minor|task|all] [--target VERSION|TASK_ID] [--session-id ID] [--override-gate]
+#   get-available-issues.sh <project-dir> [--scope major|minor|issue|all] [--target VERSION|ISSUE_ID] [--session-id ID] [--override-gate]
 #
 # Output (JSON):
-#   {"status":"found|not_found|all_locked|gate_blocked","task_id":"2.0-task-name",...}
+#   {"status":"found|not_found|all_locked|gate_blocked","issue_id":"2.0-issue-name",...}
 
 set -uo pipefail
 
@@ -22,7 +22,7 @@ source "${SCRIPT_DIR}/lib/version-utils.sh"
 
 PROJECT_DIR=""  # Required: set via --project-dir
 SESSION_ID=""
-SCOPE="all"  # all | major | minor | task
+SCOPE="all"  # all | major | minor | issue
 TARGET=""
 OVERRIDE_GATE=false
 
@@ -63,7 +63,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                # Positional argument - could be version or task ID
+                # Positional argument - could be version or issue ID
                 if [[ -z "$TARGET" ]]; then
                     TARGET="$1"
                     # Auto-detect scope from target format
@@ -72,7 +72,7 @@ parse_args() {
                     elif [[ "$TARGET" =~ ^[0-9]+\.[0-9]+$ ]]; then
                         SCOPE="minor"
                     elif [[ "$TARGET" =~ ^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+$ ]]; then
-                        SCOPE="task"
+                        SCOPE="issue"
                     fi
                 fi
                 shift
@@ -83,33 +83,33 @@ parse_args() {
 
 show_usage() {
     cat << 'EOF'
-Usage: find-task.sh <project-dir> [OPTIONS] [VERSION_OR_TASK]
+Usage: get-available-issues.sh <project-dir> [OPTIONS] [VERSION_OR_ISSUE]
 
-Find the next executable task for /cat:work.
+Find the next executable issue for /cat:work.
 
 Arguments:
   project-dir        Project root directory (contains .claude/cat/) - REQUIRED first argument
 
 Options:
-  --scope SCOPE      Search scope: all, major, minor, task (auto-detected from target)
-  --target TARGET    Version or task ID to target
+  --scope SCOPE      Search scope: all, major, minor, issue (auto-detected from target)
+  --target TARGET    Version or issue ID to target
   --session-id ID    Session ID for lock acquisition
   --override-gate    Skip entry gate evaluation
-  VERSION_OR_TASK    Version (2, 2.0) or task ID (2.0-task-name)
+  VERSION_OR_ISSUE   Version (2, 2.0) or issue ID (2.0-issue-name)
 
 Output (JSON):
   status: found, not_found, all_locked, gate_blocked
-  task_id, major, minor, task_name, task_path
+  issue_id, major, minor, issue_name, issue_path
   scope, lock_status, blocking_reason
 EOF
 }
 
 # =============================================================================
-# TASK DISCOVERY
+# ISSUE DISCOVERY
 # =============================================================================
 
 # Parse status from STATE.md
-get_task_status() {
+get_issue_status() {
     local state_file="$1"
 
     if [[ ! -f "$state_file" ]]; then
@@ -159,7 +159,7 @@ get_task_status() {
 }
 
 # Parse dependencies from STATE.md
-get_task_dependencies() {
+get_issue_dependencies() {
     local state_file="$1"
 
     if [[ ! -f "$state_file" ]]; then
@@ -167,7 +167,7 @@ get_task_dependencies() {
         return 1
     fi
 
-    # Format: "- **Dependencies:** [task1, task2]"
+    # Format: "- **Dependencies:** [issue1, issue2]"
     local deps_line
     deps_line=$(grep -E "^\- \*\*Dependencies:\*\*" "$state_file" | head -1)
 
@@ -189,11 +189,11 @@ get_task_dependencies() {
     done | jq -R -s 'split("\n") | map(select(length > 0))'
 }
 
-# Check if a dependency is satisfied (task completed)
+# Check if a dependency is satisfied (issue completed)
 is_dependency_satisfied() {
     local dep_name="$1"
 
-    # Search for the dependency task in all versions
+    # Search for the dependency issue in all versions
     local dep_state
     dep_state=$(find "$CAT_DIR" -path "*/$dep_name/STATE.md" 2>/dev/null | head -1)
 
@@ -204,7 +204,7 @@ is_dependency_satisfied() {
     fi
 
     local status
-    status=$(get_task_status "$dep_state")
+    status=$(get_issue_status "$dep_state")
 
     if [[ "$status" == "completed" ]]; then
         echo "true"
@@ -213,11 +213,11 @@ is_dependency_satisfied() {
     fi
 }
 
-# Check all dependencies for a task
+# Check all dependencies for an issue
 check_dependencies() {
     local state_file="$1"
     local deps
-    deps=$(get_task_dependencies "$state_file")
+    deps=$(get_issue_dependencies "$state_file")
 
     if [[ "$deps" == "[]" ]]; then
         echo '{"satisfied":true,"blocking":[]}'
@@ -239,10 +239,10 @@ check_dependencies() {
     fi
 }
 
-# Try to acquire lock for a task
-# Returns the actual status from task-lock.sh (acquired, locked, or error)
+# Try to acquire lock for an issue
+# Returns the actual status from issue-lock.sh (acquired, locked, or error)
 try_acquire_lock() {
-    local task_id="$1"
+    local issue_id="$1"
 
     if [[ -z "$SESSION_ID" ]]; then
         echo '{"status":"error","message":"No session ID provided"}'
@@ -250,9 +250,9 @@ try_acquire_lock() {
     fi
 
     local result
-    # Capture output regardless of exit code - task-lock.sh returns valid JSON even on failure
+    # Capture output regardless of exit code - issue-lock.sh returns valid JSON even on failure
     # The JSON contains the actual status (locked, acquired, error) which callers must check
-    result=$("${SCRIPT_DIR}/task-lock.sh" acquire "$PROJECT_DIR" "$task_id" "$SESSION_ID" 2>/dev/null) || true
+    result=$("${SCRIPT_DIR}/issue-lock.sh" acquire "$PROJECT_DIR" "$issue_id" "$SESSION_ID" 2>/dev/null) || true
 
     # If result is empty, something went very wrong
     if [[ -z "$result" ]]; then
@@ -263,87 +263,87 @@ try_acquire_lock() {
     echo "$result"
 }
 
-# Check if task is an exit gate task
-is_exit_gate_task() {
+# Check if issue is an exit gate issue
+is_exit_gate_issue() {
     local version_dir="$1"
-    local task_name="$2"
+    local issue_name="$2"
 
     local plan_file="$version_dir/PLAN.md"
     [[ ! -f "$plan_file" ]] && echo "false" && return
 
-    # Look for [task] prefix in Exit section
-    if grep -qE "^\- \[task\] ${task_name}$" "$plan_file" 2>/dev/null; then
+    # Look for [issue] prefix in Exit section
+    if grep -qE "^\- \[issue\] ${issue_name}$" "$plan_file" 2>/dev/null; then
         echo "true"
     else
         echo "false"
     fi
 }
 
-# Check if all non-exit-gate tasks in version are complete
+# Check if all non-exit-gate issues in version are complete
 check_exit_gate_rule() {
     local version_dir="$1"
-    local task_name="$2"
+    local issue_name="$2"
 
-    # Get all exit gate tasks
+    # Get all exit gate issues
     local plan_file="$version_dir/PLAN.md"
-    local exit_tasks=()
+    local exit_issues=()
     if [[ -f "$plan_file" ]]; then
         while IFS= read -r line; do
-            local exit_task
-            exit_task=$(echo "$line" | grep -oP '^\- \[task\] \K.*$' 2>/dev/null) || continue
-            exit_tasks+=("$exit_task")
+            local exit_issue
+            exit_issue=$(echo "$line" | grep -oP '^\- \[issue\] \K.*$' 2>/dev/null) || continue
+            exit_issues+=("$exit_issue")
         done < "$plan_file"
     fi
 
-    # Check all tasks in version
-    local pending_tasks=()
-    for task_dir in "$version_dir"/*/; do
-        task_dir="${task_dir%/}"  # Strip trailing slash from glob
-        [[ ! -d "$task_dir" ]] && continue
-        local this_task
-        this_task=$(basename "$task_dir")
+    # Check all issues in version
+    local pending_issues=()
+    for issue_dir in "$version_dir"/*/; do
+        issue_dir="${issue_dir%/}"  # Strip trailing slash from glob
+        [[ ! -d "$issue_dir" ]] && continue
+        local this_issue
+        this_issue=$(basename "$issue_dir")
 
-        # Skip exit gate tasks
+        # Skip exit gate issues
         local is_exit=false
-        for exit_task in "${exit_tasks[@]}"; do
-            [[ "$this_task" == "$exit_task" ]] && is_exit=true && break
+        for exit_issue in "${exit_issues[@]}"; do
+            [[ "$this_issue" == "$exit_issue" ]] && is_exit=true && break
         done
         $is_exit && continue
 
-        # Check if this non-exit-gate task is complete
+        # Check if this non-exit-gate issue is complete
         local status
-        status=$(get_task_status "$task_dir/STATE.md")
+        status=$(get_issue_status "$issue_dir/STATE.md")
         if [[ "$status" != "completed" ]]; then
-            pending_tasks+=("$this_task")
+            pending_issues+=("$this_issue")
         fi
     done
 
-    if [[ ${#pending_tasks[@]} -eq 0 ]]; then
+    if [[ ${#pending_issues[@]} -eq 0 ]]; then
         echo '{"satisfied":true,"pending":[]}'
     else
-        printf '{"satisfied":false,"pending":%s}' "$(printf '%s\n' "${pending_tasks[@]}" | jq -R -s 'split("\n") | map(select(length > 0))')"
+        printf '{"satisfied":false,"pending":%s}' "$(printf '%s\n' "${pending_issues[@]}" | jq -R -s 'split("\n") | map(select(length > 0))')"
     fi
 }
 
-# Find first executable task in a minor version
-find_task_in_minor() {
+# Find first executable issue in a minor version
+find_issue_in_minor() {
     local minor_dir="$1"
 
-    for task_dir in "$minor_dir"/*/; do
-        task_dir="${task_dir%/}"  # Strip trailing slash from glob
-        [[ ! -d "$task_dir" ]] && continue
-        [[ ! -f "$task_dir/STATE.md" ]] && continue
+    for issue_dir in "$minor_dir"/*/; do
+        issue_dir="${issue_dir%/}"  # Strip trailing slash from glob
+        [[ ! -d "$issue_dir" ]] && continue
+        [[ ! -f "$issue_dir/STATE.md" ]] && continue
 
-        local task_name
-        task_name=$(basename "$task_dir")
+        local issue_name
+        issue_name=$(basename "$issue_dir")
 
-        # Skip directories that are version subdirectories (not tasks)
-        [[ "$task_name" =~ ^v[0-9] ]] && continue
+        # Skip directories that are version subdirectories (not issues)
+        [[ "$issue_name" =~ ^v[0-9] ]] && continue
 
         local status
-        status=$(get_task_status "$task_dir/STATE.md")
+        status=$(get_issue_status "$issue_dir/STATE.md")
 
-        # Only consider pending or in-progress tasks
+        # Only consider pending or in-progress issues
         if [[ "$status" != "pending" && "$status" != "in-progress" ]]; then
             continue
         fi
@@ -355,43 +355,43 @@ find_task_in_minor() {
         major=$(echo "$minor_version" | grep -oP '^v?\K[0-9]+')
         local minor
         minor=$(echo "$minor_version" | grep -oP '\.\K[0-9]+$')
-        local task_id="${major}.${minor}-${task_name}"
+        local issue_id="${major}.${minor}-${issue_name}"
 
         # Check dependencies
         local dep_result
-        dep_result=$(check_dependencies "$task_dir/STATE.md")
+        dep_result=$(check_dependencies "$issue_dir/STATE.md")
         if [[ $(echo "$dep_result" | jq -r '.satisfied') != "true" ]]; then
             continue
         fi
 
-        # Check if this is an exit gate task and if rule is satisfied
-        if [[ $(is_exit_gate_task "$minor_dir" "$task_name") == "true" ]]; then
+        # Check if this is an exit gate issue and if rule is satisfied
+        if [[ $(is_exit_gate_issue "$minor_dir" "$issue_name") == "true" ]]; then
             local gate_result
-            gate_result=$(check_exit_gate_rule "$minor_dir" "$task_name")
+            gate_result=$(check_exit_gate_rule "$minor_dir" "$issue_name")
             if [[ $(echo "$gate_result" | jq -r '.satisfied') != "true" ]]; then
                 continue
             fi
         fi
 
         # Check for existing worktree (M237)
-        # If worktree exists, assume it's in use by another session - skip this task
-        local worktree_path="$PROJECT_DIR/.worktrees/$task_id"
+        # If worktree exists, assume it's in use by another session - skip this issue
+        local worktree_path="$PROJECT_DIR/.worktrees/$issue_id"
         if [[ -d "$worktree_path" ]]; then
-            # Skip this task - worktree indicates another session is working on it
+            # Skip this issue - worktree indicates another session is working on it
             continue
         fi
 
         # Try to acquire lock
         local lock_result lock_status
-        lock_result=$(try_acquire_lock "$task_id")
+        lock_result=$(try_acquire_lock "$issue_id")
         lock_status=$(echo "$lock_result" | jq -r '.status')
         # Skip if not acquired (locked by another session, or error)
         if [[ "$lock_status" != "acquired" ]]; then
             continue
         fi
 
-        # Found executable task!
-        echo "$task_id"
+        # Found executable issue!
+        echo "$issue_id"
         return 0
     done
 
@@ -407,16 +407,16 @@ find_first_incomplete_minor() {
     for minor_dir in $(find "$major_dir" -maxdepth 1 -type d -name "v*.*" 2>/dev/null | sort -V); do
         [[ ! -d "$minor_dir" ]] && continue
 
-        # Check if minor has any pending/in-progress tasks
-        for task_dir in "$minor_dir"/*/; do
-            task_dir="${task_dir%/}"  # Strip trailing slash from glob
-            [[ ! -f "$task_dir/STATE.md" ]] && continue
-            local task_name
-            task_name=$(basename "$task_dir")
-            [[ "$task_name" =~ ^v[0-9] ]] && continue
+        # Check if minor has any pending/in-progress issues
+        for issue_dir in "$minor_dir"/*/; do
+            issue_dir="${issue_dir%/}"  # Strip trailing slash from glob
+            [[ ! -f "$issue_dir/STATE.md" ]] && continue
+            local issue_name
+            issue_name=$(basename "$issue_dir")
+            [[ "$issue_name" =~ ^v[0-9] ]] && continue
 
             local status
-            status=$(get_task_status "$task_dir/STATE.md")
+            status=$(get_issue_status "$issue_dir/STATE.md")
             if [[ "$status" == "pending" || "$status" == "in-progress" ]]; then
                 echo "$minor_dir"
                 return 0
@@ -432,38 +432,38 @@ find_first_incomplete_minor() {
 # MAIN LOGIC
 # =============================================================================
 
-find_next_task() {
-    # Specific task requested
-    if [[ "$SCOPE" == "task" && -n "$TARGET" ]]; then
-        # Parse task ID: major.minor-task-name
-        local major minor task_name
+find_next_issue() {
+    # Specific issue requested
+    if [[ "$SCOPE" == "issue" && -n "$TARGET" ]]; then
+        # Parse issue ID: major.minor-issue-name
+        local major minor issue_name
         major=$(echo "$TARGET" | cut -d. -f1)
         minor=$(echo "$TARGET" | cut -d. -f2 | cut -d- -f1)
-        task_name=$(echo "$TARGET" | sed 's/^[0-9]*\.[0-9]*-//')
+        issue_name=$(echo "$TARGET" | sed 's/^[0-9]*\.[0-9]*-//')
 
-        local task_dir
-        task_dir=$(get_task_dir "${major}.${minor}" "$task_name" "$CAT_DIR")
+        local issue_dir
+        issue_dir=$(get_task_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
 
-        if [[ ! -d "$task_dir" ]]; then
-            echo '{"status":"not_found","message":"Task directory not found","task_id":"'"$TARGET"'"}'
+        if [[ ! -d "$issue_dir" ]]; then
+            echo '{"status":"not_found","message":"Issue directory not found","issue_id":"'"$TARGET"'"}'
             return 1
         fi
 
         # Check status
         local status
-        status=$(get_task_status "$task_dir/STATE.md")
+        status=$(get_issue_status "$issue_dir/STATE.md")
         if [[ "$status" != "pending" && "$status" != "in-progress" ]]; then
-            echo '{"status":"not_executable","message":"Task status is '"$status"'","task_id":"'"$TARGET"'"}'
+            echo '{"status":"not_executable","message":"Issue status is '"$status"'","issue_id":"'"$TARGET"'"}'
             return 1
         fi
 
         # Check dependencies
         local dep_result
-        dep_result=$(check_dependencies "$task_dir/STATE.md")
+        dep_result=$(check_dependencies "$issue_dir/STATE.md")
         if [[ $(echo "$dep_result" | jq -r '.satisfied') != "true" ]]; then
             local blocking
             blocking=$(echo "$dep_result" | jq -c '.blocking')
-            echo '{"status":"blocked","message":"Dependencies not satisfied","task_id":"'"$TARGET"'","blocking":'"$blocking"'}'
+            echo '{"status":"blocked","message":"Dependencies not satisfied","issue_id":"'"$TARGET"'","blocking":'"$blocking"'}'
             return 1
         fi
 
@@ -471,7 +471,7 @@ find_next_task() {
         # If worktree exists, it's in use by another session - report as unavailable
         local worktree_path="$PROJECT_DIR/.worktrees/$TARGET"
         if [[ -d "$worktree_path" ]]; then
-            echo '{"status":"existing_worktree","task_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","task_name":"'"$task_name"'","task_path":"'"$task_dir"'","worktree_path":"'"$worktree_path"'","message":"Task has existing worktree - likely in use by another session"}'
+            echo '{"status":"existing_worktree","issue_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","worktree_path":"'"$worktree_path"'","message":"Issue has existing worktree - likely in use by another session"}'
             return 1
         fi
 
@@ -481,16 +481,16 @@ find_next_task() {
         if [[ $(echo "$lock_result" | jq -r '.status') == "locked" ]]; then
             local owner
             owner=$(echo "$lock_result" | jq -r '.owner // "unknown"')
-            echo '{"status":"locked","message":"Task locked by another session","task_id":"'"$TARGET"'","owner":"'"$owner"'"}'
+            echo '{"status":"locked","message":"Issue locked by another session","issue_id":"'"$TARGET"'","owner":"'"$owner"'"}'
             return 1
         fi
 
         # Success!
-        echo '{"status":"found","task_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","task_name":"'"$task_name"'","task_path":"'"$task_dir"'","scope":"task","lock_status":"acquired"}'
+        echo '{"status":"found","issue_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","scope":"issue","lock_status":"acquired"}'
         return 0
     fi
 
-    # Search for tasks based on scope
+    # Search for issues based on scope
     local search_dirs=()
 
     case "$SCOPE" in
@@ -524,44 +524,44 @@ find_next_task() {
             fi
             [[ -z "$minor_dir" ]] && continue
 
-            local task_id
-            if ! task_id=$(find_task_in_minor "$minor_dir"); then
+            local issue_id
+            if ! issue_id=$(find_issue_in_minor "$minor_dir"); then
                 continue
             fi
-            if [[ -n "$task_id" ]]; then
-                # Parse components from task_id
-                local major minor task_name
-                major=$(echo "$task_id" | cut -d. -f1)
-                minor=$(echo "$task_id" | cut -d. -f2 | cut -d- -f1)
-                task_name=$(echo "$task_id" | sed 's/^[0-9]*\.[0-9]*-//')
-                local task_dir
-                task_dir=$(get_task_dir "${major}.${minor}" "$task_name" "$CAT_DIR")
+            if [[ -n "$issue_id" ]]; then
+                # Parse components from issue_id
+                local major minor issue_name
+                major=$(echo "$issue_id" | cut -d. -f1)
+                minor=$(echo "$issue_id" | cut -d. -f2 | cut -d- -f1)
+                issue_name=$(echo "$issue_id" | sed 's/^[0-9]*\.[0-9]*-//')
+                local issue_dir
+                issue_dir=$(get_task_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
 
-                echo '{"status":"found","task_id":"'"$task_id"'","major":"'"$major"'","minor":"'"$minor"'","task_name":"'"$task_name"'","task_path":"'"$task_dir"'","scope":"'"$SCOPE"'","lock_status":"acquired"}'
+                echo '{"status":"found","issue_id":"'"$issue_id"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","scope":"'"$SCOPE"'","lock_status":"acquired"}'
                 return 0
             fi
         else
             # Minor directory - search directly
-            local task_id
-            if ! task_id=$(find_task_in_minor "$search_dir"); then
+            local issue_id
+            if ! issue_id=$(find_issue_in_minor "$search_dir"); then
                 continue
             fi
-            if [[ -n "$task_id" ]]; then
-                local major minor task_name
-                major=$(echo "$task_id" | cut -d. -f1)
-                minor=$(echo "$task_id" | cut -d. -f2 | cut -d- -f1)
-                task_name=$(echo "$task_id" | sed 's/^[0-9]*\.[0-9]*-//')
-                local task_dir
-                task_dir=$(get_task_dir "${major}.${minor}" "$task_name" "$CAT_DIR")
+            if [[ -n "$issue_id" ]]; then
+                local major minor issue_name
+                major=$(echo "$issue_id" | cut -d. -f1)
+                minor=$(echo "$issue_id" | cut -d. -f2 | cut -d- -f1)
+                issue_name=$(echo "$issue_id" | sed 's/^[0-9]*\.[0-9]*-//')
+                local issue_dir
+                issue_dir=$(get_task_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
 
-                echo '{"status":"found","task_id":"'"$task_id"'","major":"'"$major"'","minor":"'"$minor"'","task_name":"'"$task_name"'","task_path":"'"$task_dir"'","scope":"'"$SCOPE"'","lock_status":"acquired"}'
+                echo '{"status":"found","issue_id":"'"$issue_id"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","scope":"'"$SCOPE"'","lock_status":"acquired"}'
                 return 0
             fi
         fi
     done
 
-    # No task found
-    echo '{"status":"not_found","message":"No executable tasks found","scope":"'"$SCOPE"'"}'
+    # No issue found
+    echo '{"status":"not_found","message":"No executable issues found","scope":"'"$SCOPE"'"}'
     return 1
 }
 
@@ -585,4 +585,4 @@ fi
 # Set derived paths
 CAT_DIR="$PROJECT_DIR/.claude/cat/issues"
 
-find_next_task
+find_next_issue

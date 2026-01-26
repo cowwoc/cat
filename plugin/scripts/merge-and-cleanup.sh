@@ -335,7 +335,7 @@ fi
 # ============================================================================
 progress_step "Releasing task lock"
 
-LOCK_SCRIPT="${PLUGIN_ROOT}/scripts/task-lock.sh"
+LOCK_SCRIPT="${PLUGIN_ROOT}/scripts/issue-lock.sh"
 
 if [[ -x "$LOCK_SCRIPT" ]]; then
   LOCK_RESULT=$("$LOCK_SCRIPT" release "$PROJECT_DIR" "$TASK_ID" "$SESSION_ID" 2>&1) || {

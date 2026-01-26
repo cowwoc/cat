@@ -69,7 +69,7 @@ Same as normal task completion:
 
 ```bash
 # Release task lock
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
 
 # Remove worktree if created
 git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true

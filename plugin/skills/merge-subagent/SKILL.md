@@ -24,7 +24,7 @@ This skill operates under the task lock held by `/cat:work`. Refresh the lock he
 long-running merge operations:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" heartbeat "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" heartbeat "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 The task lock is released by `work` finalization step after all subagent work is merged.
