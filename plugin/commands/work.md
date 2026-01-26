@@ -1920,337 +1920,108 @@ Use `/cat:git-squash` skill for safe squashing.
 
 </step>
 
-<step name="merge">
+<step name="finalization">
+**Spawn Finalization subagent to complete post-approval work.**
 
-**Return to main workspace and complete task:**
+This step batches merge, cleanup, state updates, and changelog updates into a single subagent,
+hiding tool calls from the user. See concepts/work.md § Subagent Batching Standards.
 
-**MANDATORY: cd back to main workspace before merging/PR.**
+**Spawn Finalization subagent:**
 
-We've been working in the worktree directory. To merge or create PR, return to the main workspace:
+```
+Task tool invocation:
+  description: "Finalize task {task-name}"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  prompt: |
+    Complete post-approval finalization for task.
 
-```bash
-# Return to main workspace
-cd /workspace  # Or wherever CLAUDE_PROJECT_DIR is
-pwd  # Verify we're in main workspace (not worktree)
+    CONTEXT:
+    - Task: {task-name}
+    - Task branch: {task-branch}
+    - Worktree path: {worktree-path}
+    - Base branch: {base-branch}
+    - Completion workflow: {completionWorkflow from config}
+    - Merge style: {mergeStyle from config}
+    - Task ID: {TASK_ID}
+    - Session ID: {SESSION_ID}
+
+    STEP 1: MERGE
+    Return to main workspace and merge task branch.
+
+    cd /workspace
+    CURRENT_BRANCH=$(git branch --show-current)
+
+    If completionWorkflow is "merge":
+      If mergeStyle is "fast-forward":
+        git merge --ff-only {task-branch}
+      If mergeStyle is "merge-commit":
+        git merge --no-ff {task-branch}
+      If mergeStyle is "squash":
+        git merge --squash {task-branch} && git commit -m "{commit-message}"
+
+      If merge fails: Return {"status": "MERGE_CONFLICT", "error": "..."}
+
+    If completionWorkflow is "pr":
+      git push -u origin {task-branch}
+      If GitHub: gh pr create --base {base} --head {task-branch} --title "..." --body "..."
+      Return {"status": "PR_CREATED", "url": "..."}
+
+    STEP 2: CLEANUP
+    Remove worktree: git worktree remove "{worktree-path}" --force
+
+    If completionWorkflow is "merge":
+      Delete branch: git branch -d "{task-branch}"
+
+    Release lock:
+      "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{TASK_ID}" "{SESSION_ID}"
+
+    STEP 3: UPDATE PARENT STATE
+    Task STATE.md already committed with implementation.
+    Update parent STATE.md files (minor/major progress rollup).
+
+    git add .claude/cat/issues/v*/STATE.md .claude/cat/issues/v*/v*.*/STATE.md
+    git commit -m "config: update progress for v{major}.{minor}"
+
+    STEP 4: UPDATE CHANGELOGS
+    Update minor CHANGELOG.md: Add task to Tasks Completed table.
+    Update major CHANGELOG.md if minor version completes.
+
+    RETURN FORMAT:
+    {
+      "status": "SUCCESS" | "MERGE_CONFLICT" | "PR_CREATED" | "FAILED",
+      "merged": true/false,
+      "branch": "{base-branch}",
+      "pr_url": "..." (if PR workflow),
+      "error": "..." (if failed)
+    }
+
+    FAIL-FAST:
+    - If merge fails with conflict, return MERGE_CONFLICT immediately
+    - If any git operation fails unexpectedly, return FAILED with error
+    - Always release lock before returning, even on failure
 ```
 
-**Read completion workflow config:**
-
-```bash
-COMPLETION_WORKFLOW=$(jq -r '.completionWorkflow // "merge"' .claude/cat/cat-config.json)
-echo "Completion workflow: $COMPLETION_WORKFLOW"
-```
-
-**CRITICAL (M154): Preserve the currently checked out branch.**
-
-The main workspace has whatever branch the user was working on (could be `main`, `v1.10`, a
-feature branch, etc.). Merge the task branch INTO that branch without switching branches:
-
-```bash
-# Check current branch (DO NOT CHANGE IT)
-CURRENT_BRANCH=$(git branch --show-current)
-echo "Base branch: $CURRENT_BRANCH"
-```
-
-**Anti-pattern (M154):** Using `git checkout main` or `git checkout <any-branch>` in the main
-workspace. This disrupts the user's working state. The task worktree exists precisely to avoid
-touching the main workspace's checked out branch.
-
-**Apply Merge Preference from PROJECT.md:**
-
-```bash
-# Read merge method from PROJECT.md
-MERGE_METHOD=$(grep -A10 "### Merge Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "MUST use" | grep -oP "(fast-forward|merge commit|squash)" | head -1)
-
-# Also check cat-config.json for programmatic access
-if [[ -z "$MERGE_METHOD" ]]; then
-  MERGE_METHOD=$(jq -r '.gitWorkflow.mergeStyle // "fast-forward"' .claude/cat/cat-config.json 2>/dev/null)
-fi
-
-echo "Merge method: $MERGE_METHOD"
-```
-
-**Branch on completion workflow:**
-
-**If completionWorkflow is "merge" (default):**
-
-Apply merge based on configured merge method:
-
-```bash
-case "$MERGE_METHOD" in
-  "fast-forward"|"ff-only")
-    git merge --ff-only {task-branch}
-    ;;
-  "merge-commit"|"merge commit"|"no-ff")
-    git merge --no-ff {task-branch} -m "$(cat <<'EOF'
-Merge task: {task-name}
-
-{commit-type}: {summary from PLAN.md goal}
-EOF
-)"
-    ;;
-  "squash")
-    git merge --squash {task-branch}
-    git commit -m "$(cat <<'EOF'
-{commit-type}: {summary from PLAN.md goal}
-EOF
-)"
-    ;;
-  *)
-    # Default to fast-forward
-    git merge --ff-only {task-branch}
-    ;;
-esac
-```
-
-**Note:** Default is `--ff-only` for linear history (not `--no-ff`). See M047.
-
-Handle merge conflicts:
-1. Identify conflicting files
-2. Attempt automatic resolution
-3. If unresolvable, present to user
-
-**If completionWorkflow is "pr":**
-
-```bash
-# Push task branch to origin
-git push -u origin {task-branch}
-
-# Auto-detect git provider from remote URL
-REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-GIT_PROVIDER="unknown"
-
-if [[ "$REMOTE_URL" == *"github.com"* ]] || [[ "$REMOTE_URL" == *"github."* ]]; then
-    GIT_PROVIDER="github"
-elif [[ "$REMOTE_URL" == *"gitlab.com"* ]] || [[ "$REMOTE_URL" == *"gitlab."* ]]; then
-    GIT_PROVIDER="gitlab"
-elif [[ "$REMOTE_URL" == *"dev.azure.com"* ]] || [[ "$REMOTE_URL" == *"visualstudio.com"* ]]; then
-    GIT_PROVIDER="azure"
-elif [[ "$REMOTE_URL" == *"bitbucket.org"* ]] || [[ "$REMOTE_URL" == *"bitbucket."* ]]; then
-    GIT_PROVIDER="bitbucket"
-fi
-
-echo "Detected git provider: $GIT_PROVIDER"
-```
-
-**Create PR based on detected provider:**
-
-```bash
-PR_TITLE="{commit-type}: {summary from PLAN.md goal}"
-PR_BODY="## Summary
-{goal from PLAN.md}
-
-## Changes
-{list of key changes from commit messages}
-
-## Task
-Task ID: v{major}.{minor}-{task-name}
-
----
-*Created by CAT*"
-
-case "$GIT_PROVIDER" in
-    github)
-        # GitHub CLI
-        gh pr create --base {base-branch} --head {task-branch} \
-            --title "$PR_TITLE" --body "$PR_BODY"
-        ;;
-    gitlab)
-        # GitLab CLI (glab)
-        glab mr create --source-branch {task-branch} --target-branch {base-branch} \
-            --title "$PR_TITLE" --description "$PR_BODY"
-        ;;
-    azure)
-        # Azure DevOps CLI
-        az repos pr create --source-branch {task-branch} --target-branch {base-branch} \
-            --title "$PR_TITLE" --description "$PR_BODY"
-        ;;
-    bitbucket)
-        # Bitbucket - no official CLI, provide manual instructions
-        echo "⚠️ Bitbucket detected - no official CLI available"
-        echo "Create PR manually at: ${REMOTE_URL}/pull-requests/new"
-        echo "Source: {task-branch} → Target: {base-branch}"
-        ;;
-    *)
-        echo "⚠️ Unknown git provider - cannot auto-create PR"
-        echo "Remote URL: $REMOTE_URL"
-        echo "Create PR manually with:"
-        echo "  Source: {task-branch} → Target: {base-branch}"
-        ;;
-esac
-```
-
-Display PR URL to user:
-```
-✅ Pull request created: {PR_URL}
-
-The task branch has been pushed and a PR created.
-Review and merge the PR when ready.
-```
-
-**Supported providers:**
-| Provider | CLI | Auto-detect Pattern |
-|----------|-----|---------------------|
-| GitHub | `gh` | `github.com`, `github.*` |
-| GitLab | `glab` | `gitlab.com`, `gitlab.*` |
-| Azure DevOps | `az` | `dev.azure.com`, `visualstudio.com` |
-| Bitbucket | (manual) | `bitbucket.org`, `bitbucket.*` |
-
-**Note:** When using PR workflow, the cleanup step should NOT delete the task branch
-(it's needed for the PR). Set `autoRemoveWorktrees` behavior to keep the branch.
-
-</step>
-
-<step name="cleanup">
-
-**Clean up worktree and release lock:**
-
-**Cleanup runs for BOTH workflows** (merge and PR). The difference is branch handling:
-
-| Workflow | Worktree | Branch | Lock |
-|----------|----------|--------|------|
-| `merge` | Removed | Deleted | Released |
-| `pr` | Removed | **Preserved** (needed for PR) | Released |
-
-```bash
-COMPLETION_WORKFLOW=$(jq -r '.completionWorkflow // "merge"' .claude/cat/cat-config.json)
-
-# 1. Remove worktree (ALWAYS - worktree is local working copy, not needed after task)
-git worktree remove "$WORKTREE_PATH" --force
-
-# 2. Handle branch based on workflow
-if [[ "$COMPLETION_WORKFLOW" == "merge" ]]; then
-    # Merge workflow: branch already merged, safe to delete
-    git branch -d "{task-branch}" 2>/dev/null || true
-else
-    # PR workflow: branch must stay - it's the source for the pull request
-    echo "✓ Branch {task-branch} preserved (required for PR)"
-fi
-
-# 3. Release task lock (ALWAYS)
-TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
-echo "✓ Lock released for task: $TASK_ID"
-```
-
-**Anti-pattern (M173): Do NOT add fallback rm commands to lock release.**
-
-```bash
-# ❌ WRONG - fallback rm triggers block_lock_manipulation hook
-task-lock.sh release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}" || rm -f .claude/cat/locks/*.lock
-
-# ✅ CORRECT - just call task-lock.sh, handle errors separately
-task-lock.sh release "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
-```
-
-The `block_lock_manipulation` handler checks the ENTIRE command string for `rm ... .claude/cat/locks`.
-Adding `|| rm` as fallback causes the hook to block the entire command, even though the primary
-command (task-lock.sh) is safe.
-
-**If CLAUDE_SESSION_ID is unavailable:** Extract it from the system reminders at conversation start.
-Look for "Session ID: {uuid}" in the session instructions.
-
-**Note:** Lock is also released automatically by `session-unlock.sh` hook on session end, providing
-a safety net if the agent crashes or is interrupted.
-
-**PR workflow branch lifecycle:**
-1. Task completes → branch pushed to origin → PR created
-2. Cleanup runs → worktree removed, **branch preserved**
-3. PR reviewed and merged on hosting platform
-4. Branch can be deleted manually or via platform's "delete branch after merge" option
-
-</step>
-
-<step name="update_state">
-
-**Update STATE.md files:**
-
-**Note:** Task STATE.md was already updated and committed with the implementation (M076).
-This step handles the parent STATE.md rollup updates.
-
-### STATE.md Verification Checklist (A011)
-
-**MANDATORY: Verify these rules when updating any STATE.md file.**
-
-| Rule | Description | Anti-pattern |
-|------|-------------|--------------|
-| Valid status transitions | `pending` → `in-progress` → `completed` (no skipping) | M150: Jumping from pending to completed |
-| Progress matches status | `completed` requires `100%`, `in-progress` requires `< 100%` | M153: 90% with in-progress at approval |
-| Resolution required | `completed` status requires Resolution field | M092: Missing resolution |
-| Parent pending list | Adding task → add to parent's "Tasks Pending" list | M163: Task created without parent update |
-| Atomic updates | Task STATE.md updated in same commit as implementation | M076: Separate docs commit for STATE.md |
-
-**Verification script:**
-
-```bash
-# Verify task STATE.md before proceeding
-TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
-
-# Extract current values
-STATUS=$(grep -oP "Status:\s*\K\S+" "$TASK_STATE" || echo "unknown")
-PROGRESS=$(grep -oP "Progress:\s*\K[0-9]+" "$TASK_STATE" || echo "0")
-RESOLUTION=$(grep -oP "Resolution:\s*\K\S+" "$TASK_STATE" || echo "")
-
-# Validate consistency
-if [[ "$STATUS" == "completed" ]]; then
-  [[ "$PROGRESS" != "100" ]] && echo "ERROR: completed status requires 100% progress"
-  [[ -z "$RESOLUTION" ]] && echo "ERROR: completed status requires Resolution field"
-elif [[ "$STATUS" == "in-progress" ]]; then
-  [[ "$PROGRESS" == "100" ]] && echo "ERROR: in-progress status cannot have 100% progress"
-fi
-```
-
-1. **Minor STATE.md:**
-   - Recalculate progress based on task completion
-   - Update status if all tasks complete
-
-2. **Major STATE.md:**
-   - Recalculate progress based on minor completion
-   - Update status if all minor versions complete
-
-3. **Dependent tasks:**
-   - Find all tasks in the same minor version that list this task in Dependencies
-   - For each dependent task, check if ALL its dependencies are now completed
-   - If all dependencies met, the task is now executable (no longer blocked)
-
-</step>
-
-<step name="commit_metadata">
-
-**Commit parent STATE.md rollup updates:**
-
-Only commit Minor/Major STATE.md updates here. Task STATE.md was already committed
-with the implementation per M076.
-
-```bash
-git add .claude/cat/issues/v*/STATE.md .claude/cat/issues/v*/v*.*/STATE.md
-git commit -m "$(cat <<'EOF'
-config: update progress for v{major}.{minor}
-
-Task {task-name} completed. Updates minor/major STATE.md progress.
-EOF
-)"
-```
-
-</step>
-
-<step name="update_changelogs">
-
-**Update version changelogs:**
-
-1. **Minor version CHANGELOG.md** (`.claude/cat/issues/v{major}/v{major}.{minor}/CHANGELOG.md`):
-   - If file doesn't exist, create from template with pending status
-   - Add completed task to Tasks Completed table:
-     ```markdown
-     | {task-name} | {commit-type} | {goal from PLAN.md} |
-     ```
-
-2. **Major version CHANGELOG.md** (`.claude/cat/issues/v{major}/CHANGELOG.md`):
-   - If file doesn't exist, create from template with pending status
-   - Update aggregate summary when minor version completes
-
-> See `templates/changelog.md` for full format. Task details are in commit messages.
-
+**Handle subagent result:**
+
+**If result.status is "SUCCESS":**
+Proceed to next_task step.
+
+**If result.status is "PR_CREATED":**
+Display PR URL: `PR created: {result.pr_url}`
+Proceed to next_task step.
+
+**If result.status is "MERGE_CONFLICT":**
+Use AskUserQuestion: "Force merge commit" | "Rebase first" | "Abort"
+- If "Force merge commit": Re-run finalization with merge-commit style
+- If "Rebase first": Instruct user to rebase manually, then retry
+- If "Abort": Release lock, exit workflow
+
+**If result.status is "FAILED":**
+Display error: `Finalization failed: {result.error}`
+Use AskUserQuestion: "Retry" | "Abort"
+- If "Retry": Re-spawn finalization subagent
+- If "Abort": Release lock (if not already released), exit workflow
 </step>
 
 <step name="next_task">
