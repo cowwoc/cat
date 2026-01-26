@@ -353,6 +353,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Locate the specific box template by name in OUTPUT TEMPLATE WORK BOXES section, use exact structure, replace only placeholder text"
+    },
+    {
+      "id": "M258",
+      "timestamp": "2026-01-26T00:50:00Z",
+      "category": "prompt_engineering",
+      "description": "Subagent prompts for /cat:shrink-doc compression did not require reporting execution equivalence score, making postcondition verification impossible",
+      "root_cause": "spawn-subagent skill lacks guidance on ensuring skill postconditions are verified and reported back when delegating skill execution",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/spawn-subagent/SKILL.md",
+      "pattern_keywords": [
+        "subagent",
+        "postcondition",
+        "score",
+        "shrink-doc",
+        "validation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When delegating skill execution to subagent, prompt MUST require reporting the skill postcondition values (e.g., execution_equivalence_score for /cat:shrink-doc)"
     }
   ]
 }
