@@ -166,6 +166,21 @@ fi
 
 The script handles argument parsing, version filtering, dependency checks, lock acquisition, and gate evaluation.
 
+**MANDATORY: Fail-fast on script ERROR output (M262)**
+
+**If script output contains "ERROR:" prefix:**
+1. STOP immediately - do NOT process the JSON result
+2. Report the error to the user
+3. The error indicates data integrity issues (invalid status values, corrupted STATE.md)
+4. User must fix the underlying issue before proceeding
+
+**Example ERROR that requires fail-fast:**
+```
+ERROR: Unknown status 'decomposed' in .../STATE.md
+Valid values: pending in-progress completed blocked
+```
+This means a STATE.md file has invalid data. Fix it before continuing.
+
 **Session ID**: The session ID is automatically available as `${CLAUDE_SESSION_ID}` in this command.
 All bash commands below use this value directly.
 
@@ -2519,6 +2534,7 @@ See `concepts/duplicate-task.md` for full handling including:
 | M239 | Resume existing worktree | Skip, find alternative |
 | M245 | Ignore get-available-issues.sh | Accept script results |
 | M246 | Manual box characters | Copy-paste from template |
+| M262 | Ignore ERROR in script output | Fail-fast, report error, do NOT continue |
 | M248 | Confuse version/branch | Distinguish task version from base branch |
 | M251 | No subtask context | Include decomposition context |
 
