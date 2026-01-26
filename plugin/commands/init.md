@@ -61,6 +61,54 @@ echo "Found $CODE_COUNT source files"
 
 </step>
 
+<step name="configure_worktree_push">
+
+**Configure git for worktree-based workflow**
+
+CAT uses git worktrees for task isolation. By default, git refuses to push to a checked-out branch.
+This step configures git to allow it (with automatic working tree update).
+
+```bash
+CURRENT_SETTING=$(git config --get receive.denyCurrentBranch 2>/dev/null || echo "not set")
+```
+
+**If setting is already "updateInstead":**
+Skip configuration, proceed to next step.
+
+**If setting is NOT "updateInstead":**
+
+Explain and ask permission:
+
+```
+CAT uses git worktrees for task isolation. When merging completed tasks back to the main
+branch, git needs permission to update a checked-out branch.
+
+The setting `receive.denyCurrentBranch=updateInstead` allows this safely by automatically
+updating the working tree when the branch is updated.
+
+Current setting: {CURRENT_SETTING}
+```
+
+AskUserQuestion: header="Git Config", question="Enable worktree push support?", options=[
+  "Yes, enable (Recommended)" - Set receive.denyCurrentBranch=updateInstead,
+  "No, I'll merge manually" - Skip; user will need to merge from main worktree
+]
+
+**If "Yes, enable":**
+```bash
+git config receive.denyCurrentBranch updateInstead
+echo "Configured: receive.denyCurrentBranch=updateInstead"
+```
+
+**If "No, I'll merge manually":**
+Note in PROJECT.md:
+```markdown
+## Notes
+- Worktree push disabled. Merge task branches manually from main worktree.
+```
+
+</step>
+
 <step name="project_type">
 
 AskUserQuestion: header="Project Type", question="What type?", options=["New project", "Existing codebase"]
