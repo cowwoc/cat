@@ -38,7 +38,7 @@ fi
 
 2. **Collect satisfied requirements from all issues**:
    - For each closed issue in the minor version
-   - Read the issue's PLAN.md and extract the `## Satisfies` section
+   - Read the issue's PLAN.md and extract the `## Parent Requirements` section
    - Build a set of all satisfied requirement IDs
 
 3. **Identify unsatisfied requirements**:

@@ -22,7 +22,7 @@ agent loads the shared skill instead of embedding the content inline.
 Claude Code processes `skills:` frontmatter before the first API turn (no extra network round-trip).
 `@path` references inside skill files are also expanded at load time.
 
-## Satisfies
+## Parent Requirements
 
 None — refactor
 

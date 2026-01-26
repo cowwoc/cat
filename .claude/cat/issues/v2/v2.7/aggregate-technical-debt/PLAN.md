@@ -4,7 +4,7 @@
 Extend the technical debt calculator to aggregate scores across directories, modules, and the entire product, producing
 a hierarchical debt summary.
 
-## Satisfies
+## Parent Requirements
 - REQ-003
 
 ## Risk Assessment

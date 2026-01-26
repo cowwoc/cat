@@ -4,7 +4,7 @@
 Add a dedicated `backlog/` directory for unscheduled issues that exist outside the version hierarchy. Issues graduate
 from the backlog into a specific version when they are prioritized and scheduled.
 
-## Satisfies
+## Parent Requirements
 None (infrastructure improvement)
 
 ## Design Decisions

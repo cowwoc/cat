@@ -4,7 +4,7 @@
 Create a showcase page demonstrating CAT git safety features including safe rebase, squash, and history rewriting with
 video demos.
 
-## Satisfies
+## Parent Requirements
 None - marketing/documentation task
 
 ## Risk Assessment

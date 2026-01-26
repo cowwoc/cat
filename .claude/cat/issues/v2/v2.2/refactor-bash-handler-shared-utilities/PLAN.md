@@ -5,7 +5,7 @@ Extract shared utility code (`CD_PATTERN`, `COMMIT_PATTERN` constants and `extra
 `isInsideCatWorktree` methods) duplicated across `WarnMainWorkspaceCommit`, `BlockWrongBranchCommit`,
 and `VerifyStateInCommit` into a shared `BashHandlerUtils` class.
 
-## Satisfies
+## Parent Requirements
 None - internal code quality
 
 ## Origin

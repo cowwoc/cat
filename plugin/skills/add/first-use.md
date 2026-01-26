@@ -487,7 +487,7 @@ Extract REQ-XXX items from PLAN.md. Store as VERSION_REQUIREMENTS (may be empty)
 - Set BLOCKS = [] (no issues to block)
 - Only ask requirements (if any exist):
   - If VERSION_REQUIREMENTS is non-empty: use AskUserQuestion with the requirements question below
-  - If VERSION_REQUIREMENTS is empty: set Satisfies = None, skip to step: issue_research
+  - If VERSION_REQUIREMENTS is empty: set Parent Requirements = None, skip to step: issue_research
 
 **If issue_count > 0 (version has existing issues):**
 - Batch dependencies, blocks, and requirements into a single AskUserQuestion call (3 questions):
@@ -513,10 +513,10 @@ Use AskUserQuestion with multiple questions:
       multiSelect: false
 
     - question: "Which requirements does this issue satisfy? (Select all that apply)"
-      header: "Satisfies"
+      header: "Parent Requirements"
       options: [List of REQ-XXX from VERSION_REQUIREMENTS] + "None - infrastructure/setup issue"
       multiSelect: true
-      (omit this question entirely if VERSION_REQUIREMENTS is empty; set Satisfies = None)
+      (omit this question entirely if VERSION_REQUIREMENTS is empty; set Parent Requirements = None)
 
 **5. Conditional follow-ups:**
 
@@ -898,7 +898,7 @@ Add a Research Findings section to PLAN.md after the Goal/Problem section:
 {RESEARCH_FINDINGS}
 ```
 
-This section should appear before the "Satisfies" section in all templates.
+This section should appear before the "Parent Requirements" section in all templates.
 
 **If IMPACT_NOTES is non-empty:**
 

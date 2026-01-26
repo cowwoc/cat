@@ -6,7 +6,7 @@ Agents occasionally write STATE.md files with unsupported field names (e.g., `**
 The StateSchemaValidator validates field values but does not reject field names outside the allowed
 set, allowing schema violations to be committed silently.
 
-## Satisfies
+## Parent Requirements
 
 None — correctness fix
 

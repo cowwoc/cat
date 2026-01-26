@@ -4,7 +4,7 @@
 Define what "technical debt" means in the context of CAT, establish a scoring rubric, and document the metric so it can
 be implemented consistently across calculation and reporting tools.
 
-## Satisfies
+## Parent Requirements
 - REQ-001
 
 ## Risk Assessment

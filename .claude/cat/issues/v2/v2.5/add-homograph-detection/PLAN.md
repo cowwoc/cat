@@ -4,7 +4,7 @@
 Protect against Unicode homograph attacks by detecting visually confusable characters (e.g., Cyrillic "і" vs Latin "i")
 in URLs, domains, and user input prompts. Inspired by Tirith's terminal security approach.
 
-## Satisfies
+## Parent Requirements
 - REQ-001: Homograph detection for URLs/domains
 - REQ-002: Hook integration for pre-execution validation
 - REQ-004: Input prompt validation
