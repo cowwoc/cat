@@ -25,6 +25,8 @@ fi
 > Exit gates are for user-defined additional conditions (tests passing, manual sign-off, etc.).
 > Requirements can be defined at any version level (major, minor, or patch).
 
+> **See also:** [version-scheme.md](version-scheme.md) for versioning scheme details.
+
 1. **Extract requirements from version PLAN.md**:
    - Read the version's PLAN.md (works for any level: major, minor, or patch)
    - Parse the Requirements table for all REQ-XXX IDs

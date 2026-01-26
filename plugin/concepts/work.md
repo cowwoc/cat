@@ -785,6 +785,8 @@ When auto-continuing to the next task, detect if the next task is in a different
 
 Supports all versioning schemes (MAJOR, MAJOR.MINOR, or MAJOR.MINOR.PATCH):
 
+> **See also:** [version-scheme.md](version-scheme.md) for scheme detection and boundary rules.
+
 ```bash
 # Track completed task version (empty values for unused levels)
 COMPLETED_MAJOR="{major from completed task}"
