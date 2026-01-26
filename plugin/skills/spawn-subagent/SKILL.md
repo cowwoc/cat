@@ -374,6 +374,34 @@ if [ "${ACTUAL_TOKENS}" -ge "${HARD_LIMIT}" ]; then
 fi
 ```
 
+**Skill Postcondition Reporting (M258):**
+
+When delegating a skill (like /cat:shrink-doc) that has postconditions, the prompt MUST require
+reporting those postconditions. The main agent cannot verify postconditions were met without
+explicit reporting.
+
+**MANDATORY for skill delegation:**
+```
+POSTCONDITION REPORTING (required for skills with validation):
+When executing /cat:{skill-name}, you MUST report:
+- The validation score returned by the skill
+- Whether the postcondition was met (e.g., score = 1.0)
+- If postcondition failed, what was the actual value
+
+Example for /cat:shrink-doc:
+  Report: execution_equivalence_score={score}, met_threshold={true/false}
+```
+
+**Why explicit reporting?** Without requiring postcondition values in the response, the main agent
+has no evidence that the skill's validation workflow actually ran. Claims like "all files maintain
+execution equivalence (score 1.0)" become unverifiable assertions.
+
+| Skill | Postcondition | Required Report |
+|-------|---------------|-----------------|
+| /cat:shrink-doc | execution_equivalence_score = 1.0 | Score value and pass/fail |
+| /cat:compare-docs | semantic comparison complete | Score and component breakdown |
+| /cat:stakeholder-review | all stakeholders approve | Individual stakeholder verdicts |
+
 **Verification:**
 
 Before invoking Task tool, confirm:
@@ -389,6 +417,7 @@ Before invoking Task tool, confirm:
 | **Session ID in prompt** | All tasks | A017, M099, M109, M123 |
 | Token measurement instructions | All tasks | spawn-subagent core |
 | **Pre-spawn limit validation** | All tasks | A018 |
+| **Skill postcondition reporting** | Skill delegation tasks | M258 |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
 

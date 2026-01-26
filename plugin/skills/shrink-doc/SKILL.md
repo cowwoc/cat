@@ -353,20 +353,32 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 After presenting validation results for ANY version, show comparison table.
 
+**Token Counting**: Use tiktoken for accurate token counts:
+
+```bash
+# Actual token count using tiktoken
+TOKENS=$(python3 -c "
+import tiktoken
+enc = tiktoken.get_encoding('cl100k_base')
+with open('$FILE', 'r') as f:
+    print(len(enc.encode(f.read())))
+")
+```
+
 **Table format:**
 
-| Version      | Lines | Size | Reduction | Score | Status     |
-|--------------|-------|------|-----------|-------|------------|
-| **Original** | {n}   | {n}K | baseline  | N/A   | Reference  |
-| **V{n}**     | {n}   | {n}K | {n}%      | {n}   | {status}   |
+| Version      | Tokens | Reduction | Score | Status     |
+|--------------|--------|-----------|-------|------------|
+| **Original** | {n}    | baseline  | N/A   | Reference  |
+| **V{n}**     | {n}    | {n}%      | {n}   | {status}   |
 
 **Expected output format:**
 
-| Version      | Lines | Size | Reduction | Score | Status      |
-|--------------|-------|------|-----------|-------|-------------|
-| **Original** | {n}   | {n}K | baseline  | N/A   | Reference   |
-| **V1**       | {n}   | {n}K | {n}%      | {n}   | Rejected    |
-| **V2**       | {n}   | {n}K | {n}%      | {n}   | Applied     |
+| Version      | Tokens | Reduction | Score | Status      |
+|--------------|--------|-----------|-------|-------------|
+| **Original** | {n}    | baseline  | N/A   | Reference   |
+| **V1**       | {n}    | {n}%      | {n}   | Rejected    |
+| **V2**       | {n}    | {n}%      | {n}   | Applied     |
 
 **Status values**:
 - Approved = Score equals 1.0
@@ -375,11 +387,11 @@ After presenting validation results for ANY version, show comparison table.
 
 **Example**:
 
-| Version      | Lines | Size | Reduction | Score | Status    |
-|--------------|-------|------|-----------|-------|-----------|
-| **Original** | 1,057 | 48K  | baseline  | N/A   | Reference |
-| **V1**       | 520   | 26K  | 51%       | 0.89  | Rejected  |
-| **V2**       | 437   | 27K  | 59%       | 0.97  | Applied   |
+| Version      | Tokens | Reduction | Score | Status    |
+|--------------|--------|-----------|-------|-----------|
+| **Original** | 12,480 | baseline  | N/A   | Reference |
+| **V1**       | 6,760  | 46%       | 0.89  | Rejected  |
+| **V2**       | 5,590  | 55%       | 1.0   | Applied   |
 
 ---
 
