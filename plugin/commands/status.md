@@ -16,51 +16,10 @@ User sees a correctly-aligned, complete project status display with actionable n
 
 ---
 
-## Prerequisites
-
-- CAT project initialized (`.claude/cat` directory exists)
-- Box rendering utilities: `${CLAUDE_PLUGIN_ROOT}/scripts/build_box_lines.py`
-
----
-
-## Functions
-
-### select_emoji(minor) -> emoji
-
-Select status emoji for a minor version based on completion state.
-
-**Definition**:
-```
-if minor.completed == minor.total AND minor.total > 0:
-  return "☑️"
-if minor.inProgress is not empty OR minor.id == current.minor:
-  return "🔄"
-return "🔳"
-```
-
-**Additional states** (for tasks):
-- `🚫` = Blocked (task cannot proceed due to dependency)
-- `🚧` = Gate waiting (entry/exit conditions not met)
-
-### build_progress_bar(percent, width=25) -> string
-
-Generate visual progress bar.
-
-**Definition**:
-```
-filled = floor(percent * width / 100)
-empty = width - filled
-return "█"×filled + "░"×empty
-```
-
-**Example**:
-```
-build_progress_bar(45, 25) = "███████████░░░░░░░░░░░░░░"
-```
-
----
-
 ## Procedure
+
+> **CRITICAL:** This skill uses pre-computed output. Do NOT attempt manual computation.
+> The handler already computed the display - your job is to OUTPUT it verbatim.
 
 ### Step 1: Require pre-computed display
 
@@ -145,7 +104,11 @@ accurate widths. Manual rendering defeats the purpose of extraction.
 
 ---
 
-## External Computation
+## External Computation (Reference Only)
+
+> **NOTE:** This section is for understanding WHY pre-computation exists.
+> You do NOT need to understand or use any of these details.
+> Your only job: copy-paste the pre-computed output.
 
 This skill relies on pre-computation via UserPromptSubmit hook to prevent alignment errors.
 
@@ -160,4 +123,11 @@ The handler:
 
 **Why pre-compute?** LLMs cannot reliably calculate emoji widths or character padding.
 Pre-computing ensures correct alignment every time.
+
+**Emoji Reference (for understanding output, NOT for manual use):**
+- `☑️` = Completed
+- `🔄` = In Progress
+- `🔳` = Pending
+- `🚫` = Blocked
+- `🚧` = Gate Waiting
 
