@@ -20,6 +20,8 @@ When editing CAT plugin files, always edit the source files in `/workspace/plugi
 
 The cache is a read-only copy that gets overwritten on plugin updates.
 
+**Worktree Path Handling (M267):** When working in a worktree (e.g., `/workspace/.worktrees/task-name/`), use relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to `/workspace/` bypass worktree isolation and modify the main workspace instead.
+
 ## Testing Requirements
 
 **MANDATORY: Run all tests before presenting any task for user review.**
