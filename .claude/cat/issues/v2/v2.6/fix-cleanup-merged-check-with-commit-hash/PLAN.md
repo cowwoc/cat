@@ -12,7 +12,7 @@ See LICENSE.md in the project root for license terms.
 without a source for the target branch name. This causes cleanup to fail with a missing-file error
 when trying to determine whether an issue branch has been merged.
 
-## Satisfies
+## Parent Requirements
 
 None (infrastructure bugfix)
 

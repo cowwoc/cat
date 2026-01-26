@@ -13,7 +13,7 @@ Step 7 is renamed to "Squash Commits by Topic Before Review" and all in-skill re
 name change makes the ordering explicit: squash (Step 7) happens before rebase onto target branch (Step 8). The
 MANDATORY STEPS section header and the step heading and body references all use the new name.
 
-## Satisfies
+## Parent Requirements
 None
 
 ## Risk Assessment

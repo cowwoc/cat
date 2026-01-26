@@ -3,7 +3,7 @@
 ## Goal
 Compress all plugin MD files to reduce token usage while maintaining execution equivalence.
 
-## Satisfies
+## Parent Requirements
 None - infrastructure/optimization task
 
 ## Risk Assessment

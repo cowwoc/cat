@@ -8,7 +8,7 @@ for new users trying to get started.
 README.md is ~80-100 lines focused on quick start, with detailed sections moved to docs/ sub-pages for users who want to
 learn more.
 
-## Satisfies
+## Parent Requirements
 None (user onboarding improvement)
 
 ## Risk Assessment

@@ -33,6 +33,8 @@ set -euo pipefail
 # 11. Migrate terminalWidth to fileWidth + displayWidth in cat-config.json
 # 12. Remove deprecated Last Updated and Completed fields from open issue-level STATE.md files
 #     (closed issues are not modified)
+# 13. Rename ## Satisfies → ## Parent Requirements in open issue-level PLAN.md files
+#     (closed issues are not modified)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -926,6 +928,53 @@ else
     done <<< "$issue_state_files"
 
     log_migration "Phase 12 complete: $phase12_changed files changed, $phase12_skipped closed issues skipped"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 13: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 13: Rename ## Satisfies → ## Parent Requirements in open issue PLAN.md files"
+
+# Issue-level PLAN.md files live at .claude/cat/issues/v*/v*.*/issue-name/PLAN.md (depth 4 from issues/).
+issue_plan_files=$(find .claude/cat/issues -path "*v*.*/*" -name "PLAN.md" -mindepth 4 -maxdepth 4 -type f \
+    2>/dev/null || true)
+
+if [[ -z "$issue_plan_files" ]]; then
+    log_migration "No issue-level PLAN.md files found - skipping phase 13"
+else
+    total_count=$(echo "$issue_plan_files" | wc -l | tr -d ' ')
+    log_migration "Found $total_count issue-level PLAN.md files to check"
+
+    phase13_changed=0
+    phase13_skipped=0
+
+    while IFS= read -r plan_file; do
+        [[ -z "$plan_file" ]] && continue
+
+        # Skip if already migrated (idempotency)
+        if ! grep -q "^## Satisfies" "$plan_file" 2>/dev/null; then
+            continue
+        fi
+
+        # Skip closed issues - check corresponding STATE.md
+        issue_dir=$(dirname "$plan_file")
+        state_file="${issue_dir}/STATE.md"
+        if [[ ! -f "$state_file" ]]; then
+            log_migration "  Warning: STATE.md missing for $plan_file — treating as open issue"
+        elif grep -q '^\*\*Status:\*\* closed' "$state_file" 2>/dev/null || \
+             grep -q '^- \*\*Status:\*\* closed' "$state_file" 2>/dev/null; then
+            ((phase13_skipped++)) || true
+            continue
+        fi
+
+        sed -i 's/^## Satisfies$/## Parent Requirements/' "$plan_file"
+        ((phase13_changed++)) || true
+        log_migration "  Updated: $plan_file"
+
+    done <<< "$issue_plan_files"
+
+    log_migration "Phase 13 complete: $phase13_changed files changed, $phase13_skipped closed issues skipped"
 fi
 
 log_success "Migration to 2.1 completed"
