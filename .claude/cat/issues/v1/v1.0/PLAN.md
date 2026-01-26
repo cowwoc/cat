@@ -1,4 +1,4 @@
-# Minor Version 2.0: Core Rewrite
+# v1.0: Core Rewrite
 
 ## Objective
 Implement the new multi-agent architecture from scratch.

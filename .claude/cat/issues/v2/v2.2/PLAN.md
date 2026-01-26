@@ -1,4 +1,4 @@
-# Minor Version 2.2: Demos & Marketing
+# v2.2: Demos & Marketing
 
 ## Objective
 Create showcase pages with video demos for marketing and user onboarding.

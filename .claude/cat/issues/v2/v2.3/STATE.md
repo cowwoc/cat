@@ -1,4 +1,4 @@
-# Minor Version 2.3 State: Pluggable Issue Trackers
+# v2.3 State: Pluggable Issue Trackers
 
 ## Status
 - **Status:** pending

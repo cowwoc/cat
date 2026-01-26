@@ -1,4 +1,4 @@
-# Minor Version 2.1: Commercialization
+# v2.0: Licensing
 
 ## Objective
 Prepare CAT for commercial release with pricing tiers and license key system.

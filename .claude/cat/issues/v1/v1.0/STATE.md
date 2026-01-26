@@ -1,4 +1,4 @@
-# Minor Version 2.0 State: Core Rewrite
+# v1.0 State: Core Rewrite
 
 ## Status
 - **Status:** completed
