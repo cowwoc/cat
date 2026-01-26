@@ -46,7 +46,12 @@ Select the appropriate template based on issue type.
 <!-- Default: all dependent issues listed in STATE.md are closed -->
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Main Agent Waves
+<!-- OPTIONAL: Skills that require main-agent-level execution (spawn their own subagents) -->
+<!-- Remove this section if the issue has no pre-delegation skills -->
+<!-- Each bullet is a skill invocation: - /cat:optimize-doc path/to/file.md -->
+
+## Sub-Agent Waves
 
 ### Wave 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes like "score = 1.0" or "should be X" -->
@@ -106,7 +111,10 @@ code_that_fails();
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Main Agent Waves
+<!-- OPTIONAL: Skills requiring main-agent-level execution. Remove if not needed. -->
+
+## Sub-Agent Waves
 
 ### Wave 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
@@ -147,7 +155,10 @@ code_that_fails();
 ## Pre-conditions
 - [ ] All dependent issues are closed
 
-## Execution Waves
+## Main Agent Waves
+<!-- OPTIONAL: Skills requiring main-agent-level execution. Remove if not needed. -->
+
+## Sub-Agent Waves
 
 ### Wave 1
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
