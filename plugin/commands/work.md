@@ -2260,7 +2260,50 @@ EOF
 After cleanup, ALWAYS show user their available options. Never end with just "Task Complete" -
 user needs guidance on what to do next.
 
-**Find next executable task** (pending + dependencies met + not locked).
+**Version Boundary Detection:**
+
+Track completed task version (supports MAJOR, MAJOR.MINOR, or MAJOR.MINOR.PATCH schemes):
+```bash
+COMPLETED_MAJOR="{major from completed task}"
+COMPLETED_MINOR="{minor from completed task, empty if major-only scheme}"
+COMPLETED_PATCH="{patch from completed task, empty if no patch level}"
+```
+
+After find-task.sh returns next task, extract its version:
+```bash
+NEXT_MAJOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.major')
+NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
+NEXT_PATCH=$(echo "$NEXT_TASK_RESULT" | jq -r '.patch // empty')
+```
+
+**Boundary detection adapts to versioning scheme:**
+
+| Scheme | Boundary Crossed When |
+|--------|----------------------|
+| MAJOR only | `COMPLETED_MAJOR != NEXT_MAJOR` |
+| MAJOR.MINOR | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR` |
+| MAJOR.MINOR.PATCH | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR OR COMPLETED_PATCH != NEXT_PATCH` |
+
+**If BOUNDARY_CROSSED is true:**
+1. Use **VERSION_BOUNDARY_GATE** box from PRE-COMPUTED WORK BOXES
+2. Use AskUserQuestion:
+   - header: "Version Boundary"
+   - question: "All tasks in v{completed-version} complete. Continue to v{next-version}?"
+   - options:
+     - "Continue to next version" - Proceed with auto-continue
+     - "Exit to publish first" - Exit work loop for user to publish
+     - "Stop" - Exit work loop immediately
+
+**If user selects "Continue to next version":**
+Proceed with existing auto-continue logic.
+
+**If user selects "Exit to publish first" or "Stop":**
+Release lock, exit workflow gracefully.
+
+**If BOUNDARY_CROSSED is false (same version):**
+Proceed with existing auto-continue logic unchanged.
+
+**Auto-continue behavior conditionals:**
 
 **MANDATORY: Try to acquire lock before offering next task.**
 
