@@ -1,7 +1,7 @@
 {
   "name": "cat",
   "description": "Multi-agent task orchestration with comprehensive planning and quality gates",
-  "version": "2.0",
+  "version": "2.1",
   "author": {
     "name": "cowwoc"
   },

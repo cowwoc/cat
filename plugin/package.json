@@ -1,6 +1,6 @@
 {
   "name": "claude-code-cat",
-  "version": "2.0",
+  "version": "2.1",
   "description": "Multi-agent task orchestration with comprehensive planning and quality gates",
   "repository": {
     "type": "git",

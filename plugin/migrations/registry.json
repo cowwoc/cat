@@ -21,6 +21,11 @@
       "version": "2.0",
       "script": "2.0.sh",
       "description": "Add Research and Requirements sections to PLAN.md files"
+    },
+    {
+      "version": "2.1",
+      "script": "2.1.sh",
+      "description": "Migration to 2.1 (no structural changes)"
     }
   ]
 }
