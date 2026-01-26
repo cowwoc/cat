@@ -606,6 +606,48 @@ Any score derived from manual assessment, estimation, or targeted validation is 
 
 ---
 
+## Batch Processing (Multiple Files)
+
+When compressing multiple files in a single task (e.g., "compress all files in plugin/commands/"):
+
+### Per-File Validation Required (M265)
+
+Each file MUST be validated individually with `/compare-docs`. Report results as a per-file table:
+
+| File | execution_equivalence_score | Status |
+|------|----------------------------|--------|
+| commands/add.md | 1.0 | PASS |
+| commands/work.md | 1.0 | PASS |
+| commands/status.md | 0.94 | FAIL - iterate |
+
+**Anti-pattern (M265):** Summarizing batch results as "all files passed" or "all files scored 1.0" without showing per-file evidence. Aggregate statements are unverifiable.
+
+### Batch Workflow
+
+1. **Process each file through full workflow** (Steps 1-6)
+2. **Track per-file scores** in the table above
+3. **Iterate failed files** before reporting completion
+4. **Present final table** showing all files and their scores
+
+### Reporting to Parent Agent
+
+When batch compression is delegated via subagent:
+
+```
+BATCH RESULTS:
+
+| File | execution_equivalence_score | Status |
+|------|----------------------------|--------|
+| {file1} | {score} | {PASS/FAIL} |
+| {file2} | {score} | {PASS/FAIL} |
+
+Summary: {N} files processed, {M} passed (score = 1.0), {K} failed
+```
+
+**Parent agent responsibility:** When presenting approval gate after batch compression, include the per-file table. Do NOT summarize as "all passed" - show each file's actual score.
+
+---
+
 ## Implementation Notes
 
 **Agent Type**: MUST use `subagent_type: "general-purpose"`

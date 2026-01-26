@@ -403,36 +403,13 @@ explicit reporting.
 ```
 POSTCONDITION REPORTING (required for skills with validation):
 When executing /cat:{skill-name}, you MUST report:
-- The validation score returned by the skill PER FILE (not aggregated)
+- The validation score returned by the skill
 - Whether the postcondition was met (e.g., score = 1.0)
 - If postcondition failed, what was the actual value
 
-FOR BATCH OPERATIONS (multiple files):
-Return a table with per-file scores - do NOT summarize as "all files passed":
-
-| File | Score | Status |
-|------|-------|--------|
-| path/to/file1.md | 1.0 | PASS |
-| path/to/file2.md | 1.0 | PASS |
-
-Example for /cat:shrink-doc (single file):
-  Report: execution_equivalence_score=1.0, met_threshold=true
-
-Example for /cat:shrink-doc (batch):
-  | File | execution_equivalence_score | Status |
-  |------|----------------------------|--------|
-  | commands/add.md | 1.0 | PASS |
-  | commands/work.md | 1.0 | PASS |
+Example:
+  Report: validation_score=1.0, met_threshold=true
 ```
-
-**Why per-file reporting?** Aggregate statements like "all files scored 1.0" are unverifiable.
-Per-file tables provide evidence that each file was individually validated.
-
-**Parent Agent Responsibility (M265):**
-When presenting approval gate after batch skill delegation, the main agent MUST:
-1. Include the per-file postcondition table from subagent output
-2. NOT summarize as "all passed" - show each file's score
-3. If subagent returned aggregate only, note this as incomplete reporting
 
 **Why explicit reporting?** Without requiring postcondition values in the response, the main agent
 has no evidence that the skill's validation workflow actually ran. Claims like "all files maintain
@@ -440,7 +417,7 @@ execution equivalence (score 1.0)" become unverifiable assertions.
 
 | Skill | Postcondition | Required Report |
 |-------|---------------|-----------------|
-| /cat:shrink-doc | execution_equivalence_score = 1.0 | Per-file score table (batch) or single score |
+| /cat:shrink-doc | execution_equivalence_score = 1.0 | Score value and pass/fail |
 | /cat:compare-docs | semantic comparison complete | Score and component breakdown |
 | /cat:stakeholder-review | all stakeholders approve | Individual stakeholder verdicts |
 
@@ -461,11 +438,8 @@ Before invoking Task tool, confirm:
 | **Pre-spawn limit validation** | All tasks | A018 |
 | **Skill postcondition reporting** | Skill delegation tasks | M258 |
 | **Skill invocation (not principles)** | Skill delegation tasks | M264 |
-| **Per-file scores for batch ops** | Batch skill delegation | M265 |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
-
-**Anti-pattern (M265):** Summarizing batch postconditions as "all passed" instead of per-file table.
 
 ### Example: Exploration Task (gather info, no action)
 
