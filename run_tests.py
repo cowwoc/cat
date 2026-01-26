@@ -149,6 +149,31 @@ EOF
         runner.test(f"Invalid type '{t}' blocked",
                     result is not None and result.get("decision") == "block")
 
+    # Test M255: docs: blocked for plugin/ files
+    cmd = '''git add plugin/concepts/test.md && git commit -m "$(cat <<'EOF'
+docs: update plugin documentation
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("M255: docs: blocked for plugin/ files",
+                result is not None and result.get("decision") == "block" and "M255" in result.get("reason", ""))
+
+    # Test M255: config: allowed for plugin/ files
+    cmd = '''git add plugin/concepts/test.md && git commit -m "$(cat <<'EOF'
+config: update plugin documentation
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("M255: config: allowed for plugin/ files", result is None)
+
+    # Test: docs: still allowed for non-plugin files
+    cmd = '''git add README.md && git commit -m "$(cat <<'EOF'
+docs: update readme
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("docs: allowed for non-plugin files", result is None)
+
 
 # =============================================================================
 # SKILL HANDLERS TESTS
