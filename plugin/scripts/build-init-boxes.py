@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build pre-computed boxes for init.md with correct padding.
+Build output template boxes for init.md with correct padding.
 
 This script generates properly aligned boxes for the init.md skill.
 All boxes use the standard style (see original box style) with correct padding
@@ -10,7 +10,7 @@ Usage:
   build-init-boxes.py [--width N]
 
 Output:
-  JSON with all 8 pre-computed box templates for init.md.
+  JSON with all 8 output template box templates for init.md.
 
 Box style uses: curved box characters
 """
@@ -128,7 +128,7 @@ def build_box(title: str, content_lines: list, width: int = DEFAULT_WIDTH) -> st
 
 
 def generate_all_boxes(width: int = DEFAULT_WIDTH) -> dict:
-    """Generate all 8 pre-computed boxes for init.md.
+    """Generate all 8 output template boxes for init.md.
 
     Returns:
         Dictionary with box names as keys and rendered boxes as values.
@@ -268,7 +268,7 @@ def generate_all_boxes(width: int = DEFAULT_WIDTH) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Build pre-computed boxes for init.md')
+    parser = argparse.ArgumentParser(description='Build output template boxes for init.md')
     parser.add_argument('--width', type=int, default=DEFAULT_WIDTH,
                        help=f'Internal content width (default: {DEFAULT_WIDTH})')
     parser.add_argument('--format', choices=['json', 'text'], default='json',

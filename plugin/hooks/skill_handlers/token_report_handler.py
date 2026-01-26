@@ -56,7 +56,7 @@ class TokenReportHandler:
             if not lines:
                 return None
 
-            return f"""PRE-COMPUTED TOKEN REPORT:
+            return f"""OUTPUT TEMPLATE TOKEN REPORT:
 
 {lines}
 

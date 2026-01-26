@@ -10,9 +10,9 @@ description: "MANDATORY: Use BEFORE showing ANY diff to user - transforms git di
 Transform raw git diff output into a 4-column table format optimized for approval gate reviews.
 Each hunk is rendered as a self-contained box with file header, making diffs easy to review.
 
-## Pre-computed Output (MANDATORY for Approval Gates)
+## Output template Output (MANDATORY for Approval Gates)
 
-**Check context for "PRE-COMPUTED RENDER-DIFF OUTPUT".**
+**Check context for "OUTPUT TEMPLATE RENDER-DIFF OUTPUT".**
 
 If found:
 1. Output the rendered diff content **directly** - no preamble, no Bash commands
@@ -24,7 +24,7 @@ If NOT found during an approval gate: **FAIL immediately**.
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "diff output" "render-diff"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed diff not found. Check:"
+  echo "ERROR: Output template diff not found. Check:"
   echo "1. Handler is registered in skill_handlers/__init__.py"
   echo "2. Handler file exists in plugin/hooks/skill_handlers/"
   echo "3. Base branch is detectable from worktree/branch name"

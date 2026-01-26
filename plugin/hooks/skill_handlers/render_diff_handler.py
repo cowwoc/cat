@@ -227,7 +227,7 @@ class RenderDiffHandler:
         # Get changed files list
         changed_files = get_changed_files(project_path, base_branch)
         if not changed_files:
-            return f"""PRE-COMPUTED RENDER-DIFF OUTPUT:
+            return f"""OUTPUT TEMPLATE RENDER-DIFF OUTPUT:
 
 No changes detected between {base_branch} and HEAD.
 
@@ -246,7 +246,7 @@ INSTRUCTION: Report "No changes to display" to the user."""
         if len(changed_files) > 20:
             file_list += f"\n  ... and {len(changed_files) - 20} more files"
 
-        return f"""PRE-COMPUTED RENDER-DIFF OUTPUT:
+        return f"""OUTPUT TEMPLATE RENDER-DIFF OUTPUT:
 
 ## Diff Summary
 - **Base branch:** {base_branch}

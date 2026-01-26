@@ -30,9 +30,9 @@ Let caller/user decide next action
 Skills that depend on handler-computed output must fail if output is missing.
 
 ```markdown
-**Check for pre-computed output:**
+**Check for output template:**
 
-Look in conversation context for "PRE-COMPUTED {SKILL_NAME} OUTPUT" section.
+Look in conversation context for "OUTPUT TEMPLATE {SKILL_NAME} OUTPUT" section.
 
 If NOT found: **FAIL immediately**.
 
@@ -104,12 +104,12 @@ Input validation must fail on first error, not accumulate.
 
 ```markdown
 # BAD - Fallback undermines handler purpose
-If pre-computed output not found:
+If output template not found:
   - Try to compute manually...
   - Fall back to simplified version...
 
 # GOOD - Fail-fast exposes problems
-If pre-computed output not found:
+If output template not found:
   - FAIL immediately
   - Error message explains what's missing
 ```

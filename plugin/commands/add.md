@@ -560,7 +560,7 @@ EOF
 
 **Present completion:**
 
-Check conversation context for "PRE-COMPUTED ADD DISPLAY" from the handler and output it exactly.
+Check conversation context for "OUTPUT TEMPLATE ADD DISPLAY" from the handler and output it exactly.
 If not found, use this fallback format:
 
 ```
@@ -1184,7 +1184,7 @@ EOF
 
 **Present completion:**
 
-Check conversation context for "PRE-COMPUTED ADD DISPLAY" from the handler and output it exactly.
+Check conversation context for "OUTPUT TEMPLATE ADD DISPLAY" from the handler and output it exactly.
 If not found, use this fallback format:
 
 ```

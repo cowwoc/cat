@@ -541,7 +541,7 @@ class StatusHandler:
             final_box += line + '\n'
         final_box += outer_bottom
 
-        return f"""PRE-COMPUTED STATUS DISPLAY (copy exactly):
+        return f"""OUTPUT TEMPLATE STATUS DISPLAY (copy exactly):
 
 {final_box}
 

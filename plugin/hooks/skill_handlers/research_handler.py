@@ -8,7 +8,7 @@ Provides utility functions for rendering stakeholder research display elements:
 - Total calculations
 
 Since research content is reasoning-based, this handler provides templates and
-calculation functions rather than pre-computed output.
+calculation functions rather than output template output.
 """
 
 from . import register_handler
@@ -272,7 +272,7 @@ def build_option_section_divider() -> str:
 class ResearchHandler:
     """Handler for /cat:research skill.
 
-    Provides utility functions for the skill rather than pre-computed output,
+    Provides utility functions for the skill rather than output template output,
     since research content requires AI reasoning.
     """
 
@@ -294,7 +294,7 @@ class ResearchHandler:
 
 ## Rating System
 
-Use these pre-computed circle patterns for ratings 1-5:
+Use these output template circle patterns for ratings 1-5:
 - 5 → ●●●●●  (Excellent)
 - 4 → ●●●●○  (Good)
 - 3 → ●●●○○  (Moderate)

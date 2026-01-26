@@ -19,9 +19,9 @@ users through modifying their preferences.
 
 <emoji_reference>
 
-> **Note (M256):** Setting emojis are rendered in the PRE-COMPUTED CONFIG DISPLAY.
+> **Note (M256):** Setting emojis are rendered in the OUTPUT TEMPLATE CONFIG DISPLAY.
 > They are NOT documented here to prevent manual construction attempts.
-> Always use the pre-computed display from the handler.
+> Always use the template display from the handler.
 
 </emoji_reference>
 
@@ -29,9 +29,9 @@ users through modifying their preferences.
 
 <step name="check-precomputed">
 
-**MANDATORY: Check for pre-computed display**
+**MANDATORY: Check for template display**
 
-Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
+Look in the conversation context for "OUTPUT TEMPLATE CONFIG DISPLAY".
 
 **If found:**
 - Store the exact box text from the context
@@ -42,7 +42,7 @@ Look in the conversation context for "PRE-COMPUTED CONFIG DISPLAY".
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "config display" "/cat:config"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed display not available."
+  echo "ERROR: Output template display not available."
   echo "Handler config_handler.py may have failed."
 fi
 ```
@@ -69,11 +69,11 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-**Output the PRE-COMPUTED CONFIG DISPLAY from context**
+**Output the OUTPUT TEMPLATE CONFIG DISPLAY from context**
 
-Copy the exact box from the "PRE-COMPUTED CONFIG DISPLAY" context. Do NOT recompute or modify alignment.
+Copy the exact box from the "OUTPUT TEMPLATE CONFIG DISPLAY" context. Do NOT recompute or modify alignment.
 
-**Why pre-computed:** Agents miscalculate emoji widths, causing misaligned box borders.
+**Why output template:** Agents miscalculate emoji widths, causing misaligned box borders.
 The handler config_handler.py calculates correct widths before the skill starts.
 
 </step>
@@ -113,7 +113,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
-Use the **CURRENT_SETTINGS** box from PRE-COMPUTED CONFIG BOXES.
+Use the **CURRENT_SETTINGS** box from OUTPUT TEMPLATE CONFIG BOXES.
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -309,7 +309,7 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 
 **📊 Version Gates configuration:**
 
-Use the **VERSION_GATES_OVERVIEW** box from PRE-COMPUTED CONFIG BOXES.
+Use the **VERSION_GATES_OVERVIEW** box from OUTPUT TEMPLATE CONFIG BOXES.
 
 **Step 1: Select version to configure**
 
@@ -347,7 +347,7 @@ cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from PRE-COMPUTED CONFIG BOXES.
+Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from OUTPUT TEMPLATE CONFIG BOXES.
 Replace `{version}` and gate descriptions with actual values.
 
 **Step 3: Choose action**
@@ -420,7 +420,7 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Use the **GATES_UPDATED** box from PRE-COMPUTED CONFIG BOXES.
+Use the **GATES_UPDATED** box from OUTPUT TEMPLATE CONFIG BOXES.
 Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
@@ -443,7 +443,7 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Use the **SETTING_UPDATED** box from PRE-COMPUTED CONFIG BOXES.
+Use the **SETTING_UPDATED** box from OUTPUT TEMPLATE CONFIG BOXES.
 Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
 
 **After confirming**: Return to the **parent menu** and re-display its options.
@@ -461,11 +461,11 @@ Examples:
 
 If changes were made:
 
-Use the **CONFIGURATION_SAVED** box from PRE-COMPUTED CONFIG BOXES.
+Use the **CONFIGURATION_SAVED** box from OUTPUT TEMPLATE CONFIG BOXES.
 
 If no changes:
 
-Use the **NO_CHANGES** box from PRE-COMPUTED CONFIG BOXES.
+Use the **NO_CHANGES** box from OUTPUT TEMPLATE CONFIG BOXES.
 
 </step>
 

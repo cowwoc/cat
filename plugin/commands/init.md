@@ -20,7 +20,7 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 
 <step name="check_precomputed_boxes">
 
-**MANDATORY:** Check context for "PRE-COMPUTED INIT BOXES".
+**MANDATORY:** Check context for "OUTPUT TEMPLATE INIT BOXES".
 
 If found: Use those box templates exactly as provided. Replace only the {variable} placeholders with actual values.
 If NOT found: **FAIL immediately**.
@@ -28,7 +28,7 @@ If NOT found: **FAIL immediately**.
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "init boxes" "/cat:init"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed boxes not found."
+  echo "ERROR: Output template boxes not found."
   echo "The init_handler.py should have provided box templates."
   echo "Please report this issue - the handler may not be registered correctly."
 fi
@@ -345,7 +345,7 @@ For each minor version PLAN.md, add:
 - All tasks complete
 ```
 
-After applying defaults, use the **default_gates_configured** box from PRE-COMPUTED INIT BOXES.
+After applying defaults, use the **default_gates_configured** box from OUTPUT TEMPLATE INIT BOXES.
 Replace `{N}` with the version count.
 
 **If "Configure per version":**
@@ -424,7 +424,7 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Use the **research_skipped** box from PRE-COMPUTED INIT BOXES.
+Use the **research_skipped** box from OUTPUT TEMPLATE INIT BOXES.
 
 </step>
 
@@ -434,7 +434,7 @@ Use the **research_skipped** box from PRE-COMPUTED INIT BOXES.
 
 **Choose Your Partner - Capture development style preferences**
 
-Use the **choose_your_partner** box from PRE-COMPUTED INIT BOXES.
+Use the **choose_your_partner** box from OUTPUT TEMPLATE INIT BOXES.
 ```
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
@@ -854,7 +854,7 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Use the **cat_initialized** box from PRE-COMPUTED INIT BOXES.
+Use the **cat_initialized** box from OUTPUT TEMPLATE INIT BOXES.
 Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
 
 **New projects:**
@@ -884,7 +884,7 @@ AskUserQuestion: header="First Task", question="Would you like me to walk you th
 
 **If "Yes, guide me":**
 
-Use the **first_task_walkthrough** box from PRE-COMPUTED INIT BOXES.
+Use the **first_task_walkthrough** box from OUTPUT TEMPLATE INIT BOXES.
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -938,7 +938,7 @@ git add ".claude/cat/"
 git commit -m "docs: add first task - ${TASK_NAME}"
 ```
 
-7. Use the **first_task_created** box from PRE-COMPUTED INIT BOXES.
+7. Use the **first_task_created** box from OUTPUT TEMPLATE INIT BOXES.
    Replace `{task-name}` with the actual sanitized task name.
 
 AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
@@ -951,11 +951,11 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this t
 
 **If "No, I'll start later":**
 
-Use the **all_set** box from PRE-COMPUTED INIT BOXES.
+Use the **all_set** box from OUTPUT TEMPLATE INIT BOXES.
 
 **If "No, I'll explore" (from initial question):**
 
-Use the **explore_at_your_own_pace** box from PRE-COMPUTED INIT BOXES.
+Use the **explore_at_your_own_pace** box from OUTPUT TEMPLATE INIT BOXES.
 │  → /cat:work         Execute tasks                                 │
 │  → /cat:help         Full command reference                        │
 │                                                                    │

@@ -179,7 +179,7 @@ def test_add_handler():
     }
     result = handler.handle(task_context)
     runner.test("Task returns string", isinstance(result, str))
-    runner.test("Task contains PRE-COMPUTED marker", "PRE-COMPUTED ADD DISPLAY" in result)
+    runner.test("Task contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE ADD DISPLAY" in result)
     runner.test("Task contains task name", "parse-tokens" in result)
     runner.test("Task contains version", "Version: 2.0" in result)
     runner.test("Task contains checkmark", "✅" in result)
@@ -196,7 +196,7 @@ def test_add_handler():
     }
     result = handler.handle(version_context)
     runner.test("Version returns string", isinstance(result, str))
-    runner.test("Version contains PRE-COMPUTED marker", "PRE-COMPUTED ADD DISPLAY" in result)
+    runner.test("Version contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE ADD DISPLAY" in result)
     runner.test("Version contains version name", "v2.1" in result)
 
 
@@ -309,7 +309,7 @@ def test_help_handler():
     # Test returns string
     result = handler.handle({})
     runner.test("Returns string", isinstance(result, str))
-    runner.test("Contains PRE-COMPUTED marker", "PRE-COMPUTED" in result)
+    runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
     runner.test("Contains commands", "/cat:" in result)
 
 
@@ -329,7 +329,7 @@ def test_work_handler():
     result = handler.handle(context)
     runner.test("Returns string with task", isinstance(result, str))
     if result:
-        runner.test("Contains PRE-COMPUTED marker", "PRE-COMPUTED" in result)
+        runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
         runner.test("Contains progress info", "Progress" in result or "Template" in result)
 
 
@@ -357,7 +357,7 @@ def test_cleanup_handler():
     result = handler.handle(context)
     runner.test("Returns string for survey phase", isinstance(result, str))
     if result:
-        runner.test("Contains PRE-COMPUTED marker", "PRE-COMPUTED" in result)
+        runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
 
 
 def test_config_loader():

@@ -28,7 +28,7 @@ process repeats until user reaches desired specificity.
 
 <functions>
 
-This skill uses pre-computed utilities from research_handler.py:
+This skill uses output template utilities from research_handler.py:
 
 | Function | Purpose |
 |----------|---------|

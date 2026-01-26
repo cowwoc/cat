@@ -397,18 +397,18 @@ Recursive case:
 
 Steps call functions rather than duplicating logic.
 
-### Step 1: Require pre-computed results (if computation was extracted)
+### Step 1: Require template results (if computation was extracted)
 
-**MANDATORY:** Check context for "PRE-COMPUTED [SKILL-NAME]".
+**MANDATORY:** Check context for "OUTPUT TEMPLATE [SKILL-NAME]".
 
 If found:
-1. Output the pre-computed content **directly without preamble or commentary**
+1. Output the template content **directly without preamble or commentary**
 2. Skip to Step N (output/verification)
 
-**Silent output rule (M194):** When outputting pre-computed content, do NOT:
-- Announce "I can see the pre-computed display..."
+**Silent output rule (M194):** When outputting template content, do NOT:
+- Announce "I can see the template display..."
 - Explain "Let me output this exactly as provided..."
-- Add any text before the pre-computed content
+- Add any text before the template content
 
 Simply output the content. The user doesn't need to know about internal computation mechanisms.
 
@@ -417,7 +417,7 @@ If NOT found: **FAIL immediately**.
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "results" "the skill"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed results not found."
+  echo "ERROR: Output template results not found."
   echo "Hook precompute-{skill-name}.sh should have provided these."
 fi
 ```
@@ -759,11 +759,11 @@ When designing skills with multiple paths, distinguish between:
 
 ```
 # BAD - Fallback hides hook failure
-If pre-computed exists: use it
+If output template exists: use it
 Else: compute manually (error-prone!)
 
 # GOOD - Fail-fast exposes problems
-If pre-computed exists: use it
+If output template exists: use it
 Else: FAIL with "Hook failed - check precompute-status-display.sh"
 ```
 
@@ -936,23 +936,23 @@ architecture flowcharts) are acceptable because:
 
 ### Conditional Information Principle (M256)
 
-**Critical rule**: Information that is only useful when pre-computed output exists should BE IN the
-pre-computed output, not in the skill documentation.
+**Critical rule**: Information that is only useful when output template exists should BE IN the
+output template, not in the skill documentation.
 
 **The failure pattern:**
 1. Skill doc contains "reference" information (emoji meanings, circle patterns, formatting rules)
 2. Agent sees this reference material before executing
-3. Agent uses the reference to manually construct output instead of copy-pasting pre-computed content
+3. Agent uses the reference to manually construct output instead of copy-pasting template content
 4. Manual construction produces incorrect results (emoji widths, alignment errors)
 
 **Where information belongs:**
 
 | Information Type | Location | Why |
 |------------------|----------|-----|
-| How to find/copy pre-computed output | Skill doc | Always needed |
-| What to do if pre-computed missing | Skill doc (FAIL instruction) | Always needed |
-| Emoji meanings (☑️, 🔄, 🔳) | Pre-computed Legend line | Only useful with pre-computed output |
-| Rating patterns (●●●●○) | Pre-computed output | Only useful with pre-computed output |
+| How to find/copy output template | Skill doc | Always needed |
+| What to do if output template missing | Skill doc (FAIL instruction) | Always needed |
+| Emoji meanings (☑️, 🔄, 🔳) | Output template Legend line | Only useful with output template |
+| Rating patterns (●●●●○) | Output template output | Only useful with output template |
 | Box character reference | Handler code only | Never needed by skill |
 | Formatting rules (widths, padding) | Handler code only | Never needed by skill |
 
@@ -960,14 +960,14 @@ pre-computed output, not in the skill documentation.
 ```markdown
 # GOOD - Skill doc says WHERE, not HOW
 
-### Step 1: Output pre-computed display
+### Step 1: Output template display
 
-**MANDATORY:** Check context for "PRE-COMPUTED {NAME}".
+**MANDATORY:** Check context for "OUTPUT TEMPLATE {NAME}".
 
 If found: Output exactly as provided.
 If NOT found: FAIL immediately.
 
-> **Note:** Emoji meanings are included in the pre-computed Legend line.
+> **Note:** Emoji meanings are included in the output template Legend line.
 > They are NOT documented separately here to prevent manual construction attempts.
 ```
 
@@ -991,10 +991,10 @@ If NOT found: FAIL immediately.
 **Self-check during skill creation:**
 - [ ] Does the skill contain reference tables the agent shouldn't use directly?
 - [ ] Is there any "for reference only" or "do not use manually" information?
-- [ ] Could this information enable manual construction if pre-computed output is ignored?
-- [ ] Should this information be moved to the pre-computed output instead?
+- [ ] Could this information enable manual construction if output template is ignored?
+- [ ] Should this information be moved to the output template instead?
 
-If YES to any: Move the information to the pre-computed output or remove it entirely.
+If YES to any: Move the information to the output template or remove it entirely.
 
 ### Output Artifact Gates (M192 Prevention)
 
@@ -1116,8 +1116,8 @@ the purpose of extraction.
 **The correct pattern (see `plugin/hooks/skill_handlers/`):**
 1. Hook runs automatically when skill is invoked (via UserPromptSubmit or skill handler)
 2. Hook pre-computes ALL possible outputs the skill might need
-3. Hook returns pre-computed content via `additionalContext`
-4. Skill receives pre-computed content and outputs it directly (no script invocation)
+3. Hook returns template content via `additionalContext`
+4. Skill receives template content and outputs it directly (no script invocation)
 
 **Identify computation candidates during function extraction (Step 5):**
 
@@ -1156,8 +1156,8 @@ If YES to all three → Extract to hook-based precomputation
 # CORRECT - Hook runs BEFORE skill, user sees nothing
 1. Hook detects skill invocation (via UserPromptSubmit or handler)
 2. Hook pre-computes ALL possible outputs
-3. Hook returns pre-computed content via additionalContext
-4. Skill receives pre-computed content, reasons about which to use, outputs directly
+3. Hook returns template content via additionalContext
+4. Skill receives template content, reasons about which to use, outputs directly
 ```
 
 ### MANDATORY: Planning Verification Checklist (M198)
@@ -1213,9 +1213,9 @@ DISPLAY rendering (box characters, padding, alignment) is deterministic and shou
 1. Hook detects skill invocation
 2. Hook gathers all data that could be displayed (from files, state, etc.)
 3. Hook pre-renders ALL possible output variants
-4. Hook returns pre-computed variants via additionalContext
+4. Hook returns output template variants via additionalContext
 5. Agent reasons about which variant(s) to use
-6. Agent outputs the selected pre-computed content directly
+6. Agent outputs the selected template content directly
 
 **Example - research executive summary:**
 ```yaml
@@ -1237,8 +1237,8 @@ display_rendering: deterministic     # Box layout, alignment - extract to hook
 2. Hook reads all stakeholder data from PLAN.md Research section
 3. Hook pre-renders executive summary boxes for each option/approach
 4. Hook returns ALL pre-rendered variants via additionalContext
-5. Agent reasons about findings, selects relevant pre-computed sections
-6. Agent outputs selected pre-computed content (no Bash invocation)
+5. Agent reasons about findings, selects relevant output template sections
+6. Agent outputs selected template content (no Bash invocation)
 ```
 
 **Example - Token-report skill:**
@@ -1278,7 +1278,7 @@ is often known ahead of time. The hook can pre-compute **templates** that the sk
 2. Hook returns templates via additionalContext
 3. Skill reasons about content (option names, descriptions, etc.)
 4. Skill fills templates with content, extending to more lines as needed
-5. Skill outputs using pre-computed structural elements
+5. Skill outputs using output template structural elements
 
 **Example - Research executive summary templates:**
 
@@ -1300,9 +1300,9 @@ def precompute_templates():
 **Skill uses templates:**
 
 ```markdown
-### Step 1: Require pre-computed templates
+### Step 1: Require output template templates
 
-**MANDATORY:** Check context for "PRE-COMPUTED RESEARCH TEMPLATES".
+**MANDATORY:** Check context for "OUTPUT TEMPLATE RESEARCH TEMPLATES".
 
 Templates include:
 - `top_border`: Use once at start
@@ -1315,7 +1315,7 @@ Templates include:
 ### Step 2: Reason about content
 
 Synthesize stakeholder findings to identify approaches, tradeoffs, etc.
-(This is the reasoning part that cannot be pre-computed.)
+(This is the reasoning part that cannot be output template.)
 
 ### Step 3: Build output using templates
 
@@ -1382,8 +1382,8 @@ class SkillNameHandler:
         # 2. Pre-render ALL possible output variants
         variants = self._render_all_variants(data)
 
-        # 3. Return pre-computed content via additionalContext
-        return f"""PRE-COMPUTED {SKILL_NAME} OUTPUT:
+        # 3. Return template content via additionalContext
+        return f"""OUTPUT TEMPLATE {SKILL_NAME} OUTPUT:
 
 {variants['main_output']}
 
@@ -1393,7 +1393,7 @@ VARIANT A (if applicable):
 VARIANT B (if applicable):
 {variants['variant_b']}
 
-INSTRUCTION: Output the appropriate pre-computed section. Do not recalculate."""
+INSTRUCTION: Output the appropriate output template section. Do not recalculate."""
 
     def _collect_data(self, project_root):
         # Read files, gather state, etc.
@@ -1418,12 +1418,12 @@ register_handler("{skill-name}", _handler)
 **2. Skill Preamble** (add to generated skill - FAIL-FAST, not fallback):
 
 ```markdown
-### Step 1: Require pre-computed results
+### Step 1: Require template results
 
-**MANDATORY:** Check context for "PRE-COMPUTED {SKILL-NAME}".
+**MANDATORY:** Check context for "OUTPUT TEMPLATE {SKILL-NAME}".
 
 If found:
-1. Output the pre-computed content **directly without preamble**
+1. Output the template content **directly without preamble**
 2. If skill requires reasoning to select variants, select appropriate section
 3. Skip to verification step
 
@@ -1432,7 +1432,7 @@ If NOT found: **FAIL immediately**.
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "results" "the skill"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed results not found."
+  echo "ERROR: Output template results not found."
   echo "The handler ({skill-name}_handler.py) should have provided these."
   echo "Check:"
   echo "1. Handler is registered in skill_handlers/__init__.py"
@@ -1478,7 +1478,7 @@ def _render_all_variants(self, data):
 ```
 
 The skill then reasons about the data, decides what to show, and outputs
-the appropriate pre-computed sections.
+the appropriate output template sections.
 
 **Example - Box alignment extraction**:
 
@@ -1493,9 +1493,9 @@ Generate:
      - Implements display_width, build_line, build_border
      - Pre-computes complete box output
      - Returns via additionalContext
-  2. Skill preamble - REQUIRES pre-computed output (fail-fast)
+  2. Skill preamble - REQUIRES output template (fail-fast)
 
-Result: Agent receives exact pre-computed box, outputs directly.
+Result: Agent receives exact template box, outputs directly.
 No Bash tools shown to user. If handler fails, skill fails immediately.
 ```
 
@@ -1514,7 +1514,7 @@ For each function:
          │
   Handler pre-computes ALL variants BEFORE skill runs
          │
-  Skill REQUIRES pre-computed result (fail-fast if missing)
+  Skill REQUIRES template result (fail-fast if missing)
 ```
 
 ---
@@ -1534,7 +1534,7 @@ For each function:
 - [ ] Skill handler created in `plugin/hooks/skill_handlers/` for deterministic functions
 - [ ] Handler pre-computes ALL possible output variants BEFORE skill runs
 - [ ] **Skill NEVER invokes scripts via Bash** - user sees no tool calls (M215)
-- [ ] **Skill REQUIRES pre-computed results - FAIL-FAST if missing** (no fallback)
+- [ ] **Skill REQUIRES template results - FAIL-FAST if missing** (no fallback)
 - [ ] **No "if not found, continue to manual..." patterns** (fail-fast principle)
 - [ ] **Calculation gates added for transformation steps** (M191)
 - [ ] **Artifact gates added when output has precise formatting** (M192)

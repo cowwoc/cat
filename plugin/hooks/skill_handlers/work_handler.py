@@ -392,7 +392,7 @@ class WorkHandler:
         if match:
             task_id = match.group(1)
 
-        return f"""PRE-COMPUTED WORK PROGRESS FORMAT:
+        return f"""OUTPUT TEMPLATE WORK PROGRESS FORMAT:
 
 ## Progress Display Templates
 
@@ -469,7 +469,7 @@ Use these templates directly in your output. Do NOT call any external scripts.
 
 INSTRUCTION: Render progress displays inline using these templates. Update the banner at each phase transition.
 
-PRE-COMPUTED WORK BOXES - LITERAL COPY-PASTE REQUIRED (M225):
+OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE REQUIRED (M225):
 
 **CRITICAL**: Copy-paste the EXACT box below into your response. Do NOT reconstruct or retype it.
 The boxes use precise Unicode characters (╭╮╰╯│├┤─) that must be preserved exactly.
