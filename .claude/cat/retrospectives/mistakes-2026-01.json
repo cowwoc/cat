@@ -407,6 +407,61 @@
         "catches_variations": true
       },
       "correct_behavior": "Before and after renaming files, run grep to find ALL references across the codebase (*.md, *.sh, *.bats, *.py) and update every file. Verify with grep after commit that no old references remain."
+    },
+    {
+      "id": "M260",
+      "timestamp": "2026-01-26T11:30:00Z",
+      "category": "prompt_engineering",
+      "description": "Subagent prompt did not include PLAN.md acceptance criteria, causing subagent to miss required deliverables",
+      "root_cause": "spawn-subagent skill does not require transferring acceptance criteria from PLAN.md to subagent prompt",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/spawn-subagent/SKILL.md",
+      "pattern_keywords": [
+        "subagent",
+        "acceptance criteria",
+        "PLAN.md",
+        "prompt",
+        "deliverables"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When spawning subagent, copy acceptance criteria from PLAN.md into the subagent prompt so subagent knows what must be delivered"
+    },
+    {
+      "id": "M261",
+      "timestamp": "2026-01-26T12:00:00Z",
+      "category": "tool_misuse",
+      "description": "Ran render-diff.py inside Bash tool at approval gate - output is collapsed and user cannot see the diff without expanding",
+      "root_cause": "work.md showed render-diff.py in bash code block, implying to run it via Bash tool; no explicit guidance that output must be displayed directly in response text",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "render-diff",
+        "Bash",
+        "collapsed",
+        "approval gate",
+        "visible",
+        "response text"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Capture render-diff.py output, then paste directly into response text (not inside Bash tool). User must see diff without expanding collapsed tool output."
     }
   ]
 }
