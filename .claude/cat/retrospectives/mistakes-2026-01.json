@@ -303,7 +303,7 @@
       "timestamp": "2026-01-26T15:00:00Z",
       "category": "protocol_violation",
       "description": "Manually constructed status box instead of copy-pasting pre-computed output from hook, causing misaligned boxes and emojis rendering as dots",
-      "root_cause": "Agent ignored explicit instruction to output pre-computed content EXACTLY as shown, instead attempting manual reconstruction with incorrect characters",
+      "root_cause": "Two factors: (1) Agent ignored instruction to copy-paste pre-computed output. (2) Documentation had misleading Functions section teaching manual construction BEFORE the procedure, priming agent for wrong approach.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -323,7 +323,8 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When PRE-COMPUTED content exists in context, locate it and copy-paste EXACTLY without modification. Never attempt to reconstruct formatted output manually."
+      "correct_behavior": "When PRE-COMPUTED content exists in context, locate it and copy-paste EXACTLY without modification. Never attempt to reconstruct formatted output manually.",
+      "additional_prevention": "Removed misleading Functions/Prerequisites sections from status.md; added CRITICAL note at procedure start"
     }
   ]
 }
