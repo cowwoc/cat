@@ -23,7 +23,6 @@ redesign, and workflow hardening. 74 tasks completed across 310 commits.
 
 **Display Redesign:**
 - **Ultra-Compact Status**: Redesigned `/cat:status` with condensed visual layout
-- **Pre-Computed Boxes**: All display output pre-computed via hooks to prevent alignment errors
 - **Render-Diff Skill**: New skill for approval gate code review with 4-column table format
 - **Dynamic Box Sizing**: Boxes automatically expand to fit content width
 - **Emoji-Aware Alignment**: Correct padding for emoji characters in box borders
@@ -36,34 +35,10 @@ redesign, and workflow hardening. 74 tasks completed across 310 commits.
 - **Local Config Override**: `cat-config.local.json` for machine-specific settings
 - **Task Tools Integration**: Native Claude Code task tracking replaces custom backup system
 
-**Plugin Architecture:**
-- **Reorganized Directory Structure**: Skills, commands, and concepts consolidated under `plugin/`
-- **Centralized Version Paths**: Unified path resolution for version/task lookups
-- **Conventions Directory**: Split between `.claude/rules/` and `.claude/cat/conventions/`
-- **Stakeholders Relocated**: Moved to `plugin/stakeholders/` for portability
-- **Shared Libraries**: `emoji_widths.py` and hook utilities extracted for reuse
-
 **Research & Planning:**
 - **Recursive Drill-Down**: `/cat:research` supports multi-level exploration with scorecards
 - **Executive Summary**: Research results include strategic recommendations
 - **Skill Builder Rewrite**: 12 core skills rewritten with validation-driven approach
-
-**Bugfixes:**
-- Fix fail-fast status validation to prevent stale display (M253)
-- Fix emoji width calculations for box alignment
-- Fix HEREDOC commit message parsing in type validation
-- Fix render-diff bracket placement at word boundaries (M212)
-- Fix work box right border alignment
-- Standardize STATE.md format parsing (M224)
-
-**Retrospectives:**
-- R001: First retrospective analysis (10 mistakes)
-- M220-M255: 35 learnings recorded with prevention rules
-
-**Configuration:**
-- Default to task creation for work requests
-- Worktree isolation requirement enforced (M252)
-- Project-local convention hooks (M255)
 
 ### 2026-01-20: v1.10
 
