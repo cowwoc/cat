@@ -4,7 +4,7 @@
 Create a `/cat:feedback` command that allows users to report bugs or request features, collecting relevant information
 and publishing issues to https://github.com/cowwoc/cat/issues with user permission.
 
-## Satisfies
+## Parent Requirements
 None - independent user support functionality
 
 ## Design

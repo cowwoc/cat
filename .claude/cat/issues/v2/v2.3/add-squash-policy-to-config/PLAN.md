@@ -5,7 +5,7 @@
 Add squash policy configuration to the `/cat:config` interactive wizard so users can set their preferred squash
 strategy without manually editing PROJECT.md.
 
-## Satisfies
+## Parent Requirements
 
 None (infrastructure improvement)
 

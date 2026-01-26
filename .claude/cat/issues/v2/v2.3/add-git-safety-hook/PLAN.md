@@ -4,7 +4,7 @@
 
 Add a PreToolUse BashHandler that blocks destructive git commands with proper flag normalization, closing the gap between advisory skill documentation and enforced safety.
 
-## Satisfies
+## Parent Requirements
 
 None (infrastructure hardening, not tied to v2.3 requirements)
 

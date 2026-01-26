@@ -4,7 +4,7 @@
 Create a showcase page demonstrating CAT planning and research features including initialization, research, and
 stakeholder review with video demos.
 
-## Satisfies
+## Parent Requirements
 None - marketing/documentation task
 
 ## Risk Assessment

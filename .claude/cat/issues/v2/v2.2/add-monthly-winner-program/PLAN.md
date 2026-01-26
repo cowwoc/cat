@@ -5,7 +5,7 @@ Add a "Monthly Winner Program" section to README.md featuring a Hall of Fame tha
 each month that uses CAT for development. Winners receive a free Enterprise license for one year and are listed in a
 rolling 12-month Hall of Fame at the bottom of the README.
 
-## Satisfies
+## Parent Requirements
 None
 
 ## Approaches

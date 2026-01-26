@@ -3,7 +3,7 @@
 ## Goal
 Implement GitHub Issues backend that stores planning metadata as GitHub Issues with labels for organization.
 
-## Satisfies
+## Parent Requirements
 - REQ-003
 
 ## Risk Assessment

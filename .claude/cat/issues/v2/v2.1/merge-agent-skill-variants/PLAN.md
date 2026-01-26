@@ -7,7 +7,7 @@ Remove redundant skill variants. Every skill should have exactly the variants it
 - `-agent` variant: model-invocable, `user-invocable: false`
 - Both: when both users and the model invoke the skill
 
-## Satisfies
+## Parent Requirements
 None
 
 ## Background

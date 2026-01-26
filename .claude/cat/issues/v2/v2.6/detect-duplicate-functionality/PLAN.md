@@ -5,7 +5,7 @@ Enhance the design stakeholder to detect when new code duplicates existing funct
 codebase, JDK, or project dependencies. Uses claim-based semantic comparison with an indexed
 lookup for efficient detection across large codebases.
 
-## Satisfies
+## Parent Requirements
 None - quality gate enhancement
 
 ## Research Summary

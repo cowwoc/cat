@@ -4,7 +4,7 @@
 Create a `/cat:tech-debt` skill that produces a formatted technical debt report at any scope (file, directory, module,
 product), surfacing the worst offenders and providing actionable guidance.
 
-## Satisfies
+## Parent Requirements
 - REQ-004
 - REQ-005 (partial - lays groundwork for workflow feedback by exposing debt data)
 

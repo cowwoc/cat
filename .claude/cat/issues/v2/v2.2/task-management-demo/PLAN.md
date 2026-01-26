@@ -4,7 +4,7 @@
 Create a showcase page demonstrating CAT task management features including /cat:add, /cat:status, and /cat:work
 commands with video demos.
 
-## Satisfies
+## Parent Requirements
 None - marketing/documentation task
 
 ## Risk Assessment

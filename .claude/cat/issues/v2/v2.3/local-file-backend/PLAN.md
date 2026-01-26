@@ -4,7 +4,7 @@
 Implement the local file backend that wraps current .claude/cat file-based storage behind the new storage abstraction
 interface.
 
-## Satisfies
+## Parent Requirements
 - REQ-002
 
 ## Risk Assessment

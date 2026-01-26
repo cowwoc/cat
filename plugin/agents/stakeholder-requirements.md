@@ -145,12 +145,12 @@ or "Locate the preprocessed box" are Claude-directed actions, not human-facing U
 
 Unlike other stakeholders that evaluate code quality, security, or performance, the Requirements
 stakeholder answers: *"Does this implementation actually satisfy the requirements listed in its
-Satisfies section?"*
+Parent Requirements section?"*
 
 ## Review Process
 
 1. **Read the issue's PLAN.md** to extract:
-   - The `## Satisfies` section (list of REQ-XXX IDs, if any)
+   - The `## Parent Requirements` section (list of REQ-XXX IDs, if any)
    - The `## Success Criteria` section (issue-local acceptance criteria, if any)
    - The `## Target State` or goal description (what the implementation should produce)
 2. **Read the parent minor version's PLAN.md** to get the full requirement descriptions
@@ -248,7 +248,7 @@ Return compact JSON inline. Write full details to the detail file, not inline.
       "severity": "CRITICAL|HIGH|MEDIUM|LOW",
       "location": "file:line or component",
       "explanation": "Brief description of the requirements gap",
-      "recommendation": "Brief guidance on how to fix or remove from Satisfies list",
+      "recommendation": "Brief guidance on how to fix or remove from Parent Requirements list",
       "detail_file": ".claude/cat/review/requirements-concerns.json"
     }
   ]
@@ -263,7 +263,7 @@ If there are no concerns, return an empty `concerns` array.
 - **CONCERNS**: Claimed requirements partially implemented or acceptance criteria unclear
 - **REJECTED**: Issue claims to satisfy requirements it does not implement
 
-**Special case - No claims**: If issue has `Satisfies: None`, approve if issue achieves its stated
+**Special case - No claims**: If issue has `Parent Requirements: None`, approve if issue achieves its stated
 goal without claiming specific requirements.
 
 ## Key Differences from Other Stakeholders

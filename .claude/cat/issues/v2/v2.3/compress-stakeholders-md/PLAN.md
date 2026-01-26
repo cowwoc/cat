@@ -7,7 +7,7 @@ equivalence.
 ## Parent Task
 compress-md-files (decomposed)
 
-## Satisfies
+## Parent Requirements
 None - infrastructure/optimization sub-issue
 
 ## Risk Assessment

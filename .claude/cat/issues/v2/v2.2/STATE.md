@@ -21,6 +21,10 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - multi-agent-demo
 - planning-research-demo
 - precompile-autolearn-pattern-constants
+- add-migration-phase13-tests
+- fix-migration-depth-fragility
+- add-parent-requirements-e2e-test
+- fix-phase12-depth-bug
 
 ## Issues Closed
 (None)

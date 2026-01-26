@@ -55,17 +55,17 @@ Requirements are defined at the **minor version level** and traced to issues:
 
 ```
 Minor PLAN.md                    Issue PLAN.md
-┌─────────────────────┐         ┌─────────────────────┐
-│ ## Requirements     │         │ ## Satisfies        │
-│ | REQ-001 | ...     │ ◄────── │ - REQ-001           │
-│ | REQ-002 | ...     │         │ - REQ-003           │
-│ | REQ-003 | ...     │         └─────────────────────┘
+┌─────────────────────┐         ┌──────────────────────────┐
+│ ## Requirements     │         │ ## Parent Requirements   │
+│ | REQ-001 | ...     │ ◄────── │ - REQ-001               │
+│ | REQ-002 | ...     │         │ - REQ-003               │
+│ | REQ-003 | ...     │         └──────────────────────────┘
 └─────────────────────┘
 ```
 
 **Key rules:**
 - Requirements live in minor version PLAN.md (not issue level)
-- Issues reference requirements via `## Satisfies` field (zero or more)
+- Issues reference requirements via `## Parent Requirements` field (zero or more)
 - A minor version cannot complete until all must-have requirements are satisfied (implicit check)
 - The Requirements stakeholder verifies issues satisfy their claimed requirements
 - Exit gates are for additional user-defined conditions, not requirements

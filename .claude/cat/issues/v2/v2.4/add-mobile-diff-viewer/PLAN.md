@@ -5,7 +5,7 @@ Create an execution-order diff viewer that shows code changes in the order they 
 4-column box format. This enables meaningful code review on mobile devices by presenting changes as a narrative flow
 rather than scattered file-by-file diffs.
 
-## Satisfies
+## Parent Requirements
 - REQ-001: Execution-order diff viewer
 - REQ-002: Integration with existing render-diff format
 - REQ-003: Coverage verification

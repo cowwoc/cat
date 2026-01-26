@@ -61,7 +61,9 @@ Add tests to `AutoLearnMistakesTest` verifying:
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/AutoLearnMistakesTest.java` — add false-positive and
   true-positive test cases for Pattern 2
 
-## Execution Steps
+## Execution Waves
+
+### Wave 1
 
 1. In `AutoLearnMistakesTest.java`, add a test `failPrefixDocumentationErrorIsNotTestFailure()` that asserts
    `FAIL: some documentation error message` does NOT trigger a `test_failure` detection (addresses "Pattern 2 does

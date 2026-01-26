@@ -12,7 +12,7 @@ Select the appropriate template based on issue type.
 ## Goal
 [1-2 sentences: what this feature accomplishes]
 
-## Satisfies
+## Parent Requirements
 [List requirement IDs from parent version PLAN.md, or "None" for infrastructure issues]
 - REQ-001
 
@@ -74,7 +74,7 @@ Select the appropriate template based on issue type.
 ## Problem
 [1-2 sentences describing the bug]
 
-## Satisfies
+## Parent Requirements
 [List requirement IDs or "None"]
 - REQ-001
 
@@ -132,7 +132,7 @@ code_that_fails();
 ## Target State
 [1-2 sentences - what it should become]
 
-## Satisfies
+## Parent Requirements
 [List requirement IDs or "None" for tech debt]
 - REQ-001
 
