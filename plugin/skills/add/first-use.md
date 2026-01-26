@@ -822,7 +822,7 @@ Use appropriate template format:
 
 Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
 
-**CRITICAL:** Follow template guidance to separate Execution Waves/Steps (actions only) from Success Criteria
+**CRITICAL:** Follow template guidance to separate Sub-Agent Waves/Steps (actions only) from Success Criteria
 (measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution sections as this primes subagents
 to fabricate
 results.
@@ -859,22 +859,35 @@ Apply the following depth to PLAN.md content based on `$EFFORT`:
 
 This ensures batch tasks leverage parallel execution rather than sequential processing.
 
-**Execution Waves for Parallel Execution:** When the issue has clearly independent work that can run simultaneously,
-use `## Execution Waves` with `### Wave N` sections to enable parallel subagent spawning. Use sparingly — only when
+**Sub-Agent Waves for Parallel Execution:** When the issue has clearly independent work that can run simultaneously,
+use `## Sub-Agent Waves` with `### Wave N` sections to enable parallel subagent spawning. Use sparingly — only when
 items genuinely don't depend on each other and won't modify the same files.
 
-Rules for execution waves:
-- Create `## Execution Waves` section (replaces `## Execution Steps`)
+Rules for sub-agent waves:
+- Create `## Sub-Agent Waves` section (replaces `## Execution Steps`)
 - Each `### Wave N` subsection contains bullet items for parallel execution
 - Waves execute sequentially (Wave 1 completes before Wave 2 starts)
 - All items within a wave run in parallel
 - Waves must not modify the same files (to avoid merge conflicts)
 - The last wave is responsible for updating STATE.md
 
-Example valid wave structure (independent modules):
+**Main Agent Waves (optional):** If the issue requires skills that spawn their own subagents (e.g.,
+`/cat:optimize-doc`, `/cat:compare-docs`, `/cat:stakeholder-review-agent`), add a `## Main Agent Waves` section
+**above** `## Sub-Agent Waves`. The main agent executes these skills directly before spawning implementation
+subagents. Each bullet is a skill invocation:
 
 ```markdown
-## Execution Waves
+## Main Agent Waves
+
+- /cat:optimize-doc path/to/file.md
+```
+
+Omit `## Main Agent Waves` entirely when the issue has no pre-delegation skills.
+
+Example valid sub-agent wave structure (independent modules):
+
+```markdown
+## Sub-Agent Waves
 
 ### Wave 1
 - Implement parser module
@@ -887,7 +900,7 @@ Example valid wave structure (independent modules):
 ```
 
 Do NOT use multiple waves if items share files or if the sequential dependency is unclear. In such cases, use a single
-`## Execution Waves` / `### Wave 1` section or revert to `## Execution Steps` for sequential execution.
+`## Sub-Agent Waves` / `### Wave 1` section or revert to `## Execution Steps` for sequential execution.
 
 **If RESEARCH_FINDINGS exists:**
 

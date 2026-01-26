@@ -143,21 +143,23 @@ The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 Do NOT skip the banner or continue without it.
 
-### Read PLAN.md and Identify Skills
+### Read PLAN.md and Invoke Main Agent Waves
 
 ```bash
 PLAN_MD="${ISSUE_PATH}/PLAN.md"
 ```
 
-Scan PLAN.md for skill references that require spawning capability at the main agent level:
+Read the `## Main Agent Waves` section from PLAN.md:
 
-- `/cat:optimize-doc` - Document compression (spawns compare-docs subagent)
-- `/cat:compare-docs` - Document equivalence validation (spawns validation subagent)
-- `/cat:stakeholder-review-agent` - Code review (spawns reviewer subagents)
+```bash
+MAIN_AGENT_WAVES=$(sed -n '/^## Main Agent Waves/,/^## /p' "$PLAN_MD" | head -n -1)
+```
 
-**If PLAN.md references these skills** (detected via `grep -E "/cat:(optimize-doc|compare-docs|stakeholder-review-agent)" "$PLAN_MD"`), invoke them NOW at the main agent level using the Skill tool.
+**If `## Main Agent Waves` is present and non-empty:** extract each bullet item
+(`- /cat:skill-name args`) and invoke the corresponding skill NOW at the main agent level
+using the Skill tool.
 
-Example: If PLAN.md says "Step 1: Invoke /cat:optimize-doc on file.md", then:
+Example: If `## Main Agent Waves` contains `- /cat:optimize-doc path/to/file.md`, then:
 
 ```
 Skill tool:
@@ -174,7 +176,7 @@ Capture the output from these skills - the implementation subagent will need the
 
 ### Detect Parallel Execution Waves
 
-Read PLAN.md directly to detect `## Execution Waves` sections and count the number of `### Wave N` subsections.
+Read PLAN.md directly to detect `## Sub-Agent Waves` sections and count the number of `### Wave N` subsections.
 
 For each wave subsection found, count the top-level bullet items (`- `) that don't start with indentation. Ignore
 sub-items (indented bullets with `  - `).
@@ -183,14 +185,14 @@ sub-items (indented bullets with `  - `).
 
 ```bash
 # Count number of ### Wave N sections in PLAN.md
+# Count ### Wave N sections under ## Sub-Agent Waves
 WAVES_COUNT=$(grep -c "^### Wave " "$PLAN_MD" 2>/dev/null || echo 0)
 ```
 
 Where `$PLAN_MD` is the path to the issue's PLAN.md file.
 
 **If waves are empty or only one wave is present (`WAVES_COUNT` is 0 or 1):** proceed to single-subagent execution
-(see below). Parse execution items from `## Execution Steps` (old format) or `## Execution Waves` / `### Wave 1`
-(new format).
+(see below). Parse execution items from `## Sub-Agent Waves` / `### Wave 1`.
 
 **If two or more waves are present (`WAVES_COUNT` >= 2):** use parallel execution (see Parallel Subagent Execution
 below). Extract the wave sections from PLAN.md and count items in each wave.
@@ -199,7 +201,7 @@ below). Extract the wave sections from PLAN.md and count items in each wave.
 
 **Subagents read PLAN.md directly — do NOT relay its content into prompts.**
 
-Pass `PLAN_MD_PATH` so the subagent can read the Goal and Execution Waves/Steps sections itself.
+Pass `PLAN_MD_PATH` so the subagent can read the Goal and Sub-Agent Waves/Steps sections itself.
 Do NOT extract and paste those sections into the prompt — that is the content relay anti-pattern.
 
 **Why:** Subagents that receive a `PLAN_MD_PATH` and read PLAN.md themselves always see the authoritative
@@ -210,7 +212,7 @@ interpretive distortion.
 **Pattern:**
 - ✅ Pass `PLAN_MD_PATH: ${PLAN_MD}` and instruct the subagent to read Goal and Execution sections itself
 - ✅ Trust PLAN.md structure — subagents read it directly, no relay needed
-- ❌ Do NOT inline `${ISSUE_GOAL}` or Execution Waves content into the prompt
+- ❌ Do NOT inline `${ISSUE_GOAL}` or Sub-Agent Waves content into the prompt
 - ❌ Do NOT add interpretive summaries or aggregate instructions that restate PLAN.md differently
 
 ### Commit-Before-Spawn Requirement
@@ -251,7 +253,7 @@ Task tool:
     TRUST_LEVEL: ${TRUST}
     PLAN_MD_PATH: ${PLAN_MD}
 
-    Read the Goal section and Execution Waves (or Execution Steps) from PLAN_MD_PATH directly.
+    Read the Goal section and Sub-Agent Waves (or Execution Steps) from PLAN_MD_PATH directly.
     Do NOT ask the main agent to provide this content — it is authoritative in PLAN.md.
 
     ## Pre-Invoked Skill Results
@@ -660,7 +662,7 @@ Initialize loop: `VERIFY_ITERATION=0`
        ## Instructions
        - Read ${ISSUE_PATH}/PLAN.md to understand the current plan
        - Read the detail files to understand what specifically failed
-       - Add new items to the Execution Waves section of PLAN.md (or Execution Steps for old-format plans)
+       - Add new items to the Sub-Agent Waves section of PLAN.md
        - Each new item must address exactly one missing criterion
        - Do NOT remove or alter existing items — only append new items to the last wave (or steps section)
        - Commit the revised PLAN.md: `planning: add fix items for missing criteria (iteration ${VERIFY_ITERATION})`
@@ -1682,7 +1684,7 @@ If any phase fails:
 ## Success Criteria
 
 - [ ] All phases orchestrated at main agent level
-- [ ] Skills requiring spawning (optimize-doc, compare-docs, stakeholder-review) invoked directly
+- [ ] Main Agent Waves skills invoked directly at main agent level before delegation
 - [ ] Approval gates respected based on trust level
 - [ ] Progress banners displayed at phase transitions
 - [ ] Lock released on completion or error

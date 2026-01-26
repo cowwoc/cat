@@ -35,6 +35,8 @@ set -euo pipefail
 #     (closed issues are not modified)
 # 13. Rename ## Satisfies → ## Parent Requirements in open issue-level PLAN.md files
 #     (closed issues are not modified)
+# 14. Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
+#     (all issues, including closed ones)
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -975,6 +977,43 @@ else
     done <<< "$issue_plan_files"
 
     log_migration "Phase 13 complete: $phase13_changed files changed, $phase13_skipped closed issues skipped"
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 14: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 14: Rename ## Execution Waves → ## Sub-Agent Waves in PLAN.md files"
+
+all_plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+
+if [[ -z "$all_plan_files" ]]; then
+    log_migration "No PLAN.md files found - skipping phase 14"
+else
+    phase14_migrated=0
+    phase14_skipped=0
+
+    while IFS= read -r plan_file; do
+        [[ -z "$plan_file" ]] && continue
+
+        # Idempotency: skip files that already use the new section name
+        if grep -q "^## Sub-Agent Waves" "$plan_file" 2>/dev/null; then
+            ((phase14_skipped++)) || true
+            continue
+        fi
+
+        # Skip files with no old section to rename
+        if ! grep -q "^## Execution Waves" "$plan_file" 2>/dev/null; then
+            continue
+        fi
+
+        sed -i 's/^## Execution Waves$/## Sub-Agent Waves/' "$plan_file"
+        ((phase14_migrated++)) || true
+        log_migration "  Updated: $plan_file"
+
+    done <<< "$all_plan_files"
+
+    log_migration "Phase 14 complete: $phase14_migrated files migrated, $phase14_skipped already up to date"
 fi
 
 log_success "Migration to 2.1 completed"
