@@ -181,6 +181,7 @@ Before spawning, verify your prompt answers:
 - [ ] What if the build fails? (fail-fast, not recovery)
 - [ ] What commit message to use? (exact text, for implementation)
 - [ ] **Does prompt include STATE.md update?** (MUST be in same commit as implementation - M076/M077)
+- [ ] **Does prompt include PLAN.md acceptance criteria?** (M260: validation commands, expected scores, verification requirements)
 
 ### Mandatory Subagent Prompt Checklist (A013)
 
