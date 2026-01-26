@@ -14,7 +14,7 @@ import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarker;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectCatAgentId;
-import io.github.cowwoc.cat.hooks.session.InjectCatRules;
+import io.github.cowwoc.cat.hooks.session.InjectMainAgentRules;
 import io.github.cowwoc.cat.hooks.session.InjectCriticalThinking;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
@@ -54,7 +54,7 @@ public final class SessionStartHook implements HookHandler
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
       new InjectSessionInstructions(),
-      new InjectCatRules(scope),
+      new InjectMainAgentRules(scope),
       new InjectSkillListing(scope),
       new InjectCriticalThinking(),
       new InjectEnv(scope),
