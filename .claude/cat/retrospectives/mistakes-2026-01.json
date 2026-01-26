@@ -462,6 +462,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Capture render-diff.py output, then paste directly into response text (not inside Bash tool). User must see diff without expanding collapsed tool output."
+    },
+    {
+      "id": "M262",
+      "timestamp": "2026-01-26T12:30:00Z",
+      "category": "protocol_violation",
+      "description": "Agent ignored ERROR output from get-available-issues.sh indicating invalid status decomposed in STATE.md. Proceeded with task execution instead of fail-fast.",
+      "root_cause": "No fail-fast behavior when ERROR prefix appears in script output - agent processed JSON result despite ERROR being reported",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "ERROR",
+        "fail-fast",
+        "script-output",
+        "get-available-issues"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When script output contains ERROR: prefix, STOP immediately. Report the error to user. Do NOT continue processing the JSON result or subsequent workflow steps."
     }
   ]
 }
