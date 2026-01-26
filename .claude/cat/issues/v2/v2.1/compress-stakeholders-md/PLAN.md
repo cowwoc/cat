@@ -1,0 +1,31 @@
+# Plan: compress-stakeholders-md
+
+## Goal
+Compress all stakeholder MD files (11 files in `plugin/stakeholders/`) to reduce token usage while maintaining execution equivalence.
+
+## Parent Task
+compress-md-files (decomposed)
+
+## Satisfies
+None - infrastructure/optimization subtask
+
+## Risk Assessment
+- **Risk Level:** LOW
+- **Concerns:** Compressed files might lose semantic content
+- **Mitigation:** /compare-docs validation ensures score = 1.0 before applying
+
+## Scope
+| Category | Files | Path Pattern |
+|----------|-------|--------------|
+| Stakeholders | 11 | `plugin/stakeholders/*.md` |
+
+## Acceptance Criteria
+- [ ] All 11 stakeholder files compressed
+- [ ] Execution equivalence verified (all files score 1.0 on /compare-docs)
+- [ ] No functionality regression
+
+## Execution Steps
+1. List all MD files in `plugin/stakeholders/`
+2. For each file: Run /cat:shrink-doc
+   - Verify: Score = 1.0 from /compare-docs validation
+3. Commit changes with appropriate message
