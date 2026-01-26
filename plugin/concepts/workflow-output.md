@@ -26,13 +26,13 @@ Handler pre-computes → Skill outputs verbatim → User sees correct result
 **Implementation:**
 1. Create handler in `plugin/hooks/skill_handlers/`
 2. Handler computes ALL output variants before skill runs
-3. Skill checks for "PRE-COMPUTED {NAME} OUTPUT" in context
+3. Skill checks for "OUTPUT TEMPLATE {NAME} OUTPUT" in context
 4. If not found: **FAIL immediately** (see error-handling.md)
-5. If found: Output the pre-computed result exactly
+5. If found: Output the template result exactly
 
 **Checklist:**
 - [ ] Skill NEVER invokes scripts via Bash - user sees no tool calls
-- [ ] Skill REQUIRES pre-computed results - fail-fast if missing
+- [ ] Skill REQUIRES template results - fail-fast if missing
 - [ ] No "if not found, compute manually..." fallback patterns
 
 ### 2. Subagent Batching (Multi-Step Operations)
@@ -135,19 +135,19 @@ Let me calculate the box width...
 [Builds box manually using similar characters]
 [Emojis render as dots because agent used wrong characters]
 
-# GOOD: Use pre-computed output VERBATIM
-[Locates "PRE-COMPUTED" block in context]
+# GOOD: Use output template VERBATIM
+[Locates "OUTPUT TEMPLATE" block in context]
 [Copy-pastes exact content without modification]
 [Emojis and box characters display correctly]
 ```
 
-**Self-check before outputting pre-computed content:**
+**Self-check before outputting template content:**
 - [ ] Content starts with proper box characters (`╭─`, `╭──`)
 - [ ] Emojis are visible, not dots or `?` symbols
 - [ ] You copied (not retyped) the content
 - [ ] You did NOT run Bash/Read to gather data yourself
 
-**If checks fail:** You are reconstructing, not pasting. Find the PRE-COMPUTED block.
+**If checks fail:** You are reconstructing, not pasting. Find the OUTPUT TEMPLATE block.
 
 ## Choosing the Right Approach
 

@@ -13,7 +13,7 @@ class CleanupHandler:
 
     def handle(self, context: dict) -> str | None:
         """
-        Generate pre-computed display for cleanup phases.
+        Generate output template display for cleanup phases.
 
         Context keys:
             - phase: "survey" | "plan" | "verify"
@@ -118,7 +118,7 @@ class CleanupHandler:
         # Summary counts
         counts = f"Found: {len(worktrees)} worktrees, {len(locks)} locks, {len(branches)} branches, {len(stale_remotes)} stale remotes"
 
-        return f"""PRE-COMPUTED SURVEY DISPLAY (copy exactly):
+        return f"""OUTPUT TEMPLATE SURVEY DISPLAY (copy exactly):
 
 {final_box}
 
@@ -196,7 +196,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         # Count summary
         total = len(locks_to_remove) + len(worktrees_to_remove) + len(branches_to_remove)
 
-        return f"""PRE-COMPUTED PLAN DISPLAY (copy exactly):
+        return f"""OUTPUT TEMPLATE PLAN DISPLAY (copy exactly):
 
 {final_box}
 
@@ -271,7 +271,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         box_lines = [top_line] + lines + [bottom]
         final_box = "\n".join(box_lines)
 
-        return f"""PRE-COMPUTED VERIFY DISPLAY (copy exactly):
+        return f"""OUTPUT TEMPLATE VERIFY DISPLAY (copy exactly):
 
 {final_box}
 

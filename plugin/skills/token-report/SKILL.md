@@ -22,14 +22,14 @@ Display a compact token usage report showing per-subagent breakdown with context
 **CRITICAL**: This skill requires hook-based pre-computation. Check context for:
 
 ```
-PRE-COMPUTED TOKEN REPORT:
+OUTPUT TEMPLATE TOKEN REPORT:
 ```
 
-### If PRE-COMPUTED TOKEN REPORT is found:
+### If OUTPUT TEMPLATE TOKEN REPORT is found:
 
 Output the table EXACTLY as provided. Do NOT modify alignment or recalculate values.
 
-**Example pre-computed output:**
+**Example output template:**
 ```
 ╭───────────────────┬────────────────────────────────┬──────────┬──────────────────┬────────────╮
 │ Type              │ Description                    │ Tokens   │ Context          │ Duration   │
@@ -42,12 +42,12 @@ Output the table EXACTLY as provided. Do NOT modify alignment or recalculate val
 ╰───────────────────┴────────────────────────────────┴──────────┴──────────────────┴────────────╯
 ```
 
-### If PRE-COMPUTED TOKEN REPORT is NOT found:
+### If OUTPUT TEMPLATE TOKEN REPORT is NOT found:
 
 **FAIL immediately** with this message:
 
 ```
-ERROR: Pre-computed token report not found.
+ERROR: Output template token report not found.
 
 The hook precompute-token-report.sh should have provided the table data.
 Do NOT attempt manual computation - the alignment requires deterministic
@@ -65,7 +65,7 @@ Do NOT proceed to manual extraction or table building.
 
 ## Table Format Reference
 
-The pre-computed table uses these specifications:
+The output template table uses these specifications:
 
 **Column widths (fixed):**
 | Column | Width | Content |
@@ -93,7 +93,7 @@ The pre-computed table uses these specifications:
 
 Before outputting the table, verify:
 
-- [ ] Pre-computed results found in context
+- [ ] Output template results found in context
 - [ ] Table copied exactly (no modifications)
 - [ ] All box characters preserved
 - [ ] Emoji indicators inside Context column
@@ -108,11 +108,11 @@ Before outputting the table, verify:
 jq -s '...' "$SESSION_FILE"
 # Then manually building table rows
 
-# GOOD - Use pre-computed results only
+# GOOD - Use template results only
 # Output exactly what the hook provided
 ```
 
-### Never modify pre-computed alignment
+### Never modify output template alignment
 
 ```
 # BAD - "Fixing" spacing or alignment

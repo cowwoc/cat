@@ -2,7 +2,7 @@
 """
 Compute token report table with deterministic alignment.
 
-Reads session data and produces a pre-computed table for the token-report skill.
+Reads session data and produces a output template table for the token-report skill.
 Emoji indicators are placed INSIDE the Context column for proper alignment.
 
 Usage:

@@ -95,7 +95,7 @@ done
 }
 ```
 
-Output the PRE-COMPUTED SURVEY DISPLAY from the handler exactly as provided.
+Output the OUTPUT TEMPLATE SURVEY DISPLAY from the handler exactly as provided.
 Do NOT copy the example below - it shows format only. Use the handler output.
 
 ---
@@ -192,7 +192,7 @@ If uncommitted:
 }
 ```
 
-Output the PRE-COMPUTED PLAN DISPLAY from the handler exactly as provided.
+Output the OUTPUT TEMPLATE PLAN DISPLAY from the handler exactly as provided.
 Do NOT copy any example boxes - use the handler output.
 
 **BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
@@ -279,7 +279,7 @@ fi
 }
 ```
 
-Output the PRE-COMPUTED VERIFY DISPLAY from the handler exactly as provided.
+Output the OUTPUT TEMPLATE VERIFY DISPLAY from the handler exactly as provided.
 Do NOT copy any example boxes - use the handler output.
 
 ---

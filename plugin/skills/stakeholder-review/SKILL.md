@@ -282,7 +282,7 @@ fi
 
 ### Output Format
 
-After context analysis, use the **STAKEHOLDER_SELECTION** box from PRE-COMPUTED STAKEHOLDER BOXES.
+After context analysis, use the **STAKEHOLDER_SELECTION** box from OUTPUT TEMPLATE STAKEHOLDER BOXES.
 Replace placeholders with actual selection data.
 
 If file-based overrides occurred, add an "Overrides (file-based):" section inside the box.
@@ -446,7 +446,7 @@ for review in reviews:
 
 Output the review results:
 
-**Summary box:** Use the **STAKEHOLDER_REVIEW** box from PRE-COMPUTED STAKEHOLDER BOXES.
+**Summary box:** Use the **STAKEHOLDER_REVIEW** box from OUTPUT TEMPLATE STAKEHOLDER BOXES.
 Replace placeholders with actual reviewer results.
 
 **Concern boxes (if any):** Use the **CRITICAL_CONCERN** or **HIGH_CONCERN** boxes.

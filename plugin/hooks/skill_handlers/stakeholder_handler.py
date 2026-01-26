@@ -111,7 +111,7 @@ class StakeholderHandler:
 
     def handle(self, context: dict) -> str | None:
         """Provide box templates for stakeholder review."""
-        return f"""PRE-COMPUTED STAKEHOLDER BOXES - LITERAL COPY-PASTE REQUIRED:
+        return f"""OUTPUT TEMPLATE STAKEHOLDER BOXES - LITERAL COPY-PASTE REQUIRED:
 
 **CRITICAL**: Copy-paste the EXACT boxes below. Do NOT reconstruct or retype them.
 

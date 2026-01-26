@@ -40,21 +40,19 @@ This is CAT's core execution command. It:
 </objective>
 
 <progress_output>
+**MANDATORY: Use output template progress format from handler.**
 
-**MANDATORY: Use pre-computed progress format from handler.**
-
-Check conversation context for "PRE-COMPUTED WORK PROGRESS FORMAT" and render progress
-displays using those templates.
+Check for "OUTPUT TEMPLATE WORK PROGRESS FORMAT" in context and render progress using those templates.
 
 **CRITICAL: Copy-paste boxes verbatim from system-reminder (M246)**
 
-When the instructions say "Use the **XXX** box from PRE-COMPUTED WORK BOXES":
+When the instructions say "Use the **XXX** box from OUTPUT TEMPLATE WORK BOXES":
 1. Search conversation for "--- XXX ---" in the system-reminder
 2. Copy the ENTIRE box after that marker (all lines with ╭╮╰╯│ characters)
 3. Paste it EXACTLY - do NOT manually type or reconstruct it
 4. Only replace placeholder text like `{task-name}` with actual values
 
-**Why:** Box characters and emoji widths vary across terminals. Pre-computed boxes are tested
+**Why:** Box characters and emoji widths vary across terminals. Output template boxes are tested
 for alignment; manually typed boxes will have misaligned vertical bars.
 
 The handler provides:
@@ -69,7 +67,7 @@ The handler provides:
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "work boxes" "/cat:work"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Pre-computed work boxes not found."
+  echo "ERROR: Output template work boxes not found."
   echo "Check that hooks/skill_handlers/work_handler.py exists."
 fi
 ```
@@ -397,11 +395,13 @@ If it says no tasks are available, there are no tasks available.
 
 **If specific task requested but not found:**
 
-Use the **TASK_NOT_FOUND** box from PRE-COMPUTED WORK BOXES.
+Use the **TASK_NOT_FOUND** box from OUTPUT TEMPLATE WORK BOXES.
 Replace `{task-name}` and `{suggestion}` with actual values.
 
 Exit command.
 
+**If no executable task found:**
+Use **NO_EXECUTABLE_TASKS** box from OUTPUT TEMPLATE WORK BOXES.
 </step>
 
 <step name="acquire_lock">
@@ -2285,7 +2285,7 @@ NEXT_PATCH=$(echo "$NEXT_TASK_RESULT" | jq -r '.patch // empty')
 | MAJOR.MINOR.PATCH | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR OR COMPLETED_PATCH != NEXT_PATCH` |
 
 **If BOUNDARY_CROSSED is true:**
-1. Use **VERSION_BOUNDARY_GATE** box from PRE-COMPUTED WORK BOXES
+1. Use **VERSION_BOUNDARY_GATE** box from OUTPUT TEMPLATE WORK BOXES
 2. Use AskUserQuestion:
    - header: "Version Boundary"
    - question: "All tasks in v{completed-version} complete. Continue to v{next-version}?"

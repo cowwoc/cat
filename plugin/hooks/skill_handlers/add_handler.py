@@ -13,7 +13,7 @@ class AddHandler:
 
     def handle(self, context: dict) -> str | None:
         """
-        Generate pre-computed display for add completion.
+        Generate output template display for add completion.
 
         Context keys:
             - item_type: "task" or "version"
@@ -77,7 +77,7 @@ class AddHandler:
 
         next_cmd = f"/cat:work {version}-{item_name}"
 
-        return f"""PRE-COMPUTED ADD DISPLAY (copy exactly):
+        return f"""OUTPUT TEMPLATE ADD DISPLAY (copy exactly):
 
 {final_box}
 
@@ -124,7 +124,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         box_lines = [top_line] + lines + [bottom]
         final_box = "\n".join(box_lines)
 
-        return f"""PRE-COMPUTED ADD DISPLAY (copy exactly):
+        return f"""OUTPUT TEMPLATE ADD DISPLAY (copy exactly):
 
 {final_box}
 

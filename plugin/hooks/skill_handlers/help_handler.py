@@ -36,7 +36,7 @@ class HelpHandler:
 
     def handle(self, context: dict) -> str | None:
         """Build and return help content."""
-        return f"""PRE-COMPUTED HELP DISPLAY (output exactly):
+        return f"""OUTPUT TEMPLATE HELP DISPLAY (output exactly):
 
 # CAT Command Reference
 

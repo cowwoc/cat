@@ -9,7 +9,7 @@ context: fork
 
 Display the CAT command reference.
 
-A UserPromptSubmit hook has pre-computed the formatted help content and provided it
+A UserPromptSubmit hook has output template the formatted help content and provided it
 in the context above. Output that content EXACTLY as provided.
 
 Do NOT:

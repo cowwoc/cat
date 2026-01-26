@@ -51,7 +51,7 @@ class InitHandler:
         all_set = boxes_json.get('all_set', '')
         explore = boxes_json.get('explore_at_your_own_pace', '')
 
-        return f"""PRE-COMPUTED INIT BOXES
+        return f"""OUTPUT TEMPLATE INIT BOXES
 
 Use these box templates EXACTLY as shown. Replace {{variables}} with actual values at runtime.
 
@@ -88,7 +88,7 @@ Variables: none (static)
 {explore}
 
 INSTRUCTION: When displaying a box, copy the template EXACTLY and only replace the {{variable}} placeholders.
-Do NOT recalculate padding or alignment - the boxes are pre-computed with correct widths."""
+Do NOT recalculate padding or alignment - the boxes are output template with correct widths."""
 
 
 # Register handler
