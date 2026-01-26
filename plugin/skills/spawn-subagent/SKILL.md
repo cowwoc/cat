@@ -376,6 +376,23 @@ if [ "${ACTUAL_TOKENS}" -ge "${HARD_LIMIT}" ]; then
 fi
 ```
 
+**Skill Delegation Requirement (M264):**
+
+When delegating a skill to a subagent, the subagent MUST:
+1. Invoke the exact same skill (not apply its "principles" manually)
+2. Return the skill's outputs back to the parent agent
+
+```
+# ❌ WRONG - Describes principles instead of invoking skill
+"Apply the skill's principles: [manual steps]..."
+
+# ✅ CORRECT - Requires skill invocation and output reporting
+"Invoke /cat:{skill-name} and return its output to the parent agent."
+```
+
+**Why:** Skills contain validation workflows and produce specific outputs. Manual application
+bypasses validation and loses outputs the parent agent needs to verify success.
+
 **Skill Postcondition Reporting (M258):**
 
 When delegating a skill (like /cat:shrink-doc) that has postconditions, the prompt MUST require
@@ -420,6 +437,7 @@ Before invoking Task tool, confirm:
 | Token measurement instructions | All tasks | spawn-subagent core |
 | **Pre-spawn limit validation** | All tasks | A018 |
 | **Skill postcondition reporting** | Skill delegation tasks | M258 |
+| **Skill invocation (not principles)** | Skill delegation tasks | M264 |
 
 **Anti-pattern:** Spawning subagent without reviewing this checklist against your prompt.
 
