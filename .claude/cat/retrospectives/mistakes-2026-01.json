@@ -213,6 +213,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Always use /cat:work to create isolated worktree before implementing task changes"
+    },
+    {
+      "id": "M253",
+      "timestamp": "2026-01-26T00:30:00Z",
+      "category": "detection_gap",
+      "description": "Scripts silently accepted unknown STATE.md status values like 'complete' instead of 'completed', causing tasks to appear pending when already merged",
+      "root_cause": "Scripts accept any status value without validation against allowed values - no fail-fast on invalid input",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "validation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/find-task.sh",
+      "pattern_keywords": [
+        "status",
+        "validation",
+        "fail-fast",
+        "STATE.md",
+        "typo"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Validate status values against canonical set (pending, in-progress, completed, blocked); normalize known aliases with warning; fail-fast with helpful error on unknown values"
     }
   ]
 }
