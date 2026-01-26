@@ -47,3 +47,4 @@ def get_all_handlers() -> list["PostToolHandler"]:
 
 # Import handlers to register them
 from . import auto_learn_mistakes
+from . import skill_precompute
