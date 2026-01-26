@@ -235,13 +235,18 @@ restart - the filesystem may have changed while the session was inactive.
 
 ## Main Agent Responsibilities (BEFORE Delegating)
 
-1. **Read all relevant code** - Complete exploration before delegating
-2. **Make architectural decisions** - Which pattern, which API, which approach
-3. **Resolve ambiguities** - If PLAN.md says "handle errors appropriately", decide HOW
-4. **Identify edge cases** - Subagent executes happy path unless told otherwise
-5. **Write explicit examples** - Code snippets, not prose descriptions
-6. **Specify verification** - Exact test commands and expected output
-7. **Produce comprehensive execution plan** - Numbered steps the subagent follows mechanically
+For issues using two-stage planning (lines 164-194), Stage 1 and Stage 2 planning subagents handle
+code exploration. The main agent's role is: choose an approach from Stage 1 options, pass the
+selection to Stage 2, and hand the resulting PLAN.md path to the implementation subagent.
+
+For issues with an existing PLAN.md ready for execution:
+
+1. **Make architectural decisions** - Which pattern, which API, which approach
+2. **Resolve ambiguities** - If PLAN.md says "handle errors appropriately", decide HOW
+3. **Identify edge cases** - Subagent executes happy path unless told otherwise
+4. **Write explicit examples** - Code snippets, not prose descriptions
+5. **Specify verification** - Exact test commands and expected output
+6. **Produce comprehensive execution plan** - Numbered steps the subagent follows mechanically
 
 ## Comprehensive Execution Plan Format
 
