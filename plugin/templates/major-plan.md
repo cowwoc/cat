@@ -1,4 +1,4 @@
-# Plan: Version {{MAJOR}}
+# Plan: v{{MAJOR}} - [Version Name]
 
 ## Vision
 [1-2 sentences: overarching goal for this major version]

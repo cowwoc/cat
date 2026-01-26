@@ -182,6 +182,7 @@ Before spawning, verify your prompt answers:
 - [ ] What commit message to use? (exact text, for implementation)
 - [ ] **Does prompt include STATE.md update?** (MUST be in same commit as implementation - M076/M077)
 - [ ] **Does prompt include PLAN.md acceptance criteria?** (M260: validation commands, expected scores, verification requirements)
+- [ ] **If task uses a skill, does prompt require invoking it?** (M261: "Use /cat:shrink-doc for each file" not "compress each file")
 
 ### Mandatory Subagent Prompt Checklist (A013)
 
