@@ -1370,17 +1370,14 @@ to identify concerns from multiple perspectives before presenting to user.
 
 **Stakeholders:**
 
-| Stakeholder | Focus | Reference |
-|-------------|-------|-----------|
-| requirements | Requirement satisfaction | stakeholders/requirements.md |
-| architect | System design, modules, APIs | stakeholders/architect.md |
-| security | Vulnerabilities, validation | stakeholders/security.md |
-| quality | Code quality, complexity | stakeholders/quality.md |
-| tester | Test coverage, edge cases | stakeholders/tester.md |
-| performance | Efficiency, resources | stakeholders/performance.md |
-| ux | Usability, accessibility | stakeholders/ux.md |
-| sales | Customer value, positioning | stakeholders/sales.md |
-| marketing | Messaging, go-to-market | stakeholders/marketing.md |
+| Stakeholder | Focus |
+|-------------|-------|
+| requirements | Requirement satisfaction |
+| architect | System design, modules, APIs |
+| security | Vulnerabilities, validation |
+| design | Code quality, complexity |
+| testing | Test coverage, edge cases |
+| performance | Efficiency, resources |
 
 **Execution:**
 

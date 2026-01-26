@@ -311,7 +311,7 @@ Use these output template circle patterns for ratings 1-5:
 **Stakeholder dimensions (1-5):**
 4. Architect - Addresses architectural concerns
 5. Security - Addresses security concerns
-6. Tester - Addresses testing concerns
+6. Testing - Addresses testing concerns
 7. Performance - Addresses performance concerns
 8. UX - Addresses user experience concerns
 9. Sales - Addresses sales/value concerns

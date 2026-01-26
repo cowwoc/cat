@@ -1,6 +1,6 @@
-# Stakeholder: Quality
+# Stakeholder: Design
 
-**Role**: Quality Engineer
+**Role**: Design Quality Engineer
 **Focus**: Code quality, maintainability, duplication, complexity, and best practices
 
 ## Modes
@@ -48,7 +48,7 @@ maintainable, readable, and robust.
 
 ```json
 {
-  "stakeholder": "quality",
+  "stakeholder": "design",
   "mode": "research",
   "topic": "[the specific topic researched]",
   "expertise": {
@@ -110,7 +110,7 @@ Flag methods exceeding these thresholds:
 
 ```json
 {
-  "stakeholder": "quality",
+  "stakeholder": "design",
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [
     {

@@ -1,4 +1,4 @@
-# Stakeholder: Tester
+# Stakeholder: Testing
 
 **Role**: Test Engineer
 **Focus**: Test coverage, test quality, edge cases, and validation completeness
@@ -48,7 +48,7 @@ in [topic] systems and how experienced testers catch those bugs.
 
 ```json
 {
-  "stakeholder": "tester",
+  "stakeholder": "testing",
   "mode": "research",
   "topic": "[the specific topic researched]",
   "expertise": {
@@ -111,7 +111,7 @@ For new code:
 
 ```json
 {
-  "stakeholder": "tester",
+  "stakeholder": "testing",
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [
     {
