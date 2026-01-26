@@ -75,7 +75,23 @@ The UserPromptSubmit hook pre-computes the entire status display to prevent alig
 4. Output the legend
 5. Skip to Verification
 
+**CRITICAL SELF-CHECK (M256):**
+Before outputting, verify you are copy-pasting the EXACT pre-computed content:
+- [ ] Content starts with `╭─` (top-left corner character)
+- [ ] Content contains emoji like `📊`, `☑️`, `🔳` (NOT dots or question marks)
+- [ ] All lines end with `│` at the same column position
+- [ ] You are NOT typing/reconstructing the box - you are PASTING it
+
+**If any checkbox fails:** You are NOT using the pre-computed content. STOP and find it.
+
 **Silent output (M194):** Do NOT announce or explain the pre-computed content. Simply output it.
+
+**Anti-pattern (M256):** Manually constructing a "similar-looking" status box instead of copy-pasting
+the pre-computed output. Signs you are doing this wrong:
+- Running Bash commands to gather status data yourself
+- Building inner boxes with `build_inner_box()` or similar
+- Typing box characters (`│`, `╭`, `─`) instead of pasting them
+- Emojis appear as dots or question marks in your output
 
 **If NOT found**: **FAIL immediately**.
 
