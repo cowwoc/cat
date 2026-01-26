@@ -44,7 +44,11 @@ This is CAT's core execution command. It:
 
 Check for "OUTPUT TEMPLATE WORK PROGRESS FORMAT" in context and render progress using those templates.
 
-**CRITICAL: Copy-paste boxes verbatim from system-reminder (M246)**
+**CRITICAL (M246/M257):** Use box templates from OUTPUT TEMPLATE WORK BOXES section verbatim.
+- Locate the specific box by name (e.g., "--- CHECKPOINT_TASK_COMPLETE ---")
+- Use that exact structure - do NOT manually reconstruct box characters (│╭╮╰╯├┤─)
+- Replace ONLY placeholder text inside the box (e.g., {task-name} → actual value)
+- Manual typing of box characters causes alignment problems
 
 When the instructions say "Use the **XXX** box from OUTPUT TEMPLATE WORK BOXES":
 1. Search conversation for "--- XXX ---" in the system-reminder
@@ -52,27 +56,8 @@ When the instructions say "Use the **XXX** box from OUTPUT TEMPLATE WORK BOXES":
 3. Paste it EXACTLY - do NOT manually type or reconstruct it
 4. Only replace placeholder text like `{task-name}` with actual values
 
-**Why:** Box characters and emoji widths vary across terminals. Output template boxes are tested
-for alignment; manually typed boxes will have misaligned vertical bars.
-
-The handler provides:
-
-- Header format template
-- Progress banner format with phase symbols
-- Example transitions for each phase
-- Success and failure display formats
-
-**If NOT found**: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "work boxes" "/cat:work"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Output template work boxes not found."
-  echo "Check that hooks/skill_handlers/work_handler.py exists."
-fi
-```
-
-Output the error and STOP.
+**If OUTPUT TEMPLATE WORK PROGRESS FORMAT found:**
+Use the templates directly. Locate box by name, preserve structure exactly.
 
 ### Phase Mapping
 
@@ -1653,6 +1638,14 @@ When diff output is truncated or saved to a file due to size:
 3. If output exceeds response limits, split across multiple messages
 4. NEVER summarize with "remaining diff shows..." - show the actual content
 5. Users MUST see every changed line to make informed approval decisions
+
+**Use CHECKPOINT_TASK_COMPLETE box from OUTPUT TEMPLATE WORK BOXES (M257):**
+1. Locate the "--- CHECKPOINT_TASK_COMPLETE ---" section in context
+2. Use that EXACT box structure - do NOT manually type box characters
+3. Replace ONLY the placeholder text (e.g., {task-name} → actual name)
+4. Verify: Box must have exactly 10 lines including header
+
+Anti-pattern M089: Don't show subagent branch in approval.
 
 Anti-pattern: Reading only first 200 lines of a 115KB diff and summarizing the rest as "standard
 implementation". This defeats the purpose of showing the diff.

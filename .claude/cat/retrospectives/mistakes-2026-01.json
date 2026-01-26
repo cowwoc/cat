@@ -325,6 +325,34 @@
       },
       "correct_behavior": "When PRE-COMPUTED content exists in context, locate it and copy-paste EXACTLY without modification. Never attempt to reconstruct formatted output manually.",
       "additional_prevention": "Removed misleading Functions/Prerequisites sections from status.md; added CRITICAL note at procedure start"
+    },
+    {
+      "id": "M257",
+      "timestamp": "2026-01-26T04:30:00Z",
+      "category": "protocol_violation",
+      "description": "Manually typed CHECKPOINT_TASK_COMPLETE box at approval gate instead of using precomputed template from OUTPUT TEMPLATE WORK BOXES, causing potential vertical line alignment issues",
+      "root_cause": "No verification step to ensure template was used vs manual reconstruction; instruction says copy-paste but model generates token-by-token",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/commands/work.md",
+      "pattern_keywords": [
+        "box",
+        "template",
+        "alignment",
+        "copy-paste",
+        "M246",
+        "CHECKPOINT"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Locate the specific box template by name in OUTPUT TEMPLATE WORK BOXES section, use exact structure, replace only placeholder text"
     }
   ]
 }
