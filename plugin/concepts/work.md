@@ -421,6 +421,32 @@ The subagent may have lost context and produced lower quality output.
 
 Present AskUserQuestion with decomposition as recommended option.
 
+### 9b. MANDATORY: Verify Acceptance Criteria (M277)
+
+**CRITICAL: Before proceeding to finalization, verify ALL acceptance criteria from PLAN.md have evidence.**
+
+```bash
+PLAN_PATH=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/PLAN.md"
+CRITERIA=$(grep -A20 "## Acceptance Criteria" "$PLAN_PATH" | grep "^\- \[" || echo "")
+```
+
+**For each criterion:**
+1. Check if subagent output contains evidence of satisfaction
+2. If evidence missing, obtain it (method depends on criterion type - see skill docs)
+3. If criterion is unmet, FAIL-FAST before approval gate
+
+**FAIL-FAST on missing evidence:**
+```
+❌ ACCEPTANCE CRITERIA NOT MET
+
+Required: {criterion from PLAN.md}
+Evidence: {missing | actual value}
+
+BLOCKING: Cannot proceed to approval without validation evidence.
+```
+
+**Why M277 exists:** Without explicit verification step, main agent may skip to approval without evidence.
+
 ## Why Finalization Uses Direct Execution (Not Subagent Batching)
 
 **Finalization phase (steps 10-16) uses direct execution instead of subagent batching.**
