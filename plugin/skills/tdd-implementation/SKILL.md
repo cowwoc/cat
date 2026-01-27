@@ -1,6 +1,6 @@
 # TDD Implementation Workflow
 
-> **See also:** [tdd.md](../../concepts/tdd.md) for TDD philosophy and when to use TDD vs standard implementation.
+> **See also:** [tdd.md](tdd.md) for TDD philosophy and when to use TDD vs standard implementation.
 
 Use Test-Driven Development for features that benefit from upfront behavior specification.
 

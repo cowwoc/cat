@@ -995,7 +995,7 @@ If YES to any: Move the information to the output template or remove it entirely
 
 ### Output Artifact Gates (M192 Prevention)
 
-> **See also:** [workflow-output.md](../../concepts/workflow-output.md) for clean output standards
+> **See also:** [workflow-output.md](workflow-output.md) for clean output standards
 > including pre-computation patterns and subagent batching strategies.
 
 **Critical insight**: Calculation gates alone are insufficient. When a skill produces structured
