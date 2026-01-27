@@ -956,12 +956,6 @@ Use the **all_set** box from OUTPUT TEMPLATE INIT BOXES.
 **If "No, I'll explore" (from initial question):**
 
 Use the **explore_at_your_own_pace** box from OUTPUT TEMPLATE INIT BOXES.
-│  → /cat:work         Execute tasks                                 │
-│  → /cat:help         Full command reference                        │
-│                                                                    │
-│  Tip: Run /cat:status anytime to see suggested next steps.         │
-╰────────────────────────────────────────────────────────────────────╯
-```
 
 </step>
 

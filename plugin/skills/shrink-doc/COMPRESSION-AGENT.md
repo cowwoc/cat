@@ -9,9 +9,12 @@ Compress the document at `{{FILE_PATH}}` while preserving execution equivalence.
 
 ## Goal
 
-Reduce document size by ~50% while maintaining **perfect execution equivalence** (score = 1.0).
+Reduce document size by ~50% while maintaining **perfect execution equivalence**.
 Compression amount is secondary to equivalence - lesser compression is acceptable if needed
 to preserve all semantic content.
+
+**Note**: The orchestrator validates equivalence via /compare-docs. Your job is to preserve
+content; the validation tool determines the actual score.
 
 ## What is Execution Equivalence?
 
@@ -57,6 +60,64 @@ A reader following the compressed version achieves the same results as someone f
 
 **CRITICAL**: You MUST actually write the file using the Write tool. Do NOT just describe
 or summarize the compressed content - physically create the file.
+
+## CLAUDE.md Special Handling
+
+When compressing `CLAUDE.md`, use **content reorganization** instead of standard compression:
+
+**Step 1: Analyze Content Location**
+Before compressing, categorize ALL content into:
+
+| Category | Action |
+|----------|--------|
+| **Duplicates skills** | REMOVE - reference skill instead |
+| **Main-agent-specific** | MOVE to main-agent-specific file |
+| **Sub-agent-specific** | MOVE to sub-agent-specific file |
+| **Universal (all agents)** | KEEP in CLAUDE.md |
+
+**Step 2: Check for Duplication**
+```bash
+# Check if content already exists in skills
+ls .claude/skills/
+
+# Check if procedural content duplicates a skill
+grep -l "pattern" .claude/skills/*/SKILL.md
+```
+
+**Step 3: Content Categories**
+
+*Examples are illustrative; specific categories vary by project.*
+
+**REMOVE (duplicates existing):**
+- Procedural content that exists in skills
+- Content already documented in agent-specific files
+
+**MOVE (agent-specific):**
+- Main-agent-only content (e.g., multi-agent coordination, repository structure)
+- Sub-agent-only content (e.g., specific workflow steps only they perform)
+
+**KEEP (universal guidance):**
+- Tone/style, error handling, security policies
+- Content that applies equally to ALL agent types
+
+**Step 4: Result Structure**
+
+CLAUDE.md should be a **slim reference document** (~200 lines) that:
+- Contains ONLY universal guidance for ALL agents
+- **Instructs agents to read their agent-specific files** (e.g., "MAIN AGENT: Read {file}.md")
+- References skills for procedural content (not duplicate them)
+
+**Hub-and-Spoke Pattern**:
+```
+CLAUDE.md (universal, ~200 lines)
+  ├── "MAIN AGENT: Read {main-agent-file}.md"
+  └── "SUB-AGENTS: Read {sub-agent-file}.md"
+```
+
+Agent-specific files contain the detailed content moved out of CLAUDE.md. Create these files if they
+don't exist. CLAUDE.md becomes a routing document that directs agents to their specialized guidance.
+
+---
 
 ## Style Documentation Special Handling
 

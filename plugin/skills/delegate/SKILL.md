@@ -261,20 +261,20 @@ CURIOSITY_PREF=$(jq -r '.curiosity // "low"' .claude/cat/cat-config.json)
 **Issues Return Format** (subagent writes to .completion.json when curiosity is medium/high):
 ```json
 {
-  "status": "success",
-  "tokensUsed": 65000,
-  "inputTokens": 45000,
-  "outputTokens": 20000,
-  "compactionEvents": 0,
-  "summary": "Implemented feature with full test coverage",
+  "status": "{actual status}",
+  "tokensUsed": "{actual token count}",
+  "inputTokens": "{actual input tokens}",
+  "outputTokens": "{actual output tokens}",
+  "compactionEvents": "{actual count}",
+  "summary": "{actual summary of work done}",
   "discoveredIssues": [
     {
-      "file": "src/Example.java",
-      "line": 142,
-      "type": "code-quality",
-      "severity": "medium",
-      "description": "Duplicate logic could be extracted",
-      "benefitCost": 2.5
+      "file": "{actual file path}",
+      "line": "{actual line number}",
+      "type": "{code-quality|security|performance}",
+      "severity": "{low|medium|high}",
+      "description": "{actual description}",
+      "benefitCost": "{actual ratio}"
     }
   ]
 }
@@ -358,21 +358,18 @@ When delegating a skill to a subagent, the subagent MUST:
 
 **Skill Postcondition Reporting (M258):**
 
-When delegating a skill that has postconditions, the prompt MUST require reporting:
+When delegating a skill that has postconditions, the prompt MUST require the subagent to report
+the skill's validation output. Each skill defines its own postconditions in its SKILL.md.
 
 ```
 POSTCONDITION REPORTING (required for skills with validation):
-When executing /cat:{skill-name}, you MUST report:
-- The validation score returned by the skill
-- Whether the postcondition was met (e.g., score = 1.0)
-- If postcondition failed, what was the actual value
+When executing /cat:{skill-name}, you MUST:
+- Report the validation output returned by the skill
+- State whether the postcondition was met
+- If postcondition failed, include the actual values
 ```
 
-| Skill | Postcondition | Required Report |
-|-------|---------------|-----------------|
-| /cat:shrink-doc | execution_equivalence_score = 1.0 | Score value and pass/fail |
-| /cat:compare-docs | semantic comparison complete | Score and component breakdown |
-| /cat:stakeholder-review | all stakeholders approve | Individual stakeholder verdicts |
+Refer to each skill's SKILL.md for its specific postconditions and success criteria.
 
 ### Verification Checklist
 
@@ -397,37 +394,15 @@ Before invoking Task tool, confirm:
 
 ### Progress Output (MANDATORY)
 
-**For parallel execution:**
+**Check for OUTPUT TEMPLATE DELEGATE PROGRESS in context.**
+
+If found: Use the appropriate template (PARALLEL or SEQUENTIAL) and replace placeholders.
+
+If NOT found: Report error and stop. Do NOT manually construct progress output.
+
 ```
-═══════════════════════════════════════════════════
-Delegating: K items (parallel)
-═══════════════════════════════════════════════════
-◆ Spawning subagent 1/K: item-a...
-◆ Spawning subagent 2/K: item-b...
-
-Monitoring K subagents (X% complete | Ys elapsed)
-  ✓ item-a: complete (12s, 45K tokens)
-  ⏳ item-b: running (8s elapsed)
-
-Collecting results:
-  ✓ item-a: collected
-  ✓ item-b: collected
-
-✅ Delegation complete: K/K items succeeded
-```
-
-**For sequential execution:**
-```
-═══════════════════════════════════════════════════
-Delegating: K items (sequential)
-═══════════════════════════════════════════════════
-◆ [1/K] item-a...
-  ✓ Complete (12s, 45K tokens)
-
-◆ [2/K] item-b...
-  ✓ Complete (15s, 52K tokens)
-
-✅ Delegation complete: K/K items succeeded
+ERROR: OUTPUT TEMPLATE DELEGATE PROGRESS not found.
+Handler should have provided this via additionalContext.
 ```
 
 ### 1. Parse Arguments

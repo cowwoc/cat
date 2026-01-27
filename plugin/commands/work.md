@@ -42,22 +42,20 @@ This is CAT's core execution command. It:
 <progress_output>
 **MANDATORY: Use output template progress format from handler.**
 
-Check for "OUTPUT TEMPLATE WORK PROGRESS FORMAT" in context and render progress using those templates.
+Check for "OUTPUT TEMPLATE WORK PROGRESS FORMAT" in context.
 
-**CRITICAL (M246/M257):** Use box templates from OUTPUT TEMPLATE WORK BOXES section verbatim.
+**If OUTPUT TEMPLATE found:**
 - Locate the specific box by name (e.g., "--- CHECKPOINT_TASK_COMPLETE ---")
-- Use that exact structure - do NOT manually reconstruct box characters (│╭╮╰╯├┤─)
-- Replace ONLY placeholder text inside the box (e.g., {task-name} → actual value)
-- Manual typing of box characters causes alignment problems
+- Copy the ENTIRE box structure verbatim
+- Replace ONLY placeholder text (e.g., {task-name} → actual value)
 
-When the instructions say "Use the **XXX** box from OUTPUT TEMPLATE WORK BOXES":
-1. Search conversation for "--- XXX ---" in the system-reminder
-2. Copy the ENTIRE box after that marker (all lines with ╭╮╰╯│ characters)
-3. Paste it EXACTLY - do NOT manually type or reconstruct it
-4. Only replace placeholder text like `{task-name}` with actual values
-
-**If OUTPUT TEMPLATE WORK PROGRESS FORMAT found:**
-Use the templates directly. Locate box by name, preserve structure exactly.
+**If OUTPUT TEMPLATE NOT found:** FAIL immediately.
+```
+ERROR: OUTPUT TEMPLATE WORK PROGRESS FORMAT not found.
+The work_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT attempt to manually construct progress output.
 
 ### Phase Mapping
 
@@ -364,7 +362,7 @@ argument, skip the entry gate check for that specific task.
 
 **MANDATORY: Copy-paste the exact box from system-reminder (M246)**
 
-Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the PRE-COMPUTED WORK BOXES
+Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the OUTPUT TEMPLATE WORK BOXES
 section. Copy the ENTIRE box structure verbatim - do NOT manually type it. Box characters and
 emoji widths vary across terminals; only the pre-computed version is guaranteed aligned.
 
@@ -762,7 +760,7 @@ else:
 
 **Step 5: Present wizard (if needed)**
 
-Use the **FORK_IN_THE_ROAD** box from PRE-COMPUTED WORK BOXES.
+Use the **FORK_IN_THE_ROAD** box from OUTPUT TEMPLATE WORK BOXES.
 Replace placeholders with actual approach data.
 
 Use AskUserQuestion to capture selection:
@@ -1823,7 +1821,7 @@ After merging feedback changes, the approval gate MUST be re-presented. This ens
 - User explicitly approves final implementation
 - No changes merge without explicit approval
 
-Use the **CHECKPOINT_FEEDBACK_APPLIED** box from PRE-COMPUTED WORK BOXES.
+Use the **CHECKPOINT_FEEDBACK_APPLIED** box from OUTPUT TEMPLATE WORK BOXES.
 Replace placeholders with actual values.
 
 Then re-present approval options via AskUserQuestion:
@@ -2158,7 +2156,7 @@ esac
 
 **If trust >= medium and next task found (within scope):**
 
-Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from PRE-COMPUTED WORK BOXES.
+Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from OUTPUT TEMPLATE WORK BOXES.
 Replace placeholders with actual values:
 - `{task-name}` → completed task name
 - `{next-task-name}` → next task name
@@ -2178,7 +2176,7 @@ the work session gracefully.
 
 **If scope complete (no more tasks within scope):**
 
-Use the **SCOPE_COMPLETE** box from PRE-COMPUTED WORK BOXES.
+Use the **SCOPE_COMPLETE** box from OUTPUT TEMPLATE WORK BOXES.
 Replace placeholders based on scope type.
 
 **If trust == low and next task found:**
@@ -2189,7 +2187,7 @@ Release the lock (user will re-acquire when they invoke the command):
 "${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-Use the **TASK_COMPLETE_LOW_TRUST** box from PRE-COMPUTED WORK BOXES.
+Use the **TASK_COMPLETE_LOW_TRUST** box from OUTPUT TEMPLATE WORK BOXES.
 Replace placeholders with actual values.
 
 If no more tasks in the current minor version (all completed, blocked, or locked):
