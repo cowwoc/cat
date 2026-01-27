@@ -120,6 +120,35 @@ Action: Re-run validation or adjust approach.
 compression prompt without /compare-docs), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
 
+### Skill Output Format Requirement (M272)
+
+**When delegating work that a skill handles, use the skill's output format.**
+
+If a skill exists for the work (e.g., shrink-doc for compression), either:
+1. Have subagent invoke the skill directly, OR
+2. Include the skill's SKILL.md output format requirements in the delegation prompt
+
+**Example - shrink-doc delegation:**
+
+```yaml
+# ❌ WRONG: Ad-hoc metrics (chars/lines)
+subagent_prompt: |
+  Compress file, report:
+  - Original size (characters, lines)
+  - Compressed size (characters, lines)
+  - Reduction %
+
+# ✅ RIGHT: Use skill's required format (tokens)
+subagent_prompt: |
+  Compress file using /cat:shrink-doc, report:
+  - Token counts (original, compressed, % reduction)
+  - Execution equivalence score (must be 1.0)
+  - Version comparison table per SKILL.md
+```
+
+**Why this matters:** Skills define output formats that users expect. Ad-hoc delegations
+that omit skill-mandated metrics (like token counts) frustrate users who rely on them.
+
 ## Common Failure Patterns
 
 ### Exploration + Decision in Same Task
