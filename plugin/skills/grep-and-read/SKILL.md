@@ -1,6 +1,6 @@
 ---
 name: grep-and-read
-description: Find and read multiple files in one operation (50-70% faster for exploration)
+description: Use when searching for pattern across codebase - finds and reads matching files (50-70% faster)
 allowed-tools: Grep, Read, Bash
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: batch-read
-description: Find and read multiple files in one operation (50-70% faster for exploration)
+description: Use when exploring 3+ related files - finds and reads in one operation (50-70% faster)
 allowed-tools: Bash
 ---
 

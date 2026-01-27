@@ -1,6 +1,6 @@
 ---
 name: cat:learn
-description: Analyze and learn from mistakes
+description: Use after making any mistake - triggers RCA workflow and prevention implementation
 ---
 
 <objective>

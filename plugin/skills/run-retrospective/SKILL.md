@@ -369,6 +369,20 @@ trigger_check:
     fi
 ```
 
+## Verification Checklist
+
+Before completing retrospective:
+
+- [ ] All mistakes since last retrospective analyzed
+- [ ] Category breakdown computed correctly
+- [ ] Existing action item effectiveness checked
+- [ ] New patterns identified (if any)
+- [ ] New action items derived for unaddressed patterns
+- [ ] Escalations created for ineffective actions
+- [ ] Retrospective entry written to split file
+- [ ] index.json updated (last_retrospective, counter reset)
+- [ ] Files committed to repository
+
 ## Related Skills
 
 - `cat:learn-from-mistakes` - Records individual mistakes, triggers this skill

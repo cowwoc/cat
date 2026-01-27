@@ -76,6 +76,23 @@ git merge "${SUBAGENT_BRANCH}" --no-edit -m "Merge subagent ${SUBAGENT_ID}: ${TA
 
 ### 4. Handle Conflicts (If Any)
 
+**If merge fails with conflicts that cannot be auto-resolved: FAIL immediately.**
+
+```bash
+CONFLICT_COUNT=$(git diff --name-only --diff-filter=U | wc -l)
+if [ "$CONFLICT_COUNT" -gt 3 ]; then
+  echo "ERROR: Too many conflicts ($CONFLICT_COUNT files)"
+  echo ""
+  echo "This indicates significant divergence between task and subagent branches."
+  echo "Manual intervention required - do NOT attempt bulk resolution."
+  echo ""
+  echo "Options:"
+  echo "1. Review each conflict manually with user"
+  echo "2. Abort merge and investigate branch history"
+  exit 1
+fi
+```
+
 If merge fails with conflicts:
 
 ```bash

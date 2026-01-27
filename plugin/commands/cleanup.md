@@ -1,6 +1,6 @@
 ---
 name: cat:cleanup
-description: Clean up abandoned worktrees, lock files, and orphaned branches
+description: Use when session crashed or locks blocking - cleans abandoned worktrees, lock files, and orphaned branches
 model: haiku
 context: fork
 allowed-tools:

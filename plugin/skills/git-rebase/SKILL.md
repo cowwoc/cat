@@ -45,7 +45,23 @@ fi
 # 1. Create backup
 BACKUP="backup-before-rebase-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
+```
 
+### Verification Gate (M191): Backup Created
+
+**BLOCKING: Do NOT proceed until backup is verified.**
+
+```bash
+# Verify backup branch exists
+if ! git show-ref --verify --quiet "refs/heads/$BACKUP"; then
+  echo "ERROR: Backup branch '$BACKUP' was not created"
+  echo "Do NOT proceed with rebase without backup."
+  exit 1
+fi
+echo "✓ Backup verified: $BACKUP"
+```
+
+```bash
 # 2. Verify clean working directory
 git status --porcelain  # Must be empty
 

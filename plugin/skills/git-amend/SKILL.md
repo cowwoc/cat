@@ -24,13 +24,32 @@ git status
 
 ## Quick Workflow
 
+### Verification Gate (M191): HEAD Safe to Amend
+
+**BLOCKING: Do NOT proceed until safety is verified.**
+
 ```bash
 # 1. Verify HEAD is the commit you want to amend
 git log --oneline -1
 
 # 2. Verify not pushed to remote
-git status  # Must show "ahead of origin"
+PUSH_STATUS=$(git status --porcelain -b | head -1)
+if echo "$PUSH_STATUS" | grep -q "ahead"; then
+  echo "✓ Commit not pushed - safe to amend"
+elif echo "$PUSH_STATUS" | grep -q "behind\|up to date"; then
+  echo "ERROR: HEAD commit appears to be pushed to remote"
+  echo "Amending will create divergent history requiring force push."
+  echo ""
+  echo "Options:"
+  echo "1. Create a new commit instead of amending"
+  echo "2. Use git commit --amend with explicit force push (dangerous)"
+  exit 1
+else
+  echo "⚠ Could not determine push status - verify manually before amending"
+fi
+```
 
+```bash
 # 3. Make your changes (edit files, stage new files)
 git add <files>
 
