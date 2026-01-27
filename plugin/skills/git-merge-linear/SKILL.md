@@ -1,6 +1,6 @@
 ---
-name: cat:git-merge-linear
 description: Merge task branch to base branch with linear history (works from task worktree)
+user-invocable: false
 allowed-tools: Bash, Read
 ---
 

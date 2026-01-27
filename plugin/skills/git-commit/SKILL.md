@@ -1,6 +1,6 @@
 ---
-name: git-commit
 description: Guide for writing clear, descriptive commit messages
+user-invocable: false
 ---
 
 # Git Commit Message Skill

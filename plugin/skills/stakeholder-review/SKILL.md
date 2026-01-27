@@ -1,6 +1,6 @@
 ---
-name: cat:stakeholder-review
 description: Multi-perspective quality review gate with architect, security, design, testing, and performance stakeholders
+user-invocable: false
 ---
 
 # Skill: stakeholder-review

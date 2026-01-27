@@ -1,6 +1,6 @@
 ---
-name: git-rewrite-history
 description: "MANDATORY: Use instead of `git filter-branch` - safer git-filter-repo with recovery"
+user-invocable: false
 ---
 
 # Git Rewrite History Skill

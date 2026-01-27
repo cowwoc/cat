@@ -1,6 +1,6 @@
 ---
-name: register-hook
 description: Create and register hook scripts with proper error handling and settings
+user-invocable: false
 allowed-tools: Bash, Write, Read, Edit
 ---
 

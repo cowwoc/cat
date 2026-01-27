@@ -1,5 +1,4 @@
 ---
-name: shrink-doc
 description: >
   Use to reduce Claude-facing document size while maintaining execution equivalence.
   Validates with /compare-docs to ensure no semantic loss.

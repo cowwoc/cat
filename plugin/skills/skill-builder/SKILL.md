@@ -1,6 +1,6 @@
 ---
-name: skill-builder
 description: "Use BEFORE creating or updating any skill OR command - decomposes goal into forward steps via backward reasoning"
+user-invocable: false
 ---
 
 # Skill Builder
@@ -1858,5 +1858,4 @@ plugin/concepts/
 | Referenced By | Location |
 |---------------|----------|
 | Single skill only | `plugin/skills/{skill-name}/` |
-| Single command only | `plugin/commands/` (inline or same dir) |
-| Multiple skills/commands | `plugin/concepts/` |
+| Multiple skills | `plugin/concepts/` |

@@ -1,5 +1,4 @@
 ---
-name: cat:monitor-subagents
 description: Check status of running subagents including token usage and context limits
 ---
 

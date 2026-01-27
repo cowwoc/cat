@@ -1,6 +1,6 @@
 ---
-name: grep-and-read
 description: Use when searching for pattern across codebase - finds and reads matching files (50-70% faster)
+user-invocable: false
 allowed-tools: Grep, Read, Bash
 ---
 

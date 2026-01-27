@@ -1,6 +1,6 @@
 ---
-name: write-and-commit
 description: Create file and commit atomically (60-75% faster than step-by-step)
+user-invocable: false
 allowed-tools: Bash, Write
 ---
 

@@ -1,6 +1,6 @@
 ---
-name: get-session-id
 description: Reference for accessing session ID via ${CLAUDE_SESSION_ID} automatic substitution
+user-invocable: false
 ---
 
 # Get Session ID Skill

@@ -1,6 +1,6 @@
 ---
-name: cat:merge-subagent
 description: Merge subagent branch into task branch with conflict resolution and cleanup
+user-invocable: false
 ---
 
 # Merge Subagent
