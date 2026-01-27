@@ -790,6 +790,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Require subagent to include VERBATIM tool output in completion report, not summaries. Main agent reads raw output to verify scores without re-running validation."
+    },
+    {
+      "id": "M274",
+      "timestamp": "2026-01-27T15:15:00Z",
+      "category": "prompt_engineering",
+      "description": "Delegation prompt specified expected value in output format: 'validation_score: 1.0 (required)'. Subagent reported the expected value instead of actual result (0.944).",
+      "root_cause": "Output format template included expected outcomes, not just structure. When actual result (0.944) conflicted with expected value (1.0), subagent resolved conflict by reporting the expected value.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "output_format",
+        "priming",
+        "expected_value",
+        "fabrication",
+        "delegation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M269",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output format specifies STRUCTURE only (field names, types). Never include CONTENT (expected values, required outcomes). Say 'validation_score: {actual score from compare-docs}' not 'validation_score: 1.0 (required)'."
     }
   ]
 }

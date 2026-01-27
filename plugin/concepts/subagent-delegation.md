@@ -120,82 +120,6 @@ Action: Re-run validation or adjust approach.
 compression prompt without /compare-docs), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
 
-### Skill Output Format Requirement (M272)
-
-**When delegating work that a skill handles, use the skill's output format.**
-
-If a skill exists for the work (e.g., shrink-doc for compression), either:
-1. Have subagent invoke the skill directly, OR
-2. Include the skill's SKILL.md output format requirements in the delegation prompt
-
-**Example - shrink-doc delegation:**
-
-```yaml
-# ❌ WRONG: Ad-hoc metrics (chars/lines)
-subagent_prompt: |
-  Compress file, report:
-  - Original size (characters, lines)
-  - Compressed size (characters, lines)
-  - Reduction %
-
-# ✅ RIGHT: Use skill's required format (tokens)
-subagent_prompt: |
-  Compress file using /cat:shrink-doc, report:
-  - Token counts (original, compressed, % reduction)
-  - Execution equivalence score (must be 1.0)
-  - Version comparison table per SKILL.md
-```
-
-**Why this matters:** Skills define output formats that users expect. Ad-hoc delegations
-that omit skill-mandated metrics (like token counts) frustrate users who rely on them.
-
-### Raw Tool Output Requirement (M273)
-
-**CRITICAL: Require subagents to include verbatim tool output, not summaries.**
-
-Subagent-reported validation scores can be fabricated. Requiring raw tool output makes
-fabrication harder and provides verifiable evidence.
-
-**For tasks with validation requirements:**
-
-1. **In delegation prompt**, require: "Include VERBATIM output from validation tool"
-2. **Subagent must paste** actual tool output, not summarize it
-3. **Main agent reads** the raw output to verify scores
-
-```yaml
-# ❌ WRONG: Subagent summarizes (easy to fabricate)
-completion_report: |
-  Validation passed!
-  Score: 1.0
-  Claims preserved: 33/33
-
-# ✅ RIGHT: Subagent includes verbatim tool output
-completion_report: |
-  VERBATIM OUTPUT FROM /cat:compare-docs:
-  ┌─────────────────────────────┬───────────────┬──────────────────────┐
-  │           Metric            │     Score     │       Details        │
-  ├─────────────────────────────┼───────────────┼──────────────────────┤
-  │ Execution Equivalence Score │ 0.944 (94.4%) │ PASS ≥0.85 threshold │
-  ├─────────────────────────────┼───────────────┼──────────────────────┤
-  │ Claim Preservation          │ 0.955         │ 21/22 claims         │
-  └─────────────────────────────┴───────────────┴──────────────────────┘
-```
-
-**Delegation prompt template:**
-
-```
-VALIDATION REQUIREMENT:
-After running validation, include the VERBATIM tool output in your report.
-Do NOT summarize or interpret - paste the exact output.
-Main agent will read the raw output to verify results.
-```
-
-**Why raw output works:**
-- Tool output has specific formatting that's hard to fake exactly
-- Main agent can verify without re-running the tool
-- Discourages fabrication (would need to guess exact format)
-- Creates audit trail of actual validation
-
 ## Common Failure Patterns
 
 ### Exploration + Decision in Same Task
@@ -266,6 +190,27 @@ the user can't review. Separating them lets the main agent (with user access) ma
 ```
 
 **Why it fails**: Subagent implements the obvious case; edge cases cause silent bugs.
+
+### Output Format Priming (M274)
+
+```
+# ❌ WRONG: Output format specifies expected value
+"OUTPUT FORMAT:
+ - validation_score: 1.0 (required)
+ - status: success"
+
+# ✅ RIGHT: Output format specifies structure only
+"OUTPUT FORMAT:
+ - validation_score: {actual score from compare-docs}
+ - status: {success if score >= threshold, else failed}"
+```
+
+**Why it fails**: Specifying expected values in output format tells the subagent what to report,
+not what to measure. When actual results differ from expected, the subagent may report the expected
+value rather than the actual value. This is a form of documentation priming (M269).
+
+**Rule**: Output format defines *structure* (field names, types). Never include *content* (expected
+values, required outcomes). Acceptance criteria belong in a separate section, not in output format.
 
 ## Quality Indicators
 
