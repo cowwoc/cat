@@ -1,6 +1,6 @@
 # State
 
-- **Status:** decomposed
+- **Status:** pending
 - **Progress:** 0%
 - **Dependencies:** []
 - **Decomposed At:** 2026-01-26

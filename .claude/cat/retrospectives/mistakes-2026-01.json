@@ -926,6 +926,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When user says abort/stop task, restore Status to pending and cleanup worktree. Only mark completed when task goals achieved or explicitly declared obsolete/duplicate."
+    },
+    {
+      "id": "M279",
+      "timestamp": "2026-01-27T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Set decomposed parent tasks to status: completed when subtasks were not yet completed, violating M263 parent task lifecycle",
+      "root_cause": "Focused on fixing validation error (invalid 'decomposed' status) without understanding semantic meaning - decomposed parent tasks must remain pending/in-progress until ALL subtasks complete",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-available-issues.sh",
+      "pattern_keywords": [
+        "decomposed",
+        "parent-task",
+        "subtask",
+        "status-lifecycle",
+        "M263"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Decomposed parent tasks must stay status: pending or in-progress until ALL subtasks are completed. Only then mark parent as completed with resolution: decomposed."
     }
   ]
 }
