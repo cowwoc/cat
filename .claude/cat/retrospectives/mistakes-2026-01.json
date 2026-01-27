@@ -882,12 +882,13 @@
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
       "pattern_keywords": [
         "acceptance_criteria",
         "validation_separation",
         "approval_gate",
-        "compare-docs"
+        "compare-docs",
+        "per-file_subagent"
       ],
       "prevention_implemented": true,
       "prevention_verified": false,
