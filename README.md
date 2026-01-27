@@ -210,6 +210,12 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 | `/cat:learn` | Analyze and learn from mistakes |
 | `/cat:remove` | Remove a task or version |
 
+### Plugin Development
+
+| Command | What It Does |
+|---------|--------------|
+| `/cat:skill-builder` | Design or update skills/commands using backward reasoning |
+
 ---
 
 ## Configuration
