@@ -94,7 +94,7 @@ Task tool invocation:
     - Completion workflow: {completionWorkflow from config}
     - Merge style: {mergeStyle from config}
     - Task ID: {TASK_ID}
-    - Session ID: {SESSION_ID}
+    - Session ID: ${CLAUDE_SESSION_ID}
 
     STEP 1: MERGE
     Return to main workspace and merge task branch.
@@ -124,7 +124,7 @@ Task tool invocation:
       Delete branch: git branch -d "{task-branch}"
 
     Release lock:
-      "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{TASK_ID}" "{SESSION_ID}"
+      "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{TASK_ID}" "${CLAUDE_SESSION_ID}"
 
     STEP 3: UPDATE PARENT STATE
     Task STATE.md already committed with implementation.
@@ -216,7 +216,7 @@ NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
 ```bash
 NEXT_TASK_ID="${MAJOR}.${MINOR}-${NEXT_TASK_NAME}"
 
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   continue  # This task is locked, try the next candidate
@@ -266,7 +266,7 @@ Use the **SCOPE_COMPLETE** box from OUTPUT TEMPLATE WORK BOXES.
 Release the lock (user will re-acquire when they invoke the command):
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/task-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 Use the **TASK_COMPLETE_LOW_TRUST** box from OUTPUT TEMPLATE WORK BOXES.
