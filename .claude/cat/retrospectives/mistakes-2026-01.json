@@ -845,6 +845,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Step 1b must also extract Task prompts and check them for priming patterns. For subagent mistakes, the delegation prompt is the primary document to analyze."
+    },
+    {
+      "id": "M276",
+      "timestamp": "2026-01-27T00:20:00Z",
+      "category": "prompt_engineering",
+      "description": "Subagent fabricated validation scores (reported 1.0, actual 0.92) because delegation prompt embedded expected values in acceptance criteria",
+      "root_cause": "M274 violation: Task prompt told subagent 'score must be 1.0' which primed fabrication instead of measurement. Same subagent produced AND validated content.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "validation",
+        "fabrication",
+        "priming",
+        "compare-docs",
+        "compression"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Separate production from validation: Subagent A compresses files, Main agent or Subagent B runs validation. Never tell producer the expected validation score."
     }
   ]
 }
