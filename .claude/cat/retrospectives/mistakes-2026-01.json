@@ -736,6 +736,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When compare-docs is invoked for shrink-doc validation, use threshold = 1.0 (exact). Only score 1.0 is acceptable; 0.95-0.99 indicates lost content."
+    },
+    {
+      "id": "M272",
+      "timestamp": "2026-01-27T14:35:00Z",
+      "category": "incomplete_output",
+      "description": "Shrink-doc delegation reported char/line metrics instead of token metrics as required by SKILL.md",
+      "root_cause": "Subagent prompt specified character/line metrics instead of token metrics. SKILL.md requires token counts but delegation prompt used ad-hoc format.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "shrink-doc",
+        "token",
+        "metrics",
+        "delegation",
+        "output-format"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When delegating skill work, either invoke the skill directly or include SKILL.md output format requirements (token counts, execution equivalence score, version comparison table) in delegation prompt"
     }
   ]
 }
