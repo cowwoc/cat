@@ -384,96 +384,18 @@ class WorkHandler:
 
     def handle(self, context: dict) -> str | None:
         """Provide progress format templates for the work skill."""
-        user_prompt = context.get("user_prompt", "")
-
-        # Extract task ID from prompt if provided (e.g., "/cat:work 2.0-task-name")
-        task_id = ""
-        match = re.search(r'/cat:work\s+(\S+)', user_prompt)
-        if match:
-            task_id = match.group(1)
-
+        # Compact progress banner format - no verbose examples
         return f"""OUTPUT TEMPLATE WORK PROGRESS FORMAT:
 
-## Progress Display Templates
+## Progress Display
 
-Use these templates directly in your output. Do NOT call any external scripts.
+**Banner:** `{{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging`
 
-### Header Format (display at workflow start)
+**Symbols:** ○ Pending | ● Complete | ◉ Active | ✗ Failed
 
-```
-🐱 > {{TASK_ID}}
-────────────────────────────────────────────────────────────────────
-```
+**Header:** `🐱 > {{TASK_ID}}`
 
-### Progress Banner Format (update at each phase transition)
-
-```
-{{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging
-                          {{METRICS}}
-```
-
-### Phase Symbols
-
-| Symbol | Code | Meaning |
-|--------|------|---------|
-| ○ | Pending | Phase not started |
-| ● | Complete | Phase finished |
-| ◉ | Active | Currently in this phase |
-| ✗ | Failed | Phase failed |
-
-### Example Transitions
-
-**Starting (Preparing active):**
-```
-🐱 > 2.0-fix-config-documentation
-────────────────────────────────────────────────────────────────────
-
-◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
-```
-
-**Executing with metrics:**
-```
-🐱 > 2.0-fix-config-documentation
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ◉ Executing ────── ○ Reviewing ────── ○ Merging
-                      45K tokens
-```
-
-**Reviewing with metrics:**
-```
-🐱 > 2.0-fix-config-documentation
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ◉ Reviewing ────── ○ Merging
-                      75K · 3 commits
-```
-
-**Passed (success):**
-```
-🐱 > 2.0-fix-config-documentation > PASSED
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ● Reviewing ────── ● Merging
-                      75K · 3 commits    approved            → main
-```
-
-**Failed:**
-```
-🐱 > 2.0-fix-config-documentation > FAILED
-────────────────────────────────────────────────────────────────────
-
-● Preparing ────── ● Executing ────── ✗ Reviewing ────── ○ Merging
-                      75K · 3 commits    BLOCKED: security
-```
-
-INSTRUCTION: Render progress displays inline using these templates. Update the banner at each phase transition.
-
-OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE REQUIRED (M225):
-
-**CRITICAL**: Copy-paste the EXACT box below into your response. Do NOT reconstruct or retype it.
-The boxes use precise Unicode characters (╭╮╰╯│├┤─) that must be preserved exactly.
-Typing similar-looking characters (like |) causes misalignment.
+OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE (M225):
 
 --- NO_EXECUTABLE_TASKS ---
 {self._build_no_executable_tasks()}
@@ -505,8 +427,7 @@ Typing similar-looking characters (like |) causes misalignment.
 --- VERSION_BOUNDARY_GATE ---
 {self._build_version_boundary_gate()}
 
-INSTRUCTION: Copy-paste the box structure VERBATIM, then replace ONLY the placeholder text inside.
-Do NOT retype box characters - copy the entire box including │ and ─ characters exactly as shown."""
+Copy box VERBATIM, replace only placeholders."""
 
 
 # Register handler

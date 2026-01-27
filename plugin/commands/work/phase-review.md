@@ -272,7 +272,7 @@ git diff ${BASE_BRANCH}..HEAD > /tmp/current-implementation.diff
 
 **Step 3: Spawn Feedback Implementation Subagent**
 
-Invoke `/cat:spawn-subagent` with feedback context.
+Invoke `/cat:delegate` with feedback context.
 
 **Step 4: Collect Results**
 
