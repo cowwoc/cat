@@ -953,6 +953,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Decomposed parent tasks must stay status: pending or in-progress until ALL subtasks are completed. Only then mark parent as completed with resolution: decomposed."
+    },
+    {
+      "id": "M280",
+      "timestamp": "2026-01-27T14:35:00Z",
+      "category": "assumption_without_verification",
+      "description": "Assessed priming vulnerability as fixed because external file (COMPRESSION-AGENT.md) existed, missing that orchestrator doc still contained partial actionable guidance",
+      "root_cause": "Conflated algorithm encapsulation (external file exists) with zero actionable guidance (orchestrator doc is clean). Partial information like what to preserve/remove can still prime manual bypass attempts.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "priming",
+        "encapsulation",
+        "external-file",
+        "partial-information",
+        "orchestrator-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When checking encapsulation, verify orchestrator doc contains ZERO actionable guidance - not just that external file exists. Partial information (what to preserve, what to condense) still enables manual bypass."
     }
   ]
 }
