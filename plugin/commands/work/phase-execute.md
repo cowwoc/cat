@@ -14,7 +14,7 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
 | Task Size | Strategy |
 |-----------|----------|
-| Any task | Spawn subagent via `/cat:spawn-subagent` |
+| Any task | Spawn subagent via `/cat:delegate` |
 | Large/complex | Consider `/cat:decompose-task` first, then spawn |
 
 **Why subagents are mandatory (not optimization):**
@@ -40,7 +40,7 @@ Main agent is the orchestrator. Subagents do the work. This is NOT optional.
 
    **IMPORTANT:** The implementor subagent NEVER fixes discovered issues directly.
 
-2. Invoke `/cat:spawn-subagent` skill with:
+2. Invoke `/cat:delegate` skill with:
    - Task path
    - PLAN.md contents
    - Worktree path

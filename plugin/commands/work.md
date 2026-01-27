@@ -80,25 +80,24 @@ Do NOT attempt to manually construct progress output.
 <!-- SKILL.md vs PLAN.md (A015/M172): Always reference SKILL.md for skill usage.
      PLAN.md = what to build (task planning). SKILL.md = how to use it (authoritative). -->
 
+<!-- Core concepts always needed for orchestration -->
 @${CLAUDE_PLUGIN_ROOT}/concepts/work.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/merge-and-cleanup.md
 @${CLAUDE_PLUGIN_ROOT}/concepts/agent-architecture.md
 @${CLAUDE_PLUGIN_ROOT}/concepts/subagent-delegation.md
 @${CLAUDE_PLUGIN_ROOT}/concepts/commit-types.md
-@${CLAUDE_PLUGIN_ROOT}/templates/changelog.md
-@${CLAUDE_PLUGIN_ROOT}/skills/spawn-subagent/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/skills/stakeholder-review/SKILL.md
-@${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md
 
 </execution_context>
 
 <conditional_context>
 
-**Load on demand when specific scenarios occur:**
+**Load on demand when specific phases or scenarios occur:**
 
-| Scenario | Load Workflow |
-|----------|---------------|
+| Phase/Scenario | Load Context |
+|----------------|--------------|
+| Execute phase (spawning subagent) | @${CLAUDE_PLUGIN_ROOT}/skills/delegate/SKILL.md |
+| Review phase (stakeholder review) | @${CLAUDE_PLUGIN_ROOT}/skills/stakeholder-review/SKILL.md, @${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md |
+| Merge phase (merging subagent) | @${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md, @${CLAUDE_PLUGIN_ROOT}/concepts/merge-and-cleanup.md |
+| Merge phase (changelog update) | @${CLAUDE_PLUGIN_ROOT}/templates/changelog.md |
 | Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/concepts/version-completion.md |
 | Task discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/concepts/duplicate-task.md |
 | Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/concepts/token-warning.md |
