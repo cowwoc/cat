@@ -1007,6 +1007,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Check if CLAUDE_PLUGIN_ROOT is set before using. If empty, use hardcoded fallback path: /home/node/.config/claude/plugins/cache/cat/cat/2.1"
+    },
+    {
+      "id": "M282",
+      "timestamp": "2026-01-27T18:30:00Z",
+      "category": "detection_gap",
+      "description": "get-available-issues.sh did not check version-level dependencies before scanning tasks in a minor version",
+      "root_cause": "find_first_incomplete_minor function checked only if tasks existed with pending/in-progress status, but did not verify the minor version's own dependencies were satisfied first",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-available-issues.sh",
+      "pattern_keywords": [
+        "version_dependency",
+        "find_first_incomplete_minor",
+        "dependency_check",
+        "scan_order"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check version STATE.md dependencies before scanning tasks in that version. Skip versions whose dependencies are not satisfied."
     }
   ]
 }
