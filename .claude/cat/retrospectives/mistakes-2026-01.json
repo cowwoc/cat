@@ -681,6 +681,33 @@
         "catches_variations": true
       },
       "correct_behavior": "For batch compression: (1) Each file MUST have explicit /compare-docs invocation in conversation history, (2) Scores reported MUST match /compare-docs output exactly, (3) Summary table MUST reference validation evidence, not claim scores without proof"
+    },
+    {
+      "id": "M270",
+      "timestamp": "2026-01-27T10:45:00Z",
+      "category": "protocol_violation",
+      "description": "Subagent did not run /compare-docs validation; parent agent did not fail-fast on missing acceptance criteria; parent agent proceeded to approval without required score",
+      "root_cause": "Subagent prompts bypassed shrink-doc skill (which mandates /compare-docs), and parent agent had no check for acceptance criteria satisfaction in subagent output before proceeding to approval",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "acceptance_criteria",
+        "compare-docs",
+        "validation",
+        "subagent_output",
+        "fail-fast"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Parent agent must verify subagent output contains evidence of PLAN.md acceptance criteria satisfaction before proceeding to approval gate"
     }
   ]
 }
