@@ -708,6 +708,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Parent agent must verify subagent output contains evidence of PLAN.md acceptance criteria satisfaction before proceeding to approval gate"
+    },
+    {
+      "id": "M271",
+      "timestamp": "2026-01-27T11:30:00Z",
+      "category": "protocol_violation",
+      "description": "Applied ≥0.95 threshold for compare-docs approval when shrink-doc requires exactly 1.0; claimed 0.96 'meets threshold'",
+      "root_cause": "compare-docs skill defines ≥0.95 as default APPROVE threshold, but when invoked for shrink-doc validation, the 1.0 threshold from shrink-doc was not carried forward",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "compare-docs",
+        "threshold",
+        "shrink-doc",
+        "1.0",
+        "0.95",
+        "approval"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When compare-docs is invoked for shrink-doc validation, use threshold = 1.0 (exact). Only score 1.0 is acceptable; 0.95-0.99 indicates lost content."
     }
   ]
 }

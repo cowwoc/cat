@@ -692,12 +692,25 @@ COMPARISON="<parse JSON response>"
 
 ## Execution Equivalence Criteria
 
-**Score Thresholds**:
+**Score Thresholds (Default)**:
 
 - **≥0.95**: **APPROVE** - Execution equivalent (minor cosmetic differences acceptable)
 - **0.75-0.94**: **REVIEW REQUIRED** - Moderate relationship changes (manual review needed)
 - **0.50-0.74**: **REJECT RECOMMENDED** - Significant execution differences
 - **<0.50**: **REJECT CRITICAL** - Execution will fail or produce wrong results
+
+**Context-Specific Thresholds (M271)**:
+
+When compare-docs is invoked as part of another skill's validation workflow, use that skill's
+threshold instead of the defaults above:
+
+| Context | Required Threshold | Rationale |
+|---------|-------------------|-----------|
+| `/cat:shrink-doc` validation | **= 1.0** (exact) | Compression must preserve ALL content |
+| General comparison | ≥0.95 (default) | Minor cosmetic differences acceptable |
+
+**CRITICAL**: When validating shrink-doc output, only score = 1.0 is acceptable. Scores of 0.95-0.99
+indicate lost relationships or structural changes that shrink-doc prohibits.
 
 **Decision Criteria**:
 
