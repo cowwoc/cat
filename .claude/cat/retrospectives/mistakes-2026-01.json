@@ -1059,6 +1059,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Always use ${CLAUDE_SESSION_ID} when referencing the session ID environment variable in documentation examples. Scripts can use their own internal variable names (e.g., SESSION_ID) after receiving the value via arguments."
+    },
+    {
+      "id": "M284",
+      "timestamp": "2026-01-27T19:30:00Z",
+      "category": "protocol_violation",
+      "description": "Used manual Glob/Read/Bash exploration for task discovery instead of invoking get-available-issues.sh script first",
+      "root_cause": "When CLAUDE_PLUGIN_ROOT environment variable was empty, I assumed the script was unavailable and fell back to manual exploration instead of using the hardcoded path fallback documented in M281",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "script-first",
+        "task-discovery",
+        "fail-fast",
+        "environment-variable",
+        "hardcoded-fallback"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always invoke get-available-issues.sh with hardcoded path fallback (PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT:-/home/node/.config/claude/plugins/cache/cat/cat/2.1}). If script fails, report the error and STOP - do not fall back to manual search."
     }
   ]
 }
