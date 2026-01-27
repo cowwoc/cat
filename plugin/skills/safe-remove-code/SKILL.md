@@ -1,6 +1,6 @@
 ---
-name: safe-remove-code
 description: Safely remove code patterns from multiple files with validation and rollback (project)
+user-invocable: false
 allowed-tools: Bash, Read, Edit, Grep, Glob
 ---
 

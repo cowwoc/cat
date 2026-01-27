@@ -1,6 +1,6 @@
 ---
-name: cat:collect-results
 description: Gather results from completed subagent including commits, metrics, and state updates
+user-invocable: false
 ---
 
 # Collect Results

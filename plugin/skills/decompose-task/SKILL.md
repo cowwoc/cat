@@ -1,6 +1,6 @@
 ---
-name: cat:decompose-task
 description: Split oversized task into smaller tasks with proper dependency management
+user-invocable: false
 ---
 
 <execution_context>

@@ -1,6 +1,6 @@
 ---
-name: git-amend
 description: "MANDATORY: Use instead of `git commit --amend` - verifies HEAD and push status first"
+user-invocable: false
 ---
 
 # Git Amend Skill

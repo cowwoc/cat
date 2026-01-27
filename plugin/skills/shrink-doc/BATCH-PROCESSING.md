@@ -2,7 +2,7 @@
 
 **Internal Document** - Loaded when compressing multiple files in a single task.
 
-When compressing multiple files (e.g., "compress all files in plugin/commands/"):
+When compressing multiple files (e.g., "compress all skills in plugin/skills/"):
 
 ---
 

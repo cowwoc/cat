@@ -1,8 +1,8 @@
 ---
-name: render-diff
 description: >
   MANDATORY: Use BEFORE showing ANY diff to user - transforms git diff into 4-column table.
   Required for approval gates, code reviews, change summaries.
+user-invocable: false
 ---
 
 # Render Diff

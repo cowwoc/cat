@@ -1,5 +1,4 @@
 ---
-name: cat:run-retrospective
 description: Run scheduled retrospective analysis, derive action items, and track effectiveness
 ---
 

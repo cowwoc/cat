@@ -1,6 +1,6 @@
 ---
-name: validate-git-safety
 description: "MANDATORY: Run before git push --force, rebase, or reset to verify safety"
+user-invocable: false
 ---
 
 # Validate Git Safety Skill

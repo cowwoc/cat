@@ -1,0 +1,26 @@
+{
+  "name": "cat",
+  "description": "AI Agents that land on their feet",
+  "version": "2.1",
+  "author": {
+    "name": "cowwoc"
+  },
+  "repository": "https://github.com/cowwoc/cat",
+  "license": "https://github.com/cowwoc/cat/blob/main/LICENSE.md",
+  "commands": [
+    "./skills/add/",
+    "./skills/cleanup/",
+    "./skills/optimize-execution/",
+    "./skills/config/",
+    "./skills/help/",
+    "./skills/init/",
+    "./skills/learn/",
+    "./skills/monitor-subagents/",
+    "./skills/remove/",
+    "./skills/research/",
+    "./skills/run-retrospective/",
+    "./skills/shrink-doc/",
+    "./skills/status/",
+    "./skills/work/"
+  ]
+}

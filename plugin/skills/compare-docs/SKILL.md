@@ -1,8 +1,8 @@
 ---
-name: compare-docs
 description: >
   Use to validate semantic equivalence when compressing, modifying, or comparing documentation.
   Required by shrink-doc for validation.
+user-invocable: false
 ---
 
 # Semantic Document Comparison

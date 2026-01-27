@@ -1,3 +1,8 @@
+---
+description: Test-Driven Development workflow for features with testable inputs/outputs
+user-invocable: false
+---
+
 # TDD Implementation Workflow
 
 > **See also:** [tdd.md](tdd.md) for TDD philosophy and when to use TDD vs standard implementation.

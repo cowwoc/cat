@@ -64,7 +64,7 @@ The CAT plugin repo separates plugin source from planning:
 |----------|--------------|------------|
 | `plugin/` | `config:` | Plugin source code that ships to users |
 | `plugin/concepts/` | `config:` | Plugin's bundled reference docs |
-| `plugin/commands/`, `plugin/skills/` | `config:` | Plugin commands and skills |
+| `plugin/skills/` | `config:` | Plugin skills |
 | `.claude/cat/` (root) | `planning:` | CAT's own development planning |
 | `.claude/cat/issues/v*/` (root) | `planning:` | CAT's version/task structure |
 

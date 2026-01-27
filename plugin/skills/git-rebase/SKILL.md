@@ -1,6 +1,6 @@
 ---
-name: git-rebase
 description: "MANDATORY: Use instead of `git rebase` - provides automatic backup and conflict recovery"
+user-invocable: false
 ---
 
 # Git Rebase Skill

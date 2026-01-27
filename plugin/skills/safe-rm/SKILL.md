@@ -1,6 +1,6 @@
 ---
-name: safe-rm
 description: "MANDATORY: Use instead of rm -rf or rm -r to prevent shell session breakage"
+user-invocable: false
 ---
 
 # Safe Remove Skill

@@ -1,6 +1,6 @@
 ---
-name: git-squash
 description: "MANDATORY: Use instead of `git rebase -i` for squashing - unified commit messages"
+user-invocable: false
 ---
 
 # Git Squash Skill

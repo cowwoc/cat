@@ -1,8 +1,8 @@
 ---
-name: cat:token-report
 description: >
   Use for quick token health check during sessions, after subagent completion,
   or before deciding whether to decompose remaining work
+user-invocable: false
 ---
 
 # Token Report

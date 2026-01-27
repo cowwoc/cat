@@ -1,6 +1,6 @@
 ---
-name: get-history
 description: Access raw conversation history from Claude Code session storage for analysis
+user-invocable: false
 ---
 
 # Get History Skill

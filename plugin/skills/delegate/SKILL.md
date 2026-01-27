@@ -1,6 +1,6 @@
 ---
-name: cat:delegate
 description: Use for batch skill execution, long-running tasks, or isolating verbose skill output
+user-invocable: false
 ---
 
 # Delegate
@@ -502,13 +502,13 @@ wave_2: [1.2b]        # Depends on 1.2a
 
 ### Single Skill Delegation
 ```bash
-/cat:delegate --skill shrink-doc plugin/commands/add.md
-# → 1 subagent executes /cat:shrink-doc plugin/commands/add.md
+/cat:delegate --skill shrink-doc plugin/skills/add/SKILL.md
+# → 1 subagent executes /cat:shrink-doc plugin/skills/add/SKILL.md
 ```
 
 ### Batch Skill Delegation (Parallel by Default)
 ```bash
-/cat:delegate --skill shrink-doc plugin/commands/add.md plugin/commands/work.md plugin/commands/status.md
+/cat:delegate --skill shrink-doc plugin/skills/add/SKILL.md plugin/skills/work/SKILL.md plugin/skills/status/SKILL.md
 # → 3 subagents execute in parallel, each running shrink-doc on one file
 ```
 
