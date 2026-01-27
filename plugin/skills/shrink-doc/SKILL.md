@@ -57,17 +57,11 @@ grep -c "Step 1:" CLAUDE.md  # Should be minimal
 
 **⚠️ SPECIAL HANDLING: Style Documentation Files**
 
-When compressing `.claude/rules/*.md` or `docs/code-style/*-claude.md`:
+When compressing `.claude/rules/*.md` or `docs/code-style/*-claude.md`, the compression agent
+follows special rules defined in COMPRESSION-AGENT.md. The orchestrator does NOT need to know
+what to preserve/remove - just invoke the subagent and validate the result.
 
-**Preserve style rule sections** (lines starting with `### `). These are intentionally-added
-detection patterns and rules. Compression can:
-- ✅ Condense explanatory text within sections
-- ✅ Shorten verbose rationale paragraphs
-- ✅ Combine redundant examples
-- ❌ Deleting entire `### Section Name` blocks breaks detection
-- ❌ Removing detection patterns or code examples breaks detection
-
-**Verification Required**: After compression, count section headers:
+**Verification Required (orchestrator runs AFTER compression)**: Count section headers:
 ```bash
 ORIGINAL_SECTIONS=$(grep -c "^### " /tmp/original-{filename})
 COMPRESSED_SECTIONS=$(grep -c "^### " /tmp/compressed-{filename}-v${VERSION}.md)

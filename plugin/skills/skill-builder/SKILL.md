@@ -1589,6 +1589,12 @@ Verify orchestrator-facing content is separated from internal agent content:
 and WHAT results to expect. If the orchestrator could do the task after reading the doc,
 the doc has exposed too much.
 
+**Critical (M278)**: External file existence does NOT automatically mean encapsulation is complete.
+Even when an internal doc (e.g., COMPRESSION-AGENT.md) contains the full algorithm, verify the
+orchestrator doc contains ZERO actionable guidance. Partial information like "preserve section
+headers" or "condense explanatory text" can still prime manual attempts. The orchestrator doc
+should contain only: what to invoke, postconditions to verify, and fail-fast conditions.
+
 ### Delegation Safety Check (M276)
 
 If the skill will be delegated to subagents:
