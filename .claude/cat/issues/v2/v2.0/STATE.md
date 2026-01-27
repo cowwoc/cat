@@ -1,8 +1,8 @@
 # v2.0 State: Licensing
 
 ## Status
-- **Status:** in-progress
-- **Progress:** 98%
+- **Status:** completed
+- **Progress:** 100%
 - **Started:** 2026-01-20
 
 ## Summary
@@ -79,17 +79,5 @@ Prepare CAT for commercial release with pricing tiers and license key system.
 - split-retrospective-files-by-time
 - fix-hierarchy-docs
 
-## Tasks Pending
-- relocate-stakeholders-dir
-- suggest-decomposition-at-soft-limit
-- branching-strategy-config
-- create-version-paths-reference
-- update-add-command-paths
-- update-remove-command-paths
-- update-work-command-paths
-- update-research-skills-paths
-- update-python-handler-paths
-- version-completion-approval-gate
-
 ## Tasks Decomposed
-- centralize-version-path-resolution (decomposed into 6 subtasks above)
+- centralize-version-path-resolution (subtasks completed as part of parent)
