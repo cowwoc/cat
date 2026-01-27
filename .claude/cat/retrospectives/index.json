@@ -5,7 +5,7 @@
     "trigger_interval_days": 7
   },
   "last_retrospective": "2026-01-27T12:30:00-05:00",
-  "mistake_count_since_last": 0,
+  "mistake_count_since_last": 1,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -25,8 +25,17 @@
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
-      "preventions": ["M269", "M270", "M271", "M273", "M274", "M276"],
-      "related_action_items": ["A001"],
+      "preventions": [
+        "M269",
+        "M270",
+        "M271",
+        "M273",
+        "M274",
+        "M276"
+      ],
+      "related_action_items": [
+        "A001"
+      ],
       "note": "Subagents fabricate or skip validation scores when delegation prompts prime expected values or combine producer/validator roles"
     },
     {
@@ -39,8 +48,13 @@
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
-      "preventions": ["M278", "M279"],
-      "related_action_items": ["A002"],
+      "preventions": [
+        "M278",
+        "M279"
+      ],
+      "related_action_items": [
+        "A002"
+      ],
       "note": "Incorrect task state transitions: abort marked as completed, decomposed parents marked completed before subtasks done"
     },
     {
@@ -53,8 +67,14 @@
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
-      "preventions": ["M266", "M267", "M268"],
-      "related_action_items": ["A003"],
+      "preventions": [
+        "M266",
+        "M267",
+        "M268"
+      ],
+      "related_action_items": [
+        "A003"
+      ],
       "note": "Assumptions about paths or config values without verification - worktree paths, terminal width, abort semantics"
     }
   ],
@@ -68,7 +88,14 @@
       "status": "implemented",
       "created_date": "2026-01-27T12:30:00Z",
       "completed_date": "2026-01-27T12:30:00Z",
-      "related_mistakes": ["M269", "M270", "M271", "M273", "M274", "M276"],
+      "related_mistakes": [
+        "M269",
+        "M270",
+        "M271",
+        "M273",
+        "M274",
+        "M276"
+      ],
       "effectiveness_check": {
         "mistakes_before": 6,
         "mistakes_after": null,
@@ -85,7 +112,10 @@
       "status": "implemented",
       "created_date": "2026-01-27T12:30:00Z",
       "completed_date": "2026-01-27T12:30:00Z",
-      "related_mistakes": ["M278", "M279"],
+      "related_mistakes": [
+        "M278",
+        "M279"
+      ],
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
@@ -102,7 +132,11 @@
       "status": "implemented",
       "created_date": "2026-01-27T12:30:00Z",
       "completed_date": "2026-01-27T17:45:00Z",
-      "related_mistakes": ["M266", "M267", "M268"],
+      "related_mistakes": [
+        "M266",
+        "M267",
+        "M268"
+      ],
       "implementation": "Added 'Path and Config Verification (A003)' section to agent-architecture.md with worktree path handling, config resolution strategy, and terminology disambiguation guidelines",
       "effectiveness_check": {
         "mistakes_before": 3,

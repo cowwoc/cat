@@ -401,3 +401,37 @@ When user says "[ambiguous term]", ask:
 ```
 
 **Anti-pattern**: Interpreting "abort" as permanent abandonment without asking.
+
+### Environment Variable Availability (M281)
+
+CAT plugin environment variables are injected by the hook system at specific points, NOT globally available in all contexts.
+
+| Variable | Available In | NOT Available In |
+|----------|--------------|------------------|
+| `CLAUDE_PLUGIN_ROOT` | Hook handlers, skill invocations | Direct Bash commands without hook context |
+| `CLAUDE_PROJECT_DIR` | Hook handlers, skill invocations | Direct Bash commands without hook context |
+| `CLAUDE_SESSION_ID` | Hook handlers, skill invocations | Direct Bash commands without hook context |
+
+**When variables are empty:**
+
+If `${CLAUDE_PLUGIN_ROOT}` expands to empty string in a bash command, use the hardcoded cache path:
+
+```bash
+# Fallback when environment variables not available
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-/home/node/.config/claude/plugins/cache/cat/cat/2.1}"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-/workspace}"
+
+# Then use PLUGIN_ROOT/scripts/... instead of ${CLAUDE_PLUGIN_ROOT}/scripts/...
+```
+
+**Detection pattern:**
+```bash
+if [ -z "$CLAUDE_PLUGIN_ROOT" ]; then
+  echo "Note: Running outside hook context, using hardcoded paths"
+  PLUGIN_ROOT="/home/node/.config/claude/plugins/cache/cat/cat/2.1"
+else
+  PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"
+fi
+```
+
+**Anti-pattern**: Using `${CLAUDE_PLUGIN_ROOT}/scripts/...` directly without checking if the variable is set, causing paths like `/scripts/...` which don't exist.
