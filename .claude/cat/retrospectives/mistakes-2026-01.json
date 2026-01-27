@@ -691,7 +691,7 @@
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
       "pattern_keywords": [
         "acceptance_criteria",
         "compare-docs",

@@ -67,6 +67,59 @@ Before spawning, the main agent must be able to answer "yes" to all:
 
 If any answer is "no", do not spawn. Gather more information first.
 
+### Acceptance Criteria Requirement (M270)
+
+**CRITICAL: Every subagent delegation MUST include explicit acceptance criteria.**
+
+Acceptance criteria define what specific outputs validate successful completion. Without them,
+"success" becomes subjective and validation gets skipped.
+
+**For task-based delegations** (subagent working on a tracked task):
+
+1. Read the task's PLAN.md `## Acceptance Criteria` section
+2. Extract each measurable criterion (scores, test results, build status)
+3. Include criteria in subagent prompt with explicit instruction to produce that output
+4. On subagent completion, verify each criterion has evidence in output
+
+```yaml
+# Example: PLAN.md says "Execution equivalence verified (score = 1.0 from /compare-docs)"
+subagent_prompt_must_include: |
+  ACCEPTANCE CRITERIA:
+  - Run /compare-docs on compressed file
+  - Required score: 1.0
+  - Include score in your output
+```
+
+**For ad-hoc delegations** (no tracked task):
+
+Parent agent must define acceptance criteria before spawning:
+
+```yaml
+acceptance_criteria:
+  - what: "Measurable outcome 1"
+    validation: "How to verify"
+  - what: "Measurable outcome 2"
+    validation: "How to verify"
+```
+
+**FAIL-FAST on missing validation:**
+
+When subagent output lacks evidence of criteria satisfaction:
+
+```
+❌ ACCEPTANCE CRITERIA NOT MET
+
+Required: {criterion}
+Subagent output: {missing | value}
+
+BLOCKING: Cannot proceed without validation evidence.
+Action: Re-run validation or adjust approach.
+```
+
+**Why this exists (M270):** When subagent prompts bypass skill-mandated validations (e.g., custom
+compression prompt without /compare-docs), criteria go unchecked. Requiring explicit criteria
+in the delegation catches these gaps at spawn time rather than after completion.
+
 ## Common Failure Patterns
 
 ### Exploration + Decision in Same Task
