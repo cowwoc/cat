@@ -404,34 +404,30 @@ When user says "[ambiguous term]", ask:
 
 ### Environment Variable Availability (M281)
 
-CAT plugin environment variables are injected by the hook system at specific points, NOT globally available in all contexts.
+CAT plugin environment variables are injected by the hook system. Skills MUST have these variables set.
 
-| Variable | Available In | NOT Available In |
-|----------|--------------|------------------|
-| `CLAUDE_PLUGIN_ROOT` | Hook handlers, skill invocations | Direct Bash commands without hook context |
-| `CLAUDE_PROJECT_DIR` | Hook handlers, skill invocations | Direct Bash commands without hook context |
-| `CLAUDE_SESSION_ID` | Hook handlers, skill invocations | Direct Bash commands without hook context |
+| Variable | Required In | If Empty |
+|----------|-------------|----------|
+| `CLAUDE_PLUGIN_ROOT` | All skill invocations | FAIL - hooks not loaded |
+| `CLAUDE_PROJECT_DIR` | All skill invocations | FAIL - hooks not loaded |
+| `CLAUDE_SESSION_ID` | Skills needing locks | FAIL - hooks not loaded |
 
-**When variables are empty:**
-
-If `${CLAUDE_PLUGIN_ROOT}` expands to empty string in a bash command, use the hardcoded cache path:
+**FAIL-FAST when variables are empty:**
 
 ```bash
-# Fallback when environment variables not available
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-/home/node/.config/claude/plugins/cache/cat/cat/2.1}"
-PROJECT_DIR="${CLAUDE_PROJECT_DIR:-/workspace}"
-
-# Then use PLUGIN_ROOT/scripts/... instead of ${CLAUDE_PLUGIN_ROOT}/scripts/...
-```
-
-**Detection pattern:**
-```bash
-if [ -z "$CLAUDE_PLUGIN_ROOT" ]; then
-  echo "Note: Running outside hook context, using hardcoded paths"
-  PLUGIN_ROOT="/home/node/.config/claude/plugins/cache/cat/cat/2.1"
-else
-  PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT"
+# Skills MUST fail-fast if required variables are not set
+if [[ -z "$CLAUDE_PLUGIN_ROOT" ]]; then
+  echo "ERROR: CLAUDE_PLUGIN_ROOT not set. CAT hooks not loaded correctly."
+  echo "Check: Is the CAT plugin installed? Are hooks enabled?"
+  exit 1
 fi
 ```
 
-**Anti-pattern**: Using `${CLAUDE_PLUGIN_ROOT}/scripts/...` directly without checking if the variable is set, causing paths like `/scripts/...` which don't exist.
+**Anti-pattern**: Using fallbacks like `${CLAUDE_PLUGIN_ROOT:-/path/to/fallback}`.
+Fallbacks mask hook failures. If variables are empty during skill invocation, the hooks
+are broken and that bug should be surfaced immediately, not worked around.
+
+**Why no fallbacks:**
+- Hardcoded paths break when plugin version changes
+- Fallbacks let broken infrastructure appear to work
+- Bugs in hook loading should be caught early, not discovered later
