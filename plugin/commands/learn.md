@@ -3,13 +3,15 @@ name: cat:learn
 description: Use after making any mistake - triggers RCA workflow and prevention implementation
 ---
 
-<objective>
+# CAT Learn
+
+## Purpose
 
 Shortcut for `/cat:learn-from-mistakes`. This command MUST immediately invoke the skill.
 
-</objective>
+---
 
-<execution>
+## Procedure
 
 **MANDATORY IMMEDIATE ACTION - Use Skill tool NOW:**
 
@@ -23,5 +25,3 @@ workflow for mistake analysis, prevention implementation, and recording.
 
 **Why this matters (M167):** Ad-hoc analysis skips prevention implementation and recording, causing
 mistakes to recur. The skill enforces the complete learning workflow.
-
-</execution>

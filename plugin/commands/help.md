@@ -5,11 +5,17 @@ model: haiku
 context: fork
 ---
 
-<objective>
+# CAT Help
+
+## Purpose
 
 Display the CAT command reference.
 
-A UserPromptSubmit hook has output template the formatted help content and provided it
+---
+
+## Procedure
+
+A UserPromptSubmit hook has pre-computed the formatted help content and provided it
 in the context above. Output that content EXACTLY as provided.
 
 Do NOT:
@@ -18,5 +24,3 @@ Do NOT:
 - Add git status or file context
 - Add next-step suggestions
 - Add any commentary beyond the reference
-
-</objective>
