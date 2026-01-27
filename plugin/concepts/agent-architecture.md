@@ -336,3 +336,68 @@ When a subagent exceeds the hard limit:
    - Task context
 3. **Analyze:** Review why estimation failed
 4. **Improve:** Update estimation factors based on pattern
+
+## Path and Config Verification (A003)
+
+**MANDATORY**: Verify paths and config values before use. Common failure patterns documented below.
+
+### Worktree Path Handling (M267)
+
+When working in a worktree (e.g., `/workspace/.worktrees/task-name/`):
+
+| Path Type | Example | Risk |
+|-----------|---------|------|
+| Absolute to /workspace/ | `/workspace/plugin/skills/` | Bypasses worktree isolation |
+| Relative from cwd | `plugin/skills/` | Correct - stays in worktree |
+| ${CLAUDE_PROJECT_DIR} | `${CLAUDE_PROJECT_DIR}/plugin/` | Points to main workspace |
+
+**Verification checklist:**
+1. Check if cwd is a worktree: `[ -f ".git/cat-base" ]`
+2. If in worktree, use relative paths for file creation/editing
+3. Use absolute paths only for reading config from main workspace
+
+**Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of task worktree.
+
+### Config File Resolution (M268)
+
+Config files may not exist in worktrees due to `.gitignore`:
+
+| File | Main Workspace | Worktree |
+|------|----------------|----------|
+| `cat-config.json` | ✓ Exists | ✓ Exists (tracked) |
+| `.local.json` | ✓ Exists | ✗ Missing (gitignored) |
+| `.claude/settings.json` | ✓ Exists | ✗ May be missing |
+
+**Resolution strategy:**
+```bash
+# Use CLAUDE_PROJECT_DIR for config lookup (always points to main workspace)
+CONFIG_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat"
+CONFIG_FILE="${CONFIG_DIR}/cat-config.json"
+
+# Fall back to cwd only if CLAUDE_PROJECT_DIR not set
+if [ -z "$CLAUDE_PROJECT_DIR" ]; then
+  CONFIG_FILE=".claude/cat/cat-config.json"
+fi
+```
+
+**Anti-pattern**: Reading config from cwd in worktree, getting default values instead of user's configured values.
+
+### Terminology Disambiguation (M266)
+
+Ambiguous terms require user clarification before action:
+
+| Term | Possible Meanings | Required Action |
+|------|-------------------|-----------------|
+| "abort task" | Stop and keep pending, OR cleanup and abandon | Use AskUserQuestion |
+| "cancel" | Same as abort - clarify intent | Use AskUserQuestion |
+| "delete" | Remove planning entry, OR just cleanup worktree | Use AskUserQuestion |
+
+**Clarification template:**
+```
+When user says "[ambiguous term]", ask:
+1. Stop working, keep task pending for later
+2. Cleanup worktree/branch, keep task pending
+3. Abandon permanently (remove from planning)
+```
+
+**Anti-pattern**: Interpreting "abort" as permanent abandonment without asking.
