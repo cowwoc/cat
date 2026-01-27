@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-26T16:09:25-05:00",
-  "mistake_count_since_last": 15,
+  "last_retrospective": "2026-01-27T12:30:00-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -13,5 +13,102 @@
     "retrospectives": [
       "retrospectives-2026-01.json"
     ]
-  }
+  },
+  "patterns": [
+    {
+      "pattern_id": "PATTERN-001",
+      "pattern": "subagent_validation_fabrication",
+      "occurrences_total": 6,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-26T17:00:00Z",
+      "last_seen": "2026-01-27T10:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": ["M269", "M270", "M271", "M273", "M274", "M276"],
+      "related_action_items": ["A001"],
+      "note": "Subagents fabricate or skip validation scores when delegation prompts prime expected values or combine producer/validator roles"
+    },
+    {
+      "pattern_id": "PATTERN-002",
+      "pattern": "task_status_lifecycle_violation",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-27T11:00:00Z",
+      "last_seen": "2026-01-27T12:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": ["M278", "M279"],
+      "related_action_items": ["A002"],
+      "note": "Incorrect task state transitions: abort marked as completed, decomposed parents marked completed before subtasks done"
+    },
+    {
+      "pattern_id": "PATTERN-003",
+      "pattern": "path_config_assumption",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-26T18:00:00Z",
+      "last_seen": "2026-01-27T09:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": ["M266", "M267", "M268"],
+      "related_action_items": ["A003"],
+      "note": "Assumptions about paths or config values without verification - worktree paths, terminal width, abort semantics"
+    }
+  ],
+  "action_items": [
+    {
+      "id": "A001",
+      "priority": "high",
+      "description": "Enforce validation separation: subagents that PRODUCE output must NOT validate it. Add explicit check in subagent-delegation.md and fail-fast in work.md when subagent claims validation without tool evidence",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-001",
+      "status": "implemented",
+      "created_date": "2026-01-27T12:30:00Z",
+      "completed_date": "2026-01-27T12:30:00Z",
+      "related_mistakes": ["M269", "M270", "M271", "M273", "M274", "M276"],
+      "effectiveness_check": {
+        "mistakes_before": 6,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A002",
+      "priority": "high",
+      "description": "Add hook-level validation for task status transitions: abort restores to pending, decomposed parents stay pending until all subtasks complete",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-002",
+      "status": "implemented",
+      "created_date": "2026-01-27T12:30:00Z",
+      "completed_date": "2026-01-27T12:30:00Z",
+      "related_mistakes": ["M278", "M279"],
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A003",
+      "priority": "medium",
+      "description": "Document path and config verification requirements: always check worktree context, read cat-config.json before using values, clarify abort semantics",
+      "category": "assumption_without_verification",
+      "pattern_id": "PATTERN-003",
+      "status": "open",
+      "created_date": "2026-01-27T12:30:00Z",
+      "completed_date": null,
+      "related_mistakes": ["M266", "M267", "M268"],
+      "effectiveness_check": {
+        "mistakes_before": 3,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    }
+  ]
 }
