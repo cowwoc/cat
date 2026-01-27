@@ -99,10 +99,11 @@
       "description": "Document path and config verification requirements: always check worktree context, read cat-config.json before using values, clarify abort semantics",
       "category": "assumption_without_verification",
       "pattern_id": "PATTERN-003",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-27T12:30:00Z",
-      "completed_date": null,
+      "completed_date": "2026-01-27T17:45:00Z",
       "related_mistakes": ["M266", "M267", "M268"],
+      "implementation": "Added 'Path and Config Verification (A003)' section to agent-architecture.md with worktree path handling, config resolution strategy, and terminology disambiguation guidelines",
       "effectiveness_check": {
         "mistakes_before": 3,
         "mistakes_after": null,
