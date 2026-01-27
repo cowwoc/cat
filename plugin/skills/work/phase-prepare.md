@@ -36,7 +36,7 @@ For programmatic task discovery, use the `get-available-issues.sh` script:
 
 ```bash
 # Find next available task
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" "${CLAUDE_PROJECT_DIR}" --session-id "$SESSION_ID")
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}")
 
 # Parse result
 if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then

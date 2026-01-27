@@ -1033,6 +1033,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Check version STATE.md dependencies before scanning tasks in that version. Skip versions whose dependencies are not satisfied."
+    },
+    {
+      "id": "M283",
+      "timestamp": "2026-01-27T23:45:10Z",
+      "category": "inconsistent_naming",
+      "description": "Session ID variable naming inconsistent across files: phase-prepare.md used $SESSION_ID (undefined) instead of ${CLAUDE_SESSION_ID}, phase-merge.md had incorrect {SESSION_ID} placeholders and referenced old script name task-lock.sh",
+      "root_cause": "Different developers/sessions used different naming conventions without consistency check. Script internal variable (SESSION_ID) vs environment variable (CLAUDE_SESSION_ID) were conflated in documentation examples.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-prepare.md, ${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-merge.md",
+      "pattern_keywords": [
+        "session_id",
+        "variable_naming",
+        "environment_variable",
+        "consistency"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use ${CLAUDE_SESSION_ID} when referencing the session ID environment variable in documentation examples. Scripts can use their own internal variable names (e.g., SESSION_ID) after receiving the value via arguments."
     }
   ]
 }
