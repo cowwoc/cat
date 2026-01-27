@@ -447,6 +447,18 @@ find_first_incomplete_minor() {
     for minor_dir in $(find "$major_dir" -maxdepth 1 -type d -name "v*.*" 2>/dev/null | sort -V); do
         [[ ! -d "$minor_dir" ]] && continue
 
+        # M282: Check version-level dependencies BEFORE scanning tasks
+        # If version STATE.md has dependencies, verify they're satisfied
+        local version_state="$minor_dir/STATE.md"
+        if [[ -f "$version_state" ]]; then
+            local version_dep_result
+            version_dep_result=$(check_dependencies "$version_state" 2>/dev/null)
+            if [[ $(echo "$version_dep_result" | jq -r '.satisfied' 2>/dev/null) == "false" ]]; then
+                # Version dependencies not met - skip this version entirely
+                continue
+            fi
+        fi
+
         # Check if minor has any pending/in-progress issues
         for issue_dir in "$minor_dir"/*/; do
             issue_dir="${issue_dir%/}"  # Strip trailing slash from glob
