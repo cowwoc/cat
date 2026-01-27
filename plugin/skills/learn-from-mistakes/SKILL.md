@@ -390,6 +390,24 @@ Step 1: Use output template...
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
+**Fix Location Principle: Apply to deepest document possible.**
+
+When choosing WHERE to implement a fix, prefer the lowest-level document that addresses the issue:
+
+| Level | Example | Benefit |
+|-------|---------|---------|
+| Concept doc | `concepts/subagent-delegation.md` | All skills/workflows referencing it inherit the fix |
+| Skill doc | `skills/shrink-doc/SKILL.md` | All invocations of that skill get the fix |
+| Workflow doc | `concepts/work.md` | Specific workflow improved |
+| Command doc | `commands/work.md` | Single entry point fixed |
+
+**Why depth matters:** A fix in a concept document (e.g., subagent-delegation.md) benefits every skill
+and workflow that references it. A fix in a command document benefits only that command. Apply fixes
+at the deepest level where they're relevant to maximize fix propagation.
+
+**Example:** M277 (validation separation) belongs in `shrink-doc/SKILL.md` (skill-specific validation)
+not `work.md` (generic workflow) because the per-file subagent pattern is shrink-doc-specific.
+
 **Language requirements for documentation/prompt changes (M177):**
 
 When prevention involves updating documentation, prompts, or instructions, use **positive actionable
