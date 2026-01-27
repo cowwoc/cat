@@ -13,7 +13,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - migrate-python-to-java
 - release-changelog-validation
 - compress-skills-md (from decomposed compress-md-files)
-- compress-commands-md (from decomposed compress-md-files)
 - compress-concepts-md (from decomposed compress-md-files)
 - compress-templates-md (from decomposed compress-md-files)
 - compress-stakeholders-md (from decomposed compress-md-files)
@@ -42,3 +41,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Completed
 - acceptance-criteria-options
+- compress-commands-md (duplicate of compress-skills-md - commands moved to skills/)
