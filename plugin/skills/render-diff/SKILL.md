@@ -1,6 +1,8 @@
 ---
 name: render-diff
-description: "MANDATORY: Use BEFORE showing ANY diff to user - transforms git diff into 4-column table with box characters (╭╮╰╯│). Required for approval gates, code reviews, change summaries."
+description: >
+  MANDATORY: Use BEFORE showing ANY diff to user - transforms git diff into 4-column table.
+  Required for approval gates, code reviews, change summaries.
 ---
 
 # Render Diff
@@ -10,7 +12,11 @@ description: "MANDATORY: Use BEFORE showing ANY diff to user - transforms git di
 Transform raw git diff output into a 4-column table format optimized for approval gate reviews.
 Each hunk is rendered as a self-contained box with file header, making diffs easy to review.
 
-## Output template Output (MANDATORY for Approval Gates)
+---
+
+## Procedure
+
+### Step 1: Require output template (MANDATORY)
 
 **Check context for "OUTPUT TEMPLATE RENDER-DIFF OUTPUT".**
 
@@ -31,153 +37,54 @@ if [[ $? -eq 0 ]]; then
 fi
 ```
 
-Output the error and STOP. Do NOT attempt manual Bash computation.
+Output the error and STOP. Do NOT attempt manual Bash computation or manual box rendering.
 
-**Why this matters (M238):** Running `git diff | render-diff.py` via Bash shows the command
+**Why fail-fast (M238):** Running `git diff | render-diff.py` via Bash shows the command
 execution to the user, breaking the clean output experience. Pre-computation hides the
 implementation details.
 
-## Usage
+### Step 2: Output the rendered diff
 
-Pipe git diff output to the script:
+Copy-paste the output template content exactly as provided. The handler has already:
+- Calculated column widths and alignments
+- Rendered box borders with correct padding
+- Applied word-level diff highlighting
+- Added file headers and hunk context
+- Generated the legend
 
-```bash
-git diff main..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
-```
+Do NOT modify, reformat, or manually reconstruct any part of the output.
 
-Or provide a diff file:
+---
 
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" diff-output.txt
-```
+## Output Structure Reference
+
+> **NOTE:** This section describes WHAT the output contains, not HOW to render it.
+> The handler produces all rendering. You only need to copy-paste.
+
+The output template contains:
+
+**Per-hunk boxes** with:
+- File header row showing the file path
+- Column headers: Old line number, Symbol, New line number, Content
+- Hunk context (function/class name) marked with special symbol
+- Diff lines with appropriate symbols for additions/deletions/context
+- Word-level highlighting using bracket notation for changed portions
+
+**Special cases handled by the handler:**
+- Binary files: Simplified box noting binary change
+- Renamed files: Shows old path to new path
+- Long lines: Wrapped with continuation marker
+- Whitespace changes: Visible markers for tabs and spaces
+
+**Legend box** appears once at the end, showing only the symbols used in that diff.
+
+---
 
 ## Configuration
 
-The script reads `terminalWidth` from `.claude/cat/cat-config.json`:
+The script reads `terminalWidth` from `.claude/cat/cat-config.json` to determine box width.
 
-```json
-{
-  "terminalWidth": 50
-}
-```
-
-## Output Format
-
-### Hunk Box Structure
-Each hunk is a self-contained box with file header repeated:
-```
-╭────────────────────────────────────────────────╮
-│ FILE: src/main.js                              │
-├────┬───┬────┬──────────────────────────────────┤
-│ Old│   │ New│ ⌁ function init()                │
-├────┼───┼────┼──────────────────────────────────┤
-│   6│   │   6│   const app = express();         │
-│   8│ - │    │   app.use([bodyParser].json());  │
-│    │ + │   8│   app.use([express].json());     │
-│   9│   │   9│   return app;                    │
-╰────┴───┴────┴──────────────────────────────────╯
-```
-
-### Column Definitions
-
-| Column | Width | Content |
-|--------|-------|---------|
-| Old | 4 chars | Line number in original file (blank for additions) |
-| Symbol | 3 chars | `-` removed, `+` added, blank for context |
-| New | 4 chars | Line number in new file (blank for deletions) |
-| Content | remaining | The actual line text |
-
-### Features
-
-**Hunk Context**: Function/class name from git shown in header row with `⌁`:
-```
-│ Old│   │ New│ ⌁ function doSomething()         │
-```
-
-**Word-Level Diff**: Adjacent -/+ pairs highlight changed portions with `[]`:
-```
-│   8│ - │    │   app.use([bodyParser].json());  │
-│    │ + │   8│   app.use([express].json());     │
-```
-
-**Whitespace Visibility**: Tab↔space changes shown with markers:
-```
-│  15│ - │    │ →const indent = 1;               │
-│    │ + │  15│ ····const indent = 1;            │
-```
-- `·` (middle dot) for spaces
-- `→` for tabs
-
-**Line Wrapping**: Long lines wrap with `↩`:
-```
-│  46│ - │    │   logger.info(`Server running ↩  │
-│    │   │    │ on port ${port}`);               │
-```
-
-**Binary Files**:
-```
-╭────────────────────────────────────────────────╮
-│ FILE: logo.png (binary)                        │
-├────────────────────────────────────────────────┤
-│ Binary file changed                            │
-╰────────────────────────────────────────────────╯
-```
-
-**Renamed Files**:
-```
-╭────────────────────────────────────────────────╮
-│ FILE: old/path.js → new/path.js (renamed)      │
-├────────────────────────────────────────────────┤
-│ File renamed (no content changes)              │
-╰────────────────────────────────────────────────╯
-```
-
-### Legend
-Appears once at end, showing only symbols used:
-```
-╭────────────────────────────────────────────────╮
-│ Legend                                         │
-├────────────────────────────────────────────────┤
-│  -  del    +  add    []  changed    ·  space   │
-╰────────────────────────────────────────────────╯
-```
-
-## Example
-
-**Input:**
-```bash
-git diff main..HEAD | render-diff.py
-```
-
-**Output (multiple hunks in same file):**
-```
-╭────────────────────────────────────────────────╮
-│ FILE: src/api.js                               │
-├────┬───┬────┬──────────────────────────────────┤
-│ Old│   │ New│ ⌁ function init()                │
-├────┼───┼────┼──────────────────────────────────┤
-│   6│   │   6│   const app = express();         │
-│   8│ - │    │   app.use([bodyParser].json());  │
-│    │ + │   8│   app.use([express].json());     │
-│   9│   │   9│   return app;                    │
-╰────┴───┴────┴──────────────────────────────────╯
-
-╭────────────────────────────────────────────────╮
-│ FILE: src/api.js                               │
-├────┬───┬────┬──────────────────────────────────┤
-│ Old│   │ New│ ⌁ function start(port)           │
-├────┼───┼────┼──────────────────────────────────┤
-│  45│   │  45│   app.listen(port, () => {       │
-│    │ + │  46│     logEnvironment();            │
-│  46│   │  47│   });                            │
-╰────┴───┴────┴──────────────────────────────────╯
-
-╭────────────────────────────────────────────────╮
-│ Legend                                         │
-├────────────────────────────────────────────────┤
-│  -  del    +  add    []  changed               │
-╰────────────────────────────────────────────────╯
-```
+---
 
 ## Integration with Approval Gates
 
@@ -190,22 +97,21 @@ Before invoking render-diff, enumerate ALL changed files to ensure complete cove
 git diff --name-only "${BASE_BRANCH}..HEAD"
 
 # Step 2: Generate diff for ALL files (no path filtering)
-git diff "${BASE_BRANCH}..HEAD" | \
-  "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py" > /tmp/review-diff.txt
-
-# Step 3: Display for approval
-cat /tmp/review-diff.txt
+git diff "${BASE_BRANCH}..HEAD"
 ```
 
-**Anti-pattern**: Manually specifying paths based on memory. This leads to incomplete diffs.
+**Anti-pattern**: Manually specifying paths based on memory leads to incomplete diffs.
 
-```bash
-# ❌ WRONG - manual path specification misses files
-git diff v2.0..HEAD -- plugin/scripts/ plugin/skills/
+---
 
-# ✅ CORRECT - diff entire branch, no path filtering
-git diff v2.0..HEAD
-```
+## Verification
+
+- [ ] Output template found in context
+- [ ] Content output exactly as provided (no manual reconstruction)
+- [ ] All changed files included in the diff
+- [ ] No Bash tool invocations shown to user
+
+---
 
 ## Related Skills
 

@@ -1,37 +1,31 @@
 ---
 name: cat:token-report
-description: Generate detailed token usage report with threshold analysis and recommendations
+description: >
+  Use for quick token health check during sessions, after subagent completion,
+  or before deciding whether to decompose remaining work
 ---
 
 # Token Report
 
 ## Purpose
 
-Display a compact token usage report showing per-subagent breakdown with context utilization, health status, and duration. Essential for understanding session resource consumption at a glance.
+Display a compact token usage report showing per-subagent breakdown with context utilization,
+health status, and duration. Essential for understanding session resource consumption at a glance.
 
-## When to Use
+---
 
-- Quick health check during any session
-- Periodic monitoring during long-running orchestration
-- After subagent completion to check overall consumption
-- Before deciding whether to decompose remaining work
-- Post-task retrospectives on efficiency
+## Procedure
 
-## Step 1: Check for Pre-Computed Results (MANDATORY)
+### Step 1: Require output template (MANDATORY)
 
-**CRITICAL**: This skill requires hook-based pre-computation. Check context for:
+**Check context for "OUTPUT TEMPLATE TOKEN REPORT".**
 
-```
-OUTPUT TEMPLATE TOKEN REPORT:
-```
+If found:
+1. Output the table **exactly as provided** - no modifications
+2. Do NOT recalculate values or adjust alignment
+3. Skip to Verification
 
-### If OUTPUT TEMPLATE TOKEN REPORT is found:
-
-Output the table EXACTLY as provided. Do NOT modify alignment or recalculate values.
-
-### If OUTPUT TEMPLATE TOKEN REPORT is NOT found:
-
-**FAIL immediately** with this message:
+If NOT found: **FAIL immediately** with this message:
 
 ```
 ERROR: Output template token report not found.
@@ -50,64 +44,55 @@ Try running /cat:token-report again or check session status.
 
 Do NOT proceed to manual extraction or table building.
 
-## Table Format Reference
+### Step 2: Output the report
 
-The output template table uses these specifications:
+Copy-paste the output template content exactly. The handler has already:
+- Gathered subagent token data from session files
+- Formatted token counts (68.4k, 1.5M format)
+- Calculated context percentages with health indicators
+- Formatted durations (1m 7s format)
+- Built the aligned table with correct column widths
 
-**Column widths (fixed):**
-| Column | Width | Content |
-|--------|-------|---------|
-| Type | 17 | Subagent type (truncated with ...) |
-| Description | 30 | Task description (truncated with ...) |
-| Tokens | 8 | Formatted count (68.4k, 1.5M) |
-| Context | 16 | Percentage with emoji indicator |
-| Duration | 10 | Formatted time (1m 7s) |
+---
 
-**Context indicators (INSIDE column):**
-| Context % | Display | Meaning |
-|-----------|---------|---------|
-| < 40% | "34%" | Healthy - plenty of headroom |
-| >= 40% and < 80% | "45% ⚠️" | Warning - above soft target |
-| >= 80% | "85% 🚨" | Critical - approaching limit |
+## Output Structure Reference
 
-**Box characters:**
-- Top: `╭─┬─╮`
-- Divider: `├─┼─┤`
-- Bottom: `╰─┴─╯`
-- Sides: `│`
+> **NOTE:** This section describes WHAT the output contains, not HOW to render it.
+> The handler produces all rendering. You only need to copy-paste.
 
-## Verification Checklist
+The table contains these columns:
+- **Type**: Subagent type (truncated if long)
+- **Description**: Task description (truncated if long)
+- **Tokens**: Formatted count with k/M suffix
+- **Context**: Percentage with health indicator (warning/critical markers appear inline)
+- **Duration**: Formatted time
 
-Before outputting the table, verify:
+Health indicators appear within the Context column to show status at a glance.
+
+---
+
+## Verification
 
 - [ ] Output template results found in context
 - [ ] Table copied exactly (no modifications)
-- [ ] All box characters preserved
-- [ ] Emoji indicators inside Context column
 - [ ] No additional computation performed
+
+---
 
 ## Anti-Patterns
 
 ### Never attempt manual table construction
 
-```bash
-# BAD - Manual jq extraction and formatting
-jq -s '...' "$SESSION_FILE"
-# Then manually building table rows
-
-# GOOD - Use template results only
-# Output exactly what the hook provided
-```
+If output template is missing, FAIL. Do not try to:
+- Extract data manually with jq
+- Build table rows by hand
+- Guess at column widths
 
 ### Never modify output template alignment
 
-```
-# BAD - "Fixing" spacing or alignment
-│ Type           │  # Wrong - modified padding
+Copy the table exactly as provided. The handler calculated precise padding.
 
-# GOOD - Copy exactly as provided
-│ Type              │  # Correct - preserved padding
-```
+---
 
 ## Related Skills
 

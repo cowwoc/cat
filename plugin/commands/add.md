@@ -1,6 +1,6 @@
 ---
 name: cat:add
-description: Add task or version
+description: Use to add a task to a version OR create a new version (major/minor/patch)
 allowed-tools:
   - Read
   - Write
