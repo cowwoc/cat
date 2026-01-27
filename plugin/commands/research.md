@@ -330,12 +330,8 @@ Use handler functions for all display elements:
 - `build_scorecard(ratings)` - generates the scorecard box for an option
 - `build_comparison_table(options)` - generates the side-by-side comparison
 
-For rating circles, lookup from the <functions> section (do NOT type manually):
-- rating 5 → ●●●●●
-- rating 4 → ●●●●○
-- rating 3 → ●●●○○
-- rating 2 → ●●○○○
-- rating 1 → ●○○○○
+Rating circles are included in the OUTPUT TEMPLATE content only. Do NOT hand-type rating circles.
+If you need to display ratings, use `build_scorecard(option["ratings"])` from the handler.
 
 **SCORECARD STRUCTURE:** 11 dimensions in 2 sections:
 - **Row 1 (top-level):** Speed, Cost, Quality

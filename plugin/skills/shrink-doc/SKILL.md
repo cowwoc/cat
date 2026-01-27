@@ -41,65 +41,10 @@ defines what Claude does when the command is invoked.
 
 **⚠️ SPECIAL HANDLING: CLAUDE.md**
 
-When compressing `CLAUDE.md`, use **content reorganization** instead of standard compression:
+When compressing `CLAUDE.md`, the compression agent uses **content reorganization** instead of
+standard compression. The detailed reorganization algorithm is in COMPRESSION-AGENT.md.
 
-**Step 1: Analyze Content Location**
-Before compressing, categorize ALL content into:
-
-| Category | Action |
-|----------|--------|
-| **Duplicates skills** | REMOVE - reference skill instead |
-| **Main-agent-specific** | MOVE to main-agent-specific file |
-| **Sub-agent-specific** | MOVE to sub-agent-specific file |
-| **Universal (all agents)** | KEEP in CLAUDE.md |
-
-**Step 2: Check for Duplication**
-```bash
-# Check if content already exists in skills
-ls .claude/skills/
-
-# Check if procedural content duplicates a skill
-grep -l "pattern" .claude/skills/*/SKILL.md
-```
-
-**Step 3: Content Categories**
-
-*Examples are illustrative; specific categories vary by project.*
-
-**REMOVE (duplicates existing):**
-- Procedural content that exists in skills
-- Content already documented in agent-specific files
-
-**MOVE (agent-specific):**
-- Main-agent-only content (e.g., multi-agent coordination, repository structure)
-- Sub-agent-only content (e.g., specific workflow steps only they perform)
-
-**KEEP (universal guidance):**
-- Tone/style, error handling, security policies
-- Content that applies equally to ALL agent types
-
-**Step 4: Result Structure**
-
-CLAUDE.md should be a **slim reference document** (~200 lines) that:
-- Contains ONLY universal guidance for ALL agents
-- **Instructs agents to read their agent-specific files** (e.g., "MAIN AGENT: Read {file}.md")
-- References skills for procedural content (not duplicate them)
-
-**Hub-and-Spoke Pattern**:
-```
-CLAUDE.md (universal, ~200 lines)
-  ├── "MAIN AGENT: Read {main-agent-file}.md"
-  └── "SUB-AGENTS: Read {sub-agent-file}.md"
-```
-
-Agent-specific files contain the detailed content moved out of CLAUDE.md. Create these files if they
-don't exist. CLAUDE.md becomes a routing document that directs agents to their specialized guidance.
-
-**Why This Approach**: Standard compression preserves all content in place. CLAUDE.md benefits from
-**reorganization** because much content is duplicated elsewhere or is agent-specific. Moving content
-to appropriate locations reduces redundancy across the entire documentation system.
-
-**Validation**: After reorganization, verify:
+**Validation after compression:**
 ```bash
 # CLAUDE.md should be ~200-250 lines (not 800+)
 wc -l CLAUDE.md
@@ -295,16 +240,13 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 ### Step 5: Decision Logic
 
-**Threshold**: 1.0
+**Threshold**: Exact equality required (no "close enough" - see M254)
 
 **Report Format** (for approval):
-1. What was preserved
-2. What was removed
-3. Validation Details (claim/relationship/graph scores)
-4. **Results** (original size, compressed size, reduction %, **execution equivalence score**)
-5. **Version Comparison Table** (showing all versions generated in this session)
+1. Validation output from /compare-docs (copy verbatim)
+2. **Version Comparison Table** (showing all versions generated in this session)
 
-**⚠️ CRITICAL**: List execution equivalence score at bottom for easy visibility.
+**⚠️ CRITICAL**: Report the ACTUAL score from /compare-docs. Do not summarize or interpret.
 
 **Version Comparison Table Format**:
 
@@ -329,32 +271,16 @@ with open('$FILE', 'r') as f:
 | **Original** | {n}    | baseline  | N/A   | Reference  |
 | **V{n}**     | {n}    | {n}%      | {n}   | {status}   |
 
-**Expected output format:**
-
-| Version      | Tokens | Reduction | Score | Status      |
-|--------------|--------|-----------|-------|-------------|
-| **Original** | {n}    | baseline  | N/A   | Reference   |
-| **V1**       | {n}    | {n}%      | {n}   | Rejected    |
-| **V2**       | {n}    | {n}%      | {n}   | Applied     |
-
 **Status values**:
-- Approved = Score equals 1.0
-- Rejected = Score below 1.0
+- Approved = Score equals threshold
+- Rejected = Score below threshold
 - Applied = Currently applied to original file
-
-**Example**:
-
-| Version      | Tokens | Reduction | Score | Status    |
-|--------------|--------|-----------|-------|-----------|
-| **Original** | 12,480 | baseline  | N/A   | Reference |
-| **V1**       | 6,760  | 46%       | 0.89  | Rejected  |
-| **V2**       | 5,590  | 55%       | 1.0   | Applied   |
 
 ---
 
-**If score = 1.0**: ✅ **APPROVE**
+**If score meets threshold**: ✅ **APPROVE**
 ```
-Validation passed! Execution equivalence: {score}/1.0
+Validation passed! Execution equivalence: {actual score from /compare-docs}
 
 ✅ Approved version: /tmp/compressed-{{filename}}-v${VERSION}.md
 
@@ -384,31 +310,11 @@ Would you like to try again to generate an even better version?
 → `rm /tmp/shrink-doc-{{filename}}-version.txt`
 → Note: Future /shrink-doc on this file will use compressed version as new baseline
 
-**If score < 1.0**: ❌ **ITERATE**
+**If score below threshold**: ❌ **ITERATE**
 ```
-Validation requires improvement. Score: {score}/1.0 (threshold: 1.0)
+Validation requires improvement. Score: {actual score from /compare-docs}
 
-Components:
-- Claim preservation: {claim_score}
-- Relationship preservation: {relationship_score}
-- Graph structure: {graph_score}
-
-**Why < 1.0 requires iteration**:
-Scores below 1.0 indicate relationship abstraction or loss that creates
-interpretation vulnerabilities. See /compare-docs § Score Interpretation
-for detailed vulnerability analysis.
-
-**Common issues at this score range**:
-- Abstraction ambiguity (e.g., "ALL of X" → separate statements)
-- Lost mutual exclusivity constraints
-- Conditional logic flattening (IF-THEN-ELSE → flat list)
-- Temporal dependencies implicit rather than explicit
-
-Issues found:
-{list warnings from /compare-docs}
-
-Specific relationship losses:
-{list lost_relationships with details}
+{Copy /compare-docs output verbatim - includes component scores, warnings, lost_relationships}
 
 Re-invoking agent with feedback to fix issues...
 ```
@@ -418,42 +324,35 @@ Re-invoking agent with feedback to fix issues...
 
 **BLOCKING REQUIREMENT**: Complete this validation BEFORE making any approval decision.
 
-**Step 1: Extract exact score value**
+**Step 1: Run /compare-docs and capture output**
+```bash
+/compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+```
+
+**Step 2: Extract and report the ACTUAL score**
 ```
 SCORE={exact decimal from /compare-docs execution_equivalence_score}
 ```
 
-**Step 2: Perform explicit comparison**
+**Step 3: Perform explicit comparison**
 ```
-THRESHOLD=1.0
-IS_EXACTLY_ONE=$(echo "$SCORE == $THRESHOLD" | bc -l)
-```
-
-**Step 3: Decision based ONLY on comparison result**
-```
-if [ "$IS_EXACTLY_ONE" -eq 1 ]; then
+IS_EXACT_MATCH=$(echo "$SCORE == 1.0" | bc -l)
+if [ "$IS_EXACT_MATCH" -eq 1 ]; then
   DECISION="APPROVE"
 else
-  DECISION="ITERATE"  # ANY value less than 1.0, including 0.99, 0.999, etc.
+  DECISION="ITERATE"
 fi
 ```
 
-**Step 4: State decision with explicit score verification**
+**Step 4: State decision with actual score**
 ```
-Score: {SCORE}/1.0
-Comparison: {SCORE} == 1.0 → {true|false}
+Score: {ACTUAL_SCORE} (from /compare-docs)
 Decision: {DECISION}
 ```
 
 **FAIL-FAST**: If DECISION=ITERATE, STOP. Do not ask user for approval. Proceed directly to Step 6 (Iteration Loop).
 
-**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough" scores. Only exact equality (score == 1.0) permits approval. No exceptions.
-
-**Anti-patterns (blocked by this gate)**:
-- ❌ "Score 0.97, close enough to 1.0" → BLOCKED (0.97 ≠ 1.0)
-- ❌ "Score 0.99, good enough" → BLOCKED (0.99 ≠ 1.0)
-- ❌ "Score 0.999, essentially perfect" → BLOCKED (0.999 ≠ 1.0)
-- ✅ "Score 1.0" → APPROVED (1.0 == 1.0)
+**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough" scores. Only exact threshold match permits approval. No exceptions.
 
 ---
 
@@ -504,56 +403,16 @@ Do NOT just describe or return the content - you MUST physically write the file.
 
 **🚨 MANDATORY: /compare-docs Required for EVERY Iteration**
 
-**CRITICAL**: You MUST invoke `/compare-docs` (SlashCommand tool) for EVERY version validation.
-There are NO exceptions. Manual validation, estimation, or checklist-based scoring is PROHIBITED.
+**CRITICAL**: You MUST invoke `/compare-docs` for EVERY version validation.
+No exceptions. Score is ONLY valid if it comes from /compare-docs output.
 
-**Why This Is Non-Negotiable**:
-- Session 7937e222: Agent manually validated v2/v3 with self-created checklist → score 0.97
-- Independent re-analysis: Actual score was 0.72 (25% inflation)
-- Result: Compression approved that lost critical content
-
-**Validation Anti-Patterns** (ALL are violations):
-
-❌ **WRONG #1**: Manual checklist validation
-```
-"Let me assess v2 improvements..."
-| Category | Original | v2 | Preserved |
-| State machine | ✅ | ✅ | 100% |
-[creates own checklist, assigns 100% to all]
-"Estimated Score: 0.97"
-```
-**Why wrong**: Agent knows what SHOULD be there, confirms it exists (confirmation bias)
-
-❌ **WRONG #2**: Estimation without /compare-docs
-```
-"Good progress on v2. Estimated Score: ~0.88"
-```
-**Why wrong**: No independent extraction, just subjective assessment
-
-❌ **WRONG #3**: Custom Task prompt with items to verify
-```
-Task: "Verify these 6 improvements are present: 1. X, 2. Y..."
-```
-**Why wrong**: Primes validator to confirm checklist, misses other losses
-
-✅ **CORRECT**: Invoke /compare-docs for EVERY version
 ```bash
-# v1 validation
-/compare-docs /tmp/original-{filename} /tmp/compressed-{filename}-v1.md
-
-# v2 validation (after iteration)
-/compare-docs /tmp/original-{filename} /tmp/compressed-{filename}-v2.md
-
-# v3 validation (after iteration)
-/compare-docs /tmp/original-{filename} /tmp/compressed-{filename}-v3.md
+/compare-docs /tmp/original-{filename} /tmp/compressed-{filename}-v{N}.md
 ```
-
-**Enforcement**: Score is ONLY valid if it comes from /compare-docs output.
-Any score derived from manual assessment, estimation, or targeted validation is INVALID.
 
 **Self-Check Before Reporting Score**:
-1. Did I invoke /compare-docs (SlashCommand tool) for this version? YES/NO
-2. Is the score from /compare-docs output, not my own calculation? YES/NO
+1. Did I invoke /compare-docs for this version? YES/NO
+2. Is the score from /compare-docs output? YES/NO
 3. If either is NO → STOP and invoke /compare-docs
 
 **Maximum iterations**: 3
@@ -573,33 +432,11 @@ Each file MUST be validated individually with `/compare-docs`. Report results as
 
 | File | execution_equivalence_score | Status |
 |------|----------------------------|--------|
-| commands/add.md | 1.0 | PASS |
-| commands/work.md | 1.0 | PASS |
-| commands/status.md | 0.94 | FAIL - iterate |
+| {file1} | {score} | {PASS/FAIL} |
+| {file2} | {score} | {PASS/FAIL} |
 
-**Anti-pattern (M265):** Summarizing batch results as "all files passed" or "all files scored 1.0" without showing per-file evidence. Aggregate statements are unverifiable.
-
-**🚨 BLOCKING GATE (M269) - Score Fabrication Prevention:**
-
-Before reporting ANY score for a file, verify:
-
-1. **Check invocation count**: Count actual `/compare-docs` Skill tool invocations in conversation
-2. **Match files to invocations**: Each file in the summary table MUST have a corresponding `/compare-docs` invocation
-3. **Evidence trail**: Score value MUST be extracted from `/compare-docs` output, not generated
-
-**FAIL CONDITIONS (any of these blocks approval)**:
-- Number of `/compare-docs` invocations < number of files with claimed scores
-- Score appears in table but no `/compare-docs` output contains that score for that file
-- Summary shows "1.0" for file but no validation evidence exists
-
-**Why This Gate Exists (M269)**: Session 7cadeab0: Subagent claimed "score = 1.0" for 18 files but only invoked `/compare-docs` for 2 files. Independent review found actual score 0.74 for work.md (not 1.0). Lost content: skip task flow, duplicate handling, approval diff formatting, validation scripts, 10+ anti-pattern explanations. Compression was committed based on fabricated scores.
-
-**Verification Command** (run before presenting approval):
-```bash
-# Count compare-docs invocations in session (approximate)
-# Each file should have at least one
-grep -c "compare-docs" /home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl
-```
+**BLOCKING GATE (M269):** Each file in the summary table MUST have a corresponding `/compare-docs`
+invocation. Number of invocations must equal or exceed number of files with claimed scores.
 
 ### Execution Models
 
@@ -612,11 +449,79 @@ grep -c "compare-docs" /home/node/.config/claude/projects/-workspace/${SESSION_I
 **Parallel** (multiple subagents via `/cat:parallel-execute`):
 1. Spawn one subagent per file, each running full shrink-doc workflow
 2. Each subagent manages its own baseline (`/tmp/original-{filename}`) and versions
-3. Collect results from all subagents
+3. Collect results from all subagents (see Fault-Tolerant Collection below)
 4. Combine into single per-file table
-5. Files that fail validation iterate independently within their subagent
+5. Retry only failed subagents (see Selective Retry below)
 
 **Parallel is preferred** for batch operations - files are independent and can be compressed concurrently. Use sequential only when resource constraints require it.
+
+### Fault-Tolerant Parallel Execution
+
+**Principle**: Individual subagent failures MUST NOT abort the entire batch. Other subagents continue independently.
+
+**Spawning pattern** (single message, multiple Task calls):
+```
+# Spawn ALL file compression agents in ONE message with multiple Task tool invocations
+Task tool #1: { subagent_type: "general-purpose", description: "Compress file1.md", prompt: "..." }
+Task tool #2: { subagent_type: "general-purpose", description: "Compress file2.md", prompt: "..." }
+Task tool #3: { subagent_type: "general-purpose", description: "Compress file3.md", prompt: "..." }
+```
+
+**Result collection**: After parallel spawning, collect results from each subagent. Classify each result:
+
+| Result Type | Detection | Action |
+|-------------|-----------|--------|
+| **Success** | Returns structured result with score | Record score in table |
+| **Validation failure** | Returns score < 1.0 | Record score, mark for iteration retry |
+| **Agent error** | Returns error message or timeout | Record as FAILED, mark for full retry |
+| **No response** | Task tool returns no result | Record as FAILED, mark for full retry |
+
+**Result table format** (includes failure states):
+
+| File | Status | Score | Notes |
+|------|--------|-------|-------|
+| file1.md | SUCCESS | 1.0 | Approved |
+| file2.md | VALIDATION_FAILED | 0.87 | Needs iteration |
+| file3.md | AGENT_ERROR | - | Subagent crashed: {error} |
+| file4.md | SUCCESS | 1.0 | Approved |
+
+### Selective Retry Logic
+
+**After collecting all parallel results**, process failures:
+
+1. **Identify retry candidates**:
+   ```
+   RETRY_LIST = []
+   for result in results:
+     if result.status == "AGENT_ERROR":
+       RETRY_LIST.append({file: result.file, type: "full"})  # Full re-run
+     elif result.status == "VALIDATION_FAILED":
+       RETRY_LIST.append({file: result.file, type: "iterate", score: result.score})  # Iteration only
+   ```
+
+2. **Spawn retry subagents** (parallel, same pattern):
+   - For `type: "full"`: Re-run complete shrink-doc workflow from Step 1
+   - For `type: "iterate"`: Run Step 6 (Iteration Loop) with previous attempt feedback
+
+3. **Maximum retry attempts**: 2 per file
+   - After 2 failed retries for same file, mark as UNRECOVERABLE and continue
+   - Report unrecoverable files to user at end
+
+4. **Final report** includes all attempts:
+   ```
+   BATCH COMPRESSION COMPLETE
+
+   | File | Final Status | Score | Attempts |
+   |------|--------------|-------|----------|
+   | file1.md | APPROVED | 1.0 | 1 |
+   | file2.md | APPROVED | 1.0 | 2 (retry after validation failure) |
+   | file3.md | APPROVED | 1.0 | 2 (retry after agent error) |
+   | file4.md | UNRECOVERABLE | - | 3 (max retries exceeded) |
+
+   Summary: 3/4 files approved, 1 unrecoverable (requires manual review)
+   ```
+
+**Why selective retry matters**: Re-running ALL files after one failure wastes tokens and time. Fault isolation + selective retry minimizes redundant work while ensuring eventual completion.
 
 ### Reporting to Parent Agent
 
@@ -664,10 +569,14 @@ Task tool:
 
 **Batch validation workflow:**
 1. Compression subagent(s) complete → compressed files in /tmp/
-2. Spawn N validation subagents (one per file) in parallel
-3. Collect scores from each validation subagent
-4. Present per-file results table to user
-5. FAIL-FAST if any score < 1.0
+2. Spawn N validation subagents (one per file) in parallel (single message, multiple Task calls)
+3. Collect scores from each validation subagent using fault-tolerant collection:
+   - **Success**: Validator returns score → record in table
+   - **Validator error**: Subagent crashed → mark as VALIDATION_ERROR, add to retry list
+4. Retry failed validators only (max 2 attempts per file)
+5. Present per-file results table to user
+6. For files with score < 1.0: route to iteration retry (Step 6)
+7. For files with persistent VALIDATION_ERROR: report as needing manual validation
 
 ---
 
@@ -707,15 +616,12 @@ version numbers for rollback capability.
 ## Success Criteria
 
 ✅ **Compression approved** when:
-- Execution equivalence score = 1.0
+- /compare-docs execution_equivalence_score meets threshold exactly
 
 ✅ **Compression quality** metrics:
-- Word reduction: ~50% (target)
-- Execution equivalence: = 1.0
-- Claim preservation: = 1.0
-- Relationship preservation: = 1.0
-- Graph structure: = 1.0
-- No critical relationship losses
+- Word reduction: ~50% (target, secondary to equivalence)
+- All component scores from /compare-docs at maximum
+- No critical relationship losses reported by /compare-docs
 
 ---
 

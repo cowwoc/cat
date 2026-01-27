@@ -29,19 +29,6 @@ OUTPUT TEMPLATE TOKEN REPORT:
 
 Output the table EXACTLY as provided. Do NOT modify alignment or recalculate values.
 
-**Example output template:**
-```
-╭───────────────────┬────────────────────────────────┬──────────┬──────────────────┬────────────╮
-│ Type              │ Description                    │ Tokens   │ Context          │ Duration   │
-├───────────────────┼────────────────────────────────┼──────────┼──────────────────┼────────────┤
-│ Explore           │ Explore codebase               │ 68.4k    │ 34%              │ 1m 7s      │
-│ general-purpose   │ Implement fix                  │ 90.0k    │ 45% ⚠️            │ 43s        │
-│ general-purpose   │ Refactor module                │ 170.0k   │ 85% 🚨            │ 3m 12s     │
-├───────────────────┼────────────────────────────────┼──────────┼──────────────────┼────────────┤
-│                   │ TOTAL                          │ 328.4k   │ -                │ 5m 2s      │
-╰───────────────────┴────────────────────────────────┴──────────┴──────────────────┴────────────╯
-```
-
 ### If OUTPUT TEMPLATE TOKEN REPORT is NOT found:
 
 **FAIL immediately** with this message:
