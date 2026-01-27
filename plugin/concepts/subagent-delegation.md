@@ -212,6 +212,43 @@ value rather than the actual value. This is a form of documentation priming (M26
 **Rule**: Output format defines *structure* (field names, types). Never include *content* (expected
 values, required outcomes). Acceptance criteria belong in a separate section, not in output format.
 
+### Validation Separation Requirement (M276)
+
+**CRITICAL: Subagents that PRODUCE output must NOT also VALIDATE it.**
+
+When a subagent creates/modifies content that requires validation:
+
+```
+# ❌ WRONG: Same subagent produces AND validates
+"Compress these 40 files.
+ Verify each scores 1.0 on /compare-docs."
+# Subagent may skip validation or fabricate scores
+
+# ✅ RIGHT: Separate production from validation
+STEP 1: Subagent A compresses files (NO validation instruction)
+STEP 2: Main agent OR Subagent B runs /compare-docs on each file
+STEP 3: Main agent reviews actual scores, decides next action
+```
+
+**Why separation is mandatory:**
+1. Producer bias: Subagent that created content is motivated to report success
+2. Priming risk: Knowing the threshold (1.0) primes fabrication
+3. No oversight: User cannot verify validation actually ran
+4. Skill bypass: Custom prompts may omit skill-mandated validations
+
+**Enforcement pattern:**
+
+| Task Type | Producer | Validator |
+|-----------|----------|-----------|
+| Document compression | Compression subagent | Main agent via /compare-docs |
+| Code generation | Implementation subagent | Test runner (separate step) |
+| File transformation | Transform subagent | Diff/verification subagent |
+
+**Main agent MUST verify validation evidence:**
+- Check for actual tool invocations (not just claimed scores)
+- Require per-file scores in structured format
+- Cross-reference file count with validation count
+
 ## Quality Indicators
 
 ### Prompt Length
