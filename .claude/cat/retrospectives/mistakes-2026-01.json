@@ -980,6 +980,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When checking encapsulation, verify orchestrator doc contains ZERO actionable guidance - not just that external file exists. Partial information (what to preserve, what to condense) still enables manual bypass."
+    },
+    {
+      "id": "M281",
+      "timestamp": "2026-01-27T18:15:00Z",
+      "category": "assumption_without_verification",
+      "description": "Used ${CLAUDE_PLUGIN_ROOT}/scripts/... in Bash command without checking if variable was set, resulting in path /scripts/... which doesn't exist",
+      "root_cause": "Environment variables like CLAUDE_PLUGIN_ROOT are injected by hook system, not globally available. Direct Bash commands outside hook context have empty variables.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/agent-architecture.md",
+      "pattern_keywords": [
+        "environment_variable",
+        "CLAUDE_PLUGIN_ROOT",
+        "hook_context",
+        "empty_variable",
+        "path"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check if CLAUDE_PLUGIN_ROOT is set before using. If empty, use hardcoded fallback path: /home/node/.config/claude/plugins/cache/cat/cat/2.1"
     }
   ]
 }
