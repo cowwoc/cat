@@ -23,6 +23,83 @@ Use skill-builder for BOTH types.
 
 ---
 
+## Document Structure: XML vs Markdown
+
+Skills and commands can use either XML-based structure or pure markdown sections.
+Choose based on the features needed.
+
+### Use XML Structure When
+
+XML tags (`<objective>`, `<process>`, `<step>`, `<execution_context>`) are required when:
+
+| Feature | XML Syntax | Purpose |
+|---------|------------|---------|
+| **File references** | `@${CLAUDE_PLUGIN_ROOT}/path/file.md` inside `<execution_context>` | Load external files into context |
+| **Named step routing** | `<step name="validate">` with "Continue to step: create" | Branch between steps based on conditions |
+| **Conditional loading** | `<conditional_context>` | Load files only when specific scenarios occur |
+| **Complex workflows** | Multiple `<step>` blocks with routing | Multi-phase processes with 10+ steps |
+
+**Example** (command with file references and routing):
+```xml
+<execution_context>
+@${CLAUDE_PLUGIN_ROOT}/concepts/work.md
+@${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md
+</execution_context>
+
+<process>
+<step name="validate">
+If validation fails, continue to step: error_handler
+Otherwise, continue to step: execute
+</step>
+
+<step name="execute">
+...
+</step>
+</process>
+```
+
+### Use Pure Markdown When
+
+Standard markdown sections (`## Purpose`, `## Procedure`, `## Verification`) are preferred when:
+
+- No file reference expansion needed
+- Linear workflow (steps execute in order)
+- Simple single-purpose command or skill
+- No conditional branching between steps
+
+**Example** (simple skill):
+```markdown
+## Purpose
+
+Display pre-computed help content.
+
+---
+
+## Procedure
+
+Output the template content exactly as provided in context.
+
+---
+
+## Verification
+
+- [ ] Content output verbatim
+- [ ] No modifications made
+```
+
+### Decision Checklist
+
+Before creating a new skill/command, answer:
+
+1. Does it need to load external files? → **XML** (use `<execution_context>`)
+2. Does it have conditional step routing? → **XML** (use `<step name="...">`)
+3. Does it need conditional file loading? → **XML** (use `<conditional_context>`)
+4. Is it a simple linear procedure? → **Markdown** (use `## Purpose/Procedure/Verification`)
+
+**Default**: Use pure markdown unless you need XML-specific features.
+
+---
+
 ## Core Principle
 
 **Backward chaining**: Start with what you want to be true, repeatedly ask "what must be
