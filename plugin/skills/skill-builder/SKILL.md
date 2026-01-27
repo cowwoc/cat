@@ -1516,6 +1516,119 @@ For each function:
 
 ---
 
+## Priming Prevention Checklist (M256, M269, M274)
+
+**Critical**: Skills can accidentally TEACH agents to bypass proper workflows. Before finalizing,
+verify the skill doesn't prime agents for incorrect behavior.
+
+### Information Ordering Check
+
+| Question | If YES | Fix |
+|----------|--------|-----|
+| Does skill teach HOW before saying "invoke tool"? | Primes manual approach | Move algorithm to internal doc or handler |
+| Are there Functions/Prerequisites before Procedure? | Primes manual construction | Remove or move after Procedure |
+| Does skill explain what to preserve/remove? | Primes content fabrication | Move to internal agent prompt only |
+
+**Correct ordering**: WHAT to invoke → WHAT postconditions to verify → (internals hidden)
+
+### Output Format Check (M274)
+
+Output format specifications must define **structure only**, never **expected content**.
+
+```yaml
+# ❌ WRONG - Embeds expected value
+Output format:
+  validation_score: 1.0 (required)
+  status: PASS
+
+# ✅ CORRECT - Structure only
+Output format:
+  validation_score: {actual score from compare-docs}
+  status: {PASS if score >= threshold, FAIL otherwise}
+```
+
+**Never include**:
+- Expected numeric values (1.0, 100%, etc.)
+- Success indicators in examples (PASS, ✓, etc.)
+- "Required" or "must be" next to values
+
+### Cost/Efficiency Language Check
+
+**Remove any language suggesting proper approach is "expensive" or "costly":**
+
+```yaml
+# ❌ WRONG - Encourages shortcuts
+Note: Running /compare-docs spawns 2 subagents for parallel extraction.
+For batch operations, this can be costly.
+
+# ❌ WRONG - Suggests overhead
+This approach spawns subagents which adds context overhead.
+
+# ✅ CORRECT - No cost language
+Note: /compare-docs ensures semantic comparison by running parallel extraction.
+```
+
+**Why**: Cost language primes agents to take shortcuts under context pressure.
+
+### Encapsulation Check
+
+Verify orchestrator-facing content is separated from internal agent content:
+
+| Content Type | Orchestrator Doc | Internal Doc |
+|--------------|------------------|--------------|
+| What skill to invoke | ✅ | |
+| Postconditions to verify | ✅ | |
+| Fail-fast conditions | ✅ | |
+| How to report results | ✅ | |
+| Algorithm details | | ✅ |
+| What to preserve/remove | | ✅ |
+| Compression techniques | | ✅ |
+| Detailed output format | | ✅ |
+
+**Principle**: The orchestrator should NOT learn HOW to do the task - only WHAT to invoke
+and WHAT results to expect. If the orchestrator could do the task after reading the doc,
+the doc has exposed too much.
+
+### Delegation Safety Check (M276)
+
+If the skill will be delegated to subagents:
+
+- [ ] Skill does NOT tell subagent what validation score to expect
+- [ ] Producer and validator are separate (subagent A produces, subagent B validates)
+- [ ] Output format uses placeholders (`{actual score}`), not expected values
+- [ ] Acceptance criteria specify WHAT to measure, not WHAT result to report
+- [ ] Subagent is required to include raw tool output, not summaries
+
+**Anti-pattern**: Telling a subagent "validation score must be 1.0" primes fabrication.
+Instead: "Run /compare-docs and report the actual score."
+
+### Reference Information Check (M256)
+
+Information only useful when output template exists should BE IN the output template:
+
+```yaml
+# ❌ WRONG - Skill doc contains reference info
+## Emoji Reference (for understanding output, NOT for manual use)
+| Status | Emoji |
+|--------|-------|
+| Completed | ☑️ |
+
+## Procedure
+Step 1: Check for output template...
+
+# ✅ CORRECT - Reference info is in the template
+## Procedure
+Step 1: Check for "OUTPUT TEMPLATE" in context
+        (Emoji meanings appear in template Legend line)
+```
+
+**Self-check**:
+- [ ] No "for reference only" or "do not use manually" information in skill doc
+- [ ] All reference tables moved to output template or handler
+- [ ] Agent cannot construct output manually even if they tried
+
+---
+
 ## Checklist Before Finalizing Skill
 
 - [ ] Frontmatter description is trigger-oriented (WHEN to use, not just what it does)
@@ -1543,3 +1656,13 @@ For each function:
 - [ ] Visual patterns use lookup tables with "do not hand-type" warnings
 - [ ] Display rendering references handler functions by name
 - [ ] Verification criteria exist for the goal
+
+### Priming Prevention (M256, M269, M274, M276)
+
+- [ ] **Information ordering**: "Invoke skill" appears BEFORE any algorithm details
+- [ ] **No Functions/Prerequisites sections** teaching manual construction
+- [ ] **Output formats specify structure only** - no expected values (1.0, PASS, etc.)
+- [ ] **No cost/efficiency language** suggesting proper approach is expensive
+- [ ] **Encapsulation verified**: Orchestrator cannot perform task after reading doc
+- [ ] **Delegation-safe**: No expected scores in acceptance criteria
+- [ ] **Reference info in output template**, not skill doc
