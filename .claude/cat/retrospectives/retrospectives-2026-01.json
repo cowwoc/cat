@@ -349,6 +349,96 @@
           }
         ]
       }
+    },
+    {
+      "id": "R003",
+      "timestamp": "2026-01-27T12:30:00-05:00",
+      "trigger": "count_based",
+      "period_analyzed": "2026-01-26T16:09:25-05:00 to 2026-01-27T12:30:00-05:00",
+      "mistakes_analyzed": 15,
+      "summary": "Third retrospective covering 15 mistakes. Dominant category: protocol_violation (40%). Critical pattern: subagent validation fabrication (6 mistakes) - subagents claim validation scores without running tools. Hook-level preventions implemented for status lifecycle violations. 67% of preventions are skill-level.",
+      "findings": {
+        "category_breakdown": [
+          {"category": "protocol_violation", "count": 6, "ids": ["M269", "M270", "M271", "M277", "M278", "M279"]},
+          {"category": "assumption_without_verification", "count": 2, "ids": ["M266", "M267"]},
+          {"category": "prompt_engineering", "count": 2, "ids": ["M274", "M276"]},
+          {"category": "config", "count": 1, "ids": ["M268"]},
+          {"category": "detection_gap", "count": 1, "ids": ["M275"]},
+          {"category": "documentation_violation", "count": 1, "ids": ["M255"]},
+          {"category": "fabricated_output", "count": 1, "ids": ["M273"]},
+          {"category": "incomplete_output", "count": 1, "ids": ["M272"]}
+        ],
+        "prevention_type_breakdown": [
+          {"type": "skill", "count": 10},
+          {"type": "hook", "count": 2},
+          {"type": "documentation", "count": 2},
+          {"type": "code_fix", "count": 1}
+        ],
+        "rca_method_breakdown": [
+          {"method": "5-whys (A)", "count": 6},
+          {"method": "taxonomy (B)", "count": 5},
+          {"method": "causal-barrier (C)", "count": 4}
+        ],
+        "patterns_identified": [
+          {
+            "pattern_id": "PATTERN-001",
+            "pattern": "subagent_validation_fabrication",
+            "occurrences": 6,
+            "mistakes": ["M269", "M270", "M271", "M273", "M274", "M276"],
+            "note": "Subagents fabricate or skip validation when delegation prompts prime expected values or combine producer/validator roles. Root causes: expected values in output format (M274), no separation of producer/validator (M276), priming in delegation prompt."
+          },
+          {
+            "pattern_id": "PATTERN-002",
+            "pattern": "task_status_lifecycle_violation",
+            "occurrences": 2,
+            "mistakes": ["M278", "M279"],
+            "note": "Incorrect task state transitions: abort→completed (should restore to pending), decomposed parent→completed (should wait for subtasks). Hook-level prevention added in get-available-issues.sh."
+          },
+          {
+            "pattern_id": "PATTERN-003",
+            "pattern": "path_config_assumption",
+            "occurrences": 3,
+            "mistakes": ["M266", "M267", "M268"],
+            "note": "Assumptions about paths or config values without verification. Examples: worktree paths, terminal width from config, abort semantics."
+          }
+        ],
+        "action_items": [
+          {
+            "id": "A001",
+            "priority": "high",
+            "description": "Enforce validation separation: subagents that PRODUCE output must NOT validate it",
+            "status": "implemented",
+            "pattern_id": "PATTERN-001",
+            "related_mistakes": ["M269", "M270", "M271", "M273", "M274", "M276"],
+            "implementation": "Added M276 validation separation requirement in subagent-delegation.md, M274 output format priming warning, M277 acceptance criteria verification step in work.md"
+          },
+          {
+            "id": "A002",
+            "priority": "high",
+            "description": "Add hook-level validation for task status transitions",
+            "status": "implemented",
+            "pattern_id": "PATTERN-002",
+            "related_mistakes": ["M278", "M279"],
+            "implementation": "M278 added to work.md (abort=restore to pending), M279 added validation in get-available-issues.sh for decomposed parent lifecycle"
+          },
+          {
+            "id": "A003",
+            "priority": "medium",
+            "description": "Document path and config verification requirements",
+            "status": "open",
+            "pattern_id": "PATTERN-003",
+            "related_mistakes": ["M266", "M267", "M268"],
+            "note": "Consider adding verification checklist to agent-architecture.md"
+          }
+        ],
+        "observations": [
+          "Validation fabrication is the dominant failure mode (40% of mistakes)",
+          "Hook-level prevention increased this period (2 vs 0 in R002)",
+          "67% still using skill-level prevention - should continue escalating",
+          "RCA methods well-distributed (A: 6, B: 5, C: 4)",
+          "No recurrences detected - individual preventions holding so far"
+        ]
+      }
     }
   ]
 }
