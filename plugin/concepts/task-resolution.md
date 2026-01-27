@@ -10,6 +10,8 @@ How tasks are marked complete and how to trace their resolving commits.
 | `duplicate` | Another task did this work | No | Use original task's commit |
 | `obsolete` | No longer needed | No | None |
 
+**Status values:** `pending`, `in-progress`, `completed` (only these three)
+
 ## Standard Completion (implemented)
 
 When a task is completed through normal execution:
@@ -104,6 +106,20 @@ git commit -m "config: close obsolete task {task-name}
 {Reason why task is no longer needed}
 "
 ```
+
+## Stopping Work on a Task (M278)
+
+**CRITICAL:** When user says "abort the task" or "stop the task", this means
+"stop working now, restore to pending" - NOT "mark as completed".
+
+| User Says | Action |
+|-----------|--------|
+| "abort/stop the task" | Restore Status to `pending`, cleanup worktree |
+| "mark as obsolete" | Set Status: `completed`, Resolution: `obsolete` |
+| "mark as duplicate" | Set Status: `completed`, Resolution: `duplicate` |
+
+**A stopped task returns to pending state** - ready for future work.
+Only tasks that reach their goal (or are explicitly declared obsolete/duplicate) become completed.
 
 ## Tracing Task Resolution
 

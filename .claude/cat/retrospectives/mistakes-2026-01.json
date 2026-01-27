@@ -899,6 +899,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After subagent completes and before approval gate, read PLAN.md acceptance criteria, run any required validations, and FAIL-FAST if criteria not met"
+    },
+    {
+      "id": "M278",
+      "timestamp": "2026-01-27T17:45:00Z",
+      "category": "protocol_violation",
+      "description": "User said abort task but agent marked as completed instead of restoring to pending",
+      "root_cause": "Misinterpreted abort as permanent abandonment. Documentation lacked clarity that abort means restore to pending, not mark completed.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/task-resolution.md",
+      "pattern_keywords": [
+        "abort",
+        "stop",
+        "pending",
+        "completed",
+        "status"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user says abort/stop task, restore Status to pending and cleanup worktree. Only mark completed when task goals achieved or explicitly declared obsolete/duplicate."
     }
   ]
 }
