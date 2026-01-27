@@ -635,6 +635,40 @@ Summary: {N} files processed, {M} passed (score = 1.0), {K} failed
 
 **Parent agent responsibility:** When presenting approval gate after batch compression, include the per-file table. Do NOT summarize as "all passed" - show each file's actual score.
 
+### Validation Separation for Batch Operations (M277)
+
+**CRITICAL: Compression subagents must NOT validate their own work (M276).**
+
+After all compression subagents complete, the orchestrating agent spawns SEPARATE validation subagents:
+
+**One validation subagent per file** to avoid cross-file bias:
+
+```
+# For each compressed file, spawn independent validator
+Task tool:
+  subagent_type: "general-purpose"
+  description: "Validate {filename}"
+  prompt: |
+    Run /compare-docs to validate execution equivalence:
+    - Original: /tmp/original-{filename}
+    - Compressed: /tmp/compressed-{filename}-v{N}.md
+
+    Return ONLY the execution_equivalence_score from /compare-docs output.
+    Do NOT interpret, summarize, or adjust the score.
+```
+
+**Why separate subagents per file:**
+- Prevents validation bias from seeing other files' results
+- Each validation is independent and unprimed
+- Avoids single validator rationalizing "close enough" across batch
+
+**Batch validation workflow:**
+1. Compression subagent(s) complete → compressed files in /tmp/
+2. Spawn N validation subagents (one per file) in parallel
+3. Collect scores from each validation subagent
+4. Present per-file results table to user
+5. FAIL-FAST if any score < 1.0
+
 ---
 
 ## Implementation Notes
