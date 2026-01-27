@@ -364,6 +364,62 @@ jq empty ~/.claude/settings.json
 # 5. Restart Claude Code
 ```
 
+## Multi-Line Message Formatting
+
+When hooks output `systemMessage` or other text that agents will read, use heredocs with actual
+newlines instead of `\n` escape sequences. This makes messages easier to review and debug.
+
+### ✅ GOOD: Heredoc with jq for JSON escaping
+
+```bash
+# Multi-line message is readable in source
+MESSAGE=$(cat << 'MSGEOF'
+⚠️ Warning Title
+
+First paragraph explaining the situation.
+
+Second paragraph with more details:
+- Bullet point 1
+- Bullet point 2
+
+Action required: Do something specific.
+MSGEOF
+)
+
+# jq properly escapes newlines for JSON output
+jq -n --arg msg "$MESSAGE" '{"decision": "approve", "systemMessage": $msg}'
+```
+
+### ❌ AVOID: Escape sequences in long strings
+
+```bash
+# Hard to read, review, and debug
+echo '{"decision": "approve", "systemMessage": "⚠️ Warning Title\n\nFirst paragraph.\n\nSecond paragraph:\n- Bullet 1\n- Bullet 2"}'
+```
+
+### Variable Substitution in Heredocs
+
+Use `${VAR}` substitution after heredoc capture for dynamic content:
+
+```bash
+# Capture template with placeholder
+MESSAGE=$(cat << 'MSGEOF'
+Task '$TASK_NAME' needs attention.
+
+Details follow...
+MSGEOF
+)
+
+# Substitute variables
+MESSAGE="${MESSAGE//\$TASK_NAME/$TASK_NAME}"
+
+# Output as JSON
+jq -n --arg msg "$MESSAGE" '{"systemMessage": $msg}'
+```
+
+**Why this matters**: Hook messages often contain multi-line instructions for agents. Escape
+sequences make it difficult for users to review the actual message content in code review.
+
 ## Common Patterns
 
 ### Pattern 1: Validation Hook

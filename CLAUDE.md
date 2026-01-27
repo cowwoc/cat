@@ -44,26 +44,3 @@ All tests must pass (exit code 0) before requesting user approval.
 | `plugin/hooks/skill_handlers/cleanup_handler.py` | Cleanup display |
 
 Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may need updating.
-
-## Bash Script Formatting
-
-When writing bash scripts that return `systemMessage` or inject text into agent context (hooks, handlers), use heredocs or line continuations for multi-line messages:
-
-```bash
-# ✅ GOOD: Heredoc - easy to read and review
-cat << 'EOF'
-{
-  "decision": "approve",
-  "systemMessage": "Line 1 of message.
-
-Line 2 continues here.
-
-Line 3 with more context."
-}
-EOF
-
-# ❌ AVOID: Escape sequences - hard to review
-echo '{"decision": "approve", "systemMessage": "Line 1\\n\\nLine 2\\n\\nLine 3"}'
-```
-
-This makes it easier for users to review and debug message content.
