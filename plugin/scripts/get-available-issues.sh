@@ -155,6 +155,46 @@ get_issue_status() {
         return 1
     fi
 
+    # M279: Validate decomposed parent tasks aren't marked completed prematurely
+    if [[ "$status" == "completed" ]]; then
+        # Check if this is a decomposed parent task
+        if grep -q "^## Decomposed Into" "$state_file" 2>/dev/null; then
+            # Extract subtask names from "Decomposed Into" section
+            local subtask_names
+            subtask_names=$(sed -n '/^## Decomposed Into/,/^##/p' "$state_file" | grep -E '^\- ' | sed 's/^\- //' | cut -d' ' -f1 | tr -d '()')
+
+            if [[ -n "$subtask_names" ]]; then
+                local issue_dir parent_version_dir all_subtasks_complete
+                issue_dir=$(dirname "$state_file")
+                parent_version_dir=$(dirname "$issue_dir")
+                all_subtasks_complete=true
+
+                for subtask in $subtask_names; do
+                    local subtask_state="${parent_version_dir}/${subtask}/STATE.md"
+                    if [[ -f "$subtask_state" ]]; then
+                        local subtask_status
+                        subtask_status=$(grep -E "^\- \*\*Status:\*\*" "$subtask_state" 2>/dev/null | sed 's/.*\*\*Status:\*\* //' | tr -d ' ')
+                        if [[ "$subtask_status" != "completed" ]]; then
+                            all_subtasks_complete=false
+                            break
+                        fi
+                    else
+                        # Subtask doesn't exist yet - not complete
+                        all_subtasks_complete=false
+                        break
+                    fi
+                done
+
+                if [[ "$all_subtasks_complete" == "false" ]]; then
+                    echo "ERROR: Decomposed parent task marked 'completed' but subtasks are not all complete in $state_file" >&2
+                    echo "Parent tasks with '## Decomposed Into' must stay 'pending' or 'in-progress' until ALL subtasks are completed." >&2
+                    echo "See M263 in decompose-task skill for correct lifecycle." >&2
+                    return 1
+                fi
+            fi
+        fi
+    fi
+
     echo "$status"
 }
 
