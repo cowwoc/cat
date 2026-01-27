@@ -1666,3 +1666,114 @@ Step 1: Check for "OUTPUT TEMPLATE" in context
 - [ ] **Encapsulation verified**: Orchestrator cannot perform task after reading doc
 - [ ] **Delegation-safe**: No expected scores in acceptance criteria
 - [ ] **Reference info in output template**, not skill doc
+
+---
+
+## Conditional Section Lazy-Loading
+
+**Principle**: Conditional sections of a skill (content only needed in certain execution paths) MUST be stored in separate files and loaded on-demand, not embedded inline.
+
+**Why lazy-loading matters:**
+- Reduces token cost when the conditional path isn't taken
+- Keeps the main skill focused on the primary workflow
+- Prevents priming from information that won't be used
+- Allows conditional content to be more detailed without bloating the skill
+
+**Identify conditional sections during design:**
+
+```
+If step says "If X, then do Y workflow..." where Y is substantial:
+  → Extract Y to a separate file
+  → Reference it: "Read {skill-name}/Y-WORKFLOW.md and follow its instructions"
+```
+
+**Conditional section signals:**
+
+| Signal | Example | Action |
+|--------|---------|--------|
+| "If [condition], then [multi-step process]" | "If batch mode, follow batch workflow" | Extract to `BATCH-WORKFLOW.md` |
+| "When [scenario] occurs, handle by..." | "When conflicts occur, resolve using..." | Extract to `CONFLICT-RESOLUTION.md` |
+| Special handling for edge cases | "For CLAUDE.md files specifically..." | Extract to `CLAUDEMD-HANDLING.md` |
+| Alternative execution models | "For parallel execution..." | Extract to `PARALLEL-EXECUTION.md` |
+
+**File structure with lazy-loaded sections:**
+
+```
+plugin/skills/my-skill/
+├── SKILL.md                    # Main workflow (always loaded)
+├── EDGE-CASE-A.md              # Loaded only when edge case A detected
+├── EDGE-CASE-B.md              # Loaded only when edge case B detected
+└── ALTERNATIVE-MODE.md         # Loaded only when alternative mode selected
+```
+
+**Reference pattern in main skill:**
+
+```markdown
+### Step N: Handle special case
+
+**If [condition detected]:**
+
+Read `{skill-directory}/SPECIAL-CASE.md` and execute its workflow.
+
+**Otherwise:** Continue to Step N+1.
+```
+
+**Anti-pattern (inline conditional content):**
+
+```markdown
+# ❌ WRONG - Conditional content embedded inline
+### Step N: Handle special case
+
+**If [condition detected]:**
+
+[50+ lines of conditional workflow that's only used 10% of the time]
+
+**Otherwise:** Continue to Step N+1.
+```
+
+**Why this anti-pattern fails:**
+1. Agent reads all 50 lines even when condition is false
+2. Content may prime agent to follow that path unnecessarily
+3. Main skill becomes bloated and harder to maintain
+4. Token cost paid even when content isn't used
+
+**Threshold for extraction:**
+- Content > 20 lines → Extract to separate file
+- Content used < 50% of invocations → Extract to separate file
+- Content represents alternative execution model → Always extract
+
+---
+
+## File Colocation
+
+Files referenced **only** by a single skill MUST reside within that skill's directory:
+
+```
+plugin/skills/
+├── my-skill/
+│   ├── SKILL.md            # Main skill definition
+│   ├── helper-workflow.md  # Only used by my-skill → colocated
+│   └── templates/          # Subdirectories allowed
+│       └── output.md
+```
+
+**Why:** Colocation ensures:
+- Clear ownership (skill owns its dependencies)
+- Easier maintenance (related files grouped together)
+- Simpler lazy-loading (load skill directory, get all needed files)
+- Cleaner deletions (remove skill → remove all its files)
+
+**Shared files** (referenced by multiple skills/commands) belong in `plugin/concepts/`:
+
+```
+plugin/concepts/
+├── work.md                 # Used by work command AND skills
+└── merge-and-cleanup.md    # Used by multiple commands
+```
+
+**Decision rule:**
+| Referenced By | Location |
+|---------------|----------|
+| Single skill only | `plugin/skills/{skill-name}/` |
+| Single command only | `plugin/commands/` (inline or same dir) |
+| Multiple skills/commands | `plugin/concepts/` |
