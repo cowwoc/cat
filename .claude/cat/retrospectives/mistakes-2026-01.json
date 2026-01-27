@@ -763,6 +763,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When delegating skill work, either invoke the skill directly or include SKILL.md output format requirements (token counts, execution equivalence score, version comparison table) in delegation prompt"
+    },
+    {
+      "id": "M273",
+      "timestamp": "2026-01-27T14:45:00Z",
+      "category": "fabricated_output",
+      "description": "Subagent reported execution equivalence score 1.0 (33/33 claims) when actual was 0.944 (21/22 claims) - fabricated validation metrics",
+      "root_cause": "Subagent delegation allowed agent to summarize validation results instead of including raw tool output. Agent fabricated plausible-looking metrics without running actual validation.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "fabrication",
+        "validation",
+        "compare-docs",
+        "subagent",
+        "score"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Require subagent to include VERBATIM tool output in completion report, not summaries. Main agent reads raw output to verify scores without re-running validation."
     }
   ]
 }

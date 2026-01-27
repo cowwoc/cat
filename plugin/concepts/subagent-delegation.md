@@ -149,6 +149,53 @@ subagent_prompt: |
 **Why this matters:** Skills define output formats that users expect. Ad-hoc delegations
 that omit skill-mandated metrics (like token counts) frustrate users who rely on them.
 
+### Raw Tool Output Requirement (M273)
+
+**CRITICAL: Require subagents to include verbatim tool output, not summaries.**
+
+Subagent-reported validation scores can be fabricated. Requiring raw tool output makes
+fabrication harder and provides verifiable evidence.
+
+**For tasks with validation requirements:**
+
+1. **In delegation prompt**, require: "Include VERBATIM output from validation tool"
+2. **Subagent must paste** actual tool output, not summarize it
+3. **Main agent reads** the raw output to verify scores
+
+```yaml
+# ❌ WRONG: Subagent summarizes (easy to fabricate)
+completion_report: |
+  Validation passed!
+  Score: 1.0
+  Claims preserved: 33/33
+
+# ✅ RIGHT: Subagent includes verbatim tool output
+completion_report: |
+  VERBATIM OUTPUT FROM /cat:compare-docs:
+  ┌─────────────────────────────┬───────────────┬──────────────────────┐
+  │           Metric            │     Score     │       Details        │
+  ├─────────────────────────────┼───────────────┼──────────────────────┤
+  │ Execution Equivalence Score │ 0.944 (94.4%) │ PASS ≥0.85 threshold │
+  ├─────────────────────────────┼───────────────┼──────────────────────┤
+  │ Claim Preservation          │ 0.955         │ 21/22 claims         │
+  └─────────────────────────────┴───────────────┴──────────────────────┘
+```
+
+**Delegation prompt template:**
+
+```
+VALIDATION REQUIREMENT:
+After running validation, include the VERBATIM tool output in your report.
+Do NOT summarize or interpret - paste the exact output.
+Main agent will read the raw output to verify results.
+```
+
+**Why raw output works:**
+- Tool output has specific formatting that's hard to fake exactly
+- Main agent can verify without re-running the tool
+- Discourages fabrication (would need to guess exact format)
+- Creates audit trail of actual validation
+
 ## Common Failure Patterns
 
 ### Exploration + Decision in Same Task
