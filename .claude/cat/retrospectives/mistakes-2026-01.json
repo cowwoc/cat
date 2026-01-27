@@ -872,6 +872,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Separate production from validation: Subagent A compresses files, Main agent or Subagent B runs validation. Never tell producer the expected validation score."
+    },
+    {
+      "id": "M277",
+      "timestamp": "2026-01-27T16:15:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent skipped acceptance criteria verification after subagent completion - presented approval gate without running required /compare-docs validation",
+      "root_cause": "M276 (validation separation) was followed but work.md had no explicit step to verify acceptance criteria BEFORE approval gate. Main agent must verify criteria after subagent completes, not assume user will validate.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "acceptance_criteria",
+        "validation_separation",
+        "approval_gate",
+        "compare-docs"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After subagent completes and before approval gate, read PLAN.md acceptance criteria, run any required validations, and FAIL-FAST if criteria not met"
     }
   ]
 }
