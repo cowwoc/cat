@@ -55,6 +55,16 @@ ls -lht ~/.config/projects/-workspace/agent-*.jsonl | head -10
 
 If session ID not in context, report error - do NOT guess.
 
+## Verification Checklist
+
+Before completing history retrieval:
+
+- [ ] Session ID obtained (from `${CLAUDE_SESSION_ID}` or context)
+- [ ] Session file exists at expected path
+- [ ] JSONL parses correctly (each line is valid JSON)
+- [ ] Relevant entries extracted (messages, tool_use, tool_result)
+- [ ] If session not found, reported error (did not guess)
+
 ## Integration
 
 **Complements learn-from-mistakes**:

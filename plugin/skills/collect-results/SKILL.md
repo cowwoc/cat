@@ -99,19 +99,26 @@ if [ -f "$COMPLETION_FILE" ]; then
 fi
 ```
 
-**Fallback: Use token-report skill** for accurate context-based metrics:
-
-If `.completion.json` is missing or has no token data, invoke `/cat:token-report` which extracts
-`totalTokens` from Task tool completions in the session file. This metric represents actual context
-processed (matching CLI "Done" display) rather than cumulative API response tokens.
+**If `.completion.json` is missing: FAIL immediately.**
 
 ```bash
-SESSION_ID=$(cat "${WORKTREE}/.session_id" 2>/dev/null)
-if [ -n "$SESSION_ID" ] && [ ! -f "$COMPLETION_FILE" ]; then
-  echo "NOTE: .completion.json missing. Token metrics available via /cat:token-report"
-  # The token-report skill extracts totalTokens from toolUseResult in session JSONL
+if [ ! -f "$COMPLETION_FILE" ]; then
+  echo "ERROR: .completion.json not found at ${COMPLETION_FILE}"
+  echo ""
+  echo "The subagent should have written this file on completion."
+  echo "Possible causes:"
+  echo "1. Subagent is still running (check /cat:monitor-subagents)"
+  echo "2. Subagent crashed before writing completion marker"
+  echo "3. Worktree path is incorrect"
+  echo ""
+  echo "Do NOT proceed with merge until completion file exists."
+  exit 1
 fi
 ```
+
+**Why fail-fast?** Proceeding without `.completion.json` means no metrics are recorded. The subagent
+work cannot be properly evaluated, and token tracking becomes incomplete. This defeats the purpose
+of structured subagent management.
 
 **Why totalTokens from toolUseResult?** The session file stores Task tool completion results with
 `totalTokens` which represents the full context the subagent processed. This matches the CLI

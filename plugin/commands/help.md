@@ -1,6 +1,6 @@
 ---
 name: cat:help
-description: Quick reference for all CAT commands and skills
+description: Use for quick reference to all CAT commands and skills
 model: haiku
 context: fork
 ---

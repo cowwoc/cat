@@ -120,7 +120,22 @@ git log --oneline -1  # Should show <last-commit-to-squash>
 # 2. Create backup
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
+```
 
+### Verification Gate (M191): Backup Created
+
+**BLOCKING: Do NOT proceed until backup is verified.**
+
+```bash
+if ! git show-ref --verify --quiet "refs/heads/$BACKUP"; then
+  echo "ERROR: Backup branch '$BACKUP' was not created"
+  echo "Do NOT proceed with squash without backup."
+  exit 1
+fi
+echo "✓ Backup verified: $BACKUP"
+```
+
+```bash
 # 3. Verify clean working directory
 git status --porcelain  # Must be empty
 

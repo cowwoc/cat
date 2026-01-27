@@ -144,11 +144,15 @@ EOF
 \```
 ```
 
-## Validation
+## Verification Checklist
 
-After formatting:
-- Lines ≤110 chars (except unwrappable content)
-- YAML parses correctly (test with `yq` or `python -c "import yaml"`)
-- Markdown renders properly
-- URLs work
-- Code blocks execute correctly
+Before completing formatting changes:
+
+- [ ] All prose lines ≤110 characters
+- [ ] YAML frontmatter uses `>` or `|` for long values
+- [ ] YAML parses correctly: `python3 -c "import yaml; yaml.safe_load(open('file.md'))"`
+- [ ] Code blocks left unwrapped
+- [ ] URLs left unwrapped
+- [ ] Tables left unwrapped
+- [ ] Inline code spans not broken across lines
+- [ ] Markdown renders properly (visual check)
