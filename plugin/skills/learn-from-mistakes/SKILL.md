@@ -79,7 +79,7 @@ documentation_priming:
   fix_required: "Move content to internal-only document / Remove section / Restructure"
 ```
 
-**Reference:** See `plugin/concepts/documentation-priming.md` for detailed analysis patterns.
+**Reference:** See [documentation-priming.md](documentation-priming.md) for detailed analysis patterns.
 
 ### 2. Document the Mistake
 
@@ -111,7 +111,7 @@ SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 
 ### 4. Perform Root Cause Analysis
 
-**Reference:** See `plugin/concepts/rca-methods.md` for detailed method specifications.
+**Reference:** See [rca-methods.md](rca-methods.md) for detailed method specifications.
 
 **A/B TEST IN PROGRESS** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
 
@@ -169,7 +169,7 @@ context_degradation_analysis:
 
 ### 6. Identify Prevention Level
 
-**Reference:** See `plugin/concepts/prevention-hierarchy.md` for detailed hierarchy and escalation rules.
+**Reference:** See [prevention-hierarchy.md](prevention-hierarchy.md) for detailed hierarchy and escalation rules.
 
 **Quick Reference:**
 
@@ -623,7 +623,7 @@ fi
 
 **Category and Prevention Type Reference:**
 
-See `plugin/concepts/mistake-categories.md` for full category list, prevention types, and common root cause patterns.
+See [mistake-categories.md](mistake-categories.md) for full category list, prevention types, and common root cause patterns.
 
 **Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse, assumption_without_verification, misleading_documentation (M269)
 
