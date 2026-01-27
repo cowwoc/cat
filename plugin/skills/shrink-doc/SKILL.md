@@ -1,6 +1,8 @@
 ---
 name: shrink-doc
-description: Compress documentation while preserving execution equivalence (validation-driven approach)
+description: >
+  Use to reduce Claude-facing document size while maintaining execution equivalence.
+  Validates with /compare-docs to ensure no semantic loss.
 ---
 
 # Validation-Driven Document Compression

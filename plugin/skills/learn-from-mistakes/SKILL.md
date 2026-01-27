@@ -1,6 +1,8 @@
 ---
 name: cat:learn-from-mistakes
-description: Analyze mistakes with conversation length as potential cause (CAT-specific)
+description: >
+  MANDATORY: Use after ANY mistake to record learning, perform RCA, and implement prevention.
+  Integrates token tracking for context-related failures.
 ---
 
 # Learn From Mistakes (CAT-Specific)
