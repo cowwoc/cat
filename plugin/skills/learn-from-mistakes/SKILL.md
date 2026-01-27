@@ -38,7 +38,7 @@ Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
-### 1b. Analyze Documentation Path (M269)
+### 1b. Analyze Documentation Path (M269, M274)
 
 **CRITICAL: Check if documentation PRIMED the agent for the wrong approach.**
 
@@ -57,6 +57,11 @@ jq -r 'select(.type == "tool_use") | select(.name == "Read" or .name == "Skill")
 echo "=== Skill Invocations ==="
 jq -r 'select(.type == "tool_use" and .name == "Skill") |
   .input.skill + " " + (.input.args // "")' "$SESSION_FILE" 2>/dev/null
+
+# Find Task prompts (delegation prompts are documents too!) (M274)
+echo "=== Task Delegation Prompts ==="
+jq -r 'select(.type == "tool_use" and .name == "Task") |
+  "Task: " + .input.description + "\n" + .input.prompt' "$SESSION_FILE" 2>/dev/null
 ```
 
 **For each document, check for priming patterns:**
@@ -67,14 +72,22 @@ jq -r 'select(.type == "tool_use" and .name == "Skill") |
 | Output format exposure | "Expected: \| File \| Score \|..." | Agent fabricates output |
 | Cost/efficiency concerns | "This spawns 2 subagents..." | Agent takes shortcuts |
 | Internal prompts exposed | "Agent Prompt Template: ..." | Agent applies directly |
+| Expected value in output (M274) | "OUTPUT FORMAT: validation_score: 1.0 (required)" | Agent reports expected value, not actual |
+
+**For subagent mistakes, ALSO check the Task prompt that spawned it (M274):**
+
+The delegation prompt IS the primary "document" the subagent received. Check it for:
+- Expected values embedded in output format (e.g., "score: 1.0 (required)")
+- Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
+- Any content telling the subagent what to report vs what to measure
 
 **If priming found:**
 
 ```yaml
 documentation_priming:
-  document: "{path to document}"
-  misleading_section: "{section name and line numbers}"
-  priming_type: "algorithm_exposure | output_format | cost_concern | internal_prompt"
+  document: "{path to document OR 'Task prompt'}"
+  misleading_section: "{section name and line numbers OR 'OUTPUT FORMAT section'}"
+  priming_type: "algorithm_exposure | output_format | cost_concern | internal_prompt | expected_value"
   how_it_misled: "Agent learned X, then applied it directly instead of invoking Y"
   fix_required: "Move content to internal-only document / Remove section / Restructure"
 ```

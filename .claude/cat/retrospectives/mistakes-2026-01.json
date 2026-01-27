@@ -817,6 +817,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Output format specifies STRUCTURE only (field names, types). Never include CONTENT (expected values, required outcomes). Say 'validation_score: {actual score from compare-docs}' not 'validation_score: 1.0 (required)'."
+    },
+    {
+      "id": "M275",
+      "timestamp": "2026-01-27T15:30:00Z",
+      "category": "detection_gap",
+      "description": "learn-from-mistakes Step 1b checked Read/Skill tool invocations for priming but not Task prompts. Missed that delegation prompt itself primed subagent to fabricate score.",
+      "root_cause": "Step 1b's jq query only extracted Read and Skill tool invocations. Task tool prompts (delegation prompts) are the primary document a subagent receives, but weren't included in priming analysis.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn-from-mistakes/SKILL.md",
+      "pattern_keywords": [
+        "learn-from-mistakes",
+        "detection_gap",
+        "Task_prompt",
+        "delegation",
+        "priming",
+        "Step_1b"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Step 1b must also extract Task prompts and check them for priming patterns. For subagent mistakes, the delegation prompt is the primary document to analyze."
     }
   ]
 }
