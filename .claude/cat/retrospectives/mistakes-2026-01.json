@@ -1463,6 +1463,40 @@
         "catches_variations": true
       },
       "correct_behavior": "Before implementing prevention, identify the most specific document where the fix applies. Generic workflows (work.md, phase-execute.md) should not contain skill-specific rules."
+    },
+    {
+      "id": "M298",
+      "timestamp": "2026-01-28T13:15:00Z",
+      "category": "misleading_documentation",
+      "description": "Progress banner top line had one extra dash character causing right border misalignment (71 chars instead of 70)",
+      "root_cause": "OUTPUT TEMPLATE teaches construction algorithm BEFORE providing examples. Examples have different task ID (2.1-compress-lang-md) than actual task (2.1-compress-md-files), requiring manual modification. Agent applied construction algorithm instead of copying example, miscounted dashes. This is documentation priming - template teaches HOW to build, priming manual construction.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/work_handler.py",
+      "pattern_keywords": [
+        "progress_banner",
+        "alignment",
+        "documentation_priming",
+        "M269",
+        "construction_algorithm",
+        "task_id_mismatch"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M288",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "OUTPUT TEMPLATE should provide dynamically-generated example with ACTUAL task ID, or remove construction algorithm to prevent priming manual construction.",
+      "documentation_priming": {
+        "document": "work_handler.py OUTPUT TEMPLATE",
+        "misleading_section": "Progress Banner Construction steps (lines 435-443)",
+        "priming_type": "algorithm_exposure",
+        "how_it_misled": "Template teaches construction algorithm, then provides examples with different task ID. Agent applied algorithm instead of copying, miscounted."
+      }
     }
   ]
 }
