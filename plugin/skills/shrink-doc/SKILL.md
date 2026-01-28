@@ -13,7 +13,7 @@ objective validation instead of prescriptive rules.
 
 ---
 
-## CRITICAL: Always Use This Skill (M294)
+## CRITICAL: Always Use This Skill (M294, M296)
 
 **NEVER manually compress files and validate with /compare-docs directly.**
 
@@ -24,6 +24,15 @@ Manual compression bypasses:
 
 If you compress manually and get score 0.995, you must manually iterate.
 If you use this skill, iteration happens automatically until score = 1.0.
+
+**MANDATORY: Report execution equivalence score (M296)**
+
+When compressing files (even partially), you MUST report:
+- Execution equivalence score per file (from /compare-docs)
+- Token counts per file (before and after)
+
+If you compressed files without reporting these metrics, you violated this requirement.
+Go back and run /compare-docs validation for each file, then report results.
 
 ---
 
