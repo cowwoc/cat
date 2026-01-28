@@ -1436,6 +1436,33 @@
         "catches_variations": true
       },
       "correct_behavior": "For compression tasks: invoke /cat:shrink-doc skill which handles iteration and validation automatically. Report execution equivalence score for each file. Never manually compress files."
+    },
+    {
+      "id": "M297",
+      "timestamp": "2026-01-28T00:20:00Z",
+      "category": "protocol_violation",
+      "description": "Applied prevention fix to phase-execute.md (generic workflow) instead of shrink-doc/SKILL.md (specific to compression) - violated Fix Location Principle",
+      "root_cause": "Did not apply 'deepest document possible' principle from learn-from-mistakes skill. Compression-specific rules belong in shrink-doc, not generic workflow docs.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn-from-mistakes/SKILL.md",
+      "pattern_keywords": [
+        "fix_location",
+        "deepest_document",
+        "generic_vs_specific",
+        "phase-execute",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before implementing prevention, identify the most specific document where the fix applies. Generic workflows (work.md, phase-execute.md) should not contain skill-specific rules."
     }
   ]
 }
