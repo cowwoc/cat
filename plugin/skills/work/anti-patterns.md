@@ -6,6 +6,22 @@ user-invocable: false
 
 Reference tables for anti-patterns and main agent boundaries.
 
+## Background Task Behavior (M293)
+
+**CRITICAL: Claude does NOT automatically wake up when background tasks complete.**
+
+| Scenario | Correct Approach |
+|----------|------------------|
+| Background tasks running | Continue other work, OR tell user to check back |
+| All tasks backgrounded | Tell user: "Prompt me when ready to continue" |
+| trust=high expected | Use `TaskOutput` with `block: true`, OR avoid background |
+
+**Anti-pattern (M293):**
+```
+❌ "I'll wait for subagents to complete and notify me"
+✅ "Subagents running. Prompt me for status update."
+```
+
 ---
 
 ## Main Agent Boundaries
@@ -136,6 +152,7 @@ If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
 | M248 | Confuse version/branch | Distinguish task version from base branch |
 | M251 | No subtask context | Include decomposition context |
 | M262 | Ignore ERROR in script output | Fail-fast, report error, do NOT continue |
+| M293 | "I'll wait for subagents" | Continue working or prompt user to check back |
 
 ### A### Series (Architecture Codes)
 

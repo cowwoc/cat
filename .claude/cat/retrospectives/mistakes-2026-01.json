@@ -1326,6 +1326,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When aborting a task, restore Status to 'pending' (not 'aborted'). Only valid statuses are: pending, in-progress, completed."
+    },
+    {
+      "id": "M293",
+      "timestamp": "2026-01-28T10:30:00Z",
+      "category": "assumption_without_verification",
+      "description": "Stated 'I'll wait for subagents to complete' implying automatic wake-up that doesn't exist",
+      "root_cause": "Assumed background task notifications would trigger automatic response without verifying system behavior",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/anti-patterns.md",
+      "pattern_keywords": [
+        "background_task",
+        "wait",
+        "subagent",
+        "notification",
+        "blocking"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Either continue working on other tasks, use TaskOutput to block-wait, or tell user to prompt when ready"
     }
   ]
 }
