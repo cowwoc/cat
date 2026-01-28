@@ -3,7 +3,6 @@ description: Display project progress - versions, tasks, and completion status
 model: haiku
 context: fork
 allowed-tools:
-  - Bash
   - Read
 ---
 
@@ -15,67 +14,19 @@ User sees a correctly-aligned, complete project status display with actionable n
 
 ---
 
+## Pre-rendered Status Display
+
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
+
+---
+
 ## Procedure
 
-> **CRITICAL:** This skill uses output template. Do NOT attempt manual computation.
-> The handler already computed the display - your job is to OUTPUT it verbatim.
+### Step 1: Output the status display
 
-### Step 1: Require template display
+The status box above was pre-rendered via silent preprocessing.
 
-**MANDATORY:** Check conversation context for "OUTPUT TEMPLATE STATUS DISPLAY".
-
-The UserPromptSubmit hook pre-computes the entire status display to prevent alignment errors.
-
-**If found**:
-1. Locate the box output between "OUTPUT TEMPLATE STATUS DISPLAY" and "NEXT STEPS table"
-2. Output the template box **directly without preamble** (no "I can see...", no "Let me output...")
-3. Output the NEXT STEPS table EXACTLY as shown
-4. Output the legend
-5. Skip to Verification
-
-**CRITICAL SELF-CHECK (M256):**
-Before outputting, verify you are copy-pasting the EXACT template content:
-- [ ] Content starts with `╭─` (top-left corner character)
-- [ ] Content contains emoji like `📊`, `☑️`, `🔳` (NOT dots or question marks)
-- [ ] All lines end with `│` at the same column position
-- [ ] You are NOT typing/reconstructing the box - you are PASTING it
-
-**If any checkbox fails:** You are NOT using the template content. STOP and find it.
-
-**Silent output (M194):** Do NOT announce or explain the template content. Simply output it.
-
-**Anti-pattern (M256):** Manually constructing a "similar-looking" status box instead of copy-pasting
-the output template. Signs you are doing this wrong:
-- Running Bash commands to gather status data yourself
-- Building inner boxes with `build_inner_box()` or similar
-- Typing box characters (`│`, `╭`, `─`) instead of pasting them
-- Emojis appear as dots or question marks in your output
-
-**If NOT found**: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "status display" "/cat:status"
-if [[ $? -eq 0 ]]; then
-  # Hooks exist but still no output - other issue
-  if [[ ! -d .claude/cat ]]; then
-    echo "ERROR: No CAT project found. Run /cat:init to initialize."
-  else
-    echo "ERROR: Output template status display not found. Check for hook errors above."
-  fi
-fi
-```
-
-Output the error and STOP. Do NOT attempt to render manually.
-
-**Why fail-fast?** Box alignment requires precise emoji width calculations that
-LLMs cannot perform reliably. The hook uses Python's unicodedata module for
-accurate widths. Manual rendering defeats the purpose of extraction.
-
-**Anti-pattern (M242):** Do NOT attempt workarounds when output template is missing:
-- ❌ Running handler directly via `python3 -c` (fails: relative imports)
-- ❌ Calling handler functions manually (fails: missing context)
-- ❌ Building status display with Bash (fails: emoji alignment)
-- ✅ Output the ERROR message and STOP
+**Output it exactly as shown** - do NOT modify, recalculate, or reconstruct.
 
 ### Step 2: Output next steps and legend
 
@@ -98,31 +49,24 @@ accurate widths. Manual rendering defeats the purpose of extraction.
 
 - [ ] Status box displayed with all right-side `│` characters aligned vertically
 - [ ] Inner boxes (major versions) have consistent width with each other
-- [ ] NEXT STEPS table displayed with correct active version
+- [ ] NEXT STEPS table displayed
 - [ ] Legend displayed
 
 ---
 
-## External Computation (Reference Only)
+## Why Silent Preprocessing?
 
-> **NOTE:** This section is for understanding WHY pre-computation exists.
-> You do NOT need to understand or use any of these details.
-> Your only job: copy-paste the output template.
+This skill uses silent preprocessing (`!`command``) instead of OUTPUT TEMPLATE injection.
 
-This skill relies on pre-computation via UserPromptSubmit hook to prevent alignment errors.
+**Benefits:**
+- Status is computed BEFORE Claude sees the skill content
+- No possibility of manual reconstruction errors
+- Simpler skill - just output what's there
+- No handler registration or hook complexity
 
-**Handler**: `hooks/skill_handlers/status_handler.py`
-**Trigger**: User invokes `/cat:status`
-**Output**: Complete rendered box via additionalContext
-
-The handler:
-1. Collects status data directly from `.claude/cat` directory structure
-2. Uses `build_box_lines.py` to compute exact line padding
-3. Returns pre-rendered display for direct output
-
-**Why pre-compute?** LLMs cannot reliably calculate emoji widths or character padding.
-Pre-computing ensures correct alignment every time.
-
-> **Note:** Emoji meanings are included in the output template Legend line.
-> They are NOT documented separately here to prevent manual construction attempts.
-
+**How it works:**
+1. User invokes `/cat:status`
+2. Claude Code loads the skill and expands `!`command``
+3. Script runs and outputs the rendered status box
+4. Claude receives the skill with actual status data embedded
+5. Claude outputs the pre-rendered content verbatim

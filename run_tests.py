@@ -251,52 +251,34 @@ def test_display_utils():
 
 
 def test_status_handler():
-    """Test status_handler."""
+    """Test status_handler utility functions.
+
+    Note: StatusHandler class removed - status display uses silent preprocessing.
+    This tests the remaining utility functions.
+    """
     runner.section("skill_handlers/status_handler")
 
-    from skill_handlers.status_handler import StatusHandler, collect_status_data
-    handler = StatusHandler()
+    from skill_handlers.status_handler import get_task_status, get_task_dependencies
 
-    # Test returns None without project_root
-    result = handler.handle({})
-    runner.test("Returns None without project_root", result is None)
-
-    # Test returns None with non-existent path
-    result = handler.handle({"project_root": "/nonexistent/path"})
-    runner.test("Returns None with invalid path", result is None)
-
-    # Regression test for M223: must use issues/ subdirectory
-    # Create temp structure with issues/ subdirectory
+    # Test get_task_status with temp files
     with TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
-        cat_dir = tmp_path / ".claude" / "cat"
-        cat_dir.mkdir(parents=True)
-        issues_dir = cat_dir / "issues"
-        issues_dir.mkdir()
 
-        # Create config files in cat_dir
-        (cat_dir / "PROJECT.md").write_text("# Test Project\n")
-        (cat_dir / "ROADMAP.md").write_text("# Roadmap\n")
+        # Test missing file returns pending
+        result = get_task_status(tmp_path / "nonexistent" / "STATE.md")
+        runner.test("get_task_status: missing file returns pending", result == "pending")
 
-        # Create version structure in issues_dir
-        v1_dir = issues_dir / "v1"
-        v1_dir.mkdir()
-        v10_dir = v1_dir / "v1.0"
-        v10_dir.mkdir()
-        task_dir = v10_dir / "test-task"
-        task_dir.mkdir()
-        (task_dir / "STATE.md").write_text("Status: pending\n")
-        (task_dir / "PLAN.md").write_text("# Test Task\n")
+        # Test parsing status from file
+        state_file = tmp_path / "STATE.md"
+        state_file.write_text("- **Status:** completed\n")
+        result = get_task_status(state_file)
+        runner.test("get_task_status: parses bold format", result == "completed")
 
-        # Test collect_status_data finds tasks in issues/
-        data = collect_status_data(issues_dir)
-        runner.test("M223 regression: finds tasks in issues/ dir",
-                    "error" not in data and data.get("overall", {}).get("total", 0) == 1)
-
-        # Test handler uses issues/ subdirectory
-        result = handler.handle({"project_root": str(tmp_path)})
-        runner.test("M223 regression: handler uses issues/ dir",
-                    result is not None and "test-task" in result)
+        # Test get_task_dependencies
+        state_file.write_text("- **Dependencies:** [task-a, task-b]\n")
+        result = get_task_dependencies(state_file)
+        runner.test("get_task_dependencies: parses inline format",
+                    result == ["task-a", "task-b"])
 
 
 def test_help_handler():
@@ -330,7 +312,7 @@ def test_work_handler():
     runner.test("Returns string with task", isinstance(result, str))
     if result:
         runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
-        runner.test("Contains progress info", "Progress" in result or "Template" in result)
+        runner.test("Contains status boxes", "TASK_COMPLETE" in result or "SCOPE_COMPLETE" in result)
 
 
 def test_cleanup_handler():
