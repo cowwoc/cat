@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-28T10:47:26-05:00",
-  "mistake_count_since_last": 3,
+  "last_retrospective": "2026-01-28T14:51:20-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -95,6 +95,66 @@
         "A004"
       ],
       "note": "User questions arriving mid-operation via system-reminders are ignored instead of being acknowledged immediately"
+    },
+    {
+      "pattern_id": "PATTERN-005",
+      "pattern": "main_agent_delegation_bypass",
+      "occurrences_total": 5,
+      "occurrences_after_fix": 1,
+      "first_seen": "2026-01-28T00:15:00Z",
+      "last_seen": "2026-01-28T12:15:00Z",
+      "last_action_date": "2026-01-28T11:30:00-05:00",
+      "status": "recurring",
+      "effectiveness": "partially_effective",
+      "preventions": [
+        "M294",
+        "M296",
+        "M297",
+        "M302",
+        "M304"
+      ],
+      "related_action_items": [
+        "A005"
+      ],
+      "note": "Main agent uses Write/Edit tools directly instead of delegating to subagents for implementation work"
+    },
+    {
+      "pattern_id": "PATTERN-006",
+      "pattern": "test_data_fabrication",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-28T09:55:00Z",
+      "last_seen": "2026-01-28T10:40:00Z",
+      "last_action_date": "2026-01-28T11:30:00-05:00",
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M300",
+        "M303"
+      ],
+      "related_action_items": [
+        "A006"
+      ],
+      "note": "Using fabricated placeholder data instead of real values from context when testing"
+    },
+    {
+      "pattern_id": "PATTERN-007",
+      "pattern": "commit_type_classification_error",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-26T21:45:00Z",
+      "last_seen": "2026-01-28T13:34:47-05:00",
+      "last_action_date": null,
+      "status": "recurring",
+      "effectiveness": "pending",
+      "preventions": [
+        "M255",
+        "M306"
+      ],
+      "related_action_items": [
+        "A007"
+      ],
+      "note": "Using docs: commit type for Claude-facing files instead of config:. Recurs despite M255 prevention adding guidance to CLAUDE.md."
     }
   ],
   "action_items": [
@@ -217,15 +277,18 @@
         "M294",
         "M296",
         "M297",
-        "M302"
+        "M302",
+        "M304"
       ],
       "implementation": "Hook warn-base-branch-edit.sh already warns about main agent source edits (A003/M097/M302). Emits warning when Edit/Write targets non-orchestration files. Warning includes delegation guidance.",
       "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
       "effectiveness_check": {
         "mistakes_before": 4,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 1,
+        "post_fix_mistakes": [
+          "M304"
+        ],
+        "verdict": "partially_effective"
       }
     },
     {
@@ -243,6 +306,26 @@
       ],
       "implementation": "Added anti-pattern M300 to work.md documenting that session IDs must come from SessionStart context, not fabricated placeholders. Script validates UUID format and fails on invalid input.",
       "prevention_path": "${CLAUDE_PLUGIN_ROOT}/concepts/work.md",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A007",
+      "priority": "medium",
+      "description": "Add hook-level validation for commit type selection: detect when docs: is used for plugin/ or CLAUDE.md paths and suggest config: instead",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-007",
+      "status": "open",
+      "created_date": "2026-01-28T14:51:20-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M255",
+        "M306"
+      ],
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
