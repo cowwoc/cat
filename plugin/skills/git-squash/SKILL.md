@@ -65,6 +65,30 @@ if [[ "$SQUASH_POLICY" == *"by-type"* || "$SQUASH_POLICY" == *"by type"* ]]; the
 fi
 ```
 
+## Default Behavior: Squash by Topic
+
+**When user asks to squash commits, squash by topic (not all into one):**
+
+- Group related commits by their purpose/topic
+- Each topic becomes one squashed commit
+- Preserve commit type boundaries (e.g., `feature:` vs `config:`)
+
+**Example:** If branch has these commits:
+```
+config: add handler registry
+config: fix null handling in registry
+config: add if/else convention
+docs: update README
+```
+
+Squash to:
+```
+config: add handler registry with null handling and conventions
+docs: update README
+```
+
+**Rationale:** Squashing by topic preserves meaningful history while reducing noise from incremental fixes.
+
 ## Workflow Selection
 
 **CRITICAL: Choose workflow based on commit position.**
