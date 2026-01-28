@@ -1193,6 +1193,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Progress banner uses _build_progress_banner() method that dynamically calculates inner width based on max(header_width, phase_content_width) and pads both lines to match"
+    },
+    {
+      "id": "M280",
+      "timestamp": "2026-01-28T15:35:00Z",
+      "category": "protocol_violation",
+      "description": "Deleted task when user asked to abort - interpreted abort as delete instead of stop",
+      "root_cause": "Abort clarification handler (M266) had too-narrow pattern matching - literal strings did not match task names embedded in phrase",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/plugin/hooks/prompt_handlers/abort_clarification.py",
+      "pattern_keywords": [
+        "abort",
+        "delete",
+        "task",
+        "pattern_matching",
+        "regex"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use AskUserQuestion to clarify abort intent: stop working vs cleanup worktree vs abandon permanently"
     }
   ]
 }
