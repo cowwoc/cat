@@ -83,7 +83,7 @@ echo "Task branch: $TASK_BRANCH"
 echo "Base branch: $BASE_BRANCH"
 echo "Worktree: $WORKTREE_PATH"
 
-# Check for uncommitted changes (portable syntax for bash/zsh)
+# Check for uncommitted changes
 UNSTAGED=$(git diff --quiet; echo $?)
 STAGED=$(git diff --cached --quiet; echo $?)
 if [[ "$UNSTAGED" -ne 0 ]] || [[ "$STAGED" -ne 0 ]]; then
