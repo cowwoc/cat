@@ -285,6 +285,79 @@ prevention_quality_check:
 
 **Decision gate:** If fragility is HIGH, redesign the prevention before implementing.
 
+### 7b. Replay Scenario Verification (BLOCKING GATE - M305)
+
+**MANDATORY: Verify prevention would have prevented THIS specific problem.**
+
+Before proceeding, mentally replay the exact scenario that caused the mistake:
+
+```yaml
+scenario_replay:
+  # Step 1: Describe the exact sequence that led to the mistake
+  what_happened:
+    step_1: "{first action/state}"
+    step_2: "{second action/state}"
+    step_3: "{action where mistake occurred}"
+    result: "{the bad outcome}"
+
+  # Step 2: Insert your proposed prevention and replay
+  with_prevention:
+    step_1: "{same first action/state}"
+    step_2: "{same second action/state}"
+    prevention_activates: "{when/how does prevention trigger?}"
+    step_3: "{what happens differently?}"
+    result: "{the good outcome}"
+
+  # Step 3: Verify causation
+  verification:
+    prevents_root_cause: true|false  # Does it fix the CAUSE or just a symptom?
+    would_have_blocked: true|false   # Would this SPECIFIC scenario have been prevented?
+    timing_correct: true|false       # Does prevention activate BEFORE the mistake?
+```
+
+**BLOCKING CONDITION:**
+
+If `would_have_blocked: false` or `prevents_root_cause: false`:
+- STOP - your prevention fixes a symptom, not the cause
+- Return to RCA and dig deeper into WHY the mistake occurred
+- Find prevention that addresses the actual failure point
+
+**Example - would_have_blocked: false:**
+
+```yaml
+# Mistake: Squash captured stale file state from diverged worktree
+
+# ❌ FAILS VERIFICATION: "Add warning when worktree diverges from base"
+scenario_replay:
+  what_happened:
+    step_1: "Worktree created from v2.1 at commit A"
+    step_2: "v2.1 advanced to commit D, worktree not updated"
+    step_3: "git reset --soft v2.1 captured stale working directory"
+    result: "M304 changes reverted"
+  with_prevention:
+    prevention_activates: "Before squash, detect and warn about divergence"
+    step_3: "Warning printed, but squash proceeds anyway"
+    result: "M304 changes still reverted"
+  verification:
+    would_have_blocked: false  # Warning doesn't prevent the failure!
+    prevents_root_cause: false
+    # STOP: This prevention is useless - find one that actually blocks
+
+# ✅ PASSES VERIFICATION: "Rebase onto base before squashing"
+scenario_replay:
+  with_prevention:
+    prevention_activates: "Before squash, rebase onto current base"
+    step_3: "Working directory updated to include M304, then squash"
+    result: "M304 changes preserved"
+  verification:
+    would_have_blocked: true   # This specific scenario prevented
+    prevents_root_cause: true  # Addresses stale working directory state
+```
+
+**Why this gate exists:** M305 showed that proposed solutions may sound reasonable but fail
+to actually prevent the failure. Replaying the exact scenario exposes whether prevention
+changes the outcome or just adds noise (warnings, documentation).
+
 ### 8. Check If Prevention Already Exists (MANDATORY)
 
 **CRITICAL: If prevention already exists, it FAILED and MUST be replaced with stronger prevention.**

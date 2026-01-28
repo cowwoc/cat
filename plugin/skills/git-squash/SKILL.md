@@ -75,7 +75,7 @@ LAST_COMMIT="<last-commit-to-squash>"
 BRANCH_TIP=$(git rev-parse HEAD)
 
 if [ "$(git rev-parse $LAST_COMMIT)" = "$BRANCH_TIP" ]; then
-    echo "Commits at tip → Use Quick Workflow (soft reset)"
+    echo "Commits at tip → Use Quick Workflow (commit-tree)"
 else
     echo "Commits in middle of history → Use Interactive Rebase Workflow"
 fi
@@ -139,30 +139,31 @@ echo "✓ Backup verified: $BACKUP"
 # 3. Verify clean working directory
 git status --porcelain  # Must be empty
 
-# 4. Check for unintended deletions (M238)
-# If base branch has files your branch doesn't, soft reset will stage deletions!
-echo "Files on base but not in branch (will be DELETED if you proceed):"
-git diff --name-status <base-commit>..HEAD | grep "^D" | cut -f2
-# If any unexpected files shown, sync with base first:
-#   git checkout <base-commit> -- <path-to-restore>
+# 4. Create squashed commit using commit-tree (M305)
+# This uses COMMIT content directly, ignoring working directory state.
+# Prevents stale worktree files from being captured in the squash.
+TREE=$(git rev-parse HEAD^{tree})
+MESSAGE="Unified message describing what code does"
+NEW_COMMIT=$(git commit-tree "$TREE" -p <base-commit> -m "$MESSAGE")
 
-# 5. Soft reset to base (parent of first commit to squash)
-git reset --soft <base-commit>
+# 5. Move branch to new squashed commit
+git reset --hard "$NEW_COMMIT"
 
-# 6. Verify no UNINTENDED changes (check for unexpected deletions!)
-git diff --stat "$BACKUP"  # Must be empty
-git diff --name-status HEAD | grep "^D"  # Review any deletions!
-
-# 7. Create squashed commit (see git-commit skill for message guidance)
-git commit -m "Unified message describing what code does"
-
-# 8. Verify result
-git diff "$BACKUP"  # Must be empty
+# 6. Verify result
+git diff "$BACKUP"  # Must be empty (same content)
 git rev-list --count <base-commit>..HEAD  # Must be 1
 
-# 9. Cleanup backup
+# 7. Cleanup backup
 git branch -D "$BACKUP"
 ```
+
+**Why commit-tree instead of soft reset? (M305)**
+
+The old approach (`git reset --soft` + `git commit`) captured working directory state.
+If the worktree diverged from its base branch, stale file versions would be included.
+
+`git commit-tree` creates a commit directly from HEAD's tree object, which contains
+exactly what the commits contain - ignoring working directory entirely.
 
 ## Interactive Rebase Workflow (Commits in Middle of History)
 
@@ -209,7 +210,10 @@ rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 
 ### Check for Unintended Deletions (M238)
 
-**CRITICAL: Worktrees may be out of sync with base branch updates.**
+**NOTE: The Quick Workflow now uses `commit-tree` (M305), which avoids this issue entirely
+by using commit content directly instead of working directory state.**
+
+This section applies only if you manually use `git reset --soft`:
 
 When using `git reset --soft <base>`, the index reflects your working tree state. If the base
 branch has files your branch never received (e.g., new files added to base after your branch
@@ -301,13 +305,16 @@ GIT_SEQUENCE_EDITOR=... git rebase -i <base>  # Preserves all commits
 ```
 
 ### Position HEAD First (Quick Workflow Only)
-```bash
-# WRONG - HEAD beyond squash range
-git reset --soft <base>  # Squashes ALL commits to current HEAD!
 
-# CORRECT - Checkout last commit first
-git checkout <last-commit>
-git reset --soft <base>  # Squashes only intended range
+**NOTE: With commit-tree approach (M305), HEAD must be at the last commit to squash,
+since we use `HEAD^{tree}` to get the final tree state.**
+
+```bash
+# Verify HEAD is at the last commit you want included
+git log --oneline -1  # Should show <last-commit-to-squash>
+
+# If not, checkout first
+git checkout <last-commit-to-squash>
 ```
 
 ### Write Meaningful Commit Messages with Task ID
