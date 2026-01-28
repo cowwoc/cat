@@ -7,10 +7,10 @@ noise while showing meaningful progress and results.
 
 ## Two Approaches to Clean Output
 
-### 1. Pre-Computation (Deterministic Outputs)
+### 1. Silent Preprocessing (Formatted Output)
 
-For outputs with precise formatting requirements (boxes, tables, aligned text), extract
-computation to skill handlers.
+For outputs with precise formatting requirements (boxes, tables, aligned text), use
+Claude Code's **silent preprocessing** feature with the `!`command`` syntax.
 
 **Why?** Agents make errors on:
 - Emoji width calculations
@@ -20,20 +20,44 @@ computation to skill handlers.
 
 **Pattern:**
 ```
-Handler pre-computes → Skill outputs verbatim → User sees correct result
+Skill loads → Commands execute silently → Claude receives rendered content → Output verbatim
 ```
 
+**The `!`command`` syntax:**
+
+```markdown
+## My Skill
+
+Here is the current status:
+!`cat-status-display.sh --format=box`
+
+Now analyze the results...
+```
+
+**How it works:**
+1. When Claude Code loads the skill, it finds `!`command`` patterns
+2. Each command executes **immediately** during skill expansion
+3. The command output **replaces the placeholder** in the skill content
+4. Claude receives the fully-rendered prompt with actual data
+
+**Benefits:**
+- **Guaranteed correctness**: Output is computed, not approximated by the LLM
+- **No visible tool calls**: Users see clean skill output
+- **Simple implementation**: Just shell scripts, no Python handlers
+- **No LLM manipulation errors**: Prevents formatting mistakes
+
 **Implementation:**
-1. Create handler in `plugin/hooks/skill_handlers/`
-2. Handler computes ALL output variants before skill runs
-3. Skill checks for "OUTPUT TEMPLATE {NAME} OUTPUT" in context
-4. If not found: **FAIL immediately** (see error-handling.md)
-5. If found: Output the template result exactly
+1. Create script in `plugin/scripts/` (e.g., `cat-display.sh`)
+2. Script outputs formatted content to stdout
+3. Reference in skill with `!`script.sh args``
 
 **Checklist:**
-- [ ] Skill NEVER invokes scripts via Bash - user sees no tool calls
-- [ ] Skill REQUIRES template results - fail-fast if missing
-- [ ] No "if not found, compute manually..." fallback patterns
+- [ ] Script handles all formatting (boxes, alignment, emoji widths)
+- [ ] Script accepts necessary arguments (task ID, phase, etc.)
+- [ ] Claude outputs the result exactly as received
+- [ ] No manual manipulation of the preprocessed output
+
+---
 
 ### 2. Subagent Batching (Multi-Step Operations)
 
@@ -123,39 +147,51 @@ With pre-computation or subagent batching, only show:
 ✓ Context loaded, ready to proceed
 ```
 
-### Manual Computation When Handler Exists (M256)
+### Manual Computation Instead of Preprocessing
 
 ```
 # BAD: Agent computes formatting manually
 Let me calculate the box width...
 [Makes arithmetic errors]
 
-# ALSO BAD: Agent "reconstructs" output instead of copy-pasting
+# ALSO BAD: Agent "reconstructs" output
 [Runs Bash commands to gather data]
 [Builds box manually using similar characters]
 [Emojis render as dots because agent used wrong characters]
 
-# GOOD: Use output template VERBATIM
-[Locates "OUTPUT TEMPLATE" block in context]
-[Copy-pastes exact content without modification]
-[Emojis and box characters display correctly]
+# GOOD: Preprocessed output received
+[Skill loaded with !`command` preprocessing]
+[Claude receives already-rendered content]
+[Outputs exactly as received]
 ```
 
-**Self-check before outputting template content:**
+**Self-check for preprocessed output:**
 - [ ] Content starts with proper box characters (`╭─`, `╭──`)
 - [ ] Emojis are visible, not dots or `?` symbols
-- [ ] You copied (not retyped) the content
 - [ ] You did NOT run Bash/Read to gather data yourself
-
-**If checks fail:** You are reconstructing, not pasting. Find the OUTPUT TEMPLATE block.
+- [ ] You are outputting exactly what the preprocessing provided
 
 ## Choosing the Right Approach
 
 | Scenario | Approach |
 |----------|----------|
-| Formatted output (boxes, tables) | Pre-computation |
+| Formatted output (boxes, tables) | Silent preprocessing (`!`command``) |
 | Multi-step data gathering | Subagent batching |
 | Simple file reads (1-2 files) | Direct execution |
 | User interaction required | Direct execution |
-| Deterministic transformation | Pre-computation |
+| Deterministic transformation | Silent preprocessing (`!`command``) |
 | Exploratory search | Subagent batching |
+
+**Decision tree:**
+
+```
+Need formatted output (boxes, tables, alignment)?
+  │
+  ├─ Yes → Use silent preprocessing (!`command`)
+  │
+  └─ No → Multiple tool calls needed?
+           │
+           ├─ Yes (3+) → Subagent batching
+           │
+           └─ No → Direct execution
+```
