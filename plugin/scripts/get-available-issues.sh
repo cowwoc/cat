@@ -5,7 +5,12 @@
 # dependency checks, lock checks, and gate evaluation.
 #
 # Usage:
-#   get-available-issues.sh <project-dir> [--scope major|minor|issue|all] [--target VERSION|ISSUE_ID] [--session-id ID] [--override-gate]
+#   get-available-issues.sh [--scope major|minor|issue|all] [--target VERSION|ISSUE_ID] --session-id ID [--override-gate]
+#
+# Path Discovery:
+#   PROJECT_DIR is auto-discovered via git (finds main workspace, not worktree).
+#   This ensures locks and task state are always in the main workspace.
+#   SESSION_ID must be passed via --session-id (no way to discover).
 #
 # Output (JSON):
 #   {"status":"found|not_found|all_locked|gate_blocked","issue_id":"2.0-issue-name",...}
@@ -13,16 +18,53 @@
 set -uo pipefail
 
 # Source shared utilities
+# SCRIPT_DIR derived from script location - works regardless of environment variables
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/lib/version-utils.sh"
+
+# =============================================================================
+# PATH DISCOVERY
+# =============================================================================
+
+# Find the main project directory (not a worktree)
+# This is critical because:
+# - Locks must be in main workspace to be shared across sessions
+# - Task discovery must use main workspace's current state, not worktree snapshot
+#
+# Uses git to find the common .git directory, then derives main workspace from that.
+find_project_dir() {
+    local git_common_dir main_workspace
+
+    # Get the common .git directory (shared by all worktrees)
+    git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || {
+        # Not in a git repo - fall back to walking up
+        return 1
+    }
+
+    # Convert to absolute path if relative
+    if [[ "$git_common_dir" != /* ]]; then
+        git_common_dir="$(cd "$git_common_dir" 2>/dev/null && pwd)"
+    fi
+
+    # Main workspace is the parent of .git
+    main_workspace="$(dirname "$git_common_dir")"
+
+    # Verify it has .claude/cat
+    if [[ -d "$main_workspace/.claude/cat" ]]; then
+        echo "$main_workspace"
+        return 0
+    fi
+
+    return 1
+}
 
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
 
-PROJECT_DIR=""  # Required: set via --project-dir
-SESSION_ID=""
-SCOPE="all"  # all | major | minor | issue
+PROJECT_DIR=""  # Auto-discovered if not provided
+SESSION_ID=""   # Required: must be passed via --session-id
+SCOPE="all"     # all | major | minor | issue
 TARGET=""
 OVERRIDE_GATE=false
 
@@ -31,15 +73,6 @@ OVERRIDE_GATE=false
 # =============================================================================
 
 parse_args() {
-    # First argument must be project-dir
-    if [[ $# -lt 1 ]] || [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
-        show_usage
-        exit 0
-    fi
-
-    PROJECT_DIR="$1"
-    shift
-
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --scope)
@@ -63,7 +96,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                # Positional argument - could be version or issue ID
+                # Positional argument - version or issue ID
                 if [[ -z "$TARGET" ]]; then
                     TARGET="$1"
                     # Auto-detect scope from target format
@@ -79,23 +112,37 @@ parse_args() {
                 ;;
         esac
     done
+
+    # Always auto-discover PROJECT_DIR from git common directory
+    PROJECT_DIR=$(find_project_dir) || {
+        echo '{"status":"error","message":"Could not find project directory. Not in a git repo or no .claude/cat/ in main workspace."}'
+        exit 1
+    }
 }
 
 show_usage() {
     cat << 'EOF'
-Usage: get-available-issues.sh <project-dir> [OPTIONS] [VERSION_OR_ISSUE]
+Usage: get-available-issues.sh [OPTIONS] [VERSION_OR_ISSUE]
 
 Find the next executable issue for /cat:work.
-
-Arguments:
-  project-dir        Project root directory (contains .claude/cat/) - REQUIRED first argument
 
 Options:
   --scope SCOPE      Search scope: all, major, minor, issue (auto-detected from target)
   --target TARGET    Version or issue ID to target
-  --session-id ID    Session ID for lock acquisition
+  --session-id ID    Session ID for lock acquisition (REQUIRED for locking)
   --override-gate    Skip entry gate evaluation
   VERSION_OR_ISSUE   Version (2, 2.0) or issue ID (2.0-issue-name)
+
+Path Discovery:
+  PROJECT_DIR is auto-discovered using git. The script finds the main workspace
+  by looking up the git common directory, ensuring it works correctly even when
+  called from inside a worktree.
+
+  This is critical because:
+  - Locks must be in main workspace to be shared across sessions
+  - Task discovery must use main workspace's current state, not worktree snapshot
+
+  SESSION_ID must always be passed via --session-id as it cannot be discovered.
 
 Output (JSON):
   status: found, not_found, all_locked, gate_blocked
@@ -623,12 +670,8 @@ find_next_issue() {
 
 parse_args "$@"
 
-# Validate required arguments
-if [[ -z "$PROJECT_DIR" ]]; then
-    echo '{"status":"error","message":"--project-dir is required"}'
-    exit 1
-fi
-
+# PROJECT_DIR is now guaranteed to be set by parse_args (auto-discovered if not provided)
+# Just verify it's actually a CAT project
 if [[ ! -d "$PROJECT_DIR/.claude/cat" ]]; then
     echo '{"status":"error","message":"Not a CAT project: '"$PROJECT_DIR"' (no .claude/cat directory)"}'
     exit 1
