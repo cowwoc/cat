@@ -43,11 +43,13 @@ MESSAGE=$(cat << 'INSTRUCTIONS'
 3. THEN direct user message content
 
 **When user input arrives mid-operation**:
-1. **STOP** current task analysis immediately
-2. **ACKNOWLEDGE** the user's message in your response text
-3. Track with TaskCreate if needed (all issues, even just 2-3 items)
-4. If impacts current task → address now; else → add to end
-5. Continue only after acknowledgment
+1. **STOP** current tool result processing immediately (not "after workflow completes")
+2. **ACKNOWLEDGE** the user's message in your NEXT response text
+3. Answer their question or confirm you've noted it
+4. THEN continue with workflow
+
+**"IMPORTANT: After completing your current task"** means after your CURRENT tool call completes,
+NOT after the entire /cat:work or skill workflow finishes. Respond in your very next message.
 
 **Common failure**: Continuing to analyze tool output while ignoring embedded user request.
 
