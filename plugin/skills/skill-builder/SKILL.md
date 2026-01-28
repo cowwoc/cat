@@ -1180,20 +1180,64 @@ Procedure step:
   "Call build_box(root_contents) to construct the complete nested structure"
 ```
 
-### Extracting Computation to Hook-Based Precomputation (M192/M215 Prevention)
+### Silent Preprocessing with `!`command`` (Preferred)
 
 **Critical insight**: When a skill contains functions that perform deterministic computation
-(algorithms, formulas, calculations), these MUST be extracted to hooks that run BEFORE the skill.
-The skill should NEVER invoke scripts directly - this shows Bash tools to users and defeats
-the purpose of extraction.
+(algorithms, formulas, calculations), the output MUST be generated BEFORE Claude sees the content.
+Claude Code provides a built-in mechanism for this: **silent preprocessing**.
 
-**The correct pattern (see `plugin/hooks/skill_handlers/`):**
-1. Hook runs automatically when skill is invoked (via UserPromptSubmit or skill handler)
-2. Hook pre-computes ALL possible outputs the skill might need
-3. Hook returns template content via `additionalContext`
-4. Skill receives template content and outputs it directly (no script invocation)
+**The `!`command`` syntax:**
 
-**Identify computation candidates during function extraction (Step 5):**
+```markdown
+## Example Skill
+
+The current status:
+!`cat-status --format=box`
+
+Continue with your analysis...
+```
+
+**How it works:**
+1. When Claude Code loads the skill, it scans for `!`command`` patterns
+2. Each command executes **immediately** during skill expansion
+3. The command output **replaces the placeholder** in the skill content
+4. Claude receives the fully-rendered prompt with actual data
+
+**Claude never sees the command** - only the output. This is preprocessing, not something Claude executes.
+
+**Why this is the preferred approach:**
+- **Guaranteed correctness**: Output is computed, not approximated by the LLM
+- **No visible tool calls**: Users see clean skill output, not Bash/Read noise
+- **Simpler implementation**: No Python handlers needed, just shell scripts
+- **No LLM manipulation errors**: Prevents M246, M256, M257, M288, M298
+
+**Example - Progress banner skill:**
+
+```markdown
+---
+name: cat-banner
+description: Display task progress banner
+---
+
+!`cat-progress-banner.sh --task-id "${TASK_ID}" --phase "${PHASE}"`
+```
+
+The script generates the complete banner with correct box alignment, emoji widths, and padding.
+Claude receives the rendered banner and outputs it directly.
+
+**When to use silent preprocessing:**
+- Status displays with boxes/tables
+- Progress indicators
+- Any formatted output with precise alignment
+- Data that must be computed (counts, sums, percentages)
+
+**Creating preprocessing scripts:**
+1. Create script in `plugin/scripts/` (e.g., `cat-progress-banner.sh`)
+2. Script accepts arguments via shell variables or command-line args
+3. Script outputs the final formatted content to stdout
+4. Reference in skill with `!`script.sh args``
+
+**Identify extraction candidates during function extraction (Step 5):**
 
 ```
 For each function identified, ask:
@@ -1201,10 +1245,10 @@ For each function identified, ask:
 2. Could the agent get the wrong result by "thinking" instead of computing?
 3. Does the function involve precise formatting, counting, or arithmetic?
 
-If YES to all three → Extract to hook-based precomputation
+If YES to all three → Extract to silent preprocessing script
 ```
 
-**Computation candidate signals**:
+**Extraction candidate signals**:
 | Signal | Example | Why Extract? |
 |--------|---------|--------------|
 | Counting characters/widths | `display_width(text)` | Agent may miscount emojis |
@@ -1219,360 +1263,6 @@ If YES to all three → Extract to hook-based precomputation
 | Pattern matching | "Find repeated subtrees" | Requires semantic analysis |
 | Decision making | "Choose appropriate level" | Requires context |
 
-**Anti-pattern (M215):** Skill invokes a script after reasoning completes.
-```
-# WRONG - Shows Bash tools to users, defeats extraction purpose
-1. Skill reasons about content
-2. Skill invokes render-output.py via Bash  ← User sees Bash tool
-3. Script returns formatted output
-4. Skill outputs result
-
-# CORRECT - Hook runs BEFORE skill, user sees nothing
-1. Hook detects skill invocation (via UserPromptSubmit or handler)
-2. Hook pre-computes ALL possible outputs
-3. Hook returns template content via additionalContext
-4. Skill receives template content, reasons about which to use, outputs directly
-```
-
-### MANDATORY: Planning Verification Checklist (M198)
-
-**BLOCKING:** Before recommending ANY approach for a skill-builder rewrite, complete this checklist:
-
-```yaml
-extraction_verification:
-  # Check each computation candidate signal against the skill
-  signals_present:
-    counting_chars_widths: true|false  # display_width, strlen, emoji counting
-    arithmetic_with_vars: true|false   # padding = max - width, calculations
-    building_formatted_strings: true|false  # "│ " + content + " │", table rows
-    aggregating_collections: true|false     # max(widths), sum, counts
-
-  # If ANY signal is true, extraction is REQUIRED
-  extraction_required: true|false
-
-  # Verify recommendation matches requirement
-  recommendation_valid:
-    if_extraction_required_and_recommending_simplified: INVALID
-    if_extraction_required_and_recommending_hooks: VALID
-    if_no_extraction_and_recommending_simplified: VALID
-```
-
-**Anti-pattern (M198):** Recommending "simplified rewrite without hooks" based on content type
-(ASCII vs emoji) rather than computation type. The extraction criteria are about WHAT OPERATIONS
-the skill performs (counting, arithmetic, formatting), NOT what characters appear in the output.
-
-**Anti-pattern (M203):** Acknowledging extraction is required, then overriding with case-specific
-reasoning. Common override patterns to REJECT:
-- "HOWEVER, consider that this only runs once..."
-- "BUT for this specific case, hooks are overkill..."
-- "Given the static content, we can simplify..."
-- "The complexity cost outweighs the benefit..."
-
-**If signals show extraction_required: true, the determination is FINAL.** Do not add "HOWEVER"
-exceptions. The methodology exists precisely because case-specific reasoning leads to errors.
-Frequency of execution, content type, and perceived complexity are NOT valid override reasons.
-
-**Anti-pattern (M214):** Conflating content generation with display rendering. These are independent:
-
-| Dimension | Question | If YES |
-|-----------|----------|--------|
-| Content | Does content require reasoning/judgment? | Content stays in skill |
-| Display | Does output need formatted rendering (boxes, tables, alignment)? | Rendering extracted to hook |
-
-**Common error:** "The content is reasoning-based, so extraction_required: false."
-**Correct analysis:** Content and display are orthogonal. Even if CONTENT requires reasoning,
-DISPLAY rendering (box characters, padding, alignment) is deterministic and should be extracted.
-
-**Correct workflow for mixed cases (hook pre-computes all variants):**
-1. Hook detects skill invocation
-2. Hook gathers all data that could be displayed (from files, state, etc.)
-3. Hook pre-renders ALL possible output variants
-4. Hook returns output template variants via additionalContext
-5. Agent reasons about which variant(s) to use
-6. Agent outputs the selected template content directly
-
-**Example - research executive summary:**
-```yaml
-# WRONG analysis (led to M214):
-"The content requires reasoning (identifying approaches), so extraction_required: false"
-
-# WRONG workflow (led to M215):
-1. Agent reasons about stakeholder findings → produces approach data
-2. Agent calls render-research-summary.py via Bash  ← User sees Bash tool!
-3. Script returns formatted box output
-4. Agent outputs pre-rendered result
-
-# CORRECT analysis:
-content_generation: reasoning-based  # Selection/synthesis - stays in skill
-display_rendering: deterministic     # Box layout, alignment - extract to hook
-
-# CORRECT workflow:
-1. Hook detects /cat:research invocation
-2. Hook reads all stakeholder data from PLAN.md Research section
-3. Hook pre-renders executive summary boxes for each option/approach
-4. Hook returns ALL pre-rendered variants via additionalContext
-5. Agent reasons about findings, selects relevant output template sections
-6. Agent outputs selected template content (no Bash invocation)
-```
-
-**Example - Token-report skill:**
-```yaml
-# WRONG analysis (led to M198):
-"Table contents are ASCII-only, so hooks are overkill"
-
-# CORRECT analysis:
-signals_present:
-  counting_chars_widths: true      # Column widths must be calculated
-  arithmetic_with_vars: true       # padding = column_width - content_width
-  building_formatted_strings: true # "│ Type            │ Description..."
-  aggregating_collections: true    # Total tokens = sum of subagent tokens
-
-extraction_required: true  # 4/4 signals present
-recommendation: "Full hook-based pre-computation (Approach A)"
-```
-
-### Template-Based Precomputation (M216)
-
-**For mixed cases where content is reasoning-based but output structure is known:**
-
-Even when the exact content is unknown until the skill reasons about it, the OUTPUT TYPE/STRUCTURE
-is often known ahead of time. The hook can pre-compute **templates** that the skill fills in.
-
-**Key insight:** You know:
-- The box will be N characters wide
-- Each line needs "│ " prefix and " │" suffix
-- The top/bottom borders use specific characters
-- Section headers follow a pattern
-
-**Template-based workflow:**
-1. Hook pre-computes structural elements at fixed width:
-   - Box borders (top, bottom, dividers)
-   - Line template with padding placeholder
-   - Section header templates
-2. Hook returns templates via additionalContext
-3. Skill reasons about content (option names, descriptions, etc.)
-4. Skill fills templates with content, extending to more lines as needed
-5. Skill outputs using output template structural elements
-
-**Example - Research executive summary templates:**
-
-```python
-# Hook pre-computes templates at fixed width (e.g., 76 chars inner width)
-BOX_WIDTH = 76
-
-def precompute_templates():
-    return {
-        'top_border': '╭' + '─' * (BOX_WIDTH + 2) + '╮',
-        'bottom_border': '╰' + '─' * (BOX_WIDTH + 2) + '╯',
-        'divider': '├' + '─' * (BOX_WIDTH + 2) + '┤',
-        'line_template': '│ {content:<' + str(BOX_WIDTH) + '} │',
-        'header_template': '│ {icon} {title:<' + str(BOX_WIDTH - 4) + '} │',
-        'empty_line': '│' + ' ' * (BOX_WIDTH + 2) + '│',
-    }
-```
-
-**Skill uses templates:**
-
-```markdown
-### Step 1: Require output template templates
-
-**MANDATORY:** Check context for "OUTPUT TEMPLATE RESEARCH TEMPLATES".
-
-Templates include:
-- `top_border`: Use once at start
-- `bottom_border`: Use once at end
-- `line_template`: Use for each content line (format with content)
-- `header_template`: Use for section headers
-- `divider`: Use between sections
-- `empty_line`: Use for visual spacing
-
-### Step 2: Reason about content
-
-Synthesize stakeholder findings to identify approaches, tradeoffs, etc.
-(This is the reasoning part that cannot be output template.)
-
-### Step 3: Build output using templates
-
-For each line of content:
-1. Use `line_template.format(content=your_content)`
-2. If content exceeds width, wrap to multiple lines using same template
-
-Output structure:
-```
-{top_border}
-{header_template.format(icon='📋', title='Executive Summary')}
-{divider}
-{line_template.format(content='Option 1: ...')}
-{line_template.format(content='  Description: ...')}
-{empty_line}
-{line_template.format(content='Option 2: ...')}
-...
-{bottom_border}
-```
-```
-
-**Benefits of template approach:**
-- Borders/structure computed once with correct widths
-- Skill can extend to any number of lines
-- No risk of miscounting padding (template handles it)
-- Works when content is unknown but structure is known
-
-**When to use each approach:**
-
-| Scenario | Approach |
-|----------|----------|
-| All content known ahead of time | Full precomputation (status_handler pattern) |
-| Content unknown, structure known | Template precomputation |
-| Content unknown, structure varies | Plain text (avoid boxes) |
-
-**When computation candidates exist, generate two artifacts:**
-
-**1. Skill Handler** (Python in `plugin/hooks/skill_handlers/`):
-
-Create a handler that pre-computes ALL possible outputs before the skill runs.
-See `status_handler.py` for the canonical example.
-
-```python
-# plugin/hooks/skill_handlers/{skill_name}_handler.py
-"""Handler for /cat:{skill-name} precomputation."""
-
-from pathlib import Path
-from . import register_handler
-
-class SkillNameHandler:
-    """Handler for /cat:{skill-name} skill."""
-
-    def handle(self, context: dict) -> str | None:
-        """Pre-compute all possible outputs before skill runs."""
-        project_root = context.get("project_root")
-        if not project_root:
-            return None
-
-        # 1. Gather all data the skill might need
-        data = self._collect_data(project_root)
-        if not data:
-            return None
-
-        # 2. Pre-render ALL possible output variants
-        variants = self._render_all_variants(data)
-
-        # 3. Return template content via additionalContext
-        return f"""OUTPUT TEMPLATE {SKILL_NAME} OUTPUT:
-
-{variants['main_output']}
-
-VARIANT A (if applicable):
-{variants['variant_a']}
-
-VARIANT B (if applicable):
-{variants['variant_b']}
-
-INSTRUCTION: Output the appropriate output template section. Do not recalculate."""
-
-    def _collect_data(self, project_root):
-        # Read files, gather state, etc.
-        pass
-
-    def _render_all_variants(self, data):
-        # Pre-render boxes, tables, formatted output
-        # Include ALL variants the skill might need
-        pass
-
-# Register handler - this makes it run when skill is invoked
-_handler = SkillNameHandler()
-register_handler("{skill-name}", _handler)
-```
-
-**Key patterns from `status_handler.py`:**
-- `display_width(text)` - calculates terminal width with emoji support
-- `build_line(content, max_width)` - builds single box line with padding
-- `build_border(max_width, is_top)` - builds top/bottom border
-- `build_inner_box(header, content_items)` - builds nested box structures
-
-**2. Skill Preamble** (add to generated skill - FAIL-FAST, not fallback):
-
-```markdown
-### Step 1: Require template results
-
-**MANDATORY:** Check context for "OUTPUT TEMPLATE {SKILL-NAME}".
-
-If found:
-1. Output the template content **directly without preamble**
-2. If skill requires reasoning to select variants, select appropriate section
-3. Skip to verification step
-
-If NOT found: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "results" "the skill"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Output template results not found."
-  echo "The handler ({skill-name}_handler.py) should have provided these."
-  echo "Check:"
-  echo "1. Handler is registered in skill_handlers/__init__.py"
-  echo "2. Handler file exists in plugin/hooks/skill_handlers/"
-  echo "3. Handler ran without errors"
-fi
-```
-
-Output the error and STOP. Do NOT attempt manual computation.
-```
-
-**Why fail-fast?** Manual computation was extracted precisely because agents
-cannot do it reliably. Falling back to manual defeats the purpose and hides
-handler failures.
-```
-
-**For mixed cases (reasoning + display):**
-
-When the skill requires reasoning to generate content but display is deterministic:
-
-```python
-# The hook pre-computes ALL possible display formats
-# The skill reasons about which to use and outputs directly
-
-def _render_all_variants(self, data):
-    variants = {}
-
-    # Pre-render each possible stakeholder perspective
-    for stakeholder in ['architect', 'security', 'performance', ...]:
-        variants[f'{stakeholder}_box'] = self._build_stakeholder_box(
-            data.get(stakeholder, {})
-        )
-
-    # Pre-render summary tables for different groupings
-    variants['by_priority'] = self._build_priority_table(data)
-    variants['by_category'] = self._build_category_table(data)
-
-    # Pre-render option comparison boxes
-    for i, option in enumerate(data.get('options', [])):
-        variants[f'option_{i}_box'] = self._build_option_box(option)
-
-    return variants
-```
-
-The skill then reasons about the data, decides what to show, and outputs
-the appropriate output template sections.
-
-**Example - Box alignment extraction**:
-
-```
-Functions identified in Step 5:
-  display_width(text) → integer     ← COMPUTATION CANDIDATE
-  max_content_width(items) → int    ← COMPUTATION CANDIDATE
-  build_line(content, max) → string ← COMPUTATION CANDIDATE
-
-Generate:
-  1. plugin/hooks/skill_handlers/box_handler.py
-     - Implements display_width, build_line, build_border
-     - Pre-computes complete box output
-     - Returns via additionalContext
-  2. Skill preamble - REQUIRES output template (fail-fast)
-
-Result: Agent receives exact template box, outputs directly.
-No Bash tools shown to user. If handler fails, skill fails immediately.
-```
-
 **Decision flow during Step 5**:
 ```
 For each function:
@@ -1584,11 +1274,11 @@ For each function:
          │
         Yes
          │
-  Extract to skill handler (plugin/hooks/skill_handlers/)
+  Extract to preprocessing script (plugin/scripts/)
          │
-  Handler pre-computes ALL variants BEFORE skill runs
+  Script computes output BEFORE Claude sees skill
          │
-  Skill REQUIRES template result (fail-fast if missing)
+  Claude receives rendered output, outputs directly
 ```
 
 ---

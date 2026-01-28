@@ -1,7 +1,7 @@
 # State
 
-- **Status:** pending
-- **Progress:** 0%
+- **Status:** in-progress
+- **Progress:** 25%
 - **Dependencies:** []
 - **Decomposed:** true
 - **Last Updated:** 2026-01-28
@@ -10,7 +10,7 @@
 
 | Subtask | Status | Dependencies | Description |
 |---------|--------|--------------|-------------|
-| update-skill-builder-docs | pending | - | Update skill-builder to document new mechanism |
+| update-skill-builder-docs | completed | - | Update skill-builder to document new mechanism |
 | migrate-progress-banners | pending | update-skill-builder-docs | Migrate work/progress banner output |
 | migrate-status-displays | pending | update-skill-builder-docs | Migrate status command displays |
 | migrate-remaining-handlers | pending | migrate-progress-banners, migrate-status-displays | Migrate other handlers |
