@@ -48,21 +48,28 @@ Using the session history from Step 1, identify all documents the agent read:
 ```bash
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
+# Note: Tool uses are nested inside assistant messages as content blocks
+# Structure: {type: "assistant", message: {content: [{type: "tool_use", name: "...", input: {...}}]}}
+
 # Find documents read
 echo "=== Documents Read ==="
-jq -r 'select(.type == "tool_use") | select(.name == "Read" or .name == "Skill") |
-  if .name == "Read" then .input.file_path
-  else "skill:" + .input.skill end' "$SESSION_FILE" 2>/dev/null | sort -u
+grep '"type":"assistant"' "$SESSION_FILE" | \
+  jq -r '.message.content[]? | select(.type == "tool_use") |
+    select(.name == "Read" or .name == "Skill") |
+    if .name == "Read" then .input.file_path
+    else "skill:" + .input.skill end' 2>/dev/null | sort -u
 
 # Find skill invocations vs expected
 echo "=== Skill Invocations ==="
-jq -r 'select(.type == "tool_use" and .name == "Skill") |
-  .input.skill + " " + (.input.args // "")' "$SESSION_FILE" 2>/dev/null
+grep '"type":"assistant"' "$SESSION_FILE" | \
+  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Skill") |
+    .input.skill + " " + (.input.args // "")' 2>/dev/null
 
 # Find Task prompts (delegation prompts are documents too!) (M274)
 echo "=== Task Delegation Prompts ==="
-jq -r 'select(.type == "tool_use" and .name == "Task") |
-  "Task: " + .input.description + "\n" + .input.prompt' "$SESSION_FILE" 2>/dev/null
+grep '"type":"assistant"' "$SESSION_FILE" | \
+  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Task") |
+    "Task: " + .input.description + "\n" + .input.prompt' 2>/dev/null
 ```
 
 **For each document, check for priming patterns:**

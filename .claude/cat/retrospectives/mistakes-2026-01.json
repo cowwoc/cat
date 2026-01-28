@@ -1524,6 +1524,85 @@
         "catches_variations": true
       },
       "correct_behavior": "RCA must reach system/document level cause. Ask: 'What in the system enabled this mistake?' If answer is blank or 'agent should have...', RCA is incomplete - keep asking why until you can point to a specific file to change."
+    },
+    {
+      "id": "M300",
+      "timestamp": "2026-01-28T09:55:00Z",
+      "category": "assumption_without_verification",
+      "description": "Declared session file inaccessible without investigating - jq query was wrong, not the file",
+      "root_cause": "learn-from-mistakes skill Step 1b contains incorrect jq queries assuming top-level tool_use entries, but Claude Code session files nest tool_use inside assistant message content blocks",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "session-file",
+        "jq-query",
+        "assumption",
+        "investigation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When jq query returns empty, investigate actual file structure before declaring inaccessible"
+    },
+    {
+      "id": "M301",
+      "timestamp": "2026-01-28T09:51:00Z",
+      "category": "process_violation",
+      "description": "Created JDK infrastructure without writing tests first - violated TDD workflow",
+      "root_cause": "PLAN.md template had acceptance criteria but execution steps did not enforce TDD order (tests first)",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/templates/plan.md",
+      "pattern_keywords": [
+        "tdd",
+        "tests-first",
+        "execution-steps",
+        "plan-template"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "First execution step must create failing tests for acceptance criteria before implementing"
+    },
+    {
+      "id": "M302",
+      "timestamp": "2026-01-28T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent used Write tool to create JDK infrastructure files directly instead of delegating to subagent",
+      "root_cause": "warn-base-branch-edit.sh hook had two bugs: (1) only triggered for Edit not Write tool, (2) early-exit on line 51-57 allowed all edits in task worktrees without warning",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-base-branch-edit.sh",
+      "pattern_keywords": [
+        "subagent",
+        "delegation",
+        "Write tool",
+        "direct implementation",
+        "worktree"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M097",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Main agent should spawn subagent via Task tool for implementation work, even when in task worktree"
     }
   ]
 }
