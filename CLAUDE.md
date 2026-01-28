@@ -1,11 +1,12 @@
 # Project Instructions
 
-## Commit Types for Plugin Files
+## Commit Types
 
-**CRITICAL (M255):** Files in `plugin/` are Claude-facing instructions, NOT user-facing documentation.
+**CRITICAL (M255):** Claude-facing instruction files use `config:`, NOT `docs:`.
 
 | Path | Commit Type | Reason |
 |------|-------------|--------|
+| `CLAUDE.md` | `config:` | Claude project instructions |
 | `plugin/concepts/*.md` | `config:` | Claude reference docs |
 | `plugin/commands/*.md` | `config:` | Claude commands |
 | `plugin/skills/*/*.md` | `config:` | Claude skills |

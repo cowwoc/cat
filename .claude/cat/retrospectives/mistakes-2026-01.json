@@ -1681,6 +1681,31 @@
         "catches_variations": true
       },
       "correct_behavior": "In invocable skills, use descriptive text (exclamation-backtick syntax) instead of literal patterns when documenting the silent preprocessing feature"
+    },
+    {
+      "id": "M306",
+      "timestamp": "2026-01-28T13:34:47-05:00",
+      "category": "protocol_violation",
+      "description": "Used docs: commit type for CLAUDE.md which is Claude-facing config, not user-facing documentation",
+      "root_cause": "Commit type table in CLAUDE.md only listed plugin/ paths, not CLAUDE.md itself, creating ambiguity about its classification",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "/workspace/CLAUDE.md",
+      "pattern_keywords": [
+        "commit-type",
+        "docs-vs-config",
+        "claude-facing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use config: for CLAUDE.md and all Claude-facing instruction files; docs: only for user-facing files like README.md"
     }
   ]
 }
