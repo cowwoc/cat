@@ -65,7 +65,7 @@ public final class GetBashPosttoolOutput
       {
         BashHandler.Result result = handler.check(command, toolInput, toolResult, sessionId);
         // PostToolUse cannot block, only warn
-        if (result.reason() != null && !result.reason().isEmpty())
+        if (!result.reason().isEmpty())
         {
           warnings.add(result.reason());
         }

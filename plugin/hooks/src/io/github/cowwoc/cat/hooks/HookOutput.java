@@ -43,7 +43,7 @@ public final class HookOutput
     ObjectNode response = mapper.createObjectNode();
     response.put("decision", "block");
     response.put("reason", reason);
-    if (additionalContext != null && !additionalContext.isEmpty())
+    if (!additionalContext.isEmpty())
     {
       response.put("additionalContext", additionalContext);
     }

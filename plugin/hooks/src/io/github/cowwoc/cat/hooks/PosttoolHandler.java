@@ -2,6 +2,8 @@ package io.github.cowwoc.cat.hooks;
 
 import tools.jackson.databind.JsonNode;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Interface for general PostToolUse handlers.
  *
@@ -19,13 +21,21 @@ public interface PosttoolHandler
   record Result(String warning, String additionalContext)
   {
     /**
+     * Creates a new posttool handler result.
+     */
+    public Result
+    {
+      // warning and additionalContext use "" not null per Java conventions
+    }
+
+    /**
      * Creates an allow result (no warning, no context).
      *
      * @return an allow result
      */
     public static Result allow()
     {
-      return new Result(null, null);
+      return new Result("", "");
     }
 
     /**
@@ -36,7 +46,7 @@ public interface PosttoolHandler
      */
     public static Result warn(String warning)
     {
-      return new Result(warning, null);
+      return new Result(warning, "");
     }
 
     /**
@@ -47,7 +57,7 @@ public interface PosttoolHandler
      */
     public static Result context(String additionalContext)
     {
-      return new Result(null, additionalContext);
+      return new Result("", additionalContext);
     }
 
     /**
@@ -71,6 +81,7 @@ public interface PosttoolHandler
    * @param sessionId the session ID
    * @param hookData the full hook data JSON
    * @return the check result
+   * @throws NullPointerException if any parameter is null
    */
   Result check(String toolName, JsonNode toolResult, String sessionId, JsonNode hookData);
 }

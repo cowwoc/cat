@@ -30,7 +30,7 @@ public final class GetPosttoolOutput
     HookInput input = HookInput.readFromStdin();
 
     String toolName = input.getToolName();
-    if (toolName == null || toolName.isEmpty())
+    if (toolName.isEmpty())
     {
       HookOutput.empty();
       return;
@@ -48,11 +48,11 @@ public final class GetPosttoolOutput
       try
       {
         PosttoolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
-        if (result.warning() != null && !result.warning().isEmpty())
+        if (!result.warning().isEmpty())
         {
           warnings.add(result.warning());
         }
-        if (result.additionalContext() != null && !result.additionalContext().isEmpty())
+        if (!result.additionalContext().isEmpty())
         {
           additionalContexts.add(result.additionalContext());
         }

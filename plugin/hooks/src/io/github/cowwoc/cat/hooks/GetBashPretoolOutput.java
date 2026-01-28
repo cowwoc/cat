@@ -70,7 +70,7 @@ public final class GetBashPretoolOutput
           HookOutput.block(result.reason(), result.additionalContext());
           return;
         }
-        if (result.reason() != null && !result.reason().isEmpty())
+        if (!result.reason().isEmpty())
         {
           warnings.add(result.reason());
         }
