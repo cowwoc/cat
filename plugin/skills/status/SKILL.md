@@ -56,7 +56,7 @@ The status box above was pre-rendered via silent preprocessing.
 
 ## Why Silent Preprocessing?
 
-This skill uses silent preprocessing (`!`command``) instead of OUTPUT TEMPLATE injection.
+This skill uses silent preprocessing (exclamation-backtick syntax) instead of OUTPUT TEMPLATE injection.
 
 **Benefits:**
 - Status is computed BEFORE Claude sees the skill content
@@ -66,7 +66,7 @@ This skill uses silent preprocessing (`!`command``) instead of OUTPUT TEMPLATE i
 
 **How it works:**
 1. User invokes `/cat:status`
-2. Claude Code loads the skill and expands `!`command``
+2. Claude Code loads the skill and expands the command pattern
 3. Script runs and outputs the rendered status box
 4. Claude receives the skill with actual status data embedded
 5. Claude outputs the pre-rendered content verbatim
