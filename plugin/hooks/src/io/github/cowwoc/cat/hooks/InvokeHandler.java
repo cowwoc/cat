@@ -44,7 +44,7 @@ public final class InvokeHandler
       String handlerName = null;
       if (data.has("handler"))
       {
-        handlerName = data.get("handler").asText();
+        handlerName = data.get("handler").asString();
       }
       JsonNode context;
       if (data.has("context"))
@@ -63,25 +63,57 @@ public final class InvokeHandler
         return;
       }
 
-      // TODO: Port handler registry from Python
-      // Handler handler = HandlerRegistry.get(handlerName);
-      // if (handler == null) {
-      //     System.err.println("Error: No handler registered for '" + handlerName + "'");
-      //     System.exit(1);
-      //     return;
-      // }
-      // String result = handler.handle(context);
-      // if (result != null) {
-      //     System.out.println(result);
-      // }
+      // Look up handler in registry
+      SkillHandler handler = HandlerRegistry.getSkillHandler(handlerName);
+      if (handler == null)
+      {
+        System.err.println("Error: No handler registered for '" + handlerName + "'");
+        System.exit(1);
+        return;
+      }
 
-      System.err.println("Error: No handler registered for '" + handlerName + "'");
-      System.exit(1);
+      // Build context for handler (optional fields default to empty string)
+      String userPrompt = getOptionalString(context, "user_prompt");
+      String sessionId = getOptionalString(context, "session_id");
+      String projectRoot = getOptionalString(context, "project_root");
+      String pluginRoot = getOptionalString(context, "plugin_root");
+
+      SkillHandler.SkillContext skillContext = new SkillHandler.SkillContext(
+        userPrompt, sessionId, projectRoot, pluginRoot, context);
+      String result = handler.handle(skillContext);
+      if (result != null)
+      {
+        System.out.println(result);
+      }
     }
     catch (Exception e)
     {
       System.err.println("Error: " + e.getMessage());
       System.exit(1);
+    }
+  }
+
+  /**
+   * Get an optional string value from a JSON node, defaulting to empty string.
+   *
+   * @param node the parent JSON node
+   * @param key the key to look up
+   * @return the string value, or empty string if not found or null
+   */
+  private static String getOptionalString(JsonNode node, String key)
+  {
+    if (!node.has(key))
+    {
+      return "";
+    }
+    String value = node.get(key).asString();
+    if (value != null)
+    {
+      return value;
+    }
+    else
+    {
+      return "";
     }
   }
 }

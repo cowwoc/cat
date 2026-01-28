@@ -42,7 +42,26 @@ public final class GetPosttoolOutput
     List<String> warnings = new ArrayList<>();
     List<String> additionalContexts = new ArrayList<>();
 
-    // TODO: Port posttool handlers from Python
+    // Run all general posttool handlers
+    for (PosttoolHandler handler : HandlerRegistry.getPosttoolHandlers())
+    {
+      try
+      {
+        PosttoolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
+        if (result.warning() != null && !result.warning().isEmpty())
+        {
+          warnings.add(result.warning());
+        }
+        if (result.additionalContext() != null && !result.additionalContext().isEmpty())
+        {
+          additionalContexts.add(result.additionalContext());
+        }
+      }
+      catch (Exception e)
+      {
+        System.err.println("get-posttool-output: handler error: " + e.getMessage());
+      }
+    }
 
     // Output warnings to stderr
     for (String warning : warnings)

@@ -29,6 +29,25 @@ public class Example
 - 2 spaces (not tabs)
 - Continuation indent: 2 spaces
 
+### Conditional Expressions
+Use if/else statements instead of the ternary operator:
+
+```java
+// Good - if/else
+String command;
+if (commandNode != null)
+{
+  command = commandNode.asString();
+}
+else
+{
+  command = null;
+}
+
+// Avoid - ternary operator
+String command = commandNode != null ? commandNode.asString() : null;
+```
+
 ### JsonMapper Usage
 - Use `JsonMapper` instead of `ObjectMapper` for JSON parsing
 - Create non-static instances: `JsonMapper.builder().build()`

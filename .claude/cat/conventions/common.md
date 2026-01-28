@@ -90,6 +90,32 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 - Security settings (wrong default = vulnerability)
 - Any value that affects data integrity
 
+## Git Conventions
+
+### Squashing Commits
+
+When the user asks to squash commits, **squash by topic** (not all into one):
+
+- Group related commits by their purpose/topic
+- Each topic becomes one squashed commit
+- Preserve commit type boundaries (e.g., `feature:` vs `config:`)
+
+**Example:** If branch has these commits:
+```
+config: add handler registry
+config: fix null handling in registry
+config: add if/else convention
+docs: update README
+```
+
+Squash to:
+```
+config: add handler registry with null handling and conventions
+docs: update README
+```
+
+**Rationale:** Squashing by topic preserves meaningful history while reducing noise from incremental fixes.
+
 ## Testing
 
 - Python: pytest for unit tests

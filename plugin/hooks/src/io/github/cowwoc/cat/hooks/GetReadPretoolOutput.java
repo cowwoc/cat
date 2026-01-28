@@ -42,7 +42,28 @@ public final class GetReadPretoolOutput
     String sessionId = input.getSessionId();
     List<String> warnings = new ArrayList<>();
 
-    // TODO: Port read pretool handlers from Python
+    // Run all read pretool handlers
+    for (ReadHandler handler : HandlerRegistry.getReadPretoolHandlers())
+    {
+      try
+      {
+        ReadHandler.Result result = handler.check(toolName, toolInput, null, sessionId);
+        if (result.blocked())
+        {
+          // Handler blocked the operation
+          HookOutput.block(result.reason(), result.additionalContext());
+          return;
+        }
+        if (result.reason() != null && !result.reason().isEmpty())
+        {
+          warnings.add(result.reason());
+        }
+      }
+      catch (Exception e)
+      {
+        System.err.println("get-read-pretool-output: handler error: " + e.getMessage());
+      }
+    }
 
     // Output warnings if any
     for (String warning : warnings)

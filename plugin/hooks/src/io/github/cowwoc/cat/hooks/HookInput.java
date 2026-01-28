@@ -78,7 +78,7 @@ public final class HookInput
     JsonNode node = data.get(key);
     if (node != null && node.isTextual())
     {
-      return node.asText();
+      return node.asString();
     }
     return null;
   }
