@@ -387,18 +387,29 @@ class WorkHandler:
         # Compact progress banner format - no verbose examples
         return f"""OUTPUT TEMPLATE WORK PROGRESS FORMAT:
 
-## Progress Display
+## Progress Display Templates
 
-**Header:** `🐱 > {{TASK_ID}}`
+### Header Format
+`● 🐱 > {{TASK_ID}}`
 
-**Banner:** `{{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging`
+### Banner Format (indented 2 spaces)
+`  {{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging`
 
-**Symbols:** ○ Pending | ● Complete | ◉ Active | ✗ Failed
+### Symbols
+○ Pending | ● Complete | ◉ Active | ✗ Failed
+
+### Complete Progress Block Example
+```
+● 🐱 > 2.1-task-name
+
+  ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
+```
 
 **Display sequence (MANDATORY):**
-1. Show Header FIRST (after task is found): `🐱 > {{TASK_ID}}`
-2. Show Banner below Header: `◉ Preparing ────── ○ Executing...`
-3. Update Banner as phases complete
+1. Show Header FIRST (after task is found): `● 🐱 > {{TASK_ID}}`
+2. Blank line
+3. Show Banner (indented 2 spaces): `  ◉ Preparing ────── ○ Executing...`
+4. Update Banner as phases complete
 
 Do NOT show progress before task is identified. Header requires TASK_ID.
 
