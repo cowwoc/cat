@@ -389,29 +389,32 @@ class WorkHandler:
 
 ## Progress Display Templates
 
-### Header Format
-`● 🐱 > {{TASK_ID}}`
-
-### Banner Format (indented 2 spaces)
-`  {{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging`
+### Box Format
+```
+┌─ 🐱 {{TASK_ID}} ─────────────────────────────────────────────────────┐
+│  {{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
 ### Symbols
 ○ Pending | ● Complete | ◉ Active | ✗ Failed
 
-### Complete Progress Block Example
+### Example (Preparing phase active)
 ```
-● 🐱 > 2.1-task-name
-──────────────────────────────────────────────────────────────────────
-  ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging
+┌─ 🐱 2.1-compress-lang-md ────────────────────────────────────────────┐
+│  ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Display sequence (MANDATORY):**
-1. Show Header FIRST (after task is found): `● 🐱 > {{TASK_ID}}`
-2. Separator line (70 dashes): `──────────────────────────────────────────────────────────────────────`
-3. Show Banner (indented 2 spaces): `  ◉ Preparing ────── ○ Executing...`
-4. Update Banner as phases complete
+**Display rules:**
+1. Show box AFTER task is found (requires TASK_ID)
+2. Top border: `┌─ 🐱 ` + TASK_ID + ` ` + dashes to fill + `┐`
+3. Middle: `│  ` + phase banner + ` │`
+4. Bottom: `└` + dashes + `┘`
+5. Total width: 72 characters
+6. Update phase symbols as work progresses
 
-Do NOT show progress before task is identified. Header requires TASK_ID.
+Do NOT show progress before task is identified.
 
 OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE (M225):
 
