@@ -3,6 +3,7 @@
 import pytest
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -13,6 +14,13 @@ from bash_handlers.validate_commit_type import ValidateCommitTypeHandler
 @pytest.fixture
 def handler():
     return ValidateCommitTypeHandler()
+
+
+@pytest.fixture
+def handler_with_staged_files():
+    """Handler with mocked staged files."""
+    h = ValidateCommitTypeHandler()
+    return h
 
 
 class TestHeredocFormat:
@@ -174,4 +182,94 @@ EOF
 )"'''
         result = handler.check(command, {})
         assert result is not None, f"Invalid type '{commit_type}' should be blocked"
+        assert result["decision"] == "block"
+
+
+class TestA007DocsVsConfig:
+    """Test A007: docs: blocked for Claude-facing files."""
+
+    def test_docs_blocked_for_plugin_files(self, handler):
+        """docs: should be blocked when plugin/ files are staged."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update skill documentation
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['plugin/skills/work/SKILL.md']):
+            result = handler.check(command, {})
+        assert result is not None, "docs: with plugin/ files should be blocked"
+        assert result["decision"] == "block"
+        assert "Claude-facing" in result["reason"]
+        assert "config:" in result["reason"]
+
+    def test_docs_blocked_for_claude_md(self, handler):
+        """docs: should be blocked when CLAUDE.md is staged."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update project instructions
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['CLAUDE.md']):
+            result = handler.check(command, {})
+        assert result is not None, "docs: with CLAUDE.md should be blocked"
+        assert result["decision"] == "block"
+
+    def test_docs_blocked_for_hooks(self, handler):
+        """docs: should be blocked when hooks/ files are staged."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update hook documentation
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['plugin/hooks/invoke-handler.py']):
+            result = handler.check(command, {})
+        assert result is not None, "docs: with hooks/ files should be blocked"
+        assert result["decision"] == "block"
+
+    def test_docs_allowed_for_readme(self, handler):
+        """docs: should be allowed for user-facing files like README."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update README
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['README.md']):
+            result = handler.check(command, {})
+        assert result is None, "docs: with README.md should be allowed"
+
+    def test_docs_allowed_for_api_docs(self, handler):
+        """docs: should be allowed for docs/ directory."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update API documentation
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['docs/api/endpoints.md']):
+            result = handler.check(command, {})
+        assert result is None, "docs: with docs/ files should be allowed"
+
+    def test_config_allowed_for_plugin_files(self, handler):
+        """config: should be allowed for Claude-facing files."""
+        command = '''git commit -m "$(cat <<'EOF'
+config: update skill documentation
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['plugin/skills/work/SKILL.md']):
+            result = handler.check(command, {})
+        assert result is None, "config: with plugin/ files should be allowed"
+
+    def test_docs_with_empty_staged_files(self, handler):
+        """docs: should be allowed when no files are staged."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update something
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=[]):
+            result = handler.check(command, {})
+        assert result is None, "docs: with no staged files should be allowed"
+
+    def test_docs_blocked_for_claude_config_dir(self, handler):
+        """docs: should be blocked for .claude/ directory files."""
+        command = '''git commit -m "$(cat <<'EOF'
+docs: update claude config
+EOF
+)"'''
+        with patch.object(handler, '_get_staged_files', return_value=['.claude/cat/cat-config.json']):
+            result = handler.check(command, {})
+        assert result is not None, "docs: with .claude/ files should be blocked"
         assert result["decision"] == "block"
