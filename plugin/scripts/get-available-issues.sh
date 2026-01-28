@@ -435,6 +435,12 @@ find_issue_in_minor() {
             continue
         fi
 
+        # Skip decomposed parent tasks - their subtasks should be executed instead
+        # Parent tasks have "## Decomposed Into" section in STATE.md
+        if grep -q "^## Decomposed Into" "$issue_dir/STATE.md" 2>/dev/null; then
+            continue
+        fi
+
         # Extract version numbers from path
         local minor_version
         minor_version=$(basename "$minor_dir")
@@ -553,6 +559,13 @@ find_next_issue() {
         status=$(get_issue_status "$issue_dir/STATE.md")
         if [[ "$status" != "pending" && "$status" != "in-progress" ]]; then
             echo '{"status":"not_executable","message":"Issue status is '"$status"'","issue_id":"'"$TARGET"'"}'
+            return 1
+        fi
+
+        # Check if this is a decomposed parent task
+        # Decomposed parents cannot be executed directly - their subtasks should be run instead
+        if grep -q "^## Decomposed Into" "$issue_dir/STATE.md" 2>/dev/null; then
+            echo '{"status":"decomposed","message":"Issue is a decomposed parent task - execute subtasks instead","issue_id":"'"$TARGET"'"}'
             return 1
         fi
 
