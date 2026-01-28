@@ -454,6 +454,9 @@ class WorkHandler:
 {example_executing}
 ```
 
+**Output as raw text** - no markdown code blocks, no bullet prefixes, no additional formatting.
+Just output the three lines directly.
+
 Do NOT show progress before task is identified.
 
 OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE (M225):
