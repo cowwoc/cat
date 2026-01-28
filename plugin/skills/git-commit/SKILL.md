@@ -256,6 +256,20 @@ Files updated:
 - skills/collect-results/SKILL.md
 ```
 
+## Pre-Commit Efficiency
+
+When committing changes you just made in the current session, skip redundant checks (`git status`, `git diff`, `git log`). You already know:
+- What files you edited (from Edit/Write tools)
+- What the changes are (you wrote them)
+- The commit message style (from earlier commits)
+
+Proceed directly to `git add <files> && git commit`.
+
+**Use the three-command pattern only when:**
+- Resuming work from a previous session
+- Changes span files you didn't directly edit
+- Uncertain about repository state
+
 ## Checklist Before Committing
 
 - [ ] **In correct worktree** (M101): `pwd` shows task worktree, NOT `/workspace`
