@@ -409,6 +409,9 @@ at the deepest level where they're relevant to maximize fix propagation.
 **Example:** M277 (validation separation) belongs in `shrink-doc/SKILL.md` (skill-specific validation)
 not `work.md` (generic workflow) because the per-file subagent pattern is shrink-doc-specific.
 
+**Verification question (M297):** Before committing a fix, ask: "Is this rule specific to one skill/context,
+or genuinely applies to all tasks?" If specific → find the skill doc. If generic → workflow doc is correct.
+
 **Language requirements for documentation/prompt changes (M177):**
 
 When prevention involves updating documentation, prompts, or instructions, use **positive actionable
