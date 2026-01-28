@@ -154,7 +154,7 @@
       "description": "Document path and config verification requirements: always check worktree context, read cat-config.json before using values, clarify abort semantics",
       "category": "assumption_without_verification",
       "pattern_id": "PATTERN-003",
-      "status": "implemented",
+      "status": "escalated",
       "created_date": "2026-01-27T12:30:00Z",
       "completed_date": "2026-01-27T17:45:00Z",
       "related_mistakes": [
@@ -173,6 +173,14 @@
           "M286"
         ],
         "verdict": "ineffective"
+      },
+      "escalation": {
+        "id": "ESCALATE-A003",
+        "escalated_date": "2026-01-28T11:30:00-05:00",
+        "reason": "Documentation-level prevention ineffective (4 post-fix mistakes vs 3 before)",
+        "escalation_level": "hook",
+        "implementation": "Enhanced warn-base-branch-edit.sh to detect and warn when Edit/Write uses absolute /workspace/ paths while in a worktree, bypassing isolation",
+        "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh"
       }
     },
     {
@@ -202,15 +210,17 @@
       "description": "Enforce main agent delegation boundary: main agent NEVER uses Write/Edit tools on source files during task execution. All implementation work must be delegated to subagents.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-005",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-28T11:00:00Z",
-      "completed_date": null,
+      "completed_date": "2026-01-28T11:30:00-05:00",
       "related_mistakes": [
         "M294",
         "M296",
         "M297",
         "M302"
       ],
+      "implementation": "Hook warn-base-branch-edit.sh already warns about main agent source edits (A003/M097/M302). Emits warning when Edit/Write targets non-orchestration files. Warning includes delegation guidance.",
+      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
       "effectiveness_check": {
         "mistakes_before": 4,
         "mistakes_after": null,
@@ -224,13 +234,15 @@
       "description": "Prevent test data fabrication: when testing commands/scripts, always use real values from context (e.g., session ID from SessionStart) instead of placeholder/fabricated data.",
       "category": "assumption_without_verification",
       "pattern_id": "PATTERN-006",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-28T11:00:00Z",
-      "completed_date": null,
+      "completed_date": "2026-01-28T11:30:00-05:00",
       "related_mistakes": [
         "M300",
         "M303"
       ],
+      "implementation": "Added anti-pattern M300 to work.md documenting that session IDs must come from SessionStart context, not fabricated placeholders. Script validates UUID format and fails on invalid input.",
+      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/concepts/work.md",
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
