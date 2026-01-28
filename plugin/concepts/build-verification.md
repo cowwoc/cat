@@ -2,6 +2,27 @@
 
 Project-type aware verification before review.
 
+## Verify Configuration (MANDATORY)
+
+**CRITICAL: Check `.claude/cat/cat-config.json` "verify" setting BEFORE proposing merge.**
+
+```bash
+VERIFY_SETTING=$(jq -r '.verify // "all"' .claude/cat/cat-config.json 2>/dev/null || echo "all")
+```
+
+| Setting | Behavior |
+|---------|----------|
+| `"all"` | Run full verification (build, tests, lint, etc.) |
+| `"tests"` | Run tests only |
+| `"none"` | Skip verification (for non-code tasks) |
+
+**When verify != "none":**
+1. Run appropriate verification commands based on project type
+2. All required checks MUST pass before presenting for user approval
+3. Never propose merge if verification fails
+
+**Anti-pattern:** Proposing merge without checking verify setting or running verification.
+
 ## Project Type Detection
 
 Detect project type from marker files:

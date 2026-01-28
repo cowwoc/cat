@@ -25,6 +25,26 @@ public class Example
 }
 ```
 
+### Single-Statement Blocks
+Omit braces for if/else/for/while with a single statement:
+
+```java
+// Good - single statement, no braces
+if (value == null)
+  return "";
+for (int i = 0; i < 10; i += 1)
+  process(i);
+while (hasMore)
+  processNext();
+
+// Good - multiple statements need braces
+if (value == null)
+{
+  log("null value");
+  return "";
+}
+```
+
 ### Indentation
 - 2 spaces (not tabs)
 - Continuation indent: 2 spaces
@@ -75,9 +95,9 @@ if ("Bash".equalsIgnoreCase(toolName))
 ## Documentation
 
 ### Javadoc Requirements
-- **All public classes and records must have Javadoc**
-- **All public methods must have Javadoc** (including interface methods)
-- **All public constructors must have Javadoc** (including record compact constructors)
+- **All classes and records must have Javadoc** (public and non-public)
+- **All methods must have Javadoc** (including interface methods and private methods)
+- **All constructors must have Javadoc** (including record compact constructors)
 - **All thrown exceptions must be documented with `@throws`** (including interface methods that expect implementations to validate parameters)
 - Document parameters with `@param`
 - Document return values with `@return`
