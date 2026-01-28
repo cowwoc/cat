@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-27T21:55:08-05:00",
-  "mistake_count_since_last": 13,
+  "last_retrospective": "2026-01-28T10:47:26-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -189,6 +189,48 @@
         "M289"
       ],
       "implementation": "Updated inject-session-instructions.sh to clarify that IMPORTANT After completing your current task means after current tool call, not entire workflow",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A005",
+      "priority": "high",
+      "description": "Enforce main agent delegation boundary: main agent NEVER uses Write/Edit tools on source files during task execution. All implementation work must be delegated to subagents.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-005",
+      "status": "open",
+      "created_date": "2026-01-28T11:00:00Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M294",
+        "M296",
+        "M297",
+        "M302"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 4,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A006",
+      "priority": "medium",
+      "description": "Prevent test data fabrication: when testing commands/scripts, always use real values from context (e.g., session ID from SessionStart) instead of placeholder/fabricated data.",
+      "category": "assumption_without_verification",
+      "pattern_id": "PATTERN-006",
+      "status": "open",
+      "created_date": "2026-01-28T11:00:00Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M300",
+        "M303"
+      ],
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
