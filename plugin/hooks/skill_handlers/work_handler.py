@@ -422,7 +422,7 @@ class WorkHandler:
         example_preparing = self._build_progress_banner("2.1-compress-lang-md", ("◉", "○", "○", "○"))
         example_executing = self._build_progress_banner("2.1-compress-lang-md", ("●", "◉", "○", "○"))
 
-        # Compact progress banner format - no verbose examples
+        # Compact progress banner format - examples only, no construction algorithm (M298)
         return f"""OUTPUT TEMPLATE WORK PROGRESS FORMAT:
 
 ## Progress Display Templates
@@ -430,35 +430,28 @@ class WorkHandler:
 ### Symbols
 ○ Pending | ● Complete | ◉ Active | ✗ Failed
 
-### Progress Banner Construction
+### Progress Banner Examples
 
-**Phase content (fixed):** `  {{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging `
+**IMPORTANT (M298):** Copy example below, then find-replace ONLY the task ID.
+The dash count is calculated by the handler - do NOT manually adjust dashes.
 
-**Construction steps:**
-1. Calculate phase content width (65 display chars with symbols)
-2. Calculate header width: `─ 🐱 ` + TASK_ID + ` `
-3. Inner width = max(header_width, phase_width)
-4. Top: `┌` + header + dashes to fill inner_width + `┐`
-5. Middle: `│` + phase_content + padding to fill inner_width + `│`
-6. Bottom: `└` + dashes for inner_width + `┘`
-
-### Examples (copy structure, replace task ID and symbols)
-
-**Preparing phase:**
+**Preparing phase** (◉ on Preparing):
 ```
 {example_preparing}
 ```
 
-**Executing phase:**
+**Executing phase** (● ◉ pattern):
 ```
 {example_executing}
 ```
 
+**To use:** Copy the example for your current phase. Find-replace `2.1-compress-lang-md`
+with your actual task ID. The banner will auto-adjust on next invocation.
+
 **CRITICAL: Output as PLAIN TEXT on its own line.**
-- Do NOT wrap in code blocks (```)
-- Do NOT prefix with bullets (●, -, *)
-- Do NOT start output while in a list context
-- Just output the three lines directly, starting fresh on a new line
+- Do NOT wrap in code blocks
+- Do NOT prefix with bullets
+- Do NOT manually count or adjust dash characters
 
 Do NOT show progress before task is identified.
 
