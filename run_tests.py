@@ -149,6 +149,73 @@ EOF
         runner.test(f"Invalid type '{t}' blocked",
                     result is not None and result.get("decision") == "block")
 
+    # A007: Test docs: blocked for Claude-facing files
+    runner.section("bash_handlers/validate_commit_type (A007)")
+
+    # Mock _get_staged_files for A007 tests
+    original_get_staged = handler._get_staged_files
+
+    # Test docs: blocked for plugin/ files
+    handler._get_staged_files = lambda: ['plugin/skills/work/SKILL.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+docs: update skill
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("A007: docs: blocked for plugin/ files",
+                result is not None and result.get("decision") == "block"
+                and "Claude-facing" in result.get("reason", ""))
+
+    # Test docs: blocked for CLAUDE.md
+    handler._get_staged_files = lambda: ['CLAUDE.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+docs: update instructions
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("A007: docs: blocked for CLAUDE.md",
+                result is not None and result.get("decision") == "block")
+
+    # Test docs: blocked for .claude/ files
+    handler._get_staged_files = lambda: ['.claude/cat/cat-config.json']
+    cmd = '''git commit -m "$(cat <<'EOF'
+docs: update config
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("A007: docs: blocked for .claude/ files",
+                result is not None and result.get("decision") == "block")
+
+    # Test docs: allowed for README.md
+    handler._get_staged_files = lambda: ['README.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+docs: update readme
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("A007: docs: allowed for README.md", result is None)
+
+    # Test docs: allowed for docs/ directory
+    handler._get_staged_files = lambda: ['docs/api/endpoints.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+docs: update api docs
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("A007: docs: allowed for docs/ files", result is None)
+
+    # Test config: allowed for plugin/ files
+    handler._get_staged_files = lambda: ['plugin/skills/work/SKILL.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+config: update skill
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("A007: config: allowed for plugin/ files", result is None)
+
+    # Restore original method
+    handler._get_staged_files = original_get_staged
+
 
 # =============================================================================
 # SKILL HANDLERS TESTS

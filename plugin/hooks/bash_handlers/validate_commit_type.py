@@ -3,9 +3,14 @@ Validate commit message uses correct commit types.
 
 Blocks commits with invalid types like 'feat:', 'fix:', etc.
 Requires specific conventional commit types.
+
+Also validates that commit type matches file patterns:
+- docs: only for user-facing files (README, API docs)
+- config: for Claude-facing files (CLAUDE.md, plugin/, skills/)
 """
 
 import re
+import subprocess
 from . import register_handler
 
 VALID_COMMIT_TYPES = [
@@ -23,6 +28,18 @@ VALID_COMMIT_TYPES = [
 
 # Short forms that are NOT allowed (per commit-types.md)
 # feat, fix, chore, build, ci, perf
+
+# Files that are Claude-facing and should use config:, not docs:
+# Per M255, M306: plugin/, CLAUDE.md, .claude/, hooks/, skills/, etc.
+CLAUDE_FACING_PATTERNS = [
+    "CLAUDE.md",
+    "plugin/",         # CAT plugin directory (M255, M306)
+    ".claude/",        # Claude config directory
+    "hooks/",          # Hook scripts
+    "skills/",         # Skill definitions
+    "concepts/",       # Concept documents
+    "commands/",       # Command definitions
+]
 
 
 class ValidateCommitTypeHandler:
@@ -86,7 +103,44 @@ Example: feature: add user authentication
          bugfix: resolve memory leak in parser"""
                 }
 
+            # A007: Check for docs: used on Claude-facing files
+            if commit_type == "docs":
+                staged_files = self._get_staged_files()
+                if staged_files:
+                    for pattern in CLAUDE_FACING_PATTERNS:
+                        for file_path in staged_files:
+                            if pattern in file_path:
+                                return {
+                                    "decision": "block",
+                                    "reason": f"""**BLOCKED: 'docs:' used for Claude-facing file**
+
+Staged file '{file_path}' matches Claude-facing pattern '{pattern}'
+
+Claude-facing files should use 'config:', not 'docs:':
+- docs: = user-facing (README, API docs)
+- config: = Claude-facing (CLAUDE.md, plugin/, skills/)
+
+Fix: Change 'docs:' to 'config:' in your commit message
+
+See CLAUDE.md "Commit Types" section for reference (M255, M306)."""
+                                }
+
         return None
+
+    def _get_staged_files(self) -> list:
+        """Get list of staged files for commit."""
+        try:
+            result = subprocess.run(
+                ["git", "diff", "--cached", "--name-only"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            if result.returncode == 0:
+                return [f.strip() for f in result.stdout.strip().split('\n') if f.strip()]
+        except (subprocess.TimeoutExpired, Exception):
+            pass
+        return []
 
 
 register_handler(ValidateCommitTypeHandler())

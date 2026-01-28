@@ -14,6 +14,7 @@ from . import register_handler
 
 CLAUDE_FACING_PATTERNS = [
     "CLAUDE.md",
+    "plugin/",            # CAT plugin directory (A007: M255, M306)
     ".claude/",
     "hooks/",
     "skills/",

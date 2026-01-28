@@ -319,13 +319,15 @@
       "description": "Add hook-level validation for commit type selection: detect when docs: is used for plugin/ or CLAUDE.md paths and suggest config: instead",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-007",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-28T14:51:20-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-28T15:00:00-05:00",
       "related_mistakes": [
         "M255",
         "M306"
       ],
+      "implementation": "Added PreToolUse check in validate_commit_type.py that blocks docs: commits when staged files match Claude-facing patterns (plugin/, CLAUDE.md, .claude/, hooks/, skills/, concepts/, commands/). Also added plugin/ to PostToolUse verify_commit_type.py for defense-in-depth.",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
