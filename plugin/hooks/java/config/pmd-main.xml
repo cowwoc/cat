@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<!--
+  PMD ruleset from cowwoc/styler.
+  Additional rules for main source code (non-test).
+-->
+<ruleset name="Main code style enforcement" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>Specific rules for main source code (non-test)</description>
+
+  <!-- Use basic PMD rules -->
+  <rule ref="category/java/codestyle.xml/MethodNamingConventions"/>
+</ruleset>

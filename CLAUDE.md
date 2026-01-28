@@ -45,3 +45,7 @@ All tests must pass (exit code 0) before requesting user approval.
 | `plugin/hooks/skill_handlers/cleanup_handler.py` | Cleanup display |
 
 Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may need updating.
+
+## Java Code
+
+See `.claude/cat/conventions/java.md` for Java coding conventions (Allman braces, 2-space indent, TestNG, JsonMapper).

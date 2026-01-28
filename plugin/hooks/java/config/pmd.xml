@@ -1,0 +1,178 @@
+<?xml version="1.0" ?>
+<!--
+  PMD ruleset from cowwoc/styler.
+  Defines code quality rules for Java projects.
+-->
+<ruleset name="cowwoc" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>cowwoc's preferred rules</description>
+  <rule ref="category/java/bestpractices.xml">
+    <exclude name="AvoidReassigningParameters"/>
+    <exclude name="AvoidReassigningLoopVariables"/>
+    <exclude name="LiteralsFirstInComparisons"/>
+    <exclude name="UseVarargs"/>
+    <exclude name="GuardLogStatement"/>
+    <exclude name="AbstractClassWithoutAbstractMethod"/>
+    <!-- WORKAROUND: https://github.com/pmd/pmd/issues/5025 -->
+    <exclude name="PreserveStackTrace"/>
+    <exclude name="AvoidStringBufferField"/>
+    <exclude name="UnitTestShouldIncludeAssert"/>
+    <!-- Overly strict - multiple assertions per test are often appropriate -->
+    <exclude name="UnitTestContainsTooManyAsserts"/>
+    <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+    <!-- Hooks communicate via stdout/stderr by design -->
+    <exclude name="SystemPrintln"/>
+    <!-- Allow unused variables for TODO placeholders -->
+    <exclude name="UnusedLocalVariable"/>
+    <exclude name="UnusedAssignment"/>
+  </rule>
+
+  <rule ref="category/java/bestpractices.xml/ForLoopVariableCount">
+    <properties>
+      <!-- Allow declaring the iteration count as a constant or nesting an if-statement inside a loop -->
+      <property name="maximumVariables" value="2"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml">
+    <exclude name="UselessParentheses"/>
+    <exclude name="MethodArgumentCouldBeFinal"/>
+    <exclude name="LocalVariableCouldBeFinal"/>
+    <exclude name="OnlyOneReturn"/>
+    <exclude name="FieldDeclarationsShouldBeAtStartOfClass"/>
+    <exclude name="ShortVariable"/>
+    <exclude name="LongVariable"/>
+    <exclude name="UnnecessaryConstructor"/>
+    <exclude name="ControlStatementBraces"/>
+    <exclude name="EmptyControlStatement"/>
+    <exclude name="CallSuperInConstructor"/>
+    <exclude name="CommentDefaultAccessModifier"/>
+    <exclude name="TooManyStaticImports"/>
+    <exclude name="LinguisticNaming"/>
+    <exclude name="ShortClassName"/>
+    <exclude name="UnnecessaryLocalBeforeReturn"/>
+    <exclude name="ShortMethodName"/>
+    <exclude name="AtLeastOneConstructor"/>
+    <!-- Using if-else per Checkstyle rules, this becomes redundant -->
+    <exclude name="ConfusingTernary"/>
+  </rule>
+  <rule ref="category/java/codestyle.xml/UseExplicitTypes">
+    <properties>
+      <property name="allowLiterals" value="true"/>
+      <property name="allowCtors" value="true"/>
+    </properties>
+  </rule>
+  <!-- Add support for underscore parameters -->
+  <rule ref="category/java/codestyle.xml/LocalVariableNamingConventions">
+    <properties>
+      <property name="localVarPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="finalVarPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="catchParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions">
+    <properties>
+      <property name="methodParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="finalMethodParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="lambdaParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="explicitLambdaParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml">
+    <exclude name="LawOfDemeter"/>
+    <exclude name="LoosePackageCoupling"/>
+    <exclude name="AvoidThrowingNullPointerException"/>
+    <exclude name="ExcessiveImports"/>
+    <exclude name="DataClass"/>
+    <exclude name="GodClass"/>
+    <exclude name="TooManyMethods"/>
+    <exclude name="SignatureDeclareThrowsException"/>
+    <exclude name="ExcessiveParameterList"/>
+    <exclude name="UseObjectForClearerAPI"/>
+    <exclude name="CouplingBetweenObjects"/>
+    <exclude name="TooManyFields"/>
+    <exclude name="ExcessivePublicCount"/>
+    <!-- Too vague to tune -->
+    <exclude name="CognitiveComplexity"/>
+    <exclude name="CyclomaticComplexity"/>
+    <exclude name="NPathComplexity"/>
+    <exclude name="ExceptionAsFlowControl"/>
+    <!--
+    The check is not really useful. It makes it more difficult to debug by commenting-out code and it
+    suffers from this false-positive: https://github.com/pmd/pmd/issues/4911
+    -->
+    <exclude name="AvoidRethrowingException"/>
+    <!-- Allow deep nesting for structured hook logic -->
+    <exclude name="AvoidDeeplyNestedIfStmts"/>
+    <!-- Entry point classes have only static main -->
+    <exclude name="UseUtilityClass"/>
+  </rule>
+  <rule ref="category/java/documentation.xml">
+    <exclude name="UncommentedEmptyConstructor"/>
+    <exclude name="UncommentedEmptyMethodBody"/>
+    <exclude name="CommentSize"/>
+    <!-- WORKAROUND: https://github.com/pmd/pmd/issues/6103 -->
+    <exclude name="DanglingJavadoc"/>
+  </rule>
+  <rule ref="category/java/documentation.xml/CommentRequired">
+    <properties>
+      <property name="methodWithOverrideCommentRequirement" value="Ignored"/>
+      <property name="accessorCommentRequirement" value="Ignored"/>
+      <property name="classCommentRequirement" value="Ignored"/>
+      <property name="fieldCommentRequirement" value="Ignored"/>
+      <property name="publicMethodCommentRequirement" value="Required"/>
+      <property name="protectedMethodCommentRequirement" value="Ignored"/>
+      <property name="enumCommentRequirement" value="Ignored"/>
+      <property name="serialVersionUIDCommentRequired" value="Ignored"/>
+      <property name="serialPersistentFieldsCommentRequired" value="Ignored"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/errorprone.xml">
+    <exclude name="AvoidFieldNameMatchingMethodName"/>
+    <exclude name="AvoidLiteralsInIfCondition"/>
+    <exclude name="AvoidDuplicateLiterals"/>
+    <exclude name="NullAssignment"/>
+    <exclude name="SuspiciousEqualsMethodName"/>
+    <exclude name="CompareObjectsWithEquals"/>
+    <!-- https://stackoverflow.com/a/36228195/14731 -->
+    <exclude name="UseProperClassLoader"/>
+    <!-- WORKAROUND: https://github.com/pmd/pmd/issues/3601 -->
+    <exclude name="InvalidLogMessageFormat"/>
+    <!-- Allow catching generic Exception for error handling consolidation -->
+    <exclude name="AvoidCatchingGenericException"/>
+  </rule>
+  <rule ref="category/java/errorprone.xml/CloseResource">
+    <properties>
+      <property name="types" value="java.util.concurrent.ExecutorService"/>
+      <property name="closeTargets" value="shutdown,shutdownNow"/>
+      <property name="closeAsDefaultTarget" value="true"/>
+    </properties>
+  </rule>
+  <!-- Add support for underscore parameters -->
+  <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+    <properties>
+      <property name="allowExceptionNameRegex" value="^(_|ignored|expected)$"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/errorprone.xml/TestClassWithoutTestCases">
+    <properties>
+      <property name="testClassPattern" value="^^(?:.*\.)?.*Tests?$|^(?:.*\.)?.*TestCase$"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/errorprone.xml/AvoidBranchingStatementAsLastInLoop">
+    <properties>
+      <property name="checkReturnLoopTypes" value=""/>
+    </properties>
+  </rule>
+  <rule ref="category/java/multithreading.xml">
+    <exclude name="UseConcurrentHashMap"/>
+    <exclude name="DoNotUseThreads"/>
+    <exclude name="AvoidUsingVolatile"/>
+  </rule>
+  <rule ref="category/java/performance.xml">
+    <exclude name="AvoidInstantiatingObjectsInLoops"/>
+    <exclude name="ConsecutiveLiteralAppends"/>
+    <exclude name="TooFewBranchesForSwitch"/>
+  </rule>
+  <rule ref="category/java/security.xml"/>
+</ruleset>
