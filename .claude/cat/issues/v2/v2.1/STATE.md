@@ -42,3 +42,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 ## Tasks Completed
 - acceptance-criteria-options
 - compress-commands-md (duplicate of compress-skills-md - commands moved to skills/)
+- self-discover-env-vars

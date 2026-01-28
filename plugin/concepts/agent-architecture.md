@@ -402,32 +402,20 @@ When user says "[ambiguous term]", ask:
 
 **Anti-pattern**: Interpreting "abort" as permanent abandonment without asking.
 
-### Environment Variable Availability (M281)
+### Path Discovery
 
-CAT plugin environment variables are injected by the hook system. Skills MUST have these variables set.
+CAT scripts use **self-discovery** to find paths, avoiding dependency on environment variables:
 
-| Variable | Required In | If Empty |
-|----------|-------------|----------|
-| `CLAUDE_PLUGIN_ROOT` | All skill invocations | FAIL - hooks not loaded |
-| `CLAUDE_PROJECT_DIR` | All skill invocations | FAIL - hooks not loaded |
-| `CLAUDE_SESSION_ID` | Skills needing locks | FAIL - hooks not loaded |
+| Path Type | Discovery Method |
+|-----------|------------------|
+| Plugin root | `SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"` |
+| Project dir | `git rev-parse --git-common-dir` → parent directory |
+| Session ID | Injected via SessionStart hook into context |
 
-**FAIL-FAST when variables are empty:**
+**Why self-discovery:**
+- Environment variables set in hooks don't persist to Bash tool calls
+- Scripts can run from any directory without configuration
+- No dependency on external variable injection
 
-```bash
-# Skills MUST fail-fast if required variables are not set
-if [[ -z "$CLAUDE_PLUGIN_ROOT" ]]; then
-  echo "ERROR: CLAUDE_PLUGIN_ROOT not set. CAT hooks not loaded correctly."
-  echo "Check: Is the CAT plugin installed? Are hooks enabled?"
-  exit 1
-fi
-```
-
-**Anti-pattern**: Using fallbacks like `${CLAUDE_PLUGIN_ROOT:-/path/to/fallback}`.
-Fallbacks mask hook failures. If variables are empty during skill invocation, the hooks
-are broken and that bug should be surfaced immediately, not worked around.
-
-**Why no fallbacks:**
-- Hardcoded paths break when plugin version changes
-- Fallbacks let broken infrastructure appear to work
-- Bugs in hook loading should be caught early, not discovered later
+**Session ID** is the exception - it must be extracted from context (SessionStart hook injects
+"Session ID: ..." into conversation via additionalContext).

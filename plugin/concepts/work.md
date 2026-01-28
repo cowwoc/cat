@@ -70,40 +70,36 @@ Read/Bash calls, users see 3-5 Task tool invocations with clean output.
 
 ## Task Discovery (M282)
 
-**MANDATORY: Use get-available-issues.sh script FIRST. FAIL-FAST if environment or script fails.**
+**MANDATORY: Use get-available-issues.sh script FIRST. FAIL-FAST if script fails.**
 
-Task discovery MUST use the dedicated script. Environment variables MUST be set by hooks.
+Task discovery uses the dedicated script. The script uses **self-discovery** to find paths
+(via `git rev-parse` and `BASH_SOURCE`), so no environment variables need to be set.
+
+**Session ID:** Extract from the session context injected by hooks (look for "Session ID: ..." in
+system-reminders from SessionStart).
 
 ```bash
-# FAIL-FAST: Required environment variables
-if [[ -z "$CLAUDE_PLUGIN_ROOT" ]]; then
-  echo "ERROR: CLAUDE_PLUGIN_ROOT not set. Hooks not loaded correctly."
-  exit 1
-fi
-if [[ -z "$CLAUDE_SESSION_ID" ]]; then
-  echo "ERROR: CLAUDE_SESSION_ID not set. Hooks not loaded correctly."
-  exit 1
-fi
-
-RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}")
+# Run task discovery - script auto-discovers project path
+# SESSION_ID from context (injected by echo-session-id.sh hook)
+# Path: plugin/scripts/ in development, or use CLAUDE_PLUGIN_ROOT in installed context
+RESULT=$(plugin/scripts/get-available-issues.sh --session-id "${SESSION_ID}")
 
 if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
   ISSUE_ID=$(echo "$RESULT" | jq -r '.issue_id')
   ISSUE_PATH=$(echo "$RESULT" | jq -r '.issue_path')
 else
   echo "$RESULT" | jq -r '.message // .status'
-  exit 1  # FAIL-FAST: No executable tasks or script error
+  # FAIL-FAST: No executable tasks or script error - STOP here
 fi
 ```
 
 **FAIL-FAST means NO FALLBACKS:**
-- If `CLAUDE_PLUGIN_ROOT` is empty → STOP and report hook failure
 - If script returns error → STOP and report the error
 - If no tasks found → STOP and report "no executable tasks"
 - NEVER fall back to manual Glob/Read/Bash exploration
 
-**Anti-pattern (M282):** Using `${VAR:-fallback}` syntax or manual search as workaround.
-Fallbacks mask broken hooks. The correct fix is to diagnose why hooks didn't set the variable.
+**Anti-pattern (M282):** Manual file exploration as workaround for script failures.
+If the script fails, the correct fix is to diagnose and fix the script, not to work around it.
 
 ## Lock Management (M097)
 

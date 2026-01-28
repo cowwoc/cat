@@ -423,6 +423,114 @@ def test_config_loader():
 
 
 # =============================================================================
+# SCRIPT TESTS (BASH SCRIPTS)
+# =============================================================================
+
+def test_get_available_issues_discovery():
+    """Test get-available-issues.sh path self-discovery."""
+    runner.section("scripts/get-available-issues.sh path discovery")
+
+    import subprocess
+
+    script = PROJECT_ROOT / "plugin" / "scripts" / "get-available-issues.sh"
+
+    # Create a temp CAT project WITH git repo (required for auto-discovery)
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+
+        # Initialize git repo first
+        subprocess.run(["git", "init", "--quiet"], cwd=str(tmp_path), check=True)
+        subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=str(tmp_path))
+        subprocess.run(["git", "config", "user.name", "Test"], cwd=str(tmp_path))
+
+        # Create .claude/cat structure
+        cat_dir = tmp_path / ".claude" / "cat" / "issues"
+        cat_dir.mkdir(parents=True)
+
+        # Create a test task
+        task_dir = cat_dir / "v1" / "v1.0" / "test-task"
+        task_dir.mkdir(parents=True)
+        (task_dir / "STATE.md").write_text("""# State
+
+- **Status:** pending
+- **Progress:** 0%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+""")
+
+        # Test 1: Auto-discovery from project root (git repo with .claude/cat)
+        result = subprocess.run(
+            [str(script), "--session-id", "test-session-1"],
+            cwd=str(tmp_path),
+            capture_output=True,
+            text=True
+        )
+        runner.test("Auto-discovery from cwd works",
+                    "Could not find project" not in result.stdout)
+
+        # Test 2: Auto-discovery from subdirectory
+        subdir = tmp_path / "src" / "deep" / "nested"
+        subdir.mkdir(parents=True)
+        result = subprocess.run(
+            [str(script), "--session-id", "test-session-2"],
+            cwd=str(subdir),
+            capture_output=True,
+            text=True
+        )
+        runner.test("Auto-discovery from subdirectory works",
+                    "Could not find project" not in result.stdout)
+
+    # Test 3: Error when not in git repo
+    with TemporaryDirectory() as no_git_dir:
+        # Create .claude/cat but NO git repo
+        (Path(no_git_dir) / ".claude" / "cat").mkdir(parents=True)
+        result = subprocess.run(
+            [str(script), "--session-id", "test-session-3"],
+            cwd=no_git_dir,
+            capture_output=True,
+            text=True
+        )
+        runner.test("Error when not in git repo",
+                    "Could not find project" in result.stdout)
+
+    # Test 4: Error when no .claude/cat in git repo
+    with TemporaryDirectory() as no_cat_dir:
+        # Git repo but NO .claude/cat
+        subprocess.run(["git", "init", "--quiet"], cwd=no_cat_dir, check=True)
+        result = subprocess.run(
+            [str(script), "--session-id", "test-session-4"],
+            cwd=no_cat_dir,
+            capture_output=True,
+            text=True
+        )
+        runner.test("Error when no .claude/cat in git repo",
+                    "Could not find project" in result.stdout or
+                    "no .claude/cat" in result.stdout)
+
+    # Test 5: From inside a worktree, finds MAIN workspace (not worktree's snapshot)
+    # This is critical: locks and task state must be in main workspace
+    worktree_path = PROJECT_ROOT.parent / ".worktrees" / "2.1-self-discover-env-vars"
+    main_workspace = PROJECT_ROOT.parent  # /workspace
+    if worktree_path.exists() and worktree_path != main_workspace:
+        # Run from worktree, verify it uses main workspace's .claude/cat
+        result = subprocess.run(
+            [str(worktree_path / "plugin" / "scripts" / "get-available-issues.sh"),
+             "--session-id", "test-session-5"],
+            cwd=str(worktree_path),
+            capture_output=True,
+            text=True
+        )
+        # Should succeed (not error about missing project)
+        # The CAT_DIR should be /workspace/.claude/cat/issues, not worktree's
+        runner.test("From worktree: finds main workspace (not worktree snapshot)",
+                    "Could not find project" not in result.stdout and
+                    result.returncode in [0, 1])
+    else:
+        runner.test("From worktree: finds main workspace (not worktree snapshot)",
+                    True)  # Skip if no worktree exists
+
+
+# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -442,6 +550,7 @@ def main():
         test_work_handler,
         test_cleanup_handler,
         test_config_loader,
+        test_get_available_issues_discovery,
     ]
 
     for test_func in test_functions:

@@ -1086,6 +1086,60 @@
         "catches_variations": true
       },
       "correct_behavior": "Always invoke get-available-issues.sh with hardcoded path fallback (PLUGIN_ROOT=${CLAUDE_PLUGIN_ROOT:-/home/node/.config/claude/plugins/cache/cat/cat/2.1}). If script fails, report the error and STOP - do not fall back to manual search."
+    },
+    {
+      "id": "M285",
+      "timestamp": "2026-01-28T00:43:23Z",
+      "category": "protocol_violation",
+      "description": "Documentation required environment variable checks that would always fail in Bash tool context",
+      "root_cause": "Environment variables set by Claude Code for hooks are not available in Bash tool calls - the fail-fast checks were testing an impossible condition",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "/workspace/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "fail-fast",
+        "environment-variables",
+        "fallback",
+        "workaround",
+        "M281",
+        "M282"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Scripts use self-discovery (BASH_SOURCE, git rev-parse) instead of environment variables. Session ID is injected into context by hooks."
+    },
+    {
+      "id": "M286",
+      "timestamp": "2026-01-28T19:55:00Z",
+      "category": "misleading_documentation",
+      "description": "work.md referenced .claude/cat/scripts/get-available-issues.sh but script is at plugin/scripts/get-available-issues.sh",
+      "root_cause": "Documentation contained incorrect path (.claude/cat/scripts/) that doesn't exist in the workspace. The correct path is plugin/scripts/ for development context.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "path",
+        "script",
+        "get-available-issues",
+        "plugin"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use plugin/scripts/get-available-issues.sh for development context, not .claude/cat/scripts/"
     }
   ]
 }
