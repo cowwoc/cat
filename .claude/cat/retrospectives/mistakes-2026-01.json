@@ -1220,6 +1220,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use AskUserQuestion to clarify abort intent: stop working vs cleanup worktree vs abandon permanently"
+    },
+    {
+      "id": "M289",
+      "timestamp": "2026-01-28T10:30:00Z",
+      "category": "protocol_violation",
+      "description": "Ignored user question about bullet symbol in progress banner, continued spawning subagents instead of acknowledging",
+      "root_cause": "Misinterpreted 'After completing your current task' as 'after entire cat:work workflow' instead of 'after current tool call'. System-reminder language was ambiguous.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "user message",
+        "acknowledge",
+        "mid-operation",
+        "progress banner",
+        "system-reminder"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M247",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When system-reminder says IMPORTANT After completing your current task, respond in the NEXT message - do not wait for entire workflow to complete"
     }
   ]
 }
