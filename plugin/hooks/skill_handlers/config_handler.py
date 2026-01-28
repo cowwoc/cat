@@ -1,7 +1,7 @@
 """
 Handler for /cat:config precomputation.
 
-Runs the precompute-config-display.sh script and provides all config box templates.
+Runs the get-config-display.sh script and provides all config box templates.
 """
 
 from pathlib import Path
@@ -122,7 +122,7 @@ class ConfigHandler:
         if not config_file.exists():
             return None
 
-        display_script = Path(plugin_root) / "scripts" / "precompute-config-display.sh"
+        display_script = Path(plugin_root) / "scripts" / "get-config-display.sh"
         output = run_script(display_script, project_root)
 
         if not output:

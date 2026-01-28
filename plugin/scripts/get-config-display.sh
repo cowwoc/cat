@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# precompute-config-display.sh - Generate properly aligned config display box
+# get-config-display.sh - Generate properly aligned config display box
 #
-# USAGE: precompute-config-display.sh <project-dir>
+# USAGE: get-config-display.sh <project-dir>
 #
 # Arguments:
 #   project-dir    Project root directory (contains .claude/cat/) - REQUIRED
 #
-# OUTPUTS: Pre-computed box display with correct alignment
+# OUTPUTS: Pre-rendered box display with correct alignment
 
 set -euo pipefail
 
@@ -16,13 +16,13 @@ PYTHON_SCRIPT="$SCRIPT_DIR/build-box-lines.py"
 # Show usage
 usage() {
     cat << 'EOF'
-Usage: precompute-config-display.sh <project-dir>
+Usage: get-config-display.sh <project-dir>
 
 Arguments:
   project-dir    Project root directory (contains .claude/cat/) - REQUIRED
 
 Outputs:
-  Pre-computed box display with correct alignment for config settings
+  Pre-rendered box display with correct alignment for config settings
 EOF
 }
 

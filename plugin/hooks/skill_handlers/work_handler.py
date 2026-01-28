@@ -1,10 +1,10 @@
 """
 Handler for /cat:work precomputation.
 
-Provides progress display format templates for inline rendering.
+Provides pre-rendered status boxes for the work skill.
+Progress banners are handled by silent preprocessing via get-progress-banner.sh.
 """
 
-import re
 from pathlib import Path
 
 from . import register_handler
@@ -382,80 +382,16 @@ class WorkHandler:
 
         return "\n".join(lines)
 
-    def _build_progress_banner(self, task_id: str = "2.1-compress-lang-md",
-                                 phases: tuple = ("◉", "○", "○", "○")) -> str:
-        """Build progress banner with proper alignment.
-
-        Args:
-            task_id: The task ID to display
-            phases: Tuple of 4 phase symbols (Preparing, Executing, Reviewing, Merging)
-        """
-        p1, p2, p3, p4 = phases
-        # Phase content without border characters
-        phase_content = f"  {p1} Preparing ────── {p2} Executing ────── {p3} Reviewing ────── {p4} Merging "
-        phase_width = display_width(phase_content)
-
-        # Header content: "─ 🐱 " + task_id + " "
-        header_prefix = "─ 🐱 "
-        header_content = header_prefix + task_id + " "
-        header_width = display_width(header_content)
-
-        # Box width is determined by the wider of header or phase content
-        inner_width = max(header_width, phase_width)
-
-        # Build top border: ┌ + header_content + dashes + ┐
-        top_dashes = "─" * (inner_width - header_width)
-        top_line = "┌" + header_content + top_dashes + "┐"
-
-        # Build middle line: │ + phase_content + padding + │
-        phase_padding = " " * (inner_width - phase_width)
-        middle_line = "│" + phase_content + phase_padding + "│"
-
-        # Build bottom border: └ + dashes + ┘
-        bottom_line = "└" + "─" * inner_width + "┘"
-
-        return "\n".join([top_line, middle_line, bottom_line])
-
     def handle(self, context: dict) -> str | None:
-        """Provide progress format templates for the work skill."""
-        # Build example banners
-        example_preparing = self._build_progress_banner("2.1-compress-lang-md", ("◉", "○", "○", "○"))
-        example_executing = self._build_progress_banner("2.1-compress-lang-md", ("●", "◉", "○", "○"))
+        """Provide pre-rendered status boxes for the work skill.
 
-        # Compact progress banner format - examples only, no construction algorithm (M298)
-        return f"""OUTPUT TEMPLATE WORK PROGRESS FORMAT:
+        Progress banners are now handled by silent preprocessing in SKILL.md
+        via get-progress-banner.sh. This handler only provides status boxes.
+        """
+        # Build output with pre-rendered boxes (placeholders for runtime values)
+        return f"""OUTPUT TEMPLATE WORK BOXES:
 
-## Progress Display Templates
-
-### Symbols
-○ Pending | ● Complete | ◉ Active | ✗ Failed
-
-### Progress Banner Examples
-
-**IMPORTANT (M298):** Copy example below, then find-replace ONLY the task ID.
-The dash count is calculated by the handler - do NOT manually adjust dashes.
-
-**Preparing phase** (◉ on Preparing):
-```
-{example_preparing}
-```
-
-**Executing phase** (● ◉ pattern):
-```
-{example_executing}
-```
-
-**To use:** Copy the example for your current phase. Find-replace `2.1-compress-lang-md`
-with your actual task ID. The banner will auto-adjust on next invocation.
-
-**CRITICAL: Output as PLAIN TEXT on its own line.**
-- Do NOT wrap in code blocks
-- Do NOT prefix with bullets
-- Do NOT manually count or adjust dash characters
-
-Do NOT show progress before task is identified.
-
-OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE (M225):
+## Status Boxes (output EXACTLY as shown, replace only {{placeholders}}):
 
 --- NO_EXECUTABLE_TASKS ---
 {self._build_no_executable_tasks()}
@@ -485,9 +421,7 @@ OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE (M225):
 {self._build_task_complete_low_trust()}
 
 --- VERSION_BOUNDARY_GATE ---
-{self._build_version_boundary_gate()}
-
-Copy box VERBATIM, replace only placeholders."""
+{self._build_version_boundary_gate()}"""
 
 
 # Register handler
