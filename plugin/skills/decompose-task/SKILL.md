@@ -29,20 +29,24 @@ when a task exceeds safe context bounds.
 
 ### 1. Analyze Current Task Scope
 
-**If task directory or PLAN.md does not exist: FAIL immediately.**
+**MANDATORY: Verify task exists. FAIL immediately if not found.**
 
 ```bash
 TASK_DIR=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}"
 
+# FAIL immediately if task directory missing
 if [ ! -d "$TASK_DIR" ]; then
   echo "ERROR: Task directory not found at $TASK_DIR"
   echo "Cannot decompose a task that doesn't exist."
+  echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
 
+# FAIL immediately if PLAN.md missing
 if [ ! -f "${TASK_DIR}/PLAN.md" ]; then
   echo "ERROR: PLAN.md not found at ${TASK_DIR}/PLAN.md"
   echo "Cannot decompose a task without a plan - create PLAN.md first."
+  echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
 

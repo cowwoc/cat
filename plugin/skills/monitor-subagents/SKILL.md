@@ -22,10 +22,20 @@ about intervention or result collection.
 
 ### 1. Run Monitoring Script (Recommended)
 
-Use the optimized monitoring script for minimal context impact:
+**MANDATORY: Verify script exists before running. FAIL immediately if not found.**
 
 ```bash
-/workspace/cat/scripts/monitor-subagents.sh
+MONITOR_SCRIPT="${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh"
+
+# FAIL immediately if script missing
+if [ ! -f "$MONITOR_SCRIPT" ]; then
+  echo "ERROR: Monitoring script not found at $MONITOR_SCRIPT"
+  echo "FAIL immediately - do NOT attempt manual monitoring."
+  exit 1
+fi
+
+# Run the monitoring script
+"$MONITOR_SCRIPT"
 ```
 
 **Output format:**

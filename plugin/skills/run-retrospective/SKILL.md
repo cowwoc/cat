@@ -1,5 +1,6 @@
 ---
-description: Run scheduled retrospective analysis, derive action items, and track effectiveness
+description: MANDATORY after learn-from-mistakes threshold - analyzes patterns and derives action items
+user-invocable: true
 ---
 
 # Run Retrospective
