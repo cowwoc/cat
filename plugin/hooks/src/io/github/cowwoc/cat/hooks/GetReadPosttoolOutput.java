@@ -43,7 +43,23 @@ public final class GetReadPosttoolOutput
     String sessionId = input.getSessionId();
     List<String> warnings = new ArrayList<>();
 
-    // TODO: Port read posttool handlers from Python
+    // Run all read posttool handlers
+    for (ReadHandler handler : HandlerRegistry.getReadPosttoolHandlers())
+    {
+      try
+      {
+        ReadHandler.Result result = handler.check(toolName, toolInput, toolResult, sessionId);
+        // PostToolUse cannot block, only warn
+        if (result.reason() != null && !result.reason().isEmpty())
+        {
+          warnings.add(result.reason());
+        }
+      }
+      catch (Exception e)
+      {
+        System.err.println("get-read-posttool-output: handler error: " + e.getMessage());
+      }
+    }
 
     // Output warnings if any
     for (String warning : warnings)

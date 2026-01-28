@@ -38,13 +38,17 @@ public final class GetBashPosttoolOutput
 
     JsonNode toolInput = input.getToolInput();
     JsonNode commandNode = toolInput.get("command");
-    String command = "";
+    String command;
     if (commandNode != null)
     {
-      command = commandNode.asText("");
+      command = commandNode.asString();
+    }
+    else
+    {
+      command = null;
     }
 
-    if (command.isEmpty())
+    if (command == null || command.isEmpty())
     {
       HookOutput.empty();
       return;
@@ -54,7 +58,23 @@ public final class GetBashPosttoolOutput
     String sessionId = input.getSessionId();
     List<String> warnings = new ArrayList<>();
 
-    // TODO: Port bash posttool handlers from Python
+    // Run all bash posttool handlers
+    for (BashHandler handler : HandlerRegistry.getBashPosttoolHandlers())
+    {
+      try
+      {
+        BashHandler.Result result = handler.check(command, toolInput, toolResult, sessionId);
+        // PostToolUse cannot block, only warn
+        if (result.reason() != null && !result.reason().isEmpty())
+        {
+          warnings.add(result.reason());
+        }
+      }
+      catch (Exception e)
+      {
+        System.err.println("get-bash-posttool-output: handler error: " + e.getMessage());
+      }
+    }
 
     // Output warnings if any
     for (String warning : warnings)

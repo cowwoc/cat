@@ -713,8 +713,8 @@
       "id": "M271",
       "timestamp": "2026-01-27T11:30:00Z",
       "category": "protocol_violation",
-      "description": "Applied ≥0.95 threshold for compare-docs approval when shrink-doc requires exactly 1.0; claimed 0.96 'meets threshold'",
-      "root_cause": "compare-docs skill defines ≥0.95 as default APPROVE threshold, but when invoked for shrink-doc validation, the 1.0 threshold from shrink-doc was not carried forward",
+      "description": "Applied \u22650.95 threshold for compare-docs approval when shrink-doc requires exactly 1.0; claimed 0.96 'meets threshold'",
+      "root_cause": "compare-docs skill defines \u22650.95 as default APPROVE threshold, but when invoked for shrink-doc validation, the 1.0 threshold from shrink-doc was not carried forward",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -1166,7 +1166,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Show Header (🐱 > {TASK_ID}) FIRST after task is found, then show Banner below it. Do not show any progress until task is identified."
+      "correct_behavior": "Show Header (\ud83d\udc31 > {TASK_ID}) FIRST after task is found, then show Banner below it. Do not show any progress until task is identified."
     },
     {
       "id": "M288",
@@ -1706,6 +1706,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use config: for CLAUDE.md and all Claude-facing instruction files; docs: only for user-facing files like README.md"
+    },
+    {
+      "id": "M307",
+      "timestamp": "2026-01-28T14:45:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent directly edited 15 Java files instead of delegating to subagent, ignoring existing warn-base-branch-edit.sh warnings",
+      "root_cause": "Hook issues warning but agent proceeded anyway; warning-level prevention insufficient for enforcement",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-base-branch-edit.sh",
+      "pattern_keywords": [
+        "delegation",
+        "subagent",
+        "warning_ignored",
+        "M30x"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "negative",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When warn-base-branch-edit.sh emits delegation warning, STOP and spawn subagent via Task tool instead of proceeding with direct edit",
+      "escalation_needed": "Consider escalating from warning to blocking if this recurs"
     }
   ]
 }

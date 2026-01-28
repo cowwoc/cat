@@ -44,7 +44,21 @@ public final class GetSkillOutput
     List<String> outputs = new ArrayList<>();
 
     // 1. Run prompt handlers (pattern checking for all prompts)
-    // TODO: Port prompt handlers from Python
+    for (PromptHandler handler : HandlerRegistry.getPromptHandlers())
+    {
+      try
+      {
+        String result = handler.check(userPrompt, sessionId);
+        if (result != null && !result.isEmpty())
+        {
+          outputs.add(result);
+        }
+      }
+      catch (Exception e)
+      {
+        System.err.println("get-skill-output: prompt handler error: " + e.getMessage());
+      }
+    }
 
     // 2. Run skill handler if this is a /cat:* command
     String skillName = extractSkillName(userPrompt);
@@ -79,7 +93,25 @@ public final class GetSkillOutput
         pluginRoot = "";
       }
 
-      // TODO: Port skill handlers from Python
+      SkillHandler handler = HandlerRegistry.getSkillHandler(skillName);
+      if (handler != null)
+      {
+        try
+        {
+          SkillHandler.SkillContext context = new SkillHandler.SkillContext(
+            userPrompt, sessionId, projectRoot, pluginRoot, input.getRaw());
+          String result = handler.handle(context);
+          if (result != null && !result.isEmpty())
+          {
+            outputs.add(result);
+          }
+        }
+        catch (Exception e)
+        {
+          System.err.println("get-skill-output: skill handler error for " + skillName + ": " +
+            e.getMessage());
+        }
+      }
     }
 
     // Output combined results
