@@ -57,6 +57,12 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>25</release>
+                    <failOnWarning>true</failOnWarning>
+                    <showWarnings>true</showWarnings>
+                    <showDeprecation>true</showDeprecation>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-exports,-requires-automatic</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

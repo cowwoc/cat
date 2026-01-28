@@ -2,14 +2,13 @@ package io.github.cowwoc.cat.hooks;
 
 import tools.jackson.databind.JsonNode;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 /**
  * Interface for bash command handlers.
  *
  * <p>Bash handlers validate bash commands before or after execution.
  * PreToolUse handlers can block commands; PostToolUse handlers can only warn.</p>
  */
+@FunctionalInterface
 public interface BashHandler
 {
   /**
@@ -23,6 +22,10 @@ public interface BashHandler
   {
     /**
      * Creates a new bash handler result.
+     *
+     * @param blocked whether the command should be blocked
+     * @param reason the reason for blocking or warning
+     * @param additionalContext optional additional context to inject
      */
     public Result
     {

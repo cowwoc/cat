@@ -32,7 +32,7 @@ Omit braces for if/else/for/while with a single statement:
 // Good - single statement, no braces
 if (value == null)
   return "";
-for (int i = 0; i < 10; i += 1)
+for (int i = 0; i < 10; ++i)
   process(i);
 while (hasMore)
   processNext();
@@ -43,6 +43,19 @@ if (value == null)
   log("null value");
   return "";
 }
+```
+
+### Increment/Decrement Operators
+Prefer prefix increment/decrement (`++i`, `--i`) over compound assignment:
+
+```java
+// Good - prefix increment
+for (int i = 0; i < 10; ++i)
+++count;
+
+// Avoid - compound assignment for simple increment
+for (int i = 0; i < 10; i += 1)
+count += 1;
 ```
 
 ### Indentation

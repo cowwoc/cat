@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * <p>Skill handlers process CAT commands (e.g., /cat:status, /cat:work) and return
  * additional context to inject into the conversation.</p>
  */
+@FunctionalInterface
 public interface SkillHandler
 {
   /**
@@ -43,6 +44,11 @@ public interface SkillHandler
     /**
      * Creates a new skill context.
      *
+     * @param userPrompt the user's prompt text
+     * @param sessionId the Claude session ID
+     * @param projectRoot path to project root (may be empty)
+     * @param pluginRoot path to plugin root
+     * @param hookData raw hook JSON data
      * @throws NullPointerException if any parameter is null
      */
     public SkillContext

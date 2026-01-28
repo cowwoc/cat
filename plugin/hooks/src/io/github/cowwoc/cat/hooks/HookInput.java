@@ -50,7 +50,7 @@ public final class HookInput
       JsonNode node = mapper.readTree(raw);
       return new HookInput(mapper, node);
     }
-    catch (IOException e)
+    catch (IOException _)
     {
       return new HookInput(mapper, mapper.createObjectNode());
     }
@@ -76,13 +76,11 @@ public final class HookInput
   public String getString(String key)
   {
     JsonNode node = data.get(key);
-    if (node != null && node.isTextual())
+    if (node != null && node.isString())
     {
       String value = node.asString();
       if (value != null)
-      {
         return value;
-      }
     }
     return "";
   }
@@ -99,9 +97,7 @@ public final class HookInput
     {
       String value = getString(key);
       if (!value.isEmpty())
-      {
         return value;
-      }
     }
     return "";
   }
@@ -117,9 +113,7 @@ public final class HookInput
   {
     String value = getString(key);
     if (!value.isEmpty())
-    {
       return value;
-    }
     return defaultValue;
   }
 
@@ -133,9 +127,7 @@ public final class HookInput
   {
     JsonNode node = data.get(key);
     if (node != null && node.isObject())
-    {
       return node;
-    }
     return null;
   }
 
@@ -188,9 +180,7 @@ public final class HookInput
   {
     JsonNode node = getObject("tool_input");
     if (node != null)
-    {
       return node;
-    }
     return mapper.createObjectNode();
   }
 
@@ -203,13 +193,9 @@ public final class HookInput
   {
     JsonNode node = getObject("tool_result");
     if (node == null)
-    {
       node = getObject("tool_response");
-    }
     if (node != null)
-    {
       return node;
-    }
     return mapper.createObjectNode();
   }
 

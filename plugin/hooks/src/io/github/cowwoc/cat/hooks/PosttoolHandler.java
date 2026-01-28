@@ -2,14 +2,13 @@ package io.github.cowwoc.cat.hooks;
 
 import tools.jackson.databind.JsonNode;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
 /**
  * Interface for general PostToolUse handlers.
  *
  * <p>These handlers process tool results for all tools (not just Bash or Read).
  * They can warn about results or inject additional context.</p>
  */
+@FunctionalInterface
 public interface PosttoolHandler
 {
   /**
@@ -22,6 +21,9 @@ public interface PosttoolHandler
   {
     /**
      * Creates a new posttool handler result.
+     *
+     * @param warning optional warning message
+     * @param additionalContext optional additional context to inject
      */
     public Result
     {

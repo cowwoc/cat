@@ -20,14 +20,20 @@ import tools.jackson.databind.JsonNode;
  */
 public final class GetReadPretoolOutput
 {
+  private GetReadPretoolOutput()
+  {
+    // Utility class
+  }
+
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
   /**
    * Entry point for the Read pretool output hook.
    *
-   * @param args command line arguments (unused)
+   * @param _args command line arguments (unused)
    */
-  public static void main(String[] args)
+  @SuppressWarnings("UnusedVariable")
+  public static void main(String[] _args)
   {
     HookInput input = HookInput.readFromStdin();
 
@@ -55,9 +61,7 @@ public final class GetReadPretoolOutput
           return;
         }
         if (!result.reason().isEmpty())
-        {
           warnings.add(result.reason());
-        }
       }
       catch (Exception e)
       {

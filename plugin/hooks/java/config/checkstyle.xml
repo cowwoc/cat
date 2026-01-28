@@ -64,6 +64,7 @@
     <module name="EmptyCatchBlock">
       <property name="exceptionVariableName" value="ignore|ignored|_"/>
     </module>
+    <module name="UnusedCatchParameterShouldBeUnnamed"/>
     <module name="OperatorWrap">
       <property name="option" value="eol"/>
     </module>
@@ -98,7 +99,8 @@
       <property name="allowOneCharVarInForLoop" value="true"/>
     </module>
     <module name="ParameterName">
-      <property name="format" value="^[a-z][a-zA-Z0-9]{1,}$"/>
+      <!-- Allow underscore prefix for unused parameters (e.g., _args, _toolInput) -->
+      <property name="format" value="^(_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]{1,})$"/>
     </module>
     <module name="MemberName">
       <property name="format" value="^[a-z][a-zA-Z0-9]{1,}$"/>

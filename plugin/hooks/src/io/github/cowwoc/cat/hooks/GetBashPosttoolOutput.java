@@ -2,24 +2,41 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 
+import io.github.cowwoc.cat.hooks.bash.post.DetectConcatenatedCommit;
+import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
+import io.github.cowwoc.cat.hooks.bash.post.ValidateRebaseTarget;
+import io.github.cowwoc.cat.hooks.bash.post.VerifyCommitType;
+import tools.jackson.databind.JsonNode;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import tools.jackson.databind.JsonNode;
-
 /**
- * get-bash-posttool-output - Unified PostToolUse hook for Bash commands
+ * get-bash-posttool-output - Unified PostToolUse hook for Bash commands.
  *
- * TRIGGER: PostToolUse (matcher: Bash)
+ * <p>TRIGGER: PostToolUse (matcher: Bash)</p>
  *
- * Consolidates all Bash command result validation hooks into a single Java dispatcher.
+ * <p>Consolidates all Bash command result validation hooks into a single Java dispatcher.</p>
  *
- * Handlers can:
- * - Warn about command results (return warning)
- * - Allow silently (return null)
+ * <p>Handlers can:</p>
+ * <ul>
+ *   <li>Warn about command results (return warning)</li>
+ *   <li>Allow silently (return allow)</li>
+ * </ul>
  */
 public final class GetBashPosttoolOutput
 {
+  private GetBashPosttoolOutput()
+  {
+    // Utility class
+  }
+
+  private static final List<BashHandler> HANDLERS = List.of(
+    new DetectConcatenatedCommit(),
+    new DetectFailures(),
+    new ValidateRebaseTarget(),
+    new VerifyCommitType());
+
   /**
    * Entry point for the Bash posttool output hook.
    *
@@ -40,15 +57,11 @@ public final class GetBashPosttoolOutput
     JsonNode commandNode = toolInput.get("command");
     String command;
     if (commandNode != null)
-    {
       command = commandNode.asString();
-    }
     else
-    {
-      command = null;
-    }
+      command = "";
 
-    if (command == null || command.isEmpty())
+    if (command.isEmpty())
     {
       HookOutput.empty();
       return;
@@ -59,16 +72,14 @@ public final class GetBashPosttoolOutput
     List<String> warnings = new ArrayList<>();
 
     // Run all bash posttool handlers
-    for (BashHandler handler : HandlerRegistry.getBashPosttoolHandlers())
+    for (BashHandler handler : HANDLERS)
     {
       try
       {
         BashHandler.Result result = handler.check(command, toolInput, toolResult, sessionId);
         // PostToolUse cannot block, only warn
         if (!result.reason().isEmpty())
-        {
           warnings.add(result.reason());
-        }
       }
       catch (Exception e)
       {

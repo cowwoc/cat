@@ -140,9 +140,7 @@ public final class Config
   {
     Object value = values.get(key);
     if (value != null)
-    {
       return value.toString();
-    }
     return null;
   }
 
@@ -157,9 +155,7 @@ public final class Config
   {
     Object value = values.get(key);
     if (value != null)
-    {
       return value.toString();
-    }
     return defaultValue;
   }
 
@@ -174,13 +170,9 @@ public final class Config
   {
     Object value = values.get(key);
     if (value instanceof Boolean b)
-    {
       return b;
-    }
     if (value instanceof String s)
-    {
       return Boolean.parseBoolean(s);
-    }
     return defaultValue;
   }
 
@@ -195,16 +187,14 @@ public final class Config
   {
     Object value = values.get(key);
     if (value instanceof Number n)
-    {
       return n.intValue();
-    }
     if (value instanceof String s)
     {
       try
       {
         return Integer.parseInt(s);
       }
-      catch (NumberFormatException e)
+      catch (NumberFormatException _)
       {
         return defaultValue;
       }
