@@ -1,5 +1,5 @@
 ---
-description: Use when exploring 3+ related files - finds and reads in one operation (50-70% faster)
+description: PREFER when reading 3+ related files - batch operation eliminates round-trips (50-70% faster)
 user-invocable: false
 allowed-tools: Bash
 ---
