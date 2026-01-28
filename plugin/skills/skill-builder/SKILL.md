@@ -1205,6 +1205,23 @@ Continue with your analysis...
 
 **Claude never sees the command** - only the output. This is preprocessing, not something Claude executes.
 
+**⚠️ CAUTION: Pattern Collision in Documentation**
+
+When documenting the silent preprocessing syntax within a skill, **never use literal** `` `!`command`` ``
+**patterns as examples**. Claude Code's pattern matcher scans the entire skill file and will attempt
+to expand any `!`...`` pattern it finds - including those in documentation sections.
+
+```markdown
+# ❌ WRONG - Pattern matcher will try to execute "command"
+This skill uses silent preprocessing (`!`command``) for output.
+
+# ✅ CORRECT - Use descriptive text instead
+This skill uses silent preprocessing (exclamation-backtick syntax) for output.
+```
+
+This applies to any invocable skill (listed in plugin.json). Reference documentation that is not
+directly invoked (like this skill-builder) can safely contain the patterns for teaching purposes.
+
 **Why this is the preferred approach:**
 - **Guaranteed correctness**: Output is computed, not approximated by the LLM
 - **No visible tool calls**: Users see clean skill output, not Bash/Read noise
