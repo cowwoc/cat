@@ -1603,6 +1603,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Main agent should spawn subagent via Task tool for implementation work, even when in task worktree"
+    },
+    {
+      "id": "M303",
+      "timestamp": "2026-01-28T10:40:00Z",
+      "category": "assumption_without_verification",
+      "description": "Used fabricated session ID 'test-session-1' instead of actual session ID from context when testing discovery script",
+      "root_cause": "When writing test commands, fabricated placeholder data instead of using real values already available in SessionStart system-reminder",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "session_id",
+        "test_data",
+        "placeholder",
+        "fabricated"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use the actual session ID from the SessionStart system-reminder in context, never fabricate test data"
     }
   ]
 }

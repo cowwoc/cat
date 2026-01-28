@@ -101,6 +101,10 @@ fi
 **Anti-pattern (M282):** Manual file exploration as workaround for script failures.
 If the script fails, the correct fix is to diagnose and fix the script, not to work around it.
 
+**Anti-pattern (M300):** Using placeholder/fabricated session IDs (e.g., "test-session-1") instead of
+the actual session ID from context. The session ID is ALWAYS available in the SessionStart system-reminder
+at conversation start. Use it directly - the script validates UUID format.
+
 ## Lock Management (M097)
 
 **MANDATORY: Lock Check Before Proceeding**
