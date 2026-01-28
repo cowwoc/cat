@@ -1497,6 +1497,33 @@
         "priming_type": "algorithm_exposure",
         "how_it_misled": "Template teaches construction algorithm, then provides examples with different task ID. Agent applied algorithm instead of copying, miscounted."
       }
+    },
+    {
+      "id": "M299",
+      "timestamp": "2026-01-28T13:45:00Z",
+      "category": "incomplete_analysis",
+      "description": "RCA for M298 stopped at 'manually constructed instead of using template' without investigating WHY. Only found actual root cause (documentation priming) after user pointed out the gap.",
+      "root_cause": "Completion bias caused premature RCA termination. learn-from-mistakes skill has Step 1b (documentation path analysis) but no blocking checkpoint that prevents proceeding to recording until RCA reaches system/document cause. Agent stopped at action-level description ('did X wrong') instead of system-level cause ('Y enabled/encouraged X').",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "rca_depth",
+        "completion_bias",
+        "shallow_analysis",
+        "blocking_gate",
+        "system_cause"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "RCA must reach system/document level cause. Ask: 'What in the system enabled this mistake?' If answer is blank or 'agent should have...', RCA is incomplete - keep asking why until you can point to a specific file to change."
     }
   ]
 }
