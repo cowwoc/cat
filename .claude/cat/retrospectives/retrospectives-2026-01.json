@@ -599,6 +599,72 @@
           "ESCALATE-A003"
         ]
       }
+    },
+    {
+      "id": "R005",
+      "timestamp": "2026-01-28T14:51:20-05:00",
+      "trigger": "manual",
+      "period_analyzed": "2026-01-28T10:47:26-05:00 to 2026-01-28T14:51:20-05:00",
+      "mistakes_analyzed": 3,
+      "summary": "Manual retrospective covering 3 mistakes (M304, M305, M306). A005 partially effective (1 post-fix mistake M304). New pattern PATTERN-007 identified for commit type classification errors (M255, M306 recurrence). Created A007 for hook-level commit type validation.",
+      "findings": {
+        "category_breakdown": [
+          {
+            "category": "protocol_violation",
+            "count": 2,
+            "ids": ["M304", "M306"]
+          },
+          {
+            "category": "documentation_priming",
+            "count": 1,
+            "ids": ["M305"]
+          }
+        ],
+        "prevention_type_breakdown": [
+          {
+            "type": "config",
+            "count": 2,
+            "ids": ["M304", "M306"]
+          },
+          {
+            "type": "skill",
+            "count": 1,
+            "ids": ["M305"]
+          }
+        ],
+        "action_effectiveness": {
+          "A001": "partially_effective",
+          "A002": "partially_effective",
+          "A003": "ineffective_escalated",
+          "A004": "pending",
+          "A005": "partially_effective",
+          "A006": "pending"
+        },
+        "new_patterns": [
+          {
+            "pattern_id": "PATTERN-007",
+            "pattern": "commit_type_classification_error",
+            "occurrences": 2,
+            "mistakes": ["M255", "M306"],
+            "note": "Using docs: commit type for Claude-facing files (CLAUDE.md, plugin/) instead of config:. Recurrence despite M255 adding guidance."
+          }
+        ],
+        "new_action_items": [
+          {
+            "id": "A007",
+            "priority": "medium",
+            "description": "Add hook-level validation for commit type selection: detect docs: used for plugin/ or CLAUDE.md paths",
+            "pattern_id": "PATTERN-007",
+            "status": "open"
+          }
+        ],
+        "observations": [
+          "A005 (delegation boundary) had first post-fix failure (M304) - partially effective",
+          "PATTERN-007 is a recurrence of M255 - documentation-level prevention insufficient",
+          "M305 is a new category (documentation_priming) - silent preprocessing pattern collision",
+          "All 3 mistakes have implemented preventions"
+        ]
+      }
     }
   ]
 }
