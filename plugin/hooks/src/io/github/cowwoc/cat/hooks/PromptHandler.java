@@ -13,7 +13,8 @@ public interface PromptHandler
    *
    * @param prompt the user's prompt text
    * @param sessionId the current session ID
-   * @return string to inject as context, or null if no match
+   * @return string to inject as context, or empty string if no match
+   * @throws NullPointerException if prompt or sessionId is null
    */
   String check(String prompt, String sessionId);
 }

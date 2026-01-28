@@ -33,7 +33,7 @@ public class Example
 Use if/else statements instead of the ternary operator:
 
 ```java
-// Good - if/else
+// Good - if/else with empty string default
 String command;
 if (commandNode != null)
 {
@@ -41,11 +41,11 @@ if (commandNode != null)
 }
 else
 {
-  command = null;
+  command = "";
 }
 
 // Avoid - ternary operator
-String command = commandNode != null ? commandNode.asString() : null;
+String command = commandNode != null ? commandNode.asString() : "";
 ```
 
 ### JsonMapper Usage
@@ -75,39 +75,146 @@ if ("Bash".equalsIgnoreCase(toolName))
 ## Documentation
 
 ### Javadoc Requirements
-- **All public methods must have Javadoc**
-- **All thrown exceptions must be documented with `@throws`**
+- **All public classes and records must have Javadoc**
+- **All public methods must have Javadoc** (including interface methods)
+- **All public constructors must have Javadoc** (including record compact constructors)
+- **All thrown exceptions must be documented with `@throws`** (including interface methods that expect implementations to validate parameters)
 - Document parameters with `@param`
 - Document return values with `@return`
+- Do not duplicate constraint info in `@param` that is already in `@throws` (e.g., don't write "must not be null" if `@throws NullPointerException` documents it)
 
 ```java
 /**
- * Processes the input and returns the result.
- *
- * @param input the input string to process
- * @return the processed result
- * @throws IllegalArgumentException if input is null or blank
- * @throws IOException if processing fails
+ * Configuration settings for the application.
  */
-public String process(String input) throws IOException
+public class Config
 {
-  requireThat(input, "input").isNotBlank();
+  /**
+   * Creates a new configuration.
+   *
+   * @param name the configuration name
+   * @param timeout the timeout in milliseconds
+   * @throws NullPointerException if name is null
+   * @throws IllegalArgumentException if timeout is not positive
+   */
+  public Config(String name, int timeout)
+  {
+    requireThat(name, "name").isNotNull();
+    requireThat(timeout, "timeout").isPositive();
+    this.name = name;
+    this.timeout = timeout;
+  }
+
+  /**
+   * Processes the input and returns the result.
+   *
+   * @param input the input string to process
+   * @return the processed result
+   * @throws IllegalArgumentException if input is null or blank
+   * @throws IOException if processing fails
+   */
+  public String process(String input) throws IOException
+  {
+    requireThat(input, "input").isNotBlank();
+    // ...
+  }
+}
+
+/**
+ * Context object passed to skill handlers.
+ *
+ * @param userPrompt the user's prompt text
+ * @param sessionId the Claude session ID
+ */
+public record SkillContext(String userPrompt, String sessionId)
+{
+  /**
+   * Creates a new skill context.
+   *
+   * @throws NullPointerException if any parameter is null
+   */
+  public SkillContext
+  {
+    requireThat(userPrompt, "userPrompt").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+  }
+}
+```
+
+## String Handling
+
+### No Null Strings
+Use `""` (empty string) instead of `null` for String values - both for return values and parameters:
+
+```java
+// Good - return empty string for no value
+public String getSessionId()
+{
+  String value = data.get("session_id");
+  if (value == null)
+  {
+    return "";
+  }
+  return value;
+}
+
+// Good - pass empty string, not null
+handler.process("", context);  // No user prompt
+
+// Avoid - returning null
+public String getSessionId()
+{
+  return data.get("session_id");  // May return null
+}
+
+// Avoid - passing null
+handler.process(null, context);  // Don't do this
+```
+
+**Rationale:**
+- Eliminates null checks throughout codebase
+- Prevents NullPointerException
+- Empty string works naturally with `.isEmpty()` checks
+- Consistent API - callers never need to handle null
+
+**Validation:** Methods must validate String parameters are not null:
+```java
+public String process(String input)
+{
+  requireThat(input, "input").isNotNull();
   // ...
 }
 ```
 
+**Exception:** Use `null` only when the distinction between "not present" and "empty" is semantically important.
+
 ## Validation
 
 ### Constructor Validation
-**Always validate constructor arguments** using requirements.java:
+**Always validate constructor arguments** using requirements.java. This applies to both classes and records:
 
 ```java
+// Class constructor
 public Config(String name, int timeout)
 {
   requireThat(name, "name").isNotBlank();
   requireThat(timeout, "timeout").isPositive();
   this.name = name;
   this.timeout = timeout;
+}
+
+// Record compact constructor
+public record SkillContext(String userPrompt, String sessionId, String projectRoot,
+                           String pluginRoot, JsonNode hookData)
+{
+  public SkillContext
+  {
+    requireThat(userPrompt, "userPrompt").isNotNull();
+    requireThat(sessionId, "sessionId").isNotNull();
+    requireThat(projectRoot, "projectRoot").isNotNull();
+    requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(hookData, "hookData").isNotNull();
+  }
 }
 ```
 

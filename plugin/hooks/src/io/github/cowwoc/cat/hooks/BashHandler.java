@@ -2,6 +2,8 @@ package io.github.cowwoc.cat.hooks;
 
 import tools.jackson.databind.JsonNode;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Interface for bash command handlers.
  *
@@ -20,13 +22,21 @@ public interface BashHandler
   record Result(boolean blocked, String reason, String additionalContext)
   {
     /**
+     * Creates a new bash handler result.
+     */
+    public Result
+    {
+      // reason and additionalContext use "" not null per Java conventions
+    }
+
+    /**
      * Creates an allow result (no blocking, no warning).
      *
      * @return an allow result
      */
     public static Result allow()
     {
-      return new Result(false, null, null);
+      return new Result(false, "", "");
     }
 
     /**
@@ -37,7 +47,7 @@ public interface BashHandler
      */
     public static Result block(String reason)
     {
-      return new Result(true, reason, null);
+      return new Result(true, reason, "");
     }
 
     /**
@@ -60,7 +70,7 @@ public interface BashHandler
      */
     public static Result warn(String warning)
     {
-      return new Result(false, warning, null);
+      return new Result(false, warning, "");
     }
   }
 
@@ -72,6 +82,7 @@ public interface BashHandler
    * @param toolResult the tool result JSON (null for PreToolUse)
    * @param sessionId the session ID
    * @return the check result
+   * @throws NullPointerException if command, toolInput, or sessionId is null
    */
   Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId);
 }

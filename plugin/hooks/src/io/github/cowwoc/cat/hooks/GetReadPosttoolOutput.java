@@ -50,7 +50,7 @@ public final class GetReadPosttoolOutput
       {
         ReadHandler.Result result = handler.check(toolName, toolInput, toolResult, sessionId);
         // PostToolUse cannot block, only warn
-        if (result.reason() != null && !result.reason().isEmpty())
+        if (!result.reason().isEmpty())
         {
           warnings.add(result.reason());
         }

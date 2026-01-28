@@ -1,5 +1,7 @@
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,7 @@ public final class GetSkillOutput
     HookInput input = HookInput.readFromStdin();
 
     String userPrompt = input.getUserPrompt();
-    if (userPrompt == null || userPrompt.isEmpty())
+    if (userPrompt.isEmpty())
     {
       HookOutput.empty();
       return;
@@ -49,7 +51,7 @@ public final class GetSkillOutput
       try
       {
         String result = handler.check(userPrompt, sessionId);
-        if (result != null && !result.isEmpty())
+        if (!result.isEmpty())
         {
           outputs.add(result);
         }
@@ -62,7 +64,7 @@ public final class GetSkillOutput
 
     // 2. Run skill handler if this is a /cat:* command
     String skillName = extractSkillName(userPrompt);
-    if (skillName != null)
+    if (!skillName.isEmpty())
     {
       // Determine project root
       String projectRoot = System.getenv("CLAUDE_PROJECT_DIR");
@@ -101,7 +103,7 @@ public final class GetSkillOutput
           SkillHandler.SkillContext context = new SkillHandler.SkillContext(
             userPrompt, sessionId, projectRoot, pluginRoot, input.getRaw());
           String result = handler.handle(context);
-          if (result != null && !result.isEmpty())
+          if (!result.isEmpty())
           {
             outputs.add(result);
           }
@@ -146,19 +148,21 @@ public final class GetSkillOutput
    * </ul>
    *
    * @param prompt the user prompt to parse
-   * @return the skill name (e.g., "init", "status") or null if not a CAT command
+   * @return the skill name (e.g., "init", "status") or empty string if not a CAT command
+   * @throws NullPointerException if prompt is null
    */
   public static String extractSkillName(String prompt)
   {
-    if (prompt == null)
+    requireThat(prompt, "prompt").isNotNull();
+    if (prompt.isEmpty())
     {
-      return null;
+      return "";
     }
     Matcher matcher = SKILL_PATTERN.matcher(prompt);
     if (matcher.find())
     {
       return matcher.group(1).toLowerCase(Locale.ROOT);
     }
-    return null;
+    return "";
   }
 }

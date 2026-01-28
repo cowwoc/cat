@@ -2,6 +2,8 @@ package io.github.cowwoc.cat.hooks;
 
 import tools.jackson.databind.JsonNode;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
  * Interface for skill handlers.
  *
@@ -21,7 +23,8 @@ public interface SkillHandler
    *     <li>pluginRoot - Path to plugin root</li>
    *     <li>hookData - Raw hook JSON data</li>
    *   </ul>
-   * @return string to inject as additionalContext, or null for no injection
+   * @return string to inject as additionalContext, or empty string for no injection
+   * @throws NullPointerException if context is null
    */
   String handle(SkillContext context);
 
@@ -37,5 +40,18 @@ public interface SkillHandler
   record SkillContext(String userPrompt, String sessionId, String projectRoot, String pluginRoot,
                       JsonNode hookData)
   {
+    /**
+     * Creates a new skill context.
+     *
+     * @throws NullPointerException if any parameter is null
+     */
+    public SkillContext
+    {
+      requireThat(userPrompt, "userPrompt").isNotNull();
+      requireThat(sessionId, "sessionId").isNotNull();
+      requireThat(projectRoot, "projectRoot").isNotNull();
+      requireThat(pluginRoot, "pluginRoot").isNotNull();
+      requireThat(hookData, "hookData").isNotNull();
+    }
   }
 }

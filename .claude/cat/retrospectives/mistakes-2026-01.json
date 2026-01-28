@@ -1733,6 +1733,33 @@
       },
       "correct_behavior": "When warn-base-branch-edit.sh emits delegation warning, STOP and spawn subagent via Task tool instead of proceeding with direct edit",
       "escalation_needed": "Consider escalating from warning to blocking if this recurs"
+    },
+    {
+      "id": "M308",
+      "timestamp": "2026-01-28T15:15:00Z",
+      "category": "protocol_violation",
+      "description": "Java records lacked constructor validation and Javadoc despite convention requirements",
+      "root_cause": "Convention documented class constructors but not record compact constructors; Javadoc requirement only mentioned methods, not classes/records/constructors",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/conventions/java.md",
+      "pattern_keywords": [
+        "record",
+        "constructor",
+        "validation",
+        "javadoc",
+        "convention_gap"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "All records must have compact constructors with requireThat validation and Javadoc on classes, records, and constructors"
     }
   ]
 }

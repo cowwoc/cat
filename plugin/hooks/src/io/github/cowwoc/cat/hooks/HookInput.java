@@ -71,35 +71,39 @@ public final class HookInput
    * Get a string value from the input.
    *
    * @param key the key to look up
-   * @return the string value, or null if not found or not textual
+   * @return the string value, or empty string if not found or not textual
    */
   public String getString(String key)
   {
     JsonNode node = data.get(key);
     if (node != null && node.isTextual())
     {
-      return node.asString();
+      String value = node.asString();
+      if (value != null)
+      {
+        return value;
+      }
     }
-    return null;
+    return "";
   }
 
   /**
    * Get a string value with fallback keys.
    *
    * @param keys the keys to try in order
-   * @return the first non-empty string value found, or null
+   * @return the first non-empty string value found, or empty string
    */
   public String getString(String... keys)
   {
     for (String key : keys)
     {
       String value = getString(key);
-      if (value != null && !value.isEmpty())
+      if (!value.isEmpty())
       {
         return value;
       }
     }
-    return null;
+    return "";
   }
 
   /**
@@ -112,7 +116,7 @@ public final class HookInput
   public String getString(String key, String defaultValue)
   {
     String value = getString(key);
-    if (value != null)
+    if (!value.isEmpty())
     {
       return value;
     }

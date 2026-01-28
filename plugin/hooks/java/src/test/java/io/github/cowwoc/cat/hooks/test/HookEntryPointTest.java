@@ -98,8 +98,8 @@ public class HookEntryPointTest
       isEqualTo("add");
     requireThat(GetSkillOutput.extractSkillName("  /cat:init  "), "skillInitWhitespace").
       isEqualTo("init");
-    requireThat(GetSkillOutput.extractSkillName("hello world"), "nonSkillInput").isNull();
-    requireThat(GetSkillOutput.extractSkillName(null), "nullInput").isNull();
+    requireThat(GetSkillOutput.extractSkillName("hello world"), "nonSkillInput").isEmpty();
+    requireThat(GetSkillOutput.extractSkillName(""), "emptyInput").isEmpty();
   }
 
   // --- GetBashPretoolOutput tests ---
