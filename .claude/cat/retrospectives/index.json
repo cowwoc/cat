@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-27T12:30:00-05:00",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-01-27T21:55:08-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -19,11 +19,11 @@
       "pattern_id": "PATTERN-001",
       "pattern": "subagent_validation_fabrication",
       "occurrences_total": 6,
-      "occurrences_after_fix": 0,
+      "occurrences_after_fix": 2,
       "first_seen": "2026-01-26T17:00:00Z",
       "last_seen": "2026-01-27T10:00:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M269",
@@ -42,11 +42,11 @@
       "pattern_id": "PATTERN-002",
       "pattern": "task_status_lifecycle_violation",
       "occurrences_total": 2,
-      "occurrences_after_fix": 0,
+      "occurrences_after_fix": 2,
       "first_seen": "2026-01-27T11:00:00Z",
       "last_seen": "2026-01-27T12:00:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M278",
@@ -61,11 +61,11 @@
       "pattern_id": "PATTERN-003",
       "pattern": "path_config_assumption",
       "occurrences_total": 3,
-      "occurrences_after_fix": 0,
+      "occurrences_after_fix": 4,
       "first_seen": "2026-01-26T18:00:00Z",
       "last_seen": "2026-01-27T09:00:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M266",
@@ -76,6 +76,25 @@
         "A003"
       ],
       "note": "Assumptions about paths or config values without verification - worktree paths, terminal width, abort semantics"
+    },
+    {
+      "pattern_id": "PATTERN-004",
+      "pattern": "user_message_ignored_mid_operation",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-25T14:10:00Z",
+      "last_seen": "2026-01-28T10:30:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M247",
+        "M289"
+      ],
+      "related_action_items": [
+        "A004"
+      ],
+      "note": "User questions arriving mid-operation via system-reminders are ignored instead of being acknowledged immediately"
     }
   ],
   "action_items": [
@@ -98,9 +117,12 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 6,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 2,
+        "post_fix_mistakes": [
+          "M269",
+          "M273"
+        ],
+        "verdict": "partially_effective"
       }
     },
     {
@@ -118,9 +140,12 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 2,
+        "post_fix_mistakes": [
+          "M278",
+          "M280"
+        ],
+        "verdict": "partially_effective"
       }
     },
     {
@@ -140,6 +165,32 @@
       "implementation": "Added 'Path and Config Verification (A003)' section to agent-architecture.md with worktree path handling, config resolution strategy, and terminology disambiguation guidelines",
       "effectiveness_check": {
         "mistakes_before": 3,
+        "mistakes_after": 4,
+        "post_fix_mistakes": [
+          "M267",
+          "M268",
+          "M281",
+          "M286"
+        ],
+        "verdict": "ineffective"
+      }
+    },
+    {
+      "id": "A004",
+      "priority": "high",
+      "description": "Strengthen user input handling: clarify that current task means current tool call not entire workflow. Add explicit instruction to respond in very next message when system-reminder contains user question.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-004",
+      "status": "implemented",
+      "created_date": "2026-01-27T21:55:08-05:00",
+      "completed_date": "2026-01-27T21:55:08-05:00",
+      "related_mistakes": [
+        "M247",
+        "M289"
+      ],
+      "implementation": "Updated inject-session-instructions.sh to clarify that IMPORTANT After completing your current task means after current tool call, not entire workflow",
+      "effectiveness_check": {
+        "mistakes_before": 2,
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
