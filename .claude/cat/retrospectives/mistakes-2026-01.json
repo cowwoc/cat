@@ -1629,6 +1629,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Always use the actual session ID from the SessionStart system-reminder in context, never fabricate test data"
+    },
+    {
+      "id": "M304",
+      "timestamp": "2026-01-28T12:15:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent implemented code changes directly instead of delegating to subagent via Task tool",
+      "root_cause": "Session instructions specify task creation but don't reinforce that implementation within tasks should be delegated to subagents",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "delegation",
+        "subagent",
+        "implementation",
+        "Task tool",
+        "main agent"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Delegate implementation work to subagents via Task tool; main agent orchestrates and makes decisions"
     }
   ]
 }
