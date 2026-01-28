@@ -382,37 +382,77 @@ class WorkHandler:
 
         return "\n".join(lines)
 
+    def _build_progress_banner(self, task_id: str = "2.1-compress-lang-md",
+                                 phases: tuple = ("◉", "○", "○", "○")) -> str:
+        """Build progress banner with proper alignment.
+
+        Args:
+            task_id: The task ID to display
+            phases: Tuple of 4 phase symbols (Preparing, Executing, Reviewing, Merging)
+        """
+        p1, p2, p3, p4 = phases
+        # Phase content without border characters
+        phase_content = f"  {p1} Preparing ────── {p2} Executing ────── {p3} Reviewing ────── {p4} Merging "
+        phase_width = display_width(phase_content)
+
+        # Header content: "─ 🐱 " + task_id + " "
+        header_prefix = "─ 🐱 "
+        header_content = header_prefix + task_id + " "
+        header_width = display_width(header_content)
+
+        # Box width is determined by the wider of header or phase content
+        inner_width = max(header_width, phase_width)
+
+        # Build top border: ┌ + header_content + dashes + ┐
+        top_dashes = "─" * (inner_width - header_width)
+        top_line = "┌" + header_content + top_dashes + "┐"
+
+        # Build middle line: │ + phase_content + padding + │
+        phase_padding = " " * (inner_width - phase_width)
+        middle_line = "│" + phase_content + phase_padding + "│"
+
+        # Build bottom border: └ + dashes + ┘
+        bottom_line = "└" + "─" * inner_width + "┘"
+
+        return "\n".join([top_line, middle_line, bottom_line])
+
     def handle(self, context: dict) -> str | None:
         """Provide progress format templates for the work skill."""
+        # Build example banners
+        example_preparing = self._build_progress_banner("2.1-compress-lang-md", ("◉", "○", "○", "○"))
+        example_executing = self._build_progress_banner("2.1-compress-lang-md", ("●", "◉", "○", "○"))
+
         # Compact progress banner format - no verbose examples
         return f"""OUTPUT TEMPLATE WORK PROGRESS FORMAT:
 
 ## Progress Display Templates
 
-### Box Format
-```
-┌─ 🐱 {{TASK_ID}} ─────────────────────────────────────────────────────┐
-│  {{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
 ### Symbols
 ○ Pending | ● Complete | ◉ Active | ✗ Failed
 
-### Example (Preparing phase active)
+### Progress Banner Construction
+
+**Phase content (fixed):** `  {{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging `
+
+**Construction steps:**
+1. Calculate phase content width (65 display chars with symbols)
+2. Calculate header width: `─ 🐱 ` + TASK_ID + ` `
+3. Inner width = max(header_width, phase_width)
+4. Top: `┌` + header + dashes to fill inner_width + `┐`
+5. Middle: `│` + phase_content + padding to fill inner_width + `│`
+6. Bottom: `└` + dashes for inner_width + `┘`
+
+### Examples (copy structure, replace task ID and symbols)
+
+**Preparing phase:**
 ```
-┌─ 🐱 2.1-compress-lang-md ────────────────────────────────────────────┐
-│  ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging │
-└──────────────────────────────────────────────────────────────────────┘
+{example_preparing}
 ```
 
-**Display rules:**
-1. Show box AFTER task is found (requires TASK_ID)
-2. Top border: `┌─ 🐱 ` + TASK_ID + ` ` + dashes to fill + `┐`
-3. Middle: `│  ` + phase banner + ` │`
-4. Bottom: `└` + dashes + `┘`
-5. Total width: 72 characters
-6. Update phase symbols as work progresses
+**Executing phase:**
+```
+{example_executing}
+```
 
 Do NOT show progress before task is identified.
 

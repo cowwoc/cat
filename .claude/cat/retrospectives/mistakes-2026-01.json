@@ -1167,6 +1167,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Show Header (🐱 > {TASK_ID}) FIRST after task is found, then show Banner below it. Do not show any progress until task is identified."
+    },
+    {
+      "id": "M288",
+      "timestamp": "2026-01-28T10:30:00Z",
+      "category": "display_formatting",
+      "description": "Progress banner vertical bars misaligned due to fixed-width template not accounting for variable task ID lengths",
+      "root_cause": "Template defined fixed 72-character width but middle line content was fixed while top/bottom borders adapted to task ID length, causing misalignment",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/work_handler.py",
+      "pattern_keywords": [
+        "progress_banner",
+        "alignment",
+        "display_width",
+        "box_drawing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Progress banner uses _build_progress_banner() method that dynamically calculates inner width based on max(header_width, phase_content_width) and pads both lines to match"
     }
   ]
 }
