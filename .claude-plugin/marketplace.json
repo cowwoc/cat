@@ -1,11 +1,11 @@
 {
-  "name": "claude-code-cat",
+  "name": "cat",
   "owner": { "name": "cowwoc" },
   "plugins": [
     {
       "name": "cat",
       "source": "./plugin",
-      "description": "Multi-agent orchestration for Git-based projects"
+      "description": "AI Agents that land on their feet"
     }
   ]
 }
