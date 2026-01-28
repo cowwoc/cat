@@ -1656,6 +1656,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Delegate implementation work to subagents via Task tool; main agent orchestrates and makes decisions"
+    },
+    {
+      "id": "M305",
+      "timestamp": "2026-01-28T13:30:00-05:00",
+      "category": "documentation_priming",
+      "description": "Silent preprocessing pattern collision: literal !`command` in skill documentation was matched by Claude Code pattern expander",
+      "root_cause": "Status skill SKILL.md contained literal !`command` patterns in the 'Why Silent Preprocessing?' documentation section. Claude Code's pattern matcher scans the entire skill file and attempted to expand these documentation examples as actual commands, trying to execute just 'command' which failed.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/skills/skill-builder/SKILL.md",
+      "pattern_keywords": [
+        "silent-preprocessing",
+        "pattern-collision",
+        "documentation-examples"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "In invocable skills, use descriptive text (exclamation-backtick syntax) instead of literal patterns when documenting the silent preprocessing feature"
     }
   ]
 }
