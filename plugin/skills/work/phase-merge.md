@@ -99,7 +99,11 @@ Task tool invocation:
     STEP 1: MERGE
     Return to main workspace and merge task branch.
 
+    CRITICAL (M205): Do NOT run `git checkout` in main worktree.
+    The main worktree is already on the base branch. Just merge directly.
+
     cd /workspace
+    # Do NOT checkout - main worktree stays on its current branch
     CURRENT_BRANCH=$(git branch --show-current)
 
     If completionWorkflow is "merge":
