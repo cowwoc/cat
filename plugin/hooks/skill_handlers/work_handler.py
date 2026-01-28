@@ -454,8 +454,11 @@ class WorkHandler:
 {example_executing}
 ```
 
-**Output as raw text** - no markdown code blocks, no bullet prefixes, no additional formatting.
-Just output the three lines directly.
+**CRITICAL: Output as PLAIN TEXT on its own line.**
+- Do NOT wrap in code blocks (```)
+- Do NOT prefix with bullets (●, -, *)
+- Do NOT start output while in a list context
+- Just output the three lines directly, starting fresh on a new line
 
 Do NOT show progress before task is identified.
 
