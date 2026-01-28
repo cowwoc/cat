@@ -159,6 +159,47 @@ SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 }
 ```
 
+### 4b. RCA Depth Verification (BLOCKING GATE - M299)
+
+**MANDATORY: Verify RCA reached actual cause before proceeding.**
+
+After completing Step 4, answer these questions:
+
+```yaml
+rca_depth_check:
+  # Question 1: Did you ask WHY at the action level?
+  action_level_why:
+    question: "Why did the agent take THIS action instead of the correct one?"
+    example_shallow: "Agent manually constructed instead of using template"
+    example_deep: "OUTPUT TEMPLATE taught construction algorithm, priming manual approach"
+    your_answer: "_______________"
+
+  # Question 2: Can you trace to a SYSTEM/DOCUMENT cause?
+  system_cause:
+    question: "What in the system/documentation enabled or encouraged this mistake?"
+    if_answer_is_nothing: "RCA is incomplete - keep asking why"
+    if_answer_is_agent_error: "RCA is incomplete - what allowed agent to make this error?"
+    your_answer: "_______________"
+
+  # Question 3: Would the prevention CHANGE something external?
+  external_change:
+    question: "Does prevention modify code, config, or documentation?"
+    if_answer_is_no: "RCA is incomplete - behavioral changes without enforcement recur"
+    your_answer: "_______________"
+```
+
+**BLOCKING CONDITION (M299):**
+
+If ANY answer is blank or says "agent should have...":
+- STOP - RCA is incomplete
+- Return to Step 4 and ask deeper "why" questions
+- Investigate what DOCUMENTATION or SYSTEM enabled the mistake
+- Only proceed when you can point to a SPECIFIC file to change
+
+**Why this gate exists:** M299 showed that completion bias causes premature RCA termination.
+Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
+The cause is always in the system that allowed or encouraged the wrong action.
+
 ### 5. Check for Context Degradation Patterns
 
 **CAT-specific analysis checklist:**
