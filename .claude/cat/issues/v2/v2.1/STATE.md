@@ -16,7 +16,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-concepts-md (from decomposed compress-md-files)
 - compress-templates-md (from decomposed compress-md-files)
 - compress-stakeholders-md (from decomposed compress-md-files)
-- compress-lang-md (from decomposed compress-md-files)
 - deduplicate-embedded-content
 - subagent-doc-heavy-steps
 - unify-output-template-delivery
@@ -34,10 +33,13 @@ Finalize naming conventions and UI polish before recording demo videos.
 - research-new-issues
 - centralize-emoji-widths
 - show-task-header-at-approval-gate
+- monitor-subagents-handler
+- run-retrospective-handler
+- optimize-execution-handler
 
 ## Tasks Decomposed
 - rename-task-to-issue → [rename-task-scripts, rename-task-in-skills, rename-task-in-concepts, rename-task-in-commands, rename-task-remaining]
-- compress-md-files → [compress-skills-md, compress-commands-md, compress-concepts-md, compress-templates-md, compress-stakeholders-md, compress-lang-md]
+- compress-md-files → [compress-skills-md, compress-commands-md, compress-concepts-md, compress-templates-md, compress-stakeholders-md]
 
 ## Tasks Completed
 - acceptance-criteria-options
