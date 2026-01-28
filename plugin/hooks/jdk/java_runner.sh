@@ -8,11 +8,10 @@
 #   java_runner.sh <handler-class> [args...]
 #
 # Environment:
-#   CAT_JAVA_HOME - Path to CAT's custom JDK runtime (set by session_start.sh)
-#   JAVA_HOME     - Fallback to system Java
+#   CAT_JAVA_HOME - Path to CAT's custom JDK runtime (required, set by session_start.sh)
 #
 # The script:
-#   1. Locates the Java binary (CAT runtime > JAVA_HOME > PATH)
+#   1. Locates the Java binary from CAT_JAVA_HOME (jlinked runtime required)
 #   2. Sets up the classpath for hook handlers
 #   3. Invokes the specified handler class
 #   4. Passes stdin and captures stdout/stderr appropriately
@@ -34,42 +33,47 @@ readonly JAVA_XMX="${CAT_JAVA_XMX:-64m}"
 # --- Functions ---
 
 find_java() {
-    local java_bin
-
-    # Priority 1: CAT's custom runtime (smallest, fastest startup)
-    if [[ -n "${CAT_JAVA_HOME:-}" && -x "${CAT_JAVA_HOME}/bin/java" ]]; then
-        echo "${CAT_JAVA_HOME}/bin/java"
-        return 0
+    # Require CAT's jlinked runtime - no fallback to system JDK
+    if [[ -z "${CAT_JAVA_HOME:-}" ]]; then
+        echo "Error: CAT_JAVA_HOME not set. Run session_start.sh first." >&2
+        return 1
     fi
 
-    # Priority 2: System JAVA_HOME
-    if [[ -n "${JAVA_HOME:-}" && -x "${JAVA_HOME}/bin/java" ]]; then
-        echo "${JAVA_HOME}/bin/java"
-        return 0
+    local java_bin="${CAT_JAVA_HOME}/bin/java"
+    if [[ ! -x "$java_bin" ]]; then
+        echo "Error: Java binary not found at ${java_bin}" >&2
+        echo "CAT's jlinked JDK runtime may not be installed." >&2
+        return 1
     fi
 
-    # Priority 3: java on PATH
-    if command -v java &>/dev/null; then
-        command -v java
-        return 0
-    fi
-
-    return 1
+    echo "$java_bin"
 }
 
 find_hooks_jar() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    # Check relative to script location
-    local jar_path="${script_dir}/../java/cat-hooks.jar"
+    # Priority 1: Maven target directory (development)
+    local jar_path="${script_dir}/../java/target/cat-hooks.jar"
     if [[ -f "$jar_path" ]]; then
         echo "$jar_path"
         return 0
     fi
 
-    # Check using CLAUDE_PLUGIN_ROOT
+    # Priority 2: Installed location (production)
+    jar_path="${script_dir}/../java/cat-hooks.jar"
+    if [[ -f "$jar_path" ]]; then
+        echo "$jar_path"
+        return 0
+    fi
+
+    # Priority 3: Using CLAUDE_PLUGIN_ROOT
     if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+        jar_path="${CLAUDE_PLUGIN_ROOT}/hooks/java/target/cat-hooks.jar"
+        if [[ -f "$jar_path" ]]; then
+            echo "$jar_path"
+            return 0
+        fi
         jar_path="${CLAUDE_PLUGIN_ROOT}/hooks/java/cat-hooks.jar"
         if [[ -f "$jar_path" ]]; then
             echo "$jar_path"
@@ -84,6 +88,7 @@ build_classpath() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local plugin_root="${CLAUDE_PLUGIN_ROOT:-${script_dir}/../..}"
+    local java_dir="${script_dir}/../java"
 
     local classpath=""
 
@@ -93,7 +98,21 @@ build_classpath() {
         classpath="$hooks_jar"
     fi
 
-    # Add Jackson jars from the runtime lib directory
+    # Priority 1: Maven-resolved dependencies (development)
+    # Check if mvnw exists and use it to get classpath
+    if [[ -x "${java_dir}/mvnw" && -f "${java_dir}/pom.xml" ]]; then
+        local maven_cp
+        maven_cp=$("${java_dir}/mvnw" -f "${java_dir}/pom.xml" dependency:build-classpath \
+            -Dmdep.outputFile=/dev/stdout -q 2>/dev/null | tail -1) || true
+        if [[ -n "$maven_cp" ]]; then
+            [[ -n "$classpath" ]] && classpath+=":"
+            classpath+="$maven_cp"
+            echo "$classpath"
+            return 0
+        fi
+    fi
+
+    # Priority 2: Jackson jars from runtime lib directory (production)
     local lib_dir="${plugin_root}/runtime/jackson-libs"
     if [[ -d "$lib_dir" ]]; then
         for jar in "$lib_dir"/*.jar; do
@@ -103,7 +122,7 @@ build_classpath() {
         done
     fi
 
-    # Also check for jars bundled with the custom JDK
+    # Priority 3: Jackson jars bundled with custom JDK (jlinked runtime)
     if [[ -n "${CAT_JAVA_HOME:-}" ]]; then
         local jdk_lib="${CAT_JAVA_HOME}/lib/jackson"
         if [[ -d "$jdk_lib" ]]; then
@@ -124,7 +143,7 @@ run_handler() {
 
     local java_bin
     java_bin=$(find_java) || {
-        echo '{"status":"error","message":"Java not found. Install JDK 25 or run CAT setup."}' >&2
+        echo '{"status":"error","message":"CAT jlinked JDK not found. Run session_start.sh to install."}' >&2
         return 1
     }
 
