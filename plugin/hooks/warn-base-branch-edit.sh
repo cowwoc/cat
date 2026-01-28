@@ -108,6 +108,30 @@ Proceeding with edit (warning only, not blocked)."
     exit 0
 fi
 
+# ESCALATE-A003/M267: Check for absolute /workspace/ paths while in worktree
+# This bypasses worktree isolation - the edit goes to main workspace, not the worktree
+if [[ "$IN_TASK_WORKTREE" == "true" ]] && [[ "$FILE_PATH" == /workspace/* ]]; then
+    CWD=$(pwd)
+    if [[ "$CWD" != /workspace && "$CWD" != /workspace/* ]] || [[ "$CWD" == *".worktrees"* ]]; then
+        output_hook_warning "PreToolUse" "⚠️ WORKTREE PATH BYPASS DETECTED (ESCALATE-A003/M267)
+
+File: $FILE_PATH
+CWD: $CWD
+
+Absolute /workspace/ paths bypass worktree isolation!
+You are in a task worktree but editing the main workspace.
+
+Fix: Use relative path or path within current worktree.
+Example: Instead of /workspace/plugin/... use plugin/...
+
+Ref: plugin/concepts/agent-architecture.md § Worktree Path Handling
+
+Proceeding with edit (warning only, not blocked)."
+        echo '{}'
+        exit 0
+    fi
+fi
+
 # Source file edit on non-base branch (could be in worktree) - warn about delegation
 WORKTREE_NOTE=""
 if [[ "$IN_TASK_WORKTREE" == "true" ]]; then
