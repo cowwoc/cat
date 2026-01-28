@@ -312,27 +312,10 @@ execution_workflow:
 
 ## Anti-Patterns
 
-### Use zsh-compatible syntax in bash commands (M304)
+### Shell compatibility
 
-```bash
-# ❌ WRONG: != operator fails in zsh
-if [[ "$PATTERN" != "none" ]]; then
-  # Error: (eval):N: condition expected: \!=
-
-# ✅ CORRECT: Use = with negation, or use separate checks
-if [[ -n "$PATTERN" ]] && [[ "$PATTERN" = "none" ]]; then
-  : # skip
-else
-  # do work
-fi
-
-# ✅ ALSO CORRECT: Use test command
-if [ "$PATTERN" != "none" ]; then
-  # Works in both bash and zsh
-fi
-```
-
-The Bash tool may execute in zsh context. Avoid `!=` inside `[[ ]]` conditionals.
+See @concepts/shell-compatibility.md for bash/zsh compatibility rules. Key point: avoid `!=`
+inside `[[ ]]` conditionals - use `[ ]` test command instead.
 
 ### Check existing action effectiveness first
 
