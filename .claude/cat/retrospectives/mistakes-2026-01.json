@@ -1274,6 +1274,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Output progress banner as raw text - no markdown code blocks, no bullet prefixes, no additional formatting"
+    },
+    {
+      "id": "M291",
+      "timestamp": "2026-01-28T03:10:57Z",
+      "category": "context_pollution",
+      "description": "compare-docs subagents returned full claim extractions to orchestrator, polluting context with unnecessary detail when only score was needed",
+      "root_cause": "Skill documentation instructed subagents to 'Return COMPLETE JSON' and 'Return detailed comparison JSON' instead of writing to files and returning minimal status",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "subagent output",
+        "context pollution",
+        "minimal return",
+        "write to file"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Subagents write detailed output to files and return only minimal status (e.g., 'Score: 0.95'). Orchestrator reads files only if details needed for iteration."
     }
   ]
 }
