@@ -5,16 +5,18 @@ Detects when users use ambiguous "abort" terminology with tasks
 and reminds agent to clarify intent before taking action (M266).
 """
 
+import re
 from . import register_handler
 
+# Regex patterns to match abort-related phrases with optional task names
+# Matches: "abort the task", "abort the 2.1-foo task", "abort task foo", etc.
 ABORT_PATTERNS = [
-    "abort the task",
-    "abort task",
-    "abort this task",
-    "cancel the task",
-    "cancel task",
-    "stop the task",
-    "stop task",
+    r"abort\s+(?:the\s+)?(?:[\w\.\-]+\s+)?task",
+    r"cancel\s+(?:the\s+)?(?:[\w\.\-]+\s+)?task",
+    r"stop\s+(?:the\s+)?(?:[\w\.\-]+\s+)?task",
+    r"abort\s+this\s+task",
+    r"cancel\s+this\s+task",
+    r"stop\s+this\s+task",
 ]
 
 
@@ -22,13 +24,14 @@ class AbortClarificationHandler:
     """Detect abort-related terminology and remind to clarify."""
 
     def check(self, prompt: str, session_id: str) -> str | None:
-        """Check for abort patterns."""
+        """Check for abort patterns using regex."""
         prompt_lower = prompt.lower()
 
         matched_pattern = None
         for pattern in ABORT_PATTERNS:
-            if pattern in prompt_lower:
-                matched_pattern = pattern
+            if re.search(pattern, prompt_lower):
+                match = re.search(pattern, prompt_lower)
+                matched_pattern = match.group(0) if match else pattern
                 break
 
         if not matched_pattern:

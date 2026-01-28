@@ -531,6 +531,42 @@ def test_get_available_issues_discovery():
 
 
 # =============================================================================
+# PROMPT HANDLERS TESTS
+# =============================================================================
+
+def test_abort_clarification_handler():
+    """Test abort_clarification handler patterns (M280)."""
+    runner.section("prompt_handlers/abort_clarification")
+
+    from prompt_handlers.abort_clarification import AbortClarificationHandler
+    handler = AbortClarificationHandler()
+
+    # Test exact match patterns
+    result = handler.check("abort the task", "test-session")
+    runner.test("Matches 'abort the task'", result is not None)
+
+    result = handler.check("abort task", "test-session")
+    runner.test("Matches 'abort task'", result is not None)
+
+    # Test with task name in the middle (M280 fix)
+    result = handler.check("Abort the 2.1-compress-lang-md task", "test-session")
+    runner.test("Matches 'abort the <task-name> task' (M280)", result is not None)
+
+    result = handler.check("cancel the foo-bar task", "test-session")
+    runner.test("Matches 'cancel the <task-name> task'", result is not None)
+
+    result = handler.check("stop the v1.2-feature task", "test-session")
+    runner.test("Matches 'stop the <task-name> task'", result is not None)
+
+    # Test non-matching patterns
+    result = handler.check("abort the mission", "test-session")
+    runner.test("Does NOT match 'abort the mission'", result is None)
+
+    result = handler.check("please stop now", "test-session")
+    runner.test("Does NOT match unrelated 'stop'", result is None)
+
+
+# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -551,6 +587,7 @@ def main():
         test_cleanup_handler,
         test_config_loader,
         test_get_available_issues_discovery,
+        test_abort_clarification_handler,
     ]
 
     for test_func in test_functions:
