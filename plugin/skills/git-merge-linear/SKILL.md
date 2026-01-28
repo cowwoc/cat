@@ -83,8 +83,10 @@ echo "Task branch: $TASK_BRANCH"
 echo "Base branch: $BASE_BRANCH"
 echo "Worktree: $WORKTREE_PATH"
 
-# Check for uncommitted changes
-if ! git diff --quiet || ! git diff --cached --quiet; then
+# Check for uncommitted changes (portable syntax for bash/zsh)
+UNSTAGED=$(git diff --quiet; echo $?)
+STAGED=$(git diff --cached --quiet; echo $?)
+if [[ "$UNSTAGED" -ne 0 ]] || [[ "$STAGED" -ne 0 ]]; then
   echo "ERROR: Uncommitted changes detected"
   echo "Commit or stash changes before merging"
   exit 1
