@@ -1300,6 +1300,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Subagents write detailed output to files and return only minimal status (e.g., 'Score: 0.95'). Orchestrator reads files only if details needed for iteration."
+    },
+    {
+      "id": "M292",
+      "timestamp": "2026-01-27T22:53:18-05:00",
+      "category": "protocol_violation",
+      "description": "Used invalid status 'aborted' when aborting task - valid values are only pending/in-progress/completed",
+      "root_cause": "Assumed 'aborted' was valid without consulting task-resolution.md documentation which explicitly states only three valid status values",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/concepts/task-resolution.md",
+      "pattern_keywords": [
+        "status",
+        "abort",
+        "invalid_value",
+        "task_state"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When aborting a task, restore Status to 'pending' (not 'aborted'). Only valid statuses are: pending, in-progress, completed."
     }
   ]
 }
