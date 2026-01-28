@@ -88,11 +88,18 @@ minor version's PLAN.md. Tasks may satisfy zero or more requirements.
 - [ ] Criterion 2
 
 ## Execution Steps
-1. **Step 1:** [action]
-   - Files: [paths]
-   - Action: [specific implementation - what to do, how, what to avoid]
-   - Verify: [command to prove it worked]
-2. **Step 2:** [action]
+
+**TDD Required:** First step must create failing tests for acceptance criteria.
+
+1. **Write Tests First:**
+   - Files: tests/... (test file paths)
+   - Action: Create tests that verify acceptance criteria
+   - Verify: Tests fail (functionality not implemented yet)
+2. **Implement Feature:**
+   - Files: [implementation paths]
+   - Action: [specific implementation]
+   - Verify: Tests now pass
+3. **Additional Steps:** [if needed]
    ...
 ```
 
@@ -140,8 +147,19 @@ code_that_fails();
 - [ ] Edge cases - still work
 
 ## Execution Steps
-1. **Step 1:** [action with specific code changes]
-   - Verify: [test command]
+
+**TDD Required:** First step must create failing test that reproduces the bug.
+
+1. **Write Failing Test:**
+   - Files: tests/... (test file path)
+   - Action: Create test using reproduction code above
+   - Verify: Test fails (bug confirmed)
+2. **Fix Bug:**
+   - Files: [implementation paths]
+   - Action: [specific fix]
+   - Verify: Test now passes
+3. **Add Edge Case Tests:** [if needed]
+   - Verify: All tests pass
 ```
 
 ---
@@ -170,6 +188,16 @@ code_that_fails();
 - path/to/file.ext - [specific change]
 
 ## Execution Steps
-1. **Step 1:** [action with before/after patterns]
-   - Verify: [tests pass]
+
+**TDD Required:** First step must verify existing tests pass, then refactor.
+
+1. **Verify Baseline:**
+   - Action: Run existing tests to establish baseline
+   - Verify: All tests pass before refactoring
+2. **Refactor Incrementally:**
+   - Files: [paths with before/after patterns]
+   - Action: [specific refactor]
+   - Verify: Tests still pass after each change
+3. **Add Tests for New Patterns:** [if behavior exposed]
+   - Verify: Coverage maintained or improved
 ```

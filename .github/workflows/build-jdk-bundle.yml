@@ -1,0 +1,165 @@
+name: Build JDK Bundle
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for the release (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+env:
+  JDK_VERSION: '25'
+  JACKSON_VERSION: '3.0.3'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            arch: x64
+          - os: ubuntu-24.04-arm
+            platform: linux-aarch64
+            arch: aarch64
+          - os: macos-latest
+            platform: macos-x64
+            arch: x64
+          - os: macos-latest-xlarge
+            platform: macos-aarch64
+            arch: aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JDK_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JDK_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Verify JDK version
+        run: |
+          java -version
+          jlink --version
+
+      - name: Download Jackson JARs via Maven
+        run: |
+          mkdir -p jackson-libs
+          mvn dependency:copy \
+            -Dartifact=tools.jackson.core:jackson-core:${{ env.JACKSON_VERSION }} \
+            -DoutputDirectory=jackson-libs
+          mvn dependency:copy \
+            -Dartifact=tools.jackson.core:jackson-databind:${{ env.JACKSON_VERSION }} \
+            -DoutputDirectory=jackson-libs
+          mvn dependency:copy \
+            -Dartifact=tools.jackson.core:jackson-annotations:${{ env.JACKSON_VERSION }} \
+            -DoutputDirectory=jackson-libs
+          ls -la jackson-libs/
+
+      - name: Build jlinked runtime
+        run: |
+          # Build module path from Jackson jars
+          MODULE_PATH=""
+          for jar in jackson-libs/*.jar; do
+            [[ -n "$MODULE_PATH" ]] && MODULE_PATH+=":"
+            MODULE_PATH+="$jar"
+          done
+
+          # JDK and Jackson modules
+          MODULES="java.base,java.logging,java.sql,jdk.unsupported"
+          MODULES+=",tools.jackson.core,tools.jackson.databind,tools.jackson.annotation"
+
+          echo "Building jlinked runtime..."
+          jlink \
+            --module-path "$MODULE_PATH" \
+            --add-modules "$MODULES" \
+            --output "cat-jdk-${JDK_VERSION}" \
+            --strip-debug \
+            --no-man-pages \
+            --no-header-files \
+            --compress zip-6 \
+            --vm server
+
+          # Verify the runtime works
+          ./cat-jdk-${JDK_VERSION}/bin/java -version
+
+          # Show size
+          du -sh cat-jdk-${JDK_VERSION}
+
+      - name: Package bundle
+        run: |
+          BUNDLE_NAME="cat-jdk-${JDK_VERSION}-${{ matrix.platform }}"
+          tar -czf "${BUNDLE_NAME}.tar.gz" "cat-jdk-${JDK_VERSION}"
+          ls -lh "${BUNDLE_NAME}.tar.gz"
+          sha256sum "${BUNDLE_NAME}.tar.gz" > "${BUNDLE_NAME}.tar.gz.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cat-jdk-${{ env.JDK_VERSION }}-${{ matrix.platform }}
+          path: |
+            cat-jdk-${{ env.JDK_VERSION }}-${{ matrix.platform }}.tar.gz
+            cat-jdk-${{ env.JDK_VERSION }}-${{ matrix.platform }}.tar.gz.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: CAT JDK Runtime ${{ steps.version.outputs.version }}
+          body: |
+            ## CAT JDK Runtime Bundle
+
+            Pre-built jlinked JDK ${{ env.JDK_VERSION }} runtime with Jackson ${{ env.JACKSON_VERSION }} for CAT plugin hooks.
+
+            ### Platforms
+            - `cat-jdk-${{ env.JDK_VERSION }}-linux-x64.tar.gz` - Linux x86_64
+            - `cat-jdk-${{ env.JDK_VERSION }}-linux-aarch64.tar.gz` - Linux ARM64
+            - `cat-jdk-${{ env.JDK_VERSION }}-macos-x64.tar.gz` - macOS Intel
+            - `cat-jdk-${{ env.JDK_VERSION }}-macos-aarch64.tar.gz` - macOS Apple Silicon
+
+            ### Installation
+            The CAT plugin automatically downloads the appropriate bundle on first use.
+            For manual installation, extract to `~/.config/claude/cat-runtime/`.
+
+            ### Verification
+            SHA256 checksums are provided for each bundle.
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.sha256
+          draft: false
+          prerelease: false

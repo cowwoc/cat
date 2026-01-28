@@ -1,7 +1,7 @@
 #!/bin/bash
 # Hook: warn-base-branch-edit.sh
-# Type: PreToolUse (Edit)
-# Purpose: Warn when editing source files directly (A003/M097/M220)
+# Type: PreToolUse (Write|Edit)
+# Purpose: Warn when editing source files directly (A003/M097/M220/M302)
 #
 # CAT workflow requires:
 # 1. Task work happens in isolated worktrees (M220)
@@ -16,7 +16,7 @@
 # - retrospectives/ directory
 # - mistakes.json, retrospectives.json
 # - hooks/, skills/ directories
-# - When in a task worktree (has cat-base file)
+# - When in a task worktree editing orchestration files only
 
 set -euo pipefail
 
@@ -31,8 +31,8 @@ if ! init_hook; then
     exit 0
 fi
 
-# Only check Edit tool calls
-if [[ "$TOOL_NAME" != "Edit" ]]; then
+# Only check Edit and Write tool calls
+if [[ "$TOOL_NAME" != "Edit" ]] && [[ "$TOOL_NAME" != "Write" ]]; then
     echo '{}'
     exit 0
 fi
@@ -50,10 +50,9 @@ fi
 
 # Check if we're in a task worktree (has cat-base file)
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || GIT_DIR=""
+IN_TASK_WORKTREE=false
 if [[ -n "$GIT_DIR" ]] && [[ -f "$GIT_DIR/cat-base" ]]; then
-    # In a task worktree - all edits allowed
-    echo '{}'
-    exit 0
+    IN_TASK_WORKTREE=true
 fi
 
 # Allowed paths (CAT orchestration, not task implementation)
@@ -109,15 +108,21 @@ Proceeding with edit (warning only, not blocked)."
     exit 0
 fi
 
-# Not on base branch and not in worktree - warn about using subagents
-output_hook_warning "PreToolUse" "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097)
+# Source file edit on non-base branch (could be in worktree) - warn about delegation
+WORKTREE_NOTE=""
+if [[ "$IN_TASK_WORKTREE" == "true" ]]; then
+    WORKTREE_NOTE="
+(In task worktree - proper isolation, but main agent should still delegate)"
+fi
 
-File: $FILE_PATH
+output_hook_warning "PreToolUse" "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097/M302)
+
+File: $FILE_PATH${WORKTREE_NOTE}
 
 Main agent should delegate source code edits to subagents.
-If you are the main CAT orchestrator, consider:
-1. Spawning a subagent for this edit
-2. Or confirming this is intentional (trivial fix, not during task execution)
+If you are the main CAT orchestrator:
+1. Spawn a subagent via Task tool for implementation
+2. Only proceed directly if: trivial fix OR not during task execution
 
 Proceeding with edit (warning only, not blocked)."
 

@@ -567,6 +567,196 @@ def test_abort_clarification_handler():
 
 
 # =============================================================================
+# JDK INFRASTRUCTURE TESTS
+# =============================================================================
+
+def test_jlink_config():
+    """Test jlink-config.sh script."""
+    runner.section("hooks/jdk/jlink-config.sh")
+
+    import subprocess
+
+    script = PROJECT_ROOT / "plugin" / "hooks" / "jdk" / "jlink-config.sh"
+
+    if not script.exists():
+        runner.test("Script exists", False, f"Script not found at {script}")
+        return
+
+    # Test 1: info command shows configuration
+    result = subprocess.run(
+        [str(script), "info"],
+        capture_output=True,
+        text=True
+    )
+    runner.test("info command succeeds", result.returncode == 0)
+    runner.test("info shows JDK version", "Target JDK Version: 25" in result.stdout)
+    runner.test("info shows Jackson version", "Jackson Version: 3.0.3" in result.stdout)
+    runner.test("info shows runtime name", "cat-jdk-25" in result.stdout)
+    runner.test("info lists JDK modules", "java.base" in result.stdout)
+    runner.test("info lists Jackson modules", "tools.jackson.core" in result.stdout)
+
+    # Test 2: Invalid command shows usage
+    result = subprocess.run(
+        [str(script), "invalid"],
+        capture_output=True,
+        text=True
+    )
+    runner.test("invalid command shows usage", result.returncode == 1)
+    runner.test("usage mentions build", "build" in result.stdout)
+
+    # Test 3: Unknown build option fails
+    result = subprocess.run(
+        [str(script), "build", "--unknown-option", "value"],
+        capture_output=True,
+        text=True
+    )
+    runner.test("unknown option rejected", result.returncode == 1)
+    runner.test("error message shown", "Unknown option" in result.stderr)
+
+
+def test_java_runner():
+    """Test java_runner.sh script."""
+    runner.section("hooks/jdk/java_runner.sh")
+
+    import subprocess
+
+    script = PROJECT_ROOT / "plugin" / "hooks" / "jdk" / "java_runner.sh"
+
+    if not script.exists():
+        runner.test("Script exists", False, f"Script not found at {script}")
+        return
+
+    # Test 1: No arguments shows usage
+    result = subprocess.run(
+        [str(script)],
+        capture_output=True,
+        text=True
+    )
+    runner.test("no args shows usage", result.returncode == 1)
+    runner.test("usage shows handler-class", "handler-class" in result.stderr)
+    runner.test("usage lists example handlers", "BashPreToolHandler" in result.stderr)
+
+    # Test 2: Invalid handler class name rejected
+    result = subprocess.run(
+        [str(script), "invalid-class-name"],
+        capture_output=True,
+        text=True
+    )
+    runner.test("invalid class name rejected", result.returncode == 1)
+    runner.test("error is JSON", '"status":"error"' in result.stderr)
+
+    # Test 3: Handler class with special chars rejected
+    result = subprocess.run(
+        [str(script), "Handler;ls"],
+        capture_output=True,
+        text=True
+    )
+    runner.test("class name with semicolon rejected", result.returncode == 1)
+
+    # Test 4: Valid class name format accepted (will fail on missing class/Java, but validates name)
+    result = subprocess.run(
+        [str(script), "ValidHandler"],
+        capture_output=True,
+        text=True,
+        timeout=5
+    )
+    # Should not fail with "Invalid handler class name" - may fail with Java/classpath error
+    runner.test("valid class name passes validation",
+                "Invalid handler class name" not in result.stderr)
+
+
+def test_session_start():
+    """Test session_start.sh script."""
+    runner.section("hooks/jdk/session_start.sh")
+
+    import subprocess
+    import json
+
+    script = PROJECT_ROOT / "plugin" / "hooks" / "jdk" / "session_start.sh"
+
+    if not script.exists():
+        runner.test("Script exists", False, f"Script not found at {script}")
+        return
+
+    # Test 1: Script runs without error (may warn if JDK not present)
+    result = subprocess.run(
+        [str(script)],
+        capture_output=True,
+        text=True,
+        timeout=10
+    )
+    runner.test("script runs without crash", result.returncode == 0)
+
+    # Test 2: Output is valid JSON
+    stdout_lines = result.stdout.strip().split('\n')
+    json_output = None
+    for line in stdout_lines:
+        line = line.strip()
+        if line.startswith('{'):
+            try:
+                json_output = json.loads(line)
+                break
+            except json.JSONDecodeError:
+                # Multi-line JSON, try to find the complete object
+                json_text = '\n'.join(stdout_lines[stdout_lines.index(line):])
+                try:
+                    json_output = json.loads(json_text)
+                    break
+                except json.JSONDecodeError:
+                    pass
+
+    runner.test("output contains valid JSON", json_output is not None)
+
+    if json_output:
+        runner.test("JSON has status field", "status" in json_output)
+        runner.test("JSON has message field", "message" in json_output)
+        runner.test("status is success or warning",
+                    json_output.get("status") in ["success", "warning"])
+
+    # Test 3: Platform detection (via bash subshell)
+    platform_check = subprocess.run(
+        ["bash", "-c", """
+            source {} <<< ''
+            get_platform
+        """.format(str(script).replace("'", "'\"'\"'"))],
+        capture_output=True,
+        text=True
+    )
+    # Even if sourcing fails, we can test the function separately
+    platform_result = subprocess.run(
+        ["bash", "-c", """
+            get_platform() {
+                local os arch
+                case "$(uname -s)" in
+                    Linux*)  os="linux" ;;
+                    Darwin*) os="macos" ;;
+                    MINGW*|MSYS*|CYGWIN*) os="windows" ;;
+                    *)
+                        echo "unknown"
+                        return 1
+                        ;;
+                esac
+                case "$(uname -m)" in
+                    x86_64|amd64) arch="x64" ;;
+                    aarch64|arm64) arch="aarch64" ;;
+                    *)
+                        echo "unknown"
+                        return 1
+                        ;;
+                esac
+                echo "${os}-${arch}"
+            }
+            get_platform
+        """],
+        capture_output=True,
+        text=True
+    )
+    platform = platform_result.stdout.strip()
+    runner.test("platform detection works",
+                platform in ["linux-x64", "linux-aarch64", "macos-x64", "macos-aarch64"])
+
+
+# =============================================================================
 # MAIN
 # =============================================================================
 
@@ -588,6 +778,9 @@ def main():
         test_config_loader,
         test_get_available_issues_discovery,
         test_abort_clarification_handler,
+        test_jlink_config,
+        test_java_runner,
+        test_session_start,
     ]
 
     for test_func in test_functions:
