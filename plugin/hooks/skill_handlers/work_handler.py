@@ -389,11 +389,18 @@ class WorkHandler:
 
 ## Progress Display
 
+**Header:** `🐱 > {{TASK_ID}}`
+
 **Banner:** `{{P1}} Preparing ────── {{P2}} Executing ────── {{P3}} Reviewing ────── {{P4}} Merging`
 
 **Symbols:** ○ Pending | ● Complete | ◉ Active | ✗ Failed
 
-**Header:** `🐱 > {{TASK_ID}}`
+**Display sequence (MANDATORY):**
+1. Show Header FIRST (after task is found): `🐱 > {{TASK_ID}}`
+2. Show Banner below Header: `◉ Preparing ────── ○ Executing...`
+3. Update Banner as phases complete
+
+Do NOT show progress before task is identified. Header requires TASK_ID.
 
 OUTPUT TEMPLATE WORK BOXES - LITERAL COPY-PASTE (M225):
 

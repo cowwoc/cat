@@ -1140,6 +1140,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use plugin/scripts/get-available-issues.sh for development context, not .claude/cat/scripts/"
+    },
+    {
+      "id": "M287",
+      "timestamp": "2026-01-28T12:00:00Z",
+      "category": "incomplete_output",
+      "description": "Showed progress banner without header when starting /cat:work - header requires TASK_ID which is not yet known",
+      "root_cause": "Output template showed Header and Banner formats but did not specify display sequence or timing. Agent showed banner before finding task because it did not know header requires TASK_ID.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/work_handler.py",
+      "pattern_keywords": [
+        "progress",
+        "header",
+        "banner",
+        "display-sequence",
+        "timing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Show Header (🐱 > {TASK_ID}) FIRST after task is found, then show Banner below it. Do not show any progress until task is identified."
     }
   ]
 }
