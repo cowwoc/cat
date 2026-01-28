@@ -1408,6 +1408,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Comparison subagent generates formatted report directly. Main agent only relays the final ~500 token report, never sees intermediate JSON."
+    },
+    {
+      "id": "M296",
+      "timestamp": "2026-01-28T00:15:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent manually compressed files and committed without running /compare-docs validation or reporting execution equivalence scores",
+      "root_cause": "Rationalized skipping validation as 'efficient for just 2 files' despite PLAN.md acceptance criteria requiring score = 1.0 from /compare-docs",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "manual_compression",
+        "compare-docs",
+        "validation_score",
+        "shrink-doc",
+        "main_agent",
+        "M294"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M294",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "For compression tasks: invoke /cat:shrink-doc skill which handles iteration and validation automatically. Report execution equivalence score for each file. Never manually compress files."
     }
   ]
 }
