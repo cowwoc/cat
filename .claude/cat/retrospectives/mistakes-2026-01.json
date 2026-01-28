@@ -1353,6 +1353,61 @@
         "catches_variations": true
       },
       "correct_behavior": "Either continue working on other tasks, use TaskOutput to block-wait, or tell user to prompt when ready"
+    },
+    {
+      "id": "M294",
+      "timestamp": "2026-01-28T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Manual compression bypassed shrink-doc iteration loop - accepted 0.995 score instead of required 1.0",
+      "root_cause": "Manually compressed file and invoked compare-docs directly instead of using shrink-doc skill, which has automatic iteration when score < 1.0",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "shrink-doc",
+        "compare-docs",
+        "score",
+        "threshold",
+        "iteration",
+        "manual"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always invoke /cat:shrink-doc skill which automatically iterates until score = 1.0. Never manually compress and validate."
+    },
+    {
+      "id": "M295",
+      "timestamp": "2026-01-28T12:30:00Z",
+      "category": "context_degradation",
+      "description": "Compare-docs generated report in main agent instead of subagent, polluting context with ~10K+ tokens of intermediate data",
+      "root_cause": "Skill design had Step 3 (report generation) executed by main agent after receiving JSON from comparison subagent, instead of having subagent generate final report directly",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "compare-docs",
+        "context",
+        "subagent",
+        "report",
+        "pollution"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Comparison subagent generates formatted report directly. Main agent only relays the final ~500 token report, never sees intermediate JSON."
     }
   ]
 }

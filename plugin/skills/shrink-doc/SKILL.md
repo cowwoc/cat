@@ -13,6 +13,20 @@ objective validation instead of prescriptive rules.
 
 ---
 
+## CRITICAL: Always Use This Skill (M294)
+
+**NEVER manually compress files and validate with /compare-docs directly.**
+
+Manual compression bypasses:
+1. The **iteration loop** that automatically retries when score < 1.0
+2. The **1.0 threshold enforcement** (compare-docs defaults to 0.95)
+3. The **structured feedback** that guides compression improvements
+
+If you compress manually and get score 0.995, you must manually iterate.
+If you use this skill, iteration happens automatically until score = 1.0.
+
+---
+
 ## Workflow
 
 ### Step 1: Validate Document Type

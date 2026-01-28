@@ -60,9 +60,18 @@ Task tool #2:
 - Document A extraction → `/tmp/compare-doc-a-extraction.json`
 - Document B extraction → `/tmp/compare-doc-b-extraction.json`
 
-### Step 2: Compare Claims and Relationships
+### Step 2: Compare and Generate Report (Single Subagent)
+
+**CRITICAL (M295): Entire comparison MUST run in subagent to avoid context pollution.**
+
+The comparison subagent performs BOTH comparison AND report generation. The main agent
+receives ONLY the final formatted report, not intermediate JSON data.
 
 **⚠️ ENCAPSULATION (M269)**: The comparison algorithm is in a separate internal document.
+
+**Determine threshold before spawning:**
+- If invoked from `/cat:shrink-doc` → Required threshold = **1.0 (exact)**
+- Otherwise → Default threshold = **0.95**
 
 **Subagent invocation**:
 
@@ -70,7 +79,7 @@ Task tool #2:
 Task tool:
   subagent_type: "general-purpose"
   model: "opus"
-  description: "Compare document extractions"
+  description: "Compare documents and generate report"
   prompt: |
     Read the instructions at: plugin/skills/compare-docs/COMPARISON-AGENT.md
 
@@ -78,19 +87,49 @@ Task tool:
     - Document A data: /tmp/compare-doc-a-extraction.json
     - Document B data: /tmp/compare-doc-b-extraction.json
 
-    Return execution equivalence score and detailed comparison JSON.
+    **Required threshold: {threshold}** (1.0 for shrink-doc, 0.95 otherwise)
+
+    After comparison, generate the FINAL REPORT directly (do not return JSON).
+
+    **Report format (output this exactly):**
+
+    ╔══════════════════════════════════════════════════════╗
+    ║  EXECUTION EQUIVALENCE: {SCORE}                      ║
+    ║  Required Threshold: {threshold}                     ║
+    ║  Status: {PASS if score >= threshold, else FAIL}     ║
+    ╚══════════════════════════════════════════════════════╝
+
+    ## Component Scores
+    | Component | Score |
+    |-----------|-------|
+    | Claim Preservation | {score} |
+    | Relationship Preservation | {score} |
+    | Graph Structure | {score} |
+
+    ## Warnings
+    {List CRITICAL/HIGH severity warnings first}
+
+    ## Lost Relationships
+    {If any}
+
+    ## Summary
+    - Shared Claims: {count}
+    - Unique to A: {count}
+    - Unique to B: {count}
+
+    Return ONLY this formatted report. Do NOT return raw JSON.
 ```
 
-### Step 3: Generate Human-Readable Report
+**Why single subagent for compare+report (M295):**
+- Keeps ~10K+ tokens of extraction/comparison data OUT of main agent context
+- Main agent receives only the ~500 token formatted report
+- Prevents context pollution that degrades main agent quality
 
-Format the comparison results as a report with:
-- Execution Equivalence Summary (score, interpretation)
-- Component Scores (claim, relationship, graph)
-- Warnings (CRITICAL/HIGH severity first)
-- Lost Relationships
-- Structural Changes
-- Shared Claims count
-- Unique claims per document
+### Step 3: Relay Report to User
+
+The main agent simply relays the subagent's formatted report. No additional processing needed.
+
+**If Status = FAIL for shrink-doc context:** The calling workflow MUST iterate. Do not proceed to approval.
 
 ---
 
