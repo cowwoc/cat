@@ -9,6 +9,11 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- migrate-to-silent-preprocessing (decomposed)
+  - update-skill-builder-docs
+  - migrate-progress-banners
+  - migrate-status-displays
+  - migrate-remaining-handlers
 - optimize-work-command-context
 - migrate-python-to-java
 - release-changelog-validation
@@ -40,6 +45,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 ## Tasks Decomposed
 - rename-task-to-issue → [rename-task-scripts, rename-task-in-skills, rename-task-in-concepts, rename-task-in-commands, rename-task-remaining]
 - compress-md-files → [compress-skills-md, compress-commands-md, compress-concepts-md, compress-templates-md, compress-stakeholders-md]
+- migrate-to-silent-preprocessing → [update-skill-builder-docs, migrate-progress-banners, migrate-status-displays, migrate-remaining-handlers]
 
 ## Tasks Completed
 - acceptance-criteria-options
