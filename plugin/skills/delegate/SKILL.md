@@ -689,6 +689,35 @@ The exploration subagent handles three phases internally:
 | `DUPLICATE` | Task already implemented elsewhere | Mark as duplicate, skip |
 | `BLOCKED` | Cannot proceed (missing deps, etc.) | Present blocker to user |
 
+## Waiting for Subagent Completion (M293)
+
+**CRITICAL: Claude does NOT automatically wake up when background tasks complete.**
+
+When using `run_in_background: true`:
+- Completion notifications appear as system reminders
+- These do NOT trigger automatic response
+- Conversation blocks until user sends another message
+
+**To wait for results, use `TaskOutput` with `block: true`:**
+
+```bash
+# Spawn in background → returns task_id
+# Wait: TaskOutput task_id="{id}" block=true timeout=120000
+```
+
+| Scenario | Approach |
+|----------|----------|
+| Single subagent, need results | Blocking (no `run_in_background`) |
+| Multiple subagents, parallel | Background + `TaskOutput` polling |
+| Long-running, user expects updates | Background + tell user to check back |
+| High-trust autonomous | Background + `TaskOutput` with `block: true` |
+
+**Anti-pattern (M293):**
+```
+❌ "I'll wait for subagents to complete and notify me"
+✅ "Subagents running. Use TaskOutput to check, or prompt me when ready."
+```
+
 ## Related Skills
 
 - `cat:monitor-subagents` - Check status of running subagents
