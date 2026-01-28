@@ -18,13 +18,13 @@ CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // ""')
 
 # Only check Write tool operations
 if [[ "$TOOL_NAME" != "Write" ]]; then
-    echo '{"decision": "allow"}'
+    echo '{"decision": "approve"}'
     exit 0
 fi
 
 # Only check STATE.md files in .claude/cat/issues/v*/v*.*/ (task STATE.md files)
 if [[ ! "$FILE_PATH" =~ \.claude/cat/issues/v[0-9]+/v[0-9]+\.[0-9]+/[^/]+/STATE\.md$ ]]; then
-    echo '{"decision": "allow"}'
+    echo '{"decision": "approve"}'
     exit 0
 fi
 
@@ -63,4 +63,4 @@ EOF
 fi
 
 # Content is valid
-echo '{"decision": "allow"}'
+echo '{"decision": "approve"}'
