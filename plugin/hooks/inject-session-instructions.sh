@@ -44,9 +44,10 @@ MESSAGE=$(cat << 'INSTRUCTIONS'
 
 **When user input arrives mid-operation**:
 1. **STOP** current tool result processing immediately (not "after workflow completes")
-2. **ACKNOWLEDGE** the user's message in your NEXT response text
-3. Answer their question or confirm you've noted it
-4. THEN continue with workflow
+2. **ADD** the user's request to TaskList so it doesn't get forgotten
+3. **ACKNOWLEDGE** the user's message in your NEXT response text
+4. Answer their question or confirm you've noted it
+5. THEN continue with workflow
 
 **"IMPORTANT: After completing your current task"** means after your CURRENT tool call completes,
 NOT after the entire /cat:work or skill workflow finishes. Respond in your very next message.

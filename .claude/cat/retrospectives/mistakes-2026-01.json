@@ -713,8 +713,8 @@
       "id": "M271",
       "timestamp": "2026-01-27T11:30:00Z",
       "category": "protocol_violation",
-      "description": "Applied \u22650.95 threshold for compare-docs approval when shrink-doc requires exactly 1.0; claimed 0.96 'meets threshold'",
-      "root_cause": "compare-docs skill defines \u22650.95 as default APPROVE threshold, but when invoked for shrink-doc validation, the 1.0 threshold from shrink-doc was not carried forward",
+      "description": "Applied ≥0.95 threshold for compare-docs approval when shrink-doc requires exactly 1.0; claimed 0.96 'meets threshold'",
+      "root_cause": "compare-docs skill defines ≥0.95 as default APPROVE threshold, but when invoked for shrink-doc validation, the 1.0 threshold from shrink-doc was not carried forward",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -1166,7 +1166,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Show Header (\ud83d\udc31 > {TASK_ID}) FIRST after task is found, then show Banner below it. Do not show any progress until task is identified."
+      "correct_behavior": "Show Header (🐱 > {TASK_ID}) FIRST after task is found, then show Banner below it. Do not show any progress until task is identified."
     },
     {
       "id": "M288",
@@ -1760,6 +1760,32 @@
         "catches_variations": true
       },
       "correct_behavior": "All records must have compact constructors with requireThat validation and Javadoc on classes, records, and constructors"
+    },
+    {
+      "id": "M309",
+      "timestamp": "2026-01-28T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Proposed merge without checking verify config setting or running verification",
+      "root_cause": "No workflow enforcement to check cat-config.json verify setting before presenting for user approval",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/build-verification.md",
+      "pattern_keywords": [
+        "verify",
+        "configuration",
+        "merge",
+        "approval"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check .claude/cat/cat-config.json verify setting (all/tests/none) before proposing merge. When verify=all, run mvn verify. When verify=tests, run tests only. When verify=none, skip."
     }
   ]
 }
