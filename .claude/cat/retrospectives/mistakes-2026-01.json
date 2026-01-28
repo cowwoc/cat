@@ -1247,6 +1247,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When system-reminder says IMPORTANT After completing your current task, respond in the NEXT message - do not wait for entire workflow to complete"
+    },
+    {
+      "id": "M290",
+      "timestamp": "2026-01-28T11:00:00Z",
+      "category": "output_formatting",
+      "description": "Progress banner appeared with bullet prefix in terminal - agent wrapped in markdown code blocks instead of outputting raw text",
+      "root_cause": "Template examples shown in code blocks, agent copied that pattern. Template lacked explicit instruction to output as raw text without markdown formatting.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/work_handler.py",
+      "pattern_keywords": [
+        "progress banner",
+        "markdown",
+        "code block",
+        "raw text",
+        "formatting"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output progress banner as raw text - no markdown code blocks, no bullet prefixes, no additional formatting"
     }
   ]
 }
