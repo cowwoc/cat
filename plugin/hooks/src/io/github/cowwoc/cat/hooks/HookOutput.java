@@ -44,9 +44,7 @@ public final class HookOutput
     response.put("decision", "block");
     response.put("reason", reason);
     if (!additionalContext.isEmpty())
-    {
       response.put("additionalContext", additionalContext);
-    }
     output(mapper, response);
   }
 
@@ -91,7 +89,7 @@ public final class HookOutput
     {
       System.out.println(mapper.writeValueAsString(node));
     }
-    catch (Exception e)
+    catch (Exception _)
     {
       System.out.println("{}");
     }

@@ -12,6 +12,11 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public final class InvokeHandler
 {
+  private InvokeHandler()
+  {
+    // Utility class
+  }
+
   /**
    * Entry point for direct handler invocation.
    *
@@ -26,9 +31,7 @@ public final class InvokeHandler
 
       // Read input from argument or stdin
       if (args.length > 0)
-      {
         data = mapper.readTree(args[0]);
-      }
       else if (System.console() == null || System.in.available() > 0)
       {
         HookInput input = HookInput.readFromStdin();
@@ -43,18 +46,12 @@ public final class InvokeHandler
 
       String handlerName = null;
       if (data.has("handler"))
-      {
         handlerName = data.get("handler").asString();
-      }
       JsonNode context;
       if (data.has("context"))
-      {
         context = data.get("context");
-      }
       else
-      {
         context = mapper.createObjectNode();
-      }
 
       if (handlerName == null || handlerName.isEmpty())
       {
@@ -82,9 +79,7 @@ public final class InvokeHandler
         userPrompt, sessionId, projectRoot, pluginRoot, context);
       String result = handler.handle(skillContext);
       if (result != null)
-      {
         System.out.println(result);
-      }
     }
     catch (Exception e)
     {
@@ -103,17 +98,10 @@ public final class InvokeHandler
   private static String getOptionalString(JsonNode node, String key)
   {
     if (!node.has(key))
-    {
       return "";
-    }
     String value = node.get(key).asString();
     if (value != null)
-    {
       return value;
-    }
-    else
-    {
-      return "";
-    }
+    return "";
   }
 }

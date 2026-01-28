@@ -20,12 +20,18 @@ import tools.jackson.databind.JsonNode;
  */
 public final class GetPosttoolOutput
 {
+  private GetPosttoolOutput()
+  {
+    // Utility class
+  }
+
   /**
    * Entry point for the general posttool output hook.
    *
-   * @param args command line arguments (unused)
+   * @param _args command line arguments (unused)
    */
-  public static void main(String[] args)
+  @SuppressWarnings("UnusedVariable")
+  public static void main(String[] _args)
   {
     HookInput input = HookInput.readFromStdin();
 
@@ -49,13 +55,9 @@ public final class GetPosttoolOutput
       {
         PosttoolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
         if (!result.warning().isEmpty())
-        {
           warnings.add(result.warning());
-        }
         if (!result.additionalContext().isEmpty())
-        {
           additionalContexts.add(result.additionalContext());
-        }
       }
       catch (Exception e)
       {

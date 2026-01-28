@@ -6,6 +6,7 @@ package io.github.cowwoc.cat.hooks;
  * <p>Prompt handlers analyze user prompts for patterns that require injected context
  * (reminders, warnings, etc.) regardless of whether the prompt is a skill command.</p>
  */
+@FunctionalInterface
 public interface PromptHandler
 {
   /**

@@ -19,15 +19,21 @@ import tools.jackson.databind.JsonNode;
  */
 public final class GetReadPosttoolOutput
 {
+  private GetReadPosttoolOutput()
+  {
+    // Utility class
+  }
+
   private static final Set<String> SUPPORTED_TOOLS = Set.of(
     "Read", "Glob", "Grep", "WebFetch", "WebSearch");
 
   /**
    * Entry point for the Read posttool output hook.
    *
-   * @param args command line arguments (unused)
+   * @param _args command line arguments (unused)
    */
-  public static void main(String[] args)
+  @SuppressWarnings("UnusedVariable")
+  public static void main(String[] _args)
   {
     HookInput input = HookInput.readFromStdin();
 
@@ -51,9 +57,7 @@ public final class GetReadPosttoolOutput
         ReadHandler.Result result = handler.check(toolName, toolInput, toolResult, sessionId);
         // PostToolUse cannot block, only warn
         if (!result.reason().isEmpty())
-        {
           warnings.add(result.reason());
-        }
       }
       catch (Exception e)
       {

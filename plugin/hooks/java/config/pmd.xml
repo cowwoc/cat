@@ -23,9 +23,6 @@
     <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
     <!-- Hooks communicate via stdout/stderr by design -->
     <exclude name="SystemPrintln"/>
-    <!-- Allow unused variables for TODO placeholders -->
-    <exclude name="UnusedLocalVariable"/>
-    <exclude name="UnusedAssignment"/>
   </rule>
 
   <rule ref="category/java/bestpractices.xml/ForLoopVariableCount">
@@ -62,20 +59,20 @@
       <property name="allowCtors" value="true"/>
     </properties>
   </rule>
-  <!-- Add support for underscore parameters -->
+  <!-- Add support for underscore-prefixed parameters (unused) -->
   <rule ref="category/java/codestyle.xml/LocalVariableNamingConventions">
     <properties>
-      <property name="localVarPattern" value="_|[a-z][a-zA-Z0-9]*"/>
-      <property name="finalVarPattern" value="_|[a-z][a-zA-Z0-9]*"/>
-      <property name="catchParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="localVarPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
+      <property name="finalVarPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
+      <property name="catchParameterPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
     </properties>
   </rule>
   <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions">
     <properties>
-      <property name="methodParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
-      <property name="finalMethodParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
-      <property name="lambdaParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
-      <property name="explicitLambdaParameterPattern" value="_|[a-z][a-zA-Z0-9]*"/>
+      <property name="methodParameterPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
+      <property name="finalMethodParameterPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
+      <property name="lambdaParameterPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
+      <property name="explicitLambdaParameterPattern" value="_[a-z][a-zA-Z0-9]*|[a-z][a-zA-Z0-9]*"/>
     </properties>
   </rule>
   <rule ref="category/java/design.xml">

@@ -23,13 +23,9 @@ public final class Strings
   {
     // Reference equality check handles both-null case and same-object optimization
     if (first == second)
-    {
       return true;
-    }
     if (first == null || second == null)
-    {
       return false;
-    }
     return first.equalsIgnoreCase(second);
   }
 }

@@ -21,6 +21,11 @@ import java.util.regex.Pattern;
  */
 public final class GetSkillOutput
 {
+  private GetSkillOutput()
+  {
+    // Utility class
+  }
+
   // Pattern to match /cat:skill-name or cat:skill-name
   private static final Pattern SKILL_PATTERN = Pattern.compile(
     "^\\s*/?cat:([a-z-]+)(?:\\s|$)",
@@ -29,9 +34,10 @@ public final class GetSkillOutput
   /**
    * Entry point for the skill output hook.
    *
-   * @param args command line arguments (unused)
+   * @param _args command line arguments (unused)
    */
-  public static void main(String[] args)
+  @SuppressWarnings("UnusedVariable")
+  public static void main(String[] _args)
   {
     HookInput input = HookInput.readFromStdin();
 
@@ -52,9 +58,7 @@ public final class GetSkillOutput
       {
         String result = handler.check(userPrompt, sessionId);
         if (!result.isEmpty())
-        {
           outputs.add(result);
-        }
       }
       catch (Exception e)
       {
@@ -69,9 +73,7 @@ public final class GetSkillOutput
       // Determine project root
       String projectRoot = System.getenv("CLAUDE_PROJECT_DIR");
       if (projectRoot == null || projectRoot.isEmpty())
-      {
         projectRoot = "";
-      }
       if (!projectRoot.isEmpty())
       {
         Path catDir = Path.of(projectRoot, ".claude", "cat");
@@ -91,9 +93,7 @@ public final class GetSkillOutput
 
       String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
       if (pluginRoot == null)
-      {
         pluginRoot = "";
-      }
 
       SkillHandler handler = HandlerRegistry.getSkillHandler(skillName);
       if (handler != null)
@@ -104,9 +104,7 @@ public final class GetSkillOutput
             userPrompt, sessionId, projectRoot, pluginRoot, input.getRaw());
           String result = handler.handle(context);
           if (!result.isEmpty())
-          {
             outputs.add(result);
-          }
         }
         catch (Exception e)
         {
@@ -123,9 +121,7 @@ public final class GetSkillOutput
       for (String output : outputs)
       {
         if (!combined.isEmpty())
-        {
           combined.append('\n');
-        }
         combined.append(HookOutput.wrapSystemReminder(output));
       }
       HookOutput.additionalContext("UserPromptSubmit", combined.toString());
@@ -155,14 +151,10 @@ public final class GetSkillOutput
   {
     requireThat(prompt, "prompt").isNotNull();
     if (prompt.isEmpty())
-    {
       return "";
-    }
     Matcher matcher = SKILL_PATTERN.matcher(prompt);
     if (matcher.find())
-    {
       return matcher.group(1).toLowerCase(Locale.ROOT);
-    }
     return "";
   }
 }
