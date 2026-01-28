@@ -31,7 +31,6 @@ Reference for categorizing mistakes in `/cat:learn-from-mistakes`.
 | Memory reliance | Used memory instead of get-history/re-reading | Add verification requirement (process) |
 | Environment state mismatch | Wrong directory, stale data, wrong branch | Add state verification (hook/validation) |
 | Documentation ignored | Rule existed but wasn't followed | Escalate to hook/code_fix |
-| Shell compatibility | zsh vs bash differences | Document in CLAUDE.md (documentation) |
 | Ordering/timing | Operations in wrong sequence | Add explicit ordering (skill/process) |
 | Documentation priming | Skill doc taught algorithm agent then bypassed | Encapsulate internal algorithms (skill) |
 

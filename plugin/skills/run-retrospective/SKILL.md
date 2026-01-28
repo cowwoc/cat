@@ -312,11 +312,6 @@ execution_workflow:
 
 ## Anti-Patterns
 
-### Shell compatibility
-
-See @concepts/shell-compatibility.md for bash/zsh compatibility rules. Key point: avoid `!=`
-inside `[[ ]]` conditionals - use `[ ]` test command instead.
-
 ### Check existing action effectiveness first
 
 ```yaml
