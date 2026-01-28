@@ -39,22 +39,15 @@ This is CAT's core execution command. It:
 </objective>
 
 <progress_output>
-**MANDATORY: Use output template progress format from handler.**
 
-Check for "OUTPUT TEMPLATE WORK PROGRESS FORMAT" in context.
+## Pre-rendered Progress Banners
 
-**If OUTPUT TEMPLATE found:**
-- Locate the specific box by name (e.g., "--- CHECKPOINT_TASK_COMPLETE ---")
-- Copy the ENTIRE box structure verbatim
-- Replace ONLY placeholder text (e.g., {task-name} → actual value)
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
-**If OUTPUT TEMPLATE NOT found:** FAIL immediately.
-```
-ERROR: OUTPUT TEMPLATE WORK PROGRESS FORMAT not found.
-The work_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
-```
-Do NOT attempt to manually construct progress output.
+**INSTRUCTION:** Output the appropriate phase banner EXACTLY as shown above.
+- Do NOT modify the banner content
+- Do NOT wrap in code blocks
+- Do NOT manually construct banners
 
 ### Phase Mapping
 
@@ -67,10 +60,9 @@ Do NOT attempt to manually construct progress output.
 
 ### Key Principles
 
-1. **Use templates from handler** - Render progress inline using provided formats
-2. **Full task ID required** - Format: `{major}.{minor}-{task-name}`
-3. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
-4. **Update at transitions** - Display progress banner when phase changes
+1. **Output banners verbatim** - Pre-rendered banners require NO modification
+2. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
+3. **Update at transitions** - Display progress banner when phase changes
 
 </progress_output>
 
