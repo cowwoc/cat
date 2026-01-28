@@ -1,5 +1,6 @@
 ---
-description: Analyze command execution history to optimize execution and improve output UX
+description: Use after complex tasks to analyze session efficiency and generate optimization recommendations
+user-invocable: true
 ---
 
 # Command Optimizer Skill
