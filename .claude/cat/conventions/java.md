@@ -62,6 +62,19 @@ count += 1;
 - 2 spaces (not tabs)
 - Continuation indent: 2 spaces
 
+### Naming
+Avoid abbreviated names - use full descriptive names:
+
+```java
+// Good - descriptive names
+private static final int DESCRIPTION_WIDTH = 20;
+private static final int TYPE_WIDTH = 10;
+
+// Avoid - abbreviated names
+private static final int COL_DESC = 20;
+private static final int COL_TYPE = 10;
+```
+
 ### Field Initialization
 Prefer inline initialization over constructor initialization when the value is constant:
 
@@ -167,6 +180,16 @@ String border = "\u2500\u2500";
 **Emojis and symbols:** Use literal characters directly - no constants needed.
 
 **Box-drawing characters:** Define constants in `DisplayUtils` only to centralize the choice of box style (rounded `╭╮╯╰` vs sharp `┌┐┘└`). Otherwise, use characters inline.
+
+**Comments:** Do not add comments showing the unicode escape sequence - they add no value since the character is already visible:
+
+```java
+// Good - the character speaks for itself
+private static final char FILLED_CIRCLE = '●';
+
+// Avoid - redundant comment that doesn't improve readability
+private static final char FILLED_CIRCLE = '●';  // \u25CF
+```
 
 ### String Concatenation with Newlines
 Split consecutive newlines across lines for readability:
