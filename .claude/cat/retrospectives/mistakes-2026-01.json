@@ -1892,6 +1892,112 @@
         "catches_variations": true
       },
       "correct_behavior": "When render-diff output is persisted to file, use Read tool to retrieve and display the actual rendered content"
+    },
+    {
+      "id": "M314",
+      "timestamp": "2026-01-29T00:00:00Z",
+      "category": "user_experience",
+      "description": "Did not show progress banner immediately after locking task - user waited through multiple file reads with no visual feedback",
+      "root_cause": "phase-prepare.md workflow shows echo after lock acquisition but does not instruct to display progress banner before exploration file reads begin",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-prepare.md",
+      "pattern_keywords": [
+        "progress_banner",
+        "user_feedback",
+        "lock_acquired",
+        "immediate_display"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display progress banner IMMEDIATELY after get-available-issues.sh returns with lock acquired, before any exploration file reads"
+    },
+    {
+      "id": "M315",
+      "timestamp": "2026-01-29T00:30:00Z",
+      "category": "output_formatting",
+      "description": "Displayed custom progress banner format instead of using get-progress-banner.sh output which shows all phases with dot symbols (○●◉)",
+      "root_cause": "Manually constructed a simplified banner instead of invoking the script that generates the correct multi-phase format with Preparing/Executing/Reviewing/Merging steps",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-prepare.md",
+      "pattern_keywords": [
+        "progress_banner",
+        "get-progress-banner.sh",
+        "phase_symbols",
+        "workflow_steps"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use get-progress-banner.sh with --phase argument to generate banner showing all workflow steps (○ Pending, ● Complete, ◉ Active)"
+    },
+    {
+      "id": "M316",
+      "timestamp": "2026-01-29T01:00:00Z",
+      "category": "design_violation",
+      "description": "Introduced silent fallback to current working directory when CLAUDE_PROJECT_DIR not set, instead of returning null (fail-fast)",
+      "root_cause": "Prioritized convenience (always working) over fail-fast principle; didn't apply session instructions about fail-fast to this specific code",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/GetRenderDiffOutput.java",
+      "pattern_keywords": [
+        "fail_fast",
+        "fallback",
+        "silent_workaround",
+        "environment_variable",
+        "preprocessing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Direct preprocessing methods should return null when required environment variables are not set, not fall back to alternatives"
+    },
+    {
+      "id": "M317",
+      "timestamp": "2026-01-29T14:55:00Z",
+      "category": "commit_organization",
+      "description": "Convention/infrastructure updates committed on task branch instead of base branch",
+      "root_cause": "No documented guidance distinguishing enabling infrastructure from task implementation in commit organization",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/commit-types.md",
+      "pattern_keywords": [
+        "convention",
+        "infrastructure",
+        "task_branch",
+        "base_branch",
+        "commit_organization"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Commit convention and infrastructure updates to base branch first, then rebase task branch to incorporate them"
     }
   ]
 }

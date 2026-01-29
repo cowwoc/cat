@@ -107,6 +107,27 @@ All commits for a task MUST include the same `Task ID` footer for traceability.
 Any changes to a task's STATE.md (marking complete, updating status, adding notes) are part of
 implementing that task and belong in the same commit as the code changes.
 
+**Convention/Infrastructure Updates (M317):**
+
+Convention updates discovered during task work belong on the **base branch**, not the task branch:
+
+| Change Type | Where to Commit | Why |
+|-------------|-----------------|-----|
+| Task implementation | Task branch | Direct task deliverable |
+| Convention updates (java.md, style rules) | Base branch first | Enables multiple tasks |
+| Tooling config (checkstyle, pmd rules) | Base branch first | Project-wide infrastructure |
+| Skill/workflow improvements | Base branch first | Benefits all future work |
+
+**Workflow when conventions need updating:**
+1. Stash or set aside task work
+2. Switch to base branch
+3. Commit convention/infrastructure updates
+4. Return to task branch and rebase
+5. Continue task implementation
+
+This keeps task branches focused on deliverables and ensures infrastructure changes are
+immediately available to all branches.
+
 ```
 # ✅ CORRECT - Implementation + STATE.md update (ONE commit)
 abc1234 feature: add nested annotation type support
