@@ -18,27 +18,26 @@ about intervention or result collection.
 - Before collecting results to verify completion
 - When suspecting a subagent has stalled or hit limits
 
-## Workflow
+## Progress Output (MANDATORY)
 
-### 1. Run Monitoring Script (Recommended)
+**Check for SCRIPT OUTPUT MONITOR SUBAGENTS in context.**
 
-**MANDATORY: Verify script exists before running. FAIL immediately if not found.**
+If found: Output the JSON EXACTLY as provided. Do NOT invoke scripts or Bash commands.
 
-```bash
-MONITOR_SCRIPT="${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh"
+If NOT found: **FAIL immediately.**
 
-# FAIL immediately if script missing
-if [ ! -f "$MONITOR_SCRIPT" ]; then
-  echo "ERROR: Monitoring script not found at $MONITOR_SCRIPT"
-  echo "FAIL immediately - do NOT attempt manual monitoring."
-  exit 1
-fi
-
-# Run the monitoring script
-"$MONITOR_SCRIPT"
+```
+ERROR: SCRIPT OUTPUT MONITOR SUBAGENTS not found.
+Handler monitor_subagents_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
 ```
 
-**Output format:**
+Output the error and STOP. Do NOT manually construct monitoring output or invoke scripts.
+
+## Output Format
+
+The handler provides JSON in this format:
+
 ```json
 {
   "subagents": [
@@ -54,17 +53,10 @@ fi
 - `warning` - Tokens >= 80K (40% of context), consider intervention
 - `complete` - Completion marker (`.completion.json`) found in worktree
 
-**Token Metric Source:**
+## Interpret Results
 
-The `tokens` field in monitor output comes from:
-1. `.completion.json` if subagent has completed (preferred)
-2. Session file parsing for running subagents (legacy method)
-
-For accurate token metrics on completed subagents, use `/cat:token-report` which extracts
-`totalTokens` from Task tool completions. This metric matches the CLI "Done" display and
-represents actual context processed, not cumulative API response tokens.
-
-### 2. Interpret Results
+**If total = 0:**
+Report "No active subagents found."
 
 **If status = "warning":**
 - Subagent approaching context limits (>= 80K tokens)
@@ -81,71 +73,35 @@ represents actual context processed, not cumulative API response tokens.
 - Quality may have degraded
 - Collect results and review carefully
 
-## Examples
+## Token Metric Source
 
-### Quick Status Check
+The `tokens` field in monitor output comes from:
+1. `.completion.json` if subagent has completed (preferred)
+2. Session file parsing for running subagents
 
-```bash
-# Single command returns all subagent status
-/workspace/cat/scripts/monitor-subagents.sh
-```
-
-### Check Specific Subagent
-
-```bash
-# Filter output with jq
-/workspace/cat/scripts/monitor-subagents.sh | jq '.subagents[] | select(.id == "a1b2c3d4")'
-```
-
-### Count Active Subagents
-
-```bash
-# Get summary counts only
-/workspace/cat/scripts/monitor-subagents.sh | jq '.summary'
-```
+For accurate token metrics on completed subagents, use `/cat:token-report` which extracts
+`totalTokens` from Task tool completions.
 
 ## Anti-Patterns
 
-### Use single script call for all metrics
+### Never invoke Bash for monitoring
 
 ```bash
-# ❌ Running jq manually each poll (accumulates tool call overhead)
-jq -s '[...] | add' "${SESSION_FILE}"
-jq -s '[...] | length' "${SESSION_FILE}"
+# ❌ Invoking shell script (exposes tool calls to user)
+${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh
 
-# ✅ Single script call returns all data
-/workspace/cat/scripts/monitor-subagents.sh
-```
-
-### Use reasonable polling intervals (30-60 seconds)
-
-```bash
-# ❌ Checking every second
-while true; do
-  /workspace/cat/scripts/monitor-subagents.sh
-  sleep 1
-done
-
-# ✅ Reasonable polling interval (30-60 seconds)
-while true; do
-  /workspace/cat/scripts/monitor-subagents.sh
-  sleep 60
-done
+# ✅ Use pre-computed handler output
+# Check for SCRIPT OUTPUT MONITOR SUBAGENTS in context
 ```
 
 ### Treat compaction as intervention signal
 
 ```bash
 # ❌ Ignoring compaction
-if [ "${COMPACTIONS}" -gt 0 ]; then
-  echo "Compaction detected, continuing anyway..."
-fi
+if compactions > 0: "continuing anyway..."
 
 # ✅ Treat compaction as intervention signal
-if [ "${COMPACTIONS}" -gt 0 ]; then
-  echo "Compaction detected - initiating result collection"
-  # Trigger collect-results
-fi
+if compactions > 0: initiate result collection
 ```
 
 ### Verify session activity (worktree presence alone is insufficient)
@@ -154,12 +110,8 @@ fi
 # ❌ Assuming worktree = active subagent
 ACTIVE_COUNT=$(git worktree list | grep -c "-sub-")
 
-# ✅ Verify session activity
-for worktree in $(get_subagent_worktrees); do
-  if is_session_active "${worktree}"; then
-    ACTIVE_COUNT=$((ACTIVE_COUNT + 1))
-  fi
-done
+# ✅ Check handler output for actual status
+# Handler verifies completion markers and session files
 ```
 
 ## Related Skills
