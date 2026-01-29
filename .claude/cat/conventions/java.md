@@ -112,10 +112,61 @@ else
 String command = commandNode != null ? commandNode.asString() : "";
 ```
 
+### Early Returns (No Else After Return)
+Do not use `else` after a conditional that always returns or throws:
+
+```java
+// Good - no else after return
+public String process(String input)
+{
+  if (input == null)
+    return "";
+  return input.trim();
+}
+
+// Good - no else after throw
+public void validate(String value)
+{
+  if (value == null)
+    throw new NullPointerException("value");
+  process(value);
+}
+
+// Avoid - unnecessary else
+public String process(String input)
+{
+  if (input == null)
+    return "";
+  else  // Don't use else here
+    return input.trim();
+}
+```
+
 ### JsonMapper Usage
 - Use `JsonMapper` instead of `ObjectMapper` for JSON parsing
 - Create non-static instances: `JsonMapper.builder().build()`
 - Create mapper where needed, don't use static class-level instances
+
+### Unicode Characters
+Use literal characters instead of unicode escapes:
+
+```java
+// Good - literal emoji (readable, no constant needed)
+String header = "✅ Complete";
+String status = "📁 Worktrees";
+
+// Good - named constants for box-drawing (hard to distinguish visually)
+String border = DisplayUtils.HORIZONTAL + DisplayUtils.HORIZONTAL;
+String line = DisplayUtils.VERTICAL + " content";
+
+// Avoid - unicode escapes (unreadable)
+String header = "\u2705 Complete";
+String border = "\u2500\u2500";
+```
+
+**Emojis and symbols:** Use literal characters directly - no constants needed.
+
+**Box-drawing characters:** Define constants in `DisplayUtils` only to centralize the choice of box style (rounded `╭╮╯╰` vs sharp `┌┐┘└`). Otherwise, use characters inline.
 
 ### String Concatenation with Newlines
 Split consecutive newlines across lines for readability:
@@ -292,7 +343,9 @@ public String process(String input)
 ## Validation
 
 ### Constructor Validation
-**Always validate constructor arguments** using requirements.java. This applies to both classes and records:
+**Always validate constructor arguments** using requirements.java. This applies to both classes and records.
+
+**Records MUST have compact constructors** with validation - never leave the body empty:
 
 ```java
 // Class constructor
@@ -304,48 +357,114 @@ public Config(String name, int timeout)
   this.timeout = timeout;
 }
 
-// Record compact constructor
-public record SkillContext(String userPrompt, String sessionId, String projectRoot,
-                           String pluginRoot, JsonNode hookData)
+// Good - record with compact constructor validation
+public record Worktree(String path, String branch, String state)
 {
-  public SkillContext
+  public Worktree
   {
-    requireThat(userPrompt, "userPrompt").isNotNull();
-    requireThat(sessionId, "sessionId").isNotNull();
-    requireThat(projectRoot, "projectRoot").isNotNull();
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(hookData, "hookData").isNotNull();
+    requireThat(path, "path").isNotBlank();
+    requireThat(branch, "branch").isNotBlank();
+    // state may be empty, but not null
+    requireThat(state, "state").isNotNull();
   }
+}
+
+// Avoid - empty record body (no validation)
+public record Worktree(String path, String branch, String state)
+{
 }
 ```
 
 ### Method Preconditions
-**Validate all method parameters** using requirements.java:
-
-- **Public methods:** Use `requireThat()` - throws `IllegalArgumentException`
-- **Private methods:** Use `assert that()` - throws `AssertionError` (only in debug builds)
+**Public methods:** Always validate parameters with `requireThat()` - throws `IllegalArgumentException`:
 
 ```java
-// Public method - use requireThat()
 public void process(String input)
 {
   requireThat(input, "input").isNotNull();
   // ...
 }
+```
 
-// Private method - use assert that()
+**Private methods:** Validation is optional. When needed, use `assert that()`:
+
+```java
+// Complex private method - validation helps debugging
 private void processInternal(String input, int count)
 {
   assert that(input, "input").isNotNull().elseThrow();
   assert that(count, "count").isPositive().elseThrow();
   // ...
 }
+
+// Simple private method - validation not required
+private String formatLine(String content)
+{
+  return VERTICAL + " " + content;
+}
 ```
+
+**When to validate private methods:**
+- Complex logic where invalid input causes subtle bugs
+- Parameters with non-obvious constraints (e.g., must be positive)
+- Methods called from multiple places within the class
+
+**When validation is unnecessary:**
+- Simple helpers that just format or transform data
+- Parameters already validated by the calling public method
+- Obvious failure modes (e.g., NPE on null dereference)
 
 **Rationale:**
 - Public methods are API boundaries - callers get clear exceptions
-- Private methods are internal - assertions verify invariants during development
+- Private methods are internal - assertions help debugging but aren't always needed
 - Assertions can be disabled in production for performance
+
+### Fail Fast - No Silent Fallbacks
+**Throw exceptions for invalid required parameters** - never silently return fallback values:
+
+```java
+// Good - throw exception for invalid input
+public String getOutput(Path projectRoot)
+{
+  requireThat(projectRoot, "projectRoot").isNotNull();
+  // ... process normally
+}
+
+// Avoid - silent fallback hides bugs
+public String getOutput(Path projectRoot)
+{
+  if (projectRoot == null)
+    return null;  // Don't do this - caller may not expect null
+  // ...
+}
+```
+
+**Why:** Silent fallbacks mask programming errors. If a required parameter is invalid, the caller has a bug that should be fixed, not worked around. Throwing an exception immediately surfaces the problem.
+
+**Exception:** Optional parameters may have defaults, but document this clearly in Javadoc.
+
+### String Validation - Prefer isNotBlank()
+When validating string parameters, prefer `isNotBlank()` over `isNotNull()` unless empty strings are valid:
+
+```java
+// Good - rejects null, empty "", and whitespace-only "  "
+public String getConfig(String key)
+{
+  requireThat(key, "key").isNotBlank();
+  // ...
+}
+
+// Avoid - allows empty string "" which is usually a bug
+public String getConfig(String key)
+{
+  requireThat(key, "key").isNotNull();  // "" passes but is likely wrong
+  // ...
+}
+```
+
+**When to use each:**
+- `isNotBlank()` - Most string parameters (names, keys, paths, identifiers)
+- `isNotNull()` - Only when empty strings are valid input (user content, messages)
 
 See `.claude/rules/requirements-api.md` for full API conventions.
 
@@ -412,6 +531,37 @@ public void testInvalidInput() throws Exception
   // ...
 }
 ```
+
+### Wrapping Checked Exceptions
+Use `WrappedCheckedException.wrap()` from pouch when checked exceptions must be wrapped:
+
+```java
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
+
+// Good - use WrappedCheckedException.wrap()
+try
+{
+  return new DisplayUtils();
+}
+catch (IOException e)
+{
+  throw WrappedCheckedException.wrap(e);
+}
+
+// Avoid - using specific unchecked exception types
+try
+{
+  return new DisplayUtils();
+}
+catch (IOException e)
+{
+  throw new UncheckedIOException(e);  // Don't use this
+}
+```
+
+**Why:** `WrappedCheckedException` provides a consistent API for wrapping any checked exception
+type, preserving the original exception as the cause. This avoids proliferation of different
+unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 
 ## Testing
 

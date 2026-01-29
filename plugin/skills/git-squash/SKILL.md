@@ -34,6 +34,35 @@ This reduces the initial investigation from 4+ sequential commands to a single p
 3. **Verify immediately** - no changes lost or added
 4. Cleanup backup only after verification passes
 
+## Delegate Complex Squash Operations
+
+**MANDATORY: Delegate complex squash operations to a subagent.**
+
+Complex squash operations include:
+- Squashing by topic when commits are interleaved (different topics mixed together)
+- Non-adjacent commit squashing requiring reordering
+- Any operation that may cause merge conflicts due to reordering
+- Squashing 5+ commits with multiple topics
+
+**Why delegate:**
+- Subagent isolation prevents main context pollution from conflict resolution
+- Failed squash attempts don't waste main agent context
+- Subagent can retry with different strategies if conflicts occur
+
+**Delegation pattern:**
+```
+Use the Task tool with subagent_type="general-purpose" and prompt:
+"Squash the commits from <base> to HEAD by topic.
+Current commits: [list commits]
+Desired groupings: [describe topic groupings]
+Create backup first, verify no changes lost after squash."
+```
+
+**Simple squash (do NOT delegate):**
+- Squashing all commits into one (single topic)
+- Adjacent commits that don't require reordering
+- Quick workflow with commits already at branch tip
+
 ## Read PROJECT.md Squash Policy
 
 **Check PROJECT.md for configured squash preferences before proceeding.**
