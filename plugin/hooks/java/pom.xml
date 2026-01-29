@@ -18,6 +18,7 @@
         <jackson.version>3.0.3</jackson.version>
         <testng.version>7.10.2</testng.version>
         <requirements.version>13.2</requirements.version>
+        <pouch.version>10.3</pouch.version>
         <checkstyle.version>11.0.1</checkstyle.version>
         <pmd.version>7.19.0</pmd.version>
     </properties>
@@ -44,6 +45,11 @@
             <groupId>io.github.cowwoc.requirements</groupId>
             <artifactId>requirements-java</artifactId>
             <version>${requirements.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.cowwoc.pouch</groupId>
+            <artifactId>pouch-core</artifactId>
+            <version>${pouch.version}</version>
         </dependency>
     </dependencies>
 
