@@ -7,9 +7,20 @@
 
 ## Summary
 
-Replaced "OUTPUT TEMPLATE" pattern with "PRE-RENDERED" terminology across:
-- 9 Python skill handlers (add, cleanup, config, help, init, render_diff, stakeholder, token_report, work)
-- 14 SKILL.md files to match handler output markers
-- Test expectations in run_tests.py
+Migrated skills to direct preprocessing architecture per skill-builder guidelines:
 
-Also moved SKILL.md terminology changes from 2.1-java-skill-handlers branch to this task since they are part of the same preprocessing architecture alignment.
+**Terminology:** OUTPUT TEMPLATE → SCRIPT OUTPUT
+
+**New preprocessing scripts (12 total):**
+- get-help-display.sh/py, get-config-boxes.sh, get-init-boxes.sh
+- get-work-boxes.sh/py, get-stakeholder-boxes.sh, get-token-report.sh
+- get-cleanup-boxes.sh, get-render-diff.sh, render-add-complete.sh
+
+**Updated skills (9 total):**
+- help, config, init, work, stakeholder-review, token-report, cleanup, render-diff, add
+
+**Architecture patterns:**
+- Direct preprocessing: Script runs during skill load via `!`script.sh`` syntax
+- Delegated preprocessing: LLM invokes renderer with gathered data (add skill)
+
+Also moved SKILL.md terminology changes from 2.1-java-skill-handlers branch and reverted those changes on that branch.
