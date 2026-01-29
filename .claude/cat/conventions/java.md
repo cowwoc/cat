@@ -86,7 +86,44 @@ String command = commandNode != null ? commandNode.asString() : "";
 - Create non-static instances: `JsonMapper.builder().build()`
 - Create mapper where needed, don't use static class-level instances
 
-### String Comparison
+### String Concatenation with Newlines
+Split consecutive newlines across lines for readability:
+
+```java
+// Good - split newlines for readability
+"First line\n" +
+"\n" +
+"Second line after blank"
+
+// Avoid - multiple escape sequences per line
+"First line\n\n" +
+"Second line after blank"
+```
+
+### String Comparison (Case-Sensitive)
+Use `variable.equals("literal")` for standard comparisons. Only use `Objects.equals()` when the variable may be null:
+
+```java
+// Good - variable first, known non-null
+if (toolName.equals("Skill"))
+{
+  // ...
+}
+
+// Good - use Objects.equals() only when variable may be null
+if (Objects.equals(nullableValue, "expected"))
+{
+  // ...
+}
+
+// Avoid - awkward "Yoda condition" style
+if ("Skill".equals(toolName))
+{
+  // ...
+}
+```
+
+### String Comparison (Case-Insensitive)
 Use `Strings.equalsIgnoreCase()` for null-safe case-insensitive comparison:
 
 ```java
