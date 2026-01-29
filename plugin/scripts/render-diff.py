@@ -7,10 +7,12 @@ a structured table with old/new line numbers, change symbols, and content.
 
 Usage:
     git diff main..HEAD | ./render-diff.py
+    git log -p main..HEAD | ./render-diff.py    # Shows commit messages
     ./render-diff.py diff-output.txt
 
 Features:
     - 4-column format: Old line | Symbol | New line | Content
+    - Commit message headers when using git log -p output
     - Hunk context (function name) in column header
     - Word-level diff highlighting with [] brackets
     - Whitespace visualization (· for spaces, → for tabs)
@@ -74,6 +76,14 @@ class UsedSymbols:
 
 
 @dataclass
+class Commit:
+    """Represents a git commit."""
+    hash: str
+    subject: str
+    body: str = ""
+
+
+@dataclass
 class DiffHunk:
     """Represents a single diff hunk."""
     file: str
@@ -81,6 +91,7 @@ class DiffHunk:
     new_start: int
     context: str
     lines: list = field(default_factory=list)
+    commit: Optional[Commit] = None
 
 
 @dataclass
@@ -89,6 +100,8 @@ class ParsedDiff:
     hunks: list = field(default_factory=list)
     binary_files: list = field(default_factory=list)
     renamed_files: dict = field(default_factory=dict)
+    commits: list = field(default_factory=list)  # Ordered list of commits
+    file_to_commit: dict = field(default_factory=dict)  # Maps file to commit
 
 
 def display_width(s: str) -> int:
@@ -157,9 +170,28 @@ class DiffRenderer:
         """Render the complete diff."""
         self.output = []
         first_box = True
+        current_commit = None
+
+        # Group hunks by commit for rendering
+        def get_commit_for_file(filename: str) -> Optional[Commit]:
+            return diff.file_to_commit.get(filename)
+
+        def maybe_print_commit_header(commit: Optional[Commit]) -> bool:
+            """Print commit header if it's a new commit. Returns True if printed."""
+            nonlocal current_commit, first_box
+            if commit and commit != current_commit:
+                if not first_box:
+                    self.output.append('')
+                current_commit = commit
+                self._print_commit_header(commit)
+                first_box = False
+                return True
+            return False
 
         # Render binary files first
         for file in diff.binary_files:
+            commit = get_commit_for_file(file)
+            maybe_print_commit_header(commit)
             if not first_box:
                 self.output.append('')
             first_box = False
@@ -169,6 +201,8 @@ class DiffRenderer:
         files_with_hunks = {h.file for h in diff.hunks}
         for new_path, old_path in diff.renamed_files.items():
             if new_path not in files_with_hunks:
+                commit = get_commit_for_file(new_path)
+                maybe_print_commit_header(commit)
                 if not first_box:
                     self.output.append('')
                 first_box = False
@@ -179,6 +213,7 @@ class DiffRenderer:
             if hunk.file in [bf for bf in diff.binary_files]:
                 continue
 
+            maybe_print_commit_header(hunk.commit)
             if not first_box:
                 self.output.append('')
             first_box = False
@@ -192,6 +227,28 @@ class DiffRenderer:
         self._print_legend()
 
         return '\n'.join(self.output)
+
+    def _print_commit_header(self, commit: Commit):
+        """Print commit header box."""
+        # Short hash (7 chars)
+        short_hash = commit.hash[:7] if len(commit.hash) >= 7 else commit.hash
+
+        # Format: COMMIT abc1234: subject line
+        header_text = f"COMMIT {short_hash}: {commit.subject}"
+        header_len = display_width(header_text)
+
+        # Truncate if too long
+        if header_len > self.width - 4:
+            max_subject_len = self.width - 4 - len(f"COMMIT {short_hash}: ") - 3
+            truncated_subject = commit.subject[:max_subject_len] + "..."
+            header_text = f"COMMIT {short_hash}: {truncated_subject}"
+            header_len = display_width(header_text)
+
+        padding = self.width - 4 - header_len
+
+        self.output.append(f"{BOX_TOP_LEFT}{fill_char(BOX_HORIZONTAL, self.width - 2)}{BOX_TOP_RIGHT}")
+        self.output.append(f"{BOX_VERTICAL} {header_text}{' ' * max(0, padding)} {BOX_VERTICAL}")
+        self.output.append(f"{BOX_BOTTOM_LEFT}{fill_char(BOX_HORIZONTAL, self.width - 2)}{BOX_BOTTOM_RIGHT}")
 
     def _print_hunk_top(self, filename: str):
         """Print hunk box top with file header."""
@@ -429,45 +486,110 @@ class DiffParser:
     RENAME_FROM = re.compile(r'^rename from (.+)$')
     RENAME_TO = re.compile(r'^rename to (.+)$')
     BINARY = re.compile(r'^Binary files')
+    COMMIT_HEADER = re.compile(r'^commit ([a-f0-9]{7,40})$')
 
     def parse(self, diff_text: str) -> ParsedDiff:
         """Parse diff text into structured data."""
         result = ParsedDiff()
         current_file = ''
         current_hunk: Optional[DiffHunk] = None
+        current_commit: Optional[Commit] = None
         rename_from = ''
+        in_commit_message = False
+        in_diff_content = False  # True once we've seen 'diff --git' for this commit
+        commit_message_lines: list[str] = []
 
-        for line in diff_text.split('\n'):
+        lines = diff_text.split('\n')
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+
+            # Commit header (from git log -p or git show)
+            match = self.COMMIT_HEADER.match(line)
+            if match:
+                # Finalize previous commit message if any
+                if current_commit and commit_message_lines:
+                    self._finalize_commit_message(current_commit, commit_message_lines)
+                    commit_message_lines = []
+
+                if current_hunk:
+                    result.hunks.append(current_hunk)
+                    current_hunk = None
+
+                commit_hash = match.group(1)
+                current_commit = Commit(hash=commit_hash, subject="")
+                result.commits.append(current_commit)
+                in_commit_message = False
+                in_diff_content = False  # Reset for new commit
+                i += 1
+                continue
+
+            # Skip Author/Date/Merge lines after commit header (before diff content)
+            if current_commit and not in_commit_message and not in_diff_content:
+                if (line.startswith('Author:') or line.startswith('Date:') or
+                    line.startswith('Merge:') or line.strip() == ''):
+                    # Empty line after Date: marks start of commit message
+                    if line.strip() == '' and not commit_message_lines:
+                        in_commit_message = True
+                    i += 1
+                    continue
+
+            # Collect commit message lines (indented with 4 spaces, before diff content)
+            if in_commit_message and current_commit and not in_diff_content:
+                if line.startswith('    '):
+                    commit_message_lines.append(line[4:])
+                    i += 1
+                    continue
+                elif line.strip() == '':
+                    commit_message_lines.append('')
+                    i += 1
+                    continue
+                else:
+                    # End of commit message (hit diff --git or other content)
+                    self._finalize_commit_message(current_commit, commit_message_lines)
+                    commit_message_lines = []
+                    in_commit_message = False
+                    # Don't increment i - process this line normally
+
             # New file
             match = self.FILE_HEADER.match(line)
             if match:
+                in_diff_content = True  # Now in diff content, stop looking for commit messages
                 if current_hunk:
                     result.hunks.append(current_hunk)
                     current_hunk = None
                 current_file = match.group(2)
                 rename_from = ''
+                # Associate file with current commit
+                if current_commit:
+                    result.file_to_commit[current_file] = current_commit
+                i += 1
                 continue
 
             # Rename detection
             match = self.RENAME_FROM.match(line)
             if match:
                 rename_from = match.group(1)
+                i += 1
                 continue
 
             match = self.RENAME_TO.match(line)
             if match and rename_from:
                 result.renamed_files[current_file] = rename_from
+                i += 1
                 continue
 
             # Binary file
             if self.BINARY.match(line):
                 result.binary_files.append(current_file)
+                i += 1
                 continue
 
             # Skip metadata
             if (line.startswith('index ') or line.startswith('--- ') or
                 line.startswith('+++ ') or line.startswith('new file') or
                 line.startswith('deleted file') or line.startswith('similarity')):
+                i += 1
                 continue
 
             # Hunk header
@@ -479,8 +601,10 @@ class DiffParser:
                     file=current_file,
                     old_start=int(match.group(1)),
                     new_start=int(match.group(2)),
-                    context=match.group(3).strip()
+                    context=match.group(3).strip(),
+                    commit=current_commit
                 )
+                i += 1
                 continue
 
             # Content lines
@@ -490,11 +614,38 @@ class DiffParser:
                 elif line == '\\ No newline at end of file':
                     current_hunk.lines.append(line)
 
+            i += 1
+
+        # Finalize any remaining commit message
+        if current_commit and commit_message_lines:
+            self._finalize_commit_message(current_commit, commit_message_lines)
+
         # Save final hunk
         if current_hunk:
             result.hunks.append(current_hunk)
 
         return result
+
+    def _finalize_commit_message(self, commit: Commit, lines: list[str]):
+        """Extract subject and body from commit message lines."""
+        # Remove leading/trailing empty lines
+        while lines and not lines[0].strip():
+            lines.pop(0)
+        while lines and not lines[-1].strip():
+            lines.pop()
+
+        if not lines:
+            return
+
+        # First non-empty line is subject
+        commit.subject = lines[0].strip()
+
+        # Rest is body (skip blank line after subject if present)
+        if len(lines) > 1:
+            body_lines = lines[1:]
+            while body_lines and not body_lines[0].strip():
+                body_lines.pop(0)
+            commit.body = '\n'.join(body_lines)
 
 
 def load_config(project_dir: str = '.') -> dict:
