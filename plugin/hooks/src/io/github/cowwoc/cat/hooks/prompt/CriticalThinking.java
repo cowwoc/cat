@@ -22,10 +22,12 @@ public final class CriticalThinking implements PromptHandler
 **EXAMPLES OF CRITICAL ANALYSIS:**
 
 Instead of: "That's a good approach"
-Use: "That approach addresses the immediate issue. Based on testing X, I can confirm it works. However, there's a potential edge case Y that we should consider because Z."
+Use: "That approach addresses the immediate issue. Based on testing X, I can confirm it works. \
+However, there's a potential edge case Y that we should consider because Z."
 
 Instead of: "You're absolutely right"
-Use: "The core logic is sound. My investigation shows X evidence supporting this. However, we should also consider scenario Y where this might need adjustment."
+Use: "The core logic is sound. My investigation shows X evidence supporting this. \
+However, we should also consider scenario Y where this might need adjustment."
 
 **APPLY TO CURRENT PROMPT**: Gather evidence first, then provide critical analysis based on that evidence.""";
 

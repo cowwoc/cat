@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -27,8 +28,7 @@ public final class UserIssues implements PromptHandler
     "wasn't detected", "not detected", "false positive", "false negative",
     "incorrect output", "wrong output", "wrong result", "incorrect result",
     "ignored", "you ignored", "didn't acknowledge", "didn't respond to",
-    "expected behavior"
-  );
+    "expected behavior");
 
   /**
    * Creates a new user issues handler.
@@ -42,7 +42,7 @@ public final class UserIssues implements PromptHandler
   public String check(String prompt, String sessionId)
   {
     requireThat(sessionId, "sessionId").isNotBlank();
-    String promptLower = prompt.toLowerCase();
+    String promptLower = prompt.toLowerCase(Locale.ROOT);
     String matchedPattern = null;
 
     for (String pattern : ISSUE_PATTERNS)

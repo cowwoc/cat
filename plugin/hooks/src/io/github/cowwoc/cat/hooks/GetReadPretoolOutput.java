@@ -24,8 +24,7 @@ import java.util.Set;
 public final class GetReadPretoolOutput
 {
   private static final List<ReadHandler> HANDLERS = List.of(
-      new PredictBatchOpportunity()
-  );
+      new PredictBatchOpportunity());
 
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 

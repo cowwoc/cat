@@ -22,8 +22,7 @@ public final class GetSkillOutput
   private static final List<PromptHandler> HANDLERS = List.of(
       new CriticalThinking(),
       new DestructiveOps(),
-      new UserIssues()
-  );
+      new UserIssues());
 
   private GetSkillOutput()
   {
