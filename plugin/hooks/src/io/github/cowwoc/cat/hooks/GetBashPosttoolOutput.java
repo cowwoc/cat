@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.post.DetectConcatenatedCommit;
 import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
@@ -69,6 +70,7 @@ public final class GetBashPosttoolOutput
 
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
+    requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     // Run all bash posttool handlers

@@ -2,12 +2,12 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import java.nio.file.Path;
+import io.github.cowwoc.cat.hooks.prompt.CriticalThinking;
+import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
+import io.github.cowwoc.cat.hooks.prompt.UserIssues;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * get-skill-output - Unified UserPromptSubmit hook for CAT
@@ -15,21 +15,20 @@ import java.util.regex.Pattern;
  * TRIGGER: UserPromptSubmit
  *
  * This dispatcher consolidates all UserPromptSubmit hooks into a single Java
- * entry point, handling both:
- * 1. Skill precomputation (for /cat:* commands)
- * 2. Prompt pattern checking (for all prompts)
+ * entry point for prompt pattern checking.
  */
 public final class GetSkillOutput
 {
+  private static final List<PromptHandler> HANDLERS = List.of(
+      new CriticalThinking(),
+      new DestructiveOps(),
+      new UserIssues()
+  );
+
   private GetSkillOutput()
   {
     // Utility class
   }
-
-  // Pattern to match /cat:skill-name or cat:skill-name
-  private static final Pattern SKILL_PATTERN = Pattern.compile(
-    "^\\s*/?cat:([a-z-]+)(?:\\s|$)",
-    Pattern.CASE_INSENSITIVE);
 
   /**
    * Entry point for the skill output hook.
@@ -49,10 +48,11 @@ public final class GetSkillOutput
     }
 
     String sessionId = input.getSessionId();
+    requireThat(sessionId, "sessionId").isNotBlank();
     List<String> outputs = new ArrayList<>();
 
-    // 1. Run prompt handlers (pattern checking for all prompts)
-    for (PromptHandler handler : HandlerRegistry.getPromptHandlers())
+    // Run prompt handlers (pattern checking for all prompts)
+    for (PromptHandler handler : HANDLERS)
     {
       try
       {
@@ -63,54 +63,6 @@ public final class GetSkillOutput
       catch (Exception e)
       {
         System.err.println("get-skill-output: prompt handler error: " + e.getMessage());
-      }
-    }
-
-    // 2. Run skill handler if this is a /cat:* command
-    String skillName = extractSkillName(userPrompt);
-    if (!skillName.isEmpty())
-    {
-      // Determine project root
-      String projectRoot = System.getenv("CLAUDE_PROJECT_DIR");
-      if (projectRoot == null || projectRoot.isEmpty())
-        projectRoot = "";
-      if (!projectRoot.isEmpty())
-      {
-        Path catDir = Path.of(projectRoot, ".claude", "cat");
-        if (!catDir.toFile().isDirectory())
-        {
-          projectRoot = "";
-        }
-      }
-      if (projectRoot.isEmpty())
-      {
-        Path localCatDir = Path.of(".claude/cat");
-        if (localCatDir.toFile().isDirectory())
-        {
-          projectRoot = System.getProperty("user.dir");
-        }
-      }
-
-      String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-      if (pluginRoot == null)
-        pluginRoot = "";
-
-      SkillHandler handler = HandlerRegistry.getSkillHandler(skillName);
-      if (handler != null)
-      {
-        try
-        {
-          SkillHandler.SkillContext context = new SkillHandler.SkillContext(
-            userPrompt, sessionId, projectRoot, pluginRoot, input.getRaw());
-          String result = handler.handle(context);
-          if (!result.isEmpty())
-            outputs.add(result);
-        }
-        catch (Exception e)
-        {
-          System.err.println("get-skill-output: skill handler error for " + skillName + ": " +
-            e.getMessage());
-        }
       }
     }
 
@@ -130,31 +82,5 @@ public final class GetSkillOutput
     {
       HookOutput.empty();
     }
-  }
-
-  /**
-   * Extracts the CAT skill name from a user prompt.
-   *
-   * <p>Matches patterns like:
-   * <ul>
-   *   <li>/cat:init</li>
-   *   <li>cat:status</li>
-   *   <li>/cat:work 1.0</li>
-   *   <li>/cat:add make it faster</li>
-   * </ul>
-   *
-   * @param prompt the user prompt to parse
-   * @return the skill name (e.g., "init", "status") or empty string if not a CAT command
-   * @throws NullPointerException if prompt is null
-   */
-  public static String extractSkillName(String prompt)
-  {
-    requireThat(prompt, "prompt").isNotNull();
-    if (prompt.isEmpty())
-      return "";
-    Matcher matcher = SKILL_PATTERN.matcher(prompt);
-    if (matcher.find())
-      return matcher.group(1).toLowerCase(Locale.ROOT);
-    return "";
   }
 }

@@ -1,10 +1,13 @@
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
+import tools.jackson.databind.JsonNode;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import tools.jackson.databind.JsonNode;
 
 /**
  * get-read-pretool-output - Unified PreToolUse hook for Read/Glob/Grep
@@ -20,12 +23,16 @@ import tools.jackson.databind.JsonNode;
  */
 public final class GetReadPretoolOutput
 {
+  private static final List<ReadHandler> HANDLERS = List.of(
+      new PredictBatchOpportunity()
+  );
+
+  private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
+
   private GetReadPretoolOutput()
   {
     // Utility class
   }
-
-  private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
   /**
    * Entry point for the Read pretool output hook.
@@ -46,10 +53,11 @@ public final class GetReadPretoolOutput
 
     JsonNode toolInput = input.getToolInput();
     String sessionId = input.getSessionId();
+    requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     // Run all read pretool handlers
-    for (ReadHandler handler : HandlerRegistry.getReadPretoolHandlers())
+    for (ReadHandler handler : HANDLERS)
     {
       try
       {

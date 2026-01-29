@@ -1,9 +1,12 @@
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import io.github.cowwoc.cat.hooks.tool.post.AutoLearnMistakes;
+import tools.jackson.databind.JsonNode;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import tools.jackson.databind.JsonNode;
 
 /**
  * get-posttool-output - Unified PostToolUse hook for all tools
@@ -20,6 +23,10 @@ import tools.jackson.databind.JsonNode;
  */
 public final class GetPosttoolOutput
 {
+  private static final List<PosttoolHandler> HANDLERS = List.of(
+      new AutoLearnMistakes()
+  );
+
   private GetPosttoolOutput()
   {
     // Utility class
@@ -44,12 +51,13 @@ public final class GetPosttoolOutput
 
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
+    requireThat(sessionId, "sessionId").isNotBlank();
 
     List<String> warnings = new ArrayList<>();
     List<String> additionalContexts = new ArrayList<>();
 
     // Run all general posttool handlers
-    for (PosttoolHandler handler : HandlerRegistry.getPosttoolHandlers())
+    for (PosttoolHandler handler : HANDLERS)
     {
       try
       {

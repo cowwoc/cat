@@ -74,6 +74,7 @@ public interface ReadHandler
    * @param sessionId the session ID
    * @return the check result
    * @throws NullPointerException if toolName, toolInput, or sessionId is null
+   * @throws IllegalArgumentException if sessionId is blank
    */
   Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId);
 }

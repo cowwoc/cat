@@ -78,7 +78,7 @@ public final class VerifyCommitType implements BashHandler
     String commitType = typeMatcher.group(1);
 
     // Check for docs: used on Claude-facing files
-    if ("docs".equals(commitType))
+    if (commitType.equals("docs"))
     {
       Result result = checkDocsOnClaudeFacing();
       if (result != null)
@@ -86,7 +86,7 @@ public final class VerifyCommitType implements BashHandler
     }
 
     // Check for config: used on source code
-    if ("config".equals(commitType))
+    if (commitType.equals("config"))
     {
       Result result = checkConfigOnSourceCode();
       if (result != null)
