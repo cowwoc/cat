@@ -14,6 +14,12 @@ import java.util.regex.Pattern;
  */
 public final class ValidateRebaseTarget implements BashHandler
 {
+  private static final Pattern REBASE_ORIGIN_PATTERN =
+    Pattern.compile("(^|[;&|])\\s*git\\s+rebase\\s+(-[a-z]+\\s+|--[a-z-]+\\s+)*origin/",
+      Pattern.CASE_INSENSITIVE);
+  private static final Pattern ORIGIN_BRANCH_PATTERN =
+    Pattern.compile("origin/([a-zA-Z0-9_-]+)");
+
   /**
    * Creates a new handler for validating rebase targets.
    */
@@ -21,12 +27,6 @@ public final class ValidateRebaseTarget implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern REBASE_ORIGIN_PATTERN =
-    Pattern.compile("(^|[;&|])\\s*git\\s+rebase\\s+(-[a-z]+\\s+|--[a-z-]+\\s+)*origin/",
-      Pattern.CASE_INSENSITIVE);
-  private static final Pattern ORIGIN_BRANCH_PATTERN =
-    Pattern.compile("origin/([a-zA-Z0-9_-]+)");
 
   @Override
   @SuppressWarnings("UnusedVariable")

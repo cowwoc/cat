@@ -13,6 +13,13 @@ import java.util.regex.Pattern;
  */
 public final class BlockReflogDestruction implements BashHandler
 {
+  private static final Pattern ACKNOWLEDGMENT_PATTERN =
+    Pattern.compile("# ACKNOWLEDGED:.*([Rr]eflog|gc|prune)");
+  private static final Pattern REFLOG_EXPIRE_PATTERN =
+    Pattern.compile("git\\s+reflog\\s+expire.*--expire=(now|all|0)");
+  private static final Pattern GC_PRUNE_PATTERN =
+    Pattern.compile("git\\s+gc\\s+.*--prune=(now|all)");
+
   /**
    * Creates a new handler for blocking reflog destruction.
    */
@@ -20,13 +27,6 @@ public final class BlockReflogDestruction implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern ACKNOWLEDGMENT_PATTERN =
-    Pattern.compile("# ACKNOWLEDGED:.*([Rr]eflog|gc|prune)");
-  private static final Pattern REFLOG_EXPIRE_PATTERN =
-    Pattern.compile("git\\s+reflog\\s+expire.*--expire=(now|all|0)");
-  private static final Pattern GC_PRUNE_PATTERN =
-    Pattern.compile("git\\s+gc\\s+.*--prune=(now|all)");
 
   @Override
   @SuppressWarnings("UnusedVariable")

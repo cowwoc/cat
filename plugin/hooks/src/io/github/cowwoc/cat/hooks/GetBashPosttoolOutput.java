@@ -27,16 +27,16 @@ import java.util.List;
  */
 public final class GetBashPosttoolOutput
 {
-  private GetBashPosttoolOutput()
-  {
-    // Utility class
-  }
-
   private static final List<BashHandler> HANDLERS = List.of(
     new DetectConcatenatedCommit(),
     new DetectFailures(),
     new ValidateRebaseTarget(),
     new VerifyCommitType());
+
+  private GetBashPosttoolOutput()
+  {
+    // Utility class
+  }
 
   /**
    * Entry point for the Bash posttool output hook.

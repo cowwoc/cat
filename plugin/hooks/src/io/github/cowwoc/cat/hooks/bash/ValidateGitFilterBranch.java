@@ -12,6 +12,9 @@ import java.util.regex.Pattern;
  */
 public final class ValidateGitFilterBranch implements BashHandler
 {
+  private static final Pattern DANGEROUS_FLAGS_PATTERN =
+    Pattern.compile("(^|;|&&|\\|)\\s*git\\s+(filter-branch|rebase)\\s+.*\\s+--(all|branches)(\\s|$)");
+
   /**
    * Creates a new handler for validating git filter-branch commands.
    */
@@ -19,9 +22,6 @@ public final class ValidateGitFilterBranch implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern DANGEROUS_FLAGS_PATTERN =
-    Pattern.compile("(^|;|&&|\\|)\\s*git\\s+(filter-branch|rebase)\\s+.*\\s+--(all|branches)(\\s|$)");
 
   @Override
   @SuppressWarnings("UnusedVariable")

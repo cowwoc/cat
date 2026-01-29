@@ -10,6 +10,9 @@ import java.util.regex.Pattern;
  */
 public final class RemindGitSquash implements BashHandler
 {
+  private static final Pattern INTERACTIVE_REBASE_PATTERN =
+    Pattern.compile("git\\s+rebase\\s+.*-i");
+
   /**
    * Creates a new handler for reminding about git squash skill.
    */
@@ -17,9 +20,6 @@ public final class RemindGitSquash implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern INTERACTIVE_REBASE_PATTERN =
-    Pattern.compile("git\\s+rebase\\s+.*-i");
 
   @Override
   @SuppressWarnings("UnusedVariable")
