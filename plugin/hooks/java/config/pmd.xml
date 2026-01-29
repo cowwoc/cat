@@ -103,6 +103,8 @@
     <exclude name="AvoidDeeplyNestedIfStmts"/>
     <!-- Entry point classes have only static main -->
     <exclude name="UseUtilityClass"/>
+    <!-- Allow long methods in parser/renderer logic -->
+    <exclude name="NcssCount"/>
   </rule>
   <rule ref="category/java/documentation.xml">
     <exclude name="UncommentedEmptyConstructor"/>
