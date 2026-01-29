@@ -10,6 +10,9 @@ import java.util.regex.Pattern;
  */
 public final class WarnFileExtraction implements BashHandler
 {
+  private static final Pattern EXTRACTION_PATTERN =
+    Pattern.compile("(tar\\s+.*-?x|unzip|gunzip)");
+
   /**
    * Creates a new handler for warning about file extraction.
    */
@@ -17,9 +20,6 @@ public final class WarnFileExtraction implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern EXTRACTION_PATTERN =
-    Pattern.compile("(tar\\s+.*-?x|unzip|gunzip)");
 
   @Override
   @SuppressWarnings("UnusedVariable")

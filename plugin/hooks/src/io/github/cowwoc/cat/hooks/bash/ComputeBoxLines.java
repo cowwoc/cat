@@ -19,6 +19,8 @@ import java.util.List;
  */
 public final class ComputeBoxLines implements BashHandler
 {
+  private static final String BOX_COMPUTE_MARKER = "#BOX_COMPUTE";
+
   /**
    * Creates a new handler for computing box lines.
    */
@@ -26,8 +28,6 @@ public final class ComputeBoxLines implements BashHandler
   {
     // Handler class
   }
-
-  private static final String BOX_COMPUTE_MARKER = "#BOX_COMPUTE";
 
   @Override
   @SuppressWarnings("UnusedVariable")

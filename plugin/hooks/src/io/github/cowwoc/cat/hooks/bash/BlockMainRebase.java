@@ -14,14 +14,6 @@ import java.util.regex.Pattern;
  */
 public final class BlockMainRebase implements BashHandler
 {
-  /**
-   * Creates a new handler for blocking main branch rebase.
-   */
-  public BlockMainRebase()
-  {
-    // Handler class
-  }
-
   private static final Pattern CHECKOUT_PATTERN =
     Pattern.compile("(^|[;&|])\\s*git\\s+(checkout|switch)\\s+", Pattern.CASE_INSENSITIVE);
   private static final Pattern CD_WORKSPACE_PATTERN =
@@ -32,6 +24,14 @@ public final class BlockMainRebase implements BashHandler
     Pattern.compile("(^|[;&|])\\s*git\\s+rebase", Pattern.CASE_INSENSITIVE);
   private static final Pattern CD_TARGET_PATTERN =
     Pattern.compile("^cd\\s+['\"]?([^'\";&|]+)['\"]?");
+
+  /**
+   * Creates a new handler for blocking main branch rebase.
+   */
+  public BlockMainRebase()
+  {
+    // Handler class
+  }
 
   @Override
   @SuppressWarnings("UnusedVariable")

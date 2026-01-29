@@ -34,11 +34,6 @@ import java.util.List;
  */
 public final class GetBashPretoolOutput
 {
-  private GetBashPretoolOutput()
-  {
-    // Utility class
-  }
-
   private static final List<BashHandler> HANDLERS = List.of(
     new BlockLockManipulation(),
     new BlockMainRebase(),
@@ -50,6 +45,11 @@ public final class GetBashPretoolOutput
     new ValidateGitFilterBranch(),
     new ValidateGitOperations(),
     new WarnFileExtraction());
+
+  private GetBashPretoolOutput()
+  {
+    // Utility class
+  }
 
   /**
    * Entry point for the Bash pretool output hook.

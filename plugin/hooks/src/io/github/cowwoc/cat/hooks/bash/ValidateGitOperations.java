@@ -12,6 +12,11 @@ import java.util.regex.Pattern;
  */
 public final class ValidateGitOperations implements BashHandler
 {
+  private static final Pattern FORCE_PUSH_MAIN_PATTERN =
+    Pattern.compile("git\\s+push\\s+.*--force.*\\s+(main|master)(\\s|$)", Pattern.CASE_INSENSITIVE);
+  private static final Pattern RESET_HARD_PATTERN =
+    Pattern.compile("git\\s+reset\\s+--hard");
+
   /**
    * Creates a new handler for validating dangerous git operations.
    */
@@ -19,11 +24,6 @@ public final class ValidateGitOperations implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern FORCE_PUSH_MAIN_PATTERN =
-    Pattern.compile("git\\s+push\\s+.*--force.*\\s+(main|master)(\\s|$)", Pattern.CASE_INSENSITIVE);
-  private static final Pattern RESET_HARD_PATTERN =
-    Pattern.compile("git\\s+reset\\s+--hard");
 
   @Override
   @SuppressWarnings("UnusedVariable")

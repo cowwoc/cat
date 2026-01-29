@@ -12,6 +12,10 @@ import java.util.regex.Pattern;
  */
 public final class DetectFailures implements BashHandler
 {
+  private static final Pattern FAILURE_PATTERN = Pattern.compile(
+    "BUILD FAILED|FAILED|ERROR:|error:|Exception|FATAL|fatal:",
+    Pattern.CASE_INSENSITIVE);
+
   /**
    * Creates a new handler for detecting command failures.
    */
@@ -19,10 +23,6 @@ public final class DetectFailures implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern FAILURE_PATTERN = Pattern.compile(
-    "BUILD FAILED|FAILED|ERROR:|error:|Exception|FATAL|fatal:",
-    Pattern.CASE_INSENSITIVE);
 
   @Override
   @SuppressWarnings("UnusedVariable")

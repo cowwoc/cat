@@ -24,14 +24,6 @@ import java.util.regex.Pattern;
  */
 public final class ValidateCommitType implements BashHandler
 {
-  /**
-   * Creates a new handler for validating commit types.
-   */
-  public ValidateCommitType()
-  {
-    // Handler class
-  }
-
   private static final Set<String> VALID_COMMIT_TYPES = Set.of(
     "feature",      // New feature (NOT "feat")
     "bugfix",       // Bug fix (NOT "fix")
@@ -61,6 +53,14 @@ public final class ValidateCommitType implements BashHandler
   private static final Pattern SIMPLE_MESSAGE_PATTERN = Pattern.compile("-m\\s+[\"']([^\"']+)[\"']");
   private static final Pattern M_FLAG_PATTERN = Pattern.compile("-m\\s+");
   private static final Pattern COMMIT_TYPE_PATTERN = Pattern.compile("^(\\w+)(\\(.+\\))?:");
+
+  /**
+   * Creates a new handler for validating commit types.
+   */
+  public ValidateCommitType()
+  {
+    // Handler class
+  }
 
   @Override
   @SuppressWarnings("UnusedVariable")

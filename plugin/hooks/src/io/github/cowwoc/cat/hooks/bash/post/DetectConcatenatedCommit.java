@@ -14,6 +14,10 @@ import java.util.regex.Pattern;
  */
 public final class DetectConcatenatedCommit implements BashHandler
 {
+  private static final Pattern GIT_OPERATION_PATTERN = Pattern.compile("(rebase|commit|merge)");
+  private static final Pattern CO_AUTHORED_PATTERN =
+    Pattern.compile("^Co-Authored-By:", Pattern.MULTILINE);
+
   /**
    * Creates a new handler for detecting concatenated commit messages.
    */
@@ -21,10 +25,6 @@ public final class DetectConcatenatedCommit implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern GIT_OPERATION_PATTERN = Pattern.compile("(rebase|commit|merge)");
-  private static final Pattern CO_AUTHORED_PATTERN =
-    Pattern.compile("^Co-Authored-By:", Pattern.MULTILINE);
 
   @Override
   @SuppressWarnings("UnusedVariable")

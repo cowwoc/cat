@@ -12,6 +12,11 @@ import java.util.regex.Pattern;
  */
 public final class BlockLockManipulation implements BashHandler
 {
+  private static final Pattern LOCK_FILE_PATTERN =
+    Pattern.compile("rm\\s+(-[frivI]+\\s+)*.*\\.claude/cat/locks");
+  private static final Pattern LOCKS_DIR_PATTERN =
+    Pattern.compile("rm\\s+(-[frivI]+\\s+)*.*\\.claude/cat/locks/?(\\s|$|\")");
+
   /**
    * Creates a new handler for blocking lock file manipulation.
    */
@@ -19,11 +24,6 @@ public final class BlockLockManipulation implements BashHandler
   {
     // Handler class
   }
-
-  private static final Pattern LOCK_FILE_PATTERN =
-    Pattern.compile("rm\\s+(-[frivI]+\\s+)*.*\\.claude/cat/locks");
-  private static final Pattern LOCKS_DIR_PATTERN =
-    Pattern.compile("rm\\s+(-[frivI]+\\s+)*.*\\.claude/cat/locks/?(\\s|$|\")");
 
   @Override
   @SuppressWarnings("UnusedVariable")

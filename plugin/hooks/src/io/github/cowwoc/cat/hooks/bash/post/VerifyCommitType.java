@@ -19,14 +19,6 @@ import java.util.regex.Pattern;
  */
 public final class VerifyCommitType implements BashHandler
 {
-  /**
-   * Creates a new handler for verifying commit types after commit.
-   */
-  public VerifyCommitType()
-  {
-    // Handler class
-  }
-
   private static final List<String> CLAUDE_FACING_PATTERNS = Arrays.asList(
     "CLAUDE.md",
     "plugin/",            // CAT plugin directory (A007: M255, M306)
@@ -52,6 +44,14 @@ public final class VerifyCommitType implements BashHandler
     Pattern.compile("lib/"));
 
   private static final Pattern COMMIT_TYPE_PATTERN = Pattern.compile("^([a-z]+):");
+
+  /**
+   * Creates a new handler for verifying commit types after commit.
+   */
+  public VerifyCommitType()
+  {
+    // Handler class
+  }
 
   @Override
   @SuppressWarnings("UnusedVariable")
