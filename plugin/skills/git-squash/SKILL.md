@@ -87,6 +87,30 @@ config: add handler registry with null handling and conventions
 docs: update README
 ```
 
+**Example - Implementation + Refactor:** If branch has these commits:
+```
+feature: migrate bash handlers to Java
+refactor: consolidate duplicate code in utility classes
+config: update Java conventions
+```
+
+Squash to:
+```
+config: migrate bash handlers to Java with utility consolidation
+config: update Java conventions
+```
+
+The `feature:` and `refactor:` commits affect the same code (the Java handlers), so they belong together.
+Use the most appropriate type for the combined commit (here `config:` since it's plugin code).
+
+**What is NOT the same topic (keep separate):**
+- Learning/retrospective changes (M310) - these are meta-work, not task implementation
+- Changes to shared infrastructure (build-verification.md, session instructions)
+- Convention updates that don't directly enable the implementation
+
+Even if commits share the same type prefix (e.g., `config:`), they may be different topics.
+The test: "Would reverting this commit break the task implementation?" If no, it's a different topic.
+
 **Rationale:** Squashing by topic preserves meaningful history while reducing noise from incremental fixes.
 
 ## Workflow Selection
@@ -270,6 +294,7 @@ Key rules when squashing:
 - **Task STATE.md** → same commit as implementation (M076)
 - **Different commit types** (`feature:` vs `docs:`) → keep separate
 - **Related same-type commits** → can combine
+- **Implementation + refactor of same code** → combine into one commit
 
 **Before squashing, analyze commit types:**
 
