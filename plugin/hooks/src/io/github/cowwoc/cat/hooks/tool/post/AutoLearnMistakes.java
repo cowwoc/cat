@@ -54,15 +54,19 @@ public final class AutoLearnMistakes implements PosttoolHandler
     String taskSubject = "LFM: Investigate " + detection.type() + " from " + toolName;
     String taskActiveForm = "Investigating " + detection.type() + " mistake";
 
+    String details = detection.details();
+    if (details.length() > 500)
+      details = details.substring(0, 500);
+
     return Result.context(
       "MISTAKE DETECTED: " + detection.type() + "\n\n" +
       "**MANDATORY**: Use TaskCreate to track this investigation:\n" +
       "- subject: \"" + taskSubject + "\"\n" +
-      "- description: \"Investigate " + detection.type() + " detected during " + toolName + " execution\"\n" +
+      "- description: \"Investigate " + detection.type() + " detected during " +
+          toolName + " execution\"\n" +
       "- activeForm: \"" + taskActiveForm + "\"\n\n" +
       "**Context**: Detected " + detection.type() + " during " + toolName + " execution.\n" +
-      "**Details**: " + (detection.details().length() > 500 ? detection.details().substring(0, 500) : detection.details())
-    );
+      "**Details**: " + details);
   }
 
   /**
@@ -163,14 +167,15 @@ public final class AutoLearnMistakes implements PosttoolHandler
     String filtered = filterJsonContent(output);
 
     // Pattern 1: Build failures
-    if (Pattern.compile("BUILD FAILURE|COMPILATION ERROR|compilation failure", Pattern.CASE_INSENSITIVE)
-        .matcher(filtered).find())
+    if (Pattern.compile("BUILD FAILURE|COMPILATION ERROR|compilation failure", Pattern.CASE_INSENSITIVE).
+        matcher(filtered).find())
       return new MistakeDetection("build_failure", extractContext(filtered, "error|failure", 5));
 
     // Pattern 2: Test failures
-    if (Pattern.compile(
-        "Tests run:.*Failures: [1-9]|\\d+\\s+tests?\\s+failed|\\d+\\s+failures?\\b|^(FAIL:|FAILED\\s)|^\\s*\\S+\\s+\\.\\.\\.\\s+FAILED",
-        Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).matcher(filtered).find())
+    String testFailPattern = "Tests run:.*Failures: [1-9]|\\d+\\s+tests?\\s+failed|" +
+        "\\d+\\s+failures?\\b|^(FAIL:|FAILED\\s)|^\\s*\\S+\\s+\\.\\.\\.\\s+FAILED";
+    if (Pattern.compile(testFailPattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE).
+        matcher(filtered).find())
       return new MistakeDetection("test_failure", extractContext(filtered, "fail|error", 5));
 
     // Pattern 3: Protocol violations
@@ -182,15 +187,22 @@ public final class AutoLearnMistakes implements PosttoolHandler
       return new MistakeDetection("merge_conflict", extractContext(filtered, "CONFLICT \\(|<<<<<<<", 3));
 
     // Pattern 5: Edit tool failures
-    if (Pattern.compile("String to replace not found|old_string not found", Pattern.CASE_INSENSITIVE)
-        .matcher(filtered).find())
-      return new MistakeDetection("edit_failure", extractContext(filtered, "string to replace not found|old_string not found", 2));
+    if (Pattern.compile("String to replace not found|old_string not found", Pattern.CASE_INSENSITIVE).
+        matcher(filtered).find())
+    {
+      String editPattern = "string to replace not found|old_string not found";
+      return new MistakeDetection("edit_failure", extractContext(filtered, editPattern, 2));
+    }
 
     // Pattern 6: Skill step failures
-    if (toolName.equals("Skill") && Pattern.compile(
-        "\\bERROR\\b|\\bFAILED\\b|failed to|step.*(failed|failure)|could not|unable to",
-        Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-      return new MistakeDetection("skill_step_failure", extractContext(filtered, "error|failed|could not|unable to", 5));
+    String skillFailPattern = "\\bERROR\\b|\\bFAILED\\b|failed to|step.*(failed|failure)|" +
+        "could not|unable to";
+    if (toolName.equals("Skill") && Pattern.compile(skillFailPattern, Pattern.CASE_INSENSITIVE).
+        matcher(filtered).find())
+    {
+      return new MistakeDetection("skill_step_failure",
+          extractContext(filtered, "error|failed|could not|unable to", 5));
+    }
 
     // Pattern 7: Git operation failures
     String gitFiltered = filterGitNoise(filtered);
@@ -198,15 +210,21 @@ public final class AutoLearnMistakes implements PosttoolHandler
       return new MistakeDetection("git_operation_failure", extractContext(gitFiltered, "^fatal:|^error: ", 3));
 
     // Pattern 8: Missing cleanup
-    if (Pattern.compile("why didn't you (remove|delete|clean|cleanup)", Pattern.CASE_INSENSITIVE)
-        .matcher(filtered).find())
-      return new MistakeDetection("missing_cleanup", extractContext(filtered, "why didn't you|didn't you", 2));
+    if (Pattern.compile("why didn't you (remove|delete|clean|cleanup)", Pattern.CASE_INSENSITIVE).
+        matcher(filtered).find())
+    {
+      return new MistakeDetection("missing_cleanup",
+          extractContext(filtered, "why didn't you|didn't you", 2));
+    }
 
     // Pattern 9: Self-acknowledged mistakes
-    if (Pattern.compile(
-        "(you're|you are) (right|correct|absolutely right).*(should have|should've)|I should have.*instead",
-        Pattern.CASE_INSENSITIVE).matcher(filtered).find())
-      return new MistakeDetection("self_acknowledged_mistake", extractContext(filtered, "you're right|should have", 5));
+    String selfAckPattern = "(you're|you are) (right|correct|absolutely right).*" +
+        "(should have|should've)|I should have.*instead";
+    if (Pattern.compile(selfAckPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+    {
+      return new MistakeDetection("self_acknowledged_mistake",
+          extractContext(filtered, "you're right|should have", 5));
+    }
 
     // Pattern 10: Restore from backup
     if (Pattern.compile(
@@ -221,14 +239,20 @@ public final class AutoLearnMistakes implements PosttoolHandler
         extractContext(gitFiltered, "CRITICAL|catastrophic|devastating", 5));
 
     // Pattern 12: Wrong working directory
-    if (Pattern.compile("fatal: not a git repository|not a git repository \\(or any", Pattern.CASE_INSENSITIVE)
-        .matcher(filtered).find())
-      return new MistakeDetection("wrong_working_directory", extractContext(filtered, "not a git repository", 3));
+    String gitRepoPattern = "fatal: not a git repository|not a git repository \\(or any";
+    if (Pattern.compile(gitRepoPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+    {
+      return new MistakeDetection("wrong_working_directory",
+          extractContext(filtered, "not a git repository", 3));
+    }
 
     // Pattern 12b: Missing pom.xml
-    if (Pattern.compile("Could not (find|locate) (the )?pom\\.xml|No pom\\.xml found", Pattern.CASE_INSENSITIVE)
-        .matcher(filtered).find())
-      return new MistakeDetection("wrong_working_directory", extractContext(filtered, "pom\\.xml", 3));
+    String pomPattern = "Could not (find|locate) (the )?pom\\.xml|No pom\\.xml found";
+    if (Pattern.compile(pomPattern, Pattern.CASE_INSENSITIVE).matcher(filtered).find())
+    {
+      return new MistakeDetection("wrong_working_directory",
+          extractContext(filtered, "pom\\.xml", 3));
+    }
 
     // Pattern 12c: Path errors in Bash
     if (toolName.equals("Bash") && Pattern.compile(
@@ -356,7 +380,9 @@ public final class AutoLearnMistakes implements PosttoolHandler
   private String extractAssistantContext(String assistantMsg)
   {
     StringBuilder result = new StringBuilder();
-    Pattern pattern = Pattern.compile(".*(?:critical|CRITICAL|catastrophic|devastating|My error|mistake|error|accidentally).*");
+    String contextPattern = ".*(?:critical|CRITICAL|catastrophic|devastating|" +
+        "My error|mistake|error|accidentally).*";
+    Pattern pattern = Pattern.compile(contextPattern);
     Matcher matcher = pattern.matcher(assistantMsg);
     int count = 0;
     while (matcher.find() && count < 3)

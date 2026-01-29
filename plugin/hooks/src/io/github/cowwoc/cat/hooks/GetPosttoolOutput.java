@@ -24,8 +24,7 @@ import java.util.List;
 public final class GetPosttoolOutput
 {
   private static final List<PosttoolHandler> HANDLERS = List.of(
-      new AutoLearnMistakes()
-  );
+      new AutoLearnMistakes());
 
   private GetPosttoolOutput()
   {

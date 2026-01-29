@@ -23,8 +23,7 @@ import java.util.Set;
 public final class GetReadPosttoolOutput
 {
   private static final List<ReadHandler> HANDLERS = List.of(
-      new DetectSequentialTools()
-  );
+      new DetectSequentialTools());
 
   private static final Set<String> SUPPORTED_TOOLS = Set.of(
       "Read", "Glob", "Grep", "WebFetch", "WebSearch");
