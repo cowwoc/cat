@@ -104,7 +104,7 @@ class CleanupHandler:
         # Summary counts
         counts = f"Found: {len(worktrees)} worktrees, {len(locks)} locks, {len(branches)} branches, {len(stale_remotes)} stale remotes"
 
-        return f"""OUTPUT TEMPLATE SURVEY DISPLAY (copy exactly):
+        return f"""SCRIPT OUTPUT SURVEY DISPLAY (copy exactly):
 
 {final_box}
 
@@ -168,7 +168,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         # Count summary
         total = len(locks_to_remove) + len(worktrees_to_remove) + len(branches_to_remove)
 
-        return f"""OUTPUT TEMPLATE PLAN DISPLAY (copy exactly):
+        return f"""SCRIPT OUTPUT PLAN DISPLAY (copy exactly):
 
 {final_box}
 
@@ -229,7 +229,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         header = "✅ Cleanup Complete"
         final_box = build_header_box(header, content_items, min_width=50, prefix="─ ")
 
-        return f"""OUTPUT TEMPLATE VERIFY DISPLAY (copy exactly):
+        return f"""SCRIPT OUTPUT VERIFY DISPLAY (copy exactly):
 
 {final_box}
 

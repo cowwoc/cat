@@ -559,7 +559,13 @@ EOF
 
 **Present completion:**
 
-Check conversation context for "OUTPUT TEMPLATE ADD DISPLAY" from the handler and output it exactly.
+Invoke the renderer to generate the completion display:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type task --name "{task-name}" --version "{version}" --task-type "{type}" --deps "{dependencies}"
+```
+
+Output the rendered box exactly as shown.
 If not found, use this fallback format:
 
 ```
@@ -1183,7 +1189,13 @@ EOF
 
 **Present completion:**
 
-Check conversation context for "OUTPUT TEMPLATE ADD DISPLAY" from the handler and output it exactly.
+Invoke the renderer to generate the completion display:
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type task --name "{task-name}" --version "{version}" --task-type "{type}" --deps "{dependencies}"
+```
+
+Output the rendered box exactly as shown.
 If not found, use this fallback format:
 
 ```

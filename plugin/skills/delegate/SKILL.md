@@ -235,7 +235,7 @@ context limits, and skill delegation rules. Load it before constructing any suba
 
 ### Progress Output (MANDATORY)
 
-**Check for OUTPUT TEMPLATE DELEGATE PROGRESS in context.**
+**Check for SCRIPT OUTPUT DELEGATE PROGRESS in context.**
 
 If found: Use the appropriate template (PARALLEL or SEQUENTIAL) and replace placeholders.
 
@@ -244,7 +244,7 @@ If NOT found: **FAIL immediately.**
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "delegate progress" "/cat:delegate"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: OUTPUT TEMPLATE DELEGATE PROGRESS not found."
+  echo "ERROR: SCRIPT OUTPUT DELEGATE PROGRESS not found."
   echo "Handler delegate_handler.py should have provided this via additionalContext."
   echo "Check that hooks are properly loaded."
 fi

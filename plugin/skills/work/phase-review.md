@@ -214,7 +214,7 @@ Present work summary with checkpoint display.
 
 ### Checkpoint Display (BLOCKING - M311)
 
-**STOP: Find "CHECKPOINT_TASK_COMPLETE" in OUTPUT TEMPLATE WORK BOXES context.**
+**STOP: Find "CHECKPOINT_TASK_COMPLETE" in Pre-rendered Work Boxes context.**
 
 The hook handler pre-computes this box with actual values. Display it VERBATIM:
 
@@ -317,7 +317,7 @@ Invoke `/cat:merge-subagent`.
 
 **MANDATORY: Loop back to approval gate with updated changes.**
 
-Use the **CHECKPOINT_FEEDBACK_APPLIED** box from OUTPUT TEMPLATE WORK BOXES.
+Use the **CHECKPOINT_FEEDBACK_APPLIED** box from Pre-rendered Work Boxes.
 
 Then re-present approval options via AskUserQuestion.
 

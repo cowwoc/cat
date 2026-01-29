@@ -12,14 +12,21 @@ Display the CAT command reference.
 
 ---
 
+## Pre-rendered Help Content
+
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
+
+---
+
 ## Procedure
 
-A UserPromptSubmit hook has pre-computed the formatted help content and provided it
-in the context above. Output that content EXACTLY as provided.
+The help content above was pre-rendered via silent preprocessing.
 
-Do NOT:
-- Recalculate or reformat any content
-- Add project-specific analysis
-- Add git status or file context
-- Add next-step suggestions
-- Add any commentary beyond the reference
+**Output it exactly as shown** - do NOT modify, recalculate, or add commentary.
+
+---
+
+## Verification
+
+- [ ] Help content displayed verbatim
+- [ ] No additional commentary or analysis added

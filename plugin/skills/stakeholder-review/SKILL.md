@@ -18,23 +18,9 @@ perspectives (architecture, security, design, testing, performance) before user 
 - Before the user approval gate
 - When significant code changes need multi-perspective validation
 
-## Step 0: Check for Pre-Computed Display (MANDATORY)
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-stakeholder-boxes.sh`
 
-**CRITICAL**: Check context for `OUTPUT TEMPLATE STAKEHOLDER BOXES`.
-
-If found: Use the box templates for all display output (STAKEHOLDER_SELECTION, STAKEHOLDER_REVIEW, etc.)
-
-If NOT found: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "stakeholder boxes" "stakeholder-review"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Output template stakeholder boxes not found."
-  echo "Handler should have provided display templates."
-fi
-```
-
-Output the error and STOP. Do NOT attempt manual box construction.
+Use the box templates above for all display output (STAKEHOLDER_SELECTION, STAKEHOLDER_REVIEW, etc.)
 
 ## Stakeholders
 
@@ -300,7 +286,7 @@ fi
 
 ### Output Format
 
-After context analysis, use the **STAKEHOLDER_SELECTION** box from OUTPUT TEMPLATE STAKEHOLDER BOXES.
+After context analysis, use the **STAKEHOLDER_SELECTION** box from SCRIPT OUTPUT STAKEHOLDER BOXES.
 Replace placeholders with actual selection data.
 
 If file-based overrides occurred, add an "Overrides (file-based):" section inside the box.
@@ -464,7 +450,7 @@ for review in reviews:
 
 Output the review results:
 
-**Summary box:** Use the **STAKEHOLDER_REVIEW** box from OUTPUT TEMPLATE STAKEHOLDER BOXES.
+**Summary box:** Use the **STAKEHOLDER_REVIEW** box from SCRIPT OUTPUT STAKEHOLDER BOXES.
 Replace placeholders with actual reviewer results.
 
 **Concern boxes (if any):** Use the **CRITICAL_CONCERN** or **HIGH_CONCERN** boxes.

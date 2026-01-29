@@ -27,7 +27,7 @@ process repeats until user reaches desired specificity.
 
 <functions>
 
-This skill uses output template utilities from research_handler.py:
+This skill uses pre-rendering utilities from research_handler.py:
 
 | Function | Purpose |
 |----------|---------|
@@ -329,7 +329,7 @@ Use handler functions for all display elements:
 - `build_scorecard(ratings)` - generates the scorecard box for an option
 - `build_comparison_table(options)` - generates the side-by-side comparison
 
-Rating circles are included in the OUTPUT TEMPLATE content only. Do NOT hand-type rating circles.
+Rating circles are included in the SCRIPT OUTPUT content only. Do NOT hand-type rating circles.
 If you need to display ratings, use `build_scorecard(option["ratings"])` from the handler.
 
 **SCORECARD STRUCTURE:** 11 dimensions in 2 sections:

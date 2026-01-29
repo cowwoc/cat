@@ -178,7 +178,7 @@ rca_depth_check:
   action_level_why:
     question: "Why did the agent take THIS action instead of the correct one?"
     example_shallow: "Agent manually constructed instead of using template"
-    example_deep: "OUTPUT TEMPLATE taught construction algorithm, priming manual approach"
+    example_deep: "SCRIPT OUTPUT CONTENT taught construction algorithm, priming manual approach"
     your_answer: "_______________"
 
   # Question 2: Can you trace to a SYSTEM/DOCUMENT cause?
@@ -453,7 +453,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 Beyond checking if prevention exists, check if documentation contains content that:
 - Teaches HOW to do something manually before saying "don't do it manually"
 - Provides implementation details the agent shouldn't use directly
-- Has reference information that only applies when output template exists
+- Has reference information that only applies when pre-rendered content exists
 - Contains examples or functions that prime the agent for incorrect behavior
 
 ```yaml
@@ -462,31 +462,31 @@ misleading_documentation_check:
     - "Does the doc teach a skill/approach BEFORE saying not to use it?"
     - "Are there 'reference' sections with info the agent might try to use?"
     - "Does section ordering prime the agent for wrong approach?"
-    - "Is there info that should ONLY appear with output template?"
+    - "Is there info that should ONLY appear with pre-rendered content?"
 
   patterns_to_find:
     - Functions/Prerequisites sections before Procedure
     - "Reference" sections with usable implementation details
     - Examples of manual construction in skills that use pre-computation
-    - Emoji/formatting references outside output template
+    - Emoji/formatting references outside pre-rendered content
 
   if_misleading_content_found:
     action: "Remove or relocate misleading content as part of prevention"
     principle: |
-      If information is only needed when output template exists,
-      it should BE IN the output template, not the skill doc.
+      If information is only needed when pre-rendered content exists,
+      it should BE IN the pre-rendered content, not the skill doc.
       This prevents agents from attempting manual construction when
-      output template is missing.
+      pre-rendered content is missing.
 ```
 
 **The "Conditional Information" Principle:**
 
 | Information Type | Where It Belongs |
 |------------------|------------------|
-| How to copy-paste output template | Skill doc (always needed) |
+| How to copy-paste pre-rendered content | Skill doc (always needed) |
 | Emoji meanings, formatting rules | Output template output (only needed when it exists) |
 | Implementation functions | Handler code only (never in skill doc) |
-| What to do if output template missing | Skill doc (FAIL instruction) |
+| What to do if pre-rendered content missing | Skill doc (FAIL instruction) |
 
 **Example - M256 Pattern:**
 
@@ -497,11 +497,11 @@ misleading_documentation_check:
 if status == "completed": return "☑️"
 ...
 ## Procedure
-Step 1: Use output template...
+Step 1: Use pre-rendered content...
 
-# RIGHT: Move emoji info to output template
+# RIGHT: Move emoji info to pre-rendered content
 ## Procedure
-Step 1: Use output template...
+Step 1: Use pre-rendered content...
 # (Emoji reference appears IN the template content, not skill doc)
 ```
 

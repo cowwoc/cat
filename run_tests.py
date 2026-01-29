@@ -129,7 +129,9 @@ EOF
     result = handler.check(cmd, {})
     runner.test("Interactive commit allowed", result is None)
 
-    # Test all valid types
+    # Test all valid types (mock staged files to avoid A007 interference)
+    original_get_staged = handler._get_staged_files
+    handler._get_staged_files = lambda: ['README.md']  # Non-Claude-facing file
     for t in ["feature", "bugfix", "docs", "style", "refactor",
               "performance", "test", "config", "planning", "revert"]:
         cmd = f'''git commit -m "$(cat <<'EOF'
@@ -138,6 +140,7 @@ EOF
 )"'''
         result = handler.check(cmd, {})
         runner.test(f"Valid type '{t}' allowed", result is None)
+    handler._get_staged_files = original_get_staged
 
     # Test all invalid types
     for t in ["feat", "fix", "chore", "build", "ci", "perf"]:
@@ -246,7 +249,7 @@ def test_add_handler():
     }
     result = handler.handle(task_context)
     runner.test("Task returns string", isinstance(result, str))
-    runner.test("Task contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE ADD DISPLAY" in result)
+    runner.test("Task contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT ADD DISPLAY" in result)
     runner.test("Task contains task name", "parse-tokens" in result)
     runner.test("Task contains version", "Version: 2.0" in result)
     runner.test("Task contains checkmark", "✅" in result)
@@ -263,7 +266,7 @@ def test_add_handler():
     }
     result = handler.handle(version_context)
     runner.test("Version returns string", isinstance(result, str))
-    runner.test("Version contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE ADD DISPLAY" in result)
+    runner.test("Version contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT ADD DISPLAY" in result)
     runner.test("Version contains version name", "v2.1" in result)
 
 
@@ -358,7 +361,7 @@ def test_help_handler():
     # Test returns string
     result = handler.handle({})
     runner.test("Returns string", isinstance(result, str))
-    runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
+    runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
     runner.test("Contains commands", "/cat:" in result)
 
 
@@ -378,7 +381,7 @@ def test_work_handler():
     result = handler.handle(context)
     runner.test("Returns string with task", isinstance(result, str))
     if result:
-        runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
+        runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
         runner.test("Contains status boxes", "TASK_COMPLETE" in result or "SCOPE_COMPLETE" in result)
 
 
@@ -406,7 +409,7 @@ def test_cleanup_handler():
     result = handler.handle(context)
     runner.test("Returns string for survey phase", isinstance(result, str))
     if result:
-        runner.test("Contains OUTPUT TEMPLATE marker", "OUTPUT TEMPLATE" in result)
+        runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
 
 
 def test_config_loader():

@@ -60,7 +60,7 @@ class AddHandler:
 
         next_cmd = f"/cat:work {version}-{item_name}"
 
-        return f"""OUTPUT TEMPLATE ADD DISPLAY (copy exactly):
+        return f"""SCRIPT OUTPUT ADD DISPLAY::
 
 {final_box}
 
@@ -90,7 +90,7 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         header = "\u2705 Version Created"
         final_box = build_header_box(header, content_items, min_width=40, prefix="─ ")
 
-        return f"""OUTPUT TEMPLATE ADD DISPLAY (copy exactly):
+        return f"""SCRIPT OUTPUT ADD DISPLAY::
 
 {final_box}
 

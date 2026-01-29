@@ -128,7 +128,7 @@ class ConfigHandler:
         if not output:
             return None
 
-        return f"""OUTPUT TEMPLATE CONFIG BOXES - LITERAL COPY-PASTE REQUIRED:
+        return f"""SCRIPT OUTPUT CONFIG BOXES:
 
 **CRITICAL**: Copy-paste the EXACT boxes below. Do NOT reconstruct or retype them.
 
