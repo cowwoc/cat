@@ -56,6 +56,34 @@ subagent output while it runs. Users cannot:
 comprehensive enough that execution is purely mechanical - following explicit instructions without
 judgment calls.
 
+## Model Selection for Subagents
+
+**MANDATORY: Always specify a model explicitly. Never use the default.**
+
+Choose the model based on task complexity:
+
+| Task Type | Model | Reasoning |
+|-----------|-------|-----------|
+| Skill invocation (skill does the work) | `haiku` | Skill handles complexity; subagent just invokes |
+| Simple file operations | `haiku` | Explicit instructions, no reasoning needed |
+| Run commands, check output | `haiku` | Purely mechanical execution |
+| Code refactoring | `sonnet` | Requires understanding patterns and context |
+| Multi-file changes | `sonnet` | Needs to maintain consistency across files |
+| Exploration/research | `sonnet` | Requires judgment about what's relevant |
+| Complex logic changes | `sonnet` | Must reason about correctness |
+
+**Decision rule:** If the execution plan can be followed with zero reasoning (copy-paste level
+explicit), use `haiku`. If the subagent needs to understand WHY to do something correctly,
+use `sonnet`.
+
+**Anti-pattern:**
+```
+❌ Task tool: subagent_type: "general-purpose" (missing model - uses expensive default)
+❌ Task tool: model: "haiku" for code refactoring (will likely fail)
+✅ Task tool: model: "haiku" for "/cat:shrink-doc file.md" (skill does the work)
+✅ Task tool: model: "sonnet" for "refactor these 4 handlers" (needs reasoning)
+```
+
 ## Hook Inheritance (A008)
 
 **Subagents inherit project hooks automatically** when running in the same project directory.
@@ -170,6 +198,87 @@ restart - the filesystem may have changed while the session was inactive.
 4. **Identify edge cases** - Subagent executes happy path unless told otherwise
 5. **Write explicit examples** - Code snippets, not prose descriptions
 6. **Specify verification** - Exact test commands and expected output
+7. **Produce comprehensive execution plan** - Numbered steps the subagent follows mechanically
+
+## Comprehensive Execution Plan Format
+
+**MANDATORY: Every subagent prompt must include a numbered execution plan.**
+
+The plan must be detailed enough that the subagent can follow it mechanically without making
+decisions. Each step should be atomic and verifiable.
+
+**Execution Plan Template:**
+```
+## Execution Plan
+
+Follow these steps IN ORDER. Do not skip steps. Do not make decisions not covered here.
+
+### Step 1: [Action verb] [specific target]
+- Input: [exact file path or data source]
+- Action: [precise operation to perform]
+- Output: [expected result or artifact]
+- Verification: [how to confirm step succeeded]
+
+### Step 2: [Action verb] [specific target]
+...
+
+### Step N: Commit and Report
+- Stage files: [exact list]
+- Commit message: "[exact message text]"
+- Report: [specific metrics to include in completion]
+
+## Fail-Fast Conditions
+If ANY of these occur, STOP and report BLOCKED:
+- [Condition 1]
+- [Condition 2]
+```
+
+**Example - Good Execution Plan:**
+```
+## Execution Plan
+
+### Step 1: Read the source file
+- Input: plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/GetWorkOutput.java
+- Action: Read entire file content
+- Output: File content in memory
+- Verification: File exists and is readable
+
+### Step 2: Add the Approach record
+- Input: File content from Step 1
+- Action: Add after line 15 (after class declaration):
+  ```java
+  public record Approach(String name, String description, String risk, int scope, int configAlignment)
+  {
+    public Approach
+    {
+      requireThat(name, "name").isNotBlank();
+      requireThat(description, "description").isNotBlank();
+      requireThat(risk, "risk").isNotBlank();
+      requireThat(scope, "scope").isPositive();
+      requireThat(configAlignment, "configAlignment").isBetween(0, 100);
+    }
+  }
+  ```
+- Output: Modified file with record added
+- Verification: Record appears after class declaration
+
+### Step 3: Verify compilation
+- Action: Run `mvn compile -f plugin/hooks/java/pom.xml`
+- Output: BUILD SUCCESS
+- Verification: Exit code 0
+
+### Step 4: Commit changes
+- Stage: plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/GetWorkOutput.java
+- Commit message: "feature: add Approach record to GetWorkOutput"
+- Report: Files changed, lines added
+```
+
+**Anti-pattern - Vague Plan:**
+```
+❌ "Update the handler to use parameters instead of placeholders"
+❌ "Refactor following the pattern in GetAddOutput"
+❌ "Make appropriate changes to support the new design"
+```
 
 ## Prompt Requirements: Zero Decision Delegation
 
@@ -342,12 +451,14 @@ done
 
 ### 5. Launch Subagents
 
-**For skill delegation:**
+**MANDATORY: Always specify model explicitly based on task type.**
+
+**For skill delegation (haiku - skill does the reasoning):**
 ```
 Task tool invocation:
   description: "Execute {skill} for {item}"
   subagent_type: "general-purpose"
-  model: "haiku"
+  model: "haiku"  # Skill handles complexity
   prompt: |
     Execute /cat:{skill} {item}
 
@@ -355,21 +466,46 @@ Task tool invocation:
 
     CRITICAL REQUIREMENTS: [hook inheritance block]
 
+    ## Execution Plan
+    [Numbered steps - see Comprehensive Execution Plan Format above]
+
     POSTCONDITION REPORTING: Report validation score and pass/fail.
 
     FAIL-FAST: If skill fails validation, report BLOCKED.
 ```
 
-**For CAT task delegation:**
+**For CAT task delegation - simple tasks (haiku):**
 ```
 Task tool invocation:
   description: "Execute task {task-id}"
   subagent_type: "general-purpose"
-  model: "haiku"
+  model: "haiku"  # Simple/mechanical task
   prompt: |
-    Execute PLAN.md at .claude/cat/issues/v{major}/v{major}.{minor}/{task}/PLAN.md
+    Execute the following plan mechanically. Do not deviate.
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
+
+    ## Execution Plan
+    [Numbered steps - 100% explicit, copy-paste level detail]
+
+    CRITICAL REQUIREMENTS: [hook inheritance block]
+```
+
+**For CAT task delegation - code changes (sonnet):**
+```
+Task tool invocation:
+  description: "Execute task {task-id}"
+  subagent_type: "general-purpose"
+  model: "sonnet"  # Code refactoring/multi-file changes
+  prompt: |
+    Execute the following plan. Use judgment to maintain code quality.
+
+    WORKING DIRECTORY: ${WORKTREE_PATH}
+
+    ## Execution Plan
+    [Numbered steps with context about WHY each change is needed]
+
+    CRITICAL REQUIREMENTS: [hook inheritance block]
 
     [Full prompt including all checklist items]
 ```
