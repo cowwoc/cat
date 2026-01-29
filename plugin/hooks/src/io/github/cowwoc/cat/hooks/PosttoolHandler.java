@@ -84,6 +84,7 @@ public interface PosttoolHandler
    * @param hookData the full hook data JSON
    * @return the check result
    * @throws NullPointerException if any parameter is null
+   * @throws IllegalArgumentException if sessionId is blank
    */
   Result check(String toolName, JsonNode toolResult, String sessionId, JsonNode hookData);
 }

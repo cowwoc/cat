@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
@@ -82,6 +83,7 @@ public final class GetBashPretoolOutput
     }
 
     String sessionId = input.getSessionId();
+    requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     // Run all bash pretool handlers

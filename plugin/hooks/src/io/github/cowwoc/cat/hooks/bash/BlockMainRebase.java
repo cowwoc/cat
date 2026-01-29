@@ -53,7 +53,7 @@ public final class BlockMainRebase implements BashHandler
 
     // Check if rebasing on main
     String currentBranch = getCurrentBranch(command);
-    if ("main".equals(currentBranch))
+    if (currentBranch.equals("main"))
     {
       return Result.block("""
         REBASE ON MAIN BLOCKED

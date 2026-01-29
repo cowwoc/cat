@@ -86,6 +86,7 @@ public interface BashHandler
    * @param sessionId the session ID
    * @return the check result
    * @throws NullPointerException if command, toolInput, or sessionId is null
+   * @throws IllegalArgumentException if sessionId is blank
    */
   Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId);
 }

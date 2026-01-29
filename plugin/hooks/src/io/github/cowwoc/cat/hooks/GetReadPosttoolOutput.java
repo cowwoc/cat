@@ -1,10 +1,13 @@
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
+import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
+import tools.jackson.databind.JsonNode;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import tools.jackson.databind.JsonNode;
 
 /**
  * get-read-posttool-output - Unified PostToolUse hook for Read/Glob/Grep/WebFetch/WebSearch
@@ -19,13 +22,17 @@ import tools.jackson.databind.JsonNode;
  */
 public final class GetReadPosttoolOutput
 {
+  private static final List<ReadHandler> HANDLERS = List.of(
+      new DetectSequentialTools()
+  );
+
+  private static final Set<String> SUPPORTED_TOOLS = Set.of(
+      "Read", "Glob", "Grep", "WebFetch", "WebSearch");
+
   private GetReadPosttoolOutput()
   {
     // Utility class
   }
-
-  private static final Set<String> SUPPORTED_TOOLS = Set.of(
-    "Read", "Glob", "Grep", "WebFetch", "WebSearch");
 
   /**
    * Entry point for the Read posttool output hook.
@@ -47,10 +54,11 @@ public final class GetReadPosttoolOutput
     JsonNode toolInput = input.getToolInput();
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
+    requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     // Run all read posttool handlers
-    for (ReadHandler handler : HandlerRegistry.getReadPosttoolHandlers())
+    for (ReadHandler handler : HANDLERS)
     {
       try
       {

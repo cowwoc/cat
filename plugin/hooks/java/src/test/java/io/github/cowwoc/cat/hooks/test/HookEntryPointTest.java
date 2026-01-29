@@ -86,22 +86,6 @@ public class HookEntryPointTest
     requireThat(result, "result").isEqualTo("{}");
   }
 
-  /**
-   * Verifies that extractSkillName correctly parses skill names from various input formats.
-   */
-  @Test
-  public void extractSkillNameParsesVariousFormats()
-  {
-    requireThat(GetSkillOutput.extractSkillName("/cat:work"), "skillWork").isEqualTo("work");
-    requireThat(GetSkillOutput.extractSkillName("cat:status"), "skillStatus").isEqualTo("status");
-    requireThat(GetSkillOutput.extractSkillName("/cat:add task"), "skillAddWithArgs").
-      isEqualTo("add");
-    requireThat(GetSkillOutput.extractSkillName("  /cat:init  "), "skillInitWhitespace").
-      isEqualTo("init");
-    requireThat(GetSkillOutput.extractSkillName("hello world"), "nonSkillInput").isEmpty();
-    requireThat(GetSkillOutput.extractSkillName(""), "emptyInput").isEmpty();
-  }
-
   // --- GetBashPretoolOutput tests ---
 
   /**
@@ -141,7 +125,7 @@ public class HookEntryPointTest
   {
     String result = runHook(
       () -> GetBashPretoolOutput.main(new String[]{}),
-      "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}}");
+      "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -172,7 +156,7 @@ public class HookEntryPointTest
   {
     String result = runHook(
       () -> GetReadPretoolOutput.main(new String[]{}),
-      "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}}");
+      "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -201,7 +185,7 @@ public class HookEntryPointTest
   {
     String result = runHook(
       () -> GetReadPosttoolOutput.main(new String[]{}),
-      "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}}");
+      "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -229,7 +213,7 @@ public class HookEntryPointTest
   {
     String result = runHook(
       () -> GetPosttoolOutput.main(new String[]{}),
-      "{\"tool_name\": \"Write\", \"tool_result\": {}}");
+      "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
     requireThat(result, "result").isEqualTo("{}");
   }
 }

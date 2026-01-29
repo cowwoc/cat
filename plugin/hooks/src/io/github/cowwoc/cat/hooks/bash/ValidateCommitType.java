@@ -114,7 +114,7 @@ public final class ValidateCommitType implements BashHandler
       }
 
       // A007: Check for docs: used on Claude-facing files
-      if ("docs".equals(commitType))
+      if (commitType.equals("docs"))
       {
         Result result = checkClaudeFacingFiles();
         if (result != null)
