@@ -404,7 +404,7 @@ Examples:
 
 ---
 
-## Template Output
+## Skill Structure Template
 
 ```markdown
 ---
@@ -426,82 +426,17 @@ description: "[WHEN to use] - [what it does]"
 
 ---
 
-## Functions
-
-List functions in dependency order (functions with no dependencies first).
-
-### function_name(inputs) → output
-
-**Purpose**: [What it computes]
-
-**Definition**:
-```
-[Algorithm or formula derived from decomposition]
-```
-
-**Example**:
-```
-function_name(example_input) = expected_output
-```
-
-### composed_function(inputs) → output
-
-**Purpose**: [Higher-level operation that uses other functions]
-
-**Definition**:
-```
-1. intermediate = other_function(inputs)
-2. result = transform(intermediate)
-3. return result
-```
-
-### recursive_function(structure) → output
-
-**Purpose**: [Operation that applies to nested structures]
-
-**Definition**:
-```
-Base case: if structure is atomic, return direct_result
-Recursive case:
-  1. Process current level
-  2. For each nested element: recursive_function(element)
-  3. Combine results
-```
-
----
-
 ## Procedure
 
-Steps call functions rather than duplicating logic.
+### Step 1: [For skills with preprocessed output]
 
-### Step 1: Require template results (if computation was extracted)
+# Direct preprocessing pattern:
+!`render-output.sh`
 
-**MANDATORY:** Check context for "OUTPUT TEMPLATE [SKILL-NAME]".
+# Or delegated preprocessing pattern (if LLM determines data):
+Analyze context and invoke renderer skill with args.
 
-If found:
-1. Output the template content **directly without preamble or commentary**
-2. Skip to Step N (output/verification)
-
-**Silent output rule (M194):** When outputting template content, do NOT:
-- Announce "I can see the template display..."
-- Explain "Let me output this exactly as provided..."
-- Add any text before the template content
-
-Simply output the content. The user doesn't need to know about internal computation mechanisms.
-
-If NOT found: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "results" "the skill"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Output template results not found."
-  echo "Hook precompute-{skill-name}.sh should have provided these."
-fi
-```
-
-Output the error and STOP. Do NOT attempt manual computation.
-
-### Step 2: [Gather inputs] (only if no extraction)
+### Step 2: [Gather inputs] (only if no preprocessing)
 
 [Collect data needed by functions]
 
@@ -832,20 +767,19 @@ When designing skills with multiple paths, distinguish between:
 2. **Fallback patterns** (degraded operation): **AVOID** - these hide failures
 
 ```
-# BAD - Fallback hides hook failure
-If output template exists: use it
+# BAD - Fallback hides preprocessing failure
+If preprocessing ran: output result
 Else: compute manually (error-prone!)
 
 # GOOD - Fail-fast exposes problems
-If output template exists: use it
-Else: FAIL with "Hook failed - check precompute-status-display.sh"
+Preprocessing via !`script.sh` runs automatically.
+If script fails, skill expansion fails visibly.
 ```
 
-**Why fail-fast is better:**
-- Fallback to manual computation defeats the purpose of extraction
-- Silent degradation makes debugging harder
-- Errors in fallback path are often worse than no output
-- Forces fixing the root cause (broken hook) rather than masking it
+**Why preprocessing is better than manual fallback:**
+- Script failures are visible (no silent degradation)
+- No fallback path means no error-prone manual computation
+- Forces fixing the root cause (broken script) rather than masking it
 
 ### Shared Dependencies
 
@@ -934,9 +868,8 @@ Hand-writing approximate output without calculation causes alignment errors.
 
 ### No Embedded Box Drawings in Skills (M217)
 
-**Critical rule**: Skills MUST NOT contain embedded box-drawing examples in their instructions or
-templates. Embedded boxes cause agents to manually render similar output instead of using handler
-functions.
+**Critical rule**: Skills MUST NOT contain embedded box-drawing examples in their instructions.
+Embedded boxes cause agents to manually render similar output instead of using preprocessing.
 
 **Important distinction**: This rule applies to skills that **output boxes to users**. Documentation
 diagrams in skills that **do not produce boxes** (e.g., state machine diagrams in tdd-implementation,
@@ -956,11 +889,11 @@ architecture flowcharts) are acceptable because:
    ```
 2. Agent sees this pattern and attempts to recreate it manually
 3. Manual rendering produces misaligned, incorrect boxes
-4. Handler functions (which would produce correct output) go unused
+4. Preprocessing scripts (which would produce correct output) go unused
 
 **Correct approach for skills that produce boxes:**
 
-1. **Reference handler functions, not visual examples:**
+1. **Use preprocessing, not visual examples:**
    ```markdown
    # BAD - Embedded box causes manual rendering
    Display the result in this format:
@@ -968,23 +901,17 @@ architecture flowcharts) are acceptable because:
    │ {content}            │
    ╰──────────────────────╯
 
-   # GOOD - References function without visual example
-   Use `build_box(content)` to render the result.
-   The function handles all alignment and border construction.
+   # GOOD - Preprocessing handles rendering
+   !`render-box.sh "$content"`
    ```
 
-2. **For circle/rating patterns, use lookup tables not examples:**
+2. **For circle/rating patterns, preprocess them:**
    ```markdown
    # BAD - Embedded pattern causes manual typing
    Display ratings like: ●●●●○ (4/5) or ●●○○○ (2/5)
 
-   # GOOD - Lookup table with explicit "do not type manually"
-   Rating circle patterns (do not hand-type, copy from table):
-   - 5 → ●●●●●
-   - 4 → ●●●●○
-   - 3 → ●●●○○
-   - 2 → ●●○○○
-   - 1 → ●○○○○
+   # GOOD - Script renders rating
+   !`render-rating.sh "$score"`
    ```
 
 3. **For output format documentation, describe structure not rendering:**
@@ -995,54 +922,47 @@ architecture flowcharts) are acceptable because:
    │ 📊 Progress: [████░░░░] 40%   │
    ╰────────────────────────────────╯
 
-   # GOOD - Describes structure, references handler
-   The status display contains:
-   - Header with emoji and title
-   - Progress bar showing percentage
-   - All rendering via `build_status_box()` function
+   # GOOD - Preprocessing renders status
+   !`get-status-display.sh`
    ```
 
 **Verification during skill creation:**
 - [ ] No box-drawing characters (╭╮╰╯│├┤┬┴┼─) appear in instruction examples
 - [ ] No formatted table examples with borders appear in skill text
-- [ ] Visual patterns (circles, bars, etc.) use lookup tables with "do not hand-type" warning
-- [ ] All display rendering references handler functions by name
+- [ ] Visual patterns (circles, bars, etc.) handled by preprocessing scripts
+- [ ] All display rendering uses `!`script`` preprocessing
 
 ### Conditional Information Principle (M256)
 
-**Critical rule**: Information that is only useful when output template exists should BE IN the
-output template, not in the skill documentation.
+**Critical rule**: Formatting details (emoji meanings, box characters, column widths) belong
+in preprocessing scripts, not in skill documentation.
 
 **The failure pattern:**
 1. Skill doc contains "reference" information (emoji meanings, circle patterns, formatting rules)
 2. Agent sees this reference material before executing
-3. Agent uses the reference to manually construct output instead of copy-pasting template content
+3. Agent attempts to manually construct output instead of using preprocessed output
 4. Manual construction produces incorrect results (emoji widths, alignment errors)
 
 **Where information belongs:**
 
 | Information Type | Location | Why |
 |------------------|----------|-----|
-| How to find/copy output template | Skill doc | Always needed |
-| What to do if output template missing | Skill doc (FAIL instruction) | Always needed |
-| Emoji meanings (☑️, 🔄, 🔳) | Output template Legend line | Only useful with output template |
-| Rating patterns (●●●●○) | Output template output | Only useful with output template |
-| Box character reference | Handler code only | Never needed by skill |
-| Formatting rules (widths, padding) | Handler code only | Never needed by skill |
+| What preprocessing command to use | Skill doc | Always needed |
+| What args to pass (if delegated) | Skill doc | Always needed |
+| Emoji meanings (☑️, 🔄, 🔳) | Preprocessing script | Script handles rendering |
+| Rating patterns (●●●●○) | Preprocessing script | Script handles rendering |
+| Box character reference | Preprocessing script | Script handles rendering |
+| Formatting rules (widths, padding) | Preprocessing script | Script handles rendering |
 
 **Correct pattern:**
 ```markdown
-# GOOD - Skill doc says WHERE, not HOW
+# GOOD - Skill uses preprocessing, doesn't explain formatting
 
-### Step 1: Output template display
+### Step 1: Display status
 
-**MANDATORY:** Check context for "OUTPUT TEMPLATE {NAME}".
+!`get-status-display.sh`
 
-If found: Output exactly as provided.
-If NOT found: FAIL immediately.
-
-> **Note:** Emoji meanings are included in the output template Legend line.
-> They are NOT documented separately here to prevent manual construction attempts.
+> Script handles all emoji selection, box alignment, and formatting.
 ```
 
 **Anti-pattern (teaching then forbidding):**
@@ -1063,12 +983,11 @@ If NOT found: FAIL immediately.
 ```
 
 **Self-check during skill creation:**
-- [ ] Does the skill contain reference tables the agent shouldn't use directly?
+- [ ] Does the skill contain formatting reference tables?
 - [ ] Is there any "for reference only" or "do not use manually" information?
-- [ ] Could this information enable manual construction if output template is ignored?
-- [ ] Should this information be moved to the output template instead?
+- [ ] Could the agent construct output manually after reading the skill?
 
-If YES to any: Move the information to the output template or remove it entirely.
+If YES to any: Move the information to the preprocessing script.
 
 ### Output Artifact Gates (M192 Prevention)
 
@@ -1298,6 +1217,148 @@ For each function:
   Claude receives rendered output, outputs directly
 ```
 
+### Architecture Decision: Direct vs. Delegated Preprocessing
+
+Choose the architecture based on **where the data comes from**:
+
+**Pattern 1: Direct Preprocessing** (script collects all inputs)
+
+Use when the script can discover all necessary data from the environment (files, git state,
+config, etc.) without LLM judgment.
+
+```
+┌─────────────────┐
+│   Skill A       │
+│                 │
+│ !`script.sh`    │──→ Script reads files/state ──→ Rendered output
+│                 │
+│ [output here]   │
+└─────────────────┘
+```
+
+**Example**: Status display - script reads STATE.md files, computes progress, renders box.
+
+```markdown
+# Status Skill
+!`get-status-display.py`
+```
+
+**Pattern 2: Delegated Preprocessing** (LLM determines data)
+
+Use when the LLM must analyze, decide, or select what data appears in the output.
+Split into two skills:
+
+```
+┌─────────────────┐     ┌─────────────────────┐
+│   Skill A       │     │   Skill B           │
+│  (Orchestrator) │     │   (Renderer)        │
+│                 │     │                     │
+│ Analyze context │     │ !`render.sh $ARGS`  │──→ Rendered output
+│ Decide on data  │     │                     │
+│ Invoke Skill B  │────→│ [output here]       │
+│ with args       │     │                     │
+└─────────────────┘     └─────────────────────┘
+```
+
+**Example**: Stakeholder concern rendering - LLM selects which concerns apply, then
+delegates to a render skill.
+
+```markdown
+# Skill A: Stakeholder Review (orchestrator)
+Analyze the changes and identify applicable concerns.
+
+For each concern, invoke the `render-concern` skill:
+- skill: render-concern
+- args: {"stakeholder": "security", "concern": "SQL injection", "severity": "high"}
+
+# Skill B: Render Concern (renderer)
+!`render-concern.sh '$ARGUMENTS'`
+```
+
+**Decision checklist**:
+
+| Question | If YES | Pattern |
+|----------|--------|---------|
+| Can script read all needed data from files/environment? | Script is self-sufficient | Direct |
+| Does output depend on LLM analysis or judgment? | LLM must decide first | Delegated |
+| Is the same rendering used with different data sources? | Reusable renderer | Delegated |
+| Is there only one way to determine what goes in output? | No LLM needed | Direct |
+
+**Benefits of delegated pattern**:
+- Rendering logic is reusable across multiple orchestrator skills
+- LLM handles judgment, script handles formatting
+- Arguments pass through unchanged (no escaping needed at Skill tool level)
+- Clean separation: orchestrator = brain, renderer = hands
+
+---
+
+## Skill Arguments and `$ARGUMENTS`
+
+Skills can receive arguments via the `$ARGUMENTS` placeholder, which is substituted
+with the value passed to the skill.
+
+### How Arguments Flow
+
+| Stage | What Happens | Escaping |
+|-------|--------------|----------|
+| User types `/skill-name arg text` | `arg text` captured | Raw, unchanged |
+| Agent invokes `Skill(skill="name", args="value")` | `value` passed | Raw, unchanged |
+| `$ARGUMENTS` in skill markdown | Substituted literally | No transformation |
+| `$ARGUMENTS` in `!` shell command | Shell interprets | **Dangerous** |
+
+### Shell Safety with `$ARGUMENTS`
+
+**Critical**: When `$ARGUMENTS` appears inside `!`command`` preprocessing, the shell
+interprets special characters:
+
+| Character | In Markdown | In Shell `!` |
+|-----------|-------------|--------------|
+| `"` | Preserved | Consumed as quote |
+| `$VAR` | Literal | Expanded (empty if unset) |
+| `` `cmd` `` | Literal | Executed as command |
+| `'` | Preserved | Quote delimiter |
+
+**Test results**:
+```
+Input: it"s complex with $VAR and `backticks`
+
+$ARGUMENTS in markdown: it"s complex with $VAR and `backticks`  ✓ preserved
+$ARGUMENTS in !`echo`: its complex with andbackticks`"`         ✗ mangled
+```
+
+### Safe Patterns
+
+**Use `$ARGUMENTS` in markdown only** (no shell):
+```markdown
+## User Request
+
+The user asked: $ARGUMENTS
+
+Now analyze this request...
+```
+
+**For shell processing, use controlled inputs**:
+```markdown
+# Instead of passing user text to shell:
+!`process-input.sh "$ARGUMENTS"`     # ❌ Dangerous
+
+# Have the script read from a known source:
+!`get-current-task.sh`                # ✓ Script controls input
+```
+
+**For skill-to-skill calls**: No escaping needed - the Skill tool's `args` parameter
+passes through unchanged:
+```
+Skill(skill="other-skill", args="text with \"quotes\" and $vars")
+→ other-skill receives: text with "quotes" and $vars
+```
+
+### Checklist
+
+- [ ] `$ARGUMENTS` only appears in markdown context, not inside `!` commands
+- [ ] Shell scripts use controlled inputs, not raw user text
+- [ ] If shell processing needed, script validates/sanitizes input first
+
 ---
 
 ## Priming Prevention Checklist (M256, M269, M274)
@@ -1309,7 +1370,7 @@ verify the skill doesn't prime agents for incorrect behavior.
 
 | Question | If YES | Fix |
 |----------|--------|-----|
-| Does skill teach HOW before saying "invoke tool"? | Primes manual approach | Move algorithm to internal doc or handler |
+| Does skill teach HOW before saying "invoke tool"? | Primes manual approach | Move algorithm to preprocessing script |
 | Are there Functions/Prerequisites before Procedure? | Primes manual construction | Remove or move after Procedure |
 | Does skill explain what to preserve/remove? | Primes content fabrication | Move to internal agent prompt only |
 
@@ -1394,7 +1455,7 @@ Instead: "Run /compare-docs and report the actual score."
 
 ### Reference Information Check (M256)
 
-Information only useful when output template exists should BE IN the output template:
+Formatting details belong in preprocessing scripts, not skill documentation:
 
 ```yaml
 # ❌ WRONG - Skill doc contains reference info
@@ -1404,17 +1465,17 @@ Information only useful when output template exists should BE IN the output temp
 | Completed | ☑️ |
 
 ## Procedure
-Step 1: Check for output template...
+Step 1: Render status display...
 
-# ✅ CORRECT - Reference info is in the template
+# ✅ CORRECT - Preprocessing handles formatting
 ## Procedure
-Step 1: Check for "OUTPUT TEMPLATE" in context
-        (Emoji meanings appear in template Legend line)
+Step 1: Display status
+!`get-status-display.sh`
 ```
 
 **Self-check**:
 - [ ] No "for reference only" or "do not use manually" information in skill doc
-- [ ] All reference tables moved to output template or handler
+- [ ] All formatting logic in preprocessing scripts
 - [ ] Agent cannot construct output manually even if they tried
 
 ---
@@ -1430,21 +1491,17 @@ Step 1: Check for "OUTPUT TEMPLATE" in context
 - [ ] Variable-length functions derived via min-case → increment → generalize
 - [ ] Functions listed in dependency order (no forward references)
 - [ ] Forward steps call functions (no duplicated logic)
-- [ ] **Computation candidates identified and extracted to skill handler** (M192/M215)
-- [ ] Skill handler created in `plugin/hooks/skill_handlers/` for deterministic functions
-- [ ] Handler pre-computes ALL possible output variants BEFORE skill runs
-- [ ] **Skill NEVER invokes scripts via Bash** - user sees no tool calls (M215)
-- [ ] **Skill REQUIRES template results - FAIL-FAST if missing** (no fallback)
-- [ ] **No "if not found, continue to manual..." patterns** (fail-fast principle)
-- [ ] **Calculation gates added for transformation steps** (M191)
-- [ ] **Artifact gates added when output has precise formatting** (M192)
-- [ ] Gates use MANDATORY and BLOCKING keywords
-- [ ] Calculation gates require explicit numeric results before construction
-- [ ] Artifact gates require explicit output strings before final assembly
+
+### Preprocessing Architecture
+
+- [ ] **Architecture decision made**: Direct vs. Delegated preprocessing
+- [ ] **Direct**: Script collects all inputs → use `!`script.sh`` in skill
+- [ ] **Delegated**: LLM determines data → Skill A invokes Skill B with args
+- [ ] **Computation extracted to preprocessing scripts** (M192/M215)
+- [ ] **No manual formatting in skill** - all rendering via preprocessing
 - [ ] **No embedded box drawings in skill instructions or examples** (M217)
-- [ ] Box-drawing characters only appear in handler code, not skill text
-- [ ] Visual patterns use lookup tables with "do not hand-type" warnings
-- [ ] Display rendering references handler functions by name
+- [ ] Box-drawing characters only appear in preprocessing scripts
+- [ ] Visual patterns handled by scripts, not documented in skill
 - [ ] Verification criteria exist for the goal
 
 ### Priming Prevention (M256, M269, M274, M276)
@@ -1455,7 +1512,7 @@ Step 1: Check for "OUTPUT TEMPLATE" in context
 - [ ] **No cost/efficiency language** suggesting proper approach is expensive
 - [ ] **Encapsulation verified**: Orchestrator cannot perform task after reading doc
 - [ ] **Delegation-safe**: No expected scores in acceptance criteria
-- [ ] **Reference info in output template**, not skill doc
+- [ ] **Formatting details in preprocessing scripts**, not skill doc
 
 ---
 

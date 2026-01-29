@@ -54,19 +54,19 @@ The status box above was pre-rendered via silent preprocessing.
 
 ---
 
-## Why Silent Preprocessing?
+## Architecture: Direct Preprocessing
 
-This skill uses silent preprocessing (exclamation-backtick syntax) instead of OUTPUT TEMPLATE injection.
+This skill uses **direct preprocessing** - the script collects all inputs from the filesystem
+and renders the complete output before Claude sees the skill.
 
 **Benefits:**
 - Status is computed BEFORE Claude sees the skill content
 - No possibility of manual reconstruction errors
 - Simpler skill - just output what's there
-- No handler registration or hook complexity
 
 **How it works:**
 1. User invokes `/cat:status`
-2. Claude Code loads the skill and expands the command pattern
-3. Script runs and outputs the rendered status box
+2. Claude Code expands the `!` command during skill loading
+3. Script reads STATE.md files and renders the status box
 4. Claude receives the skill with actual status data embedded
 5. Claude outputs the pre-rendered content verbatim

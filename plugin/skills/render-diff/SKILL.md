@@ -14,38 +14,22 @@ Each hunk is rendered as a self-contained box with file header, making diffs eas
 
 ---
 
+## Pre-rendered Diff
+
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-render-diff.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
+
+---
+
 ## Procedure
 
-### Step 1: Require output template (MANDATORY)
+### Step 1: Output the rendered diff
 
-**Check context for "OUTPUT TEMPLATE RENDER-DIFF OUTPUT".**
+The diff content above was pre-rendered via silent preprocessing. Output it **directly**:
+- No preamble, no Bash commands
+- Do NOT wrap in code blocks
+- The content is already formatted with 4-column tables and box characters
 
-If found:
-1. Output the rendered diff content **directly** - no preamble, no Bash commands
-2. The content is already formatted with 4-column tables and box characters
-3. Do NOT wrap in code blocks or show any tool invocations
-
-If NOT found during an approval gate: **FAIL immediately**.
-
-```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "diff output" "render-diff"
-if [[ $? -eq 0 ]]; then
-  echo "ERROR: Output template diff not found. Check:"
-  echo "1. Handler is registered in skill_handlers/__init__.py"
-  echo "2. Handler file exists in plugin/hooks/skill_handlers/"
-  echo "3. Base branch is detectable from worktree/branch name"
-fi
-```
-
-Output the error and STOP. Do NOT attempt manual Bash computation or manual box rendering.
-
-**Why fail-fast (M238):** Running `git diff | render-diff.py` via Bash shows the command
-execution to the user, breaking the clean output experience. Pre-computation hides the
-implementation details.
-
-### Step 2: Output the rendered diff
-
-Copy-paste the output template content exactly as provided. The handler has already:
+The preprocessing has already:
 - Calculated column widths and alignments
 - Rendered box borders with correct padding
 - Applied word-level diff highlighting
@@ -59,9 +43,9 @@ Do NOT modify, reformat, or manually reconstruct any part of the output.
 ## Output Structure Reference
 
 > **NOTE:** This section describes WHAT the output contains, not HOW to render it.
-> The handler produces all rendering. You only need to copy-paste.
+> The preprocessing script produces all rendering. You only need to copy-paste.
 
-The output template contains:
+The pre-rendered output contains:
 
 **Per-hunk boxes** with:
 - File header row showing the file path
@@ -106,7 +90,7 @@ git diff "${BASE_BRANCH}..HEAD"
 
 ## Verification
 
-- [ ] Output template found in context
+- [ ] Pre-rendered diff found in context
 - [ ] Content output exactly as provided (no manual reconstruction)
 - [ ] All changed files included in the diff
 - [ ] No Bash tool invocations shown to user

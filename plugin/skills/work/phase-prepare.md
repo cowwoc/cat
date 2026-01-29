@@ -45,7 +45,11 @@ if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
   MAJOR=$(echo "$RESULT" | jq -r '.major')
   MINOR=$(echo "$RESULT" | jq -r '.minor')
   TASK_NAME=$(echo "$RESULT" | jq -r '.task_name')
-  echo "✓ Found task: $TASK_ID"
+  # MANDATORY: Show progress banner IMMEDIATELY after lock acquired (M314, M315)
+  # User needs visual feedback before exploration begins
+  # Use get-progress-banner.sh to show all phases with dot symbols
+  "${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase preparing
+  # The banner shows: ○ Pending | ● Complete | ◉ Active for each phase
 else
   echo "No executable tasks found"
   echo "$RESULT" | jq -r '.message // .status'
@@ -141,7 +145,7 @@ For a task marked with `[task]` in the Exit section:
 
 **MANDATORY: Copy-paste the exact box from system-reminder (M246)**
 
-Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the OUTPUT TEMPLATE WORK BOXES
+Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the Pre-rendered Work Boxes
 section. Copy the ENTIRE box structure verbatim.
 
 **MANDATORY: Accept get-available-issues.sh results (M245)**
@@ -328,7 +332,7 @@ else:
 
 **Step 5: Present wizard (if needed)**
 
-Use the **FORK_IN_THE_ROAD** box from OUTPUT TEMPLATE WORK BOXES.
+Use the **FORK_IN_THE_ROAD** box from Pre-rendered Work Boxes.
 
 Use AskUserQuestion:
 - header: "Approach"

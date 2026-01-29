@@ -56,13 +56,13 @@ class TokenReportHandler:
             if not lines:
                 return None
 
-            return f"""OUTPUT TEMPLATE TOKEN REPORT:
+            return f"""SCRIPT OUTPUT TOKEN REPORT:
 
 {lines}
 
 Summary: {subagent_count} subagents, {total_tokens} total tokens
 
-INSTRUCTION: Output the table EXACTLY as shown above. Do NOT recompute or modify alignment.
+INSTRUCTION: Output the above table EXACTLY as shown. Do NOT recompute or modify alignment.
 
 Legend:
 - Percentages show context utilization per subagent

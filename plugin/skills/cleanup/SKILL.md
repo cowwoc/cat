@@ -13,6 +13,8 @@ allowed-tools:
 
 All abandoned CAT artifacts (worktrees, locks, branches) are identified and cleaned up safely.
 
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-boxes.sh`
+
 ---
 
 ## When to Use
@@ -94,7 +96,7 @@ done
 }
 ```
 
-Output the OUTPUT TEMPLATE SURVEY DISPLAY from the handler exactly as provided.
+Output the SCRIPT OUTPUT SURVEY DISPLAY from the handler exactly as provided.
 Do NOT copy the example below - it shows format only. Use the handler output.
 
 ---
@@ -191,7 +193,7 @@ If uncommitted:
 }
 ```
 
-Output the OUTPUT TEMPLATE PLAN DISPLAY from the handler exactly as provided.
+Output the SCRIPT OUTPUT PLAN DISPLAY from the handler exactly as provided.
 Do NOT copy any example boxes - use the handler output.
 
 **BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
@@ -278,7 +280,7 @@ fi
 }
 ```
 
-Output the OUTPUT TEMPLATE VERIFY DISPLAY from the handler exactly as provided.
+Output the SCRIPT OUTPUT VERIFY DISPLAY from the handler exactly as provided.
 Do NOT copy any example boxes - use the handler output.
 
 ---

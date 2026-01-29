@@ -389,7 +389,7 @@ class WorkHandler:
         via get-progress-banner.sh. This handler only provides status boxes.
         """
         # Build output with pre-rendered boxes (placeholders for runtime values)
-        return f"""OUTPUT TEMPLATE WORK BOXES:
+        return f"""SCRIPT OUTPUT WORK BOXES:
 
 ## Status Boxes (output EXACTLY as shown, replace only {{placeholders}}):
 

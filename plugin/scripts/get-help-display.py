@@ -1,10 +1,10 @@
+#!/usr/bin/env python3
 """
-Handler for /cat:help precomputation.
+get-help-display.py - Generate CAT help reference content.
 
-Builds the complete help reference content.
+Outputs the complete help reference for /cat:help skill.
+Designed to be called via !` preprocessing in SKILL.md.
 """
-
-from . import register_handler
 
 WORKFLOW_DIAGRAM = """```
 /cat:init --> /cat:add --> /cat:work
@@ -31,14 +31,8 @@ HIERARCHY_TREE = """```
 ```"""
 
 
-class HelpHandler:
-    """Handler for /cat:help skill."""
-
-    def handle(self, context: dict) -> str | None:
-        """Build and return help content."""
-        return f"""SCRIPT OUTPUT HELP DISPLAY:
-
-# CAT Command Reference
+def main():
+    print(f"""# CAT Command Reference
 
 **CAT** enables hierarchical project planning with multi-agent task execution.
 
@@ -222,11 +216,8 @@ cat-config.json:
 - Read `.claude/cat/PROJECT.md` for project vision
 - Check `.claude/cat/ROADMAP.md` for version overview
 - Use `/cat:status` to see current state
-- Review individual STATE.md files for detailed progress
-
-INSTRUCTION: Output the above content EXACTLY as shown. Do not recalculate or modify."""
+- Review individual STATE.md files for detailed progress""")
 
 
-# Register handler
-_handler = HelpHandler()
-register_handler("help", _handler)
+if __name__ == "__main__":
+    main()

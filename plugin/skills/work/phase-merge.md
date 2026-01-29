@@ -202,7 +202,7 @@ NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
 | MAJOR.MINOR | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR` |
 
 **If BOUNDARY_CROSSED is true:**
-1. Use **VERSION_BOUNDARY_GATE** box from OUTPUT TEMPLATE WORK BOXES
+1. Use **VERSION_BOUNDARY_GATE** box from Pre-rendered Work Boxes
 2. Use AskUserQuestion:
    - header: "Version Boundary"
    - question: "All tasks in v{completed-version} complete. Continue to v{next-version}?"
@@ -250,7 +250,7 @@ TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 
 **If trust >= medium and next task found (within scope):**
 
-Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from OUTPUT TEMPLATE WORK BOXES.
+Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from Pre-rendered Work Boxes.
 Replace placeholders with actual values.
 
 **Brief pause for user intervention:**
@@ -263,7 +263,7 @@ If no input received, **loop back to find_task step** with the next task.
 
 **If scope complete (no more tasks within scope):**
 
-Use the **SCOPE_COMPLETE** box from OUTPUT TEMPLATE WORK BOXES.
+Use the **SCOPE_COMPLETE** box from Pre-rendered Work Boxes.
 
 **If trust == low and next task found:**
 
@@ -273,7 +273,7 @@ Release the lock (user will re-acquire when they invoke the command):
 "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-Use the **TASK_COMPLETE_LOW_TRUST** box from OUTPUT TEMPLATE WORK BOXES.
+Use the **TASK_COMPLETE_LOW_TRUST** box from Pre-rendered Work Boxes.
 
 **If no more tasks in the current minor version:**
 

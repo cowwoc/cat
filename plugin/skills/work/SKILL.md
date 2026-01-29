@@ -44,6 +44,10 @@ This is CAT's core execution command. It:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
+---
+
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh`
+
 **INSTRUCTION:** Output the appropriate phase banner EXACTLY as shown above.
 - Do NOT modify the banner content
 - Do NOT wrap in code blocks
