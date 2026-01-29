@@ -41,6 +41,28 @@ public void process(String input)
 }
 ```
 
+## Internal Validation (Asserts)
+
+For internal code (private methods, enum constructors, class invariants), use `assert that()`:
+
+```java
+// Enum constructor - only runs when asserts enabled
+TerminalType(String jsonKey)
+{
+  assert that(jsonKey, "jsonKey").isNotBlank().elseThrow();
+  this.jsonKey = jsonKey;
+}
+
+// Private method validation
+private void processInternal(String data)
+{
+  assert that(data, "data").isNotNull().elseThrow();
+  // ...
+}
+```
+
+This validates during development (with `-ea` flag) but has zero runtime cost in production.
+
 ## Parameter Naming
 
 **Always provide explicit parameter names** - do not rely on defaults:
