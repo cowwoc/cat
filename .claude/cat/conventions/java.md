@@ -320,15 +320,32 @@ public record SkillContext(String userPrompt, String sessionId, String projectRo
 ```
 
 ### Method Preconditions
-Validate public method parameters:
+**Validate all method parameters** using requirements.java:
+
+- **Public methods:** Use `requireThat()` - throws `IllegalArgumentException`
+- **Private methods:** Use `assert that()` - throws `AssertionError` (only in debug builds)
 
 ```java
+// Public method - use requireThat()
 public void process(String input)
 {
   requireThat(input, "input").isNotNull();
   // ...
 }
+
+// Private method - use assert that()
+private void processInternal(String input, int count)
+{
+  assert that(input, "input").isNotNull().elseThrow();
+  assert that(count, "count").isPositive().elseThrow();
+  // ...
+}
 ```
+
+**Rationale:**
+- Public methods are API boundaries - callers get clear exceptions
+- Private methods are internal - assertions verify invariants during development
+- Assertions can be disabled in production for performance
 
 See `.claude/rules/requirements-api.md` for full API conventions.
 
@@ -465,7 +482,10 @@ cd plugin/hooks/java
 ./build.sh        # Build JAR (mvn package)
 ./build.sh test   # Run TestNG tests (mvn test)
 ./build.sh clean  # Clean artifacts (mvn clean)
+mvn verify        # Full build validation (compile + test + checkstyle + PMD)
 ```
+
+**Verification:** Always run `mvn verify` before committing Java changes to catch checkstyle/PMD violations.
 
 ## Module Structure
 
