@@ -1797,7 +1797,13 @@
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
       "prevention_path": "/workspace/plugin/skills/git-squash/SKILL.md",
-      "pattern_keywords": ["squash", "topic", "commit-scope", "learning", "infrastructure"],
+      "pattern_keywords": [
+        "squash",
+        "topic",
+        "commit-scope",
+        "learning",
+        "infrastructure"
+      ],
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": null,
@@ -1807,6 +1813,85 @@
         "catches_variations": true
       },
       "correct_behavior": "Apply topic test before squashing: 'Would reverting this commit break the task implementation?' If no, it's a different topic and should be a separate commit."
+    },
+    {
+      "id": "M311",
+      "timestamp": "2026-01-28T18:30:00Z",
+      "category": "protocol_violation",
+      "description": "Did not display checkpoint box in correct format - typed custom format instead of using pre-rendered output from handler",
+      "root_cause": "Documentation did not clearly specify that handler output should be displayed VERBATIM without modification",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-review.md",
+      "pattern_keywords": [
+        "checkpoint",
+        "verbatim",
+        "pre-rendered",
+        "output-template"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Find CHECKPOINT_TASK_COMPLETE in context and display the pre-rendered box exactly as provided"
+    },
+    {
+      "id": "M312",
+      "timestamp": "2026-01-28T18:30:00Z",
+      "category": "protocol_violation",
+      "description": "Did not show rendered diff before asking for approval - only showed git diff --stat file list instead of actual diff content",
+      "root_cause": "Skipped render-diff.py step and did not copy diff output into response text",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-review.md",
+      "pattern_keywords": [
+        "diff",
+        "render-diff",
+        "approval-gate",
+        "verbatim"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run render-diff.py and copy the 4-column diff output DIRECTLY into response text before presenting approval options"
+    },
+    {
+      "id": "M313",
+      "timestamp": "2026-01-28T18:45:00Z",
+      "category": "protocol_violation",
+      "description": "Showed plain text summary instead of rendered diff when output was persisted to file",
+      "root_cause": "No guidance on handling large diffs that get persisted to file - agent assumed summary was acceptable",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-review.md",
+      "pattern_keywords": [
+        "diff",
+        "persisted",
+        "large-output",
+        "summary",
+        "verbatim"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M312",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When render-diff output is persisted to file, use Read tool to retrieve and display the actual rendered content"
     }
   ]
 }

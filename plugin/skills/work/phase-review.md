@@ -212,33 +212,60 @@ Present work summary with checkpoint display.
 
 **CRITICAL: Output directly WITHOUT code blocks (M125).**
 
-Use the **CHECKPOINT_TASK_COMPLETE** box from OUTPUT TEMPLATE WORK BOXES.
-Replace placeholders with actual values: `{task-name}`, `{N}`, `{percentage}`, `{task-branch}`.
+### Checkpoint Display (BLOCKING - M311)
 
-**MANDATORY (M160/M201/M261): Show diff BEFORE approval question:**
+**STOP: Find "CHECKPOINT_TASK_COMPLETE" in OUTPUT TEMPLATE WORK BOXES context.**
 
-**CRITICAL (M261): Display diff DIRECTLY in response text, NOT inside Bash tool.**
+The hook handler pre-computes this box with actual values. Display it VERBATIM:
 
+1. Search your context for `--- CHECKPOINT_TASK_COMPLETE ---`
+2. Copy the ENTIRE pre-rendered box that follows (already has actual values)
+3. Output it EXACTLY as provided - do NOT modify or reconstruct
+
+**BLOCKED if:** You type your own checkpoint format instead of using the pre-rendered output.
+**Why:** Custom formats break visual consistency and miss required fields.
+
+### Diff Display (BLOCKING - M312)
+
+**STOP: Complete ALL steps before presenting approval options.**
+
+**Step 1: Generate rendered diff**
 ```bash
-# Step 1: Capture to variable or file
-DIFF_OUTPUT=$(git diff ${BASE_BRANCH}..HEAD | "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py")
-echo "$DIFF_OUTPUT"
+BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base")
+git diff ${BASE_BRANCH}..HEAD | python3 "${CLAUDE_PLUGIN_ROOT}/scripts/render-diff.py"
 ```
 
-Then copy-paste that output directly into your response.
+**Step 2: Copy output into your response**
+- The output contains 4-column tables with box characters (╭╮╰╯│)
+- Copy-paste this output DIRECTLY into your response text
+- Do NOT leave it inside the Bash tool result
 
-**SELF-CHECK (M201/M211/M261):**
-- [ ] Diff is visible in response text (NOT inside collapsed Bash tool)?
-- [ ] Ran render-diff.py (NOT plain git diff)?
-- [ ] Presented VERBATIM output?
-- [ ] Output has box characters (╭╮╰╯│)?
-- [ ] 4-column format?
+**Step 2b: If output is persisted to file (M313)**
+When Bash output exceeds limits and is saved to a file:
+1. Read the persisted file using the Read tool
+2. Display the file contents in your response (use multiple Read calls if needed)
+3. Do NOT summarize - show the actual rendered diff content
+4. Plain text summaries are NOT acceptable substitutes for rendered diff
 
-**If self-check fails:** Do NOT present approval. Re-run and display correctly.
+**Step 3: Verify before proceeding**
+- [ ] Diff tables visible in your response text (not collapsed in tool)?
+- [ ] Contains box characters (╭╮╰╯│)?
+- [ ] Shows 4-column format (line numbers, old code, new code)?
+
+**BLOCKED if:**
+- You only ran `git diff --stat` (file list is NOT a diff)
+- Diff is only visible inside Bash tool output
+- You skipped render-diff.py
+- You showed a plain text summary instead of the rendered diff (M313)
+
+**Why (M160/M201/M261/M312/M313):** Users cannot review changes they cannot see.
+Approval without visible diff is meaningless. Summaries lose critical detail.
 
 **CRITICAL (M211): Present render-diff output VERBATIM.**
 
 **CRITICAL (M231): Handle large diffs by showing ALL content.**
+
+**CRITICAL (M313): If output persisted to file, READ and DISPLAY file contents.**
 
 Use AskUserQuestion with options:
 - header: "Next Step"
