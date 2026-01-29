@@ -62,6 +62,37 @@ count += 1;
 - 2 spaces (not tabs)
 - Continuation indent: 2 spaces
 
+### Field Initialization
+Prefer inline initialization over constructor initialization when the value is constant:
+
+```java
+// Good - inline initialization
+private final DisplayUtils display = new DisplayUtils();
+private final JsonMapper mapper = JsonMapper.builder().build();
+
+// Avoid - unnecessary constructor initialization
+private final DisplayUtils display;
+
+public Handler()
+{
+  this.display = new DisplayUtils();
+}
+```
+
+Use constructor initialization only when:
+- The field value depends on constructor parameters
+- Complex initialization logic requires multiple statements
+
+```java
+// Good - depends on constructor parameter
+private final Path configPath;
+
+public Handler(Path pluginRoot)
+{
+  this.configPath = pluginRoot.resolve("config.json");
+}
+```
+
 ### Conditional Expressions
 Use if/else statements instead of the ternary operator:
 
