@@ -18,14 +18,9 @@ After acquiring the lock and identifying the task, run `get-progress-banner.sh` 
 "${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase preparing
 ```
 
-The banner looks like:
-```
-┌─ 🐱 2.1-task-name ──────────────────────────────────────────────────┐
-│  ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
 **Anti-pattern (M319):** Writing informal markdown like "## Phase 1: Prepare" instead of running the script.
+
+**Anti-pattern (M320):** Do NOT describe or show example banner output in documentation - this primes manual construction instead of script execution.
 
 ---
 

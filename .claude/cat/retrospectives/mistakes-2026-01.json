@@ -2052,6 +2052,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Run get-progress-banner.sh script at each phase transition and output the banner directly (not in code blocks) for visual feedback to user"
+    },
+    {
+      "id": "M320",
+      "timestamp": "2026-01-30T10:15:00-05:00",
+      "category": "misleading_documentation",
+      "description": "Included example rendered banner output in M319 prevention doc, priming LLM to construct manually instead of running script",
+      "root_cause": "When implementing M319 prevention, added 'The banner looks like: ...' example that teaches the agent what output to produce, bypassing the script. The documentation priming principle (M269/M274/M256) was not applied when creating prevention documentation.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work/phase-prepare.md",
+      "pattern_keywords": [
+        "documentation_priming",
+        "example_output",
+        "script_bypass",
+        "manual_construction"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Prevention docs should only describe WHAT to do (run script) not WHAT output looks like. Example output primes manual fabrication."
     }
   ]
 }
