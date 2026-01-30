@@ -130,43 +130,39 @@ def method_similarity(claims_a: list, claims_b: list) -> float:
     return 0.7 * token_sim + 0.3 * bigram_sim
 ```
 
-### Index Storage (SQLite + Manifest)
+### Index Storage (Git-Tracked SQLite)
 
-**Why SQLite over JSON:**
+**Why SQLite:**
 - O(log n) indexed queries vs O(n) linear scan
 - Only loads pages needed, not entire file
 - Native FTS5 for text search
 - Scales to 50K+ methods
 
+**Why git-track the DB (not ignore):**
+- Each commit has its matching index state
+- Checkout old commit → get that commit's index
+- No separate manifest needed
+- file_hash column provides built-in staleness detection
+- Merge conflicts: pick either side, staleness detection handles rest
+
 **Storage layout:**
 
 ```
 .claude/cat/
-├── claim-index.db          ← SQLite database (git-ignored)
-├── claim-index.manifest    ← JSON manifest (git-tracked, small)
-└── ...
-
-.gitignore:
-  .claude/cat/claim-index.db
-```
-
-**Manifest format (git-tracked):**
-
-```json
-{
-  "version": "1.0",
-  "extracted_with": "claude-sonnet-4-20250514",
-  "file_hashes": {
-    "plugin/hooks/util/GitCommands.java": "a1b2c3d4...",
-    "plugin/hooks/util/ProcessRunner.java": "d4e5f6a7..."
-  }
-}
+└── claim-index.db    ← SQLite database (git-TRACKED)
 ```
 
 **SQLite schema:**
 
 ```sql
--- Methods table
+-- Metadata table
+CREATE TABLE metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+-- Store: version, extracted_with model name
+
+-- Methods table (file_hash enables staleness detection)
 CREATE TABLE methods (
     id INTEGER PRIMARY KEY,
     file_path TEXT NOT NULL,
@@ -175,16 +171,15 @@ CREATE TABLE methods (
     language TEXT,
     claims_json TEXT NOT NULL,
     summary TEXT,
-    file_hash TEXT NOT NULL
+    file_hash TEXT NOT NULL  -- SHA256 of source file at indexing time
 );
 CREATE INDEX idx_file_path ON methods(file_path);
-CREATE INDEX idx_file_hash ON methods(file_hash);
 
 -- Token inverted index for fast candidate retrieval
 CREATE TABLE tokens (
     token TEXT NOT NULL,
     method_id INTEGER NOT NULL,
-    FOREIGN KEY (method_id) REFERENCES methods(id)
+    FOREIGN KEY (method_id) REFERENCES methods(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_token ON tokens(token);
 
@@ -192,7 +187,7 @@ CREATE INDEX idx_token ON tokens(token);
 CREATE TABLE bigrams (
     bigram TEXT NOT NULL,
     method_id INTEGER NOT NULL,
-    FOREIGN KEY (method_id) REFERENCES methods(id)
+    FOREIGN KEY (method_id) REFERENCES methods(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_bigram ON bigrams(bigram);
 
@@ -205,36 +200,123 @@ CREATE TABLE jdk_patterns (
 );
 ```
 
-**Regeneration strategy:**
+**Staleness detection (no manifest needed):**
 
-The index is derived data - regenerated from source when stale:
+The file_hash stored with each method entry detects when re-indexing is needed:
 
 ```python
-def ensure_index_current(db_path: str, manifest_path: str):
-    """Ensure SQLite index matches current codebase state."""
-    manifest = json.load(open(manifest_path))
+def ensure_index_current(db: sqlite3.Connection):
+    """Detect and re-index stale entries using file_hash comparison."""
+    # Get all indexed files and their stored hashes
+    indexed_files = db.execute("""
+        SELECT DISTINCT file_path, file_hash FROM methods
+    """).fetchall()
 
     stale_files = []
-    for file_path, stored_hash in manifest['file_hashes'].items():
+    deleted_files = []
+
+    for file_path, stored_hash in indexed_files:
         if not os.path.exists(file_path):
-            # File deleted - remove from index
-            remove_file_from_index(db, file_path)
-            del manifest['file_hashes'][file_path]
+            deleted_files.append(file_path)
         elif hash_file(file_path) != stored_hash:
             stale_files.append(file_path)
 
-    # Check for new files not in manifest
+    # Remove deleted files from index
+    for f in deleted_files:
+        db.execute("DELETE FROM methods WHERE file_path = ?", (f,))
+
+    # Re-index stale files (LLM calls for claim extraction)
+    for f in stale_files:
+        reindex_file(db, f)  # Extracts claims, normalizes, stores
+
+    # Check for new files not yet indexed
     for file_path in find_source_files():
-        if file_path not in manifest['file_hashes']:
-            stale_files.append(file_path)
+        exists = db.execute(
+            "SELECT 1 FROM methods WHERE file_path = ? LIMIT 1", (file_path,)
+        ).fetchone()
+        if not exists:
+            reindex_file(db, file_path)
 
-    if stale_files:
-        # Re-index only changed files (LLM calls for claim extraction)
-        for f in stale_files:
-            reindex_file(db, f)  # Extracts claims, normalizes, stores
-            manifest['file_hashes'][f] = hash_file(f)
+    db.commit()
+```
 
-        json.dump(manifest, open(manifest_path, 'w'), indent=2)
+**Merge conflict resolution:**
+
+```bash
+# On merge conflict (SQLite is binary):
+git checkout --ours .claude/cat/claim-index.db    # Pick one side
+# OR
+git checkout --theirs .claude/cat/claim-index.db
+
+# Next query automatically detects stale entries via file_hash
+# and re-indexes only what's needed
+```
+
+### Pre-Commit Hook (Index Validation)
+
+**Problem:** If developer modifies code but forgets to re-index, they commit stale DB.
+
+**Solution:** Pre-commit hook validates index is current before allowing commit.
+
+```python
+# plugin/hooks/bash_handlers/validate_claim_index.py
+class ValidateClaimIndexHandler(PreToolUseHandler):
+    """Block commits if claim index is out of date."""
+
+    def check(self, command: str, tool_input: dict) -> dict | None:
+        if 'git commit' not in command:
+            return None
+
+        # Get staged source files
+        staged = subprocess.run(
+            ['git', 'diff', '--cached', '--name-only'],
+            capture_output=True, text=True
+        ).stdout.strip().split('\n')
+
+        source_files = [f for f in staged if is_source_file(f)]
+        if not source_files:
+            return None  # No source files staged, skip check
+
+        # Check each staged file against index
+        db = sqlite3.connect('.claude/cat/claim-index.db')
+        stale_files = []
+
+        for file_path in source_files:
+            current_hash = hash_file(file_path)
+            stored = db.execute(
+                "SELECT file_hash FROM methods WHERE file_path = ? LIMIT 1",
+                (file_path,)
+            ).fetchone()
+
+            if stored is None or stored[0] != current_hash:
+                stale_files.append(file_path)
+
+        if stale_files:
+            return {
+                'decision': 'block',
+                'message': f"""Claim index out of date for {len(stale_files)} file(s):
+{chr(10).join(f'  - {f}' for f in stale_files[:5])}
+
+Run `/cat:index-claims` to update the index before committing."""
+            }
+
+        return None  # Index is current, allow commit
+```
+
+**Workflow:**
+```
+Developer modifies code
+    ↓
+Attempts git commit
+    ↓
+Pre-commit hook checks staged files vs index
+    ↓
+├── Index current → Commit proceeds
+└── Index stale → Commit blocked with message
+        ↓
+    Developer runs /cat:index-claims
+        ↓
+    Re-attempts commit → Success
 ```
 
 ### Fast Lookup Algorithm
@@ -328,21 +410,23 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 | File | Action | Purpose |
 |------|--------|---------|
 | `plugin/stakeholders/design.md` | Modify | Add duplicate detection instructions |
-| `plugin/lib/claim_index.py` | Create | SQLite index management, regeneration |
+| `plugin/lib/claim_index.py` | Create | SQLite index management, staleness detection |
 | `plugin/lib/claim_extraction.py` | Create | LLM-based claim extraction (temp=0) |
 | `plugin/lib/claim_similarity.py` | Create | Normalization, Jaccard + bigrams |
 | `plugin/data/jdk_patterns.sql` | Create | Pre-built JDK/stdlib patterns (SQL inserts) |
-| `.claude/cat/claim-index.db` | Create | SQLite database (git-ignored) |
-| `.claude/cat/claim-index.manifest` | Create | File hashes manifest (git-tracked) |
-| `.gitignore` | Modify | Add claim-index.db to ignore list |
+| `plugin/hooks/bash_handlers/validate_claim_index.py` | Create | Pre-commit hook to block stale index |
+| `plugin/skills/index-claims/SKILL.md` | Create | Manual/incremental indexing command |
+| `.claude/cat/claim-index.db` | Create | SQLite database (git-tracked) |
 
 ## Acceptance Criteria
 
 - [ ] Claim extraction works with temperature=0 for determinism
 - [ ] Jaccard + bigram similarity correctly identifies duplicates (≥0.9) and non-duplicates (<0.9)
 - [ ] SQLite index with token/bigram tables for O(log n) lookups
-- [ ] Manifest tracks file hashes, enables incremental re-indexing
-- [ ] Index regenerates automatically when files change (stale detection)
+- [ ] SQLite DB is git-tracked (each commit has matching index state)
+- [ ] file_hash column detects stale entries, triggers incremental re-indexing
+- [ ] Pre-commit hook blocks commits when staged files have stale index entries
+- [ ] Merge conflicts resolve via pick-one + automatic staleness detection
 - [ ] JDK patterns (Objects.equals, etc.) are pre-built and checked first
 - [ ] Design stakeholder integrates duplicate check in review workflow
 - [ ] LLM verification only triggered for scores ≥0.9 (rare)
@@ -367,8 +451,8 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 
 3. **Create SQLite index management**
    - Files: `plugin/lib/claim_index.py`
-   - Implement schema creation (methods, tokens, bigrams, jdk_patterns)
-   - Implement manifest-based stale detection
+   - Implement schema creation (methods, tokens, bigrams, jdk_patterns, metadata)
+   - Implement file_hash-based stale detection (no manifest needed)
    - Implement incremental re-indexing for changed files only
    - Implement fast candidate lookup via token index
    - Verify: Query time <20ms on 1K method test set
@@ -379,19 +463,24 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
    - Add Collections utilities, String utilities
    - Verify: Patterns inserted on DB initialization
 
-5. **Update .gitignore**
-   - Add `.claude/cat/claim-index.db` to project .gitignore template
-   - Ensure manifest is NOT ignored
-   - Verify: `git status` shows manifest tracked, db ignored
-
-6. **Integrate into design stakeholder**
+5. **Integrate into design stakeholder**
    - Files: `plugin/stakeholders/design.md`
    - Add duplicate detection to review checklist
    - Define violation format with location and recommendation
    - Verify: Stakeholder correctly flags test duplicates
 
-7. **Add indexing command (optional)**
-   - Consider: `/cat:index-claims` for manual full re-index
+6. **Add pre-commit hook for index validation**
+   - Files: `plugin/hooks/bash_handlers/validate_claim_index.py`
+   - Check that staged source files have matching file_hash in DB
+   - Block commit if index is stale (prevents invalid DB in commits)
+   - Auto-prompt: "Index out of date. Run /cat:index-claims to update."
+   - Verify: Commit blocked when index stale, allowed when current
+
+7. **Add indexing command**
+   - Files: `plugin/skills/index-claims/SKILL.md`
+   - Full re-index: scan all source files, extract claims, update DB
+   - Incremental: only re-index files where hash differs
+   - Verify: Index populated correctly, file_hash matches
    - Default: Auto-index on first review, incremental thereafter
    - Verify: Index populated correctly
 
