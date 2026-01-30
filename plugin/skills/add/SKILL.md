@@ -107,13 +107,41 @@ version it belongs to.
 
 **If TASK_DESCRIPTION already set (from command args):**
 - Skip the freeform question
-- Continue directly to step: task_ask_type
+- Continue directly to step: task_clarify_intent
 
 **Otherwise, ask for description (FREEFORM):**
 
 Ask inline: "What do you want to accomplish? Describe the issue you have in mind."
 
-Capture as TASK_DESCRIPTION, then continue to step: task_ask_type.
+Capture as TASK_DESCRIPTION, then continue to step: task_clarify_intent.
+
+</step>
+
+<step name="task_clarify_intent">
+
+**Clarify vague requirements if needed:**
+
+Analyze TASK_DESCRIPTION for vagueness indicators:
+- Less than 10 words
+- Contains generic terms like "improve", "fix", "make better" without specifics
+- Missing what/where/why context
+
+**If description appears vague:**
+
+Use AskUserQuestion:
+- header: "Clarification"
+- question: "Can you provide more details about this issue?"
+- options:
+  - "Describe the expected behavior" - What should happen when complete?
+  - "Describe the current problem" - What's wrong or missing now?
+  - "Show an example" - Provide a concrete use case
+  - "Description is complete" - Proceed without clarification
+
+**If user provides more details:**
+Append clarification to TASK_DESCRIPTION.
+
+**If "Description is complete":**
+Continue to next step.
 
 </step>
 
@@ -281,6 +309,8 @@ If validation fails, prompt user for different name.
 Note: Issue description and type were already captured in task_gather_intent step.
 Use TASK_DESCRIPTION and TASK_TYPE from that step.
 
+Initialize UNKNOWNS as empty list.
+
 **1. Scope, Dependencies, and Blockers (combined):**
 
 Collect all three independent questions in a single AskUserQuestion call:
@@ -296,6 +326,8 @@ Use AskUserQuestion:
           description: "Moderate scope"
         - label: "6+ files"
           description: "Broad change - consider splitting"
+        - label: "Unsure - need to research"
+          description: "Not sure, will investigate codebase"
       multiSelect: false
 
     - question: "Does this issue depend on other issues completing first?"
@@ -305,6 +337,8 @@ Use AskUserQuestion:
           description: "Can start immediately"
         - label: "Yes, select dependencies"
           description: "Show issue list to choose from"
+        - label: "Unsure - need to research"
+          description: "Need to investigate existing issues"
       multiSelect: false
 
     - question: "Does this issue block any existing issues?"
@@ -315,6 +349,14 @@ Use AskUserQuestion:
         - label: "Yes, select blocked issues"
           description: "Show issue list to choose from"
       multiSelect: false
+
+**Track unknowns:**
+
+If Scope answer is "Unsure - need to research":
+- Add "Scope estimation" to UNKNOWNS list
+
+If Dependencies answer is "Unsure - need to research":
+- Add "Dependency analysis" to UNKNOWNS list
 
 **2. Conditional follow-ups based on answers:**
 
@@ -337,6 +379,32 @@ List existing issues in same minor version for selection using AskUserQuestion w
 
 List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
 When blockers are selected, add this new issue to their Dependencies list in STATE.md.
+
+</step>
+
+<step name="task_research">
+
+**Run research if unknowns exist:**
+
+**If UNKNOWNS list is not empty:**
+
+Display to user:
+```
+Research needed for: {UNKNOWNS}
+Running /cat:research to gather information...
+```
+
+Invoke the research skill:
+```bash
+# Use Skill tool to invoke research
+Skill: "research"
+Args: "{TASK_DESCRIPTION}"
+```
+
+Capture research findings as RESEARCH_FINDINGS.
+
+**If UNKNOWNS is empty:**
+Skip to next step.
 
 </step>
 
@@ -506,7 +574,18 @@ mkdir -p "$TASK_PATH"
 
 **Create PLAN.md based on issue type:**
 
-Use appropriate template (Feature, Bugfix, or Refactor) from add-issue.md reference.
+Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
+
+**If RESEARCH_FINDINGS exists:**
+
+Add a Research Findings section to PLAN.md after the Goal/Problem section:
+
+```markdown
+## Research Findings
+{RESEARCH_FINDINGS}
+```
+
+This section should appear before the "Satisfies" section in all templates.
 
 </step>
 
