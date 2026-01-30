@@ -1,5 +1,5 @@
 ---
-description: Multi-perspective quality review gate with architect, security, design, testing, and performance stakeholders
+description: Multi-perspective quality review gate with architect, security, design, testing, performance, and deployment stakeholders
 user-invocable: false
 ---
 
@@ -10,7 +10,7 @@ Multi-perspective stakeholder review gate for implementation quality assurance.
 ## Purpose
 
 Run parallel stakeholder reviews of implementation changes to identify concerns from multiple
-perspectives (architecture, security, design, testing, performance) before user approval.
+perspectives (architecture, security, design, testing, performance, deployment) before user approval.
 
 ## When to Use
 
@@ -32,6 +32,7 @@ Use the box templates above for all display output (STAKEHOLDER_SELECTION, STAKE
 | design | @stakeholders/design.md | Code quality, complexity, duplication |
 | testing | @stakeholders/testing.md | Test coverage, edge cases |
 | performance | @stakeholders/performance.md | Efficiency, resource usage |
+| deployment | @stakeholders/deployment.md | CI/CD, build systems, release readiness |
 | ux | @stakeholders/ux.md | Usability, accessibility, interaction design |
 | sales | @stakeholders/sales.md | Customer value, competitive positioning |
 | marketing | @stakeholders/marketing.md | Positioning, messaging, go-to-market |
@@ -115,6 +116,7 @@ Scan issue description, goal, and PLAN.md for keywords:
 | "API", "endpoint", "public" | architect, security, marketing |
 | "internal", "tooling", "CLI" | architect, design (exclude ux, sales, marketing) |
 | "security", "auth", "permission" | security |
+| "CI", "CD", "pipeline", "build", "deploy", "release", "migration" | deployment |
 
 ### Version Focus Mapping
 
@@ -132,6 +134,7 @@ In review mode, file changes can override context exclusions:
 | Security-sensitive files (`**/auth/**`, `**/permission/**`, `**/security/**`) | security |
 | Test files (`*Test*`, `*Spec*`, `*_test*`) | testing |
 | Algorithm-heavy files (sort, search, optimize, process) | performance |
+| CI/CD files (`Dockerfile`, `*.yml` in `.github/`, `Jenkinsfile`, `*.yaml` pipeline) | deployment |
 | Only .md files changed | requirements only, exclude all others |
 | Only test files changed | testing, design only |
 
@@ -216,6 +219,9 @@ fi
 if echo "$TASK_TEXT" | grep -qE 'security|auth|permission'; then
     SELECTED="$SELECTED security"
 fi
+if echo "$TASK_TEXT" | grep -qE '\bci\b|\bcd\b|pipeline|build|deploy|release|migration'; then
+    SELECTED="$SELECTED deployment"
+fi
 
 # Check version PLAN.md for focus
 VERSION_PLAN=$(cat .claude/cat/versions/*/PLAN.md 2>/dev/null || echo "")
@@ -267,6 +273,13 @@ if echo "$CHANGED_FILES" | grep -qE '(sort|search|optimize|process|algorithm)'; 
     fi
 fi
 
+if echo "$CHANGED_FILES" | grep -qE '(Dockerfile|Jenkinsfile|\.github/.*\.yml|\.gitlab-ci\.yml|docker-compose)'; then
+    if ! echo "$SELECTED" | grep -q 'deployment'; then
+        SELECTED="$SELECTED deployment"
+        OVERRIDDEN="$OVERRIDDEN deployment:cicd_file_changed"
+    fi
+fi
+
 # Special case: only .md files changed
 if echo "$CHANGED_FILES" | grep -qvE '\.md$' | grep -q .; then
     : # Non-md files exist, continue normally
@@ -300,6 +313,7 @@ If file-based overrides occurred, add an "Overrides (file-based):" section insid
 | sales | Internal tooling issue / No user-facing features |
 | marketing | Internal tooling issue / No public API changes |
 | performance | No algorithm-heavy code changes |
+| deployment | No CI/CD, build, or release changes detected |
 | architect | Documentation-only issue |
 | security | Documentation-only issue / No source code changes |
 | design | Documentation-only issue |
@@ -515,6 +529,7 @@ Return structured result for integration with work:
     "design": {"status": "...", "concerns": [...]},
     "testing": {"status": "...", "concerns": [...]},
     "performance": {"status": "...", "concerns": [...]},
+    "deployment": {"status": "...", "concerns": [...]},
     "ux": {"status": "...", "concerns": [...]},
     "sales": {"status": "...", "concerns": [...]},
     "marketing": {"status": "...", "concerns": [...]},
