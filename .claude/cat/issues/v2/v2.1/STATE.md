@@ -9,7 +9,6 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
-- detect-duplicate-functionality
 - python-prerendered-output
 - migrate-to-silent-preprocessing (decomposed)
   - update-skill-builder-docs

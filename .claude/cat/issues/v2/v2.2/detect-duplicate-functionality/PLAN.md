@@ -66,39 +66,192 @@ REVIEW TIME (per new method):
 
 ### Claim Extraction
 
-Use LLM with temperature=0 for deterministic extraction:
+**Core principle:** Extract WHAT the function does, not HOW it works.
+- "iterates through collection and sums elements" → BAD (implementation detail)
+- "computes sum of numeric collection" → GOOD (semantic meaning)
+
+Use LLM with temperature=0 for deterministic extraction.
+
+**Claim categories (code-specific):**
+
+| Category | Description | Example |
+|----------|-------------|---------|
+| `input` | What the function accepts | "accepts nullable string" |
+| `output` | What the function returns | "returns boolean" |
+| `behavior` | Core semantic action | "compares two values for equality" |
+| `side_effect` | External state changes | "writes to file system" |
+| `edge_case` | Special handling | "returns false for null input" |
+
+**Claim types (adapted from compare-docs):**
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| `simple` | Single atomic statement | "returns string length" |
+| `conjunction` | Multiple behaviors (AND) | "trims whitespace and converts to lowercase" |
+| `conditional` | If-then behavior | "if input is null, returns empty string" |
+| `negation` | What it does NOT do | "does_not throw exception on null" |
+
+**Extraction schema:**
 
 ```json
 {
   "method": "ProcessRunner.readAllLines",
   "claims": [
-    {"type": "precondition", "text": "accepts BufferedReader and StringBuilder"},
-    {"type": "behavior", "text": "reads all lines until end of stream"},
-    {"type": "behavior", "text": "appends each line to StringBuilder"},
-    {"type": "behavior", "text": "inserts newline between lines"}
+    {"category": "input", "type": "simple", "text": "accepts reader and output buffer"},
+    {"category": "behavior", "type": "simple", "text": "reads all lines from stream"},
+    {"category": "behavior", "type": "simple", "text": "appends content to buffer"},
+    {"category": "behavior", "type": "simple", "text": "separates lines with newline"},
+    {"category": "edge_case", "type": "conditional", "text": "if stream empty, buffer unchanged"}
   ],
-  "summary": "reads all lines from reader into StringBuilder with newline separators"
+  "summary": "reads all lines from reader into buffer with newline separators",
+  "confidence": "high"
 }
 ```
 
-### Claim Normalization
+**Confidence levels:**
+- `high`: Clear, unambiguous function behavior
+- `medium`: Some inference required (e.g., implicit nullability)
+- `low`: Complex logic with multiple code paths
+
+**Extraction prompt (LLM):**
+
+```
+Extract semantic claims from this function. Focus on WHAT it does, not HOW.
+
+Rules:
+1. Use abstract terms: "collection" not "ArrayList", "reader" not "BufferedReader"
+2. Normalize verbs to present tense: "reads", "returns", "computes"
+3. One claim per distinct behavior
+4. Include edge cases only if explicitly handled
+5. Mark confidence based on code clarity
+
+Categories: input, output, behavior, side_effect, edge_case
+Types: simple, conjunction, conditional, negation
+
+Function:
+{code}
+```
+
+### Claim Normalization (Reused from compare-docs)
+
+**Normalization pipeline:**
+1. Lowercase all text
+2. Tokenize on whitespace and punctuation
+3. Apply tense normalization (verbs → present tense)
+4. Apply synonym mapping
+5. Apply negation standardization
+6. Remove stopwords
+7. Apply stemming
+8. Generate bigrams for order sensitivity
 
 ```python
-SYNONYMS = {
-    "none": "null", "nil": "null",
-    "input": "parameter", "argument": "parameter",
-    "list": "collection", "array": "collection", "slice": "collection",
-    "iterates": "iterate", "loops": "iterate",
-    "appends": "append", "adds": "append",
+# Tense normalization (verbs → present tense base form)
+TENSE_MAP = {
+    "reads": "read", "reading": "read",
+    "writes": "write", "writing": "write", "written": "write",
+    "returns": "return", "returning": "return", "returned": "return",
+    "throws": "throw", "throwing": "throw", "thrown": "throw",
+    "computes": "compute", "computing": "compute", "computed": "compute",
+    "creates": "create", "creating": "create", "created": "create",
+    "converts": "convert", "converting": "convert", "converted": "convert",
+    "validates": "validate", "validating": "validate", "validated": "validate",
+    "checks": "check", "checking": "check", "checked": "check",
+    "iterates": "iterate", "iterating": "iterate", "iterated": "iterate",
+    "appends": "append", "appending": "append", "appended": "append",
 }
+
+# Expanded synonym mapping
+SYNONYMS = {
+    # Null-related
+    "none": "null", "nil": "null", "nothing": "null", "undefined": "null",
+    # Parameters
+    "input": "parameter", "argument": "parameter", "arg": "parameter", "param": "parameter",
+    # Collections
+    "list": "collection", "array": "collection", "slice": "collection",
+    "set": "collection", "sequence": "collection", "iterable": "collection",
+    # Iteration
+    "iterates": "iterate", "loops": "iterate", "traverses": "iterate", "walks": "iterate",
+    # Adding
+    "appends": "append", "adds": "append", "pushes": "append", "inserts": "append",
+    # Comparison
+    "equals": "equal", "matches": "equal", "same": "equal", "identical": "equal",
+    # Boolean
+    "true": "true", "yes": "true", "truthy": "true",
+    "false": "false", "no": "false", "falsy": "false",
+    # String operations
+    "concatenates": "concat", "joins": "concat", "combines": "concat",
+    "trims": "trim", "strips": "trim",
+    # Errors
+    "throws": "throw", "raises": "throw", "signals": "throw",
+    "exception": "error", "fault": "error", "failure": "error",
+}
+
+# Negation standardization (multi-word → single token)
+NEGATION_PATTERNS = [
+    ("does not", "does_not"),
+    ("do not", "does_not"),
+    ("doesn't", "does_not"),
+    ("don't", "does_not"),
+    ("is not", "is_not"),
+    ("isn't", "is_not"),
+    ("cannot", "can_not"),
+    ("can't", "can_not"),
+    ("never", "does_not"),
+    ("no ", "does_not "),  # "no exception" → "does_not exception"
+]
+
+STOPWORDS = {'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been',
+             'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+             'would', 'could', 'should', 'may', 'might', 'must', 'shall',
+             'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from',
+             'as', 'into', 'through', 'during', 'before', 'after', 'above',
+             'below', 'between', 'under', 'again', 'further', 'then', 'once',
+             'and', 'but', 'or', 'nor', 'so', 'yet', 'both', 'each', 'few',
+             'more', 'most', 'other', 'some', 'such', 'only', 'own', 'same',
+             'than', 'too', 'very', 'just', 'also', 'now', 'here', 'there',
+             'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each',
+             'it', 'its', 'this', 'that', 'these', 'those', 'what', 'which',
+             'who', 'whom', 'whose'}
 
 def normalize_claim(claim: str) -> tuple[set[str], set[str]]:
     """Returns (tokens, bigrams) for order-sensitive comparison."""
-    tokens = tokenize(claim.lower())
-    tokens = [SYNONYMS.get(t, t) for t in tokens if t not in STOPWORDS]
-    tokens = [stem(t) for t in tokens]
+    text = claim.lower()
+
+    # Apply negation standardization first
+    for pattern, replacement in NEGATION_PATTERNS:
+        text = text.replace(pattern, replacement)
+
+    tokens = tokenize(text)
+    tokens = [TENSE_MAP.get(t, t) for t in tokens]  # Tense normalization
+    tokens = [SYNONYMS.get(t, t) for t in tokens]   # Synonym mapping
+    tokens = [t for t in tokens if t not in STOPWORDS]  # Remove stopwords
+    tokens = [stem(t) for t in tokens]              # Stemming
+
     bigrams = {f"{tokens[i]}_{tokens[i+1]}" for i in range(len(tokens)-1)}
     return set(tokens), bigrams
+```
+
+### Claim Relationships (Future Enhancement)
+
+Relationships between claims can improve matching precision by capturing semantic structure.
+Not implemented in v1, but the extraction schema supports future extension.
+
+| Relationship | Description | Example |
+|--------------|-------------|---------|
+| `precondition→behavior` | Input constraint enables behavior | "accepts non-null string" → "computes hash" |
+| `condition→effect` | Conditional triggers outcome | "if input empty" → "returns zero" |
+| `input→output` | Input type determines output | "accepts collection" → "returns count" |
+| `behavior→side_effect` | Action causes external change | "writes data" → "modifies file" |
+
+**Extraction format (optional, for future use):**
+
+```json
+{
+  "relationships": [
+    {"from": 0, "to": 1, "type": "precondition→behavior"},
+    {"from": 2, "to": 3, "type": "condition→effect"}
+  ]
+}
 ```
 
 ### Similarity Computation (Algorithmic, No LLM)
@@ -518,7 +671,11 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 
 ## Acceptance Criteria
 
+- [ ] Claim extraction extracts WHAT (semantic meaning), not HOW (implementation)
+- [ ] Claim extraction uses categories: input, output, behavior, side_effect, edge_case
+- [ ] Claim extraction uses types: simple, conjunction, conditional, negation
 - [ ] Claim extraction works with temperature=0 for determinism
+- [ ] Normalization includes tense normalization, synonym mapping, negation standardization
 - [ ] Jaccard + bigram similarity correctly identifies duplicates (≥0.9) and non-duplicates (<0.9)
 - [ ] SQLite index with token/bigram tables for O(log n) lookups
 - [ ] SQLite DB is git-tracked (each commit has matching index state)
@@ -538,13 +695,20 @@ def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float =
 1. **Create claim extraction module**
    - Files: `plugin/lib/claim_extraction.py`
    - Implement LLM-based extraction with temp=0
-   - Define claim schema (precondition, behavior, postcondition, side_effect)
+   - Extract WHAT (semantic meaning), not HOW (implementation)
+   - Claim categories: input, output, behavior, side_effect, edge_case
+   - Claim types: simple, conjunction, conditional, negation
+   - Include confidence scoring (high/medium/low)
    - Verify: Unit tests for extraction
 
 2. **Create similarity module**
    - Files: `plugin/lib/claim_similarity.py`
-   - Implement normalization with synonyms and stemming
-   - Implement Jaccard with bigrams
+   - Implement normalization pipeline (from compare-docs):
+     - Tense normalization (verbs → present tense)
+     - Expanded synonym mapping
+     - Negation standardization ("does not" → "does_not")
+     - Stopword removal, stemming
+   - Implement Jaccard with bigrams for order sensitivity
    - Verify: Test with 9 validated pairs
 
 3. **Create SQLite index management**
