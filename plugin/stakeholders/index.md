@@ -12,6 +12,7 @@ Multi-perspective code review through specialized stakeholder agents.
 | design | Code quality | Duplication, complexity, maintainability, bugs |
 | testing | Test coverage | Missing tests, edge cases, test quality |
 | performance | Efficiency | Algorithm complexity, memory, resource usage |
+| deployment | Build/release readiness | CI/CD compatibility, configuration, migrations, versioning |
 | ux | User experience | Usability, accessibility, interaction design, user feedback |
 | sales | Sales readiness | Customer value, competitive positioning, demo-readiness, objections |
 | marketing | Market readiness | Positioning, messaging, target audience, go-to-market strategy |
@@ -34,9 +35,9 @@ Stakeholders run in research mode **automatically** during:
 
 | Command | Trigger | What Happens |
 |---------|---------|--------------|
-| `/cat:add` (major version) | After discuss step | All 10 stakeholders research the domain in parallel |
-| `/cat:add` (minor version) | After discuss step | All 10 stakeholders research the domain in parallel |
-| `/cat:research` | Manual invocation | All 10 stakeholders research specific topic |
+| `/cat:add` (major version) | After discuss step | All 11 stakeholders research the domain in parallel |
+| `/cat:add` (minor version) | After discuss step | All 11 stakeholders research the domain in parallel |
+| `/cat:research` | Manual invocation | All 11 stakeholders research specific topic |
 
 **Research output** is merged into the `## Research` section of PLAN.md.
 
@@ -46,8 +47,8 @@ Stakeholders run in review mode during:
 
 | Command | Trigger | What Happens |
 |---------|---------|--------------|
-| `/cat:work` | After implementation complete | All 10 stakeholders review code in parallel |
-| `/cat:stakeholder-review` | Manual invocation | All 10 stakeholders review specified changes |
+| `/cat:work` | After implementation complete | All 11 stakeholders review code in parallel |
+| `/cat:stakeholder-review` | Manual invocation | All 11 stakeholders review specified changes |
 
 **Review output** determines if implementation can proceed to merge.
 
@@ -61,6 +62,7 @@ Stakeholders run in review mode during:
 | **design** | Best practices, anti-patterns, maintainability patterns | Duplication, complexity, dead code, obvious bugs |
 | **testing** | Testing strategies, edge cases to anticipate, test data needs | Missing tests, broken tests, coverage gaps |
 | **performance** | Performance characteristics, efficient patterns, scaling concerns | Algorithm complexity, memory leaks, blocking operations |
+| **deployment** | CI/CD patterns, deployment strategies, release processes | Build breakage, pipeline failures, missing configuration |
 | **ux** | UX patterns, usability considerations, accessibility requirements | Broken flows, missing feedback, accessibility barriers |
 | **sales** | Customer value, competitive positioning, objection handling | Value delivery, demo-readiness, competitive disadvantage |
 | **marketing** | Positioning, messaging, target audience, go-to-market | Marketability, differentiation, naming, launch readiness |
