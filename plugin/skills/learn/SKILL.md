@@ -81,6 +81,7 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 | Cost/efficiency concerns | "This spawns 2 subagents..." | Agent takes shortcuts |
 | Internal prompts exposed | "Agent Prompt Template: ..." | Agent applies directly |
 | Expected value in output (M274) | "OUTPUT FORMAT: validation_score: 1.0 (required)" | Agent reports expected value, not actual |
+| Rendered output example (M320) | "The banner looks like: ┌─ 🐱..." | Agent constructs instead of running script |
 
 **For subagent mistakes, ALSO check the Issue prompt that spawned it (M274):**
 
