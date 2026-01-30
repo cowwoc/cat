@@ -2024,6 +2024,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Always invoke AskUserQuestion at approval_gate step unless trust=high. The 'auto-continue' refers to proceeding to next task after approval, not skipping approval."
+    },
+    {
+      "id": "M319",
+      "timestamp": "2026-01-30T23:45:00Z",
+      "category": "protocol_violation",
+      "description": "Wrote informal markdown headers instead of running get-progress-banner.sh script at phase transitions",
+      "root_cause": "Documentation mentions the script in bash code blocks but agent wrote informal 'Phase 1: Prepare' markdown instead of actually running the script. The instruction was embedded in bash code rather than being a prominent standalone requirement.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-prepare.md",
+      "pattern_keywords": [
+        "progress banner",
+        "get-progress-banner.sh",
+        "phase transition",
+        "visual feedback",
+        "M314",
+        "M315"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run get-progress-banner.sh script at each phase transition and output the banner directly (not in code blocks) for visual feedback to user"
     }
   ]
 }
