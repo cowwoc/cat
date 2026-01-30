@@ -130,54 +130,119 @@ def method_similarity(claims_a: list, claims_b: list) -> float:
     return 0.7 * token_sim + 0.3 * bigram_sim
 ```
 
-### Index Storage (Git-Tracked JSON)
+### Index Storage (SQLite + Manifest)
 
-Store at `.claude/cat/claim-index.json`:
+**Why SQLite over JSON:**
+- O(log n) indexed queries vs O(n) linear scan
+- Only loads pages needed, not entire file
+- Native FTS5 for text search
+- Scales to 50K+ methods
+
+**Storage layout:**
+
+```
+.claude/cat/
+├── claim-index.db          ← SQLite database (git-ignored)
+├── claim-index.manifest    ← JSON manifest (git-tracked, small)
+└── ...
+
+.gitignore:
+  .claude/cat/claim-index.db
+```
+
+**Manifest format (git-tracked):**
 
 ```json
 {
   "version": "1.0",
   "extracted_with": "claude-sonnet-4-20250514",
-  "methods": {
-    "plugin/hooks/util/GitCommands.java::readAllLines(BufferedReader,StringBuilder)": {
-      "file_hash": "a1b2c3d4...",
-      "language": "java",
-      "claims": [
-        {"type": "precondition", "text": "accepts bufferedreader and stringbuilder"},
-        {"type": "behavior", "text": "reads all lines until end of stream"},
-        {"type": "behavior", "text": "appends each line to stringbuilder"},
-        {"type": "behavior", "text": "inserts newline between lines"}
-      ],
-      "tokens": ["accept", "bufferedread", "stringbuild", "read", "line", "stream", "append", "newline"],
-      "bigrams": ["read_line", "line_stream", "append_stringbuild"]
-    }
-  },
-  "jdk_patterns": {
-    "Objects.equals": {
-      "claims": [{"type": "behavior", "text": "null-safe equality comparison"}],
-      "tokens": ["null", "safe", "equal", "compare"],
-      "recommendation": "Use Objects.equals(a, b) instead"
-    },
-    "Objects.requireNonNull": {
-      "claims": [{"type": "behavior", "text": "throws if argument is null"}],
-      "tokens": ["throw", "argument", "null", "check"],
-      "recommendation": "Use Objects.requireNonNull(obj, message) instead"
-    }
+  "file_hashes": {
+    "plugin/hooks/util/GitCommands.java": "a1b2c3d4...",
+    "plugin/hooks/util/ProcessRunner.java": "d4e5f6a7..."
   }
 }
 ```
 
-**Why JSON over SQLite:**
-- Git diffs are readable
-- Merge conflicts are resolvable
-- No binary file issues
-- Sufficient performance for <10K methods
+**SQLite schema:**
+
+```sql
+-- Methods table
+CREATE TABLE methods (
+    id INTEGER PRIMARY KEY,
+    file_path TEXT NOT NULL,
+    method_name TEXT NOT NULL,
+    signature TEXT,
+    language TEXT,
+    claims_json TEXT NOT NULL,
+    summary TEXT,
+    file_hash TEXT NOT NULL
+);
+CREATE INDEX idx_file_path ON methods(file_path);
+CREATE INDEX idx_file_hash ON methods(file_hash);
+
+-- Token inverted index for fast candidate retrieval
+CREATE TABLE tokens (
+    token TEXT NOT NULL,
+    method_id INTEGER NOT NULL,
+    FOREIGN KEY (method_id) REFERENCES methods(id)
+);
+CREATE INDEX idx_token ON tokens(token);
+
+-- Bigram index for order-sensitive matching
+CREATE TABLE bigrams (
+    bigram TEXT NOT NULL,
+    method_id INTEGER NOT NULL,
+    FOREIGN KEY (method_id) REFERENCES methods(id)
+);
+CREATE INDEX idx_bigram ON bigrams(bigram);
+
+-- JDK/stdlib patterns (pre-populated)
+CREATE TABLE jdk_patterns (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    tokens_json TEXT NOT NULL,
+    recommendation TEXT NOT NULL
+);
+```
+
+**Regeneration strategy:**
+
+The index is derived data - regenerated from source when stale:
+
+```python
+def ensure_index_current(db_path: str, manifest_path: str):
+    """Ensure SQLite index matches current codebase state."""
+    manifest = json.load(open(manifest_path))
+
+    stale_files = []
+    for file_path, stored_hash in manifest['file_hashes'].items():
+        if not os.path.exists(file_path):
+            # File deleted - remove from index
+            remove_file_from_index(db, file_path)
+            del manifest['file_hashes'][file_path]
+        elif hash_file(file_path) != stored_hash:
+            stale_files.append(file_path)
+
+    # Check for new files not in manifest
+    for file_path in find_source_files():
+        if file_path not in manifest['file_hashes']:
+            stale_files.append(file_path)
+
+    if stale_files:
+        # Re-index only changed files (LLM calls for claim extraction)
+        for f in stale_files:
+            reindex_file(db, f)  # Extracts claims, normalizes, stores
+            manifest['file_hashes'][f] = hash_file(f)
+
+        json.dump(manifest, open(manifest_path, 'w'), indent=2)
+```
 
 ### Fast Lookup Algorithm
 
 ```python
-def find_duplicates(index: dict, new_claims: list, threshold: float = 0.9):
-    """Find potential duplicates. No LLM calls."""
+def find_duplicates(db: sqlite3.Connection, new_claims: list, threshold: float = 0.9):
+    """Find potential duplicates using indexed lookup. No LLM calls."""
+    # Normalize new method's claims
     new_tokens, new_bigrams = set(), set()
     for c in new_claims:
         t, b = normalize_claim(c['text'])
@@ -186,36 +251,64 @@ def find_duplicates(index: dict, new_claims: list, threshold: float = 0.9):
 
     candidates = []
 
-    # Check JDK patterns first (fast)
-    for pattern_name, pattern in index['jdk_patterns'].items():
-        score = jaccard(new_tokens, set(pattern['tokens']))
+    # Stage 1: Fast candidate retrieval via token index
+    # Find methods sharing at least one token (indexed lookup)
+    placeholders = ','.join('?' * len(new_tokens))
+    candidate_ids = db.execute(f"""
+        SELECT method_id, COUNT(*) as shared_count
+        FROM tokens
+        WHERE token IN ({placeholders})
+        GROUP BY method_id
+        HAVING shared_count >= ?
+    """, (*new_tokens, len(new_tokens) * 0.3)).fetchall()  # 30% overlap minimum
+
+    # Stage 2: Full Jaccard comparison only for candidates
+    for method_id, _ in candidate_ids:
+        method_tokens = {r[0] for r in db.execute(
+            "SELECT token FROM tokens WHERE method_id = ?", (method_id,)
+        )}
+        method_bigrams = {r[0] for r in db.execute(
+            "SELECT bigram FROM bigrams WHERE method_id = ?", (method_id,)
+        )}
+
+        score = 0.7 * jaccard(new_tokens, method_tokens) + \
+                0.3 * jaccard(new_bigrams, method_bigrams)
+
+        if score >= threshold:
+            method_info = db.execute(
+                "SELECT file_path, method_name FROM methods WHERE id = ?",
+                (method_id,)
+            ).fetchone()
+            candidates.append({
+                'type': 'codebase',
+                'file': method_info[0],
+                'method': method_info[1],
+                'score': score
+            })
+
+    # Also check JDK patterns (small table, full scan is fine)
+    for row in db.execute("SELECT name, tokens_json, recommendation FROM jdk_patterns"):
+        pattern_tokens = set(json.loads(row[1]))
+        score = jaccard(new_tokens, pattern_tokens)
         if score >= threshold:
             candidates.append({
                 'type': 'jdk',
-                'name': pattern_name,
+                'name': row[0],
                 'score': score,
-                'recommendation': pattern['recommendation']
-            })
-
-    # Check codebase methods
-    for method_id, method in index['methods'].items():
-        # Quick filter: must share at least 50% of tokens
-        token_overlap = len(new_tokens & set(method['tokens'])) / len(new_tokens)
-        if token_overlap < 0.5:
-            continue
-
-        # Full comparison
-        score = 0.7 * jaccard(new_tokens, set(method['tokens'])) + \
-                0.3 * jaccard(new_bigrams, set(method['bigrams']))
-        if score >= threshold:
-            candidates.append({
-                'type': 'codebase',
-                'method': method_id,
-                'score': score
+                'recommendation': row[2]
             })
 
     return sorted(candidates, key=lambda x: -x['score'])
 ```
+
+**Performance characteristics:**
+
+| Operation | Complexity | 10K methods |
+|-----------|------------|-------------|
+| Token lookup | O(log n) | <1ms |
+| Candidate filtering | O(k) where k = candidates | ~5ms |
+| Full comparison | O(k) | ~10ms |
+| **Total query time** | | **<20ms** |
 
 ## Risk Assessment
 
@@ -235,21 +328,26 @@ def find_duplicates(index: dict, new_claims: list, threshold: float = 0.9):
 | File | Action | Purpose |
 |------|--------|---------|
 | `plugin/stakeholders/design.md` | Modify | Add duplicate detection instructions |
-| `plugin/lib/claim_index.py` | Create | Index management and lookup |
-| `plugin/lib/claim_extraction.py` | Create | LLM-based claim extraction |
-| `plugin/lib/claim_similarity.py` | Create | Jaccard + bigram comparison |
-| `plugin/data/jdk_patterns.json` | Create | Pre-built JDK/stdlib patterns |
-| `.claude/cat/claim-index.json` | Create | Per-project method index |
+| `plugin/lib/claim_index.py` | Create | SQLite index management, regeneration |
+| `plugin/lib/claim_extraction.py` | Create | LLM-based claim extraction (temp=0) |
+| `plugin/lib/claim_similarity.py` | Create | Normalization, Jaccard + bigrams |
+| `plugin/data/jdk_patterns.sql` | Create | Pre-built JDK/stdlib patterns (SQL inserts) |
+| `.claude/cat/claim-index.db` | Create | SQLite database (git-ignored) |
+| `.claude/cat/claim-index.manifest` | Create | File hashes manifest (git-tracked) |
+| `.gitignore` | Modify | Add claim-index.db to ignore list |
 
 ## Acceptance Criteria
 
 - [ ] Claim extraction works with temperature=0 for determinism
 - [ ] Jaccard + bigram similarity correctly identifies duplicates (≥0.9) and non-duplicates (<0.9)
-- [ ] Index persists in `.claude/cat/claim-index.json` and is git-tracked
+- [ ] SQLite index with token/bigram tables for O(log n) lookups
+- [ ] Manifest tracks file hashes, enables incremental re-indexing
+- [ ] Index regenerates automatically when files change (stale detection)
 - [ ] JDK patterns (Objects.equals, etc.) are pre-built and checked first
 - [ ] Design stakeholder integrates duplicate check in review workflow
 - [ ] LLM verification only triggered for scores ≥0.9 (rare)
 - [ ] Cross-language duplicates detected (Java/Python/TypeScript/Go)
+- [ ] Query time <20ms for 10K method codebase
 - [ ] Tests written and passing
 - [ ] No regressions
 
@@ -267,28 +365,36 @@ def find_duplicates(index: dict, new_claims: list, threshold: float = 0.9):
    - Implement Jaccard with bigrams
    - Verify: Test with 9 validated pairs
 
-3. **Create index management**
+3. **Create SQLite index management**
    - Files: `plugin/lib/claim_index.py`
-   - Implement JSON-based index CRUD
-   - Implement fast lookup with token pre-filtering
-   - Verify: Index round-trip tests
+   - Implement schema creation (methods, tokens, bigrams, jdk_patterns)
+   - Implement manifest-based stale detection
+   - Implement incremental re-indexing for changed files only
+   - Implement fast candidate lookup via token index
+   - Verify: Query time <20ms on 1K method test set
 
 4. **Create JDK patterns database**
-   - Files: `plugin/data/jdk_patterns.json`
-   - Add common patterns: Objects.equals, Objects.requireNonNull, Optional methods, Collections utilities
-   - Verify: Patterns load correctly
+   - Files: `plugin/data/jdk_patterns.sql`
+   - Add common patterns: Objects.equals, Objects.requireNonNull, Optional methods
+   - Add Collections utilities, String utilities
+   - Verify: Patterns inserted on DB initialization
 
-5. **Integrate into design stakeholder**
+5. **Update .gitignore**
+   - Add `.claude/cat/claim-index.db` to project .gitignore template
+   - Ensure manifest is NOT ignored
+   - Verify: `git status` shows manifest tracked, db ignored
+
+6. **Integrate into design stakeholder**
    - Files: `plugin/stakeholders/design.md`
    - Add duplicate detection to review checklist
    - Define violation format with location and recommendation
    - Verify: Stakeholder correctly flags test duplicates
 
-6. **Add indexing command (optional)**
-   - Consider: `/cat:index-claims` for manual indexing
-   - Or: Auto-index during first review
+7. **Add indexing command (optional)**
+   - Consider: `/cat:index-claims` for manual full re-index
+   - Default: Auto-index on first review, incremental thereafter
    - Verify: Index populated correctly
 
-7. **Run full test suite**
+8. **Run full test suite**
    - Verify: `python3 /workspace/run_tests.py`
    - Verify: No regressions in existing functionality
