@@ -56,32 +56,32 @@ class WorkHandler:
     """Handler for /cat:work skill."""
 
     def _build_no_executable_tasks(self) -> str:
-        """Build No executable tasks info box."""
+        """Build No executable issues info box."""
         return build_simple_box(
             "ℹ️",
-            "No executable tasks",
+            "No executable issues",
             [
                 "",
-                "Run /cat:status to see available tasks",
+                "Run /cat:status to see available issues",
             ]
         )
 
     def _build_task_not_found(self) -> str:
-        """Build Task not found box with suggestion placeholder."""
+        """Build Issue not found box with suggestion placeholder."""
         return build_simple_box(
             "❓",
-            "Task \"{task-name}\" not found",
+            "Issue \"{issue-name}\" not found",
             [
                 "",
                 "Did you mean: {suggestion}?",
-                "Run /cat:status to see all tasks",
+                "Run /cat:status to see all issues",
             ]
         )
 
     def _build_fork_in_the_road(self) -> str:
         """Build Fork in the road wizard box."""
         content_lines = [
-            "   Task: {task-name}",
+            "   Issue: {issue-name}",
             "",
             "   Multiple viable paths - how would you prefer to proceed?",
             "",
@@ -113,23 +113,23 @@ class WorkHandler:
         return "\n".join(lines)
 
     def _build_checkpoint_task_complete(self) -> str:
-        """Build Checkpoint: Task Complete box with metrics."""
+        """Build Checkpoint: Issue Complete box with metrics."""
         content_lines = [
             "",
-            "**Task:** {task-name}",
+            "**Issue:** {issue-name}",
             "",
         ]
         metrics_lines = [
             "**Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)",
         ]
         branch_lines = [
-            "**Branch:** {task-branch}",
+            "**Branch:** {issue-branch}",
             "",
         ]
 
         all_content = content_lines + metrics_lines + branch_lines
         content_widths = [display_width(c) for c in all_content]
-        header = "✅ **CHECKPOINT: Task Complete**"
+        header = "✅ **CHECKPOINT: Issue Complete**"
         header_width = display_width(header)
         max_width = max(max(content_widths) if content_widths else 0, header_width)
 
@@ -151,7 +151,7 @@ class WorkHandler:
         """Build Checkpoint: Feedback Applied box."""
         content_lines = [
             "",
-            "**Task:** {task-name}",
+            "**Issue:** {issue-name}",
             "**Feedback iteration:** {N}",
             "",
         ]
@@ -160,7 +160,7 @@ class WorkHandler:
             "**Total tokens (all iterations):** {total}K",
         ]
         branch_lines = [
-            "**Branch:** {task-branch}",
+            "**Branch:** {issue-branch}",
             "",
         ]
 
@@ -185,21 +185,21 @@ class WorkHandler:
         return "\n".join(lines)
 
     def _build_task_complete_with_next(self) -> str:
-        """Build Task Complete box for auto-continue mode (trust >= medium)."""
-        header = "✓ Task Complete"
+        """Build Issue Complete box for auto-continue mode (trust >= medium)."""
+        header = "✓ Issue Complete"
 
         content_lines = [
             "",
-            "**{task-name}** merged to main.",
+            "**{issue-name}** merged to main.",
             "",
         ]
 
         separator_content = [
-            "**Next:** {next-task-name}",
+            "**Next:** {next-issue-name}",
             "{goal from PLAN.md}",
             "",
             "Auto-continuing in 3s...",
-            "• Type \"stop\" to pause after this task",
+            "• Type \"stop\" to pause after this issue",
             "• Type \"abort\" to cancel immediately",
         ]
 
@@ -226,12 +226,12 @@ class WorkHandler:
         return "\n".join(lines)
 
     def _build_task_already_complete(self) -> str:
-        """Build Task Already Complete box for tasks found already implemented."""
-        header = "✓ Task Already Complete"
+        """Build Issue Already Complete box for issues found already implemented."""
+        header = "✓ Issue Already Complete"
 
         content_lines = [
             "",
-            "**{task-name}** was already implemented.",
+            "**{issue-name}** was already implemented.",
             "Commit: {commit-hash}",
             "",
             "STATE.md updated to reflect completion.",
@@ -239,11 +239,11 @@ class WorkHandler:
         ]
 
         separator_content = [
-            "**Next:** {next-task-name}",
+            "**Next:** {next-issue-name}",
             "{goal from PLAN.md}",
             "",
             "Auto-continuing in 3s...",
-            "• Type \"stop\" to pause after this task",
+            "• Type \"stop\" to pause after this issue",
             "• Type \"abort\" to cancel immediately",
         ]
 
@@ -275,7 +275,7 @@ class WorkHandler:
 
         content_lines = [
             "",
-            "**{scope description}** - all tasks complete!",
+            "**{scope description}** - all issues complete!",
             "",
             "{For minor: \"v0.5 complete\"}",
             "{For major: \"v0.x complete\"}",
@@ -297,17 +297,17 @@ class WorkHandler:
         return "\n".join(lines)
 
     def _build_task_complete_low_trust(self) -> str:
-        """Build Task Complete box for low trust (user must invoke)."""
-        header = "✓ Task Complete"
+        """Build Issue Complete box for low trust (user must invoke)."""
+        header = "✓ Issue Complete"
 
         content_lines = [
             "",
-            "**{task-name}** merged to main.",
+            "**{issue-name}** merged to main.",
             "",
         ]
 
         separator_content = [
-            "**Next Up:** {next-task-name}",
+            "**Next Up:** {next-issue-name}",
             "{goal from PLAN.md}",
             "",
             "`/clear` then `/cat:work` to continue",
@@ -347,7 +347,7 @@ class WorkHandler:
 
         summary_content = [
             "**Summary:**",
-            "• Tasks completed: {count}",
+            "• Issues completed: {count}",
             "",
             "**Before continuing, consider:**",
             "• Publishing/releasing this version",
@@ -358,7 +358,7 @@ class WorkHandler:
 
         next_version_content = [
             "**Next Version:** v{next-version}",
-            "{next-task-name}",
+            "{next-issue-name}",
             "",
         ]
 

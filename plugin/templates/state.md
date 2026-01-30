@@ -11,12 +11,12 @@
 |-------|---------------|-------------|
 | `Status` | Always | `pending`, `in_progress`, or `completed` |
 | `Progress` | Always | `0%` for pending, `100%` for completed |
-| `Dependencies` | Always | Task names this depends on; use `[]` if none |
+| `Dependencies` | Always | Issue names this depends on; use `[]` if none |
 | `Last Updated` | Pending only | Date of last state change |
 | `Resolution` | Completed only | `implemented`, `duplicate`, or `obsolete` |
 | `Completed` | Completed only | Completion date |
 | `Duplicate Of` | Duplicate only | Issue ID that implemented the fix |
-| `Reason` | Obsolete only | Why task is no longer needed |
+| `Reason` | Obsolete only | Why issue is no longer needed |
 
 ## Resolution Patterns
 
@@ -25,16 +25,16 @@
 - **Status:** completed
 - **Progress:** 100%
 - **Resolution:** implemented
-- **Dependencies:** [prerequisite-task]
+- **Dependencies:** [prerequisite-issue]
 - **Completed:** {{TIMESTAMP}}
 ```
 
-### Duplicate Task
+### Duplicate Issue
 ```yaml
 - **Status:** completed
 - **Progress:** 100%
 - **Resolution:** duplicate
-- **Duplicate Of:** v{major}.{minor}-{original-task-name}
+- **Duplicate Of:** v{major}.{minor}-{original-issue-name}
 - **Dependencies:** [shared-dependency]
 - **Completed:** {{TIMESTAMP}}
 
@@ -44,17 +44,17 @@ Explain WHY this is a duplicate - what investigation revealed.
 
 ## Verification
 
-List scenarios tested to confirm the duplicate task's fix covers this case:
+List scenarios tested to confirm the duplicate issue's fix covers this case:
 - Scenario A ✓
 - Scenario B ✓
 ```
 
-### Obsolete Task
+### Obsolete Issue
 ```yaml
 - **Status:** completed
 - **Progress:** 100%
 - **Resolution:** obsolete
-- **Reason:** {why task is no longer needed}
+- **Reason:** {why issue is no longer needed}
 - **Completed:** {{TIMESTAMP}}
 ```
 
@@ -78,7 +78,7 @@ List tests that already cover the functionality (if applicable).
 
 Add these sections ONLY when they provide unique value not captured elsewhere.
 
-### Investigation Updates (pending tasks)
+### Investigation Updates (pending issues)
 
 Use when investigation reveals new information AFTER PLAN.md was written:
 
@@ -95,7 +95,7 @@ Technical explanation of the issue...
 **When to use**: Only when findings differ from or extend PLAN.md content.
 Avoid duplicating information already in PLAN.md.
 
-### Verification Results (gate/validation tasks)
+### Verification Results (gate/validation issues)
 
 ```markdown
 ## Previous Run ({{DATE}})
@@ -109,9 +109,9 @@ Summary of what was tested and what needs to be fixed.
 
 | Resolution | When to Use | Commit? |
 |------------|-------------|---------|
-| `implemented` | Task completed (with or without code changes) | Yes if code changed |
-| `duplicate` | Another task already did this work | No - reference other task |
-| `obsolete` | Task no longer needed (requirements changed) | No |
+| `implemented` | Issue completed (with or without code changes) | Yes if code changed |
+| `duplicate` | Another issue already did this work | No - reference other issue |
+| `obsolete` | Issue no longer needed (requirements changed) | No |
 
 ## What Belongs Where
 
@@ -119,7 +119,7 @@ Summary of what was tested and what needs to be fixed.
 |-------------|----------|-------|
 | Problem analysis, approach | PLAN.md | Initial planning |
 | Solution summary, changes | Commit message | What was implemented |
-| Dependencies | STATE.md | Task ordering |
+| Dependencies | STATE.md | Issue ordering |
 | Investigation findings | STATE.md | Only if discovered AFTER plan |
 | Duplicate/obsolete explanation | STATE.md | Why resolution was chosen |
 | Verification results | STATE.md | Proof that resolution is valid |
@@ -127,12 +127,12 @@ Summary of what was tested and what needs to be fixed.
 
 ## Finding Commits
 
-For implemented tasks:
+For implemented issues:
 ```bash
-git log --oneline --grep="Issue ID: v{major}.{minor}-{task-name}"
+git log --oneline --grep="Issue ID: v{major}.{minor}-{issue-name}"
 ```
 
-For duplicate tasks, search for the original task's ID:
+For duplicate issues, search for the original issue's ID:
 ```bash
-git log --oneline --grep="Issue ID: v{major}.{minor}-{original-task-name}"
+git log --oneline --grep="Issue ID: v{major}.{minor}-{original-issue-name}"
 ```

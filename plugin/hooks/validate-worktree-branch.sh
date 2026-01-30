@@ -55,7 +55,7 @@ if $IS_WORKTREE; then
     fi
 fi
 
-# Check expected branch pattern for CAT tasks: {version}-{task-name}
+# Check expected branch pattern for CAT issues: {version}-{issue-name}
 # Supports: MAJOR (1), MAJOR.MINOR (1.0), MAJOR.MINOR.PATCH (1.0.0)
 if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
     # Source shared version utilities
@@ -70,13 +70,13 @@ if [[ "$CURRENT_BRANCH" != "main" && "$CURRENT_BRANCH" != "master" ]]; then
 
         # Validate using shared function
         if ! validate_version "$VERSION_PART"; then
-            # Only warn if this looks like it should be a task branch
-            if echo "$CURRENT_BRANCH" | grep -qE "^(task|feature|bugfix|hotfix)"; then
+            # Only warn if this looks like it should be an issue branch
+            if echo "$CURRENT_BRANCH" | grep -qE "^(issue|task|feature|bugfix|hotfix)"; then
                 echo "NOTE: Branch naming convention"
                 echo ""
                 echo "Current branch: $CURRENT_BRANCH"
-                echo "Expected pattern: {version}-{task-name}"
-                echo "Examples: 1-task, 1.0-task, 1.0.0-task"
+                echo "Expected pattern: {version}-{issue-name}"
+                echo "Examples: 1-issue, 1.0-issue, 1.0.0-issue"
             fi
         fi
     fi

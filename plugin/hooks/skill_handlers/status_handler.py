@@ -91,7 +91,7 @@ def build_progress_bar(percent: int, width: int = 25) -> str:
     """Build a progress bar string."""
     filled = percent * width // 100
     empty = width - filled
-    return '\u2588' * filled + '\u2591' * empty
+    return '█' * filled + '░' * empty
 
 
 def build_inner_box(header: str, content_items: list, forced_width: int = None) -> list:
@@ -112,8 +112,8 @@ def build_inner_box(header: str, content_items: list, forced_width: int = None) 
     remaining = inner_max - header_width - 1
     if remaining < 0:
         remaining = 0
-    dashes = '\u2500' * remaining if remaining > 0 else ''
-    inner_top = f"\u256d\u2500 {header} {dashes}\u256e"
+    dashes = '─' * remaining if remaining > 0 else ''
+    inner_top = f"╭─ {header} {dashes}╮"
 
     lines = [build_line(c, inner_max) for c in content_items]
     inner_bottom = build_border(inner_max, is_top=False)
@@ -135,7 +135,7 @@ STATUS_ALIASES = {
 
 
 def get_task_status(state_file: Path) -> str:
-    """Get task status from STATE.md file.
+    """Get issue status from STATE.md file.
 
     Returns canonical status value. Raises ValueError for unknown statuses (M253).
     """
@@ -176,7 +176,7 @@ def get_task_status(state_file: Path) -> str:
 
 
 def get_task_dependencies(state_file: Path) -> list:
-    """Get task dependencies from STATE.md file."""
+    """Get issue dependencies from STATE.md file."""
     if not state_file.exists():
         return []
 
@@ -186,7 +186,7 @@ def get_task_dependencies(state_file: Path) -> list:
         return []
 
     # Try "## Dependencies" section with list items
-    # Format: - task-name (reason)
+    # Format: - issue-name (reason)
     deps = []
     match = re.search(r'^## Dependencies\s*\n((?:- .+\n?)+)', content, re.MULTILINE)
     if match:
