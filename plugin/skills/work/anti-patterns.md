@@ -97,9 +97,9 @@ If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
 
 | Config | Setting | Behavior |
 |--------|---------|----------|
-| trust | high | Skip approval gate, auto-continue, auto-select approach |
-| trust | medium | Auto-continue, auto-fix on rejection (3 iterations) |
-| trust | low | Wait for user, ask on rejection |
+| trust | high | Skip approval gate, auto-continue to next task, auto-select approach |
+| trust | medium | Requires approval, auto-continue to next task, auto-fix on rejection (3 iterations) |
+| trust | low | Requires approval, wait for user to start next task, ask on rejection |
 | curiosity | low | "Focus ONLY on assigned task" |
 | curiosity | medium | "NOTE obvious issues, report in .completion.json" |
 | curiosity | high | "Actively look for issues, report ALL findings" |

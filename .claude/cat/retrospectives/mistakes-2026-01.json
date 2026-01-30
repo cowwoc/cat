@@ -1998,6 +1998,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Commit convention and infrastructure updates to base branch first, then rebase task branch to incorporate them"
+    },
+    {
+      "id": "M318",
+      "timestamp": "2026-01-30T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Skipped approval_gate step for 4 tasks despite trust=medium requiring user approval",
+      "root_cause": "Misinterpreted 'auto-continues when trust >= medium' as 'auto-approves' when it only means 'auto-continues to next task after approval'",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "approval_gate",
+        "trust_level",
+        "auto-continue",
+        "user_approval"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always invoke AskUserQuestion at approval_gate step unless trust=high. The 'auto-continue' refers to proceeding to next task after approval, not skipping approval."
     }
   ]
 }
