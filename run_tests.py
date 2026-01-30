@@ -239,21 +239,21 @@ def test_add_handler():
     result = handler.handle({"item_type": "invalid"})
     runner.test("Returns None for invalid item_type", result is None)
 
-    # Test task display
-    task_context = {
-        "item_type": "task",
+    # Test issue display
+    issue_context = {
+        "item_type": "issue",
         "item_name": "parse-tokens",
         "version": "2.0",
-        "task_type": "Feature",
+        "issue_type": "Feature",
         "dependencies": [],
     }
-    result = handler.handle(task_context)
-    runner.test("Task returns string", isinstance(result, str))
-    runner.test("Task contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT ADD DISPLAY" in result)
-    runner.test("Task contains task name", "parse-tokens" in result)
-    runner.test("Task contains version", "Version: 2.0" in result)
-    runner.test("Task contains checkmark", "✅" in result)
-    runner.test("Task has box structure", "╭" in result and "╯" in result)
+    result = handler.handle(issue_context)
+    runner.test("Issue returns string", isinstance(result, str))
+    runner.test("Issue contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT ADD DISPLAY" in result)
+    runner.test("Issue contains issue name", "parse-tokens" in result)
+    runner.test("Issue contains version", "Version: 2.0" in result)
+    runner.test("Issue contains checkmark", "✅" in result)
+    runner.test("Issue has box structure", "╭" in result and "╯" in result)
 
     # Test version display
     version_context = {
