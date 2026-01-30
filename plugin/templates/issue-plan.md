@@ -1,19 +1,19 @@
-# Task Plan Templates
+# Issue Plan Templates
 
-Select the appropriate template based on task type.
+Select the appropriate template based on issue type.
 
 ---
 
 ## Feature Template
 
 ```markdown
-# Plan: [Task Name]
+# Plan: [Issue Name]
 
 ## Goal
 [1-2 sentences: what this feature accomplishes]
 
 ## Satisfies
-[List requirement IDs from parent version PLAN.md, or "None" for infrastructure tasks]
+[List requirement IDs from parent version PLAN.md, or "None" for infrastructure issues]
 - REQ-001
 
 ## Approaches (optional - include if multiple viable paths exist)
@@ -58,7 +58,7 @@ Select the appropriate template based on task type.
 ## Bugfix Template
 
 ```markdown
-# Plan: [Task Name]
+# Plan: [Issue Name]
 
 ## Problem
 [1-2 sentences describing the bug]
@@ -102,7 +102,7 @@ code_that_fails();
 ## Refactor Template
 
 ```markdown
-# Plan: [Task Name]
+# Plan: [Issue Name]
 
 ## Current State
 [1-2 sentences - what exists now]

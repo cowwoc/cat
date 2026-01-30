@@ -1,7 +1,7 @@
 """
 Handler for /cat:add precomputation.
 
-Generates box displays for task and version creation completion.
+Generates box displays for issue and version creation completion.
 """
 
 from . import register_handler
@@ -16,11 +16,11 @@ class AddHandler:
         Generate output template display for add completion.
 
         Context keys:
-            - item_type: "task" or "version"
+            - item_type: "issue" or "version"
             - item_name: Name of the created item
-            - version: Version string (e.g., "2.0" for task, "2.1" for version)
-            - task_type: Type of task (Feature, Bugfix, etc.) - for tasks only
-            - dependencies: List of dependencies - for tasks only
+            - version: Version string (e.g., "2.0" for issue, "2.1" for version)
+            - issue_type: Type of issue (Feature, Bugfix, etc.) - for issues only
+            - dependencies: List of dependencies - for issues only
             - version_type: Type of version (major, minor, patch) - for versions only
             - parent_info: Parent version info - for versions only
             - path: Filesystem path to the created item
@@ -30,18 +30,18 @@ class AddHandler:
         if not item_type:
             return None
 
-        if item_type == "task":
-            return self._build_task_display(context)
+        if item_type == "issue":
+            return self._build_issue_display(context)
         elif item_type == "version":
             return self._build_version_display(context)
 
         return None
 
-    def _build_task_display(self, context: dict) -> str:
-        """Build display box for task creation."""
-        item_name = context.get("item_name", "unknown-task")
+    def _build_issue_display(self, context: dict) -> str:
+        """Build display box for issue creation."""
+        item_name = context.get("item_name", "unknown-issue")
         version = context.get("version", "0.0")
-        task_type = context.get("task_type", "Feature")
+        issue_type = context.get("issue_type", "Feature")
         dependencies = context.get("dependencies", [])
 
         deps_str = ", ".join(dependencies) if dependencies else "None"
@@ -51,11 +51,11 @@ class AddHandler:
             item_name,
             "",
             f"Version: {version}",
-            f"Type: {task_type}",
+            f"Type: {issue_type}",
             f"Dependencies: {deps_str}",
         ]
 
-        header = "\u2705 Task Created"
+        header = "✅ Issue Created"
         final_box = build_header_box(header, content_items, min_width=40, prefix="─ ")
 
         next_cmd = f"/cat:work {version}-{item_name}"
@@ -87,14 +87,14 @@ INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
         if path:
             content_items.append(f"Path: {path}")
 
-        header = "\u2705 Version Created"
+        header = "✅ Version Created"
         final_box = build_header_box(header, content_items, min_width=40, prefix="─ ")
 
         return f"""SCRIPT OUTPUT ADD DISPLAY::
 
 {final_box}
 
-Next: /clear, then /cat:add (to add tasks)
+Next: /clear, then /cat:add (to add issues)
 
 INSTRUCTION: Output the above box EXACTLY as shown. Do not recalculate."""
 

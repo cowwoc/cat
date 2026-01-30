@@ -4,15 +4,15 @@ Select the appropriate template based on work type.
 
 **MANDATORY:** All plans must include a Risk Assessment section with:
 - **Risk Level:** LOW | MEDIUM | HIGH (required for stakeholder review decisions)
-- Concerns/risks specific to the task type
+- Concerns/risks specific to the issue type
 - Mitigation strategy
 
 ---
 
 ## Minor Version PLAN.md Template
 
-Minor version PLAN.md defines the requirements for all tasks within that version.
-Tasks reference these requirements via their `Satisfies` field.
+Minor version PLAN.md defines the requirements for all issues within that version.
+Issues reference these requirements via their `Satisfies` field.
 
 ```markdown
 # Plan: v{major}.{minor} - [Version Name]
@@ -45,29 +45,29 @@ Tasks reference these requirements via their `Satisfies` field.
 - [pitfall 1]: [prevention]
 - [pitfall 2]: [prevention]
 
-## Tasks Overview
-[Brief description of how tasks divide the work for this version]
+## Issues Overview
+[Brief description of how issues divide the work for this version]
 ```
 
 ---
 
-## Task Templates
+## Issue Templates
 
-All task templates include a `Satisfies` field referencing requirements from the parent
-minor version's PLAN.md. Tasks may satisfy zero or more requirements.
+All issue templates include a `Satisfies` field referencing requirements from the parent
+minor version's PLAN.md. Issues may satisfy zero or more requirements.
 
 ---
 
 ## Feature Template
 
 ```markdown
-# Plan: [Task Name]
+# Plan: [Issue Name]
 
 ## Goal
 [1-2 sentences: what this feature accomplishes]
 
 ## Satisfies
-[List requirement IDs from parent minor version PLAN.md, or "None" for infrastructure tasks]
+[List requirement IDs from parent minor version PLAN.md, or "None" for infrastructure issues]
 - REQ-001
 - REQ-002
 
@@ -81,7 +81,7 @@ minor version's PLAN.md. Tasks may satisfy zero or more requirements.
 - path/to/file2.ext - [specific change]
 
 ## Dependencies
-- [task-name] - [why needed]
+- [issue-name] - [why needed]
 
 ## Acceptance Criteria
 - [ ] Criterion 1
@@ -107,11 +107,11 @@ minor version's PLAN.md. Tasks may satisfy zero or more requirements.
 
 ## Bugfix Template
 
-**MANDATORY (M122):** Bugfix plans MUST include reproduction code. Tasks must be self-contained
+**MANDATORY (M122):** Bugfix plans MUST include reproduction code. Issues must be self-contained
 and executable without external dependencies (e.g., external codebases, third-party repos).
 
 ```markdown
-# Plan: [Task Name]
+# Plan: [Issue Name]
 
 ## Problem
 [1-2 sentences describing the bug]
@@ -167,7 +167,7 @@ code_that_fails();
 ## Refactor Template
 
 ```markdown
-# Plan: [Task Name]
+# Plan: [Issue Name]
 
 ## Current State
 [1-2 sentences - what exists now]

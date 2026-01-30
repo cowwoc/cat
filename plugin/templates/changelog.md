@@ -1,7 +1,7 @@
 # Changelog: {version-name}
 
 > **NOTE**: This template is for MINOR and MAJOR version changelogs only.
-> Task-level changelogs are NOT created as separate files - task changelog content
+> Issue-level changelogs are NOT created as separate files - issue changelog content
 > is embedded in commit messages instead.
 
 **Completed**: {YYYY-MM-DD}
@@ -10,28 +10,28 @@
 
 [One-line description of what this version accomplished]
 
-## Tasks Completed
+## Issues Completed
 
-| Task | Type | Description | Resolution |
-|------|------|-------------|------------|
-| {task-name} | {type} | {brief description} | implemented |
-| {dup-task} | - | {what it duplicated} | duplicate of {orig-task} |
+| Issue | Type | Description | Resolution |
+|-------|------|-------------|------------|
+| {issue-name} | {type} | {brief description} | implemented |
+| {dup-issue} | - | {what it duplicated} | duplicate of {orig-issue} |
 
 **Resolution types:**
-- `implemented` - Task completed normally with its own commit
-- `duplicate of {task}` - Work done by another task
-- `obsolete` - Task no longer needed
+- `implemented` - Issue completed normally with its own commit
+- `duplicate of {issue}` - Work done by another issue
+- `obsolete` - Issue no longer needed
 
 ## Key Changes
 
-[High-level summary of the changes across all tasks]
+[High-level summary of the changes across all issues]
 
 - {Change 1}
 - {Change 2}
 
 ## Files Changed
 
-[Aggregate of files created/modified across all tasks]
+[Aggregate of files created/modified across all issues]
 
 ### Created
 - `{path/to/NewFile.java}` - {purpose}
@@ -41,7 +41,7 @@
 
 ## Technical Highlights
 
-[Notable technical decisions or patterns established across tasks]
+[Notable technical decisions or patterns established across issues]
 
 - {Highlight 1}
 - {Highlight 2}
@@ -62,20 +62,20 @@ Find all commits for this version:
 # For minor version 1.0:
 git log --oneline --grep="Issue ID: v1.0-"
 
-# For specific task within the version:
-git log --oneline --grep="Issue ID: v1.0-{task-name}"
+# For specific issue within the version:
+git log --oneline --grep="Issue ID: v1.0-{issue-name}"
 ```
 
-### Finding Commits for Duplicate Tasks
+### Finding Commits for Duplicate Issues
 
-Duplicate tasks have no commit with their own Issue ID. To find the resolving commit:
+Duplicate issues have no commit with their own Issue ID. To find the resolving commit:
 
-1. Check the task's STATE.md for the `Duplicate Of` field
-2. Search for that original task's ID:
+1. Check the issue's STATE.md for the `Duplicate Of` field
+2. Search for that original issue's ID:
 
 ```bash
-# If task-b is duplicate of v1.0-task-a:
-git log --oneline --grep="Issue ID: v1.0-task-a"
+# If issue-b is duplicate of v1.0-issue-a:
+git log --oneline --grep="Issue ID: v1.0-issue-a"
 ```
 
-See [task-resolution.md](../concepts/task-resolution.md) for details.
+See [issue-resolution.md](../concepts/issue-resolution.md) for details.

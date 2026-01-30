@@ -31,7 +31,7 @@
 |-------------|---------|---------|
 | Main | `main` | Production-ready code |
 | [Version] | `v{major}.{minor}` | [If applicable] |
-| [Task] | `{version}-{task-name}` | Individual work |
+| [Issue] | `{version}-{issue-name}` | Individual work |
 
 **Rules:**
 - [MUST/SHOULD/MAY rules for branching]

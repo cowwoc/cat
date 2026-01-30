@@ -6,12 +6,12 @@ package io.github.cowwoc.cat.hooks.skills;
 public enum ItemType
 {
   /**
-   * A task within a version.
+   * An issue within a version.
    */
-  TASK,
+  ISSUE,
 
   /**
-   * A version containing tasks.
+   * A version containing issues.
    */
   VERSION
 }
