@@ -70,16 +70,16 @@ tool calls from reviewers.
 
 **Context-Aware Stakeholder Selection**
 
-Analyze task context to determine which stakeholders are relevant, reducing token usage by skipping irrelevant reviewers.
+Analyze issue context to determine which stakeholders are relevant, reducing token usage by skipping irrelevant reviewers.
 
 ### Selection Algorithm
 
 ```
 RESEARCH MODE (pre-implementation):
 1. Start with base set: [requirements] (always included)
-2. Detect task type from PLAN.md or commit messages
-3. Apply task type inclusions/exclusions
-4. Scan task description/goal for keywords
+2. Detect issue type from PLAN.md or commit messages
+3. Apply issue type inclusions/exclusions
+4. Scan issue description/goal for keywords
 5. Apply keyword inclusions
 6. Check version PLAN.md for focus keywords
 7. Apply version focus inclusions
@@ -93,11 +93,11 @@ REVIEW MODE (post-implementation):
 4. Output: final_stakeholders, skipped_with_reasons, overridden_stakeholders
 ```
 
-### Task Type Mappings
+### Issue Type Mappings
 
-Detect task type from PLAN.md `## Type` field or infer from commit messages/description:
+Detect issue type from PLAN.md `## Type` field or infer from commit messages/description:
 
-| Task Type | Include | Exclude |
+| Issue Type | Include | Exclude |
 |-----------|---------|---------|
 | documentation | requirements | architect, security, design, testing, performance, ux, sales, marketing |
 | refactor | architect, design, testing | ux, sales, marketing |
@@ -106,7 +106,7 @@ Detect task type from PLAN.md `## Type` field or infer from commit messages/desc
 
 ### Keyword Mappings
 
-Scan task description, goal, and PLAN.md for keywords:
+Scan issue description, goal, and PLAN.md for keywords:
 
 | Keywords | Include |
 |----------|---------|
@@ -137,7 +137,7 @@ In review mode, file changes can override context exclusions:
 
 ### User Override: Force Stakeholders
 
-Users can force specific stakeholders by adding to task PLAN.md:
+Users can force specific stakeholders by adding to issue PLAN.md:
 
 ```markdown
 ## Force Stakeholders
@@ -155,16 +155,16 @@ SELECTED="requirements"
 SKIPPED=""
 OVERRIDDEN=""
 
-# Read task PLAN.md
-TASK_PLAN=$(cat .claude/cat/tasks/*/PLAN.md 2>/dev/null || echo "")
+# Read issue PLAN.md
+TASK_PLAN=$(cat .claude/cat/issues/*/PLAN.md 2>/dev/null || echo "")
 
 # Check for forced stakeholders
 FORCED=$(echo "$TASK_PLAN" | sed -n '/## Force Stakeholders/,/^##/p' | grep '^ *-' | sed 's/^ *- *//')
 
-# Detect task type
+# Detect issue type
 TASK_TYPE=$(echo "$TASK_PLAN" | grep -E '^## Type' -A1 | tail -1 | tr '[:upper:]' '[:lower:]' || echo "")
 if [[ -z "$TASK_TYPE" ]]; then
-    # Infer from commit messages or task name
+    # Infer from commit messages or issue name
     TASK_TYPE=$(git log -1 --pretty=%s 2>/dev/null | grep -oE '^(fix|feat|refactor|docs|perf)' | head -1)
     case "$TASK_TYPE" in
         docs) TASK_TYPE="documentation" ;;
@@ -173,7 +173,7 @@ if [[ -z "$TASK_TYPE" ]]; then
     esac
 fi
 
-# Apply task type mappings
+# Apply issue type mappings
 case "$TASK_TYPE" in
     documentation)
         EXCLUDED="architect security design testing performance ux sales marketing"
@@ -197,7 +197,7 @@ case "$TASK_TYPE" in
         ;;
 esac
 
-# Scan for keywords in task description
+# Scan for keywords in issue description
 TASK_TEXT=$(echo "$TASK_PLAN" | tr '[:upper:]' '[:lower:]')
 
 if echo "$TASK_TEXT" | grep -qE 'license|compliance|legal'; then
@@ -296,14 +296,14 @@ If file-based overrides occurred, add an "Overrides (file-based):" section insid
 | Stakeholder | Skip Reason Examples |
 |-------------|---------------------|
 | ux | No UI/frontend changes detected |
-| legal | No licensing/compliance keywords in task |
-| sales | Internal tooling task / No user-facing features |
-| marketing | Internal tooling task / No public API changes |
+| legal | No licensing/compliance keywords in issue |
+| sales | Internal tooling issue / No user-facing features |
+| marketing | Internal tooling issue / No public API changes |
 | performance | No algorithm-heavy code changes |
-| architect | Documentation-only task |
-| security | Documentation-only task / No source code changes |
-| design | Documentation-only task |
-| testing | Documentation-only task |
+| architect | Documentation-only issue |
+| security | Documentation-only issue / No source code changes |
+| design | Documentation-only issue |
+| testing | Documentation-only issue |
 
 </step>
 
@@ -346,8 +346,8 @@ fi
 **Stakeholder selection is now context-aware:**
 
 The `analyze_context` step determines which stakeholders run based on:
-1. Task type (documentation, refactor, bugfix, performance)
-2. Keywords in task description (license, UI, API, security, etc.)
+1. Issue type (documentation, refactor, bugfix, performance)
+2. Keywords in issue description (license, UI, API, security, etc.)
 3. Version focus (commercialization triggers legal/sales/marketing)
 4. File-based overrides (review mode only)
 5. User-forced stakeholders via `## Force Stakeholders` in PLAN.md
@@ -387,7 +387,7 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 Return ONLY valid JSON matching the format in your stakeholder definition.
 ```
 
-Use `/cat:spawn-subagent` or `Task` tool with subagent_type for each stakeholder.
+Use `/cat:spawn-subagent` or `Issue` tool with subagent_type for each stakeholder.
 
 </step>
 
@@ -483,7 +483,7 @@ For `trust: "low"`:
 2. Ask user how to proceed:
    - "Fix concerns" → Return to implementation phase with concern list
    - "Override and proceed" → Continue to user approval with concerns noted
-   - "Abort task" → Stop execution
+   - "Abort issue" → Stop execution
 
 For `trust: "medium"`:
 1. Automatically loop back to implementation phase with concern list
@@ -491,7 +491,7 @@ For `trust: "medium"`:
 3. Escalate to user only after 3 failed fix attempts
 
 **If CONCERNS:**
-1. Note concerns in task documentation
+1. Note concerns in issue documentation
 2. Proceed to user approval gate
 3. Include concern summary in approval presentation
 
@@ -567,7 +567,7 @@ fi
 
 **High-risk detection** (informational, for risk assessment display):
 - Risk section mentions "breaking change", "data loss", "security", "production"
-- Task modifies authentication, authorization, or payment code
-- Task touches 5+ files
-- Task modifies public APIs or interfaces
-- Task involves database schema changes
+- Issue modifies authentication, authorization, or payment code
+- Issue touches 5+ files
+- Issue modifies public APIs or interfaces
+- Issue involves database schema changes

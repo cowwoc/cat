@@ -404,7 +404,7 @@ Use `${VAR}` substitution after heredoc capture for dynamic content:
 ```bash
 # Capture template with placeholder
 MESSAGE=$(cat << 'MSGEOF'
-Task '$TASK_NAME' needs attention.
+Issue '$TASK_NAME' needs attention.
 
 Details follow...
 MSGEOF

@@ -16,7 +16,7 @@ measures including earlier decomposition.
 
 - Any mistake during CAT orchestration
 - Subagent produces incorrect/incomplete results
-- Task requires rework or correction
+- Issue requires rework or correction
 - Build/test/logical errors
 - Repeated attempts at same operation
 - Quality degradation over time
@@ -65,11 +65,11 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
   jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Skill") |
     .input.skill + " " + (.input.args // "")' 2>/dev/null
 
-# Find Task prompts (delegation prompts are documents too!) (M274)
-echo "=== Task Delegation Prompts ==="
+# Find Issue prompts (delegation prompts are documents too!) (M274)
+echo "=== Issue Delegation Prompts ==="
 grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Task") |
-    "Task: " + .input.description + "\n" + .input.prompt' 2>/dev/null
+  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Issue") |
+    "Issue: " + .input.description + "\n" + .input.prompt' 2>/dev/null
 ```
 
 **For each document, check for priming patterns:**
@@ -82,7 +82,7 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 | Internal prompts exposed | "Agent Prompt Template: ..." | Agent applies directly |
 | Expected value in output (M274) | "OUTPUT FORMAT: validation_score: 1.0 (required)" | Agent reports expected value, not actual |
 
-**For subagent mistakes, ALSO check the Task prompt that spawned it (M274):**
+**For subagent mistakes, ALSO check the Issue prompt that spawned it (M274):**
 
 The delegation prompt IS the primary "document" the subagent received. Check it for:
 - Expected values embedded in output format (e.g., "score: 1.0 (required)")
@@ -93,7 +93,7 @@ The delegation prompt IS the primary "document" the subagent received. Check it 
 
 ```yaml
 documentation_priming:
-  document: "{path to document OR 'Task prompt'}"
+  document: "{path to document OR 'Issue prompt'}"
   misleading_section: "{section name and line numbers OR 'OUTPUT FORMAT section'}"
   priming_type: "algorithm_exposure | output_format | cost_concern | internal_prompt | expected_value"
   how_it_misled: "Agent learned X, then applied it directly instead of invoking Y"
@@ -397,7 +397,7 @@ failed prevention. You must escalate to a level that will actually work.
 **Example - Documentation failed:**
 
 ```yaml
-# Situation: Workflow says "MANDATORY: Execute different task when locked"
+# Situation: Workflow says "MANDATORY: Execute different issue when locked"
 # Agent ignored it and tried to delete the lock
 
 # ❌ WRONG: Record prevention as "documentation" pointing to same workflow
@@ -409,7 +409,7 @@ prevention_type: hook
 prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/enforce-lock-protocol.sh"
 action: |
   Create hook that detects lock investigation patterns and blocks them.
-  Or: Modify issue-lock.sh to output ONLY "find another task" guidance,
+  Or: Modify issue-lock.sh to output ONLY "find another issue" guidance,
   removing any information that could be used to bypass the lock.
 ```
 
@@ -531,7 +531,7 @@ at the deepest level where they're relevant to maximize fix propagation.
 not `work.md` (generic workflow) because the per-file subagent pattern is shrink-doc-specific.
 
 **Verification question (M297):** Before committing a fix, ask: "Is this rule specific to one skill/context,
-or genuinely applies to all tasks?" If specific → find the skill doc. If generic → workflow doc is correct.
+or genuinely applies to all issues?" If specific → find the skill doc. If generic → workflow doc is correct.
 
 **Language requirements for documentation/prompt changes (M177):**
 
@@ -566,7 +566,7 @@ prevention_action:
   if_context_related:
     # Context limits are fixed - see agent-architecture.md § Context Limit Constants
     primary:
-      action: "Improve task size estimation"
+      action: "Improve issue size estimation"
       rationale: "Better estimates prevent exceeding limits"
 
     secondary:
@@ -575,12 +575,12 @@ prevention_action:
         At 50% context, pause and verify:
         - Is work quality consistent with early session?
         - Are earlier decisions still being referenced?
-        - Should task be decomposed now?
+        - Should issue be decomposed now?
 
     tertiary:
       action: "Enhance PLAN.md with explicit checkpoints"
       implementation: |
-        Add context-aware milestones to task plans.
+        Add context-aware milestones to issue plans.
         Each milestone = potential decomposition point.
 ```
 
@@ -615,7 +615,7 @@ BEFORE proceeding to "Record Learning", you MUST complete this gate:
 
 ```yaml
 verification:
-  action: "Rerun similar task with new threshold"
+  action: "Rerun similar issue with new threshold"
   success_criteria:
     - Decomposition triggered before 60K tokens
     - No quality degradation observed
@@ -891,7 +891,7 @@ analysis:
 
 prevention:
   type: earlier_decomposition
-  action: "Split task at 40K tokens, before degradation"
+  action: "Split issue at 40K tokens, before degradation"
 ```
 
 ### Non-Context-Related Mistake
@@ -950,7 +950,7 @@ five_whys:
   - "Why bad?" -> "Misunderstood requirements"
   - "Why misunderstood?" -> "Earlier context not referenced"
   - "Why not referenced?" -> "95K tokens, context pressure"
-  - "Why 95K tokens?" -> "Task not decomposed"
+  - "Why 95K tokens?" -> "Issue not decomposed"
 ```
 
 ### Distinguish context-related from non-context mistakes
@@ -993,7 +993,7 @@ prevention: "Lower threshold to 30%"
 # ✅ Verify prevention works
 prevention: "Lower threshold to 30%"
 verification:
-  - Run similar task
+  - Run similar issue
   - Confirm decomposition triggers at 30%
   - Confirm mistake type doesn't recur
 ```
@@ -1065,7 +1065,7 @@ automation that makes the incorrect behavior impossible or blocked.
 
 - `cat:run-retrospective` - Aggregate analysis triggered by this skill
 - `cat:token-report` - Provides data for context analysis
-- `cat:decompose-task` - Implements earlier decomposition
+- `cat:decompose-issue` - Implements earlier decomposition
 - `cat:monitor-subagents` - Catches context issues early
 - `cat:collect-results` - Preserves progress before intervention
 

@@ -133,12 +133,12 @@ The `feature:` and `refactor:` commits affect the same code (the Java handlers),
 Use the most appropriate type for the combined commit (here `config:` since it's plugin code).
 
 **What is NOT the same topic (keep separate):**
-- Learning/retrospective changes (M310) - these are meta-work, not task implementation
+- Learning/retrospective changes (M310) - these are meta-work, not issue implementation
 - Changes to shared infrastructure (build-verification.md, session instructions)
 - Convention updates that don't directly enable the implementation
 
 Even if commits share the same type prefix (e.g., `config:`), they may be different topics.
-The test: "Would reverting this commit break the task implementation?" If no, it's a different topic.
+The test: "Would reverting this commit break the issue implementation?" If no, it's a different topic.
 
 **Rationale:** Squashing by topic preserves meaningful history while reducing noise from incremental fixes.
 
@@ -320,7 +320,7 @@ git commit --amend --no-edit
 **CRITICAL: Follow commit grouping rules from [commit-types.md](../../concepts/commit-types.md).**
 
 Key rules when squashing:
-- **Task STATE.md** → same commit as implementation (M076)
+- **Issue STATE.md** → same commit as implementation (M076)
 - **Different commit types** (`feature:` vs `docs:`) → keep separate
 - **Related same-type commits** → can combine
 - **Implementation + refactor of same code** → combine into one commit
@@ -412,7 +412,7 @@ feature: add login form with validation
 Issue ID: v1.1-implement-user-auth
 ```
 
-**MANDATORY**: Include `Issue ID: v{major}.{minor}-{task-name}` as the last line.
+**MANDATORY**: Include `Issue ID: v{major}.{minor}-{issue-name}` as the last line.
 
 See `git-commit` skill for detailed message guidance.
 

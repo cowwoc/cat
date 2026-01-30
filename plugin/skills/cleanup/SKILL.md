@@ -46,7 +46,7 @@ Run all survey commands to gather current artifact state.
 git worktree list
 ```
 
-**Task locks:**
+**Issue locks:**
 ```bash
 if [[ -d .claude/cat/locks ]]; then
   "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" list "${CLAUDE_PROJECT_DIR}" 2>/dev/null
@@ -185,7 +185,7 @@ If uncommitted:
   "handler": "cleanup",
   "context": {
     "phase": "plan",
-    "locks_to_remove": ["<task-id>"],
+    "locks_to_remove": ["<issue-id>"],
     "worktrees_to_remove": [{"path": "<path>", "branch": "<branch>"}],
     "branches_to_remove": ["<branch-name>"],
     "stale_remotes": [{"branch": "<name>", "staleness": "<info>"}]
@@ -238,7 +238,7 @@ Report each action:
 ```
 ## Cleanup Progress
 
-- [x] Removed lock: <task-id>
+- [x] Removed lock: <issue-id>
 - [x] Removed worktree: <path>
 - [x] Removed branch: <branch>
 - [x] Removed context file
@@ -307,7 +307,7 @@ Do NOT copy any example boxes - use the handler output.
 
 ### Lock file blocking new execution
 
-**Symptoms:** "Task locked by another session" error but no active session
+**Symptoms:** "Issue locked by another session" error but no active session
 
 **Action:**
 1. Identify specific lock via survey

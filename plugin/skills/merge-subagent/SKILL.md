@@ -1,5 +1,5 @@
 ---
-description: Merge subagent branch into task branch with conflict resolution and cleanup
+description: Merge subagent branch into issue branch with conflict resolution and cleanup
 user-invocable: false
 ---
 
@@ -7,27 +7,27 @@ user-invocable: false
 
 ## Purpose
 
-Integrate a completed subagent's work back into the parent task branch. Handles the merge process,
+Integrate a completed subagent's work back into the parent issue branch. Handles the merge process,
 resolves conflicts if necessary, cleans up the subagent branch and worktree, and updates tracking
 state.
 
 ## When to Use
 
 - After `collect-results` confirms subagent work is ready
-- Subagent has completed its task successfully
+- Subagent has completed its issue successfully
 - Partial results from interrupted subagent need preservation
-- Ready to consolidate subagent work into main task flow
+- Ready to consolidate subagent work into main issue flow
 
 ## Concurrent Execution Safety
 
-This skill operates under the task lock held by `/cat:work`. Refresh the lock heartbeat for
+This skill operates under the issue lock held by `/cat:work`. Refresh the lock heartbeat for
 long-running merge operations:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" heartbeat "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-The task lock is released by `work` finalization step after all subagent work is merged.
+The issue lock is released by `work` finalization step after all subagent work is merged.
 
 ## Workflow
 
@@ -35,22 +35,22 @@ The task lock is released by `work` finalization step after all subagent work is
 
 ```bash
 SUBAGENT_ID="a1b2c3d4"
-TASK="1.2-implement-parser"
-SUBAGENT_BRANCH="${TASK}-sub-${SUBAGENT_ID}"
-TASK_BRANCH="${TASK}"
+ISSUE="1.2-implement-parser"
+SUBAGENT_BRANCH="${ISSUE}-sub-${SUBAGENT_ID}"
+TASK_BRANCH="${ISSUE}"
 WORKTREE=".worktrees/${SUBAGENT_BRANCH}"
 
 # Verify subagent results collected
 # Check parent STATE.md for ready_for_merge: true
 
-# Verify task branch exists
+# Verify issue branch exists
 git branch --list "${TASK_BRANCH}"
 
 # Verify subagent branch exists
 git branch --list "${SUBAGENT_BRANCH}"
 ```
 
-### 2. Checkout Task Branch
+### 2. Checkout Issue Branch
 
 ```bash
 # Return to main workspace (not worktree)
@@ -60,7 +60,7 @@ cd /workspace
 git status --porcelain
 # Should be empty or only untracked files
 
-# Checkout task branch
+# Checkout issue branch
 git checkout "${TASK_BRANCH}"
 
 # Ensure up to date
@@ -71,7 +71,7 @@ git pull origin "${TASK_BRANCH}" 2>/dev/null || true
 
 ```bash
 # Attempt merge
-git merge "${SUBAGENT_BRANCH}" --no-edit -m "Merge subagent ${SUBAGENT_ID}: ${TASK}"
+git merge "${SUBAGENT_BRANCH}" --no-edit -m "Merge subagent ${SUBAGENT_ID}: ${ISSUE}"
 ```
 
 ### 4. Handle Conflicts (If Any)
@@ -83,7 +83,7 @@ CONFLICT_COUNT=$(git diff --name-only --diff-filter=U | wc -l)
 if [ "$CONFLICT_COUNT" -gt 3 ]; then
   echo "ERROR: Too many conflicts ($CONFLICT_COUNT files)"
   echo ""
-  echo "This indicates significant divergence between task and subagent branches."
+  echo "This indicates significant divergence between issue and subagent branches."
   echo "Manual intervention required - do NOT attempt bulk resolution."
   echo ""
   echo "Options:"
@@ -103,7 +103,7 @@ git diff --name-only --diff-filter=U
 # Option A: Accept subagent version (theirs)
 git checkout --theirs path/to/file.java
 
-# Option B: Accept task branch version (ours)
+# Option B: Accept issue branch version (ours)
 git checkout --ours path/to/file.java
 
 # Option C: Manual resolution
@@ -162,7 +162,7 @@ rm -rf "${WORKTREE}" 2>/dev/null || true
 ```yaml
 subagents:
   - id: a1b2c3d4
-    task: 1.2-implement-parser
+    issue: 1.2-implement-parser
     status: merged  # Final state
     merged_at: 2026-01-10T15:30:00Z
     merge_commit: abc123def456
@@ -259,18 +259,18 @@ git diff --name-only --diff-filter=U
 # Make informed resolution decisions
 ```
 
-### Merge to task branch first (not directly to main)
+### Merge to issue branch first (not directly to main)
 
 ```bash
 # ❌ Merging subagent to main
 git checkout main
 git merge 1.2-parser-sub-a1b2c3d4
-# Wrong! Should go to task branch first
+# Wrong! Should go to issue branch first
 
-# ✅ Merge to task branch
+# ✅ Merge to issue branch
 git checkout 1.2-implement-parser
 git merge 1.2-parser-sub-a1b2c3d4
-# Task branch later merges to main
+# Issue branch later merges to main
 ```
 
 ### Verify merge before deleting branch

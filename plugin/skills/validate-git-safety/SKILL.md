@@ -24,7 +24,7 @@ user-invocable: false
 - Only fast-forward merges
 - No history rewriting
 
-### Task Branches
+### Issue Branches
 - Treat as immutable after completion
 
 ## Dangerous Commands
@@ -65,26 +65,26 @@ git branch -f v21 <new-commit>
 
 ## Worktree Verification (M101)
 
-**During CAT task execution, NEVER operate on the main `/workspace` worktree.**
+**During CAT issue execution, NEVER operate on the main `/workspace` worktree.**
 
 ```bash
-# Before ANY git operation in a CAT task, verify location:
+# Before ANY git operation in a CAT issue, verify location:
 CURRENT_DIR=$(pwd)
 if [[ "$CURRENT_DIR" == "/workspace" ]] && [[ -d "/workspace/.worktrees" ]]; then
-  echo "BLOCKED: Currently in main worktree while task worktrees exist"
-  echo "Expected: /workspace/.worktrees/<task-name>"
+  echo "BLOCKED: Currently in main worktree while issue worktrees exist"
+  echo "Expected: /workspace/.worktrees/<issue-name>"
   echo "Current:  $CURRENT_DIR"
   exit 1
 fi
 ```
 
-**Check for active task worktrees:**
+**Check for active issue worktrees:**
 ```bash
 # If any worktrees exist, you should be in one of them (not main)
 if ls -d /workspace/.worktrees/*/ 2>/dev/null | head -1 | grep -q .; then
   # Worktrees exist - verify we're in one
   if [[ "$(pwd)" == "/workspace" ]]; then
-    echo "ERROR: Task worktrees exist but operating on main"
+    echo "ERROR: Issue worktrees exist but operating on main"
     ls /workspace/.worktrees/
     exit 1
   fi

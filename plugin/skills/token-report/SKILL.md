@@ -40,7 +40,7 @@ Output the pre-rendered content above exactly as shown. The preprocessing script
 
 The table contains these columns:
 - **Type**: Subagent type (truncated if long)
-- **Description**: Task description (truncated if long)
+- **Description**: Issue description (truncated if long)
 - **Tokens**: Formatted count with k/M suffix
 - **Context**: Percentage with health indicator (warning/critical markers appear inline)
 - **Duration**: Formatted time
@@ -75,5 +75,5 @@ Copy the table exactly as provided. The script calculated precise padding.
 ## Related Skills
 
 - `cat:monitor-subagents` - Uses token data for health checks
-- `cat:decompose-task` - Triggered when context reaches critical levels
+- `cat:decompose-issue` - Triggered when context reaches critical levels
 - `cat:learn-from-mistakes` - Uses token data for context-related analysis

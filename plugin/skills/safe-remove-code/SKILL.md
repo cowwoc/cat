@@ -17,12 +17,12 @@ allowed-tools: Bash, Read, Edit, Grep, Glob
 When removing instrumentation, debugging code, or other patterns from multiple files, aggressive removal scripts can accidentally delete functional code, leaving only boilerplate (shebang, set commands).
 
 **Real Example** (2025-11-07):
-- **Task**: Remove timing instrumentation from 47 hooks
+- **Issue**: Remove timing instrumentation from 47 hooks
 - **Mistake**: Removal script was too aggressive
 - **Impact**: 7 hooks reduced to 3 lines (only `#!/bin/bash` and `set -euo pipefail`)
 - **Hooks destroyed**: auto-learn-from-mistakes.sh, block-data-loss.sh, detect-worktree-violation.sh, enforce-requirements-release.sh, load-todo.sh, detect-assistant-giving-up.sh, verify-convergence-entry.sh
 - **Recovery**: Restored from backups
-- **Root cause**: Didn't validate hooks after removal, declared task complete too early
+- **Root cause**: Didn't validate hooks after removal, declared issue complete too early
 
 ## When to Use This Skill
 
@@ -40,7 +40,7 @@ When removing instrumentation, debugging code, or other patterns from multiple f
 - Changes are complex refactoring (not simple removal)
 - Pattern varies significantly across files
 - Need to preserve some instances of pattern
-- Pattern removal is part of larger refactoring task
+- Pattern removal is part of larger refactoring issue
 
 ## ⚠️ Critical Safety Rules
 

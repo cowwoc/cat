@@ -41,8 +41,8 @@ The handler provides JSON in this format:
 ```json
 {
   "subagents": [
-    {"id": "a1b2c3d4", "task": "1.2-parser", "status": "running", "tokens": 45000, "compactions": 0},
-    {"id": "b2c3d4e5", "task": "1.3-formatter", "status": "warning", "tokens": 85000, "compactions": 1}
+    {"id": "a1b2c3d4", "issue": "1.2-parser", "status": "running", "tokens": 45000, "compactions": 0},
+    {"id": "b2c3d4e5", "issue": "1.3-formatter", "status": "warning", "tokens": 85000, "compactions": 1}
   ],
   "summary": {"total": 2, "running": 1, "complete": 0, "warning": 1}
 }

@@ -37,7 +37,7 @@ echo "Found $CODE_COUNT source files"
 
 **Configure git for worktree-based workflow**
 
-CAT uses git worktrees for task isolation. By default, git refuses to push to a checked-out branch.
+CAT uses git worktrees for issue isolation. By default, git refuses to push to a checked-out branch.
 This step configures git to allow it (with automatic working tree update).
 
 ```bash
@@ -52,7 +52,7 @@ Skip configuration, proceed to next step.
 Explain and ask permission:
 
 ```
-CAT uses git worktrees for task isolation. When merging completed tasks back to the main
+CAT uses git worktrees for issue isolation. When merging completed issues back to the main
 branch, git needs permission to update a checked-out branch.
 
 The setting `receive.denyCurrentBranch=updateInstead` allows this safely by automatically
@@ -76,7 +76,7 @@ echo "Configured: receive.denyCurrentBranch=updateInstead"
 Note in PROJECT.md:
 ```markdown
 ## Notes
-- Worktree push disabled. Merge task branches manually from main worktree.
+- Worktree push disabled. Merge issue branches manually from main worktree.
 ```
 
 </step>
@@ -177,11 +177,11 @@ git log --all --format="%H %s" --grep="Issue ID:" 2>/dev/null | head -100
 ```
 
 For each commit with Issue ID:
-- Extract: major, minor, task-name from `Issue ID: v{major}.{minor}-{task-name}`
+- Extract: major, minor, issue-name from `Issue ID: v{major}.{minor}-{issue-name}`
 - Get files: `git diff-tree --no-commit-id --name-status -r <hash>`
 - Get date: `git log -1 --format="%ci" <hash>`
 
-Build mapping: task-name → {commits, files_created, files_modified, date}
+Build mapping: issue-name → {commits, files_created, files_modified, date}
 
 </step>
 
@@ -191,12 +191,12 @@ Build mapping: task-name → {commits, files_created, files_modified, date}
 
 ```bash
 find . -maxdepth 3 -name "changelog*.md" -type f 2>/dev/null | grep -v node_modules
-grep -rl "## Objective\|## Tasks" . --include="*.md" 2>/dev/null | head -30
+grep -rl "## Objective\|## Issues" . --include="*.md" 2>/dev/null | head -30
 ```
 
 | Content Pattern | Category | Maps To |
 |-----------------|----------|---------|
-| `## Objective`, `## Tasks` | Task Definition | PLAN.md |
+| `## Objective`, `## Issues` | Issue Definition | PLAN.md |
 | `## Accomplishments`, `completed:` | Completion Record | STATE.md |
 
 </step>
@@ -224,26 +224,26 @@ Create ROADMAP.md:
 # Roadmap
 ## Version 1: [Name]
 - **1.0:** [Description] (COMPLETED)
-  - task-a, task-b
+  - issue-a, issue-b
 - **1.1:** [Description]
-  - task-c, task-d
+  - issue-c, issue-d
 ```
 
-Create task directories:
+Create issue directories:
 ```bash
-mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{task-name}"
+mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}"
 ```
 
-**PLAN.md** (from task definition source):
+**PLAN.md** (from issue definition source):
 ```markdown
-# Task Plan: {task-name}
+# Issue Plan: {issue-name}
 ## Objective
 [Clear statement - import or derive from name]
 ## Problem Analysis
 - **Error**: "{message}" | **Occurrences**: N | **Root Cause**: {explanation}
 ## Example Code
 [Code that triggers problem]
-## Tasks
+## Issues
 - [x] {Specific action}
 ## Technical Approach
 [HOW solution works]
@@ -253,9 +253,9 @@ mkdir -p ".claude/cat/issues/v{major}/v{major}.{minor}/{task-name}"
 *Imported from: {source}*
 ```
 
-**STATE.md** (completed tasks):
+**STATE.md** (completed issues):
 ```markdown
-# Task State: {task-name}
+# Issue State: {issue-name}
 ## Status
 - **Status:** completed
 - **Progress:** 100%
@@ -289,7 +289,7 @@ Use AskUserQuestion:
 - header: "Version Gates"
 - question: "How would you like to configure entry/exit gates for imported versions?"
 - options:
-  - "Use defaults (Recommended)" - sequential dependencies, all-tasks-complete exit
+  - "Use defaults (Recommended)" - sequential dependencies, all-issues-complete exit
   - "Configure per version" - set gates for each major/minor version
   - "Skip for now" - add gates later via /cat:config
 
@@ -314,7 +314,7 @@ For each minor version PLAN.md, add:
 - Previous minor version complete
 
 ### Exit
-- All tasks complete
+- All issues complete
 ```
 
 After applying defaults, use the **default_gates_configured** box from SCRIPT OUTPUT INIT BOXES.
@@ -340,7 +340,7 @@ For each minor version, use AskUserQuestion:
 Then:
 - header: "v{X}.{Y} Exit"
 - question: "Exit gate for v{X}.{Y}?"
-- options: ["All tasks complete", "Specific conditions", "No criteria"]
+- options: ["All issues complete", "Specific conditions", "No criteria"]
 
 **If "Skip for now":**
 - Note in PROJECT.md: "Gates not configured. Use `/cat:config` to set up version gates."
@@ -416,7 +416,7 @@ AskUserQuestion: header="Trust", question="How do you prefer to work together?",
 ]
 
 AskUserQuestion: header="Curiosity", question="How should your partner handle discoveries?", options=[
-  "🎯 Focused - stay on the task, ignore tangents",
+  "🎯 Focused - stay on the issue, ignore tangents",
   "🗺️ Observant - note interesting finds, but stay on mission (Recommended)",
   "🔮 Thorough - explore every corner, document all discoveries"
 ]
@@ -445,8 +445,8 @@ The answers are used to generate RFC 2119-formatted rules in PROJECT.md.
 
 AskUserQuestion: header="Branching Strategy", question="How do you organize your git branches?", options=[
   "Main-only (Recommended for small projects)" - All work happens on main, no feature branches,
-  "Feature branches" - Short-lived branches for each task, merge to main when done,
-  "Version branches" - Long-lived branches for each version (v1.0, v2.0), tasks branch from version,
+  "Feature branches" - Short-lived branches for each issue, merge to main when done,
+  "Version branches" - Long-lived branches for each version (v1.0, v2.0), issues branch from version,
   "Let me describe" - FREEFORM input for custom workflow
 ]
 
@@ -579,12 +579,12 @@ RFC 2119 terminology (MUST, SHOULD, MAY).
 | Branch Type | Pattern | Purpose |
 |-------------|---------|---------|
 | Main | `main` | Production-ready code |
-| Task | `{major}.{minor}-{task-name}` | Individual task work |
+| Issue | `{major}.{minor}-{issue-name}` | Individual issue work |
 
 **Rules:**
-- Task branches MUST be created from `main`
-- Task branches MUST be short-lived (merge within days, not weeks)
-- Task branches MUST be deleted after merge
+- Issue branches MUST be created from `main`
+- Issue branches MUST be short-lived (merge within days, not weeks)
+- Issue branches MUST be deleted after merge
 - Direct commits to `main` SHOULD be avoided
 ```
 
@@ -598,12 +598,12 @@ RFC 2119 terminology (MUST, SHOULD, MAY).
 |-------------|---------|---------|
 | Main | `main` | Latest stable release |
 | Version | `v{major}.{minor}` | Long-lived development branches |
-| Task | `{major}.{minor}-{task-name}` | Individual task work |
+| Issue | `{major}.{minor}-{issue-name}` | Individual issue work |
 
 **Rules:**
 - Version branches MUST be created from `main` when starting a new version
-- Task branches MUST be created from their parent version branch
-- Task branches MUST merge back to their parent version branch
+- Issue branches MUST be created from their parent version branch
+- Issue branches MUST merge back to their parent version branch
 - Version branches SHOULD merge to `main` only when version is complete
 - Direct commits to version branches SHOULD be avoided
 ```
@@ -746,7 +746,7 @@ After:
 - Description MUST be imperative mood ("add", not "added")
 - Description MUST NOT exceed 72 characters
 - Body MAY provide additional context
-- Issue ID footer SHOULD be included for CAT tasks
+- Issue ID footer SHOULD be included for CAT issues
 ```
 
 **If GIT_CUSTOM_NOTES exists:**
@@ -807,7 +807,7 @@ and when to load them. Each entry should have a one-line description of when to 
 These preferences shape how CAT makes autonomous decisions:
 
 - **Trust Level:** [low|medium|high] - review frequency
-- **Curiosity:** [low|medium|high] - exploration beyond immediate task
+- **Curiosity:** [low|medium|high] - exploration beyond immediate issue
 - **Patience:** [high|medium|low] - tolerance for opportunistic improvements
 
 Update anytime with: `/cat:config`
@@ -837,20 +837,20 @@ Next: /clear -> /cat:add-major-version
 
 **Existing codebases:**
 ```
-Initialized with [N] major versions, [N] minor versions, [N] tasks
-Next: /clear -> /cat:work {task} OR /cat:add
+Initialized with [N] major versions, [N] minor versions, [N] issues
+Next: /clear -> /cat:work {issue} OR /cat:add
 ```
 
 </step>
 
 <step name="first_task_guide">
 
-**Offer guided first-task creation**
+**Offer guided first-issue creation**
 
-After initialization completes, offer to walk user through creating their first task:
+After initialization completes, offer to walk user through creating their first issue:
 
-AskUserQuestion: header="First Task", question="Would you like me to walk you through creating your first task?", options=[
-  "Yes, guide me (Recommended)" - Interactive walkthrough of first task,
+AskUserQuestion: header="First Issue", question="Would you like me to walk you through creating your first issue?", options=[
+  "Yes, guide me (Recommended)" - Interactive walkthrough of first issue,
   "No, I'll explore" - Exit with pointers to /cat:help and /cat:status
 ]
 
@@ -866,20 +866,20 @@ Use the **first_task_walkthrough** box from SCRIPT OUTPUT INIT BOXES.
    - If no major version exists: Create Major 0 with Minor 0.0
    - If major exists but no minor: Create appropriate minor version
 
-3. Create the task directory structure:
+3. Create the issue directory structure:
 ```bash
-TASK_NAME="[sanitized-task-name]"
+TASK_NAME="[sanitized-issue-name]"
 mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 ```
 
-4. Create initial PLAN.md for the task:
+4. Create initial PLAN.md for the issue:
 ```markdown
-# Task Plan: {task-name}
+# Issue Plan: {issue-name}
 
 ## Objective
 [From user's description]
 
-## Tasks
+## Issues
 - [ ] [Broken down from objective]
 
 ## Technical Approach
@@ -891,7 +891,7 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 
 5. Create initial STATE.md:
 ```markdown
-# Task State: {task-name}
+# Issue State: {issue-name}
 
 ## Status
 - **Status:** pending
@@ -901,25 +901,25 @@ mkdir -p ".claude/cat/issues/v0/v0.0/${TASK_NAME}"
 - None
 
 ## Provides
-- [What this task delivers]
+- [What this issue delivers]
 ```
 
-6. Commit the new task:
+6. Commit the new issue:
 ```bash
 git add ".claude/cat/"
-git commit -m "docs: add first task - ${TASK_NAME}"
+git commit -m "docs: add first issue - ${TASK_NAME}"
 ```
 
 7. Use the **first_task_created** box from SCRIPT OUTPUT INIT BOXES.
-   Replace `{task-name}` with the actual sanitized task name.
+   Replace `{issue-name}` with the actual sanitized issue name.
 
-AskUserQuestion: header="Start Work", question="Ready to start working on this task?", options=[
+AskUserQuestion: header="Start Work", question="Ready to start working on this issue?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
   "No, I'll start later" - Exit with /cat:work pointer
 ]
 
 **If "Yes, let's go!":**
-- Invoke `/cat:work` skill to begin task execution
+- Invoke `/cat:work` skill to begin issue execution
 
 **If "No, I'll start later":**
 
@@ -942,10 +942,10 @@ Use the **explore_at_your_own_pace** box from SCRIPT OUTPUT INIT BOXES.
 | ROADMAP.md created | ✓ | ✓ (with history) |
 | .claude/rules/ directory | ✓ | ✓ |
 | .claude/cat/conventions/ directory | ✓ | ✓ |
-| Task dirs with PLAN/STATE | - | ✓ (full content) |
+| Issue dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
 | Git committed | ✓ | ✓ |
-| First task guide offered | ✓ | ✓ |
+| First issue guide offered | ✓ | ✓ |
 
 </success_criteria>

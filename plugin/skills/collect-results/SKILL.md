@@ -9,14 +9,14 @@ user-invocable: false
 
 Extract work products from a completed subagent's worktree, including commit history, code changes,
 token metrics, and status information. Prepares the subagent's work for integration back into the
-parent task branch.
+parent issue branch.
 
 ## When to Use
 
 - Subagent has signaled completion
 - Subagent has hit context limits and partial results are needed
 - Monitoring indicates subagent is stalled or needs intervention
-- Before merging subagent branch to task branch
+- Before merging subagent branch to issue branch
 
 ## Workflow
 
@@ -52,7 +52,7 @@ Steps: Verify completion, Extract commits, Parse metrics, Extract issues, Report
 Check for completion marker file (fast path, no session parsing):
 
 ```bash
-WORKTREE=".worktrees/${TASK}-sub-${UUID}"
+WORKTREE=".worktrees/${ISSUE}-sub-${UUID}"
 COMPLETION_FILE="${WORKTREE}/.completion.json"
 
 # Check for completion marker (preferred - lightweight)
@@ -176,7 +176,7 @@ If subagent maintained a STATE.md or status file:
 
 ```bash
 # Read subagent's final state
-cat "${WORKTREE}/.claude/cat/tasks/${TASK}/STATE.md"
+cat "${WORKTREE}/.claude/cat/issues/${ISSUE}/STATE.md"
 
 # Or check for completion report
 cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null
@@ -217,7 +217,7 @@ Output format (do NOT wrap in ```):
 ## Subagent Execution Report
 
 **Subagent:** a1b2c3d4
-**Task:** 1.2-implement-parser
+**Issue:** 1.2-implement-parser
 **Status:** success
 
 **Token Usage:**
@@ -243,7 +243,7 @@ into what happened during subagent execution and whether quality may have degrad
 ⚠️ CONTEXT COMPACTION DETECTED
 
 The subagent experienced context pressure and may have produced lower quality output.
-Consider invoking /cat:decompose-task for similar tasks in the future.
+Consider invoking /cat:decompose-issue for similar issues in the future.
 ```
 
 ### 8. Update Parent STATE.md
@@ -253,7 +253,7 @@ Record collection results in parent's tracking:
 ```yaml
 subagents:
   - id: a1b2c3d4
-    task: 1.2-implement-parser
+    issue: 1.2-implement-parser
     status: collected  # Changed from 'running'
     collected_at: 2026-01-10T15:00:00Z
     results:
@@ -291,7 +291,7 @@ fi
 ```yaml
 collection_report:
   subagent_id: a1b2c3d4
-  task: 1.2-implement-parser
+  issue: 1.2-implement-parser
   collection_status: success
 
   commits:
@@ -320,7 +320,7 @@ collection_report:
 ```yaml
 collection_report:
   subagent_id: b2c3d4e5
-  task: 1.3-implement-formatter
+  issue: 1.3-implement-formatter
   collection_status: partial
 
   reason: context_limit_reached
@@ -398,7 +398,7 @@ TOKENS=$(jq -s '[.[] | select(.type == "assistant") | .message.usage |
 # Sums ALL entries regardless of compaction events
 ```
 
-**Why this matters:** Token estimates are for the ENTIRE task. If a subagent uses 50K tokens,
+**Why this matters:** Token estimates are for the ENTIRE issue. If a subagent uses 50K tokens,
 hits compaction, then uses another 30K tokens, the actual usage is 80K - not 30K. Accurate
 reporting enables proper estimate validation.
 
@@ -422,6 +422,6 @@ fi
 ## Related Skills
 
 - `cat:monitor-subagents` - Check if subagent is ready for collection
-- `cat:merge-subagent` - Merge collected results to task branch
+- `cat:merge-subagent` - Merge collected results to issue branch
 - `cat:token-report` - Detailed analysis of token usage
-- `cat:decompose-task` - Split remaining work after partial collection
+- `cat:decompose-issue` - Split remaining work after partial collection

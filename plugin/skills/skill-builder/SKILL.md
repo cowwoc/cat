@@ -475,7 +475,7 @@ Before proceeding, you MUST show:
 
 ## Example 1: Simple Skill (Rectangle Calculator)
 
-**Task**: Create a skill for calculating the area of a rectangle from user input.
+**Issue**: Create a skill for calculating the area of a rectangle from user input.
 
 ### Step 1: Goal
 
@@ -597,7 +597,7 @@ Output "Area: {area}".
 
 ## Example 2: Function Extraction (Box Alignment)
 
-**Task**: Create a skill for rendering aligned boxes with emoji support.
+**Issue**: Create a skill for rendering aligned boxes with emoji support.
 
 ### Step 1: Goal
 
@@ -1152,10 +1152,10 @@ directly invoked (like this skill-builder) can safely contain the patterns for t
 ```markdown
 ---
 name: cat-banner
-description: Display task progress banner
+description: Display issue progress banner
 ---
 
-!`cat-progress-banner.sh --task-id "${TASK_ID}" --phase "${PHASE}"`
+!`cat-progress-banner.sh --issue-id "${TASK_ID}" --phase "${PHASE}"`
 ```
 
 The script generates the complete banner with correct box alignment, emoji widths, and padding.
@@ -1343,7 +1343,7 @@ Now analyze this request...
 !`process-input.sh "$ARGUMENTS"`     # ❌ Dangerous
 
 # Have the script read from a known source:
-!`get-current-task.sh`                # ✓ Script controls input
+!`get-current-issue.sh`                # ✓ Script controls input
 ```
 
 **For skill-to-skill calls**: No escaping needed - the Skill tool's `args` parameter
@@ -1430,8 +1430,8 @@ Verify orchestrator-facing content is separated from internal agent content:
 | Compression techniques | | ✅ |
 | Detailed output format | | ✅ |
 
-**Principle**: The orchestrator should NOT learn HOW to do the task - only WHAT to invoke
-and WHAT results to expect. If the orchestrator could do the task after reading the doc,
+**Principle**: The orchestrator should NOT learn HOW to do the issue - only WHAT to invoke
+and WHAT results to expect. If the orchestrator could do the issue after reading the doc,
 the doc has exposed too much.
 
 **Critical (M278)**: External file existence does NOT automatically mean encapsulation is complete.
@@ -1510,7 +1510,7 @@ Step 1: Display status
 - [ ] **No Functions/Prerequisites sections** teaching manual construction
 - [ ] **Output formats specify structure only** - no expected values (1.0, PASS, etc.)
 - [ ] **No cost/efficiency language** suggesting proper approach is expensive
-- [ ] **Encapsulation verified**: Orchestrator cannot perform task after reading doc
+- [ ] **Encapsulation verified**: Orchestrator cannot perform issue after reading doc
 - [ ] **Delegation-safe**: No expected scores in acceptance criteria
 - [ ] **Formatting details in preprocessing scripts**, not skill doc
 

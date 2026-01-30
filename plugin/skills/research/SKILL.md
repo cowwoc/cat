@@ -1,5 +1,5 @@
 ---
-description: Research how to implement a task before planning
+description: Research how to implement a issue before planning
 argument-hint: "[major.minor or major]"
 allowed-tools:
   - Read
@@ -79,18 +79,18 @@ This skill uses pre-rendering utilities from research_handler.py:
 
 <step name="identify_version">
 
-**Parse $ARGUMENTS to identify version or task:**
+**Parse $ARGUMENTS to identify version or issue:**
 
 | Format | Example | Target |
 |--------|---------|--------|
 | major.minor | `1.2` | `.claude/cat/issues/v1/v1.2/PLAN.md` |
 | major | `1` | `.claude/cat/issues/v1/PLAN.md` |
-| task-id | `feature-gate-middleware` | `.claude/cat/issues/v{current}/v{current}.{minor}/{task-id}/PLAN.md` |
+| issue-id | `feature-gate-middleware` | `.claude/cat/issues/v{current}/v{current}.{minor}/{issue-id}/PLAN.md` |
 
 **BLOCKING GATE (M228):** Identify PLAN.md path before proceeding:
 
 1. **If version number provided:** Use version-based path
-2. **If task ID provided:** Search for task directory in current version:
+2. **If issue ID provided:** Search for issue directory in current version:
    ```bash
    CURRENT_BRANCH=$(git branch --show-current)
    # Extract version from branch (e.g., v2.0 from "v2.0" or "v2.0-feature")
@@ -131,7 +131,7 @@ each acquiring domain expertise from their perspective.
 
 **Spawn all 9 stakeholder research agents in parallel:**
 
-Use the `parallel-execute` skill or spawn 9 Task agents simultaneously:
+Use the `parallel-execute` skill or spawn 9 Issue agents simultaneously:
 
 ```yaml
 agents:
