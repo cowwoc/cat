@@ -256,27 +256,33 @@ git checkout --theirs .claude/cat/claim-index.db
 
 **Problem:** If developer modifies code but forgets to re-index, they commit stale DB.
 
-**Solution:** Pre-commit hook validates ENTIRE index against ENTIRE codebase before every commit.
+**Solution:** Delta validation - only check files changed by this commit (or merge).
 
-**Validation requirements:**
-1. No phantom entries (indexed files that don't exist in repo)
-2. No stale entries (hash mismatch between index and actual file)
-3. All source files in repo should be indexed
+**Key insight:** If previous commit's index was valid, we only need to validate the delta.
+By induction, all commits remain valid.
 
-**Performance (full validation):**
+**Validation requirements for each file in delta:**
 
-| Repo Size | Validation Time |
-|-----------|-----------------|
-| 100 files | ~50ms |
-| 1,000 files | ~200ms |
-| 10,000 files | ~1-2s |
+| File State | In Index? | Result |
+|------------|-----------|--------|
+| Exists (new/modified) | Yes, hash matches | ✓ Valid |
+| Exists (new/modified) | Yes, hash differs | ✗ Stale |
+| Exists (new) | No | ✗ Missing |
+| Deleted | No | ✓ Valid |
+| Deleted | Yes | ✗ Phantom |
 
-The cost is unavoidable - correctness requires validating all files, not just changed files.
+**Performance (delta validation):**
+
+| Scenario | Files to Check | Time |
+|----------|----------------|------|
+| Normal commit (5 files) | 5 | ~20ms |
+| Merge (50 files each side) | ~100 | ~50ms |
+| Large merge (500 each side) | ~1000 | ~200ms |
 
 ```python
 # plugin/hooks/bash_handlers/validate_claim_index.py
 class ValidateClaimIndexHandler(PreToolUseHandler):
-    """Block commits if claim index doesn't match codebase state."""
+    """Block commits if claim index doesn't match delta."""
 
     def check(self, command: str, tool_input: dict) -> dict | None:
         if 'git commit' not in command:
@@ -286,70 +292,101 @@ class ValidateClaimIndexHandler(PreToolUseHandler):
         if not os.path.exists(db_path):
             return None  # No index yet, skip validation
 
-        # Get ALL source files in repo (not just staged)
-        repo_files = set(find_all_source_files())
+        # Determine which files to validate
+        files_to_check = self._get_files_to_validate()
+        if not files_to_check:
+            return None
 
-        # Get ALL indexed files and their hashes
-        db = sqlite3.connect(db_path)
-        results = db.execute(
-            "SELECT DISTINCT file_path, file_hash FROM methods"
-        ).fetchall()
-        indexed = {r[0]: r[1] for r in results}
-        db.close()
-
-        errors = []
-
-        # Check 1: No phantom entries (indexed but not in repo)
-        phantoms = set(indexed.keys()) - repo_files
-        if phantoms:
-            errors.append(f"Index contains {len(phantoms)} non-existent file(s):")
-            for f in list(phantoms)[:3]:
-                errors.append(f"  - {f}")
-            if len(phantoms) > 3:
-                errors.append(f"  ... and {len(phantoms) - 3} more")
-
-        # Check 2: No stale entries (hash ALL indexed files)
-        stale = []
-        for file_path, stored_hash in indexed.items():
-            if file_path in repo_files:
-                if hash_file(file_path) != stored_hash:
-                    stale.append(file_path)
-        if stale:
-            errors.append(f"Index has {len(stale)} stale file(s):")
-            for f in stale[:3]:
-                errors.append(f"  - {f}")
-            if len(stale) > 3:
-                errors.append(f"  ... and {len(stale) - 3} more")
-
-        # Check 3: Missing files (source files not indexed)
-        missing = repo_files - set(indexed.keys())
-        if missing:
-            errors.append(f"Index missing {len(missing)} file(s):")
-            for f in list(missing)[:3]:
-                errors.append(f"  - {f}")
-            if len(missing) > 3:
-                errors.append(f"  ... and {len(missing) - 3} more")
-
-        if errors:
+        # Validate delta
+        valid, error_msg = self._validate_delta(db_path, files_to_check)
+        if not valid:
             return {
                 'decision': 'block',
                 'message': f"""Claim index validation failed:
 
-{chr(10).join(errors)}
+{error_msg}
 
 Run `/cat:index-claims` to update the index before committing."""
             }
 
-        return None  # Index is valid, allow commit
+        return None
 
+    def _get_files_to_validate(self) -> set[str]:
+        """Get files that need validation based on commit type."""
 
-def find_all_source_files() -> list[str]:
-    """Get all source files tracked by git."""
-    result = subprocess.run(
-        ['git', 'ls-files'],
-        capture_output=True, text=True, timeout=30
-    )
-    return [f for f in result.stdout.strip().split('\n') if is_source_file(f)]
+        # Check if this is a merge (MERGE_HEAD exists)
+        is_merge = subprocess.run(
+            ['git', 'rev-parse', 'MERGE_HEAD'],
+            capture_output=True
+        ).returncode == 0
+
+        if is_merge:
+            # Merge: validate union of both sides' changes
+            merge_base = subprocess.run(
+                ['git', 'merge-base', 'HEAD', 'MERGE_HEAD'],
+                capture_output=True, text=True
+            ).stdout.strip()
+
+            # Files changed on our side (HEAD)
+            ours = subprocess.run(
+                ['git', 'diff', '--name-only', merge_base, 'HEAD'],
+                capture_output=True, text=True
+            ).stdout.strip().split('\n')
+
+            # Files changed on their side (MERGE_HEAD)
+            theirs = subprocess.run(
+                ['git', 'diff', '--name-only', merge_base, 'MERGE_HEAD'],
+                capture_output=True, text=True
+            ).stdout.strip().split('\n')
+
+            return {f for f in ours + theirs if f and is_source_file(f)}
+        else:
+            # Normal commit: validate staged files only
+            result = subprocess.run(
+                ['git', 'diff', '--cached', '--name-only'],
+                capture_output=True, text=True
+            )
+            return {f for f in result.stdout.strip().split('\n')
+                    if f and is_source_file(f)}
+
+    def _validate_delta(self, db_path: str, files: set[str]) -> tuple[bool, str]:
+        """Validate specific files against index."""
+        db = sqlite3.connect(db_path)
+
+        # Get stored hashes for files we're checking
+        placeholders = ','.join('?' * len(files))
+        results = db.execute(f"""
+            SELECT file_path, file_hash FROM methods
+            WHERE file_path IN ({placeholders})
+        """, tuple(files)).fetchall()
+        stored = {r[0]: r[1] for r in results}
+        db.close()
+
+        errors = []
+
+        for file_path in files:
+            file_exists = os.path.exists(file_path)
+            in_index = file_path in stored
+
+            if file_exists and not in_index:
+                # NEW FILE: Added but not indexed
+                errors.append(f"New file not in index: {file_path}")
+
+            elif file_exists and in_index:
+                # EXISTING FILE: Check hash matches
+                if hash_file(file_path) != stored[file_path]:
+                    errors.append(f"Stale hash: {file_path}")
+
+            elif not file_exists and in_index:
+                # DELETED FILE: Should be removed from index
+                errors.append(f"Deleted file still in index: {file_path}")
+
+            # not file_exists and not in_index: OK (deleted and not indexed)
+
+        if errors:
+            return False, "\n".join(errors[:10]) + \
+                   (f"\n... and {len(errors) - 10} more" if len(errors) > 10 else "")
+        return True, ""
 
 
 def is_source_file(path: str) -> bool:
@@ -358,11 +395,11 @@ def is_source_file(path: str) -> bool:
     return any(path.endswith(ext) for ext in extensions)
 ```
 
-**Why full validation is necessary:**
-- Index is git-tracked, so every commit must have a valid snapshot
-- Partial validation could miss stale entries from previous commits
-- After merge conflicts, the entire index state could be inconsistent
-- Correctness > Performance for data integrity
+**Why delta validation is sufficient:**
+- Base case: Initial index is empty or fully validated
+- Inductive step: If commit N is valid, validating N+1's delta ensures N+1 is valid
+- Merge case: Union of both sides' changes covers all possible inconsistencies
+- Performance: O(changed files) instead of O(all files)
 
 **Workflow:**
 ```
