@@ -32,8 +32,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-stakeholders
 - rename-task-scripts (from decomposed rename-task-to-issue)
 - rename-task-in-skills (from decomposed rename-task-to-issue)
-- rename-task-in-concepts (from decomposed rename-task-to-issue)
-- rename-task-in-commands (from decomposed rename-task-to-issue)
 - rename-task-remaining (from decomposed rename-task-to-issue)
 - suggest-issue-names
 - research-new-issues
@@ -52,4 +50,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 ## Tasks Completed
 - acceptance-criteria-options
 - compress-commands-md (duplicate of compress-skills-md - commands moved to skills/)
+- rename-task-in-commands (duplicate of rename-task-in-skills - commands moved to skills/)
+- rename-task-in-concepts (from decomposed rename-task-to-issue)
 - self-discover-env-vars

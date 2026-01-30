@@ -4,21 +4,21 @@
 
 </execution_context>
 
-# Workflow: Execute Task
+# Workflow: Execute Issue
 
 ## Overview
 
-Core task execution workflow for CAT. Orchestrates subagent execution across four phases:
+Core issue execution workflow for CAT. Orchestrates subagent execution across four phases:
 Prepare, Execute, Review, and Merge.
 
 **Full phase details are in phase files** - this document covers orchestration patterns only.
 
 ## Prerequisites
 
-- Task exists with STATE.md, PLAN.md
-- All task dependencies completed
+- Issue exists with STATE.md, PLAN.md
+- All issue dependencies completed
 - Main agent in orchestration mode
-- **Task lock can be acquired** (not locked by another session)
+- **Issue lock can be acquired** (not locked by another session)
 
 ## Subagent Batching Standards
 
@@ -47,39 +47,39 @@ Read/Bash calls, users see 3-5 Task tool invocations with clean output.
 
 ## CRITICAL: Worktree Isolation (M101)
 
-**ALL task implementation work MUST happen in the task worktree, NEVER in `/workspace` main.**
+**ALL issue implementation work MUST happen in the issue worktree, NEVER in `/workspace` main.**
 
 ```
-/workspace/                    ← MAIN WORKTREE - READ-ONLY during task execution
+/workspace/                    ← MAIN WORKTREE - READ-ONLY during issue execution
 ├── .worktrees/
-│   └── 0.5-task-name/        ← TASK WORKTREE - All edits happen here
+│   └── 0.5-issue-name/        ← ISSUE WORKTREE - All edits happen here
 │       └── parser/src/...
-└── parser/src/...            ← NEVER edit these files during task execution
+└── parser/src/...            ← NEVER edit these files during issue execution
 ```
 
 **Rules:**
 1. After creating worktree, immediately `cd` to it and verify with `pwd`
-2. All file edits, git commits, and builds happen in the task worktree
+2. All file edits, git commits, and builds happen in the issue worktree
 3. Return to `/workspace` ONLY for final merge and cleanup
 4. If confused about location, run `pwd` and `git branch --show-current`
 
-**Why:** Multiple parallel tasks create separate worktrees. Editing main worktree:
-- Corrupts other parallel tasks
+**Why:** Multiple parallel issues create separate worktrees. Editing main worktree:
+- Corrupts other parallel issues
 - Creates merge conflicts
 - Makes rollback impossible
 
-## Task Discovery (M282)
+## Issue Discovery (M282)
 
 **MANDATORY: Use get-available-issues.sh script FIRST. FAIL-FAST if script fails.**
 
-Task discovery uses the dedicated script. The script uses **self-discovery** to find paths
+Issue discovery uses the dedicated script. The script uses **self-discovery** to find paths
 (via `git rev-parse` and `BASH_SOURCE`), so no environment variables need to be set.
 
 **Session ID:** Extract from the session context injected by hooks (look for "Session ID: ..." in
 system-reminders from SessionStart).
 
 ```bash
-# Run task discovery - script auto-discovers project path
+# Run issue discovery - script auto-discovers project path
 # SESSION_ID from context (injected by echo-session-id.sh hook)
 # Path: plugin/scripts/ in development, or use CLAUDE_PLUGIN_ROOT in installed context
 RESULT=$(plugin/scripts/get-available-issues.sh --session-id "${SESSION_ID}")
@@ -89,13 +89,13 @@ if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
   ISSUE_PATH=$(echo "$RESULT" | jq -r '.issue_path')
 else
   echo "$RESULT" | jq -r '.message // .status'
-  # FAIL-FAST: No executable tasks or script error - STOP here
+  # FAIL-FAST: No executable issues or script error - STOP here
 fi
 ```
 
 **FAIL-FAST means NO FALLBACKS:**
 - If script returns error → STOP and report the error
-- If no tasks found → STOP and report "no executable tasks"
+- If no issues found → STOP and report "no executable issues"
 - NEVER fall back to manual Glob/Read/Bash exploration
 
 **Anti-pattern (M282):** Manual file exploration as workaround for script failures.
@@ -109,22 +109,22 @@ at conversation start. Use it directly - the script validates UUID format.
 
 **MANDATORY: Lock Check Before Proceeding**
 
-Before validating a task as executable, attempt to acquire its lock:
+Before validating an issue as executable, attempt to acquire its lock:
 
 ```bash
-TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
+ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$ISSUE_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
-  echo "⏸️ Task $TASK_ID is locked by another session"
-  # Skip this task, try next candidate
+  echo "⏸️ Issue $ISSUE_ID is locked by another session"
+  # Skip this issue, try next candidate
 fi
 ```
 
 This prevents:
-- Offering tasks that another Claude instance is executing
-- Wasted exploration/planning on locked tasks
-- Confusion about task availability
+- Offering issues that another Claude instance is executing
+- Wasted exploration/planning on locked issues
+- Confusion about issue availability
 
 ## Minor Version Dependency Rules
 
@@ -134,7 +134,7 @@ This prevents:
 | Subsequent minors (e.g., v0.5) | Previous minor must be complete (v0.4) |
 | First minor of new major (e.g., v1.0) | Last minor of previous major must be complete |
 
-A minor is complete when all its tasks have `status: completed`.
+A minor is complete when all its issues have `status: completed`.
 
 ## Error Recovery
 
@@ -155,13 +155,13 @@ A minor is complete when all its tasks have `status: completed`.
 
 ## Parallel Execution
 
-For independent tasks:
+For independent issues:
 ```
 Main Agent
     |
-    +---> Subagent A (task-1)
-    +---> Subagent B (task-2)
-    +---> Subagent C (task-3)
+    +---> Subagent A (issue-1)
+    +---> Subagent B (issue-2)
+    +---> Subagent C (issue-3)
     |
     v
 Process completions as they arrive

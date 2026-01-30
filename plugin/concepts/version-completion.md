@@ -2,15 +2,15 @@
 
 ## When to Load
 
-Load this workflow when **all tasks in a minor version are completed** (no pending/in-progress).
+Load this workflow when **all issues in a minor version are completed** (no pending/in-progress).
 
 ## Minor Version Complete
 
 ### Check Minor Completion
 
 ```bash
-# Count pending/in-progress tasks in this minor version
-PENDING_COUNT=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/task" -name "STATE.md" -exec grep -l 'Status.*pending\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
+# Count pending/in-progress issues in this minor version
+PENDING_COUNT=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "STATE.md" -exec grep -l 'Status.*pending\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
 
 if [[ "$PENDING_COUNT" -eq 0 ]]; then
   MINOR_COMPLETE=true
@@ -31,14 +31,14 @@ fi
    - Read the version's PLAN.md (works for any level: major, minor, or patch)
    - Parse the Requirements table for all REQ-XXX IDs
 
-2. **Collect satisfied requirements from all tasks**:
-   - For each completed task in the minor version
-   - Read the task's PLAN.md and extract the `## Satisfies` section
+2. **Collect satisfied requirements from all issues**:
+   - For each completed issue in the minor version
+   - Read the issue's PLAN.md and extract the `## Satisfies` section
    - Build a set of all satisfied requirement IDs
 
 3. **Identify unsatisfied requirements**:
    ```
-   unsatisfied = version_requirements - task_satisfied_requirements
+   unsatisfied = version_requirements - issue_satisfied_requirements
    ```
 
 4. **Block completion if unsatisfied requirements exist**:
@@ -46,12 +46,12 @@ fi
      ```
      ⚠️ Cannot complete v{major}.{minor}: unsatisfied requirements
 
-     The following requirements are not satisfied by any completed task:
+     The following requirements are not satisfied by any completed issue:
      - REQ-XXX: [requirement description]
      - REQ-YYY: [requirement description]
 
      Options:
-     1. Add a task to satisfy these requirements
+     1. Add an issue to satisfy these requirements
      2. Remove requirements that are no longer needed
      3. Mark requirements as deferred (update PLAN.md)
      ```
@@ -69,13 +69,13 @@ Display completion celebration:
 ```
 ---
 
-## Task Complete
+## Issue Complete
 
-**{task-name}** merged to main.
+**{issue-name}** merged to main.
 
 ## 🎉 Minor Version v{major}.{minor} Complete!
 
-All tasks in this minor version are done.
+All issues in this minor version are done.
 
 ---
 ```
@@ -158,13 +158,13 @@ Use AskUserQuestion:
 
 ```
 Use `/cat:status` to see overall progress.
-Use `/cat:add` to add more tasks or versions.
+Use `/cat:add` to add more issues or versions.
 ```
 
 ---
 
 ## When NOT to Load
 
-- When tasks remain in current version
-- During normal task execution
-- When finding next task
+- When issues remain in current version
+- During normal issue execution
+- When finding next issue

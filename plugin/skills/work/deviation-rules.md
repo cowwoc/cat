@@ -80,7 +80,7 @@ See `concepts/duplicate-task.md` for full handling including:
 - Signs of a duplicate task
 - Verification process
 - STATE.md resolution format
-- Commit message format (no Task ID footer)
+- Commit message format (no Issue ID footer)
 - Cleanup and next task flow
 
 **Quick reference:** Set `resolution: duplicate` and `Duplicate Of: v{major}.{minor}-{original-task}` in STATE.md.

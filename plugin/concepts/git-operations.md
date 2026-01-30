@@ -6,7 +6,7 @@ CAT provides git skills that handle edge cases correctly. Prefer these over raw 
 
 | Operation | Use Skill | Instead of |
 |-----------|-----------|------------|
-| Merge task to base | `/cat:git-merge-linear` | `git checkout && git merge` |
+| Merge issue to base | `/cat:git-merge-linear` | `git checkout && git merge` |
 | Amend commits | `/cat:git-amend` | `git commit --amend` |
 | Squash commits | `/cat:git-squash` | `git rebase -i` |
 | Rebase | `/cat:git-rebase` | `git rebase` |
@@ -15,7 +15,7 @@ CAT provides git skills that handle edge cases correctly. Prefer these over raw 
 - Handle pre-flight checks (divergence, dirty state)
 - Respect hook constraints (M205, M047)
 - Include rollback/recovery on failure
-- Work correctly from task worktrees
+- Work correctly from issue worktrees
 
 ## Blocked Operations
 
@@ -45,21 +45,21 @@ git status && git log --oneline -3 && git diff --stat
 
 ```bash
 # Instead of:
-cd /workspace/.worktrees/task && git status
+cd /workspace/.worktrees/issue && git status
 
 # Use:
-git -C /workspace/.worktrees/task status
+git -C /workspace/.worktrees/issue status
 ```
 
 ## Linear History Workflow
 
-To merge a task branch to its base branch with linear history:
+To merge an issue branch to its base branch with linear history:
 
 ```bash
-# 1. Rebase task branch onto base (from task worktree)
+# 1. Rebase issue branch onto base (from issue worktree)
 git rebase {base-branch}
 
-# 2. Fast-forward base branch (from task worktree, no checkout needed)
+# 2. Fast-forward base branch (from issue worktree, no checkout needed)
 git push . HEAD:{base-branch}
 
 # 3. Cleanup worktree and branch

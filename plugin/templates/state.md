@@ -15,7 +15,7 @@
 | `Last Updated` | Pending only | Date of last state change |
 | `Resolution` | Completed only | `implemented`, `duplicate`, or `obsolete` |
 | `Completed` | Completed only | Completion date |
-| `Duplicate Of` | Duplicate only | Task ID that implemented the fix |
+| `Duplicate Of` | Duplicate only | Issue ID that implemented the fix |
 | `Reason` | Obsolete only | Why task is no longer needed |
 
 ## Resolution Patterns
@@ -129,10 +129,10 @@ Summary of what was tested and what needs to be fixed.
 
 For implemented tasks:
 ```bash
-git log --oneline --grep="Task ID: v{major}.{minor}-{task-name}"
+git log --oneline --grep="Issue ID: v{major}.{minor}-{task-name}"
 ```
 
 For duplicate tasks, search for the original task's ID:
 ```bash
-git log --oneline --grep="Task ID: v{major}.{minor}-{original-task-name}"
+git log --oneline --grep="Issue ID: v{major}.{minor}-{original-task-name}"
 ```

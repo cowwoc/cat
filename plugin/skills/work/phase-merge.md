@@ -93,7 +93,7 @@ Task tool invocation:
     - Base branch: {base-branch}
     - Completion workflow: {completionWorkflow from config}
     - Merge style: {mergeStyle from config}
-    - Task ID: {TASK_ID}
+    - Issue ID: {TASK_ID}
     - Session ID: ${CLAUDE_SESSION_ID}
 
     STEP 1: MERGE

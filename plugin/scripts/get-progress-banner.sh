@@ -4,7 +4,7 @@
 # USAGE: get-progress-banner.sh [task-id] [--phase <phase>] [--all-phases]
 #
 # Arguments:
-#   task-id      Task ID to display (positional, or auto-discover if omitted)
+#   task-id      Issue ID to display (positional, or auto-discover if omitted)
 #   --phase      Phase to render (preparing|executing|reviewing|merging)
 #   --all-phases Generate all phase banners (default if no --phase)
 #   --project-dir Directory containing .claude/cat/ (for auto-discovery)
@@ -31,7 +31,7 @@ usage() {
 Usage: get-progress-banner.sh [task-id] [--phase <phase>] [--all-phases]
 
 Arguments:
-  task-id        Task ID to display (positional, auto-discover if omitted)
+  task-id        Issue ID to display (positional, auto-discover if omitted)
   --phase        Phase to render (preparing|executing|reviewing|merging)
   --all-phases   Generate all phase banners (default)
   --project-dir  Project directory for auto-discovery

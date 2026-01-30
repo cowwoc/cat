@@ -18,15 +18,15 @@ See [version-scheme.md](version-scheme.md) for detailed scheme documentation.
 
 ## Directory Structure
 
-Tasks are placed **directly under the version directory** (not in a `task/` subdirectory).
+Issues are placed **directly under the version directory** (not in a `issue/` subdirectory).
 
-The version directory varies by scheme, but task placement is consistent:
+The version directory varies by scheme, but issue placement is consistent:
 
-| Scheme | Task Path |
+| Scheme | Issue Path |
 |--------|-----------|
-| MAJOR only | `.claude/cat/issues/v1/my-task/` |
-| MAJOR.MINOR | `.claude/cat/issues/v1/v1.0/my-task/` |
-| MAJOR.MINOR.PATCH | `.claude/cat/issues/v1/v1.0/v1.0.1/my-task/` |
+| MAJOR only | `.claude/cat/issues/v1/my-issue/` |
+| MAJOR.MINOR | `.claude/cat/issues/v1/v1.0/my-issue/` |
+| MAJOR.MINOR.PATCH | `.claude/cat/issues/v1/v1.0/v1.0.1/my-issue/` |
 
 Example (MAJOR.MINOR scheme):
 ```
@@ -36,7 +36,7 @@ Example (MAJOR.MINOR scheme):
         ├── STATE.md
         ├── PLAN.md
         ├── CHANGELOG.md
-        └── my-task-name/      ← Task directory (directly under version)
+        └── my-issue-name/      ← Issue directory (directly under version)
             ├── STATE.md
             └── PLAN.md
 ```
@@ -88,19 +88,19 @@ get_version_path() {
 }
 ```
 
-### Get Task Path
+### Get Issue Path
 
 ```bash
-# Get the path to a task directory
-# Usage: get_task_path $MAJOR $MINOR $TASK_NAME [$PATCH]
-get_task_path() {
+# Get the path to a issue directory
+# Usage: get_issue_path $MAJOR $MINOR $ISSUE_NAME [$PATCH]
+get_issue_path() {
   local MAJOR="$1"
   local MINOR="$2"
-  local TASK_NAME="$3"
+  local ISSUE_NAME="$3"
   local PATCH="$4"
 
   local VERSION_PATH=$(get_version_path "$MAJOR" "$MINOR" "$PATCH")
-  echo "${VERSION_PATH}/${TASK_NAME}"
+  echo "${VERSION_PATH}/${ISSUE_NAME}"
 }
 ```
 
@@ -116,9 +116,9 @@ find_minor_versions() {
   find "$BASE" -mindepth 1 -maxdepth 1 -type d -name "v${MAJOR}.*" 2>/dev/null | sort -V
 }
 
-# Find all tasks in a version
-# Usage: find_tasks_in_version $MAJOR $MINOR
-find_tasks_in_version() {
+# Find all issues in a version
+# Usage: find_issues_in_version $MAJOR $MINOR
+find_issues_in_version() {
   local MAJOR="$1"
   local MINOR="$2"
   local VERSION_PATH=$(get_version_path "$MAJOR" "$MINOR")
@@ -136,9 +136,9 @@ find_tasks_in_version() {
 | Major version dir | `.claude/cat/issues/v${MAJOR}` |
 | Minor version dir | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}` |
 | Patch version dir | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.${PATCH}` |
-| Task dir | `$(get_version_path $MAJOR $MINOR)/${TASK_NAME}` |
-| Task STATE.md | `$(get_task_path $MAJOR $MINOR $TASK_NAME)/STATE.md` |
-| Task PLAN.md | `$(get_task_path $MAJOR $MINOR $TASK_NAME)/PLAN.md` |
+| Issue dir | `$(get_version_path $MAJOR $MINOR)/${ISSUE_NAME}` |
+| Issue STATE.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/STATE.md` |
+| Issue PLAN.md | `$(get_issue_path $MAJOR $MINOR $ISSUE_NAME)/PLAN.md` |
 | Version STATE.md | `$(get_version_path $MAJOR $MINOR)/STATE.md` |
 | Version CHANGELOG.md | `$(get_version_path $MAJOR $MINOR)/CHANGELOG.md` |
 
@@ -149,18 +149,18 @@ find_tasks_in_version() {
 | All major versions | `.claude/cat/issues/v*` |
 | All minor versions in major | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.*` |
 | All patches in minor | `.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/v${MAJOR}.${MINOR}.*` |
-| All tasks (any version) | `.claude/cat/issues/v*/v*.*/*/STATE.md` |
+| All issues (any version) | `.claude/cat/issues/v*/v*.*/*/STATE.md` |
 
 ## Usage in Commands/Skills
 
 Instead of hardcoding paths like:
 ```bash
 # WRONG - hardcoded assumption
-TASK_DIR=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
+ISSUE_DIR=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$ISSUE_NAME"
 ```
 
 Use the resolution functions:
 ```bash
 # CORRECT - flexible resolution
-TASK_DIR=$(get_task_path "$MAJOR" "$MINOR" "$TASK_NAME")
+ISSUE_DIR=$(get_issue_path "$MAJOR" "$MINOR" "$ISSUE_NAME")
 ```

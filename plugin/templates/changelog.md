@@ -60,22 +60,22 @@ Find all commits for this version:
 
 ```bash
 # For minor version 1.0:
-git log --oneline --grep="Task ID: v1.0-"
+git log --oneline --grep="Issue ID: v1.0-"
 
 # For specific task within the version:
-git log --oneline --grep="Task ID: v1.0-{task-name}"
+git log --oneline --grep="Issue ID: v1.0-{task-name}"
 ```
 
 ### Finding Commits for Duplicate Tasks
 
-Duplicate tasks have no commit with their own Task ID. To find the resolving commit:
+Duplicate tasks have no commit with their own Issue ID. To find the resolving commit:
 
 1. Check the task's STATE.md for the `Duplicate Of` field
 2. Search for that original task's ID:
 
 ```bash
 # If task-b is duplicate of v1.0-task-a:
-git log --oneline --grep="Task ID: v1.0-task-a"
+git log --oneline --grep="Issue ID: v1.0-task-a"
 ```
 
 See [task-resolution.md](../concepts/task-resolution.md) for details.

@@ -1,10 +1,10 @@
 # Workflow: Merge and Cleanup
 
 ## Overview
-Post-task workflow for merging completed work and cleaning up worktrees.
+Post-issue workflow for merging completed work and cleaning up worktrees.
 
 ## Prerequisites
-- Task execution completed
+- Issue execution completed
 - Subagent branches ready for merge
 - Approval received (interactive mode)
 
@@ -12,17 +12,17 @@ Post-task workflow for merging completed work and cleaning up worktrees.
 
 ### 1. Collect Subagent Branches
 
-Identify all subagent branches for the task:
+Identify all subagent branches for the issue:
 ```
-{major}.{minor}-{task-name}-sub-*
+{major}.{minor}-{issue-name}-sub-*
 ```
 
 ### 2. Sequential Subagent Merge
 
 For each subagent branch:
 ```bash
-# In task worktree
-git checkout {major}.{minor}-{task-name}
+# In issue worktree
+git checkout {major}.{minor}-{issue-name}
 git merge {subagent-branch} --no-ff -m "Merge subagent work: {summary}"
 ```
 
@@ -70,9 +70,9 @@ docs: update documentation
 
 Present to user:
 ```markdown
-## Ready for Merge: {task-name}
+## Ready for Merge: {issue-name}
 
-**Branch:** {major}.{minor}-{task-name}
+**Branch:** {major}.{minor}-{issue-name}
 **Commits:** 3 (1 feature, 1 bugfix, 1 test)
 **Files Changed:** 8
 
@@ -87,21 +87,21 @@ To review: `git diff main..{branch}`
 **Approve merge to main?**
 ```
 
-### 6. Update Task STATE.md (BEFORE merge)
+### 6. Update Issue STATE.md (BEFORE merge)
 
 **CRITICAL (M070): STATE.md must be in same commit as implementation.**
 
-Before squashing/merging, update task STATE.md to completed in the task branch:
+Before squashing/merging, update issue STATE.md to completed in the issue branch:
 
 ```bash
-# In task worktree - update STATE.md
-# .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md:
+# In issue worktree - update STATE.md
+# .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md:
 #   status: completed
 #   progress: 100%
 #   completed: {date}
 
 # Include in implementation commit
-git add .claude/cat/issues/v{major}/v{major}.{minor}/{task-name}/STATE.md
+git add .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
 git commit --amend --no-edit
 ```
 
@@ -113,8 +113,8 @@ After approval and STATE.md update:
 git checkout main
 git pull origin main
 
-# Merge task branch (STATE.md already included)
-git merge {major}.{minor}-{task-name} --no-ff
+# Merge issue branch (STATE.md already included)
+git merge {major}.{minor}-{issue-name} --no-ff
 
 # Push to remote
 git push origin main
@@ -122,41 +122,41 @@ git push origin main
 
 ### 8. Worktree Cleanup
 
-Remove task worktree:
+Remove issue worktree:
 ```bash
-git worktree remove ../cat-worktree-{task-name}
+git worktree remove ../cat-worktree-{issue-name}
 ```
 
 If worktree removal fails:
 ```bash
-git worktree remove --force ../cat-worktree-{task-name}
+git worktree remove --force ../cat-worktree-{issue-name}
 ```
 
 ### 9. Branch Cleanup
 
 Delete merged branches:
 ```bash
-# Delete task branch
-git branch -d {major}.{minor}-{task-name}
+# Delete issue branch
+git branch -d {major}.{minor}-{issue-name}
 
-# Delete all subagent branches for this task
-git branch -d {major}.{minor}-{task-name}-sub-*
+# Delete all subagent branches for this issue
+git branch -d {major}.{minor}-{issue-name}-sub-*
 ```
 
 ### 10. Update Parent State Files
 
-Update minor and major STATE.md progress (task STATE.md already updated in step 6):
+Update minor and major STATE.md progress (issue STATE.md already updated in step 6):
 
-- Minor STATE.md: recalculate progress based on completed tasks
+- Minor STATE.md: recalculate progress based on completed issues
 - Major STATE.md: recalculate progress based on completed minor versions
 - ROADMAP.md: update if version status changed
 
 ### 11. Update Changelogs
 
-Update minor/major CHANGELOG.md to include completed task summary.
+Update minor/major CHANGELOG.md to include completed issue summary.
 
-> **NOTE**: Task changelog content is embedded in commit messages, not separate files.
-> Minor/major version CHANGELOG.md files aggregate completed tasks.
+> **NOTE**: Issue changelog content is embedded in commit messages, not separate files.
+> Minor/major version CHANGELOG.md files aggregate completed issues.
 
 ## High Trust Mode Differences
 
@@ -181,7 +181,7 @@ git worktree remove --force <path>
 git worktree prune
 
 # List branches matching pattern
-git branch --list "{major}.{minor}-{task-name}*"
+git branch --list "{major}.{minor}-{issue-name}*"
 
 # Delete branches
 git branch -d <branch-name>
@@ -199,15 +199,15 @@ pwd
 git branch --show-current
 ```
 
-**Expected:** Task worktree (`/workspace/.worktrees/<task>`) on task branch
+**Expected:** Issue worktree (`/workspace/.worktrees/<issue>`) on issue branch
 **WRONG:** Main worktree (`/workspace`) on main branch
 
 **Common mistake:** After conflict resolution attempts (abort, reset), agent ends up in main
-worktree and makes edits there. This corrupts main and other parallel tasks.
+worktree and makes edits there. This corrupts main and other parallel issues.
 
 **Recovery if in wrong location:**
 ```bash
-cd /workspace/.worktrees/<task-name>  # Return to task worktree
+cd /workspace/.worktrees/<issue-name>  # Return to issue worktree
 pwd  # Verify
 ```
 

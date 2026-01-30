@@ -7,7 +7,7 @@
 | Area | Actions |
 |------|---------|
 | Orchestration | Coordinate subagent execution |
-| Planning | Read code, make decisions, decompose tasks |
+| Planning | Read code, make decisions, decompose issues |
 | Metadata | Create/update planning documents |
 | Git operations | Branch creation, merging |
 | Conflict resolution | Resolve merge conflicts |
@@ -17,7 +17,7 @@
 ### Does NOT
 
 - Write production code directly
-- Execute implementation tasks
+- Execute implementation work
 - Work in worktrees except for merging
 
 ### No Exceptions for "Small Fixes" (M097)
@@ -35,38 +35,38 @@ The delegation boundary exists for quality and traceability, not efficiency.
 
 ### Work Request Handling
 
-**Default behavior:** When a user requests work, the main agent proposes task creation first.
+**Default behavior:** When a user requests work, the main agent proposes issue creation first.
 
 This ensures all work is tracked in the planning structure. The agent should respond:
 
-> "I'll create a task for this so it's tracked properly. Let me add it via `/cat:add`."
+> "I'll create an issue for this so it's tracked properly. Let me add it via `/cat:add`."
 
 **Trust-level variations:**
 
 | Trust Level | Behavior |
 |-------------|----------|
 | `low` | Always ask before any work, even trivial changes |
-| `medium` | Propose task creation for non-trivial work; ask for trivial |
-| `high` | Create task automatically via `/cat:add`, then proceed to `/cat:work` |
+| `medium` | Propose issue creation for non-trivial work; ask for trivial |
+| `high` | Create issue automatically via `/cat:add`, then proceed to `/cat:work` |
 
 **Trivial work definition:**
 - Single-line changes (typos, import fixes, obvious corrections)
 - Changes affecting only 1 file
 - No logic changes, purely cosmetic
 
-**User override:** User can bypass with phrases like "just do it", "quick fix", or "no task needed".
-When overridden, the agent should still warn: "Working directly without task tracking."
+**User override:** User can bypass with phrases like "just do it", "quick fix", or "no issue needed".
+When overridden, the agent should still warn: "Working directly without issue tracking."
 
 **Example interactions:**
 
 User: "Fix the bug where parsing fails on empty input"
-Agent (medium trust): "I'll create a task for this so it's tracked properly. Running `/cat:add fix parsing failure on empty input`..."
+Agent (medium trust): "I'll create an issue for this so it's tracked properly. Running `/cat:add fix parsing failure on empty input`..."
 
 User: "Fix the typo in README"
-Agent (medium trust): "This looks like a trivial fix. Should I create a task for tracking, or just fix it directly?"
+Agent (medium trust): "This looks like a trivial fix. Should I create an issue for tracking, or just fix it directly?"
 
 User: "Just fix it"
-Agent: "Working directly without task tracking. [proceeds to fix]"
+Agent: "Working directly without issue tracking. [proceeds to fix]"
 
 **What this does NOT change:**
 - `/cat:work` workflow remains unchanged
@@ -76,18 +76,18 @@ Agent: "Working directly without task tracking. [proceeds to fix]"
 ### Worktree Usage
 
 Main agent uses worktrees ONLY for:
-- Merging subagent branches into task branches
-- Merging task branches into main
+- Merging subagent branches into issue branches
+- Merging issue branches into main
 
 ## Subagent Types
 
 ### Implementation Subagent
 
-Standard subagent for executing coding tasks.
+Standard subagent for executing coding issues.
 
 | Area | Actions |
 |------|---------|
-| Execution | Perform coding tasks |
+| Execution | Perform implementation work |
 | Isolation | Work in dedicated worktree |
 | Token tracking | Monitor context usage |
 | Compaction detection | Track summary events |
@@ -96,12 +96,12 @@ Standard subagent for executing coding tasks.
 
 ### Exploration Subagent
 
-Specialized subagent for task preparation, codebase exploration, and verification.
+Specialized subagent for issue preparation, codebase exploration, and verification.
 Handles three phases internally to hide noisy tool calls from user.
 
 | Phase | Responsibilities | Output |
 |-------|------------------|--------|
-| **Preparation** | Read PLAN.md, analyze task size, create worktree | Estimate and worktree path |
+| **Preparation** | Read PLAN.md, analyze issue size, create worktree | Estimate and worktree path |
 | **Exploration** | Search codebase, find patterns, check duplicates | File locations and patterns |
 | **Verification** | Validate findings, confirm paths exist | Validation results |
 
@@ -169,9 +169,9 @@ COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FIL
 ```
 Main Agent
     |
-    +---> Spawn Subagent 1 (task-a)
+    +---> Spawn Subagent 1 (issue-a)
     |         |
-    +---> Spawn Subagent 2 (task-b)
+    +---> Spawn Subagent 2 (issue-b)
     |         |
     v         v
     [Wait for completions]
@@ -190,8 +190,8 @@ Main Agent
 
 - No arbitrary limits on concurrent subagents
 - Main agent manages based on available resources
-- Independent tasks execute simultaneously
-- Dependent tasks wait for prerequisites
+- Independent issues execute simultaneously
+- Dependent issues wait for prerequisites
 
 ## Context Limit Constants (A018)
 
@@ -200,7 +200,7 @@ Main Agent
 | Constant | Value | Purpose |
 |----------|-------|---------|
 | `CONTEXT_LIMIT` | 200000 | Claude's context window (tokens) |
-| `SOFT_TARGET_PCT` | 40 | Ideal task size percentage |
+| `SOFT_TARGET_PCT` | 40 | Ideal issue size percentage |
 | `HARD_LIMIT_PCT` | 80 | Maximum safe execution percentage |
 
 **Derived values:**
@@ -226,7 +226,7 @@ HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))    # 160000
 
 | Limit | Percentage | Tokens (200K) | Purpose |
 |-------|------------|---------------|---------|
-| Soft target | 40% | 80,000 | Recommended task size for optimal quality |
+| Soft target | 40% | 80,000 | Recommended issue size for optimal quality |
 | Hard limit | 80% | 160,000 | Maximum allowed - MANDATORY decomposition above |
 | Context limit | 100% | 200,000 | Absolute ceiling - compaction occurs |
 
@@ -242,10 +242,10 @@ HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))    # 160000
 **The 40-50% inflection point:** Claude perceives context mounting and enters "completion mode."
 Result: Quality crash before reaching hard limit. This is why soft target is 40%, not 70%.
 
-### Task Sizing Guidelines
+### Issue Sizing Guidelines
 
-| Task Complexity | Context/Task | Guideline |
-|-----------------|--------------|-----------|
+| Issue Complexity | Context/Issue | Guideline |
+|------------------|---------------|-----------|
 | Simple (CRUD, config) | ~10-15% | Can batch 3-4 per session |
 | Medium (business logic) | ~20-30% | 2-3 per session |
 | Complex (algorithms) | ~30-40% | 1-2 per session |
@@ -255,7 +255,7 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 
 **Pre-Spawn (BEFORE spawning any subagent):**
 
-1. Calculate estimated tokens from task analysis
+1. Calculate estimated tokens from issue analysis
 2. Calculate hard limit: `HARD_LIMIT = CONTEXT_LIMIT * 80 / 100`
 3. Validate: `estimate < hard_limit`
 4. If validation fails: MANDATORY decomposition (do NOT spawn)
@@ -274,7 +274,7 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 │                    MAIN AGENT (Pre-Spawn)                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  1. Analyze task → estimate tokens                              │
+│  1. Analyze issue → estimate tokens                             │
 │                     │                                           │
 │                     v                                           │
 │  2. Calculate: HARD_LIMIT = CONTEXT_LIMIT * 80%                │
@@ -308,16 +308,16 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 
 ### Aggregate Reporting Format
 
-For multi-subagent tasks, generate aggregate token report:
+For multi-subagent issues, generate aggregate token report:
 
 ```
 ## Aggregate Token Report
 
 | Subagent | Tokens | % of Limit | Status |
 |----------|--------|------------|--------|
-| task-sub-a1b2c3d4 | 65,000 | 32% | OK |
-| task-sub-e5f6g7h8 | 170,000 | 85% | EXCEEDED |
-| task-sub-i9j0k1l2 | 45,000 | 22% | OK |
+| issue-sub-a1b2c3d4 | 65,000 | 32% | OK |
+| issue-sub-e5f6g7h8 | 170,000 | 85% | EXCEEDED |
+| issue-sub-i9j0k1l2 | 45,000 | 22% | OK |
 
 **Total tokens:** 280,000
 **Subagents exceeded hard limit:** 1
@@ -333,7 +333,7 @@ When a subagent exceeds the hard limit:
    - Subagent ID
    - Actual tokens used
    - Hard limit value
-   - Task context
+   - Issue context
 3. **Analyze:** Review why estimation failed
 4. **Improve:** Update estimation factors based on pattern
 
@@ -343,7 +343,7 @@ When a subagent exceeds the hard limit:
 
 ### Worktree Path Handling (M267)
 
-When working in a worktree (e.g., `/workspace/.worktrees/task-name/`):
+When working in a worktree (e.g., `/workspace/.worktrees/issue-name/`):
 
 | Path Type | Example | Risk |
 |-----------|---------|------|
@@ -356,7 +356,7 @@ When working in a worktree (e.g., `/workspace/.worktrees/task-name/`):
 2. If in worktree, use relative paths for file creation/editing
 3. Use absolute paths only for reading config from main workspace
 
-**Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of task worktree.
+**Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of issue worktree.
 
 ### Config File Resolution (M268)
 
@@ -388,15 +388,15 @@ Ambiguous terms require user clarification before action:
 
 | Term | Possible Meanings | Required Action |
 |------|-------------------|-----------------|
-| "abort task" | Stop and keep pending, OR cleanup and abandon | Use AskUserQuestion |
+| "abort issue" | Stop and keep pending, OR cleanup and abandon | Use AskUserQuestion |
 | "cancel" | Same as abort - clarify intent | Use AskUserQuestion |
 | "delete" | Remove planning entry, OR just cleanup worktree | Use AskUserQuestion |
 
 **Clarification template:**
 ```
 When user says "[ambiguous term]", ask:
-1. Stop working, keep task pending for later
-2. Cleanup worktree/branch, keep task pending
+1. Stop working, keep issue pending for later
+2. Cleanup worktree/branch, keep issue pending
 3. Abandon permanently (remove from planning)
 ```
 
