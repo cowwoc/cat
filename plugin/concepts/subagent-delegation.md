@@ -74,9 +74,9 @@ If any answer is "no", do not spawn. Gather more information first.
 Acceptance criteria define what specific outputs validate successful completion. Without them,
 "success" becomes subjective and validation gets skipped.
 
-**For task-based delegations** (subagent working on a tracked task):
+**For issue-based delegations** (subagent working on a tracked issue):
 
-1. Read the task's PLAN.md `## Acceptance Criteria` section
+1. Read the issue's PLAN.md `## Acceptance Criteria` section
 2. Extract each measurable criterion (scores, test results, build status)
 3. Include criteria in subagent prompt with explicit instruction to produce that output
 4. On subagent completion, verify each criterion has evidence in output
@@ -90,7 +90,7 @@ subagent_prompt_must_include: |
   - Include score in your output
 ```
 
-**For ad-hoc delegations** (no tracked task):
+**For ad-hoc delegations** (no tracked issue):
 
 Parent agent must define acceptance criteria before spawning:
 
@@ -122,7 +122,7 @@ in the delegation catches these gaps at spawn time rather than after completion.
 
 ## Common Failure Patterns
 
-### Exploration + Decision in Same Task
+### Exploration + Decision in Same Delegation
 
 Subagents CAN explore/research. They must NOT decide based on findings.
 
@@ -238,8 +238,8 @@ STEP 3: Main agent reviews actual scores, decides next action
 
 **Enforcement pattern:**
 
-| Task Type | Producer | Validator |
-|-----------|----------|-----------|
+| Issue Type | Producer | Validator |
+|------------|----------|-----------|
 | Document compression | Compression subagent | Main agent via /compare-docs |
 | Code generation | Implementation subagent | Test runner (separate step) |
 | File transformation | Transform subagent | Diff/verification subagent |
@@ -276,7 +276,7 @@ Would the robot produce correct output? If not, the prompt needs more detail.
 
 ## When Not to Use Subagents
 
-Some tasks should NOT be delegated:
+Some work should NOT be delegated:
 
 1. **Exploration + decision combined** - "figure out how X works and fix it"
 2. **Design decisions** - "choose the best approach"
@@ -286,7 +286,7 @@ Some tasks should NOT be delegated:
 
 These require the main agent (with user access) to make decisions.
 
-## Valid Subagent Tasks
+## Valid Subagent Work
 
 Subagents ARE appropriate for:
 

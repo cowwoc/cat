@@ -112,13 +112,13 @@ Changes:
 - Second major change
 - Third major change
 
-Task ID: v{major}.{minor}-{task-name}
+Issue ID: v{major}.{minor}-{task-name}
 ```
 
-## Task ID Footer (MANDATORY for CAT tasks)
+## Issue ID Footer (MANDATORY for CAT tasks)
 
-**Every commit for a CAT task MUST include the Task ID in the last line.** A task may span multiple
-commits (across sessions or addressing distinct aspects). Each commit MUST include the same Task ID:
+**Every commit for a CAT task MUST include the Issue ID in the last line.** A task may span multiple
+commits (across sessions or addressing distinct aspects). Each commit MUST include the same Issue ID:
 
 ```
 feature: add yield statement parsing support
@@ -130,13 +130,13 @@ for JDK 14+ switch expressions.
 - Created parseYieldStatement() following parseThrowStatement() pattern
 - Updated ContextDetector exhaustive switch
 
-Task ID: v3.0-add-yield-statement-support
+Issue ID: v3.0-add-yield-statement-support
 ```
 
-**Format**: `Task ID: v{major}.{minor}-{task-name}`
+**Format**: `Issue ID: v{major}.{minor}-{task-name}`
 
 **Why**: Enables reliable commit identification without storing commit hashes in documentation.
-Find all commits for a task: `git log --grep="Task ID: v3.0-add-yield-statement-support"` (may
+Find all commits for a task: `git log --grep="Issue ID: v3.0-add-yield-statement-support"` (may
 return multiple commits if the task was implemented across multiple commits)
 
 ## For Squashed Commits
@@ -146,23 +146,23 @@ return multiple commits if the task was implemented across multiple commits)
 git log --oneline base..HEAD
 ```
 
-**Synthesize into unified message with Task ID:**
+**Synthesize into unified message with Issue ID:**
 
 ```
-# WRONG - Concatenated messages, no Task ID
+# WRONG - Concatenated messages, no Issue ID
 feature(auth): add login form
 feature(auth): add validation
 feature(auth): add error handling
 bugfix(auth): fix typo
 
-# CORRECT - Unified message with Task ID footer
+# CORRECT - Unified message with Issue ID footer
 feature: add login form with validation and error handling
 
 - Email/password form with client-side validation
 - Server-side validation with descriptive error messages
 - Loading states and error display
 
-Task ID: v1.1-implement-user-auth
+Issue ID: v1.1-implement-user-auth
 ```
 
 ## Commit Types (MANDATORY)
@@ -200,7 +200,7 @@ Changes:
 # CORRECT - Separate commits by type
 bugfix: fix parser bug for comments in member declarations
 
-Task ID: v0.5-fix-comment-in-member-declaration
+Issue ID: v0.5-fix-comment-in-member-declaration
 
 ---
 
@@ -279,7 +279,7 @@ Proceed directly to `git add <files> && git commit`.
 - [ ] Body explains WHAT and WHY, not HOW
 - [ ] No file names listed (the diff already shows which files changed)
 - [ ] For squashed commits: synthesized meaningful summary
-- [ ] **Task ID footer included** (for CAT tasks): `Task ID: vX.Y-task-name`
+- [ ] **Issue ID footer included** (for CAT tasks): `Issue ID: vX.Y-task-name`
 - [ ] Message would make sense in git history 6 months from now
 
 ## Worktree Verification (M101)

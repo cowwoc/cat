@@ -14,7 +14,7 @@ VERIFY_SETTING=$(jq -r '.verify // "all"' .claude/cat/cat-config.json 2>/dev/nul
 |---------|----------|
 | `"all"` | Run full verification (build, tests, lint, etc.) |
 | `"tests"` | Run tests only |
-| `"none"` | Skip verification (for non-code tasks) |
+| `"none"` | Skip verification (for non-code issues) |
 
 **When verify != "none":**
 1. Run appropriate verification commands based on project type

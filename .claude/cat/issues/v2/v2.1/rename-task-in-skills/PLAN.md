@@ -31,6 +31,14 @@ Replace "task" terminology with "issue" in all skill files.
 - plugin/skills/merge-subagent/SKILL.md
 - plugin/skills/validate-git-safety/SKILL.md
 - plugin/skills/git-squash/SKILL.md
+- plugin/skills/add/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/remove/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/work/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/status/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/init/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/cleanup/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/config/SKILL.md (from merged rename-task-in-commands)
+- plugin/skills/research/SKILL.md (from merged rename-task-in-commands)
 
 ## Execution Steps
 1. Replace "task" with "issue" in all skill files

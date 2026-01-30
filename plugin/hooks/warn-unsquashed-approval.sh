@@ -42,12 +42,12 @@ if [[ -f "$CAT_BASE_FILE" ]]; then
     fi
 else
     # M224: In main workspace - check for recent task commits that weren't squashed
-    # Look for multiple commits with same Task ID in last 5 commits
+    # Look for multiple commits with same Issue ID in last 5 commits
     RECENT_COMMITS=$(git log --oneline -5 2>/dev/null || echo "")
 
     # Check if last 2+ commits are related (same task or config/planning pair)
     LAST_TWO=$(git log --oneline -2 2>/dev/null || echo "")
-    TASK_ID_COUNT=$(git log --format="%B" -5 2>/dev/null | grep -c "Task ID:" || echo "0")
+    TASK_ID_COUNT=$(git log --format="%B" -5 2>/dev/null | grep -c "Issue ID:" || echo "0")
 
     # If we have a planning/config commit followed by a task commit, they should be squashed
     if echo "$LAST_TWO" | head -1 | grep -qE "^[a-f0-9]+ (config|planning):.*progress" && \

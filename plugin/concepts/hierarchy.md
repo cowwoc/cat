@@ -1,4 +1,4 @@
-# CAT Hierarchy: MAJOR > MINOR > TASK
+# CAT Hierarchy: MAJOR > MINOR > ISSUE
 
 > **See also:** [version-paths.md](version-paths.md) for path construction functions and patterns.
 
@@ -12,17 +12,17 @@
 └── v<n>/
     ├── STATE.md
     ├── PLAN.md
-    ├── CHANGELOG.md          # Aggregates completed tasks
+    ├── CHANGELOG.md          # Aggregates completed issues
     └── v<n>.<m>/
         ├── STATE.md
         ├── PLAN.md
-        ├── CHANGELOG.md      # Aggregates completed tasks
-        └── <task-name>/
+        ├── CHANGELOG.md      # Aggregates completed issues
+        └── <issue-name>/
             ├── STATE.md
             └── PLAN.md
 ```
 
-> **NOTE**: Task-level CHANGELOG.md is not created. Task changelog content is embedded
+> **NOTE**: Issue-level CHANGELOG.md is not created. Issue changelog content is embedded
 > in commit messages (see commit message format in work command).
 
 ## Version Semantics
@@ -31,7 +31,7 @@
 |-------|---------|-----------|
 | MAJOR | New features or capabilities | 0-based (users typically start at 1) |
 | MINOR | Bugfixes and smaller additions | 0-based |
-| TASK | Atomic unit of work | Named (lowercase-hyphens) |
+| ISSUE | Atomic unit of work | Named (lowercase-hyphens) |
 
 ## Versioning Schemes
 
@@ -44,10 +44,10 @@ See [version-scheme.md](version-scheme.md) for:
 
 ## Requirements Flow
 
-Requirements are defined at the **minor version level** and traced to tasks:
+Requirements are defined at the **minor version level** and traced to issues:
 
 ```
-Minor PLAN.md                    Task PLAN.md
+Minor PLAN.md                    Issue PLAN.md
 ┌─────────────────────┐         ┌─────────────────────┐
 │ ## Requirements     │         │ ## Satisfies        │
 │ | REQ-001 | ...     │ ◄────── │ - REQ-001           │
@@ -57,10 +57,10 @@ Minor PLAN.md                    Task PLAN.md
 ```
 
 **Key rules:**
-- Requirements live in minor version PLAN.md (not task level)
-- Tasks reference requirements via `## Satisfies` field (zero or more)
+- Requirements live in minor version PLAN.md (not issue level)
+- Issues reference requirements via `## Satisfies` field (zero or more)
 - A minor version cannot complete until all must-have requirements are satisfied (implicit check)
-- The Requirements stakeholder verifies tasks satisfy their claimed requirements
+- The Requirements stakeholder verifies issues satisfy their claimed requirements
 - Exit gates are for additional user-defined conditions, not requirements
 
 ## Version Decisions
@@ -87,28 +87,28 @@ Minor versions have implicit sequential dependencies:
 - `v1.1` → Depends on `v1.0`
 
 **A minor version is executable when:**
-1. Its dependency minor version is completed (all tasks in that minor are completed)
+1. Its dependency minor version is completed (all issues in that minor are completed)
 2. OR it has no dependency (first version)
 
-**Task-level dependencies:**
-- Tasks within a minor depend on their explicit dependency list in STATE.md
-- Cross-minor task dependencies are not supported (use minor version ordering instead)
+**Issue-level dependencies:**
+- Issues within a minor depend on their explicit dependency list in STATE.md
+- Cross-minor issue dependencies are not supported (use minor version ordering instead)
 
-## Task Execution Order
+## Issue Execution Order
 
-**Non-Linear Progression:** Tasks execute based on dependency resolution, not sequence order.
+**Non-Linear Progression:** Issues execute based on dependency resolution, not sequence order.
 
-When dependencies are met, tasks become eligible for execution regardless of their position in the
-task list. Multiple independent tasks can execute concurrently.
+When dependencies are met, issues become eligible for execution regardless of their position in the
+issue list. Multiple independent issues can execute concurrently.
 
-| Task State | Execution Eligibility |
+| Issue State | Execution Eligibility |
 |------------|----------------------|
 | Dependencies empty | Immediately eligible |
 | All dependencies completed | Eligible |
 | Any dependency pending | Blocked until resolved |
 
-This enables parallel execution of independent tasks while maintaining correct ordering for
-dependent tasks.
+This enables parallel execution of independent issues while maintaining correct ordering for
+dependent issues.
 
 ## Example Path
 
@@ -119,6 +119,6 @@ dependent tasks.
 Components (using MAJOR.MINOR scheme):
 - Major version: 1
 - Minor version: 0
-- Task name: parse-switch-statements
+- Issue name: parse-switch-statements
 
 > **Note:** Path structure adapts to versioning scheme. See [version-scheme.md](version-scheme.md).

@@ -91,7 +91,7 @@ format_branch_name() {
     echo "${version}-${task_name}"
 }
 
-# Format Task ID for commit messages
+# Format Issue ID for commit messages
 format_task_id() {
     local version="$1"
     local task_name="$2"

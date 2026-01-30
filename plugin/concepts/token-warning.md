@@ -21,29 +21,29 @@ during execution. This indicates potential quality degradation.
 The subagent experienced {N} compaction event(s). This indicates:
 - Context window was exhausted during execution
 - Quality may have degraded as context was summarized
-- Task may be too large for single-subagent execution
+- Issue may be too large for single-subagent execution
 
-RECOMMENDATION: Decompose remaining work into smaller tasks.
+RECOMMENDATION: Decompose remaining work into smaller issues.
 ```
 
 ### User Decision
 
 Use AskUserQuestion:
 - header: "Token Warning"
-- question: "Task triggered context compaction. Decomposition is strongly recommended:"
+- question: "Issue triggered context compaction. Decomposition is strongly recommended:"
 - options:
-  - "Decompose" - Split into smaller tasks via /cat:decompose-task (Recommended)
+  - "Decompose" - Split into smaller issues via /cat:decompose-issue (Recommended)
   - "Continue anyway" - Accept potential quality impact
   - "Abort" - Stop and review work quality
 
 **If "Decompose":**
-Invoke `/cat:decompose-task` to split remaining similar work.
+Invoke `/cat:decompose-issue` to split remaining similar work.
 
 **If "Continue anyway":**
 Proceed but note in STATE.md that compaction occurred.
 
 **If "Abort":**
-Rollback changes and mark task for manual review.
+Rollback changes and mark issue for manual review.
 
 ---
 
@@ -55,7 +55,7 @@ Rollback changes and mark task for manual review.
 📊 HIGH TOKEN USAGE: {N} tokens ({percentage}% of context)
 
 The subagent used significant context (threshold: {targetContextUsage}%).
-Consider decomposing similar tasks in the future.
+Consider decomposing similar issues in the future.
 ```
 
 No action required - this is informational for future planning.
@@ -69,7 +69,7 @@ No action required - this is informational for future planning.
 ```
 ## Subagent Execution Report
 
-**Task:** {task-name}
+**Issue:** {issue-name}
 **Status:** {success|partial|failed}
 
 **Token Usage:**
@@ -92,7 +92,7 @@ output_tokens` from message.usage) which only shows response overhead.
 
 ## Token Estimate Variance Check (M099)
 
-After collecting actual token usage, compare against estimate from task analysis:
+After collecting actual token usage, compare against estimate from issue analysis:
 
 ```bash
 # Calculate variance
@@ -109,7 +109,7 @@ fi
 Invoke `/cat:learn-from-mistakes` with:
 - Description: "Token estimate underestimated actual usage by {variance}%"
 - Estimated vs actual tokens
-- Task details
+- Issue details
 
 ---
 
@@ -117,4 +117,4 @@ Invoke `/cat:learn-from-mistakes` with:
 
 - Normal execution without compaction
 - Token usage below threshold
-- Task not yet started
+- Issue not yet started

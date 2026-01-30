@@ -171,13 +171,13 @@ find . -maxdepth 3 -type d \( -name "releases" -o -name "roadmap" \) 2>/dev/null
 
 <step name="existing_parse_git" condition="Existing codebase">
 
-**Parse Task ID footers (AUTHORITATIVE source):**
+**Parse Issue ID footers (AUTHORITATIVE source):**
 ```bash
-git log --all --format="%H %s" --grep="Task ID:" 2>/dev/null | head -100
+git log --all --format="%H %s" --grep="Issue ID:" 2>/dev/null | head -100
 ```
 
-For each commit with Task ID:
-- Extract: major, minor, task-name from `Task ID: v{major}.{minor}-{task-name}`
+For each commit with Issue ID:
+- Extract: major, minor, task-name from `Issue ID: v{major}.{minor}-{task-name}`
 - Get files: `git diff-tree --no-commit-id --name-status -r <hash>`
 - Get date: `git log -1 --format="%ci" <hash>`
 
@@ -187,7 +187,7 @@ Build mapping: task-name → {commits, files_created, files_modified, date}
 
 <step name="existing_import" condition="Existing codebase">
 
-**Import planning data (FALLBACK when no Task ID commits):**
+**Import planning data (FALLBACK when no Issue ID commits):**
 
 ```bash
 find . -maxdepth 3 -name "changelog*.md" -type f 2>/dev/null | grep -v node_modules
@@ -746,7 +746,7 @@ After:
 - Description MUST be imperative mood ("add", not "added")
 - Description MUST NOT exceed 72 characters
 - Body MAY provide additional context
-- Task ID footer SHOULD be included for CAT tasks
+- Issue ID footer SHOULD be included for CAT tasks
 ```
 
 **If GIT_CUSTOM_NOTES exists:**

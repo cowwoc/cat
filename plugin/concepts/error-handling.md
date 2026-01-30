@@ -89,12 +89,12 @@ Input validation must fail on first error, not accumulate.
 
 ```bash
 # WRONG - continues after error
-[ -z "$TASK_NAME" ] && echo "Warning: no task name"
+[ -z "$ISSUE_NAME" ] && echo "Warning: no issue name"
 [ -z "$VERSION" ] && echo "Warning: no version"
 # ... continues with invalid state
 
 # CORRECT - fail-fast
-[ -z "$TASK_NAME" ] && echo "ERROR: TASK_NAME required" && exit 1
+[ -z "$ISSUE_NAME" ] && echo "ERROR: ISSUE_NAME required" && exit 1
 [ -z "$VERSION" ] && echo "ERROR: VERSION required" && exit 1
 ```
 
@@ -162,12 +162,12 @@ Main agent attempts resolution
 When escalating to user, provide:
 
 1. **Error message**: Clear description of failure
-2. **Task context**: Which task/operation failed
+2. **Issue context**: Which issue/operation failed
 3. **Details**: Relevant logs or state
 4. **Suggested actions**: What user can do
 
 ```markdown
-## Task Failed: parse-switch-statements
+## Issue Failed: parse-switch-statements
 
 **Error:** Unable to resolve merge conflict in Parser.java
 
@@ -178,7 +178,7 @@ When escalating to user, provide:
 **Conflict Details:**
 Lines 45-52 have conflicting changes from:
 - main branch: Added null check
-- task branch: Refactored method signature
+- issue branch: Refactored method signature
 
 **Suggested Actions:**
 1. Review conflict in Parser.java

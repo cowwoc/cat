@@ -52,7 +52,7 @@ already shows Files Modified, Files Created, and Test Coverage - omit these from
 ## Deviations from Plan (optional)
 - {Deviation}: {reason and impact}
 
-Task ID: v{major}.{minor}-{task-name}
+Issue ID: v{major}.{minor}-{task-name}
 ```
 
 ---
@@ -74,5 +74,5 @@ feature: add lambda expression parsing
 ## Decisions Made
 - Reuse parameter parsing: Maintains consistency with method parameters
 
-Task ID: v1.0-parse-lambdas
+Issue ID: v1.0-parse-lambdas
 ```
