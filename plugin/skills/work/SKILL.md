@@ -1,5 +1,5 @@
 ---
-description: Work on issues (auto-continues when trust >= medium)
+description: Work on issues (approval required unless trust=high; auto-continues to next task when trust >= medium)
 argument-hint: "[version | taskId] [--override-gate]"
 allowed-tools:
   - Read
