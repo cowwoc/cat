@@ -256,20 +256,27 @@ git checkout --theirs .claude/cat/claim-index.db
 
 **Problem:** If developer modifies code but forgets to re-index, they commit stale DB.
 
-**Solution:** Pre-commit hook validates index is current before allowing commit.
+**Solution:** Pre-commit hook validates ENTIRE index against ENTIRE codebase before every commit.
 
-**Performance (optimized with batch query):**
+**Validation requirements:**
+1. No phantom entries (indexed files that don't exist in repo)
+2. No stale entries (hash mismatch between index and actual file)
+3. All source files in repo should be indexed
 
-| Commit Size | Validation Time |
-|-------------|-----------------|
-| 1-10 files | <20ms |
-| 50-100 files | ~35ms |
-| 500-1000 files | ~150ms |
+**Performance (full validation):**
+
+| Repo Size | Validation Time |
+|-----------|-----------------|
+| 100 files | ~50ms |
+| 1,000 files | ~200ms |
+| 10,000 files | ~1-2s |
+
+The cost is unavoidable - correctness requires validating all files, not just changed files.
 
 ```python
 # plugin/hooks/bash_handlers/validate_claim_index.py
 class ValidateClaimIndexHandler(PreToolUseHandler):
-    """Block commits if claim index is out of date."""
+    """Block commits if claim index doesn't match codebase state."""
 
     def check(self, command: str, tool_input: dict) -> dict | None:
         if 'git commit' not in command:
@@ -279,47 +286,83 @@ class ValidateClaimIndexHandler(PreToolUseHandler):
         if not os.path.exists(db_path):
             return None  # No index yet, skip validation
 
-        # Get staged source files (one git command)
-        result = subprocess.run(
-            ['git', 'diff', '--cached', '--name-only'],
-            capture_output=True, text=True, timeout=5
-        )
-        staged = [f for f in result.stdout.strip().split('\n') if is_source_file(f)]
-        if not staged:
-            return None
+        # Get ALL source files in repo (not just staged)
+        repo_files = set(find_all_source_files())
 
-        # OPTIMIZED: Single batch query instead of N queries
+        # Get ALL indexed files and their hashes
         db = sqlite3.connect(db_path)
-        placeholders = ','.join('?' * len(staged))
-        results = db.execute(f"""
-            SELECT file_path, file_hash FROM methods
-            WHERE file_path IN ({placeholders})
-        """, staged).fetchall()
-        stored_hashes = {r[0]: r[1] for r in results}
+        results = db.execute(
+            "SELECT DISTINCT file_path, file_hash FROM methods"
+        ).fetchall()
+        indexed = {r[0]: r[1] for r in results}
         db.close()
 
-        # Hash files and compare (only files already in index)
-        stale_files = []
-        for file_path in staged:
-            if file_path in stored_hashes:  # Only check indexed files
-                if hash_file(file_path) != stored_hashes[file_path]:
-                    stale_files.append(file_path)
+        errors = []
 
-        if stale_files:
+        # Check 1: No phantom entries (indexed but not in repo)
+        phantoms = set(indexed.keys()) - repo_files
+        if phantoms:
+            errors.append(f"Index contains {len(phantoms)} non-existent file(s):")
+            for f in list(phantoms)[:3]:
+                errors.append(f"  - {f}")
+            if len(phantoms) > 3:
+                errors.append(f"  ... and {len(phantoms) - 3} more")
+
+        # Check 2: No stale entries (hash ALL indexed files)
+        stale = []
+        for file_path, stored_hash in indexed.items():
+            if file_path in repo_files:
+                if hash_file(file_path) != stored_hash:
+                    stale.append(file_path)
+        if stale:
+            errors.append(f"Index has {len(stale)} stale file(s):")
+            for f in stale[:3]:
+                errors.append(f"  - {f}")
+            if len(stale) > 3:
+                errors.append(f"  ... and {len(stale) - 3} more")
+
+        # Check 3: Missing files (source files not indexed)
+        missing = repo_files - set(indexed.keys())
+        if missing:
+            errors.append(f"Index missing {len(missing)} file(s):")
+            for f in list(missing)[:3]:
+                errors.append(f"  - {f}")
+            if len(missing) > 3:
+                errors.append(f"  ... and {len(missing) - 3} more")
+
+        if errors:
             return {
                 'decision': 'block',
-                'message': f"""Claim index out of date for {len(stale_files)} file(s):
-{chr(10).join(f'  - {f}' for f in stale_files[:5])}
-{'  ...' if len(stale_files) > 5 else ''}
+                'message': f"""Claim index validation failed:
+
+{chr(10).join(errors)}
 
 Run `/cat:index-claims` to update the index before committing."""
             }
 
-        return None  # Index is current, allow commit
+        return None  # Index is valid, allow commit
+
+
+def find_all_source_files() -> list[str]:
+    """Get all source files tracked by git."""
+    result = subprocess.run(
+        ['git', 'ls-files'],
+        capture_output=True, text=True, timeout=30
+    )
+    return [f for f in result.stdout.strip().split('\n') if is_source_file(f)]
+
+
+def is_source_file(path: str) -> bool:
+    """Check if file is a source file that should be indexed."""
+    extensions = {'.java', '.py', '.ts', '.js', '.go', '.rs', '.kt', '.scala'}
+    return any(path.endswith(ext) for ext in extensions)
 ```
 
-**Note:** New files (not yet in index) are NOT blocked - they'll be indexed on next
-`/cat:index-claims` run or during stakeholder review.
+**Why full validation is necessary:**
+- Index is git-tracked, so every commit must have a valid snapshot
+- Partial validation could miss stale entries from previous commits
+- After merge conflicts, the entire index state could be inconsistent
+- Correctness > Performance for data integrity
 
 **Workflow:**
 ```
