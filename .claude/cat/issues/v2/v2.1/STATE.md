@@ -9,6 +9,8 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- holistic-review-skill
+- holistic-review-criteria
 - python-prerendered-output
 - migrate-to-silent-preprocessing (decomposed)
   - update-skill-builder-docs
