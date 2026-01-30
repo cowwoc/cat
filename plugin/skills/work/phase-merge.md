@@ -8,6 +8,16 @@ Steps for post-approval work: squash_commits, finalization, next_task.
 
 ---
 
+## Progress Banner Requirement (M319)
+
+**MANDATORY: Display progress banner when entering this phase.**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase merging
+```
+
+---
+
 <step name="squash_commits">
 
 **Apply Squash Preference from PROJECT.md:**

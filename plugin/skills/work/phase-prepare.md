@@ -8,6 +8,27 @@ Steps for task preparation: verify, find_task, acquire_lock, load_task, validate
 
 ---
 
+## Progress Banner Requirement (M319)
+
+**MANDATORY: Display progress banner at phase start and transitions.**
+
+After acquiring the lock and identifying the task, run `get-progress-banner.sh` and OUTPUT the result directly to the user (not in a code block):
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase preparing
+```
+
+The banner looks like:
+```
+┌─ 🐱 2.1-task-name ──────────────────────────────────────────────────┐
+│  ◉ Preparing ────── ○ Executing ────── ○ Reviewing ────── ○ Merging │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Anti-pattern (M319):** Writing informal markdown like "## Phase 1: Prepare" instead of running the script.
+
+---
+
 <step name="verify">
 
 **MANDATORY FIRST STEP - Verify planning structure:**

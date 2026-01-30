@@ -8,6 +8,16 @@ Steps for review and approval: stakeholder_review, approval_gate.
 
 ---
 
+## Progress Banner Requirement (M319)
+
+**MANDATORY: Display progress banner when entering this phase.**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase reviewing
+```
+
+---
+
 <step name="stakeholder_review">
 
 **Multi-perspective stakeholder review gate:**

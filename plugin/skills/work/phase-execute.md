@@ -8,6 +8,16 @@ Steps for task execution: execute, collect_and_report, aggregate_token_report, t
 
 ---
 
+## Progress Banner Requirement (M319)
+
+**MANDATORY: Display progress banner when entering this phase.**
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase executing
+```
+
+---
+
 <step name="execute">
 
 **Execute the PLAN.md:**
