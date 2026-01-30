@@ -151,14 +151,14 @@ Map: None → `verify: "none"`, Changed → `verify: "changed"`, All → `verify
 
 <step name="curiosity">
 
-**🔍 Curiosity — How much CAT explores beyond the immediate task**
+**🔍 Curiosity — How much CAT explores beyond the immediate issue**
 
 Display current setting, then AskUserQuestion:
 - header: "Curiosity"
-- question: "How much should CAT explore beyond the task? (Current: {curiosity || 'low'})"
+- question: "How much should CAT explore beyond the issue? (Current: {curiosity || 'low'})"
 - options:
   - label: "Low (Recommended)"
-    description: "Task-only, minimal scope"
+    description: "Issue-only, minimal scope"
   - label: "Medium"
     description: "Notice obvious issues while working"
   - label: "High"
@@ -205,7 +205,7 @@ AskUserQuestion:
 - question: "Worktree cleanup behavior: (Current: {autoRemoveWorktrees ? 'Auto-remove' : 'Keep'})"
 - options:
   - label: "🧹 Auto-remove (Recommended)"
-    description: "Remove after task completion"
+    description: "Remove after issue completion"
   - label: "📦 Keep"
     description: "Preserve for manual inspection"
   - label: "← Back"
@@ -261,10 +261,10 @@ jq '.terminalWidth = {value}' .claude/cat/cat-config.json > .claude/cat/cat-conf
 
 AskUserQuestion:
 - header: "Completion Workflow"
-- question: "How should completed tasks be integrated? (Current: {completionWorkflow || 'merge'})"
+- question: "How should completed issues be integrated? (Current: {completionWorkflow || 'merge'})"
 - options:
   - label: "🔀 Merge (Recommended)"
-    description: "Merge task branch directly to base branch after approval"
+    description: "Merge issue branch directly to base branch after approval"
   - label: "📝 Pull Request"
     description: "Create a PR instead of merging directly"
   - label: "← Back"
@@ -348,12 +348,12 @@ Use AskUserQuestion:
 - multiSelect: true
 - options:
   - "Previous version complete" - sequential dependency
-  - "Specific task(s) complete" - named tasks required
+  - "Specific issue(s) complete" - named issues required
   - "Specific version(s) complete" - named versions required
   - "Manual approval required" - explicit sign-off
 
-If "Specific task(s) complete":
-- Ask: "Which task(s)? (e.g., 0.5-design-review, comma-separated)"
+If "Specific issue(s) complete":
+- Ask: "Which issue(s)? (e.g., 0.5-design-review, comma-separated)"
 
 If "Specific version(s) complete":
 - Ask: "Which version(s)? (e.g., 0.3, 0.4, comma-separated)"
@@ -365,13 +365,13 @@ Use AskUserQuestion:
 - question: "Select exit conditions (current: {current conditions}):"
 - multiSelect: true
 - options:
-  - "All tasks complete" - every task in version done
-  - "Specific task(s) complete" - only named tasks required
+  - "All issues complete" - every issue in version done
+  - "Specific issue(s) complete" - only named issues required
   - "Tests passing" - test suite must pass
   - "Manual sign-off" - explicit approval
 
-If "Specific task(s) complete":
-- Ask: "Which task(s)? (comma-separated)"
+If "Specific issue(s) complete":
+- Ask: "Which issue(s)? (comma-separated)"
 
 **Step 5: Update PLAN.md**
 
@@ -452,10 +452,10 @@ Use the **NO_CHANGES** box from Pre-rendered Config Boxes.
 |---------|------|---------|-------------|
 | `trust` | string | "medium" | Trust level (controls review and autonomy) |
 | `verify` | string | "changed" | What verification runs before commits |
-| `curiosity` | string | "low" | Exploration beyond immediate task |
+| `curiosity` | string | "low" | Exploration beyond immediate issue |
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
-| `completionWorkflow` | string | "merge" | Task completion behavior (merge or PR) |
+| `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
 
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
@@ -470,7 +470,7 @@ Use the **NO_CHANGES** box from Pre-rendered Config Boxes.
 - `all` — Verify entire project.
 
 ### Curiosity Values
-- `low` — Task-only. Don't explore.
+- `low` — Issue-only. Don't explore.
 - `medium` — Notice obvious issues while working.
 - `high` — Actively explore for improvements.
 
@@ -480,7 +480,7 @@ Use the **NO_CHANGES** box from Pre-rendered Config Boxes.
 - `high` — Defer by priority to future versions.
 
 ### Completion Workflow Values
-- `merge` — Merge task branch directly to base branch after approval (default).
+- `merge` — Merge issue branch directly to base branch after approval (default).
 - `pr` — Create a pull request instead of merging directly.
 
 </configuration_reference>

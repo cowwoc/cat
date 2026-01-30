@@ -6,7 +6,7 @@ description: >
 
 # Validation-Driven Document Compression
 
-**Task**: Compress the documentation file: `{{arg}}`
+**Issue**: Compress the documentation file: `{{arg}}`
 
 **Goal**: Reduce document size while preserving execution equivalence using
 objective validation instead of prescriptive rules.
@@ -397,7 +397,7 @@ Decision: {DECISION}
   - Impact: {violation_consequence}
   - **Fix**: {specific recommendation}
 
-**Your Task**:
+**Your Issue**:
 
 Revise the compressed document to restore the lost relationships while maintaining compression.
 

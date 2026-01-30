@@ -1,5 +1,5 @@
 ---
-description: Use to add a task to a version OR create a new version (major/minor/patch)
+description: Use to add a issue to a version OR create a new version (major/minor/patch)
 allowed-tools:
   - Read
   - Write
@@ -12,18 +12,18 @@ args: "[description]"
 
 <objective>
 
-Unified command for adding tasks or versions to the CAT planning structure. Routes to the appropriate
+Unified command for adding issues or versions to the CAT planning structure. Routes to the appropriate
 workflow based on user selection.
 
 **Shortcut:** When invoked with a description argument (e.g., `/cat:add make installation easier`),
-treats the argument as a task description and skips directly to task creation workflow.
+treats the argument as a issue description and skips directly to issue creation workflow.
 
 </objective>
 
 <execution_context>
 
-@${CLAUDE_PLUGIN_ROOT}/templates/task-state.md
-@${CLAUDE_PLUGIN_ROOT}/templates/task-plan.md
+@${CLAUDE_PLUGIN_ROOT}/templates/issue-state.md
+@${CLAUDE_PLUGIN_ROOT}/templates/issue-plan.md
 @${CLAUDE_PLUGIN_ROOT}/templates/major-state.md
 @${CLAUDE_PLUGIN_ROOT}/templates/major-plan.md
 @${CLAUDE_PLUGIN_ROOT}/templates/minor-state.md
@@ -68,7 +68,7 @@ Use AskUserQuestion:
 - header: "Add What?"
 - question: "What would you like to add?"
 - options:
-  - "Task" - Add a task to an existing minor version
+  - "Issue" - Add a issue to an existing minor version
   - "Patch version" - Add a patch version to an existing minor
   - "Minor version" - Add a minor version to an existing major
   - "Major version" - Add a new major version
@@ -79,15 +79,15 @@ Use AskUserQuestion:
 
 **Route based on selection:**
 
-**If "Task":**
+**If "Issue":**
 - Continue to add_task workflow (step: task_gather_intent)
 
 **If "Patch version":**
-- Set VERSION_TYPE="patch", PARENT_TYPE="minor", CHILD_TYPE="task"
+- Set VERSION_TYPE="patch", PARENT_TYPE="minor", CHILD_TYPE="issue"
 - Continue to unified version workflow (step: version_select_parent)
 
 **If "Minor version":**
-- Set VERSION_TYPE="minor", PARENT_TYPE="major", CHILD_TYPE="task"
+- Set VERSION_TYPE="minor", PARENT_TYPE="major", CHILD_TYPE="issue"
 - Continue to unified version workflow (step: version_select_parent)
 
 **If "Major version":**
@@ -96,11 +96,11 @@ Use AskUserQuestion:
 
 </step>
 
-<!-- ========== TASK WORKFLOW ========== -->
+<!-- ========== ISSUE WORKFLOW ========== -->
 
 <step name="task_gather_intent">
 
-**Gather task intent BEFORE selecting version:**
+**Gather issue intent BEFORE selecting version:**
 
 The goal is to understand what the user wants to accomplish first, then intelligently suggest which
 version it belongs to.
@@ -111,7 +111,7 @@ version it belongs to.
 
 **Otherwise, ask for description (FREEFORM):**
 
-Ask inline: "What do you want to accomplish? Describe the task you have in mind."
+Ask inline: "What do you want to accomplish? Describe the issue you have in mind."
 
 Capture as TASK_DESCRIPTION, then continue to step: task_ask_type.
 
@@ -119,10 +119,10 @@ Capture as TASK_DESCRIPTION, then continue to step: task_ask_type.
 
 <step name="task_ask_type">
 
-**Ask task type:**
+**Ask issue type:**
 
 Use AskUserQuestion:
-- header: "Task Type"
+- header: "Issue Type"
 - question: "What type of work is this?"
 - options:
   - "Feature" - Add new functionality
@@ -151,7 +151,7 @@ For each version:
 
 **2. FILTER OUT COMPLETED VERSIONS (MANDATORY):**
 
-**Completed versions MUST NOT be offered as task targets.** Check each version's STATE.md:
+**Completed versions MUST NOT be offered as issue targets.** Check each version's STATE.md:
 
 ```bash
 # Check if version is completed
@@ -171,18 +171,18 @@ Create a mental map of each eligible version's focus:
 - Extract requirement descriptions from "## Requirements"
 - Note the overall theme/domain
 
-**4. Compare task to version focuses:**
+**4. Compare issue to version focuses:**
 
 Analyze TASK_DESCRIPTION against each eligible version's focus:
 - Keyword matching (e.g., "parser" matches parser-focused versions)
-- Domain alignment (e.g., UI task matches UI-focused versions)
+- Domain alignment (e.g., UI issue matches UI-focused versions)
 - Scope fit (bugfix in active development version vs new feature in upcoming version)
 
 **5. Rank versions by fit:**
 
 Score each version based on:
 - Topic alignment (high weight)
-- Logical grouping with existing tasks (medium weight)
+- Logical grouping with existing issues (medium weight)
 
 </step>
 
@@ -196,8 +196,8 @@ Based on analysis, present options with the best match first:
 
 Use AskUserQuestion:
 - header: "Suggested Version"
-- question: "Based on your task description, I recommend adding this to version {best_match}
-  ({brief_reason}). Which version should this task be added to?"
+- question: "Based on your issue description, I recommend adding this to version {best_match}
+  ({brief_reason}). Which version should this issue be added to?"
 - options:
   - "{best_match} (Recommended)" - {version_focus_summary}
   - "{second_match}" - {version_focus_summary} (if applicable)
@@ -215,7 +215,7 @@ find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | \
 
 Use AskUserQuestion:
 - header: "All Versions"
-- question: "Select a version for this task:"
+- question: "Select a version for this issue:"
 - options: [List of all versions with focus summaries] + "Create new minor version"
 
 **If no versions exist or "Create new minor version" selected:**
@@ -234,11 +234,11 @@ VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Version $MAJOR.$MINOR does not exist" && exit 1
 
-# MANDATORY (M168): Verify version is not completed before adding tasks
+# MANDATORY (M168): Verify version is not completed before adding issues
 VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "pending")
 if [ "$VERSION_STATUS" = "complete" ] || [ "$VERSION_STATUS" = "completed" ]; then
     echo "ERROR: Version $MAJOR.$MINOR is already completed (status: $VERSION_STATUS)"
-    echo "Cannot add tasks to completed versions. Choose a different version."
+    echo "Cannot add issues to completed versions. Choose a different version."
     exit 1
 fi
 ```
@@ -247,25 +247,25 @@ fi
 
 <step name="task_get_name">
 
-**Get task name from user:**
+**Get issue name from user:**
 
-Ask inline (FREEFORM): "What should this task be called? (lowercase, hyphens only, max 50 chars)"
+Ask inline (FREEFORM): "What should this issue be called? (lowercase, hyphens only, max 50 chars)"
 
-**Validate task name:**
+**Validate issue name:**
 
 ```bash
 TASK_NAME="{user input}"
 
 # Validate format
 if ! echo "$TASK_NAME" | grep -qE '^[a-z][a-z0-9-]{0,48}[a-z0-9]$'; then
-    echo "ERROR: Invalid task name. Use lowercase letters, numbers, and hyphens only."
+    echo "ERROR: Invalid issue name. Use lowercase letters, numbers, and hyphens only."
     echo "Example: parse-tokens, fix-memory-leak, add-user-auth"
     exit 1
 fi
 
 # Check uniqueness within minor version
 if [ -d ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
-    echo "ERROR: Task '$TASK_NAME' already exists in version $MAJOR.$MINOR"
+    echo "ERROR: Issue '$TASK_NAME' already exists in version $MAJOR.$MINOR"
     exit 1
 fi
 ```
@@ -276,9 +276,9 @@ If validation fails, prompt user for different name.
 
 <step name="task_discuss">
 
-**Gather additional task context:**
+**Gather additional issue context:**
 
-Note: Task description and type were already captured in task_gather_intent step.
+Note: Issue description and type were already captured in task_gather_intent step.
 Use TASK_DESCRIPTION and TASK_TYPE from that step.
 
 **1. Scope, Dependencies, and Blockers (combined):**
@@ -287,7 +287,7 @@ Collect all three independent questions in a single AskUserQuestion call:
 
 Use AskUserQuestion:
 - questions:
-    - question: "How many files will this task likely touch?"
+    - question: "How many files will this issue likely touch?"
       header: "Scope"
       options:
         - label: "1-2 files"
@@ -298,22 +298,22 @@ Use AskUserQuestion:
           description: "Broad change - consider splitting"
       multiSelect: false
 
-    - question: "Does this task depend on other tasks completing first?"
+    - question: "Does this issue depend on other issues completing first?"
       header: "Dependencies"
       options:
         - label: "No dependencies"
           description: "Can start immediately"
         - label: "Yes, select dependencies"
-          description: "Show task list to choose from"
+          description: "Show issue list to choose from"
       multiSelect: false
 
-    - question: "Does this task block any existing tasks?"
+    - question: "Does this issue block any existing issues?"
       header: "Blocks"
       options:
         - label: "No, doesn't block anything"
           description: "Continue without blockers"
-        - label: "Yes, select blocked tasks"
-          description: "Show task list to choose from"
+        - label: "Yes, select blocked issues"
+          description: "Show issue list to choose from"
       multiSelect: false
 
 **2. Conditional follow-ups based on answers:**
@@ -321,22 +321,22 @@ Use AskUserQuestion:
 **If Scope = "6+ files":**
 
 Use AskUserQuestion:
-- header: "Task Size"
-- question: "This seems like a large task. Should we split it into multiple smaller tasks?"
+- header: "Issue Size"
+- question: "This seems like a large issue. Should we split it into multiple smaller issues?"
 - options:
-  - "Split into multiple tasks" - Create several focused tasks
-  - "Keep as single task" - I understand the token risk
+  - "Split into multiple issues" - Create several focused issues
+  - "Keep as single issue" - I understand the token risk
 
-If "Split into multiple tasks" -> guide user to define multiple tasks, loop this command.
+If "Split into multiple issues" -> guide user to define multiple issues, loop this command.
 
 **If Dependencies = "Yes, select dependencies":**
 
-List existing tasks in same minor version for selection using AskUserQuestion with multiSelect.
+List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
 
-**If Blocks = "Yes, select blocked tasks":**
+**If Blocks = "Yes, select blocked issues":**
 
-List existing tasks in same minor version for selection using AskUserQuestion with multiSelect.
-When blockers are selected, add this new task to their Dependencies list in STATE.md.
+List existing issues in same minor version for selection using AskUserQuestion with multiSelect.
+When blockers are selected, add this new issue to their Dependencies list in STATE.md.
 
 </step>
 
@@ -418,7 +418,7 @@ After the type-specific options, always add:
 
 **If "Custom criteria" selected:**
 
-Ask inline: "What are your custom acceptance criteria? How will we know this task is complete?"
+Ask inline: "What are your custom acceptance criteria? How will we know this issue is complete?"
 
 Append the custom response to the selected options.
 
@@ -430,7 +430,7 @@ Capture selected criteria as ACCEPTANCE_CRITERIA (list of labels, possibly with 
 
 <step name="task_select_requirements">
 
-**Select requirements this task satisfies:**
+**Select requirements this issue satisfies:**
 
 Requirements can be defined at any version level (major, minor, or patch). This step reads
 requirements from the parent version's PLAN.md, regardless of which level that is.
@@ -448,9 +448,9 @@ If requirements exist in the parent version's PLAN.md:
 
 Use AskUserQuestion:
 - header: "Satisfies"
-- question: "Which requirements does this task satisfy? (Select all that apply)"
+- question: "Which requirements does this issue satisfy? (Select all that apply)"
 - multiSelect: true
-- options: [List of REQ-XXX from parent version PLAN.md] + "None - infrastructure/setup task"
+- options: [List of REQ-XXX from parent version PLAN.md] + "None - infrastructure/setup issue"
 
 If no requirements defined in parent version: Satisfies = None
 
@@ -460,33 +460,33 @@ If no requirements defined in parent version: Satisfies = None
 
 **Apply Branching Strategy from PROJECT.md:**
 
-When creating a task, check PROJECT.md for branch naming conventions:
+When creating a issue, check PROJECT.md for branch naming conventions:
 
 ```bash
 # Check if Git Workflow section exists in PROJECT.md
-BRANCH_PATTERN=$(grep -A20 "### Branching Strategy" .claude/cat/PROJECT.md 2>/dev/null | grep "Task" | grep -oP "Pattern.*\`\K[^\`]+" | head -1)
+BRANCH_PATTERN=$(grep -A20 "### Branching Strategy" .claude/cat/PROJECT.md 2>/dev/null | grep "Issue" | grep -oP "Pattern.*\`\K[^\`]+" | head -1)
 
 # Also check cat-config.json for branching strategy
 BRANCH_STRATEGY=$(jq -r '.gitWorkflow.branchingStrategy // "feature"' .claude/cat/cat-config.json 2>/dev/null)
 
 if [[ -n "$BRANCH_PATTERN" ]]; then
-  # Apply pattern to task branch name
-  # Supported variables: {major}, {minor}, {version}, {task-name}
-  TASK_BRANCH=$(echo "$BRANCH_PATTERN" | sed "s/{major}/$MAJOR/g; s/{minor}/$MINOR/g; s/{version}/$MAJOR.$MINOR/g; s/{task-name}/$TASK_NAME/g")
+  # Apply pattern to issue branch name
+  # Supported variables: {major}, {minor}, {version}, {issue-name}
+  TASK_BRANCH=$(echo "$BRANCH_PATTERN" | sed "s/{major}/$MAJOR/g; s/{minor}/$MINOR/g; s/{version}/$MAJOR.$MINOR/g; s/{issue-name}/$TASK_NAME/g")
   echo "Branch pattern from PROJECT.md: $BRANCH_PATTERN"
-  echo "Task branch will be: $TASK_BRANCH"
+  echo "Issue branch will be: $TASK_BRANCH"
 elif [[ "$BRANCH_STRATEGY" == "main-only" ]]; then
-  # No task branches for main-only workflow
+  # No issue branches for main-only workflow
   TASK_BRANCH=""
-  echo "Main-only workflow: no task branch will be created"
+  echo "Main-only workflow: no issue branch will be created"
 else
-  # Default: {major}.{minor}-{task-name}
+  # Default: {major}.{minor}-{issue-name}
   TASK_BRANCH="$MAJOR.$MINOR-$TASK_NAME"
   echo "Using default branch pattern: $TASK_BRANCH"
 fi
 ```
 
-**Create task structure:**
+**Create issue structure:**
 
 ```bash
 TASK_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
@@ -504,9 +504,9 @@ mkdir -p "$TASK_PATH"
 - **Last Updated:** {timestamp}
 ```
 
-**Create PLAN.md based on task type:**
+**Create PLAN.md based on issue type:**
 
-Use appropriate template (Feature, Bugfix, or Refactor) from add-task.md reference.
+Use appropriate template (Feature, Bugfix, or Refactor) from add-issue.md reference.
 
 </step>
 
@@ -514,41 +514,41 @@ Use appropriate template (Feature, Bugfix, or Refactor) from add-task.md referen
 
 **Update parent version STATE.md (MANDATORY):**
 
-Add the new task to the "Tasks Pending" list in STATE.md:
+Add the new issue to the "Issues Pending" list in STATE.md:
 
 ```bash
 VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 
-# Add task to Tasks Pending section
-# Find the "## Tasks Pending" line and append the new task
-if grep -q "^## Tasks Pending" "$VERSION_STATE"; then
-  # Add task name to the pending list
-  sed -i "/^## Tasks Pending/a - $TASK_NAME" "$VERSION_STATE"
+# Add issue to Issues Pending section
+# Find the "## Issues Pending" line and append the new issue
+if grep -q "^## Issues Pending" "$VERSION_STATE"; then
+  # Add issue name to the pending list
+  sed -i "/^## Issues Pending/a - $TASK_NAME" "$VERSION_STATE"
 else
-  # If no Tasks Pending section exists, create it
-  echo -e "\n## Tasks Pending\n- $TASK_NAME" >> "$VERSION_STATE"
+  # If no Issues Pending section exists, create it
+  echo -e "\n## Issues Pending\n- $TASK_NAME" >> "$VERSION_STATE"
 fi
 ```
 
 **Verify the update:**
 
 ```bash
-grep -q "$TASK_NAME" "$VERSION_STATE" || echo "ERROR: Task not added to STATE.md"
+grep -q "$TASK_NAME" "$VERSION_STATE" || echo "ERROR: Issue not added to STATE.md"
 ```
 
 </step>
 
 <step name="task_commit">
 
-**Commit task creation:**
+**Commit issue creation:**
 
 ```bash
 git add ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME/"
 git add ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 git commit -m "$(cat <<'EOF'
-planning: add task {task-name} to {major}.{minor}
+planning: add issue {issue-name} to {major}.{minor}
 
-{One-line description of task goal}
+{One-line description of issue goal}
 EOF
 )"
 ```
@@ -562,15 +562,15 @@ EOF
 Invoke the renderer to generate the completion display:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type task --name "{task-name}" --version "{version}" --task-type "{type}" --deps "{dependencies}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
 ```
 
 Output the rendered box exactly as shown.
 If not found, use this fallback format:
 
 ```
-Task created: {task-name} in version {major}.{minor}
-Next: /cat:work {major}.{minor}-{task-name}
+Issue created: {issue-name} in version {major}.{minor}
+Next: /cat:work {major}.{minor}-{issue-name}
 ```
 
 </step>
@@ -581,7 +581,7 @@ Next: /cat:work {major}.{minor}-{task-name}
   Variables set by route step:
     VERSION_TYPE: "major" | "minor" | "patch"
     PARENT_TYPE: "none" | "major" | "minor"
-    CHILD_TYPE: "minor" | "task" | "task"
+    CHILD_TYPE: "minor" | "issue" | "issue"
 -->
 
 <step name="version_select_parent">
@@ -939,7 +939,7 @@ Present for review with AskUserQuestion.
 ```bash
 MAJOR=$VERSION_NUMBER
 VERSION_PATH=".claude/cat/issues/v$MAJOR"
-mkdir -p "$VERSION_PATH/v$MAJOR.0/task"
+mkdir -p "$VERSION_PATH/v$MAJOR.0/issue"
 ```
 
 **Create major STATE.md:**
@@ -971,7 +971,7 @@ Create initial minor version (X.0) with its STATE.md, PLAN.md, and CHANGELOG.md.
 ```bash
 MINOR=$VERSION_NUMBER
 VERSION_PATH="$PARENT_PATH/v$MAJOR.$MINOR"
-mkdir -p "$VERSION_PATH/task"
+mkdir -p "$VERSION_PATH/issue"
 ```
 
 Create STATE.md, PLAN.md, and CHANGELOG.md for minor version.
@@ -996,10 +996,10 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 - **Started:** $(date +%Y-%m-%d)
 - **Last Updated:** $(date +%Y-%m-%d)
 
-## Tasks Pending
-(No tasks yet)
+## Issues Pending
+(No issues yet)
 
-## Tasks Completed
+## Issues Completed
 (None)
 
 ## Summary
@@ -1192,7 +1192,7 @@ EOF
 Invoke the renderer to generate the completion display:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type task --name "{task-name}" --version "{version}" --task-type "{type}" --deps "{dependencies}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
 ```
 
 Output the rendered box exactly as shown.
@@ -1200,7 +1200,7 @@ If not found, use this fallback format:
 
 ```
 {VERSION_TYPE} version created: {version}
-Next: /cat:add (to add tasks)
+Next: /cat:add (to add issues)
 ```
 
 </step>
@@ -1209,10 +1209,10 @@ Next: /cat:add (to add tasks)
 
 <success_criteria>
 
-**For Task:**
+**For Issue:**
 - [ ] Target version selected or created
-- [ ] Task name validated (format and uniqueness)
-- [ ] Discussion captured task details
+- [ ] Issue name validated (format and uniqueness)
+- [ ] Discussion captured issue details
 - [ ] Requirements selected (or explicitly set to None)
 - [ ] STATE.md and PLAN.md created
 - [ ] Parent STATE.md updated

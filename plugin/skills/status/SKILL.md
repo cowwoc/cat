@@ -1,5 +1,5 @@
 ---
-description: Display project progress - versions, tasks, and completion status
+description: Display project progress - versions, issues, and completion status
 model: haiku
 context: fork
 allowed-tools:
@@ -36,8 +36,8 @@ The status box above was pre-rendered via silent preprocessing.
 
 | Option | Action | Command |
 |--------|--------|---------|
-| [**1**] | Execute a task | `/cat:work {version}-<task-name>` |
-| [**2**] | Add new task | `/cat:add` |
+| [**1**] | Execute a issue | `/cat:work {version}-<issue-name>` |
+| [**2**] | Add new issue | `/cat:add` |
 
 ---
 

@@ -7,7 +7,7 @@ user-invocable: false
 
 # Semantic Document Comparison
 
-**Task**: Compare two documents semantically: `{{arg1}}` vs `{{arg2}}`
+**Issue**: Compare two documents semantically: `{{arg1}}` vs `{{arg2}}`
 
 **Goal**: Determine if documents contain the same semantic content AND preserve relationships
 (temporal, conditional, cross-document) despite different wording/organization.

@@ -1,5 +1,5 @@
 ---
-description: Use for batch skill execution, long-running tasks, or isolating verbose skill output
+description: Use for batch skill execution, long-running issues, or isolating verbose skill output
 user-invocable: false
 ---
 
@@ -7,7 +7,7 @@ user-invocable: false
 
 ## Purpose
 
-Delegate tasks or skills to subagents in isolated worktrees. Multiple items execute in parallel by
+Delegate issues or skills to subagents in isolated worktrees. Multiple items execute in parallel by
 default; use `--sequential` to force sequential execution when needed.
 
 ## Parameters
@@ -15,7 +15,7 @@ default; use `--sequential` to force sequential execution when needed.
 | Parameter | Description |
 |-----------|-------------|
 | `--skill <name> [args...]` | Skill to invoke with its arguments (everything after skill name passed through) |
-| `--tasks <id1,id2,...>` | CAT task IDs (dependencies from TaskList) |
+| `--issues <id1,id2,...>` | CAT issue IDs (dependencies from TaskList) |
 | `--sequential` | Force sequential execution (default: parallel for multiple items) |
 
 **Skill arguments**: Everything after the skill name is passed to that skill.
@@ -26,10 +26,10 @@ default; use `--sequential` to force sequential execution when needed.
 #                     skill name   skill arguments (passed through)
 ```
 
-**CAT tasks**: Dependencies are automatically detected from TaskList.
+**CAT issues**: Dependencies are automatically detected from TaskList.
 ```bash
-# Example: delegate 3 CAT tasks (TaskList provides dependency info)
-/cat:delegate --tasks 2.1-task-a,2.1-task-b,2.1-task-c
+# Example: delegate 3 CAT issues (TaskList provides dependency info)
+/cat:delegate --issues 2.1-issue-a,2.1-issue-b,2.1-issue-c
 ```
 
 ## Execution Model
@@ -60,9 +60,9 @@ judgment calls.
 
 **MANDATORY: Always specify a model explicitly. Never use the default.**
 
-Choose the model based on task complexity:
+Choose the model based on issue complexity:
 
-| Task Type | Model | Reasoning |
+| Issue Type | Model | Reasoning |
 |-----------|-------|-----------|
 | Skill invocation (skill does the work) | `haiku` | Skill handles complexity; subagent just invokes |
 | Simple file operations | `haiku` | Explicit instructions, no reasoning needed |
@@ -113,10 +113,10 @@ These are ABSOLUTE rules. Violation will be detected and blocked.
 - Skill has well-defined inputs and outputs
 - Skill produces measurable postconditions (validation scores)
 
-### For CAT Tasks (`--tasks`)
-- Task has a well-defined PLAN.md ready for execution
+### For CAT Issues (`--issues`)
+- Issue has a well-defined PLAN.md ready for execution
 - **All ambiguities resolved** - main agent has made all decisions
-- Task is independent enough to execute in isolation
+- Issue is independent enough to execute in isolation
 - Parent agent needs to continue with other work
 
 ## Subagent Types and Two-Stage Planning
@@ -130,7 +130,7 @@ These are ABSOLUTE rules. Violation will be detected and blocked.
 
 **Stage 1 prompt template:**
 ```
-Analyze the task and produce HIGH-LEVEL outlines (1-2 sentences each) for:
+Analyze the issue and produce HIGH-LEVEL outlines (1-2 sentences each) for:
 - Conservative approach: [minimal scope, low risk]
 - Balanced approach: [moderate scope, medium risk]
 - Aggressive approach: [comprehensive, high risk]
@@ -153,7 +153,7 @@ prompt: "User selected [approach]. Now produce the DETAILED spec with:
 
 ## Concurrent Execution Safety
 
-This skill respects task-level locking. Before spawning, verify the parent agent holds the task lock.
+This skill respects issue-level locking. Before spawning, verify the parent agent holds the issue lock.
 The lock should have been acquired by `/cat:work`. Subagents inherit lock ownership through
 their worktree association (recorded in the lock file).
 
@@ -168,7 +168,7 @@ LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${TASK_ID}.lock"
 # Verify lock file exists and we own it
 if [[ ! -f "$LOCK_FILE" ]]; then
   echo "ERROR: Lock file does not exist at $LOCK_FILE"
-  echo "Lock was NOT acquired. Another session may own this task."
+  echo "Lock was NOT acquired. Another session may own this issue."
   exit 1
 fi
 
@@ -177,7 +177,7 @@ LOCK_SESSION=$(grep "^session_id=" "$LOCK_FILE" | cut -d= -f2)
 if [[ "$LOCK_SESSION" != "$SESSION_ID" ]]; then
   echo "ERROR: Lock owned by different session: $LOCK_SESSION"
   echo "Current session: $SESSION_ID"
-  echo "Do NOT proceed - another Claude instance is working on this task."
+  echo "Do NOT proceed - another Claude instance is working on this issue."
   exit 1
 fi
 
@@ -288,14 +288,14 @@ If ANY of these occur, STOP and report BLOCKED:
 
 | Element | Why Required |
 |---------|--------------|
-| Clear task type | "Explore and report" OR "Execute these steps" - never both |
+| Clear issue type | "Explore and report" OR "Execute these steps" - never both |
 | Fail-fast conditions | When to stop and report BLOCKED |
-| Exact file paths | For implementation tasks |
+| Exact file paths | For implementation issues |
 | Specific code changes | Before/after examples, not descriptions |
 | Test verification steps | Explicit commands to run, expected outcomes |
 | Edge cases to handle | Subagent won't discover these independently |
 | Commit message format | Exact text, not guidelines |
-| **STATE.md update** | Task STATE.md must be updated to completed IN THE SAME COMMIT |
+| **STATE.md update** | Issue STATE.md must be updated to completed IN THE SAME COMMIT |
 
 ### Fail-Fast Requirements
 
@@ -367,7 +367,7 @@ Output the error and STOP. Do NOT manually construct progress output.
 # Parse parameters
 SKILL=""
 SKILL_ARGS=()
-TASKS=()
+ISSUES=()
 SEQUENTIAL=false
 
 while [[ $# -gt 0 ]]; do
@@ -381,8 +381,8 @@ while [[ $# -gt 0 ]]; do
         shift
       done
       ;;
-    --tasks)
-      IFS=',' read -ra TASKS <<< "$2"
+    --issues)
+      IFS=',' read -ra ISSUES <<< "$2"
       shift 2
       ;;
     --sequential)
@@ -401,7 +401,7 @@ if [[ -n "$SKILL" ]]; then
   ITEM_COUNT=${#SKILL_ARGS[@]}
   [[ $ITEM_COUNT -eq 0 ]] && ITEM_COUNT=1  # Skill with no args = 1 invocation
 else
-  ITEM_COUNT=${#TASKS[@]}
+  ITEM_COUNT=${#ISSUES[@]}
 fi
 
 # Determine execution mode
@@ -412,25 +412,25 @@ else
 fi
 ```
 
-### 3. For CAT Tasks: Analyze Dependencies
+### 3. For CAT Issues: Analyze Dependencies
 
-When delegating CAT tasks, use TaskList to identify dependencies:
+When delegating CAT issues, use TaskList to identify dependencies:
 
 ```bash
-if [[ ${#TASKS[@]} -gt 0 ]]; then
+if [[ ${#ISSUES[@]} -gt 0 ]]; then
   # Get dependency info from TaskList
   TASK_INFO=$(TaskList)
 
   # Build dependency graph
   declare -A BLOCKED_BY
-  for task in "${TASKS[@]}"; do
-    deps=$(echo "$TASK_INFO" | jq -r ".tasks[] | select(.id == \"$task\") | .blockedBy[]")
-    BLOCKED_BY[$task]="$deps"
+  for issue in "${ISSUES[@]}"; do
+    deps=$(echo "$TASK_INFO" | jq -r ".issues[] | select(.id == \"$issue\") | .blockedBy[]")
+    BLOCKED_BY[$issue]="$deps"
   done
 
   # Group into parallel waves based on dependencies
-  # Wave 1: tasks with no dependencies in our list
-  # Wave 2: tasks that depend on Wave 1 items
+  # Wave 1: issues with no dependencies in our list
+  # Wave 2: issues that depend on Wave 1 items
   # etc.
 fi
 ```
@@ -451,7 +451,7 @@ done
 
 ### 5. Launch Subagents
 
-**MANDATORY: Always specify model explicitly based on task type.**
+**MANDATORY: Always specify model explicitly based on issue type.**
 
 **For skill delegation (haiku - skill does the reasoning):**
 ```
@@ -474,12 +474,12 @@ Task tool invocation:
     FAIL-FAST: If skill fails validation, report BLOCKED.
 ```
 
-**For CAT task delegation - simple tasks (haiku):**
+**For CAT issue delegation - simple issues (haiku):**
 ```
 Task tool invocation:
-  description: "Execute task {task-id}"
+  description: "Execute issue {issue-id}"
   subagent_type: "general-purpose"
-  model: "haiku"  # Simple/mechanical task
+  model: "haiku"  # Simple/mechanical issue
   prompt: |
     Execute the following plan mechanically. Do not deviate.
 
@@ -491,10 +491,10 @@ Task tool invocation:
     CRITICAL REQUIREMENTS: [hook inheritance block]
 ```
 
-**For CAT task delegation - code changes (sonnet):**
+**For CAT issue delegation - code changes (sonnet):**
 ```
 Task tool invocation:
-  description: "Execute task {task-id}"
+  description: "Execute issue {issue-id}"
   subagent_type: "general-purpose"
   model: "sonnet"  # Code refactoring/multi-file changes
   prompt: |
@@ -572,7 +572,7 @@ Task tool:
   description: "Process next item"
   prompt: |
     Process the next item: {next_item}
-    [Same skill/task instructions]
+    [Same skill/issue instructions]
     Report approximate token usage after completion.
 ```
 
@@ -605,14 +605,14 @@ fi
 ```bash
 # For parallel execution with dependencies
 for wave in "${WAVES[@]}"; do
-  for task in "${wave[@]}"; do
+  for issue in "${wave[@]}"; do
     # Verify dependencies are merged
-    for dep in ${BLOCKED_BY[$task]}; do
+    for dep in ${BLOCKED_BY[$issue]}; do
       verify_merged "$dep" || error "Dependency not merged"
     done
 
-    # Merge this task's branch
-    merge_subagent "$task"
+    # Merge this issue's branch
+    merge_subagent "$issue"
   done
 done
 ```
@@ -627,7 +627,7 @@ failure_handling:
     - Record failure details
     - Collect any partial results
     - Continue with successful subagents
-    - Mark dependent tasks as blocked
+    - Mark dependent issues as blocked
     - Report failures to orchestrator
 ```
 
@@ -659,17 +659,17 @@ fi
 
 ## Auto-Trigger from Decomposition
 
-When `/cat:work` triggers auto-decomposition (task exceeds context threshold),
+When `/cat:work` triggers auto-decomposition (issue exceeds context threshold),
 this skill is automatically invoked:
 
 ```
-work → analyze_task_size → (exceeds threshold) → decompose-task → delegate --tasks
+work → analyze_task_size → (exceeds threshold) → decompose-issue → delegate --issues
 ```
 
 **Example auto-trigger flow:**
 ```yaml
-# work detects large task
-task: 1.2-implement-parser
+# work detects large issue
+issue: 1.2-implement-parser
 estimated_tokens: 120000
 
 # Auto-decomposition triggered
@@ -683,7 +683,7 @@ wave_1: [1.2a, 1.2c]  # Independent, run concurrently
 wave_2: [1.2b]        # Depends on 1.2a
 
 # Auto-delegation
-/cat:delegate --tasks 1.2a,1.2b,1.2c
+/cat:delegate --issues 1.2a,1.2b,1.2c
 # Internally groups by dependencies and executes wave_1 parallel, then wave_2
 ```
 
@@ -707,24 +707,24 @@ wave_2: [1.2b]        # Depends on 1.2a
 # → 3 subagents execute sequentially (wait for each before starting next)
 ```
 
-### CAT Task Delegation
+### CAT Issue Delegation
 ```bash
-/cat:delegate --tasks 2.1-task-a,2.1-task-b,2.1-task-c
+/cat:delegate --issues 2.1-issue-a,2.1-issue-b,2.1-issue-c
 # → Dependencies analyzed via TaskList
-# → Independent tasks execute in parallel
-# → Dependent tasks wait for their dependencies
+# → Independent issues execute in parallel
+# → Dependent issues wait for their dependencies
 ```
 
 ### Mixed Dependencies
 ```yaml
 # TaskList shows:
-# - 2.1-task-a: no dependencies
-# - 2.1-task-b: blocked by 2.1-task-a
-# - 2.1-task-c: no dependencies
+# - 2.1-issue-a: no dependencies
+# - 2.1-issue-b: blocked by 2.1-issue-a
+# - 2.1-issue-c: no dependencies
 
 # Execution:
-# Wave 1 (parallel): task-a, task-c
-# Wave 2 (after wave 1): task-b
+# Wave 1 (parallel): issue-a, issue-c
+# Wave 2 (after wave 1): issue-b
 ```
 
 ## Anti-Patterns
@@ -787,7 +787,7 @@ The exploration subagent handles three phases internally:
 
 | Phase | Responsibilities | Output |
 |-------|------------------|--------|
-| **Preparation** | Read PLAN.md, analyze task size, create worktree | `preparation` object |
+| **Preparation** | Read PLAN.md, analyze issue size, create worktree | `preparation` object |
 | **Exploration** | Search codebase, find relevant code, check duplicates | `findings` object |
 | **Verification** | Verify findings exist, run preliminary tests | `verification` object |
 
@@ -798,8 +798,8 @@ The exploration subagent handles three phases internally:
   "preparation": {
     "estimatedTokens": 45000,
     "percentOfThreshold": 56,
-    "worktreePath": "/workspace/.worktrees/1.0-task",
-    "branch": "1.0-task"
+    "worktreePath": "/workspace/.worktrees/1.0-issue",
+    "branch": "1.0-issue"
   },
   "findings": {
     "filesToModify": [...],
@@ -820,14 +820,14 @@ The exploration subagent handles three phases internally:
 
 | Status | Meaning | Main Agent Action |
 |--------|---------|-------------------|
-| `READY` | Task within threshold, ready to proceed | Continue to implementation |
+| `READY` | Issue within threshold, ready to proceed | Continue to implementation |
 | `OVERSIZED` | Estimated tokens exceed threshold | Trigger decomposition |
-| `DUPLICATE` | Task already implemented elsewhere | Mark as duplicate, skip |
+| `DUPLICATE` | Issue already implemented elsewhere | Mark as duplicate, skip |
 | `BLOCKED` | Cannot proceed (missing deps, etc.) | Present blocker to user |
 
 ## Waiting for Subagent Completion (M293)
 
-**CRITICAL: Claude does NOT automatically wake up when background tasks complete.**
+**CRITICAL: Claude does NOT automatically wake up when background issues complete.**
 
 When using `run_in_background: true`:
 - Completion notifications appear as system reminders
@@ -858,5 +858,5 @@ When using `run_in_background: true`:
 
 - `cat:monitor-subagents` - Check status of running subagents
 - `cat:collect-results` - Gather results when subagent completes
-- `cat:merge-subagent` - Merge subagent work back to task branch
-- `cat:decompose-task` - Creates parallelizable subtasks
+- `cat:merge-subagent` - Merge subagent work back to issue branch
+- `cat:decompose-issue` - Creates parallelizable subtasks

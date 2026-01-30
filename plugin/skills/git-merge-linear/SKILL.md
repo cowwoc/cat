@@ -1,12 +1,12 @@
 ---
-description: Merge task branch to base branch with linear history (works from task worktree)
+description: Merge issue branch to base branch with linear history (works from issue worktree)
 user-invocable: false
 allowed-tools: Bash, Read
 ---
 
 # Git Linear Merge Skill
 
-Merge task branch to its base branch while staying in the task worktree. Uses `git push . HEAD:<base>`
+Merge issue branch to its base branch while staying in the issue worktree. Uses `git push . HEAD:<base>`
 to fast-forward the base branch without checking out.
 
 ## Step 0: Read Git Workflow Preferences
@@ -41,15 +41,15 @@ fi
 
 ## When to Use
 
-- After task branch has passed review and user approval
-- When merging completed task to base branch (main, v1.10, etc.)
+- After issue branch has passed review and user approval
+- When merging completed issue to base branch (main, v1.10, etc.)
 - To maintain clean, linear git history
 
 ## Prerequisites
 
 - [ ] User approval obtained
 - [ ] Working directory is clean (commit or stash changes)
-- [ ] You are in the task worktree (not main repo)
+- [ ] You are in the issue worktree (not main repo)
 
 ## Workflow
 
@@ -61,8 +61,8 @@ WORKTREE_PATH=$(pwd)
 MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
 
 if [[ "$WORKTREE_PATH" == "$MAIN_REPO" ]]; then
-  echo "ERROR: Must run from task worktree, not main repo"
-  echo "Navigate to: /workspace/.worktrees/<task-name>"
+  echo "ERROR: Must run from issue worktree, not main repo"
+  echo "Navigate to: /workspace/.worktrees/<issue-name>"
   exit 1
 fi
 
@@ -79,7 +79,7 @@ if [[ ! -f "$CAT_BASE_FILE" ]]; then
 fi
 BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
-echo "Task branch: $TASK_BRANCH"
+echo "Issue branch: $TASK_BRANCH"
 echo "Base branch: $BASE_BRANCH"
 echo "Worktree: $WORKTREE_PATH"
 
@@ -124,11 +124,11 @@ echo "Base branch has not diverged - safe to proceed"
 **CRITICAL: Even after rebase, incorrect conflict resolution can delete base branch files.**
 
 ```bash
-# Check if task branch deletes files that exist in base branch
+# Check if issue branch deletes files that exist in base branch
 DELETED_FILES=$(git diff --name-status "${BASE_BRANCH}..HEAD" | grep "^D" | cut -f2)
 
 if [[ -n "$DELETED_FILES" ]]; then
-  echo "WARNING: Task branch deletes files from base branch:"
+  echo "WARNING: Issue branch deletes files from base branch:"
   echo "$DELETED_FILES"
   echo ""
 
@@ -144,10 +144,10 @@ if [[ -n "$DELETED_FILES" ]]; then
     echo ""
     echo "Solution: Re-rebase with correct conflict resolution:"
     echo "  git reset --hard origin/${TASK_BRANCH}  # If remote has clean state"
-    echo "  # Or reset to merge-base and cherry-pick task commits"
+    echo "  # Or reset to merge-base and cherry-pick issue commits"
     echo "  git checkout ${BASE_BRANCH}"
     echo "  git checkout -B ${TASK_BRANCH}"
-    echo "  # Then cherry-pick your actual task commits"
+    echo "  # Then cherry-pick your actual issue commits"
     exit 1
   fi
 
@@ -241,7 +241,7 @@ cd "$MAIN_REPO"
 # Remove worktree
 git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true
 
-# Delete task branch (now safe since worktree removed)
+# Delete issue branch (now safe since worktree removed)
 git branch -D "$TASK_BRANCH" 2>/dev/null || true
 
 # Clean up empty worktrees directory
@@ -252,7 +252,7 @@ echo "Cleanup complete"
 
 ## Single Command Version
 
-For experienced users, combine all steps (run from task worktree):
+For experienced users, combine all steps (run from issue worktree):
 
 ```bash
 # Detect branches and paths
@@ -278,7 +278,7 @@ fi
 # Check for suspicious file deletions (M233)
 SUSPICIOUS_DELETIONS=$(git diff --name-status "${BASE_BRANCH}..HEAD" | grep "^D" | cut -f2 | grep -E "^(\.claude/cat/|plugin/)" || true)
 if [[ -n "$SUSPICIOUS_DELETIONS" ]]; then
-  echo "ERROR: Task branch deletes infrastructure files from base:" >&2
+  echo "ERROR: Issue branch deletes infrastructure files from base:" >&2
   echo "$SUSPICIOUS_DELETIONS" >&2
   echo "Likely incorrect rebase conflict resolution. Re-rebase with correct resolution." >&2
   exit 1
@@ -304,8 +304,8 @@ git branch -D "$TASK_BRANCH" 2>/dev/null
 ## Common Issues
 
 ### Issue 1: "failed to push some refs"
-**Cause**: Base branch has moved ahead since task branch was created
-**Solution**: Rebase task branch onto base first:
+**Cause**: Base branch has moved ahead since issue branch was created
+**Solution**: Rebase issue branch onto base first:
 ```bash
 git fetch origin "$BASE_BRANCH"
 git rebase "origin/$BASE_BRANCH"
@@ -326,7 +326,7 @@ git rebase "origin/$BASE_BRANCH"
 
 ## Success Criteria
 
-- [ ] Base branch points to task commit
+- [ ] Base branch points to issue commit
 - [ ] Linear history maintained (no merge commits)
-- [ ] Task worktree removed
-- [ ] Task branch deleted
+- [ ] Issue worktree removed
+- [ ] Issue branch deleted

@@ -1,5 +1,5 @@
 ---
-description: Use after complex tasks to analyze session efficiency and generate optimization recommendations
+description: Use after complex issues to analyze session efficiency and generate optimization recommendations
 user-invocable: true
 ---
 
@@ -11,7 +11,7 @@ summarization.
 
 ## When to Use
 
-- After completing a complex task, to identify efficiency improvements
+- After completing a complex issue, to identify efficiency improvements
 - When investigating slow sessions or high token usage
 - To generate configuration rules for output hiding/summarization
 - When preparing recommendations for Claude Code UX improvements

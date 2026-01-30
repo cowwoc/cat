@@ -22,7 +22,7 @@ Claude Code assigns a unique session ID (UUID v4) to each conversation session. 
 - Naming conversation history files: `/home/node/.config/projects/-workspace/{session-id}.jsonl`
 - Session-specific TODO list tracking
 - Hook coordination across tools
-- Task ownership in multi-instance scenarios
+- Issue ownership in multi-instance scenarios
 
 ## Automatic Substitution in Skills
 

@@ -1,5 +1,5 @@
 ---
-description: Split oversized task into smaller tasks with proper dependency management
+description: Split oversized issue into smaller issues with proper dependency management
 user-invocable: false
 ---
 
@@ -9,35 +9,35 @@ user-invocable: false
 
 </execution_context>
 
-# Decompose Task
+# Decompose Issue
 
 ## Purpose
 
-Break down a task that is too large for a single context window into smaller, manageable subtasks.
+Break down a issue that is too large for a single context window into smaller, manageable subtasks.
 This is essential for CAT's proactive context management, allowing work to continue efficiently
-when a task exceeds safe context bounds.
+when a issue exceeds safe context bounds.
 
 ## When to Use
 
-- Token report shows task approaching 40% threshold (80K tokens)
+- Token report shows issue approaching 40% threshold (80K tokens)
 - Subagent has experienced compaction events
-- PLAN.md analysis reveals task is larger than expected
+- PLAN.md analysis reveals issue is larger than expected
 - Partial collection indicates significant remaining work
 - Pre-emptive decomposition during planning phase
 
 ## Workflow
 
-### 1. Analyze Current Task Scope
+### 1. Analyze Current Issue Scope
 
-**MANDATORY: Verify task exists. FAIL immediately if not found.**
+**MANDATORY: Verify issue exists. FAIL immediately if not found.**
 
 ```bash
 TASK_DIR=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}"
 
-# FAIL immediately if task directory missing
+# FAIL immediately if issue directory missing
 if [ ! -d "$TASK_DIR" ]; then
-  echo "ERROR: Task directory not found at $TASK_DIR"
-  echo "Cannot decompose a task that doesn't exist."
+  echo "ERROR: Issue directory not found at $TASK_DIR"
+  echo "Cannot decompose a issue that doesn't exist."
   echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
@@ -45,7 +45,7 @@ fi
 # FAIL immediately if PLAN.md missing
 if [ ! -f "${TASK_DIR}/PLAN.md" ]; then
   echo "ERROR: PLAN.md not found at ${TASK_DIR}/PLAN.md"
-  echo "Cannot decompose a task without a plan - create PLAN.md first."
+  echo "Cannot decompose a issue without a plan - create PLAN.md first."
   echo "FAIL immediately - do NOT attempt workarounds."
   exit 1
 fi
@@ -57,9 +57,9 @@ cat "${TASK_DIR}/PLAN.md"
 cat "${TASK_DIR}/STATE.md"
 
 # If subagent exists, check its progress
-if [ -d ".worktrees/${TASK}-sub-${UUID}" ]; then
+if [ -d ".worktrees/${ISSUE}-sub-${UUID}" ]; then
   # Review commits made
-  cd ".worktrees/${TASK}-sub-${UUID}"
+  cd ".worktrees/${ISSUE}-sub-${UUID}"
   git log --oneline origin/HEAD..HEAD
 fi
 ```
@@ -80,26 +80,26 @@ Analyze PLAN.md for natural boundaries:
 - Between tightly coupled components
 - In the middle of a transaction boundary
 
-### 3. Create New Task Directories
+### 3. Create New Issue Directories
 
 ```bash
-# Original task: 1.2/implement-parser
-# New tasks: parser-lexer, parser-ast, parser-semantic (within same minor)
+# Original issue: 1.2/implement-parser
+# New issues: parser-lexer, parser-ast, parser-semantic (within same minor)
 
-# Create directories for new tasks
+# Create directories for new issues
 mkdir -p ".claude/cat/issues/v1/v1.2/parser-lexer"
 mkdir -p ".claude/cat/issues/v1/v1.2/parser-ast"
 mkdir -p ".claude/cat/issues/v1/v1.2/parser-semantic"
 ```
 
-### 4. Create PLAN.md for Each New Task
+### 4. Create PLAN.md for Each New Issue
 
-Each new task gets its own focused PLAN.md:
+Each new issue gets its own focused PLAN.md:
 
 ```yaml
 # 1.2a-parser-lexer/PLAN.md
 ---
-task: 1.2a-parser-lexer
+issue: 1.2a-parser-lexer
 parent: 1.2-implement-parser
 sequence: 1 of 3
 ---
@@ -123,7 +123,7 @@ Implement the lexical analysis phase of the parser.
 - test/parser/LexerTest.java
 ```
 
-### 5. Define Dependencies Between New Tasks
+### 5. Define Dependencies Between New Issues
 
 ```yaml
 # Dependency graph
@@ -137,9 +137,9 @@ dependencies:
 
 ### 6. Update STATE.md Files
 
-**Parent Task Status Lifecycle (M263):**
+**Parent Issue Status Lifecycle (M263):**
 
-When a task is decomposed, the parent task status follows this lifecycle:
+When a issue is decomposed, the parent issue status follows this lifecycle:
 1. `pending` → `in-progress` (when decomposition starts)
 2. Remains `in-progress` while subtasks execute
 3. `in-progress` → `completed` (only when ALL subtasks are completed)
@@ -147,7 +147,7 @@ When a task is decomposed, the parent task status follows this lifecycle:
 **INVALID:** Using `status: decomposed` - this is NOT a valid status value.
 Valid values are: `pending`, `in-progress`, `completed`, `blocked`.
 
-Original task STATE.md:
+Original issue STATE.md:
 
 ```markdown
 # 1.2-implement-parser/STATE.md
@@ -156,7 +156,7 @@ Original task STATE.md:
 - **Progress:** 0%
 - **Decomposed:** true
 - **Decomposed At:** 2026-01-10T16:00:00Z
-- **Reason:** Task exceeded context threshold (85K tokens used)
+- **Reason:** Issue exceeded context threshold (85K tokens used)
 
 ## Decomposed Into
 - 1.2a-parser-lexer
@@ -170,7 +170,7 @@ Original task STATE.md:
 
 **Note:** Parent stays `in-progress` until ALL subtasks complete. Progress is calculated from subtask completion (e.g., 1/3 subtasks = 33%).
 
-New task STATE.md:
+New issue STATE.md:
 
 ```markdown
 # 1.2a-parser-lexer/STATE.md
@@ -190,17 +190,17 @@ If decomposing due to subagent context limits:
 # Collect partial results from subagent
 collect-results "${SUBAGENT_ID}"
 
-# Determine which new task inherits the work
+# Determine which new issue inherits the work
 # Usually the first or most complete component
 
-# Merge subagent work to appropriate new task branch
+# Merge subagent work to appropriate new issue branch
 git checkout "1.2a-parser-lexer"
 git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed parent"
 ```
 
 ### 8. Generate Parallel Execution Plan
 
-**MANDATORY: Analyze dependencies and create sub-task-based execution plan.**
+**MANDATORY: Analyze dependencies and create sub-issue-based execution plan.**
 
 After decomposition, determine which subtasks can run concurrently:
 
@@ -217,25 +217,25 @@ subtasks:
     dependencies: []
     estimated_tokens: 20000
 
-# Sub-task-based parallel plan
+# Sub-issue-based parallel plan
 parallel_execution_plan:
   sub_task_1:
-    # Tasks with no dependencies - can run concurrently
-    tasks: [1.2a-parser-lexer, 1.2c-parser-tests]
+    # Issues with no dependencies - can run concurrently
+    issues: [1.2a-parser-lexer, 1.2c-parser-tests]
     max_concurrent: 2
     reason: "Both have no dependencies, can execute in parallel"
 
   sub_task_2:
-    # Tasks that depend on sub_task_1 completion
-    tasks: [1.2b-parser-ast]
+    # Issues that depend on sub_task_1 completion
+    issues: [1.2b-parser-ast]
     depends_on: [sub_task_1]
     reason: "Depends on 1.2a-parser-lexer from sub_task_1"
 
 execution_order:
-  1. Spawn subagents for sub_task_1 tasks (parallel)
+  1. Spawn subagents for sub_task_1 issues (parallel)
   2. Monitor and collect sub_task_1 results
   3. Merge sub_task_1 branches
-  4. Spawn subagents for sub_task_2 tasks (parallel)
+  4. Spawn subagents for sub_task_2 issues (parallel)
   5. Monitor and collect sub_task_2 results
   6. Merge sub_task_2 branches
 ```
@@ -245,24 +245,24 @@ execution_order:
 ```markdown
 ## Parallel Execution Plan
 
-### Sub-task 1 (Concurrent)
-| Task | Est. Tokens | Dependencies |
+### Sub-issue 1 (Concurrent)
+| Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2a-parser-lexer | 25K | None |
 | 1.2c-parser-tests | 20K | None |
 
-### Sub-task 2 (After Sub-task 1)
-| Task | Est. Tokens | Dependencies |
+### Sub-issue 2 (After Sub-issue 1)
+| Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2b-parser-ast | 30K | 1.2a-parser-lexer |
 
-**Total sub-tasks:** 2
+**Total sub-issues:** 2
 **Max concurrent subagents:** 2
 ```
 
-**Conflict detection for parallel tasks:**
+**Conflict detection for parallel issues:**
 
-Ensure no parallel tasks modify the same files:
+Ensure no parallel issues modify the same files:
 
 ```yaml
 conflict_check:
@@ -278,7 +278,7 @@ conflict_check:
     move_conflicting_task_to_next_sub_task: true
 ```
 
-### 9. Update Original Task for Decomposition
+### 9. Update Original Issue for Decomposition
 
 **STATE.md:** Keep status as `in-progress` (NOT `decomposed` - invalid status value per M263).
 
@@ -300,11 +300,11 @@ parallel_plan: sub_task_1=[1.2a, 1.2c], sub_task_2=[1.2b]
 
 ### Pre-Planning Decomposition
 
-When analyzing requirements reveals a task is too large:
+When analyzing requirements reveals a issue is too large:
 
 ```yaml
-# Original task seemed manageable
-task: 1.5-implement-authentication
+# Original issue seemed manageable
+issue: 1.5-implement-authentication
 
 # Analysis reveals scope
 components:
@@ -333,7 +333,7 @@ When subagent hits context limits:
 
 ```yaml
 decomposition_trigger:
-  task: 1.3-implement-formatter
+  issue: 1.3-implement-formatter
   subagent_tokens: 85000
   compaction_events: 1
   completed_work:
@@ -345,12 +345,12 @@ decomposition_trigger:
     - Multi-line string handling
 
 decomposition_result:
-  - task: 1.3a-formatter-core
+  - issue: 1.3a-formatter-core
     inherits: subagent work
     status: nearly_complete
-  - task: 1.3b-formatter-wrapping
+  - issue: 1.3b-formatter-wrapping
     status: ready
-  - task: 1.3c-formatter-comments
+  - issue: 1.3c-formatter-comments
     status: ready
 ```
 
@@ -362,13 +362,13 @@ When subagent is stuck or confused:
 emergency_decomposition:
   trigger: "Subagent making no progress for 30+ minutes"
   analysis: |
-    Task scope unclear, subagent attempting multiple
+    Issue scope unclear, subagent attempting multiple
     approaches without success.
 
   action:
     - Collect any usable partial work
     - Re-analyze requirements
-    - Create smaller, more specific tasks
+    - Create smaller, more specific issues
     - Add explicit acceptance criteria to each
 ```
 
@@ -421,7 +421,7 @@ merge_to_appropriate_subtask "${SUBAGENT_WORK}"
 1.2b: "Define TokenType enum"
 1.2c: "Implement nextToken method"
 1.2d: "Implement peek method"
-# ...20 more tiny tasks
+# ...20 more tiny issues
 
 # ✅ Meaningful chunks
 1.2a: "Implement Lexer (tokens, types, core methods)"
@@ -443,35 +443,35 @@ update_orchestration_plan
 
 ### Distinguish runtime dependencies from extraction dependencies
 
-For code extraction/refactoring tasks, runtime method calls are NOT task dependencies.
+For code extraction/refactoring issues, runtime method calls are NOT issue dependencies.
 
 ```yaml
-# ❌ Confusing runtime calls with task dependencies
+# ❌ Confusing runtime calls with issue dependencies
 # "parseUnary calls parsePostfix, so extract-unary must run before extract-postfix"
 subtasks:
   extract-unary: []
   extract-postfix: [extract-unary]  # Wrong! Just copying code, not executing it
 
-# ✅ Extraction tasks that write to different sections can run in parallel
+# ✅ Extraction issues that write to different sections can run in parallel
 # Methods call each other at RUNTIME, but extraction is just copying text
 subtasks:
   extract-unary: [setup-interface]      # Both depend on interface setup
   extract-postfix: [setup-interface]    # Both can run concurrently
 
 # Key insight: "Does method A call method B?" is irrelevant for extraction order.
-# Ask instead: "Do both tasks write to the same file section?"
+# Ask instead: "Do both issues write to the same file section?"
 # If writing to different sections of the same file → can parallelize
-# Only the final integration task depends on all extractions completing
+# Only the final integration issue depends on all extractions completing
 ```
 
 **Dependency analysis questions:**
-1. Does task B need OUTPUT from task A? (Real dependency)
-2. Does task B just reference CODE that task A also references? (Not a dependency)
-3. Are both tasks copying different methods to the same target file? (Parallelizable with merge)
+1. Does issue B need OUTPUT from issue A? (Real dependency)
+2. Does issue B just reference CODE that issue A also references? (Not a dependency)
+3. Are both issues copying different methods to the same target file? (Parallelizable with merge)
 
 ## Related Skills
 
 - `cat:token-report` - Triggers decomposition decisions
 - `cat:collect-results` - Preserves progress before decomposition
-- `cat:spawn-subagent` - Launches work on decomposed tasks
+- `cat:spawn-subagent` - Launches work on decomposed issues
 - `cat:parallel-execute` - Can run independent subtasks concurrently

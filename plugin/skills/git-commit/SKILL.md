@@ -112,12 +112,12 @@ Changes:
 - Second major change
 - Third major change
 
-Issue ID: v{major}.{minor}-{task-name}
+Issue ID: v{major}.{minor}-{issue-name}
 ```
 
-## Issue ID Footer (MANDATORY for CAT tasks)
+## Issue ID Footer (MANDATORY for CAT issues)
 
-**Every commit for a CAT task MUST include the Issue ID in the last line.** A task may span multiple
+**Every commit for a CAT issue MUST include the Issue ID in the last line.** A issue may span multiple
 commits (across sessions or addressing distinct aspects). Each commit MUST include the same Issue ID:
 
 ```
@@ -133,11 +133,11 @@ for JDK 14+ switch expressions.
 Issue ID: v3.0-add-yield-statement-support
 ```
 
-**Format**: `Issue ID: v{major}.{minor}-{task-name}`
+**Format**: `Issue ID: v{major}.{minor}-{issue-name}`
 
 **Why**: Enables reliable commit identification without storing commit hashes in documentation.
-Find all commits for a task: `git log --grep="Issue ID: v3.0-add-yield-statement-support"` (may
-return multiple commits if the task was implemented across multiple commits)
+Find all commits for a issue: `git log --grep="Issue ID: v3.0-add-yield-statement-support"` (may
+return multiple commits if the issue was implemented across multiple commits)
 
 ## For Squashed Commits
 
@@ -179,7 +179,7 @@ Issue ID: v1.1-implement-user-auth
 | `docs` | User-facing docs (README, API docs) | `docs: add API documentation` |
 | `style` | Formatting, linting fixes | `style: format auth module` |
 | `config` | Config, tooling, deps, Claude-facing docs | `config: add bcrypt dependency` |
-| `planning` | Planning system updates | `planning: add task 5 summary` |
+| `planning` | Planning system updates | `planning: add issue 5 summary` |
 
 **NOT VALID:** `feat`, `fix`, `chore`, `build`, `ci`, `perf` - use full names instead
 
@@ -272,24 +272,24 @@ Proceed directly to `git add <files> && git commit`.
 
 ## Checklist Before Committing
 
-- [ ] **In correct worktree** (M101): `pwd` shows task worktree, NOT `/workspace`
+- [ ] **In correct worktree** (M101): `pwd` shows issue worktree, NOT `/workspace`
 - [ ] Subject line is imperative mood ("Add", not "Added")
 - [ ] Subject line is specific (not "Update files")
 - [ ] Subject line is under 72 characters
 - [ ] Body explains WHAT and WHY, not HOW
 - [ ] No file names listed (the diff already shows which files changed)
 - [ ] For squashed commits: synthesized meaningful summary
-- [ ] **Issue ID footer included** (for CAT tasks): `Issue ID: vX.Y-task-name`
+- [ ] **Issue ID footer included** (for CAT issues): `Issue ID: vX.Y-issue-name`
 - [ ] Message would make sense in git history 6 months from now
 
 ## Worktree Verification (M101)
 
-**Before committing in a CAT task, verify you're in the task worktree:**
+**Before committing in a CAT issue, verify you're in the issue worktree:**
 
 ```bash
 # Quick verification
-pwd  # Should show /workspace/.worktrees/<task-name>, NOT /workspace
-git branch --show-current  # Should show task branch, NOT main
+pwd  # Should show /workspace/.worktrees/<issue-name>, NOT /workspace
+git branch --show-current  # Should show issue branch, NOT main
 ```
 
 **If in wrong worktree:** Stop and navigate to the correct one before committing.
