@@ -2288,6 +2288,31 @@
         "catches_variations": true
       },
       "correct_behavior": "After Phase 1 returns READY, run get-progress-banner.sh with task_id and --phase executing, then output the banner in a code block before Phase 2"
+    },
+    {
+      "id": "M329",
+      "timestamp": "2026-01-31T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Did not display progress banner for Prepare phase - only showed banner after Phase 1 completed",
+      "root_cause": "get-progress-banner.sh output placeholder text when no task ID available, and build_banner function was defined after the early-exit check",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-progress-banner.sh",
+      "pattern_keywords": [
+        "progress-banner",
+        "preprocessor",
+        "placeholder"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display a generic Preparing banner with '...' as task ID when no task is known yet, so users see progress indication during the Prepare phase"
     }
   ]
 }
