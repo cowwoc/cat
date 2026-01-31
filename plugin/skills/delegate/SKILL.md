@@ -71,10 +71,47 @@ Choose the model based on issue complexity:
 | Multi-file changes | `sonnet` | Needs to maintain consistency across files |
 | Exploration/research | `sonnet` | Requires judgment about what's relevant |
 | Complex logic changes | `sonnet` | Must reason about correctness |
+| Two-stage planning (Stage 1) | `opus` | Generating high-quality approach options requires deep reasoning |
+| Critical validation gates | `opus` | Asymmetric failure costs justify higher accuracy |
 
 **Decision rule:** If the execution plan can be followed with zero reasoning (copy-paste level
 explicit), use `haiku`. If the subagent needs to understand WHY to do something correctly,
-use `sonnet`.
+use `sonnet`. If failure would be very costly or the task requires generating novel approaches,
+consider `opus`.
+
+### When to Use Opus (Rare Cases)
+
+**Opus is the exception, not the default.** Most delegated work should use haiku or sonnet.
+
+Use Opus only when:
+
+1. **Two-stage planning (Stage 1)** - Generating approach options requires creative problem-solving
+   and deep architectural understanding. The quality of options directly affects the whole
+   implementation path.
+
+2. **Critical validation gates** - When the cost of a false positive (incorrectly passing) is much
+   higher than the cost of running a more capable model. Examples:
+   - Security review of authentication changes
+   - Validating semantic equivalence of compressed documentation
+   - Final quality gate before production deployment
+
+3. **Complex architectural analysis** - Evaluating tradeoffs across multiple systems, identifying
+   non-obvious dependencies, or reasoning about emergent behavior.
+
+**Signal to reconsider delegation:** If you find yourself reaching for Opus, ask whether this work
+should be delegated at all. Work requiring Opus-level reasoning often benefits from:
+- Main agent handling it directly (with user oversight)
+- Breaking into smaller pieces that sonnet can handle
+- More explicit specifications that reduce reasoning requirements
+
+**Anti-pattern:**
+```
+❌ model: "opus" for mechanical file operations (wasteful)
+❌ model: "opus" for straightforward code changes (sonnet suffices)
+❌ model: "opus" as a "just to be safe" default (defeats cost efficiency)
+✅ model: "opus" for Stage 1 planning with 3+ viable approaches
+✅ model: "opus" for security-critical validation gates
+```
 
 **Anti-pattern:**
 ```
