@@ -18,6 +18,15 @@ User sees a correctly-aligned, complete project status display with actionable n
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
+**FAIL-FAST (ESCALATE-A008):** If you do NOT see a pre-rendered status box above (containing
+`╭─ 📋 CAT Project Status`), then preprocessing FAILED. In this case:
+
+1. **STOP** - do NOT proceed
+2. Run: `${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
+3. Copy-paste that output exactly
+
+**NEVER manually construct status boxes.**
+
 ---
 
 ## Procedure
