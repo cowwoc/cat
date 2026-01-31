@@ -402,8 +402,10 @@ This file is automatically deleted when the worktree is removed.
 
 After creating the worktree, `cd` into it and stay there for the remainder of task execution.
 
-**Update task STATE.md:**
+**Update task STATE.md (AFTER cd into worktree - M326):**
 
-Set status to `in-progress` and record start time.
+Set status to `in-progress` and record start time. This update MUST happen after `cd` into the
+worktree, not in the main workspace. Updating STATE.md before entering the worktree causes merge
+conflicts later.
 
 </step>
