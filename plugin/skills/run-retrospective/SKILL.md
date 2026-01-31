@@ -18,114 +18,51 @@ Implements the full workflow defined in `retrospectives.json`.
 - After significant project milestones
 - When pattern recurrence is suspected
 
+## Pre-computed Analysis
+
+**MANDATORY: Check for SCRIPT OUTPUT RETROSPECTIVE in context first.**
+
+The handler precomputes:
+- Trigger condition check (time-based and count-based)
+- Mistake gathering and filtering
+- Category breakdown
+- Action item effectiveness evaluation
+- Pattern status summary
+- Open action items list
+
+**If `SCRIPT OUTPUT RETROSPECTIVE ANALYSIS:` found:**
+1. Output the analysis EXACTLY as provided
+2. Continue with workflow steps 5-9 (pattern identification, action derivation, etc.)
+
+**If `SCRIPT OUTPUT RETROSPECTIVE STATUS:` found:**
+1. Output the status message
+2. STOP - retrospective not triggered
+
+**If `SCRIPT OUTPUT RETROSPECTIVE ERROR:` found:**
+1. Output the error message
+2. STOP - cannot proceed
+
+**If NO SCRIPT OUTPUT found:**
+```
+FAIL: Handler output not found in context.
+Check that run_retrospective_handler.py is registered and running.
+```
+Do NOT manually gather data - the handler provides all necessary analysis.
+
 ## Trigger Conditions
 
 Retrospective is triggered when EITHER condition is met:
 
 ```yaml
 triggers:
-  time_based: days_since_last_retrospective >= trigger_interval_days  # default: 14
+  time_based: days_since_last_retrospective >= trigger_interval_days  # default: 7
   count_based: mistake_count_since_last >= mistake_count_threshold    # default: 10
 ```
 
-## Workflow
+## Workflow (Post-Handler)
 
-### 1. Check Trigger Conditions
-
-```bash
-RETRO_DIR=".claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
-
-# Get config and state from index.json
-INTERVAL=$(jq -r '.config.trigger_interval_days' "$INDEX_FILE")
-THRESHOLD=$(jq -r '.config.mistake_count_threshold' "$INDEX_FILE")
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-MISTAKES_SINCE=$(jq -r '.mistake_count_since_last' "$INDEX_FILE")
-
-# Calculate days since last retrospective
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
-else
-  LAST_EPOCH=0
-fi
-NOW_EPOCH=$(date +%s)
-DAYS_SINCE=$(( (NOW_EPOCH - LAST_EPOCH) / 86400 ))
-
-# Check triggers
-if [[ $DAYS_SINCE -ge $INTERVAL ]] || [[ $MISTAKES_SINCE -ge $THRESHOLD ]]; then
-  echo "RETROSPECTIVE TRIGGERED"
-  echo "  Days since last: $DAYS_SINCE (threshold: $INTERVAL)"
-  echo "  Mistakes since last: $MISTAKES_SINCE (threshold: $THRESHOLD)"
-else
-  echo "No retrospective needed"
-  echo "  Days since last: $DAYS_SINCE / $INTERVAL"
-  echo "  Mistakes since last: $MISTAKES_SINCE / $THRESHOLD"
-  exit 0
-fi
-```
-
-### 2. Gather Mistakes for Analysis
-
-```bash
-# Aggregate ALL mistakes since last retrospective across all split files
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  MISTAKES_TO_ANALYZE=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s --arg last "$LAST_RETRO" \
-    '[.[].mistakes[] | select(.timestamp > $last)]')
-else
-  # No previous retrospective - analyze all mistakes
-  MISTAKES_TO_ANALYZE=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[]]')
-fi
-
-MISTAKE_COUNT=$(echo "$MISTAKES_TO_ANALYZE" | jq 'length')
-echo "Analyzing $MISTAKE_COUNT mistakes since $LAST_RETRO"
-```
-
-### 3. Analyze by Category
-
-```yaml
-category_analysis:
-  query: |
-    # Use pre-aggregated MISTAKES_TO_ANALYZE from step 2
-    echo "$MISTAKES_TO_ANALYZE" | jq '
-      group_by(.category)
-      | map({category: .[0].category, count: length, ids: [.[].id]})
-      | sort_by(-.count)
-    '
-
-  output_format:
-    - category: protocol_violation
-      count: 7
-      ids: [M028, M034, M035, ...]
-    - category: build_failure
-      count: 4
-      ids: [M029, M030, ...]
-```
-
-### 4. Check Action Item Effectiveness
-
-For each existing action item with `status: implemented`:
-
-```yaml
-effectiveness_check:
-  for_each_action_item:
-    # Find mistakes matching this action's pattern AFTER completion
-    query: |
-      COMPLETED=$(jq -r --arg id "A004" '.action_items[] | select(.id == $id) | .completed_date' "$INDEX_FILE")
-      PATTERN=$(jq -r --arg id "A004" '.action_items[] | select(.id == $id) | .pattern_id' "$INDEX_FILE")
-
-      # Count post-fix mistakes across all split files
-      POST_FIX=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-        jq -s --arg pattern "$PATTERN" --arg completed "$COMPLETED" \
-        '[.[].mistakes[] | select(.pattern_keywords | contains([$pattern])) | select(.timestamp > $completed)] | length')
-
-    verdicts:
-      effective: post_fix_count == 0
-      partially_effective: post_fix_count > 0 AND post_fix_count < pre_fix_count
-      ineffective: post_fix_count >= pre_fix_count
-      escalate: post_fix_count >= recurrence_after_fix_threshold  # default: 1
-```
+The handler performs steps 1-4 (trigger check, gathering, categorization, effectiveness).
+Continue from step 5 using the pre-computed analysis.
 
 ### 5. Identify New Patterns
 
