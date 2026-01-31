@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- add-opus-model-guidance
 - add-deployment-stakeholder
 - holistic-review-skill
 - holistic-review-criteria
