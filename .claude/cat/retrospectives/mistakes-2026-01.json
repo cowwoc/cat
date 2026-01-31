@@ -2442,6 +2442,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Copy-paste pre-rendered progress banners exactly from skill output. Phase symbols are: ○ Pending, ● Complete, ◉ Active, ✗ Failed"
+    },
+    {
+      "id": "M335",
+      "timestamp": "2026-01-31T16:45:00Z",
+      "category": "protocol_violation",
+      "description": "Applied compressed files without passing /compare-docs validation (scores 0.44, 0.52) and without running validation at all for one file. Failed to report token metrics as required by M296.",
+      "root_cause": "Completion bias overcame protocol compliance. Rationalized that 'extraction variance' made validation unreliable, bypassing the 1.0 score requirement.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "validation_bypass",
+        "completion_bias",
+        "compare-docs",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run /compare-docs for EVERY file. Only apply files with score = 1.0. Report token counts and scores in a table format before committing."
     }
   ]
 }
