@@ -2185,6 +2185,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Always cd /workspace before running git worktree remove"
+    },
+    {
+      "id": "M325",
+      "timestamp": "2026-01-31T07:20:00Z",
+      "category": "workflow_violation",
+      "description": "User perceived approval requested before commit was made, even though commit existed",
+      "root_cause": "No explicit commit confirmation displayed before approval gate summary - user saw summary before processing commit success",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-review.md",
+      "pattern_keywords": [
+        "commit",
+        "approval",
+        "confirmation",
+        "workflow"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After committing, display explicit confirmation message before approval gate"
     }
   ]
 }

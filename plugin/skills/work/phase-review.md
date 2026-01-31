@@ -214,6 +214,15 @@ echo "PASS: All pre-approval checks passed"
 
 **MANDATORY: Verify commit exists before presenting approval (M072).**
 
+**MANDATORY: Confirm commit to user before approval gate (M325).**
+
+After committing, display explicit confirmation:
+```
+Committed: {commit-hash} {commit-message-first-line}
+```
+
+This prevents user confusion about whether changes are committed before the approval question appears.
+
 **MANDATORY: Verify STATE.md in implementation commit (M076/M085).**
 
 **Required STATE.md fields for completion (M092):**
