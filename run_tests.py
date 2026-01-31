@@ -412,13 +412,13 @@ def test_cleanup_handler():
         runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
 
 
-def test_posttool_skill_precompute():
-    """Test PostToolUse handler for Skill tool precomputation."""
-    runner.section("posttool_handlers/skill_precompute")
+def test_posttool_skill_preprocessor_output():
+    """Test PostToolUse handler for Skill tool preprocessor output."""
+    runner.section("posttool_handlers/skill_preprocessor_output")
 
     # Import from the package
-    from posttool_handlers.skill_precompute import SkillPrecomputeHandler
-    handler = SkillPrecomputeHandler()
+    from posttool_handlers.skill_preprocessor_output import SkillPreprocessorOutputHandler
+    handler = SkillPreprocessorOutputHandler()
 
     # Test: non-Skill tool returns None
     result = handler.check("Bash", {}, {"session_id": "test"})
@@ -889,7 +889,7 @@ def main():
         test_help_handler,
         test_work_handler,
         test_cleanup_handler,
-        test_posttool_skill_precompute,
+        test_posttool_skill_preprocessor_output,
         test_config_loader,
         test_get_available_issues_discovery,
         test_abort_clarification_handler,

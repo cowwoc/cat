@@ -16,7 +16,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * - Total calculations
  *
  * Since research content is reasoning-based, this generator provides templates and
- * calculation functions rather than precomputed output.
+ * calculation functions rather than preprocessor output.
  */
 public final class GetResearchOutput
 {

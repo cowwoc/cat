@@ -1,16 +1,16 @@
 """
-PostToolUse handler for Skill tool precomputation.
+PostToolUse handler for Skill tool preprocessor output.
 
 When the agent invokes a CAT skill via the Skill tool (rather than the user
-typing /cat:* directly), this handler generates the pre-computed output
+typing /cat:* directly), this handler generates the preprocessor output
 that the skill expects to find in context.
 
 This solves the timing issue where:
-- User types "/cat:status" → UserPromptSubmit generates output template
+- User types "/cat:status" → UserPromptSubmit generates preprocessor output
 - Agent invokes Skill(skill="cat:status") → UserPromptSubmit already fired
-  for original user message, no output template was generated
+  for original user message, no preprocessor output was generated
 
-By using PostToolUse, we inject the output template alongside the skill
+By using PostToolUse, we inject the preprocessor output alongside the skill
 content that the Skill tool returns.
 """
 
@@ -28,8 +28,8 @@ sys.path.insert(0, str(SCRIPT_DIR))
 from skill_handlers import get_handler as get_skill_handler
 
 
-class SkillPrecomputeHandler:
-    """Handler that pre-computes output for CAT skills invoked via Skill tool."""
+class SkillPreprocessorOutputHandler:
+    """Handler that generates preprocessor output for CAT skills invoked via Skill tool."""
 
     def check(self, tool_name: str, tool_result: dict, context: dict) -> dict | None:
         """
@@ -41,7 +41,7 @@ class SkillPrecomputeHandler:
             context: Dict with session_id, hook_data
 
         Returns:
-            {"additionalContext": "..."} with pre-computed output, or None
+            {"additionalContext": "..."} with preprocessor output, or None
         """
         if tool_name != "Skill":
             return None
@@ -86,7 +86,7 @@ class SkillPrecomputeHandler:
             if result:
                 return {"additionalContext": result}
         except Exception as e:
-            sys.stderr.write(f"skill_precompute: handler error for {cat_skill_name}: {e}\n")
+            sys.stderr.write(f"skill_preprocessor_output: handler error for {cat_skill_name}: {e}\n")
 
         return None
 
@@ -106,4 +106,4 @@ class SkillPrecomputeHandler:
 
 
 # Register handler
-register_handler(SkillPrecomputeHandler())
+register_handler(SkillPreprocessorOutputHandler())
