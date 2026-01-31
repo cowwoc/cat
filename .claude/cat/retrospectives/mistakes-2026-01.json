@@ -2365,6 +2365,32 @@
         "catches_variations": true
       },
       "correct_behavior": "If preprocessing fails or is interrupted, report the error. NEVER manually construct banners - copy ONLY from pre-rendered script output."
+    },
+    {
+      "id": "M332",
+      "timestamp": "2026-01-31T05:45:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed checkpoint box instead of using script. No script existed to generate checkpoint boxes with actual values.",
+      "root_cause": "get-checkpoint-box.py script was missing. get-work-boxes.py only generates templates with {placeholders}, not actual values. Agent fell back to manual construction.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-checkpoint-box.py",
+      "pattern_keywords": [
+        "checkpoint-box",
+        "manual-construction",
+        "missing-script",
+        "PATTERN-008"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M331",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use get-checkpoint-box.py --type issue-complete --issue-name NAME --tokens N --percent N --branch BRANCH to generate aligned checkpoint boxes."
     }
   ]
 }
