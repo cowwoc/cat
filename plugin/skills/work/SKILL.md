@@ -91,8 +91,8 @@ Task tool:
 
 After Phase 1 returns READY, delegate remaining phases to the work-with-task skill.
 
-This skill receives the task ID and metadata, allowing its `!`-preprocessing to render progress
-banners automatically for all 4 phases.
+This skill receives the task ID and metadata, allowing its exclamation-backtick preprocessing to
+render progress banners automatically for all 4 phases.
 
 **Invoke the work-with-task skill:**
 
@@ -113,7 +113,7 @@ Use the Skill tool to invoke `/cat:work-with-task` with JSON arguments:
 ```
 
 The skill will:
-1. Render progress banners via `!`-preprocessing (now has task_id available)
+1. Render progress banners via exclamation-backtick preprocessing (now has task_id available)
 2. Execute Phase 2 (implementation subagent)
 3. Execute Phase 3 (stakeholder review) if verify != none
 4. Execute Phase 4 (merge and cleanup)

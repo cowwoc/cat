@@ -66,7 +66,7 @@ and renders the complete output before Claude sees the skill.
 
 **How it works:**
 1. User invokes `/cat:status`
-2. Claude Code expands the `!` command during skill loading
+2. Claude Code expands the exclamation-backtick command during skill loading
 3. Script reads STATE.md files and renders the status box
 4. Claude receives the skill with actual status data embedded
 5. Claude outputs the pre-rendered content verbatim
