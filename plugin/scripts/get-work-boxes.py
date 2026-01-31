@@ -79,23 +79,23 @@ def build_simple_box(icon: str, title: str, content_lines: list) -> str:
     return "\n".join(lines)
 
 
-def build_no_executable_tasks():
+def build_no_executable_issues():
     return build_simple_box(
-        "ℹ️", "No executable tasks",
-        ["", "Run /cat:status to see available tasks"]
+        "ℹ️", "No executable issues",
+        ["", "Run /cat:status to see available issues"]
     )
 
 
-def build_task_not_found():
+def build_issue_not_found():
     return build_simple_box(
-        "❓", 'Task "{task-name}" not found',
-        ["", "Did you mean: {suggestion}?", "Run /cat:status to see all tasks"]
+        "❓", 'Issue "{issue-name}" not found',
+        ["", "Did you mean: {suggestion}?", "Run /cat:status to see all issues"]
     )
 
 
 def build_fork_in_the_road():
     content_lines = [
-        "   Task: {task-name}",
+        "   Issue: {issue-name}",
         "",
         "   Multiple viable paths - how would you prefer to proceed?",
         "",
@@ -143,31 +143,31 @@ def build_checkpoint_box(header: str, main_content: list, metrics: list, branch:
     return "\n".join(lines)
 
 
-def build_checkpoint_task_complete():
+def build_checkpoint_issue_complete():
     return build_checkpoint_box(
-        "✅ **CHECKPOINT: Task Complete**",
-        ["", "**Task:** {task-name}", ""],
+        "✅ **CHECKPOINT: Issue Complete**",
+        ["", "**Issue:** {issue-name}", ""],
         ["**Time:** {N} minutes | **Tokens:** {N} ({percentage}% of context)"],
-        ["**Branch:** {task-branch}", ""]
+        ["**Branch:** {issue-branch}", ""]
     )
 
 
 def build_checkpoint_feedback_applied():
     return build_checkpoint_box(
         "✅ **CHECKPOINT: Feedback Applied**",
-        ["", "**Task:** {task-name}", "**Feedback iteration:** {N}", ""],
+        ["", "**Issue:** {issue-name}", "**Feedback iteration:** {N}", ""],
         ["**Feedback subagent:** {N}K tokens", "**Total tokens (all iterations):** {total}K"],
-        ["**Branch:** {task-branch}", ""]
+        ["**Branch:** {issue-branch}", ""]
     )
 
 
-def build_task_complete_with_next():
-    header = "✓ Task Complete"
-    content = ["", "**{task-name}** merged to main.", ""]
+def build_issue_complete_with_next():
+    header = "✓ Issue Complete"
+    content = ["", "**{issue-name}** merged to main.", ""]
     sep = [
-        "**Next:** {next-task-name}", "{goal from PLAN.md}", "",
+        "**Next:** {next-issue-name}", "{goal from PLAN.md}", "",
         "Auto-continuing in 3s...",
-        '• Type "stop" to pause after this task',
+        '• Type "stop" to pause after this issue',
         '• Type "abort" to cancel immediately'
     ]
     footer = [""]
@@ -190,13 +190,13 @@ def build_task_complete_with_next():
     return "\n".join(lines)
 
 
-def build_task_already_complete():
-    header = "✓ Task Already Complete"
-    content = ["", "**{task-name}** was already implemented.", "Commit: {commit-hash}", "", "STATE.md updated to reflect completion.", ""]
+def build_issue_already_complete():
+    header = "✓ Issue Already Complete"
+    content = ["", "**{issue-name}** was already implemented.", "Commit: {commit-hash}", "", "STATE.md updated to reflect completion.", ""]
     sep = [
-        "**Next:** {next-task-name}", "{goal from PLAN.md}", "",
+        "**Next:** {next-issue-name}", "{goal from PLAN.md}", "",
         "Auto-continuing in 3s...",
-        '• Type "stop" to pause after this task',
+        '• Type "stop" to pause after this issue',
         '• Type "abort" to cancel immediately'
     ]
     footer = [""]
@@ -239,11 +239,11 @@ def build_scope_complete():
     return "\n".join(lines)
 
 
-def build_task_complete_low_trust():
-    header = "✓ Task Complete"
-    content = ["", "**{task-name}** merged to main.", ""]
+def build_issue_complete_low_trust():
+    header = "✓ Issue Complete"
+    content = ["", "**{issue-name}** merged to main.", ""]
     sep = [
-        "**Next Up:** {next-task-name}", "{goal from PLAN.md}", "",
+        "**Next Up:** {next-issue-name}", "{goal from PLAN.md}", "",
         "`/clear` then `/cat:work` to continue"
     ]
     footer = [""]
@@ -301,41 +301,41 @@ def main():
 
 Output EXACTLY as shown, replace only {placeholders}:
 
-### NO_EXECUTABLE_TASKS
+### NO_EXECUTABLE_ISSUES
 """)
-    print(build_no_executable_tasks())
+    print(build_no_executable_issues())
     print("""
-### TASK_NOT_FOUND
+### ISSUE_NOT_FOUND
 """)
-    print(build_task_not_found())
+    print(build_issue_not_found())
     print("""
 ### FORK_IN_THE_ROAD
 """)
     print(build_fork_in_the_road())
     print("""
-### CHECKPOINT_TASK_COMPLETE
+### CHECKPOINT_ISSUE_COMPLETE
 """)
-    print(build_checkpoint_task_complete())
+    print(build_checkpoint_issue_complete())
     print("""
 ### CHECKPOINT_FEEDBACK_APPLIED
 """)
     print(build_checkpoint_feedback_applied())
     print("""
-### TASK_COMPLETE_WITH_NEXT_TASK
+### ISSUE_COMPLETE_WITH_NEXT_ISSUE
 """)
-    print(build_task_complete_with_next())
+    print(build_issue_complete_with_next())
     print("""
-### TASK_ALREADY_COMPLETE
+### ISSUE_ALREADY_COMPLETE
 """)
-    print(build_task_already_complete())
+    print(build_issue_already_complete())
     print("""
 ### SCOPE_COMPLETE
 """)
     print(build_scope_complete())
     print("""
-### TASK_COMPLETE_LOW_TRUST
+### ISSUE_COMPLETE_LOW_TRUST
 """)
-    print(build_task_complete_low_trust())
+    print(build_issue_complete_low_trust())
     print("""
 ### VERSION_BOUNDARY_GATE
 """)

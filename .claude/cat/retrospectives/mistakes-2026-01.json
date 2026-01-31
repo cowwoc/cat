@@ -2078,6 +2078,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Prevention docs should only describe WHAT to do (run script) not WHAT output looks like. Example output primes manual fabrication."
+    },
+    {
+      "id": "M321",
+      "timestamp": "2026-01-31T10:30:00Z",
+      "category": "terminology_inconsistency",
+      "description": "Pre-rendered work boxes used 'Task' terminology while project uses 'Issue', causing agent to manually construct boxes with correct terminology instead of using templates",
+      "root_cause": "The get-work-boxes.py script generated templates with 'Task Complete', 'Task Already Complete' etc. but the project consistently uses 'Issue' terminology. This mismatch caused the agent to believe the templates didn't apply and manually construct boxes with 'Issue Complete'.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-work-boxes.py",
+      "pattern_keywords": [
+        "terminology",
+        "task_vs_issue",
+        "pre-rendered_template",
+        "box_alignment",
+        "manual_construction"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use pre-rendered templates from get-work-boxes.py. Templates now use consistent 'Issue' terminology throughout."
     }
   ]
 }
