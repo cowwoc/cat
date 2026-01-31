@@ -2105,6 +2105,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use pre-rendered templates from get-work-boxes.py. Templates now use consistent 'Issue' terminology throughout."
+    },
+    {
+      "id": "M322",
+      "timestamp": "2026-01-31T19:10:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed Issue Complete box instead of using pre-rendered template, causing alignment issues",
+      "root_cause": "Documentation said 'use the box' but lacked explicit copy-verbatim guidance similar to M311/M312. Agent reconstructed box manually, leading to width calculation errors when content exceeded template placeholders.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-merge.md",
+      "pattern_keywords": [
+        "box_construction",
+        "alignment",
+        "template_copy",
+        "pre_rendered"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Search context for exact marker (--- TASK_COMPLETE_WITH_NEXT_TASK ---), copy the pre-rendered box verbatim, replace only {placeholders} with actual values"
     }
   ]
 }

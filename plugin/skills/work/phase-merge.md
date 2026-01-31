@@ -260,8 +260,22 @@ TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 
 **If trust >= medium and next task found (within scope):**
 
-Use the **TASK_COMPLETE_WITH_NEXT_TASK** box from Pre-rendered Work Boxes.
-Replace placeholders with actual values.
+### Issue Complete Display (BLOCKING - M322)
+
+**STOP: Find the pre-rendered box in your context.**
+
+1. Search your context for `--- TASK_COMPLETE_WITH_NEXT_TASK ---`
+2. Copy the ENTIRE pre-rendered box that follows (already has correct width)
+3. Replace ONLY the {placeholders} with actual values
+4. Output it EXACTLY - do NOT reconstruct or manually type the box
+
+**BLOCKED if:**
+- You manually construct a box instead of copying the template
+- Box lines have inconsistent widths (alignment breaks)
+- You change the box structure beyond placeholder replacement
+
+**Why (M322):** Manual construction causes alignment issues when content length varies.
+Pre-rendered boxes have calculated widths that account for padding.
 
 **Brief pause for user intervention:**
 
