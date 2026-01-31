@@ -133,17 +133,30 @@ The main agent simply relays the subagent's formatted report. No additional proc
 
 ---
 
-## Reproducibility Notes
+## Reproducibility Notes (M321)
 
 This command aims for high reproducibility but cannot guarantee perfect determinism due to
-LLM semantic judgment.
+LLM semantic judgment in claim extraction.
 
 **Expected Reproducibility**:
 - Same session, same documents: ±0-1%
 - Different sessions, temp=0, pinned model: ±1-2%
 - Different model versions: ±5-10%
+- **Different agent invocations: ±10-35%** (claim type classification variance)
 
-**Best Practices**: Focus on score interpretation range (≥0.95, 0.85-0.94, etc.) not exact decimal.
+**Why Scores Can Vary Significantly (M321)**:
+
+Extraction agents make judgment calls on claim types:
+- "MUST include X (M122)" → classified as `negation` OR `simple`?
+- "if needed" clauses → classified as `conditional` OR `simple`?
+
+Different classifications lead to different relationship counts and structural change detection.
+The 0.7x penalty for relationship_preservation < 0.9 can swing scores dramatically (e.g., 0.93 → 0.65).
+
+**Best Practices**:
+1. Focus on score interpretation range (≥0.95, 0.85-0.94, etc.) not exact decimal
+2. If scores vary >20% between runs, re-run extraction and average
+3. For shrink-doc validation requiring 1.0, consider multiple comparison runs
 
 ---
 
