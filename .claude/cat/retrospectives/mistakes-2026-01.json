@@ -2131,6 +2131,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Call get-issue-complete-box.py with actual issue values, copy output verbatim"
+    },
+    {
+      "id": "M323",
+      "timestamp": "2026-01-31T19:30:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed Issue Complete box instead of using pre-rendered template, resulting in misaligned borders",
+      "root_cause": "When silent preprocessing failed (script not found error in zsh), I constructed the box manually instead of failing fast or using the pre-rendered templates from SKILL.md. Manual box construction always results in misalignment because LLMs cannot count character display widths accurately.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "box alignment",
+        "manual construction",
+        "pre-rendered",
+        "display width",
+        "preprocessing failure"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use ONLY pre-rendered boxes from SCRIPT OUTPUT sections. If preprocessing fails, report the error and proceed without visual boxes rather than attempting manual construction."
     }
   ]
 }
