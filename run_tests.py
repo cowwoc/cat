@@ -351,6 +351,79 @@ def test_status_handler():
                     result == ["task-a", "task-b"])
 
 
+def test_active_agents():
+    """Test active agents display in status."""
+    runner.section("scripts/get-status-display.py active agents")
+
+    # Import functions from get-status-display.py
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "get_status_display",
+        PROJECT_ROOT / "plugin" / "scripts" / "get-status-display.py"
+    )
+    get_status_display = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(get_status_display)
+
+    # Test format_age
+    runner.test("format_age: seconds", get_status_display.format_age(45) == "45s ago")
+    runner.test("format_age: minutes", get_status_display.format_age(300) == "5m ago")
+    runner.test("format_age: hours", get_status_display.format_age(7200) == "2h ago")
+
+    # Test format_session_id
+    runner.test("format_session_id: short ID unchanged",
+                get_status_display.format_session_id("abc123") == "abc123")
+    runner.test("format_session_id: long ID truncated",
+                get_status_display.format_session_id("f3d7107a-ef6a-44df-833d-2a2261a6421e") == "f3d71...421e")
+
+    # Test get_active_agents with temp directory
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        locks_dir = cat_dir / "locks"
+        locks_dir.mkdir(parents=True)
+
+        # Test: no locks directory returns empty list
+        result = get_status_display.get_active_agents(tmp_path / "nonexistent")
+        runner.test("get_active_agents: missing locks dir returns empty", result == [])
+
+        # Test: empty locks directory returns empty list
+        result = get_status_display.get_active_agents(cat_dir)
+        runner.test("get_active_agents: empty locks dir returns empty", result == [])
+
+        # Create mock lock files
+        import time
+        now = int(time.time())
+
+        lock1 = locks_dir / "2.1-task-one.lock"
+        lock1.write_text(f"""session_id=abc123-session-1
+created_at={now - 300}
+worktree=/workspace/.worktrees/2.1-task-one
+created_iso=2026-01-31T12:00:00Z""")
+
+        lock2 = locks_dir / "2.0-task-two.lock"
+        lock2.write_text(f"""session_id=def456-session-2
+created_at={now - 720}
+worktree=/workspace/.worktrees/2.0-task-two
+created_iso=2026-01-31T11:48:00Z""")
+
+        # Test: get all agents
+        result = get_status_display.get_active_agents(cat_dir)
+        runner.test("get_active_agents: finds lock files", len(result) == 2)
+        runner.test("get_active_agents: sorted by age", result[0]['issue_id'] == "2.1-task-one")
+        runner.test("get_active_agents: second agent", result[1]['issue_id'] == "2.0-task-two")
+
+        # Test: exclude current session
+        result = get_status_display.get_active_agents(cat_dir, "abc123-session-1")
+        runner.test("get_active_agents: excludes current session", len(result) == 1)
+        runner.test("get_active_agents: excluded correct session", result[0]['session_id'] == "def456-session-2")
+
+        # Test: malformed lock file is skipped
+        lock3 = locks_dir / "2.1-bad-lock.lock"
+        lock3.write_text("invalid content")
+        result = get_status_display.get_active_agents(cat_dir)
+        runner.test("get_active_agents: skips malformed lock", len(result) == 2)
+
+
 def test_help_handler():
     """Test help_handler."""
     runner.section("skill_handlers/help_handler")
@@ -886,6 +959,7 @@ def main():
         test_add_handler,
         test_display_utils,
         test_status_handler,
+        test_active_agents,
         test_help_handler,
         test_work_handler,
         test_cleanup_handler,
