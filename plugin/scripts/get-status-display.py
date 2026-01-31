@@ -7,8 +7,10 @@ It's called by get-status-display.sh and outputs to stdout.
 """
 
 import argparse
+import os
 import re
 import sys
+import time
 from pathlib import Path
 
 # Get the script directory
@@ -79,6 +81,76 @@ def build_progress_bar(percent: int, width: int = 25) -> str:
     filled = percent * width // 100
     empty = width - filled
     return '█' * filled + '░' * empty
+
+
+def format_age(seconds: int) -> str:
+    """Format age in human-readable form."""
+    if seconds < 60:
+        return f"{seconds}s ago"
+    elif seconds < 3600:
+        return f"{seconds // 60}m ago"
+    else:
+        return f"{seconds // 3600}h ago"
+
+
+def format_session_id(session_id: str) -> str:
+    """Format session ID for display (truncated)."""
+    if len(session_id) > 12:
+        return f"{session_id[:5]}...{session_id[-4:]}"
+    return session_id
+
+
+def get_active_agents(cat_dir: Path, current_session: str = None) -> list:
+    """Get list of active agents from lock files.
+
+    Args:
+        cat_dir: Path to .claude/cat directory
+        current_session: Optional session ID to exclude from results
+
+    Returns:
+        List of dicts with keys: issue_id, session_id, age_seconds, worktree
+    """
+    locks_dir = cat_dir / "locks"
+    if not locks_dir.is_dir():
+        return []
+
+    agents = []
+    now = int(time.time())
+
+    for lock_file in locks_dir.glob("*.lock"):
+        issue_id = lock_file.stem  # filename without .lock
+
+        # Parse lock file
+        session_id = None
+        created_at = 0
+        worktree = ""
+
+        try:
+            content = lock_file.read_text()
+            for line in content.strip().split('\n'):
+                if line.startswith('session_id='):
+                    session_id = line.split('=', 1)[1]
+                elif line.startswith('created_at='):
+                    created_at = int(line.split('=', 1)[1])
+                elif line.startswith('worktree='):
+                    worktree = line.split('=', 1)[1]
+        except Exception:
+            continue
+
+        # Skip if this is the current session
+        if current_session and session_id == current_session:
+            continue
+
+        if session_id:
+            age_seconds = now - created_at if created_at > 0 else 0
+            agents.append({
+                'issue_id': issue_id,
+                'session_id': session_id,
+                'age_seconds': age_seconds,
+                'worktree': worktree
+            })
+
+    return sorted(agents, key=lambda a: a['age_seconds'])
 
 
 # Valid status values (canonical)
@@ -370,6 +442,18 @@ def generate_status_display(project_dir: str) -> str:
     progress_bar = build_progress_bar(percent)
     content_items.append(f"📊 Overall: [{progress_bar}] {percent}% · {completed}/{total} tasks")
     content_items.append('')
+
+    # Get active agents (excluding current session)
+    current_session = os.environ.get('CLAUDE_SESSION_ID', '')
+    agents = get_active_agents(cat_dir, current_session)
+
+    if agents:
+        content_items.append('🤖 Active Agents:')
+        for agent in agents:
+            age_str = format_age(agent['age_seconds'])
+            session_str = format_session_id(agent['session_id'])
+            content_items.append(f"   • {agent['issue_id']} (session: {session_str}, {age_str})")
+        content_items.append('')
 
     # Process each major version
     for major in majors:
