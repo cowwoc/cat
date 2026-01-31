@@ -1,182 +1,124 @@
-<execution_context>
-
-@${CLAUDE_PLUGIN_ROOT}/concepts/version-paths.md
-
-</execution_context>
-
 # Workflow: Execute Issue
 
 ## Overview
 
-Core issue execution workflow for CAT. Orchestrates subagent execution across four phases:
-Prepare, Execute, Review, and Merge.
+Core issue execution workflow for CAT. Uses a **thin orchestrator** architecture where the main
+agent delegates to 4 phase subagents, each with isolated context.
 
-**Full phase details are in phase files** - this document covers orchestration patterns only.
+## Architecture
 
-## Prerequisites
-
-- Issue exists with STATE.md, PLAN.md
-- All issue dependencies completed
-- Main agent in orchestration mode
-- **Issue lock can be acquired** (not locked by another session)
-
-## Subagent Batching Standards
-
-**Hide tool calls by delegating batched operations to subagents.**
-
-Subagent internal tool calls are invisible to the parent conversation. Instead of 20+ visible
-Read/Bash calls, users see 3-5 Task tool invocations with clean output.
-
-**Phase batches:**
-
-| Batch | Subagent | Operations |
-|-------|----------|------------|
-| Preparation | Exploration | Validate, analyze, create worktree |
-| Discovery | Exploration | Search codebase, check duplicates |
-| Planning | Plan | Make decisions, create spec |
-| Implementation | general-purpose | Execute spec, commit |
-| Review | general-purpose | Orchestrate reviewers |
-| Finalization | Main agent (direct) | Merge, cleanup, update state |
-
-**Output pattern:**
 ```
-◆ {Phase}...
-[Task tool - single collapsed block]
-✓ {Result summary}
+Main Agent (thin orchestrator: ~5-10K context)
+    |
+    +---> work-prepare subagent
+    |     Loads: version-paths.md, discovery scripts
+    |     Returns: {task_id, worktree_path, estimate}
+    |
+    +---> work-execute subagent
+    |     Loads: subagent-delegation.md, delegate/SKILL.md
+    |     Returns: {status, tokens, commits}
+    |
+    +---> work-review subagent
+    |     Loads: stakeholder-review/SKILL.md, stakeholders/*.md
+    |     Returns: {approval_status, concerns[]}
+    |
+    +---> work-merge subagent
+          Loads: merge-and-cleanup.md, commit-types.md
+          Returns: {merged, cleanup_status}
 ```
+
+**Benefits:**
+- Main agent context stays minimal (~5-10K vs ~60K+ previously)
+- Each phase has fresh context for quality work
+- Phase subagents load only docs they need
+- User sees clean phase transitions, not internal tool calls
+
+## Phase Subagent Skills
+
+| Phase | Skill | Purpose |
+|-------|-------|---------|
+| Prepare | work-prepare | Find task, create worktree |
+| Execute | work-execute | Spawn implementation subagent |
+| Review | work-review | Run stakeholder reviews |
+| Merge | work-merge | Squash, merge, cleanup |
+
+Model selection follows `delegate/SKILL.md` criteria based on task complexity.
+
+## Main Agent Responsibilities
+
+The main agent ONLY handles:
+
+| Area | Actions |
+|------|---------|
+| Orchestration | Spawn phase subagents, collect results |
+| User interaction | Approval gates, questions, feedback |
+| Error escalation | Surface failures, offer recovery |
+| Progress display | Show phase banners |
+| Decision routing | Handle status codes from subagents |
+
+Main agent does NOT:
+- Load full documentation (delegated to subagents)
+- Perform implementation work
+- Run stakeholder reviews directly
+- Handle merge operations directly
+
+## JSON Contracts
+
+Each phase subagent returns structured JSON. Main agent parses and routes.
+
+**Success statuses:** READY, SUCCESS, APPROVED, MERGED
+**Failure statuses:** NO_TASKS, LOCKED, BLOCKED, FAILED, CONFLICT, ERROR
+
+See individual skill files for full contracts:
+- work-prepare/SKILL.md
+- work-execute/SKILL.md
+- work-review/SKILL.md
+- work-merge/SKILL.md
 
 ## CRITICAL: Worktree Isolation (M101)
 
 **ALL issue implementation work MUST happen in the issue worktree, NEVER in `/workspace` main.**
 
 ```
-/workspace/                    ← MAIN WORKTREE - READ-ONLY during issue execution
-├── .worktrees/
-│   └── 0.5-issue-name/        ← ISSUE WORKTREE - All edits happen here
-│       └── parser/src/...
-└── parser/src/...            ← NEVER edit these files during issue execution
+/workspace/                    <- MAIN WORKTREE - READ-ONLY during issue execution
++-- .worktrees/
+|   +-- 0.5-issue-name/        <- ISSUE WORKTREE - All edits happen here
+|       +-- parser/src/...
++-- parser/src/...             <- NEVER edit these files during issue execution
 ```
-
-**Rules:**
-1. After creating worktree, immediately `cd` to it and verify with `pwd`
-2. All file edits, git commits, and builds happen in the issue worktree
-3. Return to `/workspace` ONLY for final merge and cleanup
-4. If confused about location, run `pwd` and `git branch --show-current`
-
-**Why:** Multiple parallel issues create separate worktrees. Editing main worktree:
-- Corrupts other parallel issues
-- Creates merge conflicts
-- Makes rollback impossible
 
 ## Issue Discovery (M282)
 
-**MANDATORY: Use get-available-issues.sh script FIRST. FAIL-FAST if script fails.**
+**MANDATORY: Use get-available-issues.sh script. FAIL-FAST if script fails.**
 
-Issue discovery uses the dedicated script. The script uses **self-discovery** to find paths
-(via `git rev-parse` and `BASH_SOURCE`), so no environment variables need to be set.
-
-**Session ID:** Extract from the session context injected by hooks (look for "Session ID: ..." in
-system-reminders from SessionStart).
-
-```bash
-# Run issue discovery - script auto-discovers project path
-# SESSION_ID from context (injected by echo-session-id.sh hook)
-# Path: plugin/scripts/ in development, or use CLAUDE_PLUGIN_ROOT in installed context
-RESULT=$(plugin/scripts/get-available-issues.sh --session-id "${SESSION_ID}")
-
-if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
-  ISSUE_ID=$(echo "$RESULT" | jq -r '.issue_id')
-  ISSUE_PATH=$(echo "$RESULT" | jq -r '.issue_path')
-else
-  echo "$RESULT" | jq -r '.message // .status'
-  # FAIL-FAST: No executable issues or script error - STOP here
-fi
-```
-
-**FAIL-FAST means NO FALLBACKS:**
-- If script returns error → STOP and report the error
-- If no issues found → STOP and report "no executable issues"
-- NEVER fall back to manual Glob/Read/Bash exploration
-
-**Anti-pattern (M282):** Manual file exploration as workaround for script failures.
-If the script fails, the correct fix is to diagnose and fix the script, not to work around it.
-
-**Anti-pattern (M300):** Using placeholder/fabricated session IDs (e.g., "test-session-1") instead of
-the actual session ID from context. The session ID is ALWAYS available in the SessionStart system-reminder
-at conversation start. Use it directly - the script validates UUID format.
+The work-prepare subagent handles discovery internally. Main agent receives the result
+as JSON with task_id, worktree_path, and other metadata.
 
 ## Lock Management (M097)
 
-**MANDATORY: Lock Check Before Proceeding**
-
-Before validating an issue as executable, attempt to acquire its lock:
-
-```bash
-ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$ISSUE_ID" "${CLAUDE_SESSION_ID}")
-
-if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
-  echo "⏸️ Issue $ISSUE_ID is locked by another session"
-  # Skip this issue, try next candidate
-fi
-```
-
-This prevents:
-- Offering issues that another Claude instance is executing
-- Wasted exploration/planning on locked issues
-- Confusion about issue availability
-
-## Minor Version Dependency Rules
-
-| Scenario | Dependency |
-|----------|------------|
-| First minor of first major (v0.0) | None - always executable |
-| Subsequent minors (e.g., v0.5) | Previous minor must be complete (v0.4) |
-| First minor of new major (e.g., v1.0) | Last minor of previous major must be complete |
-
-A minor is complete when all its issues have `status: completed`.
+Locks are acquired by work-prepare subagent and released by work-merge subagent.
+Main agent tracks lock status but doesn't manage locks directly.
 
 ## Error Recovery
 
-### Subagent Failure
-1. Subagent returns error status
-2. Main agent logs failure
-3. Attempt resolution or escalate
-
-### Merge Conflict
-1. Identify conflicting files
-2. Attempt automatic resolution
-3. Escalate with conflict details if unresolved
-
-### Session Interruption
-1. STATE.md preserves progress
-2. Worktree may have partial work
-3. Resume resumes from last state
+| Error | Handler |
+|-------|---------|
+| Subagent returns ERROR | Main agent displays error, offers retry/abort |
+| Merge conflict | work-merge returns CONFLICT, main agent asks user |
+| Lock unavailable | work-prepare returns LOCKED, main agent tries next task |
+| Token limit exceeded | work-execute returns warning, main agent offers decomposition |
 
 ## Parallel Execution
 
-For independent issues:
+For independent issues, main agent can spawn multiple work-execute subagents:
+
 ```
 Main Agent
     |
-    +---> Subagent A (issue-1)
-    +---> Subagent B (issue-2)
-    +---> Subagent C (issue-3)
+    +---> work-execute (issue-1)
+    +---> work-execute (issue-2)
+    +---> work-execute (issue-3)
     |
     v
 Process completions as they arrive
 ```
-
-## Why Finalization Uses Direct Execution
-
-**Finalization phase uses direct execution instead of subagent batching.**
-
-Unlike Exploration, Planning, and Implementation phases:
-
-1. **Happens AFTER user approval** - User has already reviewed and approved all changes
-2. **Minimal tool calls** - Only 3-5 operations (merge, cleanup, state updates) vs 20+ in exploration
-3. **Low user benefit from hiding** - No noise to hide; operations are already approved
-4. **Better error handling** - Merge conflicts or cleanup failures should surface immediately
-5. **Simplicity** - Direct execution is simpler than subagent overhead for post-approval cleanup
-
-**Result:** Users see straightforward cleanup steps after approval.

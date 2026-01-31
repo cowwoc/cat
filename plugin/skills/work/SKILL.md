@@ -3,44 +3,19 @@ description: Work on issues (approval required unless trust=high; auto-continues
 argument-hint: "[version | taskId] [--override-gate]"
 allowed-tools:
   - Read
-  - Write
-  - Edit
   - Bash
-  - Glob
-  - Grep
   - Task
   - AskUserQuestion
-  - SlashCommand
 ---
 
-<objective>
+# Work: Thin Orchestrator
 
-Execute a issue with worktree isolation, subagent orchestration, and quality gates.
+Execute issues with worktree isolation, subagent orchestration, and quality gates.
 
-**Concurrent Execution:** This command uses issue-level locking to prevent multiple Claude instances
-from executing the same issue simultaneously. Locks persist until explicitly released.
+**Architecture:** Main agent orchestrates 4 phase subagents. Each phase runs in isolation with
+its own context, keeping main agent context minimal (~5-10K tokens).
 
-This is CAT's core execution command. It:
-1. Finds the next executable issue (pending + dependencies met)
-2. Acquires exclusive issue lock (prevents concurrent execution)
-3. Creates a issue worktree and branch
-4. Executes the PLAN.md (spawn subagent or work directly)
-5. Monitors token usage throughout
-6. Runs stakeholder review gate (multi-perspective quality review)
-7. Loops back to fix concerns if review rejects
-8. Squashes commits by type
-9. Runs user approval gate (interactive mode)
-10. Merges issue branch to main
-11. Cleans up worktrees
-12. Updates STATE.md
-13. Updates changelogs (minor/major CHANGELOG.md)
-14. Offers next issue
-
-</objective>
-
-<progress_output>
-
-## Pre-rendered Progress Banners
+## Progress Output
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
@@ -48,142 +23,194 @@ This is CAT's core execution command. It:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh`
 
-**INSTRUCTION:** Output the appropriate phase banner EXACTLY as shown above.
-- Do NOT modify the banner content
-- Do NOT wrap in code blocks
-- Do NOT manually construct banners
+## Configuration
 
-**FAIL-FAST (M323):** If pre-rendered content is missing (script execution failed):
-1. Check for error messages in skill loading (e.g., "no such file or directory")
-2. Report the error to user: "Pre-rendered work boxes unavailable: {error}"
-3. Do NOT attempt to manually construct boxes - they will be misaligned
-4. Either fix the preprocessing issue OR proceed without visual boxes
+Read once at start:
 
-### Phase Mapping
-
-| Phase | Steps Included | Complete When |
-|-------|----------------|---------------|
-| Preparing | verify, find_task, acquire_lock, load_task, validate_requirements, analyze_task_size, choose_approach, create_worktree | Worktree created, ready to execute |
-| Executing | execute, collect_and_report, token_check, handle_discovered_issues, verify_changes | Subagent complete, changes verified |
-| Reviewing | stakeholder_review, approval_gate | Review passed, user approved |
-| Merging | squash_commits, merge, cleanup, update_state, commit_metadata, update_changelogs, next_task | Merged to main, cleanup done |
-
-### Key Principles
-
-1. **Output banners verbatim** - Pre-rendered banners require NO modification
-2. **4 phases, not 17 steps** - Users see meaningful stages, not micro-steps
-3. **Update at transitions** - Display progress banner when phase changes
-
-</progress_output>
-
-<execution_context>
-
-<!-- SKILL.md vs PLAN.md (A015/M172): Always reference SKILL.md for skill usage.
-     PLAN.md = what to build (issue planning). SKILL.md = how to use it (authoritative). -->
-
-<!-- Core concepts always needed for orchestration -->
-@${CLAUDE_PLUGIN_ROOT}/concepts/work.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/agent-architecture.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/subagent-delegation.md
-@${CLAUDE_PLUGIN_ROOT}/concepts/commit-types.md
-
-</execution_context>
-
-<conditional_context>
-
-**Load on demand when specific phases or scenarios occur:**
-
-| Phase/Scenario | Load Context |
-|----------------|--------------|
-| Execute phase (spawning subagent) | @${CLAUDE_PLUGIN_ROOT}/skills/delegate/SKILL.md |
-| Review phase (stakeholder review) | @${CLAUDE_PLUGIN_ROOT}/skills/stakeholder-review/SKILL.md, @${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md |
-| Merge phase (merging subagent) | @${CLAUDE_PLUGIN_ROOT}/skills/merge-subagent/SKILL.md, @${CLAUDE_PLUGIN_ROOT}/concepts/merge-and-cleanup.md |
-| Merge phase (changelog update) | @${CLAUDE_PLUGIN_ROOT}/templates/changelog.md |
-| Minor/major version completes | @${CLAUDE_PLUGIN_ROOT}/concepts/version-completion.md |
-| Issue discovered as duplicate | @${CLAUDE_PLUGIN_ROOT}/concepts/duplicate-issue.md |
-| Compaction events or high token usage | @${CLAUDE_PLUGIN_ROOT}/concepts/token-warning.md |
-
-</conditional_context>
-
-<context>
-
-Issue path: $ARGUMENTS
-
-**Load project state first:**
-@.claude/cat/cat-config.json
-@.claude/cat/PROJECT.md
-@.claude/cat/ROADMAP.md
-
-</context>
-
-<process>
+```bash
+TRUST=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
+VERIFY=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
+AUTO_REMOVE=$(jq -r '.autoRemoveWorktrees // true' .claude/cat/cat-config.json)
+```
 
 ## Phase 1: Prepare
 
-Steps: verify, find_task, acquire_lock, load_task, validate_requirements, analyze_task_size, choose_approach, create_worktree
+Delegate to work-prepare subagent:
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/phase-prepare.md
+```
+Task tool:
+  description: "Prepare: find task, create worktree"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  prompt: |
+    Execute the work-prepare phase skill.
+
+    SESSION_ID: ${CLAUDE_SESSION_ID}
+    PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+    ARGUMENTS: $ARGUMENTS
+    TRUST_LEVEL: ${TRUST}
+
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-prepare/SKILL.md
+
+    Return JSON per the output contract.
+```
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| READY | Display progress banner, continue to Phase 2 |
+| NO_TASKS | Display NO_EXECUTABLE_ISSUES box, stop |
+| LOCKED | Display lock message, try next task |
+| OVERSIZED | Invoke /cat:decompose-issue, then retry |
+| ERROR | Display error, stop |
+
+**Store for later phases:**
+- `task_id`, `task_path`, `worktree_path`, `branch`, `base_branch`
+- `estimated_tokens`
 
 ## Phase 2: Execute
 
-Steps: execute, collect_and_report, aggregate_token_report, token_check, handle_discovered_issues, verify_changes
+Delegate to work-execute subagent:
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/phase-execute.md
+```
+Task tool:
+  description: "Execute: implement task"
+  subagent_type: "general-purpose"
+  model: "sonnet"
+  prompt: |
+    Execute the work-execute phase skill.
+
+    SESSION_ID: ${CLAUDE_SESSION_ID}
+    TASK_ID: ${task_id}
+    TASK_PATH: ${task_path}
+    WORKTREE_PATH: ${worktree_path}
+    ESTIMATED_TOKENS: ${estimated_tokens}
+    TRUST_LEVEL: ${TRUST}
+
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-execute/SKILL.md
+
+    Return JSON per the output contract.
+```
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| SUCCESS | Store metrics, continue to Phase 3 |
+| PARTIAL | Warn user, continue to Phase 3 |
+| FAILED | Display error, offer retry or abort |
+| BLOCKED | Display blocker, stop |
+
+**Token check:**
+- If `compaction_events > 0`: Warn user, offer decomposition
+- If `percent_of_context > 80`: Invoke learn-from-mistakes
+
+**Store for later phases:**
+- `commits`, `files_changed`, `tokens_used`
 
 ## Phase 3: Review
 
-Steps: stakeholder_review, approval_gate
+**Skip if:** `VERIFY == "none"` or `TRUST == "high"`
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/phase-review.md
+Delegate to work-review subagent:
+
+```
+Task tool:
+  description: "Review: stakeholder quality check"
+  subagent_type: "general-purpose"
+  model: "sonnet"
+  prompt: |
+    Execute the work-review phase skill.
+
+    SESSION_ID: ${CLAUDE_SESSION_ID}
+    TASK_ID: ${task_id}
+    TASK_PATH: ${task_path}
+    WORKTREE_PATH: ${worktree_path}
+    TRUST_LEVEL: ${TRUST}
+    VERIFY_LEVEL: ${VERIFY}
+    EXECUTION_RESULT: ${execution_result_json}
+
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-review/SKILL.md
+
+    Return JSON per the output contract.
+```
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| APPROVED | Continue to user approval gate |
+| CONCERNS | Note concerns, continue to user approval gate |
+| REJECTED | If medium trust: auto-loop to fix. If low trust: ask user |
+
+**User Approval Gate (if trust != high):**
+
+Use AskUserQuestion:
+- header: "Approval"
+- question: "Ready to merge {task_id}?"
+- options:
+  - "Approve and merge"
+  - "Request changes" (provide feedback)
+  - "Abort"
 
 ## Phase 4: Merge
 
-Steps: squash_commits, finalization, next_task
+Delegate to work-merge subagent:
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/phase-merge.md
+```
+Task tool:
+  description: "Merge: squash, merge, cleanup"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  prompt: |
+    Execute the work-merge phase skill.
 
-</process>
+    SESSION_ID: ${CLAUDE_SESSION_ID}
+    TASK_ID: ${task_id}
+    TASK_PATH: ${task_path}
+    WORKTREE_PATH: ${worktree_path}
+    BRANCH: ${branch}
+    BASE_BRANCH: ${base_branch}
+    COMMITS: ${commits_json}
+    AUTO_REMOVE_WORKTREES: ${AUTO_REMOVE}
 
-<deviation_rules>
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-merge/SKILL.md
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/deviation-rules.md
+    Return JSON per the output contract.
+```
 
-</deviation_rules>
+**Handle result:**
 
-<main_agent_boundaries>
+| Status | Action |
+|--------|--------|
+| MERGED | Display success, check for next task |
+| CONFLICT | Display conflicting files, ask user for resolution |
+| ERROR | Display error, attempt manual cleanup |
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/anti-patterns.md
+## Next Task
 
-</main_agent_boundaries>
+After successful merge:
 
-<commit_rules>
+1. Check if more tasks in scope (based on original arguments)
+2. If trust >= medium: Auto-continue after 3s delay
+3. If trust == low: Display next task, wait for user
 
-@${CLAUDE_PLUGIN_ROOT}/commands/work/commit-rules.md
+Use appropriate box from pre-rendered output.
 
-</commit_rules>
+## Error Handling
 
-<success_criteria>
+If any phase subagent fails unexpectedly:
 
-- [ ] **Issue lock acquired BEFORE offering issue (M097)**
-- [ ] Issue identified and loaded
-- [ ] **Entry gate evaluated (blocked if unmet, unless --override-gate)**
-- [ ] **Issue size analyzed (estimate vs threshold)**
-- [ ] **Pre-spawn validation: estimate < hard limit (A018)**
-- [ ] **If oversized: auto-decomposition triggered**
-- [ ] **If decomposed: parallel execution plan generated**
-- [ ] Worktree(s) created with correct branch(es)
-- [ ] PLAN.md executed successfully via subagent(s)
-- [ ] **Token metrics collected and reported to user**
-- [ ] **Aggregate token report generated (multi-subagent issues)**
-- [ ] **Context limit violations flagged and learn-from-mistakes triggered**
-- [ ] **Compaction events evaluated (decomposition offered if > 0)**
-- [ ] **Stakeholder review passed (or concerns addressed)**
-- [ ] Approval gate passed (if interactive)
-- [ ] Commits squashed by type
-- [ ] Branch(es) merged to main
-- [ ] Worktree(s) cleaned up
-- [ ] Lock released
-- [ ] STATE.md files updated
-- [ ] **Next issue offered (lock checked first)**
+1. Capture error message
+2. Attempt lock release: `issue-lock.sh release ...`
+3. Display error to user
+4. Offer: Retry, Abort, or Manual cleanup
 
-</success_criteria>
+## Success Criteria
+
+- [ ] Phase subagent spawned for each phase
+- [ ] Results collected and parsed as JSON
+- [ ] User approval gate respected (unless trust=high)
+- [ ] Lock released on completion or error
+- [ ] Progress banners displayed at phase transitions
