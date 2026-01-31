@@ -35,6 +35,9 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 ## Progress Output
 
+**CRITICAL (M331):** Copy banners ONLY from pre-rendered output below. If preprocessing failed or was
+interrupted, report the error - NEVER manually construct banners.
+
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
 ---
