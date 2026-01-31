@@ -106,24 +106,16 @@ if [[ -z "$TASK_ID" ]]; then
     fi
 fi
 
-# If still no task ID, output placeholder message
-if [[ -z "$TASK_ID" ]]; then
-    echo "## Progress Banners"
-    echo ""
-    echo "Task will be identified during execution. Banners will be displayed inline."
-    exit 0
-fi
+# Phase symbols (defined early for use in placeholder banner)
+# ○ Pending | ● Complete | ◉ Active | ✗ Failed
+PENDING="○"
+COMPLETE="●"
+ACTIVE="◉"
 
 # Default to all phases if no specific phase requested
 if [[ -z "$PHASE" ]]; then
     ALL_PHASES=true
 fi
-
-# Phase symbols
-# ○ Pending | ● Complete | ◉ Active | ✗ Failed
-PENDING="○"
-COMPLETE="●"
-ACTIVE="◉"
 
 # Build banner using Python for accurate width calculation
 build_banner() {
@@ -171,6 +163,16 @@ print(middle_line)
 print(bottom_line)
 PYTHON_EOF
 }
+
+# If no task ID, output a generic "Preparing" banner with placeholder
+if [[ -z "$TASK_ID" ]]; then
+    echo '```'
+    build_banner "..." "$ACTIVE" "$PENDING" "$PENDING" "$PENDING"
+    echo '```'
+    echo ""
+    echo "Task will be identified after preparation completes."
+    exit 0
+fi
 
 # Generate banners based on mode
 if [[ "$ALL_PHASES" == "true" ]]; then
