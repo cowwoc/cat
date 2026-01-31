@@ -13,8 +13,8 @@ allowed-tools:
 Execute all 4 work phases (prepare, execute, review, merge) with automatic progress banner rendering.
 
 **Architecture:** This skill is invoked by `/cat:work` after task discovery (Phase 1). It receives
-the task ID and metadata as arguments, allowing `!`-preprocessing to render progress banners with
-the actual task ID.
+the task ID and metadata as arguments, allowing exclamation-backtick preprocessing to render progress
+banners with the actual task ID.
 
 ## Arguments Format
 
@@ -36,8 +36,9 @@ The main `/cat:work` skill invokes this with JSON-encoded arguments:
 
 ## Progress Banners (Automatic)
 
-The banners below are pre-rendered via `!`-preprocessing. Since this skill receives the task ID
-as an argument, the preprocessing can access it and render all 4 phase banners at skill load time.
+The banners below are pre-rendered via exclamation-backtick preprocessing. Since this skill receives
+the task ID as an argument, the preprocessing can access it and render all 4 phase banners at skill
+load time.
 
 !`ARGS="$ARGUMENTS"; TASK_ID=$(echo "$ARGS" | jq -r '.task_id // empty' 2>/dev/null || echo "$ARGS" | grep -oE '^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+'); ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh "$TASK_ID" --all-phases`
 

@@ -2313,6 +2313,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Display a generic Preparing banner with '...' as task ID when no task is known yet, so users see progress indication during the Prepare phase"
+    },
+    {
+      "id": "M330",
+      "timestamp": "2026-01-31T03:46:00-05:00",
+      "category": "misleading_documentation",
+      "description": "Skill documentation containing backtick-exclamation pattern in inline code triggered Claude Code preprocessor, causing shell eval errors",
+      "root_cause": "Documentation text in work-with-task/SKILL.md used `!` in backticks to describe the preprocessing syntax. The preprocessor pattern matcher doesn't distinguish between actual preprocessing commands and documentation/inline code blocks.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "preprocessing",
+        "backtick",
+        "pattern-collision",
+        "documentation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use descriptive text like 'exclamation-backtick preprocessing' instead of literal backtick-exclamation patterns in skill documentation"
     }
   ]
 }
