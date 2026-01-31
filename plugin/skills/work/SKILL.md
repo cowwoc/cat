@@ -83,134 +83,57 @@ Task tool:
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
 | ERROR | Display error, stop |
 
-**Progress banner generation:** After READY status, run:
-```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh ${task_id} --phase executing
-```
-Then output the banner in a code block before delegating to Phase 2.
-
-**Store for later phases:**
+**Store phase 1 results:**
 - `task_id`, `task_path`, `worktree_path`, `branch`, `base_branch`
 - `estimated_tokens`
 
-## Phase 2: Execute
+## Phase 2-4: Delegate to work-with-task
 
-Delegate to work-execute subagent:
+After Phase 1 returns READY, delegate remaining phases to the work-with-task skill.
 
-```
-Task tool:
-  description: "Execute: implement task"
-  subagent_type: "general-purpose"
-  model: "sonnet"
-  prompt: |
-    Execute the work-execute phase skill.
+This skill receives the task ID and metadata, allowing its `!`-preprocessing to render progress
+banners automatically for all 4 phases.
 
-    SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${task_id}
-    TASK_PATH: ${task_path}
-    WORKTREE_PATH: ${worktree_path}
-    ESTIMATED_TOKENS: ${estimated_tokens}
-    TRUST_LEVEL: ${TRUST}
+**Invoke the work-with-task skill:**
 
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-execute/SKILL.md
+Use the Skill tool to invoke `/cat:work-with-task` with JSON arguments:
 
-    Return JSON per the output contract.
-```
-
-**Handle result:**
-
-| Status | Action |
-|--------|--------|
-| SUCCESS | Store metrics, continue to Phase 3 |
-| PARTIAL | Warn user, continue to Phase 3 |
-| FAILED | Display error, offer retry or abort |
-| BLOCKED | Display blocker, stop |
-
-**Token check:**
-- If `compaction_events > 0`: Warn user, offer decomposition
-- If `percent_of_context > 80`: Invoke learn-from-mistakes
-
-**Store for later phases:**
-- `commits`, `files_changed`, `tokens_used`
-
-## Phase 3: Review
-
-**Skip if:** `VERIFY == "none"` or `TRUST == "high"`
-
-Delegate to work-review subagent:
-
-```
-Task tool:
-  description: "Review: stakeholder quality check"
-  subagent_type: "general-purpose"
-  model: "sonnet"
-  prompt: |
-    Execute the work-review phase skill.
-
-    SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${task_id}
-    TASK_PATH: ${task_path}
-    WORKTREE_PATH: ${worktree_path}
-    TRUST_LEVEL: ${TRUST}
-    VERIFY_LEVEL: ${VERIFY}
-    EXECUTION_RESULT: ${execution_result_json}
-
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-review/SKILL.md
-
-    Return JSON per the output contract.
+```json
+{
+  "task_id": "${task_id}",
+  "task_path": "${task_path}",
+  "worktree_path": "${worktree_path}",
+  "branch": "${branch}",
+  "base_branch": "${base_branch}",
+  "estimated_tokens": ${estimated_tokens},
+  "trust": "${TRUST}",
+  "verify": "${VERIFY}",
+  "auto_remove": ${AUTO_REMOVE}
+}
 ```
 
-**Handle result:**
+The skill will:
+1. Render progress banners via `!`-preprocessing (now has task_id available)
+2. Execute Phase 2 (implementation subagent)
+3. Execute Phase 3 (stakeholder review) if verify != none
+4. Execute Phase 4 (merge and cleanup)
+5. Return execution summary
 
-| Status | Action |
-|--------|--------|
-| APPROVED | Continue to user approval gate |
-| CONCERNS | Note concerns, continue to user approval gate |
-| REJECTED | If medium trust: auto-loop to fix. If low trust: ask user |
+**Expected return format:**
 
-**User Approval Gate (if trust != high):**
-
-Use AskUserQuestion:
-- header: "Approval"
-- question: "Ready to merge {task_id}?"
-- options:
-  - "Approve and merge"
-  - "Request changes" (provide feedback)
-  - "Abort"
-
-## Phase 4: Merge
-
-Delegate to work-merge subagent:
-
-```
-Task tool:
-  description: "Merge: squash, merge, cleanup"
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    Execute the work-merge phase skill.
-
-    SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${task_id}
-    TASK_PATH: ${task_path}
-    WORKTREE_PATH: ${worktree_path}
-    BRANCH: ${branch}
-    BASE_BRANCH: ${base_branch}
-    COMMITS: ${commits_json}
-    AUTO_REMOVE_WORKTREES: ${AUTO_REMOVE}
-
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-merge/SKILL.md
-
-    Return JSON per the output contract.
+```json
+{
+  "status": "SUCCESS|FAILED",
+  "task_id": "2.1-task-name",
+  "commits": [...],
+  "files_changed": 5,
+  "tokens_used": 65000,
+  "merged": true
+}
 ```
 
-**Handle result:**
-
-| Status | Action |
-|--------|--------|
-| MERGED | Display success, check for next task |
-| CONFLICT | Display conflicting files, ask user for resolution |
-| ERROR | Display error, attempt manual cleanup |
+**Store final results:**
+- `commits`, `files_changed`, `tokens_used`, `merged`
 
 ## Next Task
 
