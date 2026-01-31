@@ -458,6 +458,87 @@ def test_work_handler():
         runner.test("Contains status boxes", "TASK_COMPLETE" in result or "SCOPE_COMPLETE" in result)
 
 
+def test_box_alignment():
+    """Test that all box-generating scripts produce aligned output."""
+    runner.section("scripts/box_alignment")
+
+    import subprocess
+    sys.path.insert(0, str(PROJECT_ROOT / "plugin" / "scripts" / "lib"))
+    from emoji_widths import display_width, get_emoji_widths
+    ew = get_emoji_widths()
+
+    def check_box_alignment(box_text):
+        """Check if all lines in a box have the same display width."""
+        lines = box_text.strip().split('\n')
+        box_lines = []
+        for line in lines:
+            # Only check lines that are box borders or content
+            if line and (line.startswith('│') or line.startswith('╭') or
+                        line.startswith('╰') or line.startswith('├') or
+                        line.startswith('┌') or line.startswith('└') or
+                        line.startswith('┤')):
+                box_lines.append(line)
+
+        if len(box_lines) < 2:
+            return True, "Not enough box lines"
+
+        widths = [display_width(line, ew) for line in box_lines]
+        first_width = widths[0]
+        for i, w in enumerate(widths):
+            if w != first_width:
+                return False, f"Line {i} has width {w}, expected {first_width}"
+        return True, "All lines aligned"
+
+    # Test 1: get-issue-complete-box.py alignment
+    result = subprocess.run([
+        "python3", str(PROJECT_ROOT / "plugin" / "scripts" / "get-issue-complete-box.py"),
+        "--issue-name", "2.1-test-issue",
+        "--next-issue", "2.1-next-issue",
+        "--next-goal", "Test goal description",
+        "--base-branch", "v2.1"
+    ], capture_output=True, text=True)
+    aligned, msg = check_box_alignment(result.stdout)
+    runner.test("get-issue-complete-box.py produces aligned box", aligned, msg)
+
+    # Test 2: get-work-boxes.py template alignment
+    result = subprocess.run([
+        "python3", str(PROJECT_ROOT / "plugin" / "scripts" / "get-work-boxes.py")
+    ], capture_output=True, text=True)
+    # Split into individual boxes and check each
+    boxes = result.stdout.split("###")
+    for box_section in boxes[1:]:  # Skip first empty section
+        lines = box_section.strip().split('\n')
+        if len(lines) > 1:
+            box_name = lines[0].strip()
+            box_content = '\n'.join(lines[1:])
+            aligned, msg = check_box_alignment(box_content)
+            runner.test(f"get-work-boxes.py {box_name} aligned", aligned, msg)
+
+    # Test 3: get-progress-banner.sh alignment
+    result = subprocess.run([
+        "bash", str(PROJECT_ROOT / "plugin" / "scripts" / "get-progress-banner.sh"),
+        "2.1-test-task", "--phase", "executing"
+    ], capture_output=True, text=True)
+    aligned, msg = check_box_alignment(result.stdout)
+    runner.test("get-progress-banner.sh produces aligned box", aligned, msg)
+
+    # Test 4: get-checkpoint-box.py alignment (if exists)
+    checkpoint_script = PROJECT_ROOT / "plugin" / "scripts" / "get-checkpoint-box.py"
+    if checkpoint_script.exists():
+        result = subprocess.run([
+            "python3", str(checkpoint_script),
+            "--issue-name", "2.1-test-issue",
+            "--tokens", "50000",
+            "--percent", "25",
+            "--branch", "v2.1"
+        ], capture_output=True, text=True)
+        aligned, msg = check_box_alignment(result.stdout)
+        runner.test("get-checkpoint-box.py produces aligned box", aligned, msg)
+    else:
+        runner.test("get-checkpoint-box.py exists", False,
+                    "Script missing - checkpoint boxes cannot be generated with actual values")
+
+
 def test_cleanup_handler():
     """Test cleanup_handler."""
     runner.section("skill_handlers/cleanup_handler")
@@ -962,6 +1043,7 @@ def main():
         test_active_agents,
         test_help_handler,
         test_work_handler,
+        test_box_alignment,
         test_cleanup_handler,
         test_posttool_skill_preprocessor_output,
         test_config_loader,
