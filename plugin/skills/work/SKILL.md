@@ -83,6 +83,12 @@ Task tool:
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
 | ERROR | Display error, stop |
 
+**Progress banner generation:** After READY status, run:
+```bash
+${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh ${task_id} --phase executing
+```
+Then output the banner in a code block before delegating to Phase 2.
+
 **Store for later phases:**
 - `task_id`, `task_path`, `worktree_path`, `branch`, `base_branch`
 - `estimated_tokens`

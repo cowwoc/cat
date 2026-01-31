@@ -2263,6 +2263,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Only accept positional arguments matching task ID format (N.N-name); show placeholder for filter phrases"
+    },
+    {
+      "id": "M328",
+      "timestamp": "2026-01-31T03:15:00-05:00",
+      "category": "protocol_violation",
+      "description": "Did not display progress banner after Phase 1 READY status - wrote prose text instead",
+      "root_cause": "Skill doc says Display progress banner but when preprocessing cannot discover task, no explicit instruction exists for generating banner dynamically post-discovery",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "progress-banner",
+        "phase-transition",
+        "dynamic-generation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After Phase 1 returns READY, run get-progress-banner.sh with task_id and --phase executing, then output the banner in a code block before Phase 2"
     }
   ]
 }
