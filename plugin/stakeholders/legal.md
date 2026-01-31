@@ -117,6 +117,30 @@ landscape, licensing implications, and regulatory requirements for [topic].
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's legal posture, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall legal compliance?
+   - Do they introduce new license dependencies that affect the whole project?
+   - Do they change data handling in ways that affect privacy compliance?
+   - Do they create new contractual obligations or liabilities?
+
+2. **Accumulated Legal Debt**: Is this change adding to or reducing legal risk?
+   - Does it follow established license and compliance patterns?
+   - Are there similar compliance gaps elsewhere that should be addressed?
+   - Is this adding another "minor" legal risk that compounds with others?
+
+3. **Compliance Coherence**: Does this change maintain consistent legal standards?
+   - Does it use the same privacy and data handling approach as similar code?
+   - Does it respect established IP protection patterns?
+   - Will future auditors understand the compliance implications?
+
+**Anti-Accumulation Check**: Flag if this change adds to accumulated legal risk
+(e.g., "this is the 4th dependency added without license verification").
+
 ## Review Concerns
 
 Evaluate implementation against these legal criteria:

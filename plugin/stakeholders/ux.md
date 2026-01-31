@@ -80,6 +80,30 @@ and what makes [topic] experiences good or frustrating.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's user experience, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall UX consistency?
+   - Do they establish interaction patterns that should be used elsewhere?
+   - Do they create inconsistencies with existing user flows?
+   - Do they change mental models users have built with existing features?
+
+2. **Accumulated UX Debt**: Is this change adding to or reducing UX debt?
+   - Does it follow established UX patterns or introduce new ones?
+   - Are there similar UX issues elsewhere that should be fixed together?
+   - Is this adding another "inconsistency" that collectively confuses users?
+
+3. **UX Coherence**: Does this change maintain a coherent user experience?
+   - Does it use the same feedback patterns as similar features?
+   - Does it respect established navigation and interaction models?
+   - Will users find this feature behaves as they expect based on other features?
+
+**Anti-Accumulation Check**: Flag if this change adds to UX inconsistency
+(e.g., "this is the 4th different approach to error messaging in this flow").
+
 ## Review Concerns
 
 Evaluate implementation against these UX criteria:

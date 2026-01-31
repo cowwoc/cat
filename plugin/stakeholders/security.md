@@ -79,6 +79,30 @@ secure implementation patterns for [topic].
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's security posture, not just the diff.**
+
+Before analyzing specific vulnerabilities, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall security?
+   - Do they expand the attack surface in ways that affect other components?
+   - Do they establish security patterns (good or bad) that may be copied?
+   - Do they change trust boundaries or data flow in ways that affect elsewhere?
+
+2. **Accumulated Security Risk**: Is this change adding to or reducing security debt?
+   - Does it follow existing security patterns or introduce inconsistencies?
+   - Are there similar security shortcuts elsewhere that should be fixed together?
+   - Is this adding another "small exception" that collectively creates exposure?
+
+3. **Security Coherence**: Does this change maintain consistent security standards?
+   - Does it use the same validation/sanitization approach as similar code?
+   - Does it respect established authentication/authorization patterns?
+   - Will future developers understand the security requirements?
+
+**Anti-Accumulation Check**: Flag if this change adds to accumulated risk patterns
+(e.g., "this is the 3rd place where user input bypasses standard validation").
+
 ## Review Concerns
 
 Evaluate implementation against these security criteria:

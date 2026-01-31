@@ -80,6 +80,30 @@ in [topic] systems and how experienced testers catch those bugs.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's test coverage, not just the diff.**
+
+Before analyzing specific gaps, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall test coverage?
+   - Do they add tests that follow established testing patterns?
+   - Do they create testing approaches that should be applied elsewhere?
+   - Do they affect shared test infrastructure or fixtures?
+
+2. **Accumulated Testing Debt**: Is this change adding to or reducing test debt?
+   - Are similar components tested consistently across the codebase?
+   - Does this maintain the same coverage standards as existing code?
+   - Are there similar untested paths elsewhere that should be addressed?
+
+3. **Test Suite Coherence**: Does this change make the test suite more or less maintainable?
+   - Do new tests follow established patterns for setup, assertions, naming?
+   - Will future developers understand what these tests verify?
+   - Does test quality match the complexity of the code being tested?
+
+**Anti-Accumulation Check**: Flag if this change continues patterns of undertesting
+(e.g., "handlers in this package consistently lack error path tests").
+
 ## Review Concerns
 
 Evaluate implementation against these testing criteria:

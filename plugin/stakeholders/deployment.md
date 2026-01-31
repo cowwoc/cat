@@ -82,6 +82,30 @@ deeply enough to make informed infrastructure decisions about [topic].
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's deployment posture, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall deployability?
+   - Do they introduce new dependencies or configuration requirements?
+   - Do they affect build times, artifact sizes, or deployment processes?
+   - Do they change rollback complexity or risk?
+
+2. **Accumulated Deployment Debt**: Is this change adding to or reducing operational risk?
+   - Does it follow established configuration and deployment patterns?
+   - Are there similar deployment gaps elsewhere that should be addressed?
+   - Is this adding another "deployment concern" that compounds with others?
+
+3. **Operational Coherence**: Does this change maintain consistent operational standards?
+   - Does it use the same configuration approach as similar components?
+   - Does it respect established CI/CD patterns and conventions?
+   - Will future operators understand the deployment requirements?
+
+**Anti-Accumulation Check**: Flag if this change adds to accumulated operational risk
+(e.g., "this is the 3rd component missing proper environment variable handling").
+
 ## Review Concerns
 
 Evaluate implementation against these deployment and release criteria:

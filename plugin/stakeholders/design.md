@@ -79,6 +79,30 @@ maintainable, readable, and robust.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall code quality?
+   - Do they introduce patterns that contradict existing idioms?
+   - Do they add complexity that will compound across the codebase?
+   - Do they create inconsistencies with established coding standards?
+
+2. **Accumulated Technical Debt**: Is this change adding to or reducing quality debt?
+   - Is this duplicating logic that exists elsewhere?
+   - Does it introduce a pattern that should be refactored if repeated?
+   - Are there similar code smells elsewhere that should be fixed together?
+
+3. **Codebase Coherence**: Does this change make the codebase more or less maintainable?
+   - Does it follow established naming conventions and idioms?
+   - Will it be obvious to future developers what this code does?
+   - Does it match the quality level of surrounding code?
+
+**Anti-Accumulation Check**: Flag if this change exhibits patterns that collectively degrade
+quality (e.g., "this is the 5th instance of duplicated validation logic across handlers").
+
 ## Review Concerns
 
 Evaluate implementation against these quality criteria:
