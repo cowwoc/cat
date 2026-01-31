@@ -10,11 +10,11 @@
 # Example:
 #   "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "status display" "/cat:status"
 
-WHAT="${1:-pre-computed output}"
+WHAT="${1:-preprocessor output}"
 COMMAND="${2:-the command}"
 
 if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]] && [[ -f "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json" ]]; then
-  echo "ERROR: Pre-computed $WHAT not found."
+  echo "ERROR: Preprocessor $WHAT not found."
   echo ""
   echo "Hooks are configured but not running. This usually means:"
   echo "→ Plugin was recently installed/reinstalled without restarting Claude Code."

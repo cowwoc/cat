@@ -1,7 +1,7 @@
 # Plan: render-diff-precomputation
 
 ## Goal
-Pre-compute rendered diff output for approval gates so the agent can display it directly without visible Bash tool invocations.
+Generate preprocessor output for rendered diff for approval gates so the agent can display it directly without visible Bash tool invocations.
 
 ## Satisfies
 None - infrastructure improvement
@@ -14,15 +14,15 @@ None - infrastructure improvement
 ## Files to Modify
 - `plugin/hooks/skill_handlers/__init__.py` - Register new handler
 - `plugin/hooks/skill_handlers/render_diff_handler.py` - New handler (created)
-- `plugin/skills/render-diff/SKILL.md` - Document pre-computed output pattern
+- `plugin/skills/render-diff/SKILL.md` - Document preprocessor output pattern
 
 ## Acceptance Criteria
 - [ ] Handler registered in __init__.py
-- [ ] Handler pre-computes diff on skill invocation
-- [ ] SKILL.md documents PRE-COMPUTED RENDER-DIFF OUTPUT pattern
+- [ ] Handler generates preprocessor output for diff on skill invocation
+- [ ] SKILL.md documents PREPROCESSOR OUTPUT pattern
 - [ ] Approval gates display clean output without Bash visibility
 
 ## Execution Steps
 1. Create render_diff_handler.py with base branch detection
 2. Register handler in __init__.py
-3. Update SKILL.md with pre-computed output documentation
+3. Update SKILL.md with preprocessor output documentation
