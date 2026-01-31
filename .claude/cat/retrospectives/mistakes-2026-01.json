@@ -2391,6 +2391,57 @@
         "catches_variations": true
       },
       "correct_behavior": "Use get-checkpoint-box.py --type issue-complete --issue-name NAME --tokens N --percent N --branch BRANCH to generate aligned checkpoint boxes."
+    },
+    {
+      "id": "M333",
+      "timestamp": "2026-01-31T20:56:55Z",
+      "category": "protocol_violation",
+      "description": "Subagent delegated to compress templates manually instead of invoking /cat:shrink-doc skill as specified in PLAN.md execution steps",
+      "root_cause": "Delegation prompt instructed manual compression techniques instead of following PLAN.md execution steps which specified skill invocation with validation",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "delegation",
+        "skill-bypass",
+        "validation-skip",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When PLAN.md execution steps reference a skill (e.g., /cat:shrink-doc), the subagent must invoke that skill rather than manually implementing its functionality"
+    },
+    {
+      "id": "M334",
+      "timestamp": "2026-01-31T20:56:55Z",
+      "category": "prompt_engineering",
+      "description": "Used checkmark symbol (✓) instead of filled circle (●) for completed phases in progress banner",
+      "root_cause": "Constructed progress banner manually with semantically similar but visually incorrect symbol instead of copy-pasting pre-rendered banner from skill output",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "progress-banner",
+        "symbol-mismatch",
+        "manual-construction"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Copy-paste pre-rendered progress banners exactly from skill output. Phase symbols are: ○ Pending, ● Complete, ◉ Active, ✗ Failed"
     }
   ]
 }
