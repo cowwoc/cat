@@ -42,6 +42,11 @@ load time.
 
 !`ARGS="$ARGUMENTS"; TASK_ID=$(echo "$ARGS" | jq -r '.task_id // empty' 2>/dev/null || echo "$ARGS" | grep -oE '^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+'); ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh "$TASK_ID" --all-phases`
 
+**CRITICAL (M334):** Copy-paste the pre-rendered banners from above EXACTLY. Phase symbols are:
+- `○` Pending | `●` Complete | `◉` Active | `✗` Failed
+
+Do NOT substitute other symbols (e.g., ✓ for ●). The script output is authoritative.
+
 ---
 
 ## Configuration

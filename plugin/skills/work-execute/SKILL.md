@@ -72,6 +72,11 @@ Read the task's PLAN.md to understand:
 - Acceptance criteria
 - Files to modify
 
+**CRITICAL (M333):** The Execution Steps in PLAN.md specify HOW to implement. If they reference
+skills like `/cat:shrink-doc`, the subagent MUST invoke those skills - not reimplement their
+functionality manually. Skills provide validation (e.g., equivalence scores) that manual
+implementation skips.
+
 ### Step 2: Prepare Subagent Prompt
 
 Build comprehensive execution plan following delegate/SKILL.md guidelines:
