@@ -122,14 +122,24 @@ git push origin main
 
 ### 8. Worktree Cleanup
 
-Remove issue worktree:
+**CRITICAL (M324): Change directory to main workspace BEFORE removing worktree.**
+
+The shell's current working directory persists between Bash tool calls. If cwd is inside the
+worktree being removed, the deletion will succeed but leave the shell in an invalid state
+where all subsequent commands fail silently.
+
 ```bash
-git worktree remove ../cat-worktree-{issue-name}
+# ALWAYS change to main workspace first
+cd /workspace
+
+# Then remove the worktree
+git worktree remove .worktrees/{issue-name}
 ```
 
 If worktree removal fails:
 ```bash
-git worktree remove --force ../cat-worktree-{issue-name}
+cd /workspace
+git worktree remove --force .worktrees/{issue-name}
 ```
 
 ### 9. Branch Cleanup

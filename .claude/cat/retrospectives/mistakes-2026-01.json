@@ -2158,6 +2158,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use ONLY pre-rendered boxes from SCRIPT OUTPUT sections. If preprocessing fails, report the error and proceed without visual boxes rather than attempting manual construction."
+    },
+    {
+      "id": "M324",
+      "timestamp": "2026-01-31T01:45:00Z",
+      "category": "tool_misuse",
+      "description": "Removed worktree while shell cwd was inside it, causing all subsequent bash commands to fail",
+      "root_cause": "Shell cwd persists between Bash tool calls; deleting the cwd directory leaves shell in invalid state",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/merge-and-cleanup.md",
+      "pattern_keywords": [
+        "worktree",
+        "cwd",
+        "shell",
+        "cleanup",
+        "directory"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always cd /workspace before running git worktree remove"
     }
   ]
 }
