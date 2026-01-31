@@ -17,21 +17,36 @@ Extract all semantic claims AND relationships from the provided document.
 - A discrete unit of meaning that can be verified as present/absent
 - Examples: "must do X before Y", "prohibited to use Z", "setting W defaults to V"
 
-**Claim Types**:
+**Claim Types** (classify in order - first match wins):
 
-1. **Simple Claims** (requirement, instruction, constraint, fact, configuration)
-2. **Conjunctions**: ALL of {X, Y, Z} must be true
+1. **Negations with Scope**: Prohibition with explicit scope
+   - Markers: "NEVER", "prohibited", "CANNOT", "forbidden", "MUST NOT"
+   - Also: "MUST include/have" with (M###) reference = mandatory prohibition of omission
+   - Example: "CANNOT run Steps 2 and 3 in parallel (data corruption risk)"
+   - Example: "Bugfix plans MUST include reproduction code (M122)" → negation (prohibition of omitting)
+2. **Conditionals**: IF condition THEN consequence (ELSE alternative)
+   - Markers: "IF...THEN", "when X, do Y", "depends on", "if needed", "if behavior exposed"
+   - Example: "IF attacker has monitoring THEN silent block ELSE network disconnect"
+   - Example: "Add edge case tests if needed" → conditional (condition: "if needed")
+3. **Conjunctions**: ALL of {X, Y, Z} must be true
    - Markers: "ALL of the following", "both X AND Y", "requires all"
    - Example: "Approval requires: technical review AND budget review AND strategic review"
-3. **Conditionals**: IF condition THEN consequence_true ELSE consequence_false
-   - Markers: "IF...THEN...ELSE", "when X, do Y", "depends on"
-   - Example: "IF attacker has monitoring THEN silent block ELSE network disconnect"
 4. **Consequences**: Actions that result from conditions/events
    - Markers: "results in", "causes", "leads to", "enforcement"
    - Example: "Violating Step 1 causes data corruption (47 transactions affected)"
-5. **Negations with Scope**: Prohibition with explicit scope
-   - Markers: "NEVER", "prohibited", "CANNOT", "forbidden"
-   - Example: "CANNOT run Steps 2 and 3 in parallel (data corruption risk)"
+5. **Simple Claims** (requirement, instruction, constraint, fact, configuration)
+   - Use ONLY when no other type applies
+   - Default fallback for basic requirements without prohibition/condition/conjunction semantics
+
+**Type Disambiguation (M321)**:
+
+| Pattern | Type | Rationale |
+|---------|------|-----------|
+| "MUST include X (M###)" | negation | Tracked violation = prohibition semantics |
+| "if [condition]" anywhere | conditional | Explicit condition present |
+| "MUST do X" (no ref) | simple | Basic requirement, not prohibition |
+| "CANNOT/NEVER do X" | negation | Explicit prohibition |
+| "requires all of" | conjunction | Explicit all-of semantics |
 
 **Extraction Rules**:
 
