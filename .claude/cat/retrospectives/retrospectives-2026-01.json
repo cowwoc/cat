@@ -612,24 +612,34 @@
           {
             "category": "protocol_violation",
             "count": 2,
-            "ids": ["M304", "M306"]
+            "ids": [
+              "M304",
+              "M306"
+            ]
           },
           {
             "category": "documentation_priming",
             "count": 1,
-            "ids": ["M305"]
+            "ids": [
+              "M305"
+            ]
           }
         ],
         "prevention_type_breakdown": [
           {
             "type": "config",
             "count": 2,
-            "ids": ["M304", "M306"]
+            "ids": [
+              "M304",
+              "M306"
+            ]
           },
           {
             "type": "skill",
             "count": 1,
-            "ids": ["M305"]
+            "ids": [
+              "M305"
+            ]
           }
         ],
         "action_effectiveness": {
@@ -645,7 +655,10 @@
             "pattern_id": "PATTERN-007",
             "pattern": "commit_type_classification_error",
             "occurrences": 2,
-            "mistakes": ["M255", "M306"],
+            "mistakes": [
+              "M255",
+              "M306"
+            ],
             "note": "Using docs: commit type for Claude-facing files (CLAUDE.md, plugin/) instead of config:. Recurrence despite M255 adding guidance."
           }
         ],
@@ -675,13 +688,65 @@
       "summary": "17 mistakes dominated by protocol_violation (10/17=59%). Strong emerging pattern: pre_rendered_output_bypass (6 mistakes M311,M315,M319,M321,M322,M323) - Claude manually constructs boxes/banners instead of using scripts. Also render_diff_omission (M312,M313). A003 remains ineffective despite escalation. Created PATTERN-008 and A008 for pre-rendered output enforcement.",
       "findings": {
         "category_breakdown": [
-          {"category": "protocol_violation", "count": 10, "ids": ["M280", "M308", "M310", "M311", "M312", "M313", "M318", "M319", "M322", "M323"]},
-          {"category": "misleading_documentation", "count": 2, "ids": ["M286", "M320"]},
-          {"category": "commit_organization", "count": 1, "ids": ["M317"]},
-          {"category": "design_violation", "count": 1, "ids": ["M316"]},
-          {"category": "output_formatting", "count": 1, "ids": ["M315"]},
-          {"category": "terminology_inconsistency", "count": 1, "ids": ["M321"]},
-          {"category": "user_experience", "count": 1, "ids": ["M314"]}
+          {
+            "category": "protocol_violation",
+            "count": 10,
+            "ids": [
+              "M280",
+              "M308",
+              "M310",
+              "M311",
+              "M312",
+              "M313",
+              "M318",
+              "M319",
+              "M322",
+              "M323"
+            ]
+          },
+          {
+            "category": "misleading_documentation",
+            "count": 2,
+            "ids": [
+              "M286",
+              "M320"
+            ]
+          },
+          {
+            "category": "commit_organization",
+            "count": 1,
+            "ids": [
+              "M317"
+            ]
+          },
+          {
+            "category": "design_violation",
+            "count": 1,
+            "ids": [
+              "M316"
+            ]
+          },
+          {
+            "category": "output_formatting",
+            "count": 1,
+            "ids": [
+              "M315"
+            ]
+          },
+          {
+            "category": "terminology_inconsistency",
+            "count": 1,
+            "ids": [
+              "M321"
+            ]
+          },
+          {
+            "category": "user_experience",
+            "count": 1,
+            "ids": [
+              "M314"
+            ]
+          }
         ],
         "action_effectiveness": {
           "A001": "partially_effective",
@@ -697,14 +762,24 @@
             "pattern_id": "PATTERN-008",
             "pattern": "pre_rendered_output_bypass",
             "occurrences": 6,
-            "mistakes": ["M311", "M315", "M319", "M321", "M322", "M323"],
+            "mistakes": [
+              "M311",
+              "M315",
+              "M319",
+              "M321",
+              "M322",
+              "M323"
+            ],
             "note": "Claude manually constructs progress banners, work boxes, checkpoint boxes instead of using pre-rendered scripts (get-progress-banner.sh, get-work-boxes.py). Results in misaligned boxes due to LLM inability to count display widths."
           },
           {
             "pattern_id": "PATTERN-009",
             "pattern": "render_diff_omission",
             "occurrences": 2,
-            "mistakes": ["M312", "M313"],
+            "mistakes": [
+              "M312",
+              "M313"
+            ],
             "note": "Approval gates shown without /cat:render-diff, user sees raw git diff or summary instead of 4-column table format."
           }
         ],
@@ -737,6 +812,41 @@
           "Consider removing all example box output from skill documentation to prevent priming",
           "Review /cat:work phase transitions for missing script invocations"
         ]
+      }
+    },
+    {
+      "id": "R007",
+      "timestamp": "2026-01-31T16:02:48-05:00",
+      "trigger": "count (11 >= 10)",
+      "period_analyzed": "2026-01-31T01:14:50-05:00 to 2026-01-31T16:02:48-05:00",
+      "mistakes_analyzed": 11,
+      "summary": "11 mistakes in ~15 hours. PATTERN-008 (pre-rendered output bypass) continues with 4 new occurrences despite A008 hook. Skill bypass (M333) represents extension of pattern to skill invocation, not just banners. A008 hook detecting manual box construction but agents still bypassing.",
+      "findings": {
+        "category_breakdown": {
+          "protocol_violation": 6,
+          "prompt_engineering": 2,
+          "terminology_inconsistency": 1,
+          "workflow_violation": 1,
+          "misleading_documentation": 1,
+          "tool_misuse": 1
+        },
+        "patterns_updated": [
+          "PATTERN-008"
+        ],
+        "actions_evaluated": {
+          "A001": "partially_effective",
+          "A002": "partially_effective",
+          "A004": "effective",
+          "A005": "partially_effective",
+          "A006": "effective",
+          "A007": "effective",
+          "A008": "partially_effective",
+          "A009": "pending"
+        },
+        "escalations_needed": [
+          "A008"
+        ],
+        "new_action_items": []
       }
     }
   ]
