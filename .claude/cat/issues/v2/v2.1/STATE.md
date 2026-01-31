@@ -45,6 +45,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - run-retrospective-handler
 - optimize-execution-handler
 - use-patch-id-for-commit-tracking
+- work-skill-banner-delegation
 
 ## Tasks Decomposed
 - rename-task-to-issue → [rename-task-scripts, rename-task-in-skills, rename-task-in-concepts, rename-task-in-commands, rename-task-remaining]
