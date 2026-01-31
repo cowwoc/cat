@@ -2237,6 +2237,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Only update STATE.md after cd into worktree directory"
+    },
+    {
+      "id": "M327",
+      "timestamp": "2026-01-31T12:00:00Z",
+      "category": "prompt_engineering",
+      "description": "Progress banner displayed filter phrase as task name instead of placeholder",
+      "root_cause": "get-progress-banner.sh treated any positional argument as task ID without validating format",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/plugin/scripts/get-progress-banner.sh",
+      "pattern_keywords": [
+        "banner",
+        "task-id",
+        "argument-parsing",
+        "filter"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Only accept positional arguments matching task ID format (N.N-name); show placeholder for filter phrases"
     }
   ]
 }
