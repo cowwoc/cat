@@ -412,6 +412,68 @@ def test_cleanup_handler():
         runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
 
 
+def test_posttool_skill_precompute():
+    """Test PostToolUse handler for Skill tool precomputation."""
+    runner.section("posttool_handlers/skill_precompute")
+
+    # Import from the package
+    from posttool_handlers.skill_precompute import SkillPrecomputeHandler
+    handler = SkillPrecomputeHandler()
+
+    # Test: non-Skill tool returns None
+    result = handler.check("Bash", {}, {"session_id": "test"})
+    runner.test("Non-Skill tool returns None", result is None)
+
+    # Test: Skill tool without skill parameter returns None
+    hook_data = {"tool_input": {}}
+    result = handler.check("Skill", {}, {"session_id": "test", "hook_data": hook_data})
+    runner.test("Skill tool without skill parameter returns None", result is None)
+
+    # Test: Non-CAT skill returns None
+    hook_data = {"tool_input": {"skill": "some-other-skill"}}
+    result = handler.check("Skill", {}, {"session_id": "test", "hook_data": hook_data})
+    runner.test("Non-CAT skill returns None", result is None)
+
+    # Test: CAT skill with valid handler returns output
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        cat_dir.mkdir(parents=True)
+
+        # Create minimal cat structure
+        (cat_dir / "PROJECT.md").write_text("# Test Project")
+
+        hook_data = {"tool_input": {"skill": "cat:help"}}
+        context = {
+            "session_id": "test-session",
+            "hook_data": hook_data,
+            "project_root": str(tmp_path),
+        }
+        result = handler.check("Skill", {}, context)
+        runner.test("CAT skill returns additionalContext",
+                    result is not None and "additionalContext" in result)
+
+        if result and "additionalContext" in result:
+            output = result["additionalContext"]
+            runner.test("Help output contains CAT Command Reference",
+                        "CAT Command Reference" in output)
+            runner.test("Help output contains SCRIPT OUTPUT marker",
+                        "SCRIPT OUTPUT" in output)
+
+    # Test: CAT skill name extraction
+    test_cases = [
+        ("cat:status", "status"),
+        ("cat:work", "work"),
+        ("cat:help", "help"),
+        ("CAT:STATUS", "status"),  # Case insensitive
+        ("other-skill", None),
+        ("", None),
+    ]
+    for skill_input, expected in test_cases:
+        result = handler._extract_cat_skill_name(skill_input)
+        runner.test(f"Extract '{skill_input}' -> {expected}", result == expected)
+
+
 def test_config_loader():
     """Test unified config loader."""
     runner.section("lib/config loader")
@@ -827,6 +889,7 @@ def main():
         test_help_handler,
         test_work_handler,
         test_cleanup_handler,
+        test_posttool_skill_precompute,
         test_config_loader,
         test_get_available_issues_discovery,
         test_abort_clarification_handler,
