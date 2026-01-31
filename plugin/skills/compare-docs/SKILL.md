@@ -138,9 +138,12 @@ The main agent simply relays the subagent's formatted report. No additional proc
 This command aims for high reproducibility but cannot guarantee perfect determinism due to
 LLM semantic judgment in claim extraction.
 
+**Temperature Control**: The Task tool does not support a temperature parameter. Subagents
+run with default temperature settings, which contributes to variance between invocations.
+
 **Expected Reproducibility**:
 - Same session, same documents: ±0-1%
-- Different sessions, temp=0, pinned model: ±1-2%
+- Different sessions, pinned model: ±1-5%
 - Different model versions: ±5-10%
 - **Different agent invocations: ±10-35%** (claim type classification variance)
 
