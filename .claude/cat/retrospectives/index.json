@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-31T01:14:50-05:00",
-  "mistake_count_since_last": 11,
+  "last_retrospective": "2026-01-31T16:02:48-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -159,10 +159,10 @@
     {
       "pattern_id": "PATTERN-008",
       "pattern": "pre_rendered_output_bypass",
-      "occurrences_total": 6,
+      "occurrences_total": 10,
       "occurrences_after_fix": 0,
       "first_seen": "2026-01-29T09:00:00Z",
-      "last_seen": "2026-01-31T00:00:00Z",
+      "last_seen": "2026-01-31T16:00:00Z",
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
@@ -172,7 +172,11 @@
         "M319",
         "M321",
         "M322",
-        "M323"
+        "M323",
+        "M331",
+        "M332",
+        "M333",
+        "M334"
       ],
       "related_action_items": [
         "A008"
@@ -398,9 +402,23 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 6,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 4,
+        "post_fix_mistakes": [
+          "M331",
+          "M332",
+          "M333",
+          "M334"
+        ],
+        "verdict": "partially_effective"
+      },
+      "escalation": {
+        "id": "ESCALATE-A008",
+        "escalated_date": "2026-01-31T16:02:48-05:00",
+        "reason": "4 post-fix mistakes (M331, M332, M333, M334) - hook detects but does not prevent bypass",
+        "escalation_level": "code_fix",
+        "analysis": "Current PostToolUse hook warns AFTER manual construction occurs. Need PreToolUse enforcement that BLOCKS text generation containing box-drawing characters unless preceded by script call.",
+        "proposed_solution": "Add PreToolUse blocking hook that requires script invocation before any response containing box-drawing chars. Alternative: Move all box/banner generation to mandatory skill invocations.",
+        "status": "open"
       }
     },
     {
