@@ -260,22 +260,24 @@ TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 
 **If trust >= medium and next task found (within scope):**
 
-### Issue Complete Display (BLOCKING - M322)
+### Issue Complete Display (M322)
 
-**STOP: Find the pre-rendered box in your context.**
+**Generate the Issue Complete box using the script:**
 
-1. Search your context for `--- TASK_COMPLETE_WITH_NEXT_TASK ---`
-2. Copy the ENTIRE pre-rendered box that follows (already has correct width)
-3. Replace ONLY the {placeholders} with actual values
-4. Output it EXACTLY - do NOT reconstruct or manually type the box
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-issue-complete-box.py" \
+  --issue-name "$ISSUE_NAME" \
+  --next-issue "$NEXT_ISSUE_NAME" \
+  --next-goal "$NEXT_ISSUE_GOAL" \
+  --base-branch "$BASE_BRANCH"
+```
 
-**BLOCKED if:**
-- You manually construct a box instead of copying the template
-- Box lines have inconsistent widths (alignment breaks)
-- You change the box structure beyond placeholder replacement
+The script calculates correct widths for the actual content values and outputs a properly aligned box.
+
+**Copy the output VERBATIM** - do NOT manually construct or modify the box.
 
 **Why (M322):** Manual construction causes alignment issues when content length varies.
-Pre-rendered boxes have calculated widths that account for padding.
+The script handles width calculations for actual values.
 
 **Brief pause for user intervention:**
 

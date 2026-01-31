@@ -2110,12 +2110,12 @@
       "id": "M322",
       "timestamp": "2026-01-31T19:10:00Z",
       "category": "protocol_violation",
-      "description": "Manually constructed Issue Complete box instead of using pre-rendered template, causing alignment issues",
-      "root_cause": "Documentation said 'use the box' but lacked explicit copy-verbatim guidance similar to M311/M312. Agent reconstructed box manually, leading to width calculation errors when content exceeded template placeholders.",
+      "description": "Manually constructed Issue Complete box instead of using script, causing alignment issues",
+      "root_cause": "work_handler.py output template placeholders expecting agent to substitute values. When agent replaced placeholders, content length changed and alignment broke. Root fix: add script that renders boxes with actual values and correct width calculations.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
-      "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-merge.md",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-issue-complete-box.py",
       "pattern_keywords": [
         "box_construction",
         "alignment",
@@ -2130,7 +2130,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Search context for exact marker (--- TASK_COMPLETE_WITH_NEXT_TASK ---), copy the pre-rendered box verbatim, replace only {placeholders} with actual values"
+      "correct_behavior": "Call get-issue-complete-box.py with actual issue values, copy output verbatim"
     }
   ]
 }
