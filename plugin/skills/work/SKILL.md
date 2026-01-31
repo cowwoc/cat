@@ -53,6 +53,12 @@ This is CAT's core execution command. It:
 - Do NOT wrap in code blocks
 - Do NOT manually construct banners
 
+**FAIL-FAST (M323):** If pre-rendered content is missing (script execution failed):
+1. Check for error messages in skill loading (e.g., "no such file or directory")
+2. Report the error to user: "Pre-rendered work boxes unavailable: {error}"
+3. Do NOT attempt to manually construct boxes - they will be misaligned
+4. Either fix the preprocessing issue OR proceed without visual boxes
+
 ### Phase Mapping
 
 | Phase | Steps Included | Complete When |
