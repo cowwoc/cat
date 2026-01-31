@@ -79,10 +79,11 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            # Positional argument = task ID
-            if [[ -z "$TASK_ID" ]]; then
+            # Positional argument = task ID (only if it matches task ID format: N.N-name)
+            if [[ -z "$TASK_ID" && "$1" =~ ^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+$ ]]; then
                 TASK_ID="$1"
             fi
+            # Ignore other positional arguments (filter phrases like "skip compression tasks")
             shift
             ;;
     esac
