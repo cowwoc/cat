@@ -164,10 +164,43 @@ print(bottom_line)
 PYTHON_EOF
 }
 
-# If no task ID, output a generic "Preparing" banner with placeholder
+# If no task ID, output a generic "Preparing" banner (task discovered after prepare phase)
 if [[ -z "$TASK_ID" ]]; then
     echo '```'
-    build_banner "..." "$ACTIVE" "$PENDING" "$PENDING" "$PENDING"
+    # Use empty task ID - banner will show just the cat emoji and phase indicators
+    python3 << 'PYTHON_EOF'
+import sys
+sys.path.insert(0, '$LIB_DIR'.replace("'", ""))
+
+# Inline the build since we need special handling for no task ID
+PENDING = "○"
+ACTIVE = "◉"
+
+# Phase content without border characters
+phase_content = f"  {ACTIVE} Preparing ────── {PENDING} Executing ────── {PENDING} Reviewing ────── {PENDING} Merging "
+
+# For no task ID, just use cat emoji with dashes extending to match phase width
+# Calculate phase width manually (approximation for consistency)
+phase_width = 69  # Width of phase line content
+
+# Build simple header with just cat emoji
+header = "─ 🐱 "
+header_width = 5  # "─ 🐱 " is approximately 5 display units
+
+# Top line extends to match phase content
+top_dashes = "─" * (phase_width - header_width)
+top_line = "┌" + header + top_dashes + "┐"
+
+# Middle line with phase content
+middle_line = "│" + phase_content + "│"
+
+# Bottom border
+bottom_line = "└" + "─" * phase_width + "┘"
+
+print(top_line)
+print(middle_line)
+print(bottom_line)
+PYTHON_EOF
     echo '```'
     echo ""
     echo "Task will be identified after preparation completes."

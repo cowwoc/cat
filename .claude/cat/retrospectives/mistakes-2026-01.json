@@ -2339,6 +2339,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use descriptive text like 'exclamation-backtick preprocessing' instead of literal backtick-exclamation patterns in skill documentation"
+    },
+    {
+      "id": "M331",
+      "timestamp": "2026-01-31T05:15:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed progress banner with checkmarks instead of using pre-rendered script output. Preprocessing was interrupted but agent typed banner anyway.",
+      "root_cause": "When exclamation-backtick preprocessing failed/was interrupted, agent manually typed a banner instead of reporting the preprocessing failure. Documentation priming: seeing banner format in docs led to manual construction.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "progress-banner",
+        "manual-construction",
+        "preprocessing-failure",
+        "PATTERN-008"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M323",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "If preprocessing fails or is interrupted, report the error. NEVER manually construct banners - copy ONLY from pre-rendered script output."
     }
   ]
 }
