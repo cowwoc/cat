@@ -145,7 +145,13 @@ Task tool:
 
 **User Approval Gate (if trust != high):**
 
-Use AskUserQuestion:
+Before asking for approval, display the task's goal to remind the user what this task is about:
+
+1. Read `${TASK_PATH}/PLAN.md`
+2. Extract the content between `## Goal` and the next `##` heading
+3. Display to user: "**Task Goal:** {extracted goal text}"
+
+Then use AskUserQuestion:
 - header: "Approval"
 - question: "Ready to merge {TASK_ID}?"
 - options:
