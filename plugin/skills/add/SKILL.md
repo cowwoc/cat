@@ -273,16 +273,51 @@ fi
 
 </step>
 
-<step name="task_get_name">
+<step name="task_suggest_names">
 
-**Get issue name from user:**
+**Generate and present issue name suggestions:**
 
-Ask inline (FREEFORM): "What should this issue be called? (lowercase, hyphens only, max 50 chars)"
+Based on TASK_DESCRIPTION and TASK_TYPE, generate 3-4 suggested names:
+
+**Name generation rules:**
+1. Extract key action verbs and nouns from description
+2. Use standard prefixes based on TASK_TYPE:
+   - Feature: `add-`, `implement-`, `create-`, `enable-`
+   - Bugfix: `fix-`, `resolve-`, `correct-`
+   - Refactor: `refactor-`, `restructure-`, `simplify-`, `extract-`
+   - Performance: `optimize-`, `speed-up-`, `improve-`
+3. Keep names under 50 characters
+4. Use lowercase letters, numbers, and hyphens only
+5. Make names descriptive but concise
+
+**Example generation:**
+- Description: "Add the ability to export reports to PDF format"
+- Type: Feature
+- Suggestions: `add-pdf-export`, `implement-pdf-reports`, `enable-report-export`
+
+**Present suggestions:**
+
+Use AskUserQuestion:
+- header: "Issue Name"
+- question: "Choose a name for this issue (or enter a custom name):"
+- options:
+  - "{suggestion1}" - Based on key terms in description
+  - "{suggestion2}" - Alternative phrasing
+  - "{suggestion3}" - Shorter variant (if applicable)
+
+**If user selects "Other" (custom name):**
+Capture custom input as TASK_NAME.
+
+Otherwise, capture selected suggestion as TASK_NAME.
+
+</step>
+
+<step name="task_validate_name">
 
 **Validate issue name:**
 
 ```bash
-TASK_NAME="{user input}"
+TASK_NAME="{selected or entered name}"
 
 # Validate format
 if ! echo "$TASK_NAME" | grep -qE '^[a-z][a-z0-9-]{0,48}[a-z0-9]$'; then
@@ -298,7 +333,9 @@ if [ -d ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
 fi
 ```
 
-If validation fails, prompt user for different name.
+If validation fails:
+- If format invalid: prompt user to select different suggestion or enter valid custom name
+- If duplicate: inform user and return to task_suggest_names step with different suggestions
 
 </step>
 
