@@ -157,6 +157,19 @@ Proceed to approval_gate with stakeholder summary:
 
 Skip if `trust: "high"` in config.
 
+### Progress Banner Display (M320)
+
+**MANDATORY: Display progress banner BEFORE presenting diff and approval options.**
+
+After lengthy stakeholder review output, users may lose context about which issue they're reviewing.
+Re-display the progress banner to restore context.
+
+```bash
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase reviewing
+```
+
+Output this banner BEFORE the checkpoint display and diff.
+
 ### Pre-Approval Checklist (MANDATORY - A010)
 
 **BLOCKING: Do NOT present approval until ALL items are verified.**
