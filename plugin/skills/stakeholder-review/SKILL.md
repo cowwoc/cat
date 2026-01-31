@@ -12,6 +12,13 @@ Multi-perspective stakeholder review gate for implementation quality assurance.
 Run parallel stakeholder reviews of implementation changes to identify concerns from multiple
 perspectives (architecture, security, design, testing, performance, deployment) before user approval.
 
+**Holistic Review Approach:** Stakeholders receive full file context (not just diffs) to evaluate how
+changes affect the overall codebase. This enables reviewers to catch:
+- Accumulated technical debt patterns
+- Inconsistencies with existing code
+- Architecture violations that only appear in full context
+- Testing gaps relative to surrounding code
+
 ## When to Use
 
 - After implementation phase completes in `/cat:work`
@@ -323,17 +330,18 @@ If file-based overrides occurred, add an "Overrides (file-based):" section insid
 
 <step name="prepare">
 
-**Prepare review context:**
+**Prepare review context (Holistic Approach):**
 
 Uses stakeholders selected by the `analyze_context` step. The `SELECTED` variable contains
 the space-separated list of stakeholders to run.
 
 1. Identify files changed in implementation
-2. Get diff summary for reviewers
-3. Use stakeholder selection from analyze_context step
+2. **Read full file content** (not just diffs) for holistic evaluation
+3. Include diff summary as supplementary context
+4. Use stakeholder selection from analyze_context step
 
 ```bash
-# Get changed files (used for diff context, selection already done)
+# Get changed files
 CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
 
 # Detect primary language from file extensions
@@ -355,7 +363,74 @@ fi
 # Contains: space-separated stakeholder names (e.g., "requirements architect security design testing")
 # SKIPPED contains: stakeholder:reason pairs for reporting
 # OVERRIDDEN contains: stakeholder:reason pairs for file-based overrides
+
+# Prepare file content for holistic review
+# For small files: include full content
+# For large files: diff with extended context + file structure summary
+MAX_FILE_SIZE=50000  # characters threshold for "large file" handling
+FILE_CONTENTS=""
+for file in $CHANGED_FILES; do
+    if [[ -f "$file" ]]; then
+        size=$(wc -c < "$file")
+        if [[ $size -lt $MAX_FILE_SIZE ]]; then
+            # Small file: include full content
+            FILE_CONTENTS="${FILE_CONTENTS}\n\n### File: ${file}\n\`\`\`\n$(cat "$file")\n\`\`\`"
+        else
+            # Large file: structure summary + diff with extended context
+            FILE_CONTENTS="${FILE_CONTENTS}\n\n### File: ${file} (large file)\n"
+
+            # Extract file structure summary based on language
+            ext="${file##*.}"
+            FILE_CONTENTS="${FILE_CONTENTS}\n#### Structure Summary:\n\`\`\`\n"
+            case "$ext" in
+                java)
+                    # Java: package, imports, class/interface/enum declarations, method signatures
+                    grep -nE '^package |^import |^(public |private |protected )?(abstract |static |final )*(class |interface |enum |record )|^\s+(public |private |protected )?(abstract |static |final |synchronized )*[a-zA-Z<>\[\]]+\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(' "$file" 2>/dev/null | head -100
+                    ;;
+                py)
+                    # Python: imports, class definitions, function definitions
+                    grep -nE '^import |^from .* import |^class |^def |^async def ' "$file" 2>/dev/null | head -100
+                    ;;
+                ts|js|tsx|jsx)
+                    # TypeScript/JavaScript: imports, exports, class/function declarations
+                    grep -nE '^import |^export |^(export )?(async )?(function |class |const |let |interface |type )' "$file" 2>/dev/null | head -100
+                    ;;
+                go)
+                    # Go: package, imports, type/func declarations
+                    grep -nE '^package |^import |^type |^func ' "$file" 2>/dev/null | head -100
+                    ;;
+                *)
+                    # Generic: show first 20 lines (often contains headers/imports) + any function-like patterns
+                    head -20 "$file"
+                    echo "..."
+                    grep -nE '^\s*(function|def|class|struct|enum|interface|impl|pub fn|fn |sub |proc )' "$file" 2>/dev/null | head -50
+                    ;;
+            esac
+            FILE_CONTENTS="${FILE_CONTENTS}\`\`\`\n"
+
+            # Diff with 100 lines of context for this file
+            FILE_CONTENTS="${FILE_CONTENTS}\n#### Changes (with 100 lines context):\n\`\`\`diff\n"
+            FILE_CONTENTS="${FILE_CONTENTS}$(git diff HEAD~1..HEAD -U100 -- "$file" 2>/dev/null)\n\`\`\`\n"
+        fi
+    fi
+done
+
+# Also prepare full diff for supplementary context (smaller context for overview)
+DIFF_SUMMARY=$(git diff HEAD~1..HEAD -U3 2>/dev/null || git diff --cached -U3)
 ```
+
+**Holistic context enables:**
+- Reviewing changes in context of surrounding code
+- Detecting inconsistencies with existing patterns
+- Evaluating test coverage relative to implementation complexity
+- Identifying accumulated technical debt
+
+**Large file handling:**
+- Files under 50KB: full content included
+- Files over 50KB: structure summary + diff with 100 lines context
+  - Structure summary extracts: imports, class/function declarations, method signatures
+  - Language-aware extraction for Java, Python, TypeScript/JavaScript, Go
+  - Diff with extended context shows changes in their surrounding code
 
 **Stakeholder selection is now context-aware:**
 
@@ -385,18 +460,27 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 ## Language-Specific Patterns
 {content of LANG_SUPPLEMENT if available, otherwise "No language supplement loaded."}
 
-## Files to Review
-{list of changed files relevant to this stakeholder}
+## Files to Review (Full Content)
+{FILE_CONTENTS - full file content prepared in prepare step}
 
-## Diff Summary
-{git diff output or summary}
+## What Changed (Diff Summary)
+{DIFF_SUMMARY - git diff for reference}
 
-## Instructions
+## Holistic Review Instructions
+You have access to the FULL content of changed files, not just diffs. Use this to:
+
+1. **Evaluate impact on entire project** - How do these changes affect the codebase as a whole?
+2. **Check for accumulated patterns** - Is this change contributing to technical debt?
+3. **Verify consistency** - Does this follow existing patterns in the surrounding code?
+4. **Assess completeness** - Are there related areas that should also be updated?
+
+## Review Criteria
 1. Review the implementation against your stakeholder criteria
 2. Apply language-specific red flags from the supplement (if loaded)
-3. Identify concerns at CRITICAL, HIGH, or MEDIUM severity
-4. Return your assessment in the specified JSON format
-5. Be specific about locations and recommendations
+3. Consider the change in context of the full file, not just the diff
+4. Identify concerns at CRITICAL, HIGH, or MEDIUM severity
+5. Return your assessment in the specified JSON format
+6. Be specific about locations and recommendations
 
 Return ONLY valid JSON matching the format in your stakeholder definition.
 ```
