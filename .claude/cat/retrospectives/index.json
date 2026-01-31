@@ -383,9 +383,11 @@
       "description": "Enforce pre-rendered output usage: add PostToolUse hook to detect manual box/banner construction patterns and warn agent. Pattern detection: box-drawing chars in agent output not preceded by script execution.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-008",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-31T01:14:50-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-31T01:25:00-05:00",
+      "implementation": "Created detect_manual_boxes.py PostToolUse handler that monitors conversation log for box-drawing characters in assistant messages without preceding script execution. Warns with A008/PATTERN-008 context.",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/detect_manual_boxes.py",
       "related_mistakes": [
         "M311",
         "M315",
@@ -407,9 +409,11 @@
       "description": "Enforce render-diff at approval gates: add PreToolUse hook on AskUserQuestion that checks for approval keywords and validates render-diff was invoked.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-009",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-01-31T01:14:50-05:00",
-      "completed_date": null,
+      "completed_date": "2026-01-31T01:25:00-05:00",
+      "implementation": "Already implemented via warn-approval-without-renderdiff.sh PreToolUse hook. Detects approval-related AskUserQuestion calls and warns if render-diff.py wasn't invoked recently.",
+      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-approval-without-renderdiff.sh",
       "related_mistakes": [
         "M312",
         "M313"
