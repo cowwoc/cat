@@ -48,6 +48,26 @@ Extract all semantic claims AND relationships from the provided document.
 | "CANNOT/NEVER do X" | negation | Explicit prohibition |
 | "requires all of" | conjunction | Explicit all-of semantics |
 
+**Worked Examples (M321)** - Use these as classification anchors:
+
+| Input Text | Type | Reasoning |
+|------------|------|-----------|
+| "Plans MUST include reproduction code (M122)" | negation | Has (M###) → tracked violation |
+| "Add edge case tests if needed" | conditional | Contains "if needed" condition |
+| "Validate input before processing" | simple | No prohibition marker, no (M###) |
+| "Run Step 1 before Step 2" | simple | Temporal aspect goes in *relationship*, not claim type |
+| "NEVER commit directly to main" | negation | Explicit "NEVER" prohibition |
+| "Tests must pass before merge" | simple | "must" without (M###) = basic requirement |
+| "If build fails, notify team" | conditional | Explicit "If...then" structure |
+| "Requires: review AND approval AND signoff" | conjunction | Explicit "AND" list with "requires" |
+| "Coverage must be ≥80%" | simple | Threshold requirement, no condition/prohibition |
+| "MUST NOT skip validation (M205)" | negation | "MUST NOT" + (M###) = prohibition |
+| "Update docs when API changes" | conditional | "when" = implicit condition |
+| "Delete temp files after completion" | simple | Temporal goes in relationship |
+
+**Key principle**: Temporal ordering ("before", "after", "then") creates *relationships* between
+claims, not claim *types*. The claim itself is usually `simple` unless it has prohibition/condition markers.
+
 **Extraction Rules**:
 
 1. **Granularity**: Atomic claims (cannot split without losing meaning)
