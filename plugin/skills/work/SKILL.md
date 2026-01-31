@@ -35,14 +35,24 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 ## Progress Output
 
-**CRITICAL (M331):** Copy banners ONLY from pre-rendered output below. If preprocessing failed or was
-interrupted, report the error - NEVER manually construct banners.
-
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
 ---
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh`
+
+**FAIL-FAST (ESCALATE-A008):** If you do NOT see pre-rendered content above (banner with `┌─ 🐱`
+and work boxes), then preprocessing FAILED. In this case:
+
+1. **STOP immediately** - do NOT proceed with the workflow
+2. Run the scripts manually:
+   ```bash
+   ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh --project-dir "${CLAUDE_PROJECT_DIR}"
+   ${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh
+   ```
+3. If scripts fail, report the error - do NOT manually construct boxes
+
+**NEVER manually construct boxes** - LLMs cannot accurately count display widths.
 
 ## Configuration
 

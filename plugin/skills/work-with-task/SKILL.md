@@ -42,10 +42,19 @@ load time.
 
 !`ARGS="$ARGUMENTS"; TASK_ID=$(echo "$ARGS" | jq -r '.task_id // empty' 2>/dev/null || echo "$ARGS" | grep -oE '^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+'); ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh "$TASK_ID" --all-phases`
 
-**CRITICAL (M334):** Copy-paste the pre-rendered banners from above EXACTLY. Phase symbols are:
-- `○` Pending | `●` Complete | `◉` Active | `✗` Failed
+**FAIL-FAST (ESCALATE-A008):** If you do NOT see 4 pre-rendered banners above (lines containing
+box-drawing characters like `┌─ 🐱`), then preprocessing FAILED. In this case:
 
-Do NOT substitute other symbols (e.g., ✓ for ●). The script output is authoritative.
+1. **STOP immediately** - do NOT proceed with the skill workflow
+2. Run the script manually to get banners:
+   ```bash
+   ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh "${TASK_ID}" --all-phases
+   ```
+3. If the script also fails, report: "Progress banner script failed: [error]"
+
+**NEVER manually construct boxes** - LLMs cannot accurately count display widths.
+
+**Phase symbols:** `○` Pending | `●` Complete | `◉` Active | `✗` Failed
 
 ---
 
