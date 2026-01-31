@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-28T14:51:20-05:00",
-  "mistake_count_since_last": 12,
+  "last_retrospective": "2026-01-31T01:14:50-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json"
@@ -155,6 +155,48 @@
         "A007"
       ],
       "note": "Using docs: commit type for Claude-facing files instead of config:. Recurs despite M255 prevention adding guidance to CLAUDE.md."
+    },
+    {
+      "pattern_id": "PATTERN-008",
+      "pattern": "pre_rendered_output_bypass",
+      "occurrences_total": 6,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-29T09:00:00Z",
+      "last_seen": "2026-01-31T00:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M311",
+        "M315",
+        "M319",
+        "M321",
+        "M322",
+        "M323"
+      ],
+      "related_action_items": [
+        "A008"
+      ],
+      "note": "Claude manually constructs progress banners, work boxes, checkpoint boxes instead of using pre-rendered scripts. Results in misaligned boxes due to LLM inability to count display widths."
+    },
+    {
+      "pattern_id": "PATTERN-009",
+      "pattern": "render_diff_omission",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-01-29T10:00:00Z",
+      "last_seen": "2026-01-29T11:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M312",
+        "M313"
+      ],
+      "related_action_items": [
+        "A009"
+      ],
+      "note": "Approval gates shown without /cat:render-diff, user sees raw git diff or summary instead of 4-column table format."
     }
   ],
   "action_items": [
@@ -259,9 +301,9 @@
       "implementation": "Updated inject-session-instructions.sh to clarify that IMPORTANT After completing your current task means after current tool call, not entire workflow",
       "effectiveness_check": {
         "mistakes_before": 2,
-        "mistakes_after": null,
+        "mistakes_after": 0,
         "post_fix_mistakes": [],
-        "verdict": "pending"
+        "verdict": "effective"
       }
     },
     {
@@ -308,9 +350,9 @@
       "prevention_path": "${CLAUDE_PLUGIN_ROOT}/concepts/work.md",
       "effectiveness_check": {
         "mistakes_before": 2,
-        "mistakes_after": null,
+        "mistakes_after": 0,
         "post_fix_mistakes": [],
-        "verdict": "pending"
+        "verdict": "effective"
       }
     },
     {
@@ -328,6 +370,50 @@
       ],
       "implementation": "Added PreToolUse check in validate_commit_type.py that blocks docs: commits when staged files match Claude-facing patterns (plugin/, CLAUDE.md, .claude/, hooks/, skills/, concepts/, commands/). Also added plugin/ to PostToolUse verify_commit_type.py for defense-in-depth.",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_commit_type.py",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": 0,
+        "post_fix_mistakes": [],
+        "verdict": "effective"
+      }
+    },
+    {
+      "id": "A008",
+      "priority": "high",
+      "description": "Enforce pre-rendered output usage: add PostToolUse hook to detect manual box/banner construction patterns and warn agent. Pattern detection: box-drawing chars in agent output not preceded by script execution.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-008",
+      "status": "open",
+      "created_date": "2026-01-31T01:14:50-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M311",
+        "M315",
+        "M319",
+        "M321",
+        "M322",
+        "M323"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 6,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A009",
+      "priority": "medium",
+      "description": "Enforce render-diff at approval gates: add PreToolUse hook on AskUserQuestion that checks for approval keywords and validates render-diff was invoked.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-009",
+      "status": "open",
+      "created_date": "2026-01-31T01:14:50-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M312",
+        "M313"
+      ],
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,

@@ -665,6 +665,79 @@
           "All 3 mistakes have implemented preventions"
         ]
       }
+    },
+    {
+      "id": "R006",
+      "timestamp": "2026-01-31T01:14:50-05:00",
+      "trigger": "count_based",
+      "period_analyzed": "2026-01-28T14:51:20-05:00 to 2026-01-31T01:14:50-05:00",
+      "mistakes_analyzed": 17,
+      "summary": "17 mistakes dominated by protocol_violation (10/17=59%). Strong emerging pattern: pre_rendered_output_bypass (6 mistakes M311,M315,M319,M321,M322,M323) - Claude manually constructs boxes/banners instead of using scripts. Also render_diff_omission (M312,M313). A003 remains ineffective despite escalation. Created PATTERN-008 and A008 for pre-rendered output enforcement.",
+      "findings": {
+        "category_breakdown": [
+          {"category": "protocol_violation", "count": 10, "ids": ["M280", "M308", "M310", "M311", "M312", "M313", "M318", "M319", "M322", "M323"]},
+          {"category": "misleading_documentation", "count": 2, "ids": ["M286", "M320"]},
+          {"category": "commit_organization", "count": 1, "ids": ["M317"]},
+          {"category": "design_violation", "count": 1, "ids": ["M316"]},
+          {"category": "output_formatting", "count": 1, "ids": ["M315"]},
+          {"category": "terminology_inconsistency", "count": 1, "ids": ["M321"]},
+          {"category": "user_experience", "count": 1, "ids": ["M314"]}
+        ],
+        "action_effectiveness": {
+          "A001": "partially_effective",
+          "A002": "partially_effective",
+          "A003": "ineffective_escalated",
+          "A004": "effective",
+          "A005": "partially_effective",
+          "A006": "effective",
+          "A007": "effective"
+        },
+        "new_patterns": [
+          {
+            "pattern_id": "PATTERN-008",
+            "pattern": "pre_rendered_output_bypass",
+            "occurrences": 6,
+            "mistakes": ["M311", "M315", "M319", "M321", "M322", "M323"],
+            "note": "Claude manually constructs progress banners, work boxes, checkpoint boxes instead of using pre-rendered scripts (get-progress-banner.sh, get-work-boxes.py). Results in misaligned boxes due to LLM inability to count display widths."
+          },
+          {
+            "pattern_id": "PATTERN-009",
+            "pattern": "render_diff_omission",
+            "occurrences": 2,
+            "mistakes": ["M312", "M313"],
+            "note": "Approval gates shown without /cat:render-diff, user sees raw git diff or summary instead of 4-column table format."
+          }
+        ],
+        "new_action_items": [
+          {
+            "id": "A008",
+            "priority": "high",
+            "description": "Enforce pre-rendered output usage: add PostToolUse hook to detect manual box/banner construction patterns and warn agent. Pattern detection: box-drawing chars (─│┌┐└┘) in agent output not preceded by script execution.",
+            "pattern_id": "PATTERN-008",
+            "status": "open"
+          },
+          {
+            "id": "A009",
+            "priority": "medium",
+            "description": "Enforce render-diff at approval gates: add PreToolUse hook on AskUserQuestion that checks for approval keywords and validates render-diff was invoked.",
+            "pattern_id": "PATTERN-009",
+            "status": "open"
+          }
+        ],
+        "observations": [
+          "59% of mistakes are protocol_violation - highest ratio across all retrospectives",
+          "pre_rendered_output_bypass is the dominant new pattern (35% of mistakes)",
+          "A004, A006, A007 appear effective (no post-fix recurrences)",
+          "A003 remains problematic - path/config assumptions continue despite escalation",
+          "M314-M323 cluster suggests workflow progression issues in /cat:work skill",
+          "Documentation priming (M320) caused M322/M323 cascade - example output in docs led to copy attempts"
+        ],
+        "recommendations": [
+          "Prioritize A008 implementation - pre-rendered output bypass is 35% of period mistakes",
+          "Consider removing all example box output from skill documentation to prevent priming",
+          "Review /cat:work phase transitions for missing script invocations"
+        ]
+      }
     }
   ]
 }
