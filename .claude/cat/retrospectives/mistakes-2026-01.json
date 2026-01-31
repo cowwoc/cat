@@ -2211,6 +2211,32 @@
         "catches_variations": true
       },
       "correct_behavior": "After committing, display explicit confirmation message before approval gate"
+    },
+    {
+      "id": "M326",
+      "timestamp": "2026-01-31T07:30:00Z",
+      "category": "protocol_violation",
+      "description": "Edited STATE.md in main workspace before creating issue worktree, causing merge conflict later",
+      "root_cause": "Eager status update before worktree creation - should have waited until in worktree to update STATE.md",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "process",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/phase-prepare.md",
+      "pattern_keywords": [
+        "worktree",
+        "isolation",
+        "STATE.md",
+        "M101"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M101",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Only update STATE.md after cd into worktree directory"
     }
   ]
 }
