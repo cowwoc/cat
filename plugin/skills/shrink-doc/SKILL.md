@@ -260,6 +260,14 @@ state from before /shrink-doc was invoked (not against any intermediate versions
 
 **Threshold**: Exact equality required (no "close enough" - see M254)
 
+**COMMIT GATE (M335)**: Files may ONLY be committed after validation passes:
+- Score < 1.0 → File MUST NOT be applied or committed
+- Score = 1.0 → File may be applied and committed
+- Skipped validation → File MUST NOT be applied or committed
+
+Rationalizations like "extraction variance" or "validation is broken" are completion bias.
+If validation consistently fails, the compression is too aggressive - iterate or abandon.
+
 **Report Format** (for approval):
 1. Validation output from /compare-docs (copy verbatim)
 2. **Version Comparison Table** (showing all versions generated in this session)
