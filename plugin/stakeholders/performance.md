@@ -79,6 +79,30 @@ problems in [topic] systems and how practitioners optimize them.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's performance profile, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall system performance?
+   - Do they affect hot paths or critical performance-sensitive areas?
+   - Do they establish performance patterns (good or bad) that may be copied?
+   - Do they change resource usage in ways that affect other components?
+
+2. **Accumulated Performance Debt**: Is this change adding to or reducing performance debt?
+   - Does it follow efficient patterns established elsewhere?
+   - Are there similar inefficiencies elsewhere that should be addressed together?
+   - Is this adding "just one more" slow operation to an already slow path?
+
+3. **Performance Coherence**: Does this change maintain consistent performance standards?
+   - Does it use the same caching/optimization strategies as similar code?
+   - Does it respect established resource limits and constraints?
+   - Will future developers understand the performance requirements?
+
+**Anti-Accumulation Check**: Flag if this change adds to accumulated inefficiency
+(e.g., "this is the 4th handler with O(n²) operations on the same data structure").
+
 ## Review Concerns
 
 Evaluate implementation against these performance criteria:

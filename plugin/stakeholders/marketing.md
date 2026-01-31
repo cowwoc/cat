@@ -92,6 +92,30 @@ and what messaging resonates with the target audience.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire product's market positioning, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall marketability?
+   - Do they create new messaging opportunities or complicate the story?
+   - Do they strengthen or weaken competitive differentiation?
+   - Do they align with or diverge from target audience needs?
+
+2. **Accumulated Messaging Debt**: Is this change adding to or reducing messaging coherence?
+   - Does it follow established naming conventions and terminology?
+   - Does it create inconsistencies that will confuse market communications?
+   - Are there related features that should be messaged together?
+
+3. **Brand Coherence**: Does this change maintain brand consistency?
+   - Does it fit the product's market positioning?
+   - Will marketing be able to explain this in a compelling way?
+   - Does it strengthen or dilute the brand promise?
+
+**Anti-Accumulation Check**: Flag if this change continues patterns that hurt marketability
+(e.g., "this is the 3rd feature with confusing terminology that doesn't match our messaging").
+
 ## Review Concerns
 
 Evaluate implementation against these marketing-readiness criteria:

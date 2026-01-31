@@ -79,6 +79,30 @@ decisions about [topic].
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect the overall architecture?
+   - Do they introduce new dependencies that affect other modules?
+   - Do they establish patterns that should be followed elsewhere?
+   - Do they create inconsistencies with existing architectural decisions?
+
+2. **Accumulated Technical Debt**: Is this change adding to or reducing architectural debt?
+   - Does it follow existing patterns or introduce new ones without justification?
+   - Are there similar structures elsewhere that should be refactored consistently?
+   - Is this a "quick fix" that should be a proper solution?
+
+3. **Codebase Coherence**: Does this change make the codebase more or less coherent?
+   - Does it align with established module boundaries?
+   - Does it respect existing abstraction levels?
+   - Will future developers understand why this structure was chosen?
+
+**Anti-Accumulation Check**: Flag if this change repeats patterns you've seen elsewhere that
+collectively indicate architectural drift (e.g., "this is the 4th module bypassing the service layer").
+
 ## Review Concerns
 
 Evaluate implementation against these architectural criteria:

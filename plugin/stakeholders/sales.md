@@ -90,6 +90,30 @@ how to position it against alternatives.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire product's sales story, not just the diff.**
+
+Before analyzing specific concerns, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall product positioning?
+   - Do they strengthen or weaken the value proposition?
+   - Do they create new demo opportunities or complicate existing demos?
+   - Do they affect how we compare against competitors?
+
+2. **Accumulated Value Debt**: Is this change adding to or reducing value delivery?
+   - Does it complete features that customers have been waiting for?
+   - Does it add polish to rough areas that affect customer perception?
+   - Are there related improvements that should be addressed together?
+
+3. **Story Coherence**: Does this change maintain a coherent product story?
+   - Does it fit the product positioning and messaging?
+   - Will sales be able to explain this naturally to customers?
+   - Does it strengthen or dilute our differentiation?
+
+**Anti-Accumulation Check**: Flag if this change continues patterns that hurt sales
+(e.g., "this is the 3rd feature without clear customer value articulation").
+
 ## Review Concerns
 
 Evaluate implementation against these sales-readiness criteria:

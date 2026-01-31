@@ -79,6 +79,30 @@ to specify requirements that can be objectively verified.
 
 ## Review Mode (default)
 
+## Holistic Review
+
+**Review changes in context of the entire project's requirements, not just the diff.**
+
+Before verifying specific requirements, evaluate:
+
+1. **Project-Wide Impact**: How do these changes affect overall requirements satisfaction?
+   - Do they complete requirements that unblock other functionality?
+   - Do they change existing behavior in ways that affect other requirements?
+   - Do they introduce new implicit requirements that need tracking?
+
+2. **Accumulated Requirements Debt**: Is this change adding to or reducing requirements debt?
+   - Are there related requirements that should be addressed together?
+   - Does this satisfy the requirement fully or create partial implementations?
+   - Are there edge cases from the requirement spec that are being deferred?
+
+3. **Requirements Coherence**: Does this change maintain consistent specification compliance?
+   - Does it interpret requirements consistently with similar implementations?
+   - Does it document any deviations or clarifications from the spec?
+   - Will future developers understand which requirements this satisfies?
+
+**Anti-Accumulation Check**: Flag if this change continues patterns of partial implementation
+(e.g., "this is the 3rd issue that partially implements REQ-005 without completing it").
+
 ## Core Function
 
 **This stakeholder verifies the implementation satisfies the requirements the task claims to satisfy.**
