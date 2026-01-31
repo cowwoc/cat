@@ -1,6 +1,6 @@
 ---
 description: Work on issues (approval required unless trust=high; auto-continues to next task when trust >= medium)
-argument-hint: "[version | taskId] [--override-gate]"
+argument-hint: "[version | taskId | filter] [--override-gate]"
 allowed-tools:
   - Read
   - Bash
@@ -14,6 +14,24 @@ Execute issues with worktree isolation, subagent orchestration, and quality gate
 
 **Architecture:** Main agent orchestrates 4 phase subagents. Each phase runs in isolation with
 its own context, keeping main agent context minimal (~5-10K tokens).
+
+## Arguments
+
+| Format | Example | Behavior |
+|--------|---------|----------|
+| Empty | `/cat:work` | Work on next available task |
+| Version | `/cat:work 2.1` | Work on tasks in version 2.1 |
+| Task ID | `/cat:work 2.1-migrate-api` | Work on specific task |
+| Filter | `/cat:work skip compression` | Filter task selection (natural language) |
+
+**Flags:**
+- `--override-gate` - Skip approval gate (use with caution)
+
+**Filter examples:**
+- `skip compression tasks` - exclude tasks with "compression" in name
+- `only migration` - only tasks with "migration" in name
+
+Filters are interpreted by the prepare phase subagent using natural language understanding.
 
 ## Progress Output
 
