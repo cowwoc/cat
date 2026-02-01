@@ -106,6 +106,9 @@ Skills exist to enforce consistent processes. Shortcuts defeat their purpose.
 
 **Anti-pattern**: Starting to write code without first creating or selecting a task.
 
+**CRITICAL (M339)**: User selecting an implementation option from AskUserQuestion does NOT bypass this rule.
+Create the issue first, then delegate via /cat:work. Direct implementation is only for true trivial fixes.
+
 ### Implementation Delegation (M30x)
 **CRITICAL**: Main agent orchestrates; subagents implement.
 
