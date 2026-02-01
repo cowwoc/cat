@@ -94,9 +94,7 @@ def format_age(seconds: int) -> str:
 
 
 def format_session_id(session_id: str) -> str:
-    """Format session ID for display (truncated)."""
-    if len(session_id) > 12:
-        return f"{session_id[:5]}...{session_id[-4:]}"
+    """Format session ID for display (full ID shown)."""
     return session_id
 
 
