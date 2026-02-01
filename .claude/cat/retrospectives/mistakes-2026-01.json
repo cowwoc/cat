@@ -2599,6 +2599,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Copy-paste the pre-rendered status box exactly as shown, without interpretation or summarization"
+    },
+    {
+      "id": "M342",
+      "timestamp": "2026-02-01T04:16:26Z",
+      "category": "environment_state_corruption",
+      "description": "Deleted worktree while shell cwd was inside it, breaking all subsequent Bash commands",
+      "root_cause": "No validation to check if cwd is inside target worktree before removal. Cleanup skill warns not to cd INTO worktree but doesn't check if ALREADY inside.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "/workspace/plugin/hooks/bash_handlers/validate_worktree_remove.py",
+      "pattern_keywords": [
+        "worktree",
+        "cwd",
+        "remove",
+        "delete",
+        "shell"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Ensure shell cwd is outside target worktree before running git worktree remove"
     }
   ]
 }
