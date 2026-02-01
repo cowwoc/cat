@@ -134,22 +134,52 @@ Summary: {N} files processed, {M} passed (score = 1.0), {K} failed
 
 **CRITICAL: Compression subagents must NOT validate their own work (M276).**
 
-After all compression subagents complete, spawn SEPARATE validation subagents:
+After all compression subagents complete, spawn SEPARATE validation subagents.
 
-**One validation subagent per file** to avoid cross-file bias:
+---
+
+## Best-2-of-3 Validation (M346)
+
+Due to ±10-35% variance in /compare-docs scores, use consensus validation for each file:
+
+**For each file, spawn TWO validation subagents in parallel:**
 
 ```
-Task tool:
+Task tool #1:
   subagent_type: "general-purpose"
-  description: "Validate {filename}"
+  model: "opus"
+  description: "Validate {filename} (run 1)"
   prompt: |
     Run /compare-docs to validate execution equivalence:
     - Original: /tmp/original-{filename}
     - Compressed: /tmp/compressed-{filename}-v{N}.md
 
-    Return ONLY the execution_equivalence_score from /compare-docs output.
-    Do NOT interpret, summarize, or adjust the score.
+    Return ONLY the formatted report from /compare-docs output.
+
+Task tool #2:
+  subagent_type: "general-purpose"
+  model: "opus"
+  description: "Validate {filename} (run 2)"
+  prompt: |
+    Run /compare-docs to validate execution equivalence:
+    - Original: /tmp/original-{filename}
+    - Compressed: /tmp/compressed-{filename}-v{N}.md
+
+    Return ONLY the formatted report from /compare-docs output.
 ```
+
+**Compare results (tolerance: ±0.05):**
+
+| Score 1 | Score 2 | Action |
+|---------|---------|--------|
+| Agree (within ±0.05) | Use average as consensus |
+| Disagree (>0.05 apart) | Run third validation, use two that agree |
+
+**If third run needed:**
+- Spawn single tiebreaker subagent
+- Find the two scores within ±0.05 of each other
+- Use their average as consensus
+- If no pair agrees: use median, flag file as "uncertain validation"
 
 **Why separate subagents per file:**
 - Prevents validation bias from seeing other files' results
@@ -158,9 +188,17 @@ Task tool:
 
 **Batch validation workflow:**
 1. Compression subagent(s) complete → compressed files in /tmp/
-2. Spawn N validation subagents (one per file) in parallel
-3. Collect scores using fault-tolerant collection
-4. Retry failed validators only (max 2 attempts per file)
-5. Present per-file results table to user
-6. For files with score < 1.0: route to iteration retry
-7. For persistent VALIDATION_ERROR: report as needing manual validation
+2. For each file: spawn 2 validation subagents in parallel
+3. Collect scores, check for agreement (within ±0.05)
+4. For disagreements: spawn tiebreaker, find consensus
+5. Present per-file results table with consensus scores
+6. For files with consensus < 1.0: route to iteration retry
+7. For "uncertain validation" files: report for manual review
+
+**Per-file result format:**
+
+| File | Tokens Before | Tokens After | Reduction | Run 1 | Run 2 | Run 3 | Consensus | Status |
+|------|---------------|--------------|-----------|-------|-------|-------|-----------|--------|
+| file1.md | 1,245 | 823 | 34% | 0.95 | 0.97 | - | 0.96 | FAIL |
+| file2.md | 567 | 312 | 45% | 0.51 | 0.95 | 0.93 | 0.94 | FAIL |
+| file3.md | 890 | 445 | 50% | 1.0 | 1.0 | - | 1.0 | PASS |
