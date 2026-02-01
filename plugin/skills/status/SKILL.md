@@ -18,7 +18,7 @@ User sees a correctly-aligned, complete project status display with actionable n
 
 ### Step 1: Output the pre-rendered status box
 
-**COPY AND OUTPUT THIS BOX EXACTLY:**
+**COPY AND OUTPUT THIS BOX EXACTLY** as plain text (do NOT wrap in markdown code fencing):
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
