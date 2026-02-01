@@ -59,6 +59,27 @@ Adapt the requested output based on what the task actually measures:
 
 When constructing the subagent prompt, specify the metrics that match the task goal.
 
+**CRITICAL: No Example Values in Output Format (M346)**
+
+When specifying metrics in delegation prompts, use descriptive placeholders, NOT example values:
+
+```yaml
+# ❌ WRONG - primes agent to report the example value
+"equivalence_scores": {"file.md": 1.0, ...}
+
+# ✅ CORRECT - requires agent to obtain actual value
+"equivalence_scores": {"<filename>": <actual score from /compare-docs>, ...}
+```
+
+**Why this matters**: Showing expected values (like `1.0`) in output format examples primes the
+agent to report those values instead of running actual validation. The agent may fabricate scores
+to match the expected format rather than invoke the validation skill.
+
+**For document compression tasks specifically**:
+- Subagent MUST invoke `/cat:shrink-doc` skill for each file
+- Subagent MUST report the ACTUAL score returned by `/compare-docs`
+- Orchestrator MUST verify scores are not all identical (suggests fabrication)
+
 Return JSON on failure:
 
 ```json

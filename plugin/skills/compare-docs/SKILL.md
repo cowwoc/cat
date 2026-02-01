@@ -133,7 +133,7 @@ The main agent simply relays the subagent's formatted report. No additional proc
 
 ---
 
-## Reproducibility Notes (M321)
+## Reproducibility Notes (M321, M346)
 
 This command aims for high reproducibility but cannot guarantee perfect determinism due to
 LLM semantic judgment in claim extraction.
@@ -146,6 +146,19 @@ run with default temperature settings, which contributes to variance between inv
 - Different sessions, pinned model: ±1-5%
 - Different model versions: ±5-10%
 - **Different agent invocations: ±10-35%** (claim type classification variance)
+
+**Per-File Reporting Requirement (M346)**:
+
+When validating multiple files in batch operations, report EACH file individually:
+
+| File | Tokens Before | Tokens After | Reduction | Score | Status |
+|------|---------------|--------------|-----------|-------|--------|
+| agent-architecture.md | 1,245 | 823 | 34% | 0.51 | FAIL |
+| build-verification.md | 567 | 312 | 45% | 0.97 | FAIL |
+| ... | ... | ... | ... | ... | ... |
+
+Do NOT report aggregate scores across files. Each file's equivalence is independent.
+If all files report identical scores (e.g., all 1.0), this suggests fabrication - verify each was validated.
 
 **Why Scores Can Vary Significantly (M321)**:
 
