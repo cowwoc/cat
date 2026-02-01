@@ -1,0 +1,32 @@
+{
+  "period": "2026-02",
+  "mistakes": [
+    {
+      "id": "M340",
+      "timestamp": "2026-02-01T12:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Status box misaligned because robot emoji (🤖) missing from emoji-widths.json, causing width miscalculation",
+      "root_cause": "show-active-agents-in-status task added robot emoji to status display but did not add it to emoji-widths.json. Emoji not in widths file defaults to char-by-char counting (width 1 per code unit) instead of correct display width (2).",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/emoji-widths.json",
+      "pattern_keywords": [
+        "emoji",
+        "display width",
+        "alignment",
+        "robot",
+        "status box"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When adding new emojis to any display/box output, also add them to emoji-widths.json with correct width for each supported terminal"
+    }
+  ]
+}
