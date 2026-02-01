@@ -174,6 +174,15 @@ The 0.7x penalty for relationship_preservation < 0.9 can swing scores dramatical
 2. If scores vary >20% between runs, re-run extraction and average
 3. For shrink-doc validation requiring 1.0, consider multiple comparison runs
 
+**Recommended: Best-2-of-3 Validation (M346)**
+
+For reliable scores, callers should run /compare-docs twice in parallel:
+- If scores agree (within ±0.05): use average as consensus
+- If scores disagree: run third time, use two that agree
+
+This approach eliminates outlier scores caused by extraction variance.
+See shrink-doc/SKILL.md Step 4 for full implementation.
+
 ---
 
 ## Score Interpretation

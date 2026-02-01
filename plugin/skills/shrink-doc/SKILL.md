@@ -226,27 +226,88 @@ After agent completes:
    head -5 /tmp/compressed-{{filename}}-v${VERSION}.md | grep -q "^---$" || echo "⚠️ WARNING: YAML frontmatter missing!"
    ```
 
-4. **Run validation AGAINST ORIGINAL**:
-   ```bash
-   # ALWAYS compare against original baseline, NOT current file state
-   /compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+4. **Run validation with Best-2-of-3 (M346)**:
+
+   Due to ±10-35% variance in /compare-docs scores across invocations, use consensus validation:
+
+   **Step 4a: Run two validations in parallel**
+   ```
+   Task tool #1:
+     subagent_type: "general-purpose"
+     model: "opus"
+     description: "Validate compression (run 1)"
+     prompt: |
+       Run /compare-docs to validate:
+       - Original: /tmp/original-{{filename}}
+       - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
+
+       Return ONLY the formatted report from /compare-docs.
+
+   Task tool #2:
+     subagent_type: "general-purpose"
+     model: "opus"
+     description: "Validate compression (run 2)"
+     prompt: |
+       Run /compare-docs to validate:
+       - Original: /tmp/original-{{filename}}
+       - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
+
+       Return ONLY the formatted report from /compare-docs.
    ```
 
-   **⚠️ IMPORTANT**: The validation score reflects execution equivalence between:
-   - **Document A**: Original document state BEFORE /shrink-doc was invoked in this session
-   - **Document B**: Newly compressed candidate version
+   **Step 4b: Compare results**
 
-   **NOT** a comparison against any intermediate compressed versions.
+   Extract `execution_equivalence_score` from both reports.
+
+   | Score 1 | Score 2 | Difference | Action |
+   |---------|---------|------------|--------|
+   | 0.95 | 0.97 | 0.02 ≤ 0.05 | **Agree** - use average (0.96) |
+   | 0.95 | 0.51 | 0.44 > 0.05 | **Disagree** - run third validation |
+
+   **Tolerance**: Scores within ±0.05 are considered agreeing.
+
+   **Step 4c: If disagreement, run third validation**
+   ```
+   Task tool:
+     subagent_type: "general-purpose"
+     model: "opus"
+     description: "Validate compression (tiebreaker)"
+     prompt: |
+       Run /compare-docs to validate:
+       - Original: /tmp/original-{{filename}}
+       - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
+
+       Return ONLY the formatted report from /compare-docs.
+   ```
+
+   **Step 4d: Determine consensus score**
+
+   With three scores, find the two that agree (within ±0.05):
+
+   | Score 1 | Score 2 | Score 3 | Consensus |
+   |---------|---------|---------|-----------|
+   | 0.95 | 0.51 | 0.93 | Scores 1 & 3 agree → use average (0.94) |
+   | 0.95 | 0.51 | 0.55 | Scores 2 & 3 agree → use average (0.53) |
+   | 0.95 | 0.51 | 0.72 | No pair agrees → use median (0.72), flag as uncertain |
+
+   **Report consensus**:
+   ```
+   Validation (best 2 of 3):
+   - Run 1: {score1}
+   - Run 2: {score2}
+   - Run 3: {score3} (if needed)
+   - Consensus: {final_score} ({agreeing runs})
+   ```
 
 5. **Parse validation result**:
-   - Extract execution_equivalence_score
-   - Extract warnings and lost_relationships
-   - Extract structural_changes
+   - Use the **consensus score** from Step 4d
+   - Extract warnings and lost_relationships from the agreeing runs
+   - If runs disagree on warnings, include warnings from BOTH agreeing runs
 
 **Scoring Context**: When reporting the score to the user, explicitly state:
 ```
-Score {score}/1.0 compares the compressed version against the ORIGINAL document
-state from before /shrink-doc was invoked (not against any intermediate versions).
+Consensus score {score}/1.0 (best 2 of 3) compares the compressed version against
+the ORIGINAL document state from before /shrink-doc was invoked.
 ```
 
 **⚠️ CRITICAL REMINDER**: On second, third, etc. invocations:
