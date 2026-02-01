@@ -26,6 +26,7 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 ## Safety Rules
 
 - NEVER cd into a worktree that will be deleted - use `git -C <path>` instead
+  *(Enforced by hook M342 - removal blocked if cwd is inside target)*
 - ALWAYS check for uncommitted changes before removing worktrees
 - ALWAYS ask user before removing anything with uncommitted work
 - ALWAYS remove worktree BEFORE deleting its branch
