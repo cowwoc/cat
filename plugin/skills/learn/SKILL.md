@@ -583,6 +583,56 @@ language** that guides toward correct behavior rather than warning against mista
 Keep negative language only when no actionable positive alternative exists (e.g., security warnings
 where the "don't" is the entire point).
 
+**Complete Fix Requirement for Documentation Priming (M345):**
+
+When documentation primed the agent for wrong behavior, the fix must be **complete**:
+
+| Scenario | Incomplete Fix | Complete Fix |
+|----------|----------------|--------------|
+| Automation exists but broken | "NEVER manually construct" | Fix the preprocessing/handler |
+| Automation doesn't exist yet | "NEVER manually construct" | ASK USER: build it or simplify? |
+| Skill references non-existent feature | "Don't use feature X" | ASK USER: build it or simplify? |
+
+**The fix must make correct behavior possible, not just prohibit wrong behavior.**
+
+**MANDATORY: Preserve Output Format When Possible (M345):**
+
+When a skill cannot produce its intended output due to missing automation:
+
+1. **Do NOT unilaterally change the output format**
+2. **Use AskUserQuestion to offer the choice:**
+
+```yaml
+question: "Skill '{skill}' references output that cannot be generated. How should I proceed?"
+options:
+  - label: "Build the missing automation"
+    description: "Create the preprocessing script/handler to generate the intended output"
+  - label: "Simplify the output format"
+    description: "Change skill to use simpler format (e.g., markdown instead of boxes)"
+```
+
+3. Implement whichever option the user selects
+
+**Checklist before finalizing documentation priming fix:**
+
+```yaml
+complete_fix_checklist:
+  negative_guidance: "Does fix say what NOT to do?"  # Necessary but insufficient
+  positive_guidance: "Does fix say what TO do?"      # Required
+  ability_to_act: "Can agent actually do it?"        # Required
+  format_preserved: "Is original output format retained?"  # Preferred
+
+  # If ability_to_act is NO:
+  if_automation_broken:
+    action: "Fix the automation"
+  if_automation_missing:
+    action: "ASK USER: build automation or simplify output?"
+    do_not: "Unilaterally change output format"
+```
+
+**Anti-pattern (M345):** Adding "NEVER do X" without ensuring the agent CAN do Y.
+**Anti-pattern (M345):** Changing output format without user consent.
+
 **For context-related mistakes:**
 
 ```yaml

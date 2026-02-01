@@ -4,6 +4,13 @@ Handler for /cat:cleanup precomputation.
 Generates box displays for survey results, cleanup plan, and verification.
 """
 
+import json
+import os
+import re
+import subprocess
+import time
+from pathlib import Path
+
 from . import register_handler
 from .status_handler import display_width, build_inner_box, build_header_box
 
@@ -16,12 +23,18 @@ class CleanupHandler:
         Generate output template display for cleanup phases.
 
         Context keys:
-            - phase: "survey" | "plan" | "verify"
-        """
-        phase = context.get("phase")
+            - phase: "survey" | "plan" | "verify" (optional, defaults to "survey")
+            - project_root: Project directory (used to gather data if not provided)
 
-        if not phase:
-            return None
+        When called without phase (from preprocessing), defaults to "survey"
+        and gathers data automatically from project_root.
+        """
+        phase = context.get("phase", "survey")
+        project_root = context.get("project_root", os.getcwd())
+
+        # For survey phase, gather data if not provided
+        if phase == "survey" and "worktrees" not in context:
+            context = self._gather_survey_data(project_root, context)
 
         if phase == "survey":
             return self._build_survey_display(context)
@@ -30,6 +43,160 @@ class CleanupHandler:
         elif phase == "verify":
             return self._build_verify_display(context)
 
+        return None
+
+    def _run_command(self, cmd: list[str], cwd: str = None) -> tuple[int, str, str]:
+        """Run a command and return (returncode, stdout, stderr)."""
+        try:
+            result = subprocess.run(
+                cmd,
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            return result.returncode, result.stdout, result.stderr
+        except Exception as e:
+            return 1, "", str(e)
+
+    def _gather_survey_data(self, project_dir: str, context: dict) -> dict:
+        """Gather survey data from the project directory."""
+        context = dict(context)  # Don't modify original
+        context["worktrees"] = self._get_worktrees(project_dir)
+        context["locks"] = self._get_locks(project_dir)
+        context["branches"] = self._get_cat_branches(project_dir)
+        context["stale_remotes"] = self._get_stale_remotes(project_dir)
+        context["context_file"] = self._get_context_file(project_dir)
+        return context
+
+    def _get_worktrees(self, project_dir: str) -> list[dict]:
+        """Get list of git worktrees."""
+        worktrees = []
+        rc, stdout, _ = self._run_command(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=project_dir
+        )
+        if rc != 0:
+            return worktrees
+
+        current = {}
+        for line in stdout.strip().split('\n'):
+            if not line:
+                if current:
+                    worktrees.append(current)
+                    current = {}
+                continue
+            if line.startswith('worktree '):
+                current['path'] = line[9:]
+            elif line.startswith('HEAD '):
+                current['head'] = line[5:][:7]
+            elif line.startswith('branch '):
+                current['branch'] = line[7:].split('/')[-1]
+            elif line == 'bare':
+                current['state'] = 'bare'
+            elif line == 'detached':
+                current['state'] = 'detached'
+
+        if current:
+            worktrees.append(current)
+
+        return worktrees
+
+    def _get_locks(self, project_dir: str) -> list[dict]:
+        """Get list of task locks."""
+        locks = []
+        locks_dir = Path(project_dir) / ".claude" / "cat" / "locks"
+
+        if not locks_dir.is_dir():
+            return locks
+
+        for lock_file in locks_dir.glob("*.lock"):
+            try:
+                data = json.loads(lock_file.read_text())
+                task_id = lock_file.stem
+                session = data.get("session_id", "")
+                created = data.get("created", 0)
+                age = int(time.time() - created) if created else 0
+                locks.append({
+                    "task_id": task_id,
+                    "session": session,
+                    "age": age
+                })
+            except Exception:
+                continue
+
+        return locks
+
+    def _get_cat_branches(self, project_dir: str) -> list[str]:
+        """Get CAT-related branches."""
+        branches = []
+        rc, stdout, _ = self._run_command(
+            ["git", "branch", "-a"],
+            cwd=project_dir
+        )
+        if rc != 0:
+            return branches
+
+        pattern = re.compile(r'(release/|worktree|\d+\.\d+-)')
+        for line in stdout.strip().split('\n'):
+            branch = line.strip().lstrip('* ')
+            if pattern.search(branch):
+                branches.append(branch)
+
+        return branches
+
+    def _get_stale_remotes(self, project_dir: str) -> list[dict]:
+        """Get remote branches idle for 1-7 days."""
+        stale = []
+        # Fetch and prune first
+        self._run_command(["git", "fetch", "--prune"], cwd=project_dir)
+
+        rc, stdout, _ = self._run_command(["git", "branch", "-r"], cwd=project_dir)
+        if rc != 0:
+            return stale
+
+        pattern = re.compile(r'origin/\d+\.\d+-')
+        now = int(time.time())
+
+        for line in stdout.strip().split('\n'):
+            branch = line.strip()
+            if not pattern.search(branch):
+                continue
+
+            rc2, date_out, _ = self._run_command(
+                ["git", "log", "-1", "--format=%ct", branch],
+                cwd=project_dir
+            )
+            if rc2 != 0:
+                continue
+
+            try:
+                commit_date = int(date_out.strip())
+                age_days = (now - commit_date) // 86400
+                if 1 <= age_days <= 7:
+                    rc3, author, _ = self._run_command(
+                        ["git", "log", "-1", "--format=%an", branch],
+                        cwd=project_dir
+                    )
+                    rc4, relative, _ = self._run_command(
+                        ["git", "log", "-1", "--format=%cr", branch],
+                        cwd=project_dir
+                    )
+                    stale.append({
+                        "branch": branch,
+                        "author": author.strip() if rc3 == 0 else "",
+                        "relative": relative.strip() if rc4 == 0 else ""
+                    })
+            except ValueError:
+                continue
+
+        return stale
+
+    def _get_context_file(self, project_dir: str) -> str | None:
+        """Check for execution context file."""
+        context_path = Path(project_dir) / ".cat-execution-context"
+        if context_path.exists():
+            return str(context_path)
         return None
 
     def _build_survey_display(self, context: dict) -> str:
