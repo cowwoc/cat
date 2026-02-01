@@ -2520,6 +2520,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When user sends a request mid-operation (new feature, change, fix, or complex instruction), immediately use TaskCreate to add it to TaskList before or while acknowledging"
+    },
+    {
+      "id": "M338",
+      "timestamp": "2026-02-01T22:35:00Z",
+      "category": "output_formatting",
+      "description": "Wrapped status box in markdown code fencing instead of plain text, breaking alignment",
+      "root_cause": "Skill instruction said 'output verbatim' but did not explicitly prohibit markdown code fencing - agent assumed fencing would preserve characters but it broke terminal rendering",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/status/SKILL.md",
+      "pattern_keywords": [
+        "code-fencing",
+        "box-alignment",
+        "markdown",
+        "verbatim-output"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output pre-rendered boxes as plain text without markdown code fencing"
     }
   ]
 }
