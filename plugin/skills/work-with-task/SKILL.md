@@ -108,6 +108,27 @@ Task tool:
 | FAILED | Display error, offer retry or abort |
 | BLOCKED | Display blocker, stop |
 
+### Protocol Violation Handling (M348)
+
+**MANDATORY: Correctness over completion.**
+
+After receiving execution result, check for protocol violations:
+
+1. **Check skill invocation compliance**: If PLAN.md specified skills (e.g., `/cat:shrink-doc`),
+   verify subagent actually invoked them (check for skill invocation in result or commits)
+
+2. **If protocol violation detected:**
+   - Do NOT rationalize ("tests pass", "looks reasonable", "saves tokens")
+   - Do NOT proceed to review phase
+   - REJECT the work and re-execute with explicit instruction:
+     "Previous execution violated M333 - MUST invoke /cat:shrink-doc skill, not manually edit files"
+
+3. **Why this matters:** Manual workarounds skip validation that skills provide. Accepting
+   protocol-violating work means accepting unvalidated work.
+
+**Anti-pattern:** "The work looks correct so I'll proceed despite the protocol violation."
+**Correct behavior:** "Protocol was violated. Re-executing with proper skill invocation."
+
 **Token check:**
 - If `compaction_events > 0`: Warn user, offer decomposition
 - If `percent_of_context > 80`: Invoke learn-from-mistakes

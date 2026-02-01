@@ -145,6 +145,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Display compression results table showing filename, before/after tokens, percent reduction, and execution equivalence score for each file before presenting for approval"
+    },
+    {
+      "id": "M348",
+      "timestamp": "2026-02-01T12:15:00Z",
+      "category": "protocol_violation",
+      "description": "Proceeded with task despite detecting M333 protocol violation (subagent manually compressed instead of using /cat:shrink-doc), rationalizing that 'tests pass' and 're-running would consume tokens'",
+      "root_cause": "work-with-task skill has no protocol violation handling section requiring rejection and re-execution when subagent violates required skill invocation",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "completion-bias",
+        "protocol-violation",
+        "correctness",
+        "M333",
+        "skill-invocation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When protocol violation detected, reject the work and re-execute with explicit instruction to follow required skill invocation. Do not rationalize acceptance based on indirect evidence like tests passing."
     }
   ]
 }
