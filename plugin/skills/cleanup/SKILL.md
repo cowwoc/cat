@@ -38,49 +38,21 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 
 ### Step 1: Survey Current State
 
-Run all survey commands to gather current artifact state.
+**Look for pre-rendered survey output in SCRIPT OUTPUT SURVEY DISPLAY above.**
 
-**Worktrees:**
+If found, copy and output that box EXACTLY as shown.
+
+If NOT found (preprocessing failed), run the survey script manually:
+
 ```bash
-git worktree list
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-display.py" \
+  --project-dir "${CLAUDE_PROJECT_DIR}" \
+  --phase survey
 ```
 
-**Issue locks:**
-```bash
-if [[ -d .claude/cat/locks ]]; then
-  "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" list "${CLAUDE_PROJECT_DIR}" 2>/dev/null
-else
-  echo "[]"
-fi
-```
+Then copy and output the resulting box EXACTLY as shown.
 
-**Context files:**
-```bash
-ls -la .cat-execution-context 2>/dev/null || echo "No context file"
-```
-
-**CAT branches:**
-```bash
-git branch -a | grep -E '(release/|worktree|[0-9]+\.[0-9]+-)' || echo "No CAT branches"
-```
-
-**Remote branch staleness (1-7 days idle):**
-```bash
-git fetch --prune 2>/dev/null
-for remote_branch in $(git branch -r 2>/dev/null | grep -E 'origin/[0-9]+\.[0-9]+-' | tr -d ' '); do
-  COMMIT_DATE=$(git log -1 --format='%ct' "$remote_branch" 2>/dev/null)
-  NOW=$(date +%s)
-  AGE_DAYS=$(( (NOW - COMMIT_DATE) / 86400 ))
-  if [ "$AGE_DAYS" -ge 1 ] && [ "$AGE_DAYS" -le 7 ]; then
-    AUTHOR=$(git log -1 --format='%an' "$remote_branch" 2>/dev/null)
-    RELATIVE=$(git log -1 --format='%cr' "$remote_branch" 2>/dev/null)
-    echo "STALE: $remote_branch (last: $AUTHOR, $RELATIVE)"
-  fi
-done
-```
-
-Use the **SURVEY_DISPLAY** box from SCRIPT OUTPUT CLEANUP BOXES.
-Replace placeholders with actual survey data.
+**NEVER manually construct ASCII boxes** - LLMs cannot accurately count display widths.
 
 ---
 
@@ -161,8 +133,25 @@ If uncommitted:
 
 ### Step 4: Get User Confirmation
 
-Use the **PLAN_DISPLAY** box from SCRIPT OUTPUT CLEANUP BOXES.
-Replace placeholders with actual cleanup plan data.
+Generate the cleanup plan box by invoking the handler with your analysis:
+
+```bash
+echo '{
+  "handler": "cleanup",
+  "context": {
+    "phase": "plan",
+    "locks_to_remove": ["2.1-task-name"],
+    "worktrees_to_remove": [{"path": "/workspace/.worktrees/2.1-task-name", "branch": "2.1-task-name"}],
+    "branches_to_remove": ["2.1-task-name"],
+    "stale_remotes": []
+  }
+}' | python3 "${CLAUDE_PLUGIN_ROOT}/hooks/invoke-handler.py"
+```
+
+Replace the example values with actual items identified in Step 2.
+Copy and output the resulting box EXACTLY as shown.
+
+Then use AskUserQuestion to confirm before proceeding.
 
 **BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
 
@@ -233,8 +222,23 @@ else
 fi
 ```
 
-Use the **VERIFY_DISPLAY** box from SCRIPT OUTPUT CLEANUP BOXES.
-Replace placeholders with actual verification results.
+Generate the verification box by invoking the handler with cleanup results:
+
+```bash
+echo '{
+  "handler": "cleanup",
+  "context": {
+    "phase": "verify",
+    "removed_counts": {"locks": 1, "worktrees": 1, "branches": 1},
+    "remaining_worktrees": ["/workspace (main)"],
+    "remaining_branches": [],
+    "remaining_locks": []
+  }
+}' | python3 "${CLAUDE_PLUGIN_ROOT}/hooks/invoke-handler.py"
+```
+
+Replace the example values with actual cleanup results.
+Copy and output the resulting box EXACTLY as shown.
 
 ---
 

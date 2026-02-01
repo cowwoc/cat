@@ -53,6 +53,40 @@
         "catches_variations": true
       },
       "correct_behavior": "Subagents have access to ALL tools. When PLAN.md specifies using a skill, invoke it via Skill tool. Do not assume tool limitations."
+    },
+    {
+      "id": "M345",
+      "timestamp": "2026-02-01T01:50:00Z",
+      "category": "misleading_documentation",
+      "description": "Agent manually constructed ASCII boxes with alignment problems because cleanup skill referenced non-existent pre-rendered boxes without FAIL-FAST instruction",
+      "root_cause": "Cleanup skill referenced SURVEY_DISPLAY, PLAN_DISPLAY, VERIFY_DISPLAY boxes from SCRIPT OUTPUT CLEANUP BOXES but: (1) no preprocessing generated them, (2) no fallback instruction existed, (3) no NEVER manually construct warning like work.md has. Agent tried to be helpful by constructing boxes.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/cleanup/SKILL.md",
+      "pattern_keywords": [
+        "box alignment",
+        "manual construction",
+        "display width",
+        "cleanup",
+        "pre-rendered content"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use markdown headers and bullet points for cleanup output. NEVER manually construct ASCII boxes - LLMs cannot accurately count display widths.",
+      "documentation_priming": {
+        "document": "plugin/skills/cleanup/SKILL.md",
+        "misleading_section": "Steps 1, 4, 6 - references to SCRIPT OUTPUT CLEANUP BOXES",
+        "priming_type": "output_format",
+        "how_it_misled": "Skill described box names to use but did not generate them or provide fallback. Agent attempted manual construction to fulfill skill instructions.",
+        "fix_required": "Replace box references with markdown formatting instruction and add NEVER manual construct warning"
+      }
     }
   ]
 }

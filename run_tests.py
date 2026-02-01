@@ -546,9 +546,9 @@ def test_cleanup_handler():
     from skill_handlers.cleanup_handler import CleanupHandler
     handler = CleanupHandler()
 
-    # Test returns None without phase
-    result = handler.handle({})
-    runner.test("Returns None without phase", result is None)
+    # Test defaults to survey phase and gathers data
+    result = handler.handle({"project_root": "/nonexistent"})
+    runner.test("Defaults to survey phase without explicit phase", isinstance(result, str))
 
     # Test survey phase
     context = {
