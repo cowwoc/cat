@@ -4,15 +4,16 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-01-31T16:02:48-05:00",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-02-01T01:08:32-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
       "mistakes-2026-02.json"
     ],
     "retrospectives": [
-      "retrospectives-2026-01.json"
+      "retrospectives-2026-01.json",
+      "retrospectives-2026-02.json"
     ]
   },
   "patterns": [
@@ -100,8 +101,8 @@
     {
       "pattern_id": "PATTERN-005",
       "pattern": "main_agent_delegation_bypass",
-      "occurrences_total": 5,
-      "occurrences_after_fix": 1,
+      "occurrences_total": 6,
+      "occurrences_after_fix": 2,
       "first_seen": "2026-01-28T00:15:00Z",
       "last_seen": "2026-01-28T12:15:00Z",
       "last_action_date": "2026-01-28T11:30:00-05:00",
@@ -160,8 +161,8 @@
     {
       "pattern_id": "PATTERN-008",
       "pattern": "pre_rendered_output_bypass",
-      "occurrences_total": 10,
-      "occurrences_after_fix": 0,
+      "occurrences_total": 14,
+      "occurrences_after_fix": 4,
       "first_seen": "2026-01-29T09:00:00Z",
       "last_seen": "2026-01-31T16:00:00Z",
       "last_action_date": null,
