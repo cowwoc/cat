@@ -27,6 +27,12 @@
 - **Resolution:** implemented
 - **Dependencies:** [prerequisite-issue]
 - **Completed:** {{TIMESTAMP}}
+
+## Implementation
+
+Changes are tracked via git file history. To find implementation commits:
+
+git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```
 
 ### Duplicate Issue
@@ -72,6 +78,12 @@ List scenarios tested to confirm the duplicate issue's fix covers this case:
 ## Existing Test Coverage
 
 List tests that already cover the functionality (if applicable).
+
+## Implementation
+
+No code changes needed. Find verification commit via:
+
+git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```
 
 ## Optional Sections
@@ -127,12 +139,17 @@ Summary of what was tested and what needs to be fixed.
 
 ## Finding Commits
 
-For implemented issues:
+Implementation commits are tracked via STATE.md file history:
+
 ```bash
-git log --oneline --grep="Issue ID: v{major}.{minor}-{issue-name}"
+# Find all commits for this issue
+git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/
+
+# Find the completion commit
+git log --oneline -1 -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
+
+# View full implementation history
+git log -p -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 ```
 
-For duplicate issues, search for the original issue's ID:
-```bash
-git log --oneline --grep="Issue ID: v{major}.{minor}-{original-issue-name}"
-```
+For duplicate issues, find the original issue's commits using its path.

@@ -395,24 +395,20 @@ git log --oneline -1  # Should show <last-commit-to-squash>
 git checkout <last-commit-to-squash>
 ```
 
-### Write Meaningful Commit Messages with Issue ID
+### Write Meaningful Commit Messages
 
 ```bash
-# WRONG - Concatenated messages, no Issue ID
+# WRONG - Concatenated messages
 feature(auth): add login
 feature(auth): add validation
 bugfix(auth): fix typo
 
-# CORRECT - Unified message with Issue ID footer
+# CORRECT - Unified message describing what the code does
 feature: add login form with validation
 
 - Email/password form with client-side validation
 - Server-side validation with descriptive messages
-
-Issue ID: v1.1-implement-user-auth
 ```
-
-**MANDATORY**: Include `Issue ID: v{major}.{minor}-{issue-name}` as the last line.
 
 See `git-commit` skill for detailed message guidance.
 
