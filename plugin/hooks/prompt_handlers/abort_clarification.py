@@ -6,6 +6,15 @@ and reminds agent to clarify intent before taking action (M266).
 """
 
 import re
+import sys
+from pathlib import Path
+
+# Add skill_handlers to path for build_header_box import
+_hooks_dir = Path(__file__).parent.parent
+if str(_hooks_dir) not in sys.path:
+    sys.path.insert(0, str(_hooks_dir))
+
+from skill_handlers.status_handler import build_header_box
 from . import register_handler
 
 # Regex patterns to match abort-related phrases with optional task names
@@ -37,23 +46,26 @@ class AbortClarificationHandler:
         if not matched_pattern:
             return None
 
-        return """╭─ ⚠️ AMBIGUOUS TERMINOLOGY DETECTED (M266)
-│
-│  User said: "{pattern}"
-│
-│  This is AMBIGUOUS - clarify with AskUserQuestion BEFORE acting:
-│
-│  Possible meanings:
-│  • "Stop current work session" → Keep task pending, just stop working now
-│  • "Cleanup worktree/branch" → Remove worktree but keep task in planning
-│  • "Abandon permanently" → Mark task as abandoned (rarely intended)
-│
-│  Use AskUserQuestion with options:
-│  1. "Stop working (keep task pending)" - Most common intent
-│  2. "Cleanup worktree only (keep in planning)"
-│  3. "Abandon task permanently"
-│
-╰─""".format(pattern=matched_pattern)
+        # Build warning box
+        content = [
+            "",
+            f'User said: "{matched_pattern}"',
+            "",
+            "This is AMBIGUOUS - clarify with AskUserQuestion BEFORE acting:",
+            "",
+            "Possible meanings:",
+            '• "Stop current work session" → Keep task pending, just stop working now',
+            '• "Cleanup worktree/branch" → Remove worktree but keep task in planning',
+            '• "Abandon permanently" → Mark task as abandoned (rarely intended)',
+            "",
+            "Use AskUserQuestion with options:",
+            '1. "Stop working (keep task pending)" - Most common intent',
+            '2. "Cleanup worktree only (keep in planning)"',
+            '3. "Abandon task permanently"',
+            "",
+        ]
+
+        return build_header_box("⚠️ AMBIGUOUS TERMINOLOGY DETECTED (M266)", content, prefix="─ ")
 
 
 # Register handler

@@ -407,7 +407,6 @@ Use the **research_skipped** box from SCRIPT OUTPUT INIT BOXES.
 **Choose Your Partner - Capture development style preferences**
 
 Use the **choose_your_partner** box from SCRIPT OUTPUT INIT BOXES.
-```
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Hands-On - check in often, verify each move",

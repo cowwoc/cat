@@ -25,10 +25,6 @@ changes affect the overall codebase. This enables reviewers to catch:
 - Before the user approval gate
 - When significant code changes need multi-perspective validation
 
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-stakeholder-boxes.sh`
-
-Use the box templates above for all display output (STAKEHOLDER_SELECTION, STAKEHOLDER_REVIEW, etc.)
-
 ## Stakeholders
 
 | Stakeholder | Reference | Focus |

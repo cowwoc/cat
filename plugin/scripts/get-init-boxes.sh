@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# get-init-boxes.sh - Generate init box templates
+# get-init-boxes.sh - Generate init skill box templates
 #
 # USAGE: get-init-boxes.sh
 #
-# OUTPUTS: Pre-rendered init box templates for /cat:init
+# OUTPUTS: Pre-rendered init box templates
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 
@@ -11,43 +11,61 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Call the existing Python script with JSON output, then format for skill
-python3 "$SCRIPT_DIR/build-init-boxes.py" --format json 2>/dev/null | python3 -c "
-import sys
+# Call Python to generate boxes with correct alignment
+python3 "$SCRIPT_DIR/build-init-boxes.py" --format json | python3 -c "
 import json
+import sys
 
 data = json.load(sys.stdin)
 
 if 'error' in data:
-    print('**Init boxes unavailable** - ' + data['error'])
-    sys.exit(0)
+    print(f\"Error: {data['error']}\", file=sys.stderr)
+    sys.exit(1)
 
-print('## Pre-rendered Init Boxes')
+print('''SCRIPT OUTPUT INIT BOXES:
+
+Use these box templates EXACTLY as shown. Replace {variables} with actual values at runtime.
+
+=== BOX: default_gates_configured ===
+Variables: {N} = version count''')
+print(data['default_gates_configured'])
 print()
-print('Use these box templates EXACTLY as shown. Replace {variables} with actual values.')
+
+print('''=== BOX: research_skipped ===
+Variables: {version} = example version number (shown in help text)''')
+print(data['research_skipped'])
 print()
 
-boxes = [
-    ('default_gates_configured', 'Variables: {N} = version count'),
-    ('research_skipped', 'Variables: {version} = example version number'),
-    ('choose_your_partner', 'Variables: none (static)'),
-    ('cat_initialized', 'Variables: {trust}, {curiosity}, {patience}'),
-    ('first_task_walkthrough', 'Variables: none (static)'),
-    ('first_task_created', 'Variables: {task-name}'),
-    ('all_set', 'Variables: none (static)'),
-    ('explore_at_your_own_pace', 'Variables: none (static)'),
-]
-
-for name, desc in boxes:
-    if name in data:
-        print(f'### {name}')
-        print(f'{desc}')
-        print()
-        print(data[name])
-        print()
-
-print('---')
+print('''=== BOX: choose_your_partner ===
+Variables: none (static)''')
+print(data['choose_your_partner'])
 print()
-print('**INSTRUCTION**: Copy template EXACTLY and only replace {variable} placeholders.')
-print('Do NOT recalculate padding or alignment - boxes are pre-computed with correct widths.')
+
+print('''=== BOX: cat_initialized ===
+Variables: {trust}, {curiosity}, {patience} = user preference values''')
+print(data['cat_initialized'])
+print()
+
+print('''=== BOX: first_task_walkthrough ===
+Variables: none (static)''')
+print(data['first_task_walkthrough'])
+print()
+
+print('''=== BOX: first_task_created ===
+Variables: {task-name} = sanitized task name from user input''')
+print(data['first_task_created'])
+print()
+
+print('''=== BOX: all_set ===
+Variables: none (static)''')
+print(data['all_set'])
+print()
+
+print('''=== BOX: explore_at_your_own_pace ===
+Variables: none (static)''')
+print(data['explore_at_your_own_pace'])
+print()
+
+print('''INSTRUCTION: When displaying a box, copy the template EXACTLY and only replace the {variable} placeholders.
+Do NOT recalculate padding or alignment - the boxes are pre-computed with correct widths.''')
 "
