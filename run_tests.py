@@ -372,8 +372,8 @@ def test_active_agents():
     # Test format_session_id
     runner.test("format_session_id: short ID unchanged",
                 get_status_display.format_session_id("abc123") == "abc123")
-    runner.test("format_session_id: long ID truncated",
-                get_status_display.format_session_id("f3d7107a-ef6a-44df-833d-2a2261a6421e") == "f3d71...421e")
+    runner.test("format_session_id: full ID shown",
+                get_status_display.format_session_id("f3d7107a-ef6a-44df-833d-2a2261a6421e") == "f3d7107a-ef6a-44df-833d-2a2261a6421e")
 
     # Test get_active_agents with temp directory
     with TemporaryDirectory() as tmp_dir:
