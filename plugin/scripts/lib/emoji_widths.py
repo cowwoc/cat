@@ -211,7 +211,37 @@ def get_emoji_widths(terminal: Optional[str] = None,
     }
 
 
-def display_width(text: str, emoji_widths: Optional[Dict[str, int]] = None) -> int:
+def _is_likely_emoji(char: str) -> bool:
+    """
+    Check if a character is likely an emoji based on Unicode codepoint.
+
+    Covers common emoji ranges without requiring a full emoji database.
+    Does NOT include variation selectors (U+FE0F) which are modifiers, not emojis.
+    """
+    if not char:
+        return False
+    cp = ord(char[0])
+    # Common emoji ranges:
+    # U+1F300-U+1F9FF: Most pictographic emojis
+    # U+1FA00-U+1FAFF: Extended symbols
+    # U+2600-U+26FF: Misc symbols (sun, stars, etc.)
+    # U+2700-U+27BF: Dingbats
+    # NOTE: U+FE0F (variation selector) is NOT included - it's a modifier with width 0
+    return (
+        (0x1F300 <= cp <= 0x1F9FF) or
+        (0x1FA00 <= cp <= 0x1FAFF) or
+        (0x2600 <= cp <= 0x26FF) or
+        (0x2700 <= cp <= 0x27BF)
+    )
+
+
+class UnknownEmojiError(Exception):
+    """Raised when an emoji is encountered that's not in emoji-widths.json."""
+    pass
+
+
+def display_width(text: str, emoji_widths: Optional[Dict[str, int]] = None,
+                  strict: bool = True) -> int:
     """
     Calculate the terminal display width of text.
 
@@ -220,9 +250,15 @@ def display_width(text: str, emoji_widths: Optional[Dict[str, int]] = None) -> i
     Args:
         text: The text to measure.
         emoji_widths: Dict mapping emojis to widths. If None, uses defaults.
+        strict: If True (default), raise UnknownEmojiError when encountering
+                an emoji not in emoji_widths. If False, treat unknown emojis
+                as width 1 (legacy behavior).
 
     Returns:
         The display width in terminal columns.
+
+    Raises:
+        UnknownEmojiError: When strict=True and an unknown emoji is found.
     """
     if emoji_widths is None:
         emoji_widths = get_emoji_widths()
@@ -246,6 +282,18 @@ def display_width(text: str, emoji_widths: Optional[Dict[str, int]] = None) -> i
                 break
 
         if not matched:
+            char = text[i]
+            # Fail-fast on unknown emojis
+            if strict and _is_likely_emoji(char):
+                # Find context for error message
+                start = max(0, i - 10)
+                end = min(text_len, i + 10)
+                context = text[start:end]
+                raise UnknownEmojiError(
+                    f"Unknown emoji '{char}' (U+{ord(char):04X}) not in emoji-widths.json. "
+                    f"Context: ...{context}... "
+                    f"Add this emoji to emoji-widths.json with its display width."
+                )
             # Regular character (ASCII, box-drawing, etc.) = width 1
             width += 1
             i += 1
@@ -319,9 +367,17 @@ class EmojiWidths:
             self._widths = get_emoji_widths(self.terminal, self.plugin_root)
         return self._widths
 
-    def display_width(self, text: str) -> int:
-        """Calculate display width of text."""
-        return display_width(text, self.widths)
+    def display_width(self, text: str, strict: bool = True) -> int:
+        """Calculate display width of text.
+
+        Args:
+            text: The text to measure.
+            strict: If True (default), raise UnknownEmojiError on unknown emojis.
+
+        Returns:
+            The display width in terminal columns.
+        """
+        return display_width(text, self.widths, strict=strict)
 
     def pad_to_width(self, text: str, target_width: int, align: str = "left") -> str:
         """Pad text to target display width."""
