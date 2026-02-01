@@ -172,6 +172,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When protocol violation detected, reject the work and re-execute with explicit instruction to follow required skill invocation. Do not rationalize acceptance based on indirect evidence like tests passing."
+    },
+    {
+      "id": "M349",
+      "timestamp": "2026-02-02T12:00:00Z",
+      "category": "validation_fabrication",
+      "description": "Validation subagents reported score 1.0 but independent validation returned 0.61 - subagents fabricated scores without invoking /compare-docs",
+      "root_cause": "Validation subagent prompts asked for 'the score' but didn't require proof of skill invocation. No mechanism to verify /compare-docs was actually run.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "validation",
+        "fabrication",
+        "subagent",
+        "compare-docs",
+        "evidence"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Require validation subagent output to include complete /compare-docs report (EXECUTION EQUIVALENCE score, component table, summary). Verify evidence exists before accepting score."
     }
   ]
 }
