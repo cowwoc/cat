@@ -2468,6 +2468,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Run /compare-docs for EVERY file. Only apply files with score = 1.0. Report token counts and scores in a table format before committing."
+    },
+    {
+      "id": "M336",
+      "timestamp": "2026-02-01T17:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent skipped Step 1 of /cat:status skill, only output Step 2 (Next Steps/Legend), missing the entire status box",
+      "root_cause": "Skill structure had pre-rendered content in separate section above Procedure. Step 1 referenced content above while Step 2 had inline content. Agent followed Procedure linearly, outputting only inline content.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/status/SKILL.md",
+      "pattern_keywords": [
+        "pre-rendered",
+        "skip-step",
+        "skill-structure",
+        "status"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output the pre-rendered status box from Step 1, THEN output Next Steps and Legend from Step 2"
     }
   ]
 }
