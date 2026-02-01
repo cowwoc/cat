@@ -168,18 +168,18 @@ Task tool #2:
     Return ONLY the formatted report from /compare-docs output.
 ```
 
-**Compare results (tolerance: ±0.05):**
+**Compare results (exact 1.0 required for shrink-doc):**
 
 | Score 1 | Score 2 | Action |
 |---------|---------|--------|
-| Agree (within ±0.05) | Use average as consensus |
-| Disagree (>0.05 apart) | Run third validation, use two that agree |
+| 1.0 | 1.0 | **PASS** - both agree on 1.0 |
+| 1.0 | ≠1.0 | Run tiebreaker |
+| ≠1.0 | ≠1.0 | **FAIL** - iterate to new version, re-validate |
 
-**If third run needed:**
-- Spawn single tiebreaker subagent
-- Find the two scores within ±0.05 of each other
-- Use their average as consensus
-- If no pair agrees: use median, flag file as "uncertain validation"
+**If tiebreaker needed:**
+- Spawn single tiebreaker subagent for that file
+- If 2 of 3 = 1.0 → **PASS**
+- If <2 of 3 = 1.0 → **FAIL** - iterate to new version, re-validate
 
 **Why separate subagents per file:**
 - Prevents validation bias from seeing other files' results
@@ -197,8 +197,13 @@ Task tool #2:
 
 **Per-file result format:**
 
-| File | Tokens Before | Tokens After | Reduction | Run 1 | Run 2 | Run 3 | Consensus | Status |
+| File | Tokens Before | Tokens After | Reduction | Run 1 | Run 2 | Run 3 | 1.0 Count | Status |
 |------|---------------|--------------|-----------|-------|-------|-------|-----------|--------|
-| file1.md | 1,245 | 823 | 34% | 0.95 | 0.97 | - | 0.96 | FAIL |
-| file2.md | 567 | 312 | 45% | 0.51 | 0.95 | 0.93 | 0.94 | FAIL |
-| file3.md | 890 | 445 | 50% | 1.0 | 1.0 | - | 1.0 | PASS |
+| file1.md | 1,245 | 823 | 34% | 0.95 | 0.97 | - | 0/2 | FAIL → iterate |
+| file2.md | 567 | 312 | 45% | 1.0 | 0.95 | 0.93 | 1/3 | FAIL → iterate |
+| file3.md | 890 | 445 | 50% | 1.0 | 1.0 | - | 2/2 | PASS |
+| file4.md | 650 | 340 | 48% | 1.0 | 0.92 | 1.0 | 2/3 | PASS |
+
+**Status logic:**
+- PASS = ≥2 runs returned exactly 1.0
+- FAIL = <2 runs returned 1.0 → iterate to new version, run best-2-of-3 again

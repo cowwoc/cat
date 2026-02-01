@@ -255,18 +255,19 @@ After agent completes:
        Return ONLY the formatted report from /compare-docs.
    ```
 
-   **Step 4b: Compare results**
+   **Step 4b: Check for consensus on 1.0**
 
    Extract `execution_equivalence_score` from both reports.
 
-   | Score 1 | Score 2 | Difference | Action |
-   |---------|---------|------------|--------|
-   | 0.95 | 0.97 | 0.02 ≤ 0.05 | **Agree** - use average (0.96) |
-   | 0.95 | 0.51 | 0.44 > 0.05 | **Disagree** - run third validation |
+   **For shrink-doc, only 1.0 is acceptable.** Check if both runs agree on 1.0:
 
-   **Tolerance**: Scores within ±0.05 are considered agreeing.
+   | Score 1 | Score 2 | Action |
+   |---------|---------|--------|
+   | 1.0 | 1.0 | **PASS** - both agree on 1.0, approved |
+   | 1.0 | 0.95 | **Disagree** - run tiebreaker |
+   | 0.95 | 0.93 | **FAIL** - neither is 1.0, iterate |
 
-   **Step 4c: If disagreement, run third validation**
+   **Step 4c: If one is 1.0 and other is not, run tiebreaker**
    ```
    Task tool:
      subagent_type: "general-purpose"
@@ -280,24 +281,25 @@ After agent completes:
        Return ONLY the formatted report from /compare-docs.
    ```
 
-   **Step 4d: Determine consensus score**
+   **Step 4d: Determine if 2 of 3 agree on 1.0**
 
-   With three scores, find the two that agree (within ±0.05):
+   | Score 1 | Score 2 | Score 3 | Result |
+   |---------|---------|---------|--------|
+   | 1.0 | 0.95 | 1.0 | **PASS** - 2 of 3 = 1.0 |
+   | 1.0 | 0.95 | 0.93 | **FAIL** - only 1 of 3 = 1.0, iterate |
+   | 0.95 | 0.93 | - | **FAIL** - 0 of 2 = 1.0, iterate (no tiebreaker needed) |
 
-   | Score 1 | Score 2 | Score 3 | Consensus |
-   |---------|---------|---------|-----------|
-   | 0.95 | 0.51 | 0.93 | Scores 1 & 3 agree → use average (0.94) |
-   | 0.95 | 0.51 | 0.55 | Scores 2 & 3 agree → use average (0.53) |
-   | 0.95 | 0.51 | 0.72 | No pair agrees → use median (0.72), flag as uncertain |
-
-   **Report consensus**:
+   **Report validation result**:
    ```
    Validation (best 2 of 3):
    - Run 1: {score1}
    - Run 2: {score2}
    - Run 3: {score3} (if needed)
-   - Consensus: {final_score} ({agreeing runs})
+   - Result: {PASS if ≥2 runs = 1.0, else FAIL}
    ```
+
+   **If FAIL**: Proceed to Step 6 (Iteration). After creating new version, run
+   Steps 4a-4d again on the NEW compressed version.
 
 5. **Parse validation result**:
    - Use the **consensus score** from Step 4d
