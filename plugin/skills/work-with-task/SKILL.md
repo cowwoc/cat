@@ -34,27 +34,22 @@ The main `/cat:work` skill invokes this with JSON-encoded arguments:
 }
 ```
 
-## Progress Banners (Automatic)
+## Progress Banners
 
-The banners below are pre-rendered via exclamation-backtick preprocessing. Since this skill receives
-the task ID as an argument, the preprocessing can access it and render all 4 phase banners at skill
-load time.
+Progress banners for all 4 phases are pre-rendered by the work_with_task_handler and provided
+in the SCRIPT OUTPUT PROGRESS BANNERS section. The handler parses the task_id from the skill
+invocation arguments and calls get-progress-banner.sh to generate all phase banners.
 
-!`ARGS="$ARGUMENTS"; TASK_ID=$(echo "$ARGS" | jq -r '.task_id // empty' 2>/dev/null || echo "$ARGS" | grep -oE '^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+'); ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh "$TASK_ID" --all-phases`
-
-**FAIL-FAST (ESCALATE-A008):** If you do NOT see 4 pre-rendered banners above (lines containing
-box-drawing characters like `┌─ 🐱`), then preprocessing FAILED. In this case:
-
-1. **STOP immediately** - do NOT proceed with the skill workflow
-2. Run the script manually to get banners:
-   ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh "${TASK_ID}" --all-phases
-   ```
-3. If the script also fails, report: "Progress banner script failed: [error]"
-
-**NEVER manually construct boxes** - LLMs cannot accurately count display widths.
+Use the banners from **SCRIPT OUTPUT PROGRESS BANNERS** - they are correctly formatted with
+box-drawing characters and proper display widths.
 
 **Phase symbols:** `○` Pending | `●` Complete | `◉` Active | `✗` Failed
+
+**Banner pattern by phase:**
+- Preparing: `◉ ○ ○ ○`
+- Executing: `● ◉ ○ ○`
+- Reviewing: `● ● ◉ ○`
+- Merging: `● ● ● ◉`
 
 ---
 
@@ -77,7 +72,7 @@ AUTO_REMOVE=$(echo "$ARGUMENTS" | jq -r '.auto_remove')
 
 ## Phase 2: Execute
 
-Display the **Executing phase** banner from above (● ◉ pattern).
+Display the **Executing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ◉ ○ ○ pattern).
 
 Delegate to work-execute subagent:
 
@@ -124,7 +119,7 @@ Task tool:
 
 **Skip if:** `VERIFY == "none"` or `TRUST == "high"`
 
-Display the **Reviewing phase** banner from above (● ● ◉ pattern).
+Display the **Reviewing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ● ◉ ○ pattern).
 
 Delegate to work-review subagent:
 
@@ -175,7 +170,7 @@ Then use AskUserQuestion:
 
 ## Phase 4: Merge
 
-Display the **Merging phase** banner from above (● ● ● ◉ pattern).
+Display the **Merging phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ● ● ◉ pattern).
 
 Delegate to work-merge subagent:
 
