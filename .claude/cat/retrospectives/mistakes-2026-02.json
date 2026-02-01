@@ -118,6 +118,33 @@
         "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
         "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/BATCH-PROCESSING.md"
       ]
+    },
+    {
+      "id": "M347",
+      "timestamp": "2026-02-01T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Compression task completed without displaying per-file metrics report (before/after tokens, reduction %, equivalence score)",
+      "root_cause": "work-with-task skill proceeds to review phase without validating that compression tasks include required per-file metrics in task_metrics",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "compression",
+        "metrics",
+        "per-file",
+        "validation",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display compression results table showing filename, before/after tokens, percent reduction, and execution equivalence score for each file before presenting for approval"
     }
   ]
 }

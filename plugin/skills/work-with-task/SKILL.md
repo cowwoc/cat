@@ -115,6 +115,31 @@ Task tool:
 **Store for later phases:**
 - `commits`, `files_changed`, `tokens_used`
 
+### Compression Task Validation (M347)
+
+**MANDATORY for tasks with "compress" or "shrink" in task_id:**
+
+Before proceeding to Phase 3, validate that execution result contains per-file metrics:
+
+1. Check if `task_metrics.equivalence_scores` exists and is non-empty
+2. Verify each file has an actual score (not all identical, which suggests fabrication)
+3. Display the compression report to user:
+
+```
+## Compression Results
+
+| File | Before | After | Reduction | Score | Status |
+|------|--------|-------|-----------|-------|--------|
+| {filename} | {tokens} | {tokens} | {%} | {score} | {PASS/FAIL} |
+```
+
+**If validation fails:**
+- Missing `task_metrics`: Return to execution phase with explicit requirement
+- All scores identical: Warn user, require manual verification
+- Any score < 1.0 for shrink-doc tasks: Block merge, require iteration
+
+**This validation enforces M346 (per-file reporting) at the orchestration level.**
+
 ## Phase 3: Review
 
 **Skip if:** `VERIFY == "none"` or `TRUST == "high"`
