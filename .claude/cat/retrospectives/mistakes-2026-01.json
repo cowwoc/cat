@@ -2546,6 +2546,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Output pre-rendered boxes as plain text without markdown code fencing"
+    },
+    {
+      "id": "M339",
+      "timestamp": "2026-01-31T22:50:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent implemented feature directly instead of creating issue and delegating via /cat:work",
+      "root_cause": "User selecting implementation option from AskUserQuestion was treated as permission to bypass delegation workflow - session instructions did not explicitly cover this case",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "delegation",
+        "inline-implementation",
+        "askuserquestion",
+        "work-request"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user requests implementation work (even via option selection), create issue via /cat:add then delegate via /cat:work"
     }
   ]
 }
