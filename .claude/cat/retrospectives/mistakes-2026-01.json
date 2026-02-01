@@ -2494,6 +2494,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Output the pre-rendered status box from Step 1, THEN output Next Steps and Legend from Step 2"
+    },
+    {
+      "id": "M337",
+      "timestamp": "2026-02-01T22:30:00-05:00",
+      "category": "protocol_violation",
+      "description": "Not using TaskCreate for user requests mid-operation despite step 2 of CAT SESSION INSTRUCTIONS explicitly requiring it",
+      "root_cause": "Completion bias - judged step 2 as optional when handling user requests immediately, rationalizing that immediate handling made task tracking unnecessary",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "TaskList",
+        "TaskCreate",
+        "mid-operation",
+        "user-input"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user sends a request mid-operation (new feature, change, fix, or complex instruction), immediately use TaskCreate to add it to TaskList before or while acknowledging"
     }
   ]
 }

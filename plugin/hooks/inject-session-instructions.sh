@@ -49,10 +49,18 @@ MESSAGE=$(cat << 'INSTRUCTIONS'
 4. Answer their question or confirm you've noted it
 5. THEN continue with workflow
 
+**TaskList usage (step 2) - MANDATORY when**:
+- User requests a new feature, change, or fix
+- User provides multiple instructions to track
+- Request is complex enough that you might forget details
+
+**Skip TaskList only for**: Simple questions ("what's this file?") or one-word commands ("continue")
+
 **"IMPORTANT: After completing your current task"** means after your CURRENT tool call completes,
 NOT after the entire /cat:work or skill workflow finishes. Respond in your very next message.
 
 **Common failure**: Continuing to analyze tool output while ignoring embedded user request.
+**Common failure**: NOT using TaskCreate for user requests mid-operation (step 2 is MANDATORY).
 
 ### Mandatory Mistake Handling
 **CRITICAL**: Invoke `learn-from-mistakes` skill for ANY mistake.
