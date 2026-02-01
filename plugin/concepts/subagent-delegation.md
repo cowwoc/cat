@@ -1,5 +1,12 @@
 # Subagent Delegation Principles
 
+## Tool Access (M344)
+
+**General-purpose subagents have access to ALL tools**, including Task and Skill.
+
+If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc`), invoke it
+directly via the Skill tool. Do not assume tool limitations exist - subagents have full tool access.
+
 ## Core Constraint
 
 **Claude Code does not allow users to supervise subagent execution.**
