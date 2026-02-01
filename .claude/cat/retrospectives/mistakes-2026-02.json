@@ -27,6 +27,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When adding new emojis to any display/box output, also add them to emoji-widths.json with correct width for each supported terminal"
+    },
+    {
+      "id": "M344",
+      "timestamp": "2026-02-01T05:45:00Z",
+      "category": "assumption_without_verification",
+      "description": "Subagent falsely claimed Task tool not available when general-purpose subagents have access to ALL tools",
+      "root_cause": "No explicit affirmation of tool access in subagent prompts or skill documentation. Subagent assumed limitation without evidence.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "tool access",
+        "subagent",
+        "false limitation",
+        "capability assumption"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Subagents have access to ALL tools. When PLAN.md specifies using a skill, invoke it via Skill tool. Do not assume tool limitations."
     }
   ]
 }
