@@ -7,24 +7,23 @@ user-invocable: false
 
 # Token Report
 
-## Purpose
+## MANDATORY OUTPUT REQUIREMENT (M341)
 
-Display a compact token usage report showing per-subagent breakdown with context utilization,
-health status, and duration. Essential for understanding session resource consumption at a glance.
+**YOUR ONLY JOB**: Copy-paste the report below VERBATIM. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## Pre-rendered Token Report
+## Pre-rendered Token Report (COPY THIS EXACTLY)
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-token-report.sh --session-id "${CLAUDE_SESSION_ID}"`
 
+**NEVER summarize the report. NEVER describe it. COPY IT.**
+
 ---
 
-## Procedure
+## Reference (do not output this section)
 
-### Step 1: Output the report
-
-Output the pre-rendered content above exactly as shown. The preprocessing script has already:
+The preprocessing script has already:
 - Gathered subagent token data from session files
 - Formatted token counts (68.4k, 1.5M format)
 - Calculated context percentages with health indicators
