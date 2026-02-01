@@ -277,77 +277,55 @@ class ResearchHandler:
     """
 
     def handle(self, context: dict) -> str | None:
-        """Return template instructions for research display.
+        """Research handler provides utility functions, not output templates.
 
-        Since research involves AI reasoning to generate content, this handler
-        provides the template structure and utility function references.
+        The research skill uses this handler's utility functions to build displays.
+        This handler does NOT output templates or formatting reference information
+        to avoid priming manual construction (M256).
         """
-        # Example ratings for template demonstration
-        example_ratings = {
-            "Speed": 4, "Cost": 3, "Architect": 4, "Security": 5, "Quality": 3,
-            "Tester": 3, "Performance": 3, "UX": 4, "Sales": 4, "Marketing": 3, "Legal": 5
-        }
-        example_scorecard = build_scorecard(example_ratings)
-        example_total, example_max = sum_ratings(example_ratings)
+        return """RESEARCH HANDLER LOADED
 
-        return f"""RESEARCH DISPLAY TEMPLATES LOADED
+## Available Utility Functions
 
-## Rating System
+This handler provides pre-rendering functions for research displays:
 
-Use these output template circle patterns for ratings 1-5:
-- 5 → ●●●●●  (Excellent)
-- 4 → ●●●●○  (Good)
-- 3 → ●●●○○  (Moderate)
-- 2 → ●●○○○  (Poor)
-- 1 → ●○○○○  (Very Poor)
+- `rating_to_circles(n)` - Convert 1-5 rating to visual pattern
+- `sum_ratings(dict)` - Calculate total and max from ratings dict
+- `build_scorecard(ratings)` - Build complete scorecard box
+- `build_comparison_table(options)` - Build side-by-side comparison
+- `build_concerns_box(concerns)` - Build stakeholder concerns display
 
-## 11 Rating Dimensions
+**CRITICAL (M256):** Formatting details are in the handler functions.
+Do NOT manually construct circle patterns or box structures.
+Always invoke handler functions to generate visual output.
 
-**Top-level metrics (1-5):**
-1. Speed - Time to implement and deploy
-2. Cost - Total cost of ownership
-3. Quality - Code quality and maintainability
+## Handler Invocation
 
-**Stakeholder dimensions (1-5):**
-4. Architect - Addresses architectural concerns
-5. Security - Addresses security concerns
-6. Testing - Addresses testing concerns
-7. Performance - Addresses performance concerns
-8. UX - Addresses user experience concerns
-9. Sales - Addresses sales/value concerns
-10. Marketing - Addresses marketing concerns
-11. Legal - Addresses legal/compliance concerns
+To render research output, call handler functions directly in Python:
 
-## Scorecard Template
+```python
+from plugin.hooks.skill_handlers.research_handler import (
+    rating_to_circles,
+    build_scorecard,
+    build_comparison_table,
+    build_concerns_box
+)
 
-Example scorecard (total: {example_total}/{example_max}):
-```
-{chr(10).join(example_scorecard)}
+# Build scorecard
+ratings = {"Speed": 4, "Cost": 3, ...}  # All 11 dimensions
+scorecard = build_scorecard(ratings)
+print("\\n".join(scorecard))
 ```
 
-## Calculation Gates (VERIFY BEFORE OUTPUT)
+## Calculation Gates
 
+Before invoking display functions, verify:
 - [ ] All ratings are integers 1-5
-- [ ] Each option has all 11 dimensions rated
+- [ ] Each option has all 11 dimensions rated (Speed, Cost, Quality + 8 stakeholders)
 - [ ] Total = sum of all 11 ratings
 - [ ] Max possible = 55 (11 × 5)
-- [ ] Circle pattern matches rating number
 
-## Display Sequence
-
-1. CONCERNS BOX - Present stakeholder concerns FIRST
-2. OPTIONS WITH SCORECARDS - Each option with its rating scorecard
-3. COMPARISON TABLE - Side-by-side with all options
-4. WIZARD - Use AskUserQuestion for selection
-
-## Provider Research
-
-When an option refers to a category (e.g., "Payment Orchestration Platform"):
-- Research top 3 specific providers
-- List with brief rationale for each
-
-INSTRUCTION: Use circle patterns exactly as shown. Calculate totals correctly.
-Do not hand-draw boxes. Fill in the template structures with reasoned content."""
+INSTRUCTION: Use handler functions for ALL visual output. Never construct manually."""
 
 
 # Expose utility functions at module level for imports

@@ -13,8 +13,6 @@ allowed-tools:
 
 All abandoned CAT artifacts (worktrees, locks, branches) are identified and cleaned up safely.
 
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-boxes.sh`
-
 ---
 
 ## When to Use
@@ -80,24 +78,8 @@ for remote_branch in $(git branch -r 2>/dev/null | grep -E 'origin/[0-9]+\.[0-9]
 done
 ```
 
-**Invoke handler to generate display:**
-
-```json
-{
-  "handler": "cleanup",
-  "context": {
-    "phase": "survey",
-    "worktrees": [{"path": "<path>", "branch": "<branch>", "state": "<state>"}],
-    "locks": [{"task_id": "<id>", "session": "<session-id>", "age": <seconds>}],
-    "branches": ["<branch-name>"],
-    "stale_remotes": [{"branch": "<name>", "author": "<author>", "relative": "<time>"}],
-    "context_file": "<path-or-null>"
-  }
-}
-```
-
-Output the SCRIPT OUTPUT SURVEY DISPLAY from the handler exactly as provided.
-Do NOT copy the example below - it shows format only. Use the handler output.
+Use the **SURVEY_DISPLAY** box from SCRIPT OUTPUT CLEANUP BOXES.
+Replace placeholders with actual survey data.
 
 ---
 
@@ -178,23 +160,8 @@ If uncommitted:
 
 ### Step 4: Get User Confirmation
 
-**Invoke handler to generate display:**
-
-```json
-{
-  "handler": "cleanup",
-  "context": {
-    "phase": "plan",
-    "locks_to_remove": ["<issue-id>"],
-    "worktrees_to_remove": [{"path": "<path>", "branch": "<branch>"}],
-    "branches_to_remove": ["<branch-name>"],
-    "stale_remotes": [{"branch": "<name>", "staleness": "<info>"}]
-  }
-}
-```
-
-Output the SCRIPT OUTPUT PLAN DISPLAY from the handler exactly as provided.
-Do NOT copy any example boxes - use the handler output.
+Use the **PLAN_DISPLAY** box from SCRIPT OUTPUT CLEANUP BOXES.
+Replace placeholders with actual cleanup plan data.
 
 **BLOCKING: Do NOT execute cleanup without explicit user confirmation.**
 
@@ -265,23 +232,8 @@ else
 fi
 ```
 
-**Invoke handler to generate display:**
-
-```json
-{
-  "handler": "cleanup",
-  "context": {
-    "phase": "verify",
-    "remaining_worktrees": ["<path>"],
-    "remaining_branches": ["<branch>"],
-    "remaining_locks": ["<lock-id>"],
-    "removed_counts": {"locks": <n>, "worktrees": <n>, "branches": <n>}
-  }
-}
-```
-
-Output the SCRIPT OUTPUT VERIFY DISPLAY from the handler exactly as provided.
-Do NOT copy any example boxes - use the handler output.
+Use the **VERIFY_DISPLAY** box from SCRIPT OUTPUT CLEANUP BOXES.
+Replace placeholders with actual verification results.
 
 ---
 

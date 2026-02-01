@@ -16,10 +16,6 @@ users through modifying their preferences.
 
 </objective>
 
-## Pre-rendered Config Boxes
-
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-config-boxes.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
-
 ---
 
 <process>
@@ -44,12 +40,7 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-**Output the SCRIPT OUTPUT CONFIG DISPLAY from context**
-
-Copy the exact box from the "SCRIPT OUTPUT CONFIG DISPLAY" context. Do NOT recompute or modify alignment.
-
-**Why pre-rendering:** Agents miscalculate emoji widths, causing misaligned box borders.
-The handler config_handler.py calculates correct widths before the skill starts.
+Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES (provided by config_handler.py).
 
 </step>
 
@@ -88,7 +79,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
-Use the **CURRENT_SETTINGS** box from Pre-rendered Config Boxes.
+Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES.
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -284,7 +275,7 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 
 **📊 Version Gates configuration:**
 
-Use the **VERSION_GATES_OVERVIEW** box from Pre-rendered Config Boxes.
+Use the **VERSION_GATES_OVERVIEW** box from SCRIPT OUTPUT CONFIG BOXES.
 
 **Step 1: Select version to configure**
 
@@ -322,7 +313,7 @@ cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from Pre-rendered Config Boxes.
+Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from SCRIPT OUTPUT CONFIG BOXES.
 Replace `{version}` and gate descriptions with actual values.
 
 **Step 3: Choose action**
@@ -395,7 +386,7 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Use the **GATES_UPDATED** box from Pre-rendered Config Boxes.
+Use the **GATES_UPDATED** box from SCRIPT OUTPUT CONFIG BOXES.
 Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
 
 Return to Step 3 (Choose action) to allow further edits or navigation.
@@ -418,7 +409,7 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Use the **SETTING_UPDATED** box from Pre-rendered Config Boxes.
+Use the **SETTING_UPDATED** box from SCRIPT OUTPUT CONFIG BOXES.
 Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
 
 **After confirming**: Return to the **parent menu** and re-display its options.
@@ -436,11 +427,11 @@ Examples:
 
 If changes were made:
 
-Use the **CONFIGURATION_SAVED** box from Pre-rendered Config Boxes.
+Use the **CONFIGURATION_SAVED** box from SCRIPT OUTPUT CONFIG BOXES.
 
 If no changes:
 
-Use the **NO_CHANGES** box from Pre-rendered Config Boxes.
+Use the **NO_CHANGES** box from SCRIPT OUTPUT CONFIG BOXES.
 
 </step>
 
