@@ -2572,6 +2572,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When user requests implementation work (even via option selection), create issue via /cat:add then delegate via /cat:work"
+    },
+    {
+      "id": "M341",
+      "timestamp": "2026-02-01T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent summarized pre-rendered status box instead of copy-pasting it verbatim",
+      "root_cause": "Default agent behavior is to interpret and summarize information. The instruction to copy-paste existed but was not prominent enough to override this default mode.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/status/SKILL.md",
+      "pattern_keywords": [
+        "copy-paste",
+        "verbatim",
+        "pre-rendered",
+        "summarize",
+        "status"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Copy-paste the pre-rendered status box exactly as shown, without interpretation or summarization"
     }
   ]
 }

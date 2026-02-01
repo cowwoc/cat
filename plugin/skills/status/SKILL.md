@@ -8,17 +8,13 @@ allowed-tools:
 
 # CAT Status Display
 
-## Purpose
+## MANDATORY OUTPUT REQUIREMENT (M341)
 
-User sees a correctly-aligned, complete project status display with actionable next steps.
+**YOUR ONLY JOB**: Copy-paste the box below VERBATIM. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## Procedure
-
-### Step 1: Output the pre-rendered status box
-
-**COPY AND OUTPUT THIS BOX EXACTLY** as plain text (do NOT wrap in markdown code fencing):
+## Pre-rendered Status Box (COPY THIS EXACTLY)
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
@@ -29,7 +25,7 @@ User sees a correctly-aligned, complete project status display with actionable n
 2. Run: `${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 3. Copy-paste that output exactly
 
-**NEVER manually construct status boxes. NEVER skip this step.**
+**NEVER summarize the box. NEVER describe its contents. COPY IT.**
 
 ### Step 2: Output next steps and legend
 
