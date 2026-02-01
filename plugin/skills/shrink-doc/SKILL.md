@@ -241,7 +241,14 @@ After agent completes:
        - Original: /tmp/original-{{filename}}
        - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
 
-       Return ONLY the formatted report from /compare-docs.
+       MANDATORY: Invoke the Skill tool with skill="cat:compare-docs".
+       Include the COMPLETE output including:
+       - EXECUTION EQUIVALENCE score
+       - Component Scores table
+       - Warnings section
+       - Summary section
+
+       Do NOT summarize or fabricate - return the actual skill output.
 
    Task tool #2:
      subagent_type: "general-purpose"
@@ -252,7 +259,14 @@ After agent completes:
        - Original: /tmp/original-{{filename}}
        - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
 
-       Return ONLY the formatted report from /compare-docs.
+       MANDATORY: Invoke the Skill tool with skill="cat:compare-docs".
+       Include the COMPLETE output including:
+       - EXECUTION EQUIVALENCE score
+       - Component Scores table
+       - Warnings section
+       - Summary section
+
+       Do NOT summarize or fabricate - return the actual skill output.
    ```
 
    **Step 4b: Check for consensus on 1.0**
@@ -278,7 +292,14 @@ After agent completes:
        - Original: /tmp/original-{{filename}}
        - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
 
-       Return ONLY the formatted report from /compare-docs.
+       MANDATORY: Invoke the Skill tool with skill="cat:compare-docs".
+       Include the COMPLETE output including:
+       - EXECUTION EQUIVALENCE score
+       - Component Scores table
+       - Warnings section
+       - Summary section
+
+       Do NOT summarize or fabricate - return the actual skill output.
    ```
 
    **Step 4d: Determine if 2 of 3 agree on 1.0**
@@ -289,17 +310,45 @@ After agent completes:
    | 1.0 | 0.95 | 0.93 | **FAIL** - only 1 of 3 = 1.0, iterate |
    | 0.95 | 0.93 | - | **FAIL** - 0 of 2 = 1.0, iterate (no tiebreaker needed) |
 
+   **Step 4e: Verify validation evidence (M349)**
+
+   **MANDATORY**: Before accepting any score, verify the subagent output contains ACTUAL
+   /compare-docs evidence, not just a claimed score.
+
+   **Evidence requirements** - subagent output MUST contain:
+   1. EXECUTION EQUIVALENCE score line
+   2. Component Scores table (Claim Preservation, Relationship Preservation, Graph Structure)
+   3. Summary section with Shared Claims count
+
+   **Verification check**:
+   ```yaml
+   evidence_check:
+     has_score: true|false           # Look for "EXECUTION EQUIVALENCE:"
+     has_component_table: true|false # Look for "| Component | Score |"
+     has_summary: true|false         # Look for "Shared Claims:"
+
+     # If ANY is false → subagent likely fabricated the score
+     # REJECT and re-run validation with explicit instruction to include full output
+   ```
+
+   **If evidence missing**: Do NOT accept the score. Re-run validation with prompt:
+   "Include the COMPLETE /compare-docs output including the EXECUTION EQUIVALENCE score, component table, and summary."
+
+   **Why this matters (M349)**: Subagents may report expected scores without actually running
+   validation. The 1.0 threshold creates strong priming for fabrication. Requiring evidence
+   proves the skill was actually invoked.
+
    **Report validation result**:
    ```
    Validation (best 2 of 3):
-   - Run 1: {score1}
-   - Run 2: {score2}
-   - Run 3: {score3} (if needed)
-   - Result: {PASS if ≥2 runs = 1.0, else FAIL}
+   - Run 1: {score1} [evidence: {verified|missing}]
+   - Run 2: {score2} [evidence: {verified|missing}]
+   - Run 3: {score3} (if needed) [evidence: {verified|missing}]
+   - Result: {PASS if ≥2 runs = 1.0 WITH verified evidence, else FAIL}
    ```
 
    **If FAIL**: Proceed to Step 6 (Iteration). After creating new version, run
-   Steps 4a-4d again on the NEW compressed version.
+   Steps 4a-4e again on the NEW compressed version.
 
 5. **Parse validation result**:
    - Use the **consensus score** from Step 4d
