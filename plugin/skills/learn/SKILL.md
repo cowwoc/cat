@@ -612,6 +612,60 @@ BEFORE proceeding to "Record Learning", you MUST complete this gate:
    The prevention_path in the JSON entry MUST match a file listed above.
    If they don't match, the learning system is corrupted.
 
+### 9c. Check Related Files for Similar Mistakes (M341)
+
+**MANDATORY: After fixing a file, check if similar files have the same vulnerability.**
+
+Many mistakes reflect patterns that exist across multiple files. After implementing the fix:
+
+1. **Identify the pattern fixed:**
+   ```yaml
+   pattern_fixed:
+     file_type: "skill"  # skill, hook, handler, config, etc.
+     vulnerability: "weak copy-paste instruction for pre-rendered content"
+     fix_applied: "added prominent MANDATORY OUTPUT REQUIREMENT header"
+   ```
+
+2. **Find related files:**
+   ```bash
+   # Examples by file type:
+
+   # Skills with pre-rendered content
+   grep -l '!\`' plugin/skills/*/SKILL.md
+
+   # Handlers with similar validation
+   find plugin/hooks -name "*.py" -exec grep -l "similar_pattern" {} \;
+
+   # Config files with same structure
+   find . -name "cat-config.json"
+   ```
+
+3. **Check each related file for the same vulnerability:**
+   - Read the file
+   - Determine if it has the same weakness
+   - If yes: apply the same fix pattern
+
+4. **Record related fixes:**
+   ```yaml
+   related_files_checked:
+     - path: "plugin/skills/help/SKILL.md"
+       had_vulnerability: true
+       fixed: true
+     - path: "plugin/skills/work/SKILL.md"
+       had_vulnerability: true
+       fixed: true
+     - path: "plugin/skills/init/SKILL.md"
+       had_vulnerability: false
+       reason: "uses named box references instead of direct copy-paste"
+   ```
+
+**Why this matters:** Fixing one file while leaving identical vulnerabilities in similar files
+means the same mistake WILL recur. Proactive checking prevents future M-numbers for the same root cause.
+
+**Skip this step only when:**
+- The fix is truly unique to one file (e.g., typo fix)
+- No similar files exist (verified, not assumed)
+
 ### 10. Verify Prevention Works
 
 ```yaml
