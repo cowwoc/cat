@@ -2626,6 +2626,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Ensure shell cwd is outside target worktree before running git worktree remove"
+    },
+    {
+      "id": "M343",
+      "timestamp": "2026-02-01T10:30:00Z",
+      "category": "prompt_engineering",
+      "description": "Task delegation prompt specified generic output format (lines_added/lines_removed) instead of task-specific metrics (tokens before/after, equivalence scores) for shrink-doc task",
+      "root_cause": "work-execute SKILL.md defined one-size-fits-all output contract without guidance on adapting metrics to task type",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "output format",
+        "task-specific",
+        "metrics",
+        "shrink-doc",
+        "delegation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Adapt output format task_metrics field to match what the task actually measures - tokens/scores for compression, lines for code changes, etc."
     }
   ]
 }
