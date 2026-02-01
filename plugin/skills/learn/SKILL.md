@@ -513,6 +513,29 @@ Step 1: Use pre-rendered content...
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
+**Escalation and Layered Prevention (M342):**
+
+When escalating from documentation to hook/validation, **keep both layers** but align them:
+
+| Layer | Purpose | Keep? |
+|-------|---------|-------|
+| **Skill/Doc** | Proactive guidance - teaches WHY, guides before action | YES |
+| **Hook** | Reactive enforcement - blocks after attempt, provides fix | YES (new) |
+
+**Why keep both:**
+- Skills guide agents BEFORE they act (proactive)
+- Hooks catch mistakes AFTER the attempt (reactive)
+- Skills explain context and cover related rules
+- Hooks can fail (bugs, edge cases, not loaded)
+
+**When escalating, update the skill to reference the hook:**
+```markdown
+- NEVER do X - use Y instead
+  *(Enforced by hook MXXX - blocked if condition)*
+```
+
+This creates defense-in-depth: guidance prevents most mistakes, enforcement catches the rest.
+
 **Fix Location Principle: Apply to deepest document possible.**
 
 When choosing WHERE to implement a fix, prefer the lowest-level document that addresses the issue:
