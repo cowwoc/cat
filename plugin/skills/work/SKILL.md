@@ -33,7 +33,9 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 
 Filters are interpreted by the prepare phase subagent using natural language understanding.
 
-## Progress Output
+## Progress Output (COPY EXACTLY - M341)
+
+**Copy-paste the banner and boxes below VERBATIM. Do NOT summarize or reformat.**
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 

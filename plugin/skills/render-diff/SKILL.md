@@ -7,27 +7,21 @@ user-invocable: false
 
 # Render Diff
 
-## Purpose
+## MANDATORY OUTPUT REQUIREMENT (M341)
 
-Transform raw git diff output into a 4-column table format optimized for approval gate reviews.
-Each hunk is rendered as a self-contained box with file header, making diffs easy to review.
+**YOUR ONLY JOB**: Copy-paste the diff below VERBATIM. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## Pre-rendered Diff
+## Pre-rendered Diff (COPY THIS EXACTLY)
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-render-diff.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
+**NEVER summarize the diff. NEVER describe it. COPY IT.**
+
 ---
 
-## Procedure
-
-### Step 1: Output the rendered diff
-
-The diff content above was pre-rendered via silent preprocessing. Output it **directly**:
-- No preamble, no Bash commands
-- Do NOT wrap in code blocks
-- The content is already formatted with 4-column tables and box characters
+## Reference (do not output this section)
 
 The preprocessing has already:
 - Calculated column widths and alignments

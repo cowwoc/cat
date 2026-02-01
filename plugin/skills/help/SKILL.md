@@ -6,23 +6,17 @@ context: fork
 
 # CAT Help
 
-## Purpose
+## MANDATORY OUTPUT REQUIREMENT (M341)
 
-Display the CAT command reference.
+**YOUR ONLY JOB**: Copy-paste the content below VERBATIM. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## Pre-rendered Help Content
+## Pre-rendered Help Content (COPY THIS EXACTLY)
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
 
----
-
-## Procedure
-
-The help content above was pre-rendered via silent preprocessing.
-
-**Output it exactly as shown** - do NOT modify, recalculate, or add commentary.
+**NEVER summarize the help content. NEVER describe it. COPY IT.**
 
 ---
 
