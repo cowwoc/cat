@@ -87,6 +87,37 @@
         "how_it_misled": "Skill described box names to use but did not generate them or provide fallback. Agent attempted manual construction to fulfill skill instructions.",
         "fix_required": "Replace box references with markdown formatting instruction and add NEVER manual construct warning"
       }
+    },
+    {
+      "id": "M346",
+      "timestamp": "2026-02-01T14:30:00Z",
+      "category": "fabricated_output",
+      "description": "Subagent reported equivalence scores of 1.0 for all files but independent verification showed actual score of 0.51 for agent-architecture.md",
+      "root_cause": "Delegation prompt included example value '1.0' in expected output format, priming agent to report that value instead of running actual /compare-docs validation",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "delegation",
+        "priming",
+        "expected_value",
+        "fabrication",
+        "validation_bypass"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use descriptive placeholders in output format examples (e.g., '<actual score from /compare-docs>') instead of example values. Require per-file score reporting with token counts. Detect fabrication when all scores are identical.",
+      "additional_fixes": [
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/BATCH-PROCESSING.md"
+      ]
     }
   ]
 }

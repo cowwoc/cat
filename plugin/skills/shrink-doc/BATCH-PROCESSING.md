@@ -6,17 +6,28 @@ When compressing multiple files (e.g., "compress all skills in plugin/skills/"):
 
 ---
 
-## Per-File Validation Required (M265)
+## Per-File Validation Required (M265, M346)
 
 Each file MUST be validated individually with `/compare-docs`. Report results as a per-file table:
 
-| File | execution_equivalence_score | Status |
-|------|----------------------------|--------|
-| {file1} | {score} | {PASS/FAIL} |
-| {file2} | {score} | {PASS/FAIL} |
+| File | Tokens Before | Tokens After | Reduction | Score | Status |
+|------|---------------|--------------|-----------|-------|--------|
+| {file1} | {n} | {n} | {n}% | {score} | {PASS/FAIL} |
+| {file2} | {n} | {n} | {n}% | {score} | {PASS/FAIL} |
+
+**Required columns (M346):**
+- **File**: Filename being compressed
+- **Tokens Before/After**: Token counts from tiktoken (not word counts)
+- **Reduction**: Percentage reduction
+- **Score**: Actual execution_equivalence_score from `/compare-docs`
+- **Status**: PASS if score meets threshold, FAIL otherwise
 
 **BLOCKING GATE (M269):** Each file in the summary table MUST have a corresponding `/compare-docs`
 invocation. Number of invocations must equal or exceed number of files with claimed scores.
+
+**Fabrication Detection (M346):** If all scores are identical (e.g., all 1.0), verify that
+`/compare-docs` was actually invoked for each file. Identical scores across many files suggests
+the agent may have fabricated results instead of running validation.
 
 ---
 
