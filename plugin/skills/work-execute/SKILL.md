@@ -37,8 +37,7 @@ Return JSON on success:
     {"hash": "abc123", "message": "feature: add parser", "type": "feature"}
   ],
   "files_changed": 8,
-  "lines_added": 250,
-  "lines_removed": 45,
+  "task_metrics": {},
   "discovered_issues": [],
   "verification": {
     "build_passed": true,
@@ -47,6 +46,18 @@ Return JSON on success:
   }
 }
 ```
+
+**Task-Specific Metrics (M343):** The `task_metrics` field captures metrics meaningful to the task type.
+Adapt the requested output based on what the task actually measures:
+
+| Task Type | Metrics to Request |
+|-----------|-------------------|
+| Code changes | `lines_added`, `lines_removed` |
+| Document compression (/shrink-doc) | `tokens_before`, `tokens_after`, `equivalence_score` per file |
+| Refactoring | `files_moved`, `symbols_renamed` |
+| Test additions | `tests_added`, `coverage_delta` |
+
+When constructing the subagent prompt, specify the metrics that match the task goal.
 
 Return JSON on failure:
 
