@@ -157,59 +157,35 @@ def5678 bugfix: fix comment parsing
 abc1234 bugfix: fix comment parsing (includes tests)
 ```
 
-## Issue Resolution and Commit Footers
+## Finding Commits by Issue
 
-### Standard Issue Completion
+Implementation commits are tracked via STATE.md file history, not commit footers.
 
-Implementation commits include a `Issue ID` footer for traceability:
+### Finding Implementation Commits
 
-```
-bugfix: fix multi-parameter lambda parsing
+```bash
+# Find all commits that touched this issue
+git log --oneline -- .claude/cat/issues/v2/v2.1/issue-name/
 
-[description]
+# Find the most recent implementation commit (usually STATE.md completion)
+git log --oneline -1 -- .claude/cat/issues/v2/v2.1/issue-name/STATE.md
 
-Issue ID: v0.5-fix-multi-param-lambda
-```
-
-### Duplicate Issue Resolution
-
-When an issue is discovered to be a duplicate of another issue:
-
-1. **No implementation commit** - the work was already done
-2. **STATE.md-only commit** - marks the duplicate issue complete
-3. **No Issue ID footer** - because there's no implementation
-
-```
-# Commit for closing a duplicate issue
-config: close duplicate issue fix-cast-lambda-in-method-args
-
-Duplicate of fix-multi-param-lambda (resolved in commit abc1234).
-Both issues addressed "Expected RIGHT_PARENTHESIS but found COMMA" errors.
-
-# NOTE: No "Issue ID:" footer - this is not an implementation commit
+# See full implementation history with diffs
+git log -p -- .claude/cat/issues/v2/v2.1/issue-name/STATE.md
 ```
 
-### Obsolete Issue Resolution
+**Why this works:**
+- STATE.md is updated when the issue is completed
+- STATE.md commits are part of the implementation commit (per M076)
+- Git's file history tracking survives rebases automatically
+- No manual commit hash maintenance required
 
-When an issue is no longer needed:
-
-```
-config: close obsolete issue add-legacy-support
-
-Requirements changed - legacy support is no longer in scope.
-
-# NOTE: No "Issue ID:" footer - this is not an implementation commit
-```
-
-### Finding Commits by Issue
+### Resolution Types
 
 | Resolution | How to Find Commits |
 |------------|---------------------|
-| `implemented` | `git log --grep="Issue ID: v{x}.{y}-{issue-name}"` (may return multiple commits) |
+| `implemented` | `git log -- .claude/cat/issues/v*/v*.*/issue-name/STATE.md` |
 | `duplicate` | Check STATE.md for `Duplicate Of`, search for that issue |
 | `obsolete` | No implementation commit exists |
-
-**Note**: The grep command may return multiple commits if the issue was implemented across multiple
-commits. Each commit for the same issue shares the identical `Issue ID` footer.
 
 See [issue-resolution.md](issue-resolution.md) for detailed resolution handling.

@@ -115,10 +115,12 @@ Changes:
 Issue ID: v{major}.{minor}-{issue-name}
 ```
 
-## Issue ID Footer (MANDATORY for CAT issues)
+## Finding Commits for CAT Issues
 
-**Every commit for a CAT issue MUST include the Issue ID in the last line.** A issue may span multiple
-commits (across sessions or addressing distinct aspects). Each commit MUST include the same Issue ID:
+**Commits are tracked via STATE.md file history, not commit footers.**
+
+When an issue is completed, STATE.md is updated in the same commit as the implementation
+(per M076). This creates a permanent link between the commit and the issue.
 
 ```
 feature: add yield statement parsing support
@@ -129,15 +131,20 @@ for JDK 14+ switch expressions.
 - Added YIELD_STATEMENT to NodeType enum
 - Created parseYieldStatement() following parseThrowStatement() pattern
 - Updated ContextDetector exhaustive switch
-
-Issue ID: v3.0-add-yield-statement-support
 ```
 
-**Format**: `Issue ID: v{major}.{minor}-{issue-name}`
+**Finding implementation commits:**
 
-**Why**: Enables reliable commit identification without storing commit hashes in documentation.
-Find all commits for a issue: `git log --grep="Issue ID: v3.0-add-yield-statement-support"` (may
-return multiple commits if the issue was implemented across multiple commits)
+```bash
+# Find all commits for an issue
+git log --oneline -- .claude/cat/issues/v3/v3.0/add-yield-statement-support/
+
+# Find the completion commit
+git log --oneline -1 -- .claude/cat/issues/v3/v3.0/add-yield-statement-support/STATE.md
+```
+
+**Why no footer needed:** Git's file history tracking survives rebases automatically and
+requires no manual maintenance
 
 ## For Squashed Commits
 
@@ -146,23 +153,21 @@ return multiple commits if the issue was implemented across multiple commits)
 git log --oneline base..HEAD
 ```
 
-**Synthesize into unified message with Issue ID:**
+**Synthesize into unified message:**
 
 ```
-# WRONG - Concatenated messages, no Issue ID
+# WRONG - Concatenated messages
 feature(auth): add login form
 feature(auth): add validation
 feature(auth): add error handling
 bugfix(auth): fix typo
 
-# CORRECT - Unified message with Issue ID footer
+# CORRECT - Unified message describing what the code does
 feature: add login form with validation and error handling
 
 - Email/password form with client-side validation
 - Server-side validation with descriptive error messages
 - Loading states and error display
-
-Issue ID: v1.1-implement-user-auth
 ```
 
 ## Commit Types (MANDATORY)
@@ -279,7 +284,6 @@ Proceed directly to `git add <files> && git commit`.
 - [ ] Body explains WHAT and WHY, not HOW
 - [ ] No file names listed (the diff already shows which files changed)
 - [ ] For squashed commits: synthesized meaningful summary
-- [ ] **Issue ID footer included** (for CAT issues): `Issue ID: vX.Y-issue-name`
 - [ ] Message would make sense in git history 6 months from now
 
 ## Worktree Verification (M101)
