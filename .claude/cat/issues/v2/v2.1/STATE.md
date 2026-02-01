@@ -60,3 +60,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-task-in-commands (duplicate of rename-task-in-skills - commands moved to skills/)
 - rename-task-in-concepts (from decomposed rename-task-to-issue)
 - self-discover-env-vars
+
+## Issues Pending
+- simplify-prerendered-skills
