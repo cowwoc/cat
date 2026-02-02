@@ -16,128 +16,119 @@ user-invocable: false
 
 ## Procedure
 
-### Step 1: Extract Claims from Both Documents (IN PARALLEL)
+### Step 1: Run TWO Independent Comparisons (MANDATORY - M350, M354)
 
-**⚡ CRITICAL**: Invoke BOTH extraction agents in a single message with two Task tool calls.
+**⚠️ MANDATORY**: Run the full extract+compare pipeline TWICE in a single message.
 
-**Why Parallel Execution**:
-- Extractions are completely independent (no cross-contamination risk)
-- Running sequentially wastes time (~50% slower for no accuracy benefit)
-- Step 2 waits for both to complete before comparing
+Due to ±10-35% extraction variance, a single comparison may be an outlier. M354 failure: running
+only one comparison for a file led to potentially unreliable validation (e.g., 0.91 vs 0.575 on
+same document). Both runs MUST complete before proceeding.
+
+**Spawn ALL 4 extraction agents in a single message:**
+
+```
+Task tool #1 (Run 1, Doc A):
+  subagent_type: "general-purpose"
+  model: "opus"
+  description: "Extract claims from Document A (Run 1)"
+  prompt: |
+    Read the instructions at: plugin/skills/compare-docs/EXTRACTION-AGENT.md
+    Then extract all semantic claims and relationships from:
+    - DOCUMENT: {{arg1}}
+    Return COMPLETE JSON (not summary).
+
+Task tool #2 (Run 1, Doc B):
+  subagent_type: "general-purpose"
+  model: "opus"
+  description: "Extract claims from Document B (Run 1)"
+  prompt: |
+    Read the instructions at: plugin/skills/compare-docs/EXTRACTION-AGENT.md
+    Then extract all semantic claims and relationships from:
+    - DOCUMENT: {{arg2}}
+    Return COMPLETE JSON (not summary).
+
+Task tool #3 (Run 2, Doc A):
+  subagent_type: "general-purpose"
+  model: "opus"
+  description: "Extract claims from Document A (Run 2)"
+  prompt: |
+    Read the instructions at: plugin/skills/compare-docs/EXTRACTION-AGENT.md
+    Then extract all semantic claims and relationships from:
+    - DOCUMENT: {{arg1}}
+    Return COMPLETE JSON (not summary).
+
+Task tool #4 (Run 2, Doc B):
+  subagent_type: "general-purpose"
+  model: "opus"
+  description: "Extract claims from Document B (Run 2)"
+  prompt: |
+    Read the instructions at: plugin/skills/compare-docs/EXTRACTION-AGENT.md
+    Then extract all semantic claims and relationships from:
+    - DOCUMENT: {{arg2}}
+    Return COMPLETE JSON (not summary).
+```
+
+**After all 4 complete**, save results:
+- Run 1: `/tmp/compare-doc-a-extraction-run1.json`, `/tmp/compare-doc-b-extraction-run1.json`
+- Run 2: `/tmp/compare-doc-a-extraction-run2.json`, `/tmp/compare-doc-b-extraction-run2.json`
 
 **⚠️ ENCAPSULATION (M269)**: The extraction algorithm is in a separate internal document.
 Do NOT attempt extraction manually - invoke subagents which read their own instructions.
 
-**Subagent invocation** (invoke BOTH in a single message):
-
-```
-Task tool #1:
-  subagent_type: "general-purpose"
-  model: "opus"
-  description: "Extract claims from Document A"
-  prompt: |
-    Read the instructions at: plugin/skills/compare-docs/EXTRACTION-AGENT.md
-
-    Then extract all semantic claims and relationships from:
-    - DOCUMENT: {{arg1}}
-
-    Return COMPLETE JSON (not summary).
-
-Task tool #2:
-  subagent_type: "general-purpose"
-  model: "opus"
-  description: "Extract claims from Document B"
-  prompt: |
-    Read the instructions at: plugin/skills/compare-docs/EXTRACTION-AGENT.md
-
-    Then extract all semantic claims and relationships from:
-    - DOCUMENT: {{arg2}}
-
-    Return COMPLETE JSON (not summary).
-```
-
-**After both complete**, save results:
-- Document A extraction → `/tmp/compare-doc-a-extraction.json`
-- Document B extraction → `/tmp/compare-doc-b-extraction.json`
-
-### Step 2: Compare and Generate Report (Single Subagent)
+### Step 2: Run BOTH Comparison Agents (IN PARALLEL)
 
 **CRITICAL (M295): Entire comparison MUST run in subagent to avoid context pollution.**
 
-The comparison subagent performs BOTH comparison AND report generation. The main agent
-receives ONLY the final formatted report, not intermediate JSON data.
-
-**⚠️ ENCAPSULATION (M269)**: The comparison algorithm is in a separate internal document.
+Spawn BOTH comparison agents in a single message - one for each run's extractions.
 
 **Determine threshold before spawning:**
 - If invoked from `/cat:shrink-doc` → Required threshold = **1.0 (exact)**
 - Otherwise → Default threshold = **0.95**
 
-**Subagent invocation**:
+**Subagent invocation (spawn BOTH in single message):**
 
 ```
-Task tool:
+Task tool #1 (Run 1 Comparison):
   subagent_type: "general-purpose"
   model: "opus"
-  description: "Compare documents and generate report"
+  description: "Compare documents Run 1"
   prompt: |
     Read the instructions at: plugin/skills/compare-docs/COMPARISON-AGENT.md
 
     Compare these two document extractions:
-    - Document A data: /tmp/compare-doc-a-extraction.json
-    - Document B data: /tmp/compare-doc-b-extraction.json
+    - Document A data: /tmp/compare-doc-a-extraction-run1.json
+    - Document B data: /tmp/compare-doc-b-extraction-run1.json
 
     **Required threshold: {threshold}** (1.0 for shrink-doc, 0.95 otherwise)
 
     After comparison, generate the FINAL REPORT directly (do not return JSON).
+    [Report format - see COMPARISON-AGENT.md]
 
-    **Report format (output this exactly):**
+Task tool #2 (Run 2 Comparison):
+  subagent_type: "general-purpose"
+  model: "opus"
+  description: "Compare documents Run 2"
+  prompt: |
+    Read the instructions at: plugin/skills/compare-docs/COMPARISON-AGENT.md
 
-    ╔══════════════════════════════════════════════════════╗
-    ║  EXECUTION EQUIVALENCE: {SCORE}                      ║
-    ║  Required Threshold: {threshold}                     ║
-    ║  Status: {PASS if score >= threshold, else FAIL}     ║
-    ╚══════════════════════════════════════════════════════╝
+    Compare these two document extractions:
+    - Document A data: /tmp/compare-doc-a-extraction-run2.json
+    - Document B data: /tmp/compare-doc-b-extraction-run2.json
 
-    ## Component Scores
-    | Component | Score |
-    |-----------|-------|
-    | Claim Preservation | {score} |
-    | Relationship Preservation | {score} |
-    | Graph Structure | {score} |
+    **Required threshold: {threshold}** (1.0 for shrink-doc, 0.95 otherwise)
 
-    ## Warnings
-    {List CRITICAL/HIGH severity warnings first}
-
-    ## Lost Relationships
-    {If any}
-
-    ## Summary
-    - Shared Claims: {count}
-    - Unique to A: {count}
-    - Unique to B: {count}
-
-    Return ONLY this formatted report. Do NOT return raw JSON.
+    After comparison, generate the FINAL REPORT directly (do not return JSON).
+    [Report format - see COMPARISON-AGENT.md]
 ```
 
-**Why single subagent for compare+report (M295):**
+**⚠️ ENCAPSULATION (M269)**: The comparison algorithm is in a separate internal document.
+
+**Why single subagent per run (M295):**
 - Keeps ~10K+ tokens of extraction/comparison data OUT of main agent context
-- Main agent receives only the ~500 token formatted report
+- Main agent receives only the ~500 token formatted report per run
 - Prevents context pollution that degrades main agent quality
 
-### Step 3: Run Second Comparison (MANDATORY - M350)
-
-**⚠️ MANDATORY**: Due to ±10-35% extraction variance, run comparison TWICE for reliable scores.
-
-Repeat Step 1 and Step 2 to get a second independent score for each document pair.
-
-**Why this is mandatory:**
-- Single comparison may be an outlier (extraction agents classify claims differently each run)
-- Best-2-of-3 eliminates variance-caused false PASS/FAIL decisions
-- M350 failure: skipping this step led to unreliable validation
-
-**Parallel execution**: For efficiency, spawn the second comparison in parallel with the first
-(4 extraction agents total for a single document pair, then 2 comparison agents).
+### Step 3: Calculate Consensus from Both Runs
 
 **Consensus rules:**
 
@@ -281,13 +272,12 @@ At this score range, watch for:
 
 ## Verification
 
-- [ ] Both extraction agents invoked in parallel (single message)
-- [ ] Comparison agent invoked with both extraction results
-- [ ] **Second comparison run completed (M350)** - NOT optional
-- [ ] Consensus calculated from 2+ runs
+- [ ] **All 4 extraction agents invoked in single message (M354)** - Run 1 A/B + Run 2 A/B
+- [ ] **Both comparison agents invoked in single message (M350)** - Run 1 + Run 2
+- [ ] Consensus calculated from 2 runs (Step 3)
 - [ ] Score interpretation matches threshold table
 - [ ] Warnings reviewed for CRITICAL/HIGH severity
-- [ ] Report generated with all required sections
+- [ ] Report shows both run scores: "Run 1: X | Run 2: Y | Consensus: Z"
 
 ---
 
