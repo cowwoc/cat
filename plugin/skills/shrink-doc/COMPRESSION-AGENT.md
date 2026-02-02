@@ -16,6 +16,23 @@ to preserve all semantic content.
 **Note**: The orchestrator validates equivalence via /compare-docs. Your job is to preserve
 content; the validation tool determines the actual score.
 
+## Clarity Improvement Principle
+
+**Improve clarity, don't just preserve content.**
+
+When compressing, actively reduce ambiguity by:
+- Converting implicit temporal ordering to explicit statements
+- Normalizing vague language to precise constraints
+- Making relationships explicit even if "derivable" from context
+- Replacing negative instructions ("don't do X") with positive actionable ones ("do Y")
+
+This reduces extraction variance during validation and improves execution equivalence.
+
+**Apply this principle when:**
+- Text uses vague ordering ("then", "next") - clarify to explicit "Step N before Step M"
+- Examples show constraints without stating them - add explicit constraint statement
+- Relationships are implied but not stated - state them explicitly
+
 ## What is Execution Equivalence?
 
 A reader following the compressed version achieves the same results as someone following the original.
@@ -51,6 +68,52 @@ A reader following the compressed version achieves the same results as someone f
 - Remove "Definition" sections that explain obvious terms
 - Combine related claims into single statements where possible
 - Use high-level principle statements instead of exhaustive enumeration (when appropriate)
+
+## Normalization for Clarity
+
+When compressing, apply these normalizations to reduce ambiguity:
+
+**Temporal Ordering:**
+- BEFORE: "Run the tests, then deploy"
+- AFTER: "Run tests before deployment" (explicit temporal marker)
+
+**Implicit Constraints:**
+- BEFORE: Example shows `validate(); process();` without explanation
+- AFTER: "Validate before processing (required ordering)"
+
+**Vague Quantifiers:**
+- BEFORE: "Wait a bit before retrying"
+- AFTER: "Wait before retrying" or remove if no constraint intended
+
+**Conditional Clarity:**
+- BEFORE: "You might want to check X"
+- AFTER: "Check X if [condition]" or remove if optional
+
+**Negative → Positive:**
+- BEFORE: "Don't skip validation"
+- AFTER: "Validate before proceeding" (actionable positive instruction)
+
+- BEFORE: "Never deploy without testing"
+- AFTER: "Test before deploying" (same constraint, positive framing)
+
+**Principle:** If the original text conveys a constraint (even implicitly), the compressed
+version should state that constraint MORE explicitly, not less. Prefer positive actionable
+instructions over negative prohibitions when the positive form is equally clear.
+
+## Compression Anti-Patterns
+
+**DO NOT reduce clarity when compressing:**
+
+| Original | Bad Compression | Good Compression |
+|----------|-----------------|------------------|
+| "Always run A before B" | "Run A and B" | "Run A before B" (preserved) |
+| "Step 1, then Step 2, then Step 3" | "Complete all steps" | "Step 1 → Step 2 → Step 3" |
+| Example: `init(); start();` | (removed) | "Initialize before starting" |
+| "MUST validate OR reject" | "Handle input" | "Validate input; reject if invalid" |
+| "Don't skip the tests" | "Don't skip tests" | "Run tests before proceeding" |
+| "Never commit without review" | (kept as-is) | "Get review before committing" |
+
+**Key insight:** Compression should reduce TOKENS, not CONSTRAINTS.
 
 ## Output
 
