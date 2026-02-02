@@ -312,6 +312,34 @@
         "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/SKILL.md",
         "${CLAUDE_PROJECT_DIR}/CLAUDE.md"
       ]
+    },
+    {
+      "id": "M354",
+      "timestamp": "2026-02-02T05:00:00Z",
+      "category": "protocol_violation",
+      "description": "compare-docs executed with single comparison run for 2 of 3 files instead of mandatory two-run validation despite M350 requirement",
+      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1→2→4, making the 'go back' step easy to skip due to completion bias after getting a result.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "compare-docs",
+        "validation",
+        "two-run",
+        "M350",
+        "structural-bypass"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M350",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Spawn ALL 4 extraction agents in Step 1 (both runs), spawn BOTH comparison agents in Step 2 (both runs). Two-run requirement is now structurally impossible to skip.",
+      "structural_fix": "Integrated two-run requirement INTO execution steps rather than as separate 'repeat' instruction. Step 1 spawns 4 agents, Step 2 spawns 2 agents, Step 3 calculates consensus."
     }
   ]
 }
