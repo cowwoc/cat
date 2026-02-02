@@ -578,6 +578,27 @@ When escalating from documentation to hook/validation, **keep both layers** but 
 
 This creates defense-in-depth: guidance prevents most mistakes, enforcement catches the rest.
 
+**Script vs Skill Instructions (M363):**
+
+Before adding prevention to a skill, ask: **Does this require LLM decision-making?**
+
+| If the check is... | Implement as... | Why |
+|--------------------|-----------------|-----|
+| Deterministic (fixed inputs → fixed outputs) | Script with tests | Testable, consistent, no LLM variance |
+| Requires context/judgment | Skill instructions | LLM needed for interpretation |
+
+**Examples:**
+
+| Check | Deterministic? | Implementation |
+|-------|----------------|----------------|
+| "Does branch have commits ahead of base?" | Yes - `git log` | Script |
+| "Is file path inside worktree?" | Yes - path comparison | Script |
+| "Does commit message follow convention?" | Yes - regex match | Hook |
+| "Is this change architecturally sound?" | No - requires judgment | Skill instructions |
+| "Should we decompose this task?" | No - context-dependent | Skill instructions |
+
+**When in doubt, ask:** "Could a bash script do this with no LLM?" If yes → script with tests.
+
 **Fix Location Principle: Apply to deepest document possible.**
 
 When choosing WHERE to implement a fix, prefer the lowest-level document that addresses the issue:
