@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-01T01:08:32-05:00",
-  "mistake_count_since_last": 17,
+  "last_retrospective": "2026-02-02T18:00:00-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -20,20 +20,23 @@
     {
       "pattern_id": "PATTERN-001",
       "pattern": "subagent_validation_fabrication",
-      "occurrences_total": 6,
-      "occurrences_after_fix": 2,
+      "occurrences_total": 9,
+      "occurrences_after_fix": 5,
       "first_seen": "2026-01-26T17:00:00Z",
-      "last_seen": "2026-01-27T10:00:00Z",
+      "last_seen": "2026-02-02T12:00:00Z",
       "last_action_date": null,
       "status": "recurring",
-      "effectiveness": "pending",
+      "effectiveness": "partially_effective",
       "preventions": [
         "M269",
         "M270",
         "M271",
         "M273",
         "M274",
-        "M276"
+        "M276",
+        "M346",
+        "M349",
+        "M356"
       ],
       "related_action_items": [
         "A001"
@@ -203,6 +206,59 @@
         "A009"
       ],
       "note": "Approval gates shown without /cat:render-diff, user sees raw git diff or summary instead of 4-column table format."
+    },
+    {
+      "pattern_id": "PATTERN-010",
+      "pattern": "two_run_validation_bypass",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-02T22:15:00Z",
+      "last_seen": "2026-02-02T06:20:00Z",
+      "last_action_date": "2026-02-02T18:00:00-05:00",
+      "status": "addressed",
+      "effectiveness": "pending",
+      "preventions": [
+        "M351",
+        "M354",
+        "M357"
+      ],
+      "related_action_items": ["A010"],
+      "note": "compare-docs executed with single comparison run instead of mandatory two-run protocol. Completion bias causes skip of 'repeat' steps."
+    },
+    {
+      "pattern_id": "PATTERN-011",
+      "pattern": "rca_symptom_fix",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-02T00:20:00Z",
+      "last_seen": "2026-02-02T01:00:00Z",
+      "last_action_date": "2026-02-02T18:00:00-05:00",
+      "status": "addressed",
+      "effectiveness": "pending",
+      "preventions": [
+        "M355",
+        "M358"
+      ],
+      "related_action_items": ["A011"],
+      "note": "RCA adds validation layers to detect symptoms instead of fixing source prompts that caused subagent misbehavior."
+    },
+    {
+      "pattern_id": "PATTERN-012",
+      "pattern": "subagent_prompt_priming",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-01T14:30:00Z",
+      "last_seen": "2026-02-02T14:00:00Z",
+      "last_action_date": "2026-02-02T18:00:00-05:00",
+      "status": "addressed",
+      "effectiveness": "pending",
+      "preventions": [
+        "M346",
+        "M350",
+        "M349"
+      ],
+      "related_action_items": ["A012"],
+      "note": "Delegation prompts contain example values that prime subagents to fabricate or deprioritize actual execution."
     }
   ],
   "action_items": [
@@ -212,7 +268,7 @@
       "description": "Enforce validation separation: subagents that PRODUCE output must NOT validate it. Add explicit check in subagent-delegation.md and fail-fast in work.md when subagent claims validation without tool evidence",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-001",
-      "status": "implemented",
+      "status": "escalated",
       "created_date": "2026-01-27T12:30:00Z",
       "completed_date": "2026-01-27T12:30:00Z",
       "related_mistakes": [
@@ -221,16 +277,31 @@
         "M271",
         "M273",
         "M274",
-        "M276"
+        "M276",
+        "M346",
+        "M349",
+        "M356"
       ],
       "effectiveness_check": {
         "mistakes_before": 6,
-        "mistakes_after": 2,
+        "mistakes_after": 5,
         "post_fix_mistakes": [
           "M269",
-          "M273"
+          "M273",
+          "M346",
+          "M349",
+          "M356"
         ],
-        "verdict": "partially_effective"
+        "verdict": "ineffective"
+      },
+      "escalation": {
+        "id": "ESCALATE-A001",
+        "escalated_date": "2026-02-02T18:00:00-05:00",
+        "reason": "5 post-fix mistakes (M346, M349, M356 in current period) - documentation-level prevention ineffective",
+        "escalation_level": "hook",
+        "analysis": "Documentation tells subagents not to fabricate, but subagents ignore it when prompts contain example values. Need to either: (1) prevent priming at prompt construction time, or (2) verify skill invocation evidence in results.",
+        "proposed_solution": "Add A012 (prompt priming prevention) AND require explicit evidence (tool output) in validation results. Consider PostToolUse hook to detect validation claims without corresponding skill invocation in session.",
+        "status": "open"
       }
     },
     {
@@ -442,6 +513,71 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A010",
+      "priority": "high",
+      "description": "Restructure compare-docs to make two-run validation structurally impossible to skip: Step 1 spawns all 4 extraction agents, Step 2 spawns both comparison agents. No 'repeat' instruction that completion bias can skip.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-010",
+      "status": "implemented",
+      "created_date": "2026-02-02T18:00:00-05:00",
+      "completed_date": "2026-02-02T18:00:00-05:00",
+      "related_mistakes": [
+        "M351",
+        "M354",
+        "M357"
+      ],
+      "implementation": "M354 prevention already restructured compare-docs to spawn all agents upfront. M357 added explicit batch handling. Two-run is now default structure.",
+      "effectiveness_check": {
+        "mistakes_before": 3,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A011",
+      "priority": "high",
+      "description": "When subagent produces wrong output, fix the SOURCE (prompt/skill) not add validation layers. learn-from-mistakes skill must require asking 'Why did subagent do X?' and fixing prompt if answer involves prompt content.",
+      "category": "rca_failure",
+      "pattern_id": "PATTERN-011",
+      "status": "implemented",
+      "created_date": "2026-02-02T18:00:00-05:00",
+      "completed_date": "2026-02-02T18:00:00-05:00",
+      "related_mistakes": [
+        "M355",
+        "M358"
+      ],
+      "implementation": "M355 prevention added source-vs-symptom guidance to learn skill. M358 added explicit warning against independent validation layers.",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A012",
+      "priority": "high",
+      "description": "Use descriptive placeholders in delegation prompt examples (e.g., '<actual score from /compare-docs>') instead of example values like '1.0'. Require per-file score reporting with evidence of skill invocation.",
+      "category": "prompt_engineering",
+      "pattern_id": "PATTERN-012",
+      "status": "implemented",
+      "created_date": "2026-02-02T18:00:00-05:00",
+      "completed_date": "2026-02-02T18:00:00-05:00",
+      "related_mistakes": [
+        "M346",
+        "M349",
+        "M350"
+      ],
+      "implementation": "M346 prevention added descriptive placeholder guidance and per-file reporting requirement. M350 prevention restructured prompts with critical requirements first.",
+      "effectiveness_check": {
+        "mistakes_before": 3,
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
