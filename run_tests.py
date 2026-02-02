@@ -628,6 +628,117 @@ def test_posttool_skill_preprocessor_output():
         runner.test(f"Extract '{skill_input}' -> {expected}", result == expected)
 
 
+def test_posttool_user_input_reminder():
+    """Test PostToolUse handler for user input reminder (M247/M337/M366)."""
+    runner.section("posttool_handlers/user_input_reminder")
+
+    # Import the handler
+    from posttool_handlers.user_input_reminder import UserInputReminderHandler
+    handler = UserInputReminderHandler()
+
+    # Test 1: No system-reminder - returns None
+    result = handler.check("Bash", {"output": "some output"}, {})
+    runner.test("No system-reminder returns None", result is None)
+
+    # Test 2: System-reminder without user input - returns None
+    tool_result = {
+        "output": "<system-reminder>This is just a reminder about something.</system-reminder>"
+    }
+    result = handler.check("Bash", tool_result, {})
+    runner.test("System-reminder without user input returns None", result is None)
+
+    # Test 3: System-reminder with question mark - triggers reminder
+    tool_result = {
+        "output": "<system-reminder>Can you help me with this task?</system-reminder>"
+    }
+    result = handler.check("Bash", tool_result, {})
+    runner.test("Question with '?' triggers reminder",
+                result is not None and "additionalContext" in result)
+    if result:
+        runner.test("Reminder mentions M247/M337/M366",
+                    "M247" in result.get("additionalContext", "") and
+                    "M337" in result.get("additionalContext", "") and
+                    "M366" in result.get("additionalContext", ""))
+
+    # Test 4: System-reminder with "can you" phrase - triggers reminder
+    tool_result = {
+        "output": "<system-reminder>can you please check the logs</system-reminder>"
+    }
+    result = handler.check("Bash", tool_result, {})
+    runner.test("'can you' phrase triggers reminder",
+                result is not None and "additionalContext" in result)
+
+    # Test 5: System-reminder with "how do" phrase - triggers reminder
+    tool_result = {
+        "output": "<system-reminder>how do I configure this setting</system-reminder>"
+    }
+    result = handler.check("Bash", tool_result, {})
+    runner.test("'how do' phrase triggers reminder",
+                result is not None and "additionalContext" in result)
+
+    # Test 6: User input already acknowledged - returns None
+    tool_result = {
+        "output": "I acknowledge your question. <system-reminder>Can you help?</system-reminder>"
+    }
+    result = handler.check("Bash", tool_result, {})
+    runner.test("Acknowledged input returns None", result is None)
+
+    # Test 7: User input with "I see" acknowledgment - returns None
+    tool_result = {
+        "output": "I see your question about X. <system-reminder>What should I do?</system-reminder>"
+    }
+    result = handler.check("Bash", tool_result, {})
+    runner.test("'I see' acknowledgment returns None", result is None)
+
+    # Test 8: Multiple question patterns
+    question_cases = [
+        ("?", "Is this a test?"),
+        ("can you", "can you help me"),
+        ("could you", "could you check this"),
+        ("what is", "what is the status"),
+        ("why did", "why did this happen"),
+        ("do you", "do you have the info"),
+    ]
+    for pattern, test_text in question_cases:
+        tool_result = {
+            "output": f"<system-reminder>{test_text}</system-reminder>"
+        }
+        result = handler.check("Bash", tool_result, {})
+        has_result = result is not None and "additionalContext" in result
+        runner.test(f"Question pattern '{pattern}' detected", has_result)
+
+    # Test 9: Explicit user input markers
+    user_input_cases = [
+        ("user message", "The user sent the following message: Please add feature X"),
+        ("MUST", "You MUST complete this task before proceeding"),
+        ("Before proceeding", "Before proceeding, ensure all tests pass"),
+        ("AGENT INSTRUCTION", "AGENT INSTRUCTION: Handle this request first"),
+    ]
+    for pattern, test_text in user_input_cases:
+        tool_result = {
+            "output": f"<system-reminder>{test_text}</system-reminder>"
+        }
+        result = handler.check("Bash", tool_result, {})
+        has_result = result is not None and "additionalContext" in result
+        runner.test(f"User input marker '{pattern}' detected", has_result)
+
+    # Test 10: Imperative command patterns
+    command_cases = [
+        ("fix", "fix this bug"),
+        ("add", "add a new feature"),
+        ("update", "update the configuration"),
+        ("please add", "please add documentation"),
+        ("can you fix", "can you fix this issue"),
+    ]
+    for pattern, test_text in command_cases:
+        tool_result = {
+            "output": f"<system-reminder>{test_text}</system-reminder>"
+        }
+        result = handler.check("Bash", tool_result, {})
+        has_result = result is not None and "additionalContext" in result
+        runner.test(f"Command pattern '{pattern}' detected", has_result)
+
+
 def test_config_loader():
     """Test unified config loader."""
     runner.section("lib/config loader")
@@ -1046,6 +1157,7 @@ def main():
         test_box_alignment,
         test_cleanup_handler,
         test_posttool_skill_preprocessor_output,
+        test_posttool_user_input_reminder,
         test_config_loader,
         test_get_available_issues_discovery,
         test_abort_clarification_handler,

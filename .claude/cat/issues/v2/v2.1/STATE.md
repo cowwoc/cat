@@ -66,3 +66,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-grep-jsonl-filter
 - conservative-extraction-bias
 - fix-worktree-merge-docs
+- fix-user-question-acknowledgment
