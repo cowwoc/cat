@@ -226,6 +226,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Structure subagent prompts with CRITICAL requirements first, then working directory, then task goal, then step-by-step instructions, then output format, then context/metadata last."
+    },
+    {
+      "id": "M350",
+      "timestamp": "2026-02-02T22:15:00Z",
+      "category": "protocol_violation",
+      "description": "compare-docs executed with single comparison run per file instead of mandatory best-2-of-3 validation",
+      "root_cause": "Best-2-of-3 requirement was in 'Reproducibility Notes' section with 'Recommended/should' language rather than integrated into mandatory Procedure steps. Completion bias treated it as optional.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "compare-docs",
+        "validation",
+        "2-of-3",
+        "reproducibility",
+        "variance"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run comparison twice (or 3x if results disagree) and use consensus score. This is now mandatory Step 3 in the Procedure."
     }
   ]
 }
