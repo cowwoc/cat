@@ -342,16 +342,20 @@ When a mistake involves incorrect output from a subagent or downstream process:
 **Example - M355 Pattern:**
 
 ```yaml
-# Mistake: Subagent fabricated validation scores
+# Mistake: Subagent reported unexpected validation scores
 
-# ❌ SYMPTOM FIX: Add fabrication detection after validation
-prevention: "Check if all scores are identical (suggests fabrication)"
-prevents_root_cause: false  # Subagent will still try to fabricate!
+# ❌ SYMPTOM FIX: Add validation layer to catch "wrong" results
+prevention: "Run independent validation and compare scores"
+prevents_root_cause: false  # Another subagent is no more independent!
 
-# ✅ SOURCE FIX: Remove priming from the delegation prompt
-prevention: "Remove expected values (e.g., '1.0') from output format in prompt"
-prevents_root_cause: true  # Subagent no longer primed to fabricate
+# ✅ SOURCE FIX: Investigate and fix the prompt or skill
+prevention: "Review delegation prompt for priming; fix skill instructions if ambiguous"
+prevents_root_cause: true  # Subagent now produces correct results
 ```
+
+**Note (M357):** Identical scores (e.g., all 1.0) do NOT inherently indicate fabrication. Multiple files
+can legitimately achieve the same score. When results differ from expectations, investigate the prompt
+or skill methodology - don't add validation layers.
 
 **Anti-pattern:** "The subagent did X wrong, so I'll add a check for X."
 **Correct approach:** "The subagent did X wrong because my prompt said Y. Fix Y."

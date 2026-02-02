@@ -212,8 +212,6 @@ Do NOT use `wc -w` as approximation (words ≠ tokens; can differ by 50%+).
 Do NOT report "~230 lines" in a "Tokens" column - this is a unit mismatch error.
 
 Do NOT report aggregate scores across files. Each file's equivalence is independent.
-If all files report identical scores (e.g., all 1.0), this suggests fabrication - verify each was validated
-**using the full two-run protocol per file (M356).**
 
 **Why Scores Can Vary Significantly (M321)**:
 
