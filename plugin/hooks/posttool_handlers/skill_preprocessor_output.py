@@ -73,8 +73,11 @@ class SkillPreprocessorOutputHandler:
                 return None
 
         # Build context for skill handler
+        # Include args so handlers can parse skill arguments (e.g., task_id for work-with-task)
+        args = tool_input.get("args", "")
+        user_prompt = f"/cat:{cat_skill_name} {args}".strip() if args else f"/cat:{cat_skill_name}"
         skill_context = {
-            "user_prompt": f"/cat:{cat_skill_name}",
+            "user_prompt": user_prompt,
             "session_id": context.get("session_id", ""),
             "project_root": project_root,
             "plugin_root": str(SCRIPT_DIR.parent),
