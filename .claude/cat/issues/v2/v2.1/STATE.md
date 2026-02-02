@@ -63,3 +63,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
 - simplify-prerendered-skills
+- fix-grep-jsonl-filter
