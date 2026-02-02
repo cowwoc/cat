@@ -10,6 +10,27 @@ Extract all semantic claims AND relationships from the provided document.
 
 ---
 
+## Conservative Extraction Principle
+
+**When in doubt, extract it.**
+
+If removing text could realistically lead to a loss of execution equivalence, treat it as:
+- An explicit claim (not implicit)
+- An explicit relationship (not derivable from context)
+
+This bias is intentional: it's better to flag potential semantic loss than to miss it.
+
+**Apply this principle when:**
+- Temporal ordering is shown via example but not stated as a rule
+- A relationship could be "derived" from other claims but is also stated explicitly
+- Examples illustrate constraints that aren't repeated in abstract form
+
+**Note:** Conservative extraction does NOT mean keeping duplicates. If the same constraint appears
+both implicitly (via example) and explicitly (via rule), extract only the explicit version.
+The bias is about classification (treat ambiguous as explicit), not inflation.
+
+---
+
 ## Part 1: Claim Extraction
 
 **What is a "claim"?**
@@ -99,6 +120,19 @@ claims, not claim *types*. The claim itself is usually `simple` unless it has pr
 **Markers**: "before", "after", "then", "Step N must occur after Step M", "depends on completing"
 **Constraint**: strict=true if order violation causes failure
 
+**Conservative Classification:**
+- If an example shows step ordering (e.g., "Run A, then B, then C"), extract as explicit temporal
+  relationship even if ordering seems "obvious" from context
+- If ordering constraints appear in BOTH abstract rules AND concrete examples, extract BOTH
+- Err on the side of explicit: an "unnecessary" relationship is better than a missed one
+
+**Example:**
+Document says: "Always validate input before processing"
+Later shows: "Example: validate(data); process(data);"
+
+Extract: temporal relationship "validate → process" as EXPLICIT (not "derivable from rule")
+Rationale: The example reinforces the constraint; removing it could reduce clarity
+
 ### 2. Prerequisite Relationships (Condition → Action)
 **Markers**: "prerequisite", "required before", "must be satisfied before"
 **Constraint**: strict=true if prerequisite skipping causes failure
@@ -122,6 +156,19 @@ claims, not claim *types*. The claim itself is usually `simple` unless it has pr
 ### 7. Cross-Document References (Doc A → Doc B Section X)
 **Markers**: "see Section X.Y", "defined in Document Z", "refer to"
 **Constraint**: preserve section numbering as navigation anchor
+
+**Ambiguous Cases - Always Choose Explicit:**
+
+| Scenario | Classification | Rationale |
+|----------|---------------|-----------|
+| Example shows ordering | explicit temporal | Example provides execution guidance |
+| Rule + example both show constraint | keep explicit only | Deduplicate: explicit is clearer |
+| "Obvious" from domain knowledge | explicit | Agents lack domain expertise |
+| Could be derived from other claims | explicit | Derivation may fail |
+
+**Deduplication Rule:** When the same constraint appears in both implicit and explicit forms,
+extract only the explicit version. Conservative bias means classifying ambiguous items AS explicit,
+not inflating the claim count with duplicates of the same semantic content.
 
 ---
 
