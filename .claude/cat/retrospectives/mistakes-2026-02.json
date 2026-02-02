@@ -199,6 +199,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Require validation subagent output to include complete /compare-docs report (EXECUTION EQUIVALENCE score, component table, summary). Verify evidence exists before accepting score."
+    },
+    {
+      "id": "M350",
+      "timestamp": "2026-02-02T14:00:00Z",
+      "category": "prompt_engineering",
+      "description": "Execution subagent failed to invoke /cat:shrink-doc skill because requirement was buried in 'Execution Steps' section after context sections, requiring re-execution",
+      "root_cause": "Subagent prompts followed 'context first, critical requirements later' anti-pattern. Subagents process early content with higher priority, so skill invocation requirement in section 6 was deprioritized.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "prompt-structure",
+        "subagent",
+        "priority",
+        "skill-invocation",
+        "re-execution"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Structure subagent prompts with CRITICAL requirements first, then working directory, then task goal, then step-by-step instructions, then output format, then context/metadata last."
     }
   ]
 }
