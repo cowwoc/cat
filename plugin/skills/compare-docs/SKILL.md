@@ -190,18 +190,20 @@ When validating multiple files in batch operations, report EACH file individuall
 
 **Token Counting Method (M352):**
 
-Use `wc -w` as a token approximation (words ≈ tokens within ~20%):
+Use tiktoken (cl100k_base encoding) for reliable token counts:
 
 ```bash
-# Count tokens (word approximation) for before/after files
-wc -w /tmp/file-before.md /tmp/file-after.md
+python3 -c "
+import tiktoken
+enc = tiktoken.get_encoding('cl100k_base')
+for f in ['/tmp/file-before.md', '/tmp/file-after.md']:
+    with open(f) as file:
+        print(f'{f}: {len(enc.encode(file.read()))} tokens')
+"
 ```
 
 **CRITICAL (M352):** Column headers say "Tokens" - report TOKEN counts, NOT line counts.
-If you only have line counts, either:
-1. Run `wc -w` to get word/token approximation
-2. Change column header to "Lines" if token counting unavailable
-
+Do NOT use `wc -w` as approximation (words ≠ tokens; can differ by 50%+).
 Do NOT report "~230 lines" in a "Tokens" column - this is a unit mismatch error.
 
 Do NOT report aggregate scores across files. Each file's equivalence is independent.
