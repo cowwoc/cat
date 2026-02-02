@@ -238,6 +238,10 @@ class AutoLearnHandler:
         filtered = []
         for line in lines:
             stripped = line.strip()
+            # Strip grep line number prefix (format: "123:json_content")
+            grep_prefix_match = re.match(r'^(\d+):', stripped)
+            if grep_prefix_match:
+                stripped = stripped[grep_prefix_match.end():]
             # Skip JSONL lines (session history format)
             if stripped.startswith('{') and (
                 '"type":' in stripped or

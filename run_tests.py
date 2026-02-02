@@ -1044,6 +1044,71 @@ def test_java_runner():
                 "Invalid handler class name" not in result.stderr)
 
 
+def test_posttool_auto_learn():
+    """Test auto_learn posttool handler."""
+    runner.section("posttool_handlers/auto_learn")
+
+    from posttool_handlers.auto_learn import AutoLearnHandler
+    handler = AutoLearnHandler()
+
+    # Test 1: Grep output with line number prefix gets filtered
+    grep_output = '''42:{"type":"assistant","role":"assistant","content":"test_failure in code"}
+43:{"parentUuid":"abc123","message":"another line"}
+44:Regular text without grep prefix
+45:{"sessionId":"session1","type":"assistant"}'''
+
+    filtered = handler._filter_json_content(grep_output)
+    runner.test("grep prefix: JSON lines with line numbers filtered",
+                '"type":"assistant"' not in filtered and
+                '"parentUuid":"abc123"' not in filtered and
+                '"sessionId":"session1"' not in filtered)
+    runner.test("grep prefix: regular text preserved",
+                'Regular text without grep prefix' in filtered)
+
+    # Test 2: Content without grep prefix still works
+    no_grep_output = '''{"type":"assistant","content":"test"}
+Regular line
+{"sessionId":"abc"}'''
+
+    filtered = handler._filter_json_content(no_grep_output)
+    runner.test("no grep prefix: JSON filtered",
+                '"type":"assistant"' not in filtered and
+                '"sessionId":"abc"' not in filtered)
+    runner.test("no grep prefix: regular text preserved",
+                'Regular line' in filtered)
+
+    # Test 3: Edge case - multiple colons in line
+    edge_output = '''123:{"type":"assistant","url":"http://example.com:8080"}
+456:http://example.com:8080 regular text'''
+
+    filtered = handler._filter_json_content(edge_output)
+    runner.test("multiple colons: JSON with URL filtered",
+                '"type":"assistant"' not in filtered)
+    runner.test("multiple colons: URL text preserved",
+                'http://example.com:8080 regular text' in filtered)
+
+    # Test 4: Line starting with digit but not grep format
+    non_grep_output = '''2026-01-15 test_failure detected
+123 regular line starting with number
+42test_failure in text'''
+
+    filtered = handler._filter_json_content(non_grep_output)
+    runner.test("non-grep digits: all text preserved",
+                '2026-01-15 test_failure detected' in filtered and
+                '123 regular line starting with number' in filtered and
+                '42test_failure in text' in filtered)
+
+    # Test 5: Pattern detection still works after filtering
+    test_output = '''42:{"type":"assistant","content":"unrelated"}
+43:Some context
+44:Tests run: 10, Failures: 2
+45:{"sessionId":"abc"}'''
+
+    mistake_type, details = handler._detect_mistake("Bash", test_output, 1, "")
+    runner.test("pattern detection: test_failure detected after filtering",
+                mistake_type == "test_failure")
+
+
 def test_session_start():
     """Test session_start.sh script."""
     runner.section("hooks/jdk/session_start.sh")
@@ -1158,6 +1223,7 @@ def main():
         test_cleanup_handler,
         test_posttool_skill_preprocessor_output,
         test_posttool_user_input_reminder,
+        test_posttool_auto_learn,
         test_config_loader,
         test_get_available_issues_discovery,
         test_abort_clarification_handler,
