@@ -68,7 +68,27 @@ ESTIMATED_TOKENS=$(echo "$ARGUMENTS" | jq -r '.estimated_tokens')
 TRUST=$(echo "$ARGUMENTS" | jq -r '.trust')
 VERIFY=$(echo "$ARGUMENTS" | jq -r '.verify')
 AUTO_REMOVE=$(echo "$ARGUMENTS" | jq -r '.auto_remove')
+HAS_EXISTING_WORK=$(echo "$ARGUMENTS" | jq -r '.has_existing_work // false')
+EXISTING_COMMITS=$(echo "$ARGUMENTS" | jq -r '.existing_commits // 0')
 ```
+
+## Check for Existing Work (M362)
+
+**MANDATORY: Before Phase 2, check if work already exists on the branch.**
+
+```bash
+if [[ "$HAS_EXISTING_WORK" == "true" ]]; then
+  echo "Task has ${EXISTING_COMMITS} existing commit(s) - skipping execution phase"
+  # Skip to Phase 3 (Review)
+fi
+```
+
+When `has_existing_work: true`:
+1. Display message: "Resuming task with existing work - skipping to review"
+2. Skip Phase 2 entirely
+3. Proceed directly to Phase 3 (Review)
+
+This prevents spawning an execution subagent for work that's already committed.
 
 ## Phase 2: Execute
 
