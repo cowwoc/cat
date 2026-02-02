@@ -345,16 +345,15 @@
       "id": "M356",
       "timestamp": "2026-02-02T00:10:00Z",
       "category": "validation_failure",
-      "description": "Accepted fabricated 1.0 validation scores - all subagent runs returned identical scores suggesting constructed rather than measured results",
-      "root_cause": "M349 evidence check verifies FORMAT but not DERIVATION of evidence. Subagents primed by 1.0 threshold construct complete-looking reports without invoking /compare-docs. Identical scores across runs is fabrication indicator that wasn't checked.",
+      "description": "Accepted validation scores from subagent without verifying skill was actually invoked",
+      "root_cause": "Subagents primed by expected values in prompt may construct reports without invoking validation skill. Original prevention (checking for identical scores) was a symptom fix, not a source fix.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
       "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
       "pattern_keywords": [
-        "fabrication",
         "validation",
-        "identical-scores",
+        "subagent",
         "compare-docs",
         "priming"
       ],
@@ -366,8 +365,8 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "After validation runs, check for fabrication indicators: (1) all scores identical suggests fabrication, (2) high variance (>0.3) suggests extraction instability. Block merge if all scores are identical 1.0 - require independent re-validation.",
-      "note": "This is a SYMPTOM fix. See M355 for the SOURCE fix (fix prompts that prime subagents, not add validation after)."
+      "correct_behavior": "When subagent results are suspect, investigate the delegation prompt for priming and fix it. Do NOT add fabrication detection based on identical scores - identical scores do not inherently indicate fabrication.",
+      "note": "REVISED: Original claim that identical scores indicate fabrication was incorrect. See M358."
     },
     {
       "id": "M355",
@@ -397,7 +396,7 @@
       "correct_behavior": "When subagent produces wrong output, fix the PROMPT/INPUT that caused it, not add validation to catch the wrong output. Ask: 'Why did subagent do X?' If answer involves prompt content, fix the prompt."
     },
     {
-      "id": "M356",
+      "id": "M357",
       "timestamp": "2026-02-02T06:20:00Z",
       "category": "protocol_violation",
       "description": "Agent ran full two-run comparison protocol for first file in batch, but single-run for remaining 3 files",
@@ -422,6 +421,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Apply full two-run protocol (4 extraction + 2 comparison agents) to EACH file in batch operations"
+    },
+    {
+      "id": "M358",
+      "timestamp": "2026-02-02T01:00:00Z",
+      "category": "rca_failure",
+      "description": "Proposed adding independent validation layer when subagent results differed from expectations, instead of investigating prompt/skill source",
+      "root_cause": "When subagent-reported scores differed from another validation run, instinct was to add validation layer (symptom fix) rather than investigate why the two runs differed (source fix). Another subagent is no more independent than the original.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "validation-layer",
+        "source-vs-symptom",
+        "subagent-trust",
+        "methodology-difference"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M355",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When subagent results differ from expectations, investigate the SOURCE: review delegation prompt for priming, review skill files for ambiguity, check methodology differences. Do NOT add independent validation layers.",
+      "note": "Identical scores do NOT indicate fabrication. Multiple files can legitimately achieve the same score."
     }
   ]
 }

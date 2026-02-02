@@ -78,7 +78,6 @@ to match the expected format rather than invoke the validation skill.
 **For document compression tasks specifically**:
 - Subagent MUST invoke `/cat:shrink-doc` skill for each file
 - Subagent MUST report the ACTUAL score returned by `/compare-docs`
-- Orchestrator MUST verify scores are not all identical (suggests fabrication)
 
 Return JSON on failure:
 
