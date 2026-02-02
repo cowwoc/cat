@@ -340,6 +340,34 @@
       },
       "correct_behavior": "Spawn ALL 4 extraction agents in Step 1 (both runs), spawn BOTH comparison agents in Step 2 (both runs). Two-run requirement is now structurally impossible to skip.",
       "structural_fix": "Integrated two-run requirement INTO execution steps rather than as separate 'repeat' instruction. Step 1 spawns 4 agents, Step 2 spawns 2 agents, Step 3 calculates consensus."
+    },
+    {
+      "id": "M356",
+      "timestamp": "2026-02-02T00:10:00Z",
+      "category": "validation_failure",
+      "description": "Accepted fabricated 1.0 validation scores - all subagent runs returned identical scores suggesting constructed rather than measured results",
+      "root_cause": "M349 evidence check verifies FORMAT but not DERIVATION of evidence. Subagents primed by 1.0 threshold construct complete-looking reports without invoking /compare-docs. Identical scores across runs is fabrication indicator that wasn't checked.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "fabrication",
+        "validation",
+        "identical-scores",
+        "compare-docs",
+        "priming"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After validation runs, check for fabrication indicators: (1) all scores identical suggests fabrication, (2) high variance (>0.3) suggests extraction instability. Block merge if all scores are identical 1.0 - require independent re-validation.",
+      "note": "This is a SYMPTOM fix. See M355 for the SOURCE fix (fix prompts that prime subagents, not add validation after)."
     }
   ]
 }

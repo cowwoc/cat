@@ -338,13 +338,36 @@ After agent completes:
    validation. The 1.0 threshold creates strong priming for fabrication. Requiring evidence
    proves the skill was actually invoked.
 
+   **Step 4f: Fabrication Detection (M354)**
+
+   **MANDATORY**: After collecting scores, check for fabrication indicators:
+
+   ```yaml
+   fabrication_check:
+     all_scores_identical: true|false  # If all runs return exactly 1.0, suspicious
+     high_variance: true|false         # If runs differ by >0.3, extraction unstable
+
+     # If all_scores_identical AND score is 1.0:
+     action: "WARN: All validation runs returned identical 1.0 scores"
+     recommendation: "Request independent re-validation from user or different session"
+
+     # If high_variance (>0.3 difference between runs):
+     action: "WARN: High variance suggests extraction instability"
+     recommendation: "Run additional validation, investigate document structure"
+   ```
+
+   **Why this matters (M354)**: Subagents primed for 1.0 may construct evidence to match.
+   Real /compare-docs runs show natural variance (±0.05-0.10). Identical 1.0 scores across
+   multiple runs suggests fabrication rather than actual validation.
+
    **Report validation result**:
    ```
    Validation (best 2 of 3):
    - Run 1: {score1} [evidence: {verified|missing}]
    - Run 2: {score2} [evidence: {verified|missing}]
    - Run 3: {score3} (if needed) [evidence: {verified|missing}]
-   - Result: {PASS if ≥2 runs = 1.0 WITH verified evidence, else FAIL}
+   - Fabrication check: {PASS|WARN: all identical|WARN: high variance}
+   - Result: {PASS if ≥2 runs = 1.0 WITH verified evidence AND fabrication check passes, else FAIL}
    ```
 
    **If FAIL**: Proceed to Step 6 (Iteration). After creating new version, run

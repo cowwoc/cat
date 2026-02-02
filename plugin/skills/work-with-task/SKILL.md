@@ -156,10 +156,13 @@ Before proceeding to Phase 3, validate that execution result contains per-file m
 
 **If validation fails:**
 - Missing `task_metrics`: Return to execution phase with explicit requirement
-- All scores identical: Warn user, require manual verification
+- All scores identical (e.g., all 1.0): **BLOCK merge** - this indicates fabrication (M354)
+  - Real /compare-docs runs show natural variance (±0.05-0.10)
+  - Identical scores across files suggests subagent constructed results without invoking skill
+  - Require independent re-validation before proceeding
 - Any score < 1.0 for shrink-doc tasks: Block merge, require iteration
 
-**This validation enforces M346 (per-file reporting) at the orchestration level.**
+**This validation enforces M346 (per-file reporting) and M354 (fabrication detection) at the orchestration level.**
 
 ## Phase 3: Review
 
