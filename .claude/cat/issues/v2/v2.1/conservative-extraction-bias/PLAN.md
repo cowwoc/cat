@@ -98,6 +98,7 @@ When compressing, actively reduce ambiguity by:
 - Converting implicit temporal ordering to explicit statements
 - Normalizing vague language to precise constraints
 - Making relationships explicit even if "derivable" from context
+- Replacing negative instructions ("don't do X") with positive actionable ones ("do Y")
 
 This reduces extraction variance during validation and improves execution equivalence.
 
@@ -132,8 +133,16 @@ When compressing, apply these normalizations to reduce ambiguity:
 - BEFORE: "You might want to check X"
 - AFTER: "Check X if [condition]" or remove if optional
 
+**Negative → Positive:**
+- BEFORE: "Don't skip validation"
+- AFTER: "Validate before proceeding" (actionable positive instruction)
+
+- BEFORE: "Never deploy without testing"
+- AFTER: "Test before deploying" (same constraint, positive framing)
+
 **Principle:** If the original text conveys a constraint (even implicitly), the compressed
-version should state that constraint MORE explicitly, not less.
+version should state that constraint MORE explicitly, not less. Prefer positive actionable
+instructions over negative prohibitions when the positive form is equally clear.
 ```
 
 ### B3. Add Anti-Pattern Examples
@@ -149,8 +158,10 @@ version should state that constraint MORE explicitly, not less.
 | "Step 1, then Step 2, then Step 3" | "Complete all steps" | "Step 1 → Step 2 → Step 3" |
 | Example: `init(); start();` | (removed) | "Initialize before starting" |
 | "MUST validate OR reject" | "Handle input" | "Validate input; reject if invalid" |
+| "Don't skip the tests" | "Don't skip tests" | "Run tests before proceeding" |
+| "Never commit without review" | (kept as-is) | "Get review before committing" |
 
-**Key insight:** Compression should reduce WORDS, not CONSTRAINTS.
+**Key insight:** Compression should reduce TOKENS, not CONSTRAINTS.
 ```
 
 ## Acceptance Criteria
