@@ -448,6 +448,32 @@
       },
       "correct_behavior": "When subagent results differ from expectations, investigate the SOURCE: review delegation prompt for priming, review skill files for ambiguity, check methodology differences. Do NOT add independent validation layers.",
       "note": "Identical scores do NOT indicate fabrication. Multiple files can legitimately achieve the same score."
+    },
+    {
+      "id": "M359",
+      "timestamp": "2026-02-02T06:30:00Z",
+      "category": "documentation_error",
+      "description": "Learn skill bash commands use ${CLAUDE_SESSION_ID} but env var is only available in skill preprocessing, not exported to bash",
+      "root_cause": "Skill doc shows bash snippets with ${SESSION_ID} and ${CLAUDE_SESSION_ID} as if available in bash env, but skill env vars must be passed as literal values to bash commands",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "env-var",
+        "bash",
+        "session-id",
+        "skill-preprocessing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When skill docs show bash commands needing session ID, add note that env vars are skill-only and must be substituted with actual values before running in bash"
     }
   ]
 }

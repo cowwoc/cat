@@ -43,10 +43,14 @@ Memory is unreliable for causation, timing, attribution.
 
 **CRITICAL: Check if documentation PRIMED the agent for the wrong approach.**
 
-Using the session history from Step 1, identify all documents the agent read:
+Using the session history from Step 1, identify all documents the agent read.
+
+**NOTE (M359):** `CLAUDE_SESSION_ID` is available in skill preprocessing but NOT exported to bash.
+You must substitute the actual session ID value in bash commands, not use the variable reference.
 
 ```bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
+# Replace with actual session ID - do NOT use ${CLAUDE_SESSION_ID} in bash
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/YOUR-SESSION-ID-HERE.jsonl"
 
 # Note: Tool uses are nested inside assistant messages as content blocks
 # Structure: {type: "assistant", message: {content: [{type: "tool_use", name: "...", input: {...}}]}}
@@ -121,7 +125,8 @@ mistake:
 **CAT-specific: Always collect token data**
 
 ```bash
-SESSION_ID="${SUBAGENT_SESSION}"
+# Replace with actual subagent session ID (M359 - env vars not available in bash)
+SESSION_ID="actual-subagent-session-id-here"
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
 TOKENS_AT_ERROR=$(jq -s 'map(select(.type == "assistant")) |
