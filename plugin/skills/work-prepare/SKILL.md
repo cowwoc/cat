@@ -54,6 +54,45 @@ Return JSON on failure:
 }
 ```
 
+## Critical Constraints
+
+### Use Existing Scripts (M364)
+
+**MANDATORY: Use `get-available-issues.sh` for task discovery. NEVER reimplement its logic.**
+
+The discovery script handles:
+- Version traversal and task ordering
+- Dependency checking
+- Lock acquisition
+- Decomposed parent detection
+
+If the script doesn't support a needed feature (like filtering by name):
+1. Call the script to get the available task
+2. Check if result matches filter criteria in memory
+3. If not, return appropriate status (e.g., NO_TASKS with message about filter)
+
+**NEVER** write custom Python/bash to traverse issues directories and check STATE.md files.
+That logic already exists in the script and is tested.
+
+### No Temporary State Mutations (M365)
+
+**MANDATORY: NEVER modify STATE.md files temporarily to influence discovery.**
+
+Temporary mutations that rely on cleanup code are unsafe because:
+- User interruptions (Ctrl+C, exit code 137) are normal operations
+- Any approach that corrupts data on interruption is unacceptable
+- Cleanup code may never execute
+
+**FORBIDDEN patterns:**
+- Marking tasks "completed" temporarily to hide them from discovery
+- Creating backup files that must be restored
+- Any mutation that requires rollback
+
+**ALLOWED patterns:**
+- Read STATE.md, filter results in memory
+- Call discovery script multiple times if needed
+- Return filtered status in output JSON
+
 ## Process
 
 ### Step 1: Verify Planning Structure
@@ -72,9 +111,16 @@ RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" --session-id "$
 ```
 
 Parse the result and handle statuses:
-- `found` - Continue to worktree creation
+- `found` - Check filter (if any), then continue to worktree creation
 - `no_tasks` - Return NO_TASKS status
 - `locked` - Return LOCKED status with owner info
+
+**Filtering (M364):** If arguments include a filter (e.g., "skip compression tasks"):
+1. Parse the discovered task name from result
+2. Check if task matches filter criteria (in memory, NOT by modifying files)
+3. If task should be skipped: Return `{"status": "NO_TASKS", "message": "Available task filtered out", "filtered_task": "task-name", "filter": "skip compression tasks"}`
+
+The orchestrator can then decide to retry without filter or inform user.
 
 ### Step 3: Analyze Task Size
 

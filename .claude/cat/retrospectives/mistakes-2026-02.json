@@ -583,6 +583,60 @@
         "catches_variations": true
       },
       "correct_behavior": "When implementing prevention that involves deterministic logic (no LLM judgment needed), create a testable script/handler instead of adding instructions to skill documentation"
+    },
+    {
+      "id": "M364",
+      "timestamp": "2026-02-02T17:10:00Z",
+      "category": "tool_misuse",
+      "description": "Subagent reimplemented task discovery logic (200+ line Python script) instead of using existing get-available-issues.sh script",
+      "root_cause": "Subagent prompt said 'Execute the work-prepare phase skill' and loaded SKILL.md which describes calling get-available-issues.sh, but subagent attempted to implement filtering by writing custom Python instead of either: (1) using the script as-is, or (2) asking if script supports filtering",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "reimplementation",
+        "discovery",
+        "script",
+        "subagent",
+        "filtering"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use existing scripts as documented. If script lacks required feature (like filtering), either: (1) return result indicating feature needed, or (2) call script multiple times and filter results. NEVER reimplement core script logic."
+    },
+    {
+      "id": "M365",
+      "timestamp": "2026-02-02T17:15:00Z",
+      "category": "data_corruption",
+      "description": "Subagent temporarily marked tasks as 'completed' to hide them from discovery, leaving invalid state when interrupted (exit code 137)",
+      "root_cause": "To implement task filtering, subagent modified STATE.md files to temporarily mark compression tasks as completed, then relied on cleanup code to restore them. User interruption (normal operation) left compress-concepts-batch-5 in corrupted 'completed' state.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "temporary-mutation",
+        "state-corruption",
+        "interruption",
+        "atomicity",
+        "rollback"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "NEVER make temporary changes to persistent state that require cleanup. User interruptions are normal. Any approach that corrupts data on interruption is unacceptable. Filter in-memory or at read time, never by mutating source files."
     }
   ]
 }
