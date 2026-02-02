@@ -5,7 +5,7 @@
 # dependency checks, lock checks, and gate evaluation.
 #
 # Usage:
-#   get-available-issues.sh [--scope major|minor|issue|all] [--target VERSION|ISSUE_ID] --session-id ID [--override-gate]
+#   get-available-issues.sh [--scope major|minor|issue|all] [--target VERSION|ISSUE_ID] --session-id ID [--exclude-pattern GLOB] [--override-gate]
 #
 # Path Discovery:
 #   PROJECT_DIR is auto-discovered via git (finds main workspace, not worktree).
@@ -66,6 +66,7 @@ PROJECT_DIR=""  # Auto-discovered if not provided
 SESSION_ID=""   # Required: must be passed via --session-id
 SCOPE="all"     # all | major | minor | issue
 TARGET=""
+EXCLUDE_PATTERN=""  # Glob pattern to exclude issues by name
 OVERRIDE_GATE=false
 
 # =============================================================================
@@ -90,6 +91,10 @@ parse_args() {
             --override-gate)
                 OVERRIDE_GATE=true
                 shift
+                ;;
+            --exclude-pattern)
+                EXCLUDE_PATTERN="$2"
+                shift 2
                 ;;
             -h|--help)
                 show_usage
@@ -127,11 +132,12 @@ Usage: get-available-issues.sh [OPTIONS] [VERSION_OR_ISSUE]
 Find the next executable issue for /cat:work.
 
 Options:
-  --scope SCOPE      Search scope: all, major, minor, issue (auto-detected from target)
-  --target TARGET    Version or issue ID to target
-  --session-id ID    Session ID for lock acquisition (REQUIRED for locking)
-  --override-gate    Skip entry gate evaluation
-  VERSION_OR_ISSUE   Version (2, 2.0) or issue ID (2.0-issue-name)
+  --scope SCOPE         Search scope: all, major, minor, issue (auto-detected from target)
+  --target TARGET       Version or issue ID to target
+  --session-id ID       Session ID for lock acquisition (REQUIRED for locking)
+  --exclude-pattern PAT Glob pattern to exclude issues by name (e.g., "compress*", "*-batch-*")
+  --override-gate       Skip entry gate evaluation
+  VERSION_OR_ISSUE      Version (2, 2.0) or issue ID (2.0-issue-name)
 
 Path Discovery:
   PROJECT_DIR is auto-discovered using git. The script finds the main workspace
@@ -412,6 +418,9 @@ check_exit_gate_rule() {
     fi
 }
 
+# Track issues excluded by pattern (for reporting)
+EXCLUDED_BY_PATTERN=0
+
 # Find first executable issue in a minor version
 find_issue_in_minor() {
     local minor_dir="$1"
@@ -426,6 +435,12 @@ find_issue_in_minor() {
 
         # Skip directories that are version subdirectories (not issues)
         [[ "$issue_name" =~ ^v[0-9] ]] && continue
+
+        # Skip issues matching exclude pattern (glob matching)
+        if [[ -n "$EXCLUDE_PATTERN" && "$issue_name" == $EXCLUDE_PATTERN ]]; then
+            ((EXCLUDED_BY_PATTERN++))
+            continue
+        fi
 
         local status
         status=$(get_issue_status "$issue_dir/STATE.md")
@@ -673,7 +688,11 @@ find_next_issue() {
     done
 
     # No issue found
-    echo '{"status":"not_found","message":"No executable issues found","scope":"'"$SCOPE"'"}'
+    if [[ -n "$EXCLUDE_PATTERN" && $EXCLUDED_BY_PATTERN -gt 0 ]]; then
+        echo '{"status":"not_found","message":"No executable issues found ('"$EXCLUDED_BY_PATTERN"' excluded by pattern)","scope":"'"$SCOPE"'","exclude_pattern":"'"$EXCLUDE_PATTERN"'","excluded_count":'"$EXCLUDED_BY_PATTERN"'}'
+    else
+        echo '{"status":"not_found","message":"No executable issues found","scope":"'"$SCOPE"'"}'
+    fi
     return 1
 }
 
