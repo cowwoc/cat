@@ -123,7 +123,39 @@ fi
 **Why this matters (M351):** Without verification, a worktree may be created but remain on the base
 branch, causing commits to go to the wrong branch and bypass the review/merge workflow.
 
-### Step 6: Update STATE.md
+### Step 6: Check for Existing Work (M362)
+
+**MANDATORY: Check if task branch already has commits before returning READY.**
+
+```bash
+cd "${WORKTREE_PATH}"
+BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base" 2>/dev/null || echo "${BASE_BRANCH}")
+EXISTING_COMMITS=$(git log --oneline "${BASE_BRANCH}..HEAD" 2>/dev/null | wc -l)
+
+if [[ "$EXISTING_COMMITS" -gt 0 ]]; then
+  # Task has existing work - include in output for main agent to handle
+  COMMIT_LIST=$(git log --oneline "${BASE_BRANCH}..HEAD")
+  HAS_EXISTING_WORK=true
+else
+  HAS_EXISTING_WORK=false
+fi
+```
+
+**Include in JSON output:**
+
+```json
+{
+  "has_existing_work": true,
+  "existing_commits": 3,
+  "commit_summary": "eedb1c45 config: add conservative extraction..."
+}
+```
+
+**Why this matters (M362):** Without checking for existing commits, the orchestrator spawns
+an execution subagent for work that's already done. When `has_existing_work: true`, the main
+agent should skip execution phase and proceed directly to review/merge.
+
+### Step 7: Update STATE.md
 
 Set task status to `in-progress`:
 
@@ -133,7 +165,7 @@ Set task status to `in-progress`:
 - **Last Updated:** {date}
 ```
 
-### Step 7: Return Result
+### Step 8: Return Result
 
 Output the JSON result with all required fields.
 
