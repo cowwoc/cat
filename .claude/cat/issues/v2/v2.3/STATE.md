@@ -12,6 +12,7 @@ Abstract storage layer to support multiple issue tracking backends.
 - storage-abstraction-design
 - local-file-backend
 - github-issues-backend
+- add-feedback-command
 
 ## Tasks Completed
 (None)
