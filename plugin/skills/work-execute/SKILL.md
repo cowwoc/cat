@@ -118,6 +118,22 @@ Build comprehensive execution plan following delegate/SKILL.md guidelines:
 - Include commit message format
 - Include fail-fast conditions
 
+**Prompt Structure (M350):** Lead with CRITICAL requirements, not context.
+
+Subagents process early content with higher priority. Structure prompts as:
+
+```
+1. CRITICAL REQUIREMENTS (skill invocations, blocking rules)
+2. Working directory and environment
+3. Task goal (1 sentence)
+4. Step-by-step instructions with skill invocations inline
+5. Output format
+6. Context/metadata (SESSION_ID, etc.)
+```
+
+**Anti-pattern:** Placing skill invocation requirements in "Execution Steps" section after context
+sections. The subagent may skip them in favor of earlier-processed content.
+
 ### Step 3: Spawn Implementation Subagent
 
 ```bash
