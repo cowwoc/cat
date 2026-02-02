@@ -610,6 +610,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Spawn separate subagent for each stakeholder perspective to ensure independent reviews without anchoring or consistency bias"
+    },
+    {
+      "id": "M365",
+      "timestamp": "2026-02-02T14:00:00Z",
+      "category": "protocol_violation",
+      "description": "Failed to acknowledge user question mid-operation - continued investigating without responding or adding to TaskList",
+      "root_cause": "Completion bias: prioritized finishing investigation over following CAT session instructions to STOP and ACKNOWLEDGE user input immediately",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "user-input",
+        "acknowledgment",
+        "mid-operation",
+        "question"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user asks a question mid-operation, STOP and acknowledge in next text response before continuing investigation"
     }
   ]
 }
