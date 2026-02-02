@@ -96,7 +96,28 @@ Return JSON on failure:
 
 ## Process
 
-### Step 1: Load Task PLAN.md
+### Step 1: Verify Worktree Branch (M351)
+
+**MANDATORY: Before any work, verify you are on the correct branch.**
+
+```bash
+cd "${WORKTREE_PATH}"
+CURRENT_BRANCH=$(git branch --show-current)
+EXPECTED_BRANCH="${TASK_ID}"  # e.g., "2.1-task-name"
+
+if [[ "$CURRENT_BRANCH" != "$EXPECTED_BRANCH" ]]; then
+  echo "FAIL: Wrong branch. Expected: $EXPECTED_BRANCH, Got: $CURRENT_BRANCH"
+  exit 1
+fi
+```
+
+**FAIL-FAST:** If branch doesn't match task ID, return ERROR immediately. Do NOT attempt to fix
+by checking out the correct branch - this indicates a prepare phase failure that must be investigated.
+
+**Why this matters (M351):** Without this check, commits may go to the base branch (v2.1) instead
+of the isolated task branch, bypassing the review/merge workflow.
+
+### Step 2: Load Task PLAN.md
 
 Read the task's PLAN.md to understand:
 - Goal and requirements
@@ -109,7 +130,7 @@ skills like `/cat:shrink-doc`, the subagent MUST invoke those skills - not reimp
 functionality manually. Skills provide validation (e.g., equivalence scores) that manual
 implementation skips.
 
-### Step 2: Prepare Subagent Prompt
+### Step 3: Prepare Subagent Prompt
 
 Build comprehensive execution plan following delegate/SKILL.md guidelines:
 - Include exact file paths
@@ -134,7 +155,7 @@ Subagents process early content with higher priority. Structure prompts as:
 **Anti-pattern:** Placing skill invocation requirements in "Execution Steps" section after context
 sections. The subagent may skip them in favor of earlier-processed content.
 
-### Step 3: Spawn Implementation Subagent
+### Step 4: Spawn Implementation Subagent
 
 ```bash
 Task tool invocation:
@@ -154,18 +175,18 @@ Task tool invocation:
     FAIL-FAST: If blocked, report immediately.
 ```
 
-### Step 4: Monitor Execution
+### Step 5: Monitor Execution
 
 Wait for subagent completion. If running in background, use TaskOutput to poll.
 
-### Step 5: Collect Results
+### Step 6: Collect Results
 
 Read subagent completion output:
 - Token usage from session file
 - Commit history from git log
 - Build/test results from verification
 
-### Step 6: Verify Changes
+### Step 7: Verify Changes
 
 ```bash
 # Run build verification
@@ -175,12 +196,13 @@ Read subagent completion output:
 ./gradlew test 2>/dev/null || mvn test 2>/dev/null || npm test 2>/dev/null
 ```
 
-### Step 7: Return Result
+### Step 8: Return Result
 
 Output the JSON result with metrics and verification status.
 
 ## Fail-Fast Conditions
 
+- **Wrong branch (M351):** Current branch doesn't match task ID: Return ERROR immediately
 - PLAN.md missing or invalid: Return ERROR
 - Subagent reports BLOCKED: Return BLOCKED with details
 - Build fails: Return FAILED with error output

@@ -23,6 +23,17 @@ The cache is a read-only copy that gets overwritten on plugin updates.
 
 **Worktree Path Handling (M267):** When working in a worktree (e.g., `/workspace/.worktrees/task-name/`), use relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to `/workspace/` bypass worktree isolation and modify the main workspace instead.
 
+## Skill Step Numbering
+
+All skill steps must be 1-based and sequential (Step 1, Step 2, Step 3, etc.).
+
+When adding a new step to a skill:
+1. Insert the step at the appropriate position
+2. Renumber all subsequent steps
+3. Update any external references to the renumbered steps
+
+Avoid "half steps" (Step 4.5) or lettered sub-steps (Step 4a, 4b) unless there is a specific reason to couple multiple steps under the same number.
+
 ## Testing Requirements
 
 **MANDATORY: Run all tests before presenting any task for user review.**

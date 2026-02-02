@@ -103,7 +103,27 @@ git worktree add -b "${TASK_BRANCH}" "${WORKTREE_PATH}" HEAD
 echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${TASK_BRANCH}/cat-base"
 ```
 
-### Step 5: Update STATE.md
+### Step 5: Verify Worktree Branch (M351)
+
+**MANDATORY: Verify the worktree is on the correct branch before proceeding.**
+
+```bash
+cd "${WORKTREE_PATH}"
+ACTUAL_BRANCH=$(git branch --show-current)
+
+if [[ "$ACTUAL_BRANCH" != "$TASK_BRANCH" ]]; then
+  echo "ERROR: Worktree created on wrong branch. Expected: $TASK_BRANCH, Got: $ACTUAL_BRANCH"
+  # Clean up the broken worktree
+  cd "${CLAUDE_PROJECT_DIR}"
+  git worktree remove "${WORKTREE_PATH}" --force 2>/dev/null
+  exit 1
+fi
+```
+
+**Why this matters (M351):** Without verification, a worktree may be created but remain on the base
+branch, causing commits to go to the wrong branch and bypass the review/merge workflow.
+
+### Step 6: Update STATE.md
 
 Set task status to `in-progress`:
 
@@ -113,7 +133,7 @@ Set task status to `in-progress`:
 - **Last Updated:** {date}
 ```
 
-### Step 6: Return Result
+### Step 7: Return Result
 
 Output the JSON result with all required fields.
 
@@ -123,6 +143,7 @@ Output the JSON result with all required fields.
 - Script returns error: Return ERROR with message
 - Lock unavailable: Return LOCKED, do NOT investigate
 - Task exceeds hard limit: Return OVERSIZED
+- **Worktree on wrong branch (M351):** Clean up and return ERROR
 
 ## Context Loaded
 

@@ -280,6 +280,38 @@
         "catches_variations": true
       },
       "correct_behavior": "Use wc -w for token approximation when reporting in token columns. Never report 'X lines' in a 'Tokens' column - either measure tokens or change column header."
+    },
+    {
+      "id": "M353",
+      "timestamp": "2026-02-02T04:30:00Z",
+      "category": "worktree_isolation_violation",
+      "description": "Execution subagent committed to v2.1 branch directly instead of task branch, bypassing review/merge workflow",
+      "root_cause": "No branch verification in work-prepare (after worktree creation) or work-execute (before committing). Subagent was in worktree directory but may have been on wrong branch.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "worktree",
+        "branch",
+        "isolation",
+        "commit",
+        "wrong-branch",
+        "M252"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Verify current branch matches task ID before any work. In work-prepare: verify worktree is on task branch after creation (Step 5). In work-execute: verify branch before committing (Step 1).",
+      "additional_fixes": [
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/SKILL.md",
+        "${CLAUDE_PROJECT_DIR}/CLAUDE.md"
+      ]
     }
   ]
 }
