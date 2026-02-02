@@ -10,6 +10,7 @@ PATTERN EVOLUTION:
   - Git operation failures, missing cleanup, self-acknowledged mistakes
   - Restore from backup, critical self-acknowledgments
   - Wrong working directory, parse errors, bash parse errors
+  - Validation fabrication (scores without skill invocation)
 """
 
 import re
@@ -17,7 +18,18 @@ from pathlib import Path
 from . import register_handler
 
 
-class AutoLearnMistakesHandler:
+# Patterns for detecting validation scores (shared with detect_validation_fabrication)
+VALIDATION_SCORE_PATTERNS = [
+    r'(?:equivalence[_\s]?score|score)[:\s]+[01]\.\d+',
+    r'"equivalence_score"[:\s]+[01]\.\d+',
+    r'equivalence[:\s]+[01]\.\d+',
+]
+
+# Skills that legitimately produce validation scores
+VALIDATION_SKILLS = ["compare-docs", "shrink-doc"]
+
+
+class AutoLearnHandler:
     """Detect mistakes and suggest learn-from-mistakes skill."""
 
     def __init__(self):
@@ -191,6 +203,12 @@ class AutoLearnMistakesHandler:
         if tool_name == "Bash" and re.search(r"\(eval\):[0-9]+:.*parse error", output):
             return "bash_parse_error", self._extract_context(output, r"\(eval\):[0-9]+:|parse error", 3)
 
+        # Pattern 15: Validation fabrication (Task tool results with scores but no skill evidence)
+        if tool_name == "Task":
+            fabrication = self._detect_validation_fabrication(output)
+            if fabrication:
+                return "validation_fabrication", fabrication
+
         # Check assistant messages
         if assistant_msg:
             if re.search(
@@ -263,5 +281,37 @@ class AutoLearnMistakesHandler:
                     break
         return '\n'.join(result[:20])
 
+    def _detect_validation_fabrication(self, output: str) -> str | None:
+        """Detect validation scores in Task results without skill invocation evidence.
 
-register_handler(AutoLearnMistakesHandler())
+        Checks the SUBAGENT'S OUTPUT (not parent session) for evidence that
+        validation skills were actually invoked.
+        """
+        # Check if output contains validation score patterns
+        has_scores = False
+        for pattern in VALIDATION_SCORE_PATTERNS:
+            if re.search(pattern, output, re.IGNORECASE):
+                has_scores = True
+                break
+
+        if not has_scores:
+            return None
+
+        # Check the TASK OUTPUT for evidence of skill invocation
+        # The subagent's output should mention invoking validation skills
+        for skill in VALIDATION_SKILLS:
+            # Check for skill invocation patterns in the subagent's output
+            if f"/cat:{skill}" in output:
+                return None  # Subagent mentioned invoking the skill
+            if f'skill": "{skill}"' in output or f"skill: {skill}" in output:
+                return None  # Subagent mentioned invoking the skill
+            if f"invoke {skill}" in output.lower() or f"invoked {skill}" in output.lower():
+                return None  # Subagent mentioned invoking the skill
+            if f"running {skill}" in output.lower() or f"ran {skill}" in output.lower():
+                return None  # Subagent mentioned running the skill
+
+        # Fabrication likely - scores present but no skill invocation evidence in output
+        return self._extract_context(output, r"score|equivalence", 3)
+
+
+register_handler(AutoLearnHandler())

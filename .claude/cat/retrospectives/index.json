@@ -5,7 +5,7 @@
     "trigger_interval_days": 7
   },
   "last_retrospective": "2026-02-02T18:00:00-05:00",
-  "mistake_count_since_last": 2,
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -222,9 +222,7 @@
         "M354",
         "M357"
       ],
-      "related_action_items": [
-        "A010"
-      ],
+      "related_action_items": ["A010"],
       "note": "compare-docs executed with single comparison run instead of mandatory two-run protocol. Completion bias causes skip of 'repeat' steps."
     },
     {
@@ -241,9 +239,7 @@
         "M355",
         "M358"
       ],
-      "related_action_items": [
-        "A011"
-      ],
+      "related_action_items": ["A011"],
       "note": "RCA adds validation layers to detect symptoms instead of fixing source prompts that caused subagent misbehavior."
     },
     {
@@ -261,9 +257,7 @@
         "M350",
         "M349"
       ],
-      "related_action_items": [
-        "A012"
-      ],
+      "related_action_items": ["A012"],
       "note": "Delegation prompts contain example values that prime subagents to fabricate or deprioritize actual execution."
     }
   ],

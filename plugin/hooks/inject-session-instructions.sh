@@ -49,12 +49,6 @@ MESSAGE=$(cat << 'INSTRUCTIONS'
 4. Answer their question or confirm you've noted it
 5. THEN continue with workflow
 
-**⚠️ USER QUESTIONS REQUIRE IMMEDIATE ACKNOWLEDGMENT (M365):**
-When user asks a question mid-operation (even embedded in system-reminder), you MUST:
-- Acknowledge the question in your NEXT text response
-- Either answer it or say "Good question, let me investigate and add to TaskList"
-- Do NOT continue investigating silently without acknowledging
-
 **TaskList usage (step 2) - MANDATORY when**:
 - User requests a new feature, change, or fix
 - User provides multiple instructions to track
@@ -67,7 +61,6 @@ NOT after the entire /cat:work or skill workflow finishes. Respond in your very 
 
 **Common failure**: Continuing to analyze tool output while ignoring embedded user request.
 **Common failure**: NOT using TaskCreate for user requests mid-operation (step 2 is MANDATORY).
-**Common failure (M365)**: Seeing user question, continuing investigation without acknowledging.
 
 ### Mandatory Mistake Handling
 **CRITICAL**: Invoke `learn-from-mistakes` skill for ANY mistake.

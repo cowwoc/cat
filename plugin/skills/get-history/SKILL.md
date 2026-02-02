@@ -61,11 +61,49 @@ grep -oE '(VOICE_ID|API_KEY|CONFIG)\s*=\s*"[^"]*"' "$HIST"/*.jsonl 2>/dev/null |
 - `type: "tool_use"` - Tool invocations
 - `type: "tool_result"` - Tool outputs
 
-## Agent Sidechains
+## Subagent Session Navigation
 
-```bash
-ls -lht ~/.config/claude/projects/-workspace/agent-*.jsonl | head -10
+Subagent sessions are stored in a subdirectory of the parent session, NOT at the root level.
+
+**Storage path:**
 ```
+{parent-session-id}/subagents/agent-{agentId}.jsonl
+```
+
+**Finding agentId from parent session:**
+```bash
+HIST="/home/node/.config/claude/projects/-workspace"
+PARENT_SESSION="your-parent-session-id-here"
+
+# Extract agentIds from parent session's Task tool results
+grep -oh '"agentId":"[^"]*"' "$HIST/$PARENT_SESSION.jsonl" 2>/dev/null | sort -u
+
+# Or from raw output (agentId appears in result text)
+grep -oh 'agentId: [a-f0-9]*' "$HIST/$PARENT_SESSION.jsonl" 2>/dev/null | sort -u
+```
+
+**Verifying what tools a subagent actually used:**
+```bash
+AGENT_ID="ad630cb"  # Example agentId
+SUBAGENT_FILE="$HIST/$PARENT_SESSION/subagents/agent-$AGENT_ID.jsonl"
+
+# Count tool invocations
+grep -oh '"name":"[^"]*"' "$SUBAGENT_FILE" 2>/dev/null | sort | uniq -c | sort -rn
+
+# Check for specific skill invocation
+grep -c '"name":"Skill"' "$SUBAGENT_FILE" 2>/dev/null
+grep -oh '"skill":"[^"]*"' "$SUBAGENT_FILE" 2>/dev/null | sort -u
+```
+
+**Use case: Verify subagent actually invoked a validation skill:**
+```bash
+# Check if subagent invoked /cat:compare-docs or /cat:shrink-doc
+grep '"name":"Skill"' "$SUBAGENT_FILE" 2>/dev/null | grep -E 'compare-docs|shrink-doc'
+```
+
+**Note:** The agentId is included in the Task tool result output. Look for patterns like:
+- `"agentId":"ad630cb"` (in JSON)
+- `agentId: ad630cb` (in text output)
 
 ## Error Handling
 
