@@ -196,16 +196,6 @@ than the original. Fix the prompt or skill that produces unexpected results.
 
 Display the **Reviewing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ● ◉ ○ pattern).
 
-**Architecture (M364): Separate Subagents Per Stakeholder**
-
-The review subagent MUST spawn separate subagents for each stakeholder perspective. This is NOT
-optional - a single subagent reviewing from multiple perspectives has bias risks:
-- Anchoring bias: early positive assessments prime later ones
-- Consistency pressure: once it approves one aspect, it maintains consistent narrative
-- Context contamination: knowledge from one perspective influences another
-
-The work-review skill (Step 3) specifies: "For each selected stakeholder, spawn a reviewer subagent."
-
 Delegate to work-review subagent:
 
 ```
@@ -225,10 +215,6 @@ Task tool:
     EXECUTION_RESULT: ${execution_result_json}
 
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-review/SKILL.md
-
-    CRITICAL (M364): You MUST spawn SEPARATE subagents for each stakeholder perspective.
-    Do NOT review from all perspectives yourself - this creates bias. Follow Step 3 of
-    the skill which specifies spawning individual reviewer subagents per stakeholder.
 
     Return JSON per the output contract.
 ```
