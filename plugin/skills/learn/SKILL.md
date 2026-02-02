@@ -323,6 +323,39 @@ If `would_have_blocked: false` or `prevents_root_cause: false`:
 - Return to RCA and dig deeper into WHY the mistake occurred
 - Find prevention that addresses the actual failure point
 
+**Fix Source, Not Symptoms (M355):**
+
+When a mistake involves incorrect output from a subagent or downstream process:
+
+| Symptom Fix (❌ WRONG) | Source Fix (✅ CORRECT) |
+|------------------------|-------------------------|
+| Add validation to catch bad output | Fix the prompt/input that caused bad output |
+| Add check for fabricated scores | Remove priming content from delegation prompt |
+| Add warning when result looks wrong | Fix the instructions that led to wrong result |
+| Double-check subagent work | Fix the task description given to subagent |
+
+**The question to ask:** "Why did the subagent produce wrong output?"
+- If answer involves the PROMPT you gave it → fix the prompt
+- If answer involves the DOCUMENTATION it read → fix the documentation
+- Adding validation AFTER is treating the symptom, not the cause
+
+**Example - M355 Pattern:**
+
+```yaml
+# Mistake: Subagent fabricated validation scores
+
+# ❌ SYMPTOM FIX: Add fabrication detection after validation
+prevention: "Check if all scores are identical (suggests fabrication)"
+prevents_root_cause: false  # Subagent will still try to fabricate!
+
+# ✅ SOURCE FIX: Remove priming from the delegation prompt
+prevention: "Remove expected values (e.g., '1.0') from output format in prompt"
+prevents_root_cause: true  # Subagent no longer primed to fabricate
+```
+
+**Anti-pattern:** "The subagent did X wrong, so I'll add a check for X."
+**Correct approach:** "The subagent did X wrong because my prompt said Y. Fix Y."
+
 **Example - would_have_blocked: false:**
 
 ```yaml
