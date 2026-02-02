@@ -530,6 +530,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When validation is impossible or required parameter is missing, BLOCK the operation (fail fast), never allow it to proceed"
+    },
+    {
+      "id": "M362",
+      "timestamp": "2026-02-02T10:45:00Z",
+      "category": "workflow_gap",
+      "description": "Spawned execution subagent for work already committed on task branch",
+      "root_cause": "work-prepare skill returns READY without checking if task branch has existing commits, causing unnecessary re-execution when resuming a task",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "resume",
+        "existing-work",
+        "worktree",
+        "branch-detection"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check git log BASE..HEAD for existing commits before returning READY; include has_existing_work flag so orchestrator can skip execution phase"
     }
   ]
 }
