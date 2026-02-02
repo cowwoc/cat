@@ -474,6 +474,34 @@
         "catches_variations": true
       },
       "correct_behavior": "When skill docs show bash commands needing session ID, add note that env vars are skill-only and must be substituted with actual values before running in bash"
+    },
+    {
+      "id": "M360",
+      "timestamp": "2026-02-02T09:53:00Z",
+      "category": "tool_misuse",
+      "description": "Hook validate_worktree_remove failed to block worktree deletion because cwd was not in context",
+      "root_cause": "get-bash-pretool-output.py line 79-83 built context dict without including cwd from hook_data, causing handler to use incorrect fallback",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/get-bash-pretool-output.py",
+      "pattern_keywords": [
+        "cwd",
+        "context",
+        "hook",
+        "worktree",
+        "bash_handler",
+        "fallback"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pass cwd from hook_data to handler context; fail fast if cwd missing for handlers that require it"
     }
   ]
 }
