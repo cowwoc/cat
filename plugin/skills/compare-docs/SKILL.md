@@ -125,15 +125,46 @@ Task tool:
 - Main agent receives only the ~500 token formatted report
 - Prevents context pollution that degrades main agent quality
 
-### Step 3: Relay Report to User
+### Step 3: Run Second Comparison (MANDATORY - M350)
 
-The main agent simply relays the subagent's formatted report. No additional processing needed.
+**⚠️ MANDATORY**: Due to ±10-35% extraction variance, run comparison TWICE for reliable scores.
+
+Repeat Step 1 and Step 2 to get a second independent score for each document pair.
+
+**Why this is mandatory:**
+- Single comparison may be an outlier (extraction agents classify claims differently each run)
+- Best-2-of-3 eliminates variance-caused false PASS/FAIL decisions
+- M350 failure: skipping this step led to unreliable validation
+
+**Parallel execution**: For efficiency, spawn the second comparison in parallel with the first
+(4 extraction agents total for a single document pair, then 2 comparison agents).
+
+**Consensus rules:**
+
+| Threshold | Run 1 | Run 2 | Action |
+|-----------|-------|-------|--------|
+| 0.95 (general) | Both ≥0.95 | - | PASS (use average) |
+| 0.95 (general) | Both <0.95 | - | FAIL (use average) |
+| 0.95 (general) | Disagree (>0.05 diff) | - | Run tiebreaker (3rd comparison) |
+| 1.0 (shrink-doc) | Both = 1.0 | - | PASS |
+| 1.0 (shrink-doc) | One ≠ 1.0 | - | Run tiebreaker |
+| 1.0 (shrink-doc) | ≥2 of 3 = 1.0 | - | PASS |
+| 1.0 (shrink-doc) | <2 of 3 = 1.0 | - | FAIL (iterate) |
+
+### Step 4: Relay Report to User
+
+The main agent relays the consensus result with both/all scores shown.
+
+**Report format with consensus:**
+```
+Run 1: 0.97 | Run 2: 0.95 | Consensus: 0.96 (PASS)
+```
 
 **If Status = FAIL for shrink-doc context:** The calling workflow MUST iterate. Do not proceed to approval.
 
 ---
 
-## Reproducibility Notes (M321, M346)
+## Reproducibility Notes (M321, M346, M350)
 
 This command aims for high reproducibility but cannot guarantee perfect determinism due to
 LLM semantic judgment in claim extraction.
@@ -174,22 +205,11 @@ The 0.7x penalty for relationship_preservation < 0.9 can swing scores dramatical
 2. If scores vary >20% between runs, re-run extraction and average
 3. For shrink-doc validation requiring 1.0, consider multiple comparison runs
 
-**Recommended: Best-2-of-3 Validation (M346)**
+**MANDATORY: Best-2-of-3 Validation (M346, M350)**
 
-For reliable scores, callers should run /compare-docs twice in parallel:
+**This is now Step 3 in the Procedure section above.** All comparisons MUST run twice minimum.
 
-**For general comparison (threshold 0.95):**
-- If scores agree (within ±0.05): use average as consensus
-- If scores disagree: run third time, use two that agree
-
-**For shrink-doc validation (threshold 1.0 exact):**
-- If both = 1.0: PASS
-- If one = 1.0, one ≠ 1.0: run tiebreaker
-- PASS only if ≥2 of 3 runs return exactly 1.0
-- Otherwise: iterate to new version, re-validate
-
-This approach eliminates outlier scores caused by extraction variance.
-See shrink-doc/SKILL.md Step 4 for full implementation.
+See Step 3 for consensus rules and execution details.
 
 ---
 
@@ -245,6 +265,8 @@ At this score range, watch for:
 
 - [ ] Both extraction agents invoked in parallel (single message)
 - [ ] Comparison agent invoked with both extraction results
+- [ ] **Second comparison run completed (M350)** - NOT optional
+- [ ] Consensus calculated from 2+ runs
 - [ ] Score interpretation matches threshold table
 - [ ] Warnings reviewed for CRITICAL/HIGH severity
 - [ ] Report generated with all required sections
