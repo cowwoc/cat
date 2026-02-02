@@ -24,10 +24,13 @@ EXTRACTION-AGENT.md (lines 94-125) defines relationship types but doesn't specif
 
 ## Files to Modify
 - `plugin/skills/compare-docs/EXTRACTION-AGENT.md` - Add conservative extraction principle
+- `plugin/skills/shrink-doc/COMPRESSION-AGENT.md` - Add clarity improvement principle
 
 ## Proposed Changes
 
-### 1. Add Conservative Extraction Principle (new section after "Your Task")
+### Part A: Extraction Agent (conservative when reading)
+
+### A1. Add Conservative Extraction Principle (new section after "Your Task")
 
 ```markdown
 ## Conservative Extraction Principle
@@ -46,7 +49,7 @@ This bias is intentional: it's better to flag potential semantic loss than to mi
 - Examples illustrate constraints that aren't repeated in abstract form
 ```
 
-### 2. Update Temporal Dependency Extraction (enhance existing section)
+### A2. Update Temporal Dependency Extraction (enhance existing section)
 
 Add to "### 1. Temporal Dependencies":
 
@@ -65,7 +68,7 @@ Extract: temporal relationship "validate → process" as EXPLICIT (not "derivabl
 Rationale: The example reinforces the constraint; removing it could reduce clarity
 ```
 
-### 3. Add Classification Disambiguation Table
+### A3. Add Classification Disambiguation Table
 
 Add to relationship section:
 
@@ -80,13 +83,95 @@ Add to relationship section:
 | Could be derived from other claims | explicit | Derivation may fail |
 ```
 
+---
+
+### Part B: Compression Agent (clarify when writing)
+
+### B1. Add Clarity Improvement Principle (new section after "Goal")
+
+```markdown
+## Clarity Improvement Principle
+
+**Improve clarity, don't just preserve content.**
+
+When compressing, actively reduce ambiguity by:
+- Converting implicit temporal ordering to explicit statements
+- Normalizing vague language to precise constraints
+- Making relationships explicit even if "derivable" from context
+
+This reduces extraction variance during validation and improves execution equivalence.
+
+**Apply this principle when:**
+- Text uses vague ordering ("then", "next") - clarify to explicit "Step N before Step M"
+- Examples show constraints without stating them - add explicit constraint statement
+- Relationships are implied but not stated - state them explicitly
+```
+
+### B2. Add Normalization Techniques (new section)
+
+Add after "Compression Approach":
+
+```markdown
+## Normalization for Clarity
+
+When compressing, apply these normalizations to reduce ambiguity:
+
+**Temporal Ordering:**
+- BEFORE: "Run the tests, then deploy"
+- AFTER: "Run tests before deployment" (explicit temporal marker)
+
+**Implicit Constraints:**
+- BEFORE: Example shows `validate(); process();` without explanation
+- AFTER: "Validate before processing (required ordering)"
+
+**Vague Quantifiers:**
+- BEFORE: "Wait a bit before retrying"
+- AFTER: "Wait before retrying" or remove if no constraint intended
+
+**Conditional Clarity:**
+- BEFORE: "You might want to check X"
+- AFTER: "Check X if [condition]" or remove if optional
+
+**Principle:** If the original text conveys a constraint (even implicitly), the compressed
+version should state that constraint MORE explicitly, not less.
+```
+
+### B3. Add Anti-Pattern Examples
+
+```markdown
+## Compression Anti-Patterns
+
+**DO NOT reduce clarity when compressing:**
+
+| Original | Bad Compression | Good Compression |
+|----------|-----------------|------------------|
+| "Always run A before B" | "Run A and B" | "Run A before B" (preserved) |
+| "Step 1, then Step 2, then Step 3" | "Complete all steps" | "Step 1 → Step 2 → Step 3" |
+| Example: `init(); start();` | (removed) | "Initialize before starting" |
+| "MUST validate OR reject" | "Handle input" | "Validate input; reject if invalid" |
+
+**Key insight:** Compression should reduce WORDS, not CONSTRAINTS.
+```
+
 ## Acceptance Criteria
+
+**Extraction Agent:**
 - [ ] Conservative extraction principle documented
 - [ ] Temporal dependency section updated with conservative bias
 - [ ] Disambiguation table added for ambiguous cases
-- [ ] No test regressions (existing extractions still work)
+
+**Compression Agent:**
+- [ ] Clarity improvement principle documented
+- [ ] Normalization techniques section added
+- [ ] Anti-pattern examples added
+
+**Validation:**
+- [ ] No test regressions (python3 /workspace/run_tests.py passes)
 
 ## Execution Steps
+
+### Extraction Agent (EXTRACTION-AGENT.md)
+
 1. **Step 1:** Add "Conservative Extraction Principle" section after "Your Task"
    - Verify: Section exists and states "when in doubt, extract it"
 
@@ -96,5 +181,18 @@ Add to relationship section:
 3. **Step 3:** Add disambiguation table for ambiguous cases
    - Verify: Table covers example ordering, rule+example redundancy, domain knowledge, derivation
 
-4. **Step 4:** Run existing tests to verify no regressions
+### Compression Agent (COMPRESSION-AGENT.md)
+
+4. **Step 4:** Add "Clarity Improvement Principle" section after "Goal"
+   - Verify: Section states "improve clarity, don't just preserve content"
+
+5. **Step 5:** Add "Normalization for Clarity" section after "Compression Approach"
+   - Verify: Includes temporal ordering, implicit constraints, vague quantifiers examples
+
+6. **Step 6:** Add "Compression Anti-Patterns" section
+   - Verify: Shows bad vs good compression examples with constraint preservation
+
+### Validation
+
+7. **Step 7:** Run tests to verify no regressions
    - Verify: `python3 /workspace/run_tests.py` passes
