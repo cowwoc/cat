@@ -228,7 +228,7 @@
       "correct_behavior": "Structure subagent prompts with CRITICAL requirements first, then working directory, then task goal, then step-by-step instructions, then output format, then context/metadata last."
     },
     {
-      "id": "M350",
+      "id": "M351",
       "timestamp": "2026-02-02T22:15:00Z",
       "category": "protocol_violation",
       "description": "compare-docs executed with single comparison run per file instead of mandatory best-2-of-3 validation",
@@ -253,6 +253,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Run comparison twice (or 3x if results disagree) and use consensus score. This is now mandatory Step 3 in the Procedure."
+    },
+    {
+      "id": "M352",
+      "timestamp": "2026-02-02T23:00:00Z",
+      "category": "output_format_error",
+      "description": "Reported line counts (~230 lines) in columns labeled 'Tokens Before/After' instead of actual token counts",
+      "root_cause": "compare-docs M346 section specified 'Tokens Before | Tokens After' columns but provided no method to count tokens. Agent substituted available line counts without noting the unit mismatch.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "tokens",
+        "lines",
+        "unit-mismatch",
+        "per-file-report",
+        "M346"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use wc -w for token approximation when reporting in token columns. Never report 'X lines' in a 'Tokens' column - either measure tokens or change column header."
     }
   ]
 }

@@ -178,7 +178,7 @@ run with default temperature settings, which contributes to variance between inv
 - Different model versions: ±5-10%
 - **Different agent invocations: ±10-35%** (claim type classification variance)
 
-**Per-File Reporting Requirement (M346)**:
+**Per-File Reporting Requirement (M346, M352)**:
 
 When validating multiple files in batch operations, report EACH file individually:
 
@@ -187,6 +187,22 @@ When validating multiple files in batch operations, report EACH file individuall
 | agent-architecture.md | 1,245 | 823 | 34% | 0.51 | FAIL |
 | build-verification.md | 567 | 312 | 45% | 0.97 | FAIL |
 | ... | ... | ... | ... | ... | ... |
+
+**Token Counting Method (M352):**
+
+Use `wc -w` as a token approximation (words ≈ tokens within ~20%):
+
+```bash
+# Count tokens (word approximation) for before/after files
+wc -w /tmp/file-before.md /tmp/file-after.md
+```
+
+**CRITICAL (M352):** Column headers say "Tokens" - report TOKEN counts, NOT line counts.
+If you only have line counts, either:
+1. Run `wc -w` to get word/token approximation
+2. Change column header to "Lines" if token counting unavailable
+
+Do NOT report "~230 lines" in a "Tokens" column - this is a unit mismatch error.
 
 Do NOT report aggregate scores across files. Each file's equivalence is independent.
 If all files report identical scores (e.g., all 1.0), this suggests fabrication - verify each was validated.
