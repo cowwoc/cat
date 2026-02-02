@@ -65,3 +65,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - simplify-prerendered-skills
 - fix-grep-jsonl-filter
 - conservative-extraction-bias
+- detect-subagent-fabrication
