@@ -123,37 +123,36 @@ fi
 **Why this matters (M351):** Without verification, a worktree may be created but remain on the base
 branch, causing commits to go to the wrong branch and bypass the review/merge workflow.
 
-### Step 6: Check for Existing Work (M362)
+### Step 6: Check for Existing Work (M362, M363)
 
-**MANDATORY: Check if task branch already has commits before returning READY.**
+**MANDATORY: Use the check-existing-work.sh script to detect existing commits.**
+
+This check is deterministic (no LLM decision-making required) so it's implemented as a script
+with full test coverage (M363).
 
 ```bash
-cd "${WORKTREE_PATH}"
-BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base" 2>/dev/null || echo "${BASE_BRANCH}")
-EXISTING_COMMITS=$(git log --oneline "${BASE_BRANCH}..HEAD" 2>/dev/null | wc -l)
-
-if [[ "$EXISTING_COMMITS" -gt 0 ]]; then
-  # Task has existing work - include in output for main agent to handle
-  COMMIT_LIST=$(git log --oneline "${BASE_BRANCH}..HEAD")
-  HAS_EXISTING_WORK=true
-else
-  HAS_EXISTING_WORK=false
-fi
+EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/check-existing-work.sh" \
+  --worktree "${WORKTREE_PATH}" \
+  --base-branch "${BASE_BRANCH}")
 ```
 
-**Include in JSON output:**
+Parse the JSON result and include in output:
 
-```json
-{
-  "has_existing_work": true,
-  "existing_commits": 3,
-  "commit_summary": "eedb1c45 config: add conservative extraction..."
-}
+```bash
+HAS_EXISTING_WORK=$(echo "$EXISTING_WORK_RESULT" | jq -r '.has_existing_work')
+EXISTING_COMMITS=$(echo "$EXISTING_WORK_RESULT" | jq -r '.existing_commits')
+COMMIT_SUMMARY=$(echo "$EXISTING_WORK_RESULT" | jq -r '.commit_summary')
 ```
 
 **Why this matters (M362):** Without checking for existing commits, the orchestrator spawns
 an execution subagent for work that's already done. When `has_existing_work: true`, the main
 agent should skip execution phase and proceed directly to review/merge.
+
+**Why a script (M363):** This check is entirely deterministic - it just runs git commands and
+returns JSON. Using a script instead of inline LLM instructions ensures:
+- Test coverage for the detection logic
+- Consistent behavior across invocations
+- No risk of LLM misimplementing the check
 
 ### Step 7: Update STATE.md
 
