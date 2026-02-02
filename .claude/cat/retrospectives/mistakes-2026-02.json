@@ -368,6 +368,33 @@
       },
       "correct_behavior": "After validation runs, check for fabrication indicators: (1) all scores identical suggests fabrication, (2) high variance (>0.3) suggests extraction instability. Block merge if all scores are identical 1.0 - require independent re-validation.",
       "note": "This is a SYMPTOM fix. See M355 for the SOURCE fix (fix prompts that prime subagents, not add validation after)."
+    },
+    {
+      "id": "M355",
+      "timestamp": "2026-02-02T00:20:00Z",
+      "category": "rca_failure",
+      "description": "M354 prevention added validation (check for identical scores) instead of fixing the source (priming prompts that caused fabrication)",
+      "root_cause": "Learn skill did not explicitly require fixing the SOURCE of subagent mistakes rather than adding downstream validation. Prevention was 'detect fabrication after it happens' instead of 'prevent fabrication by fixing the prompt'.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "rca",
+        "source-vs-symptom",
+        "validation",
+        "subagent",
+        "prompt-fix"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When subagent produces wrong output, fix the PROMPT/INPUT that caused it, not add validation to catch the wrong output. Ask: 'Why did subagent do X?' If answer involves prompt content, fix the prompt."
     }
   ]
 }
