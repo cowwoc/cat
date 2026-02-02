@@ -625,6 +625,34 @@ language** that guides toward correct behavior rather than warning against mista
 Keep negative language only when no actionable positive alternative exists (e.g., security warnings
 where the "don't" is the entire point).
 
+**Fail-Fast Error Handling (M361):**
+
+When implementing prevention that modifies error handling, apply the fail-fast principle:
+
+| Situation | Wrong Approach | Correct Approach |
+|-----------|----------------|------------------|
+| Required parameter missing | Return None (allow) | Block with error |
+| Can't verify safety | Assume safe | Assume unsafe, block |
+| Validation impossible | Skip validation | Fail the operation |
+
+**The mental model:**
+- "Unknown safety" = "unsafe"
+- If you can't verify an operation is safe, block it
+- Never allow potentially dangerous operations to proceed when validation fails
+
+**Example (M361):**
+```python
+# ❌ WRONG: Allow when can't validate
+cwd = context.get("cwd")
+if not cwd:
+    return None  # Allows dangerous command!
+
+# ✅ CORRECT: Block when can't validate
+cwd = context.get("cwd")
+if not cwd:
+    return {"decision": "block", "reason": "Cannot verify safety - cwd missing"}
+```
+
 **Complete Fix Requirement for Documentation Priming (M345):**
 
 When documentation primed the agent for wrong behavior, the fix must be **complete**:
