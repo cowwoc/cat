@@ -5,5 +5,9 @@
   "verify": "all",
   "curiosity": "high",
   "patience": "medium",
-  "autoRemoveWorktrees": true
+  "autoRemoveWorktrees": true,
+  "userInputProtocol": {
+    "description": "M366: When user input arrives mid-operation (via system-reminder), STOP-ADD-ACKNOWLEDGE before continuing",
+    "steps": ["STOP current processing", "ADD to TaskList if non-trivial", "ACKNOWLEDGE in response", "THEN continue"]
+  }
 }

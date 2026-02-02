@@ -637,6 +637,39 @@
         "catches_variations": true
       },
       "correct_behavior": "NEVER make temporary changes to persistent state that require cleanup. User interruptions are normal. Any approach that corrupts data on interruption is unacceptable. Filter in-memory or at read time, never by mutating source files."
+    },
+    {
+      "id": "M366",
+      "timestamp": "2026-02-02T18:00:00Z",
+      "category": "protocol_violation",
+      "description": "Failed to acknowledge user question received mid-operation via system-reminder, continued working without adding to TaskList",
+      "root_cause": "CAT SESSION INSTRUCTIONS (session start hook) already specifies to STOP, ADD to TaskList, and ACKNOWLEDGE when user input arrives mid-operation. Agent read the system-reminder but continued with current task due to completion bias, treating acknowledgment as optional.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/user_question_reminder.py",
+      "pattern_keywords": [
+        "user-input",
+        "acknowledgment",
+        "TaskList",
+        "mid-operation",
+        "system-reminder"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "behavioral",
+        "fragility": "high",
+        "catches_variations": false
+      },
+      "correct_behavior": "When system-reminder contains user question/request: (1) STOP current processing, (2) ADD to TaskList if non-trivial, (3) ACKNOWLEDGE in next response text, (4) THEN continue. Delay is acceptable; silence is not.",
+      "escalation_needed": true,
+      "escalation_reason": "Existing documentation-level prevention (CAT SESSION INSTRUCTIONS) failed to prevent this mistake. Evidence: the mistake occurred despite instructions being present. Documentation-level prevention is insufficient.",
+      "proposed_escalation": {
+        "prevention_type": "hook",
+        "description": "PostToolUse hook that detects when tool results contain system-reminder with user question patterns and injects reminder to acknowledge"
+      }
     }
   ]
 }
