@@ -556,6 +556,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Check git log BASE..HEAD for existing commits before returning READY; include has_existing_work flag so orchestrator can skip execution phase"
+    },
+    {
+      "id": "M363",
+      "timestamp": "2026-02-02T11:15:00Z",
+      "category": "architecture",
+      "description": "Implemented deterministic check as skill instructions instead of testable script",
+      "root_cause": "M362 fix added instructions to skill documentation for the agent to execute, but the check (git log for existing commits) is entirely deterministic and requires no LLM judgment - it should be a script with tests",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/plugin/scripts/check-existing-work.sh",
+      "pattern_keywords": [
+        "deterministic",
+        "script",
+        "test",
+        "handler",
+        "tdd"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When implementing prevention that involves deterministic logic (no LLM judgment needed), create a testable script/handler instead of adding instructions to skill documentation"
     }
   ]
 }
