@@ -395,6 +395,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When subagent produces wrong output, fix the PROMPT/INPUT that caused it, not add validation to catch the wrong output. Ask: 'Why did subagent do X?' If answer involves prompt content, fix the prompt."
+    },
+    {
+      "id": "M356",
+      "timestamp": "2026-02-02T06:20:00Z",
+      "category": "protocol_violation",
+      "description": "Agent ran full two-run comparison protocol for first file in batch, but single-run for remaining 3 files",
+      "root_cause": "compare-docs skill designed for two-file comparison lacked explicit batch handling guidance; agent made efficiency shortcut after first file",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/compare-docs/SKILL.md",
+      "pattern_keywords": [
+        "batch",
+        "two-run",
+        "compare-docs",
+        "shortcut",
+        "protocol"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Apply full two-run protocol (4 extraction + 2 comparison agents) to EACH file in batch operations"
     }
   ]
 }

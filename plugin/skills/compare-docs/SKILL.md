@@ -16,6 +16,20 @@ user-invocable: false
 
 ## Procedure
 
+### Batch Comparison Handling (M356)
+
+**When comparing multiple files** (e.g., from a git diff or task branch):
+
+1. Apply the FULL two-run protocol (Steps 1-4) to **EACH file independently**
+2. Do NOT shortcut remaining files after completing the first
+3. Each file requires 4 extraction agents + 2 comparison agents = 6 subagents per file
+4. Report consensus scores for ALL files before presenting final summary
+
+**Anti-pattern (M356):** Running full protocol for first file, then single-run for remaining files.
+This violates the ±10-35% variance requirement and produces unreliable scores.
+
+---
+
 ### Step 1: Run TWO Independent Comparisons (MANDATORY - M350, M354)
 
 **⚠️ MANDATORY**: Run the full extract+compare pipeline TWICE in a single message.
@@ -198,7 +212,8 @@ Do NOT use `wc -w` as approximation (words ≠ tokens; can differ by 50%+).
 Do NOT report "~230 lines" in a "Tokens" column - this is a unit mismatch error.
 
 Do NOT report aggregate scores across files. Each file's equivalence is independent.
-If all files report identical scores (e.g., all 1.0), this suggests fabrication - verify each was validated.
+If all files report identical scores (e.g., all 1.0), this suggests fabrication - verify each was validated
+**using the full two-run protocol per file (M356).**
 
 **Why Scores Can Vary Significantly (M321)**:
 
