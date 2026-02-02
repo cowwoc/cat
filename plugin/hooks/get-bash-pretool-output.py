@@ -76,9 +76,11 @@ def main():
         return
 
     # Build context for handlers
+    # CRITICAL (M360): Include cwd from hook_data so handlers can check shell's working directory
     context = {
         "tool_input": tool_input,
         "session_id": hook_data.get("session_id", ""),
+        "cwd": hook_data.get("cwd", ""),  # M360: Pass cwd for worktree validation
         "hook_data": hook_data,
     }
 

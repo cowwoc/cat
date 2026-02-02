@@ -28,8 +28,21 @@ class ValidateWorktreeRemoveHandler:
         # Extract path from whichever group matched (double-quoted, single-quoted, or unquoted)
         target_path = match.group(1) or match.group(2) or match.group(3)
 
-        # Get current working directory from context or environment
-        cwd = context.get("cwd") or os.getcwd()
+        # Get current working directory from context (M360: required, fail fast)
+        cwd = context.get("cwd")
+        if not cwd:
+            # If cwd not provided, cannot safely validate - BLOCK (fail fast)
+            return {
+                "decision": "block",
+                "reason": f"""⛔ BLOCKED: Cannot validate worktree removal - cwd not available (M360)
+
+Target worktree: {target_path}
+
+The hook cannot determine if this removal is safe because the shell's
+working directory is not available in the context.
+
+This is a hook configuration error that should be reported."""
+            }
 
         # Normalize paths for comparison
         try:
