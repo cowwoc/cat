@@ -675,19 +675,14 @@ EOF
 
 **Present completion:**
 
-Invoke the renderer to generate the completion display:
+**MANDATORY: Run the renderer script - do NOT manually construct the output box.**
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
 ```
 
-Output the rendered box exactly as shown.
-If not found, use this fallback format:
-
-```
-Issue created: {issue-name} in version {major}.{minor}
-Next: /cat:work {major}.{minor}-{issue-name}
-```
+Output the rendered box exactly as the script produces it. The script handles emoji widths
+and alignment correctly - manual construction will have alignment errors.
 
 </step>
 
@@ -1305,19 +1300,14 @@ EOF
 
 **Present completion:**
 
-Invoke the renderer to generate the completion display:
+**MANDATORY: Run the renderer script - do NOT manually construct the output box.**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
 ```
 
-Output the rendered box exactly as shown.
-If not found, use this fallback format:
-
-```
-{VERSION_TYPE} version created: {version}
-Next: /cat:add (to add issues)
-```
+Output the rendered box exactly as the script produces it. The script handles emoji widths
+and alignment correctly - manual construction will have alignment errors.
 
 </step>
 
