@@ -1,4 +1,4 @@
-# Semantic Comparison with Relationship Analysis
+# Semantic Unit Comparison
 
 **Internal Document** - Read by comparison subagents only.
 
@@ -6,169 +6,264 @@
 
 ## Your Task
 
-Compare claims AND relationships from two document extractions to determine execution equivalence.
+Compare semantic units extracted from two documents to determine equivalence.
+
+**You see ONLY the extraction outputs**, not the original documents.
 
 ---
 
-## Part 1: Claim Comparison
+## Input
 
-**Comparison Rules**:
+You receive two JSON extraction outputs:
+- **Document A (Original):** `/tmp/compare-doc-a-extraction.json`
+- **Document B (Compressed):** `/tmp/compare-doc-b-extraction.json`
 
-1. **Exact Match**: Identical normalized text → shared
-2. **Semantic Equivalence**: Different wording, identical meaning → shared
-3. **Type Mismatch**: Same concept but different structure → flag as structural change
-4. **Unique**: Claims appearing in only one document
-
-**Enhanced Claim Comparison**:
-
-- **Conjunctions**: Two conjunctions equivalent ONLY if same sub-claims AND all_required matches
-  - Example: "ALL of {A, B, C}" ≠ "A" + "B" + "C" (conjunction split - structural loss)
-- **Conditionals**: Equivalent ONLY if same condition AND same true/false consequences
-  - Example: "IF X THEN A ELSE B" ≠ "A" + "B" (conditional context lost)
-- **Consequences**: Match on trigger AND impact
-- **Negations**: Match on prohibition AND scope
-
----
-
-## Part 2: Relationship Comparison
-
-**Relationship Matching Rules**:
-
-1. **Exact Match**: Same type, same from/to claims, same constraint → preserved
-2. **Missing Relationship**: Exists in A but not in B → lost
-3. **New Relationship**: Exists in B but not in A → added
-4. **Modified Relationship**: Same claims but different constraint → changed
-
-**Relationship Preservation Scoring**:
-
-Only count relationships where both endpoints are shared claims. Calculate:
-- preserved = count of matching relationships
-- lost = count in A but not in B
-- added = count in B but not in A
-- preservation_rate = preserved / len(a_valid) if a_valid > 0 else 1.0
-
----
-
-## Part 3: Dependency Graph Comparison
-
-**Graph Comparison**:
-
-1. **Topology**: Compare graph structure (linear_chain vs tree vs dag)
-2. **Connectivity**: Compare edge preservation (same connections?)
-3. **Critical Path**: Compare critical paths (same ordering?)
-
-**Graph Structure Score**:
-- connectivity weight: 0.5
-- topology match weight: 0.25
-- critical path similarity weight: 0.25
-
----
-
-## Part 4: Execution Equivalence Scoring
-
-**Scoring Formula**:
-
-Weights:
-- claim_preservation: 0.4
-- relationship_preservation: 0.4
-- graph_structure: 0.2
-
-base_score = sum(weights * component_scores)
-
-**Penalty**: If relationship_preservation < 0.9, multiply base_score by 0.7
-
-**Score Interpretation**:
-- >= 0.95: "Execution equivalent - minor differences acceptable"
-- >= 0.75: "Mostly equivalent - review relationship changes"
-- >= 0.50: "Significant differences - execution may differ"
-- < 0.50: "CRITICAL - execution will fail or produce wrong results"
-
----
-
-## Part 5: Warning Generation
-
-**Generate Warnings for**:
-
-1. **Relationship Loss**: "100% of temporal dependencies lost"
-2. **Structural Changes**: "Conjunction split into independent claims"
-3. **Conditional Logic Loss**: "IF-THEN-ELSE flattened to concurrent claims"
-4. **Cross-Reference Breaks**: "Section numbering removed"
-5. **Exclusion Constraint Loss**: "Concurrency prohibition lost"
-
----
-
-## Output Format (JSON)
-
-Return a JSON object with the following structure:
-
+Each contains:
 ```json
 {
-  "execution_equivalence_score": 0.75,
-  "components": {
-    "claim_preservation": 1.0,
-    "relationship_preservation": 0.6,
-    "graph_structure": 0.4
-  },
-  "shared_claims": [
+  "units": [
     {
-      "claim": "normalized shared claim",
-      "doc_a_id": "claim_1",
-      "doc_b_id": "claim_3",
-      "similarity": 100,
-      "type_match": true,
-      "note": "exact match"
+      "id": "unit_1",
+      "category": "SEQUENCE",
+      "original": "Check pwd before rm-rf",
+      "normalized": "sequence: check pwd → rm-rf",
+      "location": "line 15"
     }
   ],
-  "unique_to_a": [{"claim": "claim text", "doc_a_id": "claim_5"}],
-  "unique_to_b": [{"claim": "claim text", "doc_b_id": "claim_7"}],
-  "relationship_preservation": {
-    "temporal_preserved": 3,
-    "temporal_lost": 2,
-    "conditional_preserved": 1,
-    "conditional_lost": 0,
-    "exclusion_preserved": 0,
-    "exclusion_lost": 1,
-    "overall_preservation": 0.6
-  },
-  "lost_relationships": [
-    {
-      "type": "temporal",
-      "from": "step_1",
-      "to": "step_2",
-      "constraint": "Step 2 must occur after Step 1",
-      "risk": "HIGH - skipping Step 1 causes data corruption"
-    }
-  ],
-  "structural_changes": [
-    {
-      "type": "conjunction_split",
-      "original": "ALL of {A, B, C} required",
-      "modified": "Three separate claims: A, B, C",
-      "risk": "MEDIUM - may be interpreted as ANY instead of ALL"
-    }
-  ],
-  "warnings": [
-    {
-      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
-      "type": "relationship_loss|structural_change|contradiction",
-      "description": "Human-readable description",
-      "recommendation": "Specific action to fix"
-    }
-  ],
-  "summary": {
-    "total_claims_a": 10,
-    "total_claims_b": 10,
-    "shared_count": 10,
-    "unique_a_count": 0,
-    "unique_b_count": 0,
-    "relationships_a": 5,
-    "relationships_b": 3,
-    "relationships_preserved": 3,
-    "relationships_lost": 2,
-    "execution_equivalent": false,
-    "confidence": "high"
-  }
+  "metadata": { "total_units": N }
 }
 ```
 
-**Determinism**: Use consistent comparison logic. When uncertain, mark as unique.
+---
+
+## Comparison Algorithm
+
+### Step 1: Build Normalized Index
+
+For each document, create a map of normalized forms:
+```
+Doc A: { "sequence: check pwd → rm-rf": unit_1, ... }
+Doc B: { "sequence: check pwd → rm-rf": unit_3, ... }
+```
+
+### Step 2: Match Units
+
+For each normalized form in Doc A:
+- If exists in Doc B → **PRESERVED**
+- If not in Doc B → **LOST**
+
+For each normalized form in Doc B:
+- If not in Doc A → **ADDED**
+
+### Step 3: Determine Status
+
+```
+if LOST count == 0:
+    status = "EQUIVALENT"
+else:
+    status = "NOT_EQUIVALENT"
+```
+
+**Note:** ADDED units are informational only. A document can be EQUIVALENT
+even with additions (compressed doc adding clarifications is acceptable).
+Only LOST units cause NOT_EQUIVALENT status.
+
+---
+
+## Matching Rules
+
+### Semantic Equivalence (Not Exact String Match)
+
+Compare units by **semantic meaning**, not literal string matching.
+
+**Equivalence requires ALL of:**
+1. **Same category** - Both must be same category (SEQUENCE, PROHIBITION, etc.)
+2. **Same strength** - `must:` ≠ `require:` ≠ `should:`
+3. **Same semantic intent** - The constraint/requirement means the same thing
+4. **Same target** - Entity being acted on must match semantically
+5. **Same relationship structure** - Order and connections must match
+
+**Semantic judgment:** You judge equivalence based on meaning, not surface form.
+Two units are equivalent if they express the same constraint regardless of wording.
+
+- "validate credentials" ≈ "check auth" (same intent)
+- "remove file" ≈ "delete file" (same action)
+- "start process" ≈ "launch service" (same action, similar target)
+
+**Examples of EQUIVALENT units:**
+- `required: validate credentials` ≈ `required: check auth` (synonym action, same target domain)
+- `sequence: verify input → process data` ≈ `sequence: validate input → handle data` (synonym verbs)
+- `prohibited: skip validation` ≈ `prohibited: bypass validation step` (same constraint)
+
+**Examples of NOT EQUIVALENT:**
+- `required!: X` ≠ `required: X` (different strength - strict vs advisory)
+- `required: X` ≠ `suggested: X` (different strength)
+- `sequence: A → B` ≠ `sequence: B → A` (different order)
+- `sequence: A → B → C` ≠ `sequence: A → B` + `sequence: B → C` (decomposition loses explicit chain)
+- `prohibited: X` ≠ `required: X` (opposite meaning)
+
+### Decomposition Rules
+
+**Explicit chains must match as chains:**
+- `sequence: A → B → C` is ONE unit representing a 3-step sequence
+- It is NOT equivalent to two separate units `A → B` and `B → C`
+- Decomposition loses the explicit full-chain constraint
+
+**Conjunctions must match as conjunctions:**
+- `conjunction: [A, B, C]` means ALL THREE required together
+- It is NOT equivalent to three separate `required: A`, `required: B`, `required: C`
+- Decomposition loses the "all together" constraint
+
+### Unordered Structure Equivalence
+
+**Order within unordered structures doesn't affect equivalence:**
+- `conjunction: [A, B, C]` = `conjunction: [C, A, B]` (all required, order irrelevant)
+- `exclusion: A, B` = `exclusion: B, A` (mutual exclusion is symmetric)
+
+**Order within ordered structures DOES matter:**
+- `sequence: A → B` ≠ `sequence: B → A` (temporal order is semantic)
+
+### Double Negation Equivalence
+
+**Prohibition of omission equals requirement:**
+- `prohibit: skip validation` ≈ `require: validate` (same semantic intent)
+- `prohibit: omit tests` ≈ `require: include tests`
+
+**When category changes but meaning is preserved, units are EQUIVALENT:**
+- Original: "MUST NOT skip validation" → `must not: skip validation`
+- Compressed: "MUST validate" → `must: validate`
+- Result: **EQUIVALENT** (same constraint, different framing)
+
+**The test:** Would violating one statement also violate the other? If yes, they're equivalent.
+
+### Terminology Variations
+
+When documents use different terms for the same concept:
+- Identify the concept based on context and relationships
+- Flag as EQUIVALENT if semantic meaning is preserved
+- Note terminology mapping in output (informational)
+
+**Example:**
+```
+Doc A: sequence: validate credentials → access API
+Doc B: sequence: check auth → call API
+
+Result: EQUIVALENT (terminology differs but same semantic flow)
+```
+
+### Strength Distinction
+- `required: X` does NOT match `suggested: X`
+- Both are REQUIREMENT category but different strength
+- This is a semantic difference, not just terminology
+
+### Embedded Semantics
+- `prohibited: [sequence: A → B]` matches `prohibited: [sequence: A → B]`
+- Compare embedded structures recursively for semantic equivalence
+
+---
+
+## Output Format
+
+### Single File Comparison
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+                              COMPARISON RESULT
+═══════════════════════════════════════════════════════════════════════════════
+
+Status: NOT_EQUIVALENT (44/47 preserved, 3 lost)
+
+───────────────────────────────────────────────────────────────────────────────
+LOST (in original, missing in compressed)
+───────────────────────────────────────────────────────────────────────────────
+- [SEQUENCE] "When cleaning up test files: verify not inside target"
+- [REFERENCE] "See recovery procedures in ops/recovery.md"
+- [REQUIREMENT] "Use parent directory as working dir for build artifacts"
+
+───────────────────────────────────────────────────────────────────────────────
+ADDED (in compressed, not in original)
+───────────────────────────────────────────────────────────────────────────────
+- (none)
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### When EQUIVALENT
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+                              COMPARISON RESULT
+═══════════════════════════════════════════════════════════════════════════════
+
+Status: EQUIVALENT (47/47 preserved, 0 lost)
+
+───────────────────────────────────────────────────────────────────────────────
+LOST (in original, missing in compressed)
+───────────────────────────────────────────────────────────────────────────────
+- (none)
+
+───────────────────────────────────────────────────────────────────────────────
+ADDED (in compressed, not in original)
+───────────────────────────────────────────────────────────────────────────────
+- [REQUIREMENT] "Additional clarification about edge case"
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## Output Format: Batch Comparison
+
+When comparing multiple files, provide summary table first:
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+                           BATCH COMPARISON RESULT
+═══════════════════════════════════════════════════════════════════════════════
+
+| File                 | Status          | Preserved | Lost |
+|----------------------|-----------------|-----------|------|
+| safe-rm/SKILL.md     | NOT_EQUIVALENT  | 44/47     | 3    |
+| status/SKILL.md      | EQUIVALENT      | 23/23     | 0    |
+| deploy/SKILL.md      | NOT_EQUIVALENT  | 31/35     | 4    |
+
+───────────────────────────────────────────────────────────────────────────────
+DETAILS: safe-rm/SKILL.md (3 lost)
+───────────────────────────────────────────────────────────────────────────────
+- [SEQUENCE] "verify not inside target before cleanup"
+- [REFERENCE] "See ops/recovery.md"
+- [REQUIREMENT] "Use parent directory as working dir"
+
+───────────────────────────────────────────────────────────────────────────────
+DETAILS: deploy/SKILL.md (4 lost)
+───────────────────────────────────────────────────────────────────────────────
+- [PROHIBITION] "NEVER deploy without approval"
+- [CONDITIONAL] "IF production THEN require sign-off"
+- [DEPENDENCY] "Valid credentials required for deploy"
+- [SEQUENCE] "Run tests before deploy"
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## Critical Requirements
+
+1. **Use original text in LOST/ADDED lists** - not normalized form
+2. **Include category tag** - `[SEQUENCE]`, `[PROHIBITION]`, etc.
+3. **Count format** - `X/Y preserved, Z lost` where Y is total in original
+4. **Status determination** - EQUIVALENT only if 0 lost units
+5. **No numeric scores** - binary status with counts only
+
+---
+
+## Verification Checklist
+
+Before returning output:
+- [ ] Read both extraction JSON files
+- [ ] Matched by normalized form (exact match)
+- [ ] LOST = in A, not in B
+- [ ] ADDED = in B, not in A
+- [ ] Status = EQUIVALENT only if LOST count is 0
+- [ ] Original text used in output (not normalized)
+- [ ] Category tags included for each unit
