@@ -63,6 +63,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - self-discover-env-vars
 
 ## Issues Pending
+- optimize-add-wizard-calls
 - refactor-compare-docs-thresholds
 - simplify-prerendered-skills
 - fix-grep-jsonl-filter
