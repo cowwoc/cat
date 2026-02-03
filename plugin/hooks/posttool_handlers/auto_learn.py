@@ -1,7 +1,7 @@
 """
-Auto-invoke learn-from-mistakes skill when mistakes are detected.
+Auto-invoke learn skill when mistakes are detected.
 
-Monitors tool results for error patterns and suggests the learn-from-mistakes
+Monitors tool results for error patterns and suggests the learn
 skill for root cause analysis.
 
 PATTERN EVOLUTION:
@@ -30,7 +30,7 @@ VALIDATION_SKILLS = ["compare-docs", "shrink-doc"]
 
 
 class AutoLearnHandler:
-    """Detect mistakes and suggest learn-from-mistakes skill."""
+    """Detect mistakes and suggest learn skill."""
 
     def __init__(self):
         self._last_line_cache = {}

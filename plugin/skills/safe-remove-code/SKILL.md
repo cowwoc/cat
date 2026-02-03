@@ -20,7 +20,7 @@ When removing instrumentation, debugging code, or other patterns from multiple f
 - **Issue**: Remove timing instrumentation from 47 hooks
 - **Mistake**: Removal script was too aggressive
 - **Impact**: 7 hooks reduced to 3 lines (only `#!/bin/bash` and `set -euo pipefail`)
-- **Hooks destroyed**: auto-learn-from-mistakes.sh, block-data-loss.sh, detect-worktree-violation.sh, enforce-requirements-release.sh, load-todo.sh, detect-assistant-giving-up.sh, verify-convergence-entry.sh
+- **Hooks destroyed**: auto-learn.sh, block-data-loss.sh, detect-worktree-violation.sh, enforce-requirements-release.sh, load-todo.sh, detect-assistant-giving-up.sh, verify-convergence-entry.sh
 - **Recovery**: Restored from backups
 - **Root cause**: Didn't validate hooks after removal, declared issue complete too early
 
@@ -280,7 +280,7 @@ fi
 ```bash
 # Check a few files to verify removal was clean
 SAMPLE_FILES=(
-  "~/.claude/hooks/auto-learn-from-mistakes.sh"
+  "~/.claude/hooks/auto-learn.sh"
   "~/.claude/hooks/enforce-commit-squashing.sh"
   "~/.claude/hooks/load-todo.sh"
 )
@@ -437,8 +437,8 @@ echo "✅ All files restored and validated"
 ### Step 4: Analyze what went wrong
 
 ```bash
-# Invoke learn-from-mistakes skill
-Skill: learn-from-mistakes
+# Invoke learn skill
+Skill: learn
 
 # Document the mistake for prevention
 ```

@@ -1,6 +1,6 @@
 # Mistake Categories
 
-Reference for categorizing mistakes in `/cat:learn-from-mistakes`.
+Reference for categorizing mistakes in `/cat:learn`.
 
 ## Category Reference
 

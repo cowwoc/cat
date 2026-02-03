@@ -7,7 +7,7 @@ trap 'echo "ERROR in inject-claudemd-section.sh at line $LINENO: $BASH_COMMAND" 
 # Inject MANDATORY MISTAKE HANDLING section into CLAUDE.md
 #
 # This hook runs on SessionStart and ensures the project's CLAUDE.md
-# contains instructions for invoking learn-from-mistakes skill.
+# contains instructions for invoking learn skill.
 #
 # TRIGGER: SessionStart
 #
@@ -46,14 +46,14 @@ cat >> "$CLAUDE_MD" << 'EOF'
 
 ## MANDATORY MISTAKE HANDLING
 
-**CRITICAL**: Invoke `learn-from-mistakes` skill for ANY mistake.
+**CRITICAL**: Invoke `learn` skill for ANY mistake.
 
 **Mistakes include**: Protocol violations, rework, build failures, tool misuse, logical errors
 
 **Invocation patterns** (any of these work):
-- `/learn-from-mistakes`
+- `/learn`
 - "Learn from mistakes: <description>"
-- "run the learn-from-mistakes skill"
+- "run the learn skill"
 
 **What the skill does**: Analyzes root cause using 5-Whys, implements prevention at the appropriate
 level (code fix > validation > hook > test > documentation), and verifies the fix works.
@@ -64,7 +64,7 @@ cat << 'JSONEOF'
 {
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
-    "additionalContext": "✅ Added MANDATORY MISTAKE HANDLING section to CLAUDE.md. This ensures the learn-from-mistakes skill is invoked for any mistakes during this session."
+    "additionalContext": "✅ Added MANDATORY MISTAKE HANDLING section to CLAUDE.md. This ensures the learn skill is invoked for any mistakes during this session."
   }
 }
 JSONEOF

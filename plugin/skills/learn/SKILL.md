@@ -1246,7 +1246,7 @@ agent: "Done, here's the approval gate again"
 
 # ✅ CORRECT: Invoke skill, analyze, record, THEN fix
 user: "Learn from mistakes: you didn't commit before approval"
-agent: [invokes /cat:learn-from-mistakes skill]
+agent: [invokes /cat:learn skill]
 agent: [performs 5-whys analysis]
 agent: [records in mistakes.json]
 agent: [implements prevention]

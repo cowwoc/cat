@@ -63,14 +63,14 @@ NOT after the entire /cat:work or skill workflow finishes. Respond in your very 
 **Common failure**: NOT using TaskCreate for user requests mid-operation (step 2 is MANDATORY).
 
 ### Mandatory Mistake Handling
-**CRITICAL**: Invoke `learn-from-mistakes` skill for ANY mistake.
+**CRITICAL**: Invoke `learn` skill for ANY mistake.
 
 **Mistakes include**: Protocol violations, rework, build failures, tool misuse, logical errors
 
-**Invocation**: `/cat:learn-from-mistakes` with description of the mistake
+**Invocation**: `/cat:learn` with description of the mistake
 
 **Trigger phrase recognition**: When user says "Learn from mistakes: [description]":
-1. INVOKE `/cat:learn-from-mistakes` skill FIRST (do not just fix the problem)
+1. INVOKE `/cat:learn` skill FIRST (do not just fix the problem)
 2. Complete the full RCA workflow
 3. THEN address the immediate issue
 

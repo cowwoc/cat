@@ -230,13 +230,13 @@ milestone_review:
 
 When winner is determined:
 
-1. Update learn-from-mistakes SKILL.md:
+1. Update learn SKILL.md:
    - Remove A/B test infrastructure (assignment rule, other methods)
    - Keep only winning method as Step 3
    - Update JSON schema to remove `rca_method` fields (or keep for historical tracking)
 
 2. Archive test results:
-   - Move RCA-AB-TEST.md to `/workspace/cat/skills/learn-from-mistakes/archive/`
+   - Move RCA-AB-TEST.md to `/workspace/cat/skills/learn/archive/`
    - Add final analysis summary
 
 3. Update mistakes.json schema documentation if needed

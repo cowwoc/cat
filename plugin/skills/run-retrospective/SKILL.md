@@ -1,5 +1,5 @@
 ---
-description: MANDATORY after learn-from-mistakes threshold - analyzes patterns and derives action items
+description: MANDATORY after learn threshold - analyzes patterns and derives action items
 user-invocable: true
 ---
 
@@ -13,7 +13,7 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## When to Use
 
-- Automatically triggered by `learn-from-mistakes` when thresholds met
+- Automatically triggered by `learn` when thresholds met
 - Manually invoked with `/cat:run-retrospective`
 - After significant project milestones
 - When pattern recurrence is suspected
@@ -283,9 +283,9 @@ escalation: "ESCALATE-2026-01-08-001"
 # Immediately: propose solution, get approval, implement
 ```
 
-## Integration with learn-from-mistakes
+## Integration with learn
 
-At the end of `learn-from-mistakes` Step 12 (Update Retrospective Counter), add:
+At the end of `learn` Step 12 (Update Retrospective Counter), add:
 
 ```yaml
 trigger_check:
@@ -322,6 +322,6 @@ Before completing retrospective:
 
 ## Related Skills
 
-- `cat:learn-from-mistakes` - Records individual mistakes, triggers this skill
+- `cat:learn` - Records individual mistakes, triggers this skill
 - `cat:token-report` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items

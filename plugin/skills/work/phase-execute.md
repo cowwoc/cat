@@ -121,13 +121,13 @@ ACTUAL_PERCENT=$((ACTUAL_TOKENS * 100 / ESTIMATED_TOKENS))
 
 if [ "${ACTUAL_PERCENT}" -ge "${VARIANCE_THRESHOLD}" ]; then
   echo "⚠️ TOKEN ESTIMATE VARIANCE DETECTED"
-  # MANDATORY: Invoke learn-from-mistakes
+  # MANDATORY: Invoke learn
 fi
 ```
 
 **If actual >= estimate × 1.25 (25% or more higher):**
 
-Invoke `/cat:learn-from-mistakes` with:
+Invoke `/cat:learn` with:
 - Description: "Token estimate underestimated actual usage by {variance}%"
 - Estimated tokens: {ESTIMATED_TOKENS}
 - Actual tokens: {ACTUAL_TOKENS}
@@ -182,7 +182,7 @@ echo "**Subagents exceeded hard limit:** $TOTAL_EXCEEDED"
 
 **If any subagent exceeded hard limit:**
 
-Trigger learn-from-mistakes for each violation.
+Trigger learn for each violation.
 
 </step>
 

@@ -151,7 +151,7 @@ After receiving execution result, check for protocol violations:
 
 **Token check:**
 - If `compaction_events > 0`: Warn user, offer decomposition
-- If `percent_of_context > 80`: Invoke learn-from-mistakes
+- If `percent_of_context > 80`: Invoke learn
 
 **Store for later phases:**
 - `commits`, `files_changed`, `tokens_used`

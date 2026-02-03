@@ -75,4 +75,4 @@ Copy the table exactly as provided. The script calculated precise padding.
 
 - `cat:monitor-subagents` - Uses token data for health checks
 - `cat:decompose-issue` - Triggered when context reaches critical levels
-- `cat:learn-from-mistakes` - Uses token data for context-related analysis
+- `cat:learn` - Uses token data for context-related analysis

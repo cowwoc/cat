@@ -22,7 +22,7 @@
         "parallel-task-execution",
         "stakeholder-reviews",
         "token-usage-tracking",
-        "learn-from-mistakes",
+        "learn",
         "task-decomposition",
         "all-commands",
         "all-skills"
@@ -76,7 +76,7 @@
       "description": "Monitor and report token consumption",
       "category": "monitoring"
     },
-    "learn-from-mistakes": {
+    "learn": {
       "description": "Retrospective analysis and improvement",
       "category": "quality"
     },

@@ -265,7 +265,7 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 1. Collect actual token usage from `.completion.json`
 2. Compare actual against hard limit
 3. Flag violations with EXCEEDED status
-4. Trigger `/cat:learn-from-mistakes` for each violation
+4. Trigger `/cat:learn` for each violation
 
 ### Enforcement Flow
 
@@ -301,7 +301,7 @@ Result: Quality crash before reaching hard limit. This is why soft target is 40%
 │     │           │                                               │
 │     v           v                                               │
 │   NO: OK     YES: Flag EXCEEDED                                 │
-│              + learn-from-mistakes                              │
+│              + learn                              │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -328,7 +328,7 @@ For multi-subagent issues, generate aggregate token report:
 When a subagent exceeds the hard limit:
 
 1. **Flag:** Mark subagent status as EXCEEDED in aggregate report
-2. **Record:** Invoke `/cat:learn-from-mistakes` with:
+2. **Record:** Invoke `/cat:learn` with:
    - Mistake reference: A018
    - Subagent ID
    - Actual tokens used
