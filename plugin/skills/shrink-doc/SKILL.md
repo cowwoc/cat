@@ -18,17 +18,17 @@ objective validation instead of prescriptive rules.
 **NEVER manually compress files and validate with /compare-docs directly.**
 
 Manual compression bypasses:
-1. The **iteration loop** that automatically retries when score < 1.0
-2. The **1.0 threshold enforcement** (compare-docs defaults to 0.95)
-3. The **structured feedback** that guides compression improvements
+1. The **iteration loop** that automatically retries when status = NOT_EQUIVALENT
+2. The **EQUIVALENT requirement** enforced for shrink-doc
+3. The **structured feedback** (LOST units list) that guides compression improvements
 
-If you compress manually and get score 0.995, you must manually iterate.
-If you use this skill, iteration happens automatically until score = 1.0.
+If you compress manually and get NOT_EQUIVALENT, you must manually iterate.
+If you use this skill, iteration happens automatically until status = EQUIVALENT.
 
-**MANDATORY: Report execution equivalence score (M296)**
+**MANDATORY: Report validation status (M296)**
 
 When compressing files (even partially), you MUST report:
-- Execution equivalence score per file (from /compare-docs)
+- Validation status per file (EQUIVALENT or NOT_EQUIVALENT from /compare-docs)
 - Token counts per file (before and after)
 
 If you compressed files without reporting these metrics, you violated this requirement.
@@ -229,7 +229,7 @@ After agent completes:
 4. **Run validation via /cat:delegate (M371)**:
 
    Use `/cat:delegate` for ALL validation (single or multiple files). The compare-docs skill
-   internally handles the best-2-of-3 consensus protocol with fabrication detection.
+   handles extraction, comparison, and report generation.
 
    ```bash
    /cat:delegate --skill compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
@@ -241,27 +241,24 @@ After agent completes:
    - Result collection and formatting
 
    **The compare-docs skill handles internally**:
-   - Two independent extraction+comparison runs (Step 1)
-   - Consensus calculation (Step 3)
-   - Evidence verification and fabrication detection
-   - Threshold enforcement (1.0 for shrink-doc context)
+   - Parallel extraction from both documents (3-agent model)
+   - Binary equivalence determination (EQUIVALENT or NOT_EQUIVALENT)
 
    **Parse validation result from delegate output**:
-   - Extract consensus score and individual run scores
-   - Extract warnings and lost_relationships
-   - Check for fabrication warnings
+   - Extract `Status:` line (EQUIVALENT or NOT_EQUIVALENT with counts)
+   - Extract LOST section for iteration feedback
+   - Extract ADDED section (informational only)
 
-   **If FAIL (consensus < 1.0)**: Proceed to Step 6 (Iteration). After creating new version,
+   **If Status = NOT_EQUIVALENT**: Proceed to Step 6 (Iteration). After creating new version,
    re-run validation on the NEW compressed version.
 
 5. **Parse validation result**:
-   - Use the **consensus score** from the delegate output
-   - Extract warnings and lost_relationships from the validation report
-   - Check fabrication warnings in the delegate output
+   - Find the `Status:` line in the COMPARISON RESULT
+   - Extract the LOST section (needed for iteration feedback)
 
-**Scoring Context**: When reporting the score to the user, explicitly state:
+**Validation Context**: When reporting to the user, explicitly state:
 ```
-Consensus score {score}/1.0 (best 2 of 3) compares the compressed version against
+Status: {EQUIVALENT|NOT_EQUIVALENT} compares the compressed version against
 the ORIGINAL document state from before /shrink-doc was invoked.
 ```
 
@@ -274,11 +271,11 @@ the ORIGINAL document state from before /shrink-doc was invoked.
 
 ### Step 5: Decision Logic
 
-**Threshold**: Exact equality required (no "close enough" - see M254)
+**Threshold**: EQUIVALENT status required (no "close enough" - see M254)
 
 **COMMIT GATE (M335)**: Files may ONLY be committed after validation passes:
-- Score < 1.0 → File MUST NOT be applied or committed
-- Score = 1.0 → File may be applied and committed
+- Status = NOT_EQUIVALENT → File MUST NOT be applied or committed
+- Status = EQUIVALENT → File may be applied and committed
 - Skipped validation → File MUST NOT be applied or committed
 
 Rationalizations like "extraction variance" or "validation is broken" are completion bias.
@@ -308,21 +305,21 @@ with open('$FILE', 'r') as f:
 
 **Table format:**
 
-| Version      | Tokens | Reduction | Score | Status     |
-|--------------|--------|-----------|-------|------------|
-| **Original** | {n}    | baseline  | N/A   | Reference  |
-| **V{n}**     | {n}    | {n}%      | {n}   | {status}   |
+| Version      | Tokens | Reduction | Preserved | Status     |
+|--------------|--------|-----------|-----------|------------|
+| **Original** | {n}    | baseline  | N/A       | Reference  |
+| **V{n}**     | {n}    | {n}%      | {X}/{Y}   | {status}   |
 
 **Status values**:
-- Approved = Score equals threshold
-- Rejected = Score below threshold
+- EQUIVALENT = All units preserved, approved for commit
+- NOT_EQUIVALENT = Units lost, requires iteration
 - Applied = Currently applied to original file
 
 ---
 
-**If score meets threshold**: ✅ **APPROVE**
+**If status = EQUIVALENT**: ✅ **APPROVE**
 ```
-Validation passed! Execution equivalence: {actual score from /compare-docs}
+Validation passed! Status: EQUIVALENT ({X}/{Y} preserved)
 
 ✅ Approved version: /tmp/compressed-{{filename}}-v${VERSION}.md
 
@@ -352,89 +349,76 @@ Would you like to try again to generate an even better version?
 → `rm /tmp/shrink-doc-{{filename}}-version.txt`
 → Note: Future /shrink-doc on this file will use compressed version as new baseline
 
-**If score below threshold**: ❌ **ITERATE**
+**If status = NOT_EQUIVALENT**: ❌ **ITERATE**
 ```
-Validation requires improvement. Score: {actual score from /compare-docs}
+Validation requires improvement. Status: NOT_EQUIVALENT ({X}/{Y} preserved, {Z} lost)
 
-{Copy /compare-docs output verbatim - includes component scores, warnings, lost_relationships}
+{Copy /compare-docs LOST section verbatim - shows what units need to be restored}
 
 Re-invoking agent with feedback to fix issues...
 ```
 → Go to Step 6 (Iteration)
 
-**⚠️ MANDATORY: Score Validation Gate (M254)**
+**⚠️ MANDATORY: Validation Gate (M254)**
 
 **BLOCKING REQUIREMENT**: Complete this validation BEFORE making any approval decision.
 
-**Step 1: Run /compare-docs and capture output**
-```bash
-/compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+**Parse the COMPARISON RESULT from /compare-docs:**
+
+The report contains this key line (exact format):
+```
+Status: EQUIVALENT | NOT_EQUIVALENT (X/Y preserved, Z lost)
 ```
 
-**Step 2: Extract and report the ACTUAL score**
+**Extract the status:**
+- Find the line starting with `Status:`
+- Check if it says `EQUIVALENT` or `NOT_EQUIVALENT`
+
+**Decision logic:**
 ```
-SCORE={exact decimal from /compare-docs execution_equivalence_score}
+if Status contains "EQUIVALENT" and NOT "NOT_EQUIVALENT":
+  DECISION = "APPROVE"
+else:
+  DECISION = "ITERATE"
 ```
 
-**Step 3: Perform explicit comparison**
-```
-IS_EXACT_MATCH=$(echo "$SCORE == 1.0" | bc -l)
-if [ "$IS_EXACT_MATCH" -eq 1 ]; then
-  DECISION="APPROVE"
-else
-  DECISION="ITERATE"
-fi
-```
+**FAIL-FAST**: If DECISION=ITERATE:
+1. **STOP** - do not ask user for approval
+2. **Extract** the LOST section from the report (lists units that need restoration)
+3. **Proceed** directly to Step 6 (Iteration Loop) with that feedback
 
-**Step 4: State decision with actual score**
-```
-Score: {ACTUAL_SCORE} (from /compare-docs)
-Decision: {DECISION}
-```
-
-**FAIL-FAST**: If DECISION=ITERATE, STOP. Do not ask user for approval. Proceed directly to Step 6 (Iteration Loop).
-
-**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough" scores. Only exact threshold match permits approval. No exceptions.
+**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough". Only EQUIVALENT status permits approval. No exceptions.
 
 ---
 
 ### Step 6: Iteration Loop
 
-**If score < 1.0**, invoke agent again with specific feedback:
+**If status = NOT_EQUIVALENT**, invoke agent again with specific feedback:
 
 **Iteration Prompt Template**:
 ```
 **Document Compression - Revision Attempt {iteration_number}**
 
-**Previous Score**: {score}/1.0 (threshold: 1.0)
+**Previous Status**: NOT_EQUIVALENT ({X}/{Y} preserved, {Z} lost)
 
-**Issues Identified by Validation**:
+**Lost Semantic Units** (MUST be restored):
 
-{warnings from /compare-docs}
+{for each lost unit from LOST section:}
+- [{CATEGORY}] "{original text of lost unit}"
 
-**Lost Relationships**:
+**Your Task**:
 
-{for each lost_relationship:}
-- **{type}**: {from_claim} → {to_claim}
-  - Constraint: {constraint}
-  - Evidence: {evidence}
-  - Impact: {violation_consequence}
-  - **Fix**: {specific recommendation}
-
-**Your Issue**:
-
-Revise the compressed document to restore the lost relationships while maintaining compression.
+Revise the compressed document to restore the lost semantic units while maintaining compression.
 
 **Original**: /tmp/original-{{filename}}
 **Previous Attempt**: /tmp/compressed-{{filename}}-v${VERSION}.md
 
 Focus on:
-1. Restoring explicit relationship statements identified above
+1. Restoring the exact semantic meaning of each lost unit
 2. Maintaining conditional structure (IF-THEN-ELSE)
-3. Preserving mutual exclusivity constraints
-4. Keeping escalation/fallback paths
-5. **Preserving claim granularity** - keep separate sentences separate (don't merge "A. B." into "A and B")
-6. **Preserving formatting** - keep quote marks, code blocks, list boundaries intact
+3. Preserving mutual exclusivity constraints (EXCLUSION category)
+4. Keeping temporal ordering (SEQUENCE category)
+5. Keeping prohibition constraints (PROHIBITION category)
 
 **⚠️ CRITICAL**: USE THE WRITE TOOL to save the revised document to the specified path.
 Do NOT just describe or return the content - you MUST physically write the file.
@@ -448,19 +432,19 @@ Do NOT just describe or return the content - you MUST physically write the file.
 **🚨 MANDATORY: /compare-docs Required for EVERY Iteration**
 
 **CRITICAL**: You MUST invoke `/compare-docs` for EVERY version validation.
-No exceptions. Score is ONLY valid if it comes from /compare-docs output.
+No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 
 ```bash
 /compare-docs /tmp/original-{filename} /tmp/compressed-{filename}-v{N}.md
 ```
 
-**Self-Check Before Reporting Score**:
+**Self-Check Before Reporting Status**:
 1. Did I invoke /compare-docs for this version? YES/NO
-2. Is the score from /compare-docs output? YES/NO
+2. Is the status from /compare-docs output? YES/NO
 3. If either is NO → STOP and invoke /compare-docs
 
 **Maximum iterations**: 3
-- If still < 1.0 after 3 attempts, report to user and ask for guidance
+- If still NOT_EQUIVALENT after 3 attempts, report to user and ask for guidance
 - All versions preserved in /tmp for rollback
 - User may choose to accept best attempt or abandon compression
 
@@ -485,9 +469,9 @@ parallel execution, fault tolerance, and retry logic.
 
 **Per-file validation (M265, M346):** Each file MUST be validated individually. Report results:
 
-| File | Tokens Before | Tokens After | Reduction | Score | Status |
-|------|---------------|--------------|-----------|-------|--------|
-| {filename} | {count} | {count} | {%} | {actual score from /compare-docs} | {PASS/FAIL} |
+| File | Tokens Before | Tokens After | Reduction | Preserved | Status |
+|------|---------------|--------------|-----------|-----------|--------|
+| {filename} | {count} | {count} | {%} | {X}/{Y} | {EQUIVALENT/NOT_EQUIVALENT} |
 
 **Validation separation (M277):** Compression subagents must NOT validate their own work.
 Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
@@ -499,7 +483,7 @@ Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
 **Agent Type**: MUST use `subagent_type: "general-purpose"`
 
 **Validation Tool**: Use `/cat:delegate --skill compare-docs` (M371) - delegate handles subagent
-spawning and result collection. The compare-docs skill handles the two-run consensus protocol.
+spawning and result collection.
 
 **Validation Baseline**: On first invocation, save original document to
 `/tmp/original-{filename}` and use this as baseline for ALL subsequent
@@ -531,12 +515,12 @@ version numbers for rollback capability.
 ## Success Criteria
 
 ✅ **Compression approved** when:
-- /compare-docs execution_equivalence_score meets threshold exactly
+- /compare-docs returns Status: EQUIVALENT
 
 ✅ **Compression quality** metrics:
 - Word reduction: ~50% (target, secondary to equivalence)
-- All component scores from /compare-docs at maximum
-- No critical relationship losses reported by /compare-docs
+- All semantic units preserved (X/X in status)
+- No units in LOST section
 
 ---
 
@@ -544,32 +528,36 @@ version numbers for rollback capability.
 
 **Abstraction vs Enumeration**: When compressed document uses high-level
 constraint statements (e.g., "handlers are mutually exclusive") instead of
-explicit pairwise enumerations, validation may score 0.85-0.94. System will
-automatically iterate to restore explicit relationships, as abstraction
-creates interpretation vulnerabilities (see /compare-docs § Score Interpretation).
+explicit pairwise enumerations, validation may return NOT_EQUIVALENT with
+specific EXCLUSION units in the LOST section. System will automatically
+iterate to restore explicit constraints.
 
-**Claim Granularity Mismatch**: When score drops significantly (e.g., 0.78) despite
-minimal text changes, the issue is often claim merging during compression. The validation
-extracts individual claims - merging "A. B." into "A and B" changes claim count and shifts
-all subsequent claim IDs, causing relationship mismatches.
+**Persistent NOT_EQUIVALENT**: If multiple iterations needed but LOST count
+doesn't decrease (e.g., v1=3 lost, v2=3 lost, v3=2 lost), compression
+may be hitting fundamental limits. After 3 attempts with units still lost,
+report best version to user and explain compression challenges encountered.
 
-Symptoms:
-- Original extracts N claims, compressed extracts N-1 or N-2 claims
-- Relationships appear "lost" but content is semantically identical
-- Diff shows only minor rewording, not content removal
-
-Solution: Instruct compression agent to preserve sentence boundaries and not merge separate
-statements into compound sentences. Keep the same "claim granularity" as the original.
-
-**Score Plateau**: If multiple iterations needed but score plateaus (no
-improvement after 2 attempts, e.g., v1=0.87, v2=0.88, v3=0.89), compression
-may be hitting fundamental limits. After 3 attempts below 1.0, report best
-version to user and explain compression challenges encountered.
-
-**Multiple Iterations**: Each iteration should show improvement. Monitor progression toward 1.0 threshold.
+**Multiple Iterations**: Each iteration should reduce the LOST count. Monitor
+progression toward EQUIVALENT status (0 lost).
 
 **Large Documents**: For documents >10KB, consider breaking into logical sections
 and compressing separately to improve iteration efficiency.
+
+**Sequence Decomposition (Extraction Variance)**: When LOST section shows SEQUENCE units
+that appear to have the same content as units in the compressed version, the issue is
+likely extraction variance - one agent extracted a numbered list as a single chain
+(e.g., `sequence: A → B → C`) while the other decomposed it into separate transitions.
+
+Symptoms:
+- High unit count difference between extractions (e.g., 17 vs 15 units)
+- Multiple SEQUENCE units in LOST section
+- Similar content exists in compressed version but as separate statements
+
+Solution: Preserve numbered lists with their original formatting. The compression agent
+should NOT convert `1. X 2. Y 3. Z` into prose like "X, then Y, then Z".
+
+**Checklist Extraction**: Verification checklists (`- [ ] item`) may not extract
+consistently. Preserve checklist formatting exactly - don't convert to prose bullets.
 
 ---
 
@@ -585,11 +573,11 @@ Expected flow:
 3. Invoke compression agent
 4. Save to /tmp/compressed-example-command-v1.md (version 1) ✅
 5. Run /compare-docs /tmp/original-example-command.md /tmp/compressed-example-command-v1.md
-6. Score 1.0 → Approve v1 and overwrite original ✅
+6. Status = EQUIVALENT → Approve v1 and overwrite original ✅
 7. Cleanup: Remove /tmp/compressed-example-command-v*.md and /tmp/original-example-command.md ✅
 
 **If iteration needed**:
-- v1 score < 1.0 → Save v2, validate against original
-- v2 score < 1.0 → Save v3, validate against original
-- v3 score = 1.0 → Approve v3, cleanup v1/v1/v3 and original
-- v3 score < 1.0 (after max iterations) → Report to user with best version
+- v1 NOT_EQUIVALENT (3 lost) → Save v2, validate against original
+- v2 NOT_EQUIVALENT (1 lost) → Save v3, validate against original
+- v3 EQUIVALENT → Approve v3, cleanup v1/v2/v3 and original
+- v3 NOT_EQUIVALENT (after max iterations) → Report to user with best version

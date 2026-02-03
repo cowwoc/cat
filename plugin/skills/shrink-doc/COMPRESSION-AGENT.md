@@ -46,6 +46,8 @@ A reader following the compressed version achieves the same results as someone f
 - **Control flow**: Explicit sequences, blocking checkpoints (STOP, WAIT), branching logic
 - **Executable details**: Commands, file paths, thresholds, specific values
 - **Section headers**: `### Section Name` blocks in style docs (detection patterns)
+- **Numbered step sequences**: Lists like "1. X 2. Y 3. Z" must stay as explicit chains
+- **Verification checklists**: `- [ ] item` blocks - each item is a separate requirement
 
 ## Content Safe to Remove
 
@@ -54,32 +56,6 @@ A reader following the compressed version achieves the same results as someone f
 - **Meta-commentary**: Explanatory comments about the document (NOT structural metadata)
 - **Non-essential examples**: Examples that don't add new information
 - **Elaboration**: Extended justifications or background that don't affect decisions
-
-## Claim Granularity Preservation (Critical for Validation)
-
-**CRITICAL**: Maintain the same claim granularity as the original document.
-
-The validation process extracts individual claims and relationships. When you merge separate
-statements into compound sentences, this changes the claim structure and causes validation failures
-even when the semantic meaning is identical.
-
-**DO NOT merge separate claims:**
-
-| Original (2 claims) | Bad (1 merged claim) | Good (2 claims preserved) |
-|---------------------|----------------------|---------------------------|
-| "Shell breaks. Restart required." | "Shell breaks and restart is required." | "Shell breaks. Restart required." |
-| "This is dangerous. Use caution." | "This is dangerous so use caution." | "This dangerous. Use caution." |
-| "Check pwd. Then delete." | "Check pwd before deleting." | "Check pwd first. Then delete." |
-
-**Preserve formatting elements:**
-- Keep quote marks around specific values (e.g., `"Exit code 1"` not `Exit code 1`)
-- Maintain code block boundaries
-- Preserve list item boundaries (don't merge bullet points)
-- Keep sentence boundaries (periods) - they define claim boundaries
-
-**Why this matters**: Validation compares claims by ID. If original has claims 1-22 and compressed
-has claims 1-21 (due to merging), all subsequent claim references shift, causing relationship
-mismatches and low validation scores even when semantics are preserved.
 
 ## Compression Approach
 
@@ -140,6 +116,35 @@ instructions over negative prohibitions when the positive form is equally clear.
 | "Never commit without review" | (kept as-is) | "Get review before committing" |
 
 **Key insight:** Compression should reduce TOKENS, not CONSTRAINTS.
+
+## Preserving Numbered Step Sequences
+
+**CRITICAL**: Numbered lists (1, 2, 3...) represent explicit sequence chains. These MUST be
+preserved with their numbering intact.
+
+**Why this matters**: Validation extracts numbered lists as single unified sequence units
+(e.g., `sequence: A → B → C`). If you reformat steps into prose or unnumbered bullets,
+validation extracts them as separate units, causing NOT_EQUIVALENT status even when
+semantic content is preserved.
+
+**Preserve:**
+```
+1. STOP - do NOT proceed
+2. Run: `script.sh`
+3. Copy-paste output
+```
+
+**DO NOT compress to:**
+```
+Stop, then run script.sh, then copy-paste output.
+```
+
+The prose form loses the explicit numbered chain structure that validation relies on.
+
+**Also preserve:**
+- Markdown checklists (`- [ ] item`) - each checkbox is a distinct requirement
+- "How it works:" numbered flows - explicit execution sequences
+- Step-by-step instructions in any numbered format
 
 ## Output
 
