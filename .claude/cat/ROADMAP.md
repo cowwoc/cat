@@ -35,6 +35,8 @@ Project roadmap with version summaries. Minor versions group related tasks (2-8 
   - github-issues-backend
 - **2.4:** Mobile Review UX (PENDING)
   - add-mobile-diff-viewer
+- **2.5:** Input Validation (PENDING)
+  - homograph-attack-detection
 
 ## Version 3: Enterprise (PLANNED)
 - **3.0:** Enterprise Features (PENDING)
