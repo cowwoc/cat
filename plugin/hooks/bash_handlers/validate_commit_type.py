@@ -125,6 +125,25 @@ Fix: Change 'docs:' to 'config:' in your commit message
 See CLAUDE.md "Commit Types" section for reference (M255, M306)."""
                                 }
 
+        # M382: Warn on compression commits without validation confirmation
+        if self._is_compression_commit(message):
+            return {
+                "additionalContext": """⚠️ COMPRESSION COMMIT DETECTED (M382)
+
+**MANDATORY VERIFICATION**: Before this commit proceeds, confirm:
+1. Validation was run via /cat:shrink-doc workflow (NOT standalone /compare-docs)
+2. **ALL files achieved score = 1.0** (not 0.95, not "close enough")
+3. No validation was skipped or bypassed
+
+**If validation was run directly via /compare-docs** (threshold 0.95):
+- STOP: compare-docs defaults to 0.95, but shrink-doc requires 1.0
+- Re-run validation through /cat:shrink-doc or explicitly with threshold 1.0
+
+**M335 COMMIT GATE**: Score < 1.0 → MUST NOT commit. No exceptions.
+
+If you cannot confirm all files scored exactly 1.0, abort this commit."""
+            }
+
         return None
 
     def _get_staged_files(self) -> list:
@@ -141,6 +160,32 @@ See CLAUDE.md "Commit Types" section for reference (M255, M306)."""
         except (subprocess.TimeoutExpired, Exception):
             pass
         return []
+
+    def _is_compression_commit(self, message: str) -> bool:
+        """Check if commit message suggests document compression.
+
+        M382: Compression commits need validation gate warning.
+        """
+        message_lower = message.lower()
+
+        # Check for compression-related keywords
+        compression_keywords = [
+            "compress",
+            "shrink",
+            "reduction",
+            "token reduction",
+            "word reduction",
+        ]
+
+        for keyword in compression_keywords:
+            if keyword in message_lower:
+                # Also verify this is about skill/doc files
+                staged = self._get_staged_files()
+                for f in staged:
+                    if "skill" in f.lower() or ".md" in f.lower():
+                        return True
+
+        return False
 
 
 register_handler(ValidateCommitTypeHandler())
