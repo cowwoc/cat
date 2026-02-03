@@ -838,6 +838,33 @@
         "how_it_misled": "Agent heard 'TaskCreate' from system, saw 'Task tool' in skill, conflated them",
         "fix_required": "Added explicit clarification in skill that Task ≠ TaskCreate"
       }
+    },
+    {
+      "id": "M373",
+      "timestamp": "2026-02-03T12:00:00Z",
+      "category": "context_degradation",
+      "description": "Polluted main agent context by repeatedly polling subagent progress with TaskOutput instead of using blocking calls",
+      "root_cause": "Delegate skill recommended 'polling' for parallel subagents, which wastes context with repeated tool calls",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/delegate/SKILL.md",
+      "pattern_keywords": [
+        "TaskOutput",
+        "polling",
+        "context_pollution",
+        "subagent",
+        "blocking"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use TaskOutput with block=true and appropriate timeout instead of repeated non-blocking polls"
     }
   ]
 }
