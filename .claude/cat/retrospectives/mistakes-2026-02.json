@@ -1065,6 +1065,39 @@
       "related_files_fixed": [
         "${CLAUDE_PROJECT_DIR}/plugin/skills/delegate/SKILL.md"
       ]
+    },
+    {
+      "id": "M387",
+      "timestamp": "2026-02-04T13:00:00Z",
+      "category": "misleading_documentation",
+      "description": "COMPRESSION-AGENT.md was read by execution subagent, teaching compression techniques that were applied manually instead of invoking /cat:shrink-doc skill",
+      "root_cause": "COMPRESSION-AGENT.md is accessible to any agent and contains compression algorithms (Content to Preserve, Content Safe to Remove, Compression Approach). The warning 'Do NOT read this if orchestrating' is ineffective - once content is read, priming has occurred. The file should only be loaded by shrink-doc skill's internal subagent, not accessible to work-execute's implementation subagent.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/COMPRESSION-AGENT.md",
+      "pattern_keywords": [
+        "documentation-priming",
+        "algorithm-exposure",
+        "shrink-doc",
+        "M269-pattern"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "related_to": "M386",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "COMPRESSION-AGENT.md should only be loaded by shrink-doc skill's compression subagent. Other agents should not read it. Options: (1) Move to internal-only location, (2) Have shrink-doc inject content via prompt instead of file read, (3) Rename to make purpose clearer.",
+      "documentation_priming": {
+        "document": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/COMPRESSION-AGENT.md",
+        "misleading_section": "Lines 42-70: Content to Preserve, Content Safe to Remove, Compression Approach",
+        "priming_type": "algorithm_exposure",
+        "how_it_misled": "Agent learned compression techniques, then applied them directly instead of invoking /cat:shrink-doc skill"
+      }
     }
   ]
 }
