@@ -73,10 +73,10 @@ public final class DetectFailures implements BashHandler
 
         Consider:
         1. Fix the immediate issue
-        2. If this could recur, use learn-from-mistakes skill
+        2. If this could recur, use learn skill
            to implement prevention
 
-        See: .claude/skills/learn-from-mistakes/SKILL.md""", exitCode));
+        See: .claude/skills/learn/SKILL.md""", exitCode));
     }
 
     return Result.allow();

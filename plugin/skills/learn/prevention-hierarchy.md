@@ -1,6 +1,6 @@
 # Prevention Hierarchy
 
-Reference for choosing prevention levels in `/cat:learn-from-mistakes`.
+Reference for choosing prevention levels in `/cat:learn`.
 
 ## Prevention Levels
 

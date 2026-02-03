@@ -1,6 +1,6 @@
 # Root Cause Analysis Methods
 
-Reference document for RCA methods used in `/cat:learn-from-mistakes`.
+Reference document for RCA methods used in `/cat:learn`.
 
 ## Method Assignment
 

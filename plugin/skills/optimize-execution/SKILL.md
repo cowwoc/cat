@@ -409,7 +409,7 @@ For a session with 45 tool calls building a feature:
 - **get-history**: Provides raw session data for analysis
 - **batch-read**: Implements batch optimization recommendations
 - **token-report**: Complements with token-focused metrics
-- **learn-from-mistakes**: Optimization findings may reveal error patterns
+- **learn**: Optimization findings may reveal error patterns
 
 ## Limitations
 

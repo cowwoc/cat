@@ -339,7 +339,7 @@ The `.claude/cat/retrospectives/` directory does not exist.
 
 To initialize:
 1. Create `.claude/cat/retrospectives/index.json` with config
-2. Record mistakes via `/cat:learn-from-mistakes`
+2. Record mistakes via `/cat:learn`
 3. Run `/cat:run-retrospective` when thresholds are met
 
 INSTRUCTION: Output this status. Cannot run retrospective without data."""

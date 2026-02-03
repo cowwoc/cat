@@ -130,7 +130,7 @@ However, subagents may not follow hook guidance if not explicitly reminded.
 
 ```
 CRITICAL REQUIREMENTS (enforced by hooks):
-- Always decompose code instead of adding PMD suppression annotations
+- Always decompose code instead of adding lint suppression annotations
 - Always use git merge --ff-only for linear history
 - Always use git-filter-repo instead of git filter-branch
 - Preserve .git/refs/original unless user explicitly requests deletion

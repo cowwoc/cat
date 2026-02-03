@@ -124,7 +124,7 @@ After subagent completes (in collect_results), verify actual usage:
 ACTUAL_TOKENS=$(jq -r '.tokensUsed' "$COMPLETION_JSON")
 if [ "${ACTUAL_TOKENS}" -ge "${HARD_LIMIT}" ]; then
   echo "EXCEEDED: Subagent used ${ACTUAL_TOKENS} tokens (hard limit: ${HARD_LIMIT})"
-  # Trigger learn-from-mistakes with A018 reference
+  # Trigger learn with A018 reference
 fi
 ```
 

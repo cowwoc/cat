@@ -44,10 +44,10 @@ class DetectFailuresHandler:
 
 Consider:
 1. Fix the immediate issue
-2. If this could recur, use learn-from-mistakes skill
+2. If this could recur, use learn skill
    to implement prevention
 
-See: .claude/skills/learn-from-mistakes/SKILL.md"""
+See: .claude/skills/learn/SKILL.md"""
             }
 
         return None

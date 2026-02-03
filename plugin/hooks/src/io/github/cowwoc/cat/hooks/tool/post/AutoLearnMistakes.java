@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Detects mistakes from tool results and suggests learn-from-mistakes skill.
+ * Detects mistakes from tool results and suggests learn skill.
  *
  * <p>Monitors tool results for error patterns including build failures, test failures,
  * protocol violations, merge conflicts, and self-acknowledged mistakes.</p>
