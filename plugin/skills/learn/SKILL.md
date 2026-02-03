@@ -39,9 +39,13 @@ Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
-### 1b. Analyze Documentation Path (M269, M274)
+### 1b. Analyze Documentation Path (M269, M274, M381)
 
-**CRITICAL: Check if documentation PRIMED the agent for the wrong approach.**
+**CRITICAL: ALWAYS check documentation path FIRST after collecting history.**
+
+**MANDATORY FIRST STEP (M381):** Before any other analysis, identify what documents/skills the agent
+read and check if they caused the mistake. Do NOT skip to "agent error" conclusions without first
+checking if documentation primed the wrong behavior.
 
 Using the session history from Step 1, identify all documents the agent read.
 
