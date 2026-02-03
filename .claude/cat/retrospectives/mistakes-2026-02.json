@@ -1082,7 +1082,7 @@
         "shrink-doc",
         "M269-pattern"
       ],
-      "prevention_implemented": false,
+      "prevention_implemented": true,
       "prevention_verified": false,
       "recurrence_of": null,
       "related_to": "M386",
@@ -1097,14 +1097,15 @@
         "misleading_section": "Lines 42-70: Content to Preserve, Content Safe to Remove, Compression Approach",
         "priming_type": "algorithm_exposure",
         "how_it_misled": "Agent learned compression techniques, then applied them directly instead of invoking /cat:shrink-doc skill"
-      }
+      },
+      "addressed_by": "M388"
     },
     {
       "id": "M388",
       "timestamp": "2026-02-04T13:30:00Z",
       "category": "architecture",
-      "description": "Shortened batch-executor chain from 3 levels to 2 levels to prevent guidance loss",
-      "root_cause": "batch-executor → work-execute → implementation chain caused M386/M387: guidance in work-execute/SKILL.md never reached implementation subagent because work-execute built prompts that didn't include all requirements",
+      "description": "Modified work-execute to implement directly instead of spawning nested subagent, keeping chain at 2 levels",
+      "root_cause": "work-execute spawned implementation-subagent creating 3-level chain where guidance was lost. Better fix: work-execute implements directly (no nested spawn) while preserving its task-type handling logic",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
