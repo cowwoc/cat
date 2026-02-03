@@ -1008,6 +1008,36 @@
         "catches_variations": true
       },
       "correct_behavior": "Hook now distinguishes between editing existing files (allowed) and creating new files (warns) in skills/ and hooks/ directories on base branches"
+    },
+    {
+      "id": "M382",
+      "timestamp": "2026-02-03T15:05:00Z",
+      "category": "protocol_violation",
+      "description": "Compression committed with validation score 0.96 despite M335 COMMIT GATE requiring 1.0 for shrink-doc",
+      "root_cause": "Subagent committed compressed file without meeting 1.0 threshold. M335 COMMIT GATE documentation exists but was bypassed due to completion bias. Commit message claimed \"All semantic content preserved\" despite validation showing 0.96.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/warn_compression_commit.py",
+      "pattern_keywords": [
+        "shrink-doc",
+        "validation",
+        "threshold",
+        "1.0",
+        "commit-gate",
+        "M335",
+        "completion-bias"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When compression validation returns score < 1.0, MUST iterate to improve score before committing. M335 COMMIT GATE: Score < 1.0 means file MUST NOT be committed.",
+      "escalation_reason": "M335 COMMIT GATE documentation existed in shrink-doc skill but was ignored. Escalated from documentation (level 7) to hook (level 2) that warns on compression-related commits."
     }
   ]
 }
