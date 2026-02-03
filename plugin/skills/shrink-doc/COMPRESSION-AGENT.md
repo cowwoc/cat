@@ -51,11 +51,35 @@ A reader following the compressed version achieves the same results as someone f
 
 ## Content Safe to Remove
 
-- **Redundancy**: Repeated explanations of same concept
+- **True redundancy**: Same information repeated verbatim with no added emphasis or context
 - **Verbose explanations**: Long-winded descriptions that can be condensed
 - **Meta-commentary**: Explanatory comments about the document (NOT structural metadata)
 - **Non-essential examples**: Examples that don't add new information
 - **Elaboration**: Extended justifications or background that don't affect decisions
+
+## Critical: Preserve Intentional Reinforcement
+
+**Redundancy vs. Reinforcement**: Not all repetition is redundancy. Critical constraints are
+often stated multiple times in different ways for emphasis. This is **intentional reinforcement**.
+
+**Signs of intentional reinforcement (preserve these):**
+- Safety warnings restated in different words
+- Unrecoverable/irreversible conditions mentioned multiple times
+- Critical constraints with both positive and negative framing
+- Points marked with emphasis (bold, CAPS, "CRITICAL", "IMPORTANT")
+- Failure modes or data loss scenarios restated
+
+**Example - DO NOT compress this:**
+```
+This operation is unrecoverable without restart.
+...
+The shell session cannot recover from a deleted working directory.
+```
+Both statements emphasize unrecoverability. Merging them into one loses the reinforcement that
+signals "this is critically important." Keep both statements.
+
+**Test for reinforcement**: If removing one of two similar statements would reduce the perceived
+importance or urgency of the constraint, it's reinforcement, not redundancy. Preserve it.
 
 ## Compression Approach
 
@@ -114,8 +138,11 @@ instructions over negative prohibitions when the positive form is equally clear.
 | "MUST validate OR reject" | "Handle input" | "Validate input; reject if invalid" |
 | "Don't skip the tests" | "Don't skip tests" | "Run tests before proceeding" |
 | "Never commit without review" | (kept as-is) | "Get review before committing" |
+| Safety warning stated twice | (merged into one) | (keep both - intentional reinforcement) |
 
-**Key insight:** Compression should reduce TOKENS, not CONSTRAINTS.
+**Key insights:**
+- Compression should reduce TOKENS, not CONSTRAINTS
+- Compression should preserve EMPHASIS, not flatten critical warnings
 
 ## Preserving Numbered Step Sequences
 
