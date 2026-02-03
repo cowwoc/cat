@@ -219,6 +219,45 @@ EOF
     # Restore original method
     handler._get_staged_files = original_get_staged
 
+    # M382: Test compression commit warning
+    runner.section("bash_handlers/validate_commit_type (M382)")
+
+    # Test compression commit with skill files warns
+    handler._get_staged_files = lambda: ['plugin/skills/status/SKILL.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+config: compress status skill documentation
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("M382: compression commit warns",
+                result is not None and "additionalContext" in result)
+    runner.test("M382: warning mentions M382",
+                result is not None and "M382" in result.get("additionalContext", ""))
+    runner.test("M382: warning mentions 1.0 threshold",
+                result is not None and "1.0" in result.get("additionalContext", ""))
+
+    # Test shrink commit warns
+    handler._get_staged_files = lambda: ['docs/agent-architecture.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+config: shrink documentation files
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("M382: shrink commit warns",
+                result is not None and "additionalContext" in result)
+
+    # Test non-compression commit does not warn
+    handler._get_staged_files = lambda: ['plugin/skills/work/SKILL.md']
+    cmd = '''git commit -m "$(cat <<'EOF'
+config: update skill workflow
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("M382: non-compression commit no warning", result is None)
+
+    # Restore original method
+    handler._get_staged_files = original_get_staged
+
 
 # =============================================================================
 # SKILL HANDLERS TESTS
