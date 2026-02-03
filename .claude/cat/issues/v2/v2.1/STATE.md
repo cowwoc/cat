@@ -9,6 +9,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Tasks Pending
+- optimize-shrink-doc-workflow
 - scan-outdated-templates
 - add-opus-model-guidance
 - add-deployment-stakeholder
