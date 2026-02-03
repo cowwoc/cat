@@ -881,14 +881,28 @@ When using `run_in_background: true`:
 | Scenario | Approach |
 |----------|----------|
 | Single subagent, need results | Blocking (no `run_in_background`) |
-| Multiple subagents, parallel | Background + `TaskOutput` polling |
+| Multiple subagents, parallel | Background + `TaskOutput` with `block: true` for each |
 | Long-running, user expects updates | Background + tell user to check back |
-| High-trust autonomous | Background + `TaskOutput` with `block: true` |
+
+**Context Pollution Warning (M373):**
+
+Do NOT poll subagent status repeatedly. Each `TaskOutput` call adds ~500 tokens to context.
+For N subagents with M polls each, you waste N×M×500 tokens.
+
+```bash
+# ❌ WRONG: Polling pattern (pollutes context)
+TaskOutput task_id="abc" block=false  # Check status
+TaskOutput task_id="abc" block=false  # Check again
+TaskOutput task_id="abc" block=false  # Still checking...
+
+# ✅ CORRECT: Single blocking call per subagent
+TaskOutput task_id="abc" block=true timeout=300000  # Wait up to 5 min
+```
 
 **Anti-pattern (M293):**
 ```
 ❌ "I'll wait for subagents to complete and notify me"
-✅ "Subagents running. Use TaskOutput to check, or prompt me when ready."
+✅ "Subagents running. Use TaskOutput with block=true to wait for each."
 ```
 
 ## Related Skills
