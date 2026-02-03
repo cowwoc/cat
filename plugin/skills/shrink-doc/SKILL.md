@@ -167,6 +167,39 @@ Task tool:
 If you can see HOW to compress, you might bypass the skill and do it manually - which skips
 validation. The subagent reads COMPRESSION-AGENT.md; you (the orchestrator) only invoke and validate.
 
+**⚠️ MANDATORY: Verify Subagent Output (M384)**
+
+After subagent completes, ALWAYS verify the output file exists and is non-empty:
+
+```bash
+OUTPUT_PATH="/tmp/compressed-{{filename}}-v${VERSION}.md"
+if [ ! -f "$OUTPUT_PATH" ]; then
+  echo "❌ FAIL: Compression subagent did not create output file"
+  echo "   Expected: $OUTPUT_PATH"
+  echo "   This indicates subagent failure (empty response, API error, etc.)"
+  exit 1
+fi
+
+OUTPUT_SIZE=$(wc -c < "$OUTPUT_PATH")
+if [ "$OUTPUT_SIZE" -eq 0 ]; then
+  echo "❌ FAIL: Compression subagent created empty output file"
+  echo "   This indicates subagent failure during compression"
+  exit 1
+fi
+
+echo "✅ Output file exists: $OUTPUT_PATH ($OUTPUT_SIZE bytes)"
+```
+
+**FAIL-FAST**: If verification fails:
+1. **STOP** - do NOT proceed to validation
+2. **Report** the failure to the user
+3. **Do NOT** attempt to validate empty/missing output (will produce meaningless scores)
+
+**Why this check exists (M384)**: Compression subagent can fail silently (API errors, empty responses,
+context limits). Without verification, the orchestrator proceeds to validation which compares
+original vs original (if no file written) or original vs empty (if empty file), producing
+misleading scores like 0.25 that don't reflect actual compression quality.
+
 ---
 
 ### Step 4: Validate with /compare-docs
@@ -578,6 +611,22 @@ agent documentation includes specific guidance on preserving conditional/consequ
 actual content, this is NOT valid compression. Line reformatting can cause extraction
 variance without providing any semantic benefit. Iterate with instruction to preserve
 original line structure and focus on removing actual redundant content instead.
+
+**Subagent Failure (Empty Response/API Error) (M384)**: When the compression subagent
+fails to produce output (API error 400, empty message, context limit exceeded), the
+output file will be missing or empty. Symptoms:
+- Output file doesn't exist at `/tmp/compressed-{filename}-v{N}.md`
+- Output file exists but is 0 bytes
+- Validation produces meaningless scores (e.g., 0.25 when comparing original vs nothing)
+
+Root cause: Subagent failures can occur due to:
+- API errors (rate limits, malformed requests, context overflow)
+- Empty assistant response (subagent returned nothing)
+- Write tool failure (permissions, disk space)
+
+Solution: Step 3 includes mandatory verification. If verification fails, STOP and report
+to user. Do NOT proceed to validation - comparing against missing/empty output produces
+misleading results that mask the actual failure.
 
 ---
 
