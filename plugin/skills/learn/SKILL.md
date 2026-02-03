@@ -86,6 +86,15 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 | Internal prompts exposed | "Agent Prompt Template: ..." | Agent applies directly |
 | Expected value in output (M274) | "OUTPUT FORMAT: validation_score: 1.0 (required)" | Agent reports expected value, not actual |
 | Rendered output example (M320) | "The banner looks like: ┌─ 🐱..." | Agent constructs instead of running script |
+| Parameter inference from context (M381) | Skill shows `${WORKTREE_PATH}` for Task prompts | Agent invents flags for other tools |
+
+**For tool invocation errors (M381):**
+
+When a mistake involves invoking a tool/skill with wrong parameters:
+1. Read the tool's actual interface (Parameters section, supported flags)
+2. Compare against what was invoked
+3. Check what documentation showed similar-looking parameters that may have primed the incorrect usage
+4. The cause is often "saw parameter X used somewhere, assumed it applies to tool Y"
 
 **For subagent mistakes, ALSO check the Issue prompt that spawned it (M274):**
 
