@@ -2,7 +2,8 @@
 Handler for /cat:work-with-task precomputation.
 
 Generates progress banners for all 4 work phases by parsing task_id from skill args
-and delegating to get-progress-banner.sh.
+and delegating to get-progress-banner.sh. Also generates individual phase banners
+for use by the batch executor.
 """
 
 import json
@@ -21,7 +22,8 @@ class WorkWithTaskHandler:
         Generate progress banners for all 4 work phases.
 
         Parses task_id from the skill invocation JSON args and calls
-        get-progress-banner.sh to render all phase banners.
+        get-progress-banner.sh to render all phase banners. Also generates
+        individual phase banners for the batch executor.
 
         Args:
             context: Handler context containing user_prompt with skill invocation
@@ -52,12 +54,12 @@ class WorkWithTaskHandler:
         if not task_id:
             return None
 
-        # Call get-progress-banner.sh with task_id and --all-phases
         banner_script = Path(plugin_root) / "scripts" / "get-progress-banner.sh"
         if not banner_script.exists():
             return None
 
         try:
+            # Generate all phases banner (for reference/display)
             result = subprocess.run(
                 [str(banner_script), task_id, "--all-phases"],
                 capture_output=True,
@@ -67,8 +69,33 @@ class WorkWithTaskHandler:
             if result.returncode != 0:
                 return None
 
-            # Return banners in the SCRIPT OUTPUT format
-            return f"SCRIPT OUTPUT PROGRESS BANNERS:\n\n{result.stdout}"
+            all_phases_output = result.stdout
+
+            # Generate individual phase banners for batch executor
+            # These are the raw banners without markdown code fences
+            phase_banners = {}
+            for phase in ["preparing", "executing", "reviewing", "merging"]:
+                phase_result = subprocess.run(
+                    [str(banner_script), task_id, "--phase", phase],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if phase_result.returncode == 0:
+                    phase_banners[phase] = phase_result.stdout.strip()
+
+            # Build output with both all-phases display and individual banners
+            output_parts = [
+                "SCRIPT OUTPUT PROGRESS BANNERS:\n",
+                all_phases_output,
+                "\n---\n",
+                "INDIVIDUAL PHASE BANNERS (for batch executor output):\n",
+            ]
+
+            for phase, banner in phase_banners.items():
+                output_parts.append(f"\n**{phase.capitalize()} banner:**\n```\n{banner}\n```\n")
+
+            return "".join(output_parts)
         except Exception:
             return None
 
