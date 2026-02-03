@@ -722,6 +722,87 @@
         "catches_variations": true
       },
       "correct_behavior": "Always invoke render-add-complete.sh script for completion dialogs - script handles emoji widths and alignment correctly"
+    },
+    {
+      "id": "M369",
+      "timestamp": "2026-02-03T09:45:00Z",
+      "category": "inefficient_execution",
+      "description": "Opted for sequential shrink-doc invocations instead of using /cat:delegate for parallel batch processing",
+      "root_cause": "shrink-doc BATCH-PROCESSING.md described manual Task tool spawning for parallel execution instead of referencing /cat:delegate which already implements parallel batch processing. Agent did not know to use delegate for batch skill invocation.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/BATCH-PROCESSING.md",
+      "pattern_keywords": [
+        "batch",
+        "parallel",
+        "sequential",
+        "delegate",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use /cat:delegate for batch skill invocations. Delegate handles parallel subagent spawning, fault tolerance, and result aggregation automatically."
+    },
+    {
+      "id": "M370",
+      "timestamp": "2026-02-03T10:00:00Z",
+      "category": "misleading_documentation",
+      "description": "M369 fix introduced output format priming by including example values (1.0, 0.87, etc.) in result table templates",
+      "root_cause": "Learn skill Step 9 (Implement Prevention) had no gate to verify fixes do not introduce new priming patterns. When implementing M369 fix, agent added example result tables with concrete values which prime agents to fabricate those values.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "priming",
+        "output-format",
+        "example-values",
+        "M346",
+        "placeholders"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M346",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use descriptive placeholders ({actual score from /compare-docs}) in output format examples, never concrete values. Add explicit warning that values must come from actual invocations."
+    },
+    {
+      "id": "M371",
+      "timestamp": "2026-02-03T11:00:00Z",
+      "category": "architecture",
+      "description": "shrink-doc manually spawned Task tools for validation instead of using /cat:delegate which already handles subagent lifecycle",
+      "root_cause": "shrink-doc Step 4 contained explicit Task tool spawning templates instead of delegating to /cat:delegate. This duplicated delegate's subagent management logic and didn't benefit from delegate's fault tolerance and model selection.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/shrink-doc/SKILL.md",
+      "pattern_keywords": [
+        "delegate",
+        "validation",
+        "subagent",
+        "Task-tool",
+        "compare-docs"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use /cat:delegate for ALL validation (single or multiple files). Delegate handles subagent spawning, model selection, and result collection. The compare-docs skill handles the two-run consensus protocol internally."
     }
   ]
 }
