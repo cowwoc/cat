@@ -151,6 +151,17 @@ Subagents process early content with higher priority. Structure prompts as:
 6. Context/metadata (SESSION_ID, etc.)
 ```
 
+**Mandatory CRITICAL REQUIREMENTS (M367):** Always include these in section 1 of every delegation prompt:
+
+```
+CRITICAL REQUIREMENTS:
+- Update STATE.md to status: completed in SAME commit as implementation
+- Include tests for bugfixes in SAME commit as fix
+- Always decompose code instead of adding lint suppression
+```
+
+These requirements apply to ALL tasks regardless of PLAN.md content.
+
 **Anti-pattern:** Placing skill invocation requirements in "Execution Steps" section after context
 sections. The subagent may skip them in favor of earlier-processed content.
 
@@ -167,7 +178,7 @@ Task tool invocation:
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
     CRITICAL REQUIREMENTS:
-    - Always decompose code instead of adding PMD suppression
+    - Always decompose code instead of adding lint suppression
     - Include tests for bugfixes in SAME commit as fix
     - Update STATE.md in SAME commit as implementation
 

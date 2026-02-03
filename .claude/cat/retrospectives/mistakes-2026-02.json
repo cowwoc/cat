@@ -670,6 +670,32 @@
         "prevention_type": "hook",
         "description": "PostToolUse hook that detects when tool results contain system-reminder with user input patterns (questions, commands, explicit messages) and injects reminder to acknowledge. Generalized from user_question_reminder.py to user_input_reminder.py to catch broader user input patterns."
       }
+    },
+    {
+      "id": "M367",
+      "timestamp": "2026-02-03T12:00:00Z",
+      "category": "incomplete_delegation",
+      "description": "Delegation prompt to execution subagent omitted CRITICAL REQUIREMENTS (STATE.md update) from work-execute skill",
+      "root_cause": "Orchestrating agent constructed delegation prompt from PLAN.md execution steps only, without including the mandatory CRITICAL REQUIREMENTS section from work-execute skill spec",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "delegation",
+        "STATE.md",
+        "critical-requirements",
+        "subagent"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always include the mandatory CRITICAL REQUIREMENTS section in delegation prompts, regardless of PLAN.md content"
     }
   ]
 }
