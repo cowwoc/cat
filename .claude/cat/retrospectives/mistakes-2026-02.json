@@ -980,6 +980,34 @@
       },
       "correct_behavior": "When user message arrives mid-operation: STOP, acknowledge in next response text, add to TaskList if non-trivial, THEN continue",
       "escalation_reason": "Existing warning was ignored. Enhanced warning to be more prominent with BLOCKING label and explicit instruction that acknowledgment must come FIRST in next response."
+    },
+    {
+      "id": "M380",
+      "timestamp": "2026-02-03T08:22:43-05:00",
+      "category": "protocol_violation",
+      "description": "Implemented multi-file feature directly in main worktree instead of using isolated worktree via /cat:work",
+      "root_cause": "warn-base-branch-edit.sh hook had overly broad allowed patterns - skills/ and hooks/ exempted ALL files including new file creation, which should require worktree isolation",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-base-branch-edit.sh",
+      "pattern_keywords": [
+        "worktree",
+        "isolation",
+        "new-file",
+        "skills",
+        "hooks",
+        "allowed-patterns"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M252",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Hook now distinguishes between editing existing files (allowed) and creating new files (warns) in skills/ and hooks/ directories on base branches"
     }
   ]
 }
