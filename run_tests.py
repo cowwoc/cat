@@ -566,6 +566,69 @@ def test_cleanup_handler():
         runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
 
 
+def test_delegate_handler():
+    """Test delegate_handler."""
+    runner.section("skill_handlers/delegate_handler")
+
+    from skill_handlers.delegate_handler import DelegateHandler
+    handler = DelegateHandler()
+
+    # Test: empty prompt returns None
+    result = handler.handle({})
+    runner.test("Returns None without user_prompt", result is None)
+
+    result = handler.handle({"user_prompt": ""})
+    runner.test("Returns None with empty user_prompt", result is None)
+
+    # Test: non-delegate prompt returns None
+    result = handler.handle({"user_prompt": "/cat:status"})
+    runner.test("Returns None for non-delegate prompt", result is None)
+
+    # Test: skill delegation with multiple files (parallel)
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --skill shrink-doc file1.md file2.md file3.md"
+    })
+    runner.test("Returns string for skill delegation", isinstance(result, str))
+    if result:
+        runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
+        runner.test("Contains PARALLEL mode", "PARALLEL" in result)
+        runner.test("Contains item count", "3" in result)
+        runner.test("Contains file names", "file1.md" in result)
+
+    # Test: skill delegation with single file (sequential)
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --skill shrink-doc single-file.md"
+    })
+    runner.test("Returns string for single file", isinstance(result, str))
+    if result:
+        runner.test("Contains SEQUENTIAL mode for single file", "SEQUENTIAL" in result)
+
+    # Test: sequential flag forces sequential mode
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --sequential --skill shrink-doc file1.md file2.md"
+    })
+    runner.test("Returns string for sequential flag", isinstance(result, str))
+    if result:
+        runner.test("Sequential flag forces SEQUENTIAL mode", "SEQUENTIAL" in result)
+
+    # Test: issues delegation
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --issues 2.1-task-a,2.1-task-b,2.1-task-c"
+    })
+    runner.test("Returns string for issues delegation", isinstance(result, str))
+    if result:
+        runner.test("Contains PARALLEL mode for issues", "PARALLEL" in result)
+        runner.test("Contains issue names", "2.1-task-a" in result)
+
+    # Test: worktree parameter is captured
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --skill shrink-doc --worktree /workspace/.worktrees/test file.md"
+    })
+    runner.test("Returns string with worktree", isinstance(result, str))
+    if result:
+        runner.test("Contains worktree path", "/workspace/.worktrees/test" in result)
+
+
 def test_posttool_skill_preprocessor_output():
     """Test PostToolUse handler for Skill tool preprocessor output."""
     runner.section("posttool_handlers/skill_preprocessor_output")
@@ -1221,6 +1284,7 @@ def main():
         test_work_handler,
         test_box_alignment,
         test_cleanup_handler,
+        test_delegate_handler,
         test_posttool_skill_preprocessor_output,
         test_posttool_user_input_reminder,
         test_posttool_auto_learn,

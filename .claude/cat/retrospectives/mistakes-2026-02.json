@@ -925,6 +925,33 @@
         ".claude/cat/issues/v2/v2.1/compress-skills-batch-4/PLAN.md",
         ".claude/cat/issues/v2/v2.1/compress-skills-batch-5/PLAN.md"
       ]
+    },
+    {
+      "id": "M377",
+      "timestamp": "2026-02-03T07:48:13-05:00",
+      "category": "missing_infrastructure",
+      "description": "delegate skill references delegate_handler.py that should provide SCRIPT OUTPUT DELEGATE PROGRESS but handler doesn't exist",
+      "root_cause": "The /cat:delegate skill was documented expecting a handler to provide pre-rendered progress content via additionalContext, but the handler was never created. Skill references non-existent infrastructure.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/delegate_handler.py",
+      "pattern_keywords": [
+        "handler",
+        "missing",
+        "delegate",
+        "preprocessing",
+        "SCRIPT OUTPUT"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Handler now parses delegate skill invocation and provides SCRIPT OUTPUT DELEGATE PROGRESS with mode (PARALLEL/SEQUENTIAL), item list, and progress templates"
     }
   ]
 }

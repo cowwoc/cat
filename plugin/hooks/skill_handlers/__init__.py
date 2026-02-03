@@ -58,3 +58,4 @@ from . import research_handler
 from . import render_diff_handler
 from . import monitor_subagents_handler
 from . import run_retrospective_handler
+from . import delegate_handler
