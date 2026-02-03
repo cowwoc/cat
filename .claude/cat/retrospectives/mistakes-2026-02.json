@@ -865,6 +865,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use TaskOutput with block=true and appropriate timeout instead of repeated non-blocking polls"
+    },
+    {
+      "id": "M374",
+      "timestamp": "2026-02-03T06:55:21-05:00",
+      "category": "user_experience",
+      "description": "/cat:add wizard asks unnecessary questions with obvious answers (acceptance criteria, gates, dependencies for first issue)",
+      "root_cause": "SKILL.md explicitly instructs asking questions that have sensible defaults, without conditional skip logic",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/add/SKILL.md",
+      "pattern_keywords": [
+        "wizard",
+        "AskUserQuestion",
+        "obvious-defaults",
+        "user-friction"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Apply sensible defaults automatically; only ask for custom/additional criteria; skip dependency questions when no existing issues in version"
     }
   ]
 }
