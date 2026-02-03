@@ -7,6 +7,32 @@
 If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc`), invoke it
 directly via the Skill tool. Do not assume tool limitations exist - subagents have full tool access.
 
+## Spawning Subagents: Task vs TaskCreate (M372)
+
+**Use the Task tool to spawn subagents, NOT TaskCreate.**
+
+These are completely different tools:
+
+| Tool | Purpose | What it does |
+|------|---------|--------------|
+| **Task** | Subagent spawner | Spawns a subagent that executes work and returns results |
+| **TaskCreate** | Todo tracker | Adds an item to the task list UI (does NOT spawn anything) |
+
+**Common confusion**: System reminders mention "TaskCreate" for task tracking. When you see
+"Task tool:" in a skill, this means the **Task** tool (subagent spawner), not TaskCreate.
+
+```
+# ✅ CORRECT: Spawns a subagent
+Task tool:
+  subagent_type: "general-purpose"
+  prompt: "Do the work..."
+
+# ❌ WRONG: Just adds a todo item, nothing executes
+TaskCreate:
+  subject: "Do the work"
+  description: "..."
+```
+
 ## Core Constraint
 
 **Claude Code does not allow users to supervise subagent execution.**
