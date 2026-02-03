@@ -1098,6 +1098,37 @@
         "priming_type": "algorithm_exposure",
         "how_it_misled": "Agent learned compression techniques, then applied them directly instead of invoking /cat:shrink-doc skill"
       }
+    },
+    {
+      "id": "M388",
+      "timestamp": "2026-02-04T13:30:00Z",
+      "category": "architecture",
+      "description": "Shortened batch-executor chain from 3 levels to 2 levels to prevent guidance loss",
+      "root_cause": "batch-executor → work-execute → implementation chain caused M386/M387: guidance in work-execute/SKILL.md never reached implementation subagent because work-execute built prompts that didn't include all requirements",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "architecture",
+        "delegation-chain",
+        "guidance-loss",
+        "M386-fix",
+        "M387-fix"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "addresses": [
+        "M386",
+        "M387"
+      ],
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "batch-executor directly spawns implementation subagent with ALL critical requirements in the prompt. No intermediate work-execute layer that could lose guidance."
     }
   ]
 }
