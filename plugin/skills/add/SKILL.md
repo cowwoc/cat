@@ -341,32 +341,53 @@ If validation fails:
 
 <step name="task_discuss">
 
-**Gather additional issue context:**
+**Gather additional issue context (M374 - skip obvious questions):**
 
 Note: Issue description and type were already captured in task_gather_intent step.
 Use TASK_DESCRIPTION and TASK_TYPE from that step.
 
 Initialize UNKNOWNS as empty list.
 
-**1. Scope, Dependencies, and Blockers (combined):**
+**1. Check if version has existing issues:**
 
-Collect all three independent questions in a single AskUserQuestion call:
+```bash
+EXISTING_ISSUES=$(find ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
+```
+
+**2. Smart defaults based on context (M374):**
+
+**If EXISTING_ISSUES = 0 (first issue in version):**
+- Set DEPENDENCIES = [] (no issues to depend on)
+- Set BLOCKS = [] (no issues to block)
+- Skip dependency/blocker questions entirely
+
+**If EXISTING_ISSUES > 0:**
+- Only then ask about dependencies and blockers
+
+**3. Scope question (always ask - user input needed):**
+
+Use AskUserQuestion:
+- header: "Scope"
+- question: "How many files will this issue likely touch?"
+- options:
+  - label: "1-2 files"
+    description: "Very focused change"
+  - label: "3-5 files"
+    description: "Moderate scope"
+  - label: "6+ files"
+    description: "Broad change - consider splitting"
+  - label: "Unsure - need to research"
+    description: "Not sure, will investigate codebase"
+
+If Scope answer is "Unsure - need to research":
+- Add "Scope estimation" to UNKNOWNS list
+
+**4. Dependencies/Blockers (only if version has existing issues):**
+
+**If EXISTING_ISSUES > 0:**
 
 Use AskUserQuestion:
 - questions:
-    - question: "How many files will this issue likely touch?"
-      header: "Scope"
-      options:
-        - label: "1-2 files"
-          description: "Very focused change"
-        - label: "3-5 files"
-          description: "Moderate scope"
-        - label: "6+ files"
-          description: "Broad change - consider splitting"
-        - label: "Unsure - need to research"
-          description: "Not sure, will investigate codebase"
-      multiSelect: false
-
     - question: "Does this issue depend on other issues completing first?"
       header: "Dependencies"
       options:
@@ -374,8 +395,6 @@ Use AskUserQuestion:
           description: "Can start immediately"
         - label: "Yes, select dependencies"
           description: "Show issue list to choose from"
-        - label: "Unsure - need to research"
-          description: "Need to investigate existing issues"
       multiSelect: false
 
     - question: "Does this issue block any existing issues?"
@@ -387,15 +406,7 @@ Use AskUserQuestion:
           description: "Show issue list to choose from"
       multiSelect: false
 
-**Track unknowns:**
-
-If Scope answer is "Unsure - need to research":
-- Add "Scope estimation" to UNKNOWNS list
-
-If Dependencies answer is "Unsure - need to research":
-- Add "Dependency analysis" to UNKNOWNS list
-
-**2. Conditional follow-ups based on answers:**
+**5. Conditional follow-ups:**
 
 **If Scope = "6+ files":**
 
@@ -447,89 +458,39 @@ Skip to next step.
 
 <step name="task_ask_acceptance_criteria">
 
-**Ask for acceptance criteria with context-aware options:**
+**Apply standard acceptance criteria with option for customization (M374):**
 
-Based on TASK_TYPE captured earlier, present relevant options:
+Standard criteria are ALWAYS included - do not ask users to confirm obvious requirements.
 
-**If TASK_TYPE is "Feature":**
+**Standard criteria by type (applied automatically):**
 
-Use AskUserQuestion:
-- header: "Acceptance Criteria"
-- question: "What must be true for this feature to be complete? (Select all that apply)"
-- multiSelect: true
-- options:
-  - label: "Functionality works as described"
-    description: "Core feature behavior is implemented correctly"
-  - label: "Tests written and passing"
-    description: "Unit/integration tests cover the new functionality"
-  - label: "Documentation updated"
-    description: "README, docstrings, or user-facing docs reflect the change"
-  - label: "No regressions"
-    description: "Existing functionality continues to work"
+| Type | Standard Criteria |
+|------|-------------------|
+| Feature | Functionality works, Tests passing, No regressions |
+| Bugfix | Bug fixed, Regression test added, No new issues |
+| Refactor | Behavior unchanged, Tests passing, Code quality improved |
+| Performance | Target met, Benchmarks added, No functionality regression |
 
-**If TASK_TYPE is "Bugfix":**
+**Only ask if user wants ADDITIONAL custom criteria:**
 
 Use AskUserQuestion:
-- header: "Acceptance Criteria"
-- question: "What must be true for this bug fix to be complete? (Select all that apply)"
-- multiSelect: true
+- header: "Custom Criteria"
+- question: "Standard criteria (functionality, tests, no regressions) will be applied. Any additional acceptance criteria?"
 - options:
-  - label: "Bug no longer reproducible"
-    description: "The reported issue is fixed"
-  - label: "Regression test added"
-    description: "Test prevents this bug from recurring"
-  - label: "Root cause addressed"
-    description: "Fix addresses underlying issue, not just symptoms"
-  - label: "No new issues introduced"
-    description: "Fix doesn't create other problems"
+  - label: "No, standard criteria are sufficient"
+    description: "Use the default acceptance criteria for this issue type"
+  - label: "Yes, add custom criteria"
+    description: "I have specific requirements beyond the standard"
 
-**If TASK_TYPE is "Refactor":**
+**If "Yes, add custom criteria":**
 
-Use AskUserQuestion:
-- header: "Acceptance Criteria"
-- question: "What must be true for this refactor to be complete? (Select all that apply)"
-- multiSelect: true
-- options:
-  - label: "Behavior unchanged"
-    description: "External behavior remains identical"
-  - label: "All tests still pass"
-    description: "Existing test suite passes without modification"
-  - label: "Code quality improved"
-    description: "Measurable improvement in readability/maintainability"
-  - label: "Technical debt reduced"
-    description: "Addresses documented tech debt items"
+Ask inline: "What additional acceptance criteria should be met?"
 
-**If TASK_TYPE is "Performance":**
-
-Use AskUserQuestion:
-- header: "Acceptance Criteria"
-- question: "What must be true for this performance improvement to be complete? (Select all that apply)"
-- multiSelect: true
-- options:
-  - label: "Performance target met"
-    description: "Measurable improvement achieved (e.g., 2x faster)"
-  - label: "Benchmarks added"
-    description: "Performance tests verify the improvement"
-  - label: "No functionality regression"
-    description: "Features work correctly after optimization"
-  - label: "Resource usage acceptable"
-    description: "Memory/CPU usage within acceptable bounds"
-
-**Always include a "Custom" option in each set:**
-
-After the type-specific options, always add:
-- label: "Custom criteria"
-  description: "Enter your own acceptance criteria"
-
-**If "Custom criteria" selected:**
-
-Ask inline: "What are your custom acceptance criteria? How will we know this issue is complete?"
-
-Append the custom response to the selected options.
+Append custom criteria to the standard list.
 
 **Store results:**
 
-Capture selected criteria as ACCEPTANCE_CRITERIA (list of labels, possibly with custom text appended).
+Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom additions.
 
 </step>
 
@@ -977,12 +938,13 @@ Use AskUserQuestion:
 
 Based on response, ask follow-up questions using AskUserQuestion.
 
-**3. Boundaries:**
+**3. Boundaries (M374 - skip unless user mentioned exclusions):**
 
-Use AskUserQuestion:
-- header: "Scope"
-- question: "Is there anything that should wait for a later minor version?"
-- options: ["Nothing specific", "Yes, let me list them", "Not sure yet"]
+Only ask about scope boundaries if user's previous answers mentioned:
+- "later", "future", "not yet", "eventually"
+- Multiple distinct features that might not all fit
+
+Otherwise, assume all mentioned items are in scope and skip this question.
 
 **4. Synthesize and confirm:**
 
@@ -1026,18 +988,34 @@ Present for review with AskUserQuestion.
 
 <step name="version_configure_gates">
 
-**Configure entry and exit gates.**
+**Apply standard gates with option for customization (M374):**
 
-**If VERSION_TYPE is "major":**
-- Major gates are inherited by all minor versions within.
+Standard gates are applied automatically - do not ask users to confirm obvious requirements.
 
-**If VERSION_TYPE is "minor":**
-- Use AskUserQuestion for entry gate and exit gate configuration.
+**Standard gates by version type:**
 
-**If VERSION_TYPE is "patch":**
-- Patches typically have simpler gates focused on:
-  - Entry: Issue identified, reproduction confirmed
-  - Exit: Fix verified, regression tests pass
+| Type | Entry Gate | Exit Gate |
+|------|------------|-----------|
+| Major | Previous major complete (or none) | All minors complete, vision satisfied |
+| Minor | Previous minor complete (or none) | All issues complete, tests pass |
+| Patch | Issue identified | Fix verified, regression tests pass |
+
+**Only ask if user wants CUSTOM gates:**
+
+Use AskUserQuestion:
+- header: "Custom Gates"
+- question: "Standard gates will be applied (entry: dependencies complete, exit: all issues + tests pass). Any custom gate requirements?"
+- options:
+  - label: "No, standard gates are sufficient"
+    description: "Use default entry/exit criteria"
+  - label: "Yes, add custom gates"
+    description: "I have specific gate requirements"
+
+**If "Yes, add custom gates":**
+
+Ask inline: "What additional entry or exit gate requirements should be met?"
+
+Append custom gates to standard gates.
 
 </step>
 
