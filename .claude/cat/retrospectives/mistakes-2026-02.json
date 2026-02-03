@@ -1036,6 +1036,35 @@
         "catches_variations": true
       },
       "correct_behavior": "NEVER use manual git reset --soft for squashing. Always use /cat:git-squash which uses commit-tree to create commits from committed tree objects, ignoring working directory state entirely."
+    },
+    {
+      "id": "M386",
+      "timestamp": "2026-02-04T12:30:00Z",
+      "category": "protocol_violation",
+      "description": "Execution subagent manually compressed files instead of invoking /cat:shrink-doc skill as specified in PLAN.md, despite M333 prevention existing",
+      "root_cause": "M333 prevention was in work-execute/SKILL.md descriptive text but NOT in the Mandatory CRITICAL REQUIREMENTS block (M367) that gets included in every delegation prompt. Implementation subagent never sees M333 guidance because it only receives the prompt built by work-execute.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-execute/SKILL.md",
+      "pattern_keywords": [
+        "skill-invocation",
+        "shrink-doc",
+        "delegation",
+        "M333-recurrence"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M333",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When PLAN.md execution steps reference skills, include skill invocation requirement in CRITICAL REQUIREMENTS block of delegation prompt so implementation subagent receives it.",
+      "related_files_fixed": [
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/delegate/SKILL.md"
+      ]
     }
   ]
 }

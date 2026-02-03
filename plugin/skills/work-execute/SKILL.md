@@ -151,16 +151,18 @@ Subagents process early content with higher priority. Structure prompts as:
 6. Context/metadata (SESSION_ID, etc.)
 ```
 
-**Mandatory CRITICAL REQUIREMENTS (M367):** Always include these in section 1 of every delegation prompt:
+**Mandatory CRITICAL REQUIREMENTS (M367, M386):** Always include these in section 1 of every delegation prompt:
 
 ```
 CRITICAL REQUIREMENTS:
 - Update STATE.md to status: completed in SAME commit as implementation
 - Include tests for bugfixes in SAME commit as fix
 - Always decompose code instead of adding lint suppression
+- (M386) If PLAN.md execution steps reference skills (e.g., /cat:shrink-doc), MUST invoke those skills - do NOT reimplement their functionality manually
 ```
 
-These requirements apply to ALL tasks regardless of PLAN.md content.
+These requirements apply to ALL tasks. The skill invocation requirement (M386) ensures skills referenced in PLAN.md
+are actually invoked by the implementation subagent, not bypassed via manual reimplementation.
 
 **Anti-pattern:** Placing skill invocation requirements in "Execution Steps" section after context
 sections. The subagent may skip them in favor of earlier-processed content.
@@ -181,6 +183,7 @@ Task tool invocation:
     - Always decompose code instead of adding lint suppression
     - Include tests for bugfixes in SAME commit as fix
     - Update STATE.md in SAME commit as implementation
+    - If PLAN.md references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
 
     FAIL-FAST: If blocked, report immediately.
 ```
