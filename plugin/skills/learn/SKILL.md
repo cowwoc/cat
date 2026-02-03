@@ -213,6 +213,56 @@ If ANY answer is blank or says "agent should have...":
 Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
 The cause is always in the system that allowed or encouraged the wrong action.
 
+### 4c. Multiple Independent Mistakes (M378)
+
+**When investigating a problem reveals multiple independent mistakes, invoke `/cat:learn` for each.**
+
+During investigation, you may discover that the observed failure resulted from multiple independent
+issues - not just multiple causes of one mistake, but genuinely separate mistakes that each warrant
+their own RCA and prevention.
+
+**Identification pattern:**
+
+```yaml
+multiple_mistakes_check:
+  question: "Are these separate issues that could occur independently?"
+  if_yes: "Invoke /cat:learn separately for EACH mistake"
+  if_no: "Continue with single /cat:learn for the one mistake"
+```
+
+**When multiple independent mistakes are discovered:**
+
+1. **Complete the current `/cat:learn`** for the first mistake you identified
+2. **Invoke `/cat:learn` again** for each additional independent mistake
+3. **Each gets its own M-number**, RCA, and prevention
+
+**Example:**
+
+```yaml
+# Observed failure: Batch compression failed midway through
+# Investigation reveals TWO independent mistakes:
+
+mistake_1:
+  description: "Handler didn't exist for /cat:delegate preprocessing"
+  action: "Complete /cat:learn -> M377"
+
+mistake_2:
+  description: "Agent didn't acknowledge user message mid-operation"
+  action: "Invoke /cat:learn again -> M378"
+
+# Each mistake gets separate /cat:learn invocation with full RCA workflow
+```
+
+**Why separate invocations matter:**
+- Each mistake may have different root causes requiring different RCA methods
+- Each prevention needs its own verification
+- Retrospective tracking is more accurate with distinct M-numbers
+- Patterns are easier to identify when mistakes are properly separated
+
+**BLOCKING: Do not bundle unrelated mistakes.** If you discover a second independent issue during
+investigation, note it, complete the current `/cat:learn`, then invoke `/cat:learn` again for the
+second issue.
+
 ### 5. Check for Context Degradation Patterns
 
 **CAT-specific analysis checklist:**
