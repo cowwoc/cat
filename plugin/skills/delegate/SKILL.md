@@ -493,6 +493,24 @@ done
 
 **MANDATORY: Always specify model explicitly based on issue type.**
 
+**MANDATORY: Create TaskList entries for subagent visibility.**
+
+Before spawning each subagent, create a TaskList entry so users can see active work:
+
+```
+TaskCreate:
+  subject: "{skill or issue} - {item}"
+  description: "Subagent executing {skill/issue} on {item}"
+  activeForm: "Executing {skill/issue} on {item}"
+```
+
+After subagent completes, update the task:
+```
+TaskUpdate:
+  taskId: {created_task_id}
+  status: "completed"  # or "pending" if failed and needs retry
+```
+
 **For skill delegation (haiku - skill does the reasoning):**
 ```
 Task tool invocation:
@@ -638,6 +656,20 @@ if [[ -n "$SKILL" ]]; then
   VALIDATION_SCORE=$(jq -r '.validationScore // "N/A"' "$COMPLETION_JSON")
   POSTCONDITION_MET=$(jq -r '.postconditionMet // "unknown"' "$COMPLETION_JSON")
 fi
+```
+
+**Update TaskList entry:**
+```
+TaskUpdate:
+  taskId: {task_id_from_step_5}
+  status: "completed"  # Use "completed" for success, keep "pending" for retry-needed failures
+```
+
+For failed subagents that will be retried, keep status as "pending" and update the description:
+```
+TaskUpdate:
+  taskId: {task_id}
+  description: "FAILED: {error_reason} - awaiting retry"
 ```
 
 ### 8. Merge in Dependency Order
