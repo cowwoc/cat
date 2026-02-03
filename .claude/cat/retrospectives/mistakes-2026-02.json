@@ -891,6 +891,40 @@
         "catches_variations": true
       },
       "correct_behavior": "Apply sensible defaults automatically; only ask for custom/additional criteria; skip dependency questions when no existing issues in version"
+    },
+    {
+      "id": "M375",
+      "timestamp": "2026-02-03T12:30:00Z",
+      "category": "inefficient_execution",
+      "description": "Batch compression task delegated to single subagent processing 9 files sequentially, hitting context limits after 2 files",
+      "root_cause": "PLAN.md template used 'For each file: Run /cat:shrink-doc' which orchestrator interpreted as sequential processing in single subagent. shrink-doc's 'Multiple Files: Use /cat:delegate' section was never consulted because PLAN.md didn't reference it.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "batch",
+        "parallel",
+        "delegate",
+        "sequential",
+        "context-limit",
+        "PLAN.md"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M369",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "PLAN.md templates for batch operations must explicitly use /cat:delegate syntax instead of 'For each file' loops. Example: /cat:delegate --skill shrink-doc file1.md file2.md ...",
+      "related_files_to_update": [
+        ".claude/cat/issues/v2/v2.1/compress-skills-batch-1/PLAN.md",
+        ".claude/cat/issues/v2/v2.1/compress-skills-batch-2/PLAN.md",
+        ".claude/cat/issues/v2/v2.1/compress-skills-batch-4/PLAN.md",
+        ".claude/cat/issues/v2/v2.1/compress-skills-batch-5/PLAN.md"
+      ]
     }
   ]
 }

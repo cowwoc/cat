@@ -94,6 +94,44 @@ This prevents spawning an execution subagent for work that's already committed.
 
 Display the **Executing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ◉ ○ ○ pattern).
 
+### Batch Operation Detection (M369, M375)
+
+**MANDATORY: Before spawning execution subagent, check if task is a batch operation.**
+
+Read `${TASK_PATH}/PLAN.md` and detect batch patterns:
+
+| Pattern | Example | Detection |
+|---------|---------|-----------|
+| "For each file" + skill | "For each file: Run /cat:shrink-doc" | Batch compression |
+| Multiple files in scope + same operation | 9 files listed, all getting same skill | Batch operation |
+| "batch" in task_id | "compress-skills-batch-3" | Likely batch |
+
+**If batch pattern detected:**
+
+```bash
+# Extract file list from PLAN.md scope table
+FILES=$(grep -E '^\| [0-9]+ \|' "${TASK_PATH}/PLAN.md" | awk -F'|' '{print $3}' | tr -d ' ')
+
+# Use delegate for parallel execution instead of single subagent
+/cat:delegate --skill shrink-doc ${FILES}
+```
+
+**Why this matters (M375):** A single subagent processing N files sequentially:
+- Consumes cumulative context (each file adds to total)
+- Hits context limits before completion (84K tokens after 2 of 9 files)
+- No parallelization benefit
+
+Delegate spawns parallel subagents:
+- Each subagent has fresh context for its file
+- N files processed simultaneously
+- Fault tolerance (one failure doesn't block others)
+
+**If batch operation:** Use `/cat:delegate`, skip standard work-execute delegation, proceed to Phase 3.
+
+**If NOT batch operation:** Continue with standard work-execute delegation below.
+
+---
+
 Delegate to work-execute subagent:
 
 ```
