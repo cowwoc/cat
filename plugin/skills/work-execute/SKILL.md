@@ -1,12 +1,12 @@
 ---
-description: Execution phase for /cat:work - spawns implementation subagent and collects results
+description: Execution phase for /cat:work - implements the task directly
 user-invocable: false
 ---
 
 # Work Phase: Execute
 
-Subagent skill for the execution phase of `/cat:work`. Spawns implementation subagent(s),
-monitors progress, and collects results.
+Subagent skill for the execution phase of `/cat:work`. Implements the task directly
+by following PLAN.md execution steps. Does NOT spawn nested subagents (M388).
 
 ## Input
 
@@ -129,77 +129,35 @@ skills like `/cat:shrink-doc`, the subagent MUST invoke those skills - not reimp
 functionality manually. Skills provide validation (e.g., equivalence scores) that manual
 implementation skips.
 
-### Step 3: Prepare Subagent Prompt
+### Step 3: Implement the Task Directly (M388)
 
-Build comprehensive execution plan following delegate/SKILL.md guidelines:
-- Include exact file paths
-- Include code snippets (not descriptions)
-- Include verification commands
-- Include commit message format
-- Include fail-fast conditions
+**CRITICAL: Implement the task yourself - do NOT spawn another subagent.**
 
-**Prompt Structure (M350):** Lead with CRITICAL requirements, not context.
+You ARE the implementation agent. Follow the execution steps from PLAN.md directly:
 
-Subagents process early content with higher priority. Structure prompts as:
+1. **Apply CRITICAL REQUIREMENTS** to all your work:
+   - Always decompose code instead of adding lint suppression
+   - Include tests for bugfixes in SAME commit as fix
+   - Update STATE.md in SAME commit as implementation
+   - If PLAN.md references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
 
-```
-1. CRITICAL REQUIREMENTS (skill invocations, blocking rules)
-2. Working directory and environment
-3. Task goal (1 sentence)
-4. Step-by-step instructions with skill invocations inline
-5. Output format
-6. Context/metadata (SESSION_ID, etc.)
-```
+2. **Execute each step from PLAN.md's Execution Steps section**:
+   - If a step says "invoke /cat:skill-name", use the Skill tool to invoke it
+   - If a step says to modify files, use Edit/Write tools
+   - If a step says to run commands, use Bash tool
 
-**Mandatory CRITICAL REQUIREMENTS (M367, M386):** Always include these in section 1 of every delegation prompt:
+3. **Commit your changes** following the commit message format in PLAN.md
 
-```
-CRITICAL REQUIREMENTS:
-- Update STATE.md to status: completed in SAME commit as implementation
-- Include tests for bugfixes in SAME commit as fix
-- Always decompose code instead of adding lint suppression
-- (M386) If PLAN.md execution steps reference skills (e.g., /cat:shrink-doc), MUST invoke those skills - do NOT reimplement their functionality manually
-```
+4. **Track what you did** for the result JSON:
+   - List of commits made
+   - Files changed count
+   - Task-specific metrics (see Output Contract)
 
-These requirements apply to ALL tasks. The skill invocation requirement (M386) ensures skills referenced in PLAN.md
-are actually invoked by the implementation subagent, not bypassed via manual reimplementation.
+**Why direct implementation (M388):** Previously this skill spawned a nested subagent, creating
+a 3-level chain where guidance was lost. You implementing directly keeps the chain at 2 levels
+(batch-executor → work-execute) and ensures CRITICAL REQUIREMENTS are followed.
 
-**Anti-pattern:** Placing skill invocation requirements in "Execution Steps" section after context
-sections. The subagent may skip them in favor of earlier-processed content.
-
-### Step 4: Spawn Implementation Subagent
-
-```bash
-Task tool invocation:
-  description: "Execute task ${TASK_ID}"
-  subagent_type: "general-purpose"
-  model: "sonnet"  # Code changes need reasoning
-  prompt: |
-    [Comprehensive execution plan]
-
-    WORKING DIRECTORY: ${WORKTREE_PATH}
-
-    CRITICAL REQUIREMENTS:
-    - Always decompose code instead of adding lint suppression
-    - Include tests for bugfixes in SAME commit as fix
-    - Update STATE.md in SAME commit as implementation
-    - If PLAN.md references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
-
-    FAIL-FAST: If blocked, report immediately.
-```
-
-### Step 5: Monitor Execution
-
-Wait for subagent completion. If running in background, use TaskOutput to poll.
-
-### Step 6: Collect Results
-
-Read subagent completion output:
-- Token usage from session file
-- Commit history from git log
-- Build/test results from verification
-
-### Step 7: Verify Changes
+### Step 4: Verify Changes
 
 ```bash
 # Run build verification
@@ -209,7 +167,7 @@ Read subagent completion output:
 ./gradlew test 2>/dev/null || mvn test 2>/dev/null || npm test 2>/dev/null
 ```
 
-### Step 8: Return Result
+### Step 5: Return Result
 
 Output the JSON result with metrics and verification status.
 
@@ -217,7 +175,7 @@ Output the JSON result with metrics and verification status.
 
 - **Wrong branch (M351):** Current branch doesn't match task ID: Return ERROR immediately
 - PLAN.md missing or invalid: Return ERROR
-- Subagent reports BLOCKED: Return BLOCKED with details
+- Blocked during implementation: Return BLOCKED with details
 - Build fails: Return FAILED with error output
 - Tests fail: Return FAILED with test output
 

@@ -110,81 +110,33 @@ If `has_existing_work == true`:
 - Output: "Resuming task with existing work - skipping to review"
 - Skip to Step 3
 
-Otherwise:
-
-#### Step 2a: Read PLAN.md
-
-Read `${TASK_PATH}/PLAN.md` to understand:
-- Goal and requirements
-- Execution steps (including any skill invocations)
-- Acceptance criteria
-- Files to modify
-
-#### Step 2b: Verify Worktree Branch (M351)
-
-```bash
-cd "${WORKTREE_PATH}"
-CURRENT_BRANCH=$(git branch --show-current)
-EXPECTED_BRANCH="${TASK_ID}"
-
-if [[ "$CURRENT_BRANCH" != "$EXPECTED_BRANCH" ]]; then
-  echo "FAIL: Wrong branch. Expected: $EXPECTED_BRANCH, Got: $CURRENT_BRANCH"
-  # Return ERROR status
-fi
-```
-
-#### Step 2c: Spawn Implementation Subagent (Direct - M388)
-
-**CRITICAL: Spawn implementation directly - do NOT delegate through work-execute.**
-
-Build the implementation prompt including ALL critical requirements, then spawn:
+Otherwise, spawn work-execute subagent:
 
 ```
 Task tool:
-  description: "Execute: implement ${TASK_ID}"
+  description: "Execute: implement task"
   subagent_type: "general-purpose"
   model: "sonnet"
   prompt: |
-    CRITICAL REQUIREMENTS (M386, M367):
-    - If PLAN.md execution steps reference skills (e.g., /cat:shrink-doc), MUST invoke those skills - do NOT manually reimplement
-    - Update STATE.md to status: completed in SAME commit as implementation
-    - Include tests for bugfixes in SAME commit as fix
-    - Always decompose code instead of adding lint suppression
+    Execute the work-execute phase skill.
 
-    WORKING DIRECTORY: ${WORKTREE_PATH}
-    You MUST work in this worktree, not the main workspace.
+    SESSION_ID: ${CLAUDE_SESSION_ID}
+    TASK_ID: ${TASK_ID}
+    TASK_PATH: ${TASK_PATH}
+    WORKTREE_PATH: ${WORKTREE_PATH}
+    ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
+    TRUST_LEVEL: ${TRUST}
 
-    ## Task
-    ${TASK_ID}
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-execute/SKILL.md
 
-    ## Goal
-    [Extract from PLAN.md ## Goal section]
+    CRITICAL WORKING DIRECTORY: You MUST work in the worktree at ${WORKTREE_PATH}
 
-    ## Execution Steps
-    [Copy from PLAN.md ## Execution Steps section]
-
-    ## Acceptance Criteria
-    [Copy from PLAN.md ## Acceptance Criteria section]
-
-    ## Files to Modify
-    [List from PLAN.md]
-
-    FAIL-FAST: If blocked, report immediately with details.
-
-    Return JSON:
-    {
-      "status": "SUCCESS|PARTIAL|FAILED",
-      "commits": [{"hash": "...", "message": "...", "type": "..."}],
-      "files_changed": N,
-      "task_metrics": {...},
-      "verification": {"build_passed": true, "tests_passed": true}
-    }
+    Return JSON per the output contract.
 ```
 
-**Why direct spawning (M388):** Previously, batch-executor spawned work-execute which spawned
-implementation-subagent. This 3-level chain caused guidance loss - M333/M386 requirements in
-work-execute/SKILL.md never reached the implementation subagent. Direct spawning ensures
-CRITICAL REQUIREMENTS are in the prompt the implementation subagent actually receives.
+**Note (M388):** work-execute implements the task DIRECTLY - it does NOT spawn another subagent.
+This keeps the chain at 2 levels (batch-executor → work-execute) while preserving work-execute's
+task-type handling logic.
 
 Handle execution result:
 - SUCCESS: Store metrics, continue
@@ -329,12 +281,13 @@ Example output pattern:
 
 ## Context Efficiency
 
-This skill is designed to run as a subagent. All internal phase spawns (implementation,
+This skill is designed to run as a subagent. All internal phase spawns (work-execute,
 work-review, work-merge) are invisible to the parent conversation. Only the banner
 text outputs and final JSON result are visible.
 
-**Shortened Chain (M388):** Previously: batch-executor → work-execute → implementation (3 levels).
-Now: batch-executor → implementation (2 levels). This eliminates the layer where guidance was lost.
+**Chain Design (M388):** batch-executor → work-execute (2 levels). work-execute implements
+directly without spawning a nested subagent. This keeps work-execute's task-type handling
+logic while eliminating the 3-level chain that caused guidance loss.
 
 This reduces visible output from:
 - 4 Task spawns (prepare, execute, review, merge)
