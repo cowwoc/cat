@@ -8,13 +8,16 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# Work With Task: Phase Executor
+# Work With Task: Batch Phase Executor
 
-Execute all 4 work phases (prepare, execute, review, merge) with automatic progress banner rendering.
+Execute all work phases (execute, review, merge) with minimal visible output using a batch
+executor pattern. Shows progress banners at phase transitions while keeping intermediate
+tool calls invisible to the user.
 
-**Architecture:** This skill is invoked by `/cat:work` after task discovery (Phase 1). It receives
-the task ID and metadata as arguments, allowing exclamation-backtick preprocessing to render progress
-banners with the actual task ID.
+**Architecture:** This skill is invoked by `/cat:work` after task discovery (Phase 1). It
+shows Banner1 (Preparing complete), then spawns a single batch executor subagent that handles
+all remaining phases internally. The batch executor outputs banners as text (visible) while
+its internal subagent spawns remain invisible.
 
 ## Arguments Format
 
@@ -37,11 +40,8 @@ The main `/cat:work` skill invokes this with JSON-encoded arguments:
 ## Progress Banners
 
 Progress banners for all 4 phases are pre-rendered by the work_with_task_handler and provided
-in the SCRIPT OUTPUT PROGRESS BANNERS section. The handler parses the task_id from the skill
-invocation arguments and calls get-progress-banner.sh to generate all phase banners.
-
-Use the banners from **SCRIPT OUTPUT PROGRESS BANNERS** - they are correctly formatted with
-box-drawing characters and proper display widths.
+in the SCRIPT OUTPUT PROGRESS BANNERS section. Individual phase banners are also provided
+in the INDIVIDUAL PHASE BANNERS section for use in batch executor output.
 
 **Phase symbols:** `○` Pending | `●` Complete | `◉` Active | `✗` Failed
 
@@ -72,261 +72,80 @@ HAS_EXISTING_WORK=$(echo "$ARGUMENTS" | jq -r '.has_existing_work // false')
 EXISTING_COMMITS=$(echo "$ARGUMENTS" | jq -r '.existing_commits // 0')
 ```
 
-## Check for Existing Work (M362)
+## Step 1: Display Preparing Banner
 
-**MANDATORY: Before Phase 2, check if work already exists on the branch.**
+Display the **Preparing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (`◉ ○ ○ ○` pattern).
 
-```bash
-if [[ "$HAS_EXISTING_WORK" == "true" ]]; then
-  echo "Task has ${EXISTING_COMMITS} existing commit(s) - skipping execution phase"
-  # Skip to Phase 3 (Review)
-fi
-```
+This indicates Phase 1 (prepare) has completed and work phases are starting.
 
-When `has_existing_work: true`:
-1. Display message: "Resuming task with existing work - skipping to review"
-2. Skip Phase 2 entirely
-3. Proceed directly to Phase 3 (Review)
+## Step 2: Spawn Batch Executor
 
-This prevents spawning an execution subagent for work that's already committed.
-
-## Phase 2: Execute
-
-Display the **Executing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ◉ ○ ○ pattern).
-
-### Batch Operation Detection (M369, M375)
-
-**MANDATORY: Before spawning execution subagent, check if task is a batch operation.**
-
-Read `${TASK_PATH}/PLAN.md` and detect batch patterns:
-
-| Pattern | Example | Detection |
-|---------|---------|-----------|
-| "For each file" + skill | "For each file: Run /cat:shrink-doc" | Batch compression |
-| Multiple files in scope + same operation | 9 files listed, all getting same skill | Batch operation |
-| "batch" in task_id | "compress-skills-batch-3" | Likely batch |
-
-**If batch pattern detected:**
-
-```bash
-# Extract file list from PLAN.md scope table
-FILES=$(grep -E '^\| [0-9]+ \|' "${TASK_PATH}/PLAN.md" | awk -F'|' '{print $3}' | tr -d ' ')
-
-# Use delegate for parallel execution instead of single subagent
-/cat:delegate --skill shrink-doc ${FILES}
-```
-
-**Why this matters (M375):** A single subagent processing N files sequentially:
-- Consumes cumulative context (each file adds to total)
-- Hits context limits before completion (84K tokens after 2 of 9 files)
-- No parallelization benefit
-
-Delegate spawns parallel subagents:
-- Each subagent has fresh context for its file
-- N files processed simultaneously
-- Fault tolerance (one failure doesn't block others)
-
-**If batch operation:** Use `/cat:delegate`, skip standard work-execute delegation, proceed to Phase 3.
-
-**If NOT batch operation:** Continue with standard work-execute delegation below.
-
----
-
-Delegate to work-execute subagent:
+Spawn a single batch executor subagent that handles all remaining phases internally.
+This minimizes visible output - user sees only the initial spawn and banner outputs.
 
 ```
 Task tool:
-  description: "Execute: implement task"
+  description: "Execute work phases for ${TASK_ID}"
   subagent_type: "general-purpose"
   model: "sonnet"
   prompt: |
-    Execute the work-execute phase skill.
+    Execute all work phases (execute, review, merge) for task ${TASK_ID}.
 
-    SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${TASK_ID}
-    TASK_PATH: ${TASK_PATH}
-    WORKTREE_PATH: ${WORKTREE_PATH}
-    ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
-    TRUST_LEVEL: ${TRUST}
-
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-execute/SKILL.md
-
-    CRITICAL WORKING DIRECTORY: You MUST work in the worktree at ${WORKTREE_PATH}
-    All file edits must be to files within that worktree.
-
-    Return JSON per the output contract.
-```
-
-**Handle result:**
-
-| Status | Action |
-|--------|--------|
-| SUCCESS | Store metrics, continue to Phase 3 |
-| PARTIAL | Warn user, continue to Phase 3 |
-| FAILED | Display error, offer retry or abort |
-| BLOCKED | Display blocker, stop |
-
-### Protocol Violation Handling (M348)
-
-**MANDATORY: Correctness over completion.**
-
-After receiving execution result, check for protocol violations:
-
-1. **Check skill invocation compliance**: If PLAN.md specified skills (e.g., `/cat:shrink-doc`),
-   verify subagent actually invoked them (check for skill invocation in result or commits)
-
-2. **If protocol violation detected:**
-   - Do NOT rationalize ("tests pass", "looks reasonable", "saves tokens")
-   - Do NOT proceed to review phase
-   - REJECT the work and re-execute with explicit instruction:
-     "Previous execution violated M333 - MUST invoke /cat:shrink-doc skill, not manually edit files"
-
-3. **Why this matters:** Manual workarounds skip validation that skills provide. Accepting
-   protocol-violating work means accepting unvalidated work.
-
-**Anti-pattern:** "The work looks correct so I'll proceed despite the protocol violation."
-**Correct behavior:** "Protocol was violated. Re-executing with proper skill invocation."
-
-**Token check:**
-- If `compaction_events > 0`: Warn user, offer decomposition
-- If `percent_of_context > 80`: Invoke learn
-
-**Store for later phases:**
-- `commits`, `files_changed`, `tokens_used`
-
-### Compression Task Validation (M347)
-
-**MANDATORY for tasks with "compress" or "shrink" in task_id:**
-
-Before proceeding to Phase 3, validate execution result contains per-file metrics:
-
-1. Check if `task_metrics.equivalence_scores` exists and is non-empty
-2. Display the compression report to user:
-
-```
-## Compression Results
-
-| File | Before | After | Reduction | Score | Status |
-|------|--------|-------|-----------|-------|--------|
-| {filename} | {tokens} | {tokens} | {%} | {score} | {PASS/FAIL} |
-```
-
-**If validation fails:**
-- Missing `task_metrics`: Return to execution phase with explicit requirement
-- Any score < 1.0: Block merge, require iteration
-
-**When results are unexpected (M357):**
-
-If subagent results differ from expectations or another validation source, investigate the SOURCE:
-
-1. **Review the delegation prompt** - Did it prime the subagent toward certain outputs?
-2. **Review the skill files** - Are the skill instructions clear and unambiguous?
-3. **Check for methodology differences** - Different extraction or comparison approaches yield different scores
-
-Do NOT add independent validation layers. Another subagent running the same skill is no more "independent"
-than the original. Fix the prompt or skill that produces unexpected results.
-
-**This validation enforces M346 (per-file reporting) at the orchestration level.**
-
-## Phase 3: Review
-
-**Skip if:** `VERIFY == "none"` or `TRUST == "high"`
-
-Display the **Reviewing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ● ◉ ○ pattern).
-
-Delegate to work-review subagent:
-
-```
-Task tool:
-  description: "Review: stakeholder quality check"
-  subagent_type: "general-purpose"
-  model: "sonnet"
-  prompt: |
-    Execute the work-review phase skill.
-
-    SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${TASK_ID}
-    TASK_PATH: ${TASK_PATH}
-    WORKTREE_PATH: ${WORKTREE_PATH}
-    TRUST_LEVEL: ${TRUST}
-    VERIFY_LEVEL: ${VERIFY}
-    EXECUTION_RESULT: ${execution_result_json}
-
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-review/SKILL.md
-
-    Return JSON per the output contract.
-```
-
-**Handle result:**
-
-| Status | Action |
-|--------|--------|
-| APPROVED | Continue to user approval gate |
-| CONCERNS | Note concerns, continue to user approval gate |
-| REJECTED | If medium trust: auto-loop to fix. If low trust: ask user |
-
-**User Approval Gate (if trust != high):**
-
-Before asking for approval, display the task's goal to remind the user what this task is about:
-
-1. Read `${TASK_PATH}/PLAN.md`
-2. Extract the content between `## Goal` and the next `##` heading
-3. Display to user: "**Task Goal:** {extracted goal text}"
-
-Then use AskUserQuestion:
-- header: "Approval"
-- question: "Ready to merge {TASK_ID}?"
-- options:
-  - "Approve and merge"
-  - "Request changes" (provide feedback)
-  - "Abort"
-
-## Phase 4: Merge
-
-Display the **Merging phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (● ● ● ◉ pattern).
-
-Delegate to work-merge subagent:
-
-```
-Task tool:
-  description: "Merge: squash, merge, cleanup"
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    Execute the work-merge phase skill.
-
-    SESSION_ID: ${CLAUDE_SESSION_ID}
+    ## Task Configuration
     TASK_ID: ${TASK_ID}
     TASK_PATH: ${TASK_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     BRANCH: ${BRANCH}
     BASE_BRANCH: ${BASE_BRANCH}
-    COMMITS: ${commits_json}
-    AUTO_REMOVE_WORKTREES: ${AUTO_REMOVE}
+    ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
+    TRUST: ${TRUST}
+    VERIFY: ${VERIFY}
+    AUTO_REMOVE: ${AUTO_REMOVE}
+    HAS_EXISTING_WORK: ${HAS_EXISTING_WORK}
+    EXISTING_COMMITS: ${EXISTING_COMMITS}
 
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-merge/SKILL.md
+    ## Progress Banners (output these at phase transitions)
 
-    Return JSON per the output contract.
+    **Executing banner** (output BEFORE execute phase):
+    ```
+    [Insert executing banner from INDIVIDUAL PHASE BANNERS]
+    ```
+
+    **Reviewing banner** (output BEFORE review phase):
+    ```
+    [Insert reviewing banner from INDIVIDUAL PHASE BANNERS]
+    ```
+
+    **Merging banner** (output BEFORE merge phase):
+    ```
+    [Insert merging banner from INDIVIDUAL PHASE BANNERS]
+    ```
+
+    ## Instructions
+
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-batch-executor/SKILL.md
+
+    CRITICAL: Output each banner as plain text BEFORE starting that phase.
+    This makes phase transitions visible to the user.
+
+    If TRUST != "high", return APPROVAL_REQUIRED status after review phase
+    instead of proceeding to merge. Include execution_result, review_result,
+    and task goal in the response.
+
+    Return JSON per the output contract in the skill.
 ```
 
-**Handle result:**
+## Step 3: Handle Batch Result
 
-| Status | Action |
-|--------|--------|
-| MERGED | Display success, return to main work skill |
-| CONFLICT | Display conflicting files, ask user for resolution |
-| ERROR | Display error, attempt manual cleanup |
+Parse the batch executor result and handle based on status:
 
-## Return to Main Skill
+### Status: SUCCESS
 
-After Phase 4 completes (successfully or with error), return control to the main `/cat:work` skill
-so it can check for next tasks and handle auto-continuation.
-
-Return a summary of the execution:
+Task completed successfully. Return summary to main work skill:
 
 ```json
 {
-  "status": "SUCCESS|FAILED",
+  "status": "SUCCESS",
   "task_id": "2.1-task-name",
   "commits": [...],
   "files_changed": 5,
@@ -335,19 +154,91 @@ Return a summary of the execution:
 }
 ```
 
+### Status: APPROVAL_REQUIRED
+
+Batch executor paused at approval gate. Handle user approval:
+
+1. Display the task goal from the result
+2. Use AskUserQuestion:
+   - header: "Approval"
+   - question: "Ready to merge {TASK_ID}?"
+   - options:
+     - "Approve and merge"
+     - "Request changes" (provide feedback)
+     - "Abort"
+
+**If approved:** Spawn merge-only executor to complete Phase 4.
+
+```
+Task tool:
+  description: "Merge: squash, merge, cleanup"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  prompt: |
+    Execute ONLY the merge phase for task ${TASK_ID}.
+
+    Output the merging banner first:
+    ```
+    [Insert merging banner from INDIVIDUAL PHASE BANNERS]
+    ```
+
+    Then execute the merge.
+
+    TASK_ID: ${TASK_ID}
+    TASK_PATH: ${TASK_PATH}
+    WORKTREE_PATH: ${WORKTREE_PATH}
+    BRANCH: ${BRANCH}
+    BASE_BRANCH: ${BASE_BRANCH}
+    COMMITS: ${commits_from_execution}
+    AUTO_REMOVE_WORKTREES: ${AUTO_REMOVE}
+
+    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-merge/SKILL.md
+
+    Return JSON per the output contract.
+```
+
+**If changes requested:** Return to user with feedback for iteration.
+
+**If aborted:** Clean up and return ABORTED status.
+
+### Status: FAILED
+
+Display error message and offer options:
+- Retry the failed phase
+- Abort and cleanup
+- Manual intervention
+
 ## Error Handling
 
-If any phase subagent fails unexpectedly:
+If batch executor fails unexpectedly:
 
 1. Capture error message
 2. Attempt lock release: `${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh release ...`
 3. Display error to user
 4. Return error status to main work skill
 
+## Return to Main Skill
+
+After handling completes (successfully or with error), return control to the main `/cat:work`
+skill so it can check for next tasks and handle auto-continuation.
+
+Return a summary of the execution:
+
+```json
+{
+  "status": "SUCCESS|FAILED|ABORTED",
+  "task_id": "2.1-task-name",
+  "commits": [...],
+  "files_changed": 5,
+  "tokens_used": 65000,
+  "merged": true
+}
+```
+
 ## Success Criteria
 
-- [ ] Progress banners displayed automatically via preprocessing for all 4 phases
-- [ ] Phase subagents spawned for execute, review, merge
-- [ ] Results collected and parsed as JSON
+- [ ] Single Task spawn for batch executor (vs 3 separate spawns)
+- [ ] Progress banners displayed at phase transitions via text output
 - [ ] User approval gate respected (unless trust=high)
 - [ ] Lock released on completion or error
+- [ ] Results collected and parsed as JSON
