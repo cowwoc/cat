@@ -144,6 +144,82 @@ instructions over negative prohibitions when the positive form is equally clear.
 - Compression should reduce TOKENS, not CONSTRAINTS
 - Compression should preserve EMPHASIS, not flatten critical warnings
 
+## Preserve Conditional/Consequence Structure
+
+**CRITICAL**: Conditional statements with consequences must preserve their structural markers.
+These markers tell the extraction agent how to categorize the content.
+
+**Structural markers to NEVER remove:**
+- "then" connecting condition to action
+- "In this case:" introducing consequences
+- "If...then..." conditional framing
+- "When...," temporal condition markers
+- "Otherwise," / "Else," alternative branches
+
+**Example - DO NOT compress this:**
+```
+If you do NOT see a status box directly above, then preprocessing FAILED. In this case:
+1. STOP - do NOT proceed
+2. Run the script
+```
+
+**BAD compression (removes structural markers):**
+```
+If you do NOT see a status box directly above, preprocessing FAILED:
+1. STOP - do NOT proceed
+2. Run the script
+```
+
+**Why this fails validation:** Removing "then" and "In this case:" loses the explicit
+CONDITIONAL → CONSEQUENCE structure. The extraction agent may categorize the compressed
+version differently, causing NOT_EQUIVALENT status even though the content is "similar."
+
+**Acceptable compression (preserves structure):**
+```
+If no status box appears above, then preprocessing FAILED. In this case:
+1. STOP
+2. Run the script
+```
+
+This shortens the condition description while keeping the structural markers intact.
+
+## Line Wrapping is NOT Compression
+
+**CRITICAL**: Reformatting line breaks is NOT valid compression - it adds risk without value.
+
+Validation extracts semantic units by parsing document structure. Changing line breaks
+can alter how conditional/sequential structures are parsed, causing extraction variance.
+
+**DO NOT:**
+- Merge multi-line sentences into single lines
+- Reflow paragraphs to different widths
+- Remove line breaks within structured statements
+
+**Example - DO NOT do this:**
+```
+Original:
+**FAIL-FAST:** If condition X (containing
+`code` and Y), then Z FAILED.
+
+BAD "compression" (just reformatted):
+**FAIL-FAST:** If condition X (containing `code` and Y), then Z FAILED.
+```
+
+This is not compression - it's reformatting. It saves zero semantic content while
+risking extraction variance. Leave line breaks as they are unless removing actual content.
+
+**Valid compression removes content:**
+```
+Original:
+**FAIL-FAST:** If you do NOT see a status box directly above (containing
+`╭──` characters and issue lists indicating the preprocessing result),
+then the preprocessing step has FAILED completely.
+
+Good compression (removes verbose content):
+**FAIL-FAST:** If no status box appears above (containing `╭──` and issue lists),
+then preprocessing FAILED.
+```
+
 ## Preserving Numbered Step Sequences
 
 **CRITICAL**: Numbered lists (1, 2, 3...) represent explicit sequence chains. These MUST be

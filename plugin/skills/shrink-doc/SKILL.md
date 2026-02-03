@@ -559,6 +559,26 @@ should NOT convert `1. X 2. Y 3. Z` into prose like "X, then Y, then Z".
 **Checklist Extraction**: Verification checklists (`- [ ] item`) may not extract
 consistently. Preserve checklist formatting exactly - don't convert to prose bullets.
 
+**Structural Marker Removal**: When validation fails after seemingly minor changes
+(reformatting, word removal), check if structural markers were removed:
+
+Symptoms:
+- Low equivalence score despite minimal content changes
+- CONDITIONAL or CONSEQUENCE units in LOST section
+- Changes involved removing words like "then", "In this case:", "Otherwise"
+
+Root cause: Structural markers ("then", "In this case:", "When...") signal how extraction
+agents categorize content. Removing them changes categorization, causing NOT_EQUIVALENT
+even when semantic content appears preserved.
+
+Solution: Iterate with explicit instruction to restore structural markers. The compression
+agent documentation includes specific guidance on preserving conditional/consequence structure.
+
+**Line Wrapping Changes**: If compression only changed line breaks without removing
+actual content, this is NOT valid compression. Line reformatting can cause extraction
+variance without providing any semantic benefit. Iterate with instruction to preserve
+original line structure and focus on removing actual redundant content instead.
+
 ---
 
 ## Example Usage
