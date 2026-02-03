@@ -6,7 +6,7 @@
 - **Last Updated:** 2026-02-03
 
 ## Issues Pending
-(No issues yet)
+- add-homograph-detection
 
 ## Issues Completed
 (None)
