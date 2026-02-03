@@ -226,157 +226,38 @@ After agent completes:
    head -5 /tmp/compressed-{{filename}}-v${VERSION}.md | grep -q "^---$" || echo "⚠️ WARNING: YAML frontmatter missing!"
    ```
 
-4. **Run validation with Best-2-of-3 (M346)**:
+4. **Run validation via /cat:delegate (M371)**:
 
-   Due to ±10-35% variance in /compare-docs scores across invocations, use consensus validation:
+   Use `/cat:delegate` for ALL validation (single or multiple files). The compare-docs skill
+   internally handles the best-2-of-3 consensus protocol with fabrication detection.
 
-   **Step 4a: Run two validations in parallel**
-   ```
-   Task tool #1:
-     subagent_type: "general-purpose"
-     model: "opus"
-     description: "Validate compression (run 1)"
-     prompt: |
-       Run /compare-docs to validate:
-       - Original: /tmp/original-{{filename}}
-       - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
-
-       MANDATORY: Invoke the Skill tool with skill="cat:compare-docs".
-       Include the COMPLETE output including:
-       - EXECUTION EQUIVALENCE score
-       - Component Scores table
-       - Warnings section
-       - Summary section
-
-       Do NOT summarize or fabricate - return the actual skill output.
-
-   Task tool #2:
-     subagent_type: "general-purpose"
-     model: "opus"
-     description: "Validate compression (run 2)"
-     prompt: |
-       Run /compare-docs to validate:
-       - Original: /tmp/original-{{filename}}
-       - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
-
-       MANDATORY: Invoke the Skill tool with skill="cat:compare-docs".
-       Include the COMPLETE output including:
-       - EXECUTION EQUIVALENCE score
-       - Component Scores table
-       - Warnings section
-       - Summary section
-
-       Do NOT summarize or fabricate - return the actual skill output.
+   ```bash
+   /cat:delegate --skill compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
    ```
 
-   **Step 4b: Check for consensus on 1.0**
+   **Why delegate (M371)**: Delegate handles:
+   - Subagent spawning with appropriate model selection (opus for validation)
+   - Isolation of validation context from main agent
+   - Result collection and formatting
 
-   Extract `execution_equivalence_score` from both reports.
+   **The compare-docs skill handles internally**:
+   - Two independent extraction+comparison runs (Step 1)
+   - Consensus calculation (Step 3)
+   - Evidence verification and fabrication detection
+   - Threshold enforcement (1.0 for shrink-doc context)
 
-   **For shrink-doc, only 1.0 is acceptable.** Check if both runs agree on 1.0:
+   **Parse validation result from delegate output**:
+   - Extract consensus score and individual run scores
+   - Extract warnings and lost_relationships
+   - Check for fabrication warnings
 
-   | Score 1 | Score 2 | Action |
-   |---------|---------|--------|
-   | 1.0 | 1.0 | **PASS** - both agree on 1.0, approved |
-   | 1.0 | 0.95 | **Disagree** - run tiebreaker |
-   | 0.95 | 0.93 | **FAIL** - neither is 1.0, iterate |
-
-   **Step 4c: If one is 1.0 and other is not, run tiebreaker**
-   ```
-   Task tool:
-     subagent_type: "general-purpose"
-     model: "opus"
-     description: "Validate compression (tiebreaker)"
-     prompt: |
-       Run /compare-docs to validate:
-       - Original: /tmp/original-{{filename}}
-       - Compressed: /tmp/compressed-{{filename}}-v${VERSION}.md
-
-       MANDATORY: Invoke the Skill tool with skill="cat:compare-docs".
-       Include the COMPLETE output including:
-       - EXECUTION EQUIVALENCE score
-       - Component Scores table
-       - Warnings section
-       - Summary section
-
-       Do NOT summarize or fabricate - return the actual skill output.
-   ```
-
-   **Step 4d: Determine if 2 of 3 agree on 1.0**
-
-   | Score 1 | Score 2 | Score 3 | Result |
-   |---------|---------|---------|--------|
-   | 1.0 | 0.95 | 1.0 | **PASS** - 2 of 3 = 1.0 |
-   | 1.0 | 0.95 | 0.93 | **FAIL** - only 1 of 3 = 1.0, iterate |
-   | 0.95 | 0.93 | - | **FAIL** - 0 of 2 = 1.0, iterate (no tiebreaker needed) |
-
-   **Step 4e: Verify validation evidence (M349)**
-
-   **MANDATORY**: Before accepting any score, verify the subagent output contains ACTUAL
-   /compare-docs evidence, not just a claimed score.
-
-   **Evidence requirements** - subagent output MUST contain:
-   1. EXECUTION EQUIVALENCE score line
-   2. Component Scores table (Claim Preservation, Relationship Preservation, Graph Structure)
-   3. Summary section with Shared Claims count
-
-   **Verification check**:
-   ```yaml
-   evidence_check:
-     has_score: true|false           # Look for "EXECUTION EQUIVALENCE:"
-     has_component_table: true|false # Look for "| Component | Score |"
-     has_summary: true|false         # Look for "Shared Claims:"
-
-     # If ANY is false → subagent likely fabricated the score
-     # REJECT and re-run validation with explicit instruction to include full output
-   ```
-
-   **If evidence missing**: Do NOT accept the score. Re-run validation with prompt:
-   "Include the COMPLETE /compare-docs output including the EXECUTION EQUIVALENCE score, component table, and summary."
-
-   **Why this matters (M349)**: Subagents may report expected scores without actually running
-   validation. The 1.0 threshold creates strong priming for fabrication. Requiring evidence
-   proves the skill was actually invoked.
-
-   **Step 4f: Fabrication Detection (M354)**
-
-   **MANDATORY**: After collecting scores, check for fabrication indicators:
-
-   ```yaml
-   fabrication_check:
-     all_scores_identical: true|false  # If all runs return exactly 1.0, suspicious
-     high_variance: true|false         # If runs differ by >0.3, extraction unstable
-
-     # If all_scores_identical AND score is 1.0:
-     action: "WARN: All validation runs returned identical 1.0 scores"
-     recommendation: "Request independent re-validation from user or different session"
-
-     # If high_variance (>0.3 difference between runs):
-     action: "WARN: High variance suggests extraction instability"
-     recommendation: "Run additional validation, investigate document structure"
-   ```
-
-   **Why this matters (M354)**: Subagents primed for 1.0 may construct evidence to match.
-   Real /compare-docs runs show natural variance (±0.05-0.10). Identical 1.0 scores across
-   multiple runs suggests fabrication rather than actual validation.
-
-   **Report validation result**:
-   ```
-   Validation (best 2 of 3):
-   - Run 1: {score1} [evidence: {verified|missing}]
-   - Run 2: {score2} [evidence: {verified|missing}]
-   - Run 3: {score3} (if needed) [evidence: {verified|missing}]
-   - Fabrication check: {PASS|WARN: all identical|WARN: high variance}
-   - Result: {PASS if ≥2 runs = 1.0 WITH verified evidence AND fabrication check passes, else FAIL}
-   ```
-
-   **If FAIL**: Proceed to Step 6 (Iteration). After creating new version, run
-   Steps 4a-4e again on the NEW compressed version.
+   **If FAIL (consensus < 1.0)**: Proceed to Step 6 (Iteration). After creating new version,
+   re-run validation on the NEW compressed version.
 
 5. **Parse validation result**:
-   - Use the **consensus score** from Step 4d
-   - Extract warnings and lost_relationships from the agreeing runs
-   - If runs disagree on warnings, include warnings from BOTH agreeing runs
+   - Use the **consensus score** from the delegate output
+   - Extract warnings and lost_relationships from the validation report
+   - Check fabrication warnings in the delegate output
 
 **Scoring Context**: When reporting the score to the user, explicitly state:
 ```
@@ -583,12 +464,31 @@ No exceptions. Score is ONLY valid if it comes from /compare-docs output.
 
 ---
 
-## Batch Processing (Multiple Files)
+## Multiple Files: Use /cat:delegate (M369)
 
-**For batch operations**, read: [BATCH-PROCESSING.md](BATCH-PROCESSING.md)
+**For compressing multiple files**, use `/cat:delegate`:
 
-Summary: When compressing multiple files, each must be validated individually with `/compare-docs`.
-Use parallel subagents for efficiency, with fault-tolerant collection and selective retry logic.
+```bash
+/cat:delegate --skill shrink-doc file1.md file2.md file3.md
+```
+
+Delegate handles:
+- Parallel subagent spawning (one per file, each running this full workflow)
+- Fault-tolerant result collection
+- Automatic retry of failed subagents
+- Result aggregation into per-file table
+
+**Do NOT manually spawn Task tools for batch operations** - delegate already implements
+parallel execution, fault tolerance, and retry logic.
+
+**Per-file validation (M265, M346):** Each file MUST be validated individually. Report results:
+
+| File | Tokens Before | Tokens After | Reduction | Score | Status |
+|------|---------------|--------------|-----------|-------|--------|
+| {filename} | {count} | {count} | {%} | {actual score from /compare-docs} | {PASS/FAIL} |
+
+**Validation separation (M277):** Compression subagents must NOT validate their own work.
+Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 ---
 
@@ -596,7 +496,8 @@ Use parallel subagents for efficiency, with fault-tolerant collection and select
 
 **Agent Type**: MUST use `subagent_type: "general-purpose"`
 
-**Validation Tool**: Use /compare-docs (SlashCommand tool)
+**Validation Tool**: Use `/cat:delegate --skill compare-docs` (M371) - delegate handles subagent
+spawning and result collection. The compare-docs skill handles the two-run consensus protocol.
 
 **Validation Baseline**: On first invocation, save original document to
 `/tmp/original-{filename}` and use this as baseline for ALL subsequent
