@@ -138,6 +138,7 @@ CRITICAL REQUIREMENTS (enforced by hooks):
 - Always use git-filter-repo instead of git filter-branch
 - Preserve .git/refs/original unless user explicitly requests deletion
 - Include tests for bugfixes in the SAME commit as the fix
+- (M386) If task references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
 
 COMMIT SEPARATION (M089):
 - .claude/rules/ updates → separate config: commit (not bundled with bugfix/feature)
