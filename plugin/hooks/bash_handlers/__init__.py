@@ -54,4 +54,3 @@ from . import remind_git_squash
 from . import warn_file_extraction
 from . import compute_box_lines
 from . import validate_worktree_remove
-# warn_compression_commit.py removed - functionality consolidated into validate_commit_type.py (M383)

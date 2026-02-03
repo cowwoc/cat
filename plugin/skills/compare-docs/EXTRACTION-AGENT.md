@@ -1,4 +1,4 @@
-# Semantic Claim and Relationship Extraction
+# Semantic Unit Extraction
 
 **Internal Document** - Read by extraction subagents only.
 
@@ -6,226 +6,303 @@
 
 ## Your Task
 
-Extract all semantic claims AND relationships from the provided document.
+Extract all semantic units from the provided document. Each unit is a self-contained
+statement that captures both content AND any embedded relationships.
+
+**You see ONLY ONE document.** Do not assume knowledge of any other document.
 
 ---
 
-## Conservative Extraction Principle
+## What is a Semantic Unit?
 
-**When in doubt, extract it.**
+A discrete statement that affects execution behavior:
+- Requirements, prohibitions, constraints
+- Sequences, conditions, dependencies
+- References to other documents
 
-If removing text could realistically lead to a loss of execution equivalence, treat it as:
-- An explicit claim (not implicit)
-- An explicit relationship (not derivable from context)
-
-This bias is intentional: it's better to flag potential semantic loss than to miss it.
-
-**Apply this principle when:**
-- Temporal ordering is shown via example but not stated as a rule
-- A relationship could be "derived" from other claims but is also stated explicitly
-- Examples illustrate constraints that aren't repeated in abstract form
-
-**Note:** Conservative extraction does NOT mean keeping duplicates. If the same constraint appears
-both implicitly (via example) and explicitly (via rule), extract only the explicit version.
-The bias is about classification (treat ambiguous as explicit), not inflation.
+**Example:** "Check pwd before rm-rf" is ONE unit capturing both actions AND their ordering.
 
 ---
 
-## Part 1: Claim Extraction
+## Nine Categories (Mutually Exclusive, Priority Order)
 
-**What is a "claim"?**
-- A requirement, instruction, rule, constraint, fact, or procedure
-- A discrete unit of meaning that can be verified as present/absent
-- Examples: "must do X before Y", "prohibited to use Z", "setting W defaults to V"
+Check categories in order. **First match wins.**
 
-**Claim Types** (classify in order - first match wins):
+### Priority 1: EXCLUSION
+**Markers:** "cannot" + (both/together/simultaneously/co-occur), "mutually exclusive", "either...or" (exclusive)
 
-1. **Negations with Scope**: Prohibition with explicit scope
-   - Markers: "NEVER", "prohibited", "CANNOT", "forbidden", "MUST NOT"
-   - Also: "MUST include/have" with (M###) reference = mandatory prohibition of omission
-   - Example: "CANNOT run Steps 2 and 3 in parallel (data corruption risk)"
-   - Example: "Bugfix plans MUST include reproduction code (M122)" → negation (prohibition of omitting)
-2. **Conditionals**: IF condition THEN consequence (ELSE alternative)
-   - Markers: "IF...THEN", "when X, do Y", "depends on", "if needed", "if behavior exposed"
-   - Example: "IF attacker has monitoring THEN silent block ELSE network disconnect"
-   - Example: "Add edge case tests if needed" → conditional (condition: "if needed")
-3. **Conjunctions**: ALL of {X, Y, Z} must be true
-   - Markers: "ALL of the following", "both X AND Y", "requires all"
-   - Example: "Approval requires: technical review AND budget review AND strategic review"
-4. **Consequences**: Actions that result from conditions/events
-   - Markers: "results in", "causes", "leads to", "enforcement"
-   - Example: "Violating Step 1 causes data corruption (47 transactions affected)"
-5. **Simple Claims** (requirement, instruction, constraint, fact, configuration)
-   - Use ONLY when no other type applies
-   - Default fallback for basic requirements without prohibition/condition/conjunction semantics
+**Examples:**
+- "Steps 2 and 3 cannot run together" → EXCLUSION
+- "Cannot have both A and B enabled" → EXCLUSION
 
-**Type Disambiguation (M321)**:
+### Priority 2: CONJUNCTION
+**Markers:** "all of" + list, "both...and...required", "requires all"
 
-| Pattern | Type | Rationale |
-|---------|------|-----------|
-| "MUST include X (M###)" | negation | Tracked violation = prohibition semantics |
-| "if [condition]" anywhere | conditional | Explicit condition present |
-| "MUST do X" (no ref) | simple | Basic requirement, not prohibition |
-| "CANNOT/NEVER do X" | negation | Explicit prohibition |
-| "requires all of" | conjunction | Explicit all-of semantics |
+**Examples:**
+- "Review AND approval AND signoff ALL required" → CONJUNCTION
+- "Requires all of: tests, review, approval" → CONJUNCTION
 
-**Worked Examples (M321)** - Use these as classification anchors:
+### Priority 3: PROHIBITION
+**Markers:** NEVER, MUST NOT, CANNOT + action (without co-occurrence indicator), "forbidden", "prohibited"
 
-| Input Text | Type | Reasoning |
-|------------|------|-----------|
-| "Plans MUST include reproduction code (M122)" | negation | Has (M###) → tracked violation |
-| "Add edge case tests if needed" | conditional | Contains "if needed" condition |
-| "Validate input before processing" | simple | No prohibition marker, no (M###) |
-| "Run Step 1 before Step 2" | simple | Temporal aspect goes in *relationship*, not claim type |
-| "NEVER commit directly to main" | negation | Explicit "NEVER" prohibition |
-| "Tests must pass before merge" | simple | "must" without (M###) = basic requirement |
-| "If build fails, notify team" | conditional | Explicit "If...then" structure |
-| "Requires: review AND approval AND signoff" | conjunction | Explicit "AND" list with "requires" |
-| "Coverage must be ≥80%" | simple | Threshold requirement, no condition/prohibition |
-| "MUST NOT skip validation (M205)" | negation | "MUST NOT" + (M###) = prohibition |
-| "Update docs when API changes" | conditional | "when" = implicit condition |
-| "Delete temp files after completion" | simple | Temporal goes in relationship |
+**Examples:**
+- "NEVER rm-rf without checking pwd" → PROHIBITION
+- "MUST NOT skip validation" → PROHIBITION
+- "Cannot run step 2" (no co-occurrence) → PROHIBITION
 
-**Key principle**: Temporal ordering ("before", "after", "then") creates *relationships* between
-claims, not claim *types*. The claim itself is usually `simple` unless it has prohibition/condition markers.
+### Priority 4: CONDITIONAL
+**Markers:** IF...THEN, WHEN + consequence, "unless", "depends on whether/if"
 
-**Extraction Rules**:
+**Examples:**
+- "IF pwd in target THEN cd first" → CONDITIONAL
+- "When build fails, notify team" → CONDITIONAL
+- "Depends on whether config exists" → CONDITIONAL
 
-1. **Granularity**: Atomic claims (cannot split without losing meaning)
-2. **Completeness**: Extract ALL claims, including implicit ones if unambiguous
-3. **Context**: Include minimal context for understanding
-4. **Exclusions**: Skip pure examples, meta-commentary, table-of-contents
+### Priority 5: CONSEQUENCE
+**Markers:** "causes", "results in", "leads to", "triggers"
 
-**Normalization Rules** (apply to all claim types):
+**Examples:**
+- "Deleting pwd causes shell breakage" → CONSEQUENCE
+- "Invalid input results in rejection" → CONSEQUENCE
 
-1. **Tense**: Present tense ("create" not "created")
-2. **Voice**: Imperative/declarative ("verify changes" not "you should verify")
-3. **Synonyms**: Normalize common variations:
-   - "must/required/mandatory" → "must"
-   - "prohibited/forbidden/never" → "prohibited"
-   - "create/establish/generate" → "create"
-   - "remove/delete/cleanup" → "remove"
-   - "verify/validate/check/confirm" → "verify"
-4. **Negation**: Standardize ("must not X" → "prohibited to X")
-5. **Quantifiers**: Normalize ("≥80%", "<100")
-6. **Filler**: Remove filler words
+### Priority 6: DEPENDENCY
+**Markers:** "required for", "prerequisite for", "necessary for", "depends on" + noun (without if/whether)
+
+**Examples:**
+- "SSL cert required for HTTPS" → DEPENDENCY
+- "Valid config depends on schema file" → DEPENDENCY
+- "Authentication prerequisite for API access" → DEPENDENCY
+
+### Priority 7: SEQUENCE
+**Markers:** "before", "after", "then", "first", "prior to", "following", "Step N...Step M"
+
+**Examples:**
+- "Check pwd before rm-rf" → SEQUENCE
+- "Run tests, then deploy" → SEQUENCE
+- "Step 1 must complete before Step 2" → SEQUENCE
+
+### Priority 8: REFERENCE
+**Markers:** "see", "refer to", "defined in", "documented in", "follow...in {path}"
+
+**Examples:**
+- "See ops/deploy.md for checklist" → REFERENCE
+- "Defined in config/settings.json" → REFERENCE
+
+### Priority 9: REQUIREMENT (Default)
+**Markers:** "must", "required", "should", "shall", or no specific markers
+
+**Examples:**
+- "Must restart Claude Code" → REQUIREMENT
+- "Should validate input" → REQUIREMENT
+- "Restart the service" → REQUIREMENT
 
 ---
 
-## Part 2: Relationship Extraction
+## Disambiguation Rules
 
-**Relationship Types to Extract**:
+### "cannot" Disambiguation
+- "cannot" + co-occurrence indicator (both/together/simultaneously) → EXCLUSION
+- "cannot" + "until" → DEPENDENCY (temporal prerequisite, not general prohibition)
+- "cannot" + action alone → PROHIBITION
 
-### 1. Temporal Dependencies (Step A → Step B)
-**Markers**: "before", "after", "then", "Step N must occur after Step M", "depends on completing"
-**Constraint**: strict=true if order violation causes failure
+**Examples:**
+- "Cannot run A and B together" → EXCLUSION
+- "Cannot deploy until tests pass" → DEPENDENCY (tests → deploy)
+- "Cannot skip validation" → PROHIBITION
 
-**Conservative Classification:**
-- If an example shows step ordering (e.g., "Run A, then B, then C"), extract as explicit temporal
-  relationship even if ordering seems "obvious" from context
-- If ordering constraints appear in BOTH abstract rules AND concrete examples, extract BOTH
-- Err on the side of explicit: an "unnecessary" relationship is better than a missed one
+### "depends on" Disambiguation
+- "depends on whether/if" → CONDITIONAL
+- "depends on" + noun phrase → DEPENDENCY
+- "depends on [noun] being [participle]" → Context determines:
+  - If binary state (present/absent, enabled/disabled, green/red) → DEPENDENCY (blocking prerequisite)
+  - If behavior branches based on state → CONDITIONAL (execution path changes)
 
-**Example:**
-Document says: "Always validate input before processing"
-Later shows: "Example: validate(data); process(data);"
+**Examples:**
+- "X depends on Y configuration" → DEPENDENCY (noun)
+- "X depends on tests being green" → DEPENDENCY (binary state, blocks if not met)
+- "X depends on config being present" → DEPENDENCY (binary state, blocks if absent)
+- "behavior depends on mode being active" → CONDITIONAL (behavior branches based on mode)
+- "X depends on whether Y is enabled" → CONDITIONAL (explicit conditional)
 
-Extract: temporal relationship "validate → process" as EXPLICIT (not "derivable from rule")
-Rationale: The example reinforces the constraint; removing it could reduce clarity
+**The distinction:** Does it BLOCK (dependency) or BRANCH (conditional)?
 
-### 2. Prerequisite Relationships (Condition → Action)
-**Markers**: "prerequisite", "required before", "must be satisfied before"
-**Constraint**: strict=true if prerequisite skipping causes failure
+### Compound Statements
+When a statement contains multiple markers, classify by highest priority marker,
+but capture embedded semantics in normalization.
 
-### 3. Hierarchical Conjunctions (ALL of X must be true)
-**Markers**: "ALL", "both...AND...", "requires all", nested lists
-**Constraint**: all_required=true
+**Example:** "MUST NOT run A before B"
+- Has "MUST NOT" (PROHIBITION, priority 3)
+- Has "before" (SEQUENCE, priority 7)
+- Classification: **PROHIBITION**
+- Normalization: `prohibited: [sequence: A → B]`
 
-### 4. Conditional Relationships (IF-THEN-ELSE)
-**Markers**: "IF...THEN...ELSE", "when X, do Y", "depends on"
-**Constraint**: mutual_exclusivity=true for alternatives
+### Modal Verbs with Temporal Statements
 
-### 5. Exclusion Constraints (A and B CANNOT co-occur)
-**Markers**: "CANNOT run concurrently", "NEVER together", "mutually exclusive"
-**Constraint**: strict=true if violation causes failure
+When modal verbs (MUST, must, should) modify temporal statements:
+- The category is determined by priority order (SEQUENCE wins over REQUIREMENT)
+- The modal verb determines strength
 
-### 6. Escalation Relationships (State A → State B under trigger)
-**Markers**: "escalate to", "redirect to", "upgrade severity"
-**Constraint**: trigger condition explicit
+**Examples:**
+- "MUST verify X before Y" → `must: validate X → Y` (strict)
+- "must check A before B" → `sequence: validate A → B` (standard)
+- "should run tests before deploy" → `sequence: run tests → deploy` (standard)
 
-### 7. Cross-Document References (Doc A → Doc B Section X)
-**Markers**: "see Section X.Y", "defined in Document Z", "refer to"
-**Constraint**: preserve section numbering as navigation anchor
+---
 
-**Ambiguous Cases - Always Choose Explicit:**
+## Normalization
 
-| Scenario | Classification | Rationale |
-|----------|---------------|-----------|
-| Example shows ordering | explicit temporal | Example provides execution guidance |
-| Rule + example both show constraint | keep explicit only | Deduplicate: explicit is clearer |
-| "Obvious" from domain knowledge | explicit | Agents lack domain expertise |
-| Could be derived from other claims | explicit | Derivation may fail |
+For each extracted unit, provide both original text and normalized form.
 
-**Deduplication Rule:** When the same constraint appears in both implicit and explicit forms,
-extract only the explicit version. Conservative bias means classifying ambiguous items AS explicit,
-not inflating the claim count with duplicates of the same semantic content.
+### Normalization Principle
+
+Normalize to a **consistent grammatical form** while preserving semantic content:
+
+- **Tense:** Present tense ("validate" not "validated")
+- **Voice:** Active/imperative ("validate input" not "input must be validated")
+- **Mood:** Imperative/declarative ("validate" not "you should validate")
+
+**Do NOT enumerate synonyms.** The comparison agent judges semantic equivalence.
+Your job is to extract the semantic content in a consistent form, not to normalize vocabulary.
+
+### Basic Normalization
+
+| Category | Normalized Form |
+|----------|-----------------|
+| EXCLUSION | `exclusion: A, B` |
+| CONJUNCTION | `conjunction: [A, B, C]` |
+| PROHIBITION | `must not: X` (strict) or `prohibit: X` (standard) |
+| CONDITIONAL | `conditional: X → Y` or `conditional: X → Y \| Z` (with else) |
+| CONSEQUENCE | `consequence: X → Y` |
+| DEPENDENCY | `dependency: X → Y` |
+| SEQUENCE | `must: X → Y` (strict) or `sequence: X → Y` (standard) |
+| REFERENCE | `reference: path` |
+| REQUIREMENT | `must: X` (strict) or `require: X` (standard) or `should: X` (advisory) |
+
+### Strength Distinction
+
+Use modal verbs directly - they're intuitive:
+
+| Original | Normalized | Meaning |
+|----------|------------|---------|
+| "MUST X", "NEVER X", "CRITICAL: X" | `must: X` | Strict - violation is catastrophic |
+| "must X", "required", "X" (imperative) | `require: X` | Standard - violation is problematic |
+| "should X", "recommended" | `should: X` | Advisory - violation is suboptimal |
+
+**Strict markers** (use `must:` or `must not:`):
+- ALL CAPS: MUST, NEVER, ALWAYS, CRITICAL
+- Explicit severity: "critical", "mandatory", "essential"
+- Violation consequences mentioned: "failure", "corruption", "security risk"
+
+**Standard markers** (use `require:` or `prohibit:`):
+- Mixed case: must, never, always
+- Default imperatives without severity indication
+
+**Advisory markers** (use `should:`):
+- should, recommended, prefer, consider, ideally
+
+### Compound Embedding (Max 2 Levels)
+
+| Pattern | Normalized Form |
+|---------|-----------------|
+| "MUST NOT X before Y" | `prohibited: [sequence: X → Y]` |
+| "MUST NOT X if Y" | `prohibited: [conditional: Y → X]` |
+| "IF X, NEVER Y" | `conditional: X → [prohibited: Y]` |
+| "Use X for production" | `required: [context: production] X` |
+
+### Flattening Rule (>2 Levels)
+
+When a statement would require >2 levels of nesting, **flatten into multiple related units**.
+
+**Example:** "MUST NOT (if production environment) (skip validation before deployment)"
+
+This would be 3 levels: `prohibited: [conditional: production → [sequence: skip → deploy]]`
+
+**Flatten to two units:**
+```json
+{
+  "id": "unit_1",
+  "category": "CONDITIONAL",
+  "original": "if production environment, apply constraint unit_2",
+  "normalized": "conditional: production → @unit_2"
+},
+{
+  "id": "unit_2",
+  "category": "PROHIBITION",
+  "original": "MUST NOT skip validation before deployment",
+  "normalized": "prohibited: [sequence: skip validation → deployment]"
+}
+```
+
+**Flattening rules:**
+- Extract the innermost compound as a separate unit with its own ID
+- Reference it from the outer unit using `@unit_N` syntax
+- Both units are extracted and compared independently
+- Preserves all semantic content without deep nesting
+
+### Context Qualifiers
+
+When a statement applies to specific contexts:
+- "Use X for production, Y for development" →
+  - `required: [context: production] X`
+  - `required: [context: development] Y`
+
+---
+
+## Extraction Rules
+
+1. **Granularity:** One unit per semantic statement
+2. **Completeness:** Extract ALL units that affect execution
+3. **No Duplicates:** If same constraint appears multiple ways, extract once
+4. **Original Language:** Preserve exact wording for feedback
+5. **Skip:** Pure examples without constraints, meta-commentary, formatting
 
 ---
 
 ## Output Format (JSON)
 
-Return a JSON object with the following structure:
-
 ```json
 {
-  "claims": [
+  "units": [
     {
-      "id": "claim_1",
-      "type": "simple|conjunction|conditional|consequence|negation",
-      "text": "normalized claim text",
-      "location": "line numbers or section",
-      "confidence": "high|medium|low",
-      "sub_claims": ["claim_2", "claim_3"],
-      "all_required": true,
-      "condition": "condition text",
-      "true_consequence": "claim_4",
-      "false_consequence": "claim_5",
-      "triggered_by": "event or condition",
-      "impact": "severity description",
-      "prohibition": "what is prohibited",
-      "scope": "when prohibition applies",
-      "violation_consequence": "what happens if violated"
+      "id": "unit_1",
+      "category": "SEQUENCE",
+      "original": "Check pwd before rm-rf",
+      "normalized": "sequence: check pwd → rm-rf",
+      "location": "line 15"
+    },
+    {
+      "id": "unit_2",
+      "category": "PROHIBITION",
+      "original": "MUST NOT run A before B",
+      "normalized": "prohibited: [sequence: A → B]",
+      "location": "line 23"
+    },
+    {
+      "id": "unit_3",
+      "category": "REQUIREMENT",
+      "original": "Should validate input",
+      "normalized": "suggested: validate input",
+      "location": "line 31"
     }
   ],
-  "relationships": [
-    {
-      "id": "rel_1",
-      "type": "temporal|prerequisite|conditional|exclusion|escalation|cross_document",
-      "from_claim": "claim_1",
-      "to_claim": "claim_2",
-      "constraint": "must occur after|required before|IF-THEN|CANNOT co-occur",
-      "strict": true,
-      "evidence": "line numbers and quote",
-      "violation_consequence": "what happens if relationship violated"
-    }
-  ],
-  "dependency_graph": {
-    "nodes": ["claim_1", "claim_2", "claim_3"],
-    "edges": [["claim_1", "claim_2"], ["claim_2", "claim_3"]],
-    "topology": "linear_chain|tree|dag|cyclic",
-    "critical_path": ["claim_1", "claim_2", "claim_3"]
-  },
   "metadata": {
-    "total_claims": 10,
-    "total_relationships": 5,
-    "relationship_types": {
-      "temporal": 3,
-      "conditional": 1,
-      "exclusion": 1
+    "total_units": 3,
+    "by_category": {
+      "SEQUENCE": 1,
+      "PROHIBITION": 1,
+      "REQUIREMENT": 1
     }
   }
 }
 ```
 
-**CRITICAL**: Extract ALL relationships, not just claims. Relationships are as important as
-claims for execution equivalence.
+---
+
+## Verification Checklist
+
+Before returning output:
+- [ ] Each unit classified by checking priorities 1-9 in order
+- [ ] Compound statements have embedded semantics in normalized form
+- [ ] "should" normalized as `suggested:`, "must" as `required:`
+- [ ] Original text preserved exactly
+- [ ] No duplicate units for same semantic content

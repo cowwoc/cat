@@ -219,45 +219,6 @@ EOF
     # Restore original method
     handler._get_staged_files = original_get_staged
 
-    # M382: Test compression commit warning
-    runner.section("bash_handlers/validate_commit_type (M382)")
-
-    # Test compression commit with skill files warns
-    handler._get_staged_files = lambda: ['plugin/skills/status/SKILL.md']
-    cmd = '''git commit -m "$(cat <<'EOF'
-config: compress status skill documentation
-EOF
-)"'''
-    result = handler.check(cmd, {})
-    runner.test("M382: compression commit warns",
-                result is not None and "additionalContext" in result)
-    runner.test("M382: warning mentions M382",
-                result is not None and "M382" in result.get("additionalContext", ""))
-    runner.test("M382: warning mentions 1.0 threshold",
-                result is not None and "1.0" in result.get("additionalContext", ""))
-
-    # Test shrink commit warns
-    handler._get_staged_files = lambda: ['docs/agent-architecture.md']
-    cmd = '''git commit -m "$(cat <<'EOF'
-config: shrink documentation files
-EOF
-)"'''
-    result = handler.check(cmd, {})
-    runner.test("M382: shrink commit warns",
-                result is not None and "additionalContext" in result)
-
-    # Test non-compression commit does not warn
-    handler._get_staged_files = lambda: ['plugin/skills/work/SKILL.md']
-    cmd = '''git commit -m "$(cat <<'EOF'
-config: update skill workflow
-EOF
-)"'''
-    result = handler.check(cmd, {})
-    runner.test("M382: non-compression commit no warning", result is None)
-
-    # Restore original method
-    handler._get_staged_files = original_get_staged
-
 
 # =============================================================================
 # SKILL HANDLERS TESTS
@@ -1303,6 +1264,37 @@ def test_session_start():
                 platform in ["linux-x64", "linux-aarch64", "macos-x64", "macos-aarch64"])
 
 
+def test_compress_validate_loop():
+    """Test compress-validate-loop.py script."""
+    runner.section("scripts/compress-validate-loop.py")
+
+    import subprocess
+
+    script = PROJECT_ROOT / "scripts" / "tests" / "test_compress_validate_loop.py"
+
+    if not script.exists():
+        runner.test("Test script exists", False, f"Script not found at {script}")
+        return
+
+    # Run the unittest tests
+    result = subprocess.run(
+        ["python3", "-m", "unittest", str(script)],
+        capture_output=True,
+        text=True,
+        cwd=str(PROJECT_ROOT)
+    )
+
+    # Parse output to count tests
+    output = result.stderr  # unittest writes to stderr
+    test_count = output.count("test_")
+
+    runner.test("compress-validate-loop tests run", result.returncode == 0,
+                f"Tests failed:\n{output}" if result.returncode != 0 else "")
+
+    if result.returncode == 0:
+        runner.test("All compress-validate-loop tests passed", True)
+
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -1334,6 +1326,7 @@ def main():
         test_jlink_config,
         test_java_runner,
         test_session_start,
+        test_compress_validate_loop,
     ]
 
     for test_func in test_functions:
