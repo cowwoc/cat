@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-02T18:00:00-05:00",
-  "mistake_count_since_last": 11,
+  "last_retrospective": "2026-02-03T06:58:22-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -265,6 +265,27 @@
         "A012"
       ],
       "note": "Delegation prompts contain example values that prime subagents to fabricate or deprioritize actual execution."
+    },
+    {
+      "pattern_id": "PATTERN-013",
+      "pattern": "delegation_tooling_confusion",
+      "occurrences_total": 4,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-03T06:00:00Z",
+      "last_seen": "2026-02-03T07:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M367",
+        "M371",
+        "M372",
+        "M373"
+      ],
+      "related_action_items": [
+        "A013"
+      ],
+      "note": "Confusion about delegation mechanics: Task vs TaskCreate, manual spawning vs /cat:delegate, polling vs blocking. Subagent prompts also omit critical requirements."
     }
   ],
   "action_items": [
@@ -584,6 +605,28 @@
       "implementation": "M346 prevention added descriptive placeholder guidance and per-file reporting requirement. M350 prevention restructured prompts with critical requirements first.",
       "effectiveness_check": {
         "mistakes_before": 3,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A013",
+      "priority": "high",
+      "description": "Consolidate delegation guidance: (1) Document Task vs TaskCreate distinction clearly, (2) Prefer /cat:delegate for batch/parallel work, (3) Always use blocking TaskOutput calls, (4) Include CRITICAL REQUIREMENTS checklist in delegation prompts",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-013",
+      "status": "open",
+      "created_date": "2026-02-03T07:30:00Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M367",
+        "M371",
+        "M372",
+        "M373"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 4,
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
