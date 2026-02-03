@@ -1,11 +1,27 @@
 ---
-description: "MANDATORY: Use instead of `git rebase -i` for squashing - unified commit messages"
+description: "MANDATORY: Use instead of `git rebase -i` or `git reset --soft` for squashing - unified commit messages"
 user-invocable: false
 ---
 
 # Git Squash Skill
 
 **Purpose**: Safely squash multiple commits into one with automatic backup, verification, and cleanup.
+
+## MANDATORY: Use This Skill (M385)
+
+**NEVER manually run `git reset --soft` for squashing.** Always use this skill.
+
+Manual `git reset --soft` captures working directory state, which may contain stale files
+if the worktree diverged from its base branch. This skill uses `commit-tree` which creates
+commits from committed tree objects, ignoring working directory entirely.
+
+**What goes wrong with manual reset:**
+1. Worktree created from base at commit A
+2. Base advances to commit D (with fixes)
+3. Manual `git reset --soft base` keeps stale working directory
+4. Commit captures pre-fix file versions, reverting the fixes
+
+**This skill prevents this** by using `commit-tree` to build from HEAD's tree object.
 
 ## Parallel Initial Investigation
 

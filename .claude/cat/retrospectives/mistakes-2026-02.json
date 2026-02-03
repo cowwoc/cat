@@ -1008,6 +1008,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Hook now distinguishes between editing existing files (allowed) and creating new files (warns) in skills/ and hooks/ directories on base branches"
+    },
+    {
+      "id": "M385",
+      "timestamp": "2026-02-04T12:00:00Z",
+      "category": "tool_misuse",
+      "description": "Squash operation reverted a bugfix (emoji width 2→1) because git reset --soft captured stale worktree state instead of committed tree",
+      "root_cause": "Manual git reset --soft captures working directory state. When worktree diverged from base branch (base had newer commits with fixes), the soft reset staged deletions/reversions of those fixes because they weren't in the working directory. The commit-tree approach in git-squash skill avoids this by using committed tree objects directly.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "git reset --soft",
+        "commit-tree",
+        "worktree divergence",
+        "stale state",
+        "M305"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "NEVER use manual git reset --soft for squashing. Always use /cat:git-squash which uses commit-tree to create commits from committed tree objects, ignoring working directory state entirely."
     }
   ]
 }
