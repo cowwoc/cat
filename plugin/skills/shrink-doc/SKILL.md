@@ -433,6 +433,8 @@ Focus on:
 2. Maintaining conditional structure (IF-THEN-ELSE)
 3. Preserving mutual exclusivity constraints
 4. Keeping escalation/fallback paths
+5. **Preserving claim granularity** - keep separate sentences separate (don't merge "A. B." into "A and B")
+6. **Preserving formatting** - keep quote marks, code blocks, list boundaries intact
 
 **⚠️ CRITICAL**: USE THE WRITE TOOL to save the revised document to the specified path.
 Do NOT just describe or return the content - you MUST physically write the file.
@@ -545,6 +547,19 @@ constraint statements (e.g., "handlers are mutually exclusive") instead of
 explicit pairwise enumerations, validation may score 0.85-0.94. System will
 automatically iterate to restore explicit relationships, as abstraction
 creates interpretation vulnerabilities (see /compare-docs § Score Interpretation).
+
+**Claim Granularity Mismatch**: When score drops significantly (e.g., 0.78) despite
+minimal text changes, the issue is often claim merging during compression. The validation
+extracts individual claims - merging "A. B." into "A and B" changes claim count and shifts
+all subsequent claim IDs, causing relationship mismatches.
+
+Symptoms:
+- Original extracts N claims, compressed extracts N-1 or N-2 claims
+- Relationships appear "lost" but content is semantically identical
+- Diff shows only minor rewording, not content removal
+
+Solution: Instruct compression agent to preserve sentence boundaries and not merge separate
+statements into compound sentences. Keep the same "claim granularity" as the original.
 
 **Score Plateau**: If multiple iterations needed but score plateaus (no
 improvement after 2 attempts, e.g., v1=0.87, v2=0.88, v3=0.89), compression
