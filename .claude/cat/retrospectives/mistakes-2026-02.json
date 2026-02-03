@@ -803,6 +803,41 @@
         "catches_variations": true
       },
       "correct_behavior": "Use /cat:delegate for ALL validation (single or multiple files). Delegate handles subagent spawning, model selection, and result collection. The compare-docs skill handles the two-run consensus protocol internally."
+    },
+    {
+      "id": "M372",
+      "timestamp": "2026-02-03T10:11:00Z",
+      "category": "tool_misuse",
+      "description": "Subagent used TaskCreate (todo tracker) instead of Task (subagent spawner) when trying to invoke compression agent, causing workflow to stall",
+      "root_cause": "System-reminder repeatedly mentioned 'TaskCreate' for task tracking, priming agent to conflate 'Task tool' (subagent spawner) with 'TaskCreate' (todo tracker). Skill documentation said 'Task tool:' without clarifying it's different from TaskCreate.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "Task",
+        "TaskCreate",
+        "tool confusion",
+        "subagent",
+        "priming",
+        "system-reminder"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use Task tool (subagent spawner) to spawn subagents. TaskCreate only adds items to the todo list UI - it does NOT spawn subagents.",
+      "documentation_priming": {
+        "document": "system-reminder (external) + shrink-doc/SKILL.md",
+        "misleading_section": "System reminder says 'consider using TaskCreate'; skill said 'Task tool:' without clarification",
+        "priming_type": "tool_name_confusion",
+        "how_it_misled": "Agent heard 'TaskCreate' from system, saw 'Task tool' in skill, conflated them",
+        "fix_required": "Added explicit clarification in skill that Task ≠ TaskCreate"
+      }
     }
   ]
 }

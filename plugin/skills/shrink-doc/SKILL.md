@@ -147,7 +147,7 @@ fi
 **⚠️ ENCAPSULATION (M269)**: The compression algorithm is in a separate internal document.
 Do NOT attempt to compress manually - invoke the subagent which will read its own instructions.
 
-**Subagent invocation**:
+**Subagent invocation** (use Task tool, not TaskCreate - see M372 in subagent-delegation.md):
 
 ```
 Task tool:
