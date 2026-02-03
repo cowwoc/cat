@@ -70,16 +70,27 @@ ALLOWED_PATTERNS=(
     "retrospectives.json"   # Legacy single file
     "retrospectives-"       # Split files: retrospectives-YYYY-MM.json
     "index.json"            # Retrospective index
-    "hooks/"
-    "skills/"
 )
 
+# NARROW ALLOWLIST (M382): hooks/ and skills/ require special handling
+# - Editing EXISTING files: allowed (orchestration updates)
+# - Creating NEW files: should warn (implementation work)
 for pattern in "${ALLOWED_PATTERNS[@]}"; do
     if [[ "$FILE_PATH" == *"$pattern"* ]]; then
         echo '{}'
         exit 0
     fi
 done
+
+# Check hooks/ and skills/ - only allow if file EXISTS (editing, not creating)
+if [[ "$FILE_PATH" == *"hooks/"* ]] || [[ "$FILE_PATH" == *"skills/"* ]]; then
+    if [[ -f "$FILE_PATH" ]]; then
+        # Existing file - allow edit without warning
+        echo '{}'
+        exit 0
+    fi
+    # New file in hooks/ or skills/ - will warn below (M382)
+fi
 
 # Get current branch
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || CURRENT_BRANCH=""
