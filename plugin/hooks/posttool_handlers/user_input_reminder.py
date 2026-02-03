@@ -96,22 +96,24 @@ class UserInputReminderHandler:
         if self._is_acknowledged(result_text):
             return None
 
-        # User input detected and not acknowledged - inject reminder
+        # User input detected and not acknowledged - inject BLOCKING reminder
         return {
-            "additionalContext": """⚠️ USER INPUT DETECTED IN SYSTEM-REMINDER (M247/M337/M366)
+            "additionalContext": """
+🚨🚨🚨 BLOCKING: USER INPUT REQUIRES ACKNOWLEDGMENT (M247/M337/M366/M379) 🚨🚨🚨
 
-User input was received mid-operation via system-reminder.
+User input arrived mid-operation. You MUST acknowledge it IMMEDIATELY.
 
-**Required action (before continuing current task)**:
-1. STOP current processing immediately
-2. ADD to TaskList if the request is non-trivial
-3. ACKNOWLEDGE the input in your next response text
-   - Example: "I see your question/request about X. I'll address that after completing [current task]."
-   - Or if urgent: Address the input immediately
+**YOUR VERY NEXT RESPONSE MUST:**
 
-**Critical**: Delay is acceptable; silence is not. The user needs confirmation their input was received.
+1. START with acknowledgment text like:
+   "I see your message about X. Let me [add to TaskList / address it]."
 
-**Reference**: M247/M337/M366, CAT SESSION INSTRUCTIONS"""
+2. THEN you may continue with tool calls.
+
+**If the request is non-trivial:** Use TaskCreate BEFORE other tool calls.
+
+**FAILURE TO ACKNOWLEDGE = PROTOCOL VIOLATION**
+"""
         }
 
     def _contains_user_input(self, text: str) -> bool:

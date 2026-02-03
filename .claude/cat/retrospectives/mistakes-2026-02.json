@@ -952,6 +952,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Handler now parses delegate skill invocation and provides SCRIPT OUTPUT DELEGATE PROGRESS with mode (PARALLEL/SEQUENTIAL), item list, and progress templates"
+    },
+    {
+      "id": "M379",
+      "timestamp": "2026-02-03T07:55:59-05:00",
+      "category": "protocol_violation",
+      "description": "Agent continued working without acknowledging user message that arrived mid-operation via system-reminder",
+      "root_cause": "PostToolUse handler (user_input_reminder.py) generates warning but agent ignored it due to completion bias. Warning was not prominent enough to interrupt flow. Recurrence of M247/M289 pattern despite existing prevention.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/posttool_handlers/user_input_reminder.py",
+      "pattern_keywords": [
+        "user message",
+        "mid-operation",
+        "system-reminder",
+        "acknowledgment",
+        "TaskList"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M247",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user message arrives mid-operation: STOP, acknowledge in next response text, add to TaskList if non-trivial, THEN continue",
+      "escalation_reason": "Existing warning was ignored. Enhanced warning to be more prominent with BLOCKING label and explicit instruction that acknowledgment must come FIRST in next response."
     }
   ]
 }

@@ -692,7 +692,7 @@ def test_posttool_skill_preprocessor_output():
 
 
 def test_posttool_user_input_reminder():
-    """Test PostToolUse handler for user input reminder (M247/M337/M366)."""
+    """Test PostToolUse handler for user input reminder (M247/M337/M366/M379)."""
     runner.section("posttool_handlers/user_input_reminder")
 
     # Import the handler
@@ -718,10 +718,11 @@ def test_posttool_user_input_reminder():
     runner.test("Question with '?' triggers reminder",
                 result is not None and "additionalContext" in result)
     if result:
-        runner.test("Reminder mentions M247/M337/M366",
+        runner.test("Reminder mentions M247/M337/M366/M379",
                     "M247" in result.get("additionalContext", "") and
                     "M337" in result.get("additionalContext", "") and
-                    "M366" in result.get("additionalContext", ""))
+                    "M366" in result.get("additionalContext", "") and
+                    "M379" in result.get("additionalContext", ""))
 
     # Test 4: System-reminder with "can you" phrase - triggers reminder
     tool_result = {

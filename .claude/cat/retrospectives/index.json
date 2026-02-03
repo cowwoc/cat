@@ -5,7 +5,7 @@
     "trigger_interval_days": 7
   },
   "last_retrospective": "2026-02-03T06:58:22-05:00",
-  "mistake_count_since_last": 2,
+  "mistake_count_since_last": 3,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -85,16 +85,17 @@
     {
       "pattern_id": "PATTERN-004",
       "pattern": "user_message_ignored_mid_operation",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
+      "occurrences_total": 3,
+      "occurrences_after_fix": 1,
       "first_seen": "2026-01-25T14:10:00Z",
-      "last_seen": "2026-01-28T10:30:00Z",
+      "last_seen": "2026-02-03T08:00:00Z",
       "last_action_date": null,
-      "status": "new",
-      "effectiveness": "pending",
+      "status": "recurring",
+      "effectiveness": "partially_effective",
       "preventions": [
         "M247",
-        "M289"
+        "M289",
+        "M379"
       ],
       "related_action_items": [
         "A004"
