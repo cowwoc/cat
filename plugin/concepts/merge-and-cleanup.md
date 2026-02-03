@@ -120,6 +120,34 @@ git merge {major}.{minor}-{issue-name} --no-ff
 git push origin main
 ```
 
+#### Merging When Base Branch Is Checked Out in Main Workspace
+
+**Special case:** When working from a worktree and the base branch is already checked out in the main workspace.
+
+**Don't attempt checkout:**
+- M205 blocks checkouts in main worktree to prevent accidental branch switches
+- Main workspace maintains base branch (e.g., v2.1) for parallel work coordination
+
+**Correct pattern:**
+```bash
+# Work from main workspace directly (base branch already checked out)
+cd /workspace
+
+# Verify you're on the base branch
+git branch --show-current  # Should show base branch (e.g., v2.1)
+
+# Merge task branch without checkout (already on base)
+git merge --ff-only {task-branch}
+
+# If fast-forward not possible, use no-ff merge
+git merge {task-branch} --no-ff
+```
+
+**Why this works:**
+- Main workspace stays on base branch for stability
+- Worktrees are for task branches
+- No checkout needed when base is already active
+
 ### 8. Worktree Cleanup
 
 **CRITICAL (M324): Change directory to main workspace BEFORE removing worktree.**
