@@ -64,7 +64,8 @@ Choose the model based on issue complexity:
 
 | Issue Type | Model | Reasoning |
 |-----------|-------|-----------|
-| Skill invocation (skill does the work) | `haiku` | Skill handles complexity; subagent just invokes |
+| Skill invocation (orchestration only) | `haiku` | Skill is pure orchestration, subagent just runs it |
+| Skill invocation (skill exposes algorithm) | `sonnet` | Skill doc shows HOW to do it; haiku will apply algorithm manually (M376) |
 | Simple file operations | `haiku` | Explicit instructions, no reasoning needed |
 | Run commands, check output | `haiku` | Purely mechanical execution |
 | Code refactoring | `sonnet` | Requires understanding patterns and context |
@@ -117,8 +118,10 @@ should be delegated at all. Work requiring Opus-level reasoning often benefits f
 ```
 ❌ Task tool: subagent_type: "general-purpose" (missing model - uses expensive default)
 ❌ Task tool: model: "haiku" for code refactoring (will likely fail)
-✅ Task tool: model: "haiku" for "/cat:shrink-doc file.md" (skill does the work)
+❌ Task tool: model: "haiku" for "/cat:shrink-doc file.md" (skill exposes algorithm - M376)
+✅ Task tool: model: "sonnet" for "/cat:shrink-doc file.md" (skill doc shows HOW, needs reasoning)
 ✅ Task tool: model: "sonnet" for "refactor these 4 handlers" (needs reasoning)
+✅ Task tool: model: "haiku" for "/cat:status" (pure orchestration, no algorithm exposed)
 ```
 
 ## Hook Inheritance (A008)
@@ -884,10 +887,25 @@ When using `run_in_background: true`:
 | Multiple subagents, parallel | Background + `TaskOutput` with `block: true` for each |
 | Long-running, user expects updates | Background + tell user to check back |
 
-**Context Pollution Warning (M373):**
+**Context Pollution Warning (M373, M376):**
 
 Do NOT poll subagent status repeatedly. Each `TaskOutput` call adds ~500 tokens to context.
 For N subagents with M polls each, you waste N×M×500 tokens.
+
+**For batch operations**: Do NOT retrieve full TaskOutput for each subagent. Instead, check
+git commits directly to verify success:
+
+```bash
+# ❌ WRONG: Retrieve full output for each subagent (pollutes parent context)
+TaskOutput task_id="abc" block=true  # Returns truncated but still large output
+TaskOutput task_id="def" block=true  # More context pollution
+# Result: Parent agent context filled with subagent transcripts
+
+# ✅ CORRECT: Check results via git (minimal context impact)
+git log --oneline HEAD --not base_branch  # See what was committed
+git diff --stat base_branch..HEAD          # See files changed
+# Result: Parent agent context stays clean
+```
 
 ```bash
 # ❌ WRONG: Polling pattern (pollutes context)
@@ -895,7 +913,7 @@ TaskOutput task_id="abc" block=false  # Check status
 TaskOutput task_id="abc" block=false  # Check again
 TaskOutput task_id="abc" block=false  # Still checking...
 
-# ✅ CORRECT: Single blocking call per subagent
+# ✅ CORRECT: Single blocking call only when you NEED the output
 TaskOutput task_id="abc" block=true timeout=300000  # Wait up to 5 min
 ```
 
