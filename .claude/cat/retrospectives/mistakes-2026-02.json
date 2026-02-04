@@ -1428,7 +1428,7 @@
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "documentation",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/conventions/common.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/common.md",
       "pattern_keywords": [
         "terminology",
         "TaskList",
