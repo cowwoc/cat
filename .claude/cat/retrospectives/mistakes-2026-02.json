@@ -1896,7 +1896,36 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When presenting metrics to users, always include units in column headers (e.g., 'Tokens' not 'Before/After'). Copy table format from relevant skill documentation when available."
+      "correct_behavior": "When presenting metrics to users, always include units in column headers (e.g., 'Tokens' not 'Before/After'). Copy table format from relevant skill documentation when available.",
+      "superseded_by": "M418",
+      "notes": "Fix was in wrong location (skill-specific guidance in generic skill). Reverted and re-fixed in M418."
+    },
+    {
+      "id": "M418",
+      "timestamp": "2026-02-04T12:45:00Z",
+      "category": "output_formatting",
+      "description": "Presented compression results without units - fixed in wrong location first (skill-specific in generic doc)",
+      "root_cause": "Main agent recomposed subagent results into custom table format instead of using format from source skill. Initial fix (M417) put skill-specific guidance in generic work-with-task.md instead of concept doc.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "units",
+        "formatting",
+        "result-presentation",
+        "delegation",
+        "fix-location"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M417",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When presenting subagent results, check if source skill specifies output format and use that format. Generic rule in concept doc applies to all delegation scenarios."
     }
   ]
 }
