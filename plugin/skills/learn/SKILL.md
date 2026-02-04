@@ -1023,7 +1023,7 @@ if [ ! -f "$INDEX_FILE" ]; then
 {
   "version": "2.0",
   "config": {
-    "mistake_count_threshold": 5,
+    "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
   "last_retrospective": null,

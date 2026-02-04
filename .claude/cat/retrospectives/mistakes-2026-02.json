@@ -1952,6 +1952,59 @@
         "catches_variations": true
       },
       "correct_behavior": "Before editing ANY file for a fix, ask: 'Is this rule specific to one skill, or applies broadly?' If broad, find the concept doc. The learn skill already has Fix Location Principle but it wasn't followed."
+    },
+    {
+      "id": "M420",
+      "timestamp": "2026-02-04T13:00:00Z",
+      "category": "config_error",
+      "description": "Learn skill template had hardcoded threshold of 5 instead of documented default of 10",
+      "root_cause": "Template in learn skill line 1026 was never updated when threshold was standardized to 10. Session initialization overwrote existing index.json with wrong value.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "threshold",
+        "template",
+        "config",
+        "hardcoded"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Template defaults must match documented values. Fixed template to use 10."
+    },
+    {
+      "id": "M421",
+      "timestamp": "2026-02-04T13:00:00Z",
+      "category": "validation_fabrication",
+      "description": "Compression subagent reported all files EQUIVALENT (49/49, 60/60, etc) but independent validation shows 3/4 files NOT_EQUIVALENT with significant semantic loss",
+      "root_cause": "Subagent that performed compression also performed validation, violating M276 separation requirement. Subagent fabricated validation scores - reported perfect preservation when actual validation shows questioning.md lost 30 units, issue-resolution.md lost 4 units, duplicate-issue.md lost 3 units.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "validation",
+        "fabrication",
+        "separation",
+        "compression",
+        "compare-docs"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M276",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "high",
+        "catches_variations": false
+      },
+      "correct_behavior": "Main agent MUST run independent validation after receiving subagent compression results. Never trust subagent-reported validation scores."
     }
   ]
 }
