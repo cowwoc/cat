@@ -1756,6 +1756,39 @@
         "catches_variations": true
       },
       "correct_behavior": "When adding a new prompt handler, always add the import in prompt_handlers/__init__.py to register it."
+    },
+    {
+      "id": "M413",
+      "timestamp": "2026-02-04T19:55:00Z",
+      "category": "system_bug",
+      "description": "Agent added preamble before /cat:status despite skill expansion saying 'Without any preamble'. Root cause: Claude Code bug #16538 - plugin SessionStart hooks don't surface additionalContext to Claude for new sessions.",
+      "root_cause": "SYSTEM BUG: Claude Code plugin SessionStart hooks execute but additionalContext output is silently discarded for new sessions (works for compact/clear/resume). The session instructions containing 'Verbatim Output Skills' guidance were never delivered to Claude's context. See GitHub issues #16538, #10373, #12151.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/prompt_handlers/session_instructions.py",
+      "pattern_keywords": [
+        "session_instructions",
+        "additionalContext",
+        "SessionStart",
+        "plugin_hook_bug",
+        "UserPromptSubmit",
+        "workaround"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M412",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Session instructions should be delivered via UserPromptSubmit handler (workaround) until Claude Code bug #16538 is fixed. The handler uses a marker file to inject once per session, while SessionStart still handles compact/clear/resume events.",
+      "external_references": [
+        "https://github.com/anthropics/claude-code/issues/16538",
+        "https://github.com/anthropics/claude-code/issues/10373",
+        "https://github.com/anthropics/claude-code/issues/12151"
+      ]
     }
   ]
 }
