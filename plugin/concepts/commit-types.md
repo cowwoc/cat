@@ -98,7 +98,7 @@ A single issue typically produces **one or two commits**, but may have more:
 
 **Multi-Commit Issues**: An issue may be implemented across multiple commits when the work spans
 multiple sessions, requires incremental progress, or addresses distinct aspects of the same issue.
-All commits for an issue MUST include the same `Issue ID` footer for traceability.
+Commits are tracked via STATE.md file history, not commit footers.
 
 **Issue STATE.md vs General Config:**
 - **Issue's STATE.md changes** → **SAME commit** as implementation (always)

@@ -52,7 +52,7 @@ print(data['first_task_walkthrough'])
 print()
 
 print('''=== BOX: first_task_created ===
-Variables: {task-name} = sanitized task name from user input''')
+Variables: {issue-name} = sanitized issue name from user input''')
 print(data['first_task_created'])
 print()
 

@@ -70,7 +70,7 @@ def get_worktrees(project_dir: str) -> list[dict]:
 
 
 def get_locks(project_dir: str) -> list[dict]:
-    """Get list of task locks.
+    """Get list of issue locks.
 
     Lock files use JSON format:
         {
@@ -92,12 +92,12 @@ def get_locks(project_dir: str) -> list[dict]:
             content = lock_file.read_text()
             data = json.loads(content)
 
-            task_id = lock_file.stem
+            issue_id = lock_file.stem
             session = data.get("session_id", "")
             created = data.get("created_at", 0)
             age = int(time.time() - created) if created else 0
             locks.append({
-                "task_id": task_id,
+                "issue_id": issue_id,
                 "session": session,
                 "age": age
             })

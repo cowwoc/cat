@@ -60,24 +60,24 @@ public final class GetCleanupOutput
   /**
    * Represents a lock entry for display.
    *
-   * @param taskId the task ID
+   * @param issueId the task ID
    * @param session the session ID
    * @param age the lock age in seconds
    */
-  public record Lock(String taskId, String session, int age)
+  public record Lock(String issueId, String session, int age)
   {
     /**
      * Creates a lock entry.
      *
-     * @param taskId the task ID
+     * @param issueId the task ID
      * @param session the session ID
      * @param age the lock age in seconds
-     * @throws NullPointerException if taskId or session is null
-     * @throws IllegalArgumentException if taskId or session is blank, or age is negative
+     * @throws NullPointerException if issueId or session is null
+     * @throws IllegalArgumentException if issueId or session is blank, or age is negative
      */
     public Lock
     {
-      requireThat(taskId, "taskId").isNotBlank();
+      requireThat(issueId, "issueId").isNotBlank();
       requireThat(session, "session").isNotBlank();
       requireThat(age, "age").isNotNegative();
     }
@@ -204,11 +204,11 @@ public final class GetCleanupOutput
       String session = lock.session();
       if (session != null && session.length() > 8)
         session = session.substring(0, 8);
-      lockItems.add(lock.taskId() + ": session=" + session + ", age=" + lock.age() + "s");
+      lockItems.add(lock.issueId() + ": session=" + session + ", age=" + lock.age() + "s");
     }
     if (lockItems.isEmpty())
       lockItems.add("None found");
-    allInnerBoxes.addAll(display.buildInnerBox(DisplayUtils.EMOJI_LOCK + " Task Locks", lockItems));
+    allInnerBoxes.addAll(display.buildInnerBox(DisplayUtils.EMOJI_LOCK + " Issue Locks", lockItems));
     allInnerBoxes.add("");
 
     // Branches inner box

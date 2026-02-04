@@ -23,11 +23,11 @@ HIERARCHY_TREE = """```
     +-- v{major}.{minor}/
         +-- STATE.md        # Minor version state
         +-- PLAN.md         # Feature-level plan
-        +-- {task-name}/    # Tasks at minor level (2-level scheme)
+        +-- {issue-name}/   # Issues at minor level (2-level scheme)
         +-- v{major}.{minor}.{patch}/
             +-- STATE.md    # Patch version state (optional 3-level)
             +-- PLAN.md     # Patch-level plan
-            +-- {task-name}/  # Tasks at patch level
+            +-- {issue-name}/ # Issues at patch level
 ```"""
 
 
@@ -141,7 +141,7 @@ Initialize CAT planning structure (new or existing project).
 - Must be unique within minor version
 
 **Valid:** `parse-tokens`, `fix-memory-leak`, `add-user-auth`
-**Invalid:** `Parse_Tokens`, `fix memory leak`, `add-very-long-task-name-that-exceeds-limit`
+**Invalid:** `Parse_Tokens`, `fix memory leak`, `add-very-long-issue-name-that-exceeds-limit`
 
 </details>
 
@@ -150,9 +150,9 @@ Initialize CAT planning structure (new or existing project).
 
 | Type | Pattern | Example |
 |------|---------|---------|
-| Task (2-level) | `{{major}}.{{minor}}-{{task-name}}` | `1.0-parse-tokens` |
-| Task (3-level) | `{{major}}.{{minor}}.{{patch}}-{{task-name}}` | `1.0.1-fix-edge-case` |
-| Subagent | `{{task-branch}}-sub-{{uuid}}` | `1.0-parse-tokens-sub-a1b2c3` |
+| Issue (2-level) | `{{major}}.{{minor}}-{{issue-name}}` | `1.0-parse-tokens` |
+| Issue (3-level) | `{{major}}.{{minor}}.{{patch}}-{{issue-name}}` | `1.0.1-fix-edge-case` |
+| Subagent | `{{issue-branch}}-sub-{{uuid}}` | `1.0-parse-tokens-sub-a1b2c3` |
 
 </details>
 

@@ -17,7 +17,7 @@ def detect_base_branch(project_root: Path) -> str | None:
     Detect the base branch to diff against.
 
     Priority:
-    1. Extract from worktree name (e.g., 2.0-task-name -> v2.0)
+    1. Extract from worktree name (e.g., 2.0-issue-name -> v2.0)
     2. Extract from current branch name
     3. Check for tracking branch
     4. Default to 'main'
@@ -29,7 +29,7 @@ def detect_base_branch(project_root: Path) -> str | None:
 
         # Check if we're in a .worktrees directory
         if cwd.parent.name == ".worktrees":
-            # Extract version from worktree name (e.g., "2.0-task-name" -> "v2.0")
+            # Extract version from worktree name (e.g., "2.0-issue-name" -> "v2.0")
             match = re.match(r'^(\d+\.\d+)-', worktree_name)
             if match:
                 return f"v{match.group(1)}"

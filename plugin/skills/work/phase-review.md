@@ -13,7 +13,7 @@ Steps for review and approval: stakeholder_review, approval_gate.
 **MANDATORY: Display progress banner when entering this phase.**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase reviewing
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase reviewing
 ```
 
 ---
@@ -184,7 +184,7 @@ Output this banner BEFORE the checkpoint display and diff.
 
 ```bash
 BASE_BRANCH=$(cat "$(git rev-parse --git-dir)/cat-base")
-TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}/STATE.md"
+TASK_STATE=".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}/STATE.md"
 
 # Check 1: Commit count (should be 1-2 after squash)
 COMMIT_COUNT=$(git rev-list --count ${BASE_BRANCH}..HEAD)

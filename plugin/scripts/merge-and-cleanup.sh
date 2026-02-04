@@ -1,20 +1,20 @@
 #!/bin/bash
-# merge-and-cleanup.sh - Merge task branch and clean up worktree/branch/lock
+# merge-and-cleanup.sh - Merge issue branch and clean up worktree/branch/lock
 #
 # Handles the happy path of the merging phase for CAT's /cat:work command:
-# 1. Fast-forward merge task branch to base branch (from worktree, no checkout required)
-# 2. Remove the task worktree
-# 3. Delete the task branch
-# 4. Release the task lock
+# 1. Fast-forward merge issue branch to base branch (from worktree, no checkout required)
+# 2. Remove the issue worktree
+# 3. Delete the issue branch
+# 4. Release the issue lock
 #
 # Usage:
-#   merge-and-cleanup.sh <project-dir> <task-id> <session-id> [--worktree <path>]
+#   merge-and-cleanup.sh <project-dir> <issue-id> <session-id> [--worktree <path>]
 #
 # Required:
 #   project-dir    Project root directory (contains .claude/cat/) - MUST be first argument
 #
 # Arguments:
-#   task-id        Task identifier (e.g., "2.0-fix-parser")
+#   issue-id        Issue identifier (e.g., "2.0-fix-parser")
 #   session-id     Claude session UUID
 #   --worktree     Optional worktree path (auto-detected if not provided)
 #
@@ -70,21 +70,21 @@ trap 'error_json 1 "Unexpected error at line $LINENO: $BASH_COMMAND"' ERR
 
 usage() {
   cat << 'EOF'
-Usage: merge-and-cleanup.sh <project-dir> <task-id> <session-id> [--worktree <path>]
+Usage: merge-and-cleanup.sh <project-dir> <issue-id> <session-id> [--worktree <path>]
 
-Merge task branch to base branch and clean up resources.
+Merge issue branch to base branch and clean up resources.
 
 Arguments:
   project-dir    Project root directory (contains .claude/cat/) - MUST be first argument
-  task-id        Task identifier (e.g., "2.0-fix-parser")
+  issue-id        Issue identifier (e.g., "2.0-fix-parser")
   session-id     Claude session UUID
   --worktree     Optional worktree path (auto-detected if not provided)
 
 Operations (in order):
-  1. Fast-forward merge task branch to base branch (using git push . HEAD:<base>)
-  2. Remove task worktree
-  3. Delete task branch
-  4. Release task lock
+  1. Fast-forward merge issue branch to base branch (using git push . HEAD:<base>)
+  2. Remove issue worktree
+  3. Delete issue branch
+  4. Release issue lock
 
 Exit Codes:
   0: Success
@@ -164,7 +164,7 @@ is_worktree_dirty() {
 # ============================================================================
 
 # Parse arguments
-TASK_ID=""
+ISSUE_ID=""
 SESSION_ID=""
 WORKTREE_PATH=""
 
@@ -198,8 +198,8 @@ while [[ $# -gt 0 ]]; do
       error_json 1 "Unknown option: $1"
       ;;
     *)
-      if [[ -z "$TASK_ID" ]]; then
-        TASK_ID="$1"
+      if [[ -z "$ISSUE_ID" ]]; then
+        ISSUE_ID="$1"
       elif [[ -z "$SESSION_ID" ]]; then
         SESSION_ID="$1"
       else
@@ -211,8 +211,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate required arguments
-if [[ -z "$TASK_ID" ]]; then
-  error_json 1 "Missing required argument: task-id"
+if [[ -z "$ISSUE_ID" ]]; then
+  error_json 1 "Missing required argument: issue-id"
 fi
 
 if [[ -z "$SESSION_ID" ]]; then
@@ -245,8 +245,8 @@ fi
 # ============================================================================
 progress_step "Detecting worktree and base branch"
 
-# Task branch is typically same as task-id
-TASK_BRANCH="$TASK_ID"
+# Issue branch is typically same as issue-id
+TASK_BRANCH="$ISSUE_ID"
 
 # Find worktree if not provided
 if [[ -z "$WORKTREE_PATH" ]]; then
@@ -255,11 +255,11 @@ fi
 
 # FAIL-FAST: Worktree must exist
 if [[ -z "$WORKTREE_PATH" ]] || [[ ! -d "$WORKTREE_PATH" ]]; then
-  error_json 2 "Worktree not found for task branch: $TASK_BRANCH"
+  error_json 2 "Worktree not found for issue branch: $TASK_BRANCH"
 fi
 
 # FAIL-FAST: Get base branch from cat-base file
-BASE_BRANCH=$(get_base_branch "$WORKTREE_PATH" "$TASK_BRANCH") || error_json 3 "cat-base file missing for task branch: $TASK_BRANCH. Cannot determine base branch."
+BASE_BRANCH=$(get_base_branch "$WORKTREE_PATH" "$TASK_BRANCH") || error_json 3 "cat-base file missing for issue branch: $TASK_BRANCH. Cannot determine base branch."
 
 progress_done "Worktree: $WORKTREE_PATH, Base branch: $BASE_BRANCH"
 
@@ -282,7 +282,7 @@ fi
 
 # Verify fast-forward is possible (base must be ancestor of HEAD)
 if ! git -C "$WORKTREE_PATH" merge-base --is-ancestor "$BASE_BRANCH" HEAD 2>/dev/null; then
-  error_json 4 "Fast-forward merge not possible. Task branch has diverged from $BASE_BRANCH. Rebase required."
+  error_json 4 "Fast-forward merge not possible. Issue branch has diverged from $BASE_BRANCH. Rebase required."
 fi
 
 # Perform the fast-forward merge using git push from within the worktree
@@ -315,9 +315,9 @@ else
 fi
 
 # ============================================================================
-# STEP 4: Delete task branch (if autoRemoveWorktrees is true)
+# STEP 4: Delete issue branch (if autoRemoveWorktrees is true)
 # ============================================================================
-progress_step "Deleting task branch"
+progress_step "Deleting issue branch"
 
 if [[ "$AUTO_REMOVE_WORKTREES" == "true" ]]; then
   if ! BRANCH_ERROR=$(git -C "$PROJECT_DIR" branch -d "$TASK_BRANCH" 2>&1); then
@@ -331,14 +331,14 @@ else
 fi
 
 # ============================================================================
-# STEP 5: Release task lock
+# STEP 5: Release issue lock
 # ============================================================================
-progress_step "Releasing task lock"
+progress_step "Releasing issue lock"
 
 LOCK_SCRIPT="${PLUGIN_ROOT}/scripts/issue-lock.sh"
 
 if [[ -x "$LOCK_SCRIPT" ]]; then
-  LOCK_RESULT=$("$LOCK_SCRIPT" release "$PROJECT_DIR" "$TASK_ID" "$SESSION_ID" 2>&1) || {
+  LOCK_RESULT=$("$LOCK_SCRIPT" release "$PROJECT_DIR" "$ISSUE_ID" "$SESSION_ID" 2>&1) || {
     error_json 7 "Failed to release lock: $LOCK_RESULT"
   }
   LOCK_RELEASED=true
@@ -359,8 +359,8 @@ DURATION=$((END_TIME - START_TIME))
 OUTPUT_SENT=true
 jq -n \
   --arg status "success" \
-  --arg message "Merged and cleaned up task" \
-  --arg task_id "$TASK_ID" \
+  --arg message "Merged and cleaned up issue" \
+  --arg issue_id "$ISSUE_ID" \
   --arg base_branch "$BASE_BRANCH" \
   --arg commit_sha "$COMMIT_SHA" \
   --argjson worktree_removed "${WORKTREE_REMOVED:-false}" \
@@ -370,7 +370,7 @@ jq -n \
   '{
     status: $status,
     message: $message,
-    task_id: $task_id,
+    issue_id: $issue_id,
     base_branch: $base_branch,
     commit_sha: $commit_sha,
     worktree_removed: $worktree_removed,

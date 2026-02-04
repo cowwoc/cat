@@ -66,10 +66,10 @@ public final class BlockMainRebase implements BashHandler
         - Merged commits get recreated as direct commits
         - This breaks the audit trail
 
-        TO REBASE A TASK BRANCH ONTO MAIN:
-        Run from your task's worktree, not main:
+        TO REBASE AN ISSUE BRANCH ONTO MAIN:
+        Run from your issue's worktree, not main:
 
-          cd /workspace/.worktrees/<task-branch>
+          cd /workspace/.worktrees/<issue-branch>
           git rebase main""");
     }
 
@@ -98,11 +98,11 @@ public final class BlockMainRebase implements BashHandler
 
           WHY THIS IS BLOCKED:
           - The main worktree (/workspace) should keep its current branch
-          - Task worktrees exist precisely to avoid touching main workspace state
+          - Issue worktrees exist precisely to avoid touching main workspace state
           - Changing main worktree's branch disrupts operations
 
           WHAT TO DO INSTEAD:
-          - For task work: Use the task worktree at /workspace/.worktrees/<branch>
+          - For issue work: Use the issue worktree at /workspace/.worktrees/<branch>
           - For cleanup: Delete the worktree directory, don't checkout in main""", target));
       }
     }
@@ -115,7 +115,7 @@ public final class BlockMainRebase implements BashHandler
       if (!isCheckoutFlag(target))
       {
         return Result.block(String.format(
-          "Blocked (M205): Cannot checkout '%s' in main worktree. Use task worktrees instead.",
+          "Blocked (M205): Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
           target));
       }
     }

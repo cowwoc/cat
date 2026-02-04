@@ -2,10 +2,10 @@
 # Git Linear Merge Optimized Script
 # Merges task branch to base branch with linear history (86% faster than manual workflow)
 #
-# Usage: git-merge-linear-optimized.sh <task-branch> [--base <branch>] [--cleanup|--no-cleanup]
+# Usage: git-merge-linear-optimized.sh <issue-branch> [--base <branch>] [--cleanup|--no-cleanup]
 #
 # Arguments:
-#   task-branch      Name of the task branch to merge
+#   issue-branch     Name of the issue branch to merge
 #   --base <branch>  Target branch to merge into (default: $BASE_BRANCH, or detected from git config)
 #   --cleanup        Delete branch and worktree after merge (optional)
 #   --no-cleanup     Preserve branch and worktree (default)
@@ -55,7 +55,7 @@ done
 
 # Validate arguments
 if [[ -z "$TASK_BRANCH" ]]; then
-    echo "{\"status\": \"error\", \"message\": \"Missing required argument: task-branch\"}"
+    echo "{\"status\": \"error\", \"message\": \"Missing required argument: issue-branch\"}"
     exit 1
 fi
 

@@ -137,10 +137,10 @@ cd /workspace
 git branch --show-current  # Should show base branch (e.g., v2.1)
 
 # Merge task branch without checkout (already on base)
-git merge --ff-only {task-branch}
+git merge --ff-only {issue-branch}
 
 # If fast-forward not possible, use no-ff merge
-git merge {task-branch} --no-ff
+git merge {issue-branch} --no-ff
 ```
 
 **Why this works:**

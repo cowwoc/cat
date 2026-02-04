@@ -1155,7 +1155,7 @@ name: cat-banner
 description: Display issue progress banner
 ---
 
-!`cat-progress-banner.sh --issue-id "${TASK_ID}" --phase "${PHASE}"`
+!`cat-progress-banner.sh --issue-id "${ISSUE_ID}" --phase "${PHASE}"`
 ```
 
 The script generates the complete banner with correct box alignment, emoji widths, and padding.

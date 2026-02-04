@@ -49,7 +49,7 @@ class StakeholderHandler:
         """Build STAKEHOLDER REVIEW summary box template."""
         content = [
             "",
-            "Task: {task-name}",
+            "Issue: {issue-name}",
             "",
         ]
         separator1 = len(content)

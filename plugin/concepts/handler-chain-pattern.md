@@ -149,7 +149,7 @@ def test_work_handler_discovers_task():
     handler = WorkHandler()
     result = handler.handle({"project_root": "/test", "session_id": "abc"})
     assert "HANDLER_DATA:" in result
-    assert '"task_id":' in result
+    assert '"issue_id":' in result
 ```
 
 ## Tradeoffs

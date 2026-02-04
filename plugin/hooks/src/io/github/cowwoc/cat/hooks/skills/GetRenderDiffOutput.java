@@ -168,7 +168,7 @@ public final class GetRenderDiffOutput
       // Check if we're in a .worktrees directory
       if (cwd.getParent() != null && ".worktrees".equals(cwd.getParent().getFileName().toString()))
       {
-        // Extract version from worktree name (e.g., "2.0-task-name" -> "v2.0")
+        // Extract version from worktree name (e.g., "2.0-issue-name" -> "v2.0")
         Matcher match = VERSION_PATTERN.matcher(worktreeName);
         if (match.find())
           return "v" + match.group(1);

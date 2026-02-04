@@ -31,15 +31,15 @@ class BlockMainRebaseHandler:
                         "reason": f"""🚨 GIT CHECKOUT IN MAIN WORKTREE BLOCKED (M205)
 
 ❌ Attempted: git checkout {target} in main worktree
-✅ Correct:   Use task worktrees - never change main worktree's branch
+✅ Correct:   Use issue worktrees - never change main worktree's branch
 
 WHY THIS IS BLOCKED:
 • The main worktree (/workspace) should keep its current branch
-• Task worktrees exist precisely to avoid touching main workspace state
+• Issue worktrees exist precisely to avoid touching main workspace state
 • Changing main worktree's branch disrupts operations
 
 WHAT TO DO INSTEAD:
-• For task work: Use the task worktree at /workspace/.worktrees/<branch>
+• For issue work: Use the issue worktree at /workspace/.worktrees/<branch>
 • For cleanup: Delete the worktree directory, don't checkout in main"""
                     }
 
@@ -63,7 +63,7 @@ WHAT TO DO INSTEAD:
                         if target not in ("--", "-b", "-B"):
                             return {
                                 "decision": "block",
-                                "reason": f"Blocked (M205): Cannot checkout '{target}' in main worktree. Use task worktrees instead."
+                                "reason": f"Blocked (M205): Cannot checkout '{target}' in main worktree. Use issue worktrees instead."
                             }
                 except Exception:
                     pass
@@ -88,10 +88,10 @@ WHY THIS IS BLOCKED:
 • Merged commits get recreated as direct commits
 • This breaks the audit trail
 
-TO REBASE A TASK BRANCH ONTO MAIN:
-Run from your task's worktree, not main:
+TO REBASE AN ISSUE BRANCH ONTO MAIN:
+Run from your issue's worktree, not main:
 
-  cd /workspace/.worktrees/<task-branch>
+  cd /workspace/.worktrees/<issue-branch>
   git rebase main"""
             }
 

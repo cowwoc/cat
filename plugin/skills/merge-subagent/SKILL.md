@@ -24,7 +24,7 @@ This skill operates under the issue lock held by `/cat:work`. Refresh the lock h
 long-running merge operations:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" heartbeat "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" heartbeat "${CLAUDE_PROJECT_DIR}" "$ISSUE_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 The issue lock is released by `work` finalization step after all subagent work is merged.
@@ -37,14 +37,14 @@ The issue lock is released by `work` finalization step after all subagent work i
 SUBAGENT_ID="a1b2c3d4"
 ISSUE="1.2-implement-parser"
 SUBAGENT_BRANCH="${ISSUE}-sub-${SUBAGENT_ID}"
-TASK_BRANCH="${ISSUE}"
+ISSUE_BRANCH="${ISSUE}"
 WORKTREE=".worktrees/${SUBAGENT_BRANCH}"
 
 # Verify subagent results collected
 # Check parent STATE.md for ready_for_merge: true
 
 # Verify issue branch exists
-git branch --list "${TASK_BRANCH}"
+git branch --list "${ISSUE_BRANCH}"
 
 # Verify subagent branch exists
 git branch --list "${SUBAGENT_BRANCH}"
@@ -61,10 +61,10 @@ git status --porcelain
 # Should be empty or only untracked files
 
 # Checkout issue branch
-git checkout "${TASK_BRANCH}"
+git checkout "${ISSUE_BRANCH}"
 
 # Ensure up to date
-git pull origin "${TASK_BRANCH}" 2>/dev/null || true
+git pull origin "${ISSUE_BRANCH}" 2>/dev/null || true
 ```
 
 ### 3. Merge Subagent Branch

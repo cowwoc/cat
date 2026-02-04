@@ -75,11 +75,11 @@ The same danger applies to `git worktree remove` - if your shell's cwd is inside
 
 ```bash
 # SAFE - cd to main workspace first
-cd /workspace && git worktree remove /workspace/.worktrees/task-name --force
+cd /workspace && git worktree remove /workspace/.worktrees/issue-name --force
 
 # DANGEROUS - removing worktree while inside it
-# pwd: /workspace/.worktrees/task-name
-git worktree remove /workspace/.worktrees/task-name --force  # Shell breaks!
+# pwd: /workspace/.worktrees/issue-name
+git worktree remove /workspace/.worktrees/issue-name --force  # Shell breaks!
 ```
 
 **When merging task work:**

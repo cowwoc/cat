@@ -276,7 +276,7 @@ def build_version_boundary_gate():
         "• Tagging the release in git",
         "• Updating documentation", ""
     ]
-    next_ver = ["**Next Version:** v{next-version}", "{next-task-name}", ""]
+    next_ver = ["**Next Version:** v{next-version}", "{next-issue-name}", ""]
 
     all_content = content + summary + next_ver
     content_widths = [dw(c) for c in all_content]

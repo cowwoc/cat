@@ -39,7 +39,7 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 Before changing a task from `in-progress` to `pending`, check git history:
 
 ```bash
-TASK_NAME="task-name-here"
+ISSUE_NAME="issue-name-here"
 git log --oneline --grep="$TASK_NAME" -5
 git log --oneline -- ".claude/cat/issues/*/v*/$TASK_NAME/" -5
 ```
@@ -82,8 +82,8 @@ Analyze survey results to classify artifacts:
 
 For each lock, check status:
 ```bash
-task_id="<from-survey>"
-"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$task_id"
+issue_id="<from-survey>"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" check "${CLAUDE_PROJECT_DIR}" "$issue_id"
 ```
 
 The output shows: `{"locked":true,"session_id":"...","age_seconds":...,"worktree":"..."}`
@@ -151,9 +151,9 @@ echo '{
   "handler": "cleanup",
   "context": {
     "phase": "plan",
-    "locks_to_remove": ["2.1-task-name"],
-    "worktrees_to_remove": [{"path": "/workspace/.worktrees/2.1-task-name", "branch": "2.1-task-name"}],
-    "branches_to_remove": ["2.1-task-name"],
+    "locks_to_remove": ["2.1-issue-name"],
+    "worktrees_to_remove": [{"path": "/workspace/.worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
+    "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }
 }' | python3 "${CLAUDE_PLUGIN_ROOT}/hooks/invoke-handler.py"
@@ -180,8 +180,8 @@ Execute in strict order. Errors should propagate - do not suppress with `|| true
 
 **Remove stale locks:**
 ```bash
-task_id="<from-plan>"
-"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" force-release "${CLAUDE_PROJECT_DIR}" "$task_id"
+issue_id="<from-plan>"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" force-release "${CLAUDE_PROJECT_DIR}" "$issue_id"
 ```
 
 **Remove worktrees:**

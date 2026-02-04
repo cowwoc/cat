@@ -111,8 +111,6 @@ Changes:
 - First major change
 - Second major change
 - Third major change
-
-Issue ID: v{major}.{minor}-{issue-name}
 ```
 
 ## Finding Commits for CAT Issues
@@ -204,8 +202,6 @@ Changes:
 
 # CORRECT - Separate commits by type
 bugfix: fix parser bug for comments in member declarations
-
-Issue ID: v0.5-fix-comment-in-member-declaration
 
 ---
 

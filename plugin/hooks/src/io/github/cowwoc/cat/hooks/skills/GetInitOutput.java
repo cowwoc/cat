@@ -144,42 +144,42 @@ public final class GetInitOutput
   }
 
   /**
-   * Build the first task walkthrough box.
+   * Build the first issue walkthrough box.
    *
    * @return the formatted box
    */
-  public String getFirstTaskWalkthrough()
+  public String getFirstIssueWalkthrough()
   {
     return scope.getDisplayUtils().buildHeaderBox(
-      "📋 FIRST TASK WALKTHROUGH",
+      "📋 FIRST ISSUE WALKTHROUGH",
       List.of(
         "                                                                  ",
-        "  Great! Let's create your first task together.                   ",
+        "  Great! Let's create your first issue together.                  ",
         "  I'll ask a few questions to understand what you want to build.  "),
       BOX_WIDTH);
   }
 
   /**
-   * Build the first task created box.
+   * Build the first issue created box.
    *
-   * @param taskName the sanitized task name from user input
+   * @param issueName the sanitized issue name from user input
    * @return the formatted box
-   * @throws NullPointerException if taskName is null
-   * @throws IllegalArgumentException if taskName is blank
+   * @throws NullPointerException if issueName is null
+   * @throws IllegalArgumentException if issueName is blank
    */
-  public String getFirstTaskCreated(String taskName)
+  public String getFirstIssueCreated(String issueName)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
 
-    // Pad task name and location to fit box width
-    String taskLine = "  Task: " + taskName;
-    String locationLine = "  Location: .claude/cat/issues/v0/v0.0/" + taskName + "/";
+    // Pad issue name and location to fit box width
+    String issueLine = "  Issue: " + issueName;
+    String locationLine = "  Location: .claude/cat/issues/v0/v0.0/" + issueName + "/";
 
     return scope.getDisplayUtils().buildHeaderBox(
-      "✅ FIRST TASK CREATED",
+      "✅ FIRST ISSUE CREATED",
       List.of(
         "                                                                  ",
-        padToWidth(taskLine, 66),
+        padToWidth(issueLine, 66),
         padToWidth(locationLine, 66),
         "                                                                  ",
         "  Files created:                                                  ",
@@ -201,7 +201,7 @@ public final class GetInitOutput
         "                                                                  ",
         "  Your project is ready. When you want to start:                  ",
         "                                                                  ",
-        "  → /cat:work         Execute your first task                     ",
+        "  → /cat:work         Execute your first issue                    ",
         "  → /cat:status       See project overview                        ",
         "  → /cat:add          Add more tasks or versions                  ",
         "  → /cat:help         Full command reference                      "),

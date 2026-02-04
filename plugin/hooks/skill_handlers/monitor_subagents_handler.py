@@ -61,8 +61,8 @@ class MonitorSubagentsHandler:
             subagent_id = match.group(1) if match else "unknown"
 
             # Extract task name (part before -sub-)
-            task_name = Path(worktree_path).name
-            task_name = re.sub(r'-sub-.*$', '', task_name)
+            issue_name = Path(worktree_path).name
+            issue_name = re.sub(r'-sub-.*$', '', issue_name)
 
             # Check for completion marker
             completion_file = Path(worktree_path) / ".completion.json"
@@ -80,7 +80,7 @@ class MonitorSubagentsHandler:
 
             subagents.append({
                 "id": subagent_id,
-                "task": task_name,
+                "issue": issue_name,
                 "status": status,
                 "tokens": tokens,
                 "compactions": compactions,
