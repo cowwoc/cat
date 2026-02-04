@@ -1870,6 +1870,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Remove or replace misleading pause/delay text from generated output. Text should describe what will happen without implying time-based behavior that is impossible."
+    },
+    {
+      "id": "M417",
+      "timestamp": "2026-02-04T12:30:00Z",
+      "category": "output_formatting",
+      "description": "Presented compression results with 'Before/After' headers instead of 'Tokens' - units were ambiguous",
+      "root_cause": "Main agent recomposed subagent output into custom table format instead of using the documented format from shrink-doc skill which specifies 'Tokens' as column header",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-task/SKILL.md",
+      "pattern_keywords": [
+        "units",
+        "formatting",
+        "compression",
+        "table",
+        "presentation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When presenting metrics to users, always include units in column headers (e.g., 'Tokens' not 'Before/After'). Copy table format from relevant skill documentation when available."
     }
   ]
 }

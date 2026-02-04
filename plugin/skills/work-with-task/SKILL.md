@@ -159,7 +159,11 @@ Task completed successfully. Return summary to main work skill:
 Batch executor paused at approval gate. Handle user approval:
 
 1. Display the task goal from the result
-2. Use AskUserQuestion:
+2. **Present execution metrics with explicit units (M417)**:
+   - For compression tasks: Use "Tokens" column header (not ambiguous "Before/After")
+   - For other metrics: Always include unit in column header (e.g., "Time (ms)", "Size (KB)")
+   - Copy table format from the relevant skill documentation when available
+3. Use AskUserQuestion:
    - header: "Approval"
    - question: "Ready to merge {TASK_ID}?"
    - options:
