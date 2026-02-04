@@ -1366,6 +1366,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Parse key=value format matching issue-lock.sh output"
+    },
+    {
+      "id": "M398",
+      "timestamp": "2026-02-04T12:20:00Z",
+      "category": "hook_coverage_gap",
+      "description": "Hook regex pattern did not match git -C flag variant, allowing dangerous worktree removal",
+      "root_cause": "validate_worktree_remove.py pattern only matched git worktree but not git -C /path worktree",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/validate_worktree_remove.py",
+      "pattern_keywords": [
+        "regex",
+        "git_worktree",
+        "shell_cwd",
+        "hook_pattern"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Hook pattern should match all git worktree remove variants including git -C flag"
     }
   ]
 }

@@ -14,9 +14,10 @@ class ValidateWorktreeRemoveHandler:
     """Block worktree removal when cwd is inside target."""
 
     # Pattern to match git worktree remove commands
-    # Handles: git worktree remove path, git worktree remove "path", git worktree remove 'path'
+    # Handles: git worktree remove path, git -C dir worktree remove path,
+    # with optional --force flag and quoted/unquoted paths
     WORKTREE_REMOVE_PATTERN = re.compile(
-        r'git\s+worktree\s+remove\s+(?:--force\s+)?(?:"([^"]+)"|\'([^\']+)\'|(\S+))'
+        r'git\s+(?:-C\s+\S+\s+)?worktree\s+remove\s+(?:--force\s+)?(?:"([^"]+)"|\'([^\']+)\'|(\S+))'
     )
 
     def check(self, command: str, context: dict) -> dict | None:

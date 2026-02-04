@@ -1,8 +1,9 @@
 """
-Tests for validate_worktree_remove.py (M342, M360).
+Tests for validate_worktree_remove.py (M342, M360, M398).
 
 M342: Original hook to block worktree removal when inside
 M360: Fixed cwd context passing
+M398: Handle git -C flag in pattern matching
 """
 
 import unittest
@@ -16,7 +17,7 @@ class ValidateWorktreeRemoveHandler:
     """Block worktree removal when cwd is inside target."""
 
     WORKTREE_REMOVE_PATTERN = re.compile(
-        r'git\s+worktree\s+remove\s+(?:--force\s+)?(?:"([^"]+)"|\'([^\']+)\'|(\S+))'
+        r'git\s+(?:-C\s+\S+\s+)?worktree\s+remove\s+(?:--force\s+)?(?:"([^"]+)"|\'([^\']+)\'|(\S+))'
     )
 
     def check(self, command: str, context: dict) -> dict | None:
@@ -132,6 +133,26 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
         self.assertIsNotNone(result)
         self.assertEqual(result.get("decision"), "block")
+
+    def test_blocks_with_git_c_flag_when_inside(self):
+        """M398: Block git -C /path worktree remove when cwd is inside target."""
+        command = "git -C /workspace worktree remove /workspace/.worktrees/my-task --force"
+        context = {"cwd": "/workspace/.worktrees/my-task"}
+
+        result = self.handler.check(command, context)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result.get("decision"), "block")
+        self.assertIn("M342", result.get("reason", ""))
+
+    def test_allows_with_git_c_flag_when_safe(self):
+        """M398: Allow git -C when cwd is outside target."""
+        command = "git -C /workspace worktree remove /workspace/.worktrees/my-task --force"
+        context = {"cwd": "/workspace"}  # Safe location
+
+        result = self.handler.check(command, context)
+
+        self.assertIsNone(result)
 
     def test_blocks_when_cwd_missing(self):
         """M360: Block (fail fast) when cwd not in context."""
