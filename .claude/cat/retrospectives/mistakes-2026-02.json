@@ -1155,6 +1155,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Run get-issue-complete-box.py script with actual values and copy output VERBATIM"
+    },
+    {
+      "id": "M390",
+      "timestamp": "2026-02-04T12:30:00Z",
+      "category": "protocol_violation",
+      "description": "Batch executor subagent merged task without user approval - trust=medium requires APPROVAL_REQUIRED return",
+      "root_cause": "Term 'APPROVED' for stakeholder review status was conflated with user approval to merge; subagent skipped approval gate",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "approval_bypass",
+        "trust_level",
+        "terminology_confusion",
+        "subagent_protocol"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When trust != high, batch executor MUST return APPROVAL_REQUIRED status after review phase, NOT proceed to merge"
     }
   ]
 }
