@@ -1445,6 +1445,39 @@
         "catches_variations": true
       },
       "correct_behavior": "Distinguish between CAT issues (shown in /cat:status, persistent project items) and Claude TaskList (session-specific task tracking). Never claim a 'task is in progress' based on CAT status when TaskList is empty."
+    },
+    {
+      "id": "M401",
+      "timestamp": "2026-02-04T12:58:50Z",
+      "category": "protocol_violation",
+      "description": "Agent received /cat:status prerendered output but asked clarifying questions instead of displaying it",
+      "root_cause": "Skill content delivered via local command expansion was treated as context rather than instructions to execute. MANDATORY OUTPUT REQUIREMENT header was not prominent enough when skill arrived through <command-message> path.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status/SKILL.md",
+      "pattern_keywords": [
+        "prerendered_output",
+        "copy-paste",
+        "local_command",
+        "skill_execution",
+        "M341-recurrence",
+        "M395-recurrence"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M395",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When skill invoked, execute its instructions immediately. For prerendered output skills, copy-paste ALL content between START and END markers. Do NOT ask questions, check git status, or analyze context.",
+      "related_files_fixed": [
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/help/SKILL.md",
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/token-report/SKILL.md",
+        "${CLAUDE_PROJECT_DIR}/plugin/skills/render-diff/SKILL.md"
+      ]
     }
   ]
 }
