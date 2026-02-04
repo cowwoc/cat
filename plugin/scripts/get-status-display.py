@@ -564,6 +564,7 @@ def main():
     args = parser.parse_args()
 
     output = generate_status_display(args.project_dir)
+
     print(output)
 
 
