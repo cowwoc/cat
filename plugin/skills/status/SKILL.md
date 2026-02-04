@@ -8,20 +8,18 @@ allowed-tools:
 
 # CAT Status Display
 
-## MANDATORY OUTPUT REQUIREMENT (M341)
+## MANDATORY OUTPUT REQUIREMENT (M341, M395)
 
-**YOUR ONLY JOB**: Copy-paste the content below VERBATIM. Do NOT summarize, interpret, or reformat.
+**YOUR ONLY JOB**: Copy-paste ALL content between the START and END markers below. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## SCRIPT OUTPUT: Status Box (COPY THIS EXACTLY)
+<!-- START COPY HERE -->
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
 **FAIL-FAST (ESCALATE-A008):** If you do NOT see a status box directly above (containing
 `╭──` and issue lists), then preprocessing FAILED. STOP. Do NOT manually run scripts.
-
-**After the status box, output:**
 
 **NEXT STEPS**
 
@@ -33,6 +31,8 @@ allowed-tools:
 ---
 
 **Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
+
+<!-- END COPY HERE -->
 
 ---
 
