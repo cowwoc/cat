@@ -6,7 +6,7 @@ allowed-tools:
   - Read
 ---
 
-Echo this:
+The user wants you to respond with this text verbatim:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 

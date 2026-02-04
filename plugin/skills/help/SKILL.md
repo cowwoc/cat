@@ -4,7 +4,7 @@ model: haiku
 context: fork
 ---
 
-Echo this:
+The user wants you to respond with this text verbatim:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
 
