@@ -86,3 +86,25 @@ git worktree remove /workspace/.worktrees/task-name --force  # Shell breaks!
 1. Complete all git operations (merge, commit)
 2. `cd /workspace` (or main workspace path)
 3. THEN run `git worktree remove`
+
+## When to Use `cd` (M398)
+
+General guidance says "avoid `cd` to maintain working directory" - but this skill is an **exception**.
+
+**Use `cd` when:**
+- About to delete the current directory (rm -rf, git worktree remove)
+- About to delete an ancestor of the current directory
+- Shell state must survive a destructive operation
+
+**Do NOT use workarounds like `git -C`:**
+```bash
+# WRONG - git -C changes git's cwd, NOT the shell's cwd
+# Shell still breaks when worktree is deleted!
+git -C /workspace worktree remove /workspace/.worktrees/task --force
+
+# RIGHT - cd changes the shell's cwd
+cd /workspace && git worktree remove /workspace/.worktrees/task --force
+```
+
+The `git -C` flag tells git to run from a different directory, but it doesn't change where
+the shell thinks it is. When the worktree is deleted, the shell's cwd becomes invalid.
