@@ -1,7 +1,7 @@
 # State
 
-- **Status:** pending
-- **Progress:** 0%
+- **Status:** in-progress
+- **Progress:** 40%
 - **Dependencies:** []
 - **Decomposed:** true
 - **Decomposed At:** 2026-02-01T17:00:00Z
