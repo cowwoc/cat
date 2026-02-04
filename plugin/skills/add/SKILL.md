@@ -53,7 +53,7 @@ treats the argument as a issue description and skips directly to issue creation 
 
 If the command was invoked with arguments (e.g., `/cat:add make installation easier`):
 - Capture the full argument string as TASK_DESCRIPTION
-- Skip directly to step: task_ask_type (bypassing select_type and the freeform description question)
+- Skip directly to step: task_ask_type_and_criteria (bypassing select_type and the freeform description question)
 
 If no arguments provided:
 - Continue to step: select_type
@@ -107,7 +107,7 @@ version it belongs to.
 
 **If TASK_DESCRIPTION already set (from command args):**
 - Skip the freeform question
-- Continue directly to step: task_clarify_intent
+- Continue directly to step: task_ask_type_and_criteria
 
 **Otherwise, ask for description (FREEFORM):**
 
@@ -145,20 +145,52 @@ Continue to next step.
 
 </step>
 
-<step name="task_ask_type">
+<step name="task_ask_type_and_criteria">
 
-**Ask issue type:**
+**Ask issue type and custom acceptance criteria:**
 
-Use AskUserQuestion:
-- header: "Issue Type"
-- question: "What type of work is this?"
-- options:
-  - "Feature" - Add new functionality
-  - "Bugfix" - Fix a problem
-  - "Refactor" - Improve code structure
-  - "Performance" - Improve speed/efficiency
+Use AskUserQuestion with multiple questions:
+- questions:
+    - question: "What type of work is this?"
+      header: "Issue Type"
+      options:
+        - label: "Feature"
+          description: "Add new functionality"
+        - label: "Bugfix"
+          description: "Fix a problem"
+        - label: "Refactor"
+          description: "Improve code structure"
+        - label: "Performance"
+          description: "Improve speed/efficiency"
+      multiSelect: false
 
-Capture as TASK_TYPE.
+    - question: "Standard criteria (functionality, tests, no regressions) will be applied. Any additional acceptance criteria?"
+      header: "Custom Criteria"
+      options:
+        - label: "No, standard criteria are sufficient"
+          description: "Use the default acceptance criteria for this issue type"
+        - label: "Yes, add custom criteria"
+          description: "I have specific requirements beyond the standard"
+      multiSelect: false
+
+Capture issue type as TASK_TYPE.
+
+**If "Yes, add custom criteria":**
+
+Ask inline: "What additional acceptance criteria should be met?"
+
+Append custom criteria to the standard list for TASK_TYPE.
+
+**Standard criteria by type (applied automatically):**
+
+| Type | Standard Criteria |
+|------|-------------------|
+| Feature | Functionality works, Tests passing, No regressions |
+| Bugfix | Bug fixed, Regression test added, No new issues |
+| Refactor | Behavior unchanged, Tests passing, Code quality improved |
+| Performance | Target met, Benchmarks added, No functionality regression |
+
+Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom additions.
 
 </step>
 
@@ -452,45 +484,7 @@ Args: "{TASK_DESCRIPTION}"
 Capture research findings as RESEARCH_FINDINGS.
 
 **If UNKNOWNS is empty:**
-Skip to next step.
-
-</step>
-
-<step name="task_ask_acceptance_criteria">
-
-**Apply standard acceptance criteria with option for customization (M374):**
-
-Standard criteria are ALWAYS included - do not ask users to confirm obvious requirements.
-
-**Standard criteria by type (applied automatically):**
-
-| Type | Standard Criteria |
-|------|-------------------|
-| Feature | Functionality works, Tests passing, No regressions |
-| Bugfix | Bug fixed, Regression test added, No new issues |
-| Refactor | Behavior unchanged, Tests passing, Code quality improved |
-| Performance | Target met, Benchmarks added, No functionality regression |
-
-**Only ask if user wants ADDITIONAL custom criteria:**
-
-Use AskUserQuestion:
-- header: "Custom Criteria"
-- question: "Standard criteria (functionality, tests, no regressions) will be applied. Any additional acceptance criteria?"
-- options:
-  - label: "No, standard criteria are sufficient"
-    description: "Use the default acceptance criteria for this issue type"
-  - label: "Yes, add custom criteria"
-    description: "I have specific requirements beyond the standard"
-
-**If "Yes, add custom criteria":**
-
-Ask inline: "What additional acceptance criteria should be met?"
-
-Append custom criteria to the standard list.
-
-**Store results:**
-
-Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom additions.
+Skip to step: task_select_requirements.
 
 </step>
 
