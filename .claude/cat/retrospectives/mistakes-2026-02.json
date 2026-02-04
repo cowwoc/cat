@@ -1418,6 +1418,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before resetting a task from in-progress to pending, check git log for commits mentioning the task name to determine if work was already completed"
+    },
+    {
+      "id": "M400",
+      "timestamp": "2026-02-04T12:15:00Z",
+      "category": "conflation_error",
+      "description": "Conflated CAT issue status with Claude TaskList - claimed task in progress after TaskList returned empty",
+      "root_cause": "Two different systems both use 'task' terminology: CAT issues (project work items) and Claude TaskList (session tracking). Status display showed CAT issue in progress, but I stated 'task is in progress' after empty TaskList.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/conventions/common.md",
+      "pattern_keywords": [
+        "terminology",
+        "TaskList",
+        "CAT issues",
+        "conflation",
+        "status"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Distinguish between CAT issues (shown in /cat:status, persistent project items) and Claude TaskList (session-specific task tracking). Never claim a 'task is in progress' based on CAT status when TaskList is empty."
     }
   ]
 }
