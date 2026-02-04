@@ -1667,6 +1667,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When a skill has MANDATORY OUTPUT REQUIREMENT, copy-paste the rendered output exactly without summarization or interpretation"
+    },
+    {
+      "id": "M408",
+      "timestamp": "2026-02-04T14:30:00Z",
+      "category": "hook_ineffective",
+      "description": "M402 enforcement hook failed to detect /cat:status invocation because it searched for 'cat:status' string, but after preprocessing the user message contains expanded skill content instead",
+      "root_cause": "Hook detection logic assumed user message would contain literal '/cat:status' text, but skill preprocessing replaces the command with expanded skill content (header, markers, box)",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/enforce-status-output.py",
+      "pattern_keywords": [
+        "hook",
+        "preprocessing",
+        "skill_expansion",
+        "status",
+        "detection"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Hook should detect status skill invocation by checking for expanded skill content markers (header, START/END markers) in addition to literal command text"
     }
   ]
 }
