@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-04T07:49:58-05:00",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-02-04T20:00:00-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",

@@ -10,13 +10,6 @@ trap 'echo "ERROR in inject-session-instructions.sh at line $LINENO: $BASH_COMMA
 # Claude's context WITHOUT modifying project files.
 #
 # TRIGGER: SessionStart (also fires after compaction, re-injecting context)
-#
-# BEHAVIOR:
-# - Injects User Input Handling (consolidated system-reminder, feedback, mid-operation handling)
-# - Injects Mandatory Mistake Handling
-# - Injects Commit Before Review
-# - Injects Skill Workflow Compliance
-# - No file modifications - pure context injection
 
 # Read stdin JSON and extract session_id
 INPUT=""
@@ -25,8 +18,7 @@ if [ ! -t 0 ]; then
 fi
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null || echo "unknown")
 
-# Build message as readable multiline text, let jq handle JSON escaping
-MESSAGE=$(cat << 'INSTRUCTIONS'
+MESSAGE=$(cat <<'INSTRUCTIONS'
 ## CAT SESSION INSTRUCTIONS
 
 ### User Input Handling
@@ -162,10 +154,19 @@ Create the task properly and use the worktree workflow.
 
 Output the error message and STOP execution. The fail-fast exists because workarounds produce incorrect results.
 
+### Verbatim Output Skills
+These skills require **silent invocation** (no preamble) and **verbatim output** (copy-paste exactly):
+- `/cat:status` - copy status box exactly
+- `/cat:help` - copy help box exactly
+- `/cat:token-report` - copy token report exactly
+- `/cat:render-diff` - copy diff table exactly
+
+**Silent invocation**: Call the Skill tool immediately without announcing what you're doing.
+**Verbatim output**: Copy-paste the rendered output exactly as provided, including all box borders.
 INSTRUCTIONS
 )
 
-# Append session ID (extracted from stdin JSON)
+# Append session ID
 MESSAGE="${MESSAGE}
 Session ID: ${SESSION_ID}"
 
