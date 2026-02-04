@@ -14,9 +14,7 @@
 #   issue-lock.sh list <project-dir>
 #
 # Lock file format (.claude/cat/locks/<issue-id>.lock):
-#   session_id=<uuid>
-#   created_at=<timestamp>
-#   worktree=<path>
+#   JSON format with keys: session_id, created_at, worktree, created_iso
 
 set -euo pipefail
 trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
@@ -80,7 +78,7 @@ acquire_lock() {
   # Check if lock exists
   if [[ -f "$lock_file" ]]; then
     local existing_session
-    existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+    existing_session=$(jq -r '.session_id' "$lock_file" 2>/dev/null || echo "")
 
     # If same session, return success (idempotent)
     if [[ "$existing_session" == "$session_id" ]]; then
@@ -119,12 +117,17 @@ LOCKED_JSON
   local temp_lock="${lock_file}.$$"
   local now
   now=$(current_timestamp)
+  local created_iso
+  created_iso=$(iso_timestamp)
 
+  # Write JSON format
   cat > "$temp_lock" << EOF
-session_id=${session_id}
-created_at=${now}
-worktree=${worktree}
-created_iso=$(iso_timestamp)
+{
+  "session_id": "${session_id}",
+  "created_at": ${now},
+  "worktree": "${worktree}",
+  "created_iso": "${created_iso}"
+}
 EOF
 
   # Atomic move (rename is atomic on same filesystem)
@@ -159,7 +162,7 @@ update_lock() {
   fi
 
   local existing_session
-  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+  existing_session=$(jq -r '.session_id' "$lock_file" 2>/dev/null || echo "")
 
   if [[ "$existing_session" != "$session_id" ]]; then
     echo "{\"status\":\"error\",\"message\":\"Lock owned by different session: $existing_session\"}"
@@ -168,16 +171,18 @@ update_lock() {
 
   # Read existing values
   local created_at created_iso
-  created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
-  created_iso=$(grep "^created_iso=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+  created_at=$(jq -r '.created_at' "$lock_file" 2>/dev/null || echo "0")
+  created_iso=$(jq -r '.created_iso // ""' "$lock_file" 2>/dev/null || echo "")
 
-  # Write updated lock file atomically
+  # Write updated lock file atomically in JSON format
   local temp_lock="${lock_file}.$$"
   cat > "$temp_lock" << EOF
-session_id=${session_id}
-created_at=${created_at}
-worktree=${worktree}
-created_iso=${created_iso}
+{
+  "session_id": "${session_id}",
+  "created_at": ${created_at},
+  "worktree": "${worktree}",
+  "created_iso": "${created_iso}"
+}
 EOF
 
   mv -f "$temp_lock" "$lock_file"
@@ -204,7 +209,7 @@ release_lock() {
   fi
 
   local existing_session
-  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+  existing_session=$(jq -r '.session_id' "$lock_file" 2>/dev/null || echo "")
 
   if [[ "$existing_session" != "$session_id" ]]; then
     echo "{\"status\":\"error\",\"message\":\"Lock owned by different session: $existing_session\"}"
@@ -229,9 +234,9 @@ check_lock() {
   fi
 
   local session_id created_at worktree
-  session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
-  created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
-  worktree=$(grep "^worktree=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "")
+  session_id=$(jq -r '.session_id' "$lock_file" 2>/dev/null || echo "unknown")
+  created_at=$(jq -r '.created_at' "$lock_file" 2>/dev/null || echo "0")
+  worktree=$(jq -r '.worktree // ""' "$lock_file" 2>/dev/null || echo "")
 
   local now age
   now=$(current_timestamp)
@@ -254,7 +259,7 @@ force_release_lock() {
   fi
 
   local existing_session
-  existing_session=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
+  existing_session=$(jq -r '.session_id' "$lock_file" 2>/dev/null || echo "unknown")
 
   rm -f "$lock_file"
   echo "{\"status\":\"released\",\"message\":\"Lock forcibly released (was owned by $existing_session)\"}"
@@ -268,15 +273,17 @@ list_locks() {
   local now
   now=$(current_timestamp)
 
-  # Collect all lock data in a simple format first (no jq in loop)
+  # Collect all lock data in a simple format first
   local lock_data=""
   for lock_file in "$LOCK_DIR"/*.lock; do
     [[ ! -f "$lock_file" ]] && continue
 
     local issue_id session_id created_at age
     issue_id=$(basename "$lock_file" .lock)
-    session_id=$(grep "^session_id=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "unknown")
-    created_at=$(grep "^created_at=" "$lock_file" 2>/dev/null | cut -d= -f2 || echo "0")
+
+    session_id=$(jq -r '.session_id' "$lock_file" 2>/dev/null || echo "unknown")
+    created_at=$(jq -r '.created_at' "$lock_file" 2>/dev/null || echo "0")
+
     age=$((now - created_at))
 
     # Accumulate as tab-separated values

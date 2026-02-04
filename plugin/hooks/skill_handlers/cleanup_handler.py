@@ -105,11 +105,13 @@ class CleanupHandler:
     def _get_locks(self, project_dir: str) -> list[dict]:
         """Get list of task locks.
 
-        Lock files use key=value format (not JSON):
-            session_id=<uuid>
-            created_at=<timestamp>
-            worktree=<path>
-            created_iso=<iso-timestamp>
+        Lock files use JSON format:
+            {
+              "session_id": "<uuid>",
+              "created_at": <timestamp>,
+              "worktree": "<path>",
+              "created_iso": "<iso-timestamp>"
+            }
         """
         locks = []
         locks_dir = Path(project_dir) / ".claude" / "cat" / "locks"
@@ -119,18 +121,12 @@ class CleanupHandler:
 
         for lock_file in locks_dir.glob("*.lock"):
             try:
-                # Parse key=value format (M397 - was incorrectly using json.loads)
                 content = lock_file.read_text()
-                data = {}
-                for line in content.strip().split('\n'):
-                    if '=' in line:
-                        key, value = line.split('=', 1)
-                        data[key] = value
+                data = json.loads(content)
 
                 task_id = lock_file.stem
                 session = data.get("session_id", "")
-                created_str = data.get("created_at", "0")
-                created = int(created_str) if created_str.isdigit() else 0
+                created = data.get("created_at", 0)
                 age = int(time.time() - created) if created else 0
                 locks.append({
                     "task_id": task_id,
