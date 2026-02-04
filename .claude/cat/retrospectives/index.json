@@ -640,9 +640,9 @@
       "description": "Strengthen hook patterns: (1) Account for git -C flag in worktree hooks, (2) Test hook patterns against command variations, (3) Add hook coverage tests",
       "category": "hook_coverage_gap",
       "pattern_id": null,
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-04T12:30:00Z",
-      "completed_date": null,
+      "completed_date": "2026-02-04",
       "related_mistakes": [
         "M398"
       ],
@@ -651,7 +651,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "implementation_note": "Implemented in 2.1-strengthen-hook-patterns: Updated validate-worktree-branch.sh and block_main_rebase.py to handle git -C flag variations, added test_git_flag_patterns.py with 12 test cases"
     }
   ]
 }
