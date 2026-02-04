@@ -246,7 +246,32 @@ rca_depth_check:
     if_yes_multiple: "Previous fixes FAILED - dig deeper into WHY they failed"
     if_3_plus_recurrences: "ARCHITECTURAL issue likely - see Step 4d"
     your_answer: "_______________"
+
+  # Question 5: Prevention vs Detection (M422)
+  fix_type:
+    question: "Does your proposed fix PREVENT the problem, or DETECT/MITIGATE after it occurs?"
+    prevention: "Makes the wrong thing impossible or the right thing automatic"
+    detection: "Catches the mistake after it happens (verification layer, validation)"
+    mitigation: "Reduces impact but doesn't stop occurrence (warnings, documentation)"
+    if_detection_or_mitigation: |
+      RCA is incomplete. You're treating symptoms, not cause.
+      Ask: "WHY did the bad thing happen in the first place?"
+      Keep asking WHY until you find something you can PREVENT.
+    your_answer: "_______________"
+    your_fix_type: "prevention | detection | mitigation"
 ```
+
+**Prevention vs Detection Examples (M422):**
+
+| Problem | Detection Fix (❌) | Prevention Fix (✅) |
+|---------|-------------------|---------------------|
+| Subagent fabricates scores | Verify independently | Remove expected values from prompts |
+| Wrong file edited | Check file path after | Hook blocks edits to wrong paths |
+| Threshold wrong | Validate on read | Fix the source template |
+| Skill bypassed | Check if skill was invoked | Make skill the only path (hook) |
+
+**Key insight:** If your first instinct is "add a check/verification", you haven't found the root cause.
+The root cause is whatever made the wrong thing possible. Fix THAT.
 
 **BLOCKING CONDITION (M299):**
 
