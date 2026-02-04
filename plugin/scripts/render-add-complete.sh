@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# render-add-complete.sh - Render task/version creation completion box
+# render-add-complete.sh - Render issue/version creation completion box
 #
-# USAGE: render-add-complete.sh --type <task|version> [options]
+# USAGE: render-add-complete.sh --type <issue|version> [options]
 #
-# Task options:
-#   --name <name>       Task name (e.g., "parse-tokens")
-#   --version <ver>     Version string (e.g., "2.0")
-#   --task-type <type>  Task type (Feature, Bugfix, etc.)
-#   --deps <deps>       Comma-separated dependencies
+# Issue options:
+#   --name <name>        Issue name (e.g., "parse-tokens")
+#   --version <ver>      Version string (e.g., "2.0")
+#   --issue-type <type>  Issue type (Feature, Bugfix, etc.)
+#   --deps <deps>        Comma-separated dependencies
 #
 # Version options:
 #   --name <name>       Version name/title
@@ -26,7 +26,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ITEM_TYPE=""
 ITEM_NAME=""
 VERSION=""
-TASK_TYPE="Feature"
+ISSUE_TYPE="Feature"
 DEPS=""
 VERSION_TYPE="minor"
 PARENT_INFO=""
@@ -37,7 +37,7 @@ while [[ $# -gt 0 ]]; do
         --type) ITEM_TYPE="$2"; shift 2 ;;
         --name) ITEM_NAME="$2"; shift 2 ;;
         --version) VERSION="$2"; shift 2 ;;
-        --task-type) TASK_TYPE="$2"; shift 2 ;;
+        --issue-type) ISSUE_TYPE="$2"; shift 2 ;;
         --deps) DEPS="$2"; shift 2 ;;
         --version-type) VERSION_TYPE="$2"; shift 2 ;;
         --parent) PARENT_INFO="$2"; shift 2 ;;
@@ -47,7 +47,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$ITEM_TYPE" ]]; then
-    echo "Error: --type required (task or version)"
+    echo "Error: --type required (issue or version)"
     exit 1
 fi
 
@@ -84,22 +84,20 @@ def build_header_box(header, content_items, min_width=40, prefix="─ "):
 item_type = "$ITEM_TYPE"
 item_name = "$ITEM_NAME" or "unknown"
 version = "$VERSION" or "0.0"
-task_type = "$TASK_TYPE" or "Feature"
+issue_type = "$ISSUE_TYPE" or "Feature"
 deps = "$DEPS"
 version_type = "$VERSION_TYPE" or "minor"
 parent_info = "$PARENT_INFO"
 item_path = "$ITEM_PATH"
 
-if item_type == "task":
+if item_type == "issue":
     deps_str = deps if deps else "None"
     content = [
-        item_name,
-        "",
-        f"Version: {version}",
-        f"Type: {task_type}",
+        f"{version}-{item_name}",
+        f"Type: {issue_type}",
         f"Dependencies: {deps_str}",
     ]
-    header = "✅ Task Created"
+    header = "✅ Issue Created"
     box = build_header_box(header, content, min_width=40, prefix="─ ")
     next_cmd = f"/cat:work {version}-{item_name}"
     print(box)
@@ -118,5 +116,5 @@ else:
     box = build_header_box(header, content, min_width=40, prefix="─ ")
     print(box)
     print()
-    print("Next: /clear, then /cat:add (to add tasks)")
+    print("Next: /clear, then /cat:add (to add issues)")
 PYTHON_EOF
