@@ -342,6 +342,17 @@ mid-task, just run `/cat:work` to continue where you left off.
 
 ---
 
+## Development
+
+| Branch | Purpose |
+|--------|---------|
+| `main` | Stable release — install from here |
+| `v2.1` | Next version in development |
+
+The development branch reference is updated automatically when a new version is released.
+
+---
+
 ## Contributing
 
 CAT is opinionated by design. It does a few things well rather than everything
