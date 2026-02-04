@@ -25,10 +25,14 @@ This skill was invoked to DISPLAY output, not to gather information. Output the 
 
 **FAIL-FAST:** If you do NOT see a report above, then preprocessing FAILED. STOP. Do NOT manually run scripts.
 
----
+<!--
+INTERNAL REFERENCE (NOT FOR AGENT - M402)
+=========================================
+The sections below are for human maintainers only.
+They were REMOVED from agent-visible content because they primed
+analytical/verification behavior instead of verbatim output.
 
-## Reference (do not output this section)
-
+## Reference
 The preprocessing script has already:
 - Gathered subagent token data from session files
 - Formatted token counts (68.4k, 1.5M format)
@@ -36,49 +40,18 @@ The preprocessing script has already:
 - Formatted durations (1m 7s format)
 - Built the aligned table with correct column widths
 
----
+## Output Structure
+The table contains: Type, Description, Tokens, Context (with health indicator), Duration columns.
 
-## Output Structure Reference
-
-> **NOTE:** This section describes WHAT the output contains, not HOW to render it.
-> The handler produces all rendering. You only need to copy-paste.
-
-The table contains these columns:
-- **Type**: Subagent type (truncated if long)
-- **Description**: Issue description (truncated if long)
-- **Tokens**: Formatted count with k/M suffix
-- **Context**: Percentage with health indicator (warning/critical markers appear inline)
-- **Duration**: Formatted time
-
-Health indicators appear within the Context column to show status at a glance.
-
----
-
-## Verification
-
-- [ ] Script Output report found in context
-- [ ] Table copied exactly (no modifications)
-- [ ] No additional computation performed
-
----
+## Verification (for human review)
+- Script Output report found in context
+- Table copied exactly (no modifications)
+- No additional computation performed
 
 ## Anti-Patterns
-
-### Never attempt manual table construction
-
-If script output content is missing, FAIL. Do not try to:
-- Extract data manually with jq
-- Build table rows by hand
-- Guess at column widths
-
-### Never modify alignment
-
-Copy the table exactly as provided. The script calculated precise padding.
-
----
+- Never attempt manual table construction
+- Never modify alignment
 
 ## Related Skills
-
-- `cat:monitor-subagents` - Uses token data for health checks
-- `cat:decompose-issue` - Triggered when context reaches critical levels
-- `cat:learn` - Uses token data for context-related analysis
+- cat:monitor-subagents, cat:decompose-issue, cat:learn
+-->
