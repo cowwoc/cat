@@ -10,7 +10,7 @@ allowed-tools:
 
 ## MANDATORY OUTPUT REQUIREMENT (M341)
 
-**YOUR ONLY JOB**: Copy-paste the box below VERBATIM. Do NOT summarize, interpret, or reformat.
+**YOUR ONLY JOB**: Copy-paste the content below VERBATIM. Do NOT summarize, interpret, or reformat.
 
 ---
 
@@ -19,15 +19,7 @@ allowed-tools:
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
 **FAIL-FAST (ESCALATE-A008):** If you do NOT see a status box directly above (containing
-`╭──` and issue lists), then preprocessing FAILED. In this case:
-
-1. **STOP** - do NOT proceed
-2. Run: `${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
-3. Copy-paste that output exactly
-
-**NEVER summarize the box. NEVER describe its contents. COPY IT.**
-
-### Step 2: Output next steps and legend
+`╭──` and issue lists), then preprocessing FAILED. Run the script manually and copy-paste its output.
 
 **After the status box, output:**
 

@@ -12,15 +12,8 @@ context: fork
 
 ---
 
-## Pre-rendered Help Content (COPY THIS EXACTLY)
-
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
 
-**NEVER summarize the help content. NEVER describe it. COPY IT.**
+**FAIL-FAST:** If you do NOT see help content above, run the script manually and copy-paste its output.
 
 ---
-
-## Verification
-
-- [ ] Help content displayed verbatim
-- [ ] No additional commentary or analysis added

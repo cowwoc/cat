@@ -44,17 +44,7 @@ Filters are interpreted by the prepare phase subagent using natural language und
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh`
 
 **FAIL-FAST (ESCALATE-A008):** If you do NOT see pre-rendered content above (banner with `┌─ 🐱`
-and work boxes), then preprocessing FAILED. In this case:
-
-1. **STOP immediately** - do NOT proceed with the workflow
-2. Run the scripts manually:
-   ```bash
-   ${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh --project-dir "${CLAUDE_PROJECT_DIR}"
-   ${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh
-   ```
-3. If scripts fail, report the error - do NOT manually construct boxes
-
-**NEVER manually construct boxes** - LLMs cannot accurately count display widths.
+and work boxes), run the scripts manually and copy-paste their output. NEVER manually construct boxes.
 
 ## Configuration
 

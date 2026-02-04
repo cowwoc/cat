@@ -636,14 +636,11 @@ EOF
 
 **Present completion:**
 
-**MANDATORY: Run the renderer script - do NOT manually construct the output box.**
+Run the renderer script and output its result verbatim:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type issue --name "{issue-name}" --version "{version}" --issue-type "{type}" --deps "{dependencies}"
 ```
-
-Output the rendered box exactly as the script produces it. The script handles emoji widths
-and alignment correctly - manual construction will have alignment errors.
 
 </step>
 
@@ -1278,14 +1275,11 @@ EOF
 
 **Present completion:**
 
-**MANDATORY: Run the renderer script - do NOT manually construct the output box.**
+Run the renderer script and output its result verbatim:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/render-add-complete.sh" --type version --name "{version-name}" --version "{version}" --version-type "{VERSION_TYPE}" --parent "{parent-info}" --path "{version-path}"
 ```
-
-Output the rendered box exactly as the script produces it. The script handles emoji widths
-and alignment correctly - manual construction will have alignment errors.
 
 </step>
 
