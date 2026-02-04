@@ -438,45 +438,6 @@ jq '.version' .claude-plugin/plugin.json
 jq --arg v "{CORRECT_VERSION}" '.version = $v' {FILE} > {FILE}.tmp && mv {FILE}.tmp {FILE}
 ```
 
-## Main-Only Workflow (Simplified)
-
-If working directly on main without version branches:
-
-```bash
-# 1. Update CHANGELOG.md FIRST
-# - Replace "In development" with actual release notes
-# - Commit the changelog update
-
-# 2. Tag and push
-CURRENT_VERSION=$(jq -r '.version' package.json)
-git tag -a "v${CURRENT_VERSION}" -m "v${CURRENT_VERSION} release"
-git push origin main
-git push origin "v${CURRENT_VERSION}"
-
-# 3. Bump version for next development cycle
-NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{print $1"."$2"."$3+1}')
-jq --arg v "$NEXT_VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
-
-# 4. Create migration script and registry entry
-cat > "migrations/${NEXT_VERSION}.sh" << EOF
-#!/bin/bash
-set -euo pipefail
-source "\${CLAUDE_PLUGIN_ROOT}/migrations/lib/utils.sh"
-log_success "Migration to ${NEXT_VERSION} completed (no structural changes)"
-EOF
-chmod +x "migrations/${NEXT_VERSION}.sh"
-jq --arg ver "$NEXT_VERSION" --arg script "${NEXT_VERSION}.sh" \
-  '.migrations += [{"version": $ver, "script": $script, "description": "Migration to " + $ver}]' \
-  migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
-
-# 5. Commit and push
-git add package.json CHANGELOG.md migrations/
-git commit -m "config: bump version to ${NEXT_VERSION}"
-git push origin main
-```
-
-**Key principle**: CHANGELOG.md must be updated BEFORE creating the release tag.
-
 ## Related
 
 - Plugin installation: `claude plugin add {repo-url}`
