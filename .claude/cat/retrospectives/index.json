@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-03T06:58:22-05:00",
-  "mistake_count_since_last": 20,
+  "last_retrospective": "2026-02-04T07:49:58-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -628,6 +628,25 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 4,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A014",
+      "priority": "medium",
+      "description": "Strengthen hook patterns: (1) Account for git -C flag in worktree hooks, (2) Test hook patterns against command variations, (3) Add hook coverage tests",
+      "category": "hook_coverage_gap",
+      "pattern_id": null,
+      "status": "open",
+      "created_date": "2026-02-04T12:30:00Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M398"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 1,
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
