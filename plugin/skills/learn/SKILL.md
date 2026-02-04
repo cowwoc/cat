@@ -91,6 +91,13 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 | Expected value in output (M274) | "OUTPUT FORMAT: validation_score: 1.0 (required)" | Agent reports expected value, not actual |
 | Rendered output example (M320) | "The banner looks like: ┌─ 🐱..." | Agent constructs instead of running script |
 | Parameter inference from context (M381) | Skill shows `${WORKTREE_PATH}` for Task prompts | Agent invents flags for other tools |
+| Ambient codebase priming (M405) | Multiple docs say "hooks → settings.json" | Agent assumes wrong location |
+| Missing counter-guidance (M405) | No doc explains where plugin hooks ARE | Agent cannot do right thing |
+
+**MANDATORY CHECK (M405):** After checking documents read, ALSO ask:
+1. **Could agent do the right thing?** Search for documentation of the CORRECT approach
+2. **If no documentation exists:** Root cause is `missing_documentation`, not `assumption`
+3. **If wrong approach is documented but right approach isn't:** Fix BOTH (remove priming AND add guidance)
 
 **For tool invocation errors (M381):**
 
