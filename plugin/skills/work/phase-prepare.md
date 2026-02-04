@@ -161,7 +161,7 @@ For a task marked with `[task]` in the Exit section:
 
 **MANDATORY: Copy-paste the exact box from system-reminder (M246)**
 
-Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the Pre-rendered Work Boxes
+Search the conversation context for "--- NO_EXECUTABLE_TASKS ---" in the Script Output Work Boxes
 section. Copy the ENTIRE box structure verbatim.
 
 **MANDATORY: Accept get-available-issues.sh results (M245)**
@@ -348,7 +348,7 @@ else:
 
 **Step 5: Present wizard (if needed)**
 
-Use the **FORK_IN_THE_ROAD** box from Pre-rendered Work Boxes.
+Use the **FORK_IN_THE_ROAD** box from Script Output Work Boxes.
 
 Use AskUserQuestion:
 - header: "Approach"

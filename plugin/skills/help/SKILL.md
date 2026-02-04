@@ -14,6 +14,6 @@ context: fork
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
 
-**FAIL-FAST:** If you do NOT see help content above, run the script manually and copy-paste its output.
+**FAIL-FAST:** If you do NOT see help content above, then preprocessing FAILED. STOP. Do NOT manually run scripts.
 
 ---

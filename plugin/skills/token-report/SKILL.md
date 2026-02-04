@@ -13,7 +13,7 @@ user-invocable: false
 
 ---
 
-## Pre-rendered Token Report (COPY THIS EXACTLY)
+## Script Output Token Report (COPY THIS EXACTLY)
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-token-report.sh --session-id "${CLAUDE_SESSION_ID}"`
 
@@ -50,7 +50,7 @@ Health indicators appear within the Context column to show status at a glance.
 
 ## Verification
 
-- [ ] Pre-rendered report found in context
+- [ ] Script Output report found in context
 - [ ] Table copied exactly (no modifications)
 - [ ] No additional computation performed
 
@@ -60,7 +60,7 @@ Health indicators appear within the Context column to show status at a glance.
 
 ### Never attempt manual table construction
 
-If pre-rendered content is missing, FAIL. Do not try to:
+If script output content is missing, FAIL. Do not try to:
 - Extract data manually with jq
 - Build table rows by hand
 - Guess at column widths

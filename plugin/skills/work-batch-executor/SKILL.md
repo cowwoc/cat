@@ -52,7 +52,7 @@ The work-with-task skill provides via JSON arguments:
 }
 ```
 
-The handler provides pre-rendered banners in **SCRIPT OUTPUT PROGRESS BANNERS** section:
+The handler provides script output banners in **SCRIPT OUTPUT PROGRESS BANNERS** section:
 - banner_executing: Banner with (` ` pattern)
 - banner_reviewing: Banner with (` ` ` pattern)
 - banner_merging: Banner with (` ` ` ` pattern)
