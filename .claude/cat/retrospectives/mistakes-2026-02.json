@@ -1730,6 +1730,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Invoke verbatim output skills silently (no announcement) and copy output exactly. User-centric framing ('The user expects...') is more effective than instructional framing ('DO NOT...')."
+    },
+    {
+      "id": "M412",
+      "timestamp": "2026-02-04T14:30:00-05:00",
+      "category": "protocol_violation",
+      "description": "Main agent wrote preamble before invoking /cat:status despite M411 prevention (handler wasn't registered)",
+      "root_cause": "M411 prevention created verbatim_output_skills.py handler but forgot to add import in __init__.py. Handler was never loaded.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/prompt_handlers/__init__.py",
+      "pattern_keywords": [
+        "preamble",
+        "silent_invocation",
+        "handler_registration",
+        "missing_import"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M411",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When adding a new prompt handler, always add the import in prompt_handlers/__init__.py to register it."
     }
   ]
 }

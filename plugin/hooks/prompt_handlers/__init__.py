@@ -44,3 +44,4 @@ from . import critical_thinking
 from . import destructive_ops
 from . import user_issues
 from . import abort_clarification
+from . import verbatim_output_skills
