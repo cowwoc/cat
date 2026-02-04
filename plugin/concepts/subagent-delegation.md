@@ -282,6 +282,37 @@ STEP 3: Main agent reviews actual scores, decides next action
 - Require per-file scores in structured format
 - Cross-reference file count with validation count
 
+## Result Presentation (M418)
+
+When presenting subagent results to users, preserve the format specified by the source skill.
+
+**Problem:** Subagents return structured data (JSON). Presenting agents may recompose this into
+custom formats, losing units, context, or required formatting from the source skill.
+
+**Rule:** Before presenting results, check if the invoked skill specifies an output format.
+If so, use that format - don't compose your own.
+
+| Source | Format Location | Example |
+|--------|-----------------|---------|
+| /shrink-doc | SKILL.md lines 308-311 | Table with "Tokens" header |
+| /compare-docs | SKILL.md output section | Comparison report format |
+| /cat:status | Handler preprocessing | Pre-rendered status box |
+
+**Pattern for presenting skill results:**
+
+```
+# ❌ WRONG: Recompose results into custom format
+Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
+You present: "| Before | After |" (units unclear)
+
+# ✅ RIGHT: Use source skill's format
+Subagent returns: {"tokens_before": 1598, "tokens_after": 1278}
+Check /shrink-doc format specification
+Present: "| Tokens (Before) | Tokens (After) |" (matches skill spec)
+```
+
+**When skill has no format specification:** Include units in all numeric column headers.
+
 ## Quality Indicators
 
 ### Prompt Length
