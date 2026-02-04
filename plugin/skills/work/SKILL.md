@@ -158,7 +158,19 @@ After successful merge:
 2. If trust >= medium: Auto-continue after 3s delay
 3. If trust == low: Display next task, wait for user
 
-Use appropriate box from pre-rendered output.
+**MANDATORY (M389): Generate Issue Complete box using script, NOT manual construction:**
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-issue-complete-box.py" \
+  --issue-name "$ISSUE_NAME" \
+  --next-issue "$NEXT_ISSUE_NAME" \
+  --next-goal "$NEXT_ISSUE_GOAL" \
+  --base-branch "$BASE_BRANCH"
+```
+
+Copy script output VERBATIM. NEVER manually construct boxes - LLMs cannot accurately count display widths.
+
+For scope-complete (no more tasks): Use **SCOPE_COMPLETE** from pre-rendered Work Boxes.
 
 ## Error Handling
 
