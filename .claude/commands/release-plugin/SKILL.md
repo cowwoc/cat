@@ -203,7 +203,19 @@ echo "Next version: $NEXT_VERSION"
 git checkout -b "v${NEXT_VERSION}"
 ```
 
-### 9. Increment Version Numbers
+### 9. Update README Development Branch Reference
+
+Update README.md to reference the new development branch:
+
+```bash
+# Update the development branch reference in README.md
+sed -i "s/| \`v[0-9.]*\` | Next version in development |/| \`v${NEXT_VERSION}\` | Next version in development |/" README.md
+```
+
+**Why?** The README tells users which branch contains the next version in development.
+This must be updated to reference the new version branch.
+
+### 10. Increment Version Numbers
 
 Update both JSON files to the next version:
 
@@ -219,7 +231,7 @@ echo "package.json:" && jq '.version' package.json
 echo "plugin.json:" && jq '.version' .claude-plugin/plugin.json
 ```
 
-### 10. Create Migration Script for Next Version
+### 11. Create Migration Script for Next Version
 
 Create a placeholder migration script for the next version. This ensures the migration system can track
 version changes even if no structural changes are needed.
@@ -249,7 +261,7 @@ MIGRATION_EOF
 chmod +x "migrations/${NEXT_VERSION}.sh"
 ```
 
-### 11. Add Migration Registry Entry
+### 12. Add Migration Registry Entry
 
 Add the new version to the migration registry:
 
@@ -260,21 +272,21 @@ jq --arg ver "$NEXT_VERSION" --arg script "${NEXT_VERSION}.sh" \
   migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
 ```
 
-### 12. Update Plugin CHANGELOG.md for Next Version
+### 13. Update Plugin CHANGELOG.md for Next Version
 
 If the project has a CHANGELOG.md:
 
 1. Update the "Current Version" table to show NEXT_VERSION
 2. Add an empty version history section for NEXT_VERSION (to be filled during development)
 
-### 13. Commit Version Bump
+### 14. Commit Version Bump
 
 ```bash
-git add package.json .claude-plugin/plugin.json CHANGELOG.md migrations/
+git add package.json .claude-plugin/plugin.json CHANGELOG.md README.md migrations/
 git commit -m "config: bump version to ${NEXT_VERSION}"
 ```
 
-### 14. Push Everything to Origin
+### 15. Push Everything to Origin
 
 ```bash
 # Push main branch with new commits
@@ -324,11 +336,14 @@ git tag -a v1.4 -m "v1.4 release"
 # 8. Create next version branch
 git checkout -b v1.5
 
-# 9. Increment versions
+# 9. Update README development branch reference
+sed -i "s/| \`v[0-9.]*\` | Next version in development |/| \`v1.5\` | Next version in development |/" README.md
+
+# 10. Increment versions
 jq '.version = "1.5"' package.json > package.json.tmp && mv package.json.tmp package.json
 jq '.version = "1.5"' .claude-plugin/plugin.json > plugin.json.tmp && mv plugin.json.tmp .claude-plugin/plugin.json
 
-# 10. Create migration script for 1.5
+# 11. Create migration script for 1.5
 cat > migrations/1.5.sh << 'EOF'
 #!/bin/bash
 set -euo pipefail
@@ -337,19 +352,19 @@ log_success "Migration to 1.5 completed (no structural changes)"
 EOF
 chmod +x migrations/1.5.sh
 
-# 11. Add migration registry entry
+# 12. Add migration registry entry
 jq '.migrations += [{"version": "1.5", "script": "1.5.sh", "description": "Migration to 1.5"}]' \
   migrations/registry.json > migrations/registry.json.tmp && mv migrations/registry.json.tmp migrations/registry.json
 
-# 12. Update CHANGELOG for next version
+# 13. Update CHANGELOG for next version
 # - Update version table to 1.5
 # - Add empty v1.5 section to history
 
-# 13. Commit version bump
-git add package.json .claude-plugin/plugin.json CHANGELOG.md migrations/
+# 14. Commit version bump
+git add package.json .claude-plugin/plugin.json CHANGELOG.md README.md migrations/
 git commit -m "config: bump version to 1.5"
 
-# 14. Push everything
+# 15. Push everything
 git push origin main
 git push origin v1.4                # push tag
 git push origin --delete v1.4       # delete remote branch
@@ -380,6 +395,7 @@ After release, verify:
 - [ ] Tag exists: `git tag -l v{CURRENT_VERSION}`
 - [ ] Tag pushed: `git ls-remote --tags origin v{CURRENT_VERSION}`
 - [ ] On new branch: `git branch --show-current` shows `v{NEXT_VERSION}`
+- [ ] README updated: Development table shows `v{NEXT_VERSION}`
 - [ ] Versions updated: both files show `{NEXT_VERSION}`
 - [ ] Migration script exists: `ls migrations/{NEXT_VERSION}.sh`
 - [ ] Migration registered: `jq '.migrations[-1]' migrations/registry.json` shows `{NEXT_VERSION}`
