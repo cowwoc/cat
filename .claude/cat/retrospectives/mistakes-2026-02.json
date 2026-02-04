@@ -2033,6 +2033,73 @@
         "catches_variations": true
       },
       "correct_behavior": "When problem is 'X happened', ask WHY X happened. Then ask WHY that cause occurred. Continue until you reach a structural/systemic issue that can be fixed at the source."
+    },
+    {
+      "id": "M423",
+      "timestamp": "2026-02-04T14:30:00Z",
+      "category": "systemic_priming",
+      "description": "17+ mistakes caused by PLAN.md and delegation prompts containing expected values that prime subagents to fabricate results",
+      "root_cause": "PLAN.md structure conflates execution instructions (what to DO) with acceptance criteria (what to CHECK). When execution steps include expected values like 'Verify score = 1.0', subagents report that value regardless of actual results.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/",
+      "pattern_keywords": [
+        "priming",
+        "PLAN.md",
+        "expected-values",
+        "fabrication",
+        "systemic"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M274",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Three-layer prevention: (1) Hook blocks PLAN.md with expected values in Execution Steps, (2) PLAN.md restructure separates Actions from Success Criteria, (3) Deterministic scripts for validation loops",
+      "related_mistakes": [
+        "M254",
+        "M265",
+        "M269",
+        "M273",
+        "M274",
+        "M276",
+        "M320",
+        "M346",
+        "M349",
+        "M355",
+        "M370",
+        "M421"
+      ]
+    },
+    {
+      "id": "M424",
+      "timestamp": "2026-02-04T16:45:00Z",
+      "category": "misleading_documentation",
+      "description": "Created version CHANGELOG.md files with internal task lists instead of user-facing release notes",
+      "root_cause": "Template showed 'Issues Completed' table format, priming internal-focused content instead of user-facing feature descriptions",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/templates/changelog.md",
+      "pattern_keywords": [
+        "changelog",
+        "template",
+        "user-facing",
+        "release-notes"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Version CHANGELOG.md should contain user-facing release notes (features, improvements, bugfixes) that can be copied to root CHANGELOG.md, not internal task names"
     }
   ]
 }

@@ -1,81 +1,51 @@
 # Changelog: {version-name}
 
-> **NOTE**: This template is for MINOR and MAJOR version changelogs only.
-> Issue-level changelogs are NOT created as separate files - issue changelog content
-> is embedded in commit messages instead.
+> **PURPOSE**: This is a USER-FACING release notes document. Content should describe what
+> END-USERS get from this version, NOT internal task names. When the version is released,
+> this content is copied to the root CHANGELOG.md.
 
 **Completed**: {YYYY-MM-DD}
 
-## Summary
+**{Version Theme/Tagline}**
 
-[One-line description of what this version accomplished]
+{1-2 sentence summary of what this version delivers to users}
 
-## Issues Completed
+## New Features
 
-| Issue | Type | Description | Resolution |
-|-------|------|-------------|------------|
-| {issue-name} | {type} | {brief description} | implemented |
-| {dup-issue} | - | {what it duplicated} | duplicate of {orig-issue} |
+Describe new capabilities users can now use:
 
-**Resolution types:**
-- `implemented` - Issue completed normally with its own commit
-- `duplicate of {issue}` - Work done by another issue
-- `obsolete` - Issue no longer needed
+- **{Feature Name}**: {What it does and why users care}
+- **{Feature Name}**: {What it does and why users care}
 
-## Key Changes
+## Improvements
 
-[High-level summary of the changes across all issues]
+Enhancements to existing functionality:
 
-- {Change 1}
-- {Change 2}
+- **{Improvement}**: {What changed and the benefit}
+- {Smaller improvement without bold}
 
-## Files Changed
+## Bugfixes
 
-[Aggregate of files created/modified across all issues]
+Issues that were resolved:
 
-### Created
-- `{path/to/NewFile.java}` - {purpose}
+- Fix {description of what was broken and is now working}
+- Fix {description}
 
-### Modified
-- `{path/to/ExistingFile.java}` - {what changed}
+## Breaking Changes
 
-## Technical Highlights
+*(Only if applicable - remove section if none)*
 
-[Notable technical decisions or patterns established across issues]
-
-- {Highlight 1}
-- {Highlight 2}
-
-## Quality
-
-- {Total tests added/modified}
-- {Build status}
-- {Other quality metrics}
+- {What changed that might affect existing users}
 
 ---
 
-## Related Commits
+## Internal Reference
 
-Find all commits for this version:
+*(This section is for development tracking only - do NOT copy to root CHANGELOG.md)*
 
-```bash
-# For minor version 1.0:
-git log --oneline --grep="Issue ID: v1.0-"
-
-# For specific issue within the version:
-git log --oneline --grep="Issue ID: v1.0-{issue-name}"
-```
-
-### Finding Commits for Duplicate Issues
-
-Duplicate issues have no commit with their own Issue ID. To find the resolving commit:
-
-1. Check the issue's STATE.md for the `Duplicate Of` field
-2. Search for that original issue's ID:
+Issues completed: {count} issues across {count} commits
 
 ```bash
-# If issue-b is duplicate of v1.0-issue-a:
-git log --oneline --grep="Issue ID: v1.0-issue-a"
+# Find all commits for this version:
+git log --oneline --grep="Issue ID: {version}-"
 ```
-
-See [issue-resolution.md](../concepts/issue-resolution.md) for details.
