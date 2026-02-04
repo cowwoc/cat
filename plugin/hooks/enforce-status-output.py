@@ -62,12 +62,18 @@ def check_transcript_for_status_skill(transcript_path: str) -> tuple[bool, bool]
             continue
 
         # Check user messages for /cat:status invocation
+        # M408: After preprocessing, the user message contains expanded skill content,
+        # not the literal "/cat:status" string. Detect by skill header or markers.
         if entry.get("type") == "user":
             content = entry.get("message", {}).get("content", [])
             for block in content:
                 if isinstance(block, dict) and block.get("type") == "text":
                     text = block.get("text", "")
-                    if "cat:status" in text.lower():
+                    # Check for expanded skill content (header or markers)
+                    # OR the literal command (if preprocessing didn't run)
+                    if ("# CAT Status Display" in text or
+                        "<!-- START COPY HERE -->" in text or
+                        "cat:status" in text.lower()):
                         status_invoked = True
 
         # Check assistant messages for box output
