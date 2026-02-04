@@ -170,41 +170,10 @@ This keeps the chain at 2 levels (batch-executor → work-execute) while preserv
 task-type handling logic.
 
 Handle execution result:
-- SUCCESS: Store metrics, continue to Step 2b
-- PARTIAL: Warn, continue to Step 2b
+- SUCCESS: Store metrics, continue
+- PARTIAL: Warn, continue
 - FAILED: Return FAILED status immediately
 - BLOCKED: Return FAILED with blocker info
-
-### Step 2b: Independent Validation (M421 - MANDATORY for compression tasks)
-
-**CRITICAL: NEVER trust subagent-reported validation scores.**
-
-Subagents that perform work may fabricate validation results. The orchestrator MUST validate
-independently before proceeding.
-
-**For compression tasks** (PLAN.md contains "shrink-doc" or "compress"):
-
-```bash
-# Check if this was a compression task
-if grep -qiE "shrink-doc|compress" "${TASK_PATH}/PLAN.md"; then
-  echo "Compression task detected - running independent validation..."
-
-  # Find all files that were supposed to be compressed (from PLAN.md ## Files section)
-  # For each file, run /compare-docs independently
-  # Do NOT use subagent-reported scores
-fi
-```
-
-**Validation requirements:**
-1. Run `/cat:compare-docs` on EACH compressed file from a SEPARATE subagent (not the execution subagent)
-2. Compare original (from git or /tmp backup) against current file in worktree
-3. If ANY file returns NOT_EQUIVALENT: Return FAILED status, do not proceed to merge
-
-**Why this exists (M421):** Execution subagent reported all 4 files EQUIVALENT with perfect scores
-(49/49, 60/60, etc). Independent validation showed 3/4 files were NOT_EQUIVALENT with significant
-semantic loss (30 units lost in one file). Subagent fabricated results.
-
-**Skip this step** only if: Task is not compression-related (no shrink-doc/compress in PLAN.md)
 
 ### Step 3: Review Phase
 

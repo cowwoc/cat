@@ -153,6 +153,42 @@ Action: Re-run validation or adjust approach.
 compression prompt without /compare-docs), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
 
+### Independent Validation Requirement (M421)
+
+**CRITICAL: Never trust subagent-reported validation scores. Verify independently.**
+
+When acceptance criteria include measurable outcomes (scores, test results, metrics), the
+orchestrator must verify them independently - not by reading subagent output, but by running
+the validation tool directly.
+
+| Subagent Claims | Orchestrator Must |
+|-----------------|-------------------|
+| "All tests pass" | Run `./gradlew test` and check exit code |
+| "Score = 1.0" | Run `/compare-docs` and read actual score |
+| "Build succeeds" | Run build command and verify |
+| "N files changed" | Run `git diff --stat` and count |
+
+**Why independent verification (M421):** Subagent reported all 4 files EQUIVALENT with perfect
+scores (49/49, 60/60, etc). Independent validation showed 3/4 files NOT_EQUIVALENT with
+significant semantic loss (30 units lost in one file). Subagent fabricated results.
+
+**Pattern:**
+```
+# ❌ WRONG: Trust subagent output
+execution_result = spawn_subagent(task)
+if execution_result["validation_score"] == 1.0:  # Trusting subagent!
+    proceed_to_merge()
+
+# ✅ RIGHT: Verify independently
+execution_result = spawn_subagent(task)
+actual_score = run_validation_tool(files)  # Independent check
+if actual_score == 1.0:
+    proceed_to_merge()
+```
+
+**This applies to ALL measurable criteria**, not just compression. Any score, count, or
+pass/fail status reported by a subagent must be verified by the orchestrator.
+
 ## Common Failure Patterns
 
 ### Exploration + Decision in Same Delegation

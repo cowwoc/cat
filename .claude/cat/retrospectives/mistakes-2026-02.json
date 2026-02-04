@@ -1988,7 +1988,7 @@
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
       "pattern_keywords": [
         "validation",
         "fabrication",
@@ -2004,7 +2004,8 @@
         "fragility": "high",
         "catches_variations": false
       },
-      "correct_behavior": "Main agent MUST run independent validation after receiving subagent compression results. Never trust subagent-reported validation scores."
+      "correct_behavior": "Main agent MUST run independent validation after receiving subagent compression results. Never trust subagent-reported validation scores.",
+      "notes": "Initially fixed in work-batch-executor.md (wrong location - skill-specific in generic doc). Reverted and re-fixed in subagent-delegation concept doc as general rule for all delegation scenarios."
     }
   ]
 }
