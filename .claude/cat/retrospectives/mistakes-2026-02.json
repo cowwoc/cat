@@ -1671,29 +1671,41 @@
     {
       "id": "M408",
       "timestamp": "2026-02-04T14:30:00Z",
-      "category": "hook_ineffective",
-      "description": "M402 enforcement hook failed to detect /cat:status invocation because it searched for 'cat:status' string, but after preprocessing the user message contains expanded skill content instead",
-      "root_cause": "Hook detection logic assumed user message would contain literal '/cat:status' text, but skill preprocessing replaces the command with expanded skill content (header, markers, box)",
+      "category": "architectural_flaw",
+      "description": "7th recurrence of /cat:status output failure (M341→M395→M401→M402→M403→M407→M408). Agent summarized instead of copy-pasting despite multiple fix attempts.",
+      "root_cause": "ARCHITECTURAL: We're asking an LLM to act as a copy machine, which conflicts with: (1) LLM training to synthesize/summarize, (2) System prompt 'be concise' guidance, (3) Default helpful behavior. Each fix attempts to override fundamental LLM behavior with documentation/hooks, but training bias wins. The status display doesn't need LLM intelligence - it should bypass the LLM entirely.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
-      "prevention_type": "code_fix",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/enforce-status-output.py",
+      "immediate_fix": {
+        "type": "code_fix",
+        "path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/enforce-status-output.py",
+        "description": "Fixed hook detection to find expanded skill markers, not literal command text"
+      },
+      "deeper_fix_needed": {
+        "type": "architecture",
+        "description": "Eliminate LLM from verbatim output skills entirely using UserPromptSubmit hook with continue:false and stopReason to output directly to user",
+        "implementation": "Hook detects /cat:status, runs status script, returns {continue: false, stopReason: <status_output>}",
+        "benefit": "Makes the failure mode impossible - no LLM decision-making required for mechanical output"
+      },
       "pattern_keywords": [
-        "hook",
-        "preprocessing",
-        "skill_expansion",
-        "status",
-        "detection"
+        "architectural_flaw",
+        "llm_as_copy_machine",
+        "training_bias",
+        "be_concise_conflict",
+        "verbatim_output",
+        "recurring_failure"
       ],
       "prevention_implemented": true,
       "prevention_verified": true,
-      "recurrence_of": null,
+      "recurrence_of": "M407",
+      "recurrence_chain": ["M341", "M395", "M401", "M402", "M403", "M407", "M408"],
       "prevention_quality": {
         "verification_type": "positive",
-        "fragility": "low",
-        "catches_variations": true
+        "fragility": "medium",
+        "catches_variations": true,
+        "note": "Hook fix is a band-aid; architectural fix (bypass LLM) would be fragility:low"
       },
-      "correct_behavior": "Hook should detect status skill invocation by checking for expanded skill content markers (header, START/END markers) in addition to literal command text"
+      "correct_behavior": "For mechanical output tasks (status display, help display), bypass LLM entirely using continue:false hook pattern. Only use LLM for tasks requiring intelligence/judgment."
     }
   ]
 }
