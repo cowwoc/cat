@@ -93,11 +93,19 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 | Parameter inference from context (M381) | Skill shows `${WORKTREE_PATH}` for Task prompts | Agent invents flags for other tools |
 | Ambient codebase priming (M405) | Multiple docs say "hooks → settings.json" | Agent assumes wrong location |
 | Missing counter-guidance (M405) | No doc explains where plugin hooks ARE | Agent cannot do right thing |
+| Conflicting general guidance (M407) | "Be concise" + "copy verbatim" | General instruction overrides specific requirement |
 
 **MANDATORY CHECK (M405):** After checking documents read, ALSO ask:
 1. **Could agent do the right thing?** Search for documentation of the CORRECT approach
 2. **If no documentation exists:** Root cause is `missing_documentation`, not `assumption`
 3. **If wrong approach is documented but right approach isn't:** Fix BOTH (remove priming AND add guidance)
+
+**CHECK FOR CONFLICTING GUIDANCE (M407):** Also check if general instructions conflict with specific requirements:
+- Does system prompt say "be concise" while skill requires verbatim output?
+- Does critical thinking prompt say "analyze" while skill requires copy-paste?
+- Does general guidance favor interpretation while skill needs literal execution?
+When found: The specific skill requirement should take precedence, but add enforcement (hook) since general
+guidance may override documented specific requirements.
 
 **For tool invocation errors (M381):**
 
