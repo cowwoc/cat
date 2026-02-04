@@ -33,9 +33,13 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 
 Filters are interpreted by the prepare phase subagent using natural language understanding.
 
-## SCRIPT OUTPUT: Progress Output (COPY EXACTLY - M341, M395)
+## SCRIPT OUTPUT: Progress Output (COPY EXACTLY - M341, M395, M401)
+
+**STOP. DO NOT ASK QUESTIONS. DO NOT CHECK GIT STATUS. DO NOT ANALYZE CONTEXT.**
 
 **Copy-paste ALL content between the START and END markers below VERBATIM. Do NOT summarize or reformat.**
+
+This skill was invoked to DISPLAY output, not to gather information. Output the content NOW.
 
 <!-- START COPY HERE -->
 
