@@ -617,9 +617,10 @@
       "description": "Consolidate delegation guidance: (1) Document Task vs TaskCreate distinction clearly, (2) Prefer /cat:delegate for batch/parallel work, (3) Always use blocking TaskOutput calls, (4) Include CRITICAL REQUIREMENTS checklist in delegation prompts",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-013",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-03T07:30:00Z",
-      "completed_date": null,
+      "completed_date": "2026-02-04T20:30:00Z",
+      "implementation": "Already implemented: Task vs TaskCreate in subagent-delegation.md (M372), /cat:delegate examples in delegate/SKILL.md, blocking TaskOutput guidance in lines 901-957 (M293/M373), SUBAGENT-PROMPT-CHECKLIST.md for CRITICAL REQUIREMENTS",
       "related_mistakes": [
         "M367",
         "M371",
