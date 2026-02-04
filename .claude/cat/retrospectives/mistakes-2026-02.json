@@ -1261,6 +1261,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Rebase task branch onto current base branch before attempting fast-forward merge. Never fall back to merge commits - linear history is mandatory."
+    },
+    {
+      "id": "M394",
+      "timestamp": "2026-02-04T00:15:22-05:00",
+      "category": "detection_gap",
+      "description": "work-prepare returned READY for task already implemented on base branch",
+      "root_cause": "check-existing-work.sh only checks task branch commits, not work merged directly to base without updating STATE.md",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "duplicate-detection",
+        "state-mismatch",
+        "work-prepare"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check base branch git log for commits mentioning task name before returning READY"
     }
   ]
 }

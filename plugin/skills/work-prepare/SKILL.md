@@ -169,7 +169,7 @@ fi
 **Why this matters (M351):** Without verification, a worktree may be created but remain on the base
 branch, causing commits to go to the wrong branch and bypass the review/merge workflow.
 
-### Step 6: Check for Existing Work (M362, M363)
+### Step 6: Check for Existing Work (M362, M363, M394)
 
 **MANDATORY: Use the check-existing-work.sh script to detect existing commits.**
 
@@ -199,6 +199,36 @@ returns JSON. Using a script instead of inline LLM instructions ensures:
 - Test coverage for the detection logic
 - Consistent behavior across invocations
 - No risk of LLM misimplementing the check
+
+### Step 6b: Check for Work Merged to Base (M394)
+
+**MANDATORY: Check if task was already implemented on base branch.**
+
+The check-existing-work.sh script only detects commits on the task branch. If work was
+implemented directly on base (bypassing the task workflow), STATE.md won't reflect completion.
+
+```bash
+# Search for commits on base that mention this task name
+TASK_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline --grep="${TASK_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
+
+if [[ -n "$TASK_COMMITS" ]]; then
+  # Found suspicious commits - return for user verification
+  echo "WARNING: Found commits on base branch mentioning '${TASK_NAME}':"
+  echo "$TASK_COMMITS"
+  # Include in output JSON: "potentially_complete": true, "suspicious_commits": "..."
+fi
+```
+
+**Why this matters (M394):** Work may be implemented directly on the base branch without using
+the task workflow (e.g., previous session implemented work but didn't update STATE.md, or
+manual work outside `/cat:work`). When suspicious commits are found:
+
+1. Include `"potentially_complete": true` in output JSON
+2. Include the suspicious commit hashes and messages
+3. The orchestrator should prompt user to verify before proceeding
+
+**This prevents duplicate work** when STATE.md shows `in-progress` but the actual implementation
+already exists on the base branch.
 
 ### Step 7: Update STATE.md
 
