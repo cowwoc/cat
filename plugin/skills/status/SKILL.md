@@ -6,7 +6,7 @@ allowed-tools:
   - Skill
 ---
 
-First, invoke the echo skill with this exact content:
+Without any preamble, invoke the echo skill with this exact content:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
@@ -16,7 +16,7 @@ Then after the echo completes, output:
 
 | Option | Action | Command |
 |--------|--------|---------|
-| [**1**] | Execute a issue | `/cat:work {version}-<issue-name>` |
+| [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
 | [**2**] | Add new issue | `/cat:add` |
 
 ---
