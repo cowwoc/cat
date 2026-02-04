@@ -254,126 +254,15 @@ The cause is always in the system that allowed or encouraged the wrong action.
 
 ### 4c. Multiple Independent Mistakes (M378)
 
-**When investigating a problem reveals multiple independent mistakes, invoke `/cat:learn` for each.**
+**If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
 
-During investigation, you may discover that the observed failure resulted from multiple independent
-issues - not just multiple causes of one mistake, but genuinely separate mistakes that each warrant
-their own RCA and prevention.
-
-**Identification pattern:**
-
-```yaml
-multiple_mistakes_check:
-  question: "Are these separate issues that could occur independently?"
-  if_yes: "Invoke /cat:learn separately for EACH mistake"
-  if_no: "Continue with single /cat:learn for the one mistake"
-```
-
-**When multiple independent mistakes are discovered:**
-
-1. **Complete the current `/cat:learn`** for the first mistake you identified
-   - Full RCA (Steps 1-4)
-   - Implement prevention (Step 9) - **actually edit files**
-   - Record learning (Step 11)
-   - Commit changes (Step 12)
-2. **Invoke `/cat:learn` again** for each additional independent mistake
-   - Each invocation runs the FULL workflow: research → RCA → **implement fix** → record → commit
-3. **Each gets its own M-number**, RCA, and prevention
-
-**CRITICAL: Each /cat:learn invocation must IMPLEMENT prevention, not just record the mistake.**
-Recording without fixing is not learning - the mistake will recur.
-
-**Example:**
-
-```yaml
-# Observed failure: Batch compression failed midway through
-# Investigation reveals TWO independent mistakes:
-
-mistake_1:
-  description: "Handler didn't exist for /cat:delegate preprocessing"
-  action: "Complete /cat:learn -> M377"
-  # Full workflow: RCA → implement handler fix → record → commit
-
-mistake_2:
-  description: "Agent didn't acknowledge user message mid-operation"
-  action: "Invoke /cat:learn again -> M378"
-  # Full workflow: RCA → implement acknowledgment fix → record → commit
-
-# Each mistake gets FULL /cat:learn workflow including prevention implementation
-```
-
-**Why separate invocations matter:**
-- Each mistake may have different root causes requiring different RCA methods
-- Each prevention needs its own implementation and verification
-- Retrospective tracking is more accurate with distinct M-numbers
-- Patterns are easier to identify when mistakes are properly separated
-
-**BLOCKING: Do not bundle unrelated mistakes.** If you discover a second independent issue during
-investigation, note it, complete the current `/cat:learn` (including fix), then invoke `/cat:learn`
-again for the second issue (including its fix).
+Each independent mistake gets its own `/cat:learn` invocation with full RCA and prevention implementation.
 
 ### 4d. Investigate Hook Workarounds (M398)
 
-**When a mistake involves bypassing or working around a hook, investigate WHY.**
+**If mistake involves bypassing a hook:** Read `HOOK-WORKAROUNDS.md` and follow its investigation checklist.
 
-Hooks exist to enforce correct behavior. If an agent worked around a hook (intentionally or not),
-there are three possible causes:
-
-| Cause | Investigation | Fix |
-|-------|---------------|-----|
-| **Hook pattern gap** | Hook regex/logic didn't match the command variant used | Fix the hook pattern |
-| **Guidance gap** | Hook didn't explain what the correct approach is | Add guidance to hook error message |
-| **Technical impossibility** | The "right thing" doesn't work for some reason | Fix the underlying issue or update guidance |
-
-**Investigation checklist:**
-
-```yaml
-hook_workaround_analysis:
-  # Step 1: Was the right thing technically possible?
-  right_thing_possible:
-    question: "Could the agent have done this correctly?"
-    how_to_check: "Try the 'correct' approach manually - does it work?"
-    if_no: "The hook is blocking something that can't be done correctly - fix the underlying issue"
-    if_yes: "Continue to step 2"
-
-  # Step 2: Did existing guidance explain the correct approach?
-  guidance_exists:
-    question: "Did the hook (or related docs) tell the agent what TO do?"
-    check_locations:
-      - Hook error message (does it show the fix?)
-      - Related skill documentation
-      - System prompts/instructions
-    if_no: "Add guidance showing the correct approach"
-    if_yes: "Continue to step 3"
-
-  # Step 3: Why didn't the agent follow the guidance?
-  why_not_followed:
-    possibilities:
-      - "Hook pattern didn't match, so agent never saw the guidance"
-      - "Conflicting guidance elsewhere (e.g., 'avoid cd' vs 'cd before delete')"
-      - "Guidance was ambiguous or incomplete"
-    action: "Fix the specific gap identified"
-```
-
-**Example - M398:**
-
-```yaml
-# Agent used: git -C /workspace worktree remove /path --force
-# Hook blocked: git worktree remove (without -C flag)
-# Result: Hook didn't fire, shell cwd was deleted
-
-investigation:
-  right_thing_possible: true  # "cd /workspace && git worktree remove" works
-  guidance_exists: true       # work-merge skill shows correct pattern
-  why_not_followed: "Hook pattern didn't match 'git -C' variant"
-
-fixes_needed:
-  - pattern_fix: "Update hook regex to match git -C flag"
-  - guidance_fix: "Clarify when cd IS appropriate despite 'avoid cd' guidance"
-```
-
-**Key insight:** If the agent worked around a hook, the hook's job is to BLOCK the wrong action
-AND SHOW the right action. Both the blocking pattern AND the guidance must be correct.
+Check: Was the right thing possible? Did guidance exist? Why wasn't it followed?
 
 ### 5. Check for Context Degradation Patterns
 
@@ -908,93 +797,15 @@ BEFORE proceeding to "Record Learning", you MUST complete this gate:
 
 ### 9b. Verify Fix Doesn't Introduce Priming (M370)
 
-**MANDATORY: Check if your fix introduces new priming patterns.**
+**MANDATORY: After editing documentation, read `PRIMING-VERIFICATION.md` to verify no new priming introduced.**
 
-When implementing documentation fixes, you may inadvertently introduce the same priming
-patterns that cause fabrication (M346). After editing files, verify:
-
-```yaml
-priming_check:
-  # Check each file you edited in Step 9
-  for_each_edited_file:
-    contains_output_format_example: true|false
-    if_true:
-      has_concrete_values: true|false  # e.g., "1.0", "0.87", "SUCCESS"
-      has_placeholders: true|false     # e.g., "{actual score}", "{status}"
-
-  # BLOCKING: If concrete values found in output format
-  if_concrete_values:
-    action: "Replace with descriptive placeholders"
-    examples:
-      wrong: "| file1.md | 1.0 | PASS |"
-      right: "| {filename} | {actual score from /compare-docs} | {PASS|FAIL} |"
-```
-
-**Common priming patterns to avoid in fixes:**
-
-| Pattern | Risk | Fix |
-|---------|------|-----|
-| Result table with scores | Agent produces those exact scores | Use `{actual score}` placeholder |
-| Status examples like "SUCCESS" | Agent reports success without verification | Use `{status}` |
-| Concrete token counts | Agent fabricates similar counts | Use `{count}` |
-
-**Why this gate exists (M370):** When fixing M369, example result tables were added with
-concrete values (1.0, 0.87), which would prime agents to produce those values instead
-of running actual validation.
+Quick check: Do edited files contain concrete values (1.0, SUCCESS) in output formats? Replace with placeholders.
 
 ### 9c. Check Related Files for Similar Mistakes (M341)
 
-**MANDATORY: After fixing a file, check if similar files have the same vulnerability.**
+**MANDATORY: After fixing a file, read `RELATED-FILES-CHECK.md` to find and fix similar vulnerabilities.**
 
-Many mistakes reflect patterns that exist across multiple files. After implementing the fix:
-
-1. **Identify the pattern fixed:**
-   ```yaml
-   pattern_fixed:
-     file_type: "skill"  # skill, hook, handler, config, etc.
-     vulnerability: "weak copy-paste instruction for script output content"
-     fix_applied: "added prominent MANDATORY OUTPUT REQUIREMENT header"
-   ```
-
-2. **Find related files:**
-   ```bash
-   # Examples by file type:
-
-   # Skills with script output content
-   grep -l '!\`' plugin/skills/*/SKILL.md
-
-   # Handlers with similar validation
-   find plugin/hooks -name "*.py" -exec grep -l "similar_pattern" {} \;
-
-   # Config files with same structure
-   find . -name "cat-config.json"
-   ```
-
-3. **Check each related file for the same vulnerability:**
-   - Read the file
-   - Determine if it has the same weakness
-   - If yes: apply the same fix pattern
-
-4. **Record related fixes:**
-   ```yaml
-   related_files_checked:
-     - path: "plugin/skills/help/SKILL.md"
-       had_vulnerability: true
-       fixed: true
-     - path: "plugin/skills/work/SKILL.md"
-       had_vulnerability: true
-       fixed: true
-     - path: "plugin/skills/init/SKILL.md"
-       had_vulnerability: false
-       reason: "uses named box references instead of direct copy-paste"
-   ```
-
-**Why this matters:** Fixing one file while leaving identical vulnerabilities in similar files
-means the same mistake WILL recur. Proactive checking prevents future M-numbers for the same root cause.
-
-**Skip this step only when:**
-- The fix is truly unique to one file (e.g., typo fix)
-- No similar files exist (verified, not assumed)
+Skip only when: fix is unique to one file (typo) or no similar files exist (verified).
 
 ### 10. Verify Prevention Works
 
@@ -1262,189 +1073,17 @@ to give user explicit choice.
 
 ## Examples
 
-### Context-Related Mistake
-
-```yaml
-mistake:
-  type: "Forgot earlier requirement"
-  tokens_at_error: 110000
-  compactions: 3
-
-analysis:
-  context_related: YES
-  pattern: "Requirement stated at 15K tokens, forgotten by 110K"
-
-prevention:
-  type: earlier_decomposition
-  action: "Split issue at 40K tokens, before degradation"
-```
-
-### Non-Context-Related Mistake
-
-```yaml
-mistake:
-  type: "Used wrong API method"
-  tokens_at_error: 25000
-  compactions: 0
-
-analysis:
-  context_related: NO
-  pattern: "Simple misunderstanding of API, not context issue"
-
-prevention:
-  type: validation
-  action: "Add API usage verification in code review checklist"
-```
-
-### Ambiguous Case
-
-```yaml
-mistake:
-  type: "Inconsistent code style"
-  tokens_at_error: 75000
-  compactions: 1
-
-analysis:
-  context_related: POSSIBLY
-  pattern: "Style was consistent until compaction, then diverged"
-  contributing_factors:
-    - Compaction lost style context
-    - No automated style check
-
-prevention:
-  type: hybrid
-  actions:
-    - "Add automated style linting (code fix)"
-    - "Lower threshold to avoid compaction (CAT-specific)"
-```
+**For context analysis examples:** Read `EXAMPLES.md` for context-related, non-context, and ambiguous cases.
 
 ## Anti-Patterns
 
-### Always analyze token metrics in 5-whys
+**For common mistakes when using this skill:** Read `ANTI-PATTERNS.md`.
 
-```yaml
-# ❌ Standard analysis only
-five_whys:
-  - "Why error?" -> "Bad implementation"
-  - "Why bad?" -> "Misunderstood requirements"
-  # Stops here, misses context cause
-
-# ✅ CAT-specific analysis
-five_whys:
-  - "Why error?" -> "Bad implementation"
-  - "Why bad?" -> "Misunderstood requirements"
-  - "Why misunderstood?" -> "Earlier context not referenced"
-  - "Why not referenced?" -> "95K tokens, context pressure"
-  - "Why 95K tokens?" -> "Issue not decomposed"
-```
-
-### Distinguish context-related from non-context mistakes
-
-```yaml
-# ❌ Blaming context for everything
-mistake: "Typo in variable name"
-analysis: "Must be context degradation"
-
-# ✅ Honest analysis
-mistake: "Typo in variable name"
-analysis: |
-  Tokens at error: 15000 (15% of context)
-  Compactions: 0
-  Context-related: NO
-  Actual cause: Simple typo, needs spellcheck
-```
-
-### Base threshold adjustments on data
-
-```yaml
-# ❌ Arbitrary threshold change
-new_threshold: 20000  # "Let's be extra safe"
-
-# ✅ Data-driven adjustment
-analysis: |
-  Errors consistently occur after 70K tokens.
-  Quality degradation measurable at 60K.
-  Setting threshold at 50K provides safety margin.
-new_threshold: 50000
-```
-
-### Always verify prevention works
-
-```yaml
-# ❌ Implement and forget
-prevention: "Lower threshold to 30%"
-# Never verified!
-
-# ✅ Verify prevention works
-prevention: "Lower threshold to 30%"
-verification:
-  - Run similar issue
-  - Confirm decomposition triggers at 30%
-  - Confirm mistake type doesn't recur
-```
-
-### Use robust positive verification (check for correct format)
-
-```yaml
-# ❌ Check for specific failure pattern (fragile)
-prevention: |
-  grep "TODO" file.java  # Only catches THIS exact text
-  # What if next failure uses "FIXME", "XXX", "HACK", etc.?
-
-# ✅ Check for correct format (robust)
-prevention: |
-  ./mvnw checkstyle:check  # Verifies code meets all style requirements
-  # Catches ANY code quality failure, not just anticipated ones
-
-# Key insight: Verify what you WANT, not what you DON'T want
-```
-
-### Invoke the skill first when user says "Learn from mistakes" (M072)
-
-When user explicitly requests mistake analysis:
-
-```yaml
-# ❌ WRONG: Fix immediate problem, skip skill invocation
-user: "Learn from mistakes: you didn't commit before approval"
-agent: [makes the commit]
-agent: "Done, here's the approval gate again"
-# Mistake not recorded, will recur!
-
-# ✅ CORRECT: Invoke skill, analyze, record, THEN fix
-user: "Learn from mistakes: you didn't commit before approval"
-agent: [invokes /cat:learn skill]
-agent: [performs 5-whys analysis]
-agent: [records in mistakes.json]
-agent: [implements prevention]
-agent: [then fixes immediate problem]
-```
-
-**Key principle:** "Learn from mistakes" is a trigger to invoke this skill, not a description of what
-to conceptually do. Always invoke the actual skill.
-
-### Escalate to enforcement when documentation failed (M084)
-
-```yaml
-# ❌ WRONG: Documentation already existed and was ignored
-situation: "Workflow said MANDATORY but agent ignored it"
-recorded_prevention:
-  type: documentation
-  path: "work.md"  # Same file that was already ignored!
-# This is NOT prevention - the documentation already failed!
-
-# ✅ CORRECT: Escalate to enforcement
-situation: "Workflow said MANDATORY but agent ignored it"
-analysis: "Documentation alone is insufficient - must automate"
-recorded_prevention:
-  type: hook
-  path: ".claude/hooks/enforce-lock-protocol.sh"
-  action: "Created hook that blocks lock bypass attempts"
-# NEW mechanism that didn't exist before
-```
-
-**Key insight:** If you're pointing to a file that already contained the instruction you violated,
-you have NOT implemented prevention. You've just documented your failure to read. Escalate to
-automation that makes the incorrect behavior impossible or blocked.
+Key anti-patterns to avoid:
+- Stopping 5-whys too early (missing context degradation as root cause)
+- Blaming context for non-context mistakes
+- Implementing prevention without verification
+- Recording documentation prevention when documentation already failed (escalate to hooks instead)
 
 ## Related Skills
 
