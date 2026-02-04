@@ -1640,6 +1640,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Check plugin/hooks/hooks.json for plugin hook registration, not .claude/settings.json. The .claude/rules/hooks.md file explains the distinction."
+    },
+    {
+      "id": "M407",
+      "timestamp": "2026-02-04T09:05:00Z",
+      "category": "protocol_violation",
+      "description": "Summarized /cat:status output instead of copying verbatim box as required by MANDATORY OUTPUT REQUIREMENT",
+      "root_cause": "Stop hook (M402) only fires at turn end - if user continues conversation, enforcement never triggers. Documentation instruction alone insufficient to override default summarization behavior.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/prompt_handlers/verbatim_output_skills.py",
+      "pattern_keywords": [
+        "verbatim",
+        "copy-paste",
+        "status",
+        "summarization",
+        "pre-rendered"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M402",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a skill has MANDATORY OUTPUT REQUIREMENT, copy-paste the rendered output exactly without summarization or interpretation"
     }
   ]
 }
