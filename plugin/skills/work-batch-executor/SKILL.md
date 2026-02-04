@@ -154,8 +154,9 @@ Task tool:
     ## EXECUTION STEPS FROM PLAN.MD (M391 - follow these EXACTLY):
     ${EXECUTION_STEPS}
 
-    **CRITICAL:** If execution steps reference skills (e.g., /cat:shrink-doc), you MUST invoke
-    those skills using the Skill tool. Do NOT manually implement what the skill does.
+    **CRITICAL REQUIREMENTS (M414):**
+    - If execution steps reference skills (e.g., /cat:shrink-doc), you MUST invoke those skills using the Skill tool. Do NOT manually implement what the skill does.
+    - Update STATE.md in the SAME commit as the implementation (status: complete, progress: 100%)
 
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-execute/SKILL.md
 

@@ -1789,6 +1789,60 @@
         "https://github.com/anthropics/claude-code/issues/10373",
         "https://github.com/anthropics/claude-code/issues/12151"
       ]
+    },
+    {
+      "id": "M414",
+      "timestamp": "2026-02-04T15:34:14-05:00",
+      "category": "protocol_violation",
+      "description": "Execution subagent completed implementation but did not update STATE.md in the same commit, despite work-execute CRITICAL REQUIREMENTS stating Update STATE.md in SAME commit as implementation",
+      "root_cause": "work-execute skill Step 3 bullet 3 says update STATE.md in same commit but batch-executor delegation prompt did not include this requirement when spawning work-execute. The subagent only receives the prompt, not the skill file directly.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "STATE.md",
+        "commit",
+        "critical-requirements",
+        "delegation-prompt",
+        "same-commit"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M367",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Include STATE.md update requirement in CRITICAL REQUIREMENTS section of execution delegation prompt so subagent receives the guidance."
+    },
+    {
+      "id": "M415",
+      "timestamp": "2026-02-04T15:34:14-05:00",
+      "category": "false_assertion",
+      "description": "Prepare phase stated consolidate-delegation-guidance task was not available when it was actually marked as completed duplicate earlier in the same session. Task existed but was filtered out.",
+      "root_cause": "get-available-issues.sh correctly skips completed tasks, but the human-readable message said task was not available which is ambiguous. Task was available as a STATE.md entry but not available for execution. Message should distinguish between task-not-found vs task-complete.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-available-issues.sh",
+      "pattern_keywords": [
+        "prepare",
+        "task-not-found",
+        "completed",
+        "filtered",
+        "false-negative"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a specifically requested task is not returned, check if it exists but is completed vs truly not found. Return different error messages for each case."
     }
   ]
 }

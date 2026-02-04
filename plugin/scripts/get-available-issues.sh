@@ -569,11 +569,15 @@ find_next_issue() {
             return 1
         fi
 
-        # Check status
+        # Check status (M415: distinguish task-complete from task-not-found)
         local status
         status=$(get_issue_status "$issue_dir/STATE.md")
         if [[ "$status" != "pending" && "$status" != "in-progress" ]]; then
-            echo '{"status":"not_executable","message":"Issue status is '"$status"'","issue_id":"'"$TARGET"'"}'
+            if [[ "$status" == "completed" ]]; then
+                echo '{"status":"already_complete","message":"Issue '"$TARGET"' is already completed - no work needed","issue_id":"'"$TARGET"'"}'
+            else
+                echo '{"status":"not_executable","message":"Issue status is '"$status"' (not pending/in-progress)","issue_id":"'"$TARGET"'"}'
+            fi
             return 1
         fi
 
