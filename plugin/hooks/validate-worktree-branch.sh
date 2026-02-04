@@ -11,7 +11,8 @@ trap 'echo "ERROR in $(basename "$0") line $LINENO: $BASH_COMMAND" >&2; exit 1' 
 COMMAND="${1:-}"
 
 # Skip if not a git command that might switch branches
-if ! echo "$COMMAND" | grep -qE "^git (checkout|switch|worktree)"; then
+# Pattern handles: git -C /path, git --git-dir=/path, git -c config.key=value
+if ! echo "$COMMAND" | grep -qE "^git(\s+(-C\s+\S+|--git-dir=\S+|-c\s+\S+))?\s+(checkout|switch|worktree)"; then
     exit 0
 fi
 

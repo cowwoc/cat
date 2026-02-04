@@ -17,7 +17,8 @@ class BlockMainRebaseHandler:
         command_lower = command.lower()
 
         # Check for git checkout/switch in main worktree
-        if re.search(r'(^|[;&|])\s*git\s+(checkout|switch)\s+', command_lower):
+        # Pattern handles: git -C /path, git --git-dir=/path, git -c config.key=value
+        if re.search(r'(^|[;&|])\s*git(\s+(-C\s+\S+|--git-dir=\S+|-c\s+\S+))?\s+(checkout|switch)\s+', command_lower):
             # Check if command cd's to /workspace
             if re.search(r"cd\s+(/workspace|['\"]*/workspace['\"]*)(\s|&&|;|$)", command):
                 # Extract target
@@ -68,7 +69,8 @@ WHAT TO DO INSTEAD:
                     pass
 
         # Check for git rebase command
-        if not re.search(r'(^|[;&|])\s*git\s+rebase', command_lower):
+        # Pattern handles: git -C /path, git --git-dir=/path, git -c config.key=value
+        if not re.search(r'(^|[;&|])\s*git(\s+(-C\s+\S+|--git-dir=\S+|-c\s+\S+))?\s+rebase', command_lower):
             return None
 
         # Check if rebasing on main

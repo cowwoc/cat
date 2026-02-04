@@ -10,7 +10,7 @@
 Fixed hook patterns to handle git flag variations:
 - validate-worktree-branch.sh: Added support for -C, --git-dir, -c flags
 - block_main_rebase.py: Updated checkout/switch/rebase patterns
-- Added test coverage in test_git_flag_patterns.py
+- Added test coverage in test_git_flag_patterns.py (12 test cases)
 
 All acceptance criteria met:
 - [x] Bug fixed: Hook patterns match git commands with -C flag
