@@ -246,8 +246,16 @@ multiple_mistakes_check:
 **When multiple independent mistakes are discovered:**
 
 1. **Complete the current `/cat:learn`** for the first mistake you identified
+   - Full RCA (Steps 1-4)
+   - Implement prevention (Step 9) - **actually edit files**
+   - Record learning (Step 11)
+   - Commit changes (Step 12)
 2. **Invoke `/cat:learn` again** for each additional independent mistake
+   - Each invocation runs the FULL workflow: research → RCA → **implement fix** → record → commit
 3. **Each gets its own M-number**, RCA, and prevention
+
+**CRITICAL: Each /cat:learn invocation must IMPLEMENT prevention, not just record the mistake.**
+Recording without fixing is not learning - the mistake will recur.
 
 **Example:**
 
@@ -258,23 +266,25 @@ multiple_mistakes_check:
 mistake_1:
   description: "Handler didn't exist for /cat:delegate preprocessing"
   action: "Complete /cat:learn -> M377"
+  # Full workflow: RCA → implement handler fix → record → commit
 
 mistake_2:
   description: "Agent didn't acknowledge user message mid-operation"
   action: "Invoke /cat:learn again -> M378"
+  # Full workflow: RCA → implement acknowledgment fix → record → commit
 
-# Each mistake gets separate /cat:learn invocation with full RCA workflow
+# Each mistake gets FULL /cat:learn workflow including prevention implementation
 ```
 
 **Why separate invocations matter:**
 - Each mistake may have different root causes requiring different RCA methods
-- Each prevention needs its own verification
+- Each prevention needs its own implementation and verification
 - Retrospective tracking is more accurate with distinct M-numbers
 - Patterns are easier to identify when mistakes are properly separated
 
 **BLOCKING: Do not bundle unrelated mistakes.** If you discover a second independent issue during
-investigation, note it, complete the current `/cat:learn`, then invoke `/cat:learn` again for the
-second issue.
+investigation, note it, complete the current `/cat:learn` (including fix), then invoke `/cat:learn`
+again for the second issue (including its fix).
 
 ### 5. Check for Context Degradation Patterns
 
