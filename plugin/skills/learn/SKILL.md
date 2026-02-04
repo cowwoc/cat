@@ -287,10 +287,10 @@ Ask these architectural questions:
 
 | Question | If YES |
 |----------|--------|
-| Is the LLM being asked to fight its training? | Consider bypassing LLM entirely |
-| Does the task require LLM intelligence? | If no, use scripted automation |
+| Is the LLM being asked to fight its training? | Use user-centric framing (see below) |
+| Does the task require LLM intelligence? | If no, use preprocessing scripts |
 | Does system prompt guidance conflict with task? | The task design is flawed |
-| Are we asking for mechanical output? | Use hook with `continue: false` |
+| Are we asking for mechanical output? | Use user-centric framing + enforcement hooks |
 
 **LLM Training Conflicts (M408 Pattern):**
 
@@ -299,29 +299,16 @@ training will repeatedly fail despite documentation fixes:
 
 | Task Type | Conflicts With | Solution |
 |-----------|---------------|----------|
-| Verbatim copy-paste | "Be concise" training | Bypass LLM with direct output |
+| Verbatim copy-paste | "Be concise" training | User-centric framing + enforcement hook |
 | Mechanical formatting | Helpful synthesis | Use preprocessing scripts |
-| Exact reproduction | Interpretation instinct | Hook with stopReason |
+| Exact reproduction | Interpretation instinct | User-centric framing |
 | Strict protocol following | Flexible helpfulness | Enforcement hooks |
 
-**Bypass LLM Pattern:**
+**NOTE (M410):** The `continue: false` + `stopReason` bypass pattern does NOT work.
+Claude Code adds "Operation stopped by hook:" prefix to all stopReason values, making output appear
+like an error message. Do not attempt to bypass the LLM for output - use user-centric framing instead.
 
-For tasks that don't require LLM intelligence, use UserPromptSubmit hook to output directly:
-
-```python
-# In hook, return:
-{
-    "continue": False,  # Stop LLM processing
-    "stopReason": script_output  # Display directly to user
-}
-```
-
-This makes the failure mode IMPOSSIBLE - no LLM decision-making occurs.
-
-**NOTE:** `stopReason` displays as a termination message, NOT a conversational response.
-If you need the output to appear as a normal response, use the Task-Oriented Framing pattern below.
-
-**Task-Oriented Framing Pattern (M408 empirical finding):**
+**User-Centric Framing Pattern (M408 empirical finding):**
 
 When LLM involvement is required but verbatim output is needed, use user-centric framing:
 
@@ -342,12 +329,12 @@ minimal - remove all explanatory content that could prime analytical thinking.
 ```json
 {
   "category": "architectural_flaw",
-  "root_cause": "ARCHITECTURAL: [explain why LLM involvement is the problem]",
+  "root_cause": "ARCHITECTURAL: [explain the training conflict]",
   "immediate_fix": { "type": "...", "description": "..." },
   "deeper_fix_needed": {
-    "type": "architecture",
-    "description": "Bypass LLM entirely for this task",
-    "implementation": "[specific hook/script approach]"
+    "type": "framing",
+    "description": "Use user-centric framing with enforcement hook",
+    "implementation": "User-centric prompt + PostToolUse validation hook"
   },
   "recurrence_chain": ["M001", "M002", "M003"]
 }
