@@ -1339,6 +1339,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When NO_TASKS due to locks, suggest /cat:cleanup or waiting, never previous versions"
+    },
+    {
+      "id": "M397",
+      "timestamp": "2026-02-04T05:40:00Z",
+      "category": "code_bug",
+      "description": "cleanup_handler._get_locks() used json.loads() but locks use key=value format",
+      "root_cause": "Format mismatch between issue-lock.sh (writer) and cleanup handler (reader), with silent exception handling",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/skill_handlers/cleanup_handler.py",
+      "pattern_keywords": [
+        "format_mismatch",
+        "json",
+        "key_value",
+        "silent_exception",
+        "lock_parsing"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Parse key=value format matching issue-lock.sh output"
     }
   ]
 }
