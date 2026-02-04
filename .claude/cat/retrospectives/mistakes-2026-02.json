@@ -1703,6 +1703,33 @@
         "m410_approach": "Echo this: framing - occasional summarization but clean output",
         "decision": "Clean output is more important than preventing rare summarization failures"
       }
+    },
+    {
+      "id": "M411",
+      "timestamp": "2026-02-04T14:00:47-05:00",
+      "category": "protocol_violation",
+      "description": "Main agent added preamble ('I'll display the status using the echo skill.') before invoking /cat:status despite 'Without any preamble' instruction",
+      "root_cause": "VerbatimOutputHandler focused on output copying but not silent invocation. 'DO NOT add commentary' framing triggers analytical mode; user-centric framing ('The user expects...') aligns with helpful training.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/prompt_handlers/verbatim_output_skills.py",
+      "pattern_keywords": [
+        "preamble",
+        "silent_invocation",
+        "user_centric_framing",
+        "verbatim_output",
+        "status_skill"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": "M410",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Invoke verbatim output skills silently (no announcement) and copy output exactly. User-centric framing ('The user expects...') is more effective than instructional framing ('DO NOT...')."
     }
   ]
 }
