@@ -1478,6 +1478,33 @@
         "${CLAUDE_PROJECT_DIR}/plugin/skills/token-report/SKILL.md",
         "${CLAUDE_PROJECT_DIR}/plugin/skills/render-diff/SKILL.md"
       ]
+    },
+    {
+      "id": "M402",
+      "timestamp": "2026-02-04T08:18:53-05:00",
+      "category": "protocol_violation",
+      "description": "Agent summarized /cat:status output instead of copy-pasting the status box verbatim despite MANDATORY OUTPUT REQUIREMENT header",
+      "root_cause": "Documentation-level prevention (M341, M395, M401) failed 3+ times - agent default behavior of summarization overrides text instructions without enforcement",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "/workspace/plugin/hooks/enforce-status-output.py",
+      "pattern_keywords": [
+        "status",
+        "copy-paste",
+        "verbatim",
+        "prerendered",
+        "summarization"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M401",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output the complete status box verbatim between START and END markers without summarizing or interpreting"
     }
   ]
 }

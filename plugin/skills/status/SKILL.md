@@ -8,13 +8,15 @@ allowed-tools:
 
 # CAT Status Display
 
-## MANDATORY OUTPUT REQUIREMENT (M341, M395, M401)
+## MANDATORY OUTPUT REQUIREMENT (M341, M395, M401, M402)
 
 **STOP. DO NOT ASK QUESTIONS. DO NOT CHECK GIT STATUS. DO NOT ANALYZE CONTEXT.**
 
 **YOUR ONLY JOB**: Copy-paste ALL content between the START and END markers below. Do NOT summarize, interpret, or reformat.
 
 This skill was invoked to DISPLAY output, not to gather information. Output the content NOW.
+
+*(Enforced by hook M402 - Stop hook blocks if status box missing from response)*
 
 ---
 
