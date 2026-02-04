@@ -1207,6 +1207,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When PLAN.md references skills, MUST invoke them with Skill tool and report ACTUAL output values"
+    },
+    {
+      "id": "M392",
+      "timestamp": "2026-02-04T05:15:00Z",
+      "category": "shell_corruption",
+      "description": "Bash shell became unusable after merge subagent deleted worktree directory that main agent shell was inside",
+      "root_cause": "Main agent ran commands with cd into worktree directory. When merge subagent completed and removed worktree (AUTO_REMOVE=true), main agent shell lost its working directory reference, causing all subsequent commands to fail with exit code 1.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "worktree",
+        "cd",
+        "shell_corruption",
+        "cwd_deleted",
+        "merge_cleanup"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Main agent must NEVER cd into worktree directories. Use git -C <path> or delegate all worktree operations to subagents which have their own shell sessions."
     }
   ]
 }
