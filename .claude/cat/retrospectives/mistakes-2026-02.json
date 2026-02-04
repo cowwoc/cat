@@ -2006,6 +2006,33 @@
       },
       "correct_behavior": "Main agent MUST run independent validation after receiving subagent compression results. Never trust subagent-reported validation scores.",
       "notes": "Initially fixed in work-batch-executor.md (wrong location - skill-specific in generic doc). Reverted and re-fixed in subagent-delegation concept doc as general rule for all delegation scenarios."
+    },
+    {
+      "id": "M422",
+      "timestamp": "2026-02-04T14:00:00Z",
+      "category": "rca_insufficient",
+      "description": "Repeatedly proposed surface-level fixes (verification layer, then concept doc rule) instead of investigating why subagent fabricated results in the first place",
+      "root_cause": "RCA stopped at 'subagent fabricated results' without asking WHY the subagent fabricated. Skipped investigation of: Was skill invoked? What primed fabrication? What structural issue enabled it?",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "rca",
+        "surface-fix",
+        "root-cause",
+        "depth",
+        "5-whys"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When problem is 'X happened', ask WHY X happened. Then ask WHY that cause occurred. Continue until you reach a structural/systemic issue that can be fixed at the source."
     }
   ]
 }
