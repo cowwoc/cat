@@ -1,14 +1,14 @@
 """
-Verbatim output skills reminder handler.
+Verbatim output skills handler.
 
-M407: Certain skills require verbatim copy-paste of pre-rendered output.
-This handler detects invocation of those skills and injects a prominent
-reminder at the START of processing (before the agent responds), rather
-than relying on Stop hook (M402) which fires too late if user continues.
+M407/M411: Certain skills require silent invocation and verbatim output.
+This handler uses user-centric framing to align with LLM helpful training:
+- "The user expects..." triggers helpful compliance
+- Short, direct instructions avoid analytical mode
 
 Skills with verbatim output requirements:
-- /cat:status - must copy status box exactly
-- /cat:help - must copy help box exactly
+- /cat:status - silent invocation, copy status box exactly
+- /cat:help - silent invocation, copy help box exactly
 """
 
 import re
@@ -20,23 +20,10 @@ VERBATIM_OUTPUT_SKILLS = {
     "help": "help box with command reference",
 }
 
-VERBATIM_REMINDER_TEMPLATE = """## ⚠️ VERBATIM OUTPUT REQUIRED (M407)
+VERBATIM_REMINDER_TEMPLATE = """The user expects you to invoke `/cat:{skill}` silently and display its output verbatim.
 
-The skill you're about to execute (`/cat:{skill}`) has pre-rendered output that MUST be copied verbatim.
-
-**DO NOT:**
-- Summarize the output
-- Interpret or reformat it
-- Add your own commentary before/around the box
-- Describe what the output shows
-
-**DO:**
-- Copy-paste the ENTIRE {description} exactly as shown
-- Include all box borders (╭── ╰──)
-- Preserve all formatting
-
-The MANDATORY OUTPUT REQUIREMENT in the skill is not a suggestion - it is a blocking requirement.
-Your response MUST contain the rendered box characters or the Stop hook (M402) will block you."""
+**Silent invocation:** Call the Skill tool immediately without announcing what you're doing.
+**Verbatim output:** Copy-paste the {description} exactly as rendered, including all box borders."""
 
 
 class VerbatimOutputHandler:
