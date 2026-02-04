@@ -65,57 +65,6 @@ def extract_skill_name(prompt: str) -> str | None:
     return None
 
 
-import subprocess
-
-
-# Skills that bypass LLM entirely (M409: LLM cannot reliably copy verbatim)
-# These skills output directly to user via stopReason, no LLM processing
-# M410: Reverted - stopReason adds "Operation stopped by hook:" prefix which is
-# undesirable. Now using user-centric framing: "The user wants you to respond
-# with this text verbatim:" which aligns with LLM helpful training.
-BYPASS_LLM_SKILLS: set[str] = set()  # Empty - all skills go through LLM with framing
-
-
-def run_bypass_skill(skill_name: str, project_root: str, plugin_root: str) -> str | None:
-    """
-    Run a skill that bypasses LLM entirely, returning its output directly.
-
-    M409: After 8 recurrences of LLM summarizing instead of echoing verbatim,
-    we now bypass the LLM for mechanical output skills.
-    """
-    script_map = {
-        "status": ("scripts/get-status-display.sh", ["--project-dir", project_root or "."]),
-        "help": ("scripts/get-help-display.sh", []),
-    }
-
-    if skill_name not in script_map:
-        return None
-
-    script_path, args = script_map[skill_name]
-    script = Path(plugin_root) / script_path
-    if not script.exists():
-        return None
-
-    try:
-        result = subprocess.run(
-            [str(script)] + args,
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-        if result.returncode == 0:
-            return result.stdout
-        else:
-            sys.stderr.write(f"{skill_name} script failed: {result.stderr}\n")
-            return None
-    except subprocess.TimeoutExpired:
-        sys.stderr.write(f"{skill_name} script timed out\n")
-        return None
-    except Exception as e:
-        sys.stderr.write(f"{skill_name} script error: {e}\n")
-        return None
-
-
 def main():
     # Read hook input
     hook_data = read_hook_input()
@@ -142,21 +91,10 @@ def main():
         else:
             project_root = ""
 
-    # Check if this is a skill that bypasses LLM entirely (M409)
-    skill_name = extract_skill_name(user_prompt)
-    if skill_name and skill_name in BYPASS_LLM_SKILLS:
-        bypass_output = run_bypass_skill(skill_name, project_root, str(SCRIPT_DIR.parent))
-        if bypass_output:
-            # Return with continue: false to bypass LLM
-            # Output goes directly to user via stopReason
-            response = {
-                "continue": False,
-                "stopReason": bypass_output.rstrip()
-            }
-            print(json.dumps(response))
-            return
-
     # Collect all outputs for regular skills
+    # Note: M409 attempted LLM bypass via stopReason but it adds "Operation stopped
+    # by hook:" prefix (M410). Now using user-centric framing in skills instead.
+    skill_name = extract_skill_name(user_prompt)
     outputs = []
 
     # 1. Run prompt handlers (pattern checking for all prompts)
