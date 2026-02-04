@@ -1234,6 +1234,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Main agent must NEVER cd into worktree directories. Use git -C <path> or delegate all worktree operations to subagents which have their own shell sessions."
+    },
+    {
+      "id": "M393",
+      "timestamp": "2026-02-04T12:00:00Z",
+      "category": "misleading_documentation",
+      "description": "Merge skill created merge commit instead of linear fast-forward due to fallback pattern in documentation",
+      "root_cause": "work-merge skill Step 3 contained fallback pattern (git merge --ff-only || git merge --no-edit) that creates non-linear merge commits when base branch has diverged. The correct approach is to rebase task branch onto current base before merging.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-merge/SKILL.md",
+      "pattern_keywords": [
+        "merge",
+        "linear history",
+        "fast-forward",
+        "rebase",
+        "fallback"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Rebase task branch onto current base branch before attempting fast-forward merge. Never fall back to merge commits - linear history is mandatory."
     }
   ]
 }
