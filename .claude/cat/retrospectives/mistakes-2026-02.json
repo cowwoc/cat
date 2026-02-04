@@ -1286,6 +1286,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Check base branch git log for commits mentioning task name before returning READY"
+    },
+    {
+      "id": "M395",
+      "timestamp": "2026-02-04T05:18:18Z",
+      "category": "protocol_violation",
+      "description": "Agent output only NEXT STEPS section for /cat:status, omitting the preprocessed status box containing project progress",
+      "root_cause": "Skill said 'After the status box, output:' which was misinterpreted as 'start output here' instead of 'additionally output'. Combined with M341's 'content below' being ambiguous about what 'below' means when multiple sections exist.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/status/SKILL.md",
+      "pattern_keywords": [
+        "status",
+        "copy-paste",
+        "verbatim",
+        "pre-rendered",
+        "M341-recurrence"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M341",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Copy ALL content between explicit START and END markers. Markers are HTML comments that bracket the exact content to copy."
     }
   ]
 }
