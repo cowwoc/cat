@@ -14,6 +14,20 @@ Execute all work phases (execute, review, merge) in a single subagent context. T
 minimizes visible output to the user by keeping intermediate tool calls within the subagent
 (invisible to parent conversation).
 
+## CRITICAL: Approval Gate Enforcement (M390)
+
+**When trust != "high", you MUST return APPROVAL_REQUIRED status after review phase.**
+
+Do NOT proceed to merge. Return control to parent skill for user approval.
+
+| Trust Level | After Review Phase |
+|-------------|-------------------|
+| low | Return APPROVAL_REQUIRED |
+| medium | Return APPROVAL_REQUIRED |
+| high | Continue to merge |
+
+**Violation of this rule bypasses user consent and is a critical protocol failure.**
+
 **Architecture:** Main agent shows Banner1 (Preparing), spawns this batch executor which
 internally spawns phase subagents. User sees clean output: Banner1 -> (single spawn) ->
 Banner2/3/4 as text output -> Result.
@@ -174,18 +188,24 @@ Task tool:
 ```
 
 Handle review result:
-- APPROVED: Continue to approval gate
-- CONCERNS: Note concerns, continue to approval gate
+- REVIEW_PASSED: Continue to Step 4 (approval gate check)
+- CONCERNS: Note concerns, continue to Step 4
 - REJECTED: If trust=medium auto-loop to fix, else return for user decision
 
-### Step 4: Approval Gate (trust != high)
+**NOTE (M390):** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
+User approval is a SEPARATE gate in Step 4.
 
-**If trust != high:**
+### Step 4: Approval Gate (trust != high) - MANDATORY
+
+**CRITICAL (M390): This step is MANDATORY when trust != "high".**
+
+**If trust == "low" or trust == "medium":**
 
 Read task goal from `${TASK_PATH}/PLAN.md` (extract ## Goal section).
 
-Return APPROVAL_REQUIRED status with execution and review results. The parent skill will
-handle the AskUserQuestion interaction.
+**STOP HERE. Return APPROVAL_REQUIRED status.** Do NOT proceed to merge.
+
+The parent skill will handle user approval via AskUserQuestion.
 
 ```json
 {

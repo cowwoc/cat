@@ -528,13 +528,16 @@ for review in reviews:
 
 **Decision rules:**
 
+**NOTE (M390):** These statuses indicate stakeholder review outcome, NOT user approval to merge.
+User approval is a separate gate that follows stakeholder review.
+
 | Condition | Decision |
 |-----------|----------|
 | CRITICAL_COUNT > 0 | REJECTED - Must fix critical issues |
 | REJECTED_COUNT > 0 | REJECTED - Stakeholder rejected |
 | HIGH_COUNT >= 3 | REJECTED - Too many high concerns |
-| HIGH_COUNT > 0 | CONCERNS - Document but proceed |
-| Otherwise | APPROVED - Proceed to user approval |
+| HIGH_COUNT > 0 | CONCERNS - Document but proceed to user approval |
+| Otherwise | REVIEW_PASSED - Proceed to user approval |
 
 </step>
 

@@ -29,11 +29,14 @@ The main agent provides:
 
 ## Output Contract
 
+**NOTE (M390):** Review status indicates whether stakeholder review passed, NOT user approval to merge.
+User approval is a separate gate handled by the parent skill.
+
 Return JSON on success:
 
 ```json
 {
-  "status": "APPROVED|CONCERNS|REJECTED",
+  "status": "REVIEW_PASSED|CONCERNS|REJECTED",
   "stakeholders_run": ["requirements", "architect", "security", "design", "testing"],
   "stakeholders_skipped": [
     {"name": "ux", "reason": "No UI changes detected"},
@@ -56,7 +59,7 @@ Return JSON on success:
 
 ```bash
 if [[ "$VERIFY_LEVEL" == "none" ]]; then
-  echo '{"status":"APPROVED","stakeholders_run":[],"concerns":{},"recommendation":"Skipped per config"}'
+  echo '{"status":"REVIEW_PASSED","stakeholders_run":[],"concerns":{},"recommendation":"Skipped per config"}'
   exit 0
 fi
 ```
@@ -91,7 +94,7 @@ Task tool invocation:
     ## Changes (Diff)
     [Git diff for reference]
 
-    Return JSON: {"approval": "APPROVED|CONCERNS|REJECTED", "concerns": [...]}
+    Return JSON: {"approval": "PASS|CONCERNS|REJECTED", "concerns": [...]}
 ```
 
 ### Step 4: Collect Reviews
@@ -104,7 +107,7 @@ Count concerns by severity:
 - Any CRITICAL: Overall REJECTED
 - 3+ HIGH across all: Overall REJECTED
 - Any HIGH: Overall CONCERNS
-- Otherwise: APPROVED
+- Otherwise: REVIEW_PASSED
 
 ### Step 6: Return Result
 
