@@ -1613,6 +1613,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Step 1b MUST check: (1) what primed wrong behavior, (2) whether correct approach was documented. If no documentation for correct approach exists, root cause is missing_documentation not assumption."
+    },
+    {
+      "id": "M406",
+      "timestamp": "2026-02-04T15:30:00Z",
+      "category": "assumption_without_verification",
+      "description": "Assumed plugin hooks need registration in .claude/settings.json; concluded hook 'not registered' when it IS registered in plugin/hooks/hooks.json",
+      "root_cause": "Ambient priming pattern: saw settings.json has hooks section, assumed all hooks go there. Did not search for plugin-specific registration location before concluding.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/hooks.md",
+      "pattern_keywords": [
+        "hook",
+        "registration",
+        "settings.json",
+        "hooks.json",
+        "plugin"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check plugin/hooks/hooks.json for plugin hook registration, not .claude/settings.json. The .claude/rules/hooks.md file explains the distinction."
     }
   ]
 }
