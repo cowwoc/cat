@@ -39,21 +39,3 @@ This skill was invoked to DISPLAY output, not to gather information. Output the 
 **Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
 
 <!-- END COPY HERE -->
-
-<!--
-INTERNAL REFERENCE (NOT FOR AGENT - M402)
-=========================================
-The sections below are for human maintainers only.
-They were REMOVED from agent-visible content because they primed
-analytical/verification behavior instead of verbatim output.
-
-## Verification (for human review)
-- Status box displayed with aligned right-side │ characters
-- Inner boxes have consistent width
-- NEXT STEPS table displayed
-- Legend displayed
-
-## Architecture
-This skill uses direct preprocessing - script renders output before
-Claude sees the skill. Claude should output the content verbatim.
--->

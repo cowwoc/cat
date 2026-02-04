@@ -1512,6 +1512,45 @@
         "how_it_misled": "Verification checklist implied checking/analyzing; Architecture explanation encouraged understanding the system rather than just outputting. Content ordering primed analysis mode.",
         "fix_required": "Move Verification and Architecture sections to HTML comments (not visible to agent) and add Stop hook enforcement as defense-in-depth"
       }
+    },
+    {
+      "id": "M403",
+      "timestamp": "2026-02-04T13:30:00Z",
+      "category": "misleading_documentation",
+      "description": "Agent summarized /cat:status output instead of copy-pasting despite MANDATORY OUTPUT REQUIREMENT. M402 fix (HTML comments) was ineffective because LLM still reads commented content.",
+      "root_cause": "M402's prevention moved explanatory content to HTML comments, but HTML comments are still visible to the LLM. The text 'Claude should output the content verbatim' in the INTERNAL REFERENCE section primes understanding/analytical mode rather than execution mode. Comments don't hide content from the model.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status/SKILL.md",
+      "pattern_keywords": [
+        "html-comments",
+        "priming",
+        "verbatim",
+        "copy-paste",
+        "explanatory-content"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M402",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Output the complete status box verbatim between START and END markers without summarizing or interpreting",
+      "documentation_priming": {
+        "document": "plugin/skills/status/SKILL.md (and render-diff, token-report)",
+        "misleading_section": "INTERNAL REFERENCE section in HTML comments (lines 43-59)",
+        "priming_type": "algorithm_exposure",
+        "how_it_misled": "Even in HTML comments, explanatory text like 'Claude should output the content verbatim' primes understanding mode. LLM reads and processes HTML comments - they are not hidden.",
+        "fix_required": "Actually DELETE the INTERNAL REFERENCE section from skill files, not just comment it out"
+      },
+      "related_files_fixed": [
+        "plugin/skills/status/SKILL.md",
+        "plugin/skills/render-diff/SKILL.md",
+        "plugin/skills/token-report/SKILL.md"
+      ]
     }
   ]
 }
