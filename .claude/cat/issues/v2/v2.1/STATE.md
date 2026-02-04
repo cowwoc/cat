@@ -63,6 +63,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - self-discover-env-vars
 
 ## Issues Pending
+- prevent-plan-md-priming
 - strengthen-hook-patterns
 - consolidate-delegation-guidance
 - migrate-lock-files-to-json
