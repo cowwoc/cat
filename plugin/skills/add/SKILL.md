@@ -1050,17 +1050,110 @@ EOF
 [ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
 ```
 
-Create initial minor version (X.0) with its STATE.md, PLAN.md, and CHANGELOG.md.
+**Create major CHANGELOG.md:**
+
+```bash
+cat > "$VERSION_PATH/CHANGELOG.md" << EOF
+# Major Version $MAJOR Changelog
+
+## [Unreleased]
+
+### Added
+- (pending changes)
+
+---
+*Major version started: $(date +%Y-%m-%d)*
+EOF
+
+[ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Major CHANGELOG.md not created"
+```
+
+**Create initial minor version (X.0):**
+
+Set up variables and use the minor version templates below:
+
+```bash
+MINOR=0
+VERSION_PATH="$VERSION_PATH/v$MAJOR.$MINOR"
+VERSION_SUMMARY="Initial release for major version $MAJOR"
+```
+
+Then execute the three "Create minor [STATE/PLAN/CHANGELOG].md" bash blocks in the minor version
+section below. The templates use `$VERSION_PATH`, `$MAJOR`, `$MINOR`, and `$VERSION_SUMMARY`.
 
 **If VERSION_TYPE is "minor":**
 
 ```bash
 MINOR=$VERSION_NUMBER
 VERSION_PATH="$PARENT_PATH/v$MAJOR.$MINOR"
+VERSION_SUMMARY="$VERSION_DESCRIPTION"
 mkdir -p "$VERSION_PATH/issue"
 ```
 
-Create STATE.md, PLAN.md, and CHANGELOG.md for minor version.
+**Create minor STATE.md:**
+
+```bash
+cat > "$VERSION_PATH/STATE.md" << EOF
+# Minor Version $MAJOR.$MINOR State
+
+## Status
+- **Status:** pending
+- **Progress:** 0%
+- **Started:** $(date +%Y-%m-%d)
+- **Last Updated:** $(date +%Y-%m-%d)
+
+## Issues Pending
+(No issues yet)
+
+## Issues Completed
+(None)
+
+## Summary
+$VERSION_SUMMARY
+EOF
+
+[ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Minor STATE.md not created"
+```
+
+**Create minor PLAN.md:**
+
+```bash
+cat > "$VERSION_PATH/PLAN.md" << EOF
+# Minor Version $MAJOR.$MINOR Plan
+
+## Goals
+$VERSION_GOALS
+
+## Requirements
+$VERSION_REQUIREMENTS
+
+## Entry Gate
+$ENTRY_GATE
+
+## Exit Gate
+$EXIT_GATE
+EOF
+
+[ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Minor PLAN.md not created"
+```
+
+**Create minor CHANGELOG.md:**
+
+```bash
+cat > "$VERSION_PATH/CHANGELOG.md" << EOF
+# Minor $MAJOR.$MINOR Changelog
+
+## [Unreleased]
+
+### Added
+- (pending changes)
+
+---
+*Minor version started: $(date +%Y-%m-%d)*
+EOF
+
+[ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Minor CHANGELOG.md not created"
+```
 
 **If VERSION_TYPE is "patch":**
 
