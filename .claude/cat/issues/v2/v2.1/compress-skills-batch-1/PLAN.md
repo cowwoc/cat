@@ -34,5 +34,4 @@ None - subtask of parent
 
 ## Execution Steps
 1. For each file in scope: Run /cat:shrink-doc
-   - Verify: Score = 1.0 from /compare-docs validation
 2. Commit changes with message: "config: compress skills batch 1 (add through format-documentation)"

@@ -40,6 +40,5 @@ None - infrastructure/optimization task
    - Stakeholders (11 files)
    - Lang (1 file)
 2. **For each file:** Run /cat:shrink-doc
-   - Verify: Score = 1.0 from /compare-docs validation
 3. **After all files:** Test affected skills/commands
    - Verify: Commands execute without errors

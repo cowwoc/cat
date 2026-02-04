@@ -2,7 +2,7 @@
 
 - **Status:** pending
 - **Progress:** 0%
-- **Dependencies:** [migrate-to-silent-preprocessing]
+- **Dependencies:** [migrate-to-silent-preprocessing, prevent-plan-md-priming]
 - **Created From:** compress-md-files
 - **Decomposed:** true
 - **Decomposed At:** 2026-02-03
