@@ -1,4 +1,4 @@
-# Changelog: v2.1 - Pluggable Issue Trackers
+# Changelog: v2.3 - Pluggable Issue Trackers
 
 **Completed**: (pending)
 

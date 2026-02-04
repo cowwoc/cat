@@ -2,77 +2,95 @@
 
 ## Status
 - **Status:** in-progress
-- **Progress:** 12%
+- **Progress:** 76%
 - **Dependencies:** [v2.0]
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
 
-## Tasks Pending
-- optimize-shrink-doc-workflow
-- scan-outdated-templates
-- add-opus-model-guidance
-- add-deployment-stakeholder
-- holistic-review-skill
-- holistic-review-criteria
-- python-prerendered-output
-- migrate-to-silent-preprocessing (decomposed)
-  - update-skill-builder-docs
-  - migrate-progress-banners
-  - migrate-status-displays
-  - migrate-remaining-handlers
-- optimize-work-command-context
-- migrate-python-to-java
-- release-changelog-validation
-- compress-skills-md (from decomposed compress-md-files)
-- compress-concepts-md (from decomposed compress-md-files)
-- compress-templates-md (from decomposed compress-md-files)
-- compress-stakeholders-md (from decomposed compress-md-files)
-- deduplicate-embedded-content
-- subagent-doc-heavy-steps
-- unify-output-template-delivery
-- rename-precomputed-output
-- command-optimizer
-- shrink-doc-token-metrics
-- batch-finalization-subagent
-- rename-stakeholders
-- rename-task-scripts (from decomposed rename-task-to-issue)
-- rename-task-in-skills (from decomposed rename-task-to-issue)
-- rename-task-remaining (from decomposed rename-task-to-issue)
-- suggest-issue-names
-- research-new-issues
-- centralize-emoji-widths
-- show-task-header-at-approval-gate
-- monitor-subagents-handler
-- run-retrospective-handler
-- optimize-execution-handler
-- use-patch-id-for-commit-tracking
-- work-skill-banner-delegation
-- show-active-agents-in-status
+## Tasks In Progress
+- compress-concepts-batch-5
+- compress-concepts-md
+- compress-md-files
 
-## Tasks Decomposed
-- rename-task-to-issue → [rename-task-scripts, rename-task-in-skills, rename-task-in-concepts, rename-task-in-commands, rename-task-remaining]
-- compress-md-files → [compress-skills-md, compress-commands-md, compress-concepts-md, compress-templates-md, compress-stakeholders-md]
-- migrate-to-silent-preprocessing → [update-skill-builder-docs, migrate-progress-banners, migrate-status-displays, migrate-remaining-handlers]
+## Tasks Pending
+- compress-concepts-batch-1
+- compress-concepts-batch-4
+- compress-skills-batch-1
+- fix-add-skill-changelog-creation
+- compress-skills-batch-2
+- compress-skills-batch-3
+- compress-skills-batch-4
+- compress-skills-batch-5
+- compress-skills-md
+- compress-stakeholders-md
+- compress-templates-md
+- migrate-python-to-java
+- optimize-add-wizard-calls
+- optimize-shrink-doc-workflow
+- prevent-plan-md-priming
+- refactor-compare-docs-thresholds
+- rename-task-to-issue
 
 ## Tasks Completed
 - acceptance-criteria-options
-- compress-commands-md (duplicate of compress-skills-md - commands moved to skills/)
-- rename-task-in-commands (duplicate of rename-task-in-skills - commands moved to skills/)
-- rename-task-in-concepts (from decomposed rename-task-to-issue)
-- self-discover-env-vars
-
-## Issues Pending
-- prevent-plan-md-priming
-- strengthen-hook-patterns
-- consolidate-delegation-guidance
-- migrate-lock-files-to-json
-- enforce-script-output-failfast
+- add-deployment-stakeholder
+- add-opus-model-guidance
+- batch-finalization-subagent
+- centralize-emoji-widths
+- command-optimizer
+- compress-commands-md
+- compress-concepts-batch-2
+- compress-concepts-batch-3
+- compress-lang-md
 - compress-validation-loop
-- optimize-add-wizard-calls
-- refactor-compare-docs-thresholds
-- simplify-prerendered-skills
-- fix-grep-jsonl-filter
 - conservative-extraction-bias
-- fix-worktree-merge-docs
+- consolidate-delegation-guidance
+- deduplicate-embedded-content
+- detect-subagent-fabrication
+- enforce-script-output-failfast
+- fix-grep-jsonl-filter
+- fix-skill-preprocessor-args
 - fix-user-question-acknowledgment
+- fix-worktree-merge-docs
+- holistic-review-criteria
+- holistic-review-skill
+- implement-a008-box-detection
+- implement-a009-render-diff-enforcement
+- java-bash-handlers
+- java-core-hooks
+- java-jdk-infrastructure
+- java-other-handlers
+- java-skill-handlers
+- migrate-lock-files-to-json
+- migrate-progress-banners
+- migrate-remaining-handlers
+- migrate-status-displays
+- migrate-to-silent-preprocessing
+- monitor-subagents-handler
+- optimize-work-command-context
+- python-prerendered-output
+- release-changelog-validation
+- rename-precomputed-output
+- rename-stakeholders
+- rename-task-in-commands
+- rename-task-in-concepts
+- rename-task-in-skills
+- rename-task-remaining
+- rename-task-scripts
+- research-new-issues
+- run-retrospective-handler
+- scan-outdated-templates
+- self-discover-env-vars
+- show-active-agents-in-status
+- show-task-goal-before-merge
+- show-task-header-at-approval-gate
+- shrink-doc-token-metrics
+- simplify-prerendered-skills
+- skip-decomposed-parents-in-discovery
+- strengthen-hook-patterns
+- subagent-doc-heavy-steps
+- suggest-issue-names
+- unify-output-template-delivery
+- update-skill-builder-docs
+- use-patch-id-for-commit-tracking
