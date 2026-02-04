@@ -170,6 +170,16 @@
         ]
       }
     ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/enforce-status-output.py"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [
