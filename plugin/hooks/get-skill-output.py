@@ -70,7 +70,9 @@ import subprocess
 
 # Skills that bypass LLM entirely (M409: LLM cannot reliably copy verbatim)
 # These skills output directly to user via stopReason, no LLM processing
-BYPASS_LLM_SKILLS = {"status", "help"}
+# M410: Reverted - stopReason adds "Operation stopped by hook:" prefix which is
+# undesirable. Returning to "Echo this:" framing despite summarization risk.
+BYPASS_LLM_SKILLS: set[str] = set()  # Empty - all skills go through LLM with framing
 
 
 def run_bypass_skill(skill_name: str, project_root: str, plugin_root: str) -> str | None:
