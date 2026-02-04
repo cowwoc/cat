@@ -67,3 +67,22 @@ If shell breaks (all commands return "Exit code 1"):
 | Cleaning up test files | Verify not inside target directory |
 | Removing build artifacts | Use parent directory as working dir |
 | Any `rm -rf` operation | **Always check `pwd` first** |
+| `git worktree remove` | **Same rules apply - verify not inside worktree** |
+
+## Git Worktree Removal
+
+The same danger applies to `git worktree remove` - if your shell's cwd is inside the worktree being removed, all subsequent commands will fail.
+
+```bash
+# SAFE - cd to main workspace first
+cd /workspace && git worktree remove /workspace/.worktrees/task-name --force
+
+# DANGEROUS - removing worktree while inside it
+# pwd: /workspace/.worktrees/task-name
+git worktree remove /workspace/.worktrees/task-name --force  # Shell breaks!
+```
+
+**When merging task work:**
+1. Complete all git operations (merge, commit)
+2. `cd /workspace` (or main workspace path)
+3. THEN run `git worktree remove`
