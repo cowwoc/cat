@@ -1,7 +1,6 @@
 ---
 description: Use for quick reference to all CAT commands and skills
 model: haiku
-context: fork
 allowed-tools:
   - Skill
 ---

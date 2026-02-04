@@ -3,7 +3,6 @@ description: >
   Use for quick token health check during sessions, after subagent completion,
   or before deciding whether to decompose remaining work
 model: haiku
-context: fork
 allowed-tools:
   - Skill
 user-invocable: false
