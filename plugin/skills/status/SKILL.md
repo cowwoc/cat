@@ -40,30 +40,20 @@ This skill was invoked to DISPLAY output, not to gather information. Output the 
 
 <!-- END COPY HERE -->
 
----
+<!--
+INTERNAL REFERENCE (NOT FOR AGENT - M402)
+=========================================
+The sections below are for human maintainers only.
+They were REMOVED from agent-visible content because they primed
+analytical/verification behavior instead of verbatim output.
 
-## Verification
+## Verification (for human review)
+- Status box displayed with aligned right-side │ characters
+- Inner boxes have consistent width
+- NEXT STEPS table displayed
+- Legend displayed
 
-- [ ] Status box displayed with all right-side `│` characters aligned vertically
-- [ ] Inner boxes (major versions) have consistent width with each other
-- [ ] NEXT STEPS table displayed
-- [ ] Legend displayed
-
----
-
-## Architecture: Direct Preprocessing
-
-This skill uses **direct preprocessing** - the script collects all inputs from the filesystem
-and renders the complete output before Claude sees the skill.
-
-**Benefits:**
-- Status is computed BEFORE Claude sees the skill content
-- No possibility of manual reconstruction errors
-- Simpler skill - just output what's there
-
-**How it works:**
-1. User invokes `/cat:status`
-2. Claude Code expands the exclamation-backtick command during skill loading
-3. Script reads STATE.md files and renders the status box
-4. Claude receives the skill with actual status data embedded
-5. Claude outputs the script output content verbatim
+## Architecture
+This skill uses direct preprocessing - script renders output before
+Claude sees the skill. Claude should output the content verbatim.
+-->

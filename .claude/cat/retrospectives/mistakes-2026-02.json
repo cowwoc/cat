@@ -1482,9 +1482,9 @@
     {
       "id": "M402",
       "timestamp": "2026-02-04T08:18:53-05:00",
-      "category": "protocol_violation",
+      "category": "misleading_documentation",
       "description": "Agent summarized /cat:status output instead of copy-pasting the status box verbatim despite MANDATORY OUTPUT REQUIREMENT header",
-      "root_cause": "Documentation-level prevention (M341, M395, M401) failed 3+ times - agent default behavior of summarization overrides text instructions without enforcement",
+      "root_cause": "Skill structure primed analytical behavior: Verification checklist and Architecture explanation sections AFTER copy content shifted agent from output mode to analysis/comprehension mode. By the time agent finished reading the skill, it was primed to verify and understand rather than just output.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "hook",
@@ -1504,7 +1504,14 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Output the complete status box verbatim between START and END markers without summarizing or interpreting"
+      "correct_behavior": "Output the complete status box verbatim between START and END markers without summarizing or interpreting",
+      "documentation_priming": {
+        "document": "plugin/skills/status/SKILL.md",
+        "misleading_section": "Verification section (lines 43-50) and Architecture section (lines 52-70) - both appear AFTER the content to copy",
+        "priming_type": "output_format",
+        "how_it_misled": "Verification checklist implied checking/analyzing; Architecture explanation encouraged understanding the system rather than just outputting. Content ordering primed analysis mode.",
+        "fix_required": "Move Verification and Architecture sections to HTML comments (not visible to agent) and add Stop hook enforcement as defense-in-depth"
+      }
     }
   ]
 }
