@@ -2,6 +2,6 @@
 
 - **Status:** pending
 - **Progress:** 0%
-- **Dependencies:** []
+- **Dependencies:** [prevent-plan-md-priming]
 - **Created From:** compress-skills-md
-- **Last Updated:** 2026-02-03
+- **Last Updated:** 2026-02-04

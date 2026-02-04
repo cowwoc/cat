@@ -21,5 +21,4 @@ compress-concepts-md (decomposed)
 
 ## Execution Steps
 1. For each file: Invoke /cat:shrink-doc
-2. Verify score = 1.0 from validation
-3. Commit with message: "config: compress execution-related concepts"
+2. Commit with message: "config: compress execution-related concepts"

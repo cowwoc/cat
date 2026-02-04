@@ -27,5 +27,4 @@ None - infrastructure/optimization subtask
 ## Execution Steps
 1. List all MD files in `plugin/lang/`
 2. For each file: Run /cat:shrink-doc
-   - Verify: Score = 1.0 from /compare-docs validation
 3. Commit changes with appropriate message

@@ -3,4 +3,4 @@
 - **Status:** pending
 - **Progress:** 0%
 - **Created From:** compress-concepts-md
-- **Dependencies:** []
+- **Dependencies:** [prevent-plan-md-priming]
