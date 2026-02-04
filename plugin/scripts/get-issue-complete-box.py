@@ -78,7 +78,7 @@ def build_issue_complete_box(issue_name: str, next_issue: str, next_goal: str, b
         f"**Next:** {next_issue}",
         next_goal,
         "",
-        "Auto-continuing in 3s...",
+        "Continuing to next issue...",
         '• Type "stop" to pause after this issue',
         '• Type "abort" to cancel immediately',
     ]

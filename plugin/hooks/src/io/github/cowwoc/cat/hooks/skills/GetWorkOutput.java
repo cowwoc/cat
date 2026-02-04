@@ -262,7 +262,7 @@ public final class GetWorkOutput
       "**Next:** " + nextTaskName,
       nextGoal,
       "",
-      "Auto-continuing in 3s...",
+      "Continuing to next issue...",
       DisplayUtils.BULLET + " Type \"stop\" to pause after this task",
       DisplayUtils.BULLET + " Type \"abort\" to cancel immediately");
 
@@ -304,7 +304,7 @@ public final class GetWorkOutput
       "**Next:** " + nextTaskName,
       nextGoal,
       "",
-      "Auto-continuing in 3s...",
+      "Continuing to next issue...",
       DisplayUtils.BULLET + " Type \"stop\" to pause after this task",
       DisplayUtils.BULLET + " Type \"abort\" to cancel immediately");
 

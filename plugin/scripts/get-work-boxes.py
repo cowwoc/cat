@@ -166,7 +166,7 @@ def build_issue_complete_with_next():
     content = ["", "**{issue-name}** merged to main.", ""]
     sep = [
         "**Next:** {next-issue-name}", "{goal from PLAN.md}", "",
-        "Auto-continuing in 3s...",
+        "Continuing to next issue...",
         '• Type "stop" to pause after this issue',
         '• Type "abort" to cancel immediately'
     ]
@@ -195,7 +195,7 @@ def build_issue_already_complete():
     content = ["", "**{issue-name}** was already implemented.", "Commit: {commit-hash}", "", "STATE.md updated to reflect completion.", ""]
     sep = [
         "**Next:** {next-issue-name}", "{goal from PLAN.md}", "",
-        "Auto-continuing in 3s...",
+        "Continuing to next issue...",
         '• Type "stop" to pause after this issue',
         '• Type "abort" to cancel immediately'
     ]

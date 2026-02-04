@@ -198,7 +198,7 @@ class WorkHandler:
             "**Next:** {next-issue-name}",
             "{goal from PLAN.md}",
             "",
-            "Auto-continuing in 3s...",
+            "Continuing to next issue...",
             "• Type \"stop\" to pause after this issue",
             "• Type \"abort\" to cancel immediately",
         ]
@@ -242,7 +242,7 @@ class WorkHandler:
             "**Next:** {next-issue-name}",
             "{goal from PLAN.md}",
             "",
-            "Auto-continuing in 3s...",
+            "Continuing to next issue...",
             "• Type \"stop\" to pause after this issue",
             "• Type \"abort\" to cancel immediately",
         ]
