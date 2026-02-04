@@ -57,6 +57,17 @@ All tests must pass (exit code 0) before requesting user approval.
 
 Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may need updating.
 
-## Java Code
+## Language Conventions
 
-See `.claude/cat/conventions/java.md` for Java coding conventions (Allman braces, 2-space indent, TestNG, JsonMapper).
+**MANDATORY:** Before editing files in a language with conventions, read the corresponding convention file.
+
+| File Pattern | Convention File | Read Before Editing |
+|--------------|-----------------|---------------------|
+| `*.java` | `.claude/cat/conventions/java.md` | Any `.java` file |
+
+**Workflow:**
+1. Before your first edit to a `.java` file in a session, read `java.md`
+2. Apply conventions from that file to all edits
+3. If unsure about a convention, re-read the relevant section
+
+This ensures consistent code style (Allman braces, 2-space indent, TestNG, JsonMapper for Java).
