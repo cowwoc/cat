@@ -85,11 +85,23 @@ Claude-facing coding standards live in `.claude/cat/conventions/`. Place files h
     └── {topic}.md
 ```
 
-**Auto-loading:** Place `common.md` in `.claude/rules/` so Claude Code loads it automatically at
-session start. This ensures cross-cutting rules are always available without explicit loading.
+**Two loading mechanisms:**
 
-**INDEX.md purpose:** Provides a table of contents so agents can load only the conventions they need,
-minimizing context usage. Each entry should have a one-line description of when to load it.
+1. **Auto-loading:** Place `common.md` in `.claude/rules/` for automatic loading at session start.
+   Use for cross-cutting rules that apply to all work.
+
+2. **On-demand loading:** For language-specific conventions, add a directive to `CLAUDE.md`:
+   ```markdown
+   ## Language Conventions
+
+   | File Pattern | Convention File | Read Before Editing |
+   |--------------|-----------------|---------------------|
+   | `*.java` | `.claude/cat/conventions/java.md` | Any `.java` file |
+   | `*.py` | `.claude/cat/conventions/python.md` | Any `.py` file |
+   ```
+   This ensures conventions are loaded only when needed, minimizing context usage.
+
+**INDEX.md purpose:** Documents which conventions exist and how they're loaded (auto vs on-demand).
 
 **Content guidelines:**
 - Optimized for AI consumption (concise, unambiguous, examples over prose)
