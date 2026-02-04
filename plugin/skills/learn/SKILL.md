@@ -569,7 +569,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 Beyond checking if prevention exists, check if documentation contains content that:
 - Teaches HOW to do something manually before saying "don't do it manually"
 - Provides implementation details the agent shouldn't use directly
-- Has reference information that only applies when pre-rendered content exists
+- Has reference information that only applies when script output content exists
 - Contains examples or functions that prime the agent for incorrect behavior
 
 ```yaml
@@ -578,31 +578,31 @@ misleading_documentation_check:
     - "Does the doc teach a skill/approach BEFORE saying not to use it?"
     - "Are there 'reference' sections with info the agent might try to use?"
     - "Does section ordering prime the agent for wrong approach?"
-    - "Is there info that should ONLY appear with pre-rendered content?"
+    - "Is there info that should ONLY appear with script output content?"
 
   patterns_to_find:
     - Functions/Prerequisites sections before Procedure
     - "Reference" sections with usable implementation details
     - Examples of manual construction in skills that use pre-computation
-    - Emoji/formatting references outside pre-rendered content
+    - Emoji/formatting references outside script output content
 
   if_misleading_content_found:
     action: "Remove or relocate misleading content as part of prevention"
     principle: |
-      If information is only needed when pre-rendered content exists,
-      it should BE IN the pre-rendered content, not the skill doc.
+      If information is only needed when script output content exists,
+      it should BE IN the script output content, not the skill doc.
       This prevents agents from attempting manual construction when
-      pre-rendered content is missing.
+      script output content is missing.
 ```
 
 **The "Conditional Information" Principle:**
 
 | Information Type | Where It Belongs |
 |------------------|------------------|
-| How to copy-paste pre-rendered content | Skill doc (always needed) |
+| How to copy-paste script output content | Skill doc (always needed) |
 | Emoji meanings, formatting rules | Output template output (only needed when it exists) |
 | Implementation functions | Handler code only (never in skill doc) |
-| What to do if pre-rendered content missing | Skill doc (FAIL instruction) |
+| What to do if script output content missing | Skill doc (FAIL instruction) |
 
 **Example - M256 Pattern:**
 
@@ -613,11 +613,11 @@ misleading_documentation_check:
 if status == "completed": return "☑️"
 ...
 ## Procedure
-Step 1: Use pre-rendered content...
+Step 1: Use script output content...
 
-# RIGHT: Move emoji info to pre-rendered content
+# RIGHT: Move emoji info to script output content
 ## Procedure
-Step 1: Use pre-rendered content...
+Step 1: Use script output content...
 # (Emoji reference appears IN the template content, not skill doc)
 ```
 
@@ -895,7 +895,7 @@ Many mistakes reflect patterns that exist across multiple files. After implement
    ```yaml
    pattern_fixed:
      file_type: "skill"  # skill, hook, handler, config, etc.
-     vulnerability: "weak copy-paste instruction for pre-rendered content"
+     vulnerability: "weak copy-paste instruction for script output content"
      fix_applied: "added prominent MANDATORY OUTPUT REQUIREMENT header"
    ```
 
@@ -903,7 +903,7 @@ Many mistakes reflect patterns that exist across multiple files. After implement
    ```bash
    # Examples by file type:
 
-   # Skills with pre-rendered content
+   # Skills with script output content
    grep -l '!\`' plugin/skills/*/SKILL.md
 
    # Handlers with similar validation

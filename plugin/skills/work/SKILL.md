@@ -33,7 +33,7 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 
 Filters are interpreted by the prepare phase subagent using natural language understanding.
 
-## Progress Output (COPY EXACTLY - M341)
+## SCRIPT OUTPUT: Progress Output (COPY EXACTLY - M341)
 
 **Copy-paste the banner and boxes below VERBATIM. Do NOT summarize or reformat.**
 
@@ -43,8 +43,8 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh`
 
-**FAIL-FAST (ESCALATE-A008):** If you do NOT see pre-rendered content above (banner with `┌─ 🐱`
-and work boxes), run the scripts manually and copy-paste their output. NEVER manually construct boxes.
+**FAIL-FAST (ESCALATE-A008):** If you do NOT see script output above (banner with `┌─ 🐱`
+and work boxes), then preprocessing FAILED. STOP. Do NOT manually run scripts or construct boxes.
 
 ## Critical Constraints
 
@@ -182,7 +182,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-issue-complete-box.py" \
 
 Copy script output VERBATIM. NEVER manually construct boxes - LLMs cannot accurately count display widths.
 
-For scope-complete (no more tasks): Use **SCOPE_COMPLETE** from pre-rendered Work Boxes.
+For scope-complete (no more tasks): Use **SCOPE_COMPLETE** from script output Work Boxes.
 
 ## Error Handling
 

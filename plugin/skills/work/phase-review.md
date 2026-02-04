@@ -246,15 +246,15 @@ Present work summary with checkpoint display.
 
 ### Checkpoint Display (BLOCKING - M311)
 
-**STOP: Find "CHECKPOINT_TASK_COMPLETE" in Pre-rendered Work Boxes context.**
+**STOP: Find "CHECKPOINT_TASK_COMPLETE" in Script Output Work Boxes context.**
 
 The hook handler pre-computes this box with actual values. Display it VERBATIM:
 
 1. Search your context for `--- CHECKPOINT_TASK_COMPLETE ---`
-2. Copy the ENTIRE pre-rendered box that follows (already has actual values)
+2. Copy the ENTIRE script output box that follows (already has actual values)
 3. Output it EXACTLY as provided - do NOT modify or reconstruct
 
-**BLOCKED if:** You type your own checkpoint format instead of using the pre-rendered output.
+**BLOCKED if:** You type your own checkpoint format instead of using the script output output.
 **Why:** Custom formats break visual consistency and miss required fields.
 
 ### Diff Display (BLOCKING - M312)
@@ -349,7 +349,7 @@ Invoke `/cat:merge-subagent`.
 
 **MANDATORY: Loop back to approval gate with updated changes.**
 
-Use the **CHECKPOINT_FEEDBACK_APPLIED** box from Pre-rendered Work Boxes.
+Use the **CHECKPOINT_FEEDBACK_APPLIED** box from Script Output Work Boxes.
 
 Then re-present approval options via AskUserQuestion.
 

@@ -38,21 +38,11 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 
 ### Step 1: Survey Current State
 
-**Look for pre-rendered survey output in SCRIPT OUTPUT SURVEY DISPLAY above.**
+**Look for script output survey in SCRIPT OUTPUT SURVEY DISPLAY above.**
 
 If found, copy and output that box EXACTLY as shown.
 
-If NOT found (preprocessing failed), run the survey script manually:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-display.py" \
-  --project-dir "${CLAUDE_PROJECT_DIR}" \
-  --phase survey
-```
-
-Then copy and output the resulting box EXACTLY as shown.
-
-**NEVER manually construct ASCII boxes** - LLMs cannot accurately count display widths.
+If NOT found (preprocessing failed), STOP. Do NOT manually run scripts or construct boxes.
 
 ---
 

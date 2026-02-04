@@ -212,7 +212,7 @@ NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
 | MAJOR.MINOR | `COMPLETED_MAJOR != NEXT_MAJOR OR COMPLETED_MINOR != NEXT_MINOR` |
 
 **If BOUNDARY_CROSSED is true:**
-1. Use **VERSION_BOUNDARY_GATE** box from Pre-rendered Work Boxes
+1. Use **VERSION_BOUNDARY_GATE** box from Script Output Work Boxes
 2. Use AskUserQuestion:
    - header: "Version Boundary"
    - question: "All tasks in v{completed-version} complete. Continue to v{next-version}?"
@@ -289,7 +289,7 @@ If no input received, **loop back to find_task step** with the next task.
 
 **If scope complete (no more tasks within scope):**
 
-Use the **SCOPE_COMPLETE** box from Pre-rendered Work Boxes.
+Use the **SCOPE_COMPLETE** box from Script Output Work Boxes.
 
 **If trust == low and next task found:**
 
@@ -299,7 +299,7 @@ Release the lock (user will re-acquire when they invoke the command):
 "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
 ```
 
-Use the **TASK_COMPLETE_LOW_TRUST** box from Pre-rendered Work Boxes.
+Use the **TASK_COMPLETE_LOW_TRUST** box from Script Output Work Boxes.
 
 **If no more tasks in the current minor version:**
 

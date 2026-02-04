@@ -13,7 +13,7 @@ user-invocable: false
 
 ---
 
-## Pre-rendered Diff (COPY THIS EXACTLY)
+## Script Output Diff (COPY THIS EXACTLY)
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-render-diff.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
@@ -39,7 +39,7 @@ Do NOT modify, reformat, or manually reconstruct any part of the output.
 > **NOTE:** This section describes WHAT the output contains, not HOW to render it.
 > The preprocessing script produces all rendering. You only need to copy-paste.
 
-The pre-rendered output contains:
+The script output output contains:
 
 **Per-hunk boxes** with:
 - File header row showing the file path
@@ -84,7 +84,7 @@ git diff "${BASE_BRANCH}..HEAD"
 
 ## Verification
 
-- [ ] Pre-rendered diff found in context
+- [ ] Script Output diff found in context
 - [ ] Content output exactly as provided (no manual reconstruction)
 - [ ] All changed files included in the diff
 - [ ] No Bash tool invocations shown to user
