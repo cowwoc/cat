@@ -1,7 +1,6 @@
 ---
 description: Display project progress - versions, issues, and completion status
 model: haiku
-context: fork
 allowed-tools:
   - Skill
 ---

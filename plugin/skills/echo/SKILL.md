@@ -1,7 +1,6 @@
 ---
 description: Echo the provided text verbatim
 model: haiku
-context: fork
 allowed-tools: []
 ---
 
