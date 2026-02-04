@@ -46,6 +46,28 @@ Filters are interpreted by the prepare phase subagent using natural language und
 **FAIL-FAST (ESCALATE-A008):** If you do NOT see pre-rendered content above (banner with `┌─ 🐱`
 and work boxes), run the scripts manually and copy-paste their output. NEVER manually construct boxes.
 
+## Critical Constraints
+
+### Never cd into Worktrees (M392)
+
+**MANDATORY: Main agent must NEVER cd into worktree directories.**
+
+The merge phase removes worktrees after completion. If main agent's shell is inside a worktree
+when it's deleted, the shell session becomes corrupted (all commands fail with exit code 1).
+
+**FORBIDDEN:**
+```bash
+cd /workspace/.worktrees/2.1-task-name && git log
+```
+
+**ALLOWED:**
+```bash
+git -C /workspace/.worktrees/2.1-task-name log
+```
+
+All worktree operations are delegated to subagents, which have their own shell sessions.
+Main agent should only read results and orchestrate.
+
 ## Configuration
 
 Read once at start:
