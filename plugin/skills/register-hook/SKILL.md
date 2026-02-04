@@ -6,9 +6,19 @@ allowed-tools: Bash, Write, Read, Edit
 
 # Register Hook Skill
 
-**Purpose**: Create hook scripts with mandatory error handling patterns and register them in settings.json with proper matcher syntax.
+**Purpose**: Create **project-specific** hook scripts and register them in `.claude/settings.json`.
 
 **Performance**: Ensures hooks work correctly, prevents registration errors, enforces restart requirement
+
+## Hook Registration Locations (M405)
+
+| Hook Type | Location | Use Case |
+|-----------|----------|----------|
+| **Project hooks** | `.claude/settings.json` | Project-specific behavior (this skill) |
+| **Plugin hooks** | `plugin/hooks/hooks.json` | CAT plugin behavior (do NOT use this skill) |
+
+This skill is for **project hooks only**. CAT plugin hooks are pre-registered in `plugin/hooks/hooks.json`
+and loaded automatically - do not attempt to register them in settings.json.
 
 ## When to Use This Skill
 

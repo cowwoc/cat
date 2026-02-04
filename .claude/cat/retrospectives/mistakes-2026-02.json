@@ -1555,19 +1555,20 @@
     {
       "id": "M404",
       "timestamp": "2026-02-04T14:00:00Z",
-      "category": "assumption_without_verification",
+      "category": "missing_documentation",
       "description": "During RCA for status output issue, incorrectly assumed plugin hooks are registered in .claude/settings.json instead of plugin/hooks/hooks.json",
-      "root_cause": "Made assumption about Claude Code plugin architecture without verifying. Saw hooks section in settings.json and assumed that was the canonical location for all hooks, not just project-specific overrides.",
+      "root_cause": "No documentation existed explaining where plugin hooks are registered. register-hook/SKILL.md repeatedly associates hooks with settings.json (15+ mentions) creating ambient priming. Counter-guidance (plugin hooks in hooks.json) did not exist anywhere in documentation.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "documentation",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/agent-architecture.md",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/register-hook/SKILL.md",
       "pattern_keywords": [
         "hooks",
         "plugin",
         "settings",
-        "architecture",
-        "assumption"
+        "priming",
+        "missing_documentation",
+        "ambient_priming"
       ],
       "prevention_implemented": true,
       "prevention_verified": false,
@@ -1577,7 +1578,41 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When investigating plugin hook behavior, check plugin/hooks/hooks.json first. Project .claude/settings.json is for project-specific overrides only."
+      "correct_behavior": "When investigating plugin hook behavior, check plugin/hooks/hooks.json first. Project .claude/settings.json is for project-specific overrides only.",
+      "documentation_priming": {
+        "document": "plugin/skills/register-hook/SKILL.md",
+        "misleading_section": "Throughout - 15+ mentions of hooks in settings.json",
+        "priming_type": "ambient_association",
+        "how_it_misled": "Repeated hooks→settings.json association without clarifying plugin vs project hooks",
+        "fix_required": "Add clarification distinguishing project hooks (settings.json) from plugin hooks (hooks.json)"
+      }
+    },
+    {
+      "id": "M405",
+      "timestamp": "2026-02-04T15:00:00Z",
+      "category": "protocol_violation",
+      "description": "During M404 RCA, skipped Step 1b (Analyze Documentation Path) and recorded assumption_without_verification instead of investigating priming and missing documentation",
+      "root_cause": "Step 1b priming patterns table was incomplete - did not include ambient codebase priming or missing counter-guidance patterns. Also lacked MANDATORY CHECK reminder to verify agent COULD do the right thing.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "RCA",
+        "Step1b",
+        "priming",
+        "documentation_path",
+        "missing_pattern"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Step 1b MUST check: (1) what primed wrong behavior, (2) whether correct approach was documented. If no documentation for correct approach exists, root cause is missing_documentation not assumption."
     }
   ]
 }
