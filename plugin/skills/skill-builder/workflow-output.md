@@ -101,7 +101,7 @@ With pre-computation or subagent batching, only show:
 
 ```
 ◆ Preparing task execution...
-✓ Ready: worktree at .worktrees/2.0-task-name, estimate 45K tokens
+✓ Ready: worktree at .worktrees/2.0-issue-name, estimate 45K tokens
 
 ◆ Exploring codebase...
 ✓ Found: 3 files to modify, no duplicates

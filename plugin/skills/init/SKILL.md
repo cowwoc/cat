@@ -171,15 +171,17 @@ find . -maxdepth 3 -type d \( -name "releases" -o -name "roadmap" \) 2>/dev/null
 
 <step name="existing_parse_git" condition="Existing codebase">
 
-**Parse Issue ID footers (AUTHORITATIVE source):**
+**Parse STATE.md file history (AUTHORITATIVE source):**
 ```bash
-git log --all --format="%H %s" --grep="Issue ID:" 2>/dev/null | head -100
+# Find all issue directories with STATE.md files
+find .claude/cat/issues -name "STATE.md" -type f 2>/dev/null | head -100
 ```
 
-For each commit with Issue ID:
-- Extract: major, minor, issue-name from `Issue ID: v{major}.{minor}-{issue-name}`
-- Get files: `git diff-tree --no-commit-id --name-status -r <hash>`
-- Get date: `git log -1 --format="%ci" <hash>`
+For each STATE.md found:
+- Extract: major, minor, issue-name from path `.claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md`
+- Get commits: `git log --oneline -- ".claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/"`
+- Get files: `git diff-tree --no-commit-id --name-status -r <hash>` for each commit
+- Get date: `git log -1 --format="%ci" -- <STATE.md path>`
 
 Build mapping: issue-name → {commits, files_created, files_modified, date}
 
@@ -187,7 +189,7 @@ Build mapping: issue-name → {commits, files_created, files_modified, date}
 
 <step name="existing_import" condition="Existing codebase">
 
-**Import planning data (FALLBACK when no Issue ID commits):**
+**Import planning data (FALLBACK when no STATE.md files exist):**
 
 ```bash
 find . -maxdepth 3 -name "changelog*.md" -type f 2>/dev/null | grep -v node_modules
@@ -745,7 +747,7 @@ After:
 - Description MUST be imperative mood ("add", not "added")
 - Description MUST NOT exceed 72 characters
 - Body MAY provide additional context
-- Issue ID footer SHOULD be included for CAT issues
+- Commits are tracked via STATE.md file history, not commit footers
 ```
 
 **If GIT_CUSTOM_NOTES exists:**

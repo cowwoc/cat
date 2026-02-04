@@ -82,17 +82,17 @@ public final class GetWorkOutput
   }
 
   /**
-   * Builds the task not found box.
+   * Builds the issue not found box.
    *
-   * @param taskName the task name that was not found
-   * @param suggestion the suggested task name (may be empty if no suggestion)
+   * @param issueName the issue name that was not found
+   * @param suggestion the suggested issue name (may be empty if no suggestion)
    * @return the formatted box
-   * @throws NullPointerException if taskName or suggestion is null
-   * @throws IllegalArgumentException if taskName is blank
+   * @throws NullPointerException if issueName or suggestion is null
+   * @throws IllegalArgumentException if issueName is blank
    */
-  public String getTaskNotFound(String taskName, String suggestion)
+  public String getIssueNotFound(String issueName, String suggestion)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
     requireThat(suggestion, "suggestion").isNotNull();
 
     DisplayUtils display = scope.getDisplayUtils();
@@ -100,32 +100,32 @@ public final class GetWorkOutput
     content.add("");
     if (!suggestion.isEmpty())
       content.add("Did you mean: " + suggestion + "?");
-    content.add("Run /cat:status to see all tasks");
+    content.add("Run /cat:status to see all issues");
 
     return display.buildSimpleBox(
       "❔",
-      "Task \"" + taskName + "\" not found",
+      "Issue \"" + issueName + "\" not found",
       content);
   }
 
   /**
    * Builds the fork in the road box.
    *
-   * @param taskName the current task name
+   * @param issueName the current issue name
    * @param approaches the list of approach options (minimum 2)
    * @return the formatted box
-   * @throws NullPointerException if taskName or approaches is null
-   * @throws IllegalArgumentException if taskName is blank or approaches has fewer than 2 elements
+   * @throws NullPointerException if issueName or approaches is null
+   * @throws IllegalArgumentException if issueName is blank or approaches has fewer than 2 elements
    */
-  public String getForkInTheRoad(String taskName, List<Approach> approaches)
+  public String getForkInTheRoad(String issueName, List<Approach> approaches)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
     requireThat(approaches, "approaches").isNotNull().size().isGreaterThanOrEqualTo(2);
 
     DisplayUtils display = scope.getDisplayUtils();
     String pathSeparator = "   " + DisplayUtils.HORIZONTAL_LINE.repeat(69);
     List<String> contentLines = new ArrayList<>();
-    contentLines.add("   Task: " + taskName);
+    contentLines.add("   Issue: " + issueName);
     contentLines.add("");
     contentLines.add("   Multiple viable paths - how would you prefer to proceed?");
     contentLines.add("");
@@ -164,71 +164,71 @@ public final class GetWorkOutput
   }
 
   /**
-   * Builds the checkpoint task complete box.
+   * Builds the checkpoint issue complete box.
    *
-   * @param taskName the completed task name
+   * @param issueName the completed issue name
    * @param minutes the time spent in minutes
    * @param tokens the number of tokens used
    * @param percentage the percentage of context used
-   * @param taskBranch the task branch name
+   * @param issueBranch the issue branch name
    * @return the formatted box
-   * @throws NullPointerException if taskName or taskBranch is null
-   * @throws IllegalArgumentException if taskName or taskBranch is blank, or numeric values are negative
+   * @throws NullPointerException if issueName or issueBranch is null
+   * @throws IllegalArgumentException if issueName or issueBranch is blank, or numeric values are negative
    */
-  public String getCheckpointTaskComplete(String taskName, int minutes, int tokens, int percentage,
-                                          String taskBranch)
+  public String getCheckpointIssueComplete(String issueName, int minutes, int tokens, int percentage,
+                                          String issueBranch)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
     requireThat(minutes, "minutes").isNotNegative();
     requireThat(tokens, "tokens").isNotNegative();
     requireThat(percentage, "percentage").isBetween(0, 100);
-    requireThat(taskBranch, "taskBranch").isNotBlank();
+    requireThat(issueBranch, "issueBranch").isNotBlank();
 
     List<String> contentLines = List.of(
       "",
-      "**Task:** " + taskName,
+      "**Issue:** " + issueName,
       "");
     List<String> metricsLines = List.of(
       "**Time:** " + minutes + " minutes | **Tokens:** " + tokens + " (" + percentage + "% of context)");
     List<String> branchLines = List.of(
-      "**Branch:** " + taskBranch,
+      "**Branch:** " + issueBranch,
       "");
 
-    return buildMultiSectionBox(DisplayUtils.EMOJI_CHECKMARK + " **CHECKPOINT: Task Complete**",
+    return buildMultiSectionBox(DisplayUtils.EMOJI_CHECKMARK + " **CHECKPOINT: Issue Complete**",
                                 contentLines, metricsLines, branchLines);
   }
 
   /**
    * Builds the checkpoint feedback applied box.
    *
-   * @param taskName the task name
+   * @param issueName the issue name
    * @param iteration the feedback iteration number
    * @param subagentTokensK the subagent tokens in thousands
    * @param totalTokensK the total tokens in thousands
-   * @param taskBranch the task branch name
+   * @param issueBranch the issue branch name
    * @return the formatted box
-   * @throws NullPointerException if taskName or taskBranch is null
-   * @throws IllegalArgumentException if taskName or taskBranch is blank, or numeric values are negative
+   * @throws NullPointerException if issueName or issueBranch is null
+   * @throws IllegalArgumentException if issueName or issueBranch is blank, or numeric values are negative
    */
-  public String getCheckpointFeedbackApplied(String taskName, int iteration, int subagentTokensK,
-                                             int totalTokensK, String taskBranch)
+  public String getCheckpointFeedbackApplied(String issueName, int iteration, int subagentTokensK,
+                                             int totalTokensK, String issueBranch)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
     requireThat(iteration, "iteration").isPositive();
     requireThat(subagentTokensK, "subagentTokensK").isNotNegative();
     requireThat(totalTokensK, "totalTokensK").isNotNegative();
-    requireThat(taskBranch, "taskBranch").isNotBlank();
+    requireThat(issueBranch, "issueBranch").isNotBlank();
 
     List<String> contentLines = List.of(
       "",
-      "**Task:** " + taskName,
+      "**Issue:** " + issueName,
       "**Feedback iteration:** " + iteration,
       "");
     List<String> metricsLines = List.of(
       "**Feedback subagent:** " + subagentTokensK + "K tokens",
       "**Total tokens (all iterations):** " + totalTokensK + "K");
     List<String> branchLines = List.of(
-      "**Branch:** " + taskBranch,
+      "**Branch:** " + issueBranch,
       "");
 
     return buildMultiSectionBox(DisplayUtils.EMOJI_CHECKMARK + " **CHECKPOINT: Feedback Applied**",
@@ -236,81 +236,81 @@ public final class GetWorkOutput
   }
 
   /**
-   * Builds the task complete with next task box.
+   * Builds the issue complete with next issue box.
    *
-   * @param taskName the completed task name
-   * @param nextTaskName the next task name
-   * @param nextGoal the goal from PLAN.md for the next task
+   * @param issueName the completed issue name
+   * @param nextIssueName the next issue name
+   * @param nextGoal the goal from PLAN.md for the next issue
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getTaskCompleteWithNext(String taskName, String nextTaskName, String nextGoal)
+  public String getIssueCompleteWithNext(String issueName, String nextIssueName, String nextGoal)
   {
-    requireThat(taskName, "taskName").isNotBlank();
-    requireThat(nextTaskName, "nextTaskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
+    requireThat(nextIssueName, "nextIssueName").isNotBlank();
     requireThat(nextGoal, "nextGoal").isNotBlank();
 
-    String header = "✓ Task Complete";
+    String header = "✓ Issue Complete";
 
     List<String> contentLines = List.of(
       "",
-      "**" + taskName + "** merged to main.",
+      "**" + issueName + "** merged to main.",
       "");
 
     List<String> separatorContent = List.of(
-      "**Next:** " + nextTaskName,
+      "**Next:** " + nextIssueName,
       nextGoal,
       "",
       "Continuing to next issue...",
-      DisplayUtils.BULLET + " Type \"stop\" to pause after this task",
+      DisplayUtils.BULLET + " Type \"stop\" to pause after this issue",
       DisplayUtils.BULLET + " Type \"abort\" to cancel immediately");
 
     List<String> footerContent = List.of("");
 
-    return buildTaskBox(header, contentLines, separatorContent, footerContent);
+    return buildIssueBox(header, contentLines, separatorContent, footerContent);
   }
 
   /**
-   * Builds the task already complete box.
+   * Builds the issue already complete box.
    *
-   * @param taskName the task name
-   * @param commitHash the commit hash where the task was completed
-   * @param nextTaskName the next task name
-   * @param nextGoal the goal from PLAN.md for the next task
+   * @param issueName the issue name
+   * @param commitHash the commit hash where the issue was completed
+   * @param nextIssueName the next issue name
+   * @param nextGoal the goal from PLAN.md for the next issue
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getTaskAlreadyComplete(String taskName, String commitHash, String nextTaskName,
+  public String getIssueAlreadyComplete(String issueName, String commitHash, String nextIssueName,
                                        String nextGoal)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
     requireThat(commitHash, "commitHash").isNotBlank();
-    requireThat(nextTaskName, "nextTaskName").isNotBlank();
+    requireThat(nextIssueName, "nextIssueName").isNotBlank();
     requireThat(nextGoal, "nextGoal").isNotBlank();
 
-    String header = "✓ Task Already Complete";
+    String header = "✓ Issue Already Complete";
 
     List<String> contentLines = List.of(
       "",
-      "**" + taskName + "** was already implemented.",
+      "**" + issueName + "** was already implemented.",
       "Commit: " + commitHash,
       "",
       "STATE.md updated to reflect completion.",
       "");
 
     List<String> separatorContent = List.of(
-      "**Next:** " + nextTaskName,
+      "**Next:** " + nextIssueName,
       nextGoal,
       "",
       "Continuing to next issue...",
-      DisplayUtils.BULLET + " Type \"stop\" to pause after this task",
+      DisplayUtils.BULLET + " Type \"stop\" to pause after this issue",
       DisplayUtils.BULLET + " Type \"abort\" to cancel immediately");
 
     List<String> footerContent = List.of("");
 
-    return buildTaskBox(header, contentLines, separatorContent, footerContent);
+    return buildIssueBox(header, contentLines, separatorContent, footerContent);
   }
 
   /**
@@ -349,57 +349,57 @@ public final class GetWorkOutput
   }
 
   /**
-   * Builds the task complete low trust box.
+   * Builds the issue complete low trust box.
    *
-   * @param taskName the completed task name
-   * @param nextTaskName the next task name
-   * @param nextGoal the goal from PLAN.md for the next task
+   * @param issueName the completed issue name
+   * @param nextIssueName the next issue name
+   * @param nextGoal the goal from PLAN.md for the next issue
    * @return the formatted box
    * @throws NullPointerException if any parameter is null
    * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getTaskCompleteLowTrust(String taskName, String nextTaskName, String nextGoal)
+  public String getIssueCompleteLowTrust(String issueName, String nextIssueName, String nextGoal)
   {
-    requireThat(taskName, "taskName").isNotBlank();
-    requireThat(nextTaskName, "nextTaskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
+    requireThat(nextIssueName, "nextIssueName").isNotBlank();
     requireThat(nextGoal, "nextGoal").isNotBlank();
 
-    String header = "✓ Task Complete";
+    String header = "✓ Issue Complete";
 
     List<String> contentLines = List.of(
       "",
-      "**" + taskName + "** merged to main.",
+      "**" + issueName + "** merged to main.",
       "");
 
     List<String> separatorContent = List.of(
-      "**Next Up:** " + nextTaskName,
+      "**Next Up:** " + nextIssueName,
       nextGoal,
       "",
       "`/clear` then `/cat:work` to continue");
 
     List<String> footerContent = List.of("");
 
-    return buildTaskBox(header, contentLines, separatorContent, footerContent);
+    return buildIssueBox(header, contentLines, separatorContent, footerContent);
   }
 
   /**
    * Builds the version boundary gate box.
    *
    * @param currentVersion the completed version number
-   * @param tasksCompleted the number of tasks completed in this version
+   * @param issuesCompleted the number of issues completed in this version
    * @param nextVersion the next version number
-   * @param nextTaskName the next task name
+   * @param nextIssueName the next issue name
    * @return the formatted box
    * @throws NullPointerException if any string parameter is null
-   * @throws IllegalArgumentException if any string parameter is blank, or tasksCompleted is negative
+   * @throws IllegalArgumentException if any string parameter is blank, or issuesCompleted is negative
    */
-  public String getVersionBoundaryGate(String currentVersion, int tasksCompleted, String nextVersion,
-                                       String nextTaskName)
+  public String getVersionBoundaryGate(String currentVersion, int issuesCompleted, String nextVersion,
+                                       String nextIssueName)
   {
     requireThat(currentVersion, "currentVersion").isNotBlank();
-    requireThat(tasksCompleted, "tasksCompleted").isNotNegative();
+    requireThat(issuesCompleted, "issuesCompleted").isNotNegative();
     requireThat(nextVersion, "nextVersion").isNotBlank();
-    requireThat(nextTaskName, "nextTaskName").isNotBlank();
+    requireThat(nextIssueName, "nextIssueName").isNotBlank();
 
     String header = "✓ Version Complete";
 
@@ -410,7 +410,7 @@ public final class GetWorkOutput
 
     List<String> summaryContent = List.of(
       "**Summary:**",
-      DisplayUtils.BULLET + " Tasks completed: " + tasksCompleted,
+      DisplayUtils.BULLET + " Issues completed: " + issuesCompleted,
       "",
       "**Before continuing, consider:**",
       DisplayUtils.BULLET + " Publishing/releasing this version",
@@ -420,10 +420,10 @@ public final class GetWorkOutput
 
     List<String> nextVersionContent = List.of(
       "**Next Version:** v" + nextVersion,
-      nextTaskName,
+      nextIssueName,
       "");
 
-    return buildTaskBox(header, contentLines, summaryContent, nextVersionContent);
+    return buildIssueBox(header, contentLines, summaryContent, nextVersionContent);
   }
 
   /**
@@ -472,7 +472,7 @@ public final class GetWorkOutput
   }
 
   /**
-   * Builds a task box with separators between sections.
+   * Builds an issue box with separators between sections.
    *
    * @param header the header text
    * @param contentLines the main content
@@ -480,7 +480,7 @@ public final class GetWorkOutput
    * @param footerContent the footer section after second separator
    * @return the formatted box
    */
-  private String buildTaskBox(String header,
+  private String buildIssueBox(String header,
                               List<String> contentLines,
                               List<String> separatorContent,
                               List<String> footerContent)

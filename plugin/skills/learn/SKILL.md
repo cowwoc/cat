@@ -756,7 +756,7 @@ fix_location_checklist:
 
 **Common mistake (M419):** Editing the file you're currently working with because it's convenient,
 instead of finding the appropriate depth. Example: Putting "use Tokens header for compression" in
-work-with-task.md (generic) instead of subagent-delegation.md (concept doc for all result presentation).
+work-with-issue.md (generic) instead of subagent-delegation.md (concept doc for all result presentation).
 
 **Fix Location Principle: Apply to deepest document possible.**
 

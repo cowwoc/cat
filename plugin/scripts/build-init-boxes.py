@@ -215,13 +215,13 @@ def generate_all_boxes(width: int = DEFAULT_WIDTH) -> dict:
     )
 
     # Box 6: First task created
-    # Has {task-name} variable, uses emoji ✅
+    # Has {issue-name} variable, uses emoji ✅
     boxes["first_task_created"] = build_box(
         "✅ FIRST TASK CREATED",
         [
             "                                                                  ",
-            "  Task: {task-name}                                               ",
-            "  Location: .claude/cat/issues/v0/v0.0/{task-name}/                ",
+            "  Issue: {issue-name}                                              ",
+            "  Location: .claude/cat/issues/v0/v0.0/{issue-name}/               ",
             "                                                                  ",
             "  Files created:                                                  ",
             "  - PLAN.md - What needs to be done                               ",

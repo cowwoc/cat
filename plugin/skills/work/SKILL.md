@@ -57,12 +57,12 @@ when it's deleted, the shell session becomes corrupted (all commands fail with e
 
 **FORBIDDEN:**
 ```bash
-cd /workspace/.worktrees/2.1-task-name && git log
+cd /workspace/.worktrees/2.1-issue-name && git log
 ```
 
 **ALLOWED:**
 ```bash
-git -C /workspace/.worktrees/2.1-task-name log
+git -C /workspace/.worktrees/2.1-issue-name log
 ```
 
 All worktree operations are delegated to subagents, which have their own shell sessions.
@@ -124,24 +124,24 @@ When prepare phase returns NO_TASKS, check the `message` field and provide appro
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
 
 **Store phase 1 results:**
-- `task_id`, `task_path`, `worktree_path`, `branch`, `base_branch`
+- `issue_id`, `issue_path`, `worktree_path`, `branch`, `base_branch`
 - `estimated_tokens`
 
-## Phase 2-4: Delegate to work-with-task
+## Phase 2-4: Delegate to work-with-issue
 
-After Phase 1 returns READY, delegate remaining phases to the work-with-task skill.
+After Phase 1 returns READY, delegate remaining phases to the work-with-issue skill.
 
-This skill receives the task ID and metadata, allowing its exclamation-backtick preprocessing to
+This skill receives the issue ID and metadata, allowing its exclamation-backtick preprocessing to
 render progress banners automatically for all 4 phases.
 
-**Invoke the work-with-task skill:**
+**Invoke the work-with-issue skill:**
 
-Use the Skill tool to invoke `/cat:work-with-task` with JSON arguments:
+Use the Skill tool to invoke `/cat:work-with-issue` with JSON arguments:
 
 ```json
 {
-  "task_id": "${task_id}",
-  "task_path": "${task_path}",
+  "issue_id": "${issue_id}",
+  "issue_path": "${issue_path}",
   "worktree_path": "${worktree_path}",
   "branch": "${branch}",
   "base_branch": "${base_branch}",
@@ -153,7 +153,7 @@ Use the Skill tool to invoke `/cat:work-with-task` with JSON arguments:
 ```
 
 The skill will:
-1. Render progress banners via exclamation-backtick preprocessing (now has task_id available)
+1. Render progress banners via exclamation-backtick preprocessing (now has issue_id available)
 2. Execute Phase 2 (implementation subagent)
 3. Execute Phase 3 (stakeholder review) if verify != none
 4. Execute Phase 4 (merge and cleanup)
@@ -164,7 +164,7 @@ The skill will:
 ```json
 {
   "status": "SUCCESS|FAILED",
-  "task_id": "2.1-task-name",
+  "issue_id": "2.1-issue-name",
   "commits": [...],
   "files_changed": 5,
   "tokens_used": 65000,

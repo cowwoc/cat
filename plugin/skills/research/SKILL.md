@@ -94,7 +94,7 @@ This skill uses pre-rendering utilities from research_handler.py:
    ```bash
    CURRENT_BRANCH=$(git branch --show-current)
    # Extract version from branch (e.g., v2.0 from "v2.0" or "v2.0-feature")
-   find .claude/cat/issues -type d -name "$TASK_ID" -path "*/v${MAJOR}.${MINOR}/*"
+   find .claude/cat/issues -type d -name "$ISSUE_ID" -path "*/v${MAJOR}.${MINOR}/*"
    ```
 3. **If neither found:** Use AskUserQuestion to request clarification:
 ```

@@ -28,13 +28,13 @@ Return JSON on success:
 ```json
 {
   "status": "READY|NO_TASKS|LOCKED|BLOCKED|ERROR",
-  "task_id": "2.1-task-name",
+  "issue_id": "2.1-issue-name",
   "major": "2",
   "minor": "1",
-  "task_name": "task-name",
-  "task_path": "/workspace/.claude/cat/issues/v2/v2.1/task-name",
-  "worktree_path": "/workspace/.worktrees/2.1-task-name",
-  "branch": "2.1-task-name",
+  "issue_name": "issue-name",
+  "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
+  "worktree_path": "/workspace/.worktrees/2.1-issue-name",
+  "branch": "2.1-issue-name",
   "base_branch": "v2.1",
   "estimated_tokens": 45000,
   "percent_of_threshold": 56,
@@ -118,7 +118,7 @@ Parse the result and handle statuses:
 **Filtering (M364):** If arguments include a filter (e.g., "skip compression tasks"):
 1. Parse the discovered task name from result
 2. Check if task matches filter criteria (in memory, NOT by modifying files)
-3. If task should be skipped: Return `{"status": "NO_TASKS", "message": "Available task filtered out", "filtered_task": "task-name", "filter": "skip compression tasks"}`
+3. If task should be skipped: Return `{"status": "NO_TASKS", "message": "Available task filtered out", "filtered_task": "issue-name", "filter": "skip compression tasks"}`
 
 The orchestrator can then decide to retry without filter or inform user.
 
@@ -141,12 +141,12 @@ If exceeds hard limit: Return status `OVERSIZED` with decomposition recommendati
 ### Step 4: Create Worktree
 
 ```bash
-TASK_BRANCH="${MAJOR}.${MINOR}-${TASK_NAME}"
+ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
 BASE_BRANCH=$(git branch --show-current)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${TASK_BRANCH}"
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${ISSUE_BRANCH}"
 
-git worktree add -b "${TASK_BRANCH}" "${WORKTREE_PATH}" HEAD
-echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${TASK_BRANCH}/cat-base"
+git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
+echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRANCH}/cat-base"
 ```
 
 ### Step 5: Verify Worktree Branch (M351)
@@ -157,8 +157,8 @@ echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${TASK_BRAN
 cd "${WORKTREE_PATH}"
 ACTUAL_BRANCH=$(git branch --show-current)
 
-if [[ "$ACTUAL_BRANCH" != "$TASK_BRANCH" ]]; then
-  echo "ERROR: Worktree created on wrong branch. Expected: $TASK_BRANCH, Got: $ACTUAL_BRANCH"
+if [[ "$ACTUAL_BRANCH" != "$ISSUE_BRANCH" ]]; then
+  echo "ERROR: Worktree created on wrong branch. Expected: $ISSUE_BRANCH, Got: $ACTUAL_BRANCH"
   # Clean up the broken worktree
   cd "${CLAUDE_PROJECT_DIR}"
   git worktree remove "${WORKTREE_PATH}" --force 2>/dev/null
@@ -209,11 +209,11 @@ implemented directly on base (bypassing the task workflow), STATE.md won't refle
 
 ```bash
 # Search for commits on base that mention this task name
-TASK_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline --grep="${TASK_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
+TASK_COMMITS=$(git -C "${CLAUDE_PROJECT_DIR}" log --oneline --grep="${ISSUE_NAME}" "${BASE_BRANCH}" -5 2>/dev/null)
 
 if [[ -n "$TASK_COMMITS" ]]; then
   # Found suspicious commits - return for user verification
-  echo "WARNING: Found commits on base branch mentioning '${TASK_NAME}':"
+  echo "WARNING: Found commits on base branch mentioning '${ISSUE_NAME}':"
   echo "$TASK_COMMITS"
   # Include in output JSON: "potentially_complete": true, "suspicious_commits": "..."
 fi

@@ -50,14 +50,14 @@ find .claude/cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "completed" {} \
 
 ### 5. Commit STATE.md Only
 
-Duplicate issues do NOT get a `Issue ID:` footer (reserved for implementation commits):
+Duplicate issues have no implementation commit - only the STATE.md update:
 
 ```bash
 git add .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md
 git commit -m "$(cat <<'EOF'
 config: close duplicate issue {issue-name}
 
-Duplicate of {original-issue} (commit {hash}).
+Duplicate of {original-issue}.
 Verification confirmed all scenarios from PLAN.md pass.
 EOF
 )"

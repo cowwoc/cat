@@ -13,7 +13,7 @@ Steps for post-approval work: squash_commits, finalization, next_task.
 **MANDATORY: Display progress banner when entering this phase.**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase merging
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase merging
 ```
 
 ---
@@ -90,20 +90,20 @@ hiding tool calls from the user.
 
 ```
 Task tool invocation:
-  description: "Finalize task {task-name}"
+  description: "Finalize task {issue-name}"
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
     Complete post-approval finalization for task.
 
     CONTEXT:
-    - Task: {task-name}
-    - Task branch: {task-branch}
+    - Task: {issue-name}
+    - Task branch: {issue-branch}
     - Worktree path: {worktree-path}
     - Base branch: {base-branch}
     - Completion workflow: {completionWorkflow from config}
     - Merge style: {mergeStyle from config}
-    - Issue ID: {TASK_ID}
+    - Issue ID: {ISSUE_ID}
     - Session ID: ${CLAUDE_SESSION_ID}
 
     STEP 1: MERGE
@@ -118,27 +118,27 @@ Task tool invocation:
 
     If completionWorkflow is "merge":
       If mergeStyle is "fast-forward":
-        git merge --ff-only {task-branch}
+        git merge --ff-only {issue-branch}
       If mergeStyle is "merge-commit":
-        git merge --no-ff {task-branch}
+        git merge --no-ff {issue-branch}
       If mergeStyle is "squash":
-        git merge --squash {task-branch} && git commit -m "{commit-message}"
+        git merge --squash {issue-branch} && git commit -m "{commit-message}"
 
       If merge fails: Return {"status": "MERGE_CONFLICT", "error": "..."}
 
     If completionWorkflow is "pr":
-      git push -u origin {task-branch}
-      If GitHub: gh pr create --base {base} --head {task-branch} --title "..." --body "..."
+      git push -u origin {issue-branch}
+      If GitHub: gh pr create --base {base} --head {issue-branch} --title "..." --body "..."
       Return {"status": "PR_CREATED", "url": "..."}
 
     STEP 2: CLEANUP
     Remove worktree: git worktree remove "{worktree-path}" --force
 
     If completionWorkflow is "merge":
-      Delete branch: git branch -d "{task-branch}"
+      Delete branch: git branch -d "{issue-branch}"
 
     Release lock:
-      "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{TASK_ID}" "${CLAUDE_SESSION_ID}"
+      "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "{ISSUE_ID}" "${CLAUDE_SESSION_ID}"
 
     STEP 3: UPDATE PARENT STATE
     Task STATE.md already committed with implementation.
@@ -228,9 +228,9 @@ NEXT_MINOR=$(echo "$NEXT_TASK_RESULT" | jq -r '.minor // empty')
 **MANDATORY: Try to acquire lock before offering next task.**
 
 ```bash
-NEXT_TASK_ID="${MAJOR}.${MINOR}-${NEXT_TASK_NAME}"
+NEXT_ISSUE_ID="${MAJOR}.${MINOR}-${NEXT_ISSUE_NAME}"
 
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}")
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$NEXT_ISSUE_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   continue  # This task is locked, try the next candidate
@@ -296,7 +296,7 @@ Use the **SCOPE_COMPLETE** box from Script Output Work Boxes.
 Release the lock (user will re-acquire when they invoke the command):
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_TASK_ID" "${CLAUDE_SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "$NEXT_ISSUE_ID" "${CLAUDE_SESSION_ID}"
 ```
 
 Use the **TASK_COMPLETE_LOW_TRUST** box from Script Output Work Boxes.
@@ -315,7 +315,7 @@ See `concepts/version-completion.md` for:
 
 ## Task Complete
 
-**{task-name}** merged to main.
+**{issue-name}** merged to main.
 
 ## All Tasks Complete
 

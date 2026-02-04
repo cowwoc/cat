@@ -26,11 +26,11 @@ public final class GetHelpOutput
           +-- v{major}.{minor}/
               +-- STATE.md        # Minor version state
               +-- PLAN.md         # Feature-level plan
-              +-- {task-name}/    # Tasks at minor level (2-level scheme)
+              +-- {issue-name}/    # Tasks at minor level (2-level scheme)
               +-- v{major}.{minor}.{patch}/
                   +-- STATE.md    # Patch version state (optional 3-level)
                   +-- PLAN.md     # Patch-level plan
-                  +-- {task-name}/  # Tasks at patch level
+                  +-- {issue-name}/  # Tasks at patch level
       ```""";
 
   /**
@@ -159,7 +159,7 @@ public final class GetHelpOutput
         - Must be unique within minor version
 
         **Valid:** `parse-tokens`, `fix-memory-leak`, `add-user-auth`
-        **Invalid:** `Parse_Tokens`, `fix memory leak`, `add-very-long-task-name-that-exceeds-limit`
+        **Invalid:** `Parse_Tokens`, `fix memory leak`, `add-very-long-issue-name-that-exceeds-limit`
 
         </details>
 
@@ -168,9 +168,9 @@ public final class GetHelpOutput
 
         | Type | Pattern | Example |
         |------|---------|---------|
-        | Task (2-level) | `{major}.{minor}-{task-name}` | `1.0-parse-tokens` |
-        | Task (3-level) | `{major}.{minor}.{patch}-{task-name}` | `1.0.1-fix-edge-case` |
-        | Subagent | `{task-branch}-sub-{uuid}` | `1.0-parse-tokens-sub-a1b2c3` |
+        | Task (2-level) | `{major}.{minor}-{issue-name}` | `1.0-parse-tokens` |
+        | Task (3-level) | `{major}.{minor}.{patch}-{issue-name}` | `1.0.1-fix-edge-case` |
+        | Subagent | `{issue-branch}-sub-{uuid}` | `1.0-parse-tokens-sub-a1b2c3` |
 
         </details>
 

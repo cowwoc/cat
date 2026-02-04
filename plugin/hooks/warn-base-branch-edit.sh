@@ -4,7 +4,7 @@
 # Purpose: Warn when editing source files directly (A003/M097/M220/M302)
 #
 # CAT workflow requires:
-# 1. Task work happens in isolated worktrees (M220)
+# 1. Issue work happens in isolated worktrees (M220)
 # 2. Main agent delegates source edits to subagents (A003/M097)
 #
 # This hook warns when editing source files outside proper workflow.
@@ -16,7 +16,7 @@
 # - retrospectives/ directory
 # - mistakes.json, retrospectives.json
 # - hooks/, skills/ directories
-# - When in a task worktree editing orchestration files only
+# - When in a issue worktree editing orchestration files only
 
 set -euo pipefail
 
@@ -48,7 +48,7 @@ if [[ -z "$FILE_PATH" ]]; then
     exit 0
 fi
 
-# Check if we're in a task worktree (has cat-base file)
+# Check if we're in a issue worktree (has cat-base file)
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || GIT_DIR=""
 IN_TASK_WORKTREE=false
 if [[ -n "$GIT_DIR" ]] && [[ -f "$GIT_DIR/cat-base" ]]; then
@@ -106,11 +106,11 @@ Branch: $CURRENT_BRANCH
 File: $FILE_PATH
 
 You are editing source files directly on a base branch.
-CAT workflow requires task work to happen in isolated worktrees.
+CAT workflow requires issue work to happen in isolated worktrees.
 
-If working on a task:
+If working on an issue:
 1. Run /cat:work to create a worktree
-2. Or manually: git worktree add .worktrees/task-name -b task-branch
+2. Or manually: git worktree add .worktrees/issue-name -b issue-branch
 
 If this is intentional infrastructure work (not a task), proceed.
 
@@ -130,7 +130,7 @@ File: $FILE_PATH
 CWD: $CWD
 
 Absolute /workspace/ paths bypass worktree isolation!
-You are in a task worktree but editing the main workspace.
+You are in a issue worktree but editing the main workspace.
 
 Fix: Use relative path or path within current worktree.
 Example: Instead of /workspace/plugin/... use plugin/...
@@ -147,7 +147,7 @@ fi
 WORKTREE_NOTE=""
 if [[ "$IN_TASK_WORKTREE" == "true" ]]; then
     WORKTREE_NOTE="
-(In task worktree - proper isolation, but main agent should still delegate)"
+(In issue worktree - proper isolation, but main agent should still delegate)"
 fi
 
 output_hook_warning "PreToolUse" "⚠️ MAIN AGENT SOURCE EDIT DETECTED (A003/M097/M302)
@@ -157,7 +157,7 @@ File: $FILE_PATH${WORKTREE_NOTE}
 Main agent should delegate source code edits to subagents.
 If you are the main CAT orchestrator:
 1. Spawn a subagent via Task tool for implementation
-2. Only proceed directly if: trivial fix OR not during task execution
+2. Only proceed directly if: trivial fix OR not during issue execution
 
 Proceeding with edit (warning only, not blocked)."
 

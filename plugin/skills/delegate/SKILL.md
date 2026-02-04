@@ -203,8 +203,8 @@ their worktree association (recorded in the lock file).
 After any lock acquisition attempt, verify ownership by reading the actual lock file:
 
 ```bash
-TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${TASK_ID}.lock"
+ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
+LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
 
 # Verify lock file exists and we own it
 if [[ ! -f "$LOCK_FILE" ]]; then
@@ -508,7 +508,7 @@ TaskCreate:
 After subagent completes, update the task:
 ```
 TaskUpdate:
-  taskId: {created_task_id}
+  taskId: {created_issue_id}
   status: "completed"  # or "pending" if failed and needs retry
 ```
 
@@ -662,14 +662,14 @@ fi
 **Update TaskList entry:**
 ```
 TaskUpdate:
-  taskId: {task_id_from_step_5}
+  taskId: {issue_id_from_step_5}
   status: "completed"  # Use "completed" for success, keep "pending" for retry-needed failures
 ```
 
 For failed subagents that will be retried, keep status as "pending" and update the description:
 ```
 TaskUpdate:
-  taskId: {task_id}
+  taskId: {issue_id}
   description: "FAILED: {error_reason} - awaiting retry"
 ```
 
@@ -910,8 +910,8 @@ When using `run_in_background: true`:
 **To wait for results, use `TaskOutput` with `block: true`:**
 
 ```bash
-# Spawn in background → returns task_id
-# Wait: TaskOutput task_id="{id}" block=true timeout=120000
+# Spawn in background → returns issue_id
+# Wait: TaskOutput issue_id="{id}" block=true timeout=120000
 ```
 
 | Scenario | Approach |
@@ -930,8 +930,8 @@ git commits directly to verify success:
 
 ```bash
 # ❌ WRONG: Retrieve full output for each subagent (pollutes parent context)
-TaskOutput task_id="abc" block=true  # Returns truncated but still large output
-TaskOutput task_id="def" block=true  # More context pollution
+TaskOutput issue_id="abc" block=true  # Returns truncated but still large output
+TaskOutput issue_id="def" block=true  # More context pollution
 # Result: Parent agent context filled with subagent transcripts
 
 # ✅ CORRECT: Check results via git (minimal context impact)
@@ -942,12 +942,12 @@ git diff --stat base_branch..HEAD          # See files changed
 
 ```bash
 # ❌ WRONG: Polling pattern (pollutes context)
-TaskOutput task_id="abc" block=false  # Check status
-TaskOutput task_id="abc" block=false  # Check again
-TaskOutput task_id="abc" block=false  # Still checking...
+TaskOutput issue_id="abc" block=false  # Check status
+TaskOutput issue_id="abc" block=false  # Check again
+TaskOutput issue_id="abc" block=false  # Still checking...
 
 # ✅ CORRECT: Single blocking call only when you NEED the output
-TaskOutput task_id="abc" block=true timeout=300000  # Wait up to 5 min
+TaskOutput issue_id="abc" block=true timeout=300000  # Wait up to 5 min
 ```
 
 **Anti-pattern (M293):**

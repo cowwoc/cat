@@ -12,7 +12,7 @@ Main Agent (thin orchestrator: ~5-10K context)
     |
     +---> work-prepare subagent
     |     Loads: version-paths.md, discovery scripts
-    |     Returns: {task_id, worktree_path, estimate}
+    |     Returns: {issue_id, worktree_path, estimate}
     |
     +---> work-execute subagent
     |     Loads: subagent-delegation.md, delegate/SKILL.md
@@ -92,7 +92,7 @@ See individual skill files for full contracts:
 **MANDATORY: Use get-available-issues.sh script. FAIL-FAST if script fails.**
 
 The work-prepare subagent handles discovery internally. Main agent receives the result
-as JSON with task_id, worktree_path, and other metadata.
+as JSON with issue_id, worktree_path, and other metadata.
 
 ## Lock Management (M097)
 

@@ -34,14 +34,14 @@ Banner2/3/4 as text output -> Result.
 
 ## Input
 
-The work-with-task skill provides via JSON arguments:
+The work-with-issue skill provides via JSON arguments:
 
 ```json
 {
-  "task_id": "2.1-task-name",
-  "task_path": "/workspace/.claude/cat/issues/v2/v2.1/task-name",
-  "worktree_path": "/workspace/.worktrees/2.1-task-name",
-  "branch": "2.1-task-name",
+  "issue_id": "2.1-issue-name",
+  "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
+  "worktree_path": "/workspace/.worktrees/2.1-issue-name",
+  "branch": "2.1-issue-name",
   "base_branch": "v2.1",
   "estimated_tokens": 45000,
   "trust": "medium",
@@ -64,7 +64,7 @@ Return JSON on success:
 ```json
 {
   "status": "SUCCESS|FAILED",
-  "task_id": "2.1-task-name",
+  "issue_id": "2.1-issue-name",
   "commits": [...],
   "files_changed": 5,
   "tokens_used": 65000,
@@ -78,7 +78,7 @@ Return JSON when approval gate reached (trust != high):
 ```json
 {
   "status": "APPROVAL_REQUIRED",
-  "task_id": "2.1-task-name",
+  "issue_id": "2.1-issue-name",
   "execution_result": {...},
   "review_result": {...},
   "goal": "Task goal text from PLAN.md"
@@ -103,8 +103,8 @@ Return JSON on failure:
 Extract all parameters from arguments JSON.
 
 ```bash
-TASK_ID=$(echo "$ARGUMENTS" | jq -r '.task_id')
-TASK_PATH=$(echo "$ARGUMENTS" | jq -r '.task_path')
+ISSUE_ID=$(echo "$ARGUMENTS" | jq -r '.issue_id')
+ISSUE_PATH=$(echo "$ARGUMENTS" | jq -r '.issue_path')
 WORKTREE_PATH=$(echo "$ARGUMENTS" | jq -r '.worktree_path')
 BRANCH=$(echo "$ARGUMENTS" | jq -r '.branch')
 BASE_BRANCH=$(echo "$ARGUMENTS" | jq -r '.base_branch')
@@ -133,7 +133,7 @@ rather than relying on it to read PLAN.md and follow skill invocation requiremen
 
 ```bash
 # Read PLAN.md execution steps to include in prompt
-EXECUTION_STEPS=$(sed -n '/## Execution Steps/,/^## /p' "${TASK_PATH}/PLAN.md" | head -n -1)
+EXECUTION_STEPS=$(sed -n '/## Execution Steps/,/^## /p' "${ISSUE_PATH}/PLAN.md" | head -n -1)
 ```
 
 ```
@@ -145,8 +145,8 @@ Task tool:
     Execute the work-execute phase skill.
 
     SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${TASK_ID}
-    TASK_PATH: ${TASK_PATH}
+    ISSUE_ID: ${ISSUE_ID}
+    ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
@@ -192,8 +192,8 @@ Task tool:
     Execute the work-review phase skill.
 
     SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${TASK_ID}
-    TASK_PATH: ${TASK_PATH}
+    ISSUE_ID: ${ISSUE_ID}
+    ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     TRUST_LEVEL: ${TRUST}
     VERIFY_LEVEL: ${VERIFY}
@@ -218,7 +218,7 @@ User approval is a SEPARATE gate in Step 4.
 
 **If trust == "low" or trust == "medium":**
 
-Read task goal from `${TASK_PATH}/PLAN.md` (extract ## Goal section).
+Read task goal from `${ISSUE_PATH}/PLAN.md` (extract ## Goal section).
 
 **STOP HERE. Return APPROVAL_REQUIRED status.** Do NOT proceed to merge.
 
@@ -227,7 +227,7 @@ The parent skill will handle user approval via AskUserQuestion.
 ```json
 {
   "status": "APPROVAL_REQUIRED",
-  "task_id": "${TASK_ID}",
+  "issue_id": "${ISSUE_ID}",
   "execution_result": {...},
   "review_result": {...},
   "goal": "extracted goal text"
@@ -251,8 +251,8 @@ Task tool:
     Execute the work-merge phase skill.
 
     SESSION_ID: ${CLAUDE_SESSION_ID}
-    TASK_ID: ${TASK_ID}
-    TASK_PATH: ${TASK_PATH}
+    ISSUE_ID: ${ISSUE_ID}
+    ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
     BRANCH: ${BRANCH}
     BASE_BRANCH: ${BASE_BRANCH}
@@ -274,7 +274,7 @@ Handle merge result:
 ```json
 {
   "status": "SUCCESS",
-  "task_id": "${TASK_ID}",
+  "issue_id": "${ISSUE_ID}",
   "commits": [...],
   "files_changed": N,
   "tokens_used": N,

@@ -15,9 +15,9 @@ The main agent provides:
 ```json
 {
   "session_id": "uuid",
-  "task_id": "2.1-task-name",
-  "task_path": "/workspace/.claude/cat/issues/v2/v2.1/task-name",
-  "worktree_path": "/workspace/.worktrees/2.1-task-name",
+  "issue_id": "2.1-issue-name",
+  "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
+  "worktree_path": "/workspace/.worktrees/2.1-issue-name",
   "estimated_tokens": 45000,
   "trust_level": "low|medium|high"
 }
@@ -102,7 +102,7 @@ Return JSON on failure:
 ```bash
 cd "${WORKTREE_PATH}"
 CURRENT_BRANCH=$(git branch --show-current)
-EXPECTED_BRANCH="${TASK_ID}"  # e.g., "2.1-task-name"
+EXPECTED_BRANCH="${ISSUE_ID}"  # e.g., "2.1-issue-name"
 
 if [[ "$CURRENT_BRANCH" != "$EXPECTED_BRANCH" ]]; then
   echo "FAIL: Wrong branch. Expected: $EXPECTED_BRANCH, Got: $CURRENT_BRANCH"

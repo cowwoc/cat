@@ -4,11 +4,11 @@ How issues are marked complete and how to trace their resolving commits.
 
 ## Resolution Types
 
-| Resolution | Description | Has Commit? | Commit Footer |
-|------------|-------------|-------------|---------------|
-| `implemented` | Issue completed normally | Yes | `Issue ID: v{x}.{y}-{issue-name}` |
-| `duplicate` | Another issue did this work | No | Use original issue's commit |
-| `obsolete` | No longer needed | No | None |
+| Resolution | Description | Has Commit? | How to Find |
+|------------|-------------|-------------|-------------|
+| `implemented` | Issue completed normally | Yes | `git log -- .claude/cat/issues/v{x}/v{x}.{y}/{issue-name}/` |
+| `duplicate` | Another issue did this work | No | Check STATE.md "Duplicate Of" field |
+| `obsolete` | No longer needed | No | No implementation commit |
 
 **Status values:** `pending`, `in-progress`, `completed` (only these three)
 
@@ -17,12 +17,12 @@ How issues are marked complete and how to trace their resolving commits.
 When an issue is completed through normal execution:
 
 1. Work is done and committed
-2. Commit message footer contains: `Issue ID: v{major}.{minor}-{issue-name}`
+2. STATE.md updated in the same commit (per M076)
 3. STATE.md updated with `Resolution: implemented`
 
 ```bash
-# Find the commit
-git log --oneline --grep="Issue ID: v1.0-add-feature-x"
+# Find commits for an issue via STATE.md history
+git log --oneline -- .claude/cat/issues/v1/v1.0/add-feature-x/
 ```
 
 ## Duplicate Issues
@@ -59,15 +59,15 @@ Update the duplicate issue's STATE.md:
 
 ### Finding Commits for Duplicates
 
-The duplicate issue has **no commit with its Issue ID**. The work was done by the original issue.
+The duplicate issue has **no implementation commit**. The work was done by the original issue.
 
 **To find the resolving commit:**
 
 ```bash
 # 1. Read the duplicate issue's STATE.md
 # 2. Get the "Duplicate Of" value (e.g., v0.5-fix-multi-param-lambda)
-# 3. Search for that issue ID
-git log --oneline --grep="Issue ID: v0.5-fix-multi-param-lambda"
+# 3. Find commits for that original issue via STATE.md history
+git log --oneline -- .claude/cat/issues/v0/v0.5/fix-multi-param-lambda/
 ```
 
 ### Commit for Duplicate Resolution
@@ -82,7 +82,7 @@ Duplicate of {original-issue-name} which was resolved in commit {hash}.
 "
 ```
 
-**Note:** This commit does NOT include `Issue ID:` footer because there's no implementation.
+**Note:** Duplicate resolutions have no implementation commit - only the STATE.md update.
 
 ## Obsolete Issues
 
@@ -130,8 +130,8 @@ To find what resolved an issue:
 ```
 1. Read issue's STATE.md
 2. Check Resolution field:
-   - If "implemented": grep for "Issue ID: v{x}.{y}-{this-issue}"
-   - If "duplicate": grep for "Issue ID: {Duplicate Of value}"
+   - If "implemented": git log -- .claude/cat/issues/v{x}/v{x}.{y}/{issue-name}/
+   - If "duplicate": find commits for the "Duplicate Of" issue
    - If "obsolete": no implementation commit exists
 ```
 
@@ -153,12 +153,16 @@ MAJOR=$(basename "$MAJOR_PATH" | sed 's/v//')
 
 case "$RESOLUTION" in
   implemented)
-    ISSUE_ID="v${MAJOR}.${MINOR#v*}-${ISSUE_NAME}"
-    git log --oneline --grep="Issue ID: $ISSUE_ID"
+    # Find commits via STATE.md file history
+    git log --oneline -- "$ISSUE_PATH/"
     ;;
   duplicate)
     DUPLICATE_OF=$(grep "Duplicate Of:" "$STATE_FILE" | sed 's/.*Duplicate Of: *//')
-    git log --oneline --grep="Issue ID: $DUPLICATE_OF"
+    # Parse version and issue name from duplicate reference
+    DUP_MAJOR=$(echo "$DUPLICATE_OF" | sed 's/v\([0-9]*\)\..*/\1/')
+    DUP_MINOR=$(echo "$DUPLICATE_OF" | sed 's/v\([0-9]*\.[0-9]*\)-.*/\1/')
+    DUP_NAME=$(echo "$DUPLICATE_OF" | sed 's/v[0-9]*\.[0-9]*-//')
+    git log --oneline -- ".claude/cat/issues/v${DUP_MAJOR}/v${DUP_MINOR}/${DUP_NAME}/"
     ;;
   obsolete)
     echo "Issue was obsolete - no implementation commit"

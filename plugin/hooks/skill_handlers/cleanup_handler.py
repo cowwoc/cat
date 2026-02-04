@@ -103,7 +103,7 @@ class CleanupHandler:
         return worktrees
 
     def _get_locks(self, project_dir: str) -> list[dict]:
-        """Get list of task locks.
+        """Get list of issue locks.
 
         Lock files use JSON format:
             {
@@ -124,12 +124,12 @@ class CleanupHandler:
                 content = lock_file.read_text()
                 data = json.loads(content)
 
-                task_id = lock_file.stem
+                issue_id = lock_file.stem
                 session = data.get("session_id", "")
                 created = data.get("created_at", 0)
                 age = int(time.time() - created) if created else 0
                 locks.append({
-                    "task_id": task_id,
+                    "issue_id": issue_id,
                     "session": session,
                     "age": age
                 })
@@ -240,13 +240,13 @@ class CleanupHandler:
         # Locks inner box
         lock_items = []
         for lock in locks:
-            task_id = lock.get("task_id", "")
+            issue_id = lock.get("issue_id", "")
             session = lock.get("session", "")[:8] if lock.get("session") else ""
             age = lock.get("age", 0)
-            lock_items.append(f"{task_id}: session={session}, age={age}s")
+            lock_items.append(f"{issue_id}: session={session}, age={age}s")
         if not lock_items:
             lock_items = ["None found"]
-        lock_box = build_inner_box("🔒 Task Locks", lock_items)
+        lock_box = build_inner_box("🔒 Issue Locks", lock_items)
         all_inner_boxes.extend(lock_box)
         all_inner_boxes.append("")
 

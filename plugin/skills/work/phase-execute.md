@@ -13,7 +13,7 @@ Steps for task execution: execute, collect_and_report, aggregate_token_report, t
 **MANDATORY: Display progress banner when entering this phase.**
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase executing
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase executing
 ```
 
 ---
@@ -94,7 +94,7 @@ Output format (do NOT wrap in ```):
 
 ## Subagent Execution Report
 
-**Task:** {task-name}
+**Issue:** {issue-name}
 **Status:** {success|partial|failed}
 
 **Token Usage:**
@@ -131,7 +131,7 @@ Invoke `/cat:learn` with:
 - Description: "Token estimate underestimated actual usage by {variance}%"
 - Estimated tokens: {ESTIMATED_TOKENS}
 - Actual tokens: {ACTUAL_TOKENS}
-- Task: {task-name}
+- Issue: {issue-name}
 
 </step>
 
@@ -148,7 +148,7 @@ HARD_LIMIT_PCT=...
 HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
 
 # Find all subagent completion files for this task
-TASK_WORKTREES=$(find .worktrees -name ".completion.json" -path "*${TASK_ID}*" 2>/dev/null)
+TASK_WORKTREES=$(find .worktrees -name ".completion.json" -path "*${ISSUE_ID}*" 2>/dev/null)
 
 TOTAL_TOKENS=0
 TOTAL_EXCEEDED=0

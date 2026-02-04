@@ -76,7 +76,7 @@ Variables: none (static)
 {first_task_walkthrough}
 
 === BOX: first_task_created ===
-Variables: {{task-name}} = sanitized task name from user input
+Variables: {{issue-name}} = sanitized issue name from user input
 {first_task_created}
 
 === BOX: all_set ===

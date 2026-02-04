@@ -114,24 +114,24 @@ public final class GetStakeholderOutput
   /**
    * Build the stakeholder review box.
    *
-   * @param taskName the task being reviewed
+   * @param issueName the issue being reviewed
    * @param reviewers the list of reviewer statuses
    * @param result the overall result (e.g., "APPROVED", "CONCERNS", "REJECTED")
    * @param summary a brief summary of the review outcome
    * @return the formatted review box
    * @throws NullPointerException if any parameter is null
-   * @throws IllegalArgumentException if taskName, result, or summary is blank, or reviewers is empty
+   * @throws IllegalArgumentException if issueName, result, or summary is blank, or reviewers is empty
    */
-  public String getReviewBox(String taskName, List<ReviewerStatus> reviewers, String result, String summary)
+  public String getReviewBox(String issueName, List<ReviewerStatus> reviewers, String result, String summary)
   {
-    requireThat(taskName, "taskName").isNotBlank();
+    requireThat(issueName, "issueName").isNotBlank();
     requireThat(reviewers, "reviewers").isNotNull().isNotEmpty();
     requireThat(result, "result").isNotBlank();
     requireThat(summary, "summary").isNotBlank();
 
     List<String> content = new ArrayList<>();
     content.add("");
-    content.add("Task: " + taskName);
+    content.add("Issue: " + issueName);
     content.add("");
     int separator1 = content.size();
 

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # get-progress-banner.sh - Generate properly aligned progress banners
 #
-# USAGE: get-progress-banner.sh [task-id] [--phase <phase>] [--all-phases]
+# USAGE: get-progress-banner.sh [issue-id] [--phase <phase>] [--all-phases]
 #
 # Arguments:
-#   task-id      Issue ID to display (positional, or auto-discover if omitted)
+#   issue-id     Issue ID to display (positional, or auto-discover if omitted)
 #   --phase      Phase to render (preparing|executing|reviewing|merging)
 #   --all-phases Generate all phase banners (default if no --phase)
 #   --project-dir Directory containing .claude/cat/ (for auto-discovery)
-#   --session-id  Session ID for task locking (for auto-discovery)
+#   --session-id  Session ID for issue locking (for auto-discovery)
 #
 # OUTPUTS: Pre-rendered banner(s) with correct alignment
 #
@@ -28,14 +28,14 @@ fi
 # Show usage
 usage() {
     cat << 'EOF'
-Usage: get-progress-banner.sh [task-id] [--phase <phase>] [--all-phases]
+Usage: get-progress-banner.sh [issue-id] [--phase <phase>] [--all-phases]
 
 Arguments:
-  task-id        Issue ID to display (positional, auto-discover if omitted)
+  issue-id       Issue ID to display (positional, auto-discover if omitted)
   --phase        Phase to render (preparing|executing|reviewing|merging)
   --all-phases   Generate all phase banners (default)
   --project-dir  Project directory for auto-discovery
-  --session-id   Session ID for task locking
+  --session-id   Session ID for issue locking
 
 Examples:
   get-progress-banner.sh 2.1-migrate-progress-banners
@@ -45,7 +45,7 @@ EOF
 }
 
 # Parse arguments
-TASK_ID=""
+ISSUE_ID=""
 PHASE=""
 ALL_PHASES=false
 PROJECT_DIR=""
@@ -79,20 +79,20 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            # Positional argument = task ID (only if it matches task ID format: N.N-name)
-            if [[ -z "$TASK_ID" && "$1" =~ ^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+$ ]]; then
-                TASK_ID="$1"
+            # Positional argument = issue ID (only if it matches issue ID format: N.N-name)
+            if [[ -z "$ISSUE_ID" && "$1" =~ ^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+$ ]]; then
+                ISSUE_ID="$1"
             fi
-            # Ignore other positional arguments (filter phrases like "skip compression tasks")
+            # Ignore other positional arguments (filter phrases like "skip compression issues")
             shift
             ;;
     esac
 done
 
-# If no task ID provided, try to auto-discover
-if [[ -z "$TASK_ID" ]]; then
+# If no issue ID provided, try to auto-discover
+if [[ -z "$ISSUE_ID" ]]; then
     if [[ -n "$PROJECT_DIR" && -n "$SESSION_ID" ]]; then
-        # Try to discover next task
+        # Try to discover next issue
         DISCOVERY_SCRIPT="$SCRIPT_DIR/get-available-issues.sh"
         if [[ -x "$DISCOVERY_SCRIPT" ]]; then
             RESULT=$("$DISCOVERY_SCRIPT" --session-id "$SESSION_ID" 2>/dev/null) || true
@@ -100,7 +100,7 @@ if [[ -z "$TASK_ID" ]]; then
                 MAJOR=$(echo "$RESULT" | jq -r '.major')
                 MINOR=$(echo "$RESULT" | jq -r '.minor')
                 ISSUE_NAME=$(echo "$RESULT" | jq -r '.issue_name')
-                TASK_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
+                ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
             fi
         fi
     fi
@@ -119,7 +119,7 @@ fi
 
 # Build banner using Python for accurate width calculation
 build_banner() {
-    local task_id="$1"
+    local issue_id="$1"
     local p1="$2"  # Preparing symbol
     local p2="$3"  # Executing symbol
     local p3="$4"  # Reviewing symbol
@@ -132,16 +132,16 @@ from emoji_widths import EmojiWidths
 
 ew = EmojiWidths()
 
-task_id = "$task_id"
+issue_id = "$issue_id"
 p1, p2, p3, p4 = "$p1", "$p2", "$p3", "$p4"
 
 # Phase content without border characters
 phase_content = f"  {p1} Preparing ────── {p2} Executing ────── {p3} Reviewing ────── {p4} Merging "
 phase_width = ew.display_width(phase_content)
 
-# Header content: "─ 🐱 " + task_id + " "
+# Header content: "─ 🐱 " + issue_id + " "
 header_prefix = "─ 🐱 "
-header_content = header_prefix + task_id + " "
+header_content = header_prefix + issue_id + " "
 header_width = ew.display_width(header_content)
 
 # Box width is determined by the wider of header or phase content
@@ -164,22 +164,22 @@ print(bottom_line)
 PYTHON_EOF
 }
 
-# If no task ID, output a generic "Preparing" banner (task discovered after prepare phase)
-if [[ -z "$TASK_ID" ]]; then
+# If no issue ID, output a generic "Preparing" banner (issue discovered after prepare phase)
+if [[ -z "$ISSUE_ID" ]]; then
     echo '```'
-    # Use empty task ID - banner will show just the cat emoji and phase indicators
+    # Use empty issue ID - banner will show just the cat emoji and phase indicators
     python3 << 'PYTHON_EOF'
 import sys
 sys.path.insert(0, '$LIB_DIR'.replace("'", ""))
 
-# Inline the build since we need special handling for no task ID
+# Inline the build since we need special handling for no issue ID
 PENDING = "○"
 ACTIVE = "◉"
 
 # Phase content without border characters
 phase_content = f"  {ACTIVE} Preparing ────── {PENDING} Executing ────── {PENDING} Reviewing ────── {PENDING} Merging "
 
-# For no task ID, just use cat emoji with dashes extending to match phase width
+# For no issue ID, just use cat emoji with dashes extending to match phase width
 # Calculate phase width manually (approximation for consistency)
 phase_width = 69  # Width of phase line content
 
@@ -203,7 +203,7 @@ print(bottom_line)
 PYTHON_EOF
     echo '```'
     echo ""
-    echo "Task will be identified after preparation completes."
+    echo "Issue will be identified after preparation completes."
     exit 0
 fi
 
@@ -211,36 +211,36 @@ fi
 if [[ "$ALL_PHASES" == "true" ]]; then
     echo "**Preparing phase** (◉ on Preparing):"
     echo '```'
-    build_banner "$TASK_ID" "$ACTIVE" "$PENDING" "$PENDING" "$PENDING"
+    build_banner "$ISSUE_ID" "$ACTIVE" "$PENDING" "$PENDING" "$PENDING"
     echo '```'
     echo ""
     echo "**Executing phase** (● ◉ pattern):"
     echo '```'
-    build_banner "$TASK_ID" "$COMPLETE" "$ACTIVE" "$PENDING" "$PENDING"
+    build_banner "$ISSUE_ID" "$COMPLETE" "$ACTIVE" "$PENDING" "$PENDING"
     echo '```'
     echo ""
     echo "**Reviewing phase** (● ● ◉ pattern):"
     echo '```'
-    build_banner "$TASK_ID" "$COMPLETE" "$COMPLETE" "$ACTIVE" "$PENDING"
+    build_banner "$ISSUE_ID" "$COMPLETE" "$COMPLETE" "$ACTIVE" "$PENDING"
     echo '```'
     echo ""
     echo "**Merging phase** (● ● ● ◉ pattern):"
     echo '```'
-    build_banner "$TASK_ID" "$COMPLETE" "$COMPLETE" "$COMPLETE" "$ACTIVE"
+    build_banner "$ISSUE_ID" "$COMPLETE" "$COMPLETE" "$COMPLETE" "$ACTIVE"
     echo '```'
 else
     case "$PHASE" in
         preparing)
-            build_banner "$TASK_ID" "$ACTIVE" "$PENDING" "$PENDING" "$PENDING"
+            build_banner "$ISSUE_ID" "$ACTIVE" "$PENDING" "$PENDING" "$PENDING"
             ;;
         executing)
-            build_banner "$TASK_ID" "$COMPLETE" "$ACTIVE" "$PENDING" "$PENDING"
+            build_banner "$ISSUE_ID" "$COMPLETE" "$ACTIVE" "$PENDING" "$PENDING"
             ;;
         reviewing)
-            build_banner "$TASK_ID" "$COMPLETE" "$COMPLETE" "$ACTIVE" "$PENDING"
+            build_banner "$ISSUE_ID" "$COMPLETE" "$COMPLETE" "$ACTIVE" "$PENDING"
             ;;
         merging)
-            build_banner "$TASK_ID" "$COMPLETE" "$COMPLETE" "$COMPLETE" "$ACTIVE"
+            build_banner "$ISSUE_ID" "$COMPLETE" "$COMPLETE" "$COMPLETE" "$ACTIVE"
             ;;
         *)
             echo "Error: Unknown phase '$PHASE'. Valid: preparing, executing, reviewing, merging" >&2

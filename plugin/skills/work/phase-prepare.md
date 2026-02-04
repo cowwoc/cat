@@ -15,7 +15,7 @@ Steps for task preparation: verify, find_task, acquire_lock, load_task, validate
 After acquiring the lock and identifying the task, run `get-progress-banner.sh` and OUTPUT the result directly to the user (not in a code block):
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase preparing
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase preparing
 ```
 
 **Anti-pattern (M319):** Writing informal markdown like "## Phase 1: Prepare" instead of running the script.
@@ -56,15 +56,15 @@ RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" "${CLAUDE_PROJE
 
 # Parse result
 if echo "$RESULT" | jq -e '.status == "found"' > /dev/null 2>&1; then
-  TASK_ID=$(echo "$RESULT" | jq -r '.task_id')
-  TASK_PATH=$(echo "$RESULT" | jq -r '.task_path')
+  ISSUE_ID=$(echo "$RESULT" | jq -r '.issue_id')
+  ISSUE_PATH=$(echo "$RESULT" | jq -r '.issue_path')
   MAJOR=$(echo "$RESULT" | jq -r '.major')
   MINOR=$(echo "$RESULT" | jq -r '.minor')
-  TASK_NAME=$(echo "$RESULT" | jq -r '.task_name')
+  ISSUE_NAME=$(echo "$RESULT" | jq -r '.issue_name')
   # MANDATORY: Show progress banner IMMEDIATELY after lock acquired (M314, M315)
   # User needs visual feedback before exploration begins
   # Use get-progress-banner.sh to show all phases with dot symbols
-  "${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$TASK_ID" --phase preparing
+  "${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase preparing
   # The banner shows: ○ Pending | ● Complete | ◉ Active for each phase
 else
   echo "No executable tasks found"
@@ -114,15 +114,15 @@ WORK_TARGET=""         # e.g., "0" for major, "0.5" for minor, "0.5-parse" for t
 For each candidate task, attempt to acquire the lock BEFORE offering it as available:
 
 ```bash
-TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$TASK_ID" "${CLAUDE_SESSION_ID}")
+ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
+LOCK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" acquire "${CLAUDE_PROJECT_DIR}" "$ISSUE_ID" "${CLAUDE_SESSION_ID}")
 
 if echo "$LOCK_RESULT" | jq -e '.status == "locked"' > /dev/null 2>&1; then
   OWNER=$(echo "$LOCK_RESULT" | jq -r '.owner // "unknown"')
-  echo "⏸️ Task $TASK_ID is locked by session: $OWNER"
+  echo "⏸️ Task $ISSUE_ID is locked by session: $OWNER"
   continue  # Skip this task and try the next candidate
 fi
-echo "✓ Lock acquired for task: $TASK_ID"
+echo "✓ Lock acquired for task: $ISSUE_ID"
 ```
 
 **NEVER:**
@@ -139,7 +139,7 @@ For each candidate task, read the version's PLAN.md and extract the `## Gates` �
 |----------------|-----------------|
 | `Previous minor version (X.Y) complete` | All tasks in vX.Y must have status: completed |
 | `Previous major version (N) complete` | All minor versions in vN must be complete |
-| `Task X.Y-task-name complete` | That specific task must have status: completed |
+| `Issue X.Y-issue-name complete` | That specific issue must have status: completed |
 | `Version X.Y complete` | All tasks in that version must be complete |
 | `Manual approval required` | Check STATE.md for `Entry Approved: true` |
 | `No prerequisites` | Always satisfied |
@@ -180,8 +180,8 @@ When get-available-issues.sh returns "no executable tasks", this is the CORRECT 
 The lock was already acquired during the find_task step (M097). This step verifies the lock is held.
 
 ```bash
-TASK_ID="${MAJOR}.${MINOR}-${TASK_NAME}"
-echo "✓ Lock held for task: $TASK_ID (acquired in find_task step)"
+ISSUE_ID="${MAJOR}.${MINOR}-${ISSUE_NAME}"
+echo "✓ Lock held for task: $ISSUE_ID (acquired in find_task step)"
 ```
 
 </step>
@@ -202,7 +202,7 @@ Present task overview with visual progress bar.
 
 Output format (do NOT wrap in ```):
 
-## Task: {task-name}
+## Issue: {issue-name}
 
 **Version:** {major}.{minor}
 **Status:** {status}
@@ -222,7 +222,7 @@ This step ensures 100% requirements traceability before implementation begins.
 **Extract requirements from PLAN.md:**
 
 ```bash
-REQUIREMENTS=$(grep -oE 'REQ-[0-9]+' "$TASK_PATH/PLAN.md" | sort -u)
+REQUIREMENTS=$(grep -oE 'REQ-[0-9]+' "$ISSUE_PATH/PLAN.md" | sort -u)
 REQ_COUNT=$(echo "$REQUIREMENTS" | wc -l)
 echo "Found $REQ_COUNT requirements"
 ```
@@ -230,7 +230,7 @@ echo "Found $REQ_COUNT requirements"
 **Extract covered requirements from ## Requirements Traceability:**
 
 ```bash
-COVERED=$(grep -A100 '### Requirements Traceability' "$TASK_PATH/PLAN.md" | \
+COVERED=$(grep -A100 '### Requirements Traceability' "$ISSUE_PATH/PLAN.md" | \
           grep -oE 'REQ-[0-9]+' | sort -u)
 COVERED_COUNT=$(echo "$COVERED" | wc -l)
 ```
@@ -369,7 +369,7 @@ Add to task's STATE.md:
 
 **Create task worktree and branch:**
 
-Branch naming: `{major}.{minor}-{task-name}`
+Branch naming: `{major}.{minor}-{issue-name}`
 
 ```bash
 # Detect base branch (currently checked out branch in main worktree)
@@ -377,16 +377,16 @@ BASE_BRANCH=$(git branch --show-current)
 echo "Base branch for task: $BASE_BRANCH"
 
 # Create task branch from current branch (not hardcoded main)
-TASK_BRANCH="{major}.{minor}-{task-name}"
-git branch "$TASK_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
+ISSUE_BRANCH="{major}.{minor}-{issue-name}"
+git branch "$ISSUE_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
 
 # Create worktree (use absolute path to avoid cwd dependency)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$TASK_BRANCH"
-git worktree add "$WORKTREE_PATH" "$TASK_BRANCH" 2>/dev/null || \
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$ISSUE_BRANCH"
+git worktree add "$WORKTREE_PATH" "$ISSUE_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
 
 # Store base branch in worktree metadata (auto-deleted when worktree removed)
-echo "$BASE_BRANCH" > "$(git rev-parse --git-common-dir)/worktrees/$TASK_BRANCH/cat-base"
+echo "$BASE_BRANCH" > "$(git rev-parse --git-common-dir)/worktrees/$ISSUE_BRANCH/cat-base"
 
 # MANDATORY: Change to worktree directory
 cd "$WORKTREE_PATH"

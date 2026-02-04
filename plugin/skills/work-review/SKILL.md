@@ -15,9 +15,9 @@ The main agent provides:
 ```json
 {
   "session_id": "uuid",
-  "task_id": "2.1-task-name",
-  "task_path": "/workspace/.claude/cat/issues/v2/v2.1/task-name",
-  "worktree_path": "/workspace/.worktrees/2.1-task-name",
+  "issue_id": "2.1-issue-name",
+  "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
+  "worktree_path": "/workspace/.worktrees/2.1-issue-name",
   "trust_level": "low|medium|high",
   "verify_level": "none|changed|all",
   "execution_result": {

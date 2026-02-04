@@ -40,13 +40,13 @@ parse_version() {
     fi
 }
 
-# Get task directory path based on version format
-get_task_dir() {
+# Get issue directory path based on version format
+get_issue_dir() {
     local version="$1"
-    local task_name="$2"
+    local issue_name="$2"
     # Fail-fast: require cat_dir argument
     if [[ -z "${3:-}" ]]; then
-        echo "ERROR: get_task_dir requires cat_dir as third argument" >&2
+        echo "ERROR: get_issue_dir requires cat_dir as third argument" >&2
         return 1
     fi
     local cat_dir="$3"
@@ -54,11 +54,11 @@ get_task_dir() {
     parse_version "$version"
 
     if [[ -z "$VERSION_MINOR" ]]; then
-        echo "${cat_dir}/v${VERSION_MAJOR}/${task_name}"
+        echo "${cat_dir}/v${VERSION_MAJOR}/${issue_name}"
     elif [[ -z "$VERSION_PATCH" ]]; then
-        echo "${cat_dir}/v${VERSION_MAJOR}/v${VERSION_MAJOR}.${VERSION_MINOR}/${task_name}"
+        echo "${cat_dir}/v${VERSION_MAJOR}/v${VERSION_MAJOR}.${VERSION_MINOR}/${issue_name}"
     else
-        echo "${cat_dir}/v${VERSION_MAJOR}/v${VERSION_MAJOR}.${VERSION_MINOR}/v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}/${task_name}"
+        echo "${cat_dir}/v${VERSION_MAJOR}/v${VERSION_MAJOR}.${VERSION_MINOR}/v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}/${issue_name}"
     fi
 }
 
@@ -83,20 +83,20 @@ get_version_dir() {
     fi
 }
 
-# Format branch name from version and task
+# Format branch name from version and issue
 format_branch_name() {
     local version="$1"
-    local task_name="$2"
+    local issue_name="$2"
     version="${version#v}"
-    echo "${version}-${task_name}"
+    echo "${version}-${issue_name}"
 }
 
 # Format Issue ID for commit messages
-format_task_id() {
+format_issue_id() {
     local version="$1"
-    local task_name="$2"
+    local issue_name="$2"
     version="${version#v}"
-    echo "v${version}-${task_name}"
+    echo "v${version}-${issue_name}"
 }
 
 # Validate version format (delegates to detect_version_depth)
