@@ -1,6 +1,6 @@
 # State
 
-- **Status:** in-progress
+- **Status:** pending
 - **Progress:** 0%
 - **Dependencies:** []
 - **Decomposed:** true
