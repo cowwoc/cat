@@ -74,14 +74,19 @@ Claude-facing coding standards live in `.claude/cat/conventions/`. Place files h
 
 **Structure:**
 ```
+.claude/rules/
+└── common.md             # Cross-cutting conventions (auto-loaded by Claude Code)
+
 .claude/cat/conventions/
 ├── INDEX.md              # Summary with links to load sub-conventions on demand
-├── common.md             # Cross-cutting conventions
 ├── {language}.md         # Language-specific (python.md, typescript.md, etc.)
 ├── testing.md            # Testing standards
 └── {domain}/             # Optional subdirectories for complex domains
     └── {topic}.md
 ```
+
+**Auto-loading:** Place `common.md` in `.claude/rules/` so Claude Code loads it automatically at
+session start. This ensures cross-cutting rules are always available without explicit loading.
 
 **INDEX.md purpose:** Provides a table of contents so agents can load only the conventions they need,
 minimizing context usage. Each entry should have a one-line description of when to load it.
