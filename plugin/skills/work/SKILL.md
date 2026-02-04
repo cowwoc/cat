@@ -109,10 +109,23 @@ Task tool:
 | Status | Action |
 |--------|--------|
 | READY | Display progress banner, continue to Phase 2 |
-| NO_TASKS | Display NO_EXECUTABLE_ISSUES box, stop |
+| NO_TASKS | Display NO_EXECUTABLE_ISSUES box with context-aware guidance (see below), stop |
 | LOCKED | Display lock message, try next task |
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
 | ERROR | Display error, stop |
+
+**NO_TASKS Guidance (M396):**
+
+When prepare phase returns NO_TASKS, check the `message` field and provide appropriate guidance:
+
+| Message contains | Suggested action |
+|------------------|------------------|
+| "locked" | Suggest `/cat:cleanup` to clear stale locks, or wait for other sessions |
+| "blocked" | Suggest resolving blocking dependencies first |
+| "complete" | All tasks done - suggest `/cat:status` to verify or `/cat:add` for new work |
+| other | Suggest `/cat:status` to see available tasks |
+
+**NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
 
 **Store phase 1 results:**
 - `task_id`, `task_path`, `worktree_path`, `branch`, `base_branch`

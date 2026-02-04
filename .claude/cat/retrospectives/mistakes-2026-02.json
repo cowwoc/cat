@@ -1313,6 +1313,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Copy ALL content between explicit START and END markers. Markers are HTML comments that bracket the exact content to copy."
+    },
+    {
+      "id": "M396",
+      "timestamp": "2026-02-04T05:30:00Z",
+      "category": "incorrect_guidance",
+      "description": "Suggested /cat:work 2.0 when all v2.1 tasks locked - previous version is unhelpful",
+      "root_cause": "NO_TASKS handling had no context-aware guidance, leaving agent to improvise",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "no_tasks",
+        "locked",
+        "version_suggestion",
+        "guidance"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When NO_TASKS due to locks, suggest /cat:cleanup or waiting, never previous versions"
     }
   ]
 }
