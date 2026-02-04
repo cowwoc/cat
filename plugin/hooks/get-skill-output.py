@@ -65,6 +65,54 @@ def extract_skill_name(prompt: str) -> str | None:
     return None
 
 
+import subprocess
+
+
+# Skills that bypass LLM entirely (M409: LLM cannot reliably copy verbatim)
+# These skills output directly to user via stopReason, no LLM processing
+BYPASS_LLM_SKILLS = {"status", "help"}
+
+
+def run_bypass_skill(skill_name: str, project_root: str, plugin_root: str) -> str | None:
+    """
+    Run a skill that bypasses LLM entirely, returning its output directly.
+
+    M409: After 8 recurrences of LLM summarizing instead of echoing verbatim,
+    we now bypass the LLM for mechanical output skills.
+    """
+    script_map = {
+        "status": ("scripts/get-status-display.sh", ["--project-dir", project_root or "."]),
+        "help": ("scripts/get-help-display.sh", []),
+    }
+
+    if skill_name not in script_map:
+        return None
+
+    script_path, args = script_map[skill_name]
+    script = Path(plugin_root) / script_path
+    if not script.exists():
+        return None
+
+    try:
+        result = subprocess.run(
+            [str(script)] + args,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if result.returncode == 0:
+            return result.stdout
+        else:
+            sys.stderr.write(f"{skill_name} script failed: {result.stderr}\n")
+            return None
+    except subprocess.TimeoutExpired:
+        sys.stderr.write(f"{skill_name} script timed out\n")
+        return None
+    except Exception as e:
+        sys.stderr.write(f"{skill_name} script error: {e}\n")
+        return None
+
+
 def main():
     # Read hook input
     hook_data = read_hook_input()
@@ -83,7 +131,29 @@ def main():
 
     session_id = hook_data.get("session_id", "")
 
-    # Collect all outputs
+    # Determine project root early (needed for bypass skills)
+    project_root = os.environ.get("CLAUDE_PROJECT_DIR", "")
+    if not project_root or not Path(project_root, ".claude", "cat").is_dir():
+        if Path(".claude/cat").is_dir():
+            project_root = os.getcwd()
+        else:
+            project_root = ""
+
+    # Check if this is a skill that bypasses LLM entirely (M409)
+    skill_name = extract_skill_name(user_prompt)
+    if skill_name and skill_name in BYPASS_LLM_SKILLS:
+        bypass_output = run_bypass_skill(skill_name, project_root, str(SCRIPT_DIR.parent))
+        if bypass_output:
+            # Return with continue: false to bypass LLM
+            # Output goes directly to user via stopReason
+            response = {
+                "continue": False,
+                "stopReason": bypass_output.rstrip()
+            }
+            print(json.dumps(response))
+            return
+
+    # Collect all outputs for regular skills
     outputs = []
 
     # 1. Run prompt handlers (pattern checking for all prompts)
@@ -96,18 +166,9 @@ def main():
             sys.stderr.write(f"get-skill-output: prompt handler error: {e}\n")
 
     # 2. Run skill handler if this is a /cat:* command
-    skill_name = extract_skill_name(user_prompt)
     if skill_name:
         handler = get_skill_handler(skill_name)
         if handler:
-            # Determine project root
-            project_root = os.environ.get("CLAUDE_PROJECT_DIR", "")
-            if not project_root or not Path(project_root, ".claude", "cat").is_dir():
-                if Path(".claude/cat").is_dir():
-                    project_root = os.getcwd()
-                else:
-                    project_root = ""
-
             context = {
                 "user_prompt": user_prompt,
                 "session_id": session_id,
