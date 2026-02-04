@@ -6,6 +6,6 @@ allowed-tools:
   - Skill
 ---
 
-Invoke the echo skill with this exact content:
+Without any preamble, invoke the echo skill with this exact content:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`

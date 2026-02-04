@@ -9,7 +9,7 @@ allowed-tools:
 user-invocable: false
 ---
 
-First, invoke the echo skill with this exact content:
+Without any preamble, invoke the echo skill with this exact content:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-token-report.sh --session-id "${CLAUDE_SESSION_ID}"`
 
