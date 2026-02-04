@@ -6,21 +6,7 @@ allowed-tools:
   - Read
 ---
 
-# CAT Status Display
-
-## MANDATORY OUTPUT REQUIREMENT (M341, M395, M401, M402)
-
-**STOP. DO NOT ASK QUESTIONS. DO NOT CHECK GIT STATUS. DO NOT ANALYZE CONTEXT.**
-
-**YOUR ONLY JOB**: Copy-paste ALL content between the START and END markers below. Do NOT summarize, interpret, or reformat.
-
-This skill was invoked to DISPLAY output, not to gather information. Output the content NOW.
-
-*(Enforced by hook M402 - Stop hook blocks if status box missing from response)*
-
----
-
-<!-- START COPY HERE -->
+Echo this:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
@@ -37,5 +23,3 @@ This skill was invoked to DISPLAY output, not to gather information. Output the 
 ---
 
 **Legend:** ☑️ Completed · 🔄 In Progress · 🔳 Pending · 🚫 Blocked · 🚧 Gate Waiting
-
-<!-- END COPY HERE -->
