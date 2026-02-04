@@ -700,6 +700,39 @@ Before adding prevention to a skill, ask: **Does this require LLM decision-makin
 
 **When in doubt, ask:** "Could a bash script do this with no LLM?" If yes → script with tests.
 
+### Fix Location Checklist (M419 - MANDATORY)
+
+**BLOCKING: Complete this checklist BEFORE editing any file for prevention.**
+
+```yaml
+fix_location_checklist:
+  # Step 1: Classify the rule
+  rule_scope:
+    question: "Does this rule apply to ONE specific skill, or to MULTIPLE skills/scenarios?"
+    if_one_skill: "Edit that skill's SKILL.md"
+    if_multiple: "Go to Step 2"
+
+  # Step 2: Find the deepest applicable doc
+  depth_analysis:
+    question: "What is the LOWEST level document where this rule applies?"
+    check_order:
+      - "Concept doc? (applies to all skills referencing concept)"
+      - "Workflow doc? (applies to specific workflow)"
+      - "Skill doc? (applies to one skill only)"
+      - "Command doc? (single entry point)"
+    rule: "Choose the FIRST applicable level (deepest = most reuse)"
+
+  # Step 3: Verify before editing
+  verification:
+    file_to_edit: "________________"  # Fill in BEFORE editing
+    why_this_level: "________________"  # Justify the depth choice
+    not_editing_because_convenient: true  # Confirm you're not just editing current file
+```
+
+**Common mistake (M419):** Editing the file you're currently working with because it's convenient,
+instead of finding the appropriate depth. Example: Putting "use Tokens header for compression" in
+work-with-task.md (generic) instead of subagent-delegation.md (concept doc for all result presentation).
+
 **Fix Location Principle: Apply to deepest document possible.**
 
 When choosing WHERE to implement a fix, prefer the lowest-level document that addresses the issue:

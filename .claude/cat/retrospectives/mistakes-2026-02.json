@@ -1926,6 +1926,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When presenting subagent results, check if source skill specifies output format and use that format. Generic rule in concept doc applies to all delegation scenarios."
+    },
+    {
+      "id": "M419",
+      "timestamp": "2026-02-04T12:50:00Z",
+      "category": "fix_location",
+      "description": "Put skill-specific fix (compression table format) in generic orchestration doc (work-with-task.md) instead of concept doc",
+      "root_cause": "Did not apply Fix Location Principle from learn skill before implementing. Jumped to editing the file I was currently working with (work-with-task) instead of finding the appropriate depth (concept doc).",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/SKILL.md",
+      "pattern_keywords": [
+        "fix-location",
+        "concept-doc",
+        "generic-vs-specific",
+        "depth"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before editing ANY file for a fix, ask: 'Is this rule specific to one skill, or applies broadly?' If broad, find the concept doc. The learn skill already has Fix Location Principle but it wasn't followed."
     }
   ]
 }
