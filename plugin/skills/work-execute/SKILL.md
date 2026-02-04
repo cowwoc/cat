@@ -124,10 +124,15 @@ Read the task's PLAN.md to understand:
 - Acceptance criteria
 - Files to modify
 
-**CRITICAL (M333):** The Execution Steps in PLAN.md specify HOW to implement. If they reference
-skills like `/cat:shrink-doc`, the subagent MUST invoke those skills - not reimplement their
-functionality manually. Skills provide validation (e.g., equivalence scores) that manual
+**CRITICAL (M333, M391):** The Execution Steps in PLAN.md specify HOW to implement. If they reference
+skills like `/cat:shrink-doc`, you MUST invoke those skills using the Skill tool - do NOT manually
+reimplement their functionality. Skills provide validation (e.g., equivalence scores) that manual
 implementation skips.
+
+**FABRICATION WARNING (M391):** If you manually edit files instead of invoking required skills,
+then claim in the commit message or metrics that you used those skills - this is FABRICATION.
+You MUST actually invoke the skills. Metrics like `equivalence_score` must come from actual
+`/compare-docs` output, not invented values.
 
 ### Step 3: Implement the Task Directly (M388)
 

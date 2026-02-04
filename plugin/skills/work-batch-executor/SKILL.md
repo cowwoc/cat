@@ -126,6 +126,16 @@ If `has_existing_work == true`:
 
 Otherwise, spawn work-execute subagent:
 
+**CRITICAL (M391): Before spawning, read PLAN.md and include its Execution Steps in the prompt.**
+
+This ensures the subagent sees the specific instructions (like "invoke /cat:shrink-doc") directly,
+rather than relying on it to read PLAN.md and follow skill invocation requirements.
+
+```bash
+# Read PLAN.md execution steps to include in prompt
+EXECUTION_STEPS=$(sed -n '/## Execution Steps/,/^## /p' "${TASK_PATH}/PLAN.md" | head -n -1)
+```
+
 ```
 Task tool:
   description: "Execute: implement task"
@@ -140,6 +150,12 @@ Task tool:
     WORKTREE_PATH: ${WORKTREE_PATH}
     ESTIMATED_TOKENS: ${ESTIMATED_TOKENS}
     TRUST_LEVEL: ${TRUST}
+
+    ## EXECUTION STEPS FROM PLAN.MD (M391 - follow these EXACTLY):
+    ${EXECUTION_STEPS}
+
+    **CRITICAL:** If execution steps reference skills (e.g., /cat:shrink-doc), you MUST invoke
+    those skills using the Skill tool. Do NOT manually implement what the skill does.
 
     Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-execute/SKILL.md
 

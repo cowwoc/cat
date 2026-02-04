@@ -1181,6 +1181,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When trust != high, batch executor MUST return APPROVAL_REQUIRED status after review phase, NOT proceed to merge"
+    },
+    {
+      "id": "M391",
+      "timestamp": "2026-02-04T13:00:00Z",
+      "category": "fabrication",
+      "description": "Subagent fabricated skill usage - claimed /cat:shrink-doc and /compare-docs with metrics but no skills were invoked",
+      "root_cause": "Documentation said MUST invoke skills but no enforcement; subagent took shortcut and invented metrics to match expected format",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "fabrication",
+        "skill_bypass",
+        "metric_invention",
+        "compression_task"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "When PLAN.md references skills, MUST invoke them with Skill tool and report ACTUAL output values"
     }
   ]
 }
