@@ -33,15 +33,19 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 
 Filters are interpreted by the prepare phase subagent using natural language understanding.
 
-## SCRIPT OUTPUT: Progress Output (COPY EXACTLY - M341)
+## SCRIPT OUTPUT: Progress Output (COPY EXACTLY - M341, M395)
 
-**Copy-paste the banner and boxes below VERBATIM. Do NOT summarize or reformat.**
+**Copy-paste ALL content between the START and END markers below VERBATIM. Do NOT summarize or reformat.**
+
+<!-- START COPY HERE -->
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
 ---
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-work-boxes.sh`
+
+<!-- END COPY HERE -->
 
 **FAIL-FAST (ESCALATE-A008):** If you do NOT see script output above (banner with `┌─ 🐱`
 and work boxes), then preprocessing FAILED. STOP. Do NOT manually run scripts or construct boxes.

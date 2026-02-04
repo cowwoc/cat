@@ -7,17 +7,19 @@ user-invocable: false
 
 # Token Report
 
-## MANDATORY OUTPUT REQUIREMENT (M341)
+## MANDATORY OUTPUT REQUIREMENT (M341, M395)
 
-**YOUR ONLY JOB**: Copy-paste the report below VERBATIM. Do NOT summarize, interpret, or reformat.
+**YOUR ONLY JOB**: Copy-paste ALL content between the START and END markers below. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## Script Output Token Report (COPY THIS EXACTLY)
+<!-- START COPY HERE -->
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-token-report.sh --session-id "${CLAUDE_SESSION_ID}"`
 
-**NEVER summarize the report. NEVER describe it. COPY IT.**
+<!-- END COPY HERE -->
+
+**FAIL-FAST:** If you do NOT see a report above, then preprocessing FAILED. STOP. Do NOT manually run scripts.
 
 ---
 

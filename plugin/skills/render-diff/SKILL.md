@@ -7,17 +7,19 @@ user-invocable: false
 
 # Render Diff
 
-## MANDATORY OUTPUT REQUIREMENT (M341)
+## MANDATORY OUTPUT REQUIREMENT (M341, M395)
 
-**YOUR ONLY JOB**: Copy-paste the diff below VERBATIM. Do NOT summarize, interpret, or reformat.
+**YOUR ONLY JOB**: Copy-paste ALL content between the START and END markers below. Do NOT summarize, interpret, or reformat.
 
 ---
 
-## Script Output Diff (COPY THIS EXACTLY)
+<!-- START COPY HERE -->
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-render-diff.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
-**NEVER summarize the diff. NEVER describe it. COPY IT.**
+<!-- END COPY HERE -->
+
+**FAIL-FAST:** If you do NOT see a diff above, then preprocessing FAILED. STOP. Do NOT manually run scripts.
 
 ---
 
