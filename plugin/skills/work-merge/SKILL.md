@@ -88,25 +88,40 @@ Before merge, ensure STATE.md is updated in the implementation commit:
 - **Resolution:** implemented
 ```
 
-### Step 3: Merge to Base Branch
+### Step 3: Rebase and Merge to Base Branch (M393)
+
+**CRITICAL: Rebase onto current base branch BEFORE merging to ensure linear history.**
+
+The base branch may have advanced while work was in progress. Without rebasing first,
+`--ff-only` will fail and we'd need a merge commit (non-linear history).
 
 ```bash
 # Return to main workspace
 cd /workspace
 
+# Fetch latest base branch state
+git fetch origin ${BASE_BRANCH} 2>/dev/null || true
+
+# Rebase task branch onto current base (from main workspace, not worktree)
+git rebase ${BASE_BRANCH} ${BRANCH}
+
 # Checkout base branch
 git checkout ${BASE_BRANCH}
 
-# Merge task branch with linear history
-git merge --ff-only ${BRANCH} || git merge ${BRANCH} --no-edit
+# Merge task branch with linear history (now guaranteed to fast-forward)
+git merge --ff-only ${BRANCH}
 ```
 
-### Step 4: Handle Conflicts (if any)
+**If rebase has conflicts:** Return CONFLICT status. Do NOT fall back to merge commit.
 
-If merge fails with conflicts:
+### Step 4: Handle Rebase Conflicts (if any)
+
+If rebase fails with conflicts:
 1. Count conflicting files
 2. If > 3 files: Return CONFLICT, require manual intervention
-3. If <= 3 files: Attempt resolution (prefer task branch changes)
+3. If <= 3 files: Attempt resolution (prefer task branch changes), then `git rebase --continue`
+
+**NEVER fall back to merge commit.** Linear history is mandatory.
 
 ### Step 5: Cleanup Worktree
 
