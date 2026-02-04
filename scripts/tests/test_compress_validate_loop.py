@@ -30,7 +30,7 @@ class TestClaudeProcessManager(unittest.TestCase):
 
     def test_dry_run_compression(self):
         """Dry run compression returns mock results."""
-        result = self.manager.run_compression("2.1-test-task", Path("/tmp/fifo"))
+        result = self.manager.run_compression("2.1-test-task")
 
         self.assertEqual(result["status"], "SUCCESS")
         self.assertIn("files", result)
@@ -40,35 +40,31 @@ class TestClaudeProcessManager(unittest.TestCase):
 
     def test_dry_run_validation(self):
         """Dry run validation returns mock score."""
-        score = self.manager.run_validation("test.md", Path("/tmp/fifo"))
+        score = self.manager.run_validation("2.1-test-task", "test.md")
 
         self.assertEqual(score, 0.95)
         self.assertTrue(isinstance(score, float))
         self.assertGreaterEqual(score, 0.0)
         self.assertLessEqual(score, 1.0)
 
-    def test_dry_run_learn(self):
-        """Dry run learn returns mock results with commits."""
-        result, commits = self.manager.run_learn("Test issue")
+    def test_dry_run_analyze_and_improve(self):
+        """Dry run analyze_and_improve_shrink_doc returns mock results."""
+        result, commits = self.manager.analyze_and_improve_shrink_doc(
+            "test.md", 0.95, "compression output"
+        )
 
         self.assertEqual(result["status"], "SUCCESS")
-        self.assertIn("learning_id", result)
-        self.assertEqual(result["quality"], "high")
         self.assertTrue(isinstance(commits, list))
-        self.assertTrue(len(commits) > 0)
 
-    def test_fifo_creation_dry_run(self):
-        """Dry run FIFO creation returns mock paths."""
-        fifo_compress, fifo_validate = self.manager._create_fifos()
+    def test_session_management_dry_run(self):
+        """Dry run session management doesn't raise errors."""
+        # _start_session returns None in dry_run mode
+        session = self.manager._start_session("test")
+        self.assertIsNone(session)
 
-        self.assertTrue(isinstance(fifo_compress, Path))
-        self.assertTrue(isinstance(fifo_validate, Path))
-        self.assertEqual(str(fifo_compress), "/tmp/fifo_compress")
-        self.assertEqual(str(fifo_validate), "/tmp/fifo_validate")
-
-    def test_cleanup_fifos_dry_run(self):
-        """Dry run FIFO cleanup doesn't raise errors."""
-        self.manager._cleanup_fifos()  # Should not raise
+    def test_end_session_dry_run(self):
+        """Dry run session cleanup doesn't raise errors."""
+        self.manager._end_session(None)  # Should not raise
 
     def test_reinstall_plugin_dry_run(self):
         """Dry run plugin reinstall logs but doesn't execute."""
@@ -109,11 +105,11 @@ class TestCompressionValidationLoop(unittest.TestCase):
             mock_compress.assert_called_once()
             mock_validate.assert_called_once()
 
-    def test_dry_run_imperfect_scores_triggers_learn(self):
-        """Dry run with imperfect scores triggers /cat:learn."""
+    def test_dry_run_imperfect_scores_triggers_analysis(self):
+        """Dry run with imperfect scores triggers analysis and improvement."""
         with patch.object(self.loop.manager, 'run_compression') as mock_compress, \
              patch.object(self.loop.manager, 'run_validation') as mock_validate, \
-             patch.object(self.loop.manager, 'run_learn') as mock_learn, \
+             patch.object(self.loop.manager, 'analyze_and_improve_shrink_doc') as mock_analyze, \
              patch.object(self.loop, '_merge_learn_commits') as mock_merge:
 
             # First iteration: imperfect score
@@ -122,17 +118,19 @@ class TestCompressionValidationLoop(unittest.TestCase):
                 {
                     "status": "SUCCESS",
                     "files": ["test.md"],
-                    "compression_scores": {"test.md": 0.95}
+                    "compression_scores": {"test.md": 0.95},
+                    "output": "compression output"
                 },
                 {
                     "status": "SUCCESS",
                     "files": ["test.md"],
-                    "compression_scores": {"test.md": 1.0}
+                    "compression_scores": {"test.md": 1.0},
+                    "output": "compression output"
                 }
             ]
             mock_validate.side_effect = [0.95, 1.0]
-            mock_learn.return_value = (
-                {"status": "SUCCESS", "quality": "high"},
+            mock_analyze.return_value = (
+                {"status": "SUCCESS"},
                 ["abc123"]
             )
             mock_merge.return_value = True
@@ -140,25 +138,26 @@ class TestCompressionValidationLoop(unittest.TestCase):
             result = self.loop.run(["2.1-test-task"])
 
             self.assertEqual(result, 0)
-            self.assertEqual(mock_learn.call_count, 1)
+            self.assertEqual(mock_analyze.call_count, 1)
             self.assertEqual(mock_merge.call_count, 1)
 
     def test_max_iterations_reached(self):
         """Loop exits with error if max iterations reached."""
         with patch.object(self.loop.manager, 'run_compression') as mock_compress, \
              patch.object(self.loop.manager, 'run_validation') as mock_validate, \
-             patch.object(self.loop.manager, 'run_learn') as mock_learn, \
+             patch.object(self.loop.manager, 'analyze_and_improve_shrink_doc') as mock_analyze, \
              patch.object(self.loop, '_merge_learn_commits') as mock_merge:
 
             # Always return imperfect scores
             mock_compress.return_value = {
                 "status": "SUCCESS",
                 "files": ["test.md"],
-                "compression_scores": {"test.md": 0.95}
+                "compression_scores": {"test.md": 0.95},
+                "output": "compression output"
             }
             mock_validate.return_value = 0.95
-            mock_learn.return_value = (
-                {"status": "SUCCESS", "quality": "high"},
+            mock_analyze.return_value = (
+                {"status": "SUCCESS"},
                 ["abc123"]
             )
             mock_merge.return_value = True
@@ -166,7 +165,7 @@ class TestCompressionValidationLoop(unittest.TestCase):
             result = self.loop.run(["2.1-test-task"])
 
             self.assertEqual(result, 1)
-            self.assertEqual(mock_learn.call_count, 3)  # max_iterations
+            self.assertEqual(mock_analyze.call_count, 3)  # max_iterations
 
     def test_compression_failure_skips_task(self):
         """Compression failure for a task skips validation and continues loop."""
@@ -248,14 +247,12 @@ class TestCompressionValidationLoop(unittest.TestCase):
 
             self.assertEqual(result, 1)
 
-    def test_fifo_cleanup_on_exit(self):
-        """FIFOs are cleaned up on exit."""
-        with patch.object(self.loop.manager, '_create_fifos') as mock_create, \
-             patch.object(self.loop.manager, '_cleanup_fifos') as mock_cleanup, \
+    def test_session_cleanup_on_exit(self):
+        """Sessions are cleaned up on exit."""
+        with patch.object(self.loop.manager, '_end_session') as mock_end, \
              patch.object(self.loop.manager, 'run_compression') as mock_compress, \
              patch.object(self.loop.manager, 'run_validation') as mock_validate:
 
-            mock_create.return_value = (Path("/tmp/fifo1"), Path("/tmp/fifo2"))
             mock_compress.return_value = {
                 "status": "SUCCESS",
                 "files": ["test.md"],
@@ -266,41 +263,42 @@ class TestCompressionValidationLoop(unittest.TestCase):
             result = self.loop.run(["2.1-test-task"])
 
             self.assertEqual(result, 0)
-            mock_cleanup.assert_called_once()
+            # _end_session called for compression and validation sessions
+            self.assertEqual(mock_end.call_count, 2)
 
-    def test_low_quality_learn_warning(self):
-        """Low quality /cat:learn output triggers warning."""
+    def test_analysis_with_no_commits(self):
+        """Analysis returning no commits skips merge but continues."""
         with patch.object(self.loop.manager, 'run_compression') as mock_compress, \
              patch.object(self.loop.manager, 'run_validation') as mock_validate, \
-             patch.object(self.loop.manager, 'run_learn') as mock_learn, \
-             patch.object(self.loop, '_merge_learn_commits') as mock_merge, \
-             patch.object(self.loop.logger, 'warning') as mock_warning:
+             patch.object(self.loop.manager, 'analyze_and_improve_shrink_doc') as mock_analyze, \
+             patch.object(self.loop, '_merge_learn_commits') as mock_merge:
 
             mock_compress.side_effect = [
                 {
                     "status": "SUCCESS",
                     "files": ["test.md"],
-                    "compression_scores": {"test.md": 0.95}
+                    "compression_scores": {"test.md": 0.95},
+                    "output": "compression output"
                 },
                 {
                     "status": "SUCCESS",
                     "files": ["test.md"],
-                    "compression_scores": {"test.md": 1.0}
+                    "compression_scores": {"test.md": 1.0},
+                    "output": "compression output"
                 }
             ]
             mock_validate.side_effect = [0.95, 1.0]
-            mock_learn.return_value = (
-                {"status": "SUCCESS", "quality": "low"},
-                []
+            mock_analyze.return_value = (
+                {"status": "SUCCESS"},
+                []  # No commits produced
             )
             mock_merge.return_value = True
 
             result = self.loop.run(["2.1-test-task"])
 
             self.assertEqual(result, 0)
-            # Check that warning was called
-            warning_calls = [str(call) for call in mock_warning.call_args_list]
-            self.assertTrue(any("Low quality" in str(call) for call in warning_calls))
+            # Merge NOT called when no commits (implementation skips empty list)
+            self.assertEqual(mock_merge.call_count, 0)
 
 
 class TestIntegration(unittest.TestCase):
