@@ -84,16 +84,27 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 
 | Pattern | Example | Risk |
 |---------|---------|------|
-| Algorithm before invocation | "How to compress: 1. Remove redundancy..." then "invoke skill" | Agent learns to bypass skill |
-| Output format exposure | "Expected: \| File \| Score \|..." | Agent fabricates output |
-| Cost/efficiency concerns | "This spawns 2 subagents..." | Agent takes shortcuts |
-| Internal prompts exposed | "Agent Prompt Template: ..." | Agent applies directly |
-| Expected value in output (M274) | "OUTPUT FORMAT: validation_score: 1.0 (required)" | Agent reports expected value, not actual |
-| Rendered output example (M320) | "The banner looks like: ┌─ 🐱..." | Agent constructs instead of running script |
-| Parameter inference from context (M381) | Skill shows `${WORKTREE_PATH}` for Task prompts | Agent invents flags for other tools |
-| Ambient codebase priming (M405) | Multiple docs say "hooks → settings.json" | Agent assumes wrong location |
-| Missing counter-guidance (M405) | No doc explains where plugin hooks ARE | Agent cannot do right thing |
-| Conflicting general guidance (M407) | "Be concise" + "copy verbatim" | General instruction overrides specific requirement |
+| Algorithm before invocation | "How to compress: 1. Remove redundancy..." | Agent bypasses skill |
+| Output format with values | "validation_score: 1.0 (required)" | Agent fabricates output |
+| Cost/efficiency language | "This spawns 2 subagents..." | Agent takes shortcuts |
+| Conflicting general guidance (M407) | "Be concise" + "copy verbatim" | General overrides specific |
+
+**SKILL EXECUTION FAILURES - Use skill-builder (M408):**
+
+When the mistake involves an agent failing to execute a **skill** correctly (wrong output, skipped steps,
+manual construction instead of preprocessing), analyze the skill using skill-builder:
+
+```
+Read the skill file and apply skill-builder's Priming Prevention Checklist:
+- Information Ordering Check (does skill teach HOW before WHAT to invoke?)
+- Output Format Check (does output format contain expected values?)
+- Cost/Efficiency Language Check (does skill suggest proper approach is "expensive"?)
+- Reference Information Check (does skill contain "for reference only" info?)
+- No Embedded Box Drawings (does skill show visual examples that prime manual construction?)
+```
+
+**Reference:** See `/cat:skill-builder` § "Priming Prevention Checklist" for the complete checklist.
+If skill has structural issues, fix the SKILL as part of prevention, not just add behavioral guidance.
 
 **MANDATORY CHECK (M405):** After checking documents read, ALSO ask:
 1. **Could agent do the right thing?** Search for documentation of the CORRECT approach
@@ -644,60 +655,28 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 
 **CRITICAL: Documentation may have ACTIVELY MISLED the agent toward the wrong approach.**
 
-Beyond checking if prevention exists, check if documentation contains content that:
-- Teaches HOW to do something manually before saying "don't do it manually"
-- Provides implementation details the agent shouldn't use directly
-- Has reference information that only applies when script output content exists
-- Contains examples or functions that prime the agent for incorrect behavior
+If the mistake involves a **skill file**, use skill-builder's Priming Prevention Checklist to analyze it:
 
-```yaml
-misleading_documentation_check:
-  questions:
-    - "Does the doc teach a skill/approach BEFORE saying not to use it?"
-    - "Are there 'reference' sections with info the agent might try to use?"
-    - "Does section ordering prime the agent for wrong approach?"
-    - "Is there info that should ONLY appear with script output content?"
-
-  patterns_to_find:
-    - Functions/Prerequisites sections before Procedure
-    - "Reference" sections with usable implementation details
-    - Examples of manual construction in skills that use pre-computation
-    - Emoji/formatting references outside script output content
-
-  if_misleading_content_found:
-    action: "Remove or relocate misleading content as part of prevention"
-    principle: |
-      If information is only needed when script output content exists,
-      it should BE IN the script output content, not the skill doc.
-      This prevents agents from attempting manual construction when
-      script output content is missing.
+```
+/cat:skill-builder analyze {path-to-skill}
 ```
 
-**The "Conditional Information" Principle:**
+The checklist covers:
+- Information Ordering (teaching HOW before saying "invoke tool")
+- Output Format (expected values embedded in examples)
+- Cost/Efficiency Language (suggesting proper approach is expensive)
+- Encapsulation (orchestrator learning to do the task directly)
+- Reference Information (formatting details that should be in preprocessing)
 
-| Information Type | Where It Belongs |
-|------------------|------------------|
-| How to copy-paste script output content | Skill doc (always needed) |
-| Emoji meanings, formatting rules | Output template output (only needed when it exists) |
-| Implementation functions | Handler code only (never in skill doc) |
-| What to do if script output content missing | Skill doc (FAIL instruction) |
+**Quick self-check for non-skill documents:**
 
-**Example - M256 Pattern:**
+| Question | If YES |
+|----------|--------|
+| Does doc teach approach BEFORE saying not to use it? | Reorder or remove |
+| Are there "for reference only" sections? | Move to preprocessing |
+| Could agent do the task after reading this doc? | Too much exposed |
 
-```yaml
-# WRONG: Skill doc teaches emoji selection
-## Functions
-### select_emoji(status) -> emoji
-if status == "completed": return "☑️"
-...
-## Procedure
-Step 1: Use script output content...
-
-# RIGHT: Move emoji info to script output content
-## Procedure
-Step 1: Use script output content...
-# (Emoji reference appears IN the template content, not skill doc)
-```
+**Reference:** See `/cat:skill-builder` § "Priming Prevention Checklist" for detailed patterns.
 
 ### 9. Implement Prevention
 
