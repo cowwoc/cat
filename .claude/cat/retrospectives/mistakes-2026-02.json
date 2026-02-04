@@ -1392,6 +1392,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Hook pattern should match all git worktree remove variants including git -C flag"
+    },
+    {
+      "id": "M399",
+      "timestamp": "2026-02-04T07:42:00Z",
+      "category": "assumption_without_verification",
+      "description": "Changed migrate-lock-files-to-json task from in-progress to pending when work was already completed in commit f4b5aa4d",
+      "root_cause": "When resetting stuck in-progress tasks, did not verify git history to determine if work was completed vs truly abandoned",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/cleanup/SKILL.md",
+      "pattern_keywords": [
+        "state_reset",
+        "completed_task",
+        "git_history",
+        "verification"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before resetting a task from in-progress to pending, check git log for commits mentioning the task name to determine if work was already completed"
     }
   ]
 }

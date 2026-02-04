@@ -32,6 +32,27 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 - ALWAYS remove worktree BEFORE deleting its branch
 - NEVER force-delete branches that might have unmerged commits
 
+### STATE.md Reset Safety (M399)
+
+**When resetting stuck `in-progress` tasks, verify implementation status first:**
+
+Before changing a task from `in-progress` to `pending`, check git history:
+
+```bash
+TASK_NAME="task-name-here"
+git log --oneline --grep="$TASK_NAME" -5
+git log --oneline -- ".claude/cat/issues/*/v*/$TASK_NAME/" -5
+```
+
+| Git History Shows | Correct Action |
+|-------------------|----------------|
+| Commits implementing the task | Mark as `completed` with commit reference |
+| No relevant commits | Mark as `pending` (truly abandoned) |
+| Partial commits | Check commit content, may be partial completion |
+
+**Why this matters:** A task may show `in-progress` with 0% because STATE.md wasn't updated after
+work was completed on the base branch. Resetting to `pending` causes duplicate work.
+
 ---
 
 ## Procedure
