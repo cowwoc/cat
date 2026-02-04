@@ -1551,6 +1551,33 @@
         "plugin/skills/render-diff/SKILL.md",
         "plugin/skills/token-report/SKILL.md"
       ]
+    },
+    {
+      "id": "M404",
+      "timestamp": "2026-02-04T14:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "During RCA for status output issue, incorrectly assumed plugin hooks are registered in .claude/settings.json instead of plugin/hooks/hooks.json",
+      "root_cause": "Made assumption about Claude Code plugin architecture without verifying. Saw hooks section in settings.json and assumed that was the canonical location for all hooks, not just project-specific overrides.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/agent-architecture.md",
+      "pattern_keywords": [
+        "hooks",
+        "plugin",
+        "settings",
+        "architecture",
+        "assumption"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When investigating plugin hook behavior, check plugin/hooks/hooks.json first. Project .claude/settings.json is for project-specific overrides only."
     }
   ]
 }

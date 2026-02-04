@@ -419,3 +419,53 @@ CAT scripts use **self-discovery** to find paths, avoiding dependency on environ
 
 **Session ID** is the exception - it must be extracted from context (SessionStart hook injects
 "Session ID: ..." into conversation via additionalContext).
+
+## Hook Registration Architecture (M404)
+
+Claude Code supports hooks at two levels with different registration locations:
+
+| Hook Type | Registration Location | Purpose |
+|-----------|----------------------|---------|
+| **Plugin hooks** | `plugin/hooks/hooks.json` | CAT plugin behavior (skills, enforcement) |
+| **Project hooks** | `.claude/settings.json` | Project-specific overrides |
+
+### Plugin Hooks
+
+Plugin hooks are registered in the plugin's own `hooks.json`:
+
+```
+plugin/
+├── hooks/
+│   ├── hooks.json          ← Plugin hook registration
+│   ├── enforce-status-output.py
+│   ├── get-skill-output.py
+│   └── ...
+```
+
+These hooks are automatically loaded when the CAT plugin is active. **Do not look for them in
+`.claude/settings.json`** - that file is for project-specific hooks only.
+
+### Project Hooks
+
+Project-specific hooks are registered in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [{"type": "command", "command": ".claude/hooks/my-hook.sh"}]
+      }
+    ]
+  }
+}
+```
+
+These override or supplement plugin hooks for project-specific behavior.
+
+### Common Mistake (M404)
+
+When investigating plugin hook behavior, check `plugin/hooks/hooks.json` first, not
+`.claude/settings.json`. The project settings file is for user-defined project hooks,
+not plugin-provided hooks.
