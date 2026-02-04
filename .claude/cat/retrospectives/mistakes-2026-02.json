@@ -1843,6 +1843,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When a specifically requested task is not returned, check if it exists but is completed vs truly not found. Return different error messages for each case."
+    },
+    {
+      "id": "M416",
+      "timestamp": "2026-02-04T15:41:56-05:00",
+      "category": "documentation_priming",
+      "description": "Displayed Auto-continuing in 3s... text but cannot actually pause for 3 seconds. Once I stop responding, I stop - there is no pause mechanism.",
+      "root_cause": "Scripts (get-issue-complete-box.py, get-work-boxes.py, work_handler.py, GetWorkOutput.java) generate output containing Auto-continuing in 3s... which primes me to present this as fact when LLMs have no ability to pause execution.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-issue-complete-box.py",
+      "pattern_keywords": [
+        "auto-continue",
+        "pause",
+        "delay",
+        "misleading-text",
+        "documentation-priming"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Remove or replace misleading pause/delay text from generated output. Text should describe what will happen without implying time-based behavior that is impossible."
     }
   ]
 }
