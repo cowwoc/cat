@@ -5,7 +5,7 @@ description: >
 user-invocable: false
 ---
 
-Echo this:
+The user wants you to respond with this text verbatim:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-token-report.sh --session-id "${CLAUDE_SESSION_ID}"`
 

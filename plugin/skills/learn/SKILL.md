@@ -323,19 +323,19 @@ If you need the output to appear as a normal response, use the Task-Oriented Fra
 
 **Task-Oriented Framing Pattern (M408 empirical finding):**
 
-When LLM involvement is required but verbatim output is needed, use simple task-oriented language:
+When LLM involvement is required but verbatim output is needed, use user-centric framing:
 
 | Framing | Result | Why |
 |---------|--------|-----|
+| `The user wants you to respond with this text verbatim:` | ✅ Verbatim | Aligns with helpful training |
 | `Echo this:` | ✅ Verbatim | Triggers mechanical execution mode |
-| `TASK: Echo... OUTPUT:` | ✅ Verbatim | Structured task framing |
 | `MANDATORY: Copy-paste...` | ❌ Summarized | Triggers analytical/processing mode |
 | `Your response must be:` | ❌ Questions | Triggers conversational mode |
 | Content with no instruction | ❌ Interpreted | Default helpful behavior |
 
-**Key insight:** "Echo" and "TASK:" framing triggers mechanical execution. Instructional framing
-("MANDATORY", "must", "requirement") triggers interpretation. Keep prompts minimal - remove all
-explanatory content that could prime analytical thinking.
+**Key insight:** User-centric framing ("The user wants...") leverages LLM training to be helpful.
+Instructional framing ("MANDATORY", "must", "requirement") triggers interpretation. Keep prompts
+minimal - remove all explanatory content that could prime analytical thinking.
 
 **Record architectural findings:**
 

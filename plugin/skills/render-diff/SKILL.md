@@ -5,7 +5,7 @@ description: >
 user-invocable: false
 ---
 
-Echo this:
+The user wants you to respond with this text verbatim:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-render-diff.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 

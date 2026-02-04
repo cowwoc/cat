@@ -71,7 +71,8 @@ import subprocess
 # Skills that bypass LLM entirely (M409: LLM cannot reliably copy verbatim)
 # These skills output directly to user via stopReason, no LLM processing
 # M410: Reverted - stopReason adds "Operation stopped by hook:" prefix which is
-# undesirable. Returning to "Echo this:" framing despite summarization risk.
+# undesirable. Now using user-centric framing: "The user wants you to respond
+# with this text verbatim:" which aligns with LLM helpful training.
 BYPASS_LLM_SKILLS: set[str] = set()  # Empty - all skills go through LLM with framing
 
 
