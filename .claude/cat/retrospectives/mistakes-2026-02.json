@@ -1130,6 +1130,31 @@
         "catches_variations": true
       },
       "correct_behavior": "batch-executor directly spawns implementation subagent with ALL critical requirements in the prompt. No intermediate work-execute layer that could lose guidance."
+    },
+    {
+      "id": "M389",
+      "timestamp": "2026-02-04T12:00:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed Issue Complete box instead of using get-issue-complete-box.py script, causing alignment issues",
+      "root_cause": "Documentation priming - SKILL.md showed box templates with placeholders but script instruction was only in phase-merge.md",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "manual_construction",
+        "box_alignment",
+        "documentation_priming"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run get-issue-complete-box.py script with actual values and copy output VERBATIM"
     }
   ]
 }
