@@ -90,6 +90,26 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 - Security settings (wrong default = vulnerability)
 - Any value that affects data integrity
 
+## Data Migrations
+
+**Policy:** We do NOT maintain backward compatibility when a migration script updates the data structure.
+
+**Rationale:**
+- Backward compatibility code adds complexity and maintenance burden
+- CAT is a developer tool where users can re-run migrations easily
+- Stale data from old formats should be cleaned up, not silently supported forever
+
+**Migration pattern:**
+1. Update all writers to use the new format
+2. Update all readers to expect ONLY the new format
+3. Provide a migration script to convert existing data
+4. Document the change in the issue's PLAN.md
+
+**DO NOT:**
+- Add "legacy format" branches in readers
+- Keep old writers alongside new writers
+- Silently fall back to parsing old formats
+
 ## Testing
 
 - Python: pytest for unit tests
