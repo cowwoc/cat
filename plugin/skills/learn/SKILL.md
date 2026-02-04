@@ -318,6 +318,25 @@ For tasks that don't require LLM intelligence, use UserPromptSubmit hook to outp
 
 This makes the failure mode IMPOSSIBLE - no LLM decision-making occurs.
 
+**NOTE:** `stopReason` displays as a termination message, NOT a conversational response.
+If you need the output to appear as a normal response, use the Task-Oriented Framing pattern below.
+
+**Task-Oriented Framing Pattern (M408 empirical finding):**
+
+When LLM involvement is required but verbatim output is needed, use simple task-oriented language:
+
+| Framing | Result | Why |
+|---------|--------|-----|
+| `Echo this:` | ✅ Verbatim | Triggers mechanical execution mode |
+| `TASK: Echo... OUTPUT:` | ✅ Verbatim | Structured task framing |
+| `MANDATORY: Copy-paste...` | ❌ Summarized | Triggers analytical/processing mode |
+| `Your response must be:` | ❌ Questions | Triggers conversational mode |
+| Content with no instruction | ❌ Interpreted | Default helpful behavior |
+
+**Key insight:** "Echo" and "TASK:" framing triggers mechanical execution. Instructional framing
+("MANDATORY", "must", "requirement") triggers interpretation. Keep prompts minimal - remove all
+explanatory content that could prime analytical thinking.
+
 **Record architectural findings:**
 
 ```json
