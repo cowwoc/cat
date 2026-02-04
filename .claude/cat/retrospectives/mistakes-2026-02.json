@@ -1698,7 +1698,15 @@
       "prevention_implemented": true,
       "prevention_verified": true,
       "recurrence_of": "M407",
-      "recurrence_chain": ["M341", "M395", "M401", "M402", "M403", "M407", "M408"],
+      "recurrence_chain": [
+        "M341",
+        "M395",
+        "M401",
+        "M402",
+        "M403",
+        "M407",
+        "M408"
+      ],
       "prevention_quality": {
         "verification_type": "positive",
         "fragility": "medium",
@@ -1706,6 +1714,50 @@
         "note": "Hook fix is a band-aid; architectural fix (bypass LLM) would be fragility:low"
       },
       "correct_behavior": "For mechanical output tasks (status display, help display), bypass LLM entirely using continue:false hook pattern. Only use LLM for tasks requiring intelligence/judgment."
+    },
+    {
+      "id": "M409",
+      "timestamp": "2026-02-04T14:50:00Z",
+      "category": "architectural_flaw",
+      "description": "8th recurrence: Agent summarized /cat:status output instead of echoing verbatim despite 'Echo this:' framing from M408",
+      "root_cause": "ARCHITECTURAL: 'Echo this:' task-oriented framing is not reliable. LLM training to synthesize/summarize overrides framing instructions. The only reliable fix is to bypass the LLM entirely for mechanical output tasks using continue:false hook pattern.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/get-skill-output.py",
+      "pattern_keywords": [
+        "architectural_flaw",
+        "llm_bypass",
+        "verbatim_output",
+        "continue_false",
+        "stopReason",
+        "status_skill",
+        "help_skill"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M408",
+      "recurrence_chain": [
+        "M341",
+        "M395",
+        "M401",
+        "M402",
+        "M403",
+        "M407",
+        "M408",
+        "M409"
+      ],
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "For mechanical output skills (status, help), bypass LLM entirely using continue:false + stopReason hook pattern. This makes the failure mode impossible since no LLM decision-making is involved.",
+      "architectural_fix": {
+        "type": "architecture",
+        "description": "Modified get-skill-output.py to return {continue:false, stopReason:<output>} for status and help skills",
+        "benefit": "LLM cannot summarize what it never sees - output goes directly to user"
+      }
     }
   ]
 }
