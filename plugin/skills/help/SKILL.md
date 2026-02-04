@@ -2,10 +2,10 @@
 description: Use for quick reference to all CAT commands and skills
 model: haiku
 context: fork
+allowed-tools:
+  - Skill
 ---
 
-The user wants you to respond with this text verbatim:
+Invoke the echo skill with this exact content:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
-
-**FAIL-FAST:** If you do NOT see help content above, preprocessing FAILED. STOP.

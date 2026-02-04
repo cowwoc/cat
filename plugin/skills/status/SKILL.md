@@ -3,15 +3,14 @@ description: Display project progress - versions, issues, and completion status
 model: haiku
 context: fork
 allowed-tools:
-  - Read
+  - Skill
 ---
 
-The user wants you to respond with this text verbatim:
+First, invoke the echo skill with this exact content:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-status-display.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
 
-**FAIL-FAST (ESCALATE-A008):** If you do NOT see a status box directly above (containing
-`╭──` and issue lists), then preprocessing FAILED. STOP. Do NOT manually run scripts.
+Then after the echo completes, output:
 
 **NEXT STEPS**
 
