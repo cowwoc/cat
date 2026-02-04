@@ -201,6 +201,7 @@ SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 - Environment state mismatch?
 - Documentation ignored (rule existed)?
 - **Documentation priming (M269)?** - Did docs teach wrong approach?
+- **Architectural flaw (M408)?** - Is LLM being asked to fight its training? (See Step 4d)
 
 **Record the method used** in the final JSON entry:
 
@@ -238,6 +239,13 @@ rca_depth_check:
     question: "Does prevention modify code, config, or documentation?"
     if_answer_is_no: "RCA is incomplete - behavioral changes without enforcement recur"
     your_answer: "_______________"
+
+  # Question 4: Is this a recurring failure? (M408)
+  recurring_pattern:
+    question: "Has this type of failure occurred before? Check recurrence_of in mistakes.json"
+    if_yes_multiple: "Previous fixes FAILED - dig deeper into WHY they failed"
+    if_3_plus_recurrences: "ARCHITECTURAL issue likely - see Step 4d"
+    your_answer: "_______________"
 ```
 
 **BLOCKING CONDITION (M299):**
@@ -257,6 +265,74 @@ The cause is always in the system that allowed or encouraged the wrong action.
 **If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
 
 Each independent mistake gets its own `/cat:learn` invocation with full RCA and prevention implementation.
+
+### 4d. Architectural Root Cause Analysis (M408)
+
+**CRITICAL: Check for recurring patterns that indicate architectural flaws.**
+
+When a mistake has recurrences (check `recurrence_of` field in mistakes.json), the fixes have failed.
+Multiple failed fixes indicate the root cause is DEEPER than documentation or hooks can address.
+
+**Recurrence Chain Check:**
+
+```bash
+# Find recurrence chains in mistakes
+jq -r '.mistakes[] | select(.recurrence_of != null) |
+  "\(.id) recurs \(.recurrence_of)"' "$MISTAKES_FILE"
+```
+
+**If 3+ recurrences exist for the same failure type:**
+
+Ask these architectural questions:
+
+| Question | If YES |
+|----------|--------|
+| Is the LLM being asked to fight its training? | Consider bypassing LLM entirely |
+| Does the task require LLM intelligence? | If no, use scripted automation |
+| Does system prompt guidance conflict with task? | The task design is flawed |
+| Are we asking for mechanical output? | Use hook with `continue: false` |
+
+**LLM Training Conflicts (M408 Pattern):**
+
+LLMs are trained to be helpful, synthesize information, and be concise. Tasks that conflict with this
+training will repeatedly fail despite documentation fixes:
+
+| Task Type | Conflicts With | Solution |
+|-----------|---------------|----------|
+| Verbatim copy-paste | "Be concise" training | Bypass LLM with direct output |
+| Mechanical formatting | Helpful synthesis | Use preprocessing scripts |
+| Exact reproduction | Interpretation instinct | Hook with stopReason |
+| Strict protocol following | Flexible helpfulness | Enforcement hooks |
+
+**Bypass LLM Pattern:**
+
+For tasks that don't require LLM intelligence, use UserPromptSubmit hook to output directly:
+
+```python
+# In hook, return:
+{
+    "continue": False,  # Stop LLM processing
+    "stopReason": script_output  # Display directly to user
+}
+```
+
+This makes the failure mode IMPOSSIBLE - no LLM decision-making occurs.
+
+**Record architectural findings:**
+
+```json
+{
+  "category": "architectural_flaw",
+  "root_cause": "ARCHITECTURAL: [explain why LLM involvement is the problem]",
+  "immediate_fix": { "type": "...", "description": "..." },
+  "deeper_fix_needed": {
+    "type": "architecture",
+    "description": "Bypass LLM entirely for this task",
+    "implementation": "[specific hook/script approach]"
+  },
+  "recurrence_chain": ["M001", "M002", "M003"]
+}
+```
 
 ### 4d. Investigate Hook Workarounds (M398)
 
