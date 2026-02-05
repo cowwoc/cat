@@ -7,7 +7,7 @@ allowed-tools:
   - Glob
   - AskUserQuestion
   - Skill
-args: "[description]"
+argument-hint: "[description]"
 ---
 
 <objective>
