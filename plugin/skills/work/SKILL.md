@@ -80,25 +80,25 @@ AUTO_REMOVE=$(jq -r '.autoRemoveWorktrees // true' .claude/cat/cat-config.json)
 
 ## Phase 1: Prepare
 
-Delegate to work-prepare subagent:
+Delegate to work-prepare subagent using the Task tool with these JSON parameters:
 
-```
-Task tool:
-  description: "Prepare: find task, create worktree"
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    Execute the work-prepare phase skill.
+- **description:** `"Prepare: find task, create worktree"`
+- **subagent_type:** `"general-purpose"`
+- **model:** `"haiku"`
+- **prompt:** The prompt below (substitute variables with actual values)
 
-    SESSION_ID: ${CLAUDE_SESSION_ID}
-    PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
-    ARGUMENTS: $ARGUMENTS
-    TRUST_LEVEL: ${TRUST}
+Prompt for the subagent:
 
-    Load and follow: @${CLAUDE_PLUGIN_ROOT}/skills/work-prepare/SKILL.md
-
-    Return JSON per the output contract.
-```
+> Execute the work-prepare phase skill.
+>
+> SESSION_ID: ${CLAUDE_SESSION_ID}
+> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+> ARGUMENTS: $ARGUMENTS
+> TRUST_LEVEL: ${TRUST}
+>
+> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/work-prepare/SKILL.md
+>
+> Return JSON per the output contract.
 
 **Handle result:**
 
