@@ -36,115 +36,32 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}
 
 ## Execution Method
 
-Write ALL jq queries to a single `.sh` script file first, then execute it once.
-Inline jq in Bash tool calls fails when `!=` or `//` operators get shell-escaped (M431).
-
-```bash
-# Step 1: Write the analysis script
-# Use Write tool to create: ${SCRATCHPAD_DIR}/session-analysis.sh
-
-# Step 2: Execute it
-bash ${SCRATCHPAD_DIR}/session-analysis.sh
-```
+The skill uses a Python script (`plugin/scripts/analyze-session.py`) to extract mechanical data from
+the session file. This avoids shell escaping issues with inline jq commands (M431).
 
 ## Analysis Steps
 
-### Step 1: Extract Execution History
+### Step 1: Run Session Analysis Script
 
-Use get-history concepts to access session data:
+Execute the Python script to extract all mechanical metrics:
 
 ```bash
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
-
-# Extract all tool_use entries with metadata
-jq -s '[.[] | select(.type == "assistant") | .message.content[]? |
-  select(.type == "tool_use") | {
-    id: .id,
-    name: .name,
-    input: .input,
-    timestamp: (now | todate)
-  }]' "$SESSION_FILE"
+python3 plugin/scripts/analyze-session.py "$SESSION_FILE"
 ```
 
-### Step 2: Calculate Execution Metrics
+The script outputs a JSON object containing:
+- `tool_frequency`: Count of each tool type used
+- `token_usage`: Token consumption per tool type
+- `output_sizes`: Tool result output lengths
+- `cache_candidates`: Repeated identical operations
+- `batch_candidates`: Consecutive same-tool operations
+- `parallel_candidates`: Multiple tools in single message
+- `summary`: Overall session statistics
 
-Analyze tool usage patterns:
+### Step 2: Categorize UX Relevance
 
-```bash
-# Tool frequency analysis
-jq -s '[.[] | select(.type == "assistant") | .message.content[]? |
-  select(.type == "tool_use") | .name] |
-  group_by(.) | map({tool: .[0], count: length}) |
-  sort_by(-.count)' "$SESSION_FILE"
-
-# Output size analysis (from tool_result entries)
-jq -s '[.[] | select(.type == "tool_result") | {
-    tool_use_id: .tool_use_id,
-    output_length: (.content | tostring | length)
-  }] | sort_by(-.output_length)' "$SESSION_FILE"
-
-# Token usage per tool type
-jq -s '
-  [.[] | select(.type == "assistant")] |
-  map({
-    usage: .message.usage,
-    tools: [.message.content[]? | select(.type == "tool_use") | .name]
-  }) |
-  group_by(.tools[0] // "none") |
-  map({
-    tool: .[0].tools[0] // "conversation",
-    total_input_tokens: (map(.usage.input_tokens // 0) | add),
-    total_output_tokens: (map(.usage.output_tokens // 0) | add),
-    count: length
-  }) | sort_by(-.total_input_tokens)' "$SESSION_FILE"
-```
-
-### Step 3: Identify Execution Patterns
-
-Detect optimization opportunities:
-
-```bash
-# Repeated identical operations (cache candidates)
-jq -s '[.[] | select(.type == "assistant") | .message.content[]? |
-  select(.type == "tool_use") | {name: .name, input: .input}] |
-  group_by({name: .name, input: .input}) |
-  map(select(length > 1) | {
-    operation: .[0],
-    repeat_count: length,
-    optimization: "CACHE_CANDIDATE"
-  })' "$SESSION_FILE"
-
-# Consecutive similar operations (batch candidates)
-jq -s '[.[] | select(.type == "assistant") | .message.content[]? |
-  select(.type == "tool_use")] |
-  reduce .[] as $item (
-    {prev: null, batches: []};
-    if .prev != null and .prev.name == $item.name
-    then .batches[-1].items += [$item]
-    else .batches += [{tool: $item.name, items: [$item]}]
-    end |
-    .prev = $item
-  ) | .batches | map(select(.items | length > 2) | {
-    tool: .tool,
-    consecutive_count: (.items | length),
-    optimization: "BATCH_CANDIDATE"
-  })' "$SESSION_FILE"
-
-# Independent operations (parallel candidates)
-# Operations between the same parent message that don't depend on each other
-jq -s '[.[] | select(.type == "assistant") |
-  {msg_id: .message.id, tools: [.message.content[]? | select(.type == "tool_use")]}] |
-  map(select(.tools | length > 1) | {
-    message_id: .msg_id,
-    parallel_tools: [.tools[].name],
-    count: (.tools | length),
-    optimization: "PARALLEL_CANDIDATE"
-  })' "$SESSION_FILE"
-```
-
-### Step 4: Categorize UX Relevance
-
-Classify tool outputs by user interest level:
+Classify tool outputs by user interest level using the metrics from Step 1:
 
 ```yaml
 ux_relevance_categories:
@@ -187,72 +104,34 @@ ux_relevance_categories:
       - Repeated git branch checks
 ```
 
-Apply categorization:
+Apply categorization logic:
+- Bash commands with error indicators: HIGH
+- Write/Edit operations: HIGH
+- Repeated Read operations (from cache_candidates): LOW
+- Navigation commands (pwd, ls, cd): LOW
+- Search operations (Glob, Grep): MEDIUM
+- All others: MEDIUM
 
-```bash
-# Categorize by tool type and context
-jq -s '
-  def categorize_relevance:
-    if .name == "Bash" and (.input.command | test("error|fail|Error|FAIL"; "i"))
-    then "HIGH"
-    elif .name == "Write" or .name == "Edit"
-    then "HIGH"
-    elif .name == "Read" and (.repeat_count // 1) > 1
-    then "LOW"
-    elif .name == "Bash" and (.input.command | test("^(pwd|ls|cd)"))
-    then "LOW"
-    elif .name == "Glob" or .name == "Grep"
-    then "MEDIUM"
-    else "MEDIUM"
-    end;
+### Step 3: Generate Recommendations
 
-  [.[] | select(.type == "assistant") | .message.content[]? |
-    select(.type == "tool_use")] |
-  map(. + {ux_relevance: categorize_relevance}) |
-  group_by(.ux_relevance) |
-  map({relevance: .[0].ux_relevance, tools: [.[].name], count: length})
-' "$SESSION_FILE"
-```
+Compile the analysis into actionable recommendations based on:
 
-### Step 5: Generate Recommendations
+1. **Batch Opportunities**: Use `batch_candidates` from script output
+   - Consecutive same-tool operations suggest batching
+   - Recommendation: Combine into single operation with multiple inputs
 
-Compile analysis into actionable recommendations:
+2. **Cache Opportunities**: Use `cache_candidates` from script output
+   - Repeated identical operations suggest caching
+   - Recommendation: Reference earlier results instead of re-executing
 
-```bash
-# Generate comprehensive analysis report
-jq -s '
-{
-  session_summary: {
-    total_tool_calls: [.[] | select(.type == "assistant") | .message.content[]? |
-      select(.type == "tool_use")] | length,
-    unique_tools: [.[] | select(.type == "assistant") | .message.content[]? |
-      select(.type == "tool_use") | .name] | unique,
-    total_tokens: [.[] | select(.type == "assistant") | .message.usage |
-      select(. != null) | (.input_tokens + .output_tokens)] | add
-  },
-  optimizations: {
-    batch_opportunities: "See Step 3 batch analysis",
-    cache_opportunities: "See Step 3 cache analysis",
-    parallel_opportunities: "See Step 3 parallel analysis"
-  },
-  ux_configuration: {
-    hide_patterns: [
-      {tool: "Bash", pattern: "^pwd$", reason: "Internal navigation"},
-      {tool: "Bash", pattern: "^ls -la", reason: "Verbose listing"},
-      {tool: "Read", condition: "repeat_count > 1", reason: "Redundant reads"}
-    ],
-    summarize_patterns: [
-      {tool: "Grep", condition: "result_lines > 50", action: "Show first 10 + count"},
-      {tool: "Glob", condition: "result_count > 20", action: "Show first 10 + count"}
-    ],
-    always_show: [
-      {tool: "Write", reason: "File modifications"},
-      {tool: "Edit", reason: "Code changes"},
-      {tool: "Bash", pattern: "git commit", reason: "State changes"}
-    ]
-  }
-}' "$SESSION_FILE"
-```
+3. **Parallel Opportunities**: Use `parallel_candidates` from script output
+   - Multiple tools in single message already parallelized
+   - Recommendation: Continue this pattern for independent operations
+
+4. **UX Configuration Rules**: Based on Step 2 categorization
+   - HIGH relevance: Always display full output
+   - MEDIUM relevance: Show summary with expansion option
+   - LOW relevance: Hide by default, show on request
 
 ## Output Format
 
