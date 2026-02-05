@@ -2210,6 +2210,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Batch executor should spawn work-execute subagent which invokes required skills. Failure response examples should not appear before success path instructions."
+    },
+    {
+      "id": "M429",
+      "timestamp": "2026-02-05T05:50:00Z",
+      "category": "skill_bypass",
+      "description": "Main agent used Edit tool to compress file manually after subagent skill invocation failed, bypassing /cat:shrink-doc validation",
+      "root_cause": "No guidance for main agent on how to handle subagent skill invocation failures - allowed workaround decision",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/error-handling.md",
+      "pattern_keywords": [
+        "skill_bypass",
+        "subagent_failure",
+        "manual_implementation",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M427",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When subagent fails at skill invocation, retry with clearer instructions or escalate to user - NEVER do the work manually"
     }
   ]
 }

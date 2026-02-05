@@ -186,6 +186,54 @@ Lines 45-52 have conflicting changes from:
 3. Resume with /cat:work
 ```
 
+### Main Agent Response to Subagent Skill Failures (M429)
+
+**CRITICAL: When a subagent fails to invoke a skill, main agent must NOT do the work manually.**
+
+```
+Subagent delegated to invoke /cat:some-skill
+          |
+          v
+Subagent returns FAILED (skill invocation issues)
+          |
+          v
+Main agent MUST NOT:
+  - Read files and do the work directly
+  - "Take a more direct approach"
+  - Bypass the skill with manual implementation
+          |
+          v
+Main agent MUST:
+  - Retry with clearer instructions OR
+  - Escalate to user for guidance
+```
+
+**Why this matters:**
+- Skills contain validation logic (e.g., `/cat:shrink-doc` uses `/cat:compare-docs` for equivalence)
+- Manual implementation bypasses this validation
+- The skill exists precisely BECAUSE manual work is error-prone or requires validation
+
+**Escalation options when subagent fails at skill invocation:**
+
+| Option | When to use |
+|--------|-------------|
+| Retry with simpler scope | If batch operation, try single file first |
+| Retry with explicit instructions | Add "You MUST use Skill tool, NOT manual implementation" |
+| Escalate to user | If retries fail, ask user how to proceed |
+
+**Anti-pattern (M429):**
+```
+# BAD - Main agent sees subagent failure and decides to "just do it"
+Subagent: "FAILED: recursion issues with /cat:shrink-doc"
+Main agent: "Let me take a more direct approach..."
+Main agent: [Uses Edit tool to compress file manually]
+
+# GOOD - Main agent respects skill boundary
+Subagent: "FAILED: recursion issues with /cat:shrink-doc"
+Main agent: "The skill invocation failed. Let me retry with a single file first,
+             or ask the user how to proceed."
+```
+
 ## Recovery After Session Interruption
 
 If session ends during execution:
