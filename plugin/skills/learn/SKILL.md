@@ -133,6 +133,44 @@ The delegation prompt IS the primary "document" the subagent received. Check it 
 - Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
 - Any content telling the subagent what to report vs what to measure
 
+**CRITICAL: Trace the FULL priming chain (M425):**
+
+When the main agent wrote a bad delegation prompt, ask: **What primed the MAIN AGENT to write that prompt?**
+
+Common priming sources for main agent decisions:
+1. **Previous subagent failure messages** - "excessive nesting" or "token budget" may prime bypasses
+2. **Error messages from tools** - May suggest workarounds that violate protocols
+3. **Cost/efficiency concerns in skill docs** - "This spawns N subagents" primes shortcuts
+
+**Trace the chain backwards:**
+
+```
+Main agent wrote bad prompt
+  ↑ WHY?
+Previous subagent returned FAILED with message
+  ↑ WHY did that message prime a bad decision?
+Message described problem without actionable guidance
+  ↑ FIX: Improve failure message guidance, not just main agent behavior
+```
+
+**Search session history for failure messages:**
+
+```bash
+# Find subagent failure messages that preceded the bad decision
+grep '"type":"tool_result"' "$SESSION_FILE" | \
+  jq -r 'select(.content | type == "array") | .content[]? |
+    select(.text? | contains("FAILED") or contains("excessive") or contains("nesting"))' 2>/dev/null
+
+# Find Task tool results with failure status
+grep -B5 "do NOT invoke" "$SESSION_FILE" | head -50  # Find context before bypass instruction
+```
+
+**If a subagent failure message primed the main agent:**
+
+The fix must address BOTH:
+1. The main agent's behavior (don't bypass skills)
+2. The failure message's guidance (provide actionable alternatives, not just problem description)
+
 **If priming found:**
 
 ```yaml
