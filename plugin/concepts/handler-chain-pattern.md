@@ -25,12 +25,11 @@ into handlers and chaining skills together, intermediate steps become invisible:
 ```
 /cat:work
   ⎿  Skill loaded (handler ran config + prepare invisibly)
-● Skill(work-execute)
-  ⎿  Skill loaded (handler output Banner 2)
+● Skill(work-with-issue)
+  ⎿  Skill loaded (handler output progress banners)
 ● Task(implement)             ← only meaningful work visible
-● Skill(work-review)
-  ⎿  Skill loaded (handler output Banner 3)
-● Task(review)                ← only meaningful work visible
+● Skill(stakeholder-review)   ← invoked directly for review
+● Task(merge)                 ← only meaningful work visible
 ```
 
 ## Architecture
@@ -102,20 +101,21 @@ Extract JSON from HANDLER_DATA section in context.
 
 | Status | Action |
 |--------|--------|
-| READY | Invoke `/cat:work-execute {task_json}` |
+| READY | Invoke `/cat:work-with-issue {task_json}` |
 | NO_TASKS | Output NO_TASKS box, done |
 | ERROR | Output error, done |
 ```
 
-### 3. Chain Skills via Skill Tool
+### 3. Orchestrate Phases Directly
 
-Each phase is a separate skill that invokes the next:
+Main orchestrator skill directly invokes phases:
 
 ```
-/cat:work → handler prepares → invokes work-execute
-/cat:work-execute → handler outputs banner → spawns Task → invokes work-review
-/cat:work-review → handler outputs banner → spawns Task → invokes work-merge
-/cat:work-merge → handler outputs banner → spawns Task → done
+/cat:work → handler prepares → invokes work-with-issue
+/cat:work-with-issue → handler outputs banners →
+    spawns implementation Task →
+    invokes stakeholder-review Skill →
+    spawns merge Task → done
 ```
 
 ## When to Use
@@ -134,10 +134,8 @@ Each phase is a separate skill that invokes the next:
 
 | Phase | Handler Does | Skill Does |
 |-------|--------------|------------|
-| work | Read config, discover task, create worktree, Banner 1 | Parse data, invoke work-execute |
-| work-execute | Banner 2 | Spawn implementation Task, invoke work-review |
-| work-review | Banner 3 | Spawn review Task, invoke work-merge |
-| work-merge | Banner 4 | Spawn merge Task, output completion |
+| work | Read config, discover task, create worktree | Parse data, invoke work-with-issue |
+| work-with-issue | Generate all 4 phase banners | Orchestrate: spawn implementation Task, invoke stakeholder-review Skill, spawn merge Task |
 
 ## Testing
 
