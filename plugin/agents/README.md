@@ -73,13 +73,19 @@ Always provide specific, actionable feedback with code examples.
 
 The following components will be migrated to this directory:
 
-### From `plugin/stakeholders/`
+### From `plugin/stakeholders/` (COMPLETED)
+All stakeholder files have been migrated to this directory with proper agent format:
 - stakeholder-architect.md
 - stakeholder-deployment.md
 - stakeholder-design.md
+- stakeholder-legal.md
+- stakeholder-marketing.md
 - stakeholder-performance.md
+- stakeholder-requirements.md
+- stakeholder-sales.md
 - stakeholder-security.md
 - stakeholder-testing.md
+- stakeholder-ux.md
 
 ### From `plugin/skills/` (subagent-style skills)
 - work-merge (needs git-squash, git-rebase, validate-git-safety preloaded)
@@ -89,17 +95,21 @@ The following components will be migrated to this directory:
 
 ```
 plugin/agents/
-├── README.md              # This file
-├── .gitkeep               # Git directory tracking (temporary)
-├── code-reviewer.md       # Example agent
-├── work-merge.md          # Git merge specialist
-└── stakeholders/          # Quality assurance reviewers
-    ├── architect.md
-    ├── deployment.md
-    ├── design.md
-    ├── performance.md
-    ├── security.md
-    └── testing.md
+├── README.md                      # This file
+├── merge-subagent-branch.md       # Git merge specialist for subagent branches
+├── work-merge.md                  # Work merge agent
+├── work-prepare.md                # Work preparation agent
+├── stakeholder-architect.md       # Architecture review
+├── stakeholder-deployment.md      # Deployment/release review
+├── stakeholder-design.md          # Code quality review
+├── stakeholder-legal.md           # Legal/compliance review
+├── stakeholder-marketing.md       # Marketing readiness review
+├── stakeholder-performance.md     # Performance review
+├── stakeholder-requirements.md    # Requirements verification review
+├── stakeholder-sales.md           # Sales readiness review
+├── stakeholder-security.md        # Security review
+├── stakeholder-testing.md         # Test coverage review
+└── stakeholder-ux.md              # UX/accessibility review
 ```
 
 ## Usage
