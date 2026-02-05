@@ -175,34 +175,7 @@ Handle execution result:
 - FAILED: See failure handling below
 - BLOCKED: Return FAILED with blocker info
 
-**CRITICAL (M425): Handling FAILED status - do NOT bypass skills:**
-
-When execution returns FAILED with messages about "nesting", "token budget", or "too deep":
-
-1. **Do NOT** write a new prompt that bypasses required skills
-2. **Do NOT** tell subagent to "work directly" or "skip skill invocation"
-3. **Instead**, return control to the parent skill with actionable guidance
-
-**Correct response to nesting failures:**
-
-```json
-{
-  "status": "FAILED",
-  "reason": "nesting_limit",
-  "action_required": "For batch operations: use /cat:delegate. For single files: invoke skill directly via Skill tool",
-  "skills_to_invoke": ["cat:shrink-doc"],
-  "files": ["list", "of", "files"],
-  "batch_command": "/cat:delegate --skill shrink-doc file1.md file2.md ..."
-}
-```
-
-**For batch operations (multiple files):** Use `/cat:delegate --skill {skill} file1 file2 ...`
-**For single files:** Invoke skill directly via Skill tool
-
-The parent (work-with-issue or main agent) can then invoke appropriately without nesting.
-
-**Why this matters:** Failure messages describing "excessive nesting" prime the receiving agent to bypass
-skills entirely. The fix is actionable guidance: "invoke skill directly" not "avoid the skill".
+**If execution fails:** Return FAILED status with error details. Do not attempt workarounds.
 
 ### Step 3: Review Phase
 
