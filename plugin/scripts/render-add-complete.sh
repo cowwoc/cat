@@ -92,14 +92,29 @@ item_path = "$ITEM_PATH"
 
 if item_type == "issue":
     deps_str = deps if deps else "None"
-    content = [
-        f"{version}-{item_name}",
-        f"Type: {issue_type}",
-        f"Dependencies: {deps_str}",
-    ]
-    header = "✅ Issue Created"
+
+    # Check if multiple issues (comma-separated)
+    if "," in item_name:
+        issue_names = [name.strip() for name in item_name.split(",")]
+        content = []
+        for idx, name in enumerate(issue_names, 1):
+            content.append(f"{idx}. {name}")
+        content.append("")
+        content.append(f"Version: {version}")
+        content.append(f"Type: {issue_type}")
+        content.append(f"Dependencies: {deps_str}")
+        header = "✅ Issues Created"
+        next_cmd = f"/cat:work {version}-{issue_names[0]}"
+    else:
+        content = [
+            f"{version}-{item_name}",
+            f"Type: {issue_type}",
+            f"Dependencies: {deps_str}",
+        ]
+        header = "✅ Issue Created"
+        next_cmd = f"/cat:work {version}-{item_name}"
+
     box = build_header_box(header, content, min_width=40, prefix="─ ")
-    next_cmd = f"/cat:work {version}-{item_name}"
     print(box)
     print()
     print(f"Next: /clear, then {next_cmd}")

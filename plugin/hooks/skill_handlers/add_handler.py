@@ -46,19 +46,31 @@ class AddHandler:
 
         deps_str = ", ".join(dependencies) if dependencies else "None"
 
-        # Build content items
-        content_items = [
-            item_name,
-            "",
-            f"Version: {version}",
-            f"Type: {issue_type}",
-            f"Dependencies: {deps_str}",
-        ]
+        # Check if multiple issues (comma-separated)
+        if "," in item_name:
+            issue_names = [name.strip() for name in item_name.split(",")]
+            content_items = []
+            for idx, name in enumerate(issue_names, 1):
+                content_items.append(f"{idx}. {name}")
+            content_items.append("")
+            content_items.append(f"Version: {version}")
+            content_items.append(f"Type: {issue_type}")
+            content_items.append(f"Dependencies: {deps_str}")
+            header = "✅ Issues Created"
+            next_cmd = f"/cat:work {version}-{issue_names[0]}"
+        else:
+            # Build content items for single issue
+            content_items = [
+                item_name,
+                "",
+                f"Version: {version}",
+                f"Type: {issue_type}",
+                f"Dependencies: {deps_str}",
+            ]
+            header = "✅ Issue Created"
+            next_cmd = f"/cat:work {version}-{item_name}"
 
-        header = "✅ Issue Created"
         final_box = build_header_box(header, content_items, min_width=40, prefix="─ ")
-
-        next_cmd = f"/cat:work {version}-{item_name}"
 
         return f"""SCRIPT OUTPUT ADD DISPLAY::
 
