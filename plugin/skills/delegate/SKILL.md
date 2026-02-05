@@ -367,6 +367,7 @@ Before delegating, verify your prompt answers:
 - [ ] **Does prompt include STATE.md update?** (MUST be in same commit as implementation - M076/M077)
 - [ ] **Does prompt include PLAN.md acceptance criteria?** (M260: validation commands, expected scores)
 - [ ] **If delegating a skill, does prompt require invoking it?** (M261: "Use /cat:shrink-doc" not "compress")
+- [ ] **Does prompt include caller context?** (M426: goal, constraints, expected outcome for this invocation)
 
 ### Mandatory Subagent Prompt Checklist (A013)
 
@@ -523,12 +524,23 @@ Task tool invocation:
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
+    CONTEXT FROM CALLER (M426):
+    [Include relevant context the subagent needs to execute this skill properly:
+     - Goal: Why is this skill being invoked? What larger task does it serve?
+     - Constraints: Any requirements from PLAN.md or parent task
+     - Related files: Other files being processed in same batch (if applicable)
+     - Expected outcome: What should success look like for this specific invocation]
+
     CRITICAL REQUIREMENTS: [hook inheritance block]
 
     ## Execution Plan
     [Numbered steps - see Comprehensive Execution Plan Format above]
 
     POSTCONDITION REPORTING: Report validation score and pass/fail.
+
+    SKILL OUTPUT CAPTURE (M426): If the skill produces user-visible output (validation
+    results, compression stats, comparison tables), include the FULL textual output
+    in your completion JSON under "skill_output". Users cannot see subagent tool calls.
 
     FAIL-FAST: If skill fails validation, report BLOCKED.
 ```
@@ -652,12 +664,18 @@ COMPLETION_JSON="${WORKTREE}/.completion.json"
 STATUS=$(jq -r '.status' "$COMPLETION_JSON")
 TOKENS=$(jq -r '.tokensUsed' "$COMPLETION_JSON")
 
-# For skill delegations: extract postcondition values
+# For skill delegations: extract postcondition values AND skill output (M426)
 if [[ -n "$SKILL" ]]; then
   VALIDATION_SCORE=$(jq -r '.validationScore // "N/A"' "$COMPLETION_JSON")
   POSTCONDITION_MET=$(jq -r '.postconditionMet // "unknown"' "$COMPLETION_JSON")
+  SKILL_OUTPUT=$(jq -r '.skill_output // ""' "$COMPLETION_JSON")
 fi
 ```
+
+**Forward Skill Output to User (M426):**
+
+If `skill_output` is non-empty, display it to the user. Subagent tool calls are invisible,
+so this is the only way users see what skills like `/cat:shrink-doc` actually did.
 
 **Update TaskList entry:**
 ```

@@ -79,6 +79,31 @@ to match the expected format rather than invoke the validation skill.
 - Subagent MUST invoke `/cat:shrink-doc` skill for each file
 - Subagent MUST report the ACTUAL score returned by `/compare-docs`
 
+**Include Skill Output in Results (M426):**
+
+When skills produce user-visible output (validation results, compression stats, diffs), include the
+raw output in the result JSON so the orchestrator can forward it to the user:
+
+```json
+{
+  "task_metrics": {
+    "per_file_results": [
+      {
+        "file": "path/to/file.md",
+        "tokens_before": 5198,
+        "tokens_after": 3547,
+        "equivalence_score": 1.0,
+        "skill_output": "## Compression Result\n\n| Metric | Before | After |\n..."
+      }
+    ]
+  }
+}
+```
+
+**Why this matters (M426):** Subagent tool calls are invisible to the user. For skills like
+`/cat:shrink-doc` that produce important validation output, users need to see what the skill
+actually did. Capture the skill's textual output and include it in `skill_output`.
+
 Return JSON on failure:
 
 ```json
