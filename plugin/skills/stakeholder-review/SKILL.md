@@ -39,17 +39,17 @@ changes affect the overall codebase. This enables reviewers to catch:
 
 | Stakeholder | Reference | Focus |
 |-------------|-----------|-------|
-| requirements | @stakeholders/requirements.md | Requirement satisfaction verification |
-| architect | @stakeholders/architect.md | System design, module boundaries, APIs |
-| security | @stakeholders/security.md | Vulnerabilities, input validation |
-| design | @stakeholders/design.md | Code quality, complexity, duplication |
-| testing | @stakeholders/testing.md | Test coverage, edge cases |
-| performance | @stakeholders/performance.md | Efficiency, resource usage |
-| deployment | @stakeholders/deployment.md | CI/CD, build systems, release readiness |
-| ux | @stakeholders/ux.md | Usability, accessibility, interaction design |
-| sales | @stakeholders/sales.md | Customer value, competitive positioning |
-| marketing | @stakeholders/marketing.md | Positioning, messaging, go-to-market |
-| legal | @stakeholders/legal.md | Licensing, compliance, IP, data privacy |
+| requirements | @agents/stakeholder-requirements.md | Requirement satisfaction verification |
+| architect | @agents/stakeholder-architect.md | System design, module boundaries, APIs |
+| security | @agents/stakeholder-security.md | Vulnerabilities, input validation |
+| design | @agents/stakeholder-design.md | Code quality, complexity, duplication |
+| testing | @agents/stakeholder-testing.md | Test coverage, edge cases |
+| performance | @agents/stakeholder-performance.md | Efficiency, resource usage |
+| deployment | @agents/stakeholder-deployment.md | CI/CD, build systems, release readiness |
+| ux | @agents/stakeholder-ux.md | Usability, accessibility, interaction design |
+| sales | @agents/stakeholder-sales.md | Customer value, competitive positioning |
+| marketing | @agents/stakeholder-marketing.md | Positioning, messaging, go-to-market |
+| legal | @agents/stakeholder-legal.md | Licensing, compliance, IP, data privacy |
 
 ## Progress Output
 
@@ -148,7 +148,7 @@ In review mode, file changes can override context exclusions:
 | Test files (`*Test*`, `*Spec*`, `*_test*`) | testing |
 | Algorithm-heavy files (sort, search, optimize, process) | performance |
 | CI/CD files (`Dockerfile`, `*.yml` in `.github/`, `Jenkinsfile`, `*.yaml` pipeline) | deployment |
-| Only .md files changed | requirements only, exclude all others |
+| Only .md files changed | requirements, design only |
 | Only test files changed | testing, design only |
 
 ### User Override: Force Stakeholders
@@ -297,9 +297,9 @@ fi
 if echo "$CHANGED_FILES" | grep -qvE '\.md$' | grep -q .; then
     : # Non-md files exist, continue normally
 else
-    # Only markdown files - limit to requirements only
-    SELECTED="requirements"
-    SKIPPED="$SKIPPED architect:only_md_files security:only_md_files design:only_md_files testing:only_md_files performance:only_md_files ux:only_md_files sales:only_md_files marketing:only_md_files legal:only_md_files"
+    # Only markdown files - limit to requirements and design
+    SELECTED="requirements design"
+    SKIPPED="$SKIPPED architect:only_md_files security:only_md_files testing:only_md_files performance:only_md_files ux:only_md_files sales:only_md_files marketing:only_md_files legal:only_md_files"
 fi
 
 # Special case: only test files changed
@@ -461,7 +461,7 @@ For each relevant stakeholder, spawn a subagent with:
 You are the {stakeholder} stakeholder reviewing an implementation.
 
 ## Your Role
-{content of stakeholders/{stakeholder}.md}
+{content of agents/stakeholder-{stakeholder}.md}
 
 ## Language-Specific Patterns
 {content of LANG_SUPPLEMENT if available, otherwise "No language supplement loaded."}

@@ -1,3 +1,10 @@
+---
+name: stakeholder-architect
+description: "Software Architect stakeholder for code review and research. Focus: system architecture, module boundaries, design patterns"
+tools: Read, Grep, Glob, WebSearch, WebFetch
+model: haiku
+---
+
 # Stakeholder: Architect
 
 **Role**: Software Architect
