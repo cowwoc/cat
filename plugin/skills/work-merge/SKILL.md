@@ -150,7 +150,7 @@ for parent_dir in "$VERSION_DIR"/*/; do
       subtask_state="$VERSION_DIR/$subtask/STATE.md"
       if [[ -f "$subtask_state" ]]; then
         st=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$subtask_state" | head -1 | tr -d ' ')
-        if [[ "$st" != "completed" && "$st" != "complete" ]]; then
+        if [[ "$st" != "completed" ]]; then
           all_complete=false
           break
         fi

@@ -1264,6 +1264,73 @@ def test_session_start():
                 platform in ["linux-x64", "linux-aarch64", "macos-x64", "macos-aarch64"])
 
 
+def test_posttool_validate_state_status():
+    """Test PostToolUse handler for STATE.md status validation (M434)."""
+    runner.section("posttool_handlers/validate_state_status")
+
+    from posttool_handlers.validate_state_status import handle
+
+    # Test 1: Non-Edit/Write tool returns None
+    result = handle("Bash", {"file_path": "/tmp/STATE.md"}, {})
+    runner.test("Non-Edit/Write tool returns None", result is None)
+
+    # Test 2: Edit on non-STATE.md file returns None
+    result = handle("Edit", {"file_path": "/workspace/README.md"}, {})
+    runner.test("Edit on non-STATE.md returns None", result is None)
+
+    # Test 3-6: Canonical statuses return None
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+
+        for status in ["pending", "in-progress", "completed", "blocked"]:
+            state_file.write_text(f"# State\n\n- **Status:** {status}\n")
+            result = handle("Edit", {"file_path": str(state_file)}, {})
+            runner.test(f"Canonical status '{status}' returns None", result is None)
+
+    # Test 7: Non-canonical 'complete' returns warning
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Status:** complete\n")
+        result = handle("Edit", {"file_path": str(state_file)}, {})
+        runner.test("Non-canonical 'complete' returns warning",
+                    result is not None and "M434" in result)
+
+    # Test 8: Non-canonical 'done' via Write returns warning
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Status:** done\n")
+        result = handle("Write", {"file_path": str(state_file)}, {})
+        runner.test("Non-canonical 'done' via Write returns warning",
+                    result is not None and "M434" in result)
+
+    # Test 9: Non-canonical 'in_progress' returns warning
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Status:** in_progress\n")
+        result = handle("Edit", {"file_path": str(state_file)}, {})
+        runner.test("Non-canonical 'in_progress' returns warning",
+                    result is not None and "M434" in result)
+
+    # Test 10: Non-canonical 'active' returns warning
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Status:** active\n")
+        result = handle("Edit", {"file_path": str(state_file)}, {})
+        runner.test("Non-canonical 'active' returns warning",
+                    result is not None and "M434" in result)
+
+    # Test 11: Missing Status field returns None
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Progress:** 50%\n")
+        result = handle("Edit", {"file_path": str(state_file)}, {})
+        runner.test("Missing Status field returns None", result is None)
+
+    # Test 12: Missing file_path returns None
+    result = handle("Edit", {}, {})
+    runner.test("Missing file_path returns None", result is None)
+
+
 def test_compress_validate_loop():
     """Test compress-validate-loop.py script."""
     runner.section("scripts/compress-validate-loop.py")
@@ -1320,6 +1387,7 @@ def main():
         test_posttool_skill_preprocessor_output,
         test_posttool_user_input_reminder,
         test_posttool_auto_learn,
+        test_posttool_validate_state_status,
         test_config_loader,
         test_get_available_issues_discovery,
         test_abort_clarification_handler,

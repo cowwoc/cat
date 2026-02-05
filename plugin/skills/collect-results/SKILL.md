@@ -406,13 +406,13 @@ reporting enables proper estimate validation.
 
 ```bash
 # ❌ Discarding incomplete work
-if [ "${STATUS}" != "complete" ]; then
+if [ "${STATUS}" != "completed" ]; then
   echo "Incomplete, discarding"
   cleanup_worktree "${SUBAGENT}"
 fi
 
 # ✅ Preserve partial progress
-if [ "${STATUS}" != "complete" ]; then
+if [ "${STATUS}" != "completed" ]; then
   echo "Collecting partial results"
   document_remaining_work "${SUBAGENT}"
   # Results can still be merged
