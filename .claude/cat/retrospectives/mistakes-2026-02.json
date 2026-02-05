@@ -2100,6 +2100,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Version CHANGELOG.md should contain user-facing release notes (features, improvements, bugfixes) that can be copied to root CHANGELOG.md, not internal task names"
+    },
+    {
+      "id": "M425",
+      "timestamp": "2026-02-05T12:35:00Z",
+      "category": "prompt_engineering",
+      "description": "Delegation prompt told subagent 'do NOT invoke nested skills like /cat:shrink-doc' causing skill bypass - user expected shrink-doc output",
+      "root_cause": "When facing nesting/token issues with batch compression, delegated with explicit instruction to bypass required skill instead of finding proper batching solution. User wanted to see shrink-doc output for each file.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "shrink-doc",
+        "skill bypass",
+        "compression",
+        "delegation prompt",
+        "batch"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When PLAN.md specifies using a skill (like /cat:shrink-doc), the subagent MUST invoke that skill using the Skill tool - not manually implement the skill's functionality"
     }
   ]
 }
