@@ -50,6 +50,7 @@ from . import block_reflog_destruction
 from . import validate_commit_type
 from . import validate_git_operations
 from . import validate_git_filter_branch
+from . import validate_plan_md
 from . import remind_git_squash
 from . import warn_file_extraction
 from . import compute_box_lines

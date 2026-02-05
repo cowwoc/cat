@@ -568,6 +568,8 @@ mkdir -p "$TASK_PATH"
 
 Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
 
+**CRITICAL:** Follow template guidance to separate Execution Steps (actions only) from Success Criteria (measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution Steps as this primes subagents to fabricate results.
+
 **If RESEARCH_FINDINGS exists:**
 
 Add a Research Findings section to PLAN.md after the Goal/Problem section:
