@@ -582,10 +582,19 @@ is not detailed enough. The subagent should only decide "how to write the code",
 
 **Batch Execution Check (M427):** When the issue involves multiple files AND a skill (e.g., compress 9 files with /cat:shrink-doc):
 1. Read the target skill's documentation for batch/parallel execution patterns
-2. If the skill documents using `/cat:delegate` for multiple files, write execution steps to use delegate
-3. Example: Instead of "For each file: Run /cat:shrink-doc", use "/cat:delegate --skill shrink-doc file1.md file2.md ..."
+2. Write execution steps to invoke the skill sequentially for each file
+3. Note: The main agent should invoke skills directly. Subagents cannot invoke skills.
 
-This ensures batch tasks leverage parallel execution rather than sequential processing.
+Example execution steps:
+```
+Step 1: Compress file1.md
+  /cat:shrink-doc file1.md
+
+Step 2: Compress file2.md
+  /cat:shrink-doc file2.md
+
+[etc.]
+```
 
 **If RESEARCH_FINDINGS exists:**
 
