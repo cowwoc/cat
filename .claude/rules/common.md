@@ -125,6 +125,31 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 - Keep old writers alongside new writers
 - Silently fall back to parsing old formats
 
+## Documentation Style
+
+**No retrospective commentary.** Do not add documentation or comments that discuss:
+- What was changed or implemented
+- What was removed or refactored
+- Historical context of modifications
+
+**Exception:** Files specifically designed for history tracking (e.g., `CHANGELOG.md`).
+
+**Rationale:** Code and documentation should describe current state and intent, not narrate their own evolution. Git history provides the authoritative record of changes.
+
+## Shell Efficiency
+
+**Chain independent commands** with `&&` in a single Bash call instead of separate tool calls.
+This reduces round-trips and primes subagents to work efficiently.
+
+```bash
+# Good: single call
+git branch --show-current && git log --oneline -3 && git diff --stat
+
+# Bad: 3 separate tool calls for independent checks
+```
+
+**Use `git -C`** instead of `cd` + `git` to operate on worktrees without changing directory.
+
 ## Testing
 
 - Python: pytest for unit tests

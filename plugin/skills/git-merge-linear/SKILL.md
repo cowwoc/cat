@@ -56,18 +56,16 @@ fi
 ### Step 1: Verify Location and Detect Base Branch
 
 ```bash
-# Verify we're in a worktree (not main repo)
-WORKTREE_PATH=$(pwd)
-MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
+# Detect location, branches, and check for clean state in one block
+WORKTREE_PATH=$(pwd) &&
+  MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}') &&
+  TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 if [[ "$WORKTREE_PATH" == "$MAIN_REPO" ]]; then
   echo "ERROR: Must run from issue worktree, not main repo"
   echo "Navigate to: /workspace/.worktrees/<issue-name>"
   exit 1
 fi
-
-# Get current branch
-TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # Detect base branch from worktree metadata (fail-fast if missing)
 CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
@@ -79,16 +77,11 @@ if [[ ! -f "$CAT_BASE_FILE" ]]; then
 fi
 BASE_BRANCH=$(cat "$CAT_BASE_FILE")
 
-echo "Issue branch: $TASK_BRANCH"
-echo "Base branch: $BASE_BRANCH"
-echo "Worktree: $WORKTREE_PATH"
+echo "Issue branch: $TASK_BRANCH | Base branch: $BASE_BRANCH | Worktree: $WORKTREE_PATH"
 
 # Check for uncommitted changes
-UNSTAGED=$(git diff --quiet; echo $?)
-STAGED=$(git diff --cached --quiet; echo $?)
-if [[ "$UNSTAGED" -ne 0 ]] || [[ "$STAGED" -ne 0 ]]; then
-  echo "ERROR: Uncommitted changes detected"
-  echo "Commit or stash changes before merging"
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "ERROR: Uncommitted changes detected. Commit or stash before merging."
   exit 1
 fi
 ```
@@ -210,43 +203,27 @@ fi
 echo "$BASE_BRANCH fast-forwarded to $(git rev-parse --short HEAD)"
 ```
 
-### Step 5: Verify Merge
+### Step 5: Verify Merge and Cleanup
 
 ```bash
 # Verify base branch was updated
-BASE_SHA=$(git rev-parse "$BASE_BRANCH")
-HEAD_SHA=$(git rev-parse HEAD)
+BASE_SHA=$(git rev-parse "$BASE_BRANCH") &&
+  HEAD_SHA=$(git rev-parse HEAD)
 
 if [[ "$BASE_SHA" != "$HEAD_SHA" ]]; then
   echo "ERROR: $BASE_BRANCH not at expected commit"
-  echo "$BASE_BRANCH: $BASE_SHA"
-  echo "HEAD: $HEAD_SHA"
+  echo "$BASE_BRANCH: $BASE_SHA | HEAD: $HEAD_SHA"
   exit 1
 fi
 
 echo "Verified: $BASE_BRANCH is at $(git rev-parse --short "$BASE_BRANCH")"
-
-# Show final state
-echo ""
-echo "=== Merge Complete ==="
 git log --oneline -3 "$BASE_BRANCH"
-```
 
-### Step 6: Cleanup Worktree and Branch
-
-```bash
-# Navigate to main repo for cleanup
-cd "$MAIN_REPO"
-
-# Remove worktree
-git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true
-
-# Delete issue branch (now safe since worktree removed)
+# Cleanup: worktree, branch, empty directory
+cd "$MAIN_REPO" &&
+  git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true
 git branch -D "$TASK_BRANCH" 2>/dev/null || true
-
-# Clean up empty worktrees directory
 rmdir /workspace/.worktrees 2>/dev/null || true
-
 echo "Cleanup complete"
 ```
 
@@ -256,9 +233,9 @@ For experienced users, combine all steps (run from issue worktree):
 
 ```bash
 # Detect branches and paths
-TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}')
-WORKTREE_PATH=$(pwd)
+TASK_BRANCH=$(git rev-parse --abbrev-ref HEAD) &&
+  MAIN_REPO=$(git worktree list | head -1 | awk '{print $1}') &&
+  WORKTREE_PATH=$(pwd)
 
 # Detect base branch from worktree metadata (fail-fast if missing)
 CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
