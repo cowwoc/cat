@@ -2288,6 +2288,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Write all jq queries to a .sh script file first, then execute it once via Bash tool"
+    },
+    {
+      "id": "M432",
+      "timestamp": "2026-02-05T20:00:00Z",
+      "category": "protocol_violation",
+      "description": "Prepare subagent modified STATE.md files in main worktree instead of issue worktree, polluting main branch",
+      "root_cause": "work-prepare SKILL.md Step 7 said 'Update STATE.md' without specifying WORKTREE_PATH; subagent used PROJECT_DIR=/workspace",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "worktree_isolation",
+        "state_mutation",
+        "main_workspace_pollution",
+        "prepare_phase"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "All file modifications during task execution must target WORKTREE_PATH, never PROJECT_DIR. Step 7 must specify ${WORKTREE_PATH}/.claude/cat/issues/... path."
     }
   ]
 }
