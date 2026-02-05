@@ -154,13 +154,10 @@ echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRA
 **MANDATORY: Verify the worktree is on the correct branch before proceeding.**
 
 ```bash
-cd "${WORKTREE_PATH}"
-ACTUAL_BRANCH=$(git branch --show-current)
+ACTUAL_BRANCH=$(git -C "${WORKTREE_PATH}" branch --show-current)
 
 if [[ "$ACTUAL_BRANCH" != "$ISSUE_BRANCH" ]]; then
   echo "ERROR: Worktree created on wrong branch. Expected: $ISSUE_BRANCH, Got: $ACTUAL_BRANCH"
-  # Clean up the broken worktree
-  cd "${CLAUDE_PROJECT_DIR}"
   git worktree remove "${WORKTREE_PATH}" --force 2>/dev/null
   exit 1
 fi
@@ -230,7 +227,19 @@ manual work outside `/cat:work`). When suspicious commits are found:
 **This prevents duplicate work** when STATE.md shows `in-progress` but the actual implementation
 already exists on the base branch.
 
-### Step 7: Update STATE.md
+### Step 7: Update STATE.md (M432)
+
+**MANDATORY: Update STATE.md in the WORKTREE, not in the main workspace.**
+
+The worktree was created in Step 4. Update the STATE.md copy inside it:
+
+```bash
+# CORRECT: Edit in worktree
+STATE_FILE="${WORKTREE_PATH}/.claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/${ISSUE_NAME}/STATE.md"
+
+# WRONG: Editing in main workspace (pollutes main branch)
+# STATE_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/issues/..."
+```
 
 Set task status to `in-progress`:
 
@@ -239,6 +248,9 @@ Set task status to `in-progress`:
 - **Progress:** 0%
 - **Last Updated:** {date}
 ```
+
+**Do NOT modify any files in `${CLAUDE_PROJECT_DIR}` directly.** All file modifications
+must be in `${WORKTREE_PATH}` so they are isolated to the task branch.
 
 ### Step 8: Return Result
 
