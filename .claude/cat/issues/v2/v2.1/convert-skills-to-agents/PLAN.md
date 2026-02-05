@@ -26,12 +26,12 @@ Analysis of skills with `user-invocable: false` that are invoked via Task tool:
 
 | Current Skill | Becomes Agent | Preloaded Skills | Rationale |
 |---------------|---------------|------------------|-----------|
-| `work-execute` | `work-execute` | (none) | Executes PLAN.md steps; skills vary per task |
+| `work-execute` | `work-execute` | `write-and-commit`, `batch-read`, `grep-and-read` | Efficiency skills reduce token usage during implementation |
 | `work-merge` | `work-merge` | `git-squash`, `git-rebase`, `git-merge-linear` | Needs git safety patterns |
 | `work-review` | `work-review` | `stakeholder-review` | Orchestrates stakeholder reviews |
 | `work-prepare` | `work-prepare` | (none) | Task discovery; no domain skills needed |
 | `work-batch-executor` | `work-batch-executor` | (none) | Orchestrates other agents |
-| `merge-subagent` | `merge-subagent` | `git-squash`, `git-rebase` | Merges subagent branches |
+| `merge-subagent-branch` | `merge-subagent-branch` | `git-squash`, `git-rebase` | Merges subagent branches |
 
 **Skills NOT to convert** (reference documentation, not subagents):
 - `git-squash`, `git-rebase`, `git-merge-linear`, `git-amend`, `git-commit` - These ARE skills that get preloaded
@@ -69,12 +69,12 @@ subagent has full knowledge of git safety patterns without needing to invoke ski
 
 | Agent File | Source Skill | Preloads |
 |------------|--------------|----------|
-| `plugin/agents/work-execute.md` | `plugin/skills/work-execute/SKILL.md` | - |
+| `plugin/agents/work-execute.md` | `plugin/skills/work-execute/SKILL.md` | write-and-commit, batch-read, grep-and-read |
 | `plugin/agents/work-merge.md` | `plugin/skills/work-merge/SKILL.md` | git-squash, git-rebase, git-merge-linear |
 | `plugin/agents/work-review.md` | `plugin/skills/work-review/SKILL.md` | stakeholder-review |
 | `plugin/agents/work-prepare.md` | `plugin/skills/work-prepare/SKILL.md` | - |
 | `plugin/agents/work-batch-executor.md` | `plugin/skills/work-batch-executor/SKILL.md` | - |
-| `plugin/agents/merge-subagent.md` | `plugin/skills/merge-subagent/SKILL.md` | git-squash, git-rebase |
+| `plugin/agents/merge-subagent-branch.md` | `plugin/skills/merge-subagent-branch/SKILL.md` | git-squash, git-rebase |
 
 ### Files to Update (Task tool invocations)
 
@@ -91,13 +91,17 @@ These remain as skills but are now preloaded into agents:
 - `plugin/skills/git-rebase/SKILL.md`
 - `plugin/skills/git-merge-linear/SKILL.md`
 - `plugin/skills/stakeholder-review/SKILL.md`
+- `plugin/skills/write-and-commit/SKILL.md`
+- `plugin/skills/batch-read/SKILL.md`
+- `plugin/skills/grep-and-read/SKILL.md`
 
 ## Acceptance Criteria
 - [ ] 6 subagent-style skills converted to agent format in `plugin/agents/`
 - [ ] Each agent has appropriate `skills` field for domain knowledge preloading
+- [ ] work-execute agent preloads: write-and-commit, batch-read, grep-and-read
 - [ ] work-merge agent preloads: git-squash, git-rebase, git-merge-linear
 - [ ] work-review agent preloads: stakeholder-review
-- [ ] merge-subagent agent preloads: git-squash, git-rebase
+- [ ] merge-subagent-branch agent preloads: git-squash, git-rebase
 - [ ] Task tool invocations updated to use `subagent_type` matching agent names
 - [ ] Work phases function correctly with new agent structure
 - [ ] Original skill files can be removed (or kept as documentation)
@@ -115,27 +119,32 @@ These remain as skills but are now preloaded into agents:
    - Add frontmatter with `skills: [stakeholder-review]`
    - Copy SKILL.md content as system prompt
 
-3. **Step 3:** Create merge-subagent agent with skills preloading
-   - Create `plugin/agents/merge-subagent.md`
+3. **Step 3:** Create merge-subagent-branch agent with skills preloading
+   - Create `plugin/agents/merge-subagent-branch.md`
    - Add frontmatter with `skills: [git-squash, git-rebase]`
    - Copy SKILL.md content as system prompt
 
-4. **Step 4:** Create remaining agents (no skill preloading needed)
+4. **Step 4:** Create work-execute agent with efficiency skills preloading
    - Create `plugin/agents/work-execute.md`
+   - Add frontmatter with `skills: [write-and-commit, batch-read, grep-and-read]`
+   - Copy SKILL.md content as system prompt
+
+5. **Step 5:** Create remaining agents (no skill preloading needed)
    - Create `plugin/agents/work-prepare.md`
    - Create `plugin/agents/work-batch-executor.md`
 
-5. **Step 5:** Update Task tool invocations
+6. **Step 6:** Update Task tool invocations
    - Update `work-batch-executor` to spawn agents by name
    - Update `work-with-issue` references
    - Verify `subagent_type` parameter matches agent `name` field
 
-6. **Step 6:** Test work phases
+7. **Step 7:** Test work phases
    - Run `/cat:work` on a test task
    - Verify agents load with preloaded skill content
    - Verify merge phase has git safety knowledge
+   - Verify execute phase has efficiency skills available
 
-7. **Step 7:** Commit changes
+8. **Step 8:** Commit changes
    - Commit type: `config:` (Claude-facing agent definitions)
 
 ## Implementation Notes
