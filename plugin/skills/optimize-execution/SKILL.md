@@ -34,6 +34,19 @@ Or invoke programmatically with a specific session file:
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 ```
 
+## Execution Method
+
+Write ALL jq queries to a single `.sh` script file first, then execute it once.
+Inline jq in Bash tool calls fails when `!=` or `//` operators get shell-escaped (M431).
+
+```bash
+# Step 1: Write the analysis script
+# Use Write tool to create: ${SCRATCHPAD_DIR}/session-analysis.sh
+
+# Step 2: Execute it
+bash ${SCRATCHPAD_DIR}/session-analysis.sh
+```
+
 ## Analysis Steps
 
 ### Step 1: Extract Execution History
