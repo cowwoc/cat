@@ -53,16 +53,15 @@ Task tool:
     testing, performance, ux, sales, marketing, legal.
 
     Load stakeholder definitions:
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/index.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/architect.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/security.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/design.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/testing.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/performance.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/ux.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/sales.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/marketing.md
-    @${CLAUDE_PLUGIN_ROOT}/stakeholders/legal.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-architect.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-security.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-design.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-testing.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-performance.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-ux.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-sales.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-marketing.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-legal.md
     @${CLAUDE_PLUGIN_ROOT}/concepts/research-pitfalls.md
 
     For each stakeholder:
