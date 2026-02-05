@@ -133,6 +133,46 @@ The delegation prompt IS the primary "document" the subagent received. Check it 
 - Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
 - Any content telling the subagent what to report vs what to measure
 
+**CHECK FOR TECHNICALLY IMPOSSIBLE INSTRUCTIONS (M429):**
+
+When a subagent fails to follow instructions, check whether the instructions were **technically possible** given Claude Code's subagent architecture:
+
+| Subagent Capability | Available? | Evidence |
+|---------------------|------------|----------|
+| Spawn nested subagents (Task tool) | **NO** | Task tool not exposed to subagents |
+| Invoke skills dynamically (Skill tool) | **NO** | Skill tool not available to subagents |
+| Read/Write/Edit files | YES | Standard file tools available |
+| Run bash commands | YES | Bash tool available |
+| Web search/fetch | YES | Available to subagents |
+
+**If instructions required unavailable capabilities:**
+
+```yaml
+technically_impossible_check:
+  instruction_required: "Invoke /cat:{skill-name} for each item"
+  capability_needed: "Skill tool"
+  available_to_subagent: false
+  conclusion: "IMPOSSIBLE - instruction cannot be executed as written"
+  root_cause: "architectural_flaw"
+  fix_type: "Redesign workflow to invoke skills at main agent level"
+```
+
+**Common patterns of impossible instructions:**
+
+| Instruction Pattern | Why Impossible | Correct Design |
+|--------------------|----------------|----------------|
+| "Subagent must invoke /cat:skill" | Skill tool unavailable | Main agent invokes skill before/after delegation |
+| "Spawn reviewer subagents" | Task tool unavailable | Main agent spawns reviewers directly |
+| "Delegate to sub-subagent" | Max depth is 1 | Flatten to single delegation level |
+| "Use parallel-execute skill" | Skill tool unavailable | Main agent handles parallelization |
+
+**When this check identifies impossible instructions:**
+
+1. Root cause is `architectural_flaw` (not agent error)
+2. Prevention must redesign the WORKFLOW, not add guidance
+3. The skill/workflow documentation is the source of the bug
+4. Do NOT add "agent should have..." instructions - they cannot help
+
 **CRITICAL: Trace the FULL priming chain (M425):**
 
 When the main agent wrote a bad delegation prompt, ask: **What primed the MAIN AGENT to write that prompt?**
