@@ -33,5 +33,7 @@ None - subtask of parent
 - [ ] No functionality regression
 
 ## Execution Steps
-1. For each file in scope: Run /cat:shrink-doc
+1. Use /cat:delegate to process all files in parallel: `/cat:delegate --skill shrink-doc file1.md file2.md ...` (M369)
 2. Commit changes with message: "config: compress skills batch 4 (research through tdd-implementation)"
+
+**Note (M427):** Use delegate for batch operations - parallel execution is faster than sequential.
