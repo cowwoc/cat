@@ -104,23 +104,30 @@ Temporary mutations that rely on cleanup code are unsafe because:
 
 ### Step 2: Find Available Task
 
-Use the discovery script:
+Use the discovery script with `--exclude-pattern` when arguments contain a filter (M435):
 
 ```bash
+# Convert natural language filter to glob pattern:
+#   "skip compression" → "compress*"
+#   "skip batch tasks" → "*-batch-*"
+#   "only migration"   → exclude everything NOT matching: use no --exclude-pattern, filter result in memory
+
+# When filter maps to an exclusion pattern:
+RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" --session-id "${SESSION_ID}" --exclude-pattern "compress*")
+
+# When no filter:
 RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" --session-id "${SESSION_ID}")
 ```
 
 Parse the result and handle statuses:
-- `found` - Check filter (if any), then continue to worktree creation
-- `no_tasks` - Return NO_TASKS status
+- `found` - Continue to worktree creation
+- `not_found` - Return NO_TASKS status (may include `excluded_count` if pattern excluded issues)
 - `locked` - Return LOCKED status with owner info
 
-**Filtering (M364):** If arguments include a filter (e.g., "skip compression tasks"):
-1. Parse the discovered task name from result
-2. Check if task matches filter criteria (in memory, NOT by modifying files)
-3. If task should be skipped: Return `{"status": "NO_TASKS", "message": "Available task filtered out", "filtered_task": "issue-name", "filter": "skip compression tasks"}`
-
-The orchestrator can then decide to retry without filter or inform user.
+**Filtering (M364, M435):** Use `--exclude-pattern` for exclusion filters. The script handles
+glob matching natively and continues searching for the next eligible issue after excluding matches.
+Only use in-memory filtering for inclusion filters (e.g., "only migration") where the script
+has no native support.
 
 ### Step 3: Analyze Task Size
 
