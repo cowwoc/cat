@@ -166,12 +166,72 @@
         "system_bug_discovered": {
           "bug_id": "#16538",
           "description": "Plugin SessionStart hooks execute but additionalContext is silently discarded for new sessions",
-          "related_issues": ["#10373", "#12151"],
+          "related_issues": [
+            "#10373",
+            "#12151"
+          ],
           "workaround": "UserPromptSubmit handler injects session instructions on first user prompt"
         },
-        "open_action_items": ["A013", "A014"],
+        "open_action_items": [
+          "A013",
+          "A014"
+        ],
         "escalations": [],
         "notes": "PATTERN-008 verbatim output failures were not documentation/skill issues - the session instructions were never being delivered due to Claude Code bug. Workaround implemented."
+      }
+    },
+    {
+      "id": "R013",
+      "timestamp": "2026-02-05T00:57:05-05:00",
+      "trigger": "count_threshold",
+      "period_analyzed": "2026-02-04T20:00:00-05:00 to 2026-02-05T00:57:05-05:00",
+      "mistakes_analyzed": 5,
+      "summary": "Batch skill invocation failures during compress-skills-batch-5 task. Chain of 5 related failures: subagent confusion → failure message priming → skill bypass → manual implementation.",
+      "findings": {
+        "category_breakdown": {
+          "misleading_documentation": 1,
+          "missing_output_forwarding": 1,
+          "process_inefficiency": 1,
+          "prompt_engineering": 1,
+          "skill_bypass": 1
+        },
+        "new_patterns": [
+          {
+            "pattern_id": "PATTERN-014",
+            "pattern": "batch_skill_invocation_failure",
+            "occurrences": 5,
+            "description": "Chain failures when batch operations require nested skill invocations. Subagents fail/fabricate, failure messages prime bypass, main agent does work manually.",
+            "related_mistakes": [
+              "M425",
+              "M426",
+              "M427",
+              "M428",
+              "M429"
+            ]
+          }
+        ],
+        "action_item_effectiveness": {
+          "A004": "effective",
+          "A006": "effective",
+          "A007": "effective",
+          "A005": "partially_effective"
+        },
+        "new_action_items": [
+          {
+            "id": "A015",
+            "priority": "high",
+            "description": "Failure messages must include actionable recovery guidance: retry with single file, escalate to user, NEVER bypass skill. Implemented in M429 prevention.",
+            "status": "implemented",
+            "pattern_id": "PATTERN-014"
+          },
+          {
+            "id": "A016",
+            "priority": "medium",
+            "description": "Remove detailed failure response examples from skill docs to prevent fabrication (M428 pattern). Skills should document success format only.",
+            "status": "open",
+            "pattern_id": "PATTERN-014"
+          }
+        ]
       }
     }
   ]
