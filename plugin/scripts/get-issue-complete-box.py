@@ -70,12 +70,12 @@ def build_issue_complete_box(issue_name: str, next_issue: str, next_goal: str, b
 
     content = [
         "",
-        f"**{issue_name}** merged to {base_branch}.",
+        f"{issue_name} merged to {base_branch}.",
         "",
     ]
 
     sep = [
-        f"**Next:** {next_issue}",
+        f"Next: {next_issue}",
         next_goal,
         "",
         "Continuing to next issue...",
