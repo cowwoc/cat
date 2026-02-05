@@ -2314,6 +2314,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use positional arguments: issue-lock.sh release <project-dir> <issue-id> <session-id>"
+    },
+    {
+      "id": "M433",
+      "timestamp": "2026-02-05T12:00:00-05:00",
+      "category": "code_defect",
+      "description": "enforce-status-output.py Stop hook triggered false positive when /insights output contained 'cat:status' as text, because detection used bare substring match instead of checking for skill invocation markers",
+      "root_cause": "Line 76 used 'cat:status in text.lower()' which matches any mention of the string in any user message, not just actual skill invocations. The /insights report listed cat:status as a skill the user uses, triggering the false positive.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/plugin/hooks/enforce-status-output.py",
+      "pattern_keywords": [
+        "false_positive",
+        "substring_match",
+        "hook_detection",
+        "status_enforcement"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Detect skill invocation via <command-name> tags or expanded skill content markers (# CAT Status Display, <!-- START COPY HERE -->), not bare substring matching"
     }
   ]
 }

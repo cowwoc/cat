@@ -70,10 +70,13 @@ def check_transcript_for_status_skill(transcript_path: str) -> tuple[bool, bool]
                 if isinstance(block, dict) and block.get("type") == "text":
                     text = block.get("text", "")
                     # Check for expanded skill content (header or markers)
-                    # OR the literal command (if preprocessing didn't run)
+                    # OR the command-name tag injected by Claude Code skill system
+                    # M433: Do NOT use bare substring "cat:status" - it matches
+                    # any mention (e.g., /insights report listing skills)
                     if ("# CAT Status Display" in text or
                         "<!-- START COPY HERE -->" in text or
-                        "cat:status" in text.lower()):
+                        "<command-name>cat:status</command-name>" in text or
+                        "<command-name>/cat:status</command-name>" in text):
                         status_invoked = True
 
         # Check assistant messages for box output
