@@ -1514,6 +1514,73 @@ Step 1: Display status
 - [ ] **Delegation-safe**: No expected scores in acceptance criteria
 - [ ] **Formatting details in preprocessing scripts**, not skill doc
 
+### Subagent Skill Preloading (M432)
+
+When a skill spawns subagents (via Task tool), check whether those subagents would benefit from
+having skills preloaded via frontmatter.
+
+**The problem**: Subagents cannot invoke skills (Skill tool unavailable). If a subagent needs
+domain knowledge from skills (git operations, validation patterns, etc.), it must receive that
+knowledge through its context at startup.
+
+**Claude Code `skills` frontmatter field**: Agents in `plugin/agents/` can specify skills to
+preload into their context automatically:
+
+```yaml
+---
+name: work-merge
+description: Merge phase for /cat:work
+tools: Read, Bash, Grep, Glob
+model: haiku
+skills:
+  - git-squash
+  - git-rebase
+  - git-merge-linear
+---
+```
+
+**Design decision during skill creation**:
+
+If your skill spawns a subagent with `subagent_type: "general-purpose"`, ask:
+
+| Question | If YES |
+|----------|--------|
+| Does subagent need domain knowledge (git, validation, etc.)? | Skills would benefit execution |
+| Would subagent try to invoke skills if it could? | Skills should be preloaded instead |
+| Is this a recurring pattern (same domain knowledge needed)? | Dedicated agent type warranted |
+
+**When skills would benefit the subagent, use AskUserQuestion**:
+
+```yaml
+question: "The subagent needs [domain] knowledge but cannot invoke skills. How should I proceed?"
+header: "Subagent Design"
+options:
+  - label: "Create dedicated agent type"
+    description: "New agent in plugin/agents/ with skills preloaded via frontmatter"
+  - label: "Embed guidance in prompt"
+    description: "Include relevant skill content directly in the delegation prompt"
+```
+
+**Option 1: Create dedicated agent type** (preferred for recurring patterns):
+
+1. Create `plugin/agents/{domain}-agent.md` with `skills` frontmatter
+2. Update skill to use `subagent_type: "{domain}-agent"`
+3. The agent receives skill knowledge automatically at startup
+
+**Option 2: Embed guidance in prompt** (acceptable for one-off cases):
+
+1. Read the relevant skill content
+2. Include key guidance in the delegation prompt
+3. Note: This approach doesn't scale if multiple skills invoke similar subagents
+
+**Checklist for subagent-spawning skills**:
+
+- [ ] **Subagent domain identified**: What knowledge does the subagent need?
+- [ ] **Skills identified**: Which skills contain that knowledge?
+- [ ] **Decision made**: Dedicated agent type OR embedded guidance?
+- [ ] **If dedicated agent**: Agent exists in `plugin/agents/` with `skills` frontmatter?
+- [ ] **If embedded**: Guidance included in delegation prompt?
+
 ---
 
 ## Conditional Section Lazy-Loading
