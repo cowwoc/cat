@@ -7,15 +7,24 @@ user-invocable: false
 
 ## Purpose
 
-Delegate CAT issues to subagents in isolated worktrees. Multiple items execute in parallel by
+Delegate issues or skills to subagents in isolated worktrees. Multiple items execute in parallel by
 default; use `--sequential` to force sequential execution when needed.
 
 ## Parameters
 
 | Parameter | Description |
 |-----------|-------------|
+| `--skill <name> [args...]` | Skill to invoke with its arguments (everything after skill name passed through) |
 | `--issues <id1,id2,...>` | CAT issue IDs (dependencies from TaskList) |
 | `--sequential` | Force sequential execution (default: parallel for multiple items) |
+
+**Skill arguments**: Everything after the skill name is passed to that skill.
+```bash
+# Example: delegate shrink-doc with 3 files as arguments
+/cat:delegate --skill shrink-doc file1.md file2.md file3.md
+#                     ^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^
+#                     skill name   skill arguments (passed through)
+```
 
 **CAT issues**: Dependencies are automatically detected from TaskList.
 ```bash
@@ -138,28 +147,12 @@ COMMIT SEPARATION (M089):
 These are ABSOLUTE rules. Violation will be detected and blocked.
 ```
 
-## Skill Batch Execution
-
-Subagents cannot invoke skills (Skill tool is unavailable in subagent context). For skill
-batch execution, the main agent must invoke skills directly.
-
-**Pattern for skill batch execution:**
-
-```bash
-# Sequential execution (main agent invokes directly):
-/cat:shrink-doc file1.md
-/cat:shrink-doc file2.md
-/cat:shrink-doc file3.md
-
-# Parallel execution:
-# Use multiple Task tool invocations in a single response with skill instructions embedded in prompts
-```
-
-**For parallel skill execution:** Use the Task tool directly from the main agent,
-embedding the skill invocation in each subagent's prompt. The main agent (which has access to
-the Skill tool) coordinates the parallel execution.
-
 ## When to Use
+
+### For Skills (`--skill`)
+- Batch operations on multiple files (e.g., compress 10 files)
+- Skill has well-defined inputs and outputs
+- Skill produces measurable postconditions (validation scores)
 
 ### For CAT Issues (`--issues`)
 - Issue has a well-defined PLAN.md ready for execution
@@ -414,11 +407,22 @@ Output the error and STOP. Do NOT manually construct progress output.
 
 ```bash
 # Parse parameters
+SKILL=""
+SKILL_ARGS=()
 ISSUES=()
 SEQUENTIAL=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --skill)
+      SKILL="$2"
+      shift 2
+      # Everything remaining until next flag is skill args
+      while [[ $# -gt 0 && ! "$1" =~ ^-- ]]; do
+        SKILL_ARGS+=("$1")
+        shift
+      done
+      ;;
     --issues)
       IFS=',' read -ra ISSUES <<< "$2"
       shift 2
@@ -435,7 +439,12 @@ done
 
 ```bash
 # Count items
-ITEM_COUNT=${#ISSUES[@]}
+if [[ -n "$SKILL" ]]; then
+  ITEM_COUNT=${#SKILL_ARGS[@]}
+  [[ $ITEM_COUNT -eq 0 ]] && ITEM_COUNT=1  # Skill with no args = 1 invocation
+else
+  ITEM_COUNT=${#ISSUES[@]}
+fi
 
 # Determine execution mode
 if [[ $ITEM_COUNT -eq 1 ]] || [[ "$SEQUENTIAL" == "true" ]]; then
@@ -445,25 +454,27 @@ else
 fi
 ```
 
-### 3. Analyze Dependencies
+### 3. For CAT Issues: Analyze Dependencies
 
-Use TaskList to identify dependencies:
+When delegating CAT issues, use TaskList to identify dependencies:
 
 ```bash
-# Get dependency info from TaskList
-TASK_INFO=$(TaskList)
+if [[ ${#ISSUES[@]} -gt 0 ]]; then
+  # Get dependency info from TaskList
+  TASK_INFO=$(TaskList)
 
-# Build dependency graph
-declare -A BLOCKED_BY
-for issue in "${ISSUES[@]}"; do
-  deps=$(echo "$TASK_INFO" | jq -r ".issues[] | select(.id == \"$issue\") | .blockedBy[]")
-  BLOCKED_BY[$issue]="$deps"
-done
+  # Build dependency graph
+  declare -A BLOCKED_BY
+  for issue in "${ISSUES[@]}"; do
+    deps=$(echo "$TASK_INFO" | jq -r ".issues[] | select(.id == \"$issue\") | .blockedBy[]")
+    BLOCKED_BY[$issue]="$deps"
+  done
 
-# Group into parallel waves based on dependencies
-# Wave 1: issues with no dependencies in our list
-# Wave 2: issues that depend on Wave 1 items
-# etc.
+  # Group into parallel waves based on dependencies
+  # Wave 1: issues with no dependencies in our list
+  # Wave 2: issues that depend on Wave 1 items
+  # etc.
+fi
 ```
 
 ### 4. Generate Subagent Identifiers
@@ -490,9 +501,9 @@ Before spawning each subagent, create a TaskList entry so users can see active w
 
 ```
 TaskCreate:
-  subject: "{issue} - {item}"
-  description: "Subagent executing issue on {item}"
-  activeForm: "Executing issue on {item}"
+  subject: "{skill or issue} - {item}"
+  description: "Subagent executing {skill/issue} on {item}"
+  activeForm: "Executing {skill/issue} on {item}"
 ```
 
 After subagent completes, update the task:
@@ -500,6 +511,38 @@ After subagent completes, update the task:
 TaskUpdate:
   taskId: {created_issue_id}
   status: "completed"  # or "pending" if failed and needs retry
+```
+
+**For skill delegation (haiku - skill does the reasoning):**
+```
+Task tool invocation:
+  description: "Execute {skill} for {item}"
+  subagent_type: "general-purpose"
+  model: "haiku"  # Skill handles complexity
+  prompt: |
+    Execute /cat:{skill} {item}
+
+    WORKING DIRECTORY: ${WORKTREE_PATH}
+
+    CONTEXT FROM CALLER (M426):
+    [Include relevant context the subagent needs to execute this skill properly:
+     - Goal: Why is this skill being invoked? What larger task does it serve?
+     - Constraints: Any requirements from PLAN.md or parent task
+     - Related files: Other files being processed in same batch (if applicable)
+     - Expected outcome: What should success look like for this specific invocation]
+
+    CRITICAL REQUIREMENTS: [hook inheritance block]
+
+    ## Execution Plan
+    [Numbered steps - see Comprehensive Execution Plan Format above]
+
+    POSTCONDITION REPORTING: Report validation score and pass/fail.
+
+    SKILL OUTPUT CAPTURE (M426): If the skill produces user-visible output (validation
+    results, compression stats, comparison tables), include the FULL textual output
+    in your completion JSON under "skill_output". Users cannot see subagent tool calls.
+
+    FAIL-FAST: If skill fails validation, report BLOCKED.
 ```
 
 **For CAT issue delegation - simple issues (haiku):**
@@ -620,7 +663,19 @@ For each completed subagent:
 COMPLETION_JSON="${WORKTREE}/.completion.json"
 STATUS=$(jq -r '.status' "$COMPLETION_JSON")
 TOKENS=$(jq -r '.tokensUsed' "$COMPLETION_JSON")
+
+# For skill delegations: extract postcondition values AND skill output (M426)
+if [[ -n "$SKILL" ]]; then
+  VALIDATION_SCORE=$(jq -r '.validationScore // "N/A"' "$COMPLETION_JSON")
+  POSTCONDITION_MET=$(jq -r '.postconditionMet // "unknown"' "$COMPLETION_JSON")
+  SKILL_OUTPUT=$(jq -r '.skill_output // ""' "$COMPLETION_JSON")
+fi
 ```
+
+**Forward Skill Output to User (M426):**
+
+If `skill_output` is non-empty, display it to the user. Subagent tool calls are invisible,
+so this is the only way users see what skills like `/cat:shrink-doc` actually did.
 
 **Update TaskList entry:**
 ```
@@ -680,6 +735,17 @@ TOTAL_TOKENS=$(sum_tokens)
 echo "✅ Delegation complete: ${SUCCEEDED}/${TOTAL_ITEMS} items succeeded"
 [[ $FAILED -gt 0 ]] && echo "❌ Failed: ${FAILED} items"
 echo "Total tokens: ${TOTAL_TOKENS}"
+
+# For skills: report postcondition summary
+if [[ -n "$SKILL" ]]; then
+  echo ""
+  echo "Postcondition Results:"
+  for item in "${ITEMS[@]}"; do
+    score=$(get_validation_score "$item")
+    status=$(get_postcondition_status "$item")
+    echo "  ${item}: score=${score}, ${status}"
+  done
+fi
 ```
 
 ## Auto-Trigger from Decomposition
@@ -714,6 +780,24 @@ wave_2: [1.2b]        # Depends on 1.2a
 
 ## Examples
 
+### Single Skill Delegation
+```bash
+/cat:delegate --skill shrink-doc plugin/skills/add/SKILL.md
+# → 1 subagent executes /cat:shrink-doc plugin/skills/add/SKILL.md
+```
+
+### Batch Skill Delegation (Parallel by Default)
+```bash
+/cat:delegate --skill shrink-doc plugin/skills/add/SKILL.md plugin/skills/work/SKILL.md plugin/skills/status/SKILL.md
+# → 3 subagents execute in parallel, each running shrink-doc on one file
+```
+
+### Batch Skill Delegation (Sequential Override)
+```bash
+/cat:delegate --sequential --skill shrink-doc file1.md file2.md file3.md
+# → 3 subagents execute sequentially (wait for each before starting next)
+```
+
 ### CAT Issue Delegation
 ```bash
 /cat:delegate --issues 2.1-issue-a,2.1-issue-b,2.1-issue-c
@@ -736,14 +820,44 @@ wave_2: [1.2b]        # Depends on 1.2a
 
 ## Anti-Patterns
 
+### Parallel is the default (don't specify for batch)
+
+```bash
+# ❌ WRONG - Asking for parallel explicitly
+/cat:delegate --parallel --skill shrink-doc file1.md file2.md
+
+# ✅ CORRECT - Parallel is automatic for multiple items
+/cat:delegate --skill shrink-doc file1.md file2.md
+```
+
 ### Use --sequential only when order matters
 
 ```bash
 # ❌ WRONG - Sequential for independent items
-/cat:delegate --sequential --issues 2.1-task-a,2.1-task-b  # Independent tasks
+/cat:delegate --sequential --skill shrink-doc independent1.md independent2.md
 
 # ✅ CORRECT - Sequential only when order matters
-/cat:delegate --sequential --issues 2.1-migration-v1,2.1-migration-v2  # Must run in order
+/cat:delegate --sequential --skill migrate-schema v1-to-v2 v2-to-v3
+```
+
+### Describe skill principles instead of invoking (M264)
+
+```
+# ❌ WRONG - Tells subagent to apply principles
+"Compress the file using shrink-doc's principles: reduce size while maintaining equivalence..."
+
+# ✅ CORRECT - Tells subagent to invoke the skill
+"Invoke /cat:shrink-doc {file} and report the validation score."
+```
+
+### Require postcondition reporting (M258)
+
+```
+# ❌ WRONG - No postcondition reporting required
+"Run shrink-doc on each file."
+
+# ✅ CORRECT - Explicit postcondition reporting
+"Run /cat:shrink-doc on each file. Report: validation_score, postcondition_met (true/false)."
 ```
 
 ### Verify findings through delegation, not direct investigation (M147)

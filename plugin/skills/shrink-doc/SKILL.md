@@ -244,10 +244,10 @@ After agent completes:
    handles extraction, comparison, and report generation.
 
    ```bash
-   /cat:compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
+   /cat:delegate --skill compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
    ```
 
-   **Why invoke directly (M371)**: The main agent invokes compare-docs which handles:
+   **Why delegate (M371)**: Delegate handles:
    - Subagent spawning with appropriate model selection (opus for validation)
    - Isolation of validation context from main agent
    - Result collection and formatting
@@ -462,22 +462,22 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 
 ---
 
-## Multiple Files: Sequential Invocation (M369)
+## Multiple Files: Use /cat:delegate (M369)
 
-**For compressing multiple files**, invoke the skill sequentially for each file:
+**For compressing multiple files**, use `/cat:delegate`:
 
 ```bash
-/cat:shrink-doc file1.md
-/cat:shrink-doc file2.md
-/cat:shrink-doc file3.md
+/cat:delegate --skill shrink-doc file1.md file2.md file3.md
 ```
 
-The main agent:
-- Invokes the skill for each file sequentially
-- Collects validation results
-- Aggregates results into per-file table
+Delegate handles:
+- Parallel subagent spawning (one per file, each running this full workflow)
+- Fault-tolerant result collection
+- Automatic retry of failed subagents
+- Result aggregation into per-file table
 
-**Note:** Skills must be invoked by the main agent directly, as subagents cannot invoke skills.
+**Do NOT manually spawn Task tools for batch operations** - delegate already implements
+parallel execution, fault tolerance, and retry logic.
 
 **Per-file validation (M265, M346):** Each file MUST be validated individually. Report results:
 
@@ -494,7 +494,8 @@ Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 **Agent Type**: MUST use `subagent_type: "general-purpose"`
 
-**Validation Tool**: Use `/cat:compare-docs` (M371) directly from the main agent.
+**Validation Tool**: Use `/cat:delegate --skill compare-docs` (M371) - delegate handles subagent
+spawning and result collection.
 
 **Validation Baseline**: On first invocation, save original document to
 `/tmp/original-{filename}` and use this as baseline for ALL subsequent
