@@ -14,6 +14,9 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Tasks Pending
+- create-agents-directory
+- convert-stakeholders-to-agents
+- convert-skills-to-agents
 - compress-concepts-batch-1
 - compress-concepts-batch-4
 - compress-skills-batch-1
