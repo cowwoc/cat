@@ -96,6 +96,9 @@ Skills exist to enforce consistent processes. Shortcuts defeat their purpose.
 
 **User override phrases**: "just do it", "quick fix", "no task needed" → work directly with warning.
 
+**Resume/continue requests**: When user says "resume", "continue", or "pick up" with a task name,
+invoke `/cat:work {version}-{task-name}` directly. Do NOT invoke `/cat:status` or `/cat:add` first.
+
 **Anti-pattern**: Starting to write code without first creating or selecting a task.
 
 **CRITICAL (M339)**: User selecting an implementation option from AskUserQuestion does NOT bypass this rule.

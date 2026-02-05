@@ -584,6 +584,33 @@ def test_delegate_handler():
     result = handler.handle({"user_prompt": "/cat:status"})
     runner.test("Returns None for non-delegate prompt", result is None)
 
+    # Test: skill delegation with multiple files (parallel)
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --skill shrink-doc file1.md file2.md file3.md"
+    })
+    runner.test("Returns string for skill delegation", isinstance(result, str))
+    if result:
+        runner.test("Contains SCRIPT OUTPUT marker", "SCRIPT OUTPUT" in result)
+        runner.test("Contains PARALLEL mode", "PARALLEL" in result)
+        runner.test("Contains item count", "3" in result)
+        runner.test("Contains file names", "file1.md" in result)
+
+    # Test: skill delegation with single file (sequential)
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --skill shrink-doc single-file.md"
+    })
+    runner.test("Returns string for single file", isinstance(result, str))
+    if result:
+        runner.test("Contains SEQUENTIAL mode for single file", "SEQUENTIAL" in result)
+
+    # Test: sequential flag forces sequential mode
+    result = handler.handle({
+        "user_prompt": "/cat:delegate --sequential --skill shrink-doc file1.md file2.md"
+    })
+    runner.test("Returns string for sequential flag", isinstance(result, str))
+    if result:
+        runner.test("Sequential flag forces SEQUENTIAL mode", "SEQUENTIAL" in result)
+
     # Test: issues delegation
     result = handler.handle({
         "user_prompt": "/cat:delegate --issues 2.1-task-a,2.1-task-b,2.1-task-c"
@@ -593,9 +620,9 @@ def test_delegate_handler():
         runner.test("Contains PARALLEL mode for issues", "PARALLEL" in result)
         runner.test("Contains issue names", "2.1-task-a" in result)
 
-    # Test: worktree parameter is captured with issues
+    # Test: worktree parameter is captured
     result = handler.handle({
-        "user_prompt": "/cat:delegate --issues 2.1-task-a --worktree /workspace/.worktrees/test"
+        "user_prompt": "/cat:delegate --skill shrink-doc --worktree /workspace/.worktrees/test file.md"
     })
     runner.test("Returns string with worktree", isinstance(result, str))
     if result:

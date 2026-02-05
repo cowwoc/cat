@@ -2236,6 +2236,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When subagent fails at skill invocation, retry with clearer instructions or escalate to user - NEVER do the work manually"
+    },
+    {
+      "id": "M430",
+      "timestamp": "2026-02-05T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Invoked /cat:status instead of /cat:work when user said resume [task-name]",
+      "root_cause": "Work Request Handling section only covered new work requests (default /cat:add). No mapping for resume/continue existing task to /cat:work.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "pattern_keywords": [
+        "resume",
+        "wrong-skill",
+        "work-request",
+        "session-instructions"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When user says resume/continue/pick up [task-name], invoke /cat:work [task-name] directly"
     }
   ]
 }
