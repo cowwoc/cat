@@ -161,6 +161,15 @@
         ]
       },
       {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-posttool-output.py"
+          }
+        ]
+      },
+      {
         "matcher": "Read|Glob|Grep|WebFetch|WebSearch",
         "hooks": [
           {

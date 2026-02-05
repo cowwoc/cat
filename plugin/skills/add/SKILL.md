@@ -296,7 +296,7 @@ VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 
 # MANDATORY (M168): Verify version is not completed before adding issues
 VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "pending")
-if [ "$VERSION_STATUS" = "complete" ] || [ "$VERSION_STATUS" = "completed" ]; then
+if [ "$VERSION_STATUS" = "completed" ]; then
     echo "ERROR: Version $MAJOR.$MINOR is already completed (status: $VERSION_STATUS)"
     echo "Cannot add issues to completed versions. Choose a different version."
     exit 1
