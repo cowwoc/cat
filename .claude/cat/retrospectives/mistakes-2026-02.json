@@ -2155,6 +2155,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Delegate skill requires subagents to capture skill_output and forwards it to users. Secondary reinforcement in work-execute."
+    },
+    {
+      "id": "M427",
+      "timestamp": "2026-02-05T00:05:56-05:00",
+      "category": "process_inefficiency",
+      "description": "Processed batch compression files sequentially instead of using /cat:delegate for parallel execution",
+      "root_cause": "PLAN.md execution steps said 'For each file: Run /cat:shrink-doc' without referencing shrink-doc's documented batch pattern (M369) that recommends /cat:delegate for multiple files",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/issues/v2/v2.1/compress-skills-batch-4/PLAN.md",
+      "pattern_keywords": [
+        "sequential",
+        "parallel",
+        "delegate",
+        "batch",
+        "shrink-doc"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "For batch compression tasks, use /cat:delegate --skill shrink-doc file1.md file2.md ... to enable parallel processing as documented in shrink-doc M369"
     }
   ]
 }
