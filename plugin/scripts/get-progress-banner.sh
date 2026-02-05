@@ -147,16 +147,16 @@ header_width = ew.display_width(header_content)
 # Box width is determined by the wider of header or phase content
 inner_width = max(header_width, phase_width)
 
-# Build top border: ┌ + header_content + dashes + ┐
+# Build top border: ╭ + header_content + dashes + ╮
 top_dashes = "─" * (inner_width - header_width)
-top_line = "┌" + header_content + top_dashes + "┐"
+top_line = "╭" + header_content + top_dashes + "╮"
 
 # Build middle line: │ + phase_content + padding + │
 phase_padding = " " * (inner_width - phase_width)
 middle_line = "│" + phase_content + phase_padding + "│"
 
-# Build bottom border: └ + dashes + ┘
-bottom_line = "└" + "─" * inner_width + "┘"
+# Build bottom border: ╰ + dashes + ╯
+bottom_line = "╰" + "─" * inner_width + "╯"
 
 print(top_line)
 print(middle_line)
@@ -189,13 +189,13 @@ header_width = 5  # "─ 🐱 " is approximately 5 display units
 
 # Top line extends to match phase content
 top_dashes = "─" * (phase_width - header_width)
-top_line = "┌" + header + top_dashes + "┐"
+top_line = "╭" + header + top_dashes + "╮"
 
 # Middle line with phase content
 middle_line = "│" + phase_content + "│"
 
 # Bottom border
-bottom_line = "└" + "─" * phase_width + "┘"
+bottom_line = "╰" + "─" * phase_width + "╯"
 
 print(top_line)
 print(middle_line)
