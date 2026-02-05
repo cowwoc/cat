@@ -2182,6 +2182,34 @@
         "catches_variations": true
       },
       "correct_behavior": "For batch compression tasks, use /cat:delegate --skill shrink-doc file1.md file2.md ... to enable parallel processing as documented in shrink-doc M369"
+    },
+    {
+      "id": "M428",
+      "timestamp": "2026-02-05T05:40:00Z",
+      "category": "misleading_documentation",
+      "description": "Batch executor subagent returned fake 'nesting_limit' failure by copying example JSON from skill documentation instead of actually spawning work-execute subagent",
+      "root_cause": "work-batch-executor/SKILL.md lines 178-201 contained detailed JSON example of failure response for nesting issues. Subagent was primed by this example to skip actual work and return pre-formatted failure. The 'document units' analysis in output shows subagent tried manual compare-docs work, got confused, then gave up by copying the failure template.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-batch-executor/SKILL.md",
+      "pattern_keywords": [
+        "priming",
+        "failure example",
+        "nesting_limit",
+        "copy template",
+        "skip work",
+        "batch executor"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Batch executor should spawn work-execute subagent which invokes required skills. Failure response examples should not appear before success path instructions."
     }
   ]
 }
