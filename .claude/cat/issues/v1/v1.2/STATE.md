@@ -1,7 +1,7 @@
 # Patch Version 1.2 State: Auto-Decomposition
 
 ## Status
-- **Status:** complete
+- **Status:** closed
 - **Progress:** 100%
 - **Started:** 2026-01-12
 - **Completed:** 2026-01-12

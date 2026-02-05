@@ -1,6 +1,6 @@
 # State
 
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
 - **Last Updated:** 2026-01-26

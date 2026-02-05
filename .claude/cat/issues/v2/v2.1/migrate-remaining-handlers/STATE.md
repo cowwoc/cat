@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** [migrate-progress-banners, migrate-status-displays]

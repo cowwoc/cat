@@ -334,15 +334,15 @@ def test_status_handler():
     with TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        # Test missing file returns pending
+        # Test missing file returns open
         result = get_task_status(tmp_path / "nonexistent" / "STATE.md")
-        runner.test("get_task_status: missing file returns pending", result == "pending")
+        runner.test("get_task_status: missing file returns open", result == "open")
 
         # Test parsing status from file
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** completed\n")
+        state_file.write_text("- **Status:** closed\n")
         result = get_task_status(state_file)
-        runner.test("get_task_status: parses bold format", result == "completed")
+        runner.test("get_task_status: parses bold format", result == "closed")
 
         # Test get_task_dependencies
         state_file.write_text("- **Dependencies:** [task-a, task-b]\n")
@@ -449,7 +449,7 @@ def test_work_handler():
     context = {
         "task_id": "2.0-parse-tokens",
         "task_name": "parse-tokens",
-        "task_status": "pending",
+        "task_status": "open",
     }
     result = handler.handle(context)
     runner.test("Returns string with task", isinstance(result, str))
@@ -895,7 +895,7 @@ def test_get_available_issues_discovery():
         task_dir.mkdir(parents=True)
         (task_dir / "STATE.md").write_text("""# State
 
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
 - **Last Updated:** 2026-01-01
@@ -1282,7 +1282,7 @@ def test_posttool_validate_state_status():
     with TemporaryDirectory() as tmp_dir:
         state_file = Path(tmp_dir) / "STATE.md"
 
-        for status in ["pending", "in-progress", "completed", "blocked"]:
+        for status in ["open", "in-progress", "closed", "blocked"]:
             state_file.write_text(f"# State\n\n- **Status:** {status}\n")
             result = handle("Edit", {"file_path": str(state_file)}, {})
             runner.test(f"Canonical status '{status}' returns None", result is None)
@@ -1303,7 +1303,23 @@ def test_posttool_validate_state_status():
         runner.test("Non-canonical 'done' via Write returns warning",
                     result is not None and "M434" in result)
 
-    # Test 9: Non-canonical 'in_progress' returns warning
+    # Test 9: Non-canonical 'pending' returns warning (renamed to 'open')
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Status:** pending\n")
+        result = handle("Edit", {"file_path": str(state_file)}, {})
+        runner.test("Non-canonical 'pending' returns warning",
+                    result is not None and "M434" in result)
+
+    # Test 10: Non-canonical 'completed' returns warning (renamed to 'closed')
+    with TemporaryDirectory() as tmp_dir:
+        state_file = Path(tmp_dir) / "STATE.md"
+        state_file.write_text("# State\n\n- **Status:** completed\n")
+        result = handle("Edit", {"file_path": str(state_file)}, {})
+        runner.test("Non-canonical 'completed' returns warning",
+                    result is not None and "M434" in result)
+
+    # Test 11: Non-canonical 'in_progress' returns warning
     with TemporaryDirectory() as tmp_dir:
         state_file = Path(tmp_dir) / "STATE.md"
         state_file.write_text("# State\n\n- **Status:** in_progress\n")
@@ -1311,7 +1327,7 @@ def test_posttool_validate_state_status():
         runner.test("Non-canonical 'in_progress' returns warning",
                     result is not None and "M434" in result)
 
-    # Test 10: Non-canonical 'active' returns warning
+    # Test 12: Non-canonical 'active' returns warning
     with TemporaryDirectory() as tmp_dir:
         state_file = Path(tmp_dir) / "STATE.md"
         state_file.write_text("# State\n\n- **Status:** active\n")
@@ -1319,14 +1335,14 @@ def test_posttool_validate_state_status():
         runner.test("Non-canonical 'active' returns warning",
                     result is not None and "M434" in result)
 
-    # Test 11: Missing Status field returns None
+    # Test 13: Missing Status field returns None
     with TemporaryDirectory() as tmp_dir:
         state_file = Path(tmp_dir) / "STATE.md"
         state_file.write_text("# State\n\n- **Progress:** 50%\n")
         result = handle("Edit", {"file_path": str(state_file)}, {})
         runner.test("Missing Status field returns None", result is None)
 
-    # Test 12: Missing file_path returns None
+    # Test 14: Missing file_path returns None
     result = handle("Edit", {}, {})
     runner.test("Missing file_path returns None", result is None)
 

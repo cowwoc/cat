@@ -91,12 +91,12 @@ To review: `git diff main..{branch}`
 
 **CRITICAL (M070): STATE.md must be in same commit as implementation.**
 
-Before squashing/merging, update issue STATE.md to completed in the issue branch:
+Before squashing/merging, update issue STATE.md to closed in the issue branch:
 
 ```bash
 # In issue worktree - update STATE.md
 # .claude/cat/issues/v{major}/v{major}.{minor}/{issue-name}/STATE.md:
-#   status: completed
+#   status: closed
 #   progress: 100%
 #   completed: {date}
 
@@ -185,16 +185,16 @@ git branch -d {major}.{minor}-{issue-name}-sub-*
 
 Update minor and major STATE.md progress (issue STATE.md already updated in step 6):
 
-- Minor STATE.md: recalculate progress based on completed issues
-- Major STATE.md: recalculate progress based on completed minor versions
+- Minor STATE.md: recalculate progress based on closed issues
+- Major STATE.md: recalculate progress based on closed minor versions
 - ROADMAP.md: update if version status changed
 
 ### 11. Update Changelogs
 
-Update minor/major CHANGELOG.md to include completed issue summary.
+Update minor/major CHANGELOG.md to include closed issue summary.
 
 > **NOTE**: Issue changelog content is embedded in commit messages, not separate files.
-> Minor/major version CHANGELOG.md files aggregate completed issues.
+> Minor/major version CHANGELOG.md files aggregate closed issues.
 
 ## High Trust Mode Differences
 

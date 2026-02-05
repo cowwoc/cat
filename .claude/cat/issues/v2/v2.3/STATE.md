@@ -1,7 +1,7 @@
 # v2.3 State: Pluggable Issue Trackers
 
 ## Status
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** [v2.2]
 

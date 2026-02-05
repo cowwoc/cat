@@ -1,6 +1,6 @@
 # State
 
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** [prevent-plan-md-priming]
 - **Created From:** compress-skills-md

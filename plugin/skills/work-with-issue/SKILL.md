@@ -156,7 +156,7 @@ Task tool:
     - Verify you are on branch ${BRANCH} before making changes
     - Follow execution steps from PLAN.md EXACTLY
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
-    - Update STATE.md in the SAME commit as implementation (status: completed, progress: 100%)
+    - Update STATE.md in the SAME commit as implementation (status: closed, progress: 100%)
     - Run tests if applicable
     - Commit your changes with appropriate commit message format
 

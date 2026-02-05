@@ -1,10 +1,10 @@
 #!/bin/bash
 # Hook: enforce-workflow-completion
 # Trigger: PreToolUse:Edit
-# Purpose: Prevent marking task as completed without completing workflow phases
+# Purpose: Prevent marking task as closed without completing workflow phases
 #
 # M217: Completion bias led to skipping stakeholder_review and approval_gate phases.
-# This hook detects attempts to set task status to "completed" and warns if workflow
+# This hook detects attempts to set task status to "closed" and warns if workflow
 # phases appear incomplete.
 
 set -euo pipefail
@@ -23,8 +23,8 @@ if [[ ! "$FILE_PATH" =~ \.claude/cat/v[0-9]+/v[0-9]+\.[0-9]+/[^/]+/STATE\.md$ ]]
     echo '{}'; exit 0
 fi
 
-# Check if setting status to completed
-if [[ ! "$NEW_STRING" =~ Status.*completed ]] && [[ ! "$NEW_STRING" =~ status.*completed ]]; then
+# Check if setting status to closed
+if [[ ! "$NEW_STRING" =~ Status.*closed ]] && [[ ! "$NEW_STRING" =~ status.*closed ]]; then
     echo '{}'; exit 0
 fi
 
@@ -37,7 +37,7 @@ TASK_NAME=$(basename "$TASK_DIR")
 MESSAGE=$(cat << 'MSGEOF'
 ⚠️ WORKFLOW COMPLETION CHECK (M217)
 
-You are marking task '$TASK_NAME' as completed.
+You are marking task '$TASK_NAME' as closed.
 
 Before completing a task via /cat:work, verify ALL phases are done:
 

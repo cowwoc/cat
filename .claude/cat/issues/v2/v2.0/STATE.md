@@ -1,7 +1,7 @@
 # v2.0 State: Licensing
 
 ## Status
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Started:** 2026-01-20
 

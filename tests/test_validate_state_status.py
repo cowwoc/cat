@@ -30,11 +30,20 @@ class TestValidateStateStatus:
         result = handle("Edit", {"file_path": "/workspace/PLAN.md"}, {})
         assert result is None
 
-    def test_edit_state_md_with_completed_returns_none(self):
-        """Handler should return None for canonical status 'completed'."""
+    def test_edit_state_md_with_open_returns_none(self):
+        """Handler should return None for canonical status 'open'."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_file = Path(tmp_dir) / "STATE.md"
-            state_file.write_text("# State\n\n- **Status:** completed\n- **Progress:** 100%\n")
+            state_file.write_text("# State\n\n- **Status:** open\n- **Progress:** 0%\n")
+
+            result = handle("Edit", {"file_path": str(state_file)}, {})
+            assert result is None
+
+    def test_edit_state_md_with_closed_returns_none(self):
+        """Handler should return None for canonical status 'closed'."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            state_file = Path(tmp_dir) / "STATE.md"
+            state_file.write_text("# State\n\n- **Status:** closed\n- **Progress:** 100%\n")
 
             result = handle("Edit", {"file_path": str(state_file)}, {})
             assert result is None
@@ -49,16 +58,31 @@ class TestValidateStateStatus:
             assert result is not None
             assert "M434" in result
             assert '"complete"' in result
-            assert "completed" in result
+            assert "closed" in result
 
-    def test_edit_state_md_with_pending_returns_none(self):
-        """Handler should return None for canonical status 'pending'."""
+    def test_edit_state_md_with_pending_returns_warning(self):
+        """Handler should return warning for non-canonical status 'pending' (renamed to 'open')."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             state_file = Path(tmp_dir) / "STATE.md"
             state_file.write_text("# State\n\n- **Status:** pending\n- **Progress:** 0%\n")
 
             result = handle("Edit", {"file_path": str(state_file)}, {})
-            assert result is None
+            assert result is not None
+            assert "M434" in result
+            assert '"pending"' in result
+            assert "open" in result
+
+    def test_edit_state_md_with_completed_returns_warning(self):
+        """Handler should return warning for non-canonical status 'completed' (renamed to 'closed')."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            state_file = Path(tmp_dir) / "STATE.md"
+            state_file.write_text("# State\n\n- **Status:** completed\n- **Progress:** 100%\n")
+
+            result = handle("Edit", {"file_path": str(state_file)}, {})
+            assert result is not None
+            assert "M434" in result
+            assert '"completed"' in result
+            assert "closed" in result
 
     def test_edit_state_md_with_in_progress_returns_none(self):
         """Handler should return None for canonical status 'in-progress'."""
@@ -79,7 +103,7 @@ class TestValidateStateStatus:
             assert result is not None
             assert "M434" in result
             assert '"done"' in result
-            assert "completed" in result
+            assert "closed" in result
 
 
 def run_tests():
@@ -89,9 +113,11 @@ def run_tests():
     tests = [
         ("test_non_edit_write_tool_returns_none", test_instance.test_non_edit_write_tool_returns_none),
         ("test_edit_non_state_file_returns_none", test_instance.test_edit_non_state_file_returns_none),
-        ("test_edit_state_md_with_completed_returns_none", test_instance.test_edit_state_md_with_completed_returns_none),
+        ("test_edit_state_md_with_open_returns_none", test_instance.test_edit_state_md_with_open_returns_none),
+        ("test_edit_state_md_with_closed_returns_none", test_instance.test_edit_state_md_with_closed_returns_none),
         ("test_edit_state_md_with_complete_returns_warning", test_instance.test_edit_state_md_with_complete_returns_warning),
-        ("test_edit_state_md_with_pending_returns_none", test_instance.test_edit_state_md_with_pending_returns_none),
+        ("test_edit_state_md_with_pending_returns_warning", test_instance.test_edit_state_md_with_pending_returns_warning),
+        ("test_edit_state_md_with_completed_returns_warning", test_instance.test_edit_state_md_with_completed_returns_warning),
         ("test_edit_state_md_with_in_progress_returns_none", test_instance.test_edit_state_md_with_in_progress_returns_none),
         ("test_write_state_md_with_done_returns_warning", test_instance.test_write_state_md_with_done_returns_warning),
     ]

@@ -1,6 +1,6 @@
 # rename-task-scripts
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Dependencies:** []
 - **Assignee:** (unassigned)

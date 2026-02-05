@@ -215,16 +215,16 @@ For each version:
 
 ```bash
 # Check if version is completed
-VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "pending")
-if [[ "$VERSION_STATUS" == "completed" ]]; then
+VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "open")
+if [[ "$VERSION_STATUS" == "closed" ]]; then
   # SKIP this version - do not include in options
   continue
 fi
 ```
 
-Only versions with status `pending` or `in-progress` should be presented as options.
+Only versions with status `open` or `in-progress` should be presented as options.
 
-**3. Build version summaries (for non-completed versions only):**
+**3. Build version summaries (for non-closed versions only):**
 
 Create a mental map of each eligible version's focus:
 - Extract the "## Goals" or "## Objectives" section
@@ -294,11 +294,11 @@ VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
 
 [ ! -d "$VERSION_PATH" ] && echo "ERROR: Version $MAJOR.$MINOR does not exist" && exit 1
 
-# MANDATORY (M168): Verify version is not completed before adding issues
-VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "pending")
-if [ "$VERSION_STATUS" = "completed" ]; then
-    echo "ERROR: Version $MAJOR.$MINOR is already completed (status: $VERSION_STATUS)"
-    echo "Cannot add issues to completed versions. Choose a different version."
+# MANDATORY (M168): Verify version is not closed before adding issues
+VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "open")
+if [ "$VERSION_STATUS" = "closed" ]; then
+    echo "ERROR: Version $MAJOR.$MINOR is already closed (status: $VERSION_STATUS)"
+    echo "Cannot add issues to closed versions. Choose a different version."
     exit 1
 fi
 ```
@@ -558,7 +558,7 @@ mkdir -p "$TASK_PATH"
 ```markdown
 # State
 
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** [{dep1}, {dep2}] or []
 - **Last Updated:** {timestamp}
@@ -708,7 +708,7 @@ find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | while 
     VERSION=$(basename "$d" | sed 's/v//')
     MAJOR=$(echo "$VERSION" | cut -d. -f1)
     MINOR=$(echo "$VERSION" | cut -d. -f2)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "pending")
+    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "open")
     PATCH_COUNT=$(find "$d" -maxdepth 1 -type d -name "v$MAJOR.$MINOR.*" 2>/dev/null | wc -l)
     echo "$MAJOR.$MINOR ($STATUS, $PATCH_COUNT patches)"
 done | sort -V
@@ -1048,7 +1048,7 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 # Major Version $MAJOR State
 
 ## Status
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Started:** $(date +%Y-%m-%d)
 - **Last Updated:** $(date +%Y-%m-%d)
@@ -1110,7 +1110,7 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 # Minor Version $MAJOR.$MINOR State
 
 ## Status
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Started:** $(date +%Y-%m-%d)
 - **Last Updated:** $(date +%Y-%m-%d)
@@ -1183,7 +1183,7 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 # Patch Version $MAJOR.$MINOR.$PATCH State
 
 ## Status
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Started:** $(date +%Y-%m-%d)
 - **Last Updated:** $(date +%Y-%m-%d)

@@ -1,6 +1,6 @@
 # State: deduplicate-embedded-content
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Dependencies:** []
 - **Completed At:** 2026-01-26
