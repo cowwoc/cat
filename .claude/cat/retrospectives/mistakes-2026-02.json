@@ -2391,6 +2391,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Pass --exclude-pattern to get-available-issues.sh for exclusion filters. The script iterates all issues and skips matches, finding the next eligible one. Only use in-memory filtering for inclusion filters."
+    },
+    {
+      "id": "M436",
+      "timestamp": "2026-02-05T12:00:00Z",
+      "category": "misleading_documentation",
+      "description": "Task tool call generated with malformed subagent_type parameter containing XML tag fragments, causing agent type not found error",
+      "root_cause": "Work skill Phase 1 used pseudo-YAML Task tool: format that does not match actual JSON tool interface, causing model to mangle parameter boundaries on translation",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "task-tool",
+        "parameter-format",
+        "model-generation",
+        "xml-bleed"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Ensure Task tool parameters are separate JSON fields: subagent_type, model, prompt each as distinct parameters. Retry on malformed parameter errors."
     }
   ]
 }
