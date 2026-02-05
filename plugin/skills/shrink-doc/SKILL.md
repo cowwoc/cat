@@ -127,7 +127,7 @@ The file `{{arg}}` appears to be human-facing documentation.
 
 ### Step 2: Check for Existing Baseline
 
-**Check if baseline exists from prior iteration**:
+**Check baseline and git history in parallel**:
 
 ```bash
 BASELINE="/tmp/original-{{filename}}"
@@ -137,13 +137,7 @@ if [ -f "$BASELINE" ]; then
   echo "✅ Found existing baseline: $BASELINE ($BASELINE_LINES lines)"
   echo "   Current file: $CURRENT_LINES lines"
   echo "   Scores will compare against original baseline."
-fi
-```
-
-**If NO baseline exists**, optionally check git history for prior compression:
-
-```bash
-if [ ! -f "$BASELINE" ]; then
+else
   RECENT_SHRINK=$(git log --oneline -5 -- {{arg}} 2>/dev/null | grep -iE "compress|shrink|reduction" | head -1)
   if [ -n "$RECENT_SHRINK" ]; then
     echo "ℹ️ Note: File was previously compressed (commit: $RECENT_SHRINK)"
@@ -204,6 +198,7 @@ After agent completes:
    the TRUE original, not intermediate compressed versions.
 
 2. **Determine version number and save compressed version**:
+
    ```bash
    VERSION_FILE="/tmp/shrink-doc-{{filename}}-version.txt"
 
@@ -212,7 +207,7 @@ After agent completes:
      LAST_VERSION=$(cat "$VERSION_FILE")
      VERSION=$((LAST_VERSION + 1))
    else
-     # First time: check for existing version files to continue numbering
+     # First time: check for existing versions to continue numbering
      HIGHEST=$(ls /tmp/compressed-{{filename}}-v*.md 2>/dev/null | sed 's/.*-v\([0-9]*\)\.md/\1/' | sort -n | tail -1)
      if [ -n "$HIGHEST" ]; then
        VERSION=$((HIGHEST + 1))
