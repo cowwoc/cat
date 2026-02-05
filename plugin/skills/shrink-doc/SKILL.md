@@ -6,6 +6,18 @@ description: >
 
 # Validation-Driven Document Compression
 
+## Invocation Restriction
+
+**MAIN AGENT ONLY**: This skill spawns subagents internally. It CANNOT be invoked by
+a subagent (subagents cannot spawn nested subagents or invoke skills).
+
+If you need this skill's functionality within delegated work:
+1. Main agent invokes this skill directly
+2. Pass results to the implementation subagent
+3. See: plugin/skills/delegate/SKILL.md § "Model Selection for Subagents"
+
+---
+
 **Issue**: Compress the documentation file: `{{arg}}`
 
 **Goal**: Reduce document size while preserving execution equivalence using

@@ -7,6 +7,18 @@ user-invocable: false
 
 # Semantic Document Comparison
 
+## Invocation Restriction
+
+**MAIN AGENT ONLY**: This skill spawns subagents internally. It CANNOT be invoked by
+a subagent (subagents cannot spawn nested subagents or invoke skills).
+
+If you need this skill's functionality within delegated work:
+1. Main agent invokes this skill directly
+2. Pass results to the implementation subagent
+3. See: plugin/skills/delegate/SKILL.md § "Model Selection for Subagents"
+
+---
+
 **Task:** Compare two documents semantically: `{{arg1}}` vs `{{arg2}}`
 
 **Goal:** Determine if documents are EQUIVALENT (no semantic loss) or NOT_EQUIVALENT
