@@ -85,16 +85,8 @@ Return JSON when approval gate reached (trust != high):
 }
 ```
 
-Return JSON on failure:
-
-```json
-{
-  "status": "FAILED",
-  "phase": "execute|review|merge",
-  "message": "Human-readable explanation",
-  "partial_work": {...}
-}
-```
+On failure: Return `{"status": "FAILED", "phase": "<phase>", "message": "<explanation>"}`.
+Do NOT copy this format - actually execute the phases and report real results.
 
 ## Process
 
@@ -291,19 +283,9 @@ If any phase fails:
 
 1. Capture error message and phase name
 2. Attempt lock release: `${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh release ...`
-3. Return FAILED status with phase and error details
+3. Return FAILED status with actual phase name and actual error message
 
-```json
-{
-  "status": "FAILED",
-  "phase": "execute",
-  "message": "Build failed: missing dependency",
-  "partial_work": {
-    "commits": [...],
-    "files_changed": 3
-  }
-}
-```
+**A016: Do NOT fabricate failure responses.** You must actually attempt the work before reporting failure.
 
 ## Banner Output Format
 

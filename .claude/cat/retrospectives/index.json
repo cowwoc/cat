@@ -704,9 +704,9 @@
       "description": "Remove detailed failure response examples from skill docs to prevent fabrication",
       "category": "misleading_documentation",
       "pattern_id": "PATTERN-014",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-05T00:57:20-05:00",
-      "completed_date": null,
+      "completed_date": "2026-02-05T00:58:34-05:00",
       "related_mistakes": [
         "M428"
       ],
@@ -715,7 +715,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "implementation": "Removed detailed failure JSON examples from work-batch-executor/SKILL.md that were being copied as fabricated responses"
     }
   ]
 }
