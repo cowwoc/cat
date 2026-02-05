@@ -173,6 +173,76 @@ technically_impossible_check:
 3. The skill/workflow documentation is the source of the bug
 4. Do NOT add "agent should have..." instructions - they cannot help
 
+**CHECK FOR MISSING SKILL PRELOADING (M431):**
+
+When a subagent fails to follow skill-based guidance correctly, check whether the subagent would
+have benefited from having skills preloaded via frontmatter.
+
+**Claude Code `skills` frontmatter field:**
+
+Agents defined in `plugin/agents/` can specify skills to preload:
+
+```yaml
+---
+name: work-merge
+description: Merge phase for /cat:work
+tools: Read, Bash, Grep, Glob
+model: haiku
+skills:
+  - git-squash
+  - git-rebase
+  - git-merge-linear
+---
+```
+
+The `skills` field causes Claude Code to inject the listed skill content into the subagent's
+context at startup - the subagent receives the knowledge without needing to invoke the Skill tool.
+
+**Questions to ask when subagent makes a mistake:**
+
+| Question | If YES |
+|----------|--------|
+| Did subagent need skill knowledge it didn't have? | Consider adding skill to frontmatter |
+| Was `general-purpose` subagent used for domain-specific work? | Create dedicated agent type |
+| Did subagent try to invoke a skill (and fail)? | Move skill knowledge to frontmatter |
+| Would preloaded guidance have prevented the mistake? | Add skill to agent's `skills` field |
+
+**If general-purpose agent was used and skills would help:**
+
+```yaml
+subagent_skills_analysis:
+  subagent_type_used: "general-purpose"
+  domain_knowledge_needed: ["git-squash", "git-rebase"]
+  skill_invocation_attempted: true
+  skill_invocation_succeeded: false  # Skill tool not available to subagents
+
+  recommendation:
+    action: "Create dedicated agent type"
+    agent_name: "{domain}-agent"
+    skills_to_preload: ["skill-1", "skill-2"]
+    rationale: "Subagent needs domain knowledge but cannot invoke skills"
+```
+
+**Prevention pattern for skill preloading issues:**
+
+1. Identify the skills the subagent needed
+2. Check if a dedicated agent type already exists (check `plugin/agents/`)
+3. If yes: Use that agent type instead of `general-purpose`
+4. If no: Create new agent in `plugin/agents/{name}.md` with `skills` frontmatter
+5. Update the delegation code to use the new agent type
+
+**Record in mistake entry:**
+
+```json
+{
+  "category": "architectural_flaw",
+  "root_cause": "Subagent lacked skill knowledge; general-purpose agent used for domain work",
+  "prevention_type": "config",
+  "prevention_path": "plugin/agents/{new-agent}.md",
+  "subagent_skills_needed": ["skill-1", "skill-2"]
+}
+```
+
 **CRITICAL: Trace the FULL priming chain (M425):**
 
 When the main agent wrote a bad delegation prompt, ask: **What primed the MAIN AGENT to write that prompt?**
