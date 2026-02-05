@@ -126,6 +126,13 @@ If `has_existing_work == true`:
 
 Otherwise, spawn work-execute subagent:
 
+**CRITICAL (M425): Use the exact prompt template below. Do NOT write custom prompts that omit M414 requirements.**
+
+When facing nesting/token concerns with batch operations (e.g., compressing 9 files):
+- The subagent MUST still invoke required skills (e.g., /cat:shrink-doc) via the Skill tool
+- Skills handle their own nesting internally - the orchestrator should not bypass them
+- If a skill causes token issues, decompose the TASK, don't bypass the SKILL
+
 **CRITICAL (M391): Before spawning, read PLAN.md and include its Execution Steps in the prompt.**
 
 This ensures the subagent sees the specific instructions (like "invoke /cat:shrink-doc") directly,
