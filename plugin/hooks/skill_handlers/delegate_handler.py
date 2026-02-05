@@ -28,7 +28,7 @@ class DelegateHandler:
             context: Handler context containing user_prompt with skill invocation
 
         Returns:
-            Pre-rendered progress templates or None if args cannot be parsed
+            Progress templates (script output) or None if args cannot be parsed
         """
         user_prompt = context.get("user_prompt", "")
 

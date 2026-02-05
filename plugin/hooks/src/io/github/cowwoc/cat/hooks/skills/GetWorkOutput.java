@@ -10,7 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Output generator for /cat:work skill.
  *
- * Provides pre-rendered status boxes for the work skill.
+ * Provides status boxes for the work skill (script output).
  * Progress banners are handled by silent preprocessing via get-progress-banner.sh.
  */
 public final class GetWorkOutput

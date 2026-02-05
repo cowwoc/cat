@@ -3,7 +3,7 @@
 #
 # USAGE: get-render-diff.sh [--base-branch <branch>] [--project-dir <dir>]
 #
-# OUTPUTS: Pre-rendered 4-column diff table
+# OUTPUTS: 4-column diff table (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

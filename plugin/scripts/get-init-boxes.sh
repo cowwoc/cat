@@ -3,7 +3,7 @@
 #
 # USAGE: get-init-boxes.sh
 #
-# OUTPUTS: Pre-rendered init box templates
+# OUTPUTS: Init box templates (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

@@ -6,7 +6,7 @@
 # Arguments:
 #   --project-dir  Directory containing .claude/cat/ (defaults to cwd)
 #
-# OUTPUTS: Pre-rendered status display box with correct alignment
+# OUTPUTS: Status display box with correct alignment (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

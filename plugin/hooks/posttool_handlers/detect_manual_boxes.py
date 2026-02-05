@@ -3,7 +3,7 @@ Detect manual box/banner construction (A008/PATTERN-008).
 
 Monitors conversation for box-drawing characters that appear without
 preceding script execution, indicating Claude manually constructed
-boxes instead of using pre-rendered templates.
+boxes instead of using script output templates.
 
 Related mistakes: M311, M315, M319, M321, M322, M323
 """
@@ -73,7 +73,7 @@ Box-drawing characters were found in your output without preceding script execut
 **Problem**: LLMs cannot accurately count character display widths, leading to misaligned boxes.
 
 **Required action**:
-1. Use pre-rendered scripts for boxes/banners:
+1. Use scripts for boxes/banners (script output):
    - Progress banners: `get-progress-banner.sh`
    - Work boxes: `get-work-boxes.py` or `get-work-boxes.sh`
    - Status display: `get-status-display.sh`
