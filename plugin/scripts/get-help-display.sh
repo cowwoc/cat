@@ -3,7 +3,7 @@
 #
 # USAGE: get-help-display.sh
 #
-# OUTPUTS: Pre-rendered help content for /cat:help
+# OUTPUTS: Help content for /cat:help (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

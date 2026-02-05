@@ -1,7 +1,7 @@
 """
 Handler for /cat:work precomputation.
 
-Provides pre-rendered status boxes for the work skill.
+Provides status boxes for the work skill (script output).
 Progress banners are handled by silent preprocessing via get-progress-banner.sh.
 """
 
@@ -383,12 +383,12 @@ class WorkHandler:
         return "\n".join(lines)
 
     def handle(self, context: dict) -> str | None:
-        """Provide pre-rendered status boxes for the work skill.
+        """Provide status boxes for the work skill (script output).
 
         Progress banners are now handled by silent preprocessing in SKILL.md
         via get-progress-banner.sh. This handler only provides status boxes.
         """
-        # Build output with pre-rendered boxes (placeholders for runtime values)
+        # Build output with boxes (placeholders for runtime values)
         return f"""SCRIPT OUTPUT WORK BOXES:
 
 ## Status Boxes (output EXACTLY as shown, replace only {{placeholders}}):

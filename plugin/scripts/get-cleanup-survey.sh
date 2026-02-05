@@ -3,7 +3,7 @@
 #
 # USAGE: get-cleanup-survey.sh --project-dir <dir>
 #
-# OUTPUTS: Pre-rendered cleanup survey with worktrees, locks, branches
+# OUTPUTS: Cleanup survey with worktrees, locks, branches (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 
@@ -31,7 +31,7 @@ if [[ -z "$PROJECT_DIR" ]]; then
     PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 fi
 
-echo "## Pre-rendered Cleanup Survey"
+echo "## Script Output: Cleanup Survey"
 echo ""
 
 # Gather worktrees

@@ -3,7 +3,7 @@
 #
 # USAGE: get-token-report.sh --session-id <id>
 #
-# OUTPUTS: Pre-rendered token usage table
+# OUTPUTS: Token usage table (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

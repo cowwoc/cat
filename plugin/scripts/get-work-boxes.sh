@@ -3,7 +3,7 @@
 #
 # USAGE: get-work-boxes.sh
 #
-# OUTPUTS: Pre-rendered work box templates
+# OUTPUTS: Work box templates (script output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

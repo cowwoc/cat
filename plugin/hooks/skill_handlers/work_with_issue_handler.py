@@ -29,7 +29,7 @@ class WorkWithIssueHandler:
             context: Handler context containing user_prompt with skill invocation
 
         Returns:
-            Pre-rendered banners or None if issue_id cannot be parsed
+            Banners (script output) or None if issue_id cannot be parsed
         """
         user_prompt = context.get("user_prompt", "")
         plugin_root = context.get("plugin_root", "")

@@ -2,7 +2,7 @@
 """
 get-work-boxes.py - Generate work skill box templates.
 
-Outputs pre-rendered box templates for /cat:work skill.
+Outputs box templates for /cat:work skill (script output).
 Designed to be called via !` preprocessing in SKILL.md.
 """
 
@@ -297,7 +297,7 @@ def build_version_boundary_gate():
 
 
 def main():
-    print("""## Pre-rendered Work Boxes
+    print("""## Script Output: Work Boxes
 
 Output EXACTLY as shown, replace only {placeholders}:
 

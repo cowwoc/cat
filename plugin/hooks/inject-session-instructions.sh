@@ -155,14 +155,8 @@ Create the task properly and use the worktree workflow.
 Output the error message and STOP execution. The fail-fast exists because workarounds produce incorrect results.
 
 ### Verbatim Output Skills
-These skills require **silent invocation** (no preamble) and **verbatim output** (copy-paste exactly):
-- `/cat:status` - copy status box exactly
-- `/cat:help` - copy help box exactly
-- `/cat:token-report` - copy token report exactly
-- `/cat:render-diff` - copy diff table exactly
-
-**Silent invocation**: Call the Skill tool immediately without announcing what you're doing.
-**Verbatim output**: Copy-paste the rendered output exactly as provided, including all box borders.
+These skills produce script output. Follow their instructions exactly:
+`/cat:status`, `/cat:help`, `/cat:token-report`, `/cat:render-diff`
 INSTRUCTIONS
 )
 
