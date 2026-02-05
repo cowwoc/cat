@@ -125,11 +125,58 @@ cd /workspace &&
   "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}"
 ```
 
-### Step 6: Update Changelog
+### Step 6: Auto-Complete Decomposed Parent (M434)
+
+After merging, check if this issue is a subtask of a decomposed parent. If all sibling
+subtasks are now completed, mark the parent as completed.
+
+```bash
+# Find parent by checking all issues in the same version for "Decomposed Into" sections
+# that reference this issue name
+VERSION_DIR=$(dirname "${ISSUE_PATH}")
+ISSUE_NAME=$(basename "${ISSUE_PATH}")
+
+for parent_dir in "$VERSION_DIR"/*/; do
+  parent_state="$parent_dir/STATE.md"
+  [[ ! -f "$parent_state" ]] && continue
+
+  # Check if this parent lists our issue in "Decomposed Into"
+  if grep -q "^## Decomposed Into" "$parent_state" && grep -q "$ISSUE_NAME" "$parent_state"; then
+    # Found our parent - check if ALL subtasks are completed
+    all_complete=true
+    while IFS= read -r subtask; do
+      subtask=$(echo "$subtask" | sed 's/^- //' | cut -d' ' -f1 | tr -d '()')
+      [[ -z "$subtask" ]] && continue
+      subtask_state="$VERSION_DIR/$subtask/STATE.md"
+      if [[ -f "$subtask_state" ]]; then
+        st=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$subtask_state" | head -1 | tr -d ' ')
+        if [[ "$st" != "completed" && "$st" != "complete" ]]; then
+          all_complete=false
+          break
+        fi
+      else
+        all_complete=false
+        break
+      fi
+    done < <(sed -n '/^## Decomposed Into/,/^##/p' "$parent_state" | grep -E '^\- ')
+
+    if [[ "$all_complete" == "true" ]]; then
+      # Update parent STATE.md to completed
+      parent_name=$(basename "$parent_dir")
+      sed -i 's/\*\*Status:\*\* .*/\*\*Status:\*\* completed/' "$parent_state"
+      sed -i 's/\*\*Progress:\*\* .*/\*\*Progress:\*\* 100%/' "$parent_state"
+      echo "Auto-completed decomposed parent: $parent_name"
+    fi
+    break  # Only one parent possible
+  fi
+done
+```
+
+### Step 7: Update Changelog
 
 If minor version is now complete, update CHANGELOG.md.
 
-### Step 7: Return Result
+### Step 8: Return Result
 
 Output the JSON result with all cleanup status.
 

@@ -2340,6 +2340,57 @@
         "catches_variations": true
       },
       "correct_behavior": "Detect skill invocation via <command-name> tags or expanded skill content markers (# CAT Status Display, <!-- START COPY HERE -->), not bare substring matching"
+    },
+    {
+      "id": "M434",
+      "timestamp": "2026-02-05T12:00:00-05:00",
+      "category": "missing_automation",
+      "description": "Decomposed parent task rename-task-to-issue stuck as pending despite all 5 subtasks being completed. No automation marks parent completed when all subtasks finish.",
+      "root_cause": "Work-merge skill updates subtask STATE.md to completed but never checks if this was the last subtask of a decomposed parent. The lifecycle documented in decompose-issue SKILL.md (parent -> completed when all subtasks done) has no implementation.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-merge/SKILL.md",
+      "pattern_keywords": [
+        "decomposed-parent",
+        "auto-complete",
+        "lifecycle-gap"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After merging a subtask, check if it belongs to a decomposed parent. If all sibling subtasks are completed, auto-update parent STATE.md to completed."
+    },
+    {
+      "id": "M435",
+      "timestamp": "2026-02-05T12:05:00-05:00",
+      "category": "misleading_documentation",
+      "description": "Work-prepare subagent filtered compression tasks in-memory instead of using discovery script native --exclude-pattern flag, causing it to return NO_TASKS when only one task was found and filtered.",
+      "root_cause": "Work-prepare SKILL.md Step 2 documented in-memory filtering approach (M364) despite the discovery script supporting --exclude-pattern natively since its creation. The skill primed the subagent to filter post-discovery rather than pre-discovery.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "exclude-pattern",
+        "in-memory-filter",
+        "discovery-script",
+        "native-flag"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pass --exclude-pattern to get-available-issues.sh for exclusion filters. The script iterates all issues and skips matches, finding the next eligible one. Only use in-memory filtering for inclusion filters."
     }
   ]
 }
