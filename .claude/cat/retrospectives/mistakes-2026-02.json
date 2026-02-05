@@ -2242,11 +2242,11 @@
       "timestamp": "2026-02-05T00:00:00Z",
       "category": "protocol_violation",
       "description": "Invoked /cat:status instead of /cat:work when user said resume [task-name]",
-      "root_cause": "Work Request Handling section only covered new work requests (default /cat:add). No mapping for resume/continue existing task to /cat:work.",
+      "root_cause": "Work skill description contained implementation details instead of trigger synonyms. \"resume\" not listed as a trigger word, so intent routing failed.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
-      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/inject-session-instructions.sh",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
       "pattern_keywords": [
         "resume",
         "wrong-skill",
@@ -2261,7 +2261,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When user says resume/continue/pick up [task-name], invoke /cat:work [task-name] directly"
+      "correct_behavior": "Skill descriptions should contain trigger synonyms (resume, continue, pick up) so intent routing maps user language to the correct skill."
     }
   ]
 }

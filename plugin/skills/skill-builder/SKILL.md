@@ -381,18 +381,24 @@ Structure the skill document with:
 4. **Procedure**: The forward steps from Step 6, calling functions as needed
 5. **Verification**: How to confirm success
 
-**Frontmatter description must be trigger-oriented**:
+**Frontmatter description must be trigger-oriented (M430)**:
 
-The description tells WHEN to invoke the skill, not just what it does.
+The description is used for **intent routing** — it tells Claude WHEN to invoke this skill based
+on user input. Include ONLY trigger conditions and synonyms. Exclude implementation details
+(trust levels, auto-continue behavior, internal architecture, etc.).
 
 ```
-Format: "[WHEN to use] - [what it does]"
+Format: "[WHEN to use] - [what it does briefly]"
 
-Examples:
-  "MANDATORY: Load BEFORE rendering any box output"
+Good examples:
+  "Work on or resume issues - use when user says work, resume, continue, or pick up"
   "Use BEFORE creating or updating any skill - decomposes goal into forward steps"
-  "MANDATORY: Use for approval gate reviews - transforms git diff into table"
-  "Use when user requests git rebase - provides automatic backup and recovery"
+  "Use when session crashed or locks blocking - cleans abandoned worktrees and locks"
+
+Bad examples (implementation details leak):
+  "Work on issues (approval required unless trust=high; auto-continues when trust >= medium)"
+  "Run stakeholder review (spawns 6 parallel subagents, costs ~30K tokens)"
+  "Merge branch (uses --ff-only, requires linear history)"
 ```
 
 **Trigger patterns**:
@@ -401,6 +407,9 @@ Examples:
 - `Use BEFORE [action]` - Should be used before doing something
 - `Use when [condition]` - Triggered by a specific situation
 - `Use instead of [alternative]` - Replaces a dangerous or complex operation
+
+**Include user synonyms**: If users might say "resume" instead of "work on", include both
+in the description so intent routing matches correctly.
 
 ---
 
@@ -1482,7 +1491,9 @@ Step 1: Display status
 
 ## Checklist Before Finalizing Skill
 
-- [ ] Frontmatter description is trigger-oriented (WHEN to use, not just what it does)
+- [ ] Frontmatter description is trigger-oriented (WHEN to use, not what it does internally)
+- [ ] Description contains NO implementation details (trust levels, token costs, internal architecture)
+- [ ] Description includes user synonyms for the action (e.g., "resume", "continue", "pick up")
 - [ ] Goal is observable and verifiable
 - [ ] All REQUIRES chains end in ATOMIC conditions
 - [ ] Dependency order has no cycles
