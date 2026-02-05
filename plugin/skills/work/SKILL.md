@@ -1,5 +1,5 @@
 ---
-description: Work on issues (approval required unless trust=high; auto-continues to next task when trust >= medium)
+description: Work on or resume issues - use when user says "work on", "resume", "continue", or "pick up" a task
 argument-hint: "[version | taskId | filter] [--override-gate]"
 allowed-tools:
   - Read
