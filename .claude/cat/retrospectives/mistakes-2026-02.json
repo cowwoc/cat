@@ -2105,7 +2105,7 @@
       "id": "M425",
       "timestamp": "2026-02-05T12:35:00Z",
       "category": "prompt_engineering",
-      "description": "Delegation prompt told subagent 'do NOT invoke nested skills like /cat:shrink-doc' causing skill bypass - user expected shrink-doc output",
+      "description": "Subagent failure message about \"excessive nesting\" primed main agent to bypass skills with custom prompt \"do NOT invoke nested skills\"",
       "root_cause": "First batch executor returned FAILED with message about \"excessive nesting\" which primed main agent to bypass skills entirely. The failure message described the problem without actionable guidance, leading to bad decision (custom prompt with \"do NOT invoke nested skills\").",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",

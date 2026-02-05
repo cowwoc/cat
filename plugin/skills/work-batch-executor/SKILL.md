@@ -126,13 +126,6 @@ If `has_existing_work == true`:
 
 Otherwise, spawn work-execute subagent:
 
-**CRITICAL (M425): Use the exact prompt template below. Do NOT write custom prompts that omit M414 requirements.**
-
-When facing nesting/token concerns with batch operations (e.g., compressing 9 files):
-- The subagent MUST still invoke required skills (e.g., /cat:shrink-doc) via the Skill tool
-- Skills handle their own nesting internally - the orchestrator should not bypass them
-- If a skill causes token issues, decompose the TASK, don't bypass the SKILL
-
 **CRITICAL (M391): Before spawning, read PLAN.md and include its Execution Steps in the prompt.**
 
 This ensures the subagent sees the specific instructions (like "invoke /cat:shrink-doc") directly,
@@ -179,8 +172,33 @@ task-type handling logic.
 Handle execution result:
 - SUCCESS: Store metrics, continue
 - PARTIAL: Warn, continue
-- FAILED: Return FAILED status immediately
+- FAILED: See failure handling below
 - BLOCKED: Return FAILED with blocker info
+
+**CRITICAL (M425): Handling FAILED status - do NOT bypass skills:**
+
+When execution returns FAILED with messages about "nesting", "token budget", or "too deep":
+
+1. **Do NOT** write a new prompt that bypasses required skills
+2. **Do NOT** tell subagent to "work directly" or "skip skill invocation"
+3. **Instead**, return control to the parent skill with actionable guidance
+
+**Correct response to nesting failures:**
+
+```json
+{
+  "status": "FAILED",
+  "reason": "nesting_limit",
+  "action_required": "Parent should invoke required skills directly via Skill tool, not through nested subagents",
+  "skills_to_invoke": ["cat:shrink-doc"],
+  "files": ["list", "of", "files"]
+}
+```
+
+The parent (work-with-issue or main agent) can then invoke the skill directly without nesting.
+
+**Why this matters:** Failure messages describing "excessive nesting" prime the receiving agent to bypass
+skills entirely. The fix is actionable guidance: "invoke skill directly" not "avoid the skill".
 
 ### Step 3: Review Phase
 
