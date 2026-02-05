@@ -113,9 +113,6 @@ Task tool:
 
 Relay the comparison result verbatim to the caller.
 
-**If Status = NOT_EQUIVALENT for shrink-doc context:**
-The calling workflow MUST iterate with the LOST list as feedback.
-
 ---
 
 ## Output Format
