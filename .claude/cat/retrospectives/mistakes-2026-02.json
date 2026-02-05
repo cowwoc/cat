@@ -2288,6 +2288,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Write all jq queries to a .sh script file first, then execute it once via Bash tool"
+    },
+    {
+      "id": "M432",
+      "timestamp": "2026-02-05T12:00:00Z",
+      "category": "missing_documentation",
+      "description": "Main agent used wrong flag-style arguments for issue-lock.sh (2 failures) because work skill only showed ellipsis, not actual argument format",
+      "root_cause": "Work skill error handling section showed issue-lock.sh release ... with no argument format. Agent guessed --flag style args instead of positional.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "issue-lock",
+        "positional-args",
+        "undocumented-api",
+        "script-invocation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use positional arguments: issue-lock.sh release <project-dir> <issue-id> <session-id>"
     }
   ]
 }
