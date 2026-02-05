@@ -562,7 +562,7 @@ find_next_issue() {
         issue_name=$(echo "$TARGET" | sed 's/^[0-9]*\.[0-9]*-//')
 
         local issue_dir
-        issue_dir=$(get_task_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
+        issue_dir=$(get_issue_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
 
         if [[ ! -d "$issue_dir" ]]; then
             echo '{"status":"not_found","message":"Issue directory not found","issue_id":"'"$TARGET"'"}'
@@ -666,7 +666,7 @@ find_next_issue() {
                 minor=$(echo "$issue_id" | cut -d. -f2 | cut -d- -f1)
                 issue_name=$(echo "$issue_id" | sed 's/^[0-9]*\.[0-9]*-//')
                 local issue_dir
-                issue_dir=$(get_task_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
+                issue_dir=$(get_issue_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
 
                 echo '{"status":"found","issue_id":"'"$issue_id"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","scope":"'"$SCOPE"'","lock_status":"acquired"}'
                 return 0
@@ -683,7 +683,7 @@ find_next_issue() {
                 minor=$(echo "$issue_id" | cut -d. -f2 | cut -d- -f1)
                 issue_name=$(echo "$issue_id" | sed 's/^[0-9]*\.[0-9]*-//')
                 local issue_dir
-                issue_dir=$(get_task_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
+                issue_dir=$(get_issue_dir "${major}.${minor}" "$issue_name" "$CAT_DIR")
 
                 echo '{"status":"found","issue_id":"'"$issue_id"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","scope":"'"$SCOPE"'","lock_status":"acquired"}'
                 return 0
