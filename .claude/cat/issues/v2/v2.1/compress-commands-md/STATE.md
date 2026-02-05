@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** 2.1-compress-skills-md

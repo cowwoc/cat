@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Dependencies:** []
 - **Completed:** 2026-01-28

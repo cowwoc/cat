@@ -349,7 +349,7 @@ find .claude/cat -maxdepth 3 -type d -name "v[0-9]*.[0-9]*.[0-9]*" 2>/dev/null |
     MINOR=$(echo "$VERSION" | cut -d. -f2)
     PATCH=$(echo "$VERSION" | cut -d. -f3)
     TASK_COUNT=$(find "$d" -mindepth 1 -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
-    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "pending")
+    STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$d/STATE.md" 2>/dev/null || echo "open")
     echo "$MAJOR.$MINOR.$PATCH ($TASK_COUNT issues, $STATUS)"
 done | sort -V
 ```

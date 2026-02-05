@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 0%
 - **Created From:** compress-concepts-md
 - **Dependencies:** []

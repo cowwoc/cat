@@ -1,6 +1,6 @@
 # State
 
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
 - **Last Updated:** {{TIMESTAMP}}
@@ -9,12 +9,12 @@
 
 | Field | When Required | Description |
 |-------|---------------|-------------|
-| `Status` | Always | `pending`, `in_progress`, or `completed` |
-| `Progress` | Always | `0%` for pending, `100%` for completed |
+| `Status` | Always | `open`, `in_progress`, or `closed` |
+| `Progress` | Always | `0%` for open, `100%` for closed |
 | `Dependencies` | Always | Issue names this depends on; use `[]` if none |
-| `Last Updated` | Pending only | Date of last state change |
-| `Resolution` | Completed only | `implemented`, `duplicate`, or `obsolete` |
-| `Completed` | Completed only | Completion date |
+| `Last Updated` | Open only | Date of last state change |
+| `Resolution` | Closed only | `implemented`, `duplicate`, or `obsolete` |
+| `Completed` | Closed only | Completion date |
 | `Duplicate Of` | Duplicate only | Issue ID that implemented the fix |
 | `Reason` | Obsolete only | Why issue is no longer needed |
 
@@ -22,7 +22,7 @@
 
 ### Standard Completion (implemented)
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** [prerequisite-issue]
@@ -37,7 +37,7 @@ git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 
 ### Duplicate Issue
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v{major}.{minor}-{original-issue-name}
@@ -57,7 +57,7 @@ List scenarios tested to confirm the duplicate issue's fix covers this case:
 
 ### Obsolete Issue
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** obsolete
 - **Reason:** {why issue is no longer needed}
@@ -66,7 +66,7 @@ List scenarios tested to confirm the duplicate issue's fix covers this case:
 
 ### No Code Changes Needed
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Completed:** {{TIMESTAMP}}

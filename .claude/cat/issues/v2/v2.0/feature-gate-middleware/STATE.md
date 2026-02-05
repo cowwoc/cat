@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Dependencies:** [tier-feature-mapping]
 - **Last Updated:** 2026-01-23

@@ -10,7 +10,7 @@ How issues are marked complete and how to trace their resolving commits.
 | `duplicate` | Another issue did this work | No | Check STATE.md "Duplicate Of" field |
 | `obsolete` | No longer needed | No | No implementation commit |
 
-**Status values:** `pending`, `in-progress`, `completed` (only these three)
+**Status values:** `open`, `in-progress`, `closed` (only these three)
 
 ## Standard Completion (implemented)
 
@@ -41,7 +41,7 @@ An issue is a **duplicate** when another issue already implemented the same func
 Update the duplicate issue's STATE.md:
 
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v{major}.{minor}-{original-issue-name}
@@ -50,7 +50,7 @@ Update the duplicate issue's STATE.md:
 
 **Example:**
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v0.5-fix-multi-param-lambda
@@ -91,7 +91,7 @@ An issue is **obsolete** when it's no longer needed (requirements changed, featu
 ### How to Mark Obsolete
 
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** obsolete
 - **Reason:** {why issue is no longer needed}
@@ -110,16 +110,16 @@ git commit -m "config: close obsolete issue {issue-name}
 ## Stopping Work on an Issue (M278)
 
 **CRITICAL:** When user says "abort the issue" or "stop the issue", this means
-"stop working now, restore to pending" - NOT "mark as completed".
+"stop working now, restore to open" - NOT "mark as closed".
 
 | User Says | Action |
 |-----------|--------|
-| "abort/stop the issue" | Restore Status to `pending`, cleanup worktree |
-| "mark as obsolete" | Set Status: `completed`, Resolution: `obsolete` |
-| "mark as duplicate" | Set Status: `completed`, Resolution: `duplicate` |
+| "abort/stop the issue" | Restore Status to `open`, cleanup worktree |
+| "mark as obsolete" | Set Status: `closed`, Resolution: `obsolete` |
+| "mark as duplicate" | Set Status: `closed`, Resolution: `duplicate` |
 
-**A stopped issue returns to pending state** - ready for future work.
-Only issues that reach their goal (or are explicitly declared obsolete/duplicate) become completed.
+**A stopped issue returns to open state** - ready for future work.
+Only issues that reach their goal (or are explicitly declared obsolete/duplicate) become closed.
 
 ## Tracing Issue Resolution
 

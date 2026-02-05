@@ -82,7 +82,7 @@ git rebase -i ${BASE_BRANCH}
 Before merge, ensure STATE.md is updated in the implementation commit:
 
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Completed:** {date}
 - **Resolution:** implemented
@@ -142,7 +142,7 @@ for parent_dir in "$VERSION_DIR"/*/; do
 
   # Check if this parent lists our issue in "Decomposed Into"
   if grep -q "^## Decomposed Into" "$parent_state" && grep -q "$ISSUE_NAME" "$parent_state"; then
-    # Found our parent - check if ALL subtasks are completed
+    # Found our parent - check if ALL subtasks are closed
     all_complete=true
     while IFS= read -r subtask; do
       subtask=$(echo "$subtask" | sed 's/^- //' | cut -d' ' -f1 | tr -d '()')
@@ -150,7 +150,7 @@ for parent_dir in "$VERSION_DIR"/*/; do
       subtask_state="$VERSION_DIR/$subtask/STATE.md"
       if [[ -f "$subtask_state" ]]; then
         st=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$subtask_state" | head -1 | tr -d ' ')
-        if [[ "$st" != "completed" ]]; then
+        if [[ "$st" != "closed" ]]; then
           all_complete=false
           break
         fi
@@ -163,9 +163,9 @@ for parent_dir in "$VERSION_DIR"/*/; do
     if [[ "$all_complete" == "true" ]]; then
       # Update parent STATE.md to completed
       parent_name=$(basename "$parent_dir")
-      sed -i 's/\*\*Status:\*\* .*/\*\*Status:\*\* completed/' "$parent_state"
+      sed -i 's/\*\*Status:\*\* .*/\*\*Status:\*\* closed/' "$parent_state"
       sed -i 's/\*\*Progress:\*\* .*/\*\*Progress:\*\* 100%/' "$parent_state"
-      echo "Auto-completed decomposed parent: $parent_name"
+      echo "Auto-closed decomposed parent: $parent_name"
     fi
     break  # Only one parent possible
   fi

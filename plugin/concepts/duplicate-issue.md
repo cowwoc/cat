@@ -34,14 +34,14 @@ Find which issue/commit implemented the fix:
 # Search for when functionality was added
 git log --oneline --grep="<related keywords>"
 
-# Check other completed issues in same version
-find .claude/cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "completed" {} \;
+# Check other closed issues in same version
+find .claude/cat/issues/v*/v*.*/ -name "STATE.md" -exec grep -l "closed" {} \;
 ```
 
 ### 4. Update STATE.md
 
 ```yaml
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v{major}.{minor}-{original-issue-name}

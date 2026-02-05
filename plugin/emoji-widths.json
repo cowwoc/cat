@@ -2,9 +2,9 @@
   "$schema": "./emoji-widths.schema.json",
   "$comment": "Emoji display widths by terminal. Run scripts/measure-emoji-widths.sh to contribute.",
   "emojis": {
-    "completed": "☑️",
+    "closed": "☑️",
     "in_progress": "🔄",
-    "pending": "🔳",
+    "open": "🔳",
     "blocked": "🚫",
     "gate_waiting": "🚧",
     "progress": "📊",

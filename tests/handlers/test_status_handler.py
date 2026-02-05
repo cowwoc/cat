@@ -24,17 +24,17 @@ from skill_handlers.status_handler import (
 class TestGetTaskStatus:
     """Tests for get_task_status function."""
 
-    def test_missing_file_returns_pending(self, tmp_path):
-        """Missing STATE.md returns pending."""
+    def test_missing_file_returns_open(self, tmp_path):
+        """Missing STATE.md returns open."""
         result = get_task_status(tmp_path / "nonexistent" / "STATE.md")
-        assert result == "pending"
+        assert result == "open"
 
     def test_status_colon_format(self, tmp_path):
-        """Parses 'Status: value' format."""
+        """Plain 'Status: value' format does not match bold regex, returns default."""
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("Status: completed\n")
+        state_file.write_text("Status: closed\n")
         result = get_task_status(state_file)
-        assert result == "completed"
+        assert result == "open"
 
     def test_status_bold_format(self, tmp_path):
         """Parses '- **Status:** value' format."""
@@ -44,39 +44,39 @@ class TestGetTaskStatus:
         assert result == "in-progress"
 
     def test_lowercase_status(self, tmp_path):
-        """Parses lowercase 'status:' format."""
+        """Plain lowercase 'status:' format does not match bold regex, returns default."""
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("status: pending\n")
+        state_file.write_text("status: open\n")
         result = get_task_status(state_file)
-        assert result == "pending"
+        assert result == "open"
 
     def test_status_with_extra_content(self, tmp_path):
-        """Parses status with extra content in file."""
+        """Parses status with extra content in file using bold format."""
         state_file = tmp_path / "STATE.md"
         state_file.write_text("""# Task State
 
 Some description here.
 
-Status: completed
+- **Status:** closed
 
 More content below.
 """)
         result = get_task_status(state_file)
-        assert result == "completed"
+        assert result == "closed"
 
-    def test_no_status_returns_pending(self, tmp_path):
-        """File without status line returns pending."""
+    def test_no_status_returns_open(self, tmp_path):
+        """File without status line returns open."""
         state_file = tmp_path / "STATE.md"
         state_file.write_text("# Just some content\nNo status here.\n")
         result = get_task_status(state_file)
-        assert result == "pending"
+        assert result == "open"
 
-    def test_empty_file_returns_pending(self, tmp_path):
-        """Empty file returns pending."""
+    def test_empty_file_returns_open(self, tmp_path):
+        """Empty file returns open."""
         state_file = tmp_path / "STATE.md"
         state_file.write_text("")
         result = get_task_status(state_file)
-        assert result == "pending"
+        assert result == "open"
 
 
 class TestStatusValidation:
@@ -85,30 +85,37 @@ class TestStatusValidation:
     def test_valid_statuses_constant_exists(self):
         """VALID_STATUSES constant is defined."""
         assert VALID_STATUSES is not None
-        assert "pending" in VALID_STATUSES
+        assert "open" in VALID_STATUSES
         assert "in-progress" in VALID_STATUSES
-        assert "completed" in VALID_STATUSES
+        assert "closed" in VALID_STATUSES
         assert "blocked" in VALID_STATUSES
 
     def test_status_aliases_constant_exists(self):
         """STATUS_ALIASES constant is defined."""
         assert STATUS_ALIASES is not None
         assert "complete" in STATUS_ALIASES
-        assert STATUS_ALIASES["complete"] == "completed"
+        assert STATUS_ALIASES["complete"] == "closed"
 
-    def test_valid_status_pending(self, tmp_path):
-        """Valid status 'pending' is accepted."""
-        state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** pending\n")
-        result = get_task_status(state_file)
-        assert result == "pending"
+    def test_status_aliases_backward_compat(self):
+        """STATUS_ALIASES includes backward compat aliases for renamed statuses."""
+        assert "pending" in STATUS_ALIASES
+        assert STATUS_ALIASES["pending"] == "open"
+        assert "completed" in STATUS_ALIASES
+        assert STATUS_ALIASES["completed"] == "closed"
 
-    def test_valid_status_completed(self, tmp_path):
-        """Valid status 'completed' is accepted."""
+    def test_valid_status_open(self, tmp_path):
+        """Valid status 'open' is accepted."""
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** completed\n")
+        state_file.write_text("- **Status:** open\n")
         result = get_task_status(state_file)
-        assert result == "completed"
+        assert result == "open"
+
+    def test_valid_status_closed(self, tmp_path):
+        """Valid status 'closed' is accepted."""
+        state_file = tmp_path / "STATE.md"
+        state_file.write_text("- **Status:** closed\n")
+        result = get_task_status(state_file)
+        assert result == "closed"
 
     def test_valid_status_in_progress(self, tmp_path):
         """Valid status 'in-progress' is accepted."""
@@ -124,22 +131,36 @@ class TestStatusValidation:
         result = get_task_status(state_file)
         assert result == "blocked"
 
-    def test_alias_complete_normalized_to_completed(self, tmp_path, capsys):
-        """Alias 'complete' is normalized to 'completed' with warning."""
+    def test_alias_complete_normalized_to_closed(self, tmp_path, capsys):
+        """Alias 'complete' is normalized to 'closed' with warning."""
         state_file = tmp_path / "STATE.md"
         state_file.write_text("- **Status:** complete\n")
         result = get_task_status(state_file)
-        assert result == "completed"
+        assert result == "closed"
         # Check warning was printed
         captured = capsys.readouterr()
         assert "Non-canonical status" in captured.err or "complete" in captured.err
 
-    def test_alias_done_normalized_to_completed(self, tmp_path, capsys):
-        """Alias 'done' is normalized to 'completed' with warning."""
+    def test_alias_done_normalized_to_closed(self, tmp_path, capsys):
+        """Alias 'done' is normalized to 'closed' with warning."""
         state_file = tmp_path / "STATE.md"
         state_file.write_text("- **Status:** done\n")
         result = get_task_status(state_file)
-        assert result == "completed"
+        assert result == "closed"
+
+    def test_alias_pending_normalized_to_open(self, tmp_path, capsys):
+        """Alias 'pending' is normalized to 'open' with warning."""
+        state_file = tmp_path / "STATE.md"
+        state_file.write_text("- **Status:** pending\n")
+        result = get_task_status(state_file)
+        assert result == "open"
+
+    def test_alias_completed_normalized_to_closed(self, tmp_path, capsys):
+        """Alias 'completed' is normalized to 'closed' with warning."""
+        state_file = tmp_path / "STATE.md"
+        state_file.write_text("- **Status:** completed\n")
+        result = get_task_status(state_file)
+        assert result == "closed"
 
     def test_alias_in_progress_underscore_normalized(self, tmp_path, capsys):
         """Alias 'in_progress' is normalized to 'in-progress' with warning."""
@@ -171,22 +192,22 @@ class TestStatusValidation:
         with pytest.raises(ValueError) as exc_info:
             get_task_status(state_file)
         error_msg = str(exc_info.value)
-        assert "pending" in error_msg
-        assert "completed" in error_msg
+        assert "open" in error_msg
+        assert "closed" in error_msg
 
     def test_case_insensitive_status(self, tmp_path):
         """Status matching is case-insensitive."""
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** COMPLETED\n")
+        state_file.write_text("- **Status:** CLOSED\n")
         result = get_task_status(state_file)
-        assert result == "completed"
+        assert result == "closed"
 
     def test_status_with_whitespace(self, tmp_path):
         """Status with surrounding whitespace is handled."""
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:**   pending  \n")
+        state_file.write_text("- **Status:**   open  \n")
         result = get_task_status(state_file)
-        assert result == "pending"
+        assert result == "open"
 
 
 class TestGetTaskDependencies:
@@ -200,7 +221,7 @@ class TestGetTaskDependencies:
     def test_no_dependencies_section(self, tmp_path):
         """File without dependencies section returns empty list."""
         state_file = tmp_path / "STATE.md"
-        state_file.write_text("- **Status:** pending\n")
+        state_file.write_text("- **Status:** open\n")
         result = get_task_dependencies(state_file)
         assert result == []
 
@@ -216,7 +237,7 @@ class TestGetTaskDependencies:
         state_file = tmp_path / "STATE.md"
         state_file.write_text("""# State
 
-- **Status:** pending
+- **Status:** open
 
 ## Dependencies
 - task-a

@@ -4,7 +4,7 @@ Validate STATE.md status values after Edit or Write operations (M434).
 Monitors PostToolUse events for Edit/Write operations on STATE.md files
 and validates that the Status field uses a canonical value.
 
-Canonical statuses: pending, in-progress, completed, blocked
+Canonical statuses: open, in-progress, closed, blocked
 """
 
 import re
@@ -13,7 +13,7 @@ from . import register_handler
 
 
 # Canonical status values for STATE.md files
-CANONICAL_STATUSES = frozenset({"pending", "in-progress", "completed", "blocked"})
+CANONICAL_STATUSES = frozenset({"open", "in-progress", "closed", "blocked"})
 
 # Regex to extract the Status field value from STATE.md
 STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\*\s*(.+)$", re.MULTILINE)
@@ -22,11 +22,13 @@ WARNING_TEMPLATE = """\u26a0\ufe0f STATE.md STATUS VALIDATION (M434)
 
 Non-canonical status value: "{value}"
 
-Valid values: pending, in-progress, completed, blocked
+Valid values: open, in-progress, closed, blocked
 
 Common mistakes:
-  - "complete" \u2192 use "completed"
-  - "done" \u2192 use "completed"
+  - "pending" \u2192 use "open"
+  - "completed" \u2192 use "closed"
+  - "complete" \u2192 use "closed"
+  - "done" \u2192 use "closed"
   - "in_progress" \u2192 use "in-progress"
   - "active" \u2192 use "in-progress"
 

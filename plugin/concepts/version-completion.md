@@ -2,7 +2,7 @@
 
 ## When to Load
 
-Load this workflow when **all issues in a minor version are completed** (no pending/in-progress).
+Load this workflow when **all issues in a minor version are closed** (no open/in-progress).
 
 ## Minor Version Complete
 
@@ -10,7 +10,7 @@ Load this workflow when **all issues in a minor version are completed** (no pend
 
 ```bash
 # Count pending/in-progress issues in this minor version
-PENDING_COUNT=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "STATE.md" -exec grep -l 'Status.*pending\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
+PENDING_COUNT=$(find ".claude/cat/issues/v${MAJOR}/v${MAJOR}.${MINOR}/" -name "STATE.md" -exec grep -l 'Status.*open\|Status.*in-progress' {} \; 2>/dev/null | wc -l)
 
 if [[ "$PENDING_COUNT" -eq 0 ]]; then
   MINOR_COMPLETE=true
@@ -32,7 +32,7 @@ fi
    - Parse the Requirements table for all REQ-XXX IDs
 
 2. **Collect satisfied requirements from all issues**:
-   - For each completed issue in the minor version
+   - For each closed issue in the minor version
    - Read the issue's PLAN.md and extract the `## Satisfies` section
    - Build a set of all satisfied requirement IDs
 
@@ -46,7 +46,7 @@ fi
      ```
      ⚠️ Cannot complete v{major}.{minor}: unsatisfied requirements
 
-     The following requirements are not satisfied by any completed issue:
+     The following requirements are not satisfied by any closed issue:
      - REQ-XXX: [requirement description]
      - REQ-YYY: [requirement description]
 
@@ -207,7 +207,7 @@ Continue with next steps.
 ```bash
 # Count incomplete minor versions in this major
 INCOMPLETE_MINORS=$(find ".claude/cat/issues/v${MAJOR}" -maxdepth 1 -name "v${MAJOR}.*" -type d | while read dir; do
-  [ -f "$dir/STATE.md" ] && ! grep -q 'Status.*completed' "$dir/STATE.md" && echo "$dir"
+  [ -f "$dir/STATE.md" ] && ! grep -q 'Status.*closed' "$dir/STATE.md" && echo "$dir"
 done | wc -l)
 
 if [[ "$INCOMPLETE_MINORS" -eq 0 ]]; then

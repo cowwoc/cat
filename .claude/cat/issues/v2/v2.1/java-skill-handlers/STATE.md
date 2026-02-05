@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Started:** 2026-01-29
 - **Created From:** migrate-python-to-java

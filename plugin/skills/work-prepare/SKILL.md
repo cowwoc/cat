@@ -84,7 +84,7 @@ Temporary mutations that rely on cleanup code are unsafe because:
 - Cleanup code may never execute
 
 **FORBIDDEN patterns:**
-- Marking tasks "completed" temporarily to hide them from discovery
+- Marking tasks "closed" temporarily to hide them from discovery
 - Creating backup files that must be restored
 - Any mutation that requires rollback
 

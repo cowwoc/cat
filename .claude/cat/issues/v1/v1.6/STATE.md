@@ -1,7 +1,7 @@
 # Patch Version 1.6 State: Adventure Mode
 
 ## Status
-- **Status:** complete
+- **Status:** closed
 - **Progress:** 100%
 - **Started:** 2026-01-14
 - **Completed:** 2026-01-14

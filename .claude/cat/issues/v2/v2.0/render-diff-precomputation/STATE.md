@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** render-diff-skill (already implemented)

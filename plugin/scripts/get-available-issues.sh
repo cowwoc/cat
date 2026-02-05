@@ -170,7 +170,7 @@ get_issue_status() {
         return 1
     fi
 
-    # Format: "- **Status:** pending"
+    # Format: "- **Status:** open"
     local status
     status=$(grep -E "^\- \*\*Status:\*\*" "$state_file" | sed 's/.*\*\*Status:\*\* //' | tr -d ' ')
 
@@ -181,9 +181,13 @@ get_issue_status() {
 
     # Normalize known aliases to canonical values (M253)
     case "$status" in
-        complete|done)
-            echo "WARNING: Non-canonical status '$status' in $state_file, use 'completed'" >&2
-            status="completed"
+        pending)
+            echo "WARNING: Non-canonical status '$status' in $state_file, use 'open'" >&2
+            status="open"
+            ;;
+        completed|complete|done)
+            echo "WARNING: Non-canonical status '$status' in $state_file, use 'closed'" >&2
+            status="closed"
             ;;
         in_progress|active)
             echo "WARNING: Non-canonical status '$status' in $state_file, use 'in-progress'" >&2
@@ -192,7 +196,7 @@ get_issue_status() {
     esac
 
     # Validate against allowed status values (M253: fail-fast on unknown status)
-    local valid_statuses="pending in-progress completed blocked"
+    local valid_statuses="open in-progress closed blocked"
     local is_valid=false
     for valid in $valid_statuses; do
         if [[ "$status" == "$valid" ]]; then
@@ -204,12 +208,12 @@ get_issue_status() {
     if [[ "$is_valid" == "false" ]]; then
         echo "ERROR: Unknown status '$status' in $state_file" >&2
         echo "Valid values: $valid_statuses" >&2
-        echo "Common typo: 'complete' should be 'completed'" >&2
+        echo "Common typo: 'complete' should be 'closed'" >&2
         return 1
     fi
 
-    # M279: Validate decomposed parent tasks aren't marked completed prematurely
-    if [[ "$status" == "completed" ]]; then
+    # M279: Validate decomposed parent tasks aren't marked closed prematurely
+    if [[ "$status" == "closed" ]]; then
         # Check if this is a decomposed parent task
         if grep -q "^## Decomposed Into" "$state_file" 2>/dev/null; then
             # Extract subtask names from "Decomposed Into" section
@@ -227,7 +231,7 @@ get_issue_status() {
                     if [[ -f "$subtask_state" ]]; then
                         local subtask_status
                         subtask_status=$(grep -E "^\- \*\*Status:\*\*" "$subtask_state" 2>/dev/null | sed 's/.*\*\*Status:\*\* //' | tr -d ' ')
-                        if [[ "$subtask_status" != "completed" ]]; then
+                        if [[ "$subtask_status" != "closed" ]]; then
                             all_subtasks_complete=false
                             break
                         fi
@@ -239,8 +243,8 @@ get_issue_status() {
                 done
 
                 if [[ "$all_subtasks_complete" == "false" ]]; then
-                    echo "ERROR: Decomposed parent task marked 'completed' but subtasks are not all complete in $state_file" >&2
-                    echo "Parent tasks with '## Decomposed Into' must stay 'pending' or 'in-progress' until ALL subtasks are completed." >&2
+                    echo "ERROR: Decomposed parent task marked 'closed' but subtasks are not all closed in $state_file" >&2
+                    echo "Parent tasks with '## Decomposed Into' must stay 'open' or 'in-progress' until ALL subtasks are closed." >&2
                     echo "See M263 in decompose-task skill for correct lifecycle." >&2
                     return 1
                 fi
@@ -282,7 +286,7 @@ get_issue_dependencies() {
     done | jq -R -s 'split("\n") | map(select(length > 0))'
 }
 
-# Check if a dependency is satisfied (issue completed)
+# Check if a dependency is satisfied (issue closed)
 is_dependency_satisfied() {
     local dep_name="$1"
 
@@ -299,7 +303,7 @@ is_dependency_satisfied() {
     local status
     status=$(get_issue_status "$dep_state")
 
-    if [[ "$status" == "completed" ]]; then
+    if [[ "$status" == "closed" ]]; then
         echo "true"
     else
         echo "false"
@@ -406,7 +410,7 @@ check_exit_gate_rule() {
         # Check if this non-exit-gate issue is complete
         local status
         status=$(get_issue_status "$issue_dir/STATE.md")
-        if [[ "$status" != "completed" ]]; then
+        if [[ "$status" != "closed" ]]; then
             pending_issues+=("$this_issue")
         fi
     done
@@ -445,8 +449,8 @@ find_issue_in_minor() {
         local status
         status=$(get_issue_status "$issue_dir/STATE.md")
 
-        # Only consider pending or in-progress issues
-        if [[ "$status" != "pending" && "$status" != "in-progress" ]]; then
+        # Only consider open or in-progress issues
+        if [[ "$status" != "open" && "$status" != "in-progress" ]]; then
             continue
         fi
 
@@ -527,7 +531,7 @@ find_first_incomplete_minor() {
             fi
         fi
 
-        # Check if minor has any pending/in-progress issues
+        # Check if minor has any open/in-progress issues
         for issue_dir in "$minor_dir"/*/; do
             issue_dir="${issue_dir%/}"  # Strip trailing slash from glob
             [[ ! -f "$issue_dir/STATE.md" ]] && continue
@@ -537,7 +541,7 @@ find_first_incomplete_minor() {
 
             local status
             status=$(get_issue_status "$issue_dir/STATE.md")
-            if [[ "$status" == "pending" || "$status" == "in-progress" ]]; then
+            if [[ "$status" == "open" || "$status" == "in-progress" ]]; then
                 echo "$minor_dir"
                 return 0
             fi
@@ -572,11 +576,11 @@ find_next_issue() {
         # Check status (M415: distinguish task-complete from task-not-found)
         local status
         status=$(get_issue_status "$issue_dir/STATE.md")
-        if [[ "$status" != "pending" && "$status" != "in-progress" ]]; then
-            if [[ "$status" == "completed" ]]; then
-                echo '{"status":"already_complete","message":"Issue '"$TARGET"' is already completed - no work needed","issue_id":"'"$TARGET"'"}'
+        if [[ "$status" != "open" && "$status" != "in-progress" ]]; then
+            if [[ "$status" == "closed" ]]; then
+                echo '{"status":"already_complete","message":"Issue '"$TARGET"' is already closed - no work needed","issue_id":"'"$TARGET"'"}'
             else
-                echo '{"status":"not_executable","message":"Issue status is '"$status"' (not pending/in-progress)","issue_id":"'"$TARGET"'"}'
+                echo '{"status":"not_executable","message":"Issue status is '"$status"' (not open/in-progress)","issue_id":"'"$TARGET"'"}'
             fi
             return 1
         fi

@@ -1,7 +1,7 @@
 # v2.2 State: Demos & Marketing
 
 ## Status
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Dependencies:** [v2.1]
 

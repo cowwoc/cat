@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Dependencies:** [rename-task-scripts, rename-task-in-skills, rename-task-in-concepts, rename-task-in-commands]
 - **Created From:** 2.1-rename-task-to-issue

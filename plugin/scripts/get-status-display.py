@@ -152,12 +152,14 @@ def get_active_agents(cat_dir: Path, current_session: str = None) -> list:
 
 
 # Valid status values (canonical)
-VALID_STATUSES = {"pending", "in-progress", "completed", "blocked"}
+VALID_STATUSES = {"open", "in-progress", "closed", "blocked"}
 
 # Status aliases that get normalized to canonical values
 STATUS_ALIASES = {
-    "complete": "completed",
-    "done": "completed",
+    "pending": "open",
+    "completed": "closed",
+    "complete": "closed",
+    "done": "closed",
     "in_progress": "in-progress",
     "active": "in-progress",
 }
@@ -166,16 +168,16 @@ STATUS_ALIASES = {
 def get_task_status(state_file: Path) -> str:
     """Get task status from STATE.md file."""
     if not state_file.exists():
-        return "pending"
+        return "open"
 
     try:
         content = state_file.read_text()
     except Exception:
-        return "pending"
+        return "open"
 
     match = re.search(r'^\- \*\*Status:\*\*\s*(.+)$', content, re.MULTILINE)
     if not match:
-        return "pending"
+        return "open"
 
     raw_status = match.group(1).strip().lower()
 
@@ -185,8 +187,8 @@ def get_task_status(state_file: Path) -> str:
     if raw_status in STATUS_ALIASES:
         return STATUS_ALIASES[raw_status]
 
-    # Unknown status - return pending as fallback for script use
-    return "pending"
+    # Unknown status - return open as fallback for script use
+    return "open"
 
 
 def get_task_dependencies(state_file: Path) -> list:
@@ -270,7 +272,7 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
             major_name = match.group(1).split('(')[0].strip()
 
         major_state_file = major_dir / "STATE.md"
-        major_status = "pending"
+        major_status = "open"
         if major_state_file.exists():
             major_status = get_task_status(major_state_file)
 
@@ -324,8 +326,8 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
 
                 blocked_by = []
                 for dep in dependencies:
-                    dep_status = all_task_statuses.get(dep, "pending")
-                    if dep_status != "completed":
+                    dep_status = all_task_statuses.get(dep, "open")
+                    if dep_status != "closed":
                         blocked_by.append(dep)
 
                 tasks.append({
@@ -335,7 +337,7 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
                     "blocked_by": blocked_by
                 })
 
-                if status == "completed":
+                if status == "closed":
                     local_completed += 1
                 elif status == "in-progress":
                     local_inprog = task_name
@@ -355,12 +357,12 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
                 elif local_completed < local_total:
                     current_minor = minor_id
                     for task in tasks:
-                        if task["status"] == "pending" and not task["blocked_by"]:
+                        if task["status"] == "open" and not task["blocked_by"]:
                             next_task = task["name"]
                             break
                     if not next_task:
                         for task in tasks:
-                            if task["status"] == "pending":
+                            if task["status"] == "open":
                                 next_task = task["name"]
                                 break
 
@@ -457,7 +459,7 @@ def generate_status_display(project_dir: str) -> str:
     for major in majors:
         major_id = major.get('id', '')
         major_name = major.get('name', '')
-        major_status = major.get('status', 'pending')
+        major_status = major.get('status', 'open')
 
         major_minors = [m for m in minors if m.get('major') == major_id]
 
@@ -466,7 +468,7 @@ def generate_status_display(project_dir: str) -> str:
             for m in major_minors
         ) if major_minors else False
 
-        if major_status in ("completed", "done"):
+        if major_status in ("closed", "done"):
             all_complete = True
 
         inner_content = []
@@ -508,10 +510,10 @@ def generate_status_display(project_dir: str) -> str:
 
                     for task in tasks:
                         task_name = task.get('name', '')
-                        task_status = task.get('status', 'pending')
+                        task_status = task.get('status', 'open')
                         blocked_by = task.get('blocked_by', [])
 
-                        if task_status in ("completed", "done"):
+                        if task_status in ("closed", "done"):
                             task_emoji = '☑️'
                         elif task_status in ("in-progress", "active", "in_progress"):
                             task_emoji = '🔄'
@@ -520,7 +522,7 @@ def generate_status_display(project_dir: str) -> str:
                         else:
                             task_emoji = '🔳'
 
-                        if blocked_by and task_status not in ("completed", "done"):
+                        if blocked_by and task_status not in ("closed", "done"):
                             blocked_str = ", ".join(blocked_by)
                             inner_content.append(f"   {task_emoji} {task_name} (blocked by: {blocked_str})")
                         else:
@@ -540,7 +542,7 @@ def generate_status_display(project_dir: str) -> str:
     elif next_task:
         content_items.append(f"📋 Next: /cat:work {active_minor}-{next_task}")
     else:
-        content_items.append("📋 No pending tasks available")
+        content_items.append("📋 No open tasks available")
 
     # Compute outer box
     content_widths = [display_width(c) for c in content_items]

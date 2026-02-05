@@ -140,12 +140,12 @@ dependencies:
 **Parent Issue Status Lifecycle (M263):**
 
 When a issue is decomposed, the parent issue status follows this lifecycle:
-1. `pending` → `in-progress` (when decomposition starts)
+1. `open` → `in-progress` (when decomposition starts)
 2. Remains `in-progress` while subtasks execute
-3. `in-progress` → `completed` (only when ALL subtasks are completed)
+3. `in-progress` → `closed` (only when ALL subtasks are closed)
 
 **INVALID:** Using `status: decomposed` - this is NOT a valid status value.
-Valid values are: `pending`, `in-progress`, `completed`, `blocked`.
+Valid values are: `open`, `in-progress`, `closed`, `blocked`.
 
 Original issue STATE.md:
 
@@ -175,7 +175,7 @@ New issue STATE.md:
 ```markdown
 # 1.2a-parser-lexer/STATE.md
 
-- **Status:** pending
+- **Status:** open
 - **Progress:** 0%
 - **Created From:** 1.2-implement-parser
 - **Inherits Progress:** true (will receive merge from parent subagent)
@@ -293,7 +293,7 @@ parallel_plan: sub_task_1=[1.2a, 1.2c], sub_task_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
 
 # Update STATE.md - status stays in-progress, add Decomposed field
-# Parent transitions to 'completed' only when ALL subtasks complete
+# Parent transitions to 'closed' only when ALL subtasks complete
 ```
 
 ## Examples

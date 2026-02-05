@@ -1,6 +1,6 @@
 # State
 
-- **Status:** completed
+- **Status:** closed
 - **Progress:** 100%
 - **Dependencies:** [create-agents-directory]
 - **Completed:** 2026-02-05

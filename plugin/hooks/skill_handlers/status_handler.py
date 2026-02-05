@@ -123,12 +123,14 @@ def build_inner_box(header: str, content_items: list, forced_width: int = None) 
 
 # Valid status values (canonical)
 # M253: Scripts must fail-fast on unknown status values
-VALID_STATUSES = {"pending", "in-progress", "completed", "blocked"}
+VALID_STATUSES = {"open", "in-progress", "closed", "blocked"}
 
 # Status aliases that get normalized to canonical values
 STATUS_ALIASES = {
-    "complete": "completed",      # Common typo
-    "done": "completed",          # Alternative
+    "pending": "open",            # Renamed: pending → open
+    "completed": "closed",        # Renamed: completed → closed
+    "complete": "closed",         # Common typo
+    "done": "closed",             # Alternative
     "in_progress": "in-progress", # Underscore variant
     "active": "in-progress",      # Alternative
 }
@@ -140,17 +142,17 @@ def get_task_status(state_file: Path) -> str:
     Returns canonical status value. Raises ValueError for unknown statuses (M253).
     """
     if not state_file.exists():
-        return "pending"
+        return "open"
 
     try:
         content = state_file.read_text()
     except Exception:
-        return "pending"
+        return "open"
 
     # Format: "- **Status:** <value>"
     match = re.search(r'^\- \*\*Status:\*\*\s*(.+)$', content, re.MULTILINE)
     if not match:
-        return "pending"
+        return "open"
 
     raw_status = match.group(1).strip().lower()
 
@@ -171,7 +173,7 @@ def get_task_status(state_file: Path) -> str:
     raise ValueError(
         f"Unknown status '{raw_status}' in {state_file}. "
         f"Valid values: {valid_list}. "
-        f"Common typo: 'complete' should be 'completed'"
+        f"Common typo: 'complete' should be 'closed'"
     )
 
 

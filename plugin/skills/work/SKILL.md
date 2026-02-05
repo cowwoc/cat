@@ -118,7 +118,7 @@ When prepare phase returns NO_TASKS, check the `message` field and provide appro
 |------------------|------------------|
 | "locked" | Suggest `/cat:cleanup` to clear stale locks, or wait for other sessions |
 | "blocked" | Suggest resolving blocking dependencies first |
-| "completed" | All tasks done - suggest `/cat:status` to verify or `/cat:add` for new work |
+| "closed" | All tasks done - suggest `/cat:status` to verify or `/cat:add` for new work |
 | other | Suggest `/cat:status` to see available tasks |
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
