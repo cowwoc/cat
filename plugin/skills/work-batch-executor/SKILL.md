@@ -189,13 +189,17 @@ When execution returns FAILED with messages about "nesting", "token budget", or 
 {
   "status": "FAILED",
   "reason": "nesting_limit",
-  "action_required": "Parent should invoke required skills directly via Skill tool, not through nested subagents",
+  "action_required": "For batch operations: use /cat:delegate. For single files: invoke skill directly via Skill tool",
   "skills_to_invoke": ["cat:shrink-doc"],
-  "files": ["list", "of", "files"]
+  "files": ["list", "of", "files"],
+  "batch_command": "/cat:delegate --skill shrink-doc file1.md file2.md ..."
 }
 ```
 
-The parent (work-with-issue or main agent) can then invoke the skill directly without nesting.
+**For batch operations (multiple files):** Use `/cat:delegate --skill {skill} file1 file2 ...`
+**For single files:** Invoke skill directly via Skill tool
+
+The parent (work-with-issue or main agent) can then invoke appropriately without nesting.
 
 **Why this matters:** Failure messages describing "excessive nesting" prime the receiving agent to bypass
 skills entirely. The fix is actionable guidance: "invoke skill directly" not "avoid the skill".
