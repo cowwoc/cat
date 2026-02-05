@@ -2262,6 +2262,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Skill descriptions should contain trigger synonyms (resume, continue, pick up) so intent routing maps user language to the correct skill."
+    },
+    {
+      "id": "M431",
+      "timestamp": "2026-02-05T15:39:00Z",
+      "category": "tool_misuse",
+      "description": "Inline jq with != operator failed due to bash shell escaping of ! character, causing 5 retries",
+      "root_cause": "optimize-execution skill documents all jq as inline bash commands; bash escapes != breaking jq syntax",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/optimize-execution/SKILL.md",
+      "pattern_keywords": [
+        "shell_quoting",
+        "jq",
+        "inline_bash",
+        "histexpand"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Write all jq queries to a .sh script file first, then execute it once via Bash tool"
     }
   ]
 }
