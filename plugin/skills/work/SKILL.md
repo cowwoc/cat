@@ -202,7 +202,11 @@ For scope-complete (no more tasks): Use **SCOPE_COMPLETE** from script output Wo
 If any phase subagent fails unexpectedly:
 
 1. Capture error message
-2. Attempt lock release: `issue-lock.sh release ...`
+2. Release the lock using positional arguments:
+   ```bash
+   "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release <project-dir> <issue-id> <session-id>
+   # Example: issue-lock.sh release /workspace 2.1-compress-batch-1 $SESSION_ID
+   ```
 3. Display error to user
 4. Offer: Retry, Abort, or Manual cleanup
 
