@@ -570,6 +570,16 @@ Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md refer
 
 **CRITICAL:** Follow template guidance to separate Execution Steps (actions only) from Success Criteria (measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution Steps as this primes subagents to fabricate results.
 
+**PLAN.md Comprehensiveness (M430):** The PLAN.md must be comprehensive enough for a haiku-level
+model to implement mechanically without making architectural decisions. Include:
+- Exact file paths to create/modify
+- Specific code patterns or formats to use
+- Complete lists (all files, all references to update, all acceptance criteria)
+- Research findings that inform implementation decisions
+
+If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md
+is not detailed enough. The subagent should only decide "how to write the code", not "what approach to take".
+
 **Batch Execution Check (M427):** When the issue involves multiple files AND a skill (e.g., compress 9 files with /cat:shrink-doc):
 1. Read the target skill's documentation for batch/parallel execution patterns
 2. If the skill documents using `/cat:delegate` for multiple files, write execution steps to use delegate
