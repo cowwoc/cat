@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-04T20:00:00-05:00",
-  "mistake_count_since_last": 16,
+  "last_retrospective": "2026-02-05T00:57:20-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -287,6 +287,29 @@
         "A013"
       ],
       "note": "Confusion about delegation mechanics: Task vs TaskCreate, manual spawning vs /cat:delegate, polling vs blocking. Subagent prompts also omit critical requirements."
+    },
+    {
+      "pattern_id": "PATTERN-014",
+      "pattern": "batch_skill_invocation_failure",
+      "occurrences_total": 5,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-05T00:00:00Z",
+      "last_seen": "2026-02-05T06:00:00Z",
+      "last_action_date": "2026-02-05T00:57:20-05:00",
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M425",
+        "M426",
+        "M427",
+        "M428",
+        "M429"
+      ],
+      "related_action_items": [
+        "A015",
+        "A016"
+      ],
+      "note": "Chain failures when batch operations require nested skill invocations. Subagents fail/fabricate, failure messages prime bypass, main agent does work manually."
     }
   ],
   "action_items": [
@@ -653,6 +676,46 @@
         "verdict": "pending"
       },
       "implementation_note": "Implemented in 2.1-strengthen-hook-patterns: Updated validate-worktree-branch.sh and block_main_rebase.py to handle git -C flag variations, added test_git_flag_patterns.py with 12 test cases"
+    },
+    {
+      "id": "A015",
+      "priority": "high",
+      "description": "Failure messages must include actionable recovery guidance: retry with single file, escalate to user, NEVER bypass skill",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-014",
+      "status": "implemented",
+      "created_date": "2026-02-05T00:57:20-05:00",
+      "completed_date": "2026-02-05T00:57:20-05:00",
+      "related_mistakes": [
+        "M425",
+        "M429"
+      ],
+      "implementation": "M429 prevention added to error-handling.md: explicit guidance for main agent when subagent fails at skill invocation",
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A016",
+      "priority": "medium",
+      "description": "Remove detailed failure response examples from skill docs to prevent fabrication",
+      "category": "misleading_documentation",
+      "pattern_id": "PATTERN-014",
+      "status": "open",
+      "created_date": "2026-02-05T00:57:20-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M428"
+      ],
+      "effectiveness_check": {
+        "mistakes_before": 1,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     }
   ]
 }
