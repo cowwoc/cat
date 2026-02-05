@@ -40,11 +40,11 @@ class ValidatePlanMdHandler:
         Check if command is spawning a subagent with a PLAN.md that contains priming patterns.
 
         This runs on Bash commands, so we look for patterns that indicate reading PLAN.md
-        and spawning work-execute subagents.
+        and spawning implementation subagents (via work-with-issue orchestration).
         """
         # Only check if this appears to be reading PLAN.md for subagent execution
-        # We look for patterns like work-execute being invoked
-        if 'work-execute' not in command and 'EXECUTION_STEPS' not in command:
+        # We look for patterns like EXECUTION_STEPS being read from PLAN.md
+        if 'EXECUTION_STEPS' not in command:
             return None
 
         # Try to find PLAN.md path in the command
