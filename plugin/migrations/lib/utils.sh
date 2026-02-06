@@ -105,12 +105,19 @@ get_plugin_version() {
     fi
 
     if [[ ! -f "$plugin_file" ]]; then
-        echo "0.0.0"
-        return
+        log_migration "ERROR: plugin.json not found at $plugin_file"
+        echo "ERROR: plugin.json not found - plugin installation may be broken" >&2
+        exit 1
     fi
 
     local version
-    version=$(jq -r '.version // "0.0.0"' "$plugin_file" 2>/dev/null || echo "0.0.0")
+    version=$(jq -r '.version // empty' "$plugin_file")
+
+    if [[ -z "$version" || "$version" == "null" ]]; then
+        log_migration "ERROR: No version field in $plugin_file"
+        echo "ERROR: No version field in plugin.json" >&2
+        exit 1
+    fi
 
     echo "$version"
 }
