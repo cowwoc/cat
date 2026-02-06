@@ -7,7 +7,7 @@ prepare phase latency from ~50s to ~4s. Performs all 10 steps of the prepare pha
 that were previously done via LLM round-trips.
 
 Usage:
-  work-prepare.py --session-id ID --project-dir DIR [--exclude-pattern GLOB] --trust-level LEVEL
+  work-prepare.py --session-id ID --project-dir DIR [--exclude-pattern GLOB] [--issue-id ID] --trust-level LEVEL
 
 Outputs JSON result matching the work-prepare SKILL.md output contract.
 """
@@ -56,7 +56,8 @@ def verify_cat_structure(project_dir: Path) -> bool:
 def call_get_available_issues(
     session_id: str,
     project_dir: Path,
-    exclude_pattern: Optional[str]
+    exclude_pattern: Optional[str],
+    issue_id: Optional[str]
 ) -> Dict[str, Any]:
     """
     Step 2: Call get-available-issues.sh to find next task.
@@ -65,6 +66,7 @@ def call_get_available_issues(
         session_id: Current session ID
         project_dir: Project root directory
         exclude_pattern: Optional glob pattern to exclude issues
+        issue_id: Optional specific issue ID to select
 
     Returns:
         Parsed JSON result from get-available-issues.sh
@@ -82,6 +84,9 @@ def call_get_available_issues(
 
     if exclude_pattern:
         cmd.extend(["--exclude-pattern", exclude_pattern])
+
+    if issue_id:
+        cmd.extend(["--issue-id", issue_id])
 
     result = subprocess.run(
         cmd,
@@ -564,6 +569,7 @@ def main():
     parser.add_argument("--session-id", required=True, help="Current session ID")
     parser.add_argument("--project-dir", required=True, help="Project root directory")
     parser.add_argument("--exclude-pattern", required=False, help="Glob pattern to exclude issues")
+    parser.add_argument("--issue-id", required=False, help="Specific issue ID to select (overrides priority-based selection)")
     parser.add_argument("--trust-level", required=True, choices=["low", "medium", "high"],
                        help="Trust level for execution")
 
@@ -584,7 +590,8 @@ def main():
         discovery_result = call_get_available_issues(
             args.session_id,
             project_dir,
-            args.exclude_pattern
+            args.exclude_pattern,
+            args.issue_id
         )
 
         status = discovery_result.get("status")

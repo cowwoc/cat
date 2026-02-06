@@ -3149,6 +3149,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Use git -C instead of cd for all git operations. Check for active worktrees before committing to base branch. Never cd into ANY worktree including /workspace."
+    },
+    {
+      "id": "M465",
+      "timestamp": "2026-02-06T22:07:40Z",
+      "category": "tool_misuse",
+      "description": "work-prepare.py script lacks --issue-id parameter, so user's specific issue selection is ignored and script picks first available task alphabetically",
+      "root_cause": "Script accepts required parameters (session-id, project-dir) but is missing --issue-id parameter to support specific issue selection. /cat:work skill accepts issue ID from user but doesn't pass it to work-prepare.py because parameter doesn't exist.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/work-prepare.py",
+      "pattern_keywords": [
+        "missing_parameter",
+        "script_argument",
+        "issue_selection"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Add --issue-id optional parameter to work-prepare.py argparse, pass it to get-available-issues.sh, and update /cat:work skill to pass user's issue ID to script"
     }
   ]
 }
