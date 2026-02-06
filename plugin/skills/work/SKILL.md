@@ -75,26 +75,29 @@ Use these values: TRUST, VERIFY, AUTO_REMOVE.
 
 ## Phase 1: Prepare
 
-Delegate to work-prepare subagent using the Task tool with these JSON parameters:
+Execute the deterministic preparation script directly (no subagent needed).
 
-- **description:** `"Prepare: find task, create worktree"`
-- **subagent_type:** `"general-purpose"`
-- **model:** `"sonnet"`
-- **prompt:** The prompt below (substitute variables with actual values)
+**Convert filter to glob pattern (if ARGUMENTS contains a filter):**
 
-Prompt for the subagent:
+If ARGUMENTS contains natural language like "skip compression" or "only migration":
+- "skip X" → `--exclude-pattern "X*"` or `--exclude-pattern "*X*"`
+- "only X" → filter result in memory after script returns (script doesn't support inclusion patterns)
 
-> Execute the work-prepare phase skill.
->
-> SESSION_ID: ${CLAUDE_SESSION_ID}
-> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
-> ARGUMENTS: $ARGUMENTS
-> TRUST_LEVEL: ${TRUST}
->
-> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/work-prepare/SKILL.md
->
-> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
-> This is critical because the parent agent parses your response as JSON.
+**Call the prepare script:**
+
+```bash
+EXCLUDE_ARG=""
+# If ARGUMENTS contains exclusion pattern, set EXCLUDE_ARG
+# Example: if ARGUMENTS="skip compression", then EXCLUDE_ARG="--exclude-pattern compress*"
+
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py" \
+  --session-id "${CLAUDE_SESSION_ID}" \
+  --project-dir "${CLAUDE_PROJECT_DIR}" \
+  --trust-level "${TRUST}" \
+  ${EXCLUDE_ARG}
+```
+
+Parse the JSON output from stdout.
 
 **Handle result:**
 
@@ -108,16 +111,14 @@ Prompt for the subagent:
 | ERROR | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
-**Parsing the result (M448):** The subagent's final message is returned as text. Extract the JSON
-object from it — look for `{` through the matching `}`. If the result contains surrounding text,
-ignore the text and parse just the JSON block.
+**Parsing the result (M448):** The script returns JSON to stdout. Parse it directly.
 
-**No-result handling (M441, M444):** If the prepare subagent returns no parseable JSON (empty output,
-turn limit exceeded, or no JSON block found), treat as ERROR and STOP. Do NOT attempt to reconstruct
-the result by listing worktrees or reading lock files. Artifacts from other sessions may exist and will
-mislead you into working on the wrong task.
+**No-result handling (M441, M444):** If the prepare script returns no parseable JSON (empty output
+or malformed JSON), treat as ERROR and STOP. Do NOT attempt to reconstruct the result by listing
+worktrees or reading lock files. Artifacts from other sessions may exist and will mislead you into
+working on the wrong task.
 
-Display: "Prepare phase failed to return a result. The subagent may have exceeded its turn budget."
+Display: "Prepare phase failed to return a result. The script may have encountered an error."
 Then STOP. Do not proceed to work-with-issue.
 
 **NO_TASKS Guidance (M396, M441):**
