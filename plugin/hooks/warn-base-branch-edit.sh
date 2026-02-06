@@ -1,7 +1,7 @@
 #!/bin/bash
 # Hook: warn-base-branch-edit.sh
 # Type: PreToolUse (Write|Edit)
-# Purpose: Warn when editing source files directly (A003/M097/M220/M302)
+# Purpose: Warn when editing source files directly (A003/M097/M220/M302/M442)
 #
 # CAT workflow requires:
 # 1. Issue work happens in isolated worktrees (M220)
@@ -10,7 +10,7 @@
 # This hook warns when editing source files outside proper workflow.
 #
 # Allowed without warning:
-# - .claude/ directory (orchestration files)
+# - .claude/cat/, .claude/rules/, .claude/settings* (orchestration only, not commands/hooks)
 # - STATE.md, PLAN.md, CHANGELOG.md, ROADMAP.md files
 # - CLAUDE.md, PROJECT.md (project instructions)
 # - retrospectives/ directory
@@ -56,8 +56,12 @@ if [[ -n "$GIT_DIR" ]] && [[ -f "$GIT_DIR/cat-base" ]]; then
 fi
 
 # Allowed paths (CAT orchestration, not task implementation)
+# M442: .claude/ is NOT a blanket allowlist - only specific subdirs are orchestration
 ALLOWED_PATTERNS=(
-    ".claude/"
+    ".claude/settings.json"     # Project settings
+    ".claude/settings.local.json"
+    ".claude/cat/"              # CAT config/retrospectives
+    ".claude/rules/"            # Project rules
     "STATE.md"
     "PLAN.md"
     "CHANGELOG.md"
@@ -71,6 +75,8 @@ ALLOWED_PATTERNS=(
     "retrospectives-"       # Split files: retrospectives-YYYY-MM.json
     "index.json"            # Retrospective index
 )
+# NOTE (M442): .claude/commands/ and .claude/hooks/ are NOT allowed
+# because creating/editing skills and hooks IS implementation work
 
 # NARROW ALLOWLIST (M382): hooks/ and skills/ require special handling
 # - Editing EXISTING files: allowed (orchestration updates)
