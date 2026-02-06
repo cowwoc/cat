@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- fix-decomposed-parent-completion
 - fix-scope-complete-box-alignment
 - fix-progress-banner-newline
 - fix-merge-subagent-worktree-cd
