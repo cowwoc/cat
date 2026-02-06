@@ -199,6 +199,16 @@ After agent completes:
 
 2. **Determine version number and save compressed version**:
 
+   First, discover existing version files using the Glob tool:
+   ```
+   Glob tool:
+     pattern: "/tmp/compressed-{{filename}}-v*.md"
+   ```
+
+   Then determine the next version number. If Glob returned files, extract the highest
+   version number from the paths (e.g., `/tmp/compressed-foo-v3.md` → 3). If no files
+   found, start at version 1.
+
    ```bash
    VERSION_FILE="/tmp/shrink-doc-{{filename}}-version.txt"
 
@@ -207,8 +217,9 @@ After agent completes:
      LAST_VERSION=$(cat "$VERSION_FILE")
      VERSION=$((LAST_VERSION + 1))
    else
-     # First time: check for existing versions to continue numbering
-     HIGHEST=$(ls /tmp/compressed-{{filename}}-v*.md 2>/dev/null | sed 's/.*-v\([0-9]*\)\.md/\1/' | sort -n | tail -1)
+     # First time: use highest version from Glob results above
+     # Replace <HIGHEST> with the number extracted from Glob output, or leave empty if no files found
+     HIGHEST=<HIGHEST>
      if [ -n "$HIGHEST" ]; then
        VERSION=$((HIGHEST + 1))
      else
