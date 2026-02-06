@@ -285,6 +285,7 @@ Your final message MUST be ONLY this JSON (no other text):
 {
   "phase": "investigate",
   "status": "COMPLETE",
+  "user_summary": "1-3 sentence summary of what this phase found (for display to user between phases)",
   "event_sequence": {
     "timeline": ["Event 1", "Event 2", ...],
     "mistake_trigger": "What actually triggered the mistake"
