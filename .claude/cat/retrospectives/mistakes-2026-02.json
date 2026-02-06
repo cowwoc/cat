@@ -2653,6 +2653,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Requirements stakeholder understands that all CAT SKILL.md files contain Claude-directed instructions, and non-user-invocable skills are still valid execution targets"
+    },
+    {
+      "id": "M446",
+      "timestamp": "2026-02-06T08:37:48Z",
+      "category": "protocol_violation",
+      "description": "Presented approval gate without squashing worktree commits by topic first - user saw messy intermediate commit history",
+      "root_cause": "work-with-issue skill had squash in merge phase (Step 6) but no squash step before the approval gate (Step 5), so commits were presented unsquashed for review",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "approval-gate",
+        "commit-organization",
+        "review"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Squash worktree commits by topic into 1-2 clean commits before presenting the approval gate for user review"
     }
   ]
 }
