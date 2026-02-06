@@ -3,4 +3,4 @@
 - **Status:** open
 - **Progress:** 0%
 - **Created From:** compress-concepts-md
-- **Dependencies:** [prevent-plan-md-priming]
+- **Dependencies:** [prevent-plan-md-priming, migrate-python-to-java]
