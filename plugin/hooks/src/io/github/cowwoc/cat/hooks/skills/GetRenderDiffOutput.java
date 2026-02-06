@@ -165,8 +165,8 @@ public final class GetRenderDiffOutput
       Path cwd = Path.of(System.getProperty("user.dir"));
       String worktreeName = cwd.getFileName().toString();
 
-      // Check if we're in a .worktrees directory
-      if (cwd.getParent() != null && ".worktrees".equals(cwd.getParent().getFileName().toString()))
+      // Check if we're in a worktrees directory
+      if (cwd.getParent() != null && "worktrees".equals(cwd.getParent().getFileName().toString()))
       {
         // Extract version from worktree name (e.g., "2.0-issue-name" -> "v2.0")
         Matcher match = VERSION_PATTERN.matcher(worktreeName);

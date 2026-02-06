@@ -152,7 +152,7 @@ echo '{
   "context": {
     "phase": "plan",
     "locks_to_remove": ["2.1-issue-name"],
-    "worktrees_to_remove": [{"path": "/workspace/.worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
+    "worktrees_to_remove": [{"path": "/workspace/.claude/cat/worktrees/2.1-issue-name", "branch": "2.1-issue-name"}],
     "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }

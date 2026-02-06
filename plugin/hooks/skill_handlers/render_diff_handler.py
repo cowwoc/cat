@@ -27,8 +27,8 @@ def detect_base_branch(project_root: Path) -> str | None:
         cwd = Path.cwd()
         worktree_name = cwd.name
 
-        # Check if we're in a .worktrees directory
-        if cwd.parent.name == ".worktrees":
+        # Check if we're in a worktrees directory
+        if cwd.parent.name == "worktrees":
             # Extract version from worktree name (e.g., "2.0-issue-name" -> "v2.0")
             match = re.match(r'^(\d+\.\d+)-', worktree_name)
             if match:

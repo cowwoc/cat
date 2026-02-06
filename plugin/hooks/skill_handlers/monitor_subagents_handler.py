@@ -35,7 +35,7 @@ class MonitorSubagentsHandler:
         if not project_root:
             project_root = os.getcwd()
 
-        worktree_dir = Path(project_root) / ".worktrees"
+        worktree_dir = Path(project_root) / ".claude" / "cat" / "worktrees"
 
         # Collect subagent data
         subagents = []

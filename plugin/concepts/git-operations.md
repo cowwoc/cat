@@ -45,10 +45,10 @@ git status && git log --oneline -3 && git diff --stat
 
 ```bash
 # Instead of:
-cd /workspace/.worktrees/issue && git status
+cd /workspace/.claude/cat/worktrees/issue && git status
 
 # Use:
-git -C /workspace/.worktrees/issue status
+git -C /workspace/.claude/cat/worktrees/issue status
 ```
 
 ## Linear History Workflow

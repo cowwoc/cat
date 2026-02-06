@@ -302,7 +302,7 @@ def create_worktree(
     Raises:
         RuntimeError: If worktree creation fails
     """
-    worktree_path = project_dir / ".worktrees" / issue_branch
+    worktree_path = project_dir / ".claude" / "cat" / "worktrees" / issue_branch
 
     # Create worktree
     result = subprocess.run(

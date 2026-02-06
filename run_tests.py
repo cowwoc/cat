@@ -231,9 +231,9 @@ def test_add_handler():
     from skill_handlers.add_handler import AddHandler
     handler = AddHandler()
 
-    # Test returns None without item_type
+    # Test returns HANDLER_DATA without item_type (preload mode)
     result = handler.handle({})
-    runner.test("Returns None without item_type", result is None)
+    runner.test("Returns None without item_type", result is not None and result.startswith("HANDLER_DATA: "))
 
     # Test returns None for invalid item_type
     result = handler.handle({"item_type": "invalid"})
@@ -397,13 +397,13 @@ def test_active_agents():
         lock1 = locks_dir / "2.1-task-one.lock"
         lock1.write_text(f"""session_id=abc123-session-1
 created_at={now - 300}
-worktree=/workspace/.worktrees/2.1-task-one
+worktree=/workspace/.claude/cat/worktrees/2.1-task-one
 created_iso=2026-01-31T12:00:00Z""")
 
         lock2 = locks_dir / "2.0-task-two.lock"
         lock2.write_text(f"""session_id=def456-session-2
 created_at={now - 720}
-worktree=/workspace/.worktrees/2.0-task-two
+worktree=/workspace/.claude/cat/worktrees/2.0-task-two
 created_iso=2026-01-31T11:48:00Z""")
 
         # Test: get all agents
@@ -554,7 +554,7 @@ def test_cleanup_handler():
     context = {
         "phase": "survey",
         "worktrees": [
-            {"path": "/workspace/.worktrees/1.0-task", "branch": "1.0-task", "state": ""}
+            {"path": "/workspace/.claude/cat/worktrees/1.0-task", "branch": "1.0-task", "state": ""}
         ],
         "locks": [],
         "branches": ["1.0-old-branch"],
@@ -622,11 +622,11 @@ def test_delegate_handler():
 
     # Test: worktree parameter is captured
     result = handler.handle({
-        "user_prompt": "/cat:delegate --skill shrink-doc --worktree /workspace/.worktrees/test file.md"
+        "user_prompt": "/cat:delegate --skill shrink-doc --worktree /workspace/.claude/cat/worktrees/test file.md"
     })
     runner.test("Returns string with worktree", isinstance(result, str))
     if result:
-        runner.test("Contains worktree path", "/workspace/.worktrees/test" in result)
+        runner.test("Contains worktree path", "/workspace/.claude/cat/worktrees/test" in result)
 
 
 def test_posttool_skill_preprocessor_output():
@@ -952,7 +952,7 @@ def test_get_available_issues_discovery():
 
     # Test 5: From inside a worktree, finds MAIN workspace (not worktree's snapshot)
     # This is critical: locks and task state must be in main workspace
-    worktree_path = PROJECT_ROOT.parent / ".worktrees" / "2.1-self-discover-env-vars"
+    worktree_path = PROJECT_ROOT.parent / ".claude" / "cat" / "worktrees" / "2.1-self-discover-env-vars"
     main_workspace = PROJECT_ROOT.parent  # /workspace
     if worktree_path.exists() and worktree_path != main_workspace:
         # Run from worktree, verify it uses main workspace's .claude/cat

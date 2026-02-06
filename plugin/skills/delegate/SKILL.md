@@ -484,7 +484,7 @@ for item in "${ITEMS[@]}"; do
   UUID=$(uuidgen | cut -c1-8)
   WORKTREE_NAME="${item}-sub-${UUID}"
   BRANCH_NAME="${item}-sub-${UUID}"
-  WORKTREE_PATH=".worktrees/${WORKTREE_NAME}"
+  WORKTREE_PATH=".claude/cat/worktrees/${WORKTREE_NAME}"
 
   # Create worktree
   git worktree add -b "${BRANCH_NAME}" "${WORKTREE_PATH}" HEAD
@@ -886,7 +886,7 @@ The exploration subagent handles three phases internally:
   "preparation": {
     "estimatedTokens": 45000,
     "percentOfThreshold": 56,
-    "worktreePath": "/workspace/.worktrees/1.0-issue",
+    "worktreePath": "/workspace/.claude/cat/worktrees/1.0-issue",
     "branch": "1.0-issue"
   },
   "findings": {

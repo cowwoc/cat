@@ -148,7 +148,7 @@ HARD_LIMIT_PCT=...
 HARD_LIMIT=$((CONTEXT_LIMIT * HARD_LIMIT_PCT / 100))
 
 # Find all subagent completion files for this task
-TASK_WORKTREES=$(find .worktrees -name ".completion.json" -path "*${ISSUE_ID}*" 2>/dev/null)
+TASK_WORKTREES=$(find .claude/cat/worktrees -name ".completion.json" -path "*${ISSUE_ID}*" 2>/dev/null)
 
 TOTAL_TOKENS=0
 TOTAL_EXCEEDED=0

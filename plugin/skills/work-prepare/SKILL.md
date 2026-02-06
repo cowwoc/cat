@@ -39,7 +39,7 @@ Return JSON on success:
   "minor": "1",
   "issue_name": "issue-name",
   "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
-  "worktree_path": "/workspace/.worktrees/2.1-issue-name",
+  "worktree_path": "/workspace/.claude/cat/worktrees/2.1-issue-name",
   "branch": "2.1-issue-name",
   "base_branch": "v2.1",
   "estimated_tokens": 45000,
@@ -227,7 +227,7 @@ If exceeds hard limit: Return status `OVERSIZED` with decomposition recommendati
 ```bash
 ISSUE_BRANCH="${MAJOR}.${MINOR}-${ISSUE_NAME}"
 BASE_BRANCH=$(git branch --show-current)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/${ISSUE_BRANCH}"
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/${ISSUE_BRANCH}"
 
 git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
 echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRANCH}/cat-base"

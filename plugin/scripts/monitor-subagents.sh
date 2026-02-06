@@ -17,7 +17,7 @@ trap 'echo "{\"error\":\"Script failed at line $LINENO: $BASH_COMMAND\"}" >&2; e
 # CONFIGURATION
 # ============================================================================
 
-WORKTREE_DIR=".worktrees"
+WORKTREE_DIR=".claude/cat/worktrees"
 SESSION_BASE="/home/node/.config/claude/projects/-workspace"
 THRESHOLD_TOKENS=80000  # 40% of 200K context
 

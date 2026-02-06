@@ -42,7 +42,7 @@ cd "$PROJECT_DIR"
 if [[ -z "$BASE_BRANCH" ]]; then
     # Try to extract from worktree name
     WORKTREE_NAME=$(basename "$(pwd)")
-    if [[ "$(dirname "$(pwd)")" == *".worktrees"* ]]; then
+    if [[ "$(dirname "$(pwd)")" == *"worktrees"* ]]; then
         # Extract version from worktree name (e.g., "2.0-issue-name" -> "v2.0")
         if [[ "$WORKTREE_NAME" =~ ^([0-9]+\.[0-9]+)- ]]; then
             BASE_BRANCH="v${BASH_REMATCH[1]}"

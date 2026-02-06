@@ -487,7 +487,7 @@ find_issue_in_minor() {
 
         # Check for existing worktree (M237)
         # If worktree exists, assume it's in use by another session - skip this issue
-        local worktree_path="$PROJECT_DIR/.worktrees/$issue_id"
+        local worktree_path="$PROJECT_DIR/.claude/cat/worktrees/$issue_id"
         if [[ -d "$worktree_path" ]]; then
             # Skip this issue - worktree indicates another session is working on it
             continue
@@ -604,7 +604,7 @@ find_next_issue() {
 
         # Check for existing worktree (M237)
         # If worktree exists, it's in use by another session - report as unavailable
-        local worktree_path="$PROJECT_DIR/.worktrees/$TARGET"
+        local worktree_path="$PROJECT_DIR/.claude/cat/worktrees/$TARGET"
         if [[ -d "$worktree_path" ]]; then
             echo '{"status":"existing_worktree","issue_id":"'"$TARGET"'","major":"'"$major"'","minor":"'"$minor"'","issue_name":"'"$issue_name"'","issue_path":"'"$issue_dir"'","worktree_path":"'"$worktree_path"'","message":"Issue has existing worktree - likely in use by another session"}'
             return 1

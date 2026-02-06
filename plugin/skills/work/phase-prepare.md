@@ -381,7 +381,7 @@ ISSUE_BRANCH="{major}.{minor}-{issue-name}"
 git branch "$ISSUE_BRANCH" "$BASE_BRANCH" 2>/dev/null || true
 
 # Create worktree (use absolute path to avoid cwd dependency)
-WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.worktrees/$ISSUE_BRANCH"
+WORKTREE_PATH="${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/$ISSUE_BRANCH"
 git worktree add "$WORKTREE_PATH" "$ISSUE_BRANCH" 2>/dev/null || \
     echo "Worktree already exists at $WORKTREE_PATH"
 

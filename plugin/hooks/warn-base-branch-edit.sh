@@ -116,7 +116,7 @@ CAT workflow requires issue work to happen in isolated worktrees.
 
 If working on an issue:
 1. Run /cat:work to create a worktree
-2. Or manually: git worktree add .worktrees/issue-name -b issue-branch
+2. Or manually: git worktree add .claude/cat/worktrees/issue-name -b issue-branch
 
 If this is intentional infrastructure work (not a task), proceed.
 
@@ -129,7 +129,7 @@ fi
 # This bypasses worktree isolation - the edit goes to main workspace, not the worktree
 if [[ "$IN_TASK_WORKTREE" == "true" ]] && [[ "$FILE_PATH" == /workspace/* ]]; then
     CWD=$(pwd)
-    if [[ "$CWD" != /workspace && "$CWD" != /workspace/* ]] || [[ "$CWD" == *".worktrees"* ]]; then
+    if [[ "$CWD" != /workspace && "$CWD" != /workspace/* ]] || [[ "$CWD" == *"worktrees"* ]]; then
         output_hook_warning "PreToolUse" "⚠️ WORKTREE PATH BYPASS DETECTED (ESCALATE-A003/M267)
 
 File: $FILE_PATH

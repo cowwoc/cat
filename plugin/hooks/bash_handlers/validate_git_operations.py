@@ -29,7 +29,7 @@ Use --force-with-lease instead, or ask the user if they really want this."""
         # Block: git reset --hard without explicit acknowledgment
         if re.search(r'git\s+reset\s+--hard', command):
             # Allow if in a worktree or has acknowledgment
-            if '# ACKNOWLEDGED' in command or '.worktrees' in command:
+            if '# ACKNOWLEDGED' in command or 'worktrees' in command:
                 return None
             return {
                 "decision": "block",

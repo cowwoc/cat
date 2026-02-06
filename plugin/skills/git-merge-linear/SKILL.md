@@ -63,7 +63,7 @@ WORKTREE_PATH=$(pwd) &&
 
 if [[ "$WORKTREE_PATH" == "$MAIN_REPO" ]]; then
   echo "ERROR: Must run from issue worktree, not main repo"
-  echo "Navigate to: /workspace/.worktrees/<issue-name>"
+  echo "Navigate to: /workspace/.claude/cat/worktrees/<issue-name>"
   exit 1
 fi
 
@@ -223,7 +223,7 @@ git log --oneline -3 "$BASE_BRANCH"
 cd "$MAIN_REPO" &&
   git worktree remove "$WORKTREE_PATH" --force 2>/dev/null || true
 git branch -D "$TASK_BRANCH" 2>/dev/null || true
-rmdir /workspace/.worktrees 2>/dev/null || true
+rmdir /workspace/.claude/cat/worktrees 2>/dev/null || true
 echo "Cleanup complete"
 ```
 

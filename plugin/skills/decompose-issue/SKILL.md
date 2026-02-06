@@ -57,9 +57,9 @@ cat "${TASK_DIR}/PLAN.md"
 cat "${TASK_DIR}/STATE.md"
 
 # If subagent exists, check its progress
-if [ -d ".worktrees/${ISSUE}-sub-${UUID}" ]; then
+if [ -d ".claude/cat/worktrees/${ISSUE}-sub-${UUID}" ]; then
   # Review commits made
-  cd ".worktrees/${ISSUE}-sub-${UUID}"
+  cd ".claude/cat/worktrees/${ISSUE}-sub-${UUID}"
   git log --oneline origin/HEAD..HEAD
 fi
 ```

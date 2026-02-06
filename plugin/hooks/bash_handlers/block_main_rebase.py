@@ -40,7 +40,7 @@ WHY THIS IS BLOCKED:
 • Changing main worktree's branch disrupts operations
 
 WHAT TO DO INSTEAD:
-• For issue work: Use the issue worktree at /workspace/.worktrees/<branch>
+• For issue work: Use the issue worktree at /workspace/.claude/cat/worktrees/<branch>
 • For cleanup: Delete the worktree directory, don't checkout in main"""
                     }
 
@@ -93,7 +93,7 @@ WHY THIS IS BLOCKED:
 TO REBASE AN ISSUE BRANCH ONTO MAIN:
 Run from your issue's worktree, not main:
 
-  cd /workspace/.worktrees/<issue-branch>
+  cd /workspace/.claude/cat/worktrees/<issue-branch>
   git rebase main"""
             }
 
