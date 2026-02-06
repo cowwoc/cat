@@ -327,10 +327,16 @@ created (e.g., learning commits, other merges). Rebase ensures squashing only ca
 git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
 ```
 
-Then use `/cat:git-squash` or `git reset --soft ${BASE_BRANCH}` to consolidate commits:
+Then use `/cat:git-squash` to consolidate commits:
 
 - All implementation work + STATE.md closure into 1 feature/bugfix commit
 - Target: 1 commit (STATE.md belongs with implementation, not in a separate commit)
+
+**CRITICAL: STATE.md file grouping (M076):**
+- STATE.md status changes belong IN THE SAME COMMIT as the implementation work
+- Do NOT create separate `planning:` or `config:` commits for STATE.md updates
+- Commit type should match the implementation work (`feature:`, `bugfix:`, `config:`, etc.)
+- Example: `feature: add user authentication` includes STATE.md closure in that commit
 
 This ensures the user reviews clean commit history, not intermediate implementation state.
 

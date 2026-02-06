@@ -210,7 +210,13 @@ fi
 # 1. Verify commits are at tip
 git log --oneline -1  # Should show <last-commit-to-squash>
 
-# 2. Create backup
+# 2. MANDATORY: Rebase on base branch HEAD before squashing
+# Ensures we don't absorb base branch changes into the squash.
+# If base advanced after worktree creation, squashing without rebase
+# captures stale versions of files that were fixed on base.
+git rebase <base-branch>
+
+# 3. Create backup
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
 ```
@@ -229,24 +235,24 @@ echo "✓ Backup verified: $BACKUP"
 ```
 
 ```bash
-# 3. Verify clean working directory
+# 4. Verify clean working directory
 git status --porcelain  # Must be empty
 
-# 4. Create squashed commit using commit-tree (M305)
+# 5. Create squashed commit using commit-tree (M305)
 # This uses COMMIT content directly, ignoring working directory state.
 # Prevents stale worktree files from being captured in the squash.
 TREE=$(git rev-parse HEAD^{tree})
 MESSAGE="Unified message describing what code does"
 NEW_COMMIT=$(git commit-tree "$TREE" -p <base-commit> -m "$MESSAGE")
 
-# 5. Move branch to new squashed commit
+# 6. Move branch to new squashed commit
 git reset --hard "$NEW_COMMIT"
 
-# 6. Verify result
+# 7. Verify result
 git diff "$BACKUP"  # Must be empty (same content)
 git rev-list --count <base-commit>..HEAD  # Must be 1
 
-# 7. Cleanup backup
+# 8. Cleanup backup
 git branch -D "$BACKUP"
 ```
 
