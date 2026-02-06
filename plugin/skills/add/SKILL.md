@@ -346,23 +346,28 @@ Otherwise, capture selected suggestion as TASK_NAME.
 
 <step name="task_validate_name">
 
-**Validate issue name:**
+**Validate issue name (M448 - run as two separate Bash calls):**
+
+Run format validation first:
 
 ```bash
 TASK_NAME="{selected or entered name}"
-
-# Validate format
 if ! echo "$TASK_NAME" | grep -qE '^[a-z][a-z0-9-]{0,48}[a-z0-9]$'; then
     echo "ERROR: Invalid issue name. Use lowercase letters, numbers, and hyphens only."
     echo "Example: parse-tokens, fix-memory-leak, add-user-auth"
     exit 1
 fi
+echo "Format OK"
+```
 
-# Check uniqueness within minor version
+Then run uniqueness check as a separate Bash call:
+
+```bash
 if [ -d ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
     echo "ERROR: Issue '$TASK_NAME' already exists in version $MAJOR.$MINOR"
     exit 1
 fi
+echo "Unique OK"
 ```
 
 If validation fails:
