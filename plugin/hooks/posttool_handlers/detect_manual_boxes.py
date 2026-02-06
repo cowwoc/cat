@@ -151,6 +151,27 @@ Box-drawing characters were found in your output without preceding script execut
                         script_executed = True
                         break
 
+            # Check system-reminders and hook output for box characters
+            # If the system provided box characters, the assistant can copy them verbatim
+            if msg_type == "user" and entry.get("isMeta"):
+                # System-reminder with hook preprocessing output
+                if self._contains_box_chars(content):
+                    script_executed = True
+
+            # Check tool results for box characters (Task, Skill, etc.)
+            if msg_type == "tool_result":
+                tool_result = entry.get("tool_result", {})
+                if isinstance(tool_result, dict):
+                    # Check main content
+                    result_content = tool_result.get("content", "")
+                    if self._contains_box_chars(str(result_content)):
+                        script_executed = True
+
+                    # Check additionalContext field (hook output)
+                    additional_context = tool_result.get("additionalContext", "")
+                    if self._contains_box_chars(str(additional_context)):
+                        script_executed = True
+
             # Check assistant messages for box characters
             if msg_type == "assistant" and content:
                 # Track code blocks
@@ -182,6 +203,17 @@ Box-drawing characters were found in your output without preceding script execut
             return "Box characters in assistant output without script execution"
 
         return None
+
+    def _contains_box_chars(self, text: str) -> bool:
+        """
+        Check if text contains box-drawing characters.
+
+        Returns True if at least 10 box characters are found (substantial usage).
+        """
+        if not text:
+            return False
+        box_char_count = sum(1 for c in text if c in self.BOX_CHARS)
+        return box_char_count >= 10
 
 
 # Register handler
