@@ -34,10 +34,10 @@ class TestHelpHandler:
         result = handler.handle(context)
         assert isinstance(result, str)
 
-    def test_contains_precomputed_marker(self, handler, context):
-        """Output contains PRE-COMPUTED marker."""
+    def test_contains_script_output_marker(self, handler, context):
+        """Output contains SCRIPT OUTPUT marker."""
         result = handler.handle(context)
-        assert "PRE-COMPUTED HELP DISPLAY" in result
+        assert "SCRIPT OUTPUT HELP DISPLAY" in result
 
     def test_contains_instruction(self, handler, context):
         """Output contains INSTRUCTION marker."""

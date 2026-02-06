@@ -67,5 +67,5 @@ print(data['explore_at_your_own_pace'])
 print()
 
 print('''INSTRUCTION: When displaying a box, copy the template EXACTLY and only replace the {variable} placeholders.
-Do NOT recalculate padding or alignment - the boxes are pre-computed with correct widths.''')
+Do NOT recalculate padding or alignment - the boxes are script output with correct widths.''')
 "

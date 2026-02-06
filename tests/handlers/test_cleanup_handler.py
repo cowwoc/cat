@@ -71,10 +71,10 @@ class TestCleanupSurveyPhase:
         result = handler.handle(survey_context)
         assert isinstance(result, str)
 
-    def test_contains_precomputed_marker(self, handler, survey_context):
-        """Output contains PRE-COMPUTED marker."""
+    def test_contains_script_output_marker(self, handler, survey_context):
+        """Output contains SCRIPT OUTPUT marker."""
         result = handler.handle(survey_context)
-        assert "PRE-COMPUTED SURVEY DISPLAY" in result
+        assert "SCRIPT OUTPUT SURVEY DISPLAY" in result
 
     def test_contains_instruction(self, handler, survey_context):
         """Output contains INSTRUCTION marker."""
@@ -184,10 +184,10 @@ class TestCleanupPlanPhase:
         result = handler.handle(plan_context)
         assert isinstance(result, str)
 
-    def test_contains_precomputed_marker(self, handler, plan_context):
-        """Output contains PRE-COMPUTED marker."""
+    def test_contains_script_output_marker(self, handler, plan_context):
+        """Output contains SCRIPT OUTPUT marker."""
         result = handler.handle(plan_context)
-        assert "PRE-COMPUTED PLAN DISPLAY" in result
+        assert "SCRIPT OUTPUT PLAN DISPLAY" in result
 
     def test_contains_instruction(self, handler, plan_context):
         """Output contains INSTRUCTION marker."""
@@ -290,10 +290,10 @@ class TestCleanupVerifyPhase:
         result = handler.handle(verify_context)
         assert isinstance(result, str)
 
-    def test_contains_precomputed_marker(self, handler, verify_context):
-        """Output contains PRE-COMPUTED marker."""
+    def test_contains_script_output_marker(self, handler, verify_context):
+        """Output contains SCRIPT OUTPUT marker."""
         result = handler.handle(verify_context)
-        assert "PRE-COMPUTED VERIFY DISPLAY" in result
+        assert "SCRIPT OUTPUT VERIFY DISPLAY" in result
 
     def test_contains_instruction(self, handler, verify_context):
         """Output contains INSTRUCTION marker."""

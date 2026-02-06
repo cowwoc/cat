@@ -25,7 +25,7 @@ Let caller/user decide next action
 
 ## Fail-Fast Patterns
 
-### 1. Pre-Computed Handler Output
+### 1. Script Output Handler Output
 
 Skills that depend on handler-computed output must fail if output is missing.
 

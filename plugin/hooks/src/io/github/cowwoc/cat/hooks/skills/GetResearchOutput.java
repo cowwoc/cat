@@ -59,7 +59,7 @@ public final class GetResearchOutput
 
     return "## Rating System\n" +
            "\n" +
-           "Use these precomputed circle patterns for ratings 1-5:\n" +
+           "Use these script output circle patterns for ratings 1-5:\n" +
            "- 5 → ●●●●●  (Excellent)\n" +
            "- 4 → ●●●●○  (Good)\n" +
            "- 3 → ●●●○○  (Moderate)\n" +

@@ -55,7 +55,7 @@ class ComputeBoxLinesHandler:
             return {
                 "decision": "block",  # Block the bash command
                 "reason": f"BOX_COMPUTE result (use this output exactly):\n\n{box_output}",
-                "additionalContext": f"Pre-computed box (copy exactly):\n```\n{box_output}\n```"
+                "additionalContext": f"Script output box (copy exactly):\n```\n{box_output}\n```"
             }
         except Exception as e:
             return {

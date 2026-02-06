@@ -90,7 +90,7 @@ For accurate token metrics on completed subagents, use `/cat:token-report` which
 # ❌ Invoking shell script (exposes tool calls to user)
 ${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh
 
-# ✅ Use pre-computed handler output
+# ✅ Use script output handler output
 # Check for SCRIPT OUTPUT MONITOR SUBAGENTS in context
 ```
 

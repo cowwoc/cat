@@ -84,7 +84,7 @@ public final class ComputeBoxLines implements BashHandler
 
       return Result.block(
         "BOX_COMPUTE result (use this output exactly):\n\n" + boxOutput,
-        "Pre-computed box (copy exactly):\n```\n" + boxOutput + "\n```");
+        "Script output box (copy exactly):\n```\n" + boxOutput + "\n```");
     }
     catch (Exception e)
     {

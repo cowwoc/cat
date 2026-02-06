@@ -148,7 +148,7 @@ class TestWorkHandler:
 
 
 class TestWorkHandlerBoxes:
-    """Tests for WorkHandler pre-computed boxes."""
+    """Tests for WorkHandler script output boxes."""
 
     @pytest.fixture
     def handler(self):
@@ -222,7 +222,7 @@ class TestWorkHandlerTaskIdExtraction:
         result = handler.handle(context)
         # The handler should work regardless
         assert result is not None
-        assert "PRE-COMPUTED WORK PROGRESS FORMAT" in result
+        assert "SCRIPT OUTPUT WORK PROGRESS FORMAT" in result
 
     def test_prompt_with_version_scope(self, handler):
         """Handler handles version scope."""
