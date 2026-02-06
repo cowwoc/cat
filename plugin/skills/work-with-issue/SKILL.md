@@ -261,20 +261,32 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result:
 
-- **REVIEW_PASSED**: Continue to Step 5 (approval gate)
+- **REVIEW_PASSED**: Continue to Step 5 (squash and approval)
 - **CONCERNS**: Note concerns, continue to Step 5
 - **REJECTED**: If trust=medium, return for user decision; else continue to approval gate
 
 **NOTE (M390):** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 5.
+User approval is a SEPARATE gate in Step 6.
 
-## Step 5: Approval Gate
+## Step 5: Squash Commits Before Review (M446)
+
+**Squash worktree commits by topic into clean, reviewable commits before presenting the approval gate.**
+
+Use `/cat:git-squash` or `git reset --soft ${BASE_BRANCH}` to consolidate commits:
+
+- All implementation work into 1 feature/bugfix commit
+- Config changes into 1 config commit (if separate)
+- Target: 1-2 commits maximum
+
+This ensures the user reviews clean commit history, not intermediate implementation state.
+
+## Step 6: Approval Gate
 
 **CRITICAL (M390): This step is MANDATORY when trust != "high".**
 
 ### If trust == "high"
 
-Skip approval gate. Continue directly to Step 6 (merge).
+Skip approval gate. Continue directly to Step 7 (merge).
 
 ### If trust == "low" or trust == "medium"
 
@@ -296,7 +308,7 @@ AskUserQuestion:
     - "Abort"
 ```
 
-**If approved:** Continue to Step 6
+**If approved:** Continue to Step 7
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
@@ -316,7 +328,7 @@ AskUserQuestion:
 }
 ```
 
-## Step 6: Merge Phase
+## Step 7: Merge Phase
 
 **Output the Merging banner** from INDIVIDUAL PHASE BANNERS (`● ● ● ◉` pattern).
 
@@ -349,11 +361,11 @@ Task tool:
 
 Parse merge result:
 
-- **MERGED**: Continue to Step 7
+- **MERGED**: Continue to Step 8
 - **CONFLICT**: Return FAILED with conflict details
 - **ERROR**: Return FAILED with error
 
-## Step 7: Return Success
+## Step 8: Return Success
 
 Return summary to the main `/cat:work` skill:
 
