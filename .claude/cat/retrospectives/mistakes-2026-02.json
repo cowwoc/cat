@@ -2865,6 +2865,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Run get-progress-banner.sh script to generate banners when pre-rendered output is not in context"
+    },
+    {
+      "id": "M453",
+      "timestamp": "2026-02-06T18:45:00Z",
+      "category": "process_violation",
+      "description": "Implementation executed before tests despite task having clear testable interfaces (handler returning JSON, script with JSON contract)",
+      "root_cause": "PLAN.md execution steps ordered implementation (Steps 1-3) before tests (Steps 4-5). Work-execute agent followed PLAN.md step order despite having TDD guidance, because specific ordered steps override general guidance.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "/workspace/plugin/agents/work-execute.md",
+      "pattern_keywords": [
+        "tdd",
+        "test-first",
+        "execution-order"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Write tests before implementation when task has testable interfaces. Reorder PLAN.md steps to TDD order if needed."
     }
   ]
 }
