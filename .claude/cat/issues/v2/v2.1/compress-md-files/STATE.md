@@ -3,7 +3,7 @@
 - **Status:** in-progress
 - **Progress:** 33%
 - **Decomposed:** true
-- **Dependencies:** []
+- **Dependencies:** [migrate-python-to-java]
 - **Last Updated:** 2026-01-26
 - **Decomposed At:** 2026-01-26
 - **Reason:** Task exceeded context threshold (86 files = ~258K tokens)

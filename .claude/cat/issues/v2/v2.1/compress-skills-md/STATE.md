@@ -2,7 +2,7 @@
 
 - **Status:** open
 - **Progress:** 0%
-- **Dependencies:** [migrate-to-silent-preprocessing, prevent-plan-md-priming]
+- **Dependencies:** [migrate-to-silent-preprocessing, prevent-plan-md-priming, migrate-python-to-java]
 - **Created From:** compress-md-files
 - **Decomposed:** true
 - **Decomposed At:** 2026-02-03
