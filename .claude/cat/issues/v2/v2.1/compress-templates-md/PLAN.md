@@ -1,7 +1,8 @@
 # Plan: compress-templates-md
 
 ## Goal
-Compress all template MD files (12 files in `plugin/templates/`) to reduce token usage while maintaining execution equivalence.
+Compress all template MD files (12 files in `plugin/templates/`) to reduce token usage while maintaining execution
+equivalence.
 
 ## Parent Task
 compress-md-files (decomposed)

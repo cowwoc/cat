@@ -1,12 +1,14 @@
 # Phase 4: Record
 
-This phase verifies the prevention works, records the learning in MEMORY.md, updates the retrospective counter, and commits.
+This phase verifies the prevention works, records the learning in MEMORY.md, updates the retrospective counter, and
+commits.
 
 ## Your Task
 
 Complete the recording phase for the learn skill. You will receive prevention results from Phase 3 as input.
 
-Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses your response as JSON.
+Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
+your response as JSON.
 
 ## Input
 
@@ -183,9 +185,11 @@ fi
 
 **Category and Prevention Type Reference:**
 
-See [mistake-categories.md](mistake-categories.md) for full category list, prevention types, and common root cause patterns.
+See [mistake-categories.md](mistake-categories.md) for full category list, prevention types, and common root cause
+patterns.
 
-**Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse, assumption_without_verification, misleading_documentation (M269)
+**Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse,
+assumption_without_verification, misleading_documentation (M269)
 
 **Use jq to append to current month's split file:**
 

@@ -7,7 +7,8 @@
 - **Completed:** 2026-01-20
 
 ## Summary
-Major rewrite introducing MAJOR → MINOR → TASK hierarchy, multi-agent orchestration, token-aware decomposition, and new commands/skills.
+Major rewrite introducing MAJOR → MINOR → TASK hierarchy, multi-agent orchestration, token-aware decomposition, and new
+commands/skills.
 
 ## Minor Versions
 - v1.0: Core architecture (completed)

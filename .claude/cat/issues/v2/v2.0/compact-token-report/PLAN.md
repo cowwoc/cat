@@ -1,7 +1,8 @@
 # Plan: compact-token-report
 
 ## Goal
-Simplify /cat:token-report output to a single compact box showing essential metrics, hiding intermediate bash commands and parsing attempts.
+Simplify /cat:token-report output to a single compact box showing essential metrics, hiding intermediate bash commands
+and parsing attempts.
 
 ## Satisfies
 - REQ: Demo-ready output for video recording and marketing materials

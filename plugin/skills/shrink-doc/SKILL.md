@@ -405,7 +405,8 @@ else:
 2. **Extract** the LOST section from the report (lists units that need restoration)
 3. **Proceed** directly to Step 6 (Iteration Loop) with that feedback
 
-**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough". Only EQUIVALENT status permits approval. No exceptions.
+**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough". Only EQUIVALENT status
+permits approval. No exceptions.
 
 ---
 

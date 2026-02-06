@@ -1,7 +1,8 @@
 # Plan: render-diff-precomputation
 
 ## Goal
-Generate preprocessor output for rendered diff for approval gates so the agent can display it directly without visible Bash tool invocations.
+Generate preprocessor output for rendered diff for approval gates so the agent can display it directly without visible
+Bash tool invocations.
 
 ## Satisfies
 None - infrastructure improvement

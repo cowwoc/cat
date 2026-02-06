@@ -11,7 +11,8 @@ Add a CAT update check on startup with "update available" notice when new versio
 - [ ] Cache check result to avoid repeated network calls
 
 ## Technical Approach
-Use GitHub API to fetch latest release from `cowwoc/cat` repository. The plugin is installed via GitHub, not npm, so the version check must use the GitHub releases API:
+Use GitHub API to fetch latest release from `cowwoc/cat` repository. The plugin is installed via GitHub, not npm, so the
+version check must use the GitHub releases API:
 
 ```
 GET https://api.github.com/repos/cowwoc/cat/releases/latest

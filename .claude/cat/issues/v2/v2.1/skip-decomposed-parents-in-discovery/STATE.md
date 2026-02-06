@@ -7,7 +7,9 @@
 - **Completed:** 2026-01-28
 
 ## Outcome
-The discovery script now correctly skips decomposed parent tasks and finds their executable subtasks instead. When a decomposed parent is explicitly requested, the script returns a clear "decomposed" status with guidance to execute subtasks.
+The discovery script now correctly skips decomposed parent tasks and finds their executable subtasks instead. When a
+decomposed parent is explicitly requested, the script returns a clear "decomposed" status with guidance to execute
+subtasks.
 
 ## Acceptance Criteria Results
 - [x] Script skips tasks with `## Decomposed Into` section in STATE.md

@@ -6,7 +6,8 @@ This phase identifies prevention strategies, evaluates quality, implements fixes
 
 Complete the prevention phase for the learn skill. You will receive analysis results from Phase 2 as input.
 
-Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses your response as JSON.
+Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
+your response as JSON.
 
 ## Input
 

@@ -1,13 +1,16 @@
 # Plan: fix-user-question-acknowledgment
 
 ## Problem
-Agent fails to acknowledge user questions that arrive mid-operation via system-reminder, continuing work without adding to TaskList or responding. Existing documentation-level prevention (CAT SESSION INSTRUCTIONS) proved insufficient - M366 occurred despite instructions being present.
+Agent fails to acknowledge user questions that arrive mid-operation via system-reminder, continuing work without adding
+to TaskList or responding. Existing documentation-level prevention (CAT SESSION INSTRUCTIONS) proved insufficient - M366
+occurred despite instructions being present.
 
 ## Satisfies
 None - infrastructure/prevention issue from M366 escalation
 
 ## Root Cause
-Completion bias causes agent to prioritize finishing current work over acknowledging incoming user questions. Documentation-level prevention relies on behavioral compliance, which fails under cognitive load.
+Completion bias causes agent to prioritize finishing current work over acknowledging incoming user questions.
+Documentation-level prevention relies on behavioral compliance, which fails under cognitive load.
 
 ## Risk Assessment
 - **Risk Level:** LOW

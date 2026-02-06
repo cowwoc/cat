@@ -259,7 +259,8 @@ Files updated:
 
 ## Pre-Commit Efficiency
 
-When committing changes you just made in the current session, skip redundant checks (`git status`, `git diff`, `git log`). You already know:
+When committing changes you just made in the current session, skip redundant checks (`git status`, `git diff`, `git
+log`). You already know:
 - What files you edited (from Edit/Write tools)
 - What the changes are (you wrote them)
 - The commit message style (from earlier commits)

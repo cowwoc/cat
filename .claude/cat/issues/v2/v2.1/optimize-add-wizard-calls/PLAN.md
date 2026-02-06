@@ -1,7 +1,8 @@
 # Plan: optimize-add-wizard-calls
 
 ## Goal
-Reduce the number of separate AskUserQuestion calls in /cat:add by combining related questions into single multi-question calls where possible.
+Reduce the number of separate AskUserQuestion calls in /cat:add by combining related questions into single
+multi-question calls where possible.
 
 ## Satisfies
 None - UX improvement

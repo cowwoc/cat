@@ -40,7 +40,8 @@ Reference: concepts/delegation-rules.md
 
 ## Template 1: Stakeholder Research
 
-**Use when:** Major decisions requiring multi-perspective analysis (payment systems, cloud providers, architecture patterns)
+**Use when:** Major decisions requiring multi-perspective analysis (payment systems, cloud providers, architecture
+patterns)
 
 **Spawn configuration:**
 ```yaml

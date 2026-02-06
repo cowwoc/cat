@@ -1,7 +1,8 @@
 # Plan: compact-stakeholder-review-output
 
 ## Goal
-Redesign stakeholder review output to be concise and visually scannable, replacing verbose text dumps with structured box-drawing tables.
+Redesign stakeholder review output to be concise and visually scannable, replacing verbose text dumps with structured
+box-drawing tables.
 
 ## Satisfies
 - REQ: Demo-ready output for video recording and marketing materials

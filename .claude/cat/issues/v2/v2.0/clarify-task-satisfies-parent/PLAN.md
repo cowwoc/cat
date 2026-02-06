@@ -1,7 +1,8 @@
 # Plan: clarify-task-satisfies-parent
 
 ## Problem
-The task PLAN.md template's `## Satisfies` section says "List requirement IDs from parent minor version PLAN.md" - but with flexible versioning, a task's parent could be:
+The task PLAN.md template's `## Satisfies` section says "List requirement IDs from parent minor version PLAN.md" - but
+with flexible versioning, a task's parent could be:
 - A patch version (v1.0.1)
 - A minor version (v1.0)
 - A major version (v1)

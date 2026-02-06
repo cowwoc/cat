@@ -4,7 +4,8 @@
 Feature
 
 ## Goal
-Add a deployment stakeholder to the stakeholder review system that evaluates changes from a CI/CD and build/deploy perspective.
+Add a deployment stakeholder to the stakeholder review system that evaluates changes from a CI/CD and build/deploy
+perspective.
 
 ## Description
 Add a new "deployment" stakeholder that reviews implementation changes for:

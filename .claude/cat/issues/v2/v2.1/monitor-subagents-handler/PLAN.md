@@ -2,11 +2,14 @@
 
 ## Goal
 
-Create a Python handler for the monitor-subagents skill to precompute subagent status display, hiding Bash tool invocations from users.
+Create a Python handler for the monitor-subagents skill to precompute subagent status display, hiding Bash tool
+invocations from users.
 
 ## Background
 
-The monitor-subagents skill currently invokes a shell script (`monitor-subagents.sh`) to gather subagent status. Per skill-builder methodology (M215), skills should NEVER invoke scripts via Bash - the user shouldn't see tool calls. Instead, a handler should precompute all outputs before the skill runs.
+The monitor-subagents skill currently invokes a shell script (`monitor-subagents.sh`) to gather subagent status. Per
+skill-builder methodology (M215), skills should NEVER invoke scripts via Bash - the user shouldn't see tool calls.
+Instead, a handler should precompute all outputs before the skill runs.
 
 ## Approach
 

@@ -1,7 +1,8 @@
 # Plan: holistic-review-criteria
 
 ## Goal
-Update all stakeholder review criteria to evaluate changes from a holistic project perspective, ensuring the codebase as a whole improves with each change.
+Update all stakeholder review criteria to evaluate changes from a holistic project perspective, ensuring the codebase as
+a whole improves with each change.
 
 ## Satisfies
 None - process improvement

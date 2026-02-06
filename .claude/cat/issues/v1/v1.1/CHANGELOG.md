@@ -12,7 +12,8 @@ Stabilization release with workflow improvements and better context management.
 
 ## New Features
 
-- **Direct Context Injection**: Replaced CLAUDE.md injection with `inject-session-instructions.sh` hook for cleaner context loading
+- **Direct Context Injection**: Replaced CLAUDE.md injection with `inject-session-instructions.sh` hook for cleaner
+  context loading
 - **Flattened Task Structure**: Changed from nested directories to task ID format (e.g., `1.0-task-name`)
 - **Commit Message Changelogs**: Task changelog content now embedded in commit messages, not separate files
 

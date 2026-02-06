@@ -9,7 +9,8 @@ user-invocable: false
 
 ## Critical Issue
 
-If you delete the directory you're currently in, **all subsequent Bash commands will fail** with "Exit code 1" and Claude Code must be restarted. This is unrecoverable without restart.
+If you delete the directory you're currently in, **all subsequent Bash commands will fail** with "Exit code 1" and
+Claude Code must be restarted. This is unrecoverable without restart.
 
 ## Mandatory Pre-Delete Checklist
 
@@ -71,7 +72,8 @@ If shell breaks (all commands return "Exit code 1"):
 
 ## Git Worktree Removal
 
-The same danger applies to `git worktree remove` - if your shell's cwd is inside the worktree being removed, all subsequent commands will fail.
+The same danger applies to `git worktree remove` - if your shell's cwd is inside the worktree being removed, all
+subsequent commands will fail.
 
 ```bash
 # SAFE - cd to main workspace first

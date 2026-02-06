@@ -1,7 +1,8 @@
 # Plan: compress-stakeholders-md
 
 ## Goal
-Compress all stakeholder MD files (11 files in `plugin/stakeholders/`) to reduce token usage while maintaining execution equivalence.
+Compress all stakeholder MD files (11 files in `plugin/stakeholders/`) to reduce token usage while maintaining execution
+equivalence.
 
 ## Parent Task
 compress-md-files (decomposed)

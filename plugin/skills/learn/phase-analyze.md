@@ -6,7 +6,8 @@ This phase documents the mistake, gathers context metrics, performs root cause a
 
 Complete the analysis phase for the learn skill. You will receive investigation results from Phase 1 as input.
 
-Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses your response as JSON.
+Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses
+your response as JSON.
 
 ## Input
 

@@ -245,5 +245,6 @@ When winner is determined:
 
 - [Where LLM Agents Fail and How They Can Learn](https://arxiv.org/abs/2509.25370) - AgentErrorTaxonomy
 - [Exploring LLM-based Agents for Root Cause Analysis](https://arxiv.org/abs/2403.04123) - ReAct RCA
-- [How Causal Reasoning Addresses LLM Limitations](https://www.infoq.com/articles/causal-reasoning-observability/) - Causal reasoning
+- [How Causal Reasoning Addresses LLM Limitations](https://www.infoq.com/articles/causal-reasoning-observability/) -
+  Causal reasoning
 - [AI Agent Failures in DA-Code](https://www.atla-ai.com/post/da-code) - Error taxonomy + critique

@@ -1,7 +1,9 @@
 # Plan: self-discover-env-vars
 
 ## Problem
-Environment variables set by CAT hooks (CLAUDE_PLUGIN_ROOT, CLAUDE_PROJECT_DIR, CLAUDE_SESSION_ID) don't persist across Bash tool invocations. Each Bash call spawns a fresh shell that doesn't inherit hook-set environment variables, causing scripts to fail with "NOT SET" errors.
+Environment variables set by CAT hooks (CLAUDE_PLUGIN_ROOT, CLAUDE_PROJECT_DIR, CLAUDE_SESSION_ID) don't persist across
+Bash tool invocations. Each Bash call spawns a fresh shell that doesn't inherit hook-set environment variables, causing
+scripts to fail with "NOT SET" errors.
 
 ## Satisfies
 None - infrastructure/bugfix task
@@ -18,7 +20,8 @@ echo "CLAUDE_PLUGIN_ROOT: ${CLAUDE_PLUGIN_ROOT:-NOT SET}"
 - **Actual:** All three variables are "NOT SET" in Bash tool invocations
 
 ## Root Cause
-Claude Code hooks run in a different process context than Bash tool invocations. Environment variables don't cross this boundary.
+Claude Code hooks run in a different process context than Bash tool invocations. Environment variables don't cross this
+boundary.
 
 ## Solution: Hybrid Approach
 1. **CLAUDE_PLUGIN_ROOT**: Scripts self-discover from their own location

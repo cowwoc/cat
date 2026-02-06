@@ -1,7 +1,8 @@
 # Plan: add-homograph-detection
 
 ## Goal
-Protect against Unicode homograph attacks by detecting visually confusable characters (e.g., Cyrillic "і" vs Latin "i") in URLs, domains, and user input prompts. Inspired by Tirith's terminal security approach.
+Protect against Unicode homograph attacks by detecting visually confusable characters (e.g., Cyrillic "і" vs Latin "i")
+in URLs, domains, and user input prompts. Inspired by Tirith's terminal security approach.
 
 ## Satisfies
 - REQ-001: Homograph detection for URLs/domains

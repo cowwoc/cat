@@ -1,7 +1,8 @@
 # Plan: complete-patch-version-support
 
 ## Problem
-The flexible-version-schema task added infrastructure for parsing patch versions (v1.0.1 format) but did NOT implement the UI or workflow commands to actually create patch versions. Currently:
+The flexible-version-schema task added infrastructure for parsing patch versions (v1.0.1 format) but did NOT implement
+the UI or workflow commands to actually create patch versions. Currently:
 - ✅ Parsing/validation supports v1.0.1 format (version-utils.sh, validate-worktree-branch.sh)
 - ❌ `/cat:add` only offers Task, Minor, Major options - no Patch
 - ❌ add.md has no patch_* steps (patch_create, patch_update_parent, patch_update_roadmap)

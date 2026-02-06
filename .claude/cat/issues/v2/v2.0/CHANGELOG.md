@@ -8,7 +8,8 @@
 
 **Commercialization & Display Overhaul**
 
-Major release preparing CAT for commercial use with licensing infrastructure, comprehensive display redesign, and workflow hardening. 74 tasks completed across 310 commits.
+Major release preparing CAT for commercial use with licensing infrastructure, comprehensive display redesign, and
+workflow hardening. 74 tasks completed across 310 commits.
 
 ## Licensing & Commercial Features
 

@@ -8,7 +8,8 @@
 last_updated: 2026-01-20
 
 ## Summary
-Final v1.0 release completing the core rewrite with workflow refinements, display improvements, and diff presentation before approval gates.
+Final v1.0 release completing the core rewrite with workflow refinements, display improvements, and diff presentation
+before approval gates.
 
 ## Tasks Completed
 - config-driven-approach

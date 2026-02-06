@@ -1,18 +1,22 @@
 # Plan: detect-subagent-fabrication
 
 ## Goal
-Add PostToolUse hook to detect when subagent results contain validation scores without evidence of /compare-docs skill invocation in the session, addressing ESCALATE-A001 (PATTERN-001: subagent validation fabrication).
+Add PostToolUse hook to detect when subagent results contain validation scores without evidence of /compare-docs skill
+invocation in the session, addressing ESCALATE-A001 (PATTERN-001: subagent validation fabrication).
 
 ## Satisfies
 None - infrastructure/reliability improvement
 
 ## Context
-PATTERN-001 has 9 total occurrences with 5 post-fix failures. Documentation-level prevention (A001) was ineffective because subagents ignore instructions when prompts contain priming values. This hook provides runtime detection of fabricated validation claims.
+PATTERN-001 has 9 total occurrences with 5 post-fix failures. Documentation-level prevention (A001) was ineffective
+because subagents ignore instructions when prompts contain priming values. This hook provides runtime detection of
+fabricated validation claims.
 
 ## Risk Assessment
 - **Risk Level:** LOW
 - **Concerns:** False positives if legitimate validation happens without skill invocation
-- **Mitigation:** Only trigger on Task tool results containing specific validation score patterns; allow explicit bypass flag
+- **Mitigation:** Only trigger on Task tool results containing specific validation score patterns; allow explicit bypass
+  flag
 
 ## Files to Modify
 - plugin/hooks/posttool_handlers/detect_validation_fabrication.py - New handler

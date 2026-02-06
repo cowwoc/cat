@@ -11,7 +11,8 @@ Confusion about delegation mechanics causes multiple mistake patterns (M367, M37
 - A013 (action item from retrospective)
 
 ## Root Cause
-Documentation scattered across multiple files without clear disambiguation. System-reminder mentions TaskCreate for tracking, priming agents to conflate it with Task tool for spawning.
+Documentation scattered across multiple files without clear disambiguation. System-reminder mentions TaskCreate for
+tracking, priming agents to conflate it with Task tool for spawning.
 
 ## Risk Assessment
 - **Risk Level:** LOW

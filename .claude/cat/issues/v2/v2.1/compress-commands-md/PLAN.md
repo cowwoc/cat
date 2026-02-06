@@ -1,7 +1,8 @@
 # Plan: compress-commands-md
 
 ## Goal
-Compress all command MD files (10 files in `plugin/commands/`) to reduce token usage while maintaining execution equivalence.
+Compress all command MD files (10 files in `plugin/commands/`) to reduce token usage while maintaining execution
+equivalence.
 
 ## Parent Task
 compress-md-files (decomposed)

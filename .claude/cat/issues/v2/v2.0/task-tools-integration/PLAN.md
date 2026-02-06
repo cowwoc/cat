@@ -1,13 +1,15 @@
 # Plan: task-tools-integration
 
 ## Current State
-CAT uses TodoWrite tool with PreCompact/SessionStart hooks to backup and restore task state across context compaction. This requires:
+CAT uses TodoWrite tool with PreCompact/SessionStart hooks to backup and restore task state across context compaction.
+This requires:
 - `save-todowrite.sh` PreCompact hook
 - `restore-todowrite.sh` SessionStart hook
 - Backup files in `.claude/backups/todowrite/`
 
 ## Target State
-Replace TodoWrite backup/restore mechanism with Claude Code's native Task tools (TaskCreate, TaskUpdate, TaskList, TaskGet). These persist natively across context compaction without hooks.
+Replace TodoWrite backup/restore mechanism with Claude Code's native Task tools (TaskCreate, TaskUpdate, TaskList,
+TaskGet). These persist natively across context compaction without hooks.
 
 ## Satisfies
 None (infrastructure/internal improvement)

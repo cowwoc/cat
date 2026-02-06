@@ -1,7 +1,10 @@
 # Plan: fix-squash-workflow
 
 ## Goal
-Fix squash workflow to require rebase-before-squash and clarify STATE.md file grouping. Addresses A018/PATTERN-016 (squash commit corruption). Current squash skill allows git reset --soft without verifying branch is rebased, causing absorption of base branch changes. Also clarify that STATE.md status changes belong with implementation commits, not as separate config commits.
+Fix squash workflow to require rebase-before-squash and clarify STATE.md file grouping. Addresses A018/PATTERN-016
+(squash commit corruption). Current squash skill allows git reset --soft without verifying branch is rebased, causing
+absorption of base branch changes. Also clarify that STATE.md status changes belong with implementation commits, not as
+separate config commits.
 
 ## Satisfies
 None - infrastructure/retrospective action item

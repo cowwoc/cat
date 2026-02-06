@@ -1,7 +1,9 @@
 # Plan: reorganize-plugin-layout
 
 ## Current State
-Plugin has nested directory structure with CAT resources under `plugin/.claude/cat/` containing references, templates, and workflows subdirectories. The stakeholders language files are deeply nested at `plugin/.claude/cat/references/stakeholders/lang/`.
+Plugin has nested directory structure with CAT resources under `plugin/.claude/cat/` containing references, templates,
+and workflows subdirectories. The stakeholders language files are deeply nested at
+`plugin/.claude/cat/references/stakeholders/lang/`.
 
 ## Target State
 Flatten the plugin structure by moving CAT resources directly to `plugin/`:

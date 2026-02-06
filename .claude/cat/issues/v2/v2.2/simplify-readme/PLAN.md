@@ -1,10 +1,12 @@
 # Plan: simplify-readme
 
 ## Current State
-README.md is ~400 lines with extensive detail on commands, configuration, skills, and project structure - overwhelming for new users trying to get started.
+README.md is ~400 lines with extensive detail on commands, configuration, skills, and project structure - overwhelming
+for new users trying to get started.
 
 ## Target State
-README.md is ~80-100 lines focused on quick start, with detailed sections moved to docs/ sub-pages for users who want to learn more.
+README.md is ~80-100 lines focused on quick start, with detailed sections moved to docs/ sub-pages for users who want to
+learn more.
 
 ## Satisfies
 None (user onboarding improvement)

@@ -1,7 +1,9 @@
 # Plan: skip-decomposed-parents-in-discovery
 
 ## Problem
-The `get-available-issues.sh` script returns decomposed parent tasks (like `compress-md-files`) instead of their executable subtasks. When a parent task has `## Decomposed Into` section and its subtasks have dependencies that aren't satisfied, the script still offers the parent task - which cannot be executed directly.
+The `get-available-issues.sh` script returns decomposed parent tasks (like `compress-md-files`) instead of their
+executable subtasks. When a parent task has `## Decomposed Into` section and its subtasks have dependencies that aren't
+satisfied, the script still offers the parent task - which cannot be executed directly.
 
 ## Reproduction Code
 ```bash
@@ -12,11 +14,14 @@ plugin/scripts/get-available-issues.sh --session-id "test"
 ```
 
 ## Expected vs Actual
-- **Expected:** Script should skip decomposed parent tasks and find executable subtasks, or report "no executable tasks" if all subtasks are blocked
+- **Expected:** Script should skip decomposed parent tasks and find executable subtasks, or report "no executable tasks"
+  if all subtasks are blocked
 - **Actual:** Script offers decomposed parent task which cannot be executed directly
 
 ## Root Cause
-The `find_issue_in_minor()` function checks if a task is `pending` or `in-progress`, checks dependencies, but does NOT check if the task has `## Decomposed Into` section. Decomposed parent tasks should be skipped - the work should be done on subtasks instead.
+The `find_issue_in_minor()` function checks if a task is `pending` or `in-progress`, checks dependencies, but does NOT
+check if the task has `## Decomposed Into` section. Decomposed parent tasks should be skipped - the work should be done
+on subtasks instead.
 
 ## Risk Assessment
 - **Risk Level:** LOW

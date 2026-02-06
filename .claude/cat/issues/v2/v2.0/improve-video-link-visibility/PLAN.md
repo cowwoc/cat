@@ -1,10 +1,12 @@
 # Plan: improve-video-link-visibility
 
 ## Current State
-The embedded YouTube video link in README.md uses a static thumbnail image that doesn't clearly indicate it's a clickable video. Users may not realize they can click to watch the demo.
+The embedded YouTube video link in README.md uses a static thumbnail image that doesn't clearly indicate it's a
+clickable video. Users may not realize they can click to watch the demo.
 
 ## Target State
-The video thumbnail should have a visible play button overlay and/or hover effect that clearly communicates it's a clickable video link.
+The video thumbnail should have a visible play button overlay and/or hover effect that clearly communicates it's a
+clickable video link.
 
 ## Satisfies
 - None (documentation/UX improvement)

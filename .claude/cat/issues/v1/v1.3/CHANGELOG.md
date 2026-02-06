@@ -17,7 +17,8 @@ Quick maintenance release with file renames and a critical bugfix.
 
 ## Bugfixes
 
-- Fix SESSION_ID usage in skills (M058) - skills now correctly instruct agents to read SESSION_ID from conversation context (SessionStart system-reminder) instead of expecting a shell environment variable
+- Fix SESSION_ID usage in skills (M058) - skills now correctly instruct agents to read SESSION_ID from conversation
+  context (SessionStart system-reminder) instead of expecting a shell environment variable
 
 ---
 

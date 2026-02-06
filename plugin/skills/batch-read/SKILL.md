@@ -6,7 +6,8 @@ allowed-tools: Bash
 
 # Batch Read Skill
 
-**Purpose**: Find files matching a pattern and read them in a single atomic operation, reducing LLM round-trips from 1+N to 2-3.
+**Purpose**: Find files matching a pattern and read them in a single atomic operation, reducing LLM round-trips from 1+N
+to 2-3.
 
 **Performance**: 50-70% faster for reading 3+ files during codebase exploration
 

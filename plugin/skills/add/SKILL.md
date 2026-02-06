@@ -165,7 +165,8 @@ Use AskUserQuestion with multiple questions:
           description: "Improve speed/efficiency"
       multiSelect: false
 
-    - question: "Standard criteria (functionality, tests, no regressions) will be applied. Any additional acceptance criteria?"
+    - question: "Standard criteria (functionality, tests, no regressions) will be applied. Any additional acceptance
+      criteria?"
       header: "Custom Criteria"
       options:
         - label: "No, standard criteria are sufficient"
@@ -509,7 +510,9 @@ Use appropriate template format:
 
 Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
 
-**CRITICAL:** Follow template guidance to separate Execution Steps (actions only) from Success Criteria (measurable outcomes). Do NOT include expected values like "score = 1.0" in Execution Steps as this primes subagents to fabricate results.
+**CRITICAL:** Follow template guidance to separate Execution Steps (actions only) from Success Criteria (measurable
+outcomes). Do NOT include expected values like "score = 1.0" in Execution Steps as this primes subagents to fabricate
+results.
 
 **PLAN.md Comprehensiveness (M430):** The PLAN.md must be comprehensive enough for a haiku-level
 model to implement mechanically without making architectural decisions. Include:
@@ -521,10 +524,12 @@ model to implement mechanically without making architectural decisions. Include:
 If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md
 is not detailed enough. The subagent should only decide "how to write the code", not "what approach to take".
 
-**Batch Execution Check (M427):** When the issue involves multiple files AND a skill (e.g., compress 9 files with /cat:shrink-doc):
+**Batch Execution Check (M427):** When the issue involves multiple files AND a skill (e.g., compress 9 files with
+/cat:shrink-doc):
 1. Read the target skill's documentation for batch/parallel execution patterns
 2. If the skill documents using `/cat:delegate` for multiple files, write execution steps to use delegate
-3. Example: Instead of "For each file: Run /cat:shrink-doc", use "/cat:delegate --skill shrink-doc file1.md file2.md ..."
+3. Example: Instead of "For each file: Run /cat:shrink-doc", use "/cat:delegate --skill shrink-doc file1.md file2.md
+   ..."
 
 This ensures batch tasks leverage parallel execution rather than sequential processing.
 
@@ -899,7 +904,8 @@ Based on response, ask follow-up questions using AskUserQuestion.
 Use AskUserQuestion:
 - header: "Scope"
 - question: "How urgent is this patch?"
-- options: ["Critical - production issue", "High - needs release soon", "Normal - next maintenance window", "Low - convenience fix"]
+- options: ["Critical - production issue", "High - needs release soon", "Normal - next maintenance window", "Low -
+  convenience fix"]
 
 **4. Synthesize and confirm:**
 
@@ -935,7 +941,8 @@ Standard gates are applied automatically - do not ask users to confirm obvious r
 
 Use AskUserQuestion:
 - header: "Custom Gates"
-- question: "Standard gates will be applied (entry: dependencies complete, exit: all issues + tests pass). Any custom gate requirements?"
+- question: "Standard gates will be applied (entry: dependencies complete, exit: all issues + tests pass). Any custom
+  gate requirements?"
 - options:
   - label: "No, standard gates are sufficient"
     description: "Use default entry/exit criteria"

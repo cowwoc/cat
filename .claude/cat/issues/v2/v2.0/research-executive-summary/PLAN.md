@@ -1,7 +1,9 @@
 # Plan: research-executive-summary
 
 ## Goal
-Enhance /cat:research to produce an executive summary that aggregates findings across all 9 stakeholders into actionable solution options with tradeoffs, so users can quickly choose based on their preferences rather than reading separate stakeholder reports.
+Enhance /cat:research to produce an executive summary that aggregates findings across all 9 stakeholders into actionable
+solution options with tradeoffs, so users can quickly choose based on their preferences rather than reading separate
+stakeholder reports.
 
 ## Satisfies
 None (infrastructure improvement)

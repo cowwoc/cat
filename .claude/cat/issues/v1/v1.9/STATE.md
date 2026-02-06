@@ -8,7 +8,8 @@
 last_updated: 2026-01-20
 
 ## Summary
-Comprehensive display standardization, test infrastructure, and workflow stability improvements. Fixed parse_error false positives (M100).
+Comprehensive display standardization, test infrastructure, and workflow stability improvements. Fixed parse_error false
+positives (M100).
 
 ## Tasks Completed
 - M100-fix-parse-error-false-positive

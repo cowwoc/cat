@@ -1,7 +1,8 @@
 # Plan: suggest-decomposition-at-soft-limit
 
 ## Goal
-When /cat:work estimates a task will exceed the soft token threshold (40%), suggest decomposing the task into sub-tasks before execution instead of just noting it as a warning.
+When /cat:work estimates a task will exceed the soft token threshold (40%), suggest decomposing the task into sub-tasks
+before execution instead of just noting it as a warning.
 
 ## Satisfies
 None - UX improvement task

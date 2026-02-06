@@ -1,7 +1,8 @@
 # Plan: add-display-redesign
 
 ## Goal
-Improve the visual output of `/cat:add` command with box-drawing displays and hook-based preprocessor output for reliable emoji alignment.
+Improve the visual output of `/cat:add` command with box-drawing displays and hook-based preprocessor output for
+reliable emoji alignment.
 
 ## Satisfies
 - None (UX improvement)

@@ -1,10 +1,12 @@
 <questioning_guide>
-The initialization release is dream extraction, not requirements gathering. You're helping the user discover and articulate what they want to build. This isn't a contract negotiation — it's collaborative thinking.
+The initialization release is dream extraction, not requirements gathering. You're helping the user discover and
+articulate what they want to build. This isn't a contract negotiation — it's collaborative thinking.
 
 <philosophy>
 **You are a thinking partner, not an interviewer.**
 
-The user often has a fuzzy idea. Your job is to help them sharpen it. Ask questions that make them think "oh, I hadn't considered that" or "yes, that's exactly what I mean."
+The user often has a fuzzy idea. Your job is to help them sharpen it. Ask questions that make them think "oh, I hadn't
+considered that" or "yes, that's exactly what I mean."
 
 Don't interrogate. Collaborate.
 </philosophy>
@@ -12,7 +14,8 @@ Don't interrogate. Collaborate.
 <critical_rule>
 **ALL questions MUST use AskUserQuestion.**
 
-Never ask questions inline as plain text. Every exploration question uses the AskUserQuestion tool with thoughtful options that help the user articulate their vision.
+Never ask questions inline as plain text. Every exploration question uses the AskUserQuestion tool with thoughtful
+options that help the user articulate their vision.
 
 This applies to:
 - Opening questions ("What do you want to build?")
@@ -21,7 +24,8 @@ This applies to:
 - Boundary questions ("What's out of scope?")
 - Decision gates ("Ready to proceed?")
 
-The AskUserQuestion format helps users think by presenting concrete options to react to, rather than facing a blank text field.
+The AskUserQuestion format helps users think by presenting concrete options to react to, rather than facing a blank text
+field.
 </critical_rule>
 
 <conversation_arc>
@@ -96,7 +100,8 @@ Use AskUserQuestion:
 - Ask about audience → ask about constraints → ask about tech stack (regardless of what user said)
 
 **GOOD — Following threads with targeted options:**
-- User mentions frustration → AskUserQuestion with specific frustration interpretations as options → their selection reveals the core value prop
+- User mentions frustration → AskUserQuestion with specific frustration interpretations as options → their selection
+  reveals the core value prop
 </good_vs_bad>
 
 <probing_techniques>
@@ -155,7 +160,8 @@ Loop until "Create PROJECT.md" selected.
 - **Corporate speak** - "What are your success criteria?" "Who are your stakeholders?"
 - **Rushing** - Minimizing questions to get to "the work"
 - **Assuming** - Filling gaps with assumptions instead of asking
-- **User skills** - Focus on what to build, not user's technical experience. Claude builds — user's skills are irrelevant.
+- **User skills** - Focus on what to build, not user's technical experience. Claude builds — user's skills are
+  irrelevant.
 - **Premature constraints** - Asking about tech stack before understanding the idea
 - **Shallow acceptance** - Taking vague answers without probing for specifics
 </anti_patterns>

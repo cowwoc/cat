@@ -1,7 +1,8 @@
 <research_pitfalls>
 
 <purpose>
-This document catalogs research mistakes discovered in production use, providing specific patterns to avoid and verification strategies to prevent recurrence.
+This document catalogs research mistakes discovered in production use, providing specific patterns to avoid and
+verification strategies to prevent recurrence.
 </purpose>
 
 <known_pitfalls>

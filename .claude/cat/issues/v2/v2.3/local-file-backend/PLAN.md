@@ -1,7 +1,8 @@
 # Plan: local-file-backend
 
 ## Goal
-Implement the local file backend that wraps current .claude/cat file-based storage behind the new storage abstraction interface.
+Implement the local file backend that wraps current .claude/cat file-based storage behind the new storage abstraction
+interface.
 
 ## Satisfies
 - REQ-002

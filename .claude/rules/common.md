@@ -136,7 +136,8 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 
 **Exception:** Files specifically designed for history tracking (e.g., `CHANGELOG.md`).
 
-**Rationale:** Code and documentation should describe current state and intent, not narrate their own evolution. Git history provides the authoritative record of changes.
+**Rationale:** Code and documentation should describe current state and intent, not narrate their own evolution. Git
+history provides the authoritative record of changes.
 
 ## Shell Efficiency
 

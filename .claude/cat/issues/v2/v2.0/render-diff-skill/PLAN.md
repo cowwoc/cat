@@ -1,7 +1,8 @@
 # Plan: render-diff-skill
 
 ## Goal
-Create a `/cat:render-diff` skill that transforms raw git diff output into a 4-column table format with line numbers, diff symbols, and content - optimized for approval gate reviews.
+Create a `/cat:render-diff` skill that transforms raw git diff output into a 4-column table format with line numbers,
+diff symbols, and content - optimized for approval gate reviews.
 
 ## Satisfies
 - None (infrastructure improvement)

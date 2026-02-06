@@ -2,11 +2,13 @@
 
 ## Goal
 
-Create a skill that analyzes command execution history to optimize execution and improve output UX by hiding tool execution details that don't interest users.
+Create a skill that analyzes command execution history to optimize execution and improve output UX by hiding tool
+execution details that don't interest users.
 
 ## Background
 
-During CAT workflows, many tool calls and command executions happen behind the scenes. Not all of these are relevant to users - some are implementation details that add noise to the output. This skill will:
+During CAT workflows, many tool calls and command executions happen behind the scenes. Not all of these are relevant to
+users - some are implementation details that add noise to the output. This skill will:
 
 1. Analyze command execution patterns from session history
 2. Identify opportunities to optimize execution (caching, batching, parallel execution)

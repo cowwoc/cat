@@ -1,13 +1,16 @@
 # Plan: fix-worktree-merge-docs
 
 ## Problem
-When merging a task branch back to the base branch, the agent attempts `git checkout <base-branch>` which is blocked by M205 hook when working from a worktree. The merge-and-cleanup.md concept document and work-merge skill don't document the correct pattern for this scenario.
+When merging a task branch back to the base branch, the agent attempts `git checkout <base-branch>` which is blocked by
+M205 hook when working from a worktree. The merge-and-cleanup.md concept document and work-merge skill don't document
+the correct pattern for this scenario.
 
 ## Satisfies
 None - infrastructure/reliability improvement
 
 ## Root Cause
-The merge-and-cleanup.md assumes `git checkout main` is possible, but M205 blocks all checkouts in the main worktree to prevent accidental branch switches.
+The merge-and-cleanup.md assumes `git checkout main` is possible, but M205 blocks all checkouts in the main worktree to
+prevent accidental branch switches.
 
 ## Expected vs Actual
 - **Expected:** Agent knows to run `git merge` from main workspace without checkout

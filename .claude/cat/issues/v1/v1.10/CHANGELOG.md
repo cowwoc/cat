@@ -8,7 +8,8 @@
 
 **Workflow Refinements & Display Improvements**
 
-Final v1.0 release completing the core rewrite with workflow refinements, display improvements, and planning structure for v1.1 commercialization.
+Final v1.0 release completing the core rewrite with workflow refinements, display improvements, and planning structure
+for v1.1 commercialization.
 
 ## New Features
 

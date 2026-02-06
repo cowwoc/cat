@@ -4,7 +4,8 @@
 The codebase uses "task" terminology throughout skill files, templates, references, and documentation.
 
 ## Target State
-All references to "task" are renamed to "issue" for consistency with common issue tracker terminology, except in changelogs which preserve historical accuracy.
+All references to "task" are renamed to "issue" for consistency with common issue tracker terminology, except in
+changelogs which preserve historical accuracy.
 
 ## Satisfies
 None - terminology standardization

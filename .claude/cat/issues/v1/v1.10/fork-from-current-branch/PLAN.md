@@ -2,7 +2,8 @@
 
 ## Goal
 
-Change /cat:work to fork task branches from whatever branch is currently checked out in the main worktree (instead of always forking from main), and merge back to that same branch when the task completes.
+Change /cat:work to fork task branches from whatever branch is currently checked out in the main worktree (instead of
+always forking from main), and merge back to that same branch when the task completes.
 
 ## Type
 

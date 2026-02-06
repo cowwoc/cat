@@ -1,7 +1,9 @@
 # Plan: fix-autolearn-path-false-positive
 
 ## Problem
-Pattern 12c in `auto_learn.py` triggers `wrong_working_directory` on Bash commands that intentionally handle missing paths (e.g., `ls <path> || echo "removed"`). The pattern matches "No such file or directory" in output without checking `exit_code`, causing false positives when commands use `||` fallback (exit code 0).
+Pattern 12c in `auto_learn.py` triggers `wrong_working_directory` on Bash commands that intentionally handle missing
+paths (e.g., `ls <path> || echo "removed"`). The pattern matches "No such file or directory" in output without checking
+`exit_code`, causing false positives when commands use `||` fallback (exit code 0).
 
 ## Satisfies
 None - infrastructure bugfix
@@ -19,11 +21,14 @@ ls -la /workspace/.claude/cat/worktrees/2.1-issue-name 2>&1 || echo "Worktree su
 - **Actual:** `wrong_working_directory` mistake detected because Pattern 12c only checks output text, not exit_code
 
 ## Root Cause
-`plugin/hooks/posttool_handlers/auto_learn.py` line 188-193: Pattern 12c checks for "No such file or directory" in Bash output but does NOT check `exit_code != 0`. Compare with Pattern 13 (line 195-200) which correctly guards with `exit_code != 0`.
+`plugin/hooks/posttool_handlers/auto_learn.py` line 188-193: Pattern 12c checks for "No such file or directory" in Bash
+output but does NOT check `exit_code != 0`. Compare with Pattern 13 (line 195-200) which correctly guards with
+`exit_code != 0`.
 
 ## Risk Assessment
 - **Risk Level:** LOW
-- **Regression Risk:** Could miss genuine wrong_working_directory errors if exit code happens to be 0 despite real path issues. However, real path errors from failed commands will have non-zero exit codes.
+- **Regression Risk:** Could miss genuine wrong_working_directory errors if exit code happens to be 0 despite real path
+  issues. However, real path errors from failed commands will have non-zero exit codes.
 - **Mitigation:** Existing tests verify pattern matching; add test for exit_code=0 case
 
 ## Files to Modify
@@ -47,7 +52,8 @@ ls -la /workspace/.claude/cat/worktrees/2.1-issue-name 2>&1 || echo "Worktree su
 
 2. **Step 2:** Add regression test
    - Find or create test file for auto_learn.py
-   - Add test case: Bash output with "No such file or directory" + `/workspace` path + exit_code=0 should NOT trigger wrong_working_directory
+   - Add test case: Bash output with "No such file or directory" + `/workspace` path + exit_code=0 should NOT trigger
+     wrong_working_directory
    - Add test case: same output + exit_code=1 should still trigger wrong_working_directory
 
 3. **Step 3:** Run tests

@@ -1,7 +1,8 @@
 # Plan: optimize-work-command-context
 
 ## Goal
-Reduce context usage of `/cat:work` command by ~40% through lazy-loading skills, consolidating duplicated content, and optimizing handler output generation.
+Reduce context usage of `/cat:work` command by ~40% through lazy-loading skills, consolidating duplicated content, and
+optimizing handler output generation.
 
 ## Satisfies
 None - infrastructure/optimization task

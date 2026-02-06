@@ -1,7 +1,8 @@
 # Plan: status-display-redesign
 
 ## Goal
-Redesign /cat:status output with ultra-compact layout supporting optional patch versions, visual separation for active work, and blocked task visibility.
+Redesign /cat:status output with ultra-compact layout supporting optional patch versions, visual separation for active
+work, and blocked task visibility.
 
 ## Satisfies
 None (infrastructure task)

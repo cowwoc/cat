@@ -6,7 +6,8 @@ allowed-tools: Bash, Read, Edit, Grep, Glob
 
 # Safe Code Removal Skill
 
-**Purpose**: Safely remove code patterns (instrumentation, debugging code, deprecated patterns) from multiple files with strict validation to prevent accidentally gutting files.
+**Purpose**: Safely remove code patterns (instrumentation, debugging code, deprecated patterns) from multiple files with
+strict validation to prevent accidentally gutting files.
 
 **Created**: 2025-11-07 after accidentally gutting 7 hooks during timing code removal
 
@@ -14,13 +15,15 @@ allowed-tools: Bash, Read, Edit, Grep, Glob
 
 ## The Problem
 
-When removing instrumentation, debugging code, or other patterns from multiple files, aggressive removal scripts can accidentally delete functional code, leaving only boilerplate (shebang, set commands).
+When removing instrumentation, debugging code, or other patterns from multiple files, aggressive removal scripts can
+accidentally delete functional code, leaving only boilerplate (shebang, set commands).
 
 **Real Example** (2025-11-07):
 - **Issue**: Remove timing instrumentation from 47 hooks
 - **Mistake**: Removal script was too aggressive
 - **Impact**: 7 hooks reduced to 3 lines (only `#!/bin/bash` and `set -euo pipefail`)
-- **Hooks destroyed**: auto-learn.sh, block-data-loss.sh, detect-worktree-violation.sh, enforce-requirements-release.sh, load-todo.sh, detect-assistant-giving-up.sh, verify-convergence-entry.sh
+- **Hooks destroyed**: auto-learn.sh, block-data-loss.sh, detect-worktree-violation.sh, enforce-requirements-release.sh,
+  load-todo.sh, detect-assistant-giving-up.sh, verify-convergence-entry.sh
 - **Recovery**: Restored from backups
 - **Root cause**: Didn't validate hooks after removal, declared issue complete too early
 
@@ -567,7 +570,8 @@ done
 4. **Multiple validation layers**: Syntax + integrity + functional tests
 5. **Manual review**: Sample check before declaring complete
 
-**Remember**: It's better to be slow and careful than fast and destructive. Functional code is irreplaceable; removal can always wait for proper validation.
+**Remember**: It's better to be slow and careful than fast and destructive. Functional code is irreplaceable; removal
+can always wait for proper validation.
 
 ## Related Documentation
 

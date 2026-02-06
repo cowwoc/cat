@@ -1,7 +1,8 @@
 # Plan: optimize-shrink-doc-workflow
 
 ## Current State
-The shrink-doc skill runs sequential Bash commands for baseline/version checks and guesses file paths instead of using Glob results.
+The shrink-doc skill runs sequential Bash commands for baseline/version checks and guesses file paths instead of using
+Glob results.
 
 ## Target State
 1. Baseline check and version check run as parallel Bash calls

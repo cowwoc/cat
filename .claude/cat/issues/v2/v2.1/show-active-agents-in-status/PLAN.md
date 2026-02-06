@@ -1,7 +1,8 @@
 # Plan: show-active-agents-in-status
 
 ## Goal
-Display what issues other Claude instances are actively working on when running /cat:status, giving users visibility into parallel work happening across sessions.
+Display what issues other Claude instances are actively working on when running /cat:status, giving users visibility
+into parallel work happening across sessions.
 
 ## Satisfies
 None - UI enhancement

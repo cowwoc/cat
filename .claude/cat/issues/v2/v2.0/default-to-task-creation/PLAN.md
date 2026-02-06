@@ -1,7 +1,8 @@
 # Plan: default-to-task-creation
 
 ## Goal
-Change CAT's default behavior so that when work is suggested or requested, the main agent creates a task first rather than working on it directly. This enforces the "plan first, execute via task" pattern.
+Change CAT's default behavior so that when work is suggested or requested, the main agent creates a task first rather
+than working on it directly. This enforces the "plan first, execute via task" pattern.
 
 ## Satisfies
 - Ensures all work is tracked in the planning structure

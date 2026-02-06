@@ -1609,7 +1609,8 @@ options:
 
 ## Conditional Section Lazy-Loading
 
-**Principle**: Conditional sections of a skill (content only needed in certain execution paths) MUST be stored in separate files and loaded on-demand, not embedded inline.
+**Principle**: Conditional sections of a skill (content only needed in certain execution paths) MUST be stored in
+separate files and loaded on-demand, not embedded inline.
 
 **Why lazy-loading matters:**
 - Reduces token cost when the conditional path isn't taken

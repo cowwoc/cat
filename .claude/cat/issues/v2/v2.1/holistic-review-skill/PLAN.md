@@ -1,7 +1,8 @@
 # Plan: holistic-review-skill
 
 ## Goal
-Update the stakeholder-review skill to pass full file context to stakeholders instead of just diffs, enabling holistic project-wide evaluation.
+Update the stakeholder-review skill to pass full file context to stakeholders instead of just diffs, enabling holistic
+project-wide evaluation.
 
 ## Satisfies
 None - process improvement

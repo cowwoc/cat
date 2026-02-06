@@ -173,7 +173,8 @@ find . -maxdepth 3 -name "PROJECT.md" -type f 2>/dev/null | head -5
 find . -maxdepth 3 -type d \( -name "releases" -o -name "roadmap" \) 2>/dev/null | head -5
 ```
 
-**If structured planning exists**: Read PROJECT.md, extract description/requirements/constraints. SKIP questioning, proceed to infer_state.
+**If structured planning exists**: Read PROJECT.md, extract description/requirements/constraints. SKIP questioning,
+proceed to infer_state.
 
 </step>
 
@@ -509,7 +510,8 @@ Map response to MERGE_STYLE:
 
 **Step 3: Ask about commit squashing preference**
 
-AskUserQuestion: header="Commit Squashing", question="Before merging a branch, how should commits be handled?", options=[
+AskUserQuestion: header="Commit Squashing", question="Before merging a branch, how should commits be handled?",
+options=[
   "Squash by type (Recommended)" - Group commits by type (feature:, bugfix:, etc.),
   "Single commit" - Squash all into one commit,
   "Keep all commits" - Preserve complete commit history,
@@ -890,7 +892,8 @@ Next: /clear -> /cat:work {issue} OR /cat:add
 
 After initialization completes, offer to walk user through creating their first issue:
 
-AskUserQuestion: header="First Issue", question="Would you like me to walk you through creating your first issue?", options=[
+AskUserQuestion: header="First Issue", question="Would you like me to walk you through creating your first issue?",
+options=[
   "Yes, guide me (Recommended)" - Interactive walkthrough of first issue,
   "No, I'll explore" - Exit with pointers to /cat:help and /cat:status
 ]

@@ -1,13 +1,15 @@
 # Plan: fix-add-remove-parent-update-steps
 
 ## Goal
-Make all parent update steps in add.md and remove.md explicit with bash commands, eliminating vague instructions that lead to skipped steps.
+Make all parent update steps in add.md and remove.md explicit with bash commands, eliminating vague instructions that
+lead to skipped steps.
 
 ## Satisfies
 - Learning from M163: Vague workflow steps cause agents to skip mandatory updates
 
 ## Current State
-6 steps across add.md and remove.md have vague instructions like "Update parent STATE.md" or "Recalculate progress" without specifying exactly what to do.
+6 steps across add.md and remove.md have vague instructions like "Update parent STATE.md" or "Recalculate progress"
+without specifying exactly what to do.
 
 ## Target State
 All parent update steps have explicit bash commands showing:

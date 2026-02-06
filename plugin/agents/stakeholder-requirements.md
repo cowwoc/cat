@@ -153,7 +153,9 @@ Satisfies section?"*
 - **Partial Implementation**: Requirement only partially satisfied
 - **Undocumented Deviation**: Implementation differs from spec without explanation
 - **Edge Case Failure**: Core functionality works but fails on specified edge cases
-- **Output Contract Semantic Correctness**: Data in output contracts matches the contract's semantic meaning, not just its structural format. When a contract shows fields like 'blocked_by' with status information, that data must be actually fetched and validated, not assumed from raw field values.
+- **Output Contract Semantic Correctness**: Data in output contracts matches the contract's semantic meaning, not just
+  its structural format. When a contract shows fields like 'blocked_by' with status information, that data must be
+  actually fetched and validated, not assumed from raw field values.
 
 ### Medium Priority
 - **Ambiguous Compliance**: Implementation may or may not satisfy vague requirement

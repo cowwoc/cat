@@ -20,7 +20,8 @@ Run /cat:work on an already-completed task. The output box shows:
 - **Actual:** Right borders are offset, creating jagged appearance
 
 ## Root Cause
-Fixed-width box templates in work.md have inconsistent padding/width calculations. Task names or content with varying lengths cause the right border to shift.
+Fixed-width box templates in work.md have inconsistent padding/width calculations. Task names or content with varying
+lengths cause the right border to shift.
 
 ## Risk Assessment
 - **Risk Level:** LOW

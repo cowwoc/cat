@@ -6,9 +6,11 @@ allowed-tools: Grep, Read, Bash
 
 # Grep and Read Skill
 
-**Purpose**: Search for pattern and read all matching files in a single coordinated operation, eliminating sequential round-trips.
+**Purpose**: Search for pattern and read all matching files in a single coordinated operation, eliminating sequential
+round-trips.
 
-**Performance**: 50-70% time savings, 4000-8000 token savings compared to sequential Grep -> Read -> Read -> Read pattern.
+**Performance**: 50-70% time savings, 4000-8000 token savings compared to sequential Grep -> Read -> Read -> Read
+pattern.
 
 **When to Use**:
 - Exploring codebase for specific functionality

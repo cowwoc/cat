@@ -1,10 +1,12 @@
 # Plan: centralize-emoji-widths
 
 ## Current State
-Multiple files define their own `WIDTH_2_EMOJIS` sets and `display_width()` functions with hardcoded emoji width assumptions, duplicating logic that should come from the centralized `lib/emoji_widths.py` module.
+Multiple files define their own `WIDTH_2_EMOJIS` sets and `display_width()` functions with hardcoded emoji width
+assumptions, duplicating logic that should come from the centralized `lib/emoji_widths.py` module.
 
 ## Target State
-All emoji width handling uses `lib/emoji_widths.py` as the single source of truth. No other code makes assumptions about emoji display widths.
+All emoji width handling uses `lib/emoji_widths.py` as the single source of truth. No other code makes assumptions about
+emoji display widths.
 
 ## Satisfies
 None - infrastructure/code quality task

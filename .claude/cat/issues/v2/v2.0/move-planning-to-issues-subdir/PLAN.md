@@ -1,7 +1,8 @@
 # Plan: move-planning-to-issues-subdir
 
 ## Goal
-Move the planning structure from `.claude/cat/` to `.claude/cat/issues/` to better organize issue tracking data separately from other CAT configuration.
+Move the planning structure from `.claude/cat/` to `.claude/cat/issues/` to better organize issue tracking data
+separately from other CAT configuration.
 
 ## Satisfies
 None - infrastructure/maintenance task

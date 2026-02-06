@@ -1,7 +1,8 @@
 # Plan: hide-tool-calls-during-execution
 
 ## Goal
-Update CAT workflow instructions to minimize visible tool calls (Read, Bash, Glob) during execution, showing progress indicators instead of raw tool output.
+Update CAT workflow instructions to minimize visible tool calls (Read, Bash, Glob) during execution, showing progress
+indicators instead of raw tool output.
 
 ## Satisfies
 - REQ: Demo-ready output for video recording and marketing materials

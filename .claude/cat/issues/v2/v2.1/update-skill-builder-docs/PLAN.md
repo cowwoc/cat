@@ -1,7 +1,8 @@
 # Plan: update-skill-builder-docs
 
 ## Goal
-Update skill-builder documentation to teach the new `!`command`` silent preprocessing mechanism instead of the OUTPUT TEMPLATE + handler pattern.
+Update skill-builder documentation to teach the new `!`command`` silent preprocessing mechanism instead of the OUTPUT
+TEMPLATE + handler pattern.
 
 ## Satisfies
 - Parent: migrate-to-silent-preprocessing

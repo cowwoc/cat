@@ -1,7 +1,9 @@
 # Plan: work-box-hook-precomputation
 
 ## Problem
-LLMs cannot reliably render box-drawing characters with correct alignment because they can't accurately calculate emoji widths (e.g., ✓ renders as 2 columns but is 1 character). The boxes in `/cat:work` output (Task Complete, Scope Complete) have misaligned right borders when rendered by the LLM.
+LLMs cannot reliably render box-drawing characters with correct alignment because they can't accurately calculate emoji
+widths (e.g., ✓ renders as 2 columns but is 1 character). The boxes in `/cat:work` output (Task Complete, Scope
+Complete) have misaligned right borders when rendered by the LLM.
 
 ## Satisfies
 - None (UX bugfix)
@@ -17,15 +19,18 @@ because the LLM guesses at character widths instead of computing them precisely.
 - **Actual:** LLM renders boxes with inconsistent alignment due to emoji width miscalculation
 
 ## Root Cause
-Box templates are embedded directly in work.md and rendered by the LLM at runtime. The LLM cannot perform accurate character width calculations, especially for emojis and special characters.
+Box templates are embedded directly in work.md and rendered by the LLM at runtime. The LLM cannot perform accurate
+character width calculations, especially for emojis and special characters.
 
 ## Solution
-Implement hook-based pre-computation (like status_handler.py) where a Python script computes all possible outcome boxes at skill invocation, and the LLM outputs them verbatim.
+Implement hook-based pre-computation (like status_handler.py) where a Python script computes all possible outcome boxes
+at skill invocation, and the LLM outputs them verbatim.
 
 ## Risk Assessment
 - **Risk Level:** LOW
 - **Regression Risk:** Could affect work command output if handler fails
-- **Mitigation:** Handler returns pre-computed boxes in additionalContext; skill falls back to inline templates if not found
+- **Mitigation:** Handler returns pre-computed boxes in additionalContext; skill falls back to inline templates if not
+  found
 
 ## Files to Modify
 - plugin/hooks/skill_handlers/work_handler.py - Create new handler for pre-computing work boxes

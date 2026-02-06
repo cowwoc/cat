@@ -1,9 +1,13 @@
 <overview>
-TDD is about design quality, not coverage metrics. The red-green-refactor cycle forces you to think about behavior before implementation, producing cleaner interfaces and more testable code.
+TDD is about design quality, not coverage metrics. The red-green-refactor cycle forces you to think about behavior
+before implementation, producing cleaner interfaces and more testable code.
 
-**Principle:** If you can describe the behavior as `expect(fn(input)).toBe(output)` before writing `fn`, TDD improves the result.
+**Principle:** If you can describe the behavior as `expect(fn(input)).toBe(output)` before writing `fn`, TDD improves
+the result.
 
-**Key insight:** TDD work is fundamentally heavier than standard tasks—it requires 2-3 execution cycles (RED → GREEN → REFACTOR), each with file reads, test runs, and potential debugging. TDD features get dedicated changes to ensure full context is available throughout the cycle.
+**Key insight:** TDD work is fundamentally heavier than standard tasks—it requires 2-3 execution cycles (RED → GREEN →
+REFACTOR), each with file reads, test runs, and potential debugging. TDD features get dedicated changes to ensure full
+context is available throughout the cycle.
 </overview>
 
 <when_to_use_tdd>
@@ -85,7 +89,8 @@ After completion, create SUMMARY.md with:
 </output>
 ```
 
-**One feature per TDD change.** If features are trivial enough to batch, they're trivial enough to skip TDD—use a standard change and add tests after.
+**One feature per TDD change.** If features are trivial enough to batch, they're trivial enough to skip TDD—use a
+standard change and add tests after.
 </tdd_plan_structure>
 
 <execution_flow>
@@ -257,7 +262,8 @@ Why lower:
 - GREEN release: implement, run test, potentially iterate on failures
 - REFACTOR release: modify code, run tests, verify no regressions
 
-Each release involves reading files, running commands, analyzing output. The back-and-forth is inherently heavier than linear task execution.
+Each release involves reading files, running commands, analyzing output. The back-and-forth is inherently heavier than
+linear task execution.
 
 Single feature focus ensures full quality throughout the cycle.
 </context_budget>

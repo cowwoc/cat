@@ -1,7 +1,8 @@
 # Plan: implement-a008-box-detection
 
 ## Goal
-Add PostToolUse hook to detect when Claude manually constructs boxes/banners instead of using pre-rendered scripts, preventing PATTERN-008 mistakes.
+Add PostToolUse hook to detect when Claude manually constructs boxes/banners instead of using pre-rendered scripts,
+preventing PATTERN-008 mistakes.
 
 ## Satisfies
 - A008 action item from retrospective R006
