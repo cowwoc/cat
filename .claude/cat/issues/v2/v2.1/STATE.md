@@ -122,6 +122,11 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- migrate-token-counting
+- cleanup-python-files
+- migrate-python-tests
+- rename-subtask-to-subissue
+- migrate-enforce-hooks
 - fix-decomposed-parent-completion
 - fix-scope-complete-box-alignment
 - fix-progress-banner-newline

@@ -2,57 +2,65 @@
 
 ## Metadata
 - **Parent:** migrate-python-to-java
-- **Sequence:** 3 of 5
-- **Estimated Tokens:** 35K (reduced due to silent preprocessing migration)
+- **Sequence:** 3 of 5 (Wave 3 - concurrent with java-bash-handlers and java-other-handlers)
+- **Estimated Tokens:** 35K
 
 ## Objective
-Migrate remaining skill handlers (UI/output generation) to Java.
-
-## Architecture Note (Silent Preprocessing Migration)
-Some handlers have been migrated to "silent preprocessing" pattern:
-- **StatusHandler**: Removed from status_handler.py → now in scripts/get-status-display.py
-- **WorkHandler progress banners**: Removed → now in scripts/get-progress-banner.sh
-
-These scripts are invoked via `!`command`` syntax in SKILL.md, not through handler classes.
-The handler migration only covers handlers that still exist in skill_handlers/.
+Create Java equivalents for 5 missing skill handlers and verify all 11 existing Java skill handlers produce identical
+output to Python.
 
 ## Scope
-- skill_handlers/base.py → Java base class (display utilities only)
-- Remaining 10 skill handler implementations
-- Box drawing, progress formatting utilities
+- 11 Java skill handlers already exist - verify output matches Python
+- 5 Python skill handlers have NO Java equivalent yet - create them
+- Utility classes (DisplayUtils, JsonHelper, etc.) already exist
 
 ## Dependencies
-- java-core-hooks (core infrastructure must exist)
+- java-core-hooks (entry points must be wired up)
 
-## Files to Migrate
-| Python | Java | Notes |
-|--------|------|-------|
-| skill_handlers/base.py | src/cat/hooks/skills/DisplayUtils.java | Shared box/display utilities |
-| skill_handlers/add_handler.py | src/cat/hooks/skills/AddHandler.java | |
-| skill_handlers/cleanup_handler.py | src/cat/hooks/skills/CleanupHandler.java | |
-| skill_handlers/config_handler.py | src/cat/hooks/skills/ConfigHandler.java | |
-| skill_handlers/help_handler.py | src/cat/hooks/skills/HelpHandler.java | |
-| skill_handlers/init_handler.py | src/cat/hooks/skills/InitHandler.java | |
-| skill_handlers/render_diff_handler.py | src/cat/hooks/skills/RenderDiffHandler.java | |
-| skill_handlers/research_handler.py | src/cat/hooks/skills/ResearchHandler.java | |
-| skill_handlers/stakeholder_handler.py | src/cat/hooks/skills/StakeholderHandler.java | |
-| skill_handlers/status_handler.py | N/A | Display utils only, StatusHandler removed |
-| skill_handlers/token_report_handler.py | src/cat/hooks/skills/TokenReportHandler.java | |
-| skill_handlers/work_handler.py | src/cat/hooks/skills/WorkHandler.java | Progress banners removed |
+## Existing Java Implementations (verify only)
 
-## Silent Preprocessing Scripts (NOT migrated here)
-These are standalone scripts, not part of handler infrastructure:
-- scripts/get-status-display.py → Consider Java migration separately
-- scripts/get-progress-banner.sh → Shell script, no Java needed
+Skill handlers at `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/`:
+
+| Python | Java (exists) |
+|--------|---------------|
+| `skill_handlers/base.py` | `DisplayUtils.java` (shared box/display utilities) |
+| `skill_handlers/add_handler.py` | `GetAddOutput.java` |
+| `skill_handlers/cleanup_handler.py` | `GetCleanupOutput.java` |
+| `skill_handlers/config_handler.py` | `GetConfigOutput.java` |
+| `skill_handlers/help_handler.py` | `GetHelpOutput.java` |
+| `skill_handlers/init_handler.py` | `GetInitOutput.java` |
+| `skill_handlers/render_diff_handler.py` | `GetRenderDiffOutput.java` |
+| `skill_handlers/research_handler.py` | `GetResearchOutput.java` |
+| `skill_handlers/stakeholder_handler.py` | `GetStakeholderOutput.java` |
+| `skill_handlers/token_report_handler.py` | `GetTokenReportOutput.java` |
+| `skill_handlers/work_handler.py` | `GetWorkOutput.java` |
+
+Supporting utility classes (already exist):
+- `ItemType.java`, `JsonHelper.java`, `TaskType.java`, `TerminalType.java`
+
+## Missing Java Implementations (create new)
+
+| Python | Java (to create) | Location |
+|--------|------------------|----------|
+| `skill_handlers/delegate_handler.py` | `GetDelegateOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
+| `skill_handlers/monitor_subagents_handler.py` | `GetMonitorSubagentsOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
+| `skill_handlers/run_retrospective_handler.py` | `GetRunRetrospectiveOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
+| `skill_handlers/status_handler.py` | `GetStatusOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
+| `skill_handlers/work_with_issue_handler.py` | `GetWorkWithIssueOutput.java` | `plugin/hooks/src/io/github/cowwoc/cat/hooks/skills/` |
 
 ## Execution Steps
-1. Create DisplayUtils Java class with box drawing utilities
-2. Migrate each remaining handler preserving exact output format
-3. Ensure box drawing characters render correctly
-4. Verify JSON output matches Python version
+1. **Create GetDelegateOutput.java** - Port logic from `delegate_handler.py`
+2. **Create GetMonitorSubagentsOutput.java** - Port logic from `monitor_subagents_handler.py`
+3. **Create GetRunRetrospectiveOutput.java** - Port logic from `run_retrospective_handler.py`
+4. **Create GetStatusOutput.java** - Port logic from `status_handler.py`
+5. **Create GetWorkWithIssueOutput.java** - Port logic from `work_with_issue_handler.py`
+6. **Register new handlers** in `GetSkillOutput.java` dispatcher
+7. **Verify all 16 handlers** produce identical output to Python equivalents
+8. **Verify box characters** (special chars render correctly in Java)
+9. **Run test suite** - `python3 /workspace/run_tests.py` to verify no regressions
 
 ## Acceptance Criteria
-- [ ] All 10 remaining handlers produce identical output
-- [ ] Box characters (╭╮╰╯│─) render correctly
-- [ ] Status display utilities work correctly
-- [ ] Existing tests pass with Java handlers
+- [ ] 5 new Java skill handlers created and registered
+- [ ] All 16 skill handlers produce identical output to Python equivalents
+- [ ] Box characters render correctly
+- [ ] All existing tests pass
