@@ -1045,6 +1045,19 @@ complete_fix_checklist:
 **Anti-pattern (M345):** Adding "NEVER do X" without ensuring the agent CAN do Y.
 **Anti-pattern (M345):** Changing output format without user consent.
 
+**Missing Preprocessing Output (M452):**
+
+When a handler/preprocessing script should have provided output but didn't, fail-fast. Do NOT add
+fallback behavior that teaches the LLM to run scripts directly or gather data manually.
+
+| Prevention Pattern | Wrong | Correct |
+|-------------------|-------|---------|
+| Missing script output | Add script command as fallback | Skip output or error — fix the handler |
+| Missing handler data | Teach LLM to read files manually | Error — fix the handler |
+
+Adding script commands as fallbacks teaches the agent to bypass preprocessing — which is the same
+problem as manual construction (PATTERN-008). Fail-fast on missing preprocessing, then fix the handler.
+
 **For context-related mistakes:**
 
 ```yaml
