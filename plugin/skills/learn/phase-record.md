@@ -103,7 +103,7 @@ fi
 ```
 
 ```bash
-RETRO_DIR=".claude/cat/retrospectives"
+RETRO_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/retrospectives"
 INDEX_FILE="$RETRO_DIR/index.json"
 
 # Get current year-month for file naming
@@ -207,8 +207,14 @@ jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
 **VALIDATION CHECK**: Before incrementing, verify counter matches actual mistake count:
 
 ```bash
-RETRO_DIR=".claude/cat/retrospectives"
+RETRO_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/retrospectives"
 INDEX_FILE="$RETRO_DIR/index.json"
+
+# Check for active worktrees (warning only - non-blocking)
+ACTIVE_WORKTREES=$(git -C "${CLAUDE_PROJECT_DIR}" worktree list --porcelain | grep -c "^worktree " || true)
+if [[ $ACTIVE_WORKTREES -gt 1 ]]; then
+  echo "WARNING: $((ACTIVE_WORKTREES - 1)) active worktree(s) detected. Committing to base branch."
+fi
 
 LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
 
@@ -236,8 +242,8 @@ else
 fi
 
 # Commit split file and index together
-git add "$MISTAKES_FILE" "$INDEX_FILE"
-git commit -m "config: record learning ${NEXT_ID} - {short description}"
+git -C "${CLAUDE_PROJECT_DIR}" add "$MISTAKES_FILE" "$INDEX_FILE"
+git -C "${CLAUDE_PROJECT_DIR}" commit -m "config: record learning ${NEXT_ID} - {short description}"
 
 # Get current values to check trigger
 MISTAKES=$(jq '.mistake_count_since_last' "$INDEX_FILE")
