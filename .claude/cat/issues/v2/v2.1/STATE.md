@@ -121,4 +121,5 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- restructure-learn-tiered
 - replace-prepare-subagent-with-script
