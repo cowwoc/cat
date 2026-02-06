@@ -285,9 +285,8 @@ git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
 
 Then use `/cat:git-squash` or `git reset --soft ${BASE_BRANCH}` to consolidate commits:
 
-- All implementation work into 1 feature/bugfix commit
-- Config changes into 1 config commit (if separate)
-- Target: 1-2 commits maximum
+- All implementation work + STATE.md closure into 1 feature/bugfix commit
+- Target: 1 commit (STATE.md belongs with implementation, not in a separate commit)
 
 This ensures the user reviews clean commit history, not intermediate implementation state.
 
