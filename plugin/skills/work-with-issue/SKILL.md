@@ -87,18 +87,22 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 **Before any execution, verify the lock for this issue belongs to the current session.**
 
 ```bash
-LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
-if [[ -f "$LOCK_FILE" ]]; then
-  LOCK_SESSION=$(jq -r '.session_id' "$LOCK_FILE")
-  if [[ "$LOCK_SESSION" != "${CLAUDE_SESSION_ID}" ]]; then
-    echo "ERROR: Lock for ${ISSUE_ID} belongs to session ${LOCK_SESSION}, not current session ${CLAUDE_SESSION_ID}."
-    echo "This task was prepared by a different session. STOP and report error."
-    exit 1
-  fi
-else
-  echo "ERROR: No lock file found for ${ISSUE_ID}. Task was not properly prepared."
-  exit 1
-fi
+python3 -c "
+import json, sys
+lock_file = '${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock'
+expected = '${CLAUDE_SESSION_ID}'
+try:
+    with open(lock_file) as f:
+        session = json.load(f).get('session_id', '')
+    if session == expected:
+        print('OK: Lock verified for current session')
+    else:
+        print(f'ERROR: Lock for ${ISSUE_ID} belongs to session {session}, not {expected}')
+        sys.exit(1)
+except FileNotFoundError:
+    print(f'ERROR: No lock file found for ${ISSUE_ID}. Task was not properly prepared.')
+    sys.exit(1)
+"
 ```
 
 If lock ownership verification fails, STOP immediately and return FAILED status. Do NOT proceed
