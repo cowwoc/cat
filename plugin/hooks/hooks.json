@@ -123,6 +123,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/enforce-worktree-isolation.py"
+          }
+        ]
       }
     ],
     "PostToolUse": [

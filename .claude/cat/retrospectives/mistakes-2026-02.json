@@ -2941,6 +2941,57 @@
         "catches_variations": true
       },
       "correct_behavior": "When planning a file move for lazy-loading, verify: (1) what currently references the file, (2) what will reference it after the move, (3) if no reference exists, add one as part of the plan"
+    },
+    {
+      "id": "M456",
+      "timestamp": "2026-02-06T19:17:32.371648+00:00",
+      "category": "protocol_violation",
+      "description": "Agent edited plugin/scripts/work-prepare.py directly on v2.1 branch and committed as 602b31e6, violating M252 worktree isolation rule (3rd recurrence)",
+      "root_cause": "M252's documentation-level prevention was insufficient. No enforcement hook existed to block direct edits on base branches. This is the 3rd recurrence.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/hooks/enforce-worktree-isolation.py",
+      "pattern_keywords": [
+        "worktree_isolation",
+        "base_branch_edit",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M252",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use /cat:add -> /cat:work -> worktree -> subagent implements. Never edit code directly on base branches (v2.1/main)."
+    },
+    {
+      "id": "M457",
+      "timestamp": "2026-02-06T19:25:34.197304+00:00",
+      "category": "prompt_engineering",
+      "description": "First execution subagent completed only 9 out of 32+ files. Executed Steps 1-2 but skipped Step 3. Second subagent needed.",
+      "root_cause": "Delegation prompt conflicting structural signals. PLAN.md distinguished Step 2 from Step 3, but ad-hoc Important Notes used aggregate language (\"Replace ALL\") priming subagent to treat as single operation.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "delegation_prompt",
+        "interpretive_summarization",
+        "conflicting_signals",
+        "incomplete_implementation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pass PLAN.md execution steps verbatim to subagent without ad-hoc interpretation or summarization. Let subagent follow the structured step sequence."
     }
   ]
 }
