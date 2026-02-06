@@ -118,3 +118,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - unify-output-template-delivery
 - update-skill-builder-docs
 - use-patch-id-for-commit-tracking
+
+
+## Issues Pending
+- replace-prepare-subagent-with-script
