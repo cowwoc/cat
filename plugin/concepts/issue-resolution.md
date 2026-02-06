@@ -114,9 +114,13 @@ git commit -m "config: close obsolete issue {issue-name}
 
 | User Says | Action |
 |-----------|--------|
-| "abort/stop the issue" | Restore Status to `open`, cleanup worktree |
+| "abort/stop the issue" | Release lock, delete worktree and branch |
 | "mark as obsolete" | Set Status: `closed`, Resolution: `obsolete` |
 | "mark as duplicate" | Set Status: `closed`, Resolution: `duplicate` |
+
+**Abort cleanup:** Release the issue lock, remove the worktree (`git worktree remove --force`),
+and delete the branch. No STATE.md commit is needed on the base branch — the worktree branch
+contains all in-progress changes, and deleting it reverts STATE.md automatically.
 
 **A stopped issue returns to open state** - ready for future work.
 Only issues that reach their goal (or are explicitly declared obsolete/duplicate) become closed.
