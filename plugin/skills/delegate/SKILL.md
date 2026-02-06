@@ -584,19 +584,16 @@ Task tool invocation:
 ### 6. Execute Based on Mode
 
 **Parallel (default for multiple items):**
-```bash
-# Spawn all subagents concurrently
-for item in "${ITEMS[@]}"; do
-  Task tool: spawn subagent for item (run_in_background: true)
-done
 
-# Monitor until all complete
-while has_running_subagents; do
-  for subagent in $(get_completed); do
-    collect_results "$subagent"
-  done
-  sleep 10
-done
+Spawn all subagents in a **single message** with multiple Task tool calls. Claude Code
+runs them concurrently and returns all results when complete. No background mode or polling needed.
+
+```bash
+# Single message with N Task tool calls — all run in parallel, all block until complete
+Task tool: spawn subagent for item[0]
+Task tool: spawn subagent for item[1]
+Task tool: spawn subagent for item[2]
+# ... all return results in the same response
 ```
 
 **Sequential (when `--sequential` specified):**
@@ -918,54 +915,41 @@ The exploration subagent handles three phases internally:
 
 ## Waiting for Subagent Completion (M293)
 
-**CRITICAL: Claude does NOT automatically wake up when background issues complete.**
+**Preferred: Use multiple blocking Task calls in a single message.**
 
-When using `run_in_background: true`:
-- Completion notifications appear as system reminders
-- These do NOT trigger automatic response
-- Conversation blocks until user sends another message
-
-**To wait for results, use `TaskOutput` with `block: true`:**
+Spawn all subagents as separate Task tool calls in one message. They run concurrently and
+all return results when complete. No background mode, no polling, no TaskOutput needed.
 
 ```bash
-# Spawn in background → returns issue_id
-# Wait: TaskOutput issue_id="{id}" block=true timeout=120000
+# ✅ CORRECT: Multiple Task calls in one message (parallel, blocking)
+Task tool: subagent for item A   # All three run concurrently
+Task tool: subagent for item B   # Results return together
+Task tool: subagent for item C   # No polling needed
 ```
 
 | Scenario | Approach |
 |----------|----------|
-| Single subagent, need results | Blocking (no `run_in_background`) |
-| Multiple subagents, parallel | Background + `TaskOutput` with `block: true` for each |
-| Long-running, user expects updates | Background + tell user to check back |
+| Single subagent | Single blocking Task call |
+| Multiple subagents, parallel | Multiple Task calls in one message |
+| Sequential with reuse | Single Task call, then resume with next item |
+
+**Avoid `run_in_background`** unless you need the main agent to do other work while subagents run.
+Background mode requires TaskOutput to retrieve results, adding complexity and context pollution.
 
 **Context Pollution Warning (M373, M376):**
 
-Do NOT poll subagent status repeatedly. Each `TaskOutput` call adds ~500 tokens to context.
-For N subagents with M polls each, you waste N×M×500 tokens.
-
-**For batch operations**: Do NOT retrieve full TaskOutput for each subagent. Instead, check
-git commits directly to verify success:
+If you must use background mode, do NOT poll status repeatedly. Each `TaskOutput` call adds
+~500 tokens to context. For batch operations, check git commits directly instead of retrieving
+full TaskOutput:
 
 ```bash
 # ❌ WRONG: Retrieve full output for each subagent (pollutes parent context)
 TaskOutput issue_id="abc" block=true  # Returns truncated but still large output
 TaskOutput issue_id="def" block=true  # More context pollution
-# Result: Parent agent context filled with subagent transcripts
 
 # ✅ CORRECT: Check results via git (minimal context impact)
 git log --oneline HEAD --not base_branch  # See what was committed
 git diff --stat base_branch..HEAD          # See files changed
-# Result: Parent agent context stays clean
-```
-
-```bash
-# ❌ WRONG: Polling pattern (pollutes context)
-TaskOutput issue_id="abc" block=false  # Check status
-TaskOutput issue_id="abc" block=false  # Check again
-TaskOutput issue_id="abc" block=false  # Still checking...
-
-# ✅ CORRECT: Single blocking call only when you NEED the output
-TaskOutput issue_id="abc" block=true timeout=300000  # Wait up to 5 min
 ```
 
 **Anti-pattern (M293):**
