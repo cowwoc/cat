@@ -167,10 +167,9 @@ for issue_dir in .claude/cat/issues/v*/v*/*/ ; do
         UNRESOLVED_DEPS='[]'
         IFS=', ' read -ra DEP_ARRAY <<< "$DEPS"
         for dep in "${DEP_ARRAY[@]}"; do
-          # Find dependency's STATE.md in the same version structure
-          VERSION_DIR=$(dirname "$(dirname "$issue_dir")")
-          DEP_STATE="$VERSION_DIR/$dep/STATE.md"
-          if [ -f "$DEP_STATE" ]; then
+          # Find dependency's STATE.md across ALL versions (cross-version deps are valid)
+          DEP_STATE=$(find .claude/cat/issues -path "*/$dep/STATE.md" 2>/dev/null | head -1)
+          if [ -n "$DEP_STATE" ] && [ -f "$DEP_STATE" ]; then
             DEP_STATUS=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$DEP_STATE")
             if [ "$DEP_STATUS" != "closed" ]; then
               UNRESOLVED_DEPS=$(echo "$UNRESOLVED_DEPS" | jq --arg dep "$dep" --arg status "$DEP_STATUS" '. + [{"id": $dep, "status": $status}]')

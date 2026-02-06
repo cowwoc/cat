@@ -5,7 +5,7 @@
     "trigger_interval_days": 7
   },
   "last_retrospective": "2026-02-06T19:00:00Z",
-  "mistake_count_since_last": 0,
+  "mistake_count_since_last": 1,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -323,8 +323,14 @@
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
-      "preventions": ["M431", "M448", "M449"],
-      "related_action_items": ["A017"],
+      "preventions": [
+        "M431",
+        "M448",
+        "M449"
+      ],
+      "related_action_items": [
+        "A017"
+      ],
       "note": "Bash tool inline operators (!=, //, compound &&/||) get shell-escaped or produce incorrect results. Skill-level prevention insufficient."
     },
     {
@@ -337,8 +343,13 @@
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
-      "preventions": ["M450", "M451"],
-      "related_action_items": ["A018"],
+      "preventions": [
+        "M450",
+        "M451"
+      ],
+      "related_action_items": [
+        "A018"
+      ],
       "note": "Git squash operations produce incorrect results - absorbing base branch changes or miscategorizing files. Squash skill needs rebase-first requirement and clearer file grouping rules."
     }
   ],
@@ -757,7 +768,11 @@
       "status": "open",
       "created_date": "2026-02-06T19:00:00Z",
       "completed_date": null,
-      "related_mistakes": ["M431", "M448", "M449"],
+      "related_mistakes": [
+        "M431",
+        "M448",
+        "M449"
+      ],
       "effectiveness_check": {
         "mistakes_before": 3,
         "mistakes_after": null,
@@ -774,7 +789,10 @@
       "status": "open",
       "created_date": "2026-02-06T19:00:00Z",
       "completed_date": null,
-      "related_mistakes": ["M450", "M451"],
+      "related_mistakes": [
+        "M450",
+        "M451"
+      ],
       "effectiveness_check": {
         "mistakes_before": 2,
         "mistakes_after": null,
@@ -791,7 +809,9 @@
       "status": "open",
       "created_date": "2026-02-06T19:00:00Z",
       "completed_date": null,
-      "related_mistakes": ["M452"],
+      "related_mistakes": [
+        "M452"
+      ],
       "effectiveness_check": {
         "mistakes_before": 1,
         "mistakes_after": null,

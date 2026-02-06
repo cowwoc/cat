@@ -2890,6 +2890,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Write tests before implementation when task has testable interfaces. Reorder PLAN.md steps to TDD order if needed."
+    },
+    {
+      "id": "M454",
+      "timestamp": "2026-02-06T20:15:00Z",
+      "category": "incorrect_implementation",
+      "description": "Work-prepare diagnostic loop only searches same-version directory for dependencies, incorrectly reporting cross-version deps as not_found",
+      "root_cause": "SKILL.md Step 2 diagnostic bash loop uses dirname traversal to find deps in same version dir, while get-available-issues.sh correctly uses find across all versions. Cross-version deps (e.g. v2.2 depending on v2.0 showcase-template) reported as not_found when they exist.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/SKILL.md",
+      "pattern_keywords": [
+        "cross-version-dependency",
+        "diagnostic-loop",
+        "same-version-search"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Search all version directories for dependencies using find, matching the behavior of is_dependency_satisfied() in get-available-issues.sh"
     }
   ]
 }
