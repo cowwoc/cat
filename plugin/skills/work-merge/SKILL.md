@@ -128,10 +128,15 @@ git -C /workspace worktree remove ${WORKTREE_PATH} --force &&
   "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}"
 ```
 
-### Step 6: Auto-Complete Decomposed Parent (M434)
+### Step 6: Auto-Complete Decomposed Parent (M434, M467)
 
 After merging, check if this issue is a subtask of a decomposed parent. If all sibling
-subtasks are now completed, mark the parent as completed.
+subtasks are now implemented and tested, mark the parent as completed.
+
+**LIMITATION (M467):** This auto-completion only checks subtask status, NOT parent acceptance criteria.
+If parent has acceptance criteria beyond subtasks being completed, auto-closure may be premature.
+When /cat:work selects the parent later, it must verify parent PLAN.md acceptance criteria per
+decompose-issue § Closing Decomposed Parents.
 
 ```bash
 # Find parent by checking all issues in the same version for "Decomposed Into" sections

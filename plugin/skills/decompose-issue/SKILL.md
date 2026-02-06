@@ -137,12 +137,25 @@ dependencies:
 
 ### 6. Update STATE.md Files
 
-**Parent Issue Status Lifecycle (M263):**
+**Parent Issue Status Lifecycle (M263, M467):**
 
 When a issue is decomposed, the parent issue status follows this lifecycle:
 1. `open` → `in-progress` (when decomposition starts)
 2. Remains `in-progress` while subtasks execute
-3. `in-progress` → `closed` (only when ALL subtasks are closed)
+3. `in-progress` → `closed` (only when ALL subtasks are implemented and tested AND parent acceptance criteria are met)
+
+**Closing Decomposed Parents (M467):**
+
+When /cat:work selects a decomposed parent (all subtasks closed), verify parent acceptance criteria before closure:
+
+1. **Read parent PLAN.md** - Review all acceptance criteria listed
+2. **Verify each criterion** - Check codebase/tests to confirm each criterion is actually satisfied
+3. **If all criteria met** - Update parent STATE.md to closed/100%
+4. **If criteria NOT met** - Create new subtask for remaining work, keep parent open
+
+**Why subtasks implemented and tested ≠ parent complete:** Subtasks implement their individual scopes, but may not
+cover everything in parent acceptance criteria. Example: subtasks create Java equivalents, but none remove Python
+originals.
 
 **INVALID:** Using `status: decomposed` - this is NOT a valid status value.
 Valid values are: `open`, `in-progress`, `closed`, `blocked`.
@@ -168,8 +181,8 @@ Original issue STATE.md:
 - Will be merged to 1.2a branch
 ```
 
-**Note:** Parent stays `in-progress` until ALL subtasks complete. Progress is calculated from subtask completion (e.g.,
-1/3 subtasks = 33%).
+**Note:** Parent stays `in-progress` until ALL subtasks are implemented and tested. Progress is calculated from subtask
+completion (e.g., 1/3 subtasks = 33%).
 
 New issue STATE.md:
 
@@ -294,7 +307,7 @@ parallel_plan: sub_task_1=[1.2a, 1.2c], sub_task_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
 
 # Update STATE.md - status stays in-progress, add Decomposed field
-# Parent transitions to 'closed' only when ALL subtasks complete
+# Parent transitions to 'closed' only when ALL subtasks are implemented and tested
 ```
 
 ## Examples
