@@ -1,5 +1,7 @@
 # Clean Output Standards
 
+([BANG] = the exclamation mark, written as placeholder to avoid preprocessor expansion)
+
 ## Core Principle
 
 User-facing output should be clean, focused, and demo-ready. Hide internal implementation
@@ -10,7 +12,7 @@ noise while showing meaningful progress and results.
 ### 1. Silent Preprocessing (Formatted Output)
 
 For outputs with precise formatting requirements (boxes, tables, aligned text), use
-Claude Code's **silent preprocessing** feature with the `!`command`` syntax.
+Claude Code's **silent preprocessing** feature with the [BANG]`command` syntax.
 
 **Why?** Agents make errors on:
 - Emoji width calculations
@@ -23,19 +25,19 @@ Claude Code's **silent preprocessing** feature with the `!`command`` syntax.
 Skill loads → Commands execute silently → Claude receives rendered content → Output verbatim
 ```
 
-**The `!`command`` syntax:**
+**The [BANG]`command` syntax:**
 
 ```markdown
 ## My Skill
 
 Here is the current status:
-!`cat-status-display.sh --format=box`
+[BANG]`cat-status-display.sh --format=box`
 
 Now analyze the results...
 ```
 
 **How it works:**
-1. When Claude Code loads the skill, it finds `!`command`` patterns
+1. When Claude Code loads the skill, it finds [BANG]`command` patterns
 2. Each command executes **immediately** during skill expansion
 3. The command output **replaces the placeholder** in the skill content
 4. Claude receives the fully-rendered prompt with actual data
@@ -49,7 +51,7 @@ Now analyze the results...
 **Implementation:**
 1. Create script in `plugin/scripts/` (e.g., `cat-display.sh`)
 2. Script outputs formatted content to stdout
-3. Reference in skill with `!`script.sh args``
+3. Reference in skill with [BANG]`script.sh args`
 
 **Checklist:**
 - [ ] Script handles all formatting (boxes, alignment, emoji widths)
@@ -160,7 +162,7 @@ Let me calculate the box width...
 [Emojis render as dots because agent used wrong characters]
 
 # GOOD: Preprocessed output received
-[Skill loaded with !`command` preprocessing]
+[Skill loaded with [BANG]`command` preprocessing]
 [Claude receives already-rendered content]
 [Outputs exactly as received]
 ```
@@ -175,11 +177,11 @@ Let me calculate the box width...
 
 | Scenario | Approach |
 |----------|----------|
-| Formatted output (boxes, tables) | Silent preprocessing (`!`command``) |
+| Formatted output (boxes, tables) | Silent preprocessing ([BANG]`command`) |
 | Multi-step data gathering | Subagent batching |
 | Simple file reads (1-2 files) | Direct execution |
 | User interaction required | Direct execution |
-| Deterministic transformation | Silent preprocessing (`!`command``) |
+| Deterministic transformation | Silent preprocessing ([BANG]`command`) |
 | Exploratory search | Subagent batching |
 
 **Decision tree:**
@@ -187,7 +189,7 @@ Let me calculate the box width...
 ```
 Need formatted output (boxes, tables, alignment)?
   │
-  ├─ Yes → Use silent preprocessing (!`command`)
+  ├─ Yes → Use silent preprocessing ([BANG]`command`)
   │
   └─ No → Multiple tool calls needed?
            │

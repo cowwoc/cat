@@ -439,8 +439,10 @@ description: "[WHEN to use] - [what it does]"
 
 ### Step 1: [For skills with preprocessed output]
 
+([BANG] = the exclamation mark, written as placeholder to avoid preprocessor expansion. See M440 caution below.)
+
 # Direct preprocessing pattern:
-!`render-output.sh`
+[BANG]`render-output.sh`
 
 # Or delegated preprocessing pattern (if LLM determines data):
 Analyze context and invoke renderer skill with args.
@@ -781,7 +783,7 @@ If preprocessing ran: output result
 Else: compute manually (error-prone!)
 
 # GOOD - Fail-fast exposes problems
-Preprocessing via !`script.sh` runs automatically.
+Preprocessing via [BANG]`script.sh` runs automatically.
 If script fails, skill expansion fails visibly.
 ```
 
@@ -911,7 +913,7 @@ architecture flowcharts) are acceptable because:
    ╰──────────────────────╯
 
    # GOOD - Preprocessing handles rendering
-   !`render-box.sh "$content"`
+   [BANG]`render-box.sh "$content"`
    ```
 
 2. **For circle/rating patterns, preprocess them:**
@@ -920,7 +922,7 @@ architecture flowcharts) are acceptable because:
    Display ratings like: ●●●●○ (4/5) or ●●○○○ (2/5)
 
    # GOOD - Script renders rating
-   !`render-rating.sh "$score"`
+   [BANG]`render-rating.sh "$score"`
    ```
 
 3. **For output format documentation, describe structure not rendering:**
@@ -932,14 +934,14 @@ architecture flowcharts) are acceptable because:
    ╰────────────────────────────────╯
 
    # GOOD - Preprocessing renders status
-   !`get-status-display.sh`
+   [BANG]`get-status-display.sh`
    ```
 
 **Verification during skill creation:**
 - [ ] No box-drawing characters (╭╮╰╯│├┤┬┴┼─) appear in instruction examples
 - [ ] No formatted table examples with borders appear in skill text
 - [ ] Visual patterns (circles, bars, etc.) handled by preprocessing scripts
-- [ ] All display rendering uses `!`script`` preprocessing
+- [ ] All display rendering uses exclamation-backtick preprocessing
 
 ### Conditional Information Principle (M256)
 
@@ -969,7 +971,7 @@ in preprocessing scripts, not in skill documentation.
 
 ### Step 1: Display status
 
-!`get-status-display.sh`
+[BANG]`get-status-display.sh`
 
 > Script handles all emoji selection, box alignment, and formatting.
 ```
@@ -1108,25 +1110,25 @@ Procedure step:
   "Call build_box(root_contents) to construct the complete nested structure"
 ```
 
-### Silent Preprocessing with `!`command`` (Preferred)
+### Silent Preprocessing with exclamation-backtick syntax (Preferred)
 
 **Critical insight**: When a skill contains functions that perform deterministic computation
 (algorithms, formulas, calculations), the output MUST be generated BEFORE Claude sees the content.
 Claude Code provides a built-in mechanism for this: **silent preprocessing**.
 
-**The `!`command`` syntax:**
+**The [BANG]`command` syntax:**
 
 ```markdown
 ## Example Skill
 
 The current status:
-!`cat-status --format=box`
+[BANG]`cat-status --format=box`
 
 Continue with your analysis...
 ```
 
 **How it works:**
-1. When Claude Code loads the skill, it scans for `!`command`` patterns
+1. When Claude Code loads the skill, it scans for [BANG]`command` patterns
 2. Each command executes **immediately** during skill expansion
 3. The command output **replaces the placeholder** in the skill content
 4. Claude receives the fully-rendered prompt with actual data
@@ -1135,13 +1137,13 @@ Continue with your analysis...
 
 **⚠️ CAUTION: Pattern Collision in Documentation**
 
-When documenting the silent preprocessing syntax within a skill, **never use literal** `` `!`command`` ``
+When documenting the silent preprocessing syntax within a skill, **never use literal** [BANG]`command`
 **patterns as examples**. Claude Code's pattern matcher scans the entire skill file and will attempt
-to expand any `!`...`` pattern it finds - including those in documentation sections.
+to expand any [BANG]`...` pattern it finds - including those in documentation sections.
 
 ```markdown
 # ❌ WRONG - Pattern matcher will try to execute "command"
-This skill uses silent preprocessing (`!`command``) for output.
+This skill uses silent preprocessing ([BANG]`command`) for output.
 
 # ✅ CORRECT - Use descriptive text instead
 This skill uses silent preprocessing (exclamation-backtick syntax) for output.
@@ -1164,7 +1166,7 @@ name: cat-banner
 description: Display issue progress banner
 ---
 
-!`cat-progress-banner.sh --issue-id "${ISSUE_ID}" --phase "${PHASE}"`
+[BANG]`cat-progress-banner.sh --issue-id "${ISSUE_ID}" --phase "${PHASE}"`
 ```
 
 The script generates the complete banner with correct box alignment, emoji widths, and padding.
@@ -1180,7 +1182,7 @@ Claude receives the rendered banner and outputs it directly.
 1. Create script in `plugin/scripts/` (e.g., `cat-progress-banner.sh`)
 2. Script accepts arguments via shell variables or command-line args
 3. Script outputs the final formatted content to stdout
-4. Reference in skill with `!`script.sh args``
+4. Reference in skill with [BANG]`script.sh args`
 
 **Identify extraction candidates during function extraction (Step 5):**
 
@@ -1239,7 +1241,7 @@ config, etc.) without LLM judgment.
 ┌─────────────────┐
 │   Skill A       │
 │                 │
-│ !`script.sh`    │──→ Script reads files/state ──→ Rendered output
+│ [BANG]`script.sh`│──→ Script reads files/state ──→ Rendered output
 │                 │
 │ [output here]   │
 └─────────────────┘
@@ -1249,7 +1251,7 @@ config, etc.) without LLM judgment.
 
 ```markdown
 # Status Skill
-!`get-status-display.py`
+[BANG]`get-status-display.py`
 ```
 
 **Pattern 2: Delegated Preprocessing** (LLM determines data)
@@ -1262,7 +1264,7 @@ Split into two skills:
 │   Skill A       │     │   Skill B           │
 │  (Orchestrator) │     │   (Renderer)        │
 │                 │     │                     │
-│ Analyze context │     │ !`render.sh $ARGS`  │──→ Rendered output
+│ Analyze context │     │ [BANG]`render.sh $ARGS`│─→ Rendered output
 │ Decide on data  │     │                     │
 │ Invoke Skill B  │────→│ [output here]       │
 │ with args       │     │                     │
@@ -1281,7 +1283,7 @@ For each concern, invoke the `render-concern` skill:
 - args: {"stakeholder": "security", "concern": "SQL injection", "severity": "high"}
 
 # Skill B: Render Concern (renderer)
-!`render-concern.sh '$ARGUMENTS'`
+[BANG]`render-concern.sh '$ARGUMENTS'`
 ```
 
 **Decision checklist**:
@@ -1313,14 +1315,14 @@ with the value passed to the skill.
 | User types `/skill-name arg text` | `arg text` captured | Raw, unchanged |
 | Agent invokes `Skill(skill="name", args="value")` | `value` passed | Raw, unchanged |
 | `$ARGUMENTS` in skill markdown | Substituted literally | No transformation |
-| `$ARGUMENTS` in `!` shell command | Shell interprets | **Dangerous** |
+| `$ARGUMENTS` in [BANG] shell command | Shell interprets | **Dangerous** |
 
 ### Shell Safety with `$ARGUMENTS`
 
-**Critical**: When `$ARGUMENTS` appears inside `!`command`` preprocessing, the shell
+**Critical**: When `$ARGUMENTS` appears inside [BANG]`command` preprocessing, the shell
 interprets special characters:
 
-| Character | In Markdown | In Shell `!` |
+| Character | In Markdown | In Shell [BANG] |
 |-----------|-------------|--------------|
 | `"` | Preserved | Consumed as quote |
 | `$VAR` | Literal | Expanded (empty if unset) |
@@ -1332,7 +1334,7 @@ interprets special characters:
 Input: it"s complex with $VAR and `backticks`
 
 $ARGUMENTS in markdown: it"s complex with $VAR and `backticks`  ✓ preserved
-$ARGUMENTS in !`echo`: its complex with andbackticks`"`         ✗ mangled
+$ARGUMENTS in [BANG]`echo`: its complex with andbackticks`"`     ✗ mangled
 ```
 
 ### Safe Patterns
@@ -1349,10 +1351,10 @@ Now analyze this request...
 **For shell processing, use controlled inputs**:
 ```markdown
 # Instead of passing user text to shell:
-!`process-input.sh "$ARGUMENTS"`     # ❌ Dangerous
+[BANG]`process-input.sh "$ARGUMENTS"`     # ❌ Dangerous
 
 # Have the script read from a known source:
-!`get-current-issue.sh`                # ✓ Script controls input
+[BANG]`get-current-issue.sh`                # ✓ Script controls input
 ```
 
 **For skill-to-skill calls**: No escaping needed - the Skill tool's `args` parameter
@@ -1364,7 +1366,7 @@ Skill(skill="other-skill", args="text with \"quotes\" and $vars")
 
 ### Checklist
 
-- [ ] `$ARGUMENTS` only appears in markdown context, not inside `!` commands
+- [ ] `$ARGUMENTS` only appears in markdown context, not inside [BANG] commands
 - [ ] Shell scripts use controlled inputs, not raw user text
 - [ ] If shell processing needed, script validates/sanitizes input first
 
@@ -1479,7 +1481,7 @@ Step 1: Render status display...
 # ✅ CORRECT - Preprocessing handles formatting
 ## Procedure
 Step 1: Display status
-!`get-status-display.sh`
+[BANG]`get-status-display.sh`
 ```
 
 **Self-check**:
@@ -1506,7 +1508,7 @@ Step 1: Display status
 ### Preprocessing Architecture
 
 - [ ] **Architecture decision made**: Direct vs. Delegated preprocessing
-- [ ] **Direct**: Script collects all inputs → use `!`script.sh`` in skill
+- [ ] **Direct**: Script collects all inputs → use [BANG]`script.sh` in skill
 - [ ] **Delegated**: LLM determines data → Skill A invokes Skill B with args
 - [ ] **Computation extracted to preprocessing scripts** (M192/M215)
 - [ ] **No manual formatting in skill** - all rendering via preprocessing
