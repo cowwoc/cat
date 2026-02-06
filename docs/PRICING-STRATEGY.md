@@ -2,7 +2,8 @@
 
 ## Executive Summary
 
-CAT is an AI-powered development workflow orchestration plugin for Claude Code. This pricing strategy is designed for a **solo-dev business** with limited support capacity.
+CAT is an AI-powered development workflow orchestration plugin for Claude Code. This pricing strategy is designed for a
+**solo-dev business** with limited support capacity.
 
 **Key Decisions:**
 - 3-tier per-seat pricing: Indie (Free), Team, Enterprise
@@ -241,7 +242,8 @@ CAT is a plugin on top of Claude Code. Total cost includes Claude Max 20x subscr
 
 **Recommendation:** Maintain $49 Enterprise - don't lower price
 
-**Key Insight:** "Lowering Enterprise from $49 to $29-35 is a POOR marketing move... Enterprise buyers expect to pay more, not less - lower prices can actually reduce conversion because it appears 'not serious'"
+**Key Insight:** "Lowering Enterprise from $49 to $29-35 is a POOR marketing move... Enterprise buyers expect to pay
+more, not less - lower prices can actually reduce conversion because it appears 'not serious'"
 
 **Pros:**
 - "Indie" resonates with indie hacker movement

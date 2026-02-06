@@ -4,7 +4,8 @@ This directory contains scripts for managing the custom JDK runtime used by CAT'
 
 ## Overview
 
-CAT uses a minimal JDK 25 runtime created with `jlink` to provide fast startup times for Java hooks. The custom runtime includes only the modules needed for JSON processing (Jackson 3) and basic I/O operations.
+CAT uses a minimal JDK 25 runtime created with `jlink` to provide fast startup times for Java hooks. The custom runtime
+includes only the modules needed for JSON processing (Jackson 3) and basic I/O operations.
 
 **Benefits:**
 - ~30-40MB vs ~300MB for full JDK
@@ -112,7 +113,8 @@ CAT_JAVA_HOME=/path/to/runtime ./java_runner.sh ValidationHandler
 
 ### "Hook classpath not found"
 
-The Java hooks JAR is not built yet. This is expected during initial setup. Java hook implementations will be added in subsequent tasks.
+The Java hooks JAR is not built yet. This is expected during initial setup. Java hook implementations will be added in
+subsequent tasks.
 
 ### Build fails with "module not found"
 

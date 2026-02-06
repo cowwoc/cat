@@ -6,7 +6,8 @@
   <a href="#cat-ai-agents-that-land-on-their-feet"><img src="docs/intro-box.svg" alt="CAT Overview" width="500"/></a>
 </p>
 
-**CAT transforms chaotic AI coding sessions into predictable, reliable delivery.** Your team gets consistent results, trackable progress, and code that passes review the first time.
+**CAT transforms chaotic AI coding sessions into predictable, reliable delivery.** Your team gets consistent results,
+trackable progress, and code that passes review the first time.
 
 | Benefit | Impact |
 |---------|--------|
@@ -138,7 +139,8 @@ During `/cat:init`, you configure preferences that apply consistently across you
 | **Curiosity** | Whether CAT notes optimization opportunities beyond the task |
 | **Patience** | When CAT acts on discovered opportunities |
 
-**For Teams:** These preferences become your team's coding standards. Every developer, every project, every session follows the same rules.
+**For Teams:** These preferences become your team's coding standards. Every developer, every project, every session
+follows the same rules.
 
 ### The Workflow: Task Lifecycle
 
