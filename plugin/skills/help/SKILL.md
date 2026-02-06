@@ -5,6 +5,6 @@ allowed-tools:
   - Skill
 ---
 
-Without any preamble, invoke the script-output skill with this exact content:
+Without any preamble, invoke the render-output skill with this exact content:
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
