@@ -8,8 +8,10 @@ and provides metrics for optimization recommendations.
 
 import argparse
 import json
+import re
 import sys
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Dict, List
 
 # Minimum number of consecutive operations to qualify as batch candidate
@@ -217,8 +219,67 @@ def find_parallel_candidates(tool_uses: List[Dict[str, Any]]) -> List[Dict[str, 
     return sorted(candidates, key=lambda x: -x['count'])
 
 
-def analyze_session(file_path: str) -> Dict[str, Any]:
-    """Main analysis function."""
+def discover_subagents(file_path: str) -> List[str]:
+    """
+    Discover subagent JSONL files from parent session.
+
+    Parses the session JSONL for Task tool_result entries containing agentId,
+    then resolves subagent file paths. Returns only paths that exist on disk.
+
+    Args:
+        file_path: Path to parent session JSONL file
+
+    Returns:
+        List of discovered subagent file paths (only existing files)
+    """
+    entries = parse_jsonl(file_path)
+    agent_ids = set()
+
+    # Extract agentId from Task tool_result entries
+    for entry in entries:
+        if entry.get('type') != 'tool_result':
+            continue
+
+        content = entry.get('content', '')
+        if isinstance(content, list):
+            # Join all text items
+            content = '\n'.join(
+                item.get('text', '') if isinstance(item, dict) else str(item)
+                for item in content
+            )
+        elif not isinstance(content, str):
+            content = str(content)
+
+        # Look for agentId in the content (JSON structure)
+        try:
+            # Try to parse as JSON to find agentId
+            if '"agentId":' in content:
+                # Extract agent IDs using simple pattern matching
+                matches = re.findall(r'"agentId"\s*:\s*"([^"]+)"', content)
+                agent_ids.update(matches)
+        except Exception:
+            # If parsing fails, continue
+            pass
+
+    # Resolve subagent file paths
+    session_dir = Path(file_path).parent
+    subagent_dir = session_dir / 'subagents'
+
+    subagent_paths = []
+    for agent_id in agent_ids:
+        subagent_path = subagent_dir / f'agent-{agent_id}.jsonl'
+        if subagent_path.exists():
+            subagent_paths.append(str(subagent_path))
+
+    return sorted(subagent_paths)
+
+
+def analyze_single_agent(file_path: str) -> Dict[str, Any]:
+    """
+    Analyze a single agent's JSONL file.
+
+    Returns the same structure as analyze_session but without subagent/combined keys.
+    """
     entries = parse_jsonl(file_path)
     tool_uses = extract_tool_uses(entries)
 
@@ -234,6 +295,127 @@ def analyze_session(file_path: str) -> Dict[str, Any]:
             'unique_tools': sorted(list(set(t['name'] for t in tool_uses))),
             'total_entries': len(entries)
         }
+    }
+
+
+def merge_tool_frequency(frequencies: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Merge tool frequency counts from multiple agents."""
+    merged = defaultdict(int)
+    for freq_list in frequencies:
+        for item in freq_list:
+            merged[item['tool']] += item['count']
+
+    return [
+        {'tool': tool, 'count': count}
+        for tool, count in sorted(merged.items(), key=lambda x: -x[1])
+    ]
+
+
+def merge_cache_candidates(cache_lists: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Merge cache candidates from multiple agents."""
+    # Group by operation signature
+    merged = defaultdict(int)
+    operation_map = {}
+
+    for cache_list in cache_lists:
+        for item in cache_list:
+            op = item['operation']
+            key = (op['name'], json.dumps(op['input'], sort_keys=True))
+            merged[key] += item['repeat_count']
+            operation_map[key] = op
+
+    candidates = []
+    for key, count in merged.items():
+        if count > 1:
+            candidates.append({
+                'operation': operation_map[key],
+                'repeat_count': count,
+                'optimization': 'CACHE_CANDIDATE'
+            })
+
+    return sorted(candidates, key=lambda x: -x['repeat_count'])
+
+
+def sum_token_usage(usage_lists: List[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Sum token usage across multiple agents."""
+    merged = defaultdict(lambda: {
+        'total_input_tokens': 0,
+        'total_output_tokens': 0,
+        'count': 0
+    })
+
+    for usage_list in usage_lists:
+        for item in usage_list:
+            tool = item['tool']
+            merged[tool]['total_input_tokens'] += item['total_input_tokens']
+            merged[tool]['total_output_tokens'] += item['total_output_tokens']
+            merged[tool]['count'] += item['count']
+
+    return [
+        {
+            'tool': tool,
+            'total_input_tokens': stats['total_input_tokens'],
+            'total_output_tokens': stats['total_output_tokens'],
+            'count': stats['count']
+        }
+        for tool, stats in sorted(
+            merged.items(),
+            key=lambda x: -x[1]['total_input_tokens']
+        )
+    ]
+
+
+def analyze_session(file_path: str) -> Dict[str, Any]:
+    """
+    Main analysis function with subagent discovery and combined analysis.
+
+    Analyzes the main session and discovers any subagent sessions, providing
+    per-agent and combined metrics.
+
+    Returns:
+        Dictionary containing:
+        - 'main': Main agent metrics
+        - 'subagents': Dict of agentId -> per-subagent analysis
+        - 'combined': Aggregated metrics across all agents
+    """
+    # Analyze main agent
+    main_analysis = analyze_single_agent(file_path)
+
+    # Discover and analyze subagents
+    subagent_paths = discover_subagents(file_path)
+    subagents = {}
+
+    for subagent_path in subagent_paths:
+        # Extract agent ID from filename (agent-{agentId}.jsonl)
+        agent_id = Path(subagent_path).stem.replace('agent-', '')
+        try:
+            subagents[agent_id] = analyze_single_agent(subagent_path)
+        except Exception as e:
+            # Skip subagents that fail to analyze
+            print(f"Warning: Failed to analyze subagent {agent_id}: {e}", file=sys.stderr)
+            continue
+
+    # Build combined analysis
+    all_analyses = [main_analysis] + list(subagents.values())
+
+    combined = {
+        'tool_frequency': merge_tool_frequency([a['tool_frequency'] for a in all_analyses]),
+        'cache_candidates': merge_cache_candidates([a['cache_candidates'] for a in all_analyses]),
+        'token_usage': sum_token_usage([a['token_usage'] for a in all_analyses]),
+        'summary': {
+            'total_tool_calls': sum(a['summary']['total_tool_calls'] for a in all_analyses),
+            'unique_tools': sorted(list(set().union(
+                *[set(a['summary']['unique_tools']) for a in all_analyses]
+            ))),
+            'total_entries': sum(a['summary']['total_entries'] for a in all_analyses),
+            'agent_count': len(all_analyses)
+        }
+    }
+
+    return {
+        'main': main_analysis,
+        'subagents': subagents,
+        'combined': combined
     }
 
 

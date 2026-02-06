@@ -45,13 +45,20 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-session.py" "$SESSION_FILE"
 ```
 
 The script outputs a JSON object with:
-- `tool_frequency`: Count of each tool type used
-- `token_usage`: Token consumption per tool type
-- `output_sizes`: Sizes of tool outputs (from tool_result entries)
-- `cache_candidates`: Repeated identical operations
-- `batch_candidates`: Consecutive similar operations
-- `parallel_candidates`: Independent operations in same message
-- `summary`: Overall session statistics
+- `main`: Main agent analysis containing:
+  - `tool_frequency`: Count of each tool type used
+  - `token_usage`: Token consumption per tool type
+  - `output_sizes`: Sizes of tool outputs from tool_result entries
+  - `cache_candidates`: Repeated identical operations
+  - `batch_candidates`: Consecutive similar operations
+  - `parallel_candidates`: Independent operations in same message
+  - `summary`: Overall session statistics
+- `subagents`: Dictionary of agentId to per-subagent analysis (same structure as main)
+- `combined`: Aggregated metrics across main agent and all subagents
+
+**Subagent Discovery**: The script automatically discovers subagent JSONL files by parsing Task tool_result
+entries for `agentId` fields, then resolves paths as `{session_dir}/subagents/agent-{agentId}.jsonl`.
+Only existing files are included.
 
 ### Step 2: Categorize UX Relevance
 
@@ -124,7 +131,53 @@ Generate a comprehensive analysis report with specific recommendations for:
 
 ## Output Format
 
-The skill produces a JSON structure with four main sections:
+The skill produces a JSON structure with main agent metrics, subagent analysis, and combined aggregations:
+
+```json
+{
+  "main": {
+    "tool_frequency": [...],
+    "token_usage": [...],
+    "output_sizes": [...],
+    "cache_candidates": [...],
+    "batch_candidates": [...],
+    "parallel_candidates": [...],
+    "summary": {
+      "total_tool_calls": 45,
+      "unique_tools": ["Read", "Grep", "Edit"],
+      "total_entries": 120
+    }
+  },
+  "subagents": {
+    "agent-abc123": {
+      "tool_frequency": [...],
+      "token_usage": [...],
+      "output_sizes": [...],
+      "cache_candidates": [...],
+      "batch_candidates": [...],
+      "parallel_candidates": [...],
+      "summary": {
+        "total_tool_calls": 23,
+        "unique_tools": ["Read", "Bash"],
+        "total_entries": 58
+      }
+    }
+  },
+  "combined": {
+    "tool_frequency": [...],
+    "cache_candidates": [...],
+    "token_usage": [...],
+    "summary": {
+      "total_tool_calls": 68,
+      "unique_tools": ["Read", "Grep", "Edit", "Bash"],
+      "total_entries": 178,
+      "agent_count": 2
+    }
+  }
+}
+```
+
+After running the analysis script, categorize tool outputs and generate recommendations:
 
 ```json
 {
