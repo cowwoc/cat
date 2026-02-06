@@ -2679,6 +2679,27 @@
         "catches_variations": true
       },
       "correct_behavior": "Squash worktree commits by topic into 1-2 clean commits before presenting the approval gate for user review"
+    },
+    {
+      "id": "M447",
+      "timestamp": "2026-02-06T18:00:00Z",
+      "category": "hook_false_positive",
+      "description": "M205 hook (block_main_rebase.py) blocked file-level git checkout --theirs during rebase conflict resolution, treating it as a branch checkout",
+      "root_cause": "Hook's exclusion list for checkout targets only included --, -b, -B but not file-level conflict resolution flags (--theirs, --ours, --merge, -p, --patch)",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/bash_handlers/block_main_rebase.py",
+      "pattern_keywords": ["hook", "false-positive", "checkout", "conflict-resolution", "M205"],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "M205 hook allows file-level checkout flags (--theirs, --ours, --merge, -p, --patch) for conflict resolution while still blocking branch checkout in main worktree"
     }
   ]
 }

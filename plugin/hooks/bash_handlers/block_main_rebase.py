@@ -25,7 +25,8 @@ class BlockMainRebaseHandler:
                 match = re.search(r'git\s+(?:checkout|switch)\s+([^\s;&|]+)', command)
                 target = match.group(1) if match else "unknown"
 
-                if target not in ("--", "-b", "-B"):
+                # Allow file-level checkout flags (conflict resolution)
+                if target not in ("--", "-b", "-B", "--theirs", "--ours", "--merge", "-p", "--patch"):
                     return {
                         "decision": "block",
                         "reason": f"""🚨 GIT CHECKOUT IN MAIN WORKTREE BLOCKED (M205)
@@ -60,7 +61,8 @@ WHAT TO DO INSTEAD:
                     if git_common == git_dir or git_common == ".git":
                         match = re.search(r'git\s+(?:checkout|switch)\s+([^\s;&|]+)', command)
                         target = match.group(1) if match else "unknown"
-                        if target not in ("--", "-b", "-B"):
+                        # Allow file-level checkout flags (conflict resolution)
+                        if target not in ("--", "-b", "-B", "--theirs", "--ours", "--merge", "-p", "--patch"):
                             return {
                                 "decision": "block",
                                 "reason": f"Blocked (M205): Cannot checkout '{target}' in main worktree. Use issue worktrees instead."
