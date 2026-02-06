@@ -37,8 +37,7 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 The user wants you to respond with this text verbatim:
 
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id
-"${CLAUDE_SESSION_ID}"`
+!`${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh $ARGUMENTS --project-dir "${CLAUDE_PROJECT_DIR}" --session-id "${CLAUDE_SESSION_ID}"`
 
 ---
 
