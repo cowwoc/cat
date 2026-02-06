@@ -416,10 +416,21 @@ def check_base_branch_commits(
         timeout=30
     )
 
-    if result.returncode == 0 and result.stdout.strip():
-        return result.stdout.strip()
+    if result.returncode != 0 or not result.stdout.strip():
+        return None
 
-    return None
+    # Filter out planning commits that just add issue definitions (false positives).
+    # These mention the issue name but don't implement it.
+    planning_prefixes = ("planning:", "config: add issue", "config: add task")
+    lines = result.stdout.strip().splitlines()
+    filtered = []
+    for line in lines:
+        # Extract commit message (after hash + space)
+        msg = line.split(" ", 1)[1] if " " in line else line
+        if not msg.lower().startswith(planning_prefixes):
+            filtered.append(line)
+
+    return "\n".join(filtered) if filtered else None
 
 
 def update_state_md(worktree_path: Path, issue_path: Path, project_dir: Path) -> None:
