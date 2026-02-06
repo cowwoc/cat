@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Tasks Pending
+- rename-script-output-to-render-output
 - hide-issue-complete-bash-output
 - wrap-markdown-files-120-chars
 - move-config-read-to-work-handler
