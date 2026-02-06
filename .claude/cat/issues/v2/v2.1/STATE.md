@@ -121,6 +121,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- fix-retrospective-handler-timezone
 - fix-autolearn-path-false-positive
 - restructure-learn-tiered
 - replace-prepare-subagent-with-script
