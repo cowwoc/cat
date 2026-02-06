@@ -16,6 +16,14 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 
 !`${CLAUDE_PLUGIN_ROOT}/scripts/get-init-boxes.sh`
 
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 <process>
 
 <step name="verify">
@@ -322,6 +330,14 @@ For each minor version PLAN.md, add:
 After applying defaults, use the **default_gates_configured** box from SCRIPT OUTPUT INIT BOXES.
 Replace `{N}` with the version count.
 
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 **If "Configure per version":**
 
 For each major version found, use AskUserQuestion:
@@ -400,6 +416,14 @@ Note in PROJECT.md:
 
 Use the **research_skipped** box from SCRIPT OUTPUT INIT BOXES.
 
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 </step>
 
 <!-- COMMON STEPS -->
@@ -409,6 +433,14 @@ Use the **research_skipped** box from SCRIPT OUTPUT INIT BOXES.
 **Choose Your Partner - Capture development style preferences**
 
 Use the **choose_your_partner** box from SCRIPT OUTPUT INIT BOXES.
+
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 AskUserQuestion: header="Trust", question="How do you prefer to work together?", options=[
   "🛡️ Hands-On - check in often, verify each move",
@@ -830,6 +862,14 @@ git commit -m "docs: initialize CAT planning structure"
 Use the **cat_initialized** box from SCRIPT OUTPUT INIT BOXES.
 Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
 
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 **New projects:**
 ```
 Initialized: PROJECT.md, ROADMAP.md, cat-config.json, rules/, conventions/
@@ -858,6 +898,14 @@ AskUserQuestion: header="First Issue", question="Would you like me to walk you t
 **If "Yes, guide me":**
 
 Use the **first_task_walkthrough** box from SCRIPT OUTPUT INIT BOXES.
+
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 1. AskUserQuestion: header="First Goal", question="What's the first thing you want to accomplish?", options=[
    "[Let user describe in their own words]" - FREEFORM
@@ -914,6 +962,14 @@ git commit -m "docs: add first issue - ${TASK_NAME}"
 7. Use the **first_task_created** box from SCRIPT OUTPUT INIT BOXES.
    Replace `{issue-name}` with the actual sanitized issue name.
 
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 AskUserQuestion: header="Start Work", question="Ready to start working on this issue?", options=[
   "Yes, let's go! (Recommended)" - Run /cat:work immediately,
   "No, I'll start later" - Exit with /cat:work pointer
@@ -926,9 +982,25 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this i
 
 Use the **all_set** box from SCRIPT OUTPUT INIT BOXES.
 
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 **If "No, I'll explore" (from initial question):**
 
 Use the **explore_at_your_own_pace** box from SCRIPT OUTPUT INIT BOXES.
+
+**If SCRIPT OUTPUT INIT BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT INIT BOXES not found.
+Handler init_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 </step>
 

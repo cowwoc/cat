@@ -83,6 +83,14 @@ EXISTING_COMMITS=$(echo "$ARGUMENTS" | jq -r '.existing_commits // 0')
 
 Display the **Preparing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (`◉ ○ ○ ○` pattern).
 
+**If SCRIPT OUTPUT PROGRESS BANNERS not found:**
+```
+FAIL: SCRIPT OUTPUT PROGRESS BANNERS not found.
+Handler work_with_issue_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 This indicates Phase 1 (prepare) has completed and work phases are starting.
 
 ## Step 2: Verify Lock Ownership (M444)
@@ -114,6 +122,14 @@ to execution — another session owns this task.
 ## Step 3: Execute Phase
 
 **Output the Executing banner** from INDIVIDUAL PHASE BANNERS (`● ◉ ○ ○` pattern).
+
+**If INDIVIDUAL PHASE BANNERS not found:**
+```
+FAIL: INDIVIDUAL PHASE BANNERS not found.
+Handler work_with_issue_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 ### Skip if Resuming
 
@@ -257,6 +273,14 @@ Parse the subagent result:
 
 **Output the Reviewing banner** from INDIVIDUAL PHASE BANNERS (`● ● ◉ ○` pattern).
 
+**If INDIVIDUAL PHASE BANNERS not found:**
+```
+FAIL: INDIVIDUAL PHASE BANNERS not found.
+Handler work_with_issue_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 ### Skip Review if Configured
 
 Skip if: `VERIFY == "none"` or `TRUST == "high"`
@@ -361,6 +385,14 @@ AskUserQuestion:
 ## Step 7: Merge Phase
 
 **Output the Merging banner** from INDIVIDUAL PHASE BANNERS (`● ● ● ◉` pattern).
+
+**If INDIVIDUAL PHASE BANNERS not found:**
+```
+FAIL: INDIVIDUAL PHASE BANNERS not found.
+Handler work_with_issue_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 Spawn a merge subagent (haiku model - mechanical operations only):
 
