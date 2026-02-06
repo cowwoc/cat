@@ -128,7 +128,7 @@ Spawn a subagent to implement the task:
 ```
 Task tool:
   description: "Execute: implement ${ISSUE_ID}"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:work-execute"
   model: "sonnet"
   prompt: |
     Execute the implementation for task ${ISSUE_ID}.
