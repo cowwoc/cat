@@ -2839,6 +2839,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Include STATE.md closure in the same commit as implementation work, not in a separate commit"
+    },
+    {
+      "id": "M452",
+      "timestamp": "2026-02-06T18:30:00Z",
+      "category": "protocol_violation",
+      "description": "Manually constructed merge progress banner instead of using pre-rendered script output or running banner script",
+      "root_cause": "Pre-rendered banners from handler were lost after context compaction. Skill only said 'use banners from SCRIPT OUTPUT section' with no fallback for when banners are unavailable. Agent constructed manually instead of running the script.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "banner",
+        "manual-construction",
+        "context-compaction",
+        "PATTERN-008"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M334",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run get-progress-banner.sh script to generate banners when pre-rendered output is not in context"
     }
   ]
 }
