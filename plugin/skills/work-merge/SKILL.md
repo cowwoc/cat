@@ -66,16 +66,19 @@ Group commits into categories:
 - Implementation: feature, bugfix, refactor, test, docs
 - Infrastructure: config
 
-Squash each category into a single commit:
+Squash each category into a single commit using `/cat:git-squash`:
+
+**NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft` (captures
+stale working directory state per M385). Always use `/cat:git-squash` which uses `commit-tree`
+to create commits from committed tree objects.
 
 ```bash
-# Interactive rebase to squash
-git rebase -i ${BASE_BRANCH}
-
 # Target: 1-2 commits max
 # - Implementation commit (all feature/bugfix/test work)
 # - Config commit (optional, if config changes exist)
 ```
+
+If work-with-issue already squashed commits in Step 5, skip this step entirely.
 
 ### Step 2: Update STATE.md
 
