@@ -23,14 +23,21 @@ def _load_json_file(path: Path) -> dict | None:
 
 
 def _parse_datetime(dt_str: str | None) -> datetime | None:
-    """Parse ISO datetime string to datetime object."""
+    """Parse ISO datetime string to datetime object, normalized to UTC.
+
+    Rejects naive datetimes (no timezone info) per fail-fast principle.
+    """
     if not dt_str or dt_str == "null":
         return None
     try:
-        # Handle timezone-aware strings
         if dt_str.endswith('Z'):
             dt_str = dt_str[:-1] + '+00:00'
-        return datetime.fromisoformat(dt_str)
+        dt = datetime.fromisoformat(dt_str)
+        if dt.tzinfo is None:
+            import sys
+            print(f"WARNING: Naive datetime encountered: '{dt_str}'. Timestamps should include timezone. Skipping.", file=sys.stderr)
+            return None
+        return dt.astimezone(timezone.utc)
     except ValueError:
         return None
 
