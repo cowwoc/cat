@@ -14,8 +14,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Tasks Pending
-- add-diagnostic-review-checks
 - fix-blocked-tasks-diagnostics
+- wrap-markdown-files-120-chars
 - move-config-read-to-work-handler
 - optimize-execution-script
 - enhance-add-complete-multi-issue
@@ -41,6 +41,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-task-to-issue
 
 ## Tasks Completed
+- add-diagnostic-review-checks
 - acceptance-criteria-options
 - add-deployment-stakeholder
 - add-opus-model-guidance
