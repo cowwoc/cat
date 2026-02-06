@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Tasks Pending
+- hide-add-skill-bash-output
 - remove-scope-question-from-add-wizard
 - rename-script-output-to-render-output
 - hide-issue-complete-bash-output
