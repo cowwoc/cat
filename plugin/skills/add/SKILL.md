@@ -40,10 +40,11 @@ treats the argument as a issue description and skips directly to issue creation 
 
 **Verify planning structure exists:**
 
-```bash
-[ ! -d .claude/cat ] && echo "ERROR: No planning structure. Run /cat:init first." && exit 1
-[ ! -f .claude/cat/ROADMAP.md ] && echo "ERROR: No ROADMAP.md. Run /cat:init first." && exit 1
-```
+Parse HANDLER_DATA from the execution context. The handler has pre-loaded version data.
+
+If `planning_valid` is false in HANDLER_DATA:
+- Output the error message from HANDLER_DATA
+- STOP execution
 
 </step>
 
@@ -198,47 +199,30 @@ Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom addi
 
 **Analyze existing versions and suggest best fit:**
 
-**1. Read all minor version STATE.md and PLAN.md files:**
+Use version data from HANDLER_DATA.versions. The handler has pre-filtered closed versions.
 
-```bash
-# Get all minor versions
-VERSIONS=$(find .claude/cat -maxdepth 2 -type d -name "v[0-9]*.[0-9]*" 2>/dev/null | sort -V)
-```
+**1. Extract version information:**
 
-For each version:
-- Read STATE.md to check completion status
-- Read PLAN.md to extract goals/objectives and requirements
+For each version in HANDLER_DATA.versions:
+- version: Version number (e.g., "2.1")
+- status: Current status (open or in-progress)
+- summary: Brief description from PLAN.md goals
+- issue_count: Number of existing issues
 
-**2. FILTER OUT COMPLETED VERSIONS (MANDATORY):**
+All versions in HANDLER_DATA are already filtered to exclude closed versions.
 
-**Completed versions MUST NOT be offered as issue targets.** Check each version's STATE.md:
+**2. Build version summaries:**
 
-```bash
-# Check if version is completed
-VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "open")
-if [[ "$VERSION_STATUS" == "closed" ]]; then
-  # SKIP this version - do not include in options
-  continue
-fi
-```
+Create a mental map of each version's focus using the pre-loaded summaries.
 
-Only versions with status `open` or `in-progress` should be presented as options.
+**3. Compare issue to version focuses:**
 
-**3. Build version summaries (for non-closed versions only):**
-
-Create a mental map of each eligible version's focus:
-- Extract the "## Goals" or "## Objectives" section
-- Extract requirement descriptions from "## Requirements"
-- Note the overall theme/domain
-
-**4. Compare issue to version focuses:**
-
-Analyze TASK_DESCRIPTION against each eligible version's focus:
+Analyze TASK_DESCRIPTION against each version's focus:
 - Keyword matching (e.g., "parser" matches parser-focused versions)
 - Domain alignment (e.g., UI issue matches UI-focused versions)
 - Scope fit (bugfix in active development version vs new feature in upcoming version)
 
-**5. Rank versions by fit:**
+**4. Rank versions by fit:**
 
 Score each version based on:
 - Topic alignment (high weight)
@@ -287,21 +271,13 @@ Use AskUserQuestion:
 
 **Validate selected version exists AND is not completed (M168):**
 
-```bash
-MAJOR="{major}"
-MINOR="{minor}"
-VERSION_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR"
+Verify the selected version exists in HANDLER_DATA.versions:
+- Check if version number matches a version in the list
+- Verify status is not "closed" (should already be filtered, but double-check)
 
-[ ! -d "$VERSION_PATH" ] && echo "ERROR: Version $MAJOR.$MINOR does not exist" && exit 1
-
-# MANDATORY (M168): Verify version is not closed before adding issues
-VERSION_STATUS=$(grep -oP '(?<=\*\*Status:\*\* )\w+' "$VERSION_PATH/STATE.md" 2>/dev/null || echo "open")
-if [ "$VERSION_STATUS" = "closed" ]; then
-    echo "ERROR: Version $MAJOR.$MINOR is already closed (status: $VERSION_STATUS)"
-    echo "Cannot add issues to closed versions. Choose a different version."
-    exit 1
-fi
-```
+If version not found in HANDLER_DATA.versions:
+- Output error: "Version {major}.{minor} does not exist or is closed"
+- STOP execution
 
 </step>
 
@@ -346,33 +322,24 @@ Otherwise, capture selected suggestion as TASK_NAME.
 
 <step name="task_validate_name">
 
-**Validate issue name (M448 - run as two separate Bash calls):**
+**Validate issue name:**
 
-Run format validation first:
+**Format validation:**
 
-```bash
-TASK_NAME="{selected or entered name}"
-if ! echo "$TASK_NAME" | grep -qE '^[a-z][a-z0-9-]{0,48}[a-z0-9]$'; then
-    echo "ERROR: Invalid issue name. Use lowercase letters, numbers, and hyphens only."
-    echo "Example: parse-tokens, fix-memory-leak, add-user-auth"
-    exit 1
-fi
-echo "Format OK"
-```
+Check that TASK_NAME matches the regex pattern: `^[a-z][a-z0-9-]{0,48}[a-z0-9]$`
 
-Then run uniqueness check as a separate Bash call:
+If format is invalid:
+- Output error: "Invalid issue name. Use lowercase letters, numbers, and hyphens only."
+- Provide examples: parse-tokens, fix-memory-leak, add-user-auth
+- Prompt user to select different suggestion or enter valid custom name
 
-```bash
-if [ -d ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
-    echo "ERROR: Issue '$TASK_NAME' already exists in version $MAJOR.$MINOR"
-    exit 1
-fi
-echo "Unique OK"
-```
+**Uniqueness check:**
 
-If validation fails:
-- If format invalid: prompt user to select different suggestion or enter valid custom name
-- If duplicate: inform user and return to task_suggest_names step with different suggestions
+Check if TASK_NAME appears in HANDLER_DATA.versions[selected_version].existing_issues list.
+
+If name already exists:
+- Output error: "Issue '{TASK_NAME}' already exists in version {major}.{minor}"
+- Return to task_suggest_names step with different suggestions
 
 </step>
 
@@ -387,18 +354,16 @@ Initialize UNKNOWNS as empty list.
 
 **1. Check if version has existing issues:**
 
-```bash
-EXISTING_ISSUES=$(find ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR" -maxdepth 1 -type d ! -name "v*" 2>/dev/null | wc -l)
-```
+Use HANDLER_DATA.versions[selected_version].issue_count to determine if this is the first issue.
 
 **2. Smart defaults based on context (M374):**
 
-**If EXISTING_ISSUES = 0 (first issue in version):**
+**If issue_count = 0 (first issue in version):**
 - Set DEPENDENCIES = [] (no issues to depend on)
 - Set BLOCKS = [] (no issues to block)
 - Skip dependency/blocker questions entirely
 
-**If EXISTING_ISSUES > 0:**
+**If issue_count > 0:**
 - Only then ask about dependencies and blockers
 
 **3. Scope question (always ask - user input needed):**
@@ -523,42 +488,20 @@ If no requirements defined in parent version: Satisfies = None
 
 <step name="task_create">
 
-**Apply Branching Strategy from PROJECT.md:**
+**Note branching strategy information:**
 
-When creating a issue, check PROJECT.md for branch naming conventions:
+Use HANDLER_DATA.branch_strategy and HANDLER_DATA.branch_pattern for reference:
+- branch_strategy: "feature" or "main-only"
+- branch_pattern: Custom pattern if defined, or null
 
-```bash
-# Check if Git Workflow section exists in PROJECT.md
-BRANCH_PATTERN=$(grep -A20 "### Branching Strategy" .claude/cat/PROJECT.md 2>/dev/null | grep "Issue" | grep -oP "Pattern.*\`\K[^\`]+" | head -1)
+Calculate the issue branch name:
+- If branch_pattern is defined: Apply pattern (replace {major}, {minor}, {version}, {issue-name})
+- If branch_strategy is "main-only": No issue branch
+- Default: {major}.{minor}-{issue-name}
 
-# Also check cat-config.json for branching strategy
-BRANCH_STRATEGY=$(jq -r '.gitWorkflow.branchingStrategy // "feature"' .claude/cat/cat-config.json 2>/dev/null)
+**Generate STATE.md content:**
 
-if [[ -n "$BRANCH_PATTERN" ]]; then
-  # Apply pattern to issue branch name
-  # Supported variables: {major}, {minor}, {version}, {issue-name}
-  TASK_BRANCH=$(echo "$BRANCH_PATTERN" | sed "s/{major}/$MAJOR/g; s/{minor}/$MINOR/g; s/{version}/$MAJOR.$MINOR/g; s/{issue-name}/$TASK_NAME/g")
-  echo "Branch pattern from PROJECT.md: $BRANCH_PATTERN"
-  echo "Issue branch will be: $TASK_BRANCH"
-elif [[ "$BRANCH_STRATEGY" == "main-only" ]]; then
-  # No issue branches for main-only workflow
-  TASK_BRANCH=""
-  echo "Main-only workflow: no issue branch will be created"
-else
-  # Default: {major}.{minor}-{issue-name}
-  TASK_BRANCH="$MAJOR.$MINOR-$TASK_NAME"
-  echo "Using default branch pattern: $TASK_BRANCH"
-fi
-```
-
-**Create issue structure:**
-
-```bash
-TASK_PATH=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
-mkdir -p "$TASK_PATH"
-```
-
-**Create STATE.md:**
+Use appropriate template format:
 
 ```markdown
 # State
@@ -569,7 +512,7 @@ mkdir -p "$TASK_PATH"
 - **Last Updated:** {timestamp}
 ```
 
-**Create PLAN.md based on issue type:**
+**Generate PLAN.md content based on issue type:**
 
 Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md reference.
 
@@ -603,50 +546,30 @@ Add a Research Findings section to PLAN.md after the Goal/Problem section:
 
 This section should appear before the "Satisfies" section in all templates.
 
-</step>
+**After generating STATE.md and PLAN.md content, create the issue:**
 
-<step name="task_update_parent">
-
-**Update parent version STATE.md (MANDATORY):**
-
-Add the new issue to the "Issues Pending" list in STATE.md:
+Call the create-issue.py script with JSON input:
 
 ```bash
-VERSION_STATE=".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
-
-# Add issue to Issues Pending section
-# Find the "## Issues Pending" line and append the new issue
-if grep -q "^## Issues Pending" "$VERSION_STATE"; then
-  # Add issue name to the pending list
-  sed -i "/^## Issues Pending/a - $TASK_NAME" "$VERSION_STATE"
-else
-  # If no Issues Pending section exists, create it
-  echo -e "\n## Issues Pending\n- $TASK_NAME" >> "$VERSION_STATE"
-fi
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/create-issue.py" --json '{
+  "major": "{major}",
+  "minor": "{minor}",
+  "issue_name": "{issue-name}",
+  "issue_type": "{issue-type}",
+  "dependencies": ["{dep1}", "{dep2}"],
+  "state_content": "{full STATE.md content}",
+  "plan_content": "{full PLAN.md content}",
+  "commit_description": "{one-line description}"
+}'
 ```
 
-**Verify the update:**
+The script handles:
+- Creating the issue directory
+- Writing STATE.md and PLAN.md
+- Updating parent version STATE.md
+- Git add and commit
 
-```bash
-grep -q "$TASK_NAME" "$VERSION_STATE" || echo "ERROR: Issue not added to STATE.md"
-```
-
-</step>
-
-<step name="task_commit">
-
-**Commit issue creation:**
-
-```bash
-git add ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME/"
-git add ".claude/cat/issues/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
-git commit -m "$(cat <<'EOF'
-planning: add issue {issue-name} to {major}.{minor}
-
-{One-line description of issue goal}
-EOF
-)"
-```
+Check the JSON output for success status.
 
 </step>
 
