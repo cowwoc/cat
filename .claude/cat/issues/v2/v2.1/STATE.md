@@ -16,6 +16,9 @@ Finalize naming conventions and UI polish before recording demo videos.
 ## Tasks Pending
 - lazy-load-requirements-api
 - split-learn-into-phases
+- chain-add-wizard-bash-calls
+- reduce-a008-false-positives
+- batch-add-skill-context
 - move-worktrees-under-cat
 - hide-add-skill-bash-output
 - remove-scope-question-from-add-wizard
