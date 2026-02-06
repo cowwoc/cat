@@ -298,7 +298,7 @@ Spawn a merge subagent (haiku model - mechanical operations only):
 ```
 Task tool:
   description: "Merge: squash, merge, cleanup"
-  subagent_type: "general-purpose"
+  subagent_type: "cat:work-merge"
   model: "haiku"
   prompt: |
     Execute the merge phase for task ${ISSUE_ID}.
