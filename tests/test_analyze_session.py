@@ -24,6 +24,11 @@ find_cache_candidates = analyze_session_module.find_cache_candidates
 find_batch_candidates = analyze_session_module.find_batch_candidates
 find_parallel_candidates = analyze_session_module.find_parallel_candidates
 analyze_session = analyze_session_module.analyze_session
+discover_subagents = analyze_session_module.discover_subagents
+analyze_single_agent = analyze_session_module.analyze_single_agent
+merge_tool_frequency = analyze_session_module.merge_tool_frequency
+merge_cache_candidates = analyze_session_module.merge_cache_candidates
+sum_token_usage = analyze_session_module.sum_token_usage
 MIN_BATCH_SIZE = analyze_session_module.MIN_BATCH_SIZE
 
 
@@ -438,15 +443,20 @@ class TestAnalyzeSession(unittest.TestCase):
         file_path = self.create_jsonl_file(entries)
         result = analyze_session(file_path)
 
-        self.assertIn('tool_frequency', result)
-        self.assertIn('token_usage', result)
-        self.assertIn('output_sizes', result)
-        self.assertIn('cache_candidates', result)
-        self.assertIn('batch_candidates', result)
-        self.assertIn('parallel_candidates', result)
-        self.assertIn('summary', result)
+        self.assertIn('main', result)
+        self.assertIn('subagents', result)
+        self.assertIn('combined', result)
 
-        summary = result['summary']
+        main = result['main']
+        self.assertIn('tool_frequency', main)
+        self.assertIn('token_usage', main)
+        self.assertIn('output_sizes', main)
+        self.assertIn('cache_candidates', main)
+        self.assertIn('batch_candidates', main)
+        self.assertIn('parallel_candidates', main)
+        self.assertIn('summary', main)
+
+        summary = main['summary']
         self.assertEqual(summary['total_tool_calls'], 2)
         self.assertEqual(set(summary['unique_tools']), {"Read", "Grep"})
         self.assertEqual(summary['total_entries'], 3)
@@ -458,9 +468,319 @@ class TestAnalyzeSession(unittest.TestCase):
 
         result = analyze_session(str(file_path))
 
-        self.assertEqual(result['summary']['total_tool_calls'], 0)
-        self.assertEqual(result['summary']['unique_tools'], [])
-        self.assertEqual(result['summary']['total_entries'], 0)
+        self.assertEqual(result['main']['summary']['total_tool_calls'], 0)
+        self.assertEqual(result['main']['summary']['unique_tools'], [])
+        self.assertEqual(result['main']['summary']['total_entries'], 0)
+
+    def test_discover_subagents_no_subagents(self):
+        """Test subagent discovery when no subagents exist."""
+        entries = [
+            {
+                "type": "assistant",
+                "message": {
+                    "id": "msg1",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "tool1",
+                            "name": "Read",
+                            "input": {"file_path": "/test.txt"}
+                        }
+                    ]
+                }
+            }
+        ]
+
+        file_path = self.create_jsonl_file(entries)
+        result = discover_subagents(file_path)
+
+        self.assertEqual(result, [])
+
+    def test_discover_subagents_with_task_results(self):
+        """Test subagent discovery from Task tool results."""
+        entries = [
+            {
+                "type": "tool_result",
+                "tool_use_id": "task1",
+                "content": '{"agentId": "abc123", "status": "completed"}'
+            },
+            {
+                "type": "tool_result",
+                "tool_use_id": "task2",
+                "content": '{"agentId": "def456", "status": "completed"}'
+            }
+        ]
+
+        file_path = self.create_jsonl_file(entries)
+
+        # Create subagent directory and files
+        subagent_dir = self.tmp_path / "subagents"
+        subagent_dir.mkdir()
+        (subagent_dir / "agent-abc123.jsonl").write_text('{"type": "assistant"}\n')
+        (subagent_dir / "agent-def456.jsonl").write_text('{"type": "assistant"}\n')
+
+        result = discover_subagents(file_path)
+
+        self.assertEqual(len(result), 2)
+        self.assertIn(str(subagent_dir / "agent-abc123.jsonl"), result)
+        self.assertIn(str(subagent_dir / "agent-def456.jsonl"), result)
+
+    def test_discover_subagents_missing_files_skipped(self):
+        """Test that missing subagent files are gracefully skipped."""
+        entries = [
+            {
+                "type": "tool_result",
+                "tool_use_id": "task1",
+                "content": '{"agentId": "abc123", "status": "completed"}'
+            },
+            {
+                "type": "tool_result",
+                "tool_use_id": "task2",
+                "content": '{"agentId": "missing", "status": "completed"}'
+            }
+        ]
+
+        file_path = self.create_jsonl_file(entries)
+
+        # Create subagent directory and only one file
+        subagent_dir = self.tmp_path / "subagents"
+        subagent_dir.mkdir()
+        (subagent_dir / "agent-abc123.jsonl").write_text('{"type": "assistant"}\n')
+        # Note: agent-missing.jsonl is NOT created
+
+        result = discover_subagents(file_path)
+
+        self.assertEqual(len(result), 1)
+        self.assertIn(str(subagent_dir / "agent-abc123.jsonl"), result)
+
+    def test_merge_tool_frequency(self):
+        """Test merging tool frequency counts from multiple agents."""
+        freq1 = [
+            {'tool': 'Read', 'count': 3},
+            {'tool': 'Grep', 'count': 2}
+        ]
+        freq2 = [
+            {'tool': 'Read', 'count': 1},
+            {'tool': 'Edit', 'count': 4}
+        ]
+
+        result = merge_tool_frequency([freq1, freq2])
+
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0], {'tool': 'Read', 'count': 4})
+        self.assertEqual(result[1], {'tool': 'Edit', 'count': 4})
+        self.assertEqual(result[2], {'tool': 'Grep', 'count': 2})
+
+    def test_merge_cache_candidates(self):
+        """Test merging cache candidates from multiple agents."""
+        cache1 = [
+            {
+                'operation': {'name': 'Read', 'input': {'file_path': '/test.txt'}},
+                'repeat_count': 3,
+                'optimization': 'CACHE_CANDIDATE'
+            }
+        ]
+        cache2 = [
+            {
+                'operation': {'name': 'Read', 'input': {'file_path': '/test.txt'}},
+                'repeat_count': 2,
+                'optimization': 'CACHE_CANDIDATE'
+            },
+            {
+                'operation': {'name': 'Grep', 'input': {'pattern': 'foo'}},
+                'repeat_count': 2,
+                'optimization': 'CACHE_CANDIDATE'
+            }
+        ]
+
+        result = merge_cache_candidates([cache1, cache2])
+
+        self.assertEqual(len(result), 2)
+        # Should combine the Read operations
+        self.assertEqual(result[0]['operation']['name'], 'Read')
+        self.assertEqual(result[0]['repeat_count'], 5)
+        self.assertEqual(result[1]['operation']['name'], 'Grep')
+        self.assertEqual(result[1]['repeat_count'], 2)
+
+    def test_sum_token_usage(self):
+        """Test summing token usage across multiple agents."""
+        usage1 = [
+            {
+                'tool': 'Read',
+                'total_input_tokens': 100,
+                'total_output_tokens': 50,
+                'count': 2
+            }
+        ]
+        usage2 = [
+            {
+                'tool': 'Read',
+                'total_input_tokens': 150,
+                'total_output_tokens': 75,
+                'count': 3
+            },
+            {
+                'tool': 'Grep',
+                'total_input_tokens': 200,
+                'total_output_tokens': 100,
+                'count': 1
+            }
+        ]
+
+        result = sum_token_usage([usage1, usage2])
+
+        self.assertEqual(len(result), 2)
+        # Read should be first (higher input tokens)
+        self.assertEqual(result[0]['tool'], 'Read')
+        self.assertEqual(result[0]['total_input_tokens'], 250)
+        self.assertEqual(result[0]['total_output_tokens'], 125)
+        self.assertEqual(result[0]['count'], 5)
+        # Grep second
+        self.assertEqual(result[1]['tool'], 'Grep')
+        self.assertEqual(result[1]['total_input_tokens'], 200)
+        self.assertEqual(result[1]['total_output_tokens'], 100)
+        self.assertEqual(result[1]['count'], 1)
+
+    def test_analyze_session_with_subagents(self):
+        """Test full session analysis with subagent discovery and combined metrics."""
+        # Create main session
+        main_entries = [
+            {
+                "type": "assistant",
+                "message": {
+                    "id": "msg1",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "tool1",
+                            "name": "Read",
+                            "input": {"file_path": "/test.txt"}
+                        }
+                    ],
+                    "usage": {
+                        "input_tokens": 100,
+                        "output_tokens": 50
+                    }
+                }
+            },
+            {
+                "type": "tool_result",
+                "tool_use_id": "task1",
+                "content": '{"agentId": "sub1", "status": "completed"}'
+            }
+        ]
+
+        main_file = self.create_jsonl_file(main_entries)
+
+        # Create subagent directory and file
+        subagent_dir = self.tmp_path / "subagents"
+        subagent_dir.mkdir()
+
+        subagent_entries = [
+            {
+                "type": "assistant",
+                "message": {
+                    "id": "submsg1",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "subtool1",
+                            "name": "Grep",
+                            "input": {"pattern": "foo"}
+                        }
+                    ],
+                    "usage": {
+                        "input_tokens": 50,
+                        "output_tokens": 25
+                    }
+                }
+            }
+        ]
+
+        subagent_file = subagent_dir / "agent-sub1.jsonl"
+        with open(subagent_file, 'w') as f:
+            for entry in subagent_entries:
+                f.write(json.dumps(entry) + '\n')
+
+        result = analyze_session(main_file)
+
+        # Check main agent metrics
+        self.assertIn('main', result)
+        self.assertIn('tool_frequency', result['main'])
+        self.assertIn('token_usage', result['main'])
+        self.assertIn('summary', result['main'])
+        self.assertEqual(result['main']['summary']['total_tool_calls'], 1)
+
+        # Check subagents section
+        self.assertIn('subagents', result)
+        self.assertIn('sub1', result['subagents'])
+        self.assertEqual(result['subagents']['sub1']['summary']['total_tool_calls'], 1)
+        self.assertEqual(result['subagents']['sub1']['tool_frequency'][0]['tool'], 'Grep')
+
+        # Check combined section
+        self.assertIn('combined', result)
+        self.assertEqual(result['combined']['summary']['total_tool_calls'], 2)
+        self.assertEqual(result['combined']['summary']['agent_count'], 2)
+        self.assertEqual(set(result['combined']['summary']['unique_tools']), {'Read', 'Grep'})
+
+        # Check combined tool frequency
+        combined_freq = {item['tool']: item['count'] for item in result['combined']['tool_frequency']}
+        self.assertEqual(combined_freq['Read'], 1)
+        self.assertEqual(combined_freq['Grep'], 1)
+
+        # Check combined token usage
+        combined_tokens = {item['tool']: item['total_input_tokens']
+                          for item in result['combined']['token_usage']}
+        self.assertEqual(combined_tokens['Read'], 100)
+        self.assertEqual(combined_tokens['Grep'], 50)
+
+    def test_analyze_session_no_subagents_clean_structure(self):
+        """Test that sessions without subagents use clean structure without duplication."""
+        entries = [
+            {
+                "type": "assistant",
+                "message": {
+                    "id": "msg1",
+                    "content": [
+                        {
+                            "type": "tool_use",
+                            "id": "tool1",
+                            "name": "Read",
+                            "input": {"file_path": "/test.txt"}
+                        }
+                    ],
+                    "usage": {
+                        "input_tokens": 100,
+                        "output_tokens": 50
+                    }
+                }
+            }
+        ]
+
+        file_path = self.create_jsonl_file(entries)
+        result = analyze_session(file_path)
+
+        # Check structure has main, subagents, and combined keys
+        self.assertIn('main', result)
+        self.assertIn('subagents', result)
+        self.assertIn('combined', result)
+
+        # Main should have all analysis fields
+        self.assertIn('tool_frequency', result['main'])
+        self.assertIn('token_usage', result['main'])
+        self.assertIn('summary', result['main'])
+
+        # Subagents should be empty
+        self.assertEqual(result['subagents'], {})
+
+        # Combined should have agent_count of 1
+        self.assertEqual(result['combined']['summary']['agent_count'], 1)
+
+        # Combined should match main when no subagents
+        self.assertEqual(
+            result['combined']['summary']['total_tool_calls'],
+            result['main']['summary']['total_tool_calls']
+        )
 
 
 if __name__ == '__main__':
