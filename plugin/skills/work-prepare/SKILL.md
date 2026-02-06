@@ -5,8 +5,14 @@ user-invocable: false
 
 # Work Phase: Prepare
 
-Subagent skill for the preparation phase of `/cat:work`. Handles task discovery, lock acquisition,
-validation, and worktree creation.
+**ALGORITHM DOCUMENTATION ONLY. Runtime logic implemented in `plugin/scripts/work-prepare.py`.**
+
+This document describes the preparation phase algorithm for `/cat:work`. The actual implementation
+is a deterministic Python script that performs all steps without LLM decision-making.
+
+Historical context: This was originally a subagent skill that spawned an LLM to execute these steps.
+The skill has been replaced with work-prepare.py for performance (4s vs 50s), but this documentation
+is retained as algorithm reference.
 
 ## Input
 
