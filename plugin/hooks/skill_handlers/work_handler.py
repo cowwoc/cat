@@ -5,6 +5,7 @@ Provides status boxes for the work skill (script output).
 Progress banners are handled by silent preprocessing via get-progress-banner.sh.
 """
 
+import json
 from pathlib import Path
 
 from . import register_handler
@@ -382,14 +383,56 @@ class WorkHandler:
 
         return "\n".join(lines)
 
+    def _read_config(self, context: dict) -> dict:
+        """Read cat-config.json and return config values with defaults."""
+        # Get project directory from context or use cwd
+        project_dir = context.get("project_root", Path.cwd())
+        config_path = Path(project_dir) / ".claude" / "cat" / "cat-config.json"
+
+        # Default values
+        config = {
+            "trust": "medium",
+            "verify": "changed",
+            "autoRemoveWorktrees": True
+        }
+
+        # Read config file if it exists
+        if config_path.exists():
+            try:
+                with open(config_path, 'r') as f:
+                    file_config = json.load(f)
+                    # Update defaults with file values
+                    if "trust" in file_config:
+                        config["trust"] = file_config["trust"]
+                    if "verify" in file_config:
+                        config["verify"] = file_config["verify"]
+                    if "autoRemoveWorktrees" in file_config:
+                        config["autoRemoveWorktrees"] = file_config["autoRemoveWorktrees"]
+            except (json.JSONDecodeError, IOError):
+                # Use defaults if config file is invalid
+                pass
+
+        return config
+
     def handle(self, context: dict) -> str | None:
         """Provide status boxes for the work skill (script output).
 
         Progress banners are now handled by silent preprocessing in SKILL.md
         via get-progress-banner.sh. This handler only provides status boxes.
         """
-        # Build output with boxes (placeholders for runtime values)
-        return f"""SCRIPT OUTPUT WORK BOXES:
+        # Read configuration
+        config = self._read_config(context)
+        trust = config["trust"]
+        verify = config["verify"]
+        auto_remove = str(config["autoRemoveWorktrees"]).lower()
+
+        # Build output with config section and boxes (placeholders for runtime values)
+        return f"""CONFIGURATION:
+TRUST={trust}
+VERIFY={verify}
+AUTO_REMOVE={auto_remove}
+
+SCRIPT OUTPUT WORK BOXES:
 
 ## Status Boxes (output EXACTLY as shown, replace only {{placeholders}}):
 
