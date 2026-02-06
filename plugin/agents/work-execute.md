@@ -21,5 +21,6 @@ Key constraints:
 - Work ONLY within the assigned worktree path
 - Verify you are on the correct branch before making changes
 - Follow project conventions from CLAUDE.md
-- Use TDD workflow when the task involves testable logic
+- Apply TDD: write tests BEFORE implementation when the task has testable interfaces (functions with
+  defined inputs/outputs, scripts with JSON contracts, APIs). Reorder PLAN.md steps if needed.
 - Run `python3 /workspace/run_tests.py` before finalizing if tests exist
