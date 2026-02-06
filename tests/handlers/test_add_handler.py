@@ -55,10 +55,10 @@ class TestAddHandlerTaskDisplay:
         result = handler.handle(task_context)
         assert isinstance(result, str)
 
-    def test_task_contains_precomputed_marker(self, handler, task_context):
-        """Task output contains PRE-COMPUTED marker."""
+    def test_task_contains_script_output_marker(self, handler, task_context):
+        """Task output contains SCRIPT OUTPUT marker."""
         result = handler.handle(task_context)
-        assert "PRE-COMPUTED ADD DISPLAY" in result
+        assert "SCRIPT OUTPUT ADD DISPLAY" in result
 
     def test_task_contains_instruction(self, handler, task_context):
         """Task output contains INSTRUCTION marker."""
@@ -146,10 +146,10 @@ class TestAddHandlerVersionDisplay:
         result = handler.handle(version_context)
         assert isinstance(result, str)
 
-    def test_version_contains_precomputed_marker(self, handler, version_context):
-        """Version output contains PRE-COMPUTED marker."""
+    def test_version_contains_script_output_marker(self, handler, version_context):
+        """Version output contains SCRIPT OUTPUT marker."""
         result = handler.handle(version_context)
-        assert "PRE-COMPUTED ADD DISPLAY" in result
+        assert "SCRIPT OUTPUT ADD DISPLAY" in result
 
     def test_version_contains_instruction(self, handler, version_context):
         """Version output contains INSTRUCTION marker."""

@@ -1,5 +1,5 @@
 """
-Handler for /cat:init precomputation.
+Handler for /cat:init script output.
 
 Runs build-init-boxes.py to generate all 8 init boxes as templates.
 """
@@ -88,7 +88,7 @@ Variables: none (static)
 {explore}
 
 INSTRUCTION: When displaying a box, copy the template EXACTLY and only replace the {{variable}} placeholders.
-Do NOT recalculate padding or alignment - the boxes are pre-computed with correct widths."""
+Do NOT recalculate padding or alignment - the boxes are script output with correct widths."""
 
 
 # Register handler

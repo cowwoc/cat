@@ -71,7 +71,7 @@ Standard markdown sections (`## Purpose`, `## Procedure`, `## Verification`) are
 ```markdown
 ## Purpose
 
-Display pre-computed help content.
+Display script output help content.
 
 ---
 

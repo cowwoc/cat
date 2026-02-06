@@ -18,7 +18,7 @@ Implements the full workflow defined in `retrospectives.json`.
 - After significant project milestones
 - When pattern recurrence is suspected
 
-## Pre-computed Analysis
+## Script Output Analysis
 
 **MANDATORY: Check for SCRIPT OUTPUT RETROSPECTIVE in context first.**
 
@@ -62,7 +62,7 @@ triggers:
 ## Workflow (Post-Handler)
 
 The handler performs steps 1-4 (trigger check, gathering, categorization, effectiveness).
-Continue from step 5 using the pre-computed analysis.
+Continue from step 5 using the script output analysis.
 
 ### 5. Identify New Patterns
 
