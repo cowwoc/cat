@@ -63,6 +63,14 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 If found, copy and output that box EXACTLY as shown.
 
+**If SCRIPT OUTPUT SURVEY DISPLAY not found:**
+```
+FAIL: SCRIPT OUTPUT SURVEY DISPLAY not found.
+Handler cleanup_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 If NOT found (preprocessing failed), STOP. Do NOT manually run scripts or construct boxes.
 
 ---

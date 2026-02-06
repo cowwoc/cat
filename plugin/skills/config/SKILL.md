@@ -20,6 +20,14 @@ users through modifying their preferences.
 
 <process>
 
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 <step name="read-config">
 
 <step name="read-config">
@@ -41,6 +49,14 @@ If file doesn't exist, inform user to run `/cat:init` first.
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
 Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES (provided by config_handler.py).
+
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 </step>
 
@@ -80,6 +96,14 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 **MANDATORY (M137) - Display behavior summary BEFORE prompting:**
 
 Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES.
+
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 Then AskUserQuestion:
 - header: "Behavior"
@@ -277,6 +301,14 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 
 Use the **VERSION_GATES_OVERVIEW** box from SCRIPT OUTPUT CONFIG BOXES.
 
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 **Step 1: Select version to configure**
 
 First, scan for available versions:
@@ -315,6 +347,14 @@ cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 
 Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from SCRIPT OUTPUT CONFIG BOXES.
 Replace `{version}` and gate descriptions with actual values.
+
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 **Step 3: Choose action**
 
@@ -389,6 +429,14 @@ Write the updated PLAN.md using the Write tool.
 Use the **GATES_UPDATED** box from SCRIPT OUTPUT CONFIG BOXES.
 Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
 
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 Return to Step 3 (Choose action) to allow further edits or navigation.
 
 </step>
@@ -412,6 +460,14 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 Use the **SETTING_UPDATED** box from SCRIPT OUTPUT CONFIG BOXES.
 Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
 
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 **After confirming**: Return to the **parent menu** and re-display its options.
 
 Examples:
@@ -429,9 +485,25 @@ If changes were made:
 
 Use the **CONFIGURATION_SAVED** box from SCRIPT OUTPUT CONFIG BOXES.
 
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 If no changes:
 
 Use the **NO_CHANGES** box from SCRIPT OUTPUT CONFIG BOXES.
+
+**If SCRIPT OUTPUT CONFIG BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+Handler config_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 </step>
 

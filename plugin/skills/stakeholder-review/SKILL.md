@@ -312,8 +312,24 @@ fi
 
 ### Output Format
 
+**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+Handler stakeholder_review_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 After context analysis, use the **STAKEHOLDER_SELECTION** box from SCRIPT OUTPUT STAKEHOLDER BOXES.
 Replace placeholders with actual selection data.
+
+**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+Handler stakeholder_review_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 If file-based overrides occurred, add an "Overrides (file-based):" section inside the box.
 
@@ -555,10 +571,26 @@ User approval is a separate gate that follows stakeholder review.
 
 **Generate compact review report:**
 
+**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+Handler stakeholder_review_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
+
 Output the review results:
 
 **Summary box:** Use the **STAKEHOLDER_REVIEW** box from SCRIPT OUTPUT STAKEHOLDER BOXES.
 Replace placeholders with actual reviewer results.
+
+**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+```
+FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+Handler stakeholder_review_handler.py should have provided this via additionalContext.
+Check that hooks are properly loaded.
+```
+Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 **Concern boxes (if any):** Use the **CRITICAL_CONCERN** or **HIGH_CONCERN** boxes.
 Repeat as needed for each concern.
