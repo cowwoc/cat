@@ -1425,6 +1425,113 @@ def test_posttool_validate_state_status():
     runner.test("Missing file_path returns None", result is None)
 
 
+def test_retrospective_handler_timezone():
+    """Test retrospective handler timezone normalization."""
+    runner.section("skill_handlers/run_retrospective_handler timezone")
+
+    import json
+    from datetime import datetime, timezone
+    from skill_handlers.run_retrospective_handler import (
+        RunRetrospectiveHandler,
+        _parse_datetime,
+    )
+
+    # Test _parse_datetime with Z suffix
+    dt = _parse_datetime("2026-01-28T10:00:00Z")
+    runner.test("Parse Z suffix returns UTC", dt is not None and dt.tzinfo == timezone.utc)
+    runner.test("Parse Z suffix correct hour", dt is not None and dt.hour == 10)
+
+    # Test _parse_datetime with explicit offset
+    dt = _parse_datetime("2026-01-28T11:30:00-05:00")
+    runner.test("Parse explicit offset returns UTC", dt is not None and dt.tzinfo == timezone.utc)
+    runner.test("Parse explicit offset normalized", dt is not None and dt.hour == 16)  # 11:30 EST = 16:30 UTC
+
+    # Test _parse_datetime with naive datetime
+    dt = _parse_datetime("2026-01-28T10:00:00")
+    runner.test("Parse naive datetime returns None (fail-fast)", dt is None)
+
+    # Test null/None handling
+    runner.test("Parse 'null' string returns None", _parse_datetime("null") is None)
+    runner.test("Parse None returns None", _parse_datetime(None) is None)
+    runner.test("Parse invalid string returns None", _parse_datetime("not-a-date") is None)
+
+    # Test datetime comparison doesn't raise TypeError
+    try:
+        dt1 = _parse_datetime("2026-01-28T10:00:00Z")
+        dt2 = _parse_datetime("2026-01-28T11:30:00-05:00")
+        dt3 = _parse_datetime("2026-01-28T18:00:00+00:00")
+        comparison_works = dt1 < dt2 < dt3
+        runner.test("Mixed timezone comparison no TypeError", comparison_works)
+    except TypeError as e:
+        runner.test("Mixed timezone comparison no TypeError", False, str(e))
+
+    # Test handler with mixed timezone formats
+    with TemporaryDirectory() as tmp_dir:
+        project_root = Path(tmp_dir)
+        retro_dir = project_root / ".claude" / "cat" / "retrospectives"
+        retro_dir.mkdir(parents=True)
+
+        # Create index.json with mixed timezone formats
+        index_data = {
+            "config": {
+                "trigger_interval_days": 1,
+                "mistake_count_threshold": 5
+            },
+            "last_retrospective": "2026-01-01T00:00:00Z",
+            "mistake_count_since_last": 10,
+            "action_items": [
+                {
+                    "id": "A001",
+                    "pattern_id": "protocol-violation",
+                    "status": "implemented",
+                    "completed_date": "2026-01-15T10:00:00-05:00",
+                    "description": "Test action"
+                }
+            ],
+            "patterns": []
+        }
+
+        index_file = retro_dir / "index.json"
+        index_file.write_text(json.dumps(index_data, indent=2))
+
+        # Create mistakes with different timezone formats
+        mistakes_data = {
+            "mistakes": [
+                {
+                    "id": "M001",
+                    "timestamp": "2026-01-20T10:00:00Z",
+                    "category": "test",
+                    "pattern_keywords": ["protocol-violation"]
+                },
+                {
+                    "id": "M002",
+                    "timestamp": "2026-01-21T11:30:00-05:00",
+                    "category": "test",
+                    "pattern_keywords": []
+                },
+                {
+                    "id": "M003",
+                    "timestamp": "2026-01-22T12:00:00Z",
+                    "category": "test",
+                    "pattern_keywords": []
+                }
+            ]
+        }
+
+        mistakes_file = retro_dir / "mistakes-001.json"
+        mistakes_file.write_text(json.dumps(mistakes_data, indent=2))
+
+        # Execute handler - should not raise TypeError
+        handler = RunRetrospectiveHandler()
+        try:
+            result = handler.handle({"project_root": str(project_root)})
+            runner.test("Handler completes without crash", result is not None)
+            runner.test("Handler returns analysis output",
+                        result is not None and "SCRIPT OUTPUT RETROSPECTIVE ANALYSIS" in result)
+        except TypeError as e:
+            runner.test("Handler completes without crash", False, f"TypeError: {e}")
+
+
 def test_compress_validate_loop():
     """Test compress-validate-loop.py script."""
     runner.section("scripts/compress-validate-loop.py")
@@ -1489,6 +1596,7 @@ def main():
         test_jlink_config,
         test_java_runner,
         test_session_start,
+        test_retrospective_handler_timezone,
         test_compress_validate_loop,
     ]
 
