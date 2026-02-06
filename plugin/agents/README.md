@@ -96,10 +96,8 @@ All stakeholder files have been migrated to this directory with proper agent for
 ```
 plugin/agents/
 ├── README.md                      # This file
-├── merge-subagent-branch.md       # Git merge specialist for subagent branches
 ├── work-execute.md                # Implementation specialist (Phase 2)
 ├── work-merge.md                  # Work merge agent
-├── work-prepare.md                # Work preparation agent
 ├── stakeholder-architect.md       # Architecture review
 ├── stakeholder-deployment.md      # Deployment/release review
 ├── stakeholder-design.md          # Code quality review
