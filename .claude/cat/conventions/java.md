@@ -489,7 +489,7 @@ public String getConfig(String key)
 - `isNotBlank()` - Most string parameters (names, keys, paths, identifiers)
 - `isNotNull()` - Only when empty strings are valid input (user content, messages)
 
-See `.claude/rules/requirements-api.md` for full API conventions.
+See `plugin/concepts/requirements-api.md` for full API conventions.
 
 ## Warnings Suppression
 
