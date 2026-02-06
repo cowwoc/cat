@@ -50,9 +50,28 @@ Return JSON on failure:
 {
   "status": "NO_TASKS|LOCKED|BLOCKED|ERROR",
   "message": "Human-readable explanation",
-  "suggestion": "Next action to take"
+  "suggestion": "Next action to take",
+  "blocked_tasks": [
+    {
+      "issue_id": "2.1-issue-name",
+      "blocked_by": ["2.1-dependency-name"],
+      "reason": "Depends on 2.1-dependency-name (status: in-progress)"
+    }
+  ],
+  "locked_tasks": [
+    {
+      "issue_id": "2.1-issue-name",
+      "locked_by": "session-uuid"
+    }
+  ],
+  "closed_count": 0,
+  "total_count": 0
 }
 ```
+
+**Extended failure info (M441):** When returning NO_TASKS, include `blocked_tasks` and `locked_tasks`
+arrays so the parent agent can report WHY no tasks are available. Also include `closed_count` and
+`total_count` for context. Omit empty arrays.
 
 ## Critical Constraints
 
@@ -121,8 +140,39 @@ RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/get-available-issues.sh" --session-id "$
 
 Parse the result and handle statuses:
 - `found` - Continue to worktree creation
-- `not_found` - Return NO_TASKS status (may include `excluded_count` if pattern excluded issues)
+- `not_found` - Return NO_TASKS with extended info (see below)
 - `locked` - Return LOCKED status with owner info
+
+**Extended failure info (M441):** When discovery returns `not_found`, gather diagnostic context
+before returning NO_TASKS. Scan issue directories to report why no tasks are available:
+
+```bash
+# Gather diagnostic info for NO_TASKS response
+BLOCKED_TASKS='[]'
+LOCKED_TASKS='[]'
+CLOSED_COUNT=0
+TOTAL_COUNT=0
+
+for issue_dir in .claude/cat/issues/v*/v*/*/ ; do
+  [ -f "$issue_dir/STATE.md" ] || continue
+  TOTAL_COUNT=$((TOTAL_COUNT + 1))
+  STATUS=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$issue_dir/STATE.md")
+  case "$STATUS" in
+    closed) CLOSED_COUNT=$((CLOSED_COUNT + 1)) ;;
+    open|in-progress)
+      DEPS=$(grep -oP '(?<=\*\*Dependencies:\*\* \[).*?(?=\])' "$issue_dir/STATE.md")
+      ISSUE_NAME=$(basename "$issue_dir")
+      if [ -n "$DEPS" ] && [ "$DEPS" != "" ]; then
+        # Has dependencies - check if they're resolved
+        BLOCKED_TASKS=$(echo "$BLOCKED_TASKS" | jq --arg id "$ISSUE_NAME" --arg deps "$DEPS" '. + [{"issue_id": $id, "blocked_by": ($deps | split(", ")), "reason": "unresolved dependencies"}]')
+      fi
+      ;;
+  esac
+done
+```
+
+Include these fields in the NO_TASKS JSON response. This allows the parent agent to explain
+to the user exactly why no tasks are executable.
 
 **Filtering (M364, M435):** Use `--exclude-pattern` for exclusion filters. The script handles
 glob matching natively and continues searching for the next eligible issue after excluding matches.
