@@ -411,6 +411,17 @@ Bad examples (implementation details leak):
 **Include user synonyms**: If users might say "resume" instead of "work on", include both
 in the description so intent routing matches correctly.
 
+**Frontmatter defaults — only set non-default values**:
+
+| Field | Default | Only set when |
+|-------|---------|---------------|
+| `user-invocable` | `true` | Set to `false` for internal-only skills |
+| `allowed-tools` | all tools | Set to restrict available tools |
+| `model` | inherited | Set to override (e.g., `haiku` for simple skills) |
+| `context` | main agent | Set to `fork` to run in isolated sub-agent |
+
+Do NOT add fields set to their default value — it adds noise and obscures intentional overrides.
+
 ---
 
 ## Skill Structure Template
