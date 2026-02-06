@@ -2734,6 +2734,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Subagent prompt instructs final message to be ONLY JSON (no surrounding text). Main agent extracts JSON block from result text by finding { through matching }. Both sides hardened."
+    },
+    {
+      "id": "M448",
+      "timestamp": "2026-02-06T12:00:00Z",
+      "category": "tool_misuse",
+      "description": "Name validation bash command produced false positive errors for valid input when format check and uniqueness check were combined into single compound &&/|| command",
+      "root_cause": "Agent compressed skill's documented if/exit 1 bash pattern into compound &&/|| single-line command, which produced incorrect results due to transient execution anomaly. Compound commands are harder to debug when failures occur.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/add/SKILL.md",
+      "pattern_keywords": [
+        "bash-validation",
+        "compound-command",
+        "false-positive",
+        "add-skill"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run format validation and uniqueness check as two separate Bash tool calls, each with explicit if/exit/fi structure and confirmation echo on success"
     }
   ]
 }
