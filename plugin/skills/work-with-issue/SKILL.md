@@ -82,7 +82,29 @@ Display the **Preparing phase** banner from SCRIPT OUTPUT PROGRESS BANNERS (`◉
 
 This indicates Phase 1 (prepare) has completed and work phases are starting.
 
-## Step 2: Execute Phase
+## Step 2: Verify Lock Ownership (M444)
+
+**Before any execution, verify the lock for this issue belongs to the current session.**
+
+```bash
+LOCK_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock"
+if [[ -f "$LOCK_FILE" ]]; then
+  LOCK_SESSION=$(jq -r '.session_id' "$LOCK_FILE")
+  if [[ "$LOCK_SESSION" != "${CLAUDE_SESSION_ID}" ]]; then
+    echo "ERROR: Lock for ${ISSUE_ID} belongs to session ${LOCK_SESSION}, not current session ${CLAUDE_SESSION_ID}."
+    echo "This task was prepared by a different session. STOP and report error."
+    exit 1
+  fi
+else
+  echo "ERROR: No lock file found for ${ISSUE_ID}. Task was not properly prepared."
+  exit 1
+fi
+```
+
+If lock ownership verification fails, STOP immediately and return FAILED status. Do NOT proceed
+to execution — another session owns this task.
+
+## Step 3: Execute Phase
 
 **Output the Executing banner** from INDIVIDUAL PHASE BANNERS (`● ◉ ○ ○` pattern).
 
@@ -90,7 +112,7 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 
 If `HAS_EXISTING_WORK == true`:
 - Output: "Resuming task with existing work - skipping to review"
-- Skip to Step 3
+- Skip to Step 4
 
 ### Read PLAN.md and Identify Skills
 
@@ -203,11 +225,11 @@ Task tool:
 
 Parse the subagent result:
 
-- **SUCCESS/PARTIAL**: Store metrics, proceed to Step 3
+- **SUCCESS/PARTIAL**: Store metrics, proceed to Step 4
 - **FAILED**: Return FAILED status with error details
 - **BLOCKED**: Return FAILED with blocker info
 
-## Step 3: Review Phase
+## Step 4: Review Phase
 
 **Output the Reviewing banner** from INDIVIDUAL PHASE BANNERS (`● ● ◉ ○` pattern).
 
@@ -239,20 +261,20 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result:
 
-- **REVIEW_PASSED**: Continue to Step 4 (approval gate)
-- **CONCERNS**: Note concerns, continue to Step 4
+- **REVIEW_PASSED**: Continue to Step 5 (approval gate)
+- **CONCERNS**: Note concerns, continue to Step 5
 - **REJECTED**: If trust=medium, return for user decision; else continue to approval gate
 
 **NOTE (M390):** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
-User approval is a SEPARATE gate in Step 4.
+User approval is a SEPARATE gate in Step 5.
 
-## Step 4: Approval Gate
+## Step 5: Approval Gate
 
 **CRITICAL (M390): This step is MANDATORY when trust != "high".**
 
 ### If trust == "high"
 
-Skip approval gate. Continue directly to Step 5 (merge).
+Skip approval gate. Continue directly to Step 6 (merge).
 
 ### If trust == "low" or trust == "medium"
 
@@ -274,7 +296,7 @@ AskUserQuestion:
     - "Abort"
 ```
 
-**If approved:** Continue to Step 5
+**If approved:** Continue to Step 6
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json
@@ -294,7 +316,7 @@ AskUserQuestion:
 }
 ```
 
-## Step 5: Merge Phase
+## Step 6: Merge Phase
 
 **Output the Merging banner** from INDIVIDUAL PHASE BANNERS (`● ● ● ◉` pattern).
 
@@ -327,11 +349,11 @@ Task tool:
 
 Parse merge result:
 
-- **MERGED**: Continue to Step 6
+- **MERGED**: Continue to Step 7
 - **CONFLICT**: Return FAILED with conflict details
 - **ERROR**: Return FAILED with error
 
-## Step 6: Return Success
+## Step 7: Return Success
 
 Return summary to the main `/cat:work` skill:
 

@@ -2600,6 +2600,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When prepare phase returns READY with potentially_complete=true, ask user to verify before proceeding to execution phase"
+    },
+    {
+      "id": "M444",
+      "timestamp": "2026-02-06T08:00:00Z",
+      "category": "assumption_without_verification",
+      "description": "Main agent reconstructed prepare phase result from worktree listing when subagent returned empty output, chose wrong task (add-diagnostic-review-checks instead of compress-skills-batch-1), and proceeded to implement in a worktree owned by a different session",
+      "root_cause": "M441 no-result handling rule existed as documentation-only prevention. When prepare subagent returned content:[] (empty), main agent ignored the STOP instruction and instead listed worktrees/locks to reconstruct a result. It picked the wrong worktree (alphabetically first) and rationalized the lock session_id mismatch instead of treating it as evidence of wrong task.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "validation",
+      "prevention_path": "/workspace/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "prepare-empty-result",
+        "lock-ownership",
+        "wrong-task",
+        "session-mismatch",
+        "artifact-reconstruction"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When prepare subagent returns empty/no JSON: STOP and display error per M441. Never reconstruct results from worktree/lock artifacts. Additionally, work-with-issue Step 2 now verifies lock session_id matches current session before any execution begins."
     }
   ]
 }

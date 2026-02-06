@@ -107,9 +107,13 @@ Prompt for the subagent:
 | ERROR | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
-**No-result handling (M441):** If the prepare subagent returns no parseable JSON (empty output,
-turn limit exceeded, or malformed text), treat as ERROR. Do NOT retry silently or assume NO_TASKS.
+**No-result handling (M441, M444):** If the prepare subagent returns no parseable JSON (empty output,
+turn limit exceeded, or malformed text), treat as ERROR and STOP. Do NOT attempt to reconstruct the
+result by listing worktrees or reading lock files. Artifacts from other sessions may exist and will
+mislead you into working on the wrong task.
+
 Display: "Prepare phase failed to return a result. The subagent may have exceeded its turn budget."
+Then STOP. Do not proceed to work-with-issue.
 
 **NO_TASKS Guidance (M396, M441):**
 
