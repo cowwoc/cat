@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-06T12:00:00Z",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-02-06T19:00:00Z",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -165,10 +165,10 @@
     {
       "pattern_id": "PATTERN-008",
       "pattern": "pre_rendered_output_bypass",
-      "occurrences_total": 14,
-      "occurrences_after_fix": 4,
+      "occurrences_total": 15,
+      "occurrences_after_fix": 5,
       "first_seen": "2026-01-29T09:00:00Z",
-      "last_seen": "2026-01-31T16:00:00Z",
+      "last_seen": "2026-02-06T18:30:00Z",
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
@@ -182,10 +182,12 @@
         "M331",
         "M332",
         "M333",
-        "M334"
+        "M334",
+        "M452"
       ],
       "related_action_items": [
-        "A008"
+        "A008",
+        "A019"
       ],
       "note": "Claude manually constructs progress banners, work boxes, checkpoint boxes instead of using pre-rendered scripts. Results in misaligned boxes due to LLM inability to count display widths."
     },
@@ -310,6 +312,34 @@
         "A016"
       ],
       "note": "Chain failures when batch operations require nested skill invocations. Subagents fail/fabricate, failure messages prime bypass, main agent does work manually."
+    },
+    {
+      "pattern_id": "PATTERN-015",
+      "pattern": "shell_operator_escaping",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 1,
+      "first_seen": "2026-02-05T15:39:00Z",
+      "last_seen": "2026-02-06T12:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": ["M431", "M448", "M449"],
+      "related_action_items": ["A017"],
+      "note": "Bash tool inline operators (!=, //, compound &&/||) get shell-escaped or produce incorrect results. Skill-level prevention insufficient."
+    },
+    {
+      "pattern_id": "PATTERN-016",
+      "pattern": "squash_commit_corruption",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-06T12:54:53Z",
+      "last_seen": "2026-02-06T18:10:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": ["M450", "M451"],
+      "related_action_items": ["A018"],
+      "note": "Git squash operations produce incorrect results - absorbing base branch changes or miscategorizing files. Squash skill needs rebase-first requirement and clearer file grouping rules."
     }
   ],
   "action_items": [
@@ -717,6 +747,57 @@
         "verdict": "pending"
       },
       "implementation": "Removed detailed failure JSON examples from work-batch-executor/SKILL.md that were being copied as fabricated responses"
+    },
+    {
+      "id": "A017",
+      "priority": "high",
+      "description": "Enforce Python for all comparison/conditional logic in bash handlers. Add detection for !=, ==, // operators in Bash commands. Current skill-level prevention (M431) insufficient.",
+      "category": "tool_misuse",
+      "pattern_id": "PATTERN-015",
+      "status": "open",
+      "created_date": "2026-02-06T19:00:00Z",
+      "completed_date": null,
+      "related_mistakes": ["M431", "M448", "M449"],
+      "effectiveness_check": {
+        "mistakes_before": 3,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A018",
+      "priority": "medium",
+      "description": "Fix squash workflow to require rebase-before-squash and clarify STATE.md grouping with implementation files, not as separate config commit.",
+      "category": "incorrect_implementation",
+      "pattern_id": "PATTERN-016",
+      "status": "open",
+      "created_date": "2026-02-06T19:00:00Z",
+      "completed_date": null,
+      "related_mistakes": ["M450", "M451"],
+      "effectiveness_check": {
+        "mistakes_before": 2,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A019",
+      "priority": "medium",
+      "description": "Add fallback banner script re-invocation when pre-rendered banners unavailable due to context compaction. Skills should include script path for manual re-invocation.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-008",
+      "status": "open",
+      "created_date": "2026-02-06T19:00:00Z",
+      "completed_date": null,
+      "related_mistakes": ["M452"],
+      "effectiveness_check": {
+        "mistakes_before": 1,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
     }
   ]
 }
