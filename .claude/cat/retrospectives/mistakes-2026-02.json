@@ -3045,6 +3045,82 @@
         "catches_variations": true
       },
       "correct_behavior": "When user-requested filter arguments cause script errors, display error, explain limitation, and STOP - never retry without the filter"
+    },
+    {
+      "id": "M459",
+      "timestamp": "2026-02-06T20:34:59.802535+00:00",
+      "category": "protocol_violation",
+      "description": "Fail-fast blocks included recovery instructions and assumed causes, violating fail-fast principle",
+      "root_cause": "PLAN.md acceptance criteria explicitly required 'exact script path and arguments to re-run' in fail-fast messages, contradicting fail-fast principle of immediate stop without recovery guidance",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/common.md",
+      "pattern_keywords": [
+        "fail-fast",
+        "recovery-instructions",
+        "error-messages"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Fail-fast means STOP immediately with clear error. No 'Run: ...' commands, no assumed causes, no recovery instructions. Error should identify what component should have provided missing data and STOP."
+    },
+    {
+      "id": "M460",
+      "timestamp": "2026-02-06T20:34:59.802535+00:00",
+      "category": "protocol_violation",
+      "description": "/cat:add needs requirements stakeholder review of PLAN.md acceptance criteria before implementation",
+      "root_cause": "PLAN.md acceptance criteria contained incorrect requirement (fail-fast with recovery instructions). /cat:add skill lacks requirements stakeholder review phase to catch such errors before implementation begins, causing wrong acceptance criteria to prime wrong implementations.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "process",
+      "prevention_path": "N/A - requires /cat:add skill enhancement (CAT issue needed)",
+      "pattern_keywords": [
+        "requirements-review",
+        "acceptance-criteria",
+        "plan-validation"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "negative",
+        "fragility": "high",
+        "catches_variations": false
+      },
+      "correct_behavior": "/cat:add should include stakeholder review of PLAN.md acceptance criteria before implementation. Wrong acceptance criteria cause implementations that pass review but violate actual requirements."
+    },
+    {
+      "id": "M460",
+      "timestamp": "2026-02-06T20:35:08Z",
+      "category": "assumption_without_verification",
+      "description": "Agent claimed speculative root cause as fact despite contradictory evidence",
+      "root_cause": "LLM synthesized speculative explanation without prompt constraint preventing speculation.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-investigate.md",
+      "pattern_keywords": [
+        "speculation",
+        "evidence",
+        "verification",
+        "conclude"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "All conclusions must cite specific evidence from investigation before being stated as fact."
     }
   ]
 }
