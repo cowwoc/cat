@@ -14,7 +14,8 @@ None - infrastructure bugfix
 3. Observe that no task header banner is displayed before the diff
 
 ## Expected vs Actual
-- **Expected:** Progress header banner (e.g., `🐱 > 2.0-task-name` with `◉ Merging` state) displayed before diff and approval gate
+- **Expected:** Progress header banner (e.g., `🐱 > 2.0-task-name` with `◉ Merging` state) displayed before diff and
+  approval gate
 - **Actual:** Diff and approval gate shown without task context header
 
 ## Root Cause

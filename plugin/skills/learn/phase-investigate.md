@@ -4,7 +4,8 @@ This phase verifies the event sequence and analyzes the documentation path to un
 
 ## Your Task
 
-Complete the investigation phase for the learn skill. Your final message must be ONLY the JSON result object with no surrounding text or explanation. The parent agent parses your response as JSON.
+Complete the investigation phase for the learn skill. Your final message must be ONLY the JSON result object with no
+surrounding text or explanation. The parent agent parses your response as JSON.
 
 ## Step 1: Verify Event Sequence (MANDATORY)
 
@@ -118,7 +119,8 @@ The delegation prompt IS the primary "document" the subagent received. Check it 
 
 **CHECK FOR TECHNICALLY IMPOSSIBLE INSTRUCTIONS (M429):**
 
-When a subagent fails to follow instructions, check whether the instructions were **technically possible** given Claude Code's subagent architecture:
+When a subagent fails to follow instructions, check whether the instructions were **technically possible** given Claude
+Code's subagent architecture:
 
 | Subagent Capability | Available? | Evidence |
 |---------------------|------------|----------|

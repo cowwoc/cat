@@ -1,15 +1,19 @@
 # Plan: replace-prepare-subagent-with-script
 
 ## Goal
-Replace the work-prepare LLM subagent with a deterministic Python script to reduce prepare phase latency from ~50s to ~4s. The current approach spawns a sonnet subagent that makes 8 LLM round-trips (~6s each) to perform entirely deterministic work.
+Replace the work-prepare LLM subagent with a deterministic Python script to reduce prepare phase latency from ~50s to
+~4s. The current approach spawns a sonnet subagent that makes 8 LLM round-trips (~6s each) to perform entirely
+deterministic work.
 
 ## Satisfies
 None - infrastructure/performance optimization
 
 ## Risk Assessment
 - **Risk Level:** MEDIUM
-- **Concerns:** Script must handle all edge cases currently handled by SKILL.md (filtering, diagnostics, worktree creation, branch verification, existing work check, STATE.md update, token estimation)
-- **Mitigation:** Existing test coverage for sub-scripts (get-available-issues.sh, check-existing-work.sh, issue-lock.sh). New script calls these internally.
+- **Concerns:** Script must handle all edge cases currently handled by SKILL.md (filtering, diagnostics, worktree
+  creation, branch verification, existing work check, STATE.md update, token estimation)
+- **Mitigation:** Existing test coverage for sub-scripts (get-available-issues.sh, check-existing-work.sh,
+  issue-lock.sh). New script calls these internally.
 
 ## Current State
 - Phase 1 (Prepare) spawns a `general-purpose` sonnet subagent via Task tool
@@ -29,15 +33,18 @@ None - infrastructure/performance optimization
 
 ## Files to Modify
 - `plugin/skills/work/SKILL.md` - Phase 1 section: replace Task tool delegation with direct Bash call to work-prepare.py
-- `plugin/skills/work-prepare/SKILL.md` - Add header note that logic is now implemented as work-prepare.py script; SKILL.md retained as algorithm documentation
+- `plugin/skills/work-prepare/SKILL.md` - Add header note that logic is now implemented as work-prepare.py script;
+  SKILL.md retained as algorithm documentation
 
 ## Execution Steps
 1. **Create work-prepare.py script** that:
    - Accepts args: `--session-id`, `--project-dir`, `--exclude-pattern` (optional), `--trust-level`
    - Step 1: Verifies `.claude/cat/` structure exists
    - Step 2: Calls `get-available-issues.sh` with appropriate flags, parses JSON result
-   - Step 3: On `not_found`: gathers diagnostic info (blocked tasks with cross-version dep search, locked tasks, closed/total counts) and returns NO_TASKS JSON
-   - Step 4: On `found`: reads PLAN.md, estimates tokens heuristically (files_to_create*5000 + files_to_modify*3000 + test_files*4000 + steps*2000)
+   - Step 3: On `not_found`: gathers diagnostic info (blocked tasks with cross-version dep search, locked tasks,
+     closed/total counts) and returns NO_TASKS JSON
+   - Step 4: On `found`: reads PLAN.md, estimates tokens heuristically (files_to_create*5000 + files_to_modify*3000 +
+     test_files*4000 + steps*2000)
    - Step 5: Creates worktree via `git worktree add`
    - Step 6: Verifies worktree branch matches expected (M351)
    - Step 7: Calls `check-existing-work.sh` for existing commits (M362/M394)

@@ -1,7 +1,8 @@
 # Plan: pricing-page
 
 ## Goal
-Consolidate pricing information and create a professional GitHub Pages pricing page. Based on stakeholder review (Sales + Marketing), this task implements a unified pricing strategy.
+Consolidate pricing information and create a professional GitHub Pages pricing page. Based on stakeholder review (Sales
++ Marketing), this task implements a unified pricing strategy.
 
 ## Satisfies
 - Professional pricing presentation for SMB buyers
@@ -52,7 +53,8 @@ Consolidate pricing information and create a professional GitHub Pages pricing p
 ## Execution Steps
 
 1. **Simplify README.md pricing section**
-   - Replace multi-line pricing with: "**Free for solo developers.** See [pricing](docs/PRICING.md) for team and enterprise options."
+   - Replace multi-line pricing with: "**Free for solo developers.** See [pricing](docs/PRICING.md) for team and
+     enterprise options."
    - Verify: grep shows simplified pricing line
 
 2. **Update LICENSE.md**

@@ -1,7 +1,8 @@
 # Plan: streamline-task-not-found-error
 
 ## Goal
-Simplify "task not found" error to a compact 3-line box instead of verbose 30+ line output with multiple search attempts visible.
+Simplify "task not found" error to a compact 3-line box instead of verbose 30+ line output with multiple search attempts
+visible.
 
 ## Satisfies
 - REQ: Demo-ready output for video recording and marketing materials

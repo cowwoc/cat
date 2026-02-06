@@ -1,7 +1,8 @@
 # Plan: task-management-demo
 
 ## Goal
-Create a showcase page demonstrating CAT task management features including /cat:add, /cat:status, and /cat:work commands with video demos.
+Create a showcase page demonstrating CAT task management features including /cat:add, /cat:status, and /cat:work
+commands with video demos.
 
 ## Satisfies
 None - marketing/documentation task

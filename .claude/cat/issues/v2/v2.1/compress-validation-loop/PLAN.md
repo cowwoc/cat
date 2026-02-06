@@ -1,7 +1,9 @@
 # Plan: compress-validation-loop
 
 ## Problem
-The /cat:work compression workflow and /cat:compare-docs validation can produce different execution equivalence scores when run in separate sessions, indicating potential issues with how compressions are being validated or how /cat:learn identifies root causes.
+The /cat:work compression workflow and /cat:compare-docs validation can produce different execution equivalence scores
+when run in separate sessions, indicating potential issues with how compressions are being validated or how /cat:learn
+identifies root causes.
 
 ## Satisfies
 None - infrastructure/tooling issue

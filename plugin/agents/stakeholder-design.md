@@ -128,7 +128,8 @@ Evaluate implementation against these quality criteria:
 - **Magic Numbers**: Hardcoded values that should be named constants
 - **Missing Documentation**: Public APIs without clear documentation
 - **Inconsistent Patterns**: Code that doesn't follow established patterns in the codebase
-- **File Necessity**: New or modified files that may be unnecessary, redundant, or could be consolidated with existing files
+- **File Necessity**: New or modified files that may be unnecessary, redundant, or could be consolidated with existing
+  files
 
 ## Quality Metrics
 

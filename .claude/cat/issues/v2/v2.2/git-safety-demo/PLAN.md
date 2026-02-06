@@ -1,7 +1,8 @@
 # Plan: git-safety-demo
 
 ## Goal
-Create a showcase page demonstrating CAT git safety features including safe rebase, squash, and history rewriting with video demos.
+Create a showcase page demonstrating CAT git safety features including safe rebase, squash, and history rewriting with
+video demos.
 
 ## Satisfies
 None - marketing/documentation task

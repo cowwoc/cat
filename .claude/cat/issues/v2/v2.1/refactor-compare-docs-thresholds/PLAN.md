@@ -1,10 +1,12 @@
 # Plan: refactor-compare-docs-thresholds
 
 ## Current State
-compare-docs skill contains embedded threshold logic (0.95 default, 1.0 for shrink-doc context) and tries to detect calling context to determine which threshold to apply.
+compare-docs skill contains embedded threshold logic (0.95 default, 1.0 for shrink-doc context) and tries to detect
+calling context to determine which threshold to apply.
 
 ## Target State
-compare-docs returns raw scores only. Callers (shrink-doc, etc.) decide what score is acceptable. Clean separation of concerns.
+compare-docs returns raw scores only. Callers (shrink-doc, etc.) decide what score is acceptable. Clean separation of
+concerns.
 
 ## Satisfies
 None - internal architecture improvement

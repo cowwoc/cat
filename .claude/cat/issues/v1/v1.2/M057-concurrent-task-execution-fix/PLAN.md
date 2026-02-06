@@ -1,7 +1,8 @@
 # Plan: M057-concurrent-task-execution-fix
 
 ## Problem
-Two Claude instances started working on same task simultaneously. Agent proceeded with worktree creation after SESSION_ID check showed "NOT SET". Bash code block with `exit 1` was not sufficient instruction for agent.
+Two Claude instances started working on same task simultaneously. Agent proceeded with worktree creation after
+SESSION_ID check showed "NOT SET". Bash code block with `exit 1` was not sufficient instruction for agent.
 
 ## Solution
 - Added explicit prose instruction as "MANDATORY STOP POINT (M057)"

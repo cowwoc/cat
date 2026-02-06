@@ -29,4 +29,5 @@ Created hook-based pre-computation for init.md boxes:
 
 ## Notes
 
-Goal: Remove box-drawing logic from skill file. A UserPromptSubmit hook computes and injects the formatted output, so the skill only needs to define WHAT to display, not HOW to render it.
+Goal: Remove box-drawing logic from skill file. A UserPromptSubmit hook computes and injects the formatted output, so
+the skill only needs to define WHAT to display, not HOW to render it.

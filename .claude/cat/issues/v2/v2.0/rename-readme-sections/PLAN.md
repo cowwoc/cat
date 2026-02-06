@@ -1,7 +1,8 @@
 # Plan: rename-readme-sections
 
 ## Goal
-Rename README.md section headings to be more concise: "The Map: Hierarchical Planning" becomes "Hierarchical Planning" and "The Compass: Your Preferences" becomes "Your Style".
+Rename README.md section headings to be more concise: "The Map: Hierarchical Planning" becomes "Hierarchical Planning"
+and "The Compass: Your Preferences" becomes "Your Style".
 
 ## Satisfies
 - None (documentation cleanup)

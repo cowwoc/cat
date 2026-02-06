@@ -84,7 +84,8 @@ tool calls from reviewers.
 
 **Context-Aware Stakeholder Selection**
 
-Analyze issue context to determine which stakeholders are relevant, reducing token usage by skipping irrelevant reviewers.
+Analyze issue context to determine which stakeholders are relevant, reducing token usage by skipping irrelevant
+reviewers.
 
 ### Selection Algorithm
 

@@ -1,7 +1,8 @@
 # Plan: merge-or-pr-config
 
 ## Goal
-Add a configuration option that controls whether task branches are merged directly to the base branch or pushed as a PR after receiving user approval.
+Add a configuration option that controls whether task branches are merged directly to the base branch or pushed as a PR
+after receiving user approval.
 
 ## Satisfies
 - None (infrastructure task)

@@ -1,7 +1,8 @@
 # Plan: M100-fix-parse-error-false-positive
 
 ## Problem
-Pattern 13/13b triggered on jq parse errors in stderr even when the overall bash command succeeded (exit code 0). This caused false positive mistake detection when jq subcommands failed but the script completed successfully.
+Pattern 13/13b triggered on jq parse errors in stderr even when the overall bash command succeeded (exit code 0). This
+caused false positive mistake detection when jq subcommands failed but the script completed successfully.
 
 ## Solution
 - Extract exit code from hook context

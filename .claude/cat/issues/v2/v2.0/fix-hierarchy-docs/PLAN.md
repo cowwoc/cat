@@ -1,17 +1,23 @@
 # Plan: fix-hierarchy-docs
 
 ## Problem
-The hierarchy.md documentation shows tasks under a `task/<name>/` subdirectory, but the actual implementation (version-paths.md and find-task.sh) places tasks directly under the version directory. Additionally, hierarchy.md assumes MAJOR.MINOR versioning but version-paths.md supports MAJOR, MAJOR.MINOR, and MAJOR.MINOR.PATCH schemes. The versioning scheme information is scattered across multiple files without a single source of truth.
+The hierarchy.md documentation shows tasks under a `task/<name>/` subdirectory, but the actual implementation
+(version-paths.md and find-task.sh) places tasks directly under the version directory. Additionally, hierarchy.md
+assumes MAJOR.MINOR versioning but version-paths.md supports MAJOR, MAJOR.MINOR, and MAJOR.MINOR.PATCH schemes. The
+versioning scheme information is scattered across multiple files without a single source of truth.
 
 ## Satisfies
 None - documentation consistency fix
 
 ## Expected vs Actual
-- **Expected:** hierarchy.md matches actual path structure; versioning schemes documented in one place and referenced elsewhere
-- **Actual:** hierarchy.md shows incorrect `task/<name>/` structure, only describes MAJOR.MINOR, and scheme info is duplicated/inconsistent
+- **Expected:** hierarchy.md matches actual path structure; versioning schemes documented in one place and referenced
+  elsewhere
+- **Actual:** hierarchy.md shows incorrect `task/<name>/` structure, only describes MAJOR.MINOR, and scheme info is
+  duplicated/inconsistent
 
 ## Root Cause
-Documentation drift - hierarchy.md was not updated when path conventions were finalized. No centralized versioning scheme documentation exists.
+Documentation drift - hierarchy.md was not updated when path conventions were finalized. No centralized versioning
+scheme documentation exists.
 
 ## Risk Assessment
 - **Risk Level:** LOW

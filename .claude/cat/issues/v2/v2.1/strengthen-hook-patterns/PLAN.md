@@ -2,11 +2,13 @@
 
 ## Problem
 
-Hook regex patterns fail to match command variations like `git -C /path command`. The M398 mistake documented that a worktree hook pattern did not account for the `-C` flag, allowing operations to bypass validation.
+Hook regex patterns fail to match command variations like `git -C /path command`. The M398 mistake documented that a
+worktree hook pattern did not account for the `-C` flag, allowing operations to bypass validation.
 
 ## Implements
 
-- **A014**: Strengthen hook patterns: (1) Account for git -C flag in worktree hooks, (2) Test hook patterns against command variations, (3) Add hook coverage tests
+- **A014**: Strengthen hook patterns: (1) Account for git -C flag in worktree hooks, (2) Test hook patterns against
+  command variations, (3) Add hook coverage tests
 
 ## Satisfies
 

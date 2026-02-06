@@ -4,7 +4,8 @@
 Stakeholder definitions are nested under `plugin/concepts/stakeholders/`, creating unnecessary directory depth.
 
 ## Target State
-Stakeholder definitions at `plugin/stakeholders/` - a flatter, more intuitive location alongside other plugin components.
+Stakeholder definitions at `plugin/stakeholders/` - a flatter, more intuitive location alongside other plugin
+components.
 
 ## Satisfies
 None - infrastructure/cleanup task

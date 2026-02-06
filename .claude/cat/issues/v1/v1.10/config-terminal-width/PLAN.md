@@ -1,7 +1,8 @@
 # Plan: config-terminal-width
 
 ## Goal
-Add terminal width configuration option to /cat:config interactive wizard, allowing users to set their preferred display width for diffs and output formatting.
+Add terminal width configuration option to /cat:config interactive wizard, allowing users to set their preferred display
+width for diffs and output formatting.
 
 ## Requirements
 
@@ -21,12 +22,14 @@ Add single question to /cat:config for terminal width with preset options (50, 8
 - **Tradeoff:** Limited customization
 
 ### Balanced
-Add terminal width to /cat:config with preset options plus custom input, validate range (40-200), persist to cat-config.json.
+Add terminal width to /cat:config with preset options plus custom input, validate range (40-200), persist to
+cat-config.json.
 - **Risk:** MEDIUM
 - **Tradeoff:** Standard implementation
 
 ### Aggressive
-Auto-detect terminal width where possible, offer presets for common scenarios (mobile, laptop, wide monitor), remember per-device.
+Auto-detect terminal width where possible, offer presets for common scenarios (mobile, laptop, wide monitor), remember
+per-device.
 - **Risk:** HIGH
 - **Tradeoff:** Over-engineering for simple config
 

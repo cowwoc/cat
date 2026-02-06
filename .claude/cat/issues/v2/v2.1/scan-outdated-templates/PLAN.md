@@ -2,11 +2,14 @@
 
 ## Goal
 
-Scan all scripts for outdated output templates containing placeholders (like `{issue-name}`, `{version}`) and replace them with preprocessor equivalents that generate properly aligned output.
+Scan all scripts for outdated output templates containing placeholders (like `{issue-name}`, `{version}`) and replace
+them with preprocessor equivalents that generate properly aligned output.
 
 ## Background
 
-PATTERN-008 identified that LLMs cannot accurately count character display widths, leading to misaligned boxes when manually constructing output. The solution is to use pre-rendered scripts. However, some older scripts still contain placeholder-based templates that encourage manual construction.
+PATTERN-008 identified that LLMs cannot accurately count character display widths, leading to misaligned boxes when
+manually constructing output. The solution is to use pre-rendered scripts. However, some older scripts still contain
+placeholder-based templates that encourage manual construction.
 
 ## Scope
 

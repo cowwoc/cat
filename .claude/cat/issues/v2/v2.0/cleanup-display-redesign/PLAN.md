@@ -1,7 +1,8 @@
 # Plan: cleanup-display-redesign
 
 ## Goal
-Improve the visual output of `/cat:cleanup` command with box-drawing displays for survey results, cleanup plan confirmation, and completion verification.
+Improve the visual output of `/cat:cleanup` command with box-drawing displays for survey results, cleanup plan
+confirmation, and completion verification.
 
 ## Satisfies
 - None (UX improvement)

@@ -1,7 +1,8 @@
 # Plan: v2.5 - Input Validation
 
 ## Overview
-Comprehensive input validation with security protections, focusing on Unicode homograph attack detection similar to Tirith.
+Comprehensive input validation with security protections, focusing on Unicode homograph attack detection similar to
+Tirith.
 
 ## Requirements
 

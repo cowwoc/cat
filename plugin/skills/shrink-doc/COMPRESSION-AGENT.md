@@ -42,7 +42,8 @@ A reader following the compressed version achieves the same results as someone f
 **MANDATORY - preserve all of these:**
 - **YAML frontmatter** (between `---` delimiters) - REQUIRED for slash commands
 - **Decision-affecting information**: Claims, requirements, constraints that affect what to do
-- **Relationship structure**: Temporal ordering (A before B), conditionals (IF-THEN), prerequisites, exclusions, escalations
+- **Relationship structure**: Temporal ordering (A before B), conditionals (IF-THEN), prerequisites, exclusions,
+  escalations
 - **Control flow**: Explicit sequences, blocking checkpoints (STOP, WAIT), branching logic
 - **Executable details**: Commands, file paths, thresholds, specific values
 - **Section headers**: `### Section Name` blocks in style docs (detection patterns)

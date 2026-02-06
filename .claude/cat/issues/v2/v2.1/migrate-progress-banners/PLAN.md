@@ -1,7 +1,8 @@
 # Plan: migrate-progress-banners
 
 ## Goal
-Migrate the progress banner system to use silent `!`command`` preprocessing. This is the most error-prone area (M246, M256, M257, M288, M298).
+Migrate the progress banner system to use silent `!`command`` preprocessing. This is the most error-prone area (M246,
+M256, M257, M288, M298).
 
 ## Satisfies
 - Parent: migrate-to-silent-preprocessing

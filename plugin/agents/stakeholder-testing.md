@@ -124,8 +124,10 @@ Evaluate implementation against these testing criteria:
 - **Edge Case Gaps**: Missing null/empty validation tests, boundary condition tests
 - **Error Path Coverage**: Happy path tested but error handling untested
 - **Regression Risk**: Changed code without corresponding test updates
-- **Diagnostic Path Coverage**: Diagnostic, error reporting, and fallback code paths are tested with the same rigor as happy paths. Code that gathers data for reporting must apply the same validation/filtering as core logic.
-- **Comment-Code Consistency**: Comments that describe behavior the code actually implements. Flag comments claiming "check if X" or "verify Y" where the code does not perform that check.
+- **Diagnostic Path Coverage**: Diagnostic, error reporting, and fallback code paths are tested with the same rigor as
+  happy paths. Code that gathers data for reporting must apply the same validation/filtering as core logic.
+- **Comment-Code Consistency**: Comments that describe behavior the code actually implements. Flag comments claiming
+  "check if X" or "verify Y" where the code does not perform that check.
 
 ### Medium Priority
 - **Test Isolation Issues**: Tests with shared state, order dependencies

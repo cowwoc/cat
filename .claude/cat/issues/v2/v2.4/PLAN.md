@@ -1,7 +1,8 @@
 # v2.4: Mobile Review UX
 
 ## Overview
-Tooling for reviewing code changes on mobile devices, addressing the fundamental mismatch between code (wide, context-dependent) and phone screens (narrow, limited content).
+Tooling for reviewing code changes on mobile devices, addressing the fundamental mismatch between code (wide,
+context-dependent) and phone screens (narrow, limited content).
 
 ## Requirements
 

@@ -1,7 +1,9 @@
 # Project: CAT
 
 ## Overview
-CAT is a Claude Code plugin for multi-agent task orchestration with comprehensive planning and quality gates. It organizes work into a MAJOR → MINOR → TASK hierarchy, executes tasks in isolated git worktrees, and provides token-aware decomposition to prevent context overflow.
+CAT is a Claude Code plugin for multi-agent task orchestration with comprehensive planning and quality gates. It
+organizes work into a MAJOR → MINOR → TASK hierarchy, executes tasks in isolated git worktrees, and provides token-aware
+decomposition to prevent context overflow.
 
 ## Goals
 - Enable reliable, structured AI-assisted software development

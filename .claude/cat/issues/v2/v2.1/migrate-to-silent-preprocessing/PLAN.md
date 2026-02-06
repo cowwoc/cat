@@ -1,10 +1,12 @@
 # Plan: migrate-to-silent-preprocessing
 
 ## Current State
-Skills use OUTPUT TEMPLATEs injected by PreToolUse handlers. The LLM reads templates with placeholders and manually constructs output, leading to errors (M246, M256, M257, M288, M298).
+Skills use OUTPUT TEMPLATEs injected by PreToolUse handlers. The LLM reads templates with placeholders and manually
+constructs output, leading to errors (M246, M256, M257, M288, M298).
 
 ## Target State  
-Skills use `!`command`` preprocessing syntax to generate output silently. Commands execute during skill expansion, before the LLM sees content. Output is guaranteed correct with no LLM manipulation.
+Skills use `!`command`` preprocessing syntax to generate output silently. Commands execute during skill expansion,
+before the LLM sees content. Output is guaranteed correct with no LLM manipulation.
 
 ## Satisfies
 - Pre-Demo Polish goal: "Command output displays correctly aligned"

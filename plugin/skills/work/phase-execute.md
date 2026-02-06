@@ -4,7 +4,8 @@ user-invocable: false
 
 # Work Phase: Execute
 
-Steps for task execution: execute, collect_and_report, aggregate_token_report, token_check, handle_discovered_issues, verify_changes.
+Steps for task execution: execute, collect_and_report, aggregate_token_report, token_check, handle_discovered_issues,
+verify_changes.
 
 ---
 

@@ -1,7 +1,8 @@
 # Plan: storage-abstraction-design
 
 ## Goal
-Design the storage abstraction interface that allows CAT to work with multiple issue tracker backends (local files, GitHub, Jira, Linear, etc.).
+Design the storage abstraction interface that allows CAT to work with multiple issue tracker backends (local files,
+GitHub, Jira, Linear, etc.).
 
 ## Satisfies
 - REQ-001

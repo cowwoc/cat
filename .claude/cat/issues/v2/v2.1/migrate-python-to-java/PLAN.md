@@ -4,7 +4,8 @@
 All CAT plugin hooks are implemented in Python, requiring users to have Python installed and configured.
 
 ## Target State
-All hooks migrated to Java with a custom jlinked JDK 25 runtime that includes Jackson 3, eliminating the Python dependency and providing a self-contained runtime.
+All hooks migrated to Java with a custom jlinked JDK 25 runtime that includes Jackson 3, eliminating the Python
+dependency and providing a self-contained runtime.
 
 ## Satisfies
 None - infrastructure/setup task

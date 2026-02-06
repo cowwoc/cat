@@ -1,7 +1,8 @@
 # Plan: polish-readme-for-smb
 
 ## Goal
-Make the README.md look more professional and polished with the goal of selling licenses to small-to-medium businesses. Improve visual presentation, clarity, and commercial appeal.
+Make the README.md look more professional and polished with the goal of selling licenses to small-to-medium businesses.
+Improve visual presentation, clarity, and commercial appeal.
 
 ## Satisfies
 - None (documentation improvement for commercialization)

@@ -1,7 +1,9 @@
 # Plan: expand-exploration-subagent-role
 
 ## Goal
-Expand the exploration subagent to handle preparation (task size analysis, worktree creation) and verification (confirming findings before implementation), hiding noisy tool calls from the user and presenting clean progress summaries.
+Expand the exploration subagent to handle preparation (task size analysis, worktree creation) and verification
+(confirming findings before implementation), hiding noisy tool calls from the user and presenting clean progress
+summaries.
 
 ## Requirements
 
@@ -14,7 +16,9 @@ Expand the exploration subagent to handle preparation (task size analysis, workt
 - None (infrastructure/workflow improvement)
 
 ## Current State
-Main agent performs task size analysis, worktree creation, and post-exploration verification directly, exposing Bash/Read/Write tool calls to users. After exploration subagent returns, main agent reads source files to verify findings (violating M088/M147).
+Main agent performs task size analysis, worktree creation, and post-exploration verification directly, exposing
+Bash/Read/Write tool calls to users. After exploration subagent returns, main agent reads source files to verify
+findings (violating M088/M147).
 
 ## Target State
 Exploration subagent handles three phases internally:

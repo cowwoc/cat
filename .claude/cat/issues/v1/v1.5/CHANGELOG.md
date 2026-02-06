@@ -8,15 +8,20 @@
 
 **Quality Gates, Progress Indicators, and Workflow Stability**
 
-Major release with multi-perspective stakeholder reviews, visual progress indicators, and extensive workflow stability improvements.
+Major release with multi-perspective stakeholder reviews, visual progress indicators, and extensive workflow stability
+improvements.
 
 ## New Features
 
-- **Multi-Perspective Stakeholder Review**: New `stakeholder-review` skill providing architect, security, quality, tester, and performance perspectives before code approval
-- **Progress Indicators**: Long-running workflows now display progress bars for file operations, verification steps, and batch processing
+- **Multi-Perspective Stakeholder Review**: New `stakeholder-review` skill providing architect, security, quality,
+  tester, and performance perspectives before code approval
+- **Progress Indicators**: Long-running workflows now display progress bars for file operations, verification steps, and
+  batch processing
 - **Duplicate Task Resolution**: Automatic detection and handling of duplicate or obsolete tasks
-- **Escalation Requirements**: When prevention rules already exist for a mistake type, escalation is required for pattern-level analysis
-- **Main Agent Boundaries (M063)**: Main agent is orchestrator only - all code implementation must be delegated to subagents
+- **Escalation Requirements**: When prevention rules already exist for a mistake type, escalation is required for
+  pattern-level analysis
+- **Main Agent Boundaries (M063)**: Main agent is orchestrator only - all code implementation must be delegated to
+  subagents
 
 ## Bugfixes
 

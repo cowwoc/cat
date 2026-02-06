@@ -1,7 +1,9 @@
 # Plan: fail-fast-missing-banners
 
 ## Goal
-Enforce fail-fast when pre-rendered banners are unavailable due to context compaction. Addresses A019/PATTERN-008. When banners from SCRIPT OUTPUT sections are lost, skills must fail immediately with an error message and the script path to re-run, rather than constructing banners manually or silently degrading.
+Enforce fail-fast when pre-rendered banners are unavailable due to context compaction. Addresses A019/PATTERN-008. When
+banners from SCRIPT OUTPUT sections are lost, skills must fail immediately with an error message and the script path to
+re-run, rather than constructing banners manually or silently degrading.
 
 ## Satisfies
 None - infrastructure/retrospective action item

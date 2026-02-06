@@ -1,7 +1,8 @@
 # Plan: batch-finalization-subagent
 
 ## Goal
-Replace individual post-approval steps (merge, cleanup, update_state, commit_metadata, update_changelogs) with a single `finalization` step that spawns a Finalization subagent, hiding tool calls from the user.
+Replace individual post-approval steps (merge, cleanup, update_state, commit_metadata, update_changelogs) with a single
+`finalization` step that spawns a Finalization subagent, hiding tool calls from the user.
 
 ## Current State
 - `plugin/commands/work.md` has 5 individual `<step>` elements after approval gate
@@ -29,7 +30,8 @@ None - UX improvement / architecture consistency task
   - Include fail-fast and cleanup instructions in subagent prompt
 
 ## Files to Modify
-- `plugin/commands/work.md` - Replace steps merge/cleanup/update_state/commit_metadata/update_changelogs with single finalization step
+- `plugin/commands/work.md` - Replace steps merge/cleanup/update_state/commit_metadata/update_changelogs with single
+  finalization step
 
 ## Acceptance Criteria
 - [ ] Single `<step name="finalization">` spawns subagent for post-approval work

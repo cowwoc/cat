@@ -1,7 +1,8 @@
 # Plan: add-legal-stakeholder
 
 ## Goal
-Add a legal stakeholder to the CAT stakeholder review process for evaluating licensing terms, compliance requirements, and legal implications during planning and review phases.
+Add a legal stakeholder to the CAT stakeholder review process for evaluating licensing terms, compliance requirements,
+and legal implications during planning and review phases.
 
 ## Satisfies
 - None (infrastructure/process improvement)
@@ -19,7 +20,8 @@ Add legal stakeholder to both research and review workflows with focus areas: li
 - **Tradeoff:** May need refinement based on actual usage
 
 ### Aggressive
-Full legal stakeholder with specialized prompts for different legal domains (IP, compliance, contracts, liability, data privacy).
+Full legal stakeholder with specialized prompts for different legal domains (IP, compliance, contracts, liability, data
+privacy).
 - **Risk:** HIGH
 - **Tradeoff:** Over-engineering for current needs
 

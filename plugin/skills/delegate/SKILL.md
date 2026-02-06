@@ -607,7 +607,8 @@ done
 
 **Sequential with Subagent Reuse** (efficiency optimization):
 
-When processing multiple items sequentially, the same subagent can handle consecutive items IF context usage remains under the **soft limit** (see agent-architecture.md § Context Limit Constants for current values).
+When processing multiple items sequentially, the same subagent can handle consecutive items IF context usage remains
+under the **soft limit** (see agent-architecture.md § Context Limit Constants for current values).
 
 **Reuse Protocol:**
 ```bash
@@ -644,13 +645,15 @@ Task tool:
     Report approximate token usage after completion.
 ```
 
-**Why soft limit for reuse**: Quality degrades after 40-50% context usage (agent-architecture.md § Quality Degradation). Spawning fresh subagents above soft limit maintains output quality.
+**Why soft limit for reuse**: Quality degrades after 40-50% context usage (agent-architecture.md § Quality Degradation).
+Spawning fresh subagents above soft limit maintains output quality.
 
 **When NOT to reuse:**
 - Items require completely different skill invocations
 - Previous item failed (fresh context may help)
 - Context already near soft limit
-- Skills requiring isolation to avoid bias (e.g., `/cat:compare-docs` - each comparison must have fresh context to prevent prior comparisons from influencing judgment)
+- Skills requiring isolation to avoid bias (e.g., `/cat:compare-docs` - each comparison must have fresh context to
+  prevent prior comparisons from influencing judgment)
 
 ### 7. Collect Results
 

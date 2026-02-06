@@ -168,7 +168,8 @@ Original issue STATE.md:
 - Will be merged to 1.2a branch
 ```
 
-**Note:** Parent stays `in-progress` until ALL subtasks complete. Progress is calculated from subtask completion (e.g., 1/3 subtasks = 33%).
+**Note:** Parent stays `in-progress` until ALL subtasks complete. Progress is calculated from subtask completion (e.g.,
+1/3 subtasks = 33%).
 
 New issue STATE.md:
 

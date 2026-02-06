@@ -1,16 +1,19 @@
 # Plan: fail-fast-environment-variables
 
 ## Goal
-Replace fallback patterns in scripts that silently use default paths with fail-fast behavior that errors when required environment variables are not set.
+Replace fallback patterns in scripts that silently use default paths with fail-fast behavior that errors when required
+environment variables are not set.
 
 ## Satisfies
 None - infrastructure/cleanup task
 
 ## Current State
-Several scripts use bash fallback patterns like `${VAR:-default}` for path variables, which can silently use incorrect defaults when called from unexpected contexts.
+Several scripts use bash fallback patterns like `${VAR:-default}` for path variables, which can silently use incorrect
+defaults when called from unexpected contexts.
 
 ## Target State
-Scripts require explicit arguments or environment variables and fail immediately with clear error messages when requirements are not met.
+Scripts require explicit arguments or environment variables and fail immediately with clear error messages when
+requirements are not met.
 
 ## Risk Assessment
 - **Risk Level:** LOW

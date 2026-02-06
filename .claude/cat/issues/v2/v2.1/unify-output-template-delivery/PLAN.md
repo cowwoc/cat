@@ -1,7 +1,8 @@
 # Plan: unify-output-template-delivery
 
 ## Goal
-Update all skills/commands that use output templates to work consistently whether invoked by the user directly (via /cat:*) or by the agent via the Skill tool, using the PostToolUse hook approach.
+Update all skills/commands that use output templates to work consistently whether invoked by the user directly (via
+/cat:*) or by the agent via the Skill tool, using the PostToolUse hook approach.
 
 ## Satisfies
 None - infrastructure improvement

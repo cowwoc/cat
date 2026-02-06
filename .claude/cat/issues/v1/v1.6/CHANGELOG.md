@@ -15,7 +15,8 @@ Introduces the "fun AND reliable" philosophy with adventure-style workflow enhan
 - **Adventure Mode**: Express development style preferences during `/cat:init`
 - **Choose Approach**: "Fork in the Road" decision points with smart recommendations
 - **Visual Status**: Adventure-style progress display in `/cat:status`
-- **User Preferences**: Approach (conservative/balanced/aggressive), stakeholder review frequency, refactoring appetite - stored in cat-config.json
+- **User Preferences**: Approach (conservative/balanced/aggressive), stakeholder review frequency, refactoring
+  appetite - stored in cat-config.json
 
 ## New Skills
 

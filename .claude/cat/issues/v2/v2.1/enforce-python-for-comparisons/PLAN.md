@@ -1,7 +1,9 @@
 # Plan: enforce-python-for-comparisons
 
 ## Goal
-Add PreToolUse detection for !=, ==, // operators in Bash commands, warning to use Python instead. Addresses A017/PATTERN-015 (shell operator escaping). These operators get shell-escaped by the Bash tool, producing incorrect results.
+Add PreToolUse detection for !=, ==, // operators in Bash commands, warning to use Python instead. Addresses
+A017/PATTERN-015 (shell operator escaping). These operators get shell-escaped by the Bash tool, producing incorrect
+results.
 
 ## Satisfies
 None - infrastructure/retrospective action item

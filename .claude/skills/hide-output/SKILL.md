@@ -126,7 +126,8 @@ Based on the classification from Step 2, implement the appropriate pattern.
    - `$CLAUDE_PROJECT_DIR` - Project root directory
    - `$CLAUDE_PLUGIN_ROOT` - Plugin installation root
    - `$CLAUDE_SESSION_ID` - Current session ID
-   - `$ARGUMENTS` - Arguments passed to the skill (read from environment inside the script; do not pass directly on the shell command line — see Anti-Patterns)
+   - `$ARGUMENTS` - Arguments passed to the skill (read from environment inside the script; do not pass directly on the
+     shell command line — see Anti-Patterns)
 
 ### For Delegated Preprocessing (Skill Chaining)
 

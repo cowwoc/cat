@@ -178,7 +178,8 @@ If dependents found:
 
 Use AskUserQuestion:
 - header: "Dependency Warning"
-- question: "The following issues depend on this issue:\n\n[list]\n\nRemoving will leave these issues with unmet dependencies. Continue?"
+- question: "The following issues depend on this issue:\n\n[list]\n\nRemoving will leave these issues with unmet
+  dependencies. Continue?"
 - options:
   - "Yes, remove anyway" - Proceed
   - "No, keep it" - Cancel removal
@@ -451,7 +452,8 @@ If this is not the last minor version:
 
 Use AskUserQuestion:
 - header: "Dependency Warning"
-- question: "Minor version {major}.{minor+1} and later implicitly depend on this version. Removing may affect the roadmap. Continue?"
+- question: "Minor version {major}.{minor+1} and later implicitly depend on this version. Removing may affect the
+  roadmap. Continue?"
 - options:
   - "Yes, remove anyway" - Proceed
   - "No, cancel" - Abort
@@ -469,7 +471,8 @@ If later patches exist:
 
 Use AskUserQuestion:
 - header: "Dependency Warning"
-- question: "Later patch versions exist:\n\n{list}\n\nRemoving v$MAJOR.$MINOR.$PATCH may affect version sequence. Continue?"
+- question: "Later patch versions exist:\n\n{list}\n\nRemoving v$MAJOR.$MINOR.$PATCH may affect version sequence.
+  Continue?"
 - options:
   - "Yes, remove anyway" - Proceed
   - "No, cancel" - Abort
@@ -505,7 +508,9 @@ TASK_COUNT=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issue
 
 Use AskUserQuestion:
 - header: "CONFIRM MAJOR VERSION REMOVAL"
-- question: "You are about to remove Major Version {major}.\n\nThis will permanently delete:\n- {minor_count} minor versions\n- {task_count} issues\n- All associated STATE.md, PLAN.md, CHANGELOG.md files\n\nThis action cannot be undone (except via git). Are you absolutely sure?"
+- question: "You are about to remove Major Version {major}.\n\nThis will permanently delete:\n- {minor_count} minor
+  versions\n- {task_count} issues\n- All associated STATE.md, PLAN.md, CHANGELOG.md files\n\nThis action cannot be
+  undone (except via git). Are you absolutely sure?"
 - options:
   - "Yes, permanently remove Major {major}" - Proceed with removal
   - "No, cancel" - Abort removal
@@ -514,7 +519,8 @@ Use AskUserQuestion:
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} issues\n- All STATE.md, PLAN.md files"
+- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} issues\n- All STATE.md, PLAN.md
+  files"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort
@@ -523,7 +529,8 @@ Use AskUserQuestion:
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove patch version $MAJOR.$MINOR.$PATCH?\n\nThis will delete:\n- $TASK_COUNT issues\n- All STATE.md, PLAN.md, CHANGELOG.md files"
+- question: "Remove patch version $MAJOR.$MINOR.$PATCH?\n\nThis will delete:\n- $TASK_COUNT issues\n- All STATE.md,
+  PLAN.md, CHANGELOG.md files"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort

@@ -1,7 +1,8 @@
 # Plan: skill-builder-rewrite-tdd-implementation
 
 ## Goal
-Rewrite plugin/skills/tdd-implementation/SKILL.md using skill-builder methodology to eliminate box-drawing character alignment issues.
+Rewrite plugin/skills/tdd-implementation/SKILL.md using skill-builder methodology to eliminate box-drawing character
+alignment issues.
 
 ## Satisfies
 None - infrastructure/maintenance task

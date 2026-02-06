@@ -1,7 +1,8 @@
 # Plan: replace-precomputed-with-script-output
 
 ## Goal
-Replace all instances of "pre-computed" output terminology with "script output" across the codebase. This is a terminology standardization to make documentation clearer - the output comes from scripts, not pre-computation.
+Replace all instances of "pre-computed" output terminology with "script output" across the codebase. This is a
+terminology standardization to make documentation clearer - the output comes from scripts, not pre-computation.
 
 ## Satisfies
 None - terminology cleanup

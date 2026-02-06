@@ -1,7 +1,8 @@
 # Plan: compress-concepts-md
 
 ## Goal
-Compress all concept MD files (18 files in `plugin/concepts/`) to reduce token usage while maintaining execution equivalence.
+Compress all concept MD files (18 files in `plugin/concepts/`) to reduce token usage while maintaining execution
+equivalence.
 
 ## Parent Task
 compress-md-files (decomposed)

@@ -1,7 +1,8 @@
 # Plan: showcase-template
 
 ## Goal
-Create a reusable page template for feature showcase pages with consistent layout supporting feature descriptions and embedded video demos.
+Create a reusable page template for feature showcase pages with consistent layout supporting feature descriptions and
+embedded video demos.
 
 ## Satisfies
 None - infrastructure/marketing task

@@ -1,7 +1,8 @@
 # Plan: use-patch-id-for-commit-tracking
 
 ## Current State
-CAT currently embeds `Issue ID: v{major}.{minor}-{issue-name}` in commit message footers to link commits to issues. This requires modifying commit messages and makes history rewriting complex.
+CAT currently embeds `Issue ID: v{major}.{minor}-{issue-name}` in commit message footers to link commits to issues. This
+requires modifying commit messages and makes history rewriting complex.
 
 ## Target State
 Remove Issue ID footers entirely. Track commits via STATE.md file history instead:

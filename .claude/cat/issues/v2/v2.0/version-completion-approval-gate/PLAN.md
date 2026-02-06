@@ -1,7 +1,9 @@
 # Plan: version-completion-approval-gate
 
 ## Current State
-When `/cat:work` completes all tasks in a version, it automatically continues to the next version without user confirmation. This can be problematic because the user may need to publish/release the completed version before moving on.
+When `/cat:work` completes all tasks in a version, it automatically continues to the next version without user
+confirmation. This can be problematic because the user may need to publish/release the completed version before moving
+on.
 
 ## Target State
 Add an approval gate that triggers in two scenarios:

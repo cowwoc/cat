@@ -4,7 +4,8 @@
 Python skill handlers use "OUTPUT TEMPLATE" pattern with placeholder text that the LLM is expected to find and output.
 
 ## Target State
-Python handlers produce pre-rendered output that the skill can display directly, matching the pattern already established in the Java handlers.
+Python handlers produce pre-rendered output that the skill can display directly, matching the pattern already
+established in the Java handlers.
 
 ## Satisfies
 - Part of migrate-python-to-java sequence (architecture alignment)

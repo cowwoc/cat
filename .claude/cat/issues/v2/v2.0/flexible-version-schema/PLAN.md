@@ -1,7 +1,8 @@
 # Plan: flexible-version-schema
 
 ## Goal
-Change the version format from MAJOR.MINOR to MAJOR[.MINOR[.PATCH]], allowing versions like v1, v1.0, or v1.0.1. Update all MD files to support this flexible versioning scheme.
+Change the version format from MAJOR.MINOR to MAJOR[.MINOR[.PATCH]], allowing versions like v1, v1.0, or v1.0.1. Update
+all MD files to support this flexible versioning scheme.
 
 ## Directory Structure Mapping
 

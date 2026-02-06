@@ -4,7 +4,8 @@ user-invocable: false
 
 # Work Phase: Prepare
 
-Steps for task preparation: verify, find_task, acquire_lock, load_task, validate_requirements, analyze_task_size, choose_approach, create_worktree.
+Steps for task preparation: verify, find_task, acquire_lock, load_task, validate_requirements, analyze_task_size,
+choose_approach, create_worktree.
 
 ---
 
@@ -12,7 +13,8 @@ Steps for task preparation: verify, find_task, acquire_lock, load_task, validate
 
 **MANDATORY: Display progress banner at phase start and transitions.**
 
-After acquiring the lock and identifying the task, run `get-progress-banner.sh` and OUTPUT the result directly to the user (not in a code block):
+After acquiring the lock and identifying the task, run `get-progress-banner.sh` and OUTPUT the result directly to the
+user (not in a code block):
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/get-progress-banner.sh" "$ISSUE_ID" --phase preparing
@@ -20,7 +22,8 @@ After acquiring the lock and identifying the task, run `get-progress-banner.sh` 
 
 **Anti-pattern (M319):** Writing informal markdown like "## Phase 1: Prepare" instead of running the script.
 
-**Anti-pattern (M320):** Do NOT describe or show example banner output in documentation - this primes manual construction instead of script execution.
+**Anti-pattern (M320):** Do NOT describe or show example banner output in documentation - this primes manual
+construction instead of script execution.
 
 ---
 

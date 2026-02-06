@@ -11,7 +11,8 @@ Create tier→feature entitlement mapping defining what each tier can access.
 - [ ] Document feature availability per tier
 
 ## Technical Approach
-Per architect research: Simple lookup table, externalized as configuration. Entitlement Resolver maps tier → feature set.
+Per architect research: Simple lookup table, externalized as configuration. Entitlement Resolver maps tier → feature
+set.
 
 Example structure:
 ```json

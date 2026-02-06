@@ -2,7 +2,9 @@
 
 ## Problem
 
-The `/cat:add` skill has explicit bash scripts for creating CHANGELOG.md when creating patch versions, but for major/minor versions it only has prose instructions ("Create STATE.md, PLAN.md, and CHANGELOG.md") without actual implementation. This causes version-level CHANGELOGs to not be created.
+The `/cat:add` skill has explicit bash scripts for creating CHANGELOG.md when creating patch versions, but for
+major/minor versions it only has prose instructions ("Create STATE.md, PLAN.md, and CHANGELOG.md") without actual
+implementation. This causes version-level CHANGELOGs to not be created.
 
 ## Reproduction Code
 
@@ -20,7 +22,9 @@ mkdir -p "$VERSION_PATH/issue"
 
 ## Root Cause
 
-Incomplete implementation in `plugin/skills/add/SKILL.md`. The patch version section (lines 1120-1136) has explicit bash to create CHANGELOG.md, but the major version section (line 1053) and minor version section (line 1063) only have prose instructions without corresponding bash scripts.
+Incomplete implementation in `plugin/skills/add/SKILL.md`. The patch version section (lines 1120-1136) has explicit bash
+to create CHANGELOG.md, but the major version section (line 1053) and minor version section (line 1063) only have prose
+instructions without corresponding bash scripts.
 
 ## Satisfies
 

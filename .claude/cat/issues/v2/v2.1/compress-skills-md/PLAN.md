@@ -1,7 +1,8 @@
 # Plan: compress-skills-md
 
 ## Goal
-Compress all skills MD files (34 files in `plugin/skills/`) to reduce token usage while maintaining execution equivalence.
+Compress all skills MD files (34 files in `plugin/skills/`) to reduce token usage while maintaining execution
+equivalence.
 
 ## Parent Task
 compress-md-files (decomposed)

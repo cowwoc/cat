@@ -1,7 +1,8 @@
 # Plan: optimize-git-squash
 
 ## Goal
-Optimize git-squash skill for common patterns: parallel initial investigation, auto-detect planning commit pattern (feature + STATE.md updates), and preserve final STATE.md automatically.
+Optimize git-squash skill for common patterns: parallel initial investigation, auto-detect planning commit pattern
+(feature + STATE.md updates), and preserve final STATE.md automatically.
 
 ## Satisfies
 None - infrastructure/performance improvement

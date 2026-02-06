@@ -1,7 +1,8 @@
 # Plan: workflow-progress-display
 
 ## Goal
-Add visual progress indicators to /cat:work that show the current task name and workflow step within the context of all steps.
+Add visual progress indicators to /cat:work that show the current task name and workflow step within the context of all
+steps.
 
 ## Requirements
 

@@ -17,4 +17,5 @@ Changes:
 - Converted Example table to markdown
 - Updated Status Legend to remove emojis for cleaner table rendering
 
-The shrink-doc skill is primarily workflow-focused (spawning subagents, running validation) - the tables are instructional examples, not computed output. Markdown tables are sufficient and avoid alignment issues.
+The shrink-doc skill is primarily workflow-focused (spawning subagents, running validation) - the tables are
+instructional examples, not computed output. Markdown tables are sufficient and avoid alignment issues.

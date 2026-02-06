@@ -17,11 +17,14 @@ Use `docs:` ONLY for files end-users read (README, API docs, etc.).
 
 ## Plugin Development
 
-When editing CAT plugin files, always edit the source files in `/workspace/plugin/`, NOT the cached installation in `/home/node/.config/claude/plugins/cache/`.
+When editing CAT plugin files, always edit the source files in `/workspace/plugin/`, NOT the cached installation in
+`/home/node/.config/claude/plugins/cache/`.
 
 The cache is a read-only copy that gets overwritten on plugin updates.
 
-**Worktree Path Handling (M267):** When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/task-name/`), use relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to `/workspace/` bypass worktree isolation and modify the main workspace instead.
+**Worktree Path Handling (M267):** When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/task-name/`), use
+relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to
+`/workspace/` bypass worktree isolation and modify the main workspace instead.
 
 ## Skill Step Numbering
 
@@ -32,7 +35,8 @@ When adding a new step to a skill:
 2. Renumber all subsequent steps
 3. Update any external references to the renumbered steps
 
-Avoid "half steps" (Step 4.5) or lettered sub-steps (Step 4a, 4b) unless there is a specific reason to couple multiple steps under the same number.
+Avoid "half steps" (Step 4.5) or lettered sub-steps (Step 4a, 4b) unless there is a specific reason to couple multiple
+steps under the same number.
 
 ## Testing Requirements
 
@@ -55,7 +59,8 @@ All tests must pass (exit code 0) before requesting user approval.
 | `plugin/hooks/skill_handlers/work_handler.py` | Work progress display |
 | `plugin/hooks/skill_handlers/cleanup_handler.py` | Cleanup display |
 
-Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may need updating.
+Do not assume tests still pass after modifications. The fix may have introduced regressions or the test expectations may
+need updating.
 
 ## Language Conventions
 

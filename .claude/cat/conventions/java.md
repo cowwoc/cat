@@ -181,7 +181,8 @@ String border = "\u2500\u2500";
 
 **Box-drawing characters:** Define constants in `DisplayUtils` only to centralize the choice of box style (rounded `╭╮╯╰` vs sharp `┌┐┘└`). Otherwise, use characters inline.
 
-**Comments:** Do not add comments showing the unicode escape sequence - they add no value since the character is already visible:
+**Comments:** Do not add comments showing the unicode escape sequence - they add no value since the character is already
+visible:
 
 ```java
 // Good - the character speaks for itself
@@ -253,10 +254,12 @@ if ("Bash".equalsIgnoreCase(toolName))
 - **All classes and records must have Javadoc** (public and non-public)
 - **All methods must have Javadoc** (including interface methods and private methods)
 - **All constructors must have Javadoc** (including record compact constructors)
-- **All thrown exceptions must be documented with `@throws`** (including interface methods that expect implementations to validate parameters)
+- **All thrown exceptions must be documented with `@throws`** (including interface methods that expect implementations
+  to validate parameters)
 - Document parameters with `@param`
 - Document return values with `@return`
-- Do not duplicate constraint info in `@param` that is already in `@throws` (e.g., don't write "must not be null" if `@throws NullPointerException` documents it)
+- Do not duplicate constraint info in `@param` that is already in `@throws` (e.g., don't write "must not be null" if
+  `@throws NullPointerException` documents it)
 
 ```java
 /**
@@ -462,7 +465,8 @@ public String getOutput(Path projectRoot)
 }
 ```
 
-**Why:** Silent fallbacks mask programming errors. If a required parameter is invalid, the caller has a bug that should be fixed, not worked around. Throwing an exception immediately surfaces the problem.
+**Why:** Silent fallbacks mask programming errors. If a required parameter is invalid, the caller has a bug that should
+be fixed, not worked around. Throwing an exception immediately surfaces the problem.
 
 **Exception:** Optional parameters may have defaults, but document this clearly in Javadoc.
 

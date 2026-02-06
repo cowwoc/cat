@@ -1,7 +1,8 @@
 # Plan: release-changelog-validation
 
 ## Goal
-Add CHANGELOG.md validation to `/release-plugin` command that checks completeness at the deepest version level and all ancestor versions before allowing release.
+Add CHANGELOG.md validation to `/release-plugin` command that checks completeness at the deepest version level and all
+ancestor versions before allowing release.
 
 ## Satisfies
 None - infrastructure/workflow improvement task

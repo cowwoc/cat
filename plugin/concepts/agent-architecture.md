@@ -60,7 +60,8 @@ When overridden, the agent should still warn: "Working directly without issue tr
 **Example interactions:**
 
 User: "Fix the bug where parsing fails on empty input"
-Agent (medium trust): "I'll create an issue for this so it's tracked properly. Running `/cat:add fix parsing failure on empty input`..."
+Agent (medium trust): "I'll create an issue for this so it's tracked properly. Running `/cat:add fix parsing failure on
+empty input`..."
 
 User: "Fix the typo in README"
 Agent (medium trust): "This looks like a trivial fix. Should I create an issue for tracking, or just fix it directly?"
@@ -356,7 +357,8 @@ When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/issue-name/`
 2. If in worktree, use relative paths for file creation/editing
 3. Use absolute paths only for reading config from main workspace
 
-**Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of issue worktree.
+**Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of
+issue worktree.
 
 ### Config File Resolution (M268)
 
