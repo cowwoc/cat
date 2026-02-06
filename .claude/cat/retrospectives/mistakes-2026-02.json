@@ -5,7 +5,7 @@
       "id": "M340",
       "timestamp": "2026-02-01T12:00:00Z",
       "category": "assumption_without_verification",
-      "description": "Status box misaligned because robot emoji (\ud83e\udd16) missing from emoji-widths.json, causing width miscalculation",
+      "description": "Status box misaligned because robot emoji (🤖) missing from emoji-widths.json, causing width miscalculation",
       "root_cause": "show-active-agents-in-status task added robot emoji to status display but did not add it to emoji-widths.json. Emoji not in widths file defaults to char-by-char counting (width 1 per code unit) instead of correct display width (2).",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -318,7 +318,7 @@
       "timestamp": "2026-02-02T05:00:00Z",
       "category": "protocol_violation",
       "description": "compare-docs executed with single comparison run for 2 of 3 files instead of mandatory two-run validation despite M350 requirement",
-      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1\u21922\u21924, making the 'go back' step easy to skip due to completion bias after getting a result.",
+      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1→2→4, making the 'go back' step easy to skip due to completion bias after getting a result.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -836,7 +836,7 @@
         "misleading_section": "System reminder says 'consider using TaskCreate'; skill said 'Task tool:' without clarification",
         "priming_type": "tool_name_confusion",
         "how_it_misled": "Agent heard 'TaskCreate' from system, saw 'Task tool' in skill, conflated them",
-        "fix_required": "Added explicit clarification in skill that Task \u2260 TaskCreate"
+        "fix_required": "Added explicit clarification in skill that Task ≠ TaskCreate"
       }
     },
     {
@@ -1013,7 +1013,7 @@
       "id": "M385",
       "timestamp": "2026-02-04T12:00:00Z",
       "category": "tool_misuse",
-      "description": "Squash operation reverted a bugfix (emoji width 2\u21921) because git reset --soft captured stale worktree state instead of committed tree",
+      "description": "Squash operation reverted a bugfix (emoji width 2→1) because git reset --soft captured stale worktree state instead of committed tree",
       "root_cause": "Manual git reset --soft captures working directory state. When worktree diverged from base branch (base had newer commits with fixes), the soft reset staged deletions/reversions of those fixes because they weren't in the working directory. The commit-tree approach in git-squash skill avoids this by using committed tree objects directly.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -1583,7 +1583,7 @@
         "document": "plugin/skills/register-hook/SKILL.md",
         "misleading_section": "Throughout - 15+ mentions of hooks in settings.json",
         "priming_type": "ambient_association",
-        "how_it_misled": "Repeated hooks\u2192settings.json association without clarifying plugin vs project hooks",
+        "how_it_misled": "Repeated hooks→settings.json association without clarifying plugin vs project hooks",
         "fix_required": "Add clarification distinguishing project hooks (settings.json) from plugin hooks (hooks.json)"
       }
     },
@@ -2493,6 +2493,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use get-issue-complete-box.py --scope-complete 'vX.Y' for scope-complete boxes. Script now supports both modes: --scope-complete for no-more-tasks, or --issue-name/--next-issue/--next-goal for next-task boxes."
+    },
+    {
+      "id": "M440",
+      "timestamp": "2026-02-06T00:30:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent bypassed shrink-doc iteration loop, passing NOT_EQUIVALENT files to implementation subagent for manual fixing without re-validation",
+      "root_cause": "work-with-issue SKILL.md says 'invoke skills NOW' but doesn't specify completing iterative skills fully before delegation. Main agent treated shrink-doc as fire-and-forget instead of running its iteration loop to completion.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "shrink-doc",
+        "iteration",
+        "NOT_EQUIVALENT",
+        "validation-bypass",
+        "work-with-issue"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete iterative skills (shrink-doc) fully at main agent level — all files must reach EQUIVALENT status before passing results to implementation subagent"
     }
   ]
 }
