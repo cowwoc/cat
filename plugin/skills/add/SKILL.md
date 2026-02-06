@@ -571,6 +571,40 @@ Check the JSON output for success status.
 
 </step>
 
+<step name="task_check_parent_decomposition">
+
+**Check if parent task is decomposed (M468):**
+
+After creating a subtask, verify if it's being added to a decomposed parent issue.
+
+```bash
+# Check if this issue is a subtask of a decomposed parent
+PARENT_ISSUE_DIR=$(dirname "${ISSUE_DIR}")
+if [[ -f "${PARENT_ISSUE_DIR}/STATE.md" ]] && grep -q "^## Decomposed Into" "${PARENT_ISSUE_DIR}/STATE.md"; then
+  PARENT_NAME=$(basename "${PARENT_ISSUE_DIR}")
+
+  # Output warning about parent completion requirements
+  echo ""
+  echo "⚠️  Parent Decomposition Status"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "This subtask was added to decomposed parent: ${PARENT_NAME}"
+  echo ""
+  echo "IMPORTANT: The parent task ${PARENT_NAME} cannot be closed or merged"
+  echo "until ALL subtasks (including this new one) are completed and closed."
+  echo ""
+  echo "Completion requirements (M467):"
+  echo "  1. All subtasks must be individually completed and closed"
+  echo "  2. Parent's own acceptance criteria must be verified"
+  echo "  3. Only then can the parent be marked complete"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+fi
+```
+
+This check ensures the agent is reminded that decomposed parents require all subtasks to be completed before the parent can be closed or merged, preventing premature parent completion (M467, M468).
+
+</step>
+
 <step name="task_done">
 
 **Present completion:**
