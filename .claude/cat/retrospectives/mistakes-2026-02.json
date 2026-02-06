@@ -2915,6 +2915,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Search all version directories for dependencies using find, matching the behavior of is_dependency_satisfied() in get-available-issues.sh"
+    },
+    {
+      "id": "M455",
+      "timestamp": "2026-02-06T19:30:00Z",
+      "category": "assumption_without_verification",
+      "description": "PLAN.md for lazy-load-requirements-api assumed CLAUDE.md referenced requirements-api.md but it only references java.md - moving the file without adding a loading trigger leaves it orphaned",
+      "root_cause": "Planning agent asserted CLAUDE.md already instructs reading requirements-api.md without verifying. The convention table only references java.md (coding style), not requirements-api.md (validation library). No mechanism validates plan assertions against actual codebase state.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "process",
+      "prevention_path": ".claude/cat/retrospectives/mistakes-2026-02.json",
+      "pattern_keywords": [
+        "plan_verification",
+        "assumption",
+        "lazy_loading",
+        "orphaned_reference"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When planning a file move for lazy-loading, verify: (1) what currently references the file, (2) what will reference it after the move, (3) if no reference exists, add one as part of the plan"
     }
   ]
 }
