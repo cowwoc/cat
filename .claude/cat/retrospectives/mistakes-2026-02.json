@@ -5,7 +5,7 @@
       "id": "M340",
       "timestamp": "2026-02-01T12:00:00Z",
       "category": "assumption_without_verification",
-      "description": "Status box misaligned because robot emoji (🤖) missing from emoji-widths.json, causing width miscalculation",
+      "description": "Status box misaligned because robot emoji (\ud83e\udd16) missing from emoji-widths.json, causing width miscalculation",
       "root_cause": "show-active-agents-in-status task added robot emoji to status display but did not add it to emoji-widths.json. Emoji not in widths file defaults to char-by-char counting (width 1 per code unit) instead of correct display width (2).",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -318,7 +318,7 @@
       "timestamp": "2026-02-02T05:00:00Z",
       "category": "protocol_violation",
       "description": "compare-docs executed with single comparison run for 2 of 3 files instead of mandatory two-run validation despite M350 requirement",
-      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1→2→4, making the 'go back' step easy to skip due to completion bias after getting a result.",
+      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1\u21922\u21924, making the 'go back' step easy to skip due to completion bias after getting a result.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -836,7 +836,7 @@
         "misleading_section": "System reminder says 'consider using TaskCreate'; skill said 'Task tool:' without clarification",
         "priming_type": "tool_name_confusion",
         "how_it_misled": "Agent heard 'TaskCreate' from system, saw 'Task tool' in skill, conflated them",
-        "fix_required": "Added explicit clarification in skill that Task ≠ TaskCreate"
+        "fix_required": "Added explicit clarification in skill that Task \u2260 TaskCreate"
       }
     },
     {
@@ -1013,7 +1013,7 @@
       "id": "M385",
       "timestamp": "2026-02-04T12:00:00Z",
       "category": "tool_misuse",
-      "description": "Squash operation reverted a bugfix (emoji width 2→1) because git reset --soft captured stale worktree state instead of committed tree",
+      "description": "Squash operation reverted a bugfix (emoji width 2\u21921) because git reset --soft captured stale worktree state instead of committed tree",
       "root_cause": "Manual git reset --soft captures working directory state. When worktree diverged from base branch (base had newer commits with fixes), the soft reset staged deletions/reversions of those fixes because they weren't in the working directory. The commit-tree approach in git-squash skill avoids this by using committed tree objects directly.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -1583,7 +1583,7 @@
         "document": "plugin/skills/register-hook/SKILL.md",
         "misleading_section": "Throughout - 15+ mentions of hooks in settings.json",
         "priming_type": "ambient_association",
-        "how_it_misled": "Repeated hooks→settings.json association without clarifying plugin vs project hooks",
+        "how_it_misled": "Repeated hooks\u2192settings.json association without clarifying plugin vs project hooks",
         "fix_required": "Add clarification distinguishing project hooks (settings.json) from plugin hooks (hooks.json)"
       }
     },
@@ -2417,6 +2417,57 @@
         "catches_variations": true
       },
       "correct_behavior": "Ensure Task tool parameters are separate JSON fields: subagent_type, model, prompt each as distinct parameters. Retry on malformed parameter errors."
+    },
+    {
+      "id": "M437",
+      "timestamp": "2026-02-06T12:00:00Z",
+      "category": "code_bug",
+      "description": "Header line in build_header_box was 1 column wider than content/bottom lines due to suffix_dashes formula using +2 instead of +1",
+      "root_cause": "render-add-complete.sh build_header_box formula: suffix_dashes = max_width - header_width + 2 produces header width of max_width+5, while content/bottom are max_width+4. Same bug copied to config_handler.py.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/render-add-complete.sh",
+      "pattern_keywords": [
+        "box-alignment",
+        "off-by-one",
+        "display-width"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use +1 instead of +2 in suffix_dashes formula so header line total equals max_width+4, matching content and bottom lines"
+    },
+    {
+      "id": "M438",
+      "timestamp": "2026-02-06T12:00:00Z",
+      "category": "ux_noise",
+      "description": "The /cat:work skill instructs the LLM to read cat-config.json via a visible Bash call (jq), producing user-visible output that is pure internal bookkeeping with no user value",
+      "root_cause": "Config values (trust, verify, autoRemove) are read via LLM-executed Bash commands in SKILL.md Configuration section, instead of being pre-collected by work_handler.py preprocessing which runs invisibly",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/issues/v2/v2.1/move-config-read-to-work-handler/PLAN.md",
+      "pattern_keywords": [
+        "handler-preprocessing",
+        "visible-output",
+        "config-reading",
+        "ux-noise"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Move config reading into work_handler.py handle() method so values are injected via additionalContext, eliminating visible Bash output"
     }
   ]
 }
