@@ -127,6 +127,8 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 
 ## Documentation Style
 
+**Line wrapping:** Markdown files should wrap at 120 characters.
+
 **No retrospective commentary.** Do not add documentation or comments that discuss:
 - What was changed or implemented
 - What was removed or refactored
