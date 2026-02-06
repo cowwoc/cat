@@ -82,7 +82,7 @@ def build_simple_box(icon: str, title: str, content_lines: list) -> str:
 def build_no_executable_issues():
     return build_simple_box(
         "ℹ️", "No executable issues",
-        ["", "Run /cat:status to see available issues"]
+        ["Run /cat:status to see available issues"]
     )
 
 
