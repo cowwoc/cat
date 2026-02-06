@@ -145,6 +145,7 @@ Satisfies section?"*
 - **Partial Implementation**: Requirement only partially satisfied
 - **Undocumented Deviation**: Implementation differs from spec without explanation
 - **Edge Case Failure**: Core functionality works but fails on specified edge cases
+- **Output Contract Semantic Correctness**: Data in output contracts matches the contract's semantic meaning, not just its structural format. When a contract shows fields like 'blocked_by' with status information, that data must be actually fetched and validated, not assumed from raw field values.
 
 ### Medium Priority
 - **Ambiguous Compliance**: Implementation may or may not satisfy vague requirement
@@ -162,6 +163,7 @@ For each requirement in PLAN.md:
 | **Complete** | Are all aspects of the requirement covered? |
 | **Tested** | Is there a test that verifies this requirement? |
 | **Integrated** | Does it work with other components as specified? |
+| **Semantically Correct** | Does reported data reflect actual computed state, not just raw field extraction? |
 
 ## Review Output Format
 
