@@ -49,6 +49,10 @@ Finalize naming conventions and UI polish before recording demo videos.
 - refactor-compare-docs-thresholds
 - rename-task-to-issue
 - optimize-execution-subagents
+- enforce-python-for-comparisons
+- fix-squash-workflow
+- fail-fast-missing-banners
+- replace-precomputed-with-script-output
 
 ## Tasks Completed
 - fix-blocked-tasks-diagnostics
