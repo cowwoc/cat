@@ -2787,6 +2787,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use python3 -c for lock verification instead of bash with != operator to avoid shell escaping issues"
+    },
+    {
+      "id": "M450",
+      "timestamp": "2026-02-06T12:54:53Z",
+      "category": "incorrect_implementation",
+      "description": "Squash commit absorbed M449 changes from base branch advancement, producing misleading commit message",
+      "root_cause": "Squash step used git reset --soft BASE_BRANCH without rebasing first; base branch had advanced with M449 learning commit made directly on v2.1 during session",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "rebase",
+        "base-branch-advancement",
+        "commit-message",
+        "worktree"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Rebase worktree onto current base branch before squashing to ensure only task changes are captured"
     }
   ]
 }

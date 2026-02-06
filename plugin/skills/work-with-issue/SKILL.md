@@ -272,11 +272,18 @@ Parse review result:
 **NOTE (M390):** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
 User approval is a SEPARATE gate in Step 6.
 
-## Step 5: Squash Commits Before Review (M446)
+## Step 5: Squash Commits Before Review (M446, M450)
 
 **Squash worktree commits by topic into clean, reviewable commits before presenting the approval gate.**
 
-Use `/cat:git-squash` or `git reset --soft ${BASE_BRANCH}` to consolidate commits:
+**Rebase onto current base first (M450).** The base branch may have advanced since the worktree was
+created (e.g., learning commits, other merges). Rebase ensures squashing only captures task changes:
+
+```bash
+git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
+```
+
+Then use `/cat:git-squash` or `git reset --soft ${BASE_BRANCH}` to consolidate commits:
 
 - All implementation work into 1 feature/bugfix commit
 - Config changes into 1 config commit (if separate)
