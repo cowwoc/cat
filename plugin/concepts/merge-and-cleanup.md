@@ -161,13 +161,13 @@ where all subsequent commands fail silently.
 cd /workspace
 
 # Then remove the worktree
-git worktree remove .worktrees/{issue-name}
+git worktree remove .claude/cat/worktrees/{issue-name}
 ```
 
 If worktree removal fails:
 ```bash
 cd /workspace
-git worktree remove --force .worktrees/{issue-name}
+git worktree remove --force .claude/cat/worktrees/{issue-name}
 ```
 
 ### 9. Branch Cleanup
@@ -237,7 +237,7 @@ pwd
 git branch --show-current
 ```
 
-**Expected:** Issue worktree (`/workspace/.worktrees/<issue>`) on issue branch
+**Expected:** Issue worktree (`/workspace/.claude/cat/worktrees/<issue>`) on issue branch
 **WRONG:** Main worktree (`/workspace`) on main branch
 
 **Common mistake:** After conflict resolution attempts (abort, reset), agent ends up in main
@@ -245,7 +245,7 @@ worktree and makes edits there. This corrupts main and other parallel issues.
 
 **Recovery if in wrong location:**
 ```bash
-cd /workspace/.worktrees/<issue-name>  # Return to issue worktree
+cd /workspace/.claude/cat/worktrees/<issue-name>  # Return to issue worktree
 pwd  # Verify
 ```
 

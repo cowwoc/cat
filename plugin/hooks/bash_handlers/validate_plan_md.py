@@ -84,7 +84,7 @@ class ValidatePlanMdHandler:
             cwd = context.get('cwd', '')
             if cwd:
                 # Check if we're in a worktree and can find PLAN.md
-                worktree_match = re.search(r'\.worktrees/([^/]+)', cwd)
+                worktree_match = re.search(r'\.claude/cat/worktrees/([^/]+)', cwd)
                 if worktree_match:
                     issue_id = worktree_match.group(1)
                     # Derive version from issue_id (e.g., 2.1-task-name -> v2/v2.1)

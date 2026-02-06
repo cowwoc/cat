@@ -47,7 +47,7 @@ public final class ValidateGitOperations implements BashHandler
     if (RESET_HARD_PATTERN.matcher(command).find())
     {
       // Allow if in a worktree or has acknowledgment
-      if (command.contains("# ACKNOWLEDGED") || command.contains(".worktrees"))
+      if (command.contains("# ACKNOWLEDGED") || command.contains("worktrees"))
         return Result.allow();
       return Result.block("""
         **BLOCKED: git reset --hard can lose uncommitted work**

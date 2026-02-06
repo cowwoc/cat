@@ -38,7 +38,7 @@ SUBAGENT_ID="a1b2c3d4"
 ISSUE="1.2-implement-parser"
 SUBAGENT_BRANCH="${ISSUE}-sub-${SUBAGENT_ID}"
 ISSUE_BRANCH="${ISSUE}"
-WORKTREE=".worktrees/${SUBAGENT_BRANCH}"
+WORKTREE=".claude/cat/worktrees/${SUBAGENT_BRANCH}"
 
 # Verify subagent results collected
 # Check parent STATE.md for ready_for_merge: true
@@ -180,7 +180,7 @@ subagents:
 git checkout 1.2-implement-parser
 git merge 1.2-implement-parser-sub-a1b2c3d4 -m "Merge subagent a1b2c3d4"
 git branch -d 1.2-implement-parser-sub-a1b2c3d4
-git worktree remove .worktrees/1.2-implement-parser-sub-a1b2c3d4
+git worktree remove .claude/cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
 
 # Result: Clean linear history with merge commit
 ```
@@ -199,7 +199,7 @@ git add src/Parser.java
 # Complete
 git commit -m "Merge subagent a1b2c3d4, resolved Parser.java conflict"
 git branch -d 1.2-implement-parser-sub-a1b2c3d4
-git worktree remove .worktrees/1.2-implement-parser-sub-a1b2c3d4
+git worktree remove .claude/cat/worktrees/1.2-implement-parser-sub-a1b2c3d4
 ```
 
 ### Merge Multiple Subagents

@@ -75,11 +75,11 @@ The same danger applies to `git worktree remove` - if your shell's cwd is inside
 
 ```bash
 # SAFE - cd to main workspace first
-cd /workspace && git worktree remove /workspace/.worktrees/issue-name --force
+cd /workspace && git worktree remove /workspace/.claude/cat/worktrees/issue-name --force
 
 # DANGEROUS - removing worktree while inside it
-# pwd: /workspace/.worktrees/issue-name
-git worktree remove /workspace/.worktrees/issue-name --force  # Shell breaks!
+# pwd: /workspace/.claude/cat/worktrees/issue-name
+git worktree remove /workspace/.claude/cat/worktrees/issue-name --force  # Shell breaks!
 ```
 
 **When merging task work:**
@@ -100,10 +100,10 @@ General guidance says "avoid `cd` to maintain working directory" - but this skil
 ```bash
 # WRONG - git -C changes git's cwd, NOT the shell's cwd
 # Shell still breaks when worktree is deleted!
-git -C /workspace worktree remove /workspace/.worktrees/task --force
+git -C /workspace worktree remove /workspace/.claude/cat/worktrees/task --force
 
 # RIGHT - cd changes the shell's cwd
-cd /workspace && git worktree remove /workspace/.worktrees/task --force
+cd /workspace && git worktree remove /workspace/.claude/cat/worktrees/task --force
 ```
 
 The `git -C` flag tells git to run from a different directory, but it doesn't change where

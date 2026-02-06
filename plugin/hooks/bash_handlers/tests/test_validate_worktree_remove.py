@@ -57,8 +57,8 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_blocks_removal_when_cwd_equals_target(self):
         """M360: Block when shell cwd equals target worktree."""
-        command = "git worktree remove /workspace/.worktrees/my-task"
-        context = {"cwd": "/workspace/.worktrees/my-task"}
+        command = "git worktree remove /workspace/.claude/cat/worktrees/my-task"
+        context = {"cwd": "/workspace/.claude/cat/worktrees/my-task"}
 
         result = self.handler.check(command, context)
 
@@ -68,8 +68,8 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_blocks_removal_when_cwd_inside_target(self):
         """M360: Block when shell cwd is inside target worktree."""
-        command = "git worktree remove /workspace/.worktrees/my-task"
-        context = {"cwd": "/workspace/.worktrees/my-task/plugin"}
+        command = "git worktree remove /workspace/.claude/cat/worktrees/my-task"
+        context = {"cwd": "/workspace/.claude/cat/worktrees/my-task/plugin"}
 
         result = self.handler.check(command, context)
 
@@ -78,7 +78,7 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_allows_removal_when_cwd_different(self):
         """M360: Allow when shell cwd is different from target."""
-        command = "git worktree remove /workspace/.worktrees/my-task"
+        command = "git worktree remove /workspace/.claude/cat/worktrees/my-task"
         context = {"cwd": "/workspace"}  # Safe location
 
         result = self.handler.check(command, context)
@@ -87,7 +87,7 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_allows_removal_with_force_flag(self):
         """Test that --force flag is parsed correctly."""
-        command = "git worktree remove --force /workspace/.worktrees/my-task"
+        command = "git worktree remove --force /workspace/.claude/cat/worktrees/my-task"
         context = {"cwd": "/workspace"}
 
         result = self.handler.check(command, context)
@@ -96,8 +96,8 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_blocks_with_force_flag_when_inside(self):
         """Block even with --force when cwd is inside target."""
-        command = "git worktree remove --force /workspace/.worktrees/my-task"
-        context = {"cwd": "/workspace/.worktrees/my-task"}
+        command = "git worktree remove --force /workspace/.claude/cat/worktrees/my-task"
+        context = {"cwd": "/workspace/.claude/cat/worktrees/my-task"}
 
         result = self.handler.check(command, context)
 
@@ -115,8 +115,8 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_handles_quoted_paths(self):
         """Handle double-quoted paths correctly."""
-        command = 'git worktree remove "/workspace/.worktrees/my task"'
-        context = {"cwd": "/workspace/.worktrees/my task"}
+        command = 'git worktree remove "/workspace/.claude/cat/worktrees/my task"'
+        context = {"cwd": "/workspace/.claude/cat/worktrees/my task"}
 
         result = self.handler.check(command, context)
 
@@ -136,8 +136,8 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_blocks_with_git_c_flag_when_inside(self):
         """M398: Block git -C /path worktree remove when cwd is inside target."""
-        command = "git -C /workspace worktree remove /workspace/.worktrees/my-task --force"
-        context = {"cwd": "/workspace/.worktrees/my-task"}
+        command = "git -C /workspace worktree remove /workspace/.claude/cat/worktrees/my-task --force"
+        context = {"cwd": "/workspace/.claude/cat/worktrees/my-task"}
 
         result = self.handler.check(command, context)
 
@@ -147,7 +147,7 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_allows_with_git_c_flag_when_safe(self):
         """M398: Allow git -C when cwd is outside target."""
-        command = "git -C /workspace worktree remove /workspace/.worktrees/my-task --force"
+        command = "git -C /workspace worktree remove /workspace/.claude/cat/worktrees/my-task --force"
         context = {"cwd": "/workspace"}  # Safe location
 
         result = self.handler.check(command, context)
@@ -156,7 +156,7 @@ class TestValidateWorktreeRemoveHandler(unittest.TestCase):
 
     def test_blocks_when_cwd_missing(self):
         """M360: Block (fail fast) when cwd not in context."""
-        command = "git worktree remove /workspace/.worktrees/my-task"
+        command = "git worktree remove /workspace/.claude/cat/worktrees/my-task"
         context = {}  # No cwd provided
 
         result = self.handler.check(command, context)

@@ -5,7 +5,7 @@ Worktrees are created at `${CLAUDE_PROJECT_DIR}/.worktrees/` which places them a
 alongside user code. This is visible clutter and not clearly associated with CAT.
 
 ## Target State
-Worktrees are created at `${CLAUDE_PROJECT_DIR}/.claude/cat/.worktrees/` grouping all CAT-managed
+Worktrees are created at `${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/` grouping all CAT-managed
 directories under `.claude/cat/`.
 
 ## Satisfies
@@ -37,7 +37,7 @@ None - infrastructure cleanup
 ## Execution Steps
 1. **Step 1:** Find all files referencing `.worktrees/` or `.worktrees` path pattern
    - Files: `plugin/` directory tree (scripts, skills, hooks, concepts)
-2. **Step 2:** Replace `.worktrees/` with `.claude/cat/.worktrees/` in path construction sites
+2. **Step 2:** Replace `.worktrees/` with `.claude/cat/worktrees/` in path construction sites
    - Files: work-prepare/SKILL.md, phase-prepare.md, delegate/SKILL.md, get-available-issues.sh
 3. **Step 3:** Update documentation references in remaining files
    - Files: All 35 files from grep results
@@ -46,6 +46,6 @@ None - infrastructure cleanup
    - Files: `python3 /workspace/run_tests.py`
 
 ## Success Criteria
-- [ ] All references to `.worktrees/` updated to `.claude/cat/.worktrees/`
+- [ ] All references to `.worktrees/` updated to `.claude/cat/worktrees/`
 - [ ] All tests pass
 - [ ] No hardcoded old paths remain in plugin directory

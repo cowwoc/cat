@@ -57,12 +57,12 @@ when it's deleted, the shell session becomes corrupted (all commands fail with e
 
 **FORBIDDEN:**
 ```bash
-cd /workspace/.worktrees/2.1-issue-name && git log
+cd /workspace/.claude/cat/worktrees/2.1-issue-name && git log
 ```
 
 **ALLOWED:**
 ```bash
-git -C /workspace/.worktrees/2.1-issue-name log
+git -C /workspace/.claude/cat/worktrees/2.1-issue-name log
 ```
 
 All worktree operations are delegated to subagents, which have their own shell sessions.

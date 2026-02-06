@@ -288,7 +288,7 @@ Proceed directly to `git add <files> && git commit`.
 
 ```bash
 # Quick verification
-pwd  # Should show /workspace/.worktrees/<issue-name>, NOT /workspace
+pwd  # Should show /workspace/.claude/cat/worktrees/<issue-name>, NOT /workspace
 git branch --show-current  # Should show issue branch, NOT main
 ```
 

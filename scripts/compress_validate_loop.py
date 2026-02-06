@@ -411,7 +411,7 @@ class ClaudeProcessManager:
 
         # If no files found in response, get from worktree git diff
         if not files:
-            worktree_path = self.workspace / ".worktrees" / task_id
+            worktree_path = self.workspace / ".claude" / "cat" / "worktrees" / task_id
             if worktree_path.exists():
                 # Get base branch from the worktree
                 base_branch = "v2.1"  # Default fallback
@@ -462,7 +462,7 @@ class ClaudeProcessManager:
         self.logger.info(f"Running validation: /cat:compare-docs for {file_path}")
 
         # Get base branch from task worktree
-        worktree_path = self.workspace / ".worktrees" / task_id
+        worktree_path = self.workspace / ".claude" / "cat" / "worktrees" / task_id
         base_branch = "v2.1"  # Default fallback
         cat_base_path = worktree_path / ".git" / "cat-base"
         if cat_base_path.exists():
@@ -603,9 +603,9 @@ class ClaudeProcessManager:
         try:
             # Build the analysis prompt
             # Get paths for file comparison
-            worktree_path = self.workspace / ".worktrees" / file_path.split("/")[0] if "/" in file_path else self.workspace
+            worktree_path = self.workspace / ".claude" / "cat" / "worktrees" / file_path.split("/")[0] if "/" in file_path else self.workspace
             # Task ID format is like "2.1-compress-test-2files"
-            task_worktree = self.workspace / ".worktrees"
+            task_worktree = self.workspace / ".claude" / "cat" / "worktrees"
 
             analysis_prompt = f"""Analyze this compression validation failure and improve the shrink-doc skill.
 
@@ -722,7 +722,7 @@ Focus on the ROOT CAUSE - what instruction or missing guidance caused the agent 
             return
 
         self.logger.info(f"Removing worktrees matching: {pattern}")
-        worktree_dir = self.workspace / ".worktrees"
+        worktree_dir = self.workspace / ".claude" / "cat" / "worktrees"
         if worktree_dir.exists():
             for wt in worktree_dir.glob(pattern):
                 if wt.is_dir():
@@ -826,7 +826,7 @@ class CompressionValidationLoop:
                     if self.skip_compression:
                         # Skip compression, get files directly from worktree
                         self.logger.info(f"Skipping compression, getting files from worktree: {task_id}")
-                        worktree_path = self.manager.workspace / ".worktrees" / task_id
+                        worktree_path = self.manager.workspace / ".claude" / "cat" / "worktrees" / task_id
                         if not worktree_path.exists():
                             self.logger.error(f"Worktree not found: {worktree_path}")
                             continue
@@ -882,7 +882,7 @@ class CompressionValidationLoop:
                                 compression_output = compress_result.get("output", "")
                             else:
                                 # For skip_compression, note the worktree path for file comparison
-                                worktree_path = self.manager.workspace / ".worktrees" / task_id
+                                worktree_path = self.manager.workspace / ".claude" / "cat" / "worktrees" / task_id
                                 compression_output = f"[Worktree: {worktree_path}] File diff available"
 
                             analysis_result, improvement_commits = self.manager.analyze_and_improve_shrink_doc(

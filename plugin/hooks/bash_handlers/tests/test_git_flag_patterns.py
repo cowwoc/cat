@@ -24,7 +24,7 @@ class TestGitFlagPatterns(unittest.TestCase):
         # Basic commands
         self.assertIsNotNone(re.search(pattern, "git checkout main"))
         self.assertIsNotNone(re.search(pattern, "git switch feature"))
-        self.assertIsNotNone(re.search(pattern, "git worktree add .worktrees/task"))
+        self.assertIsNotNone(re.search(pattern, "git worktree add .claude/cat/worktrees/task"))
 
     def test_validate_worktree_branch_pattern_with_c_flag(self):
         """Pattern should match git -C /path checkout/switch/worktree."""
@@ -32,8 +32,8 @@ class TestGitFlagPatterns(unittest.TestCase):
 
         # With -C flag
         self.assertIsNotNone(re.search(pattern, "git -C /workspace checkout main"))
-        self.assertIsNotNone(re.search(pattern, "git -C /workspace/.worktrees/task switch branch"))
-        self.assertIsNotNone(re.search(pattern, "git -C /path worktree add .worktrees/task"))
+        self.assertIsNotNone(re.search(pattern, "git -C /workspace/.claude/cat/worktrees/task switch branch"))
+        self.assertIsNotNone(re.search(pattern, "git -C /path worktree add .claude/cat/worktrees/task"))
 
     def test_validate_worktree_branch_pattern_with_git_dir(self):
         """Pattern should match git --git-dir=/path checkout/switch/worktree."""

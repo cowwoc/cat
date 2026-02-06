@@ -343,7 +343,7 @@ When a subagent exceeds the hard limit:
 
 ### Worktree Path Handling (M267)
 
-When working in a worktree (e.g., `/workspace/.worktrees/issue-name/`):
+When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/issue-name/`):
 
 | Path Type | Example | Risk |
 |-----------|---------|------|
