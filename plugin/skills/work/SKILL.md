@@ -100,6 +100,7 @@ Prompt for the subagent:
 | Status | Action |
 |--------|--------|
 | READY | Display progress banner, continue to Phase 2 |
+| READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
 | NO_TASKS | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message, try next task |
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
@@ -129,6 +130,17 @@ Fallback to `message` field if extended fields are absent:
 | other | Suggest `/cat:status` to see available tasks |
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
+
+**Potentially Complete Handling (M443):**
+
+When prepare returns READY with `potentially_complete: true`, work may already exist on the base branch
+with STATE.md not reflecting completion (e.g., stale merge overwrote status).
+
+1. Display the suspicious commits from `suspicious_commits` field
+2. Use AskUserQuestion to ask user whether the issue is already complete:
+   - **"Already complete"** - Fix STATE.md to closed, release lock, clean up worktree, select next task
+   - **"Not complete, continue"** - Proceed to Phase 2 normally
+3. Do NOT proceed to Phase 2 without user confirmation
 
 **Store phase 1 results:**
 - `issue_id`, `issue_path`, `worktree_path`, `branch`, `base_branch`

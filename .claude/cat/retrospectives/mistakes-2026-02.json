@@ -2574,6 +2574,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Always use /cat:work to create isolated worktree before implementing changes, even for ad-hoc requests. Hook now narrowed .claude/ to specific orchestration paths only."
+    },
+    {
+      "id": "M443",
+      "timestamp": "2026-02-06T14:00:00Z",
+      "category": "data_corruption",
+      "description": "Migration script merge ordering caused completed issue STATE.md to revert to open/0%, wasting a prepare phase cycle",
+      "root_cause": "Task branch merge (82447a3b) brought stale STATE.md that overwrote completion status set by dd085fab. Migration script then correctly converted the stale pending to open. Root: git last-writer-wins on STATE.md during merge.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "potentially_complete",
+        "stale_state",
+        "migration",
+        "merge_ordering"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When prepare phase returns READY with potentially_complete=true, ask user to verify before proceeding to execution phase"
     }
   ]
 }
