@@ -93,7 +93,8 @@ Prompt for the subagent:
 >
 > Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/work-prepare/SKILL.md
 >
-> Return JSON per the output contract.
+> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> This is critical because the parent agent parses your response as JSON.
 
 **Handle result:**
 
@@ -107,9 +108,13 @@ Prompt for the subagent:
 | ERROR | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
+**Parsing the result (M448):** The subagent's final message is returned as text. Extract the JSON
+object from it — look for `{` through the matching `}`. If the result contains surrounding text,
+ignore the text and parse just the JSON block.
+
 **No-result handling (M441, M444):** If the prepare subagent returns no parseable JSON (empty output,
-turn limit exceeded, or malformed text), treat as ERROR and STOP. Do NOT attempt to reconstruct the
-result by listing worktrees or reading lock files. Artifacts from other sessions may exist and will
+turn limit exceeded, or no JSON block found), treat as ERROR and STOP. Do NOT attempt to reconstruct
+the result by listing worktrees or reading lock files. Artifacts from other sessions may exist and will
 mislead you into working on the wrong task.
 
 Display: "Prepare phase failed to return a result. The subagent may have exceeded its turn budget."
