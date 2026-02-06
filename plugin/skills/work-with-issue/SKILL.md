@@ -119,6 +119,11 @@ Skill tool:
   args: "path/to/file.md"
 ```
 
+**Complete each skill fully before delegation (M440).** Pre-invoked skills may have built-in
+iteration loops, validation gates, or multi-step workflows. Run each skill to its documented
+completion state before passing results to the implementation subagent. Do NOT pass intermediate
+or failed results to the subagent for manual fixing — that bypasses the skill's quality gates.
+
 Capture the output from these skills - the implementation subagent will need the results.
 
 ### Spawn Implementation Subagent

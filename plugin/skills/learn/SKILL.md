@@ -927,6 +927,20 @@ not `work.md` (generic workflow) because the per-file subagent pattern is shrink
 **Verification question (M297):** Before committing a fix, ask: "Is this rule specific to one skill/context,
 or genuinely applies to all issues?" If specific → find the skill doc. If generic → workflow doc is correct.
 
+**Generalize prevention to match fix location scope (M440).** When the fix location is a document that
+handles multiple skills/scenarios, write the prevention in general terms — not specific to the skill that
+triggered the problem. The fix should cover all similar cases.
+
+| Fix Location | Prevention Wording |
+|--------------|-------------------|
+| Skill-specific doc (e.g., `shrink-doc/SKILL.md`) | May reference that skill's specific behavior |
+| General doc (e.g., `work-with-issue/SKILL.md`) | Must apply to ALL skills handled by that doc |
+| Concept doc (e.g., `concepts/subagent-delegation.md`) | Must apply to ALL contexts using that concept |
+
+Example: If shrink-doc's iteration loop was bypassed, and the fix goes in work-with-issue (which handles
+all skills), write "complete each skill fully before delegation" — not "complete shrink-doc's iteration
+loop before delegation."
+
 **Language requirements for documentation/prompt changes (M177):**
 
 When prevention involves updating documentation, prompts, or instructions, use **positive actionable
