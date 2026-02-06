@@ -324,6 +324,8 @@ Otherwise, capture selected suggestion as TASK_NAME.
 
 **Validate issue name:**
 
+Use HANDLER_DATA.versions[selected_version].existing_issues to check both format and uniqueness.
+
 **Format validation:**
 
 Check that TASK_NAME matches the regex pattern: `^[a-z][a-z0-9-]{0,48}[a-z0-9]$`
@@ -606,7 +608,7 @@ Run the renderer script and output its result verbatim:
 - List available major versions:
 
 ```bash
-[ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist."
+[ -z "$(ls -d .claude/cat/v[0-9]* 2>/dev/null)" ] && echo "No major versions exist." && exit 0
 ```
 
 If no major versions exist:
@@ -987,7 +989,6 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Summary
 $VERSION_DESCRIPTION
 EOF
-
 [ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Major STATE.md not created"
 ```
 
@@ -1005,7 +1006,6 @@ cat > "$VERSION_PATH/CHANGELOG.md" << EOF
 ---
 *Major version started: $(date +%Y-%m-%d)*
 EOF
-
 [ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Major CHANGELOG.md not created"
 ```
 
@@ -1052,7 +1052,6 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Summary
 $VERSION_SUMMARY
 EOF
-
 [ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Minor STATE.md not created"
 ```
 
@@ -1074,7 +1073,6 @@ $ENTRY_GATE
 ## Exit Gate
 $EXIT_GATE
 EOF
-
 [ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Minor PLAN.md not created"
 ```
 
@@ -1092,7 +1090,6 @@ cat > "$VERSION_PATH/CHANGELOG.md" << EOF
 ---
 *Minor version started: $(date +%Y-%m-%d)*
 EOF
-
 [ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Minor CHANGELOG.md not created"
 ```
 
@@ -1125,7 +1122,6 @@ cat > "$VERSION_PATH/STATE.md" << EOF
 ## Summary
 $VERSION_DESCRIPTION
 EOF
-
 [ -f "$VERSION_PATH/STATE.md" ] || echo "ERROR: Patch STATE.md not created"
 ```
 
@@ -1147,7 +1143,6 @@ $ENTRY_GATE
 ## Exit Gate
 $EXIT_GATE
 EOF
-
 [ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Patch PLAN.md not created"
 ```
 
@@ -1165,7 +1160,6 @@ cat > "$VERSION_PATH/CHANGELOG.md" << EOF
 ---
 *Patch started: $(date +%Y-%m-%d)*
 EOF
-
 [ -f "$VERSION_PATH/CHANGELOG.md" ] || echo "ERROR: Patch CHANGELOG.md not created"
 ```
 
@@ -1187,7 +1181,6 @@ cat >> "$ROADMAP" << EOF
 ## Version $MAJOR: $VERSION_TITLE (PLANNED)
 - **$MAJOR.0:** Initial Release (PENDING)
 EOF
-
 grep -q "## Version $MAJOR:" "$ROADMAP" || echo "ERROR: Major version section not added to ROADMAP.md"
 ```
 
@@ -1199,8 +1192,7 @@ if grep -q "^## Version $MAJOR:" "$ROADMAP"; then
   sed -i "$((LINE_NUM + 1))a - **$MAJOR.$MINOR:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
   echo "WARNING: Major version $MAJOR section not found in ROADMAP.md"
-fi
-
+fi && \
 grep -q "$MAJOR.$MINOR" "$ROADMAP" || echo "WARNING: Minor not added to ROADMAP.md"
 ```
 
@@ -1212,8 +1204,7 @@ if grep -q "^- \*\*$MAJOR.$MINOR:\*\*" "$ROADMAP"; then
   sed -i "$((LINE_NUM))a\\  - **$MAJOR.$MINOR.$PATCH:** $VERSION_DESCRIPTION (PENDING)" "$ROADMAP"
 else
   echo "WARNING: Minor version $MAJOR.$MINOR entry not found in ROADMAP.md"
-fi
-
+fi && \
 grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to ROADMAP.md"
 ```
 
@@ -1229,28 +1220,24 @@ grep -q "$MAJOR.$MINOR.$PATCH" "$ROADMAP" || echo "WARNING: Patch not added to R
 **If VERSION_TYPE is "minor":**
 
 ```bash
-PARENT_STATE="$PARENT_PATH/STATE.md"
-
+PARENT_STATE="$PARENT_PATH/STATE.md" && \
 if grep -q "^## Minor Versions" "$PARENT_STATE"; then
   sed -i "/^## Minor Versions/a - v$MAJOR.$MINOR" "$PARENT_STATE"
 else
   echo -e "\n## Minor Versions\n- v$MAJOR.$MINOR" >> "$PARENT_STATE"
-fi
-
+fi && \
 grep -q "v$MAJOR.$MINOR" "$PARENT_STATE" || echo "ERROR: Minor version not added to major STATE.md"
 ```
 
 **If VERSION_TYPE is "patch":**
 
 ```bash
-PARENT_STATE="$PARENT_PATH/STATE.md"
-
+PARENT_STATE="$PARENT_PATH/STATE.md" && \
 if grep -q "^## Patch Versions" "$PARENT_STATE"; then
   sed -i "/^## Patch Versions/a - v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE"
 else
   echo -e "\n## Patch Versions\n- v$MAJOR.$MINOR.$PATCH" >> "$PARENT_STATE"
-fi
-
+fi && \
 grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version not added to minor STATE.md"
 ```
 
@@ -1263,8 +1250,7 @@ grep -q "v$MAJOR.$MINOR.$PATCH" "$PARENT_STATE" || echo "ERROR: Patch version no
 **If VERSION_TYPE is "major":**
 
 ```bash
-git add ".claude/cat/issues/v$MAJOR/"
-git add ".claude/cat/ROADMAP.md"
+git add ".claude/cat/issues/v$MAJOR/" ".claude/cat/ROADMAP.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add major version {major}
 
@@ -1278,9 +1264,7 @@ EOF
 **If VERSION_TYPE is "minor":**
 
 ```bash
-git add "$VERSION_PATH/"
-git add ".claude/cat/ROADMAP.md"
-git add "$PARENT_PATH/STATE.md"
+git add "$VERSION_PATH/" ".claude/cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add minor version {major}.{minor}
 
@@ -1292,9 +1276,7 @@ EOF
 **If VERSION_TYPE is "patch":**
 
 ```bash
-git add "$VERSION_PATH/"
-git add ".claude/cat/ROADMAP.md"
-git add "$PARENT_PATH/STATE.md"
+git add "$VERSION_PATH/" ".claude/cat/ROADMAP.md" "$PARENT_PATH/STATE.md" && \
 git commit -m "$(cat <<'EOF'
 planning: add patch version {major}.{minor}.{patch}
 
