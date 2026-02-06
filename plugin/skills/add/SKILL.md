@@ -368,23 +368,14 @@ Use HANDLER_DATA.versions[selected_version].issue_count to determine if this is 
 **If issue_count > 0:**
 - Only then ask about dependencies and blockers
 
-**3. Scope question (always ask - user input needed):**
+**3. Scope estimation (LLM inference):**
 
-Use AskUserQuestion:
-- header: "Scope"
-- question: "How many files will this issue likely touch?"
-- options:
-  - label: "1-2 files"
-    description: "Very focused change"
-  - label: "3-5 files"
-    description: "Moderate scope"
-  - label: "6+ files"
-    description: "Broad change - consider splitting"
-  - label: "Unsure - need to research"
-    description: "Not sure, will investigate codebase"
+Estimate the number of files this issue will touch based on the description and type:
+- Consider the issue type (Feature, Bugfix, Refactor, Performance)
+- Analyze the scope described in TASK_DESCRIPTION
+- Estimate whether it's likely 1-2 files, 3-5 files, or 6+ files
 
-If Scope answer is "Unsure - need to research":
-- Add "Scope estimation" to UNKNOWNS list
+Store the estimate internally as SCOPE_ESTIMATE (do not ask user).
 
 **4. Dependencies/Blockers (only if version has existing issues):**
 
@@ -412,7 +403,7 @@ Use AskUserQuestion:
 
 **5. Conditional follow-ups:**
 
-**If Scope = "6+ files":**
+**If SCOPE_ESTIMATE is "6+ files":**
 
 Use AskUserQuestion:
 - header: "Issue Size"
