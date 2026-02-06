@@ -19,10 +19,11 @@ class TestAddHandler:
         """Create an AddHandler instance."""
         return AddHandler()
 
-    def test_returns_none_without_item_type(self, handler):
-        """Handler returns None when item_type is missing."""
+    def test_returns_handler_data_without_item_type(self, handler):
+        """Handler returns HANDLER_DATA when item_type is missing (preload mode)."""
         result = handler.handle({})
-        assert result is None
+        assert result is not None
+        assert result.startswith("HANDLER_DATA: ")
 
     def test_returns_none_for_invalid_item_type(self, handler):
         """Handler returns None for unknown item_type."""
