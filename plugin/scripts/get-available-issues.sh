@@ -161,6 +161,50 @@ EOF
 # ISSUE DISCOVERY
 # =============================================================================
 
+# Check if all subtasks of a decomposed parent are closed
+# Returns 0 if all subtasks are closed (or no subtasks exist), 1 otherwise
+all_subtasks_closed() {
+    local state_file="$1"
+
+    # Check if this is a decomposed parent task
+    if ! grep -q "^## Decomposed Into" "$state_file" 2>/dev/null; then
+        # Not a decomposed parent - return success (no subtasks to check)
+        return 0
+    fi
+
+    # Extract subtask names from "Decomposed Into" section
+    local subtask_names
+    subtask_names=$(sed -n '/^## Decomposed Into/,/^##/p' "$state_file" | grep -E '^\- ' | sed 's/^\- //' | cut -d' ' -f1 | tr -d '()')
+
+    # If no subtasks listed, return success (defensive check)
+    if [[ -z "$subtask_names" ]]; then
+        return 0
+    fi
+
+    # Check each subtask
+    local issue_dir parent_version_dir
+    issue_dir=$(dirname "$state_file")
+    parent_version_dir=$(dirname "$issue_dir")
+
+    for subtask in $subtask_names; do
+        local subtask_state="${parent_version_dir}/${subtask}/STATE.md"
+        if [[ -f "$subtask_state" ]]; then
+            local subtask_status
+            subtask_status=$(grep -E "^\- \*\*Status:\*\*" "$subtask_state" 2>/dev/null | sed 's/.*\*\*Status:\*\* //' | tr -d ' ')
+            if [[ "$subtask_status" != "closed" ]]; then
+                # At least one subtask is not closed
+                return 1
+            fi
+        else
+            # Subtask doesn't exist yet - not complete
+            return 1
+        fi
+    done
+
+    # All subtasks are closed
+    return 0
+}
+
 # Parse status from STATE.md
 get_issue_status() {
     local state_file="$1"
@@ -214,41 +258,12 @@ get_issue_status() {
 
     # M279: Validate decomposed parent tasks aren't marked closed prematurely
     if [[ "$status" == "closed" ]]; then
-        # Check if this is a decomposed parent task
-        if grep -q "^## Decomposed Into" "$state_file" 2>/dev/null; then
-            # Extract subtask names from "Decomposed Into" section
-            local subtask_names
-            subtask_names=$(sed -n '/^## Decomposed Into/,/^##/p' "$state_file" | grep -E '^\- ' | sed 's/^\- //' | cut -d' ' -f1 | tr -d '()')
-
-            if [[ -n "$subtask_names" ]]; then
-                local issue_dir parent_version_dir all_subtasks_complete
-                issue_dir=$(dirname "$state_file")
-                parent_version_dir=$(dirname "$issue_dir")
-                all_subtasks_complete=true
-
-                for subtask in $subtask_names; do
-                    local subtask_state="${parent_version_dir}/${subtask}/STATE.md"
-                    if [[ -f "$subtask_state" ]]; then
-                        local subtask_status
-                        subtask_status=$(grep -E "^\- \*\*Status:\*\*" "$subtask_state" 2>/dev/null | sed 's/.*\*\*Status:\*\* //' | tr -d ' ')
-                        if [[ "$subtask_status" != "closed" ]]; then
-                            all_subtasks_complete=false
-                            break
-                        fi
-                    else
-                        # Subtask doesn't exist yet - not complete
-                        all_subtasks_complete=false
-                        break
-                    fi
-                done
-
-                if [[ "$all_subtasks_complete" == "false" ]]; then
-                    echo "ERROR: Decomposed parent task marked 'closed' but subtasks are not all closed in $state_file" >&2
-                    echo "Parent tasks with '## Decomposed Into' must stay 'open' or 'in-progress' until ALL subtasks are closed." >&2
-                    echo "See M263 in decompose-task skill for correct lifecycle." >&2
-                    return 1
-                fi
-            fi
+        # Use the reusable all_subtasks_closed function
+        if ! all_subtasks_closed "$state_file"; then
+            echo "ERROR: Decomposed parent task marked 'closed' but subtasks are not all closed in $state_file" >&2
+            echo "Parent tasks with '## Decomposed Into' must stay 'open' or 'in-progress' until ALL subtasks are closed." >&2
+            echo "See M263 in decompose-task skill for correct lifecycle." >&2
+            return 1
         fi
     fi
 
@@ -454,10 +469,14 @@ find_issue_in_minor() {
             continue
         fi
 
-        # Skip decomposed parent tasks - their subtasks should be executed instead
-        # Parent tasks have "## Decomposed Into" section in STATE.md
+        # Skip decomposed parent tasks UNLESS all their subtasks are closed
+        # When all subtasks are closed, the parent can be selected for validation and closure
         if grep -q "^## Decomposed Into" "$issue_dir/STATE.md" 2>/dev/null; then
-            continue
+            if ! all_subtasks_closed "$issue_dir/STATE.md"; then
+                # Still has open subtasks - skip and let subtasks be executed
+                continue
+            fi
+            # All subtasks closed - allow this parent to be selected
         fi
 
         # Extract version numbers from path
@@ -586,10 +605,15 @@ find_next_issue() {
         fi
 
         # Check if this is a decomposed parent task
-        # Decomposed parents cannot be executed directly - their subtasks should be run instead
+        # Decomposed parents with open subtasks cannot be executed - their subtasks should be run instead
+        # But if all subtasks are closed, allow the parent to be selected for validation and closure
         if grep -q "^## Decomposed Into" "$issue_dir/STATE.md" 2>/dev/null; then
-            echo '{"status":"decomposed","message":"Issue is a decomposed parent task - execute subtasks instead","issue_id":"'"$TARGET"'"}'
-            return 1
+            if ! all_subtasks_closed "$issue_dir/STATE.md"; then
+                # Still has open subtasks - reject selection
+                echo '{"status":"decomposed","message":"Issue is a decomposed parent task - execute subtasks instead","issue_id":"'"$TARGET"'"}'
+                return 1
+            fi
+            # All subtasks closed - proceed normally
         fi
 
         # Check dependencies

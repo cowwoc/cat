@@ -110,3 +110,199 @@ teardown() {
         assert_json_field "$output" '.lock_status' 'acquired'
     fi
 }
+
+# ============================================================================
+# Decomposed Parent Task Tests
+# ============================================================================
+
+@test "decomposed parent: all subtasks closed - returned as selectable" {
+    # Create parent task with decomposed section
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/parent-task"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/parent-task/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 80%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+
+## Decomposed Into
+
+- subtask-1 (closed)
+- subtask-2 (closed)
+EOF
+
+    # Create subtask 1 (closed)
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-1"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-1/STATE.md" << 'EOF'
+# State
+
+- **Status:** closed
+- **Progress:** 100%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+EOF
+
+    # Create subtask 2 (closed)
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-2"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-2/STATE.md" << 'EOF'
+# State
+
+- **Status:** closed
+- **Progress:** 100%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run "$GET_ISSUES" --session-id "$TEST_SESSION" --scope minor --target 2.0
+
+    # Should find the parent task since all subtasks are closed
+    [ "$status" -eq 0 ]
+    assert_json_field "$output" '.status' 'found'
+    assert_json_field "$output" '.issue_id' '2.0-parent-task'
+}
+
+@test "decomposed parent: some subtasks open - still skipped in scan" {
+    # Create parent task with decomposed section
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/parent-incomplete"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/parent-incomplete/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 50%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+
+## Decomposed Into
+
+- subtask-done (closed)
+- subtask-pending (open)
+EOF
+
+    # Create subtask 1 (closed)
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-done"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-done/STATE.md" << 'EOF'
+# State
+
+- **Status:** closed
+- **Progress:** 100%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+EOF
+
+    # Create subtask 2 (open)
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-pending"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/subtask-pending/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run "$GET_ISSUES" --session-id "$TEST_SESSION" --scope minor --target 2.0
+
+    # Should find the open subtask, not the parent
+    [ "$status" -eq 0 ]
+    assert_json_field "$output" '.status' 'found'
+    assert_json_field "$output" '.issue_id' '2.0-subtask-pending'
+}
+
+@test "decomposed parent: no subtasks listed - still skipped (defensive)" {
+    # Create parent task with empty decomposed section
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/parent-empty"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/parent-empty/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+
+## Decomposed Into
+
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run "$GET_ISSUES" --session-id "$TEST_SESSION" --scope minor --target 2.0
+
+    # Parent with no subtasks should be selectable (defensive: treats as "all closed")
+    [ "$status" -eq 0 ]
+    assert_json_field "$output" '.status' 'found'
+    assert_json_field "$output" '.issue_id' '2.0-parent-empty'
+}
+
+@test "decomposed parent: targeted selection of completed - returns found" {
+    # Create parent task with all subtasks closed
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-complete"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-complete/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 90%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+
+## Decomposed Into
+
+- target-sub (closed)
+EOF
+
+    # Create subtask (closed)
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-sub"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-sub/STATE.md" << 'EOF'
+# State
+
+- **Status:** closed
+- **Progress:** 100%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run "$GET_ISSUES" --session-id "$TEST_SESSION" --target 2.0-target-complete
+
+    # Should return found since all subtasks are closed
+    [ "$status" -eq 0 ]
+    assert_json_field "$output" '.status' 'found'
+    assert_json_field "$output" '.issue_id' '2.0-target-complete'
+}
+
+@test "decomposed parent: targeted selection of incomplete - returns decomposed" {
+    # Create parent task with open subtasks
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-incomplete"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-incomplete/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 30%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+
+## Decomposed Into
+
+- target-open (open)
+EOF
+
+    # Create subtask (open)
+    mkdir -p "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-open"
+    cat > "$TEST_TEMP_DIR/.claude/cat/issues/v2/v2.0/target-open/STATE.md" << 'EOF'
+# State
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Last Updated:** 2026-01-01
+EOF
+
+    cd "$TEST_TEMP_DIR"
+    run "$GET_ISSUES" --session-id "$TEST_SESSION" --target 2.0-target-incomplete
+
+    # Should return decomposed status
+    [ "$status" -eq 1 ]
+    assert_json_field "$output" '.status' 'decomposed'
+    assert_json_field "$output" '.issue_id' '2.0-target-incomplete'
+}
