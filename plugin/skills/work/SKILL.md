@@ -70,13 +70,8 @@ Main agent should only read results and orchestrate.
 
 ## Configuration
 
-Read once at start:
-
-```bash
-TRUST=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
-VERIFY=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
-AUTO_REMOVE=$(jq -r '.autoRemoveWorktrees // true' .claude/cat/cat-config.json)
-```
+Values are pre-loaded by handler preprocessing (shown above in CONFIGURATION section).
+Use these values: TRUST, VERIFY, AUTO_REMOVE.
 
 ## Phase 1: Prepare
 

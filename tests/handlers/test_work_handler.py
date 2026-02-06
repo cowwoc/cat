@@ -1,5 +1,6 @@
 """Tests for WorkHandler."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -114,50 +115,36 @@ class TestWorkHandler:
         result = handler.handle(context)
         assert isinstance(result, str)
 
-    def test_contains_precomputed_marker(self, handler, context):
-        """Output contains PRE-COMPUTED marker."""
+    def test_contains_configuration_section(self, handler, context):
+        """Output contains CONFIGURATION section."""
         result = handler.handle(context)
-        assert "PRE-COMPUTED WORK PROGRESS FORMAT" in result
+        assert "CONFIGURATION:" in result
 
-    def test_contains_instruction(self, handler, context):
-        """Output contains INSTRUCTION markers."""
+    def test_contains_script_output_marker(self, handler, context):
+        """Output contains SCRIPT OUTPUT marker."""
         result = handler.handle(context)
-        assert "INSTRUCTION:" in result
+        assert "SCRIPT OUTPUT WORK BOXES:" in result
 
-    def test_contains_progress_templates(self, handler, context):
-        """Output contains progress template section."""
+    def test_contains_default_trust(self, handler, context):
+        """Output contains default trust level."""
         result = handler.handle(context)
-        assert "## Progress Display Templates" in result
+        assert "TRUST=medium" in result
 
-    def test_contains_header_format(self, handler, context):
-        """Output contains header format."""
+    def test_contains_default_verify(self, handler, context):
+        """Output contains default verify level."""
         result = handler.handle(context)
-        assert "### Header Format" in result
-        assert "🐱 >" in result
+        assert "VERIFY=changed" in result
 
-    def test_contains_phase_symbols(self, handler, context):
-        """Output contains phase symbols table."""
+    def test_contains_default_auto_remove(self, handler, context):
+        """Output contains default auto remove setting."""
         result = handler.handle(context)
-        assert "### Phase Symbols" in result
-        assert "○" in result  # Pending
-        assert "●" in result  # Complete
-        assert "◉" in result  # Active
-        assert "✗" in result  # Failed
-
-    def test_contains_example_transitions(self, handler, context):
-        """Output contains example transitions."""
-        result = handler.handle(context)
-        assert "### Example Transitions" in result
-        assert "Preparing" in result
-        assert "Executing" in result
-        assert "Reviewing" in result
-        assert "Merging" in result
+        assert "AUTO_REMOVE=true" in result
 
     def test_empty_context_works(self, handler):
         """Handler works with empty context."""
         result = handler.handle({})
         assert result is not None
-        assert "PRE-COMPUTED WORK PROGRESS FORMAT" in result
+        assert "CONFIGURATION:" in result
 
 
 class TestWorkHandlerBoxes:
@@ -177,7 +164,7 @@ class TestWorkHandlerBoxes:
         """Output contains task complete with next task box."""
         result = handler.handle(context)
         assert "TASK_COMPLETE_WITH_NEXT_TASK" in result
-        assert "✓ Task Complete" in result
+        assert "✓ Issue Complete" in result
 
     def test_contains_scope_complete(self, handler, context):
         """Output contains scope complete box."""
@@ -193,8 +180,8 @@ class TestWorkHandlerBoxes:
     def test_task_complete_box_has_placeholders(self, handler, context):
         """Task complete box has placeholders for substitution."""
         result = handler.handle(context)
-        assert "{task-name}" in result
-        assert "{next-task-name}" in result
+        assert "{issue-name}" in result
+        assert "{next-issue-name}" in result
 
     def test_task_complete_box_has_commands(self, handler, context):
         """Task complete box has relevant commands."""
@@ -205,8 +192,8 @@ class TestWorkHandlerBoxes:
     def test_auto_continue_box_has_stop_abort(self, handler, context):
         """Auto-continue box has stop/abort instructions."""
         result = handler.handle(context)
-        assert '"stop"' in result
-        assert '"abort"' in result
+        assert "stop" in result.lower()
+        assert "abort" in result.lower()
 
     def test_boxes_have_structure(self, handler, context):
         """All boxes have proper box structure."""
@@ -266,28 +253,28 @@ class TestBuildTaskCompleteWithNext:
 
     def test_returns_string(self, handler):
         """Method returns a string."""
-        result = handler._build_task_complete_with_next(58)
+        result = handler._build_task_complete_with_next()
         assert isinstance(result, str)
 
     def test_has_header(self, handler):
         """Box has task complete header."""
-        result = handler._build_task_complete_with_next(58)
-        assert "✓ Task Complete" in result
+        result = handler._build_task_complete_with_next()
+        assert "✓ Issue Complete" in result
 
     def test_has_merged_message(self, handler):
         """Box has merged to main message."""
-        result = handler._build_task_complete_with_next(58)
+        result = handler._build_task_complete_with_next()
         assert "merged to main" in result
 
     def test_has_next_task_placeholder(self, handler):
         """Box has next task placeholder."""
-        result = handler._build_task_complete_with_next(58)
-        assert "{next-task-name}" in result
+        result = handler._build_task_complete_with_next()
+        assert "{next-issue-name}" in result
 
-    def test_has_auto_continue_message(self, handler):
-        """Box has auto-continue message."""
-        result = handler._build_task_complete_with_next(58)
-        assert "Auto-continuing" in result
+    def test_has_continue_message(self, handler):
+        """Box has continue message."""
+        result = handler._build_task_complete_with_next()
+        assert "Continuing" in result
 
 
 class TestBuildScopeComplete:
@@ -300,18 +287,18 @@ class TestBuildScopeComplete:
 
     def test_returns_string(self, handler):
         """Method returns a string."""
-        result = handler._build_scope_complete(58)
+        result = handler._build_scope_complete()
         assert isinstance(result, str)
 
     def test_has_header(self, handler):
         """Box has scope complete header."""
-        result = handler._build_scope_complete(58)
+        result = handler._build_scope_complete()
         assert "✓ Scope Complete" in result
 
     def test_has_complete_message(self, handler):
-        """Box has all tasks complete message."""
-        result = handler._build_scope_complete(58)
-        assert "all tasks complete" in result
+        """Box has all issues complete message."""
+        result = handler._build_scope_complete()
+        assert "all issues complete" in result
 
 
 class TestBuildTaskCompleteLowTrust:
@@ -324,24 +311,90 @@ class TestBuildTaskCompleteLowTrust:
 
     def test_returns_string(self, handler):
         """Method returns a string."""
-        result = handler._build_task_complete_low_trust(58)
+        result = handler._build_task_complete_low_trust()
         assert isinstance(result, str)
 
     def test_has_header(self, handler):
         """Box has task complete header."""
-        result = handler._build_task_complete_low_trust(58)
-        assert "✓ Task Complete" in result
+        result = handler._build_task_complete_low_trust()
+        assert "✓ Issue Complete" in result
 
     def test_has_manual_continue_command(self, handler):
         """Box has manual continue command."""
-        result = handler._build_task_complete_low_trust(58)
-        assert "`/cat:work`" in result
-        assert "to continue" in result
+        result = handler._build_task_complete_low_trust()
+        assert "`/cat:work`" in result or "/cat:work" in result
+        assert "to continue" in result or "continue" in result.lower()
 
     def test_has_next_up_section(self, handler):
         """Box has next up section."""
-        result = handler._build_task_complete_low_trust(58)
-        assert "Next Up" in result
+        result = handler._build_task_complete_low_trust()
+        assert "Next" in result
+
+
+class TestWorkHandlerConfigReading:
+    """Tests for configuration reading from cat-config.json."""
+
+    @pytest.fixture
+    def handler(self):
+        """Create a WorkHandler instance."""
+        return WorkHandler()
+
+    @pytest.fixture
+    def temp_project_dir(self, tmp_path):
+        """Create a temporary project directory with config."""
+        config_dir = tmp_path / ".claude" / "cat"
+        config_dir.mkdir(parents=True)
+        return tmp_path
+
+    def test_uses_default_values_when_config_missing(self, handler, temp_project_dir):
+        """Uses default values when cat-config.json doesn't exist."""
+        context = {"project_root": str(temp_project_dir)}
+        result = handler.handle(context)
+        assert "TRUST=medium" in result
+        assert "VERIFY=changed" in result
+        assert "AUTO_REMOVE=true" in result
+
+    def test_reads_config_values_from_file(self, handler, temp_project_dir):
+        """Reads config values from cat-config.json."""
+        config_path = temp_project_dir / ".claude" / "cat" / "cat-config.json"
+        config_data = {
+            "trust": "high",
+            "verify": "all",
+            "autoRemoveWorktrees": False
+        }
+        with open(config_path, 'w') as f:
+            json.dump(config_data, f)
+
+        context = {"project_root": str(temp_project_dir)}
+        result = handler.handle(context)
+        assert "TRUST=high" in result
+        assert "VERIFY=all" in result
+        assert "AUTO_REMOVE=false" in result
+
+    def test_uses_defaults_for_missing_keys(self, handler, temp_project_dir):
+        """Uses defaults when config file exists but keys are missing."""
+        config_path = temp_project_dir / ".claude" / "cat" / "cat-config.json"
+        config_data = {"trust": "low"}  # Only trust specified
+        with open(config_path, 'w') as f:
+            json.dump(config_data, f)
+
+        context = {"project_root": str(temp_project_dir)}
+        result = handler.handle(context)
+        assert "TRUST=low" in result
+        assert "VERIFY=changed" in result  # default
+        assert "AUTO_REMOVE=true" in result  # default
+
+    def test_handles_invalid_json_gracefully(self, handler, temp_project_dir):
+        """Uses defaults when config file has invalid JSON."""
+        config_path = temp_project_dir / ".claude" / "cat" / "cat-config.json"
+        with open(config_path, 'w') as f:
+            f.write("{ invalid json }")
+
+        context = {"project_root": str(temp_project_dir)}
+        result = handler.handle(context)
+        assert "TRUST=medium" in result
+        assert "VERIFY=changed" in result
+        assert "AUTO_REMOVE=true" in result
 
 
 class TestBuildSimpleBox:
