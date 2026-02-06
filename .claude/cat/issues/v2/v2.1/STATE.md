@@ -42,6 +42,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - prevent-plan-md-priming
 - refactor-compare-docs-thresholds
 - rename-task-to-issue
+- optimize-execution-subagents
 
 ## Tasks Completed
 - fix-blocked-tasks-diagnostics
