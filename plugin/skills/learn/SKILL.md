@@ -4,7 +4,14 @@ description: >
   Integrates token tracking for context-related failures.
 ---
 
-# Learn From Mistakes (CAT-Specific)
+# Learn From Mistakes: Thin Orchestrator
+
+Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context
+degradation. Integrates token tracking to identify context-related failures and recommend preventive
+measures including earlier decomposition.
+
+**Architecture:** Main agent orchestrates 4 phase subagents. Each phase runs in isolation with
+its own context, keeping main agent context minimal.
 
 ## Purpose
 
@@ -21,1370 +28,212 @@ measures including earlier decomposition.
 - Repeated attempts at same operation
 - Quality degradation over time
 
-## Workflow
+## Phase 1: Investigate
 
-### 1. Verify Event Sequence (MANDATORY)
+Verify event sequence and analyze documentation path to understand what caused the mistake.
 
-**CRITICAL: Do NOT rely on memory for root cause analysis.**
+Delegate to general-purpose subagent using the Task tool with these JSON parameters:
 
-Verify actual event sequence using get-history:
+- **description:** `"Learn Phase 1: Investigate event sequence and documentation path"`
+- **subagent_type:** `"general-purpose"`
+- **model:** `"sonnet"`
+- **prompt:** The prompt below (substitute variables with actual values)
 
-```bash
-/cat:get-history
-# Look for: When stated? Action order? User corrections? Actual trigger?
+Prompt for the subagent:
+
+> Execute the learn-investigate phase.
+>
+> SESSION_ID: ${CLAUDE_SESSION_ID}
+> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+>
+> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-investigate.md
+>
+> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> This is critical because the parent agent parses your response as JSON.
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| COMPLETE | Store investigation results, continue to Phase 2 |
+| ERROR | Display error, stop |
+| No JSON / empty | Subagent failed to produce output - display error, stop |
+
+**Parsing the result:** The subagent's final message is returned as text. Extract the JSON
+object from it — look for `{` through the matching `}`. If the result contains surrounding text,
+ignore the text and parse just the JSON block.
+
+**Store phase 1 results:**
+- `event_sequence`, `documents_read`, `priming_analysis`, `session_id`
+
+## Phase 2: Analyze
+
+Document the mistake, gather context metrics, perform RCA, and verify depth.
+
+Delegate to general-purpose subagent using the Task tool with these JSON parameters:
+
+- **description:** `"Learn Phase 2: Analyze mistake and perform RCA"`
+- **subagent_type:** `"general-purpose"`
+- **model:** `"sonnet"`
+- **prompt:** The prompt below (substitute variables with actual values and investigation results)
+
+Prompt for the subagent:
+
+> Execute the learn-analyze phase.
+>
+> SESSION_ID: ${CLAUDE_SESSION_ID}
+> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+>
+> Investigation results from Phase 1:
+> ```json
+> {investigation_results_json}
+> ```
+>
+> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-analyze.md
+>
+> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> This is critical because the parent agent parses your response as JSON.
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| COMPLETE | Store analysis results, continue to Phase 3 |
+| ERROR | Display error, stop |
+| No JSON / empty | Subagent failed to produce output - display error, stop |
+
+**Store phase 2 results:**
+- `mistake_description`, `context_metrics`, `root_cause`, `rca_method`, `rca_method_name`
+- `rca_depth_verified`, `architectural_issue`, `recurrence_of`, `category`
+
+## Phase 3: Prevent
+
+Identify prevention strategies, evaluate quality, implement fixes, and verify no new priming.
+
+Delegate to general-purpose subagent using the Task tool with these JSON parameters:
+
+- **description:** `"Learn Phase 3: Implement prevention"`
+- **subagent_type:** `"general-purpose"`
+- **model:** `"sonnet"`
+- **prompt:** The prompt below (substitute variables with actual values and previous results)
+
+Prompt for the subagent:
+
+> Execute the learn-prevent phase.
+>
+> SESSION_ID: ${CLAUDE_SESSION_ID}
+> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+>
+> Investigation results from Phase 1:
+> ```json
+> {investigation_results_json}
+> ```
+>
+> Analysis results from Phase 2:
+> ```json
+> {analysis_results_json}
+> ```
+>
+> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-prevent.md
+>
+> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> This is critical because the parent agent parses your response as JSON.
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| COMPLETE | Store prevention results, continue to Phase 4 |
+| ERROR | Display error, stop |
+| No JSON / empty | Subagent failed to produce output - display error, stop |
+
+**Store phase 3 results:**
+- `prevention_type`, `prevention_level`, `prevention_quality`
+- `scenario_verified`, `existing_prevention_failed`, `files_modified`
+- `prevention_description`, `priming_verified`, `related_files_checked`
+
+## Phase 4: Record
+
+Verify prevention works, record learning in MEMORY.md, update retrospective counter, and commit.
+
+Delegate to general-purpose subagent using the Task tool with these JSON parameters:
+
+- **description:** `"Learn Phase 4: Record learning and update retrospective"`
+- **subagent_type:** `"general-purpose"`
+- **model:** `"sonnet"`
+- **prompt:** The prompt below (substitute variables with actual values and all previous results)
+
+Prompt for the subagent:
+
+> Execute the learn-record phase.
+>
+> SESSION_ID: ${CLAUDE_SESSION_ID}
+> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+>
+> Investigation results from Phase 1:
+> ```json
+> {investigation_results_json}
+> ```
+>
+> Analysis results from Phase 2:
+> ```json
+> {analysis_results_json}
+> ```
+>
+> Prevention results from Phase 3:
+> ```json
+> {prevention_results_json}
+> ```
+>
+> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-record.md
+>
+> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> This is critical because the parent agent parses your response as JSON.
+
+**Handle result:**
+
+| Status | Action |
+|--------|--------|
+| COMPLETE | Display summary, check retrospective trigger |
+| ERROR | Display error, stop |
+| No JSON / empty | Subagent failed to produce output - display error, stop |
+
+**Store phase 4 results:**
+- `learning_id`, `memory_updated`, `counter_updated`, `committed`
+- `commit_hash`, `retrospective_triggered`, `retrospective_status`
+
+## Summary Display
+
+After all phases complete, display a summary:
+
+```
+Learning recorded: {learning_id}
+
+Category: {category}
+Root Cause: {root_cause}
+RCA Method: {rca_method_name}
+
+Prevention:
+- Type: {prevention_type} (level {prevention_level})
+- Files Modified: {count}
+- Quality: {fragility} fragility, {verification_type} verification
+
+Commit: {commit_hash}
+{retrospective_status}
 ```
 
-**Anti-Pattern (M037):** Root cause analysis based on memory without get-history verification.
-Memory is unreliable for causation, timing, attribution.
-
-**If get-history unavailable:** Document analysis based on current context only, may be incomplete.
-
-### 1b. Analyze Documentation Path (M269, M274, M381)
-
-**CRITICAL: ALWAYS check documentation path FIRST after collecting history.**
-
-**MANDATORY FIRST STEP (M381):** Before any other analysis, identify what documents/skills the agent
-read and check if they caused the mistake. Do NOT skip to "agent error" conclusions without first
-checking if documentation primed the wrong behavior.
-
-Using the session history from Step 1, identify all documents the agent read.
-
-**NOTE (M359):** `CLAUDE_SESSION_ID` is available in skill preprocessing but NOT exported to bash.
-You must substitute the actual session ID value in bash commands, not use the variable reference.
-
-```bash
-# Replace with actual session ID - do NOT use ${CLAUDE_SESSION_ID} in bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/YOUR-SESSION-ID-HERE.jsonl"
-
-# Note: Tool uses are nested inside assistant messages as content blocks
-# Structure: {type: "assistant", message: {content: [{type: "tool_use", name: "...", input: {...}}]}}
-
-# Find documents read
-echo "=== Documents Read ==="
-grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use") |
-    select(.name == "Read" or .name == "Skill") |
-    if .name == "Read" then .input.file_path
-    else "skill:" + .input.skill end' 2>/dev/null | sort -u
-
-# Find skill invocations vs expected
-echo "=== Skill Invocations ==="
-grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Skill") |
-    .input.skill + " " + (.input.args // "")' 2>/dev/null
-
-# Find Issue prompts (delegation prompts are documents too!) (M274)
-echo "=== Issue Delegation Prompts ==="
-grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Issue") |
-    "Issue: " + .input.description + "\n" + .input.prompt' 2>/dev/null
-```
-
-**For each document, check for priming patterns:**
-
-| Pattern | Example | Risk |
-|---------|---------|------|
-| Algorithm before invocation | "How to compress: 1. Remove redundancy..." | Agent bypasses skill |
-| Output format with values | "validation_score: 1.0 (required)" | Agent fabricates output |
-| Cost/efficiency language | "This spawns 2 subagents..." | Agent takes shortcuts |
-| Conflicting general guidance (M407) | "Be concise" + "copy verbatim" | General overrides specific |
-
-**SKILL EXECUTION FAILURES - Use skill-builder (M408):**
-
-When the mistake involves an agent failing to execute a **skill** correctly (wrong output, skipped steps,
-manual construction instead of preprocessing), analyze the skill using skill-builder:
-
-```
-Read the skill file and apply skill-builder's Priming Prevention Checklist:
-- Information Ordering Check (does skill teach HOW before WHAT to invoke?)
-- Output Format Check (does output format contain expected values?)
-- Cost/Efficiency Language Check (does skill suggest proper approach is "expensive"?)
-- Reference Information Check (does skill contain "for reference only" info?)
-- No Embedded Box Drawings (does skill show visual examples that prime manual construction?)
-```
-
-**Reference:** See `/cat:skill-builder` § "Priming Prevention Checklist" for the complete checklist.
-If skill has structural issues, fix the SKILL as part of prevention, not just add behavioral guidance.
-
-**MANDATORY CHECK (M405):** After checking documents read, ALSO ask:
-1. **Could agent do the right thing?** Search for documentation of the CORRECT approach
-2. **If no documentation exists:** Root cause is `missing_documentation`, not `assumption`
-3. **If wrong approach is documented but right approach isn't:** Fix BOTH (remove priming AND add guidance)
-
-**CHECK FOR CONFLICTING GUIDANCE (M407):** Also check if general instructions conflict with specific requirements:
-- Does system prompt say "be concise" while skill requires verbatim output?
-- Does critical thinking prompt say "analyze" while skill requires copy-paste?
-- Does general guidance favor interpretation while skill needs literal execution?
-When found: The specific skill requirement should take precedence, but add enforcement (hook) since general
-guidance may override documented specific requirements.
-
-**For tool invocation errors (M381):**
-
-When a mistake involves invoking a tool/skill with wrong parameters:
-1. Read the tool's actual interface (Parameters section, supported flags)
-2. Compare against what was invoked
-3. Check what documentation showed similar-looking parameters that may have primed the incorrect usage
-4. The cause is often "saw parameter X used somewhere, assumed it applies to tool Y"
-
-**For subagent mistakes, ALSO check the Issue prompt that spawned it (M274):**
-
-The delegation prompt IS the primary "document" the subagent received. Check it for:
-- Expected values embedded in output format (e.g., "score: 1.0 (required)")
-- Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
-- Any content telling the subagent what to report vs what to measure
-
-**CHECK FOR TECHNICALLY IMPOSSIBLE INSTRUCTIONS (M429):**
-
-When a subagent fails to follow instructions, check whether the instructions were **technically possible** given Claude Code's subagent architecture:
-
-| Subagent Capability | Available? | Evidence |
-|---------------------|------------|----------|
-| Spawn nested subagents (Task tool) | **NO** | Task tool not exposed to subagents |
-| Invoke skills dynamically (Skill tool) | **NO** | Skill tool not available to subagents |
-| Read/Write/Edit files | YES | Standard file tools available |
-| Run bash commands | YES | Bash tool available |
-| Web search/fetch | YES | Available to subagents |
-
-**If instructions required unavailable capabilities:**
+If `retrospective_triggered` is true, use AskUserQuestion to offer user choice:
 
 ```yaml
-technically_impossible_check:
-  instruction_required: "Invoke /cat:{skill-name} for each item"
-  capability_needed: "Skill tool"
-  available_to_subagent: false
-  conclusion: "IMPOSSIBLE - instruction cannot be executed as written"
-  root_cause: "architectural_flaw"
-  fix_type: "Redesign workflow to invoke skills at main agent level"
-```
-
-**Common patterns of impossible instructions:**
-
-| Instruction Pattern | Why Impossible | Correct Design |
-|--------------------|----------------|----------------|
-| "Subagent must invoke /cat:skill" | Skill tool unavailable | Main agent invokes skill before/after delegation |
-| "Spawn reviewer subagents" | Task tool unavailable | Main agent spawns reviewers directly |
-| "Delegate to sub-subagent" | Max depth is 1 | Flatten to single delegation level |
-| "Use parallel-execute skill" | Skill tool unavailable | Main agent handles parallelization |
-
-**When this check identifies impossible instructions:**
-
-1. Root cause is `architectural_flaw` (not agent error)
-2. Prevention must redesign the WORKFLOW, not add guidance
-3. The skill/workflow documentation is the source of the bug
-4. Do NOT add "agent should have..." instructions - they cannot help
-
-**CHECK FOR MISSING SKILL PRELOADING (M431):**
-
-When a subagent fails to follow skill-based guidance correctly, check whether the subagent would
-have benefited from having skills preloaded via frontmatter.
-
-**Claude Code `skills` frontmatter field:**
-
-Agents defined in `plugin/agents/` can specify skills to preload:
-
-```yaml
----
-name: work-merge
-description: Merge phase for /cat:work
-tools: Read, Bash, Grep, Glob
-model: haiku
-skills:
-  - git-squash
-  - git-rebase
-  - git-merge-linear
----
-```
-
-The `skills` field causes Claude Code to inject the listed skill content into the subagent's
-context at startup - the subagent receives the knowledge without needing to invoke the Skill tool.
-
-**Questions to ask when subagent makes a mistake:**
-
-| Question | If YES |
-|----------|--------|
-| Did subagent need skill knowledge it didn't have? | Consider adding skill to frontmatter |
-| Was `general-purpose` subagent used for domain-specific work? | Create dedicated agent type |
-| Did subagent try to invoke a skill (and fail)? | Move skill knowledge to frontmatter |
-| Would preloaded guidance have prevented the mistake? | Add skill to agent's `skills` field |
-
-**If general-purpose agent was used and skills would help:**
-
-```yaml
-subagent_skills_analysis:
-  subagent_type_used: "general-purpose"
-  domain_knowledge_needed: ["git-squash", "git-rebase"]
-  skill_invocation_attempted: true
-  skill_invocation_succeeded: false  # Skill tool not available to subagents
-
-  recommendation:
-    action: "Create dedicated agent type"
-    agent_name: "{domain}-agent"
-    skills_to_preload: ["skill-1", "skill-2"]
-    rationale: "Subagent needs domain knowledge but cannot invoke skills"
-```
-
-**Prevention pattern for skill preloading issues:**
-
-1. Identify the skills the subagent needed
-2. Check if a dedicated agent type already exists (check `plugin/agents/`)
-3. If yes: Use that agent type instead of `general-purpose`
-4. If no: Create new agent in `plugin/agents/{name}.md` with `skills` frontmatter
-5. Update the delegation code to use the new agent type
-
-**Record in mistake entry:**
-
-```json
-{
-  "category": "architectural_flaw",
-  "root_cause": "Subagent lacked skill knowledge; general-purpose agent used for domain work",
-  "prevention_type": "config",
-  "prevention_path": "plugin/agents/{new-agent}.md",
-  "subagent_skills_needed": ["skill-1", "skill-2"]
-}
-```
-
-**CRITICAL: Trace the FULL priming chain (M425):**
-
-When the main agent wrote a bad delegation prompt, ask: **What primed the MAIN AGENT to write that prompt?**
-
-Common priming sources for main agent decisions:
-1. **Previous subagent failure messages** - "excessive nesting" or "token budget" may prime bypasses
-2. **Error messages from tools** - May suggest workarounds that violate protocols
-3. **Cost/efficiency concerns in skill docs** - "This spawns N subagents" primes shortcuts
-
-**Trace the chain backwards:**
-
-```
-Main agent wrote bad prompt
-  ↑ WHY?
-Previous subagent returned FAILED with message
-  ↑ WHY did that message prime a bad decision?
-Message described problem without actionable guidance
-  ↑ FIX: Improve failure message guidance, not just main agent behavior
-```
-
-**Search session history for failure messages:**
-
-```bash
-# Find subagent failure messages that preceded the bad decision
-grep '"type":"tool_result"' "$SESSION_FILE" | \
-  jq -r 'select(.content | type == "array") | .content[]? |
-    select(.text? | contains("FAILED") or contains("excessive") or contains("nesting"))' 2>/dev/null
-
-# Find Task tool results with failure status
-grep -B5 "do NOT invoke" "$SESSION_FILE" | head -50  # Find context before bypass instruction
-```
-
-**If a subagent failure message primed the main agent:**
-
-The fix must address BOTH:
-1. The main agent's behavior (don't bypass skills)
-2. The failure message's guidance (provide actionable alternatives, not just problem description)
-
-**If priming found:**
-
-```yaml
-documentation_priming:
-  document: "{path to document OR 'Issue prompt'}"
-  misleading_section: "{section name and line numbers OR 'OUTPUT FORMAT section'}"
-  priming_type: "algorithm_exposure | output_format | cost_concern | internal_prompt | expected_value"
-  how_it_misled: "Agent learned X, then applied it directly instead of invoking Y"
-  fix_required: "Move content to internal-only document / Remove section / Restructure"
-```
-
-**Reference:** See [documentation-priming.md](documentation-priming.md) for detailed analysis patterns.
-
-### 2. Document the Mistake
-
-```yaml
-mistake:
-  timestamp: 2026-01-10T16:30:00Z
-  type: incorrect_implementation
-  description: |
-    Subagent implemented parser with wrong precedence rules.
-    Expressions like "a + b * c" parsed as "(a + b) * c" instead of "a + (b * c)".
-  impact: |
-    All tests using operator precedence failing. Required complete rewrite.
-```
-
-### 3. Gather Context Metrics
-
-**CAT-specific: Always collect token data**
-
-```bash
-# Replace with actual subagent session ID (M359 - env vars not available in bash)
-SESSION_ID="actual-subagent-session-id-here"
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
-
-TOKENS_AT_ERROR=$(jq -s 'map(select(.type == "assistant")) |
-  map(.message.usage | .input_tokens + .output_tokens) | add' "${SESSION_FILE}")
-COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FILE}")
-MESSAGE_COUNT=$(jq -s '[.[] | select(.type == "assistant")] | length' "${SESSION_FILE}")
-SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
-```
-
-### 4. Perform Root Cause Analysis
-
-**Reference:** See [rca-methods.md](rca-methods.md) for detailed method specifications.
-
-**A/B TEST IN PROGRESS** - See [RCA-AB-TEST.md](RCA-AB-TEST.md) for full specification.
-
-**Method Assignment Rule:** Use mistake ID modulo 3:
-- IDs where `N mod 3 = 0` → Method A (5-Whys)
-- IDs where `N mod 3 = 1` → Method B (Taxonomy)
-- IDs where `N mod 3 = 2` → Method C (Causal Barrier)
-
-**Quick Reference:**
-
-| Method | Core Approach | When Best |
-|--------|---------------|-----------|
-| A: 5-Whys | Ask "why" 5 times iteratively | General mistakes, process issues |
-| B: Taxonomy | Classify into MEMORY/PLANNING/ACTION/REFLECTION/SYSTEM | Tool misuse, capability failures |
-| C: Causal Barrier | List candidates, verify cause vs symptom, analyze barriers | Compliance failures, repeated mistakes |
-
-**Common root cause patterns to check:**
-- Assumption without verification?
-- Completion bias (rationalized ignoring rules)?
-- Memory reliance (didn't re-verify)?
-- Environment state mismatch?
-- Documentation ignored (rule existed)?
-- **Documentation priming (M269)?** - Did docs teach wrong approach?
-- **Architectural flaw (M408)?** - Is LLM being asked to fight its training? (See Step 4d)
-
-**Record the method used** in the final JSON entry:
-
-```json
-{
-  "rca_method": "A|B|C",
-  "rca_method_name": "5-whys|taxonomy|causal-barrier"
-}
-```
-
-### 4b. RCA Depth Verification (BLOCKING GATE - M299)
-
-**MANDATORY: Verify RCA reached actual cause before proceeding.**
-
-After completing Step 4, answer these questions:
-
-```yaml
-rca_depth_check:
-  # Question 1: Did you ask WHY at the action level?
-  action_level_why:
-    question: "Why did the agent take THIS action instead of the correct one?"
-    example_shallow: "Agent manually constructed instead of using template"
-    example_deep: "SCRIPT OUTPUT CONTENT taught construction algorithm, priming manual approach"
-    your_answer: "_______________"
-
-  # Question 2: Can you trace to a SYSTEM/DOCUMENT cause?
-  system_cause:
-    question: "What in the system/documentation enabled or encouraged this mistake?"
-    if_answer_is_nothing: "RCA is incomplete - keep asking why"
-    if_answer_is_agent_error: "RCA is incomplete - what allowed agent to make this error?"
-    your_answer: "_______________"
-
-  # Question 3: Would the prevention CHANGE something external?
-  external_change:
-    question: "Does prevention modify code, config, or documentation?"
-    if_answer_is_no: "RCA is incomplete - behavioral changes without enforcement recur"
-    your_answer: "_______________"
-
-  # Question 4: Is this a recurring failure? (M408)
-  recurring_pattern:
-    question: "Has this type of failure occurred before? Check recurrence_of in mistakes.json"
-    if_yes_multiple: "Previous fixes FAILED - dig deeper into WHY they failed"
-    if_3_plus_recurrences: "ARCHITECTURAL issue likely - see Step 4d"
-    your_answer: "_______________"
-
-  # Question 5: Prevention vs Detection (M422)
-  fix_type:
-    question: "Does your proposed fix PREVENT the problem, or DETECT/MITIGATE after it occurs?"
-    prevention: "Makes the wrong thing impossible or the right thing automatic"
-    detection: "Catches the mistake after it happens (verification layer, validation)"
-    mitigation: "Reduces impact but doesn't stop occurrence (warnings, documentation)"
-    if_detection_or_mitigation: |
-      RCA is incomplete. You're treating symptoms, not cause.
-      Ask: "WHY did the bad thing happen in the first place?"
-      Keep asking WHY until you find something you can PREVENT.
-    your_answer: "_______________"
-    your_fix_type: "prevention | detection | mitigation"
-```
-
-**Prevention vs Detection Examples (M422):**
-
-| Problem | Detection Fix (❌) | Prevention Fix (✅) |
-|---------|-------------------|---------------------|
-| Subagent fabricates scores | Verify independently | Remove expected values from prompts |
-| Wrong file edited | Check file path after | Hook blocks edits to wrong paths |
-| Threshold wrong | Validate on read | Fix the source template |
-| Skill bypassed | Check if skill was invoked | Make skill the only path (hook) |
-
-**Key insight:** If your first instinct is "add a check/verification", you haven't found the root cause.
-The root cause is whatever made the wrong thing possible. Fix THAT.
-
-**BLOCKING CONDITION (M299):**
-
-If ANY answer is blank or says "agent should have...":
-- STOP - RCA is incomplete
-- Return to Step 4 and ask deeper "why" questions
-- Investigate what DOCUMENTATION or SYSTEM enabled the mistake
-- Only proceed when you can point to a SPECIFIC file to change
-
-**Why this gate exists:** M299 showed that completion bias causes premature RCA termination.
-Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
-The cause is always in the system that allowed or encouraged the wrong action.
-
-### 4c. Multiple Independent Mistakes (M378)
-
-**If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
-
-Each independent mistake gets its own `/cat:learn` invocation with full RCA and prevention implementation.
-
-### 4d. Architectural Root Cause Analysis (M408)
-
-**CRITICAL: Check for recurring patterns that indicate architectural flaws.**
-
-When a mistake has recurrences (check `recurrence_of` field in mistakes.json), the fixes have failed.
-Multiple failed fixes indicate the root cause is DEEPER than documentation or hooks can address.
-
-**Recurrence Chain Check:**
-
-```bash
-# Find recurrence chains in mistakes
-jq -r '.mistakes[] | select(.recurrence_of != null) |
-  "\(.id) recurs \(.recurrence_of)"' "$MISTAKES_FILE"
-```
-
-**If 3+ recurrences exist for the same failure type:**
-
-Ask these architectural questions:
-
-| Question | If YES |
-|----------|--------|
-| Is the LLM being asked to fight its training? | Use user-centric framing (see below) |
-| Does the task require LLM intelligence? | If no, use preprocessing scripts |
-| Does system prompt guidance conflict with task? | The task design is flawed |
-| Are we asking for mechanical output? | Use user-centric framing + enforcement hooks |
-
-**LLM Training Conflicts (M408 Pattern):**
-
-LLMs are trained to be helpful, synthesize information, and be concise. Tasks that conflict with this
-training will repeatedly fail despite documentation fixes:
-
-| Task Type | Conflicts With | Solution |
-|-----------|---------------|----------|
-| Verbatim copy-paste | "Be concise" training | User-centric framing + enforcement hook |
-| Mechanical formatting | Helpful synthesis | Use preprocessing scripts |
-| Exact reproduction | Interpretation instinct | User-centric framing |
-| Strict protocol following | Flexible helpfulness | Enforcement hooks |
-
-**NOTE (M410):** The `continue: false` + `stopReason` bypass pattern does NOT work.
-Claude Code adds "Operation stopped by hook:" prefix to all stopReason values, making output appear
-like an error message. Do not attempt to bypass the LLM for output - use user-centric framing instead.
-
-**User-Centric Framing Pattern (M408 empirical finding):**
-
-When LLM involvement is required but verbatim output is needed, use user-centric framing:
-
-| Framing | Result | Why |
-|---------|--------|-----|
-| `The user wants you to respond with this text verbatim:` | ✅ Verbatim | Aligns with helpful training |
-| `Echo this:` | ✅ Verbatim | Triggers mechanical execution mode |
-| `MANDATORY: Copy-paste...` | ❌ Summarized | Triggers analytical/processing mode |
-| `Your response must be:` | ❌ Questions | Triggers conversational mode |
-| Content with no instruction | ❌ Interpreted | Default helpful behavior |
-
-**Key insight:** User-centric framing ("The user wants...") leverages LLM training to be helpful.
-Instructional framing ("MANDATORY", "must", "requirement") triggers interpretation. Keep prompts
-minimal - remove all explanatory content that could prime analytical thinking.
-
-**Record architectural findings:**
-
-```json
-{
-  "category": "architectural_flaw",
-  "root_cause": "ARCHITECTURAL: [explain the training conflict]",
-  "immediate_fix": { "type": "...", "description": "..." },
-  "deeper_fix_needed": {
-    "type": "framing",
-    "description": "Use user-centric framing with enforcement hook",
-    "implementation": "User-centric prompt + PostToolUse validation hook"
-  },
-  "recurrence_chain": ["M001", "M002", "M003"]
-}
-```
-
-### 4d. Investigate Hook Workarounds (M398)
-
-**If mistake involves bypassing a hook:** Read `HOOK-WORKAROUNDS.md` and follow its investigation checklist.
-
-Check: Was the right thing possible? Did guidance exist? Why wasn't it followed?
-
-### 5. Check for Context Degradation Patterns
-
-**CAT-specific analysis checklist:**
-
-Reference: agent-architecture.md § Context Limit Constants
-
-```yaml
-context_degradation_analysis:
-  tokens_at_error: 95000
-  threshold_exceeded: true
-  threshold_exceeded_by: 15000
-  compaction_events: 2
-  errors_after_compaction: true
-  session_duration: 4.5 hours
-  messages_before_error: 127
-  early_session_quality: high
-  late_session_quality: degraded
-  quality_degradation_detected: true
-  context_related: LIKELY
-  confidence: 0.85
-```
-
-### 6. Identify Prevention Level
-
-**Reference:** See [prevention-hierarchy.md](prevention-hierarchy.md) for detailed hierarchy and escalation rules.
-
-**Quick Reference:**
-
-| Level | Type | Description |
-|-------|------|-------------|
-| 1 | code_fix | Make incorrect behavior impossible in code |
-| 2 | hook | Automated enforcement via PreToolUse/PostToolUse |
-| 3 | validation | Automated checks that catch mistakes early |
-| 4 | config | Configuration or threshold changes |
-| 5 | skill | Update skill documentation with explicit guidance |
-| 6 | process | Change workflow steps or ordering |
-| 7 | documentation | Document to prevent future occurrence (weakest) |
-
-**Key principle:** Lower level = stronger prevention. Always prefer level 1-3 over level 5-7.
-
-### 7. Evaluate Prevention Quality
-
-**BEFORE implementing, verify the prevention is robust:**
-
-```yaml
-prevention_quality_check:
-  verification_type:
-    positive: "Check for PRESENCE of correct behavior"  # ✅ Preferred
-    negative: "Check for ABSENCE of specific failure"   # ❌ Fragile
-
-  # Ask: Am I checking for what I WANT, or what I DON'T want?
-  # Example:
-  #   ❌ grep "Initial implementation -"  (catches ONE placeholder pattern)
-  #   ✅ grep "^- \`[a-f0-9]{7,}\`"        (checks for correct commit format)
-
-  generality:
-    question: "If the failure mode varies slightly, will this still catch it?"
-    examples:
-      - "What if placeholder text changes from 'Initial' to 'First'?"
-      - "What if someone uses 'TBD' or 'TODO' instead?"
-      - "What if the format is subtly wrong in a different way?"
-    # If answer is NO → prevention is too specific → redesign
-
-  inversion:
-    question: "Can I invert this check to verify correctness instead?"
-    pattern: |
-      Instead of: "Fail if BAD_PATTERN exists"
-      Try:        "Fail if GOOD_PATTERN is missing"
-    # Positive verification catches ALL failures, not just anticipated ones
-
-  fragility_assessment:
-    low:    "Checks for correct format/behavior (positive verification)"
-    medium: "Checks for category of errors (e.g., any TODO-like text)"
-    high:   "Checks for exact observed failure (specific string match)"
-```
-
-**Decision gate:** If fragility is HIGH, redesign the prevention before implementing.
-
-### 7b. Replay Scenario Verification (BLOCKING GATE - M305)
-
-**MANDATORY: Verify prevention would have prevented THIS specific problem.**
-
-Before proceeding, mentally replay the exact scenario that caused the mistake:
-
-```yaml
-scenario_replay:
-  # Step 1: Describe the exact sequence that led to the mistake
-  what_happened:
-    step_1: "{first action/state}"
-    step_2: "{second action/state}"
-    step_3: "{action where mistake occurred}"
-    result: "{the bad outcome}"
-
-  # Step 2: Insert your proposed prevention and replay
-  with_prevention:
-    step_1: "{same first action/state}"
-    step_2: "{same second action/state}"
-    prevention_activates: "{when/how does prevention trigger?}"
-    step_3: "{what happens differently?}"
-    result: "{the good outcome}"
-
-  # Step 3: Verify causation
-  verification:
-    prevents_root_cause: true|false  # Does it fix the CAUSE or just a symptom?
-    would_have_blocked: true|false   # Would this SPECIFIC scenario have been prevented?
-    timing_correct: true|false       # Does prevention activate BEFORE the mistake?
-```
-
-**BLOCKING CONDITION:**
-
-If `would_have_blocked: false` or `prevents_root_cause: false`:
-- STOP - your prevention fixes a symptom, not the cause
-- Return to RCA and dig deeper into WHY the mistake occurred
-- Find prevention that addresses the actual failure point
-
-**Fix Source, Not Symptoms (M355):**
-
-When a mistake involves incorrect output from a subagent or downstream process:
-
-| Symptom Fix (❌ WRONG) | Source Fix (✅ CORRECT) |
-|------------------------|-------------------------|
-| Add validation to catch bad output | Fix the prompt/input that caused bad output |
-| Add check for fabricated scores | Remove priming content from delegation prompt |
-| Add warning when result looks wrong | Fix the instructions that led to wrong result |
-| Double-check subagent work | Fix the task description given to subagent |
-
-**The question to ask:** "Why did the subagent produce wrong output?"
-- If answer involves the PROMPT you gave it → fix the prompt
-- If answer involves the DOCUMENTATION it read → fix the documentation
-- Adding validation AFTER is treating the symptom, not the cause
-
-**Example - M355 Pattern:**
-
-```yaml
-# Mistake: Subagent reported unexpected validation scores
-
-# ❌ SYMPTOM FIX: Add validation layer to catch "wrong" results
-prevention: "Run independent validation and compare scores"
-prevents_root_cause: false  # Another subagent is no more independent!
-
-# ✅ SOURCE FIX: Investigate and fix the prompt or skill
-prevention: "Review delegation prompt for priming; fix skill instructions if ambiguous"
-prevents_root_cause: true  # Subagent now produces correct results
-```
-
-**Note (M357):** Identical scores (e.g., all 1.0) do NOT inherently indicate fabrication. Multiple files
-can legitimately achieve the same score. When results differ from expectations, investigate the prompt
-or skill methodology - don't add validation layers.
-
-**Anti-pattern:** "The subagent did X wrong, so I'll add a check for X."
-**Correct approach:** "The subagent did X wrong because my prompt said Y. Fix Y."
-
-**Example - would_have_blocked: false:**
-
-```yaml
-# Mistake: Squash captured stale file state from diverged worktree
-
-# ❌ FAILS VERIFICATION: "Add warning when worktree diverges from base"
-scenario_replay:
-  what_happened:
-    step_1: "Worktree created from v2.1 at commit A"
-    step_2: "v2.1 advanced to commit D, worktree not updated"
-    step_3: "git reset --soft v2.1 captured stale working directory"
-    result: "M304 changes reverted"
-  with_prevention:
-    prevention_activates: "Before squash, detect and warn about divergence"
-    step_3: "Warning printed, but squash proceeds anyway"
-    result: "M304 changes still reverted"
-  verification:
-    would_have_blocked: false  # Warning doesn't prevent the failure!
-    prevents_root_cause: false
-    # STOP: This prevention is useless - find one that actually blocks
-
-# ✅ PASSES VERIFICATION: "Rebase onto base before squashing"
-scenario_replay:
-  with_prevention:
-    prevention_activates: "Before squash, rebase onto current base"
-    step_3: "Working directory updated to include M304, then squash"
-    result: "M304 changes preserved"
-  verification:
-    would_have_blocked: true   # This specific scenario prevented
-    prevents_root_cause: true  # Addresses stale working directory state
-```
-
-**Why this gate exists:** M305 showed that proposed solutions may sound reasonable but fail
-to actually prevent the failure. Replaying the exact scenario exposes whether prevention
-changes the outcome or just adds noise (warnings, documentation).
-
-### 8. Check If Prevention Already Exists (MANDATORY)
-
-**CRITICAL: If prevention already exists, it FAILED and MUST be replaced with stronger prevention.**
-
-Before implementing prevention, check if it already exists:
-
-```yaml
-existing_prevention_check:
-  question: "Does documentation/process already cover this?"
-  check_locations:
-    - Workflow files (work.md, etc.)
-    - CLAUDE.md / project instructions
-    - Skill documentation
-    - Existing hooks
-
-  if_exists:
-    conclusion: "Existing prevention FAILED - it was ineffective"
-    action: "MUST escalate to higher prevention level"
-    rationale: |
-      If prevention exists and the mistake still occurred, that prevention
-      is NOT WORKING. Pointing to it again changes nothing. The mistake
-      WILL recur unless you implement STRONGER prevention.
-```
-
-**Key insight:** Existing prevention that didn't prevent the mistake is NOT prevention - it's
-failed prevention. You must escalate to a level that will actually work.
-
-**Escalation hierarchy (when current level failed):**
-
-| Failed Level | Escalate To | Example |
-|--------------|-------------|---------|
-| Documentation | Hook/Validation | Add pre-commit hook that blocks incorrect behavior |
-| Process | Code fix | Make incorrect path impossible in code |
-| Threshold | Lower threshold + hook | Add monitoring that forces action |
-| Validation | Code fix | Compile-time or runtime enforcement |
-
-**Example - Documentation failed:**
-
-```yaml
-# Situation: Workflow says "MANDATORY: Execute different issue when locked"
-# Agent ignored it and tried to delete the lock
-
-# ❌ WRONG: Record prevention as "documentation" pointing to same workflow
-prevention_type: documentation
-prevention_path: "work.md"  # Already says MANDATORY - and it FAILED!
-
-# ✅ CORRECT: Escalate to hook that enforces the behavior
-prevention_type: hook
-prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/enforce-lock-protocol.sh"
-action: |
-  Create hook that detects lock investigation patterns and blocks them.
-  Or: Modify issue-lock.sh to output ONLY "find another issue" guidance,
-  removing any information that could be used to bypass the lock.
-```
-
-**The prevention step MUST take NEW action.** Recording a mistake without implementing NEW prevention
-(beyond what already existed) is not learning - it's just logging. The same mistake WILL recur.
-
-**BLOCKING CRITERIA (A002) - Documentation-level prevention NOT ALLOWED when:**
-
-| Condition | Why Blocked | Required Action |
-|-----------|-------------|-----------------|
-| Similar documentation already exists | Documentation already failed | Escalate to hook or code_fix |
-| Mistake category is `protocol_violation` | Protocol was documented but violated | Escalate to hook enforcement |
-| This is a recurrence (`recurrence_of` is set) | Previous prevention failed | Escalate to stronger level |
-| prevention_type would be `documentation` (level 7) | Weakest level, often ineffective | Consider hook (level 2) or validation (level 3) |
-
-**Self-check before recording prevention_type: documentation:**
-
-```yaml
-documentation_prevention_blocked_if:
-  - Similar instruction already exists in workflow/skill docs
-  - The mistake was ignoring existing documentation
-  - Category is protocol_violation (protocols ARE documentation)
-  - This is a recurrence of a previous mistake
-
-# If ANY of the above is true:
-action: "STOP. Escalate to hook, validation, or code_fix instead."
-```
-
-**Verification questions:**
-1. "Did prevention for this already exist?" → If YES, it failed and must be escalated
-2. "What NEW mechanism will prevent this tomorrow?" → Must be different from what failed today
-3. "Is this prevention stronger than what failed?" → Must be higher in the hierarchy
-4. "Am I choosing documentation because it's easy?" → If YES, find a stronger approach (A002)
-
-**If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
-
-### 8b. Check for Misleading Documentation (M256)
-
-**CRITICAL: Documentation may have ACTIVELY MISLED the agent toward the wrong approach.**
-
-If the mistake involves a **skill file**, use skill-builder's Priming Prevention Checklist to analyze it:
-
-```
-/cat:skill-builder analyze {path-to-skill}
-```
-
-The checklist covers:
-- Information Ordering (teaching HOW before saying "invoke tool")
-- Output Format (expected values embedded in examples)
-- Cost/Efficiency Language (suggesting proper approach is expensive)
-- Encapsulation (orchestrator learning to do the task directly)
-- Reference Information (formatting details that should be in preprocessing)
-
-**Quick self-check for non-skill documents:**
-
-| Question | If YES |
-|----------|--------|
-| Does doc teach approach BEFORE saying not to use it? | Reorder or remove |
-| Are there "for reference only" sections? | Move to preprocessing |
-| Could agent do the task after reading this doc? | Too much exposed |
-
-**Reference:** See `/cat:skill-builder` § "Priming Prevention Checklist" for detailed patterns.
-
-### 9. Implement Prevention
-
-**MANDATORY: Take concrete action. Prevention without action changes nothing.**
-
-The prevention step must result in a modified file - code, hook, configuration, or documentation.
-If you finish this step without editing a file, you have not implemented prevention.
-
-**Escalation and Layered Prevention (M342):**
-
-When escalating from documentation to hook/validation, **keep both layers** but align them:
-
-| Layer | Purpose | Keep? |
-|-------|---------|-------|
-| **Skill/Doc** | Proactive guidance - teaches WHY, guides before action | YES |
-| **Hook** | Reactive enforcement - blocks after attempt, provides fix | YES (new) |
-
-**Why keep both:**
-- Skills guide agents BEFORE they act (proactive)
-- Hooks catch mistakes AFTER the attempt (reactive)
-- Skills explain context and cover related rules
-- Hooks can fail (bugs, edge cases, not loaded)
-
-**When escalating, update the skill to reference the hook:**
-```markdown
-- NEVER do X - use Y instead
-  *(Enforced by hook MXXX - blocked if condition)*
-```
-
-This creates defense-in-depth: guidance prevents most mistakes, enforcement catches the rest.
-
-**Script vs Skill Instructions (M363):**
-
-Before adding prevention to a skill, ask: **Does this require LLM decision-making?**
-
-| If the check is... | Implement as... | Why |
-|--------------------|-----------------|-----|
-| Deterministic (fixed inputs → fixed outputs) | Script with tests | Testable, consistent, no LLM variance |
-| Requires context/judgment | Skill instructions | LLM needed for interpretation |
-
-**Examples:**
-
-| Check | Deterministic? | Implementation |
-|-------|----------------|----------------|
-| "Does branch have commits ahead of base?" | Yes - `git log` | Script |
-| "Is file path inside worktree?" | Yes - path comparison | Script |
-| "Does commit message follow convention?" | Yes - regex match | Hook |
-| "Is this change architecturally sound?" | No - requires judgment | Skill instructions |
-| "Should we decompose this task?" | No - context-dependent | Skill instructions |
-
-**When in doubt, ask:** "Could a bash script do this with no LLM?" If yes → script with tests.
-
-### Fix Location Checklist (M419 - MANDATORY)
-
-**BLOCKING: Complete this checklist BEFORE editing any file for prevention.**
-
-```yaml
-fix_location_checklist:
-  # Step 1: Classify the rule
-  rule_scope:
-    question: "Does this rule apply to ONE specific skill, or to MULTIPLE skills/scenarios?"
-    if_one_skill: "Edit that skill's SKILL.md"
-    if_multiple: "Go to Step 2"
-
-  # Step 2: Find the deepest applicable doc
-  depth_analysis:
-    question: "What is the LOWEST level document where this rule applies?"
-    check_order:
-      - "Concept doc? (applies to all skills referencing concept)"
-      - "Workflow doc? (applies to specific workflow)"
-      - "Skill doc? (applies to one skill only)"
-      - "Command doc? (single entry point)"
-    rule: "Choose the FIRST applicable level (deepest = most reuse)"
-
-  # Step 3: Verify before editing
-  verification:
-    file_to_edit: "________________"  # Fill in BEFORE editing
-    why_this_level: "________________"  # Justify the depth choice
-    not_editing_because_convenient: true  # Confirm you're not just editing current file
-```
-
-**Common mistake (M419):** Editing the file you're currently working with because it's convenient,
-instead of finding the appropriate depth. Example: Putting "use Tokens header for compression" in
-work-with-issue.md (generic) instead of subagent-delegation.md (concept doc for all result presentation).
-
-**Fix Location Principle: Apply to deepest document possible.**
-
-When choosing WHERE to implement a fix, prefer the lowest-level document that addresses the issue:
-
-| Level | Example | Benefit |
-|-------|---------|---------|
-| Concept doc | `concepts/subagent-delegation.md` | All skills/workflows referencing it inherit the fix |
-| Skill doc | `skills/shrink-doc/SKILL.md` | All invocations of that skill get the fix |
-| Workflow doc | `concepts/work.md` | Specific workflow improved |
-| Command doc | `commands/work.md` | Single entry point fixed |
-
-**Why depth matters:** A fix in a concept document (e.g., subagent-delegation.md) benefits every skill
-and workflow that references it. A fix in a command document benefits only that command. Apply fixes
-at the deepest level where they're relevant to maximize fix propagation.
-
-**Example:** M277 (validation separation) belongs in `shrink-doc/SKILL.md` (skill-specific validation)
-not `work.md` (generic workflow) because the per-file subagent pattern is shrink-doc-specific.
-
-**Verification question (M297):** Before committing a fix, ask: "Is this rule specific to one skill/context,
-or genuinely applies to all issues?" If specific → find the skill doc. If generic → workflow doc is correct.
-
-**Generalize prevention to match fix location scope (M440).** When the fix location is a document that
-handles multiple skills/scenarios, write the prevention in general terms — not specific to the skill that
-triggered the problem. The fix should cover all similar cases.
-
-| Fix Location | Prevention Wording |
-|--------------|-------------------|
-| Skill-specific doc (e.g., `shrink-doc/SKILL.md`) | May reference that skill's specific behavior |
-| General doc (e.g., `work-with-issue/SKILL.md`) | Must apply to ALL skills handled by that doc |
-| Concept doc (e.g., `concepts/subagent-delegation.md`) | Must apply to ALL contexts using that concept |
-
-Example: If shrink-doc's iteration loop was bypassed, and the fix goes in work-with-issue (which handles
-all skills), write "complete each skill fully before delegation" — not "complete shrink-doc's iteration
-loop before delegation."
-
-**Language requirements for documentation/prompt changes (M177):**
-
-When prevention involves updating documentation, prompts, or instructions, use **positive actionable
-language** that guides toward correct behavior rather than warning against mistakes.
-
-| Instead of (negative) | Use (positive) |
-|----------------------|----------------|
-| "Do NOT use approximate content" | "Copy-paste exact content from final output" |
-| "Never skip the verification step" | "Complete verification before proceeding" |
-| "Don't forget to commit" | "Commit changes before requesting review" |
-| "Avoid using placeholder text" | "Write final content first, then calculate" |
-
-**Why positive framing works better:**
-- Tells the agent what TO do (actionable) vs what to avoid (requires inference)
-- Creates clear mental model of correct behavior
-- Reduces cognitive load - no need to invert the instruction
-- Section titles should name the solution, not the problem (e.g., "Copy-Paste Workflow" not "Avoiding Content Mismatch")
-
-**Self-check before finalizing prevention text:**
-1. Does each instruction describe an action to take?
-2. Are section titles named after solutions, not problems?
-3. Would someone know exactly what to do after reading this?
-
-Keep negative language only when no actionable positive alternative exists (e.g., security warnings
-where the "don't" is the entire point).
-
-**Fail-Fast Error Handling (M361):**
-
-When implementing prevention that modifies error handling, apply the fail-fast principle:
-
-| Situation | Wrong Approach | Correct Approach |
-|-----------|----------------|------------------|
-| Required parameter missing | Return None (allow) | Block with error |
-| Can't verify safety | Assume safe | Assume unsafe, block |
-| Validation impossible | Skip validation | Fail the operation |
-
-**The mental model:**
-- "Unknown safety" = "unsafe"
-- If you can't verify an operation is safe, block it
-- Never allow potentially dangerous operations to proceed when validation fails
-
-**Example (M361):**
-```python
-# ❌ WRONG: Allow when can't validate
-cwd = context.get("cwd")
-if not cwd:
-    return None  # Allows dangerous command!
-
-# ✅ CORRECT: Block when can't validate
-cwd = context.get("cwd")
-if not cwd:
-    return {"decision": "block", "reason": "Cannot verify safety - cwd missing"}
-```
-
-**Complete Fix Requirement for Documentation Priming (M345):**
-
-When documentation primed the agent for wrong behavior, the fix must be **complete**:
-
-| Scenario | Incomplete Fix | Complete Fix |
-|----------|----------------|--------------|
-| Automation exists but broken | "NEVER manually construct" | Fix the preprocessing/handler |
-| Automation doesn't exist yet | "NEVER manually construct" | ASK USER: build it or simplify? |
-| Skill references non-existent feature | "Don't use feature X" | ASK USER: build it or simplify? |
-
-**The fix must make correct behavior possible, not just prohibit wrong behavior.**
-
-**MANDATORY: Preserve Output Format When Possible (M345):**
-
-When a skill cannot produce its intended output due to missing automation:
-
-1. **Do NOT unilaterally change the output format**
-2. **Use AskUserQuestion to offer the choice:**
-
-```yaml
-question: "Skill '{skill}' references output that cannot be generated. How should I proceed?"
+question: "Retrospective threshold exceeded. Run retrospective now?"
 options:
-  - label: "Build the missing automation"
-    description: "Create the preprocessing script/handler to generate the intended output"
-  - label: "Simplify the output format"
-    description: "Change skill to use simpler format (e.g., markdown instead of boxes)"
+  - label: "Run now"
+    action: "Invoke /cat:run-retrospective immediately"
+  - label: "Later"
+    action: "Inform user to run /cat:run-retrospective when ready"
+  - label: "Skip this cycle"
+    action: "Reset counter without running"
 ```
-
-3. Implement whichever option the user selects
-
-**Checklist before finalizing documentation priming fix:**
-
-```yaml
-complete_fix_checklist:
-  negative_guidance: "Does fix say what NOT to do?"  # Necessary but insufficient
-  positive_guidance: "Does fix say what TO do?"      # Required
-  ability_to_act: "Can agent actually do it?"        # Required
-  format_preserved: "Is original output format retained?"  # Preferred
-
-  # If ability_to_act is NO:
-  if_automation_broken:
-    action: "Fix the automation"
-  if_automation_missing:
-    action: "ASK USER: build automation or simplify output?"
-    do_not: "Unilaterally change output format"
-```
-
-**Anti-pattern (M345):** Adding "NEVER do X" without ensuring the agent CAN do Y.
-**Anti-pattern (M345):** Changing output format without user consent.
-
-**Missing Preprocessing Output (M452):**
-
-When a handler/preprocessing script should have provided output but didn't, fail-fast. Do NOT add
-fallback behavior that teaches the LLM to run scripts directly or gather data manually.
-
-| Prevention Pattern | Wrong | Correct |
-|-------------------|-------|---------|
-| Missing script output | Add script command as fallback | Skip output or error — fix the handler |
-| Missing handler data | Teach LLM to read files manually | Error — fix the handler |
-
-Adding script commands as fallbacks teaches the agent to bypass preprocessing — which is the same
-problem as manual construction (PATTERN-008). Fail-fast on missing preprocessing, then fix the handler.
-
-**For context-related mistakes:**
-
-```yaml
-prevention_action:
-  if_context_related:
-    # Context limits are fixed - see agent-architecture.md § Context Limit Constants
-    primary:
-      action: "Improve issue size estimation"
-      rationale: "Better estimates prevent exceeding limits"
-
-    secondary:
-      action: "Add quality checkpoint at 50% context"
-      implementation: |
-        At 50% context, pause and verify:
-        - Is work quality consistent with early session?
-        - Are earlier decisions still being referenced?
-        - Should issue be decomposed now?
-
-    tertiary:
-      action: "Enhance PLAN.md with explicit checkpoints"
-      implementation: |
-        Add context-aware milestones to issue plans.
-        Each milestone = potential decomposition point.
-```
-
-**BLOCKING GATE (M134/A022) - Prevention File Edit Verification:**
-
-BEFORE proceeding to "Record Learning", you MUST complete this gate:
-
-1. **List EVERY file you edited in Step 9:**
-   - File 1: _______________
-   - File 2: _______________
-   (Add more lines as needed)
-
-2. **Verification check:**
-   - [ ] At least ONE file path is listed above
-   - [ ] Each listed file was ACTUALLY edited (not just read)
-   - [ ] The edit tool was used, not just planned
-
-3. **BLOCKING CONDITION:**
-   If the file list above is BLANK or contains only placeholders:
-   - **STOP IMMEDIATELY**
-   - Go back to Step 9
-   - Make an ACTUAL edit to implement prevention
-   - Return here and fill in the file path(s)
-   - Only then proceed to Record Learning
-
-4. **Why this gate exists (M134/M135):**
-   Recording `prevention_implemented: true` without editing a file is FALSE.
-   The prevention_path in the JSON entry MUST match a file listed above.
-   If they don't match, the learning system is corrupted.
-
-### 9b. Verify Fix Doesn't Introduce Priming (M370)
-
-**MANDATORY: After editing documentation, read `PRIMING-VERIFICATION.md` to verify no new priming introduced.**
-
-Quick check: Do edited files contain concrete values (1.0, SUCCESS) in output formats? Replace with placeholders.
-
-### 9c. Check Related Files for Similar Mistakes (M341)
-
-**MANDATORY: After fixing a file, read `RELATED-FILES-CHECK.md` to find and fix similar vulnerabilities.**
-
-Skip only when: fix is unique to one file (typo) or no similar files exist (verified).
-
-### 10. Verify Prevention Works
-
-```yaml
-verification:
-  action: "Rerun similar issue with new threshold"
-  success_criteria:
-    - Decomposition triggered before 60K tokens
-    - No quality degradation observed
-    - Original mistake type does not recur
-```
-
-### 11. Record Learning
-
-**MANDATORY: Persist learning to file, not just context.**
-
-**CRITICAL VALIDATION - Before recording, verify prevention is REAL:**
-
-```yaml
-prevention_path_validation:
-  invalid_examples:
-    - "N/A"
-    - "N/A - behavioral change"
-    - "behavioral"
-    - "process change"
-    - ""  # empty
-    - "TBD"
-
-  valid_examples:
-    - "/workspace/cat/commands/work.md"
-    - ".claude/hooks/validate-commit.sh"
-    - "src/main/java/Parser.java"
-
-  # Rule: prevention_path MUST be a real file path that was actually modified
-  # "Behavioral change" without enforcement is NOT prevention - it WILL recur
-
-  # (A022) BLOCKING: prevention_path must match a file listed in the BLOCKING GATE above
-  # If prevention_path doesn't match what you edited, STOP and fix before recording
-  # Recording with mismatched path corrupts the learning system
-```
-
-**If you cannot identify a real file to change, you have NOT implemented prevention.**
-Go back to step 9 and find a code/config/documentation fix.
-
-**Directory:** `.claude/cat/retrospectives/`
-
-**File Structure (v2.0 - time-based splits):**
-- `index.json` - Centralized config and file tracking
-- `mistakes-YYYY-MM.json` - Mistakes for each month
-- `retrospectives-YYYY-MM.json` - Retrospectives for each month
-
-**CRITICAL PATH CHECKS**:
-
-1. **Directory path**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
-
-2. **prevention_path format (M040)**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative
-paths:
-   ```yaml
-   # INVALID - relative paths break when cwd changes
-   prevention_path: ".claude/hooks/my-hook.sh"
-   prevention_path: "hooks/my-hook.sh"
-
-   # VALID - absolute paths work from any directory
-   prevention_path: "${CLAUDE_PROJECT_DIR}/.claude/hooks/my-hook.sh"
-   prevention_path: "/workspace/cat/skills/my-skill/SKILL.md"
-   ```
-
-3. **Plugin source vs cache (M041)**: When fixing CAT plugin files, edit SOURCE not CACHE:
-   ```yaml
-   # WRONG - edits lost on plugin update
-   ~/.config/claude/plugins/cache/claude-code-cat/cat/1.1/skills/...
-
-   # CORRECT - edit the source repository
-   /workspace/cat/skills/...  # or wherever CAT source is cloned
-   ```
-
-If files exist at wrong location, migrate:
-
-```bash
-if [ -d .claude/retrospectives ] && [ ! -d .claude/cat/retrospectives ]; then
-  mkdir -p .claude/cat/retrospectives
-  mv .claude/retrospectives/*.json .claude/cat/retrospectives/ 2>/dev/null || true
-  rmdir .claude/retrospectives 2>/dev/null || true
-fi
-```
-
-```bash
-RETRO_DIR=".claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
-
-# Get current year-month for file naming
-YEAR_MONTH=$(date +%Y-%m)
-MISTAKES_FILE="$RETRO_DIR/mistakes-${YEAR_MONTH}.json"
-
-mkdir -p "$RETRO_DIR"
-
-# Initialize index.json if needed
-if [ ! -f "$INDEX_FILE" ]; then
-  cat > "$INDEX_FILE" << 'EOF'
-{
-  "version": "2.0",
-  "config": {
-    "mistake_count_threshold": 10,
-    "trigger_interval_days": 7
-  },
-  "last_retrospective": null,
-  "mistake_count_since_last": 0,
-  "files": {
-    "mistakes": [],
-    "retrospectives": []
-  }
-}
-EOF
-fi
-
-# Initialize split file for current month if needed
-if [ ! -f "$MISTAKES_FILE" ]; then
-  echo "{\"period\":\"$YEAR_MONTH\",\"mistakes\":[]}" > "$MISTAKES_FILE"
-  # Add to index
-  jq --arg f "mistakes-${YEAR_MONTH}.json" \
-    'if (.files.mistakes | index($f)) then . else .files.mistakes += [$f] | .files.mistakes |= sort end' \
-    "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-fi
-
-# Get max ID across ALL split files (handles gaps correctly)
-MAX_NUM=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-  jq -s '[.[].mistakes[].id] | map(select(startswith("M")) | ltrimstr("M") | tonumber) | max // 0')
-NEXT_NUM=$((MAX_NUM + 1))
-NEXT_ID=$(printf "M%03d" $NEXT_NUM)
-
-# Verify ID doesn't already exist across all files (safety check)
-if cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | jq -s -e --arg id "$NEXT_ID" \
-    '[.[].mistakes[] | select(.id == $id)] | length > 0' >/dev/null 2>&1; then
-  echo "ERROR: ID $NEXT_ID already exists! Finding next available..."
-  MAX_NUM=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[].id] | map(ltrimstr("M") | tonumber) | max')
-  NEXT_NUM=$((MAX_NUM + 1))
-  NEXT_ID=$(printf "M%03d" $NEXT_NUM)
-fi
-```
-
-**Append entry to mistakes.json:**
-
-```json
-{
-  "id": "{NEXT_ID}",
-  "timestamp": "{ISO-8601 timestamp}",
-  "category": "{see category reference below}",
-  "description": "{One-line description of the mistake}",
-  "root_cause": "{Root cause from analysis}",
-  "rca_method": "{A|B|C}",
-  "rca_method_name": "{5-whys|taxonomy|causal-barrier}",
-  "prevention_type": "{code_fix|hook|validation|config|skill|threshold|process|documentation}",
-  "prevention_path": "{path/to/file/changed}",
-  "pattern_keywords": ["{keyword1}", "{keyword2}"],
-  "prevention_implemented": true,
-  "prevention_verified": true,
-  "recurrence_of": "{null or ID of original mistake if this is a recurrence}",
-  "prevention_quality": {
-    "verification_type": "{positive|negative}",
-    "fragility": "{low|medium|high}",
-    "catches_variations": true
-  },
-  "correct_behavior": "{What should be done instead}"
-}
-```
-
-**Category and Prevention Type Reference:**
-
-See [mistake-categories.md](mistake-categories.md) for full category list, prevention types, and common root cause patterns.
-
-**Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse, assumption_without_verification, misleading_documentation (M269)
-
-**Use jq to append to current month's split file:**
-
-```bash
-# Append to current month's split file (mistakes-YYYY-MM.json)
-jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
-  "$MISTAKES_FILE" > "$MISTAKES_FILE.tmp" \
-  && mv "$MISTAKES_FILE.tmp" "$MISTAKES_FILE"
-```
-
-### 12. Update Retrospective Counter and Commit
-
-**MANDATORY: Update counter and commit files together.**
-
-**VALIDATION CHECK**: Before incrementing, verify counter matches actual mistake count:
-
-```bash
-RETRO_DIR=".claude/cat/retrospectives"
-INDEX_FILE="$RETRO_DIR/index.json"
-
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-
-# Count actual mistakes since last retrospective across ALL split files
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  ACTUAL_COUNT=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s --arg date "$LAST_RETRO" \
-    '[.[].mistakes[] | select(.timestamp > $date)] | length')
-else
-  ACTUAL_COUNT=$(cat "$RETRO_DIR"/mistakes-*.json 2>/dev/null | \
-    jq -s '[.[].mistakes[]] | length')
-fi
-
-COUNTER=$(jq '.mistake_count_since_last' "$INDEX_FILE")
-
-# Warn if mismatch (counter should be ACTUAL_COUNT - 1 before we increment)
-if [[ $COUNTER -ne $((ACTUAL_COUNT - 1)) ]] && [[ $COUNTER -ne $ACTUAL_COUNT ]]; then
-  echo "WARNING: Counter mismatch! Counter=$COUNTER, Actual mistakes since $LAST_RETRO=$ACTUAL_COUNT"
-  echo "Fixing counter to match actual count..."
-  jq --argjson count "$ACTUAL_COUNT" '.mistake_count_since_last = $count' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
-    && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-else
-  jq '.mistake_count_since_last += 1' "$INDEX_FILE" > "$INDEX_FILE.tmp" \
-    && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
-fi
-
-# Commit split file and index together
-git add "$MISTAKES_FILE" "$INDEX_FILE"
-git commit -m "config: record learning ${NEXT_ID} - {short description}"
-
-# Get current values to check trigger
-MISTAKES=$(jq '.mistake_count_since_last' "$INDEX_FILE")
-THRESHOLD=$(jq '.config.mistake_count_threshold' "$INDEX_FILE")
-LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
-INTERVAL=$(jq '.config.trigger_interval_days' "$INDEX_FILE")
-
-# Calculate days since last retrospective
-if [[ -n "$LAST_RETRO" && "$LAST_RETRO" != "null" ]]; then
-  LAST_EPOCH=$(date -d "$LAST_RETRO" +%s 2>/dev/null || echo 0)
-else
-  LAST_EPOCH=0
-fi
-NOW_EPOCH=$(date +%s)
-DAYS_SINCE=$(( (NOW_EPOCH - LAST_EPOCH) / 86400 ))
-
-# Check thresholds
-if [[ $MISTAKES -ge $THRESHOLD ]]; then
-  echo "RETROSPECTIVE TRIGGERED: Mistake threshold reached ($MISTAKES >= $THRESHOLD)"
-  echo "Run: /cat:run-retrospective"
-elif [[ $DAYS_SINCE -ge $INTERVAL ]]; then
-  echo "RETROSPECTIVE TRIGGERED: Time threshold reached ($DAYS_SINCE days >= $INTERVAL)"
-  echo "Run: /cat:run-retrospective"
-else
-  echo "Retrospective status: $MISTAKES/$THRESHOLD mistakes, $DAYS_SINCE/$INTERVAL days"
-fi
-```
-
-**If triggered, MUST use AskUserQuestion (M071):**
-
-```yaml
-retrospective_trigger:
-  condition: mistakes >= threshold OR days >= interval
-  action: "Use AskUserQuestion to offer user choice"
-  mandatory_prompt:
-    question: "Retrospective threshold exceeded ({count}/{threshold}). Run retrospective now?"
-    options:
-      - "Run now" - Invoke /cat:run-retrospective immediately
-      - "Later" - Inform user to run /cat:run-retrospective when ready
-      - "Skip this cycle" - Reset counter without running
-```
-
-**Anti-pattern (M071):** Printing "retrospective should be triggered" without using AskUserQuestion
-to give user explicit choice.
 
 ## Examples
 
@@ -1465,3 +314,19 @@ When winner determined:
 2. Keep only winning method as Step 3
 3. Archive RCA-AB-TEST.md to `archive/` subdirectory
 4. Update this section to document final result
+
+## Error Handling
+
+If any phase subagent fails unexpectedly:
+
+1. Capture error message
+2. Display error to user with phase context
+3. Offer: Retry phase, Abort, or Manual intervention
+
+## Success Criteria
+
+- [ ] All 4 phases complete successfully
+- [ ] Learning recorded in mistakes-YYYY-MM.json
+- [ ] Retrospective counter updated
+- [ ] Prevention implemented and committed
+- [ ] Summary displayed to user
