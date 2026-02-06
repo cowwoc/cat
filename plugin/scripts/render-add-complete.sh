@@ -74,7 +74,7 @@ def build_header_box(header, content_items, min_width=40, prefix="─ "):
     max_width = max(max(content_widths) if content_widths else 0, header_width, min_width)
 
     # Build box
-    suffix_dashes = "─" * (max_width - header_width + 2)
+    suffix_dashes = "─" * (max_width - header_width + 1)
     lines = ["╭" + header_with_prefix + " " + suffix_dashes + "╮"]
     for c in content_items:
         lines.append(build_line(c, max_width))

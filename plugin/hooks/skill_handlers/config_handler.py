@@ -23,7 +23,7 @@ def build_simple_header_box(icon: str, title: str, content_lines: list[str]) -> 
     lines = []
     # Header top with embedded title
     prefix = "─── "
-    suffix_dashes = "─" * (max_width - len(prefix) - header_width + 2)
+    suffix_dashes = "─" * (max_width - len(prefix) - header_width + 1)
     if len(suffix_dashes) < 1:
         suffix_dashes = "─"
     lines.append("╭" + prefix + header + " " + suffix_dashes + "╮")
