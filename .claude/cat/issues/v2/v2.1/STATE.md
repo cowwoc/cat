@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Tasks Pending
+- add-diagnostic-review-checks
 - fix-blocked-tasks-diagnostics
 - move-config-read-to-work-handler
 - optimize-execution-script
