@@ -111,7 +111,7 @@ def build_scope_complete_box(scope: str) -> str:
 
     content = [
         "",
-        f"**{scope}** - all issues complete!",
+        f"{scope} - all issues complete!",
         "",
     ]
 
