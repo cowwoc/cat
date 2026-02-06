@@ -3,38 +3,53 @@
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
-- **Last Updated:** 2026-01-26
+- **Last Updated:** 2026-02-06
 - **Decomposed At:** 2026-01-26
 - **Reason:** Task exceeded context threshold (50 files = ~220K tokens)
 
 ## Decomposed Into
 - java-jdk-infrastructure (JDK bundle, bootstrap scripts)
-- java-core-hooks (lib/config, entry points)
-- java-skill-handlers (12 skill handlers)
-- java-bash-handlers (14 bash handlers)
-- java-other-handlers (7 remaining handlers)
+- java-core-hooks (wire up entry points in hooks.json)
+- java-skill-handlers (5 missing + verify 11 existing)
+- java-bash-handlers (3 missing + verify 14 existing)
+- java-other-handlers (6 missing + verify 6 existing)
+- add-java-build-to-ci (JAR build step for SessionStart)
+- migrate-enforce-hooks (EnforceWorktreeIsolation + EnforceStatusOutput to Java)
+- migrate-token-counting (Python tiktoken to Java JTokkit)
+- migrate-python-tests (18 Python test files to Java TestNG)
+- cleanup-python-files (remove all Python hook/test files)
 
 ## Parallel Execution Plan
 
-### Sub-task 1 (Sequential - Foundation)
-| Task | Est. Tokens | Files | Dependencies |
-|------|-------------|-------|--------------|
-| java-jdk-infrastructure | ~25K | 4 | None |
+### Wave 1 (Sequential - Foundation)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| java-jdk-infrastructure | ~25K | None |
 
-### Sub-task 2 (Sequential - Core)
-| Task | Est. Tokens | Files | Dependencies |
-|------|-------------|-------|--------------|
-| java-core-hooks | ~20K | 8 | java-jdk-infrastructure |
+### Wave 2 (Sequential - Core)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| java-core-hooks | ~20K | java-jdk-infrastructure, add-java-build-to-ci |
 
-### Sub-task 3 (Concurrent - Handlers)
-| Task | Est. Tokens | Files | Dependencies |
-|------|-------------|-------|--------------|
-| java-skill-handlers | ~45K | 12 | java-core-hooks |
-| java-bash-handlers | ~25K | 14 | java-core-hooks |
-| java-other-handlers | ~25K | 7 | java-core-hooks |
+### Wave 3 (Concurrent - Handlers + Token Counting)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| java-skill-handlers | ~35K | java-core-hooks |
+| java-bash-handlers | ~25K | java-core-hooks |
+| java-other-handlers | ~25K | java-core-hooks |
+| migrate-enforce-hooks | ~15K | java-core-hooks |
+| migrate-token-counting | ~15K | java-core-hooks |
+| add-java-build-to-ci | ~10K | None (can start anytime) |
 
-**Total sub-tasks:** 3 waves
-**Max concurrent subagents:** 3 (in wave 3)
+### Wave 4 (Sequential - Tests)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| migrate-python-tests | ~30K | All handler subtasks |
 
-Wave 1 and 2 are sequential (foundation must be laid first).
-Wave 3 tasks are independent - they modify different handler packages with no overlap.
+### Wave 5 (Sequential - Cleanup)
+| Task | Est. Tokens | Dependencies |
+|------|-------------|--------------|
+| cleanup-python-files | ~10K | migrate-python-tests |
+
+**Total sub-tasks:** 10
+**Max concurrent:** 6 (in wave 3)
