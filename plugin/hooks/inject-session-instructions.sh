@@ -127,11 +127,12 @@ Main agent should NOT directly edit files for implementation work.
 
 ### Worktree Isolation (M252)
 **CRITICAL**: NEVER work on tasks in the main worktree. ALWAYS use isolated worktrees.
+*(Enforced by hook - Edit/Write blocked on protected branches for plugin/ files)*
 
 **Correct flow**: `/cat:add` → `/cat:work` (creates worktree) → delegate to subagent → merge back
 
 **Violation indicators**:
-- Working directly on v2.0 or main branch
+- Working directly on v2.1 or main branch
 - No `.git/cat-base` file in current directory (not a task worktree)
 - Making task-related edits without first running `/cat:work`
 
@@ -141,8 +142,7 @@ Main agent should NOT directly edit files for implementation work.
 - Clean rollback if task is abandoned
 - Clear separation between planning and implementation
 
-**If you find yourself editing files for a task without having run `/cat:work`**: STOP.
-Create the task properly and use the worktree workflow.
+**If hook blocks your edit**: Create task via `/cat:add` and work via `/cat:work` in isolated worktree.
 
 ### Fail-Fast Protocol
 **CRITICAL**: When a skill/workflow says "FAIL immediately" or outputs an error message, STOP.

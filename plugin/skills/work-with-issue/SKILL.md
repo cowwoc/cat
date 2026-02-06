@@ -155,6 +155,23 @@ or failed results to the subagent for manual fixing — that bypasses the skill'
 
 Capture the output from these skills - the implementation subagent will need the results.
 
+### Delegation Prompt Construction (M455)
+
+**Pass PLAN.md execution steps verbatim without interpretive summarization.**
+
+When constructing the delegation prompt below, include execution steps from PLAN.md exactly as written.
+Do NOT add ad-hoc "Important Notes" or aggregate language that might conflict with PLAN.md's structure.
+
+**Why:** If PLAN.md distinguishes Step 2 (path construction) from Step 3 (documentation references),
+that distinction is intentional. Adding aggregate language like "Replace ALL occurrences" can prime
+the subagent to treat distinct steps as a single operation, causing incomplete execution.
+
+**Pattern:**
+- ✅ Include `${EXECUTION_STEPS}` directly from PLAN.md
+- ✅ Trust PLAN.md structure - distinct steps should remain distinct
+- ❌ Do NOT add interpretive summaries or aggregate instructions
+- ❌ Do NOT synthesize "Important Notes" that restate steps differently
+
 ### Spawn Implementation Subagent
 
 Spawn a subagent to implement the task:
