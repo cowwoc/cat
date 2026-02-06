@@ -52,10 +52,10 @@ If verification fails:
 
 Group and squash commits by conventional commit type:
 
-```bash
-# Interactive rebase to organize commits
-git rebase -i main
-```
+Use `/cat:git-squash` skill which uses `commit-tree` for safe squashing.
+
+**NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft`
+(captures stale working directory state, can revert fixes from base branch — see M385).
 
 Target result:
 ```
