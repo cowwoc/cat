@@ -220,6 +220,84 @@ EOF
     handler._get_staged_files = original_get_staged
 
 
+def test_detect_shell_operators():
+    """Test detect_shell_operators handler."""
+    runner.section("bash_handlers/detect_shell_operators")
+
+    from bash_handlers.detect_shell_operators import DetectShellOperatorsHandler
+    handler = DetectShellOperatorsHandler()
+
+    # Test != operator detection in [[ ]] test
+    cmd = '[[ "$var" != "value" ]] && echo "different"'
+    result = handler.check(cmd, {})
+    runner.test("Detects != in [[ ]] test", result is not None and "warning" in result)
+
+    # Test == operator detection in [[ ]] test
+    cmd = '[[ "$var" == "value" ]] && echo "same"'
+    result = handler.check(cmd, {})
+    runner.test("Detects == in [[ ]] test", result is not None and "warning" in result)
+
+    # Test // operator detection in jq
+    cmd = 'jq ".field // \\"default\\"" file.json'
+    result = handler.check(cmd, {})
+    runner.test("Detects // in jq expression", result is not None and "warning" in result)
+
+    # Test != in jq expression
+    cmd = 'jq "select(.status != \\"done\\")" file.json'
+    result = handler.check(cmd, {})
+    runner.test("Detects != in jq expression", result is not None and "warning" in result)
+
+    # Test script execution is allowed (bash script.sh)
+    cmd = 'bash /path/to/script.sh'
+    result = handler.check(cmd, {})
+    runner.test("Allows bash script.sh execution", result is None)
+
+    # Test script execution is allowed (python script.py)
+    cmd = 'python3 /path/to/script.py'
+    result = handler.check(cmd, {})
+    runner.test("Allows python3 script.py execution", result is None)
+
+    # Test script execution is allowed (./script.sh)
+    cmd = './validate-something.sh'
+    result = handler.check(cmd, {})
+    runner.test("Allows ./script.sh execution", result is None)
+
+    # Test python -c is allowed
+    cmd = 'python3 -c "import sys; sys.exit(0 if x != y else 1)"'
+    result = handler.check(cmd, {})
+    runner.test("Allows python3 -c with != operator", result is None)
+
+    # Test git commit messages are allowed
+    cmd = '''git commit -m "$(cat <<'EOF'
+feature: add support for != operator
+EOF
+)"'''
+    result = handler.check(cmd, {})
+    runner.test("Allows != in git commit message", result is None)
+
+    # Test URLs with // are allowed
+    cmd = 'curl https://example.com/api'
+    result = handler.check(cmd, {})
+    runner.test("Allows // in URLs", result is None)
+
+    # Test comments with operators are allowed
+    cmd = '''cat <<EOF
+# This checks if x != y
+# and uses // for fallback
+echo "safe command"
+EOF'''
+    result = handler.check(cmd, {})
+    runner.test("Allows operators in comments", result is None)
+
+    # Test multiple operators detected
+    cmd = '[[ "$a" != "$b" ]] && jq ".x // \\"default\\""'
+    result = handler.check(cmd, {})
+    runner.test("Detects multiple operators", result is not None and "warning" in result)
+    if result and "warning" in result:
+        runner.test("Warning mentions both != and //",
+                   "!=" in result["warning"] and "//" in result["warning"])
+
+
 # =============================================================================
 # SKILL HANDLERS TESTS
 # =============================================================================
@@ -1391,6 +1469,7 @@ def main():
     # Run all test functions
     test_functions = [
         test_validate_commit_type,
+        test_detect_shell_operators,
         test_add_handler,
         test_display_utils,
         test_status_handler,
