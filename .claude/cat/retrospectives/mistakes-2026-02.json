@@ -3174,6 +3174,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Add --issue-id optional parameter to work-prepare.py argparse, pass it to get-available-issues.sh, and update /cat:work skill to pass user's issue ID to script"
+    },
+    {
+      "id": "M466",
+      "timestamp": "2026-02-06T22:26:09Z",
+      "category": "script_error_handling",
+      "description": "work-prepare.py treated get-available-issues.sh exit code 1 as error instead of parsing JSON status field first",
+      "root_cause": "Incorrect error handling pattern: checking exit code before parsing JSON output when the JSON contains the actual status. Exit code 1 is used for both 'not found' (expected) and actual errors (unexpected), making them indistinguishable via exit code alone.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/plugin/scripts/work-prepare.py",
+      "pattern_keywords": [
+        "error_handling",
+        "json_parsing",
+        "exit_code"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Parse JSON output first to extract status field, only raise error if JSON parsing fails"
     }
   ]
 }

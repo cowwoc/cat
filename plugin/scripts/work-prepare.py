@@ -96,10 +96,17 @@ def call_get_available_issues(
         timeout=30
     )
 
-    if result.returncode != 0:
+    # Parse JSON output first - get-available-issues.sh uses JSON status field
+    # as semantic result, not exit code (exit 1 used for both "not_found" and errors)
+    try:
+        parsed = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        # JSON parse failed - this IS an error
         raise RuntimeError(f"get-available-issues.sh failed: {result.stderr}")
 
-    return json.loads(result.stdout)
+    # If JSON parsed successfully, return it regardless of exit code
+    # The status field contains the actual result (found, not_found, locked, etc.)
+    return parsed
 
 
 def gather_diagnostic_info(project_dir: Path) -> Dict[str, Any]:
