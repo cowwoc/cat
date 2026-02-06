@@ -55,3 +55,4 @@ from . import remind_git_squash
 from . import warn_file_extraction
 from . import compute_box_lines
 from . import validate_worktree_remove
+from . import detect_shell_operators
