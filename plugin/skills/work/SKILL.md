@@ -79,7 +79,7 @@ Delegate to work-prepare subagent using the Task tool with these JSON parameters
 
 - **description:** `"Prepare: find task, create worktree"`
 - **subagent_type:** `"general-purpose"`
-- **model:** `"haiku"`
+- **model:** `"sonnet"`
 - **prompt:** The prompt below (substitute variables with actual values)
 
 Prompt for the subagent:
@@ -100,14 +100,26 @@ Prompt for the subagent:
 | Status | Action |
 |--------|--------|
 | READY | Display progress banner, continue to Phase 2 |
-| NO_TASKS | Display NO_EXECUTABLE_ISSUES box with context-aware guidance (see below), stop |
+| NO_TASKS | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message, try next task |
 | OVERSIZED | Invoke /cat:decompose-issue, then retry |
 | ERROR | Display error, stop |
+| No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
-**NO_TASKS Guidance (M396):**
+**No-result handling (M441):** If the prepare subagent returns no parseable JSON (empty output,
+turn limit exceeded, or malformed text), treat as ERROR. Do NOT retry silently or assume NO_TASKS.
+Display: "Prepare phase failed to return a result. The subagent may have exceeded its turn budget."
 
-When prepare phase returns NO_TASKS, check the `message` field and provide appropriate guidance:
+**NO_TASKS Guidance (M396, M441):**
+
+When prepare phase returns NO_TASKS, use extended failure fields to provide specific diagnostics:
+
+1. If `blocked_tasks` is non-empty: list each blocked task and what it's blocked by
+2. If `locked_tasks` is non-empty: suggest `/cat:cleanup` to clear stale locks
+3. If `closed_count == total_count`: all tasks done - suggest `/cat:add` for new work
+4. Otherwise: suggest `/cat:status` to see available tasks
+
+Fallback to `message` field if extended fields are absent:
 
 | Message contains | Suggested action |
 |------------------|------------------|

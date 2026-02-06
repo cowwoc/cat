@@ -2520,6 +2520,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Complete iterative skills (shrink-doc) fully at main agent level — all files must reach EQUIVALENT status before passing results to implementation subagent"
+    },
+    {
+      "id": "M441",
+      "timestamp": "2026-02-06T14:00:00Z",
+      "category": "model_selection",
+      "description": "Prepare phase subagent (haiku) exhausted turn budget without producing JSON output - used 31K tokens, 14 tool calls, 27 assistant messages before hitting limit",
+      "root_cause": "Haiku model specified for prepare phase in work/SKILL.md. Prepare phase requires reading SKILL.md, running discovery script, creating worktree, verifying branch, checking existing work, and updating STATE.md — too many steps for haiku's token efficiency. Haiku produced verbose intermediate reasoning instead of executing efficiently.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work/SKILL.md",
+      "pattern_keywords": [
+        "haiku",
+        "prepare",
+        "turn-limit",
+        "no-result",
+        "model-selection"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use sonnet for prepare phase — it has enough steps (8) and complexity (script execution, worktree creation, branch verification) to require a capable model. Reserve haiku for truly mechanical single-step operations."
     }
   ]
 }
