@@ -59,9 +59,11 @@ if [[ -z "$BASE_BRANCH" ]]; then
         fi
     fi
 
-    # Default to main
+    # Fail-fast: base branch must be determinable
     if [[ -z "$BASE_BRANCH" ]]; then
-        BASE_BRANCH="main"
+        echo "ERROR: Could not determine base branch from worktree or current branch" >&2
+        echo "Solution: Provide BASE_BRANCH as first argument or run from a properly configured worktree" >&2
+        exit 1
     fi
 fi
 

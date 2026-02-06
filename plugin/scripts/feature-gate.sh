@@ -30,7 +30,11 @@ if "${SCRIPT_DIR}/entitlements.sh" "$TIER" "$FEATURE" 2>/dev/null; then
 else
     ALLOWED=false
     # Find required tier for this feature
-    REQUIRED_TIER=$("${SCRIPT_DIR}/entitlements.sh" --required-tier "$FEATURE" 2>/dev/null || echo "team")
+    REQUIRED_TIER=$("${SCRIPT_DIR}/entitlements.sh" --required-tier "$FEATURE" 2>/dev/null)
+    if [[ -z "$REQUIRED_TIER" ]]; then
+        echo "ERROR: Could not determine required tier for feature: $FEATURE" >&2
+        exit 1
+    fi
     MESSAGE="Feature '$FEATURE' requires $REQUIRED_TIER tier. Current: $TIER. Upgrade at https://cat.example.com/pricing"
 fi
 
