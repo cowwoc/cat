@@ -163,8 +163,30 @@ for issue_dir in .claude/cat/issues/v*/v*/*/ ; do
       DEPS=$(grep -oP '(?<=\*\*Dependencies:\*\* \[).*?(?=\])' "$issue_dir/STATE.md")
       ISSUE_NAME=$(basename "$issue_dir")
       if [ -n "$DEPS" ] && [ "$DEPS" != "" ]; then
-        # Has dependencies - check if they're resolved
-        BLOCKED_TASKS=$(echo "$BLOCKED_TASKS" | jq --arg id "$ISSUE_NAME" --arg deps "$DEPS" '. + [{"issue_id": $id, "blocked_by": ($deps | split(", ")), "reason": "unresolved dependencies"}]')
+        # Check each dependency's status
+        UNRESOLVED_DEPS='[]'
+        IFS=', ' read -ra DEP_ARRAY <<< "$DEPS"
+        for dep in "${DEP_ARRAY[@]}"; do
+          # Find dependency's STATE.md in the same version structure
+          VERSION_DIR=$(dirname "$(dirname "$issue_dir")")
+          DEP_STATE="$VERSION_DIR/$dep/STATE.md"
+          if [ -f "$DEP_STATE" ]; then
+            DEP_STATUS=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$DEP_STATE")
+            if [ "$DEP_STATUS" != "closed" ]; then
+              UNRESOLVED_DEPS=$(echo "$UNRESOLVED_DEPS" | jq --arg dep "$dep" --arg status "$DEP_STATUS" '. + [{"id": $dep, "status": $status}]')
+            fi
+          else
+            # Dependency not found - treat as unresolved
+            UNRESOLVED_DEPS=$(echo "$UNRESOLVED_DEPS" | jq --arg dep "$dep" '. + [{"id": $dep, "status": "not_found"}]')
+          fi
+        done
+        # Only add to BLOCKED_TASKS if there are unresolved dependencies
+        UNRESOLVED_COUNT=$(echo "$UNRESOLVED_DEPS" | jq 'length')
+        if [ "$UNRESOLVED_COUNT" -gt 0 ]; then
+          UNRESOLVED_IDS=$(echo "$UNRESOLVED_DEPS" | jq '[.[].id]')
+          REASON=$(echo "$UNRESOLVED_DEPS" | jq -r 'map("\(.id) (\(.status))") | join(", ")')
+          BLOCKED_TASKS=$(echo "$BLOCKED_TASKS" | jq --arg id "$ISSUE_NAME" --argjson deps "$UNRESOLVED_IDS" --arg reason "$REASON" '. + [{"issue_id": $id, "blocked_by": $deps, "reason": $reason}]')
+        fi
       fi
       ;;
   esac
