@@ -186,7 +186,7 @@ class AutoLearnHandler:
             return "wrong_working_directory", self._extract_context(output, r"pom\.xml", 3)
 
         # Pattern 12c: Path errors in Bash
-        if tool_name == "Bash" and re.search(
+        if tool_name == "Bash" and exit_code != 0 and re.search(
             r"No such file or directory.*(/workspace|/tasks)|cannot access.*/workspace",
             output, re.I
         ):
