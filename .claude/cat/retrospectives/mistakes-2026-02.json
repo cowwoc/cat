@@ -2547,6 +2547,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use sonnet for prepare phase — it has enough steps (8) and complexity (script execution, worktree creation, branch verification) to require a capable model. Reserve haiku for truly mechanical single-step operations."
+    },
+    {
+      "id": "M442",
+      "timestamp": "2026-02-06T05:50:35Z",
+      "category": "protocol_violation",
+      "description": "Made changes directly on v2.1 branch without worktree isolation - hook allowlist too broad (.claude/ matched all paths)",
+      "root_cause": "warn-base-branch-edit.sh allowlist had blanket .claude/ pattern that matched .claude/commands/ (implementation work), and existing files in skills/ were unconditionally allowed. Both paths used for the ad-hoc edits were silently permitted.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/warn-base-branch-edit.sh",
+      "pattern_keywords": [
+        "worktree",
+        "isolation",
+        "allowlist",
+        "base-branch",
+        ".claude/commands"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M380",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use /cat:work to create isolated worktree before implementing changes, even for ad-hoc requests. Hook now narrowed .claude/ to specific orchestration paths only."
     }
   ]
 }
