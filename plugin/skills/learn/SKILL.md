@@ -4,14 +4,14 @@ description: >
   Integrates token tracking for context-related failures.
 ---
 
-# Learn From Mistakes: Thin Orchestrator
+# Learn From Mistakes: Tiered Orchestrator
 
 Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context
 degradation. Integrates token tracking to identify context-related failures and recommend preventive
 measures including earlier decomposition.
 
-**Architecture:** Main agent orchestrates 4 phase subagents. Each phase runs in isolation with
-its own context, keeping main agent context minimal.
+**Architecture:** Main agent classifies mistake into tier (quick/deep), spawns single subagent that
+loads appropriate phase files and executes all phases in one context.
 
 ## Purpose
 
@@ -28,186 +28,151 @@ measures including earlier decomposition.
 - Repeated attempts at same operation
 - Quality degradation over time
 
-## Phase 1: Investigate
+## Step 1: Classify Mistake Tier
 
-Verify event sequence and analyze documentation path to understand what caused the mistake.
+Determine whether this is a quick-tier or deep-tier mistake.
+
+**Classification Logic:**
+
+| Tier | Criteria | Phases to Run | Rationale |
+|------|----------|---------------|-----------|
+| **Quick** | `protocol_violation` category OR `recurrence_of` is set | Analyze, Prevent, Record (skip Investigate) | Known pattern, investigation already done |
+| **Deep** | All other cases | Investigate, Analyze, Prevent, Record (all 4) | Novel failure, needs full investigation |
+
+**How to determine:**
+
+1. Ask user for mistake category (if not already provided in invocation)
+2. Ask if this is a recurrence of a previous mistake (check mistakes.json if needed)
+3. Apply classification logic above
+
+**Store tier decision:**
+- `tier: "quick" | "deep"`
+- `phases_to_run: ["analyze", "prevent", "record"] | ["investigate", "analyze", "prevent", "record"]`
+
+## Step 2: Spawn Single Tiered Subagent
 
 Delegate to general-purpose subagent using the Task tool with these JSON parameters:
 
-- **description:** `"Learn Phase 1: Investigate event sequence and documentation path"`
+- **description:** `"Learn ({tier} tier): Execute all phases for mistake analysis"`
 - **subagent_type:** `"general-purpose"`
 - **model:** `"sonnet"`
 - **prompt:** The prompt below (substitute variables with actual values)
 
-Prompt for the subagent:
+**Prompt for quick-tier subagent:**
 
-> Execute the learn-investigate phase.
+> Execute the learn skill phases for a quick-tier mistake.
 >
 > SESSION_ID: ${CLAUDE_SESSION_ID}
 > PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+> TIER: quick
 >
-> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-investigate.md
+> **Your task:** Execute phases in sequence: Analyze → Prevent → Record
 >
-> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> For each phase:
+> 1. Use the Read tool to load the phase file from ${CLAUDE_PLUGIN_ROOT}/skills/learn/
+> 2. Follow the instructions in that phase file
+> 3. Generate a user_summary (1-3 sentences) of what you found/did
+> 4. Include the phase result in your final JSON output
+>
+> **Phase files to load:**
+> - Phase 2 (Analyze): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-analyze.md
+> - Phase 3 (Prevent): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-prevent.md
+> - Phase 4 (Record): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-record.md
+>
+> **Your FINAL message must be ONLY the JSON result object below — no surrounding text, no explanation.**
 > This is critical because the parent agent parses your response as JSON.
+>
+> ```json
+> {
+>   "tier": "quick",
+>   "phases_executed": ["analyze", "prevent", "record"],
+>   "phase_summaries": {
+>     "analyze": "1-3 sentence summary for user",
+>     "prevent": "1-3 sentence summary for user",
+>     "record": "1-3 sentence summary for user"
+>   },
+>   "analyze": { ...phase 2 output fields... },
+>   "prevent": { ...phase 3 output fields... },
+>   "record": { ...phase 4 output fields... }
+> }
+> ```
 
-**Handle result:**
+**Prompt for deep-tier subagent:**
 
-| Status | Action |
-|--------|--------|
-| COMPLETE | Store investigation results, continue to Phase 2 |
-| ERROR | Display error, stop |
-| No JSON / empty | Subagent failed to produce output - display error, stop |
-
-**Parsing the result:** The subagent's final message is returned as text. Extract the JSON
-object from it — look for `{` through the matching `}`. If the result contains surrounding text,
-ignore the text and parse just the JSON block.
-
-**Store phase 1 results:**
-- `event_sequence`, `documents_read`, `priming_analysis`, `session_id`
-
-## Phase 2: Analyze
-
-Document the mistake, gather context metrics, perform RCA, and verify depth.
-
-Delegate to general-purpose subagent using the Task tool with these JSON parameters:
-
-- **description:** `"Learn Phase 2: Analyze mistake and perform RCA"`
-- **subagent_type:** `"general-purpose"`
-- **model:** `"sonnet"`
-- **prompt:** The prompt below (substitute variables with actual values and investigation results)
-
-Prompt for the subagent:
-
-> Execute the learn-analyze phase.
+> Execute the learn skill phases for a deep-tier mistake.
 >
 > SESSION_ID: ${CLAUDE_SESSION_ID}
 > PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
+> TIER: deep
 >
-> Investigation results from Phase 1:
-> ```json
-> {investigation_results_json}
-> ```
+> **Your task:** Execute phases in sequence: Investigate → Analyze → Prevent → Record
 >
-> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-analyze.md
+> For each phase:
+> 1. Use the Read tool to load the phase file from ${CLAUDE_PLUGIN_ROOT}/skills/learn/
+> 2. Follow the instructions in that phase file
+> 3. Generate a user_summary (1-3 sentences) of what you found/did
+> 4. Include the phase result in your final JSON output
+> 5. Pass results from previous phases as input to subsequent phases (as documented in phase files)
 >
-> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
+> **Phase files to load:**
+> - Phase 1 (Investigate): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-investigate.md
+> - Phase 2 (Analyze): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-analyze.md
+> - Phase 3 (Prevent): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-prevent.md
+> - Phase 4 (Record): ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-record.md
+>
+> **Your FINAL message must be ONLY the JSON result object below — no surrounding text, no explanation.**
 > This is critical because the parent agent parses your response as JSON.
-
-**Handle result:**
-
-| Status | Action |
-|--------|--------|
-| COMPLETE | Store analysis results, continue to Phase 3 |
-| ERROR | Display error, stop |
-| No JSON / empty | Subagent failed to produce output - display error, stop |
-
-**Store phase 2 results:**
-- `mistake_description`, `context_metrics`, `root_cause`, `rca_method`, `rca_method_name`
-- `rca_depth_verified`, `architectural_issue`, `recurrence_of`, `category`
-
-## Phase 3: Prevent
-
-Identify prevention strategies, evaluate quality, implement fixes, and verify no new priming.
-
-Delegate to general-purpose subagent using the Task tool with these JSON parameters:
-
-- **description:** `"Learn Phase 3: Implement prevention"`
-- **subagent_type:** `"general-purpose"`
-- **model:** `"sonnet"`
-- **prompt:** The prompt below (substitute variables with actual values and previous results)
-
-Prompt for the subagent:
-
-> Execute the learn-prevent phase.
 >
-> SESSION_ID: ${CLAUDE_SESSION_ID}
-> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
->
-> Investigation results from Phase 1:
 > ```json
-> {investigation_results_json}
+> {
+>   "tier": "deep",
+>   "phases_executed": ["investigate", "analyze", "prevent", "record"],
+>   "phase_summaries": {
+>     "investigate": "1-3 sentence summary for user",
+>     "analyze": "1-3 sentence summary for user",
+>     "prevent": "1-3 sentence summary for user",
+>     "record": "1-3 sentence summary for user"
+>   },
+>   "investigate": { ...phase 1 output fields... },
+>   "analyze": { ...phase 2 output fields... },
+>   "prevent": { ...phase 3 output fields... },
+>   "record": { ...phase 4 output fields... }
+> }
 > ```
->
-> Analysis results from Phase 2:
-> ```json
-> {analysis_results_json}
-> ```
->
-> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-prevent.md
->
-> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
-> This is critical because the parent agent parses your response as JSON.
 
-**Handle result:**
+## Step 3: Display Phase Summaries
 
-| Status | Action |
-|--------|--------|
-| COMPLETE | Store prevention results, continue to Phase 4 |
-| ERROR | Display error, stop |
-| No JSON / empty | Subagent failed to produce output - display error, stop |
+After the subagent completes, parse the result JSON and display each phase summary to the user:
 
-**Store phase 3 results:**
-- `prevention_type`, `prevention_level`, `prevention_quality`
-- `scenario_verified`, `existing_prevention_failed`, `files_modified`
-- `prevention_description`, `priming_verified`, `related_files_checked`
+```
+Phase: Investigate
+{investigate.user_summary or phase_summaries.investigate}
 
-## Phase 4: Record
+Phase: Analyze
+{analyze.user_summary or phase_summaries.analyze}
 
-Verify prevention works, record learning in MEMORY.md, update retrospective counter, and commit.
+Phase: Prevent
+{prevent.user_summary or phase_summaries.prevent}
 
-Delegate to general-purpose subagent using the Task tool with these JSON parameters:
+Phase: Record
+{record.user_summary or phase_summaries.record}
+```
 
-- **description:** `"Learn Phase 4: Record learning and update retrospective"`
-- **subagent_type:** `"general-purpose"`
-- **model:** `"sonnet"`
-- **prompt:** The prompt below (substitute variables with actual values and all previous results)
+**Error handling:**
 
-Prompt for the subagent:
+| Condition | Action |
+|-----------|--------|
+| Subagent returns no JSON | Display error, stop |
+| JSON missing required fields | Display error with details, stop |
+| Phase status is ERROR | Display error from that phase, stop |
 
-> Execute the learn-record phase.
->
-> SESSION_ID: ${CLAUDE_SESSION_ID}
-> PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
->
-> Investigation results from Phase 1:
-> ```json
-> {investigation_results_json}
-> ```
->
-> Analysis results from Phase 2:
-> ```json
-> {analysis_results_json}
-> ```
->
-> Prevention results from Phase 3:
-> ```json
-> {prevention_results_json}
-> ```
->
-> Load and follow: ${CLAUDE_PLUGIN_ROOT}/skills/learn/phase-record.md
->
-> Your FINAL message must be ONLY the JSON result object — no surrounding text, no explanation.
-> This is critical because the parent agent parses your response as JSON.
+## Step 4: Display Final Summary
 
-**Handle result:**
-
-| Status | Action |
-|--------|--------|
-| COMPLETE | Display summary, check retrospective trigger |
-| ERROR | Display error, stop |
-| No JSON / empty | Subagent failed to produce output - display error, stop |
-
-**Store phase 4 results:**
-- `learning_id`, `memory_updated`, `counter_updated`, `committed`
-- `commit_hash`, `retrospective_triggered`, `retrospective_status`
-
-## Summary Display
-
-After all phases complete, display a summary:
+After all phases complete, display a summary showing tier used and results:
 
 ```
 Learning recorded: {learning_id}
+Tier: {tier} ({phases_skipped} if quick tier)
 
 Category: {category}
 Root Cause: {root_cause}
@@ -220,7 +185,14 @@ Prevention:
 
 Commit: {commit_hash}
 {retrospective_status}
+
+Token Efficiency: {tier}-tier analysis (skipped {N} phase(s) for known pattern)
 ```
+
+**Token savings note for quick tier:**
+- Quick tier skips investigation phase (known pattern)
+- Typical savings: ~15-20K tokens per learning session
+- Use for protocol violations and recurrences
 
 If `retrospective_triggered` is true, use AskUserQuestion to offer user choice:
 

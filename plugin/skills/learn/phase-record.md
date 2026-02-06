@@ -287,6 +287,7 @@ Your final message MUST be ONLY this JSON (no other text):
 {
   "phase": "record",
   "status": "COMPLETE",
+  "user_summary": "1-3 sentence summary of what this phase did (for display to user between phases)",
   "learning_id": "M123",
   "memory_updated": true,
   "counter_updated": true,

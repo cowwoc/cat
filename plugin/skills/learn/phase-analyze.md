@@ -249,6 +249,7 @@ Your final message MUST be ONLY this JSON (no other text):
 {
   "phase": "analyze",
   "status": "COMPLETE",
+  "user_summary": "1-3 sentence summary of what this phase found (for display to user between phases)",
   "mistake_description": {
     "timestamp": "ISO-8601",
     "type": "incorrect_implementation|protocol_violation|tool_misuse|etc",

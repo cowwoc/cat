@@ -627,6 +627,7 @@ Your final message MUST be ONLY this JSON (no other text):
 {
   "phase": "prevent",
   "status": "COMPLETE",
+  "user_summary": "1-3 sentence summary of what this phase did (for display to user between phases)",
   "prevention_type": "code_fix|hook|validation|config|skill|process|documentation",
   "prevention_level": 1,
   "prevention_quality": {
