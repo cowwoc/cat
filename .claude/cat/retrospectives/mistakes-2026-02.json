@@ -2814,6 +2814,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Rebase worktree onto current base branch before squashing to ensure only task changes are captured"
+    },
+    {
+      "id": "M451",
+      "timestamp": "2026-02-06T18:10:00Z",
+      "category": "misleading_documentation",
+      "description": "Squash created separate 'planning: close issue' commit for STATE.md instead of including it in implementation commit",
+      "root_cause": "Work-with-issue Step 5 squash instructions said 'Config changes into 1 config commit (if separate)', causing squash agent to separate STATE.md as a planning file instead of grouping with implementation",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "/workspace/plugin/skills/work-with-issue/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "state-md",
+        "commit-grouping"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Include STATE.md closure in the same commit as implementation work, not in a separate commit"
     }
   ]
 }
