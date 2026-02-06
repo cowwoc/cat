@@ -2468,6 +2468,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Move config reading into work_handler.py handle() method so values are injected via additionalContext, eliminating visible Bash output"
+    },
+    {
+      "id": "M439",
+      "timestamp": "2026-02-06T18:00:00Z",
+      "category": "tool_misuse",
+      "description": "get-issue-complete-box.py called without --next-issue/--next-goal when no next issue exists (scope-complete scenario), causing exit code 2 and fallback to manual box construction",
+      "root_cause": "Script only supported issue-complete-with-next-task scenario. Scope-complete had no script path - SKILL.md said 'Use SCOPE_COMPLETE from script output Work Boxes' but agent tried the script instead since it was the MANDATORY primary path (M389).",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/get-issue-complete-box.py",
+      "pattern_keywords": [
+        "scope-complete",
+        "script-missing-mode",
+        "box-generation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use get-issue-complete-box.py --scope-complete 'vX.Y' for scope-complete boxes. Script now supports both modes: --scope-complete for no-more-tasks, or --issue-name/--next-issue/--next-goal for next-task boxes."
     }
   ]
 }

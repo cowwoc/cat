@@ -190,7 +190,12 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-issue-complete-box.py" \
 
 Copy script output VERBATIM. NEVER manually construct boxes - LLMs cannot accurately count display widths.
 
-For scope-complete (no more tasks): Use **SCOPE_COMPLETE** from script output Work Boxes.
+For scope-complete (no more tasks):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-issue-complete-box.py" \
+  --scope-complete "v${VERSION}"
+```
 
 ## Error Handling
 

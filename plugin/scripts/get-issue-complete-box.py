@@ -4,8 +4,9 @@ get-issue-complete-box.py - Generate Issue Complete box with actual values.
 
 Usage:
   get-issue-complete-box.py --issue-name NAME --next-issue NAME --next-goal GOAL [--base-branch BRANCH]
+  get-issue-complete-box.py --scope-complete "v2.1"
 
-Outputs a fully-rendered Issue Complete box with correct alignment.
+Outputs a fully-rendered Issue Complete or Scope Complete box with correct alignment.
 """
 
 import argparse
@@ -104,21 +105,49 @@ def build_issue_complete_box(issue_name: str, next_issue: str, next_goal: str, b
     return "\n".join(lines)
 
 
+def build_scope_complete_box(scope: str) -> str:
+    """Build Scope Complete box."""
+    header = "✓ Scope Complete"
+
+    content = [
+        "",
+        f"**{scope}** - all issues complete!",
+        "",
+    ]
+
+    content_widths = [dw(c) for c in content]
+    header_width = dw(header) + 5
+    max_width = max(max(content_widths) if content_widths else 0, header_width)
+
+    lines = [build_header_top(header, max_width)]
+    for c in content:
+        lines.append(build_line(c, max_width))
+    lines.append(build_border(max_width, is_top=False))
+
+    return "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate Issue Complete box")
-    parser.add_argument("--issue-name", required=True, help="Name of completed issue")
-    parser.add_argument("--next-issue", required=True, help="Name of next issue")
-    parser.add_argument("--next-goal", required=True, help="Goal of next issue")
+    parser.add_argument("--issue-name", required=False, help="Name of completed issue")
+    parser.add_argument("--next-issue", required=False, help="Name of next issue")
+    parser.add_argument("--next-goal", required=False, help="Goal of next issue")
     parser.add_argument("--base-branch", default="main", help="Base branch merged to")
+    parser.add_argument("--scope-complete", required=False, help="Scope description for scope-complete box")
 
     args = parser.parse_args()
 
-    box = build_issue_complete_box(
-        issue_name=args.issue_name,
-        next_issue=args.next_issue,
-        next_goal=args.next_goal,
-        base_branch=args.base_branch
-    )
+    if args.scope_complete:
+        box = build_scope_complete_box(scope=args.scope_complete)
+    else:
+        if not args.issue_name or not args.next_issue or not args.next_goal:
+            parser.error("--issue-name, --next-issue, and --next-goal are required unless --scope-complete is used")
+        box = build_issue_complete_box(
+            issue_name=args.issue_name,
+            next_issue=args.next_issue,
+            next_goal=args.next_goal,
+            base_branch=args.base_branch
+        )
 
     print(box)
 
