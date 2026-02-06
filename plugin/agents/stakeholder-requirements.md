@@ -110,6 +110,14 @@ Before verifying specific requirements, evaluate:
 **Anti-Accumulation Check**: Flag if this change continues patterns of partial implementation
 (e.g., "this is the 3rd issue that partially implements REQ-005 without completing it").
 
+## CAT Domain Context
+
+CAT skill files (SKILL.md) contain instructions for Claude (the LLM) to follow when the skill is invoked.
+All skills - including non-user-invocable ones - contain Claude-directed instructions. The `user-invocable:
+false` flag means users cannot type the command directly; Claude still reads and executes the instructions
+when the skill is invoked programmatically via the Skill tool. Instructions like "Output the box VERBATIM"
+or "Locate the preprocessed box" are Claude-directed actions, not human-facing UI steps.
+
 ## Core Function
 
 **This stakeholder verifies the implementation satisfies the requirements the task claims to satisfy.**
