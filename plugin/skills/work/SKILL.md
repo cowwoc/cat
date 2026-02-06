@@ -200,25 +200,47 @@ The skill will:
 
 ## Next Task
 
-After successful merge:
+After successful merge, generate the Issue Complete box and discover the next task using a single
+script call. This consolidates lock release, task discovery, and box rendering into one step.
 
-1. Check if more tasks in scope (based on original arguments)
-2. If trust >= medium: Auto-continue after 3s delay
-3. If trust == low: Display next task, wait for user
-
-**MANDATORY (M389): Generate Issue Complete box using script, NOT manual construction:**
+**Generate the Issue Complete box:**
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-issue-complete-box.py" \
-  --issue-name "$ISSUE_NAME" \
-  --next-issue "$NEXT_ISSUE_NAME" \
-  --next-goal "$NEXT_ISSUE_GOAL" \
-  --base-branch "$BASE_BRANCH"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-next-task-box.py" \
+  --completed-issue "${issue_id}" \
+  --base-branch "${base_branch}" \
+  --session-id "${CLAUDE_SESSION_ID}" \
+  --project-dir "${CLAUDE_PROJECT_DIR}"
 ```
 
-Copy script output VERBATIM. NEVER manually construct boxes - LLMs cannot accurately count display widths.
+If the original ARGUMENTS contained a filter (e.g., "skip compression"), add `--exclude-pattern "compress*"`.
 
-For scope-complete (no more tasks): Use **SCOPE_COMPLETE** from script output Work Boxes.
+**Copy the script output VERBATIM.** Do NOT attempt to modify, reformat, or reconstruct the box.
+
+**Parse the box to determine next task status:**
+- If box contains "**Next:**" followed by an issue ID → next task found
+- If box contains "Scope Complete" → no next task
+
+**Route based on trust level:**
+
+| Condition | Action |
+|-----------|--------|
+| No next task | Scope complete - stop |
+| Next task + trust == "low" | Display box, stop for user |
+| Next task + trust >= "medium" | Display box, auto-continue to `/cat:work ${next_issue_id}` |
+
+**Low-trust stop message:**
+
+If trust == "low" and next task found, display after the box:
+
+```
+Ready to continue to next task. Use /cat:work to continue, or /cat:status to review remaining tasks.
+```
+
+**Auto-continue (trust >= medium):**
+
+Invoke the Skill tool again with `/cat:work ${next_issue_id}` to continue to the next task.
+No delay needed - the work skill handles its own orchestration.
 
 ## Error Handling
 
