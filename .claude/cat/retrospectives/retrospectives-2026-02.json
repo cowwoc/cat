@@ -281,14 +281,77 @@
           "incorrect_implementation": 1,
           "process_violation": 1
         },
-        "patterns_updated": ["PATTERN-008", "PATTERN-003"],
-        "new_patterns": ["PATTERN-015", "PATTERN-016"],
-        "action_items_effective": ["A004", "A006", "A007"],
-        "action_items_partially_effective": ["A014"],
-        "action_items_recurring": ["A008"],
-        "new_action_items": ["A017", "A018", "A019"],
+        "patterns_updated": [
+          "PATTERN-008",
+          "PATTERN-003"
+        ],
+        "new_patterns": [
+          "PATTERN-015",
+          "PATTERN-016"
+        ],
+        "action_items_effective": [
+          "A004",
+          "A006",
+          "A007"
+        ],
+        "action_items_partially_effective": [
+          "A014"
+        ],
+        "action_items_recurring": [
+          "A008"
+        ],
+        "new_action_items": [
+          "A017",
+          "A018",
+          "A019"
+        ],
         "escalations_created": [],
         "notes": "Wide category spread confirms pattern fixes are holding (no dominant cluster). Shell escaping (PATTERN-015) recurs despite M431 skill-level prevention. Squash workflow (PATTERN-016) is new vulnerability. Hook false positive (M447) shows hook aggressiveness reaching diminishing returns."
+      }
+    },
+    {
+      "id": "R016",
+      "timestamp": "2026-02-06T20:38:59.078633+00:00",
+      "trigger": "count (11 >= 10)",
+      "period_analyzed": "2026-02-06T19:00:00Z to 2026-02-06T20:38:59.078633+00:00",
+      "mistakes_analyzed": 9,
+      "summary": "Protocol violations dominant (4/9). M456 recurs M252 (worktree bypass). New finding: M460 speculation-as-fact pattern. Handler bug: run_retrospective_handler.py timezone comparison crash.",
+      "findings": {
+        "categories": {
+          "protocol_violation": [
+            "M456",
+            "M459",
+            "M461",
+            "M462"
+          ],
+          "assumption_without_verification": [
+            "M455",
+            "M460"
+          ],
+          "incorrect_implementation": [
+            "M454"
+          ],
+          "prompt_engineering": [
+            "M457"
+          ],
+          "misleading_documentation": [
+            "M458"
+          ]
+        },
+        "recurrences": {
+          "M456": "M252"
+        },
+        "effective_actions": [
+          "A004",
+          "A006",
+          "A007"
+        ],
+        "ineffective_actions": [
+          "A001",
+          "A003"
+        ],
+        "new_action_items": [],
+        "escalations": []
       }
     }
   ]
