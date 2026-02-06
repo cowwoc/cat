@@ -14,7 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Tasks Pending
-- fix-blocked-tasks-diagnostics
+- hide-issue-complete-bash-output
 - wrap-markdown-files-120-chars
 - move-config-read-to-work-handler
 - optimize-execution-script
@@ -41,6 +41,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-task-to-issue
 
 ## Tasks Completed
+- fix-blocked-tasks-diagnostics
 - add-diagnostic-review-checks
 - acceptance-criteria-options
 - add-deployment-stakeholder
