@@ -14,11 +14,11 @@ class BlockMergeCommitsHandler:
 
     def check(self, command: str, context: dict) -> dict | None:
         # Skip if not a git merge command
-        if not re.search(r'(^|;|&&|\|)\s*git\s+merge', command):
+        if not re.search(r'(^|;|&&|\|)\s*git\s+merge(?!-)', command):
             return None
 
         # BLOCK: git merge --no-ff (explicitly creates merge commit)
-        if re.search(r'git\s+merge\s+.*--no-ff|git\s+merge\s+--no-ff', command):
+        if re.search(r'git\s+merge(?!-)\s+.*--no-ff|git\s+merge(?!-)\s+--no-ff', command):
             return {
                 "decision": "block",
                 "reason": """**BLOCKED: git merge --no-ff creates merge commits**

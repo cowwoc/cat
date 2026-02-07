@@ -13,9 +13,9 @@ import java.util.regex.Pattern;
 public final class BlockMergeCommits implements BashHandler
 {
   private static final Pattern MERGE_PATTERN =
-    Pattern.compile("(^|;|&&|\\|)\\s*git\\s+merge");
+    Pattern.compile("(^|;|&&|\\|)\\s*git\\s+merge(?!-)");
   private static final Pattern NO_FF_PATTERN =
-    Pattern.compile("git\\s+merge\\s+.*--no-ff|git\\s+merge\\s+--no-ff");
+    Pattern.compile("git\\s+merge(?!-)\\s+.*--no-ff|git\\s+merge(?!-)\\s+--no-ff");
   private static final Pattern FF_ONLY_OR_SQUASH_PATTERN =
     Pattern.compile("(?:^|\\s)(--ff-only|--squash)(?:\\s|$)");
 
