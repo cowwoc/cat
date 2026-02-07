@@ -1,5 +1,4 @@
-The handler has injected the token report as additional context (look for "SCRIPT OUTPUT TOKEN REPORT" marker above).
+The user wants you to respond with the content from "SCRIPT OUTPUT TOKEN REPORT" above, verbatim.
+Do NOT add any other text before or after it.
 
-Output that content EXACTLY as shown, without modification or summarization.
-
-**FAIL-FAST:** If you do NOT see a report above, preprocessing FAILED. STOP.
+**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT TOKEN REPORT" above, preprocessing FAILED. STOP.

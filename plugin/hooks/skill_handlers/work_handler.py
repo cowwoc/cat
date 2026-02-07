@@ -1,11 +1,11 @@
 """
 Handler for /cat:work precomputation.
 
-Provides status boxes for the work skill (script output).
-Progress banners are handled by silent preprocessing via get-progress-banner.sh.
+Provides a generic preparing banner (no issue_id) and status boxes for the work skill.
 """
 
 import json
+import subprocess
 from pathlib import Path
 
 from . import register_handler
@@ -414,20 +414,41 @@ class WorkHandler:
 
         return config
 
-    def handle(self, context: dict) -> str | None:
-        """Provide status boxes for the work skill (script output).
+    def _generate_preparing_banner(self, context: dict) -> str:
+        """Generate a generic preparing banner (no issue_id known yet)."""
+        plugin_root = context.get("plugin_root", "")
+        banner_script = Path(plugin_root) / "scripts" / "get-progress-banner.sh" if plugin_root else None
 
-        Progress banners are now handled by silent preprocessing in SKILL.md
-        via get-progress-banner.sh. This handler only provides status boxes.
-        """
+        if banner_script and banner_script.exists():
+            try:
+                result = subprocess.run(
+                    [str(banner_script), "", "--phase", "preparing"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
+                if result.returncode == 0:
+                    return result.stdout.strip()
+            except Exception:
+                pass
+        return ""
+
+    def handle(self, context: dict) -> str | None:
+        """Provide preparing banner and status boxes for the work skill."""
         # Read configuration
         config = self._read_config(context)
         trust = config["trust"]
         verify = config["verify"]
         auto_remove = str(config["autoRemoveWorktrees"]).lower()
 
-        # Build output with config section and boxes (placeholders for runtime values)
-        return f"""CONFIGURATION:
+        # Generate preparing banner (generic, no issue_id yet)
+        banner = self._generate_preparing_banner(context)
+        banner_section = f"SCRIPT OUTPUT PROGRESS BANNERS:\n\n{banner}" if banner else ""
+
+        # Build output with banner, config section, and boxes
+        return f"""{banner_section}
+
+CONFIGURATION:
 TRUST={trust}
 VERIFY={verify}
 AUTO_REMOVE={auto_remove}
