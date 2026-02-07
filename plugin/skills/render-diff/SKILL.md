@@ -8,10 +8,4 @@ allowed-tools:
 user-invocable: false
 ---
 
-Without any preamble, invoke the render-output skill with this exact content:
-
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-render-diff.sh --project-dir "${CLAUDE_PROJECT_DIR}"`
-
-Then after the render-output completes, output:
-
-**FAIL-FAST:** If you do NOT see a diff above, preprocessing FAILED. STOP.
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" render-diff "${CLAUDE_SESSION_ID}"`

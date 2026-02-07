@@ -40,6 +40,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-session-instructions.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/session_start_handlers/clear_skill_markers.py"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

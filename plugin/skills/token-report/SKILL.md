@@ -8,10 +8,4 @@ allowed-tools:
 user-invocable: false
 ---
 
-Without any preamble, invoke the render-output skill with this exact content:
-
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-token-report.sh --session-id "${CLAUDE_SESSION_ID}"`
-
-Then after the render-output completes, output:
-
-**FAIL-FAST:** If you do NOT see a report above, preprocessing FAILED. STOP.
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" token-report "${CLAUDE_SESSION_ID}"`

@@ -5,6 +5,4 @@ allowed-tools:
   - Skill
 ---
 
-Without any preamble, invoke the render-output skill with this exact content:
-
-!`${CLAUDE_PLUGIN_ROOT}/scripts/get-help-display.sh`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" help "${CLAUDE_SESSION_ID}"`
