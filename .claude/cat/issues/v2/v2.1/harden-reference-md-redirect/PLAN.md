@@ -1,4 +1,4 @@
-# Plan: always-reload-verbatim-skills
+# Plan: harden-reference-md-redirect
 
 ## Goal
 Prevent LLM from summarizing skill output on repeated invocations by strengthening the generic reference.md redirect
