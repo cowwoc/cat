@@ -10,4 +10,4 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" remove "${CLAUDE_SESSION_ID}"`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" remove "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
