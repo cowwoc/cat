@@ -200,6 +200,18 @@ jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
   && mv "$MISTAKES_FILE.tmp" "$MISTAKES_FILE"
 ```
 
+**CRITICAL (M470): After appending, verify the entry exists in the file.**
+
+```bash
+# Verify the new entry was written successfully
+if ! jq -e --arg id "$NEXT_ID" '.mistakes[] | select(.id == $id)' "$MISTAKES_FILE" >/dev/null; then
+  echo "ERROR: Failed to write mistake entry $NEXT_ID to $MISTAKES_FILE"
+  exit 1
+fi
+```
+
+Do not proceed until verification confirms the entry exists.
+
 ## Step 12: Update Retrospective Counter and Commit
 
 **MANDATORY: Update counter and commit files together.**
@@ -243,7 +255,14 @@ fi
 
 # Commit split file and index together
 git -C "${CLAUDE_PROJECT_DIR}" add "$MISTAKES_FILE" "$INDEX_FILE"
-git -C "${CLAUDE_PROJECT_DIR}" commit -m "config: record learning ${NEXT_ID} - {short description}"
+COMMIT_OUTPUT=$(git -C "${CLAUDE_PROJECT_DIR}" commit -m "config: record learning ${NEXT_ID} - {short description}" 2>&1)
+COMMIT_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse --short HEAD)
+
+# CRITICAL (M470): Verify commit succeeded and capture actual hash
+if [[ $? -ne 0 ]]; then
+  echo "ERROR: Commit failed: $COMMIT_OUTPUT"
+  exit 1
+fi
 
 # Get current values to check trigger
 MISTAKES=$(jq '.mistake_count_since_last' "$INDEX_FILE")
