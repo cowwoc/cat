@@ -3296,6 +3296,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After editing file: use Read tool to verify change exists. After writing to JSON: use jq to verify entry exists. After committing: capture actual hash from git output."
+    },
+    {
+      "id": "M471",
+      "timestamp": "2026-02-07T12:24:58Z",
+      "category": "environment_configuration",
+      "description": "Skill documentation shows bash commands with  variables that are empty in Bash tool context, causing path resolution failures",
+      "root_cause": "The skill system creates a conceptual gap: environment variables work in preprocessing (! lines) but not in Bash tool calls. Documentation shows variables without explaining they must be substituted with literal values before running bash commands. M359 fixed learn skill but pattern not propagated.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/agent-architecture.md",
+      "pattern_keywords": [
+        "environment_variable",
+        "CLAUDE_PLUGIN_ROOT",
+        "bash_tool",
+        "skill_preprocessing",
+        "path_resolution"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M359",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Skill documentation MUST use literal paths in bash command examples, or add explicit note that variables are preprocessing-only and must be substituted"
     }
   ],
   "counter": 1

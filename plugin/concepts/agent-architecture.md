@@ -404,6 +404,32 @@ When user says "[ambiguous term]", ask:
 
 **Anti-pattern**: Interpreting "abort" as permanent abandonment without asking.
 
+### Environment Variable Availability (M359, M471)
+
+**CRITICAL: Environment variables like CLAUDE_PLUGIN_ROOT, CLAUDE_PROJECT_DIR, and CLAUDE_SESSION_ID are NOT available in Bash tool calls.**
+
+| Context | Variables Available? | Why |
+|---------|---------------------|-----|
+| Skill preprocessing (`!` lines) | ✅ YES | Set by plugin system before substitution |
+| Bash tool calls | ❌ NO | Plugin env vars not exported to agent's shell |
+| Hook scripts | ✅ YES | Plugin system provides them |
+
+**Common mistake pattern:**
+
+```bash
+# ❌ WRONG: This fails in Bash tool - variables are empty
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py"
+# Resolves to: python3 "/scripts/work-prepare.py" → file not found
+
+# ✅ CORRECT: Use literal path or self-discovery
+python3 /home/node/.config/claude/plugins/cache/cat/cat/2.1/scripts/work-prepare.py
+```
+
+**When writing skill documentation:**
+- Bash command examples MUST use literal paths, not `${CLAUDE_*}` variables
+- If a variable appears in skill content, add note: "This path is shown with variables for clarity. In actual Bash commands, use literal paths."
+- Better: Show the actual command the agent should run
+
 ### Path Discovery
 
 CAT scripts use **self-discovery** to find paths, avoiding dependency on environment variables:
