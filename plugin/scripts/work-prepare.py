@@ -316,6 +316,25 @@ def create_worktree(
     """
     worktree_path = project_dir / ".claude" / "cat" / "worktrees" / issue_branch
 
+    # Check if branch already exists (stale from previous session)
+    branch_check = subprocess.run(
+        ["git", "rev-parse", "--verify", issue_branch],
+        cwd=str(project_dir),
+        capture_output=True,
+        text=True,
+        timeout=30
+    )
+
+    if branch_check.returncode == 0:
+        # Branch exists - delete it first (stale from previous session that crashed without cleanup)
+        subprocess.run(
+            ["git", "branch", "-D", issue_branch],
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
     # Create worktree
     result = subprocess.run(
         ["git", "worktree", "add", "-b", issue_branch, str(worktree_path), "HEAD"],
@@ -581,6 +600,14 @@ def main():
                        help="Trust level for execution")
 
     args = parser.parse_args()
+
+    # Fail-fast: project-dir must not be empty
+    if not args.project_dir:
+        print(json.dumps({
+            "status": "ERROR",
+            "message": "project-dir cannot be empty"
+        }))
+        sys.exit(1)
 
     project_dir = Path(args.project_dir)
 
