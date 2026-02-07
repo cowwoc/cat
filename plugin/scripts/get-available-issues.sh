@@ -100,6 +100,10 @@ parse_args() {
                 show_usage
                 exit 0
                 ;;
+            --*)
+                echo '{"status":"error","message":"Unknown option: '"$1"'"}'
+                exit 1
+                ;;
             *)
                 # Positional argument - version or issue ID
                 if [[ -z "$TARGET" ]]; then

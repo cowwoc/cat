@@ -212,6 +212,46 @@ def get_task_dependencies(state_file: Path) -> list:
     return []
 
 
-# NOTE: StatusHandler class and registration removed.
-# Status display generation now uses silent preprocessing via get-status-display.sh
-# which calls get-status-display.py for the actual computation.
+import subprocess
+
+from . import register_handler
+
+
+class StatusHandler:
+    """Handler for /cat:status skill preprocessing.
+
+    Runs get-status-display.py to generate the formatted status display
+    and wraps output as SCRIPT OUTPUT STATUS DISPLAY.
+    """
+
+    def handle(self, context: dict) -> str | None:
+        """Run status display script and return result."""
+        project_root = context.get("project_root")
+        plugin_root = context.get("plugin_root")
+
+        if not project_root or not plugin_root:
+            return None
+
+        script = Path(plugin_root) / "scripts" / "get-status-display.py"
+        if not script.exists():
+            return None
+
+        try:
+            result = subprocess.run(
+                [sys.executable, str(script), "--project-dir", str(project_root)],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode != 0 or not result.stdout.strip():
+                return None
+
+            output = result.stdout.strip()
+            return f"SCRIPT OUTPUT STATUS DISPLAY:\n\n{output}"
+
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            return None
+
+
+_handler = StatusHandler()
+register_handler("status", _handler)
