@@ -10,20 +10,16 @@ Every skill invocation loads the full SKILL.md content into the conversation con
 lines. Two invocations in one session consume ~76KB of duplicated context. With a 200K context window, this
 represents ~38% consumed just for skill instructions.
 
-This problem affects ALL agents and subagents. Subagents that invoke skills (via the Skill tool) also pay
-the full context cost on every invocation.
-
 ## Target State
 
-Each skill gets a thin wrapper that:
-1. On **first invocation**: delegates to the original skill (full body loads into context as normal)
-2. On **subsequent invocations**: delegates to a shared "context-router" skill that instructs the agent
-   to follow the original skill definition already present in the conversation context, using the new
-   arguments
+Each skill uses `!`command`` preprocessing in SKILL.md to conditionally load content:
+1. On **first invocation**: preprocessor `cat`s `content.md` (full skill body) and creates a session marker file
+2. On **subsequent invocations**: preprocessor detects marker and `cat`s `router.md` (tiny redirect to
+   already-loaded content in context)
 
-This creates:
-- **One wrapper per skill** (44 wrappers, each ~15-20 lines)
-- **One shared router skill** (~20-30 lines) used by all wrappers on repeat invocations
+**Tested and verified:** `!`command`` with `${CLAUDE_SESSION_ID}` works in plugin skills. Marker file
+`/tmp/cat-{name}-${CLAUDE_SESSION_ID}` enables session-scoped conditional loading with zero hooks and zero extra
+tool calls.
 
 ## Satisfies
 
@@ -31,111 +27,100 @@ None - infrastructure/optimization task
 
 ## Risk Assessment
 
-- **Risk Level:** MEDIUM
-- **Breaking Changes:** Skill behavior must remain identical. The wrapper is transparent.
-- **Mitigation:** All wrappers delegate to the real skill on first call, so first-time behavior is
-  identical. The router on subsequent calls references the already-loaded definition, which is already
-  in context. Run full test suite to verify no regressions.
+- **Risk Level:** LOW
+- **Breaking Changes:** None. Skill behavior is identical - same frontmatter, same content, just loaded
+  conditionally via preprocessing instead of statically.
+- **Mitigation:** First invocation is byte-identical to current behavior (same content.md body). Router on
+  subsequent calls is a simple redirect. Run full test suite + A/B testing to verify.
 
 ## Design
 
-### Wrapper Skill Structure
+### Skill Directory Structure (per skill)
 
-Each wrapper replaces the original skill's registration in `plugin.json`. The original skill is renamed
-(e.g., `add/SKILL.md` -> `add/FULL.md` or moved to a subdirectory).
-
-Wrapper SKILL.md (example for `/cat:add`):
-```markdown
----
-description: "[same as original]"
-argument-hint: "[same as original]"
-allowed-tools: [Skill]
-user-invocable: true
----
-
-Check if the skill `cat:_add` has already been loaded in this conversation context.
-
-**If NOT loaded yet** (no `<command-name>cat:_add</command-name>` tag visible in prior context):
-- Invoke: `/cat:_add $ARGUMENTS`
-
-**If already loaded** (the tag IS visible in prior context):
-- Invoke: `/cat:_context-router _add $ARGUMENTS`
+```
+skills/{name}/
+├── SKILL.md       # Thin wrapper: frontmatter + !`command` preprocessing line
+├── content.md     # Full skill body (original SKILL.md content without frontmatter)
+└── router.md      # Tiny "follow already-loaded instructions" redirect
 ```
 
-### Router Skill Structure
+### Wrapper SKILL.md Pattern
 
 ```markdown
 ---
-description: "Route to already-loaded skill definition in context"
-allowed-tools: []
-user-invocable: false
+description: [original description]
+argument-hint: [original if any]
+allowed-tools: [original]
+model: [original if any]
+[other original frontmatter]
 ---
 
-The skill `cat:_$1` was previously loaded into this conversation. Its full definition is already
-present in the context above.
-
-Execute that skill's process using these arguments: $2..N
-
-Follow the original skill's steps exactly as defined in the earlier context. Do NOT request the
-skill be loaded again.
+!`M="/tmp/cat-{name}-${CLAUDE_SESSION_ID}"; if [ -f "$M" ]; then cat "${CLAUDE_PLUGIN_ROOT}/skills/{name}/router.md"; else cat "${CLAUDE_PLUGIN_ROOT}/skills/{name}/content.md"; touch "$M"; fi`
 ```
 
-### Naming Convention
+### Shared Router Content
 
-| Component | Name Pattern | Example |
-|-----------|-------------|--------|
-| Wrapper (user-facing) | `cat:{name}` | `cat:add` |
-| Full skill (internal) | `cat:_{name}` | `cat:_add` |
-| Router (shared) | `cat:_context-router` | `cat:_context-router` |
+All router.md files contain the same text:
 
-The underscore prefix distinguishes internal skills from user-facing wrappers.
+```
+The skill instructions were already loaded earlier in this conversation. Find the previously loaded skill
+definition above and follow those instructions for the current invocation.
+```
+
+### Handler Integration
+
+Skill handlers (UserPromptSubmit) remain registered on their original names (e.g., `help`, `add`, `work`).
+They fire on every invocation and inject fresh `additionalContext` data. The `!`command`` preprocessing controls
+which instructions are loaded — the handler provides the data those instructions reference.
+
+No changes needed to handlers, PostToolUse handler, or handler registry.
+
+### Plugin.json
+
+No changes needed. Each skill remains a single directory with SKILL.md. No nested skills, no extra entries.
+
+## Files to Create
+
+- 44x `content.md` files (one per skill, body extracted from current SKILL.md)
+- 44x `router.md` files (identical content, one per skill directory)
 
 ## Files to Modify
 
-### New Files
-- `plugin/skills/context-router/SKILL.md` - Shared router skill (~20-30 lines)
-- 44x wrapper SKILL.md files (one per existing skill, replacing current SKILL.md)
+- 44x `SKILL.md` files (replace body with `!`command`` preprocessing, keep frontmatter)
 
-### Modified Files
-- `plugin/.claude-plugin/plugin.json` - Update command paths (wrappers replace originals)
-- Each existing `plugin/skills/{name}/SKILL.md` - Rename to `plugin/skills/{name}/FULL.md`
+## Files NOT Modified
+
+- `plugin/.claude-plugin/plugin.json` - No changes
+- `plugin/hooks/skill_handlers/*.py` - No handler changes
+- `plugin/hooks/posttool_handlers/skill_preprocessor_output.py` - No changes
 
 ## Acceptance Criteria
 
-- [ ] Behavior unchanged - all skill invocations produce identical results
+- [ ] Behavior unchanged - all skill invocations produce identical results on first call
 - [ ] Tests passing - `python3 /workspace/run_tests.py` exits 0
-- [ ] Code quality improved - repeat skill invocations use significantly less context
-- [ ] Each skill has a thin wrapper (~15-20 lines) that checks for prior loading
-- [ ] One shared context-router skill exists for all subsequent invocations
-- [ ] Original skill content preserved (renamed, not deleted)
+- [ ] Repeat invocations load router.md instead of full content
+- [ ] A/B test confirms token reduction on second invocation
+- [ ] Each skill directory has SKILL.md + content.md + router.md
+- [ ] No handler or hook modifications
 
 ## Execution Steps
 
-1. **Step 1:** Create the shared context-router skill
-   - Files: `plugin/skills/context-router/SKILL.md`
-   - Content: Instructions to follow an already-loaded skill definition from context
+1. **Create content.md for each skill**: Extract the body (everything after the closing `---` frontmatter
+   delimiter) from each current SKILL.md and write to content.md in the same directory.
 
-2. **Step 2:** For each of the 44 skills, rename `SKILL.md` to `FULL.md`
-   - Preserve all content, frontmatter, execution_context references
-   - Any supporting files (phase files, etc.) remain unchanged
+2. **Create router.md for each skill**: Write the shared router text to router.md in each skill directory.
 
-3. **Step 3:** For each of the 44 skills, create a new wrapper `SKILL.md`
-   - Copy `description` and `argument-hint` from the original frontmatter
-   - Set `allowed-tools: [Skill]`
-   - Add logic to check if internal skill was already loaded
-   - If not loaded: invoke `cat:_{name} $ARGUMENTS`
-   - If loaded: invoke `cat:_context-router _{name} $ARGUMENTS`
+3. **Rewrite each SKILL.md**: Keep the original YAML frontmatter block. Replace the body with a single
+   `!`command`` preprocessing line that conditionally loads content.md or router.md based on a session marker
+   file at `/tmp/cat-{name}-${CLAUDE_SESSION_ID}`.
 
-4. **Step 4:** Register all internal skills in `plugin.json`
-   - Add internal skill paths (the `_`-prefixed ones) so they can be invoked
-   - Keep existing user-invocable command paths (wrappers)
-
-5. **Step 5:** Run `python3 /workspace/run_tests.py` to verify no regressions
+4. **Run tests**: `python3 /workspace/run_tests.py` to verify no regressions.
 
 ## Success Criteria
 
-- [ ] All 44 skills have wrapper + full body structure
-- [ ] First invocation of any skill loads the full definition (identical to current behavior)
-- [ ] Second+ invocation of the same skill routes through context-router (no re-expansion of full body)
+- [ ] All 44 skills have SKILL.md + content.md + router.md structure
+- [ ] First invocation loads full content (identical to current behavior)
+- [ ] Second+ invocation loads tiny router (~2 lines vs hundreds/thousands)
 - [ ] All tests pass
+- [ ] A/B test shows significant token reduction on repeat invocations
 - [ ] No user-visible behavior changes

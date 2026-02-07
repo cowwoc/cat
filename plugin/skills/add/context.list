@@ -1,0 +1,9 @@
+templates/issue-state.md
+templates/issue-plan.md
+templates/major-state.md
+templates/major-plan.md
+templates/minor-state.md
+templates/minor-plan.md
+templates/changelog.md
+concepts/questioning.md
+concepts/version-paths.md

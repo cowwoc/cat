@@ -5,6 +5,4 @@ allowed-tools: []
 user-invocable: false
 ---
 
-The user wants you to respond with this text verbatim:
-
-$ARGUMENTS
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" render-output "${CLAUDE_SESSION_ID}"`
