@@ -21,16 +21,16 @@ exist; the work is switching hooks.json from Python to Java and validating ident
 ## Entry Points to Wire Up
 
 Each entry point already has a Java implementation. The work is replacing the Python command in hooks.json with the
-java_runner.sh invocation.
+java.sh invocation.
 
 | hooks.json Line | Python Command | Java Class | hooks.json Change |
 |-----------------|---------------|------------|-------------------|
-| ~50 | `python3 .../get-skill-output.py` | `GetSkillOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/jdk/java_runner.sh GetSkillOutput` |
-| ~96 | `python3 .../get-read-pretool-output.py` | `GetReadPretoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/jdk/java_runner.sh GetReadPretoolOutput` |
-| ~142 | `python3 .../get-posttool-output.py` | `GetPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/jdk/java_runner.sh GetPosttoolOutput` |
-| ~159 | `python3 .../get-bash-posttool-output.py` | `GetBashPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/jdk/java_runner.sh GetBashPosttoolOutput` |
-| ~178 | `python3 .../get-posttool-output.py` | `GetPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/jdk/java_runner.sh GetPosttoolOutput` |
-| ~186 | `python3 .../get-read-posttool-output.py` | `GetReadPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/jdk/java_runner.sh GetReadPosttoolOutput` |
+| ~50 | `python3 .../get-skill-output.py` | `GetSkillOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetSkillOutput` |
+| ~96 | `python3 .../get-read-pretool-output.py` | `GetReadPretoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetReadPretoolOutput` |
+| ~142 | `python3 .../get-posttool-output.py` | `GetPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetPosttoolOutput` |
+| ~159 | `python3 .../get-bash-posttool-output.py` | `GetBashPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetBashPosttoolOutput` |
+| ~178 | `python3 .../get-posttool-output.py` | `GetPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetPosttoolOutput` |
+| ~186 | `python3 .../get-read-posttool-output.py` | `GetReadPosttoolOutput` | `${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetReadPosttoolOutput` |
 
 ## Existing Java Files (already implemented)
 
@@ -47,7 +47,7 @@ Core infrastructure (already implemented):
 - `BashHandler.java`, `PosttoolHandler.java`, `PromptHandler.java`, `ReadHandler.java`
 
 ## Files to Modify
-- `plugin/hooks/hooks.json` - Replace 5 Python commands with java_runner.sh calls
+- `plugin/hooks/hooks.json` - Replace 5 Python commands with java.sh calls
 
 ## Execution Steps
 1. **Wire up GetSkillOutput** - Edit hooks.json line ~50, test by invoking a skill

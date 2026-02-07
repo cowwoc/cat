@@ -1093,11 +1093,11 @@ def test_abort_clarification_handler():
 
 def test_jlink_config():
     """Test jlink-config.sh script."""
-    runner.section("hooks/jdk/jlink-config.sh")
+    runner.section("hooks/jlink-config.sh")
 
     import subprocess
 
-    script = PROJECT_ROOT / "plugin" / "hooks" / "jdk" / "jlink-config.sh"
+    script = PROJECT_ROOT / "plugin" / "hooks" / "jlink-config.sh"
 
     if not script.exists():
         runner.test("Script exists", False, f"Script not found at {script}")
@@ -1135,13 +1135,13 @@ def test_jlink_config():
     runner.test("error message shown", "Unknown option" in result.stderr)
 
 
-def test_java_runner():
-    """Test java_runner.sh script."""
-    runner.section("hooks/jdk/java_runner.sh")
+def test_java_hook():
+    """Test java.sh script."""
+    runner.section("hooks/java.sh")
 
     import subprocess
 
-    script = PROJECT_ROOT / "plugin" / "hooks" / "jdk" / "java_runner.sh"
+    script = PROJECT_ROOT / "plugin" / "hooks" / "java.sh"
 
     if not script.exists():
         runner.test("Script exists", False, f"Script not found at {script}")
@@ -1253,12 +1253,12 @@ Regular line
 
 def test_session_start():
     """Test session_start.sh script."""
-    runner.section("hooks/jdk/session_start.sh")
+    runner.section("hooks/session_start.sh")
 
     import subprocess
     import json
 
-    script = PROJECT_ROOT / "plugin" / "hooks" / "jdk" / "session_start.sh"
+    script = PROJECT_ROOT / "plugin" / "hooks" / "session_start.sh"
 
     if not script.exists():
         runner.test("Script exists", False, f"Script not found at {script}")
@@ -1880,7 +1880,7 @@ def main():
         test_get_available_issues_discovery,
         test_abort_clarification_handler,
         test_jlink_config,
-        test_java_runner,
+        test_java_hook,
         test_session_start,
         test_retrospective_handler_timezone,
         test_compress_validate_loop,

@@ -8,7 +8,7 @@
 #   1. Check if custom JDK exists in the expected location
 #   2. If missing, download pre-built bundle from release artifacts
 #   3. Verify the runtime is functional
-#   4. Export CAT_JAVA_HOME for use by java_runner.sh
+#   4. Export CAT_JAVA_HOME for use by java.sh
 #
 # The hook is silent on success (only outputs JSON). On failure, it
 # provides instructions for manual setup.
@@ -127,7 +127,7 @@ build_runtime_locally() {
     local plugin_root="$1"
     local target_dir="$2"
 
-    local build_script="${plugin_root}/hooks/jdk/jlink-config.sh"
+    local build_script="${plugin_root}/hooks/jlink-config.sh"
 
     if [[ ! -x "$build_script" ]]; then
         echo "ERROR: Build script not found: $build_script" >&2
@@ -152,7 +152,7 @@ main() {
     # Determine plugin root from script location
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    local plugin_root="${script_dir}/../.."
+    local plugin_root="${script_dir}/.."
 
     # Use CLAUDE_PLUGIN_ROOT if set (preferred)
     if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
@@ -163,7 +163,7 @@ main() {
 
     # Check if runtime already exists and is functional
     if check_existing_runtime "$jdk_path"; then
-        # Export for java_runner.sh
+        # Export for java.sh
         export CAT_JAVA_HOME="$jdk_path"
         log_json "success" "CAT JDK runtime ready"
         return 0
@@ -192,7 +192,7 @@ main() {
     platform=$(get_platform 2>/dev/null) || platform="your-platform"
 
     log_json "warning" "CAT JDK runtime not available. Java hooks will use system Java if available." \
-        "To enable optimized Java hooks, either:\\n1. Install JDK 25 and run: ${plugin_root}/hooks/jdk/jlink-config.sh build\\n2. Download pre-built runtime from GitHub releases"
+        "To enable optimized Java hooks, either:\\n1. Install JDK 25 and run: ${plugin_root}/hooks/jlink-config.sh build\\n2. Download pre-built runtime from GitHub releases"
 
     return 0  # Don't block session on missing runtime
 }

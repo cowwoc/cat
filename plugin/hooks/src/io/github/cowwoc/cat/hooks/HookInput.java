@@ -71,18 +71,20 @@ public final class HookInput
    * Get a string value from the input.
    *
    * @param key the key to look up
-   * @return the string value, or empty string if not found or not textual
+   * @return the string value, or empty string if the key is not found
+   * @throws IllegalArgumentException if the value exists but is not textual
    */
   public String getString(String key)
   {
     JsonNode node = data.get(key);
-    if (node != null && node.isString())
-    {
-      String value = node.asString();
-      if (value != null)
-        return value;
-    }
-    return "";
+    if (node == null)
+      return "";
+    if (!node.isString())
+      throw new IllegalArgumentException("Expected string for key \"" + key + "\", got: " + node.getNodeType());
+    String value = node.asString();
+    if (value == null)
+      return "";
+    return value;
   }
 
   /**
