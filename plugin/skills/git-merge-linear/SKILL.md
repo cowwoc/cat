@@ -4,4 +4,4 @@ user-invocable: false
 allowed-tools: Bash, Read
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" git-merge-linear "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" git-merge-linear`

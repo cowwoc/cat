@@ -48,6 +48,14 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/session_start_handlers/clear_skill_markers.py"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-env.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
