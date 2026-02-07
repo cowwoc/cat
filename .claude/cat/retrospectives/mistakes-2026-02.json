@@ -3252,6 +3252,25 @@
         "catches_variations": true
       },
       "correct_behavior": "After creating a subtask under a decomposed parent, explicitly remind the agent that the parent cannot be closed or merged until all subtasks (including the new one) are completed and the parent's acceptance criteria are verified"
+    },
+    {
+      "id": "M469",
+      "timestamp": "2026-02-06T19:40:39.404955",
+      "session_id": "54776314-b62b-4cd0-a105-3036b800cbaf",
+      "category": "tool_error",
+      "description": "work-prepare.py potentially_complete heuristic false positive: commit marking another issue as duplicate (config: mark batch-add-skill-context as duplicate of add-skill-context-router) was not filtered by planning_prefixes, causing issue to be flagged as potentially complete when no implementation existed.",
+      "root_cause": "Incomplete filter pattern in check_base_branch_commits() - planning_prefixes tuple excluded planning: and config: add issue/task but not config: mark commits that reference issue names in duplicate-marking context.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_level": 1,
+      "prevention_description": "Extended planning_prefixes tuple in work-prepare.py to include config: mark alongside existing filters.",
+      "files_modified": [
+        "plugin/scripts/work-prepare.py"
+      ],
+      "recurrence_of": null,
+      "context_related": false
     }
-  ]
+  ],
+  "counter": 1
 }
