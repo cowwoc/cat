@@ -3390,6 +3390,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Use 'git -C <worktree-path>' instead of 'cd <worktree-path> &&'. Hooks must have execute permissions (chmod +x) to function."
+    },
+    {
+      "id": "M475",
+      "timestamp": "2026-02-07T19:01:57Z",
+      "category": "protocol_violation",
+      "description": "Main agent jumped to AskUserQuestion without showing progress banner, task goal, execution summary, or review results in approval gate",
+      "root_cause": "Step 6 instructions say \"Present a summary and ask for approval\" which is ambiguous about what to display. Agent interpreted this as a brief description in the question rather than showing full context first.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/content.md",
+      "pattern_keywords": [
+        "approval_gate",
+        "context_display",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display progress banner, task goal, execution summary, and review results BEFORE presenting AskUserQuestion for approval"
     }
   ],
   "counter": 1
