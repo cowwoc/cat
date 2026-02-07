@@ -86,7 +86,7 @@ def call_get_available_issues(
         cmd.extend(["--exclude-pattern", exclude_pattern])
 
     if issue_id:
-        cmd.extend(["--issue-id", issue_id])
+        cmd.append(issue_id)
 
     result = subprocess.run(
         cmd,
