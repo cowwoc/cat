@@ -122,6 +122,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- define-wave-terminology
+- add-skill-context-router
 - migrate-token-counting
 - cleanup-python-files
 - migrate-python-tests
