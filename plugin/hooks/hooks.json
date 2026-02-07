@@ -137,7 +137,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/enforce-worktree-isolation.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh EnforceWorktreeIsolation"
           }
         ]
       }
@@ -201,7 +201,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/enforce-status-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh EnforceStatusOutput"
           }
         ]
       }

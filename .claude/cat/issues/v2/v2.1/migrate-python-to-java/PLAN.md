@@ -22,10 +22,10 @@ None - infrastructure/setup task
 ### Infrastructure (Complete)
 - Maven project structure: `plugin/hooks/java/pom.xml`, `module-info.java`
 - JDK infrastructure:
-  - `plugin/hooks/jdk/java_runner.sh` - Java hook entry point with correct package prefix
-  - `plugin/hooks/jdk/session_start.sh` - JDK detection/download logic
-  - `plugin/hooks/jdk/jlink-config.sh` - jlink bundle configuration
-- System JDK fallback working correctly in `java_runner.sh`
+  - `plugin/hooks/java.sh` - Java hook entry point with correct package prefix
+  - `plugin/hooks/session_start.sh` - JDK detection/download logic
+  - `plugin/hooks/jlink-config.sh` - jlink bundle configuration
+- System JDK fallback working correctly in `java.sh`
 
 ### Java Implementations (53 files)
 - 7 entry point handlers (for hooks.json):
@@ -44,7 +44,7 @@ None - infrastructure/setup task
 ## Files to Modify
 
 ### Phase 1: Wire Up Existing Java Entry Points
-- `plugin/hooks/hooks.json` - Replace 6 Python entry points with java_runner.sh calls:
+- `plugin/hooks/hooks.json` - Replace 6 Python entry points with java.sh calls:
   - Line 50: `get-skill-output.py` → `GetSkillOutput`
   - Line 96: `get-read-pretool-output.py` → `GetReadPretoolOutput`
   - Line 142: `get-posttool-output.py` → `GetPosttoolOutput`
@@ -76,7 +76,7 @@ None - infrastructure/setup task
 ## Execution Steps
 
 ### Step 1: Wire up 6 existing Java entry points (one at a time)
-- Edit `plugin/hooks/hooks.json` to replace Python entry point with java_runner.sh call
+- Edit `plugin/hooks/hooks.json` to replace Python entry point with java.sh call
 - Test the specific hook by triggering it (e.g., run a Bash command, use a skill)
 - Verify: Hook output identical to Python version
 - Repeat for each of the 6 entry points
@@ -111,7 +111,7 @@ None - infrastructure/setup task
 - Verify: Token counts match Python tiktoken (±1% tolerance)
 
 ## Acceptance Criteria
-- [ ] All 7 entry point hooks use Java (via java_runner.sh in hooks.json)
+- [ ] All 7 entry point hooks use Java (via java.sh in hooks.json)
 - [ ] All tests migrated to Java TestNG and passing (`mvn test` exit code 0)
 - [ ] All Python hook files removed (`plugin/hooks/*.py`)
 - [ ] All Python test files removed (`tests/**/*.py`)

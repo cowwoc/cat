@@ -13,8 +13,8 @@ None - infrastructure subtask of add-java-build-to-ci
 - **Mitigation:** Clear error message if JDK not available; document requirements
 
 ## Files to Modify
-- `plugin/hooks/jdk/build-bundle.sh` - New script: rebuild jlink bundle locally when sources change
-- `plugin/hooks/jdk/jlink-config.sh` - Already modified in ci-build-jlink-bundle to include cat-hooks.jar
+- `plugin/hooks/jlink/build-bundle.sh` - New script: rebuild jlink bundle locally when sources change
+- `plugin/hooks/jlink-config.sh` - Already modified in ci-build-jlink-bundle to include cat-hooks.jar
 
 ## Acceptance Criteria
 - [ ] Developer can run a single command to rebuild the local jlink bundle
@@ -25,7 +25,7 @@ None - infrastructure subtask of add-java-build-to-ci
 
 ## Execution Steps
 1. **Create build-bundle.sh script**
-   - Files: `plugin/hooks/jdk/build-bundle.sh`
+   - Files: `plugin/hooks/jlink/build-bundle.sh`
    - Check if JDK 25 is available
    - Compare mtimes of Java source files against the bundle VERSION marker
    - If stale: run `plugin/hooks/java/build.sh` then `jlink-config.sh build`
@@ -33,7 +33,7 @@ None - infrastructure subtask of add-java-build-to-ci
    - If up-to-date: skip with message
 
 2. **Document developer workflow**
-   - Files: `plugin/hooks/jdk/README.md`
+   - Files: `plugin/hooks/README.md`
    - Add section on local development: when to rebuild, how to rebuild, prerequisites
 
 3. **Run tests**

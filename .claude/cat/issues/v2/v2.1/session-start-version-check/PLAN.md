@@ -13,7 +13,7 @@ None - infrastructure subtask of add-java-build-to-ci
 - **Mitigation:** Only check when versions mismatch (fast local comparison first); fail gracefully if API unavailable
 
 ## Files to Modify
-- `plugin/hooks/jdk/session_start.sh` - Rewrite download logic to use version-based comparison and GitHub API
+- `plugin/hooks/session_start.sh` - Rewrite download logic to use version-based comparison and GitHub API
 - `plugin/.claude-plugin/plugin.json` - Read version from here (already exists)
 
 ## Acceptance Criteria
@@ -28,20 +28,20 @@ None - infrastructure subtask of add-java-build-to-ci
 
 ## Execution Steps
 1. **Add version reading logic to session_start.sh**
-   - Files: `plugin/hooks/jdk/session_start.sh`
+   - Files: `plugin/hooks/session_start.sh`
    - Read plugin version: `jq -r .version "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`
    - Read local bundle version: `cat "${jdk_path}/VERSION"` (created by jlink-config.sh in subtask 1)
    - Compare: if equal, export CAT_JAVA_HOME and return success immediately
 
 2. **Add GitHub API download logic**
-   - Files: `plugin/hooks/jdk/session_start.sh`
+   - Files: `plugin/hooks/session_start.sh`
    - If versions mismatch, call: `curl -sSf "https://api.github.com/repos/{owner}/{repo}/releases/tags/v${plugin_version}"`
    - Parse response to find platform-specific asset URL (e.g., `cat-jdk-25-linux-x64.tar.gz`)
    - Download and extract the bundle to the expected location
    - Read owner/repo from plugin.json `repository` field
 
 3. **Remove old download/build fallback logic**
-   - Files: `plugin/hooks/jdk/session_start.sh`
+   - Files: `plugin/hooks/session_start.sh`
    - Remove the `download_runtime()` function that uses hardcoded DOWNLOAD_BASE_URL
    - Remove the `build_runtime_locally()` fallback (developers handle their own builds)
    - Keep `check_existing_runtime()` for verifying the bundle works after download

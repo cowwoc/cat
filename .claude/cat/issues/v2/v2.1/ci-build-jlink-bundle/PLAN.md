@@ -14,7 +14,7 @@ None - infrastructure subtask of add-java-build-to-ci
 
 ## Files to Modify
 - `.github/workflows/build-jlink-bundle.yml` - New GitHub Actions workflow
-- `plugin/hooks/jdk/jlink-config.sh` - Modify to include cat-hooks.jar in the jlink bundle
+- `plugin/hooks/jlink-config.sh` - Modify to include cat-hooks.jar in the jlink bundle
 - `plugin/hooks/java/build.sh` - May need updates to output JAR to a location jlink-config.sh can consume
 
 ## Acceptance Criteria
@@ -23,17 +23,17 @@ None - infrastructure subtask of add-java-build-to-ci
 - [ ] Bundle is published as a GitHub release artifact with platform-specific naming
 - [ ] Bundle includes a version marker file matching plugin.json version
 - [ ] Cross-platform builds work (at minimum linux-x64)
-- [ ] java_runner.sh can find and use cat-hooks.jar from within the jlink bundle
+- [ ] java.sh can find and use cat-hooks.jar from within the jlink bundle
 
 ## Execution Steps
 1. **Modify jlink-config.sh to include cat-hooks.jar**
-   - Files: `plugin/hooks/jdk/jlink-config.sh`
+   - Files: `plugin/hooks/jlink-config.sh`
    - After building the jlink runtime, copy cat-hooks.jar and Jackson JARs into a `lib/` directory inside the bundle
    - Write a version marker file (`VERSION`) inside the bundle directory containing the plugin.json version
    - Update `build_runtime()` to first build cat-hooks.jar via `plugin/hooks/java/build.sh`
 
-2. **Update java_runner.sh classpath resolution**
-   - Files: `plugin/hooks/jdk/java_runner.sh`
+2. **Update java.sh classpath resolution**
+   - Files: `plugin/hooks/java.sh`
    - Update `find_hooks_jar()` and `build_classpath()` to look for JARs inside the jlink bundle directory
    - Add priority path: `${CAT_JAVA_HOME}/lib/cat-hooks.jar`
 
@@ -51,4 +51,4 @@ None - infrastructure subtask of add-java-build-to-ci
 - [ ] jlink-config.sh produces a bundle containing JDK + cat-hooks.jar + Jackson
 - [ ] Bundle contains VERSION marker file
 - [ ] GitHub Actions workflow builds and publishes successfully
-- [ ] java_runner.sh finds JAR from bundle location
+- [ ] java.sh finds JAR from bundle location

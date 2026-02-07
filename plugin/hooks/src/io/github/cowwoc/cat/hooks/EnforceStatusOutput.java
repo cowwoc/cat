@@ -1,0 +1,251 @@
+package io.github.cowwoc.cat.hooks;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * enforce-status-output - Stop hook to enforce verbatim status box output.
+ *
+ * <p>HOOK: Stop</p>
+ * <p>TRIGGER: When /cat:status was invoked in this turn</p>
+ *
+ * <p>M402: After 3+ documentation-level failures (M341, M395, M401), this hook
+ * escalates enforcement to programmatic level.</p>
+ *
+ * <p>Detects when:</p>
+ * <ol>
+ *   <li>User invoked /cat:status in the current turn</li>
+ *   <li>Agent's response did NOT contain the status box (╭── characters)</li>
+ * </ol>
+ *
+ * <p>Returns decision=block to force Claude to output the status box verbatim.</p>
+ */
+public final class EnforceStatusOutput
+{
+  private EnforceStatusOutput()
+  {
+    // Utility class
+  }
+
+  /**
+   * Entry point for the status output enforcement hook.
+   *
+   * @param args command line arguments (unused)
+   */
+  public static void main(String[] args)
+  {
+    try
+    {
+      HookInput input = HookInput.readFromStdin();
+
+      String transcriptPath = input.getString("transcript_path");
+
+      String stopHookActiveValue = input.getString("stop_hook_active", "false");
+      boolean stopHookActive;
+      if (stopHookActiveValue.equals("true"))
+        stopHookActive = true;
+      else if (stopHookActiveValue.equals("false"))
+        stopHookActive = false;
+      else
+      {
+        throw new IllegalArgumentException("stop_hook_active must be \"true\" or \"false\", got: \"" +
+          stopHookActiveValue + "\"");
+      }
+      if (stopHookActive)
+      {
+        HookOutput.empty();
+        return;
+      }
+
+      CheckResult result = checkTranscriptForStatusSkill(transcriptPath);
+
+      if (result.statusInvoked && !result.hasBoxOutput)
+      {
+        String reason =
+          "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
+          "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
+          "the START and END markers. You summarized instead of copy-pasting. " +
+          "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
+          "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
+        HookOutput.block(reason);
+      }
+      else
+      {
+        HookOutput.empty();
+      }
+    }
+    catch (Exception e)
+    {
+      String errorMessage =
+        "❌ Hook error: " + e.getMessage() + "\n" +
+        "\n" +
+        "Blocking as fail-safe. Please verify your working environment.";
+      HookOutput.block(errorMessage);
+    }
+  }
+
+  /**
+   * Check the transcript to see if /cat:status was invoked and if output was correct.
+   *
+   * @param transcriptPath path to the transcript file
+   * @return result indicating whether status was invoked and whether response had box output
+   */
+  private static CheckResult checkTranscriptForStatusSkill(String transcriptPath) throws IOException
+  {
+    if (transcriptPath.isEmpty())
+      return new CheckResult(false, true);
+
+    Path path = Paths.get(transcriptPath);
+    if (!Files.exists(path))
+      return new CheckResult(false, true);
+
+    List<String> lines = Files.readAllLines(path);
+
+    List<String> recentLines = getRecentLines(lines, 10);
+
+    boolean statusInvoked = false;
+    boolean hasBoxOutput = false;
+
+    JsonMapper mapper = JsonMapper.builder().build();
+    for (String line : recentLines)
+    {
+      String trimmed = line.trim();
+      if (trimmed.isEmpty())
+        continue;
+
+      JsonNode entry;
+      try
+      {
+        entry = mapper.readTree(trimmed);
+      }
+      catch (Exception _)
+      {
+        continue;
+      }
+
+      JsonNode typeNode = entry.get("type");
+      if (typeNode == null)
+        continue;
+      String type = typeNode.asString();
+
+      if (type.equals("user") && checkUserMessageForStatus(entry))
+        statusInvoked = true;
+
+      if (type.equals("assistant") && checkAssistantMessageForBox(entry))
+        hasBoxOutput = true;
+    }
+
+    return new CheckResult(statusInvoked, hasBoxOutput);
+  }
+
+  /**
+   * Check if user message contains status skill invocation.
+   *
+   * @param entry the user message entry
+   * @return true if status skill detected
+   */
+  private static boolean checkUserMessageForStatus(JsonNode entry)
+  {
+    JsonNode messageNode = entry.get("message");
+    if (messageNode == null)
+      return false;
+
+    JsonNode contentNode = messageNode.get("content");
+    if (contentNode == null || !contentNode.isArray())
+      return false;
+
+    for (JsonNode block : contentNode)
+    {
+      if (!block.isObject())
+        continue;
+
+      JsonNode typeNode = block.get("type");
+      if (typeNode == null || !typeNode.asString().equals("text"))
+        continue;
+
+      JsonNode textNode = block.get("text");
+      if (textNode == null)
+        continue;
+
+      String text = textNode.asString();
+      if (text.contains("# CAT Status Display") ||
+          text.contains("<!-- START COPY HERE -->") ||
+          text.contains("<command-name>cat:status</command-name>") ||
+          text.contains("<command-name>/cat:status</command-name>"))
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if assistant message contains box output.
+   *
+   * @param entry the assistant message entry
+   * @return true if box characters detected
+   */
+  private static boolean checkAssistantMessageForBox(JsonNode entry)
+  {
+    JsonNode messageNode = entry.get("message");
+    if (messageNode == null)
+      return false;
+
+    JsonNode contentNode = messageNode.get("content");
+    if (contentNode == null || !contentNode.isArray())
+      return false;
+
+    for (JsonNode block : contentNode)
+    {
+      if (!block.isObject())
+        continue;
+
+      JsonNode typeNode = block.get("type");
+      if (typeNode == null || !typeNode.asString().equals("text"))
+        continue;
+
+      JsonNode textNode = block.get("text");
+      if (textNode == null)
+        continue;
+
+      String text = textNode.asString();
+      if (text.contains("╭─") && text.contains("│") && text.contains("╰─"))
+        return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Get the last N lines from a list.
+   *
+   * @param lines all lines
+   * @param count number of lines to return
+   * @return the last count lines, or all lines if fewer than count
+   */
+  private static List<String> getRecentLines(List<String> lines, int count)
+  {
+    if (lines.size() <= count)
+      return lines;
+
+    return new ArrayList<>(lines.subList(lines.size() - count, lines.size()));
+  }
+
+  /**
+   * Result of checking transcript for status skill invocation.
+   *
+   * @param statusInvoked whether status skill was invoked
+   * @param hasBoxOutput whether response contained box output
+   */
+  private record CheckResult(boolean statusInvoked, boolean hasBoxOutput)
+  {
+  }
+}

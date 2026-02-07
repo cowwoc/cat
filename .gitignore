@@ -11,6 +11,9 @@ plugin/node_modules/
 
 # User-specific license configuration
 cat-config.local.json
+
+# Compiled code
 plugin/runtime/
 __pycache__/
 *.pyc
+target/
