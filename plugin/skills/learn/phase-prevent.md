@@ -327,6 +327,15 @@ The checklist covers:
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
+**CRITICAL (M470): After editing a file, use Read tool to verify your change is present.**
+
+Do not proceed to the blocking gate below until you have:
+1. Used Edit or Write tool to modify the file
+2. Used Read tool on the same file to confirm the change exists
+3. Verified the content matches what you intended to add
+
+If the file content does NOT contain your change, the edit failed - you MUST retry the edit.
+
 **Escalation and Layered Prevention (M342):**
 
 When escalating from documentation to hook/validation, **keep both layers** but align them:
