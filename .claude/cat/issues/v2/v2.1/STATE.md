@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- developer-local-bundle-rebuild
 - session-start-version-check
 - ci-build-jlink-bundle
 - remove-version-from-cat-config
