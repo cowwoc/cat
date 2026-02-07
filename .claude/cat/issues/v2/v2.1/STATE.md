@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- fix-merge-base-false-positive
 - define-wave-terminology
 - add-skill-context-router
 - migrate-token-counting
