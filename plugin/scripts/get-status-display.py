@@ -26,6 +26,9 @@ from emoji_widths import EmojiWidths
 # Initialize emoji width calculator
 _emoji_widths = EmojiWidths()
 
+# Maximum number of completed tasks to show before collapsing
+MAX_VISIBLE_COMPLETED = 5
+
 
 def display_width(text: str) -> int:
     """Calculate terminal display width of a string."""
@@ -330,11 +333,15 @@ def collect_status_data(issues_dir: Path, cat_dir: Path = None) -> dict:
                     if dep_status != "closed":
                         blocked_by.append(dep)
 
+                # Get mtime for completion ordering
+                mtime = task_dir.stat().st_mtime if task_dir.exists() else 0
+
                 tasks.append({
                     "name": task_name,
                     "status": status,
                     "dependencies": dependencies,
-                    "blocked_by": blocked_by
+                    "blocked_by": blocked_by,
+                    "mtime": mtime
                 })
 
                 if status == "closed":
@@ -508,25 +515,49 @@ def generate_status_display(project_dir: str) -> str:
                     if tasks:
                         inner_content.append('')
 
+                    # Separate completed and non-completed tasks
+                    completed_tasks = []
+                    non_completed_tasks = []
+
                     for task in tasks:
+                        task_status = task.get('status', 'open')
+                        if task_status in ("closed", "done"):
+                            completed_tasks.append(task)
+                        else:
+                            non_completed_tasks.append(task)
+
+                    # Sort completed tasks by mtime (most recent first)
+                    completed_tasks.sort(key=lambda t: t.get('mtime', 0), reverse=True)
+
+                    # Show all non-completed tasks
+                    for task in non_completed_tasks:
                         task_name = task.get('name', '')
                         task_status = task.get('status', 'open')
                         blocked_by = task.get('blocked_by', [])
 
-                        if task_status in ("closed", "done"):
-                            task_emoji = '☑️'
-                        elif task_status in ("in-progress", "active", "in_progress"):
+                        if task_status in ("in-progress", "active", "in_progress"):
                             task_emoji = '🔄'
                         elif blocked_by:
                             task_emoji = '🚫'
                         else:
                             task_emoji = '🔳'
 
-                        if blocked_by and task_status not in ("closed", "done"):
+                        if blocked_by:
                             blocked_str = ", ".join(blocked_by)
                             inner_content.append(f"   {task_emoji} {task_name} (blocked by: {blocked_str})")
                         else:
                             inner_content.append(f"   {task_emoji} {task_name}")
+
+                    # Show up to MAX_VISIBLE_COMPLETED most recent completed tasks
+                    visible_completed = completed_tasks[:MAX_VISIBLE_COMPLETED]
+                    for task in visible_completed:
+                        task_name = task.get('name', '')
+                        inner_content.append(f"   ☑️ {task_name}")
+
+                    # Collapse remaining completed tasks
+                    remaining_completed = len(completed_tasks) - len(visible_completed)
+                    if remaining_completed > 0:
+                        inner_content.append(f"   ☑️ ... and {remaining_completed} more completed")
 
                     if tasks:
                         inner_content.append('')

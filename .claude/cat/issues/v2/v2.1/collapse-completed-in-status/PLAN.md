@@ -17,11 +17,11 @@ None (performance optimization)
 - `tests/test_status_handler.py` - Add test for collapse behavior
 
 ## Acceptance Criteria
-- [ ] Active minor shows at most 5 completed issues (the 5 most recently completed)
-- [ ] Remaining completed issues are collapsed into a single summary line like "☑️ ... and N more completed"
-- [ ] Non-completed issues (open, in-progress, blocked) are always shown
-- [ ] Inactive minors are unaffected (they already show summary counts only)
-- [ ] All existing tests pass
+- [x] Active minor shows at most 5 completed issues (the 5 most recently completed)
+- [x] Remaining completed issues are collapsed into a single summary line like "☑️ ... and N more completed"
+- [x] Non-completed issues (open, in-progress, blocked) are always shown
+- [x] Inactive minors are unaffected (they already show summary counts only)
+- [x] All existing tests pass
 
 ## Execution Steps
 1. **Step 1:** Modify `generate_status_display()` in `plugin/scripts/get-status-display.py`

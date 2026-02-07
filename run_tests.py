@@ -1563,6 +1563,292 @@ def test_compress_validate_loop():
         runner.test("All compress-validate-loop tests passed", True)
 
 
+def test_status_display_collapse():
+    """Test collapse of completed tasks in active minor."""
+    runner.section("scripts/get-status-display.py collapse completed")
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "get_status_display",
+        PROJECT_ROOT / "plugin" / "scripts" / "get-status-display.py"
+    )
+    get_status_display = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(get_status_display)
+
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        issues_dir = cat_dir / "issues"
+
+        # Create PROJECT.md
+        project_file = cat_dir / "PROJECT.md"
+        project_file.parent.mkdir(parents=True, exist_ok=True)
+        project_file.write_text("# Test Project\n")
+
+        # Create ROADMAP.md
+        roadmap_file = cat_dir / "ROADMAP.md"
+        roadmap_file.write_text("""## Version 1: Test Version
+
+- **1.0:** Test Minor
+""")
+
+        # Test: Active minor with 8 completed + 2 non-completed tasks
+        import time
+        now = time.time()
+
+        minor_dir = issues_dir / "v1" / "v1.0"
+        minor_dir.mkdir(parents=True)
+
+        # Create 8 completed tasks with different mtimes
+        for i in range(8):
+            task_dir = minor_dir / f"completed-{i}"
+            task_dir.mkdir()
+            (task_dir / "STATE.md").write_text("- **Status:** closed\n")
+            import os
+            mtime = now - (i * 100)
+            os.utime(task_dir, (mtime, mtime))
+
+        # Create 1 in-progress task (makes this the active minor)
+        inprog_dir = minor_dir / "in-progress-task"
+        inprog_dir.mkdir()
+        (inprog_dir / "STATE.md").write_text("- **Status:** in-progress\n")
+
+        # Create 1 open task
+        open_dir = minor_dir / "open-task"
+        open_dir.mkdir()
+        (open_dir / "STATE.md").write_text("- **Status:** open\n")
+
+        # Collect data
+        data = get_status_display.collect_status_data(issues_dir, cat_dir)
+
+        runner.test("collapse: data has 1 minor", len(data["minors"]) == 1)
+        runner.test("collapse: minor has 10 tasks", len(data["minors"][0]["tasks"]) == 10)
+
+        # Check mtime is stored
+        tasks = data["minors"][0]["tasks"]
+        completed = [t for t in tasks if t["status"] == "closed"]
+        runner.test("collapse: completed tasks have mtime", all("mtime" in t for t in completed))
+
+        # Generate display
+        output = get_status_display.generate_status_display(str(tmp_path))
+
+        # Should show non-completed tasks
+        runner.test("collapse: shows in-progress task", "in-progress-task" in output)
+        runner.test("collapse: shows open task", "open-task" in output)
+
+        # Should show 5 most recent completed (indices 0-4, which are newest by mtime)
+        visible_count = sum(1 for i in range(5) if f"completed-{i}" in output)
+        runner.test("collapse: shows 5 most recent completed", visible_count == 5)
+
+        # Verify the RIGHT 5 are shown (0-4, the newest) and wrong ones aren't (5-7, the oldest)
+        runner.test("collapse: shows newest completed-0", "completed-0" in output)
+        runner.test("collapse: shows newest completed-1", "completed-1" in output)
+        runner.test("collapse: shows newest completed-2", "completed-2" in output)
+        runner.test("collapse: shows newest completed-3", "completed-3" in output)
+        runner.test("collapse: shows newest completed-4", "completed-4" in output)
+
+        # Should show collapse line
+        runner.test("collapse: shows collapse line", "... and 3 more completed" in output)
+
+        # Should NOT show oldest 3 individually (unless in collapse count)
+        # Check that completed-5, 6, 7 don't appear as individual task lines
+        lines = output.split('\n')
+        individual_old_tasks = sum(1 for line in lines
+                                   if "☑️ completed-5" in line
+                                   or "☑️ completed-6" in line
+                                   or "☑️ completed-7" in line)
+        runner.test("collapse: oldest 3 not shown individually", individual_old_tasks == 0)
+
+
+def test_status_display_collapse_edge_cases():
+    """Test edge cases for completed task collapse."""
+    runner.section("scripts/get-status-display.py collapse edge cases")
+
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "get_status_display",
+        PROJECT_ROOT / "plugin" / "scripts" / "get-status-display.py"
+    )
+    get_status_display = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(get_status_display)
+
+    # Test 1: Active minor with exactly 5 completed tasks (no collapse)
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        issues_dir = cat_dir / "issues"
+
+        project_file = cat_dir / "PROJECT.md"
+        project_file.parent.mkdir(parents=True, exist_ok=True)
+        project_file.write_text("# Test Project\n")
+
+        roadmap_file = cat_dir / "ROADMAP.md"
+        roadmap_file.write_text("""## Version 1: Test Version
+
+- **1.0:** Minor One
+""")
+
+        minor1_dir = issues_dir / "v1" / "v1.0"
+        minor1_dir.mkdir(parents=True)
+
+        for i in range(5):
+            task_dir = minor1_dir / f"task-{i}"
+            task_dir.mkdir()
+            (task_dir / "STATE.md").write_text("- **Status:** closed\n")
+
+        inprog_dir = minor1_dir / "active-task"
+        inprog_dir.mkdir()
+        (inprog_dir / "STATE.md").write_text("- **Status:** in-progress\n")
+
+        output = get_status_display.generate_status_display(str(tmp_path))
+
+        # Should NOT show collapse line with only 5 completed
+        runner.test("collapse: no collapse line with 5 tasks",
+                   "more completed" not in output)
+
+    # Test 2: Active minor with exactly 6 completed tasks (boundary test)
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        issues_dir = cat_dir / "issues"
+
+        project_file = cat_dir / "PROJECT.md"
+        project_file.parent.mkdir(parents=True, exist_ok=True)
+        project_file.write_text("# Test Project\n")
+
+        roadmap_file = cat_dir / "ROADMAP.md"
+        roadmap_file.write_text("""## Version 1: Test Version
+
+- **1.1:** Minor Two
+""")
+
+        minor2_dir = issues_dir / "v1" / "v1.1"
+        minor2_dir.mkdir(parents=True)
+
+        import time
+        now = time.time()
+        for i in range(6):
+            task_dir = minor2_dir / f"completed-{i}"
+            task_dir.mkdir()
+            (task_dir / "STATE.md").write_text("- **Status:** closed\n")
+            # Set mtimes so completed-0 is newest
+            mtime = now - (i * 100)
+            import os
+            os.utime(task_dir, (mtime, mtime))
+
+        inprog2_dir = minor2_dir / "active-task-2"
+        inprog2_dir.mkdir()
+        (inprog2_dir / "STATE.md").write_text("- **Status:** in-progress\n")
+
+        output = get_status_display.generate_status_display(str(tmp_path))
+
+        # Should show collapse line with 6 completed (5 shown + 1 collapsed)
+        runner.test("collapse: shows collapse line with 6 tasks",
+                   "... and 1 more completed" in output)
+        # Verify the 5 newest are shown (completed-0 through completed-4)
+        visible_6_count = sum(1 for i in range(5) if f"completed-{i}" in output)
+        runner.test("collapse: 6 tasks - shows 5 newest",
+                   visible_6_count == 5)
+        # Verify the oldest (completed-5) is NOT shown individually
+        runner.test("collapse: 6 tasks - oldest not shown individually",
+                   "☑️ completed-5" not in output)
+
+    # Test 3: Active minor with no completed tasks
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        issues_dir = cat_dir / "issues"
+
+        project_file = cat_dir / "PROJECT.md"
+        project_file.parent.mkdir(parents=True, exist_ok=True)
+        project_file.write_text("# Test Project\n")
+
+        roadmap_file = cat_dir / "ROADMAP.md"
+        roadmap_file.write_text("""## Version 1: Test Version
+
+- **1.2:** Minor Three
+""")
+
+        minor3_dir = issues_dir / "v1" / "v1.2"
+        minor3_dir.mkdir(parents=True)
+
+        for i in range(3):
+            task_dir = minor3_dir / f"open-{i}"
+            task_dir.mkdir()
+            (task_dir / "STATE.md").write_text("- **Status:** open\n")
+
+        # Update one to make it active
+        (minor3_dir / "open-0" / "STATE.md").write_text("- **Status:** in-progress\n")
+
+        output = get_status_display.generate_status_display(str(tmp_path))
+
+        # Should not show any collapse line
+        runner.test("collapse: no collapse in output for no-completed minor",
+                   "more completed" not in output)
+        # Verify all open/in-progress tasks are shown
+        runner.test("collapse: no-completed shows all open tasks",
+                   "open-0" in output and "open-1" in output and "open-2" in output)
+
+    # Test 4: Blocked tasks mixed with completed
+    with TemporaryDirectory() as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cat_dir = tmp_path / ".claude" / "cat"
+        issues_dir = cat_dir / "issues"
+
+        project_file = cat_dir / "PROJECT.md"
+        project_file.parent.mkdir(parents=True, exist_ok=True)
+        project_file.write_text("# Test Project\n")
+
+        roadmap_file = cat_dir / "ROADMAP.md"
+        roadmap_file.write_text("""## Version 1: Test Version
+
+- **1.3:** Minor Four
+""")
+
+        minor4_dir = issues_dir / "v1" / "v1.3"
+        minor4_dir.mkdir(parents=True)
+
+        import time
+        now = time.time()
+        for i in range(6):
+            task_dir = minor4_dir / f"done-{i}"
+            task_dir.mkdir()
+            (task_dir / "STATE.md").write_text("- **Status:** closed\n")
+            mtime = now - (i * 100)
+            import os
+            os.utime(task_dir, (mtime, mtime))
+
+        # Create a dependency task that's not completed
+        dep_dir = minor4_dir / "dependency-task"
+        dep_dir.mkdir()
+        (dep_dir / "STATE.md").write_text("- **Status:** open\n")
+
+        blocked1_dir = minor4_dir / "blocked-task-1"
+        blocked1_dir.mkdir()
+        (blocked1_dir / "STATE.md").write_text("- **Status:** open\n- **Dependencies:** [dependency-task]\n")
+
+        blocked2_dir = minor4_dir / "blocked-task-2"
+        blocked2_dir.mkdir()
+        (blocked2_dir / "STATE.md").write_text("- **Status:** open\n- **Dependencies:** [dependency-task]\n")
+
+        # Add 1 in-progress task
+        inprog4_dir = minor4_dir / "active-task-4"
+        inprog4_dir.mkdir()
+        (inprog4_dir / "STATE.md").write_text("- **Status:** in-progress\n")
+
+        output = get_status_display.generate_status_display(str(tmp_path))
+
+        # Verify blocked tasks are shown with block emoji
+        runner.test("collapse: blocked tasks shown with emoji",
+                   "🚫 blocked-task-1" in output and "🚫 blocked-task-2" in output)
+        # Verify collapse line is independent of blocked tasks
+        runner.test("collapse: collapse line independent of blocked",
+                   "... and 1 more completed" in output)
+        # Verify in-progress task is shown
+        runner.test("collapse: blocked test shows in-progress",
+                   "🔄 active-task-4" in output)
+
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -1598,6 +1884,8 @@ def main():
         test_session_start,
         test_retrospective_handler_timezone,
         test_compress_validate_loop,
+        test_status_display_collapse,
+        test_status_display_collapse_edge_cases,
     ]
 
     for test_func in test_functions:
