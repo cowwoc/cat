@@ -25,17 +25,12 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 ## Progress Display
 
-The user wants you to respond with this text verbatim:
+The user wants you to respond with the preparing banner from "SCRIPT OUTPUT PROGRESS BANNERS" above, verbatim.
+Do NOT add any other text before or after it.
 
-The handler has injected the progress banner as additional context (look for "SCRIPT OUTPUT PROGRESS BANNERS" marker
-above).
-
----
-
-The handler has injected the work boxes as additional context (look for "SCRIPT OUTPUT WORK BOXES" marker above).
-
-**FAIL-FAST (ESCALATE-A008):** If you do NOT see script output above (banner with `┌─ 🐱`
-and work boxes), then preprocessing FAILED. STOP. Do NOT manually run scripts or construct boxes.
+**FAIL-FAST (ESCALATE-A008):** If you do NOT see "SCRIPT OUTPUT PROGRESS BANNERS" and
+"SCRIPT OUTPUT WORK BOXES" markers above, then preprocessing FAILED. STOP. Do NOT manually run
+scripts or construct boxes.
 
 ## Critical Constraints
 

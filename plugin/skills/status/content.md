@@ -1,7 +1,7 @@
-The handler has injected the status display as additional context (look for "SCRIPT OUTPUT STATUS DISPLAY" marker
-above).
+The user wants you to respond with the content from "SCRIPT OUTPUT STATUS DISPLAY" above, verbatim.
+Do NOT add any other text before or after it, except the NEXT STEPS table below.
 
-Output that content EXACTLY as shown, without modification or summarization.
+**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT STATUS DISPLAY" above, preprocessing FAILED. STOP.
 
 Then after the status display, output:
 

@@ -1,5 +1,4 @@
-The handler has injected the help reference as additional context (look for "SCRIPT OUTPUT HELP DISPLAY" marker
-above).
+The user wants you to respond with the content from "SCRIPT OUTPUT HELP DISPLAY" above, verbatim.
+Do NOT add any other text before or after it. Follow any INSTRUCTION directives within the output.
 
-Output that content EXACTLY as shown, without modification or summarization. Follow any INSTRUCTION directives within
-the output.
+**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT HELP DISPLAY" above, preprocessing FAILED. STOP.

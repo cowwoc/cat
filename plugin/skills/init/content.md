@@ -4,15 +4,8 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 </objective>
 
 
-The handler has injected init display boxes as additional context (look for "SCRIPT OUTPUT INIT BOXES" marker above).
-
-**If SCRIPT OUTPUT INIT BOXES not found:**
-```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
-Handler init_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT INIT BOXES" above, preprocessing FAILED. STOP.
+Do NOT manually construct output or invoke scripts.
 
 <process>
 

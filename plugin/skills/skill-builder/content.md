@@ -1292,6 +1292,72 @@ For each concern, invoke the `render-concern` skill:
 [BANG]`render-concern.sh '$ARGUMENTS'`
 ```
 
+**Pattern 3: Handler Preprocessing** (Python handler generates output before skill loads)
+
+Use when the skill's output is entirely script-generated and the content.md is just a thin wrapper
+that tells the agent to output the handler's result verbatim. The handler runs as a hook
+(UserPromptSubmit or PostToolUse:Skill) and its output appears as `additionalContext` above the
+skill content.
+
+```
+┌──────────────────────┐     ┌──────────────────────────┐
+│   Handler            │     │   content.md (thin)      │
+│   (Python)           │     │                          │
+│                      │     │ "Output the content from │
+│ Runs script/logic    │──→  │  SCRIPT OUTPUT X above,  │
+│ Returns SCRIPT OUTPUT│     │  verbatim."              │
+│ as additionalContext │     │                          │
+└──────────────────────┘     └──────────────────────────┘
+```
+
+**Example**: Help display - handler generates full help output, content.md outputs it.
+
+Handler (`skill_handlers/help_handler.py`):
+```python
+def handle(self, context):
+    return "SCRIPT OUTPUT HELP DISPLAY:\n\n" + rendered_help
+```
+
+content.md:
+```markdown
+The user wants you to respond with the content from "SCRIPT OUTPUT HELP DISPLAY" above, verbatim.
+Do NOT add any other text before or after it.
+
+**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT HELP DISPLAY" above, preprocessing FAILED. STOP.
+```
+
+**content.md pattern for handler-preprocessed skills (M471):**
+
+The thin wrapper content.md MUST follow this exact pattern:
+1. Line 1: `The user wants you to respond with the content from "SCRIPT OUTPUT X" above, verbatim.`
+2. Line 2: `Do NOT add any other text before or after it.`
+3. FAIL-FAST block if marker is missing
+
+**Anti-pattern (M471) - meta-description that agents echo literally:**
+```markdown
+The handler has injected the help reference as additional context
+(look for "SCRIPT OUTPUT HELP DISPLAY" marker above).
+```
+This text gets echoed to the user verbatim because the agent treats it as output content.
+
+**Handler vs content.md responsibilities:**
+
+| Aspect | Handler (runs every invocation) | content.md (loaded once per session) |
+|--------|--------------------------------|--------------------------------------|
+| Output | Fresh SCRIPT OUTPUT based on current args | Static behavioral instructions |
+| Args | Parses args from `context["user_prompt"]` | References `$ARGUMENTS` for conditional logic |
+| Changes | Different output each call | Same instructions, reused via reference.md |
+
+For skills with argument-dependent behavior (e.g., `/cat:work` vs `/cat:work 2.1-task`), the handler
+generates argument-specific SCRIPT OUTPUT while content.md contains the static conditional logic
+("if ARGUMENTS contains a filter, do X"). Both work correctly on subsequent invocations: the handler
+re-runs with new args, and the agent follows the already-loaded content.md instructions.
+
+**When to use handler preprocessing instead of direct preprocessing:**
+- Skill output requires Python logic (complex rendering, config reading, multi-script orchestration)
+- Handler needs to compose output from multiple sources
+- Output depends on context not available to shell scripts (e.g., parsed skill arguments)
+
 **Decision checklist**:
 
 | Question | If YES | Pattern |
@@ -1300,6 +1366,19 @@ For each concern, invoke the `render-concern` skill:
 | Does output depend on LLM analysis or judgment? | LLM must decide first | Delegated |
 | Is the same rendering used with different data sources? | Reusable renderer | Delegated |
 | Is there only one way to determine what goes in output? | No LLM needed | Direct |
+| Does output need Python logic or multi-source composition? | Handler computes it | Handler |
+| Is the entire skill output script-generated (thin wrapper)? | Handler + thin content.md | Handler |
+
+**Benefits of handler pattern**:
+- **Session-efficient**: The full skill content loads only once per session (via `load-skill.sh`).
+  Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (SCRIPT OUTPUT)
+  is fresh every time, but the skill instructions are not re-loaded, saving significant context.
+  After context compaction, `clear_skill_markers.py` (SessionStart hook) resets the markers so skills
+  re-load in full automatically.
+- Python handlers can compose output from multiple scripts, config files, and state
+- Handler runs before the agent sees the skill, so output is guaranteed correct
+- Agent cannot attempt manual construction - it only sees the final rendered output
+- Testable: handlers are Python modules with unit tests (see `tests/` directory)
 
 **Benefits of delegated pattern**:
 - Rendering logic is reusable across multiple orchestrator skills
@@ -1513,9 +1592,10 @@ Step 1: Display status
 
 ### Preprocessing Architecture
 
-- [ ] **Architecture decision made**: Direct vs. Delegated preprocessing
+- [ ] **Architecture decision made**: Direct vs. Delegated vs. Handler preprocessing
 - [ ] **Direct**: Script collects all inputs → use [BANG]`script.sh` in skill
 - [ ] **Delegated**: LLM determines data → Skill A invokes Skill B with args
+- [ ] **Handler**: Python handler generates SCRIPT OUTPUT → thin content.md outputs verbatim (M471)
 - [ ] **Computation extracted to preprocessing scripts** (M192/M215)
 - [ ] **No manual formatting in skill** - all rendering via preprocessing
 - [ ] **No embedded box drawings in skill instructions or examples** (M217)

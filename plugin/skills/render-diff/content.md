@@ -1,5 +1,4 @@
-The handler has injected the diff display as additional context (look for "SCRIPT OUTPUT RENDER DIFF" marker above).
+The user wants you to respond with the content from "SCRIPT OUTPUT RENDER DIFF" above, verbatim.
+Do NOT add any other text before or after it.
 
-Output that content EXACTLY as shown, without modification or summarization.
-
-**FAIL-FAST:** If you do NOT see a diff above, preprocessing FAILED. STOP.
+**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT RENDER DIFF" above, preprocessing FAILED. STOP.
