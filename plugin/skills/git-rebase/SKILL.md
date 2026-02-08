@@ -3,4 +3,4 @@ description: "MANDATORY: Use instead of `git rebase` - provides automatic backup
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" git-rebase`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" git-rebase "${CLAUDE_SESSION_ID}"`

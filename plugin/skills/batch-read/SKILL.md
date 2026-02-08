@@ -4,4 +4,4 @@ user-invocable: false
 allowed-tools: Bash
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" batch-read`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" batch-read "${CLAUDE_SESSION_ID}"`

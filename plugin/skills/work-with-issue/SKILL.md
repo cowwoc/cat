@@ -9,4 +9,4 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" work-with-issue`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" work-with-issue "${CLAUDE_SESSION_ID}"`

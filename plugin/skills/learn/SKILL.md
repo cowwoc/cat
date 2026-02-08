@@ -4,4 +4,4 @@ description: >
   Integrates token tracking for context-related failures.
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" learn`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" learn "${CLAUDE_SESSION_ID}"`

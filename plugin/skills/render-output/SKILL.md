@@ -5,4 +5,4 @@ allowed-tools: []
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" render-output`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" render-output "${CLAUDE_SESSION_ID}"`

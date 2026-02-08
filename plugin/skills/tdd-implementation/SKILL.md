@@ -3,4 +3,4 @@ description: Test-Driven Development workflow for features with testable inputs/
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" tdd-implementation`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" tdd-implementation "${CLAUDE_SESSION_ID}"`

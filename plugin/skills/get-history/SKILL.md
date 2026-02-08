@@ -3,4 +3,4 @@ description: Access raw conversation history from Claude Code session storage fo
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" get-history`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" get-history "${CLAUDE_SESSION_ID}"`

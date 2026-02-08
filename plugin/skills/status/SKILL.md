@@ -5,4 +5,4 @@ allowed-tools:
   - Skill
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" status`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" status "${CLAUDE_SESSION_ID}"`
