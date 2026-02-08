@@ -651,6 +651,46 @@ assertEquals(result, expected);
 assertTrue(list.contains(item));
 ```
 
+### Test Requirements, Not Implementation
+**Tests should validate business requirements with controlled inputs, not assert system configuration or implementation details.**
+
+Tests that assert environment-dependent values (terminal emoji widths, system fonts, screen resolution) provide no business value - they only verify that your development machine has specific configuration.
+
+```java
+// ❌ WRONG: Asserts developer's terminal configuration
+@Test
+public void singleEmojiHasWidthTwo() throws IOException
+{
+  DisplayUtils display = new DisplayUtils();  // Auto-detects terminal
+  int width = display.displayWidth("🐱");
+  requireThat(width, "width").isEqualTo(2);  // Fails on different terminals
+}
+
+// ✅ CORRECT: Tests width calculation logic with controlled input
+@Test
+public void displayWidthCalculatesFromConfiguration() throws IOException
+{
+  Path tempConfig = createTempConfig(Map.of("🐱", 2, "✅", 1));
+  DisplayUtils display = new DisplayUtils(tempConfig, TerminalType.KITTY);
+
+  requireThat(display.displayWidth("🐱"), "catWidth").isEqualTo(2);
+  requireThat(display.displayWidth("✅"), "checkWidth").isEqualTo(1);
+  requireThat(display.displayWidth("🐱 cat"), "combined").isEqualTo(6);
+}
+```
+
+**What to test:**
+- **Behavior:** Does the class correctly load configuration and apply it?
+- **Logic:** Does calculation handle edge cases (empty string, multiple emojis, mixed content)?
+- **Requirements:** Does it meet the stated business requirements?
+
+**What NOT to test:**
+- **System state:** What emoji width does my terminal happen to have?
+- **Implementation details:** What specific value is in the default config file?
+- **Environment:** What does auto-detection return on my machine?
+
+**Guideline:** If your test would fail when run on a different machine with different configuration (but the code still works correctly), you're testing implementation details, not requirements.
+
 ## Build Commands
 
 ```bash
