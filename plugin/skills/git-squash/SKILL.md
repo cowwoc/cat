@@ -3,4 +3,4 @@ description: "MANDATORY: Use instead of `git rebase -i` or `git reset --soft` fo
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" git-squash`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" git-squash "${CLAUDE_SESSION_ID}"`

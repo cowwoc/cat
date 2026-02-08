@@ -7,4 +7,4 @@ allowed-tools:
   - Read
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" cleanup`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" cleanup "${CLAUDE_SESSION_ID}"`

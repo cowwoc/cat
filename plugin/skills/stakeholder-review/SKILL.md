@@ -3,4 +3,4 @@ description: Multi-perspective quality review gate with architect, security, des
 user-invocable: false
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" stakeholder-review`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" stakeholder-review "${CLAUDE_SESSION_ID}"`

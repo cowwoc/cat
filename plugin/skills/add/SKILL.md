@@ -10,4 +10,4 @@ allowed-tools:
 argument-hint: "[description]"
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" add`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" add "${CLAUDE_SESSION_ID}"`

@@ -2,18 +2,9 @@
 # Conditional skill loader: loads full content on first invocation,
 # tiny reference on subsequent invocations within the same session.
 
-# Read environment variables (fail-fast if not set)
-if [ -z "${CLAUDE_PLUGIN_ROOT:-}" ]; then
-  echo "ERROR: CLAUDE_PLUGIN_ROOT not set in environment" >&2
-  exit 1
-fi
-
-if [ -z "${CLAUDE_SESSION_ID:-}" ]; then
-  echo "ERROR: CLAUDE_SESSION_ID not set in environment" >&2
-  exit 1
-fi
-
-SKILL="$1"
+CLAUDE_PLUGIN_ROOT="$1"
+SKILL="$2"
+CLAUDE_SESSION_ID="$3"
 F="/tmp/cat-skills-loaded-$CLAUDE_SESSION_ID"
 
 # Escape sed metacharacters for safe substitution

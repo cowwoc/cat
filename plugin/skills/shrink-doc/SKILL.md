@@ -4,4 +4,4 @@ description: >
   Validates with /compare-docs to ensure no semantic loss.
 ---
 
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" shrink-doc`
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh" "${CLAUDE_PLUGIN_ROOT}" shrink-doc "${CLAUDE_SESSION_ID}"`
