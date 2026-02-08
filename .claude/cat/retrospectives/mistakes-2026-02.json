@@ -3415,6 +3415,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Display progress banner, task goal, execution summary, and review results BEFORE presenting AskUserQuestion for approval"
+    },
+    {
+      "id": "M476",
+      "timestamp": "2026-02-08T13:32:33.222424Z",
+      "category": "incorrect_implementation",
+      "description": "Test singleEmojiHasWidthTwo() hardcodes emoji width assertions without controlling terminal type, testing developer machine configuration rather than requirements",
+      "root_cause": "Test design focused on implementation details (specific emoji width values) rather than requirements (DisplayUtils correctly loads and applies widths from configuration). Test uses auto-detected terminal type instead of controlling inputs, making assertions depend on developer machine configuration.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/conventions/java.md",
+      "pattern_keywords": [
+        "test-design",
+        "environment-dependency",
+        "implementation-details",
+        "controlled-inputs"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Tests should validate requirements with controlled inputs (provide known config, assert calculation logic works) rather than assert system configuration (auto-detect terminal, assert specific width values)"
     }
   ],
   "counter": 1
