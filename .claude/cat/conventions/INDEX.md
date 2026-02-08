@@ -10,6 +10,22 @@ Conventions are loaded through two mechanisms:
 | [common.md](../../rules/common.md) | Auto-loaded | Session start |
 | [java.md](java.md) | On-demand | Before editing `*.java` files |
 
+## Stakeholder Routing
+
+Convention files in this directory can specify which stakeholder reviewers should receive them during
+`/cat:stakeholder-review` by adding YAML frontmatter:
+
+```yaml
+---
+stakeholders: [design, architect]
+---
+```
+
+Valid stakeholders: `requirements`, `design`, `architect`, `security`, `testing`, `performance`, `deployment`,
+`ux`, `sales`, `marketing`, `legal`
+
+Convention files without frontmatter are not routed to any stakeholder.
+
 ## Quick Reference
 
 **Plugin logic:** Python

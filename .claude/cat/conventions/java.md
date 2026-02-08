@@ -1,3 +1,7 @@
+---
+stakeholders: [design, architect]
+---
+
 # Java Conventions
 
 ## Build System
