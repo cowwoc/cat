@@ -4,12 +4,12 @@
 # Usage: source this file in migration scripts
 #
 # Functions:
-#   version_compare <v1> <v2>  - Returns: -1 (v1<v2), 0 (equal), 1 (v1>v2)
-#   backup_cat_dir <reason>    - Creates timestamped backup of .claude/cat/
-#   get_config_version         - Returns version from config (or "0.0.0")
-#   get_plugin_version         - Returns version from plugin.json
-#   set_config_version <ver>   - Updates version in config
-#   log_migration <message>    - Logs migration progress
+#   version_compare <v1> <v2>         - Returns: -1 (v1<v2), 0 (equal), 1 (v1>v2)
+#   backup_cat_dir <reason>           - Creates timestamped backup of .claude/cat/
+#   get_last_migrated_version         - Returns last_migrated_version from config (or "0.0.0")
+#   get_plugin_version                - Returns version from plugin.json
+#   set_last_migrated_version <ver>   - Updates last_migrated_version in config
+#   log_migration <message>           - Logs migration progress
 
 set -euo pipefail
 
@@ -76,9 +76,9 @@ backup_cat_dir() {
     echo "$backup_dir"
 }
 
-# Get the version from cat-config.json
+# Get the last migrated version from cat-config.json
 # Returns "0.0.0" if not found or file doesn't exist
-get_config_version() {
+get_last_migrated_version() {
     local config_file=".claude/cat/cat-config.json"
 
     if [[ ! -f "$config_file" ]]; then
@@ -87,12 +87,17 @@ get_config_version() {
     fi
 
     local version
-    version=$(jq -r '.version // "0.0.0"' "$config_file" 2>/dev/null || echo "0.0.0")
+    version=$(jq -r '.last_migrated_version // "0.0.0"' "$config_file" 2>/dev/null || echo "0.0.0")
 
     # Handle null or empty
     [[ "$version" == "null" || -z "$version" ]] && version="0.0.0"
 
     echo "$version"
+}
+
+# Backward compatibility wrapper
+get_config_version() {
+    get_last_migrated_version
 }
 
 # Get the version from plugin.json
@@ -122,9 +127,9 @@ get_plugin_version() {
     echo "$version"
 }
 
-# Update version in cat-config.json
-# Usage: set_config_version "2.0"
-set_config_version() {
+# Update last migrated version in cat-config.json
+# Usage: set_last_migrated_version "2.0"
+set_last_migrated_version() {
     local new_version="$1"
     local config_file=".claude/cat/cat-config.json"
 
@@ -135,10 +140,15 @@ set_config_version() {
 
     # Use temp file for atomic update
     local tmp_file="${config_file}.tmp"
-    jq --arg v "$new_version" '.version = $v' "$config_file" > "$tmp_file"
+    jq --arg v "$new_version" '.last_migrated_version = $v' "$config_file" > "$tmp_file"
     mv "$tmp_file" "$config_file"
 
-    log_migration "Updated version to $new_version"
+    log_migration "Updated last_migrated_version to $new_version"
+}
+
+# Backward compatibility wrapper
+set_config_version() {
+    set_last_migrated_version "$@"
 }
 
 # Log migration progress (to stderr so it doesn't interfere with return values)

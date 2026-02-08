@@ -552,7 +552,7 @@ CAT_VERSION=$(jq -r '.version' "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json
 Create `.claude/cat/cat-config.json`:
 ```json
 {
-  "version": "[CAT_VERSION from above]",
+  "last_migrated_version": "[CAT_VERSION from above]",
   "trust": "[low|medium|high]",
   "verify": "changed",
   "curiosity": "[low|medium|high]",
