@@ -382,6 +382,31 @@ fi
 # SKIPPED contains: stakeholder:reason pairs for reporting
 # OVERRIDDEN contains: stakeholder:reason pairs for file-based overrides
 
+# Discover convention files and build per-stakeholder convention map
+CONVENTION_MAP=""  # Will store "stakeholder:convention_path" entries
+if [[ -d ".claude/cat/conventions" ]]; then
+    for convention_file in .claude/cat/conventions/*.md; do
+        if [[ -f "$convention_file" ]]; then
+            # Parse YAML frontmatter for stakeholders field
+            # Extract lines between --- delimiters at start of file
+            frontmatter=$(sed -n '1{/^---$/!q};1,/^---$/p' "$convention_file" | sed '1d;$d')
+
+            # Extract stakeholders array from frontmatter (format: stakeholders: [foo, bar])
+            stakeholder_line=$(echo "$frontmatter" | grep '^stakeholders:' || echo "")
+
+            if [[ -n "$stakeholder_line" ]]; then
+                # Extract stakeholders from array format: [design, architect] or [design,architect]
+                convention_stakeholders=$(echo "$stakeholder_line" | sed 's/^stakeholders:\s*\[//;s/\]\s*$//' | tr ',' '\n' | sed 's/^[ \t]*//;s/[ \t]*$//')
+
+                # Add this convention to each stakeholder's map
+                for stakeholder in $convention_stakeholders; do
+                    CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
+                done
+            fi
+        fi
+    done
+fi
+
 # Prepare file content for holistic review
 # For small files: include full content
 # For large files: diff with extended context + file structure summary
@@ -469,6 +494,23 @@ See `analyze_context` step for full selection rules and skip reasons.
 
 For each relevant stakeholder, spawn a subagent with:
 
+```bash
+# For each stakeholder in $SELECTED
+stakeholder="architect"  # example
+
+# Collect conventions for this stakeholder
+STAKEHOLDER_CONVENTIONS=""
+for entry in $CONVENTION_MAP; do
+    conv_stakeholder="${entry%%:*}"
+    conv_path="${entry#*:}"
+    if [[ "$conv_stakeholder" == "$stakeholder" ]]; then
+        STAKEHOLDER_CONVENTIONS="${STAKEHOLDER_CONVENTIONS}\n### Convention: ${conv_path}\n$(cat "$conv_path")\n"
+    fi
+done
+```
+
+Spawn each stakeholder with this prompt:
+
 ```
 You are the {stakeholder} stakeholder reviewing an implementation.
 
@@ -477,6 +519,9 @@ You are the {stakeholder} stakeholder reviewing an implementation.
 
 ## Language-Specific Patterns
 {content of LANG_SUPPLEMENT if available, otherwise "No language supplement loaded."}
+
+## Project Conventions
+{STAKEHOLDER_CONVENTIONS if any match this stakeholder, otherwise "No project conventions assigned to this stakeholder."}
 
 ## Files to Review (Full Content)
 {FILE_CONTENTS - full file content prepared in prepare step}
