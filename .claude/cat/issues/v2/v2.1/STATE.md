@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- unify-stop-sessionend-hooks
 - unify-posttooluse-hooks
 - unify-pretooluse-hooks
 - unify-userpromptsubmit-hooks
