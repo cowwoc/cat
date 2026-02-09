@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- move-java-integrate-jlink
 - add-release-plugin-skill
 - add-build-hooks-skill
 - mavenize-java-hooks
