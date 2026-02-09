@@ -18,7 +18,7 @@ includes only the modules needed for JSON processing (Jackson 3) and basic I/O o
 |------|---------|
 | `jlink-config.sh` | Build script for creating the custom runtime |
 | `session_start.sh` | SessionStart hook to bootstrap the JDK |
-| `java.sh` | Intermediary script for invoking Java hooks |
+| `hook.sh` | Intermediary script for invoking Java hooks |
 
 ## Building the Runtime
 
@@ -69,20 +69,20 @@ The `session_start.sh` hook runs at each Claude Code session start:
 1. Checks if custom runtime exists at expected path
 2. If missing, attempts to download pre-built bundle
 3. Falls back to building locally if JDK 25 is available
-4. Exports `CAT_JAVA_HOME` for `java.sh`
+4. Exports `CAT_JAVA_HOME` for `hook.sh`
 
 If all methods fail, a warning is logged but the session continues (Python hooks remain available).
 
 ## Running Java Hooks
 
-Java hooks are invoked through `java.sh`:
+Java hooks are invoked through `hook.sh`:
 
 ```bash
 # Direct invocation
-echo '{"tool":"Bash","input":"..."}' | ./java.sh BashPreToolHandler
+echo '{"tool":"Bash","input":"..."}' | ./hook.sh BashPreToolHandler
 
 # With environment
-CAT_JAVA_HOME=/path/to/runtime ./java.sh ValidationHandler
+CAT_JAVA_HOME=/path/to/runtime ./hook.sh ValidationHandler
 ```
 
 ### Handler Classes
