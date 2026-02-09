@@ -29,6 +29,9 @@ readonly DOWNLOAD_BASE_URL="https://github.com/anthropics/claude-code-cat/releas
 # Expected version tag for the runtime bundle
 readonly RUNTIME_VERSION="v1.0.0"
 
+# Debug log accumulator
+DEBUG_LINES=""
+
 # Platform detection
 get_platform() {
     local os arch
@@ -57,38 +60,72 @@ get_platform() {
 
 # --- Functions ---
 
+debug() {
+    if [[ -n "$DEBUG_LINES" ]]; then
+        DEBUG_LINES="${DEBUG_LINES}\\n$*"
+    else
+        DEBUG_LINES="$*"
+    fi
+}
+
 log_json() {
     local status="$1"
     local message="$2"
     local additional_context="${3:-}"
 
+    # Append debug trace to additionalContext
+    if [[ -n "$DEBUG_LINES" ]]; then
+        local debug_block="[session_start debug]\\n${DEBUG_LINES}"
+        if [[ -n "$additional_context" ]]; then
+            additional_context="${additional_context}\\n\\n${debug_block}"
+        else
+            additional_context="$debug_block"
+        fi
+    fi
+
     # Build JSON output for Claude Code hook system
-    cat <<EOF
+    if [[ -n "$additional_context" ]]; then
+        cat <<EOF
 {
   "status": "$status",
-  "message": "$message"$([ -n "$additional_context" ] && echo ",
-  \"additionalContext\": \"$additional_context\"")
+  "message": "$message",
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "$additional_context"
+  }
 }
 EOF
+    else
+        cat <<EOF
+{
+  "status": "$status",
+  "message": "$message"
+}
+EOF
+    fi
 }
 
 check_existing_runtime() {
     local jdk_path="$1"
 
     if [[ ! -d "$jdk_path" ]]; then
+        debug "JDK directory does not exist: $jdk_path"
         return 1
     fi
 
     local java_bin="${jdk_path}/bin/java"
     if [[ ! -x "$java_bin" ]]; then
+        debug "java binary not executable or missing: $java_bin"
         return 1
     fi
 
     # Verify it can run
     if ! "$java_bin" -version &>/dev/null; then
+        debug "java binary exists but failed to run: $java_bin"
         return 1
     fi
 
+    debug "JDK runtime verified at: $jdk_path"
     return 0
 }
 
@@ -96,7 +133,7 @@ download_runtime() {
     local target_dir="$1"
     local platform
     platform=$(get_platform) || {
-        echo "ERROR: Unsupported platform" >&2
+        debug "ERROR: Unsupported platform"
         return 1
     }
 
@@ -104,10 +141,10 @@ download_runtime() {
     local download_url="${DOWNLOAD_BASE_URL}/${RUNTIME_VERSION}/${archive_name}"
     local temp_archive="/tmp/${archive_name}"
 
-    echo "Downloading CAT JDK runtime for ${platform}..." >&2
+    debug "Downloading CAT JDK runtime for ${platform} from ${download_url}"
 
     if ! curl -sSfL -o "$temp_archive" "$download_url" 2>/dev/null; then
-        echo "ERROR: Failed to download runtime from $download_url" >&2
+        debug "Failed to download runtime from $download_url"
         return 1
     fi
 
@@ -116,14 +153,14 @@ download_runtime() {
 
     # Extract archive
     if ! tar -xzf "$temp_archive" -C "$(dirname "$target_dir")" 2>/dev/null; then
-        echo "ERROR: Failed to extract runtime archive" >&2
+        debug "Failed to extract runtime archive"
         rm -f "$temp_archive"
         return 1
     fi
 
     rm -f "$temp_archive"
 
-    echo "CAT JDK runtime installed to $target_dir" >&2
+    debug "CAT JDK runtime installed to $target_dir"
 }
 
 build_runtime_locally() {
@@ -133,18 +170,18 @@ build_runtime_locally() {
     local build_script="${plugin_root}/hooks/jlink-config.sh"
 
     if [[ ! -x "$build_script" ]]; then
-        echo "ERROR: Build script not found: $build_script" >&2
+        debug "Build script not found or not executable: $build_script"
         return 1
     fi
 
-    echo "Building CAT JDK runtime locally..." >&2
+    debug "Building CAT JDK runtime locally via $build_script"
 
     local runtime_parent
     runtime_parent="$(dirname "$target_dir")"
     mkdir -p "$runtime_parent"
 
     if ! "$build_script" build --output-dir "$runtime_parent" 2>&1; then
-        echo "ERROR: Failed to build runtime" >&2
+        debug "Failed to build runtime"
         return 1
     fi
 }
@@ -156,22 +193,32 @@ main() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local plugin_root="${script_dir}/.."
+    debug "script_dir=$script_dir"
+    debug "plugin_root (from script location)=$plugin_root"
 
     # Use CLAUDE_PLUGIN_ROOT if set (preferred)
     if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
         plugin_root="$CLAUDE_PLUGIN_ROOT"
+        debug "plugin_root (from CLAUDE_PLUGIN_ROOT)=$plugin_root"
+    else
+        debug "CLAUDE_PLUGIN_ROOT not set, using script-relative path"
     fi
 
     # Check if hooks JAR exists in the plugin cache
     local hooks_jar="${plugin_root}/${HOOKS_JAR_SUBPATH}"
+    debug "Checking hooks JAR at: $hooks_jar"
     if [[ ! -f "$hooks_jar" ]]; then
+        debug "JAR not found - exiting early with warning"
         log_json "warning" "Java hooks JAR not found at ${hooks_jar}. Run /build-hooks to build and install it."
         return 0
     fi
+    debug "JAR found"
 
     local jdk_path="${plugin_root}/${JDK_SUBDIR}"
+    debug "JDK path: $jdk_path"
 
     # Check if runtime already exists and is functional
+    debug "Checking existing runtime..."
     if check_existing_runtime "$jdk_path"; then
         # Export for hook.sh
         export CAT_JAVA_HOME="$jdk_path"
@@ -180,24 +227,33 @@ main() {
     fi
 
     # Try to download pre-built runtime
+    debug "Attempting download..."
     if download_runtime "$jdk_path"; then
         if check_existing_runtime "$jdk_path"; then
             export CAT_JAVA_HOME="$jdk_path"
             log_json "success" "CAT JDK runtime downloaded and ready"
             return 0
         fi
+        debug "Download succeeded but runtime check failed"
+    else
+        debug "Download failed"
     fi
 
     # Fallback: Try to build locally (requires full JDK)
+    debug "Attempting local build..."
     if build_runtime_locally "$plugin_root" "$jdk_path"; then
         if check_existing_runtime "$jdk_path"; then
             export CAT_JAVA_HOME="$jdk_path"
             log_json "success" "CAT JDK runtime built locally and ready"
             return 0
         fi
+        debug "Local build succeeded but runtime check failed"
+    else
+        debug "Local build failed"
     fi
 
     # All methods failed - provide instructions
+    debug "All methods failed - returning warning"
     local platform
     platform=$(get_platform 2>/dev/null) || platform="your-platform"
 
