@@ -67,8 +67,21 @@ None (quality assurance / infrastructure)
 6. **Update skill definitions:** Improve descriptions, add trigger phrases, adjust naming
    - Files: `plugin/skills/*/SKILL.md`
 7. **Re-run evaluation:** Verify improvement, iterate until 100% activation
+8. **Implement forced-eval hook:** If skill definition changes alone don't achieve 100%, implement a
+   `UserPromptSubmit` hook that forces Claude to evaluate each available skill with explicit YES/NO decisions
+   before acting. This three-step commitment mechanism (evaluate → activate → implement) achieves 100%
+   activation with zero false positives. Reference:
+   https://scottspence.com/posts/measuring-claude-code-skill-activation-with-sandboxed-evals
+   - Files: `.claude/settings.json` (hook registration), `plugin/hooks/` (hook handler)
 
 ## Success Criteria
 - [ ] All user-invocable skills achieve 100% activation on standard test prompts
 - [ ] Zero false positives on negative test prompts
 - [ ] Eval harness is reproducible (documented setup, deterministic test cases)
+
+## Reference
+- [Measuring Claude Code Skill Activation with Sandboxed Evals](https://scottspence.com/posts/measuring-claude-code-skill-activation-with-sandboxed-evals)
+  - Baseline without intervention: ~55% activation
+  - Forced-eval hook (UserPromptSubmit): 100% activation, 100% true negative rate
+  - LLM-eval hook (Haiku pre-classifier): 100% activation but 80% false positive rate on negatives
+  - **Forced-eval is the recommended approach** for eliminating both false negatives and false positives

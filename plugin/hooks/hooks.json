@@ -71,6 +71,14 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/forced-eval-skills.py"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetSkillOutput"
           }
         ]
