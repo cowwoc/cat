@@ -3,27 +3,30 @@ package io.github.cowwoc.cat.hooks;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Interface for read tool handlers (Read, Glob, Grep, WebFetch, WebSearch).
+ * Interface for Task tool handlers.
  * <p>
- * Read handlers validate read operations before or after execution.
- * PreToolUse handlers can block operations; PostToolUse handlers can only warn.
+ * Task handlers validate task operations (subagent spawning) before they are executed.
+ * PreToolUse handlers can block task operations.
+ * <p>
+ * Result factory methods: TaskHandler uses warn() to emit stderr warnings
+ * for non-blocking violations (unlike AskHandler which uses withContext()).
  */
 @FunctionalInterface
-public interface ReadHandler
+public interface TaskHandler
 {
   /**
-   * The result of a read handler check.
+   * The result of a task handler check.
    *
-   * @param blocked whether the operation should be blocked (PreToolUse only)
+   * @param blocked whether the task should be blocked (PreToolUse only)
    * @param reason the reason for blocking or warning
    * @param additionalContext optional additional context to inject
    */
   record Result(boolean blocked, String reason, String additionalContext)
   {
     /**
-     * Creates a new read handler result.
+     * Creates a new task handler result.
      *
-     * @param blocked whether the operation should be blocked
+     * @param blocked whether the task should be blocked
      * @param reason the reason for blocking or warning
      * @param additionalContext optional additional context to inject
      */
@@ -78,15 +81,13 @@ public interface ReadHandler
   }
 
   /**
-   * Check a read operation.
+   * Check a task operation.
    *
-   * @param toolName the tool name (Read, Glob, Grep, WebFetch, WebSearch)
    * @param toolInput the tool input JSON
-   * @param toolResult the tool result JSON (null for PreToolUse)
    * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if toolName, toolInput, or sessionId is null
+   * @throws NullPointerException if toolInput or sessionId is null
    * @throws IllegalArgumentException if sessionId is blank
    */
-  Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId);
+  Result check(JsonNode toolInput, String sessionId);
 }

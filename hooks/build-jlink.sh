@@ -38,7 +38,10 @@ readonly -a HANDLERS=(
   "skill:GetSkillOutput"
   "token-counter:TokenCounter"
   "enforce-status:EnforceStatusOutput"
-  "enforce-worktree:EnforceWorktreeIsolation"
+  "ask-pretool:GetAskPretoolOutput"
+  "edit-pretool:GetEditPretoolOutput"
+  "write-edit-pretool:GetWriteEditPretoolOutput"
+  "task-pretool:GetTaskPretoolOutput"
 )
 
 # --- Logging ---

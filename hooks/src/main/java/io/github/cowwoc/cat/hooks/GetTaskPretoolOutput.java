@@ -1,42 +1,56 @@
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
+import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
- * get-read-pretool-output - Unified PreToolUse hook for Read/Glob/Grep
- *
- * TRIGGER: PreToolUse (matcher: Read|Glob|Grep)
- *
- * Consolidates read operation validation hooks into a single Java dispatcher.
- *
+ * get-task-pretool-output - Unified PreToolUse hook for Task operations.
+ * <p>
+ * TRIGGER: PreToolUse (matcher: Task)
+ * <p>
+ * Consolidates all Task validation hooks into a single Java dispatcher.
+ * <p>
  * Handlers can:
- * - Warn about patterns (return warning)
- * - Block operations (return block=true with message)
- * - Allow silently (return null)
+ * <ul>
+ *   <li>Block task operations (return decision=block with reason)</li>
+ *   <li>Warn about task operations (return warning)</li>
+ *   <li>Allow task operations (return allow)</li>
+ * </ul>
  */
-public final class GetReadPretoolOutput implements HookHandler
+public final class GetTaskPretoolOutput implements HookHandler
 {
-  private static final List<ReadHandler> HANDLERS = List.of(
-      new PredictBatchOpportunity());
-
-  private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
+  private static final List<TaskHandler> DEFAULT_HANDLERS = List.of(
+    new EnforceApprovalBeforeMerge());
+  private final List<TaskHandler> handlers;
 
   /**
-   * Creates a new GetReadPretoolOutput instance.
+   * Creates a new GetTaskPretoolOutput instance with default handlers.
    */
-  public GetReadPretoolOutput()
+  public GetTaskPretoolOutput()
   {
+    this.handlers = DEFAULT_HANDLERS;
   }
 
   /**
-   * Entry point for the Read pretool output hook.
+   * Creates a new GetTaskPretoolOutput instance with custom handlers.
+   *
+   * @param handlers the handlers to use
+   * @throws NullPointerException if handlers is null
+   */
+  public GetTaskPretoolOutput(List<TaskHandler> handlers)
+  {
+    requireThat(handlers, "handlers").isNotNull();
+    this.handlers = List.copyOf(handlers);
+  }
+
+  /**
+   * Entry point for the Task pretool output hook.
    *
    * @param args command line arguments
    */
@@ -44,7 +58,7 @@ public final class GetReadPretoolOutput implements HookHandler
   {
     HookInput input = HookInput.readFromStdin();
     HookOutput output = new HookOutput(System.out);
-    new GetReadPretoolOutput().run(input, output);
+    new GetTaskPretoolOutput().run(input, output);
   }
 
   /**
@@ -61,7 +75,7 @@ public final class GetReadPretoolOutput implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
-    if (!SUPPORTED_TOOLS.contains(toolName))
+    if (!equalsIgnoreCase(toolName, "Task"))
     {
       output.empty();
       return;
@@ -72,12 +86,11 @@ public final class GetReadPretoolOutput implements HookHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
-    // Run all read pretool handlers
-    for (ReadHandler handler : HANDLERS)
+    for (TaskHandler handler : this.handlers)
     {
       try
       {
-        ReadHandler.Result result = handler.check(toolName, toolInput, null, sessionId);
+        TaskHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
           if (result.additionalContext().isEmpty())
@@ -91,17 +104,17 @@ public final class GetReadPretoolOutput implements HookHandler
       }
       catch (RuntimeException e)
       {
-        System.err.println("get-read-pretool-output: handler error: " + e.getMessage());
+        output.block("Hook handler failed: " + handler.getClass().getSimpleName() +
+          ": " + e.getMessage());
+        return;
       }
     }
 
-    // Output warnings if any
     for (String warning : warnings)
     {
       System.err.println(warning);
     }
 
-    // Allow the operation
     output.empty();
   }
 }

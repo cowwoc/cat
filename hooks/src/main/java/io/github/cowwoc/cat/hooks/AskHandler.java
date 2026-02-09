@@ -3,27 +3,30 @@ package io.github.cowwoc.cat.hooks;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Interface for read tool handlers (Read, Glob, Grep, WebFetch, WebSearch).
+ * Interface for AskUserQuestion handlers.
  * <p>
- * Read handlers validate read operations before or after execution.
- * PreToolUse handlers can block operations; PostToolUse handlers can only warn.
+ * Ask handlers validate user questions before they are asked.
+ * PreToolUse handlers can block questions or inject additional context.
+ * <p>
+ * Result factory methods: AskHandler uses withContext() instead of warn() because
+ * it injects additional context into the question rather than emitting stderr warnings.
  */
 @FunctionalInterface
-public interface ReadHandler
+public interface AskHandler
 {
   /**
-   * The result of a read handler check.
+   * The result of an ask handler check.
    *
-   * @param blocked whether the operation should be blocked (PreToolUse only)
+   * @param blocked whether the question should be blocked (PreToolUse only)
    * @param reason the reason for blocking or warning
    * @param additionalContext optional additional context to inject
    */
   record Result(boolean blocked, String reason, String additionalContext)
   {
     /**
-     * Creates a new read handler result.
+     * Creates a new ask handler result.
      *
-     * @param blocked whether the operation should be blocked
+     * @param blocked whether the question should be blocked
      * @param reason the reason for blocking or warning
      * @param additionalContext optional additional context to inject
      */
@@ -66,27 +69,25 @@ public interface ReadHandler
     }
 
     /**
-     * Creates a warning result (allows but warns).
+     * Creates a warning result with additional context.
      *
-     * @param warning the warning message
+     * @param additionalContext additional context to inject
      * @return a warning result
      */
-    public static Result warn(String warning)
+    public static Result withContext(String additionalContext)
     {
-      return new Result(false, warning, "");
+      return new Result(false, "", additionalContext);
     }
   }
 
   /**
-   * Check a read operation.
+   * Check an AskUserQuestion operation.
    *
-   * @param toolName the tool name (Read, Glob, Grep, WebFetch, WebSearch)
    * @param toolInput the tool input JSON
-   * @param toolResult the tool result JSON (null for PreToolUse)
    * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if toolName, toolInput, or sessionId is null
+   * @throws NullPointerException if toolInput or sessionId is null
    * @throws IllegalArgumentException if sessionId is blank
    */
-  Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId);
+  Result check(JsonNode toolInput, String sessionId);
 }
