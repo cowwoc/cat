@@ -125,11 +125,11 @@ git -C /workspace worktree remove ${WORKTREE_PATH} --force &&
 
 ### Step 6: Auto-Complete Decomposed Parent (M434, M467)
 
-After merging, check if this issue is a subtask of a decomposed parent. If all sibling
-subtasks are now implemented and tested, mark the parent as completed.
+After merging, check if this issue is a sub-issue of a decomposed parent. If all sibling
+sub-issues are now implemented and tested, mark the parent as completed.
 
-**LIMITATION (M467):** This auto-completion only checks subtask status, NOT parent acceptance criteria.
-If parent has acceptance criteria beyond subtasks being completed, auto-closure may be premature.
+**LIMITATION (M467):** This auto-completion only checks sub-issue status, NOT parent acceptance criteria.
+If parent has acceptance criteria beyond sub-issues being completed, auto-closure may be premature.
 When /cat:work selects the parent later, it must verify parent PLAN.md acceptance criteria per
 decompose-issue § Closing Decomposed Parents.
 
@@ -145,14 +145,14 @@ for parent_dir in "$VERSION_DIR"/*/; do
 
   # Check if this parent lists our issue in "Decomposed Into"
   if grep -q "^## Decomposed Into" "$parent_state" && grep -q "$ISSUE_NAME" "$parent_state"; then
-    # Found our parent - check if ALL subtasks are closed
+    # Found our parent - check if ALL sub-issues are closed
     all_complete=true
-    while IFS= read -r subtask; do
-      subtask=$(echo "$subtask" | sed 's/^- //' | cut -d' ' -f1 | tr -d '()')
-      [[ -z "$subtask" ]] && continue
-      subtask_state="$VERSION_DIR/$subtask/STATE.md"
-      if [[ -f "$subtask_state" ]]; then
-        st=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$subtask_state" | head -1 | tr -d ' ')
+    while IFS= read -r subissue; do
+      subissue=$(echo "$subissue" | sed 's/^- //' | cut -d' ' -f1 | tr -d '()')
+      [[ -z "$subissue" ]] && continue
+      subissue_state="$VERSION_DIR/$subissue/STATE.md"
+      if [[ -f "$subissue_state" ]]; then
+        st=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$subissue_state" | head -1 | tr -d ' ')
         if [[ "$st" != "closed" ]]; then
           all_complete=false
           break

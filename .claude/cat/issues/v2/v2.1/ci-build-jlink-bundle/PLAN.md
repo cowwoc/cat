@@ -5,7 +5,7 @@ Create a GitHub Actions workflow that builds the CAT jlink bundle (JDK runtime +
 on push and publishes it as a GitHub release artifact.
 
 ## Satisfies
-None - infrastructure subtask of add-java-build-to-ci
+None - infrastructure sub-issue of add-java-build-to-ci
 
 ## Risk Assessment
 - **Risk Level:** MEDIUM

@@ -8,7 +8,7 @@ equivalence.
 compress-md-files (decomposed)
 
 ## Satisfies
-None - infrastructure/optimization subtask
+None - infrastructure/optimization sub-issue
 
 ## Risk Assessment
 - **Risk Level:** LOW

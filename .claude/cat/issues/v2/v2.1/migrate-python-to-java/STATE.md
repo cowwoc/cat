@@ -44,12 +44,12 @@
 ### Wave 4 (Sequential - Tests)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
-| migrate-python-tests | ~30K | All handler subtasks |
+| migrate-python-tests | ~30K | All handler sub-issues |
 
 ### Wave 5 (Sequential - Cleanup)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | cleanup-python-files | ~10K | migrate-python-tests |
 
-**Total sub-tasks:** 10
+**Total sub-issues:** 10
 **Max concurrent:** 6 (in wave 3)

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Break down a issue that is too large for a single context window into smaller, manageable subtasks.
+Break down a issue that is too large for a single context window into smaller, manageable sub-issues.
 This is essential for CAT's proactive context management, allowing work to continue efficiently
 when a issue exceeds safe context bounds.
 
@@ -130,20 +130,20 @@ dependencies:
 
 When a issue is decomposed, the parent issue status follows this lifecycle:
 1. `open` → `in-progress` (when decomposition starts)
-2. Remains `in-progress` while subtasks execute
-3. `in-progress` → `closed` (only when ALL subtasks are implemented and tested AND parent acceptance criteria are met)
+2. Remains `in-progress` while sub-issues execute
+3. `in-progress` → `closed` (only when ALL sub-issues are implemented and tested AND parent acceptance criteria are met)
 
 **Closing Decomposed Parents (M467):**
 
-When /cat:work selects a decomposed parent (all subtasks closed), verify parent acceptance criteria before closure:
+When /cat:work selects a decomposed parent (all sub-issues closed), verify parent acceptance criteria before closure:
 
 1. **Read parent PLAN.md** - Review all acceptance criteria listed
 2. **Verify each criterion** - Check codebase/tests to confirm each criterion is actually satisfied
 3. **If all criteria met** - Update parent STATE.md to closed/100%
-4. **If criteria NOT met** - Create new subtask for remaining work, keep parent open
+4. **If criteria NOT met** - Create new sub-issue for remaining work, keep parent open
 
-**Why subtasks implemented and tested ≠ parent complete:** Subtasks implement their individual scopes, but may not
-cover everything in parent acceptance criteria. Example: subtasks create Java equivalents, but none remove Python
+**Why sub-issues implemented and tested ≠ parent complete:** Sub-issues implement their individual scopes, but may not
+cover everything in parent acceptance criteria. Example: sub-issues create Java equivalents, but none remove Python
 originals.
 
 **INVALID:** Using `status: decomposed` - this is NOT a valid status value.
@@ -170,8 +170,8 @@ Original issue STATE.md:
 - Will be merged to 1.2a branch
 ```
 
-**Note:** Parent stays `in-progress` until ALL subtasks are implemented and tested. Progress is calculated from subtask
-completion (e.g., 1/3 subtasks = 33%).
+**Note:** Parent stays `in-progress` until ALL sub-issues are implemented and tested. Progress is calculated from sub-issue
+completion (e.g., 1/3 sub-issues = 33%).
 
 New issue STATE.md:
 
@@ -205,11 +205,11 @@ git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed pare
 
 **MANDATORY: Analyze dependencies and create sub-issue-based execution plan.**
 
-After decomposition, determine which subtasks can run concurrently:
+After decomposition, determine which sub-issues can run concurrently:
 
 ```yaml
 # Dependency analysis
-subtasks:
+sub-issues:
   - id: 1.2a-parser-lexer
     dependencies: []
     estimated_tokens: 25000
@@ -222,25 +222,25 @@ subtasks:
 
 # Sub-issue-based parallel plan
 parallel_execution_plan:
-  sub_task_1:
+  sub_issue_1:
     # Issues with no dependencies - can run concurrently
     issues: [1.2a-parser-lexer, 1.2c-parser-tests]
     max_concurrent: 2
     reason: "Both have no dependencies, can execute in parallel"
 
-  sub_task_2:
-    # Issues that depend on sub_task_1 completion
+  sub_issue_2:
+    # Issues that depend on sub_issue_1 completion
     issues: [1.2b-parser-ast]
-    depends_on: [sub_task_1]
-    reason: "Depends on 1.2a-parser-lexer from sub_task_1"
+    depends_on: [sub_issue_1]
+    reason: "Depends on 1.2a-parser-lexer from sub_issue_1"
 
 execution_order:
-  1. Spawn subagents for sub_task_1 issues (parallel)
-  2. Monitor and collect sub_task_1 results
-  3. Merge sub_task_1 branches
-  4. Spawn subagents for sub_task_2 issues (parallel)
-  5. Monitor and collect sub_task_2 results
-  6. Merge sub_task_2 branches
+  1. Spawn subagents for sub_issue_1 issues (parallel)
+  2. Monitor and collect sub_issue_1 results
+  3. Merge sub_issue_1 branches
+  4. Spawn subagents for sub_issue_2 issues (parallel)
+  5. Monitor and collect sub_issue_2 results
+  6. Merge sub_issue_2 branches
 ```
 
 **Output parallel plan to STATE.md:**
@@ -278,7 +278,7 @@ conflict_check:
 
   # If overlap exists:
   conflict_resolution:
-    move_conflicting_task_to_next_sub_task: true
+    move_conflicting_task_to_next_sub_issue: true
 ```
 
 ### 9. Update Original Issue for Decomposition
@@ -292,11 +292,11 @@ conflict_check:
 echo "---
 decomposed: true
 decomposed_into: [1.2a, 1.2b, 1.2c]
-parallel_plan: sub_task_1=[1.2a, 1.2c], sub_task_2=[1.2b]
+parallel_plan: sub_issue_1=[1.2a, 1.2c], sub_issue_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
 
 # Update STATE.md - status stays in-progress, add Decomposed field
-# Parent transitions to 'closed' only when ALL subtasks are implemented and tested
+# Parent transitions to 'closed' only when ALL sub-issues are implemented and tested
 ```
 
 ## Examples
@@ -392,7 +392,7 @@ emergency_decomposition:
 ### Model actual dependencies accurately
 
 ```yaml
-# ❌ Treating all subtasks as independent
+# ❌ Treating all sub-issues as independent
 1.2a-parser-lexer: []
 1.2b-parser-ast: []    # Actually needs lexer!
 1.2c-parser-semantic: []  # Actually needs AST!
@@ -413,7 +413,7 @@ decompose_task "1.2-parser"
 # ✅ Preserve progress
 collect_results "${SUBAGENT}"
 decompose_task "1.2-parser"
-merge_to_appropriate_subtask "${SUBAGENT_WORK}"
+merge_to_appropriate_sub-issue "${SUBAGENT_WORK}"
 ```
 
 ### Create meaningful chunks (avoid over-decomposition)
@@ -434,12 +434,12 @@ merge_to_appropriate_subtask "${SUBAGENT_WORK}"
 ### Always update orchestration when decomposing
 
 ```yaml
-# ❌ Create subtasks, forget to track
+# ❌ Create sub-issues, forget to track
 mkdir 1.2a 1.2b 1.2c
 # Parent doesn't know about them!
 
 # ✅ Full state update
-create_subtasks "1.2a" "1.2b" "1.2c"
+create_sub-issues "1.2a" "1.2b" "1.2c"
 update_parent_state "decomposed" "1.2a,1.2b,1.2c"
 update_orchestration_plan
 ```
@@ -451,13 +451,13 @@ For code extraction/refactoring issues, runtime method calls are NOT issue depen
 ```yaml
 # ❌ Confusing runtime calls with issue dependencies
 # "parseUnary calls parsePostfix, so extract-unary must run before extract-postfix"
-subtasks:
+sub-issues:
   extract-unary: []
   extract-postfix: [extract-unary]  # Wrong! Just copying code, not executing it
 
 # ✅ Extraction issues that write to different sections can run in parallel
 # Methods call each other at RUNTIME, but extraction is just copying text
-subtasks:
+sub-issues:
   extract-unary: [setup-interface]      # Both depend on interface setup
   extract-postfix: [setup-interface]    # Both can run concurrently
 
@@ -477,4 +477,4 @@ subtasks:
 - `cat:token-report` - Triggers decomposition decisions
 - `cat:collect-results` - Preserves progress before decomposition
 - `cat:spawn-subagent` - Launches work on decomposed issues
-- `cat:parallel-execute` - Can run independent subtasks concurrently
+- `cat:parallel-execute` - Can run independent sub-issues concurrently

@@ -49,7 +49,7 @@ Root tests at `tests/`:
 Existing: `HookEntryPointTest.java` (11 tests)
 
 ## Dependencies
-- All handler subtasks complete (handlers must work in Java before tests can validate them)
+- All handler sub-issues complete (handlers must work in Java before tests can validate them)
 
 ## Execution Steps
 1. **Read each Python test file** to understand test cases and assertions
@@ -94,4 +94,4 @@ The following are deferred because their production code counterparts have not y
 - [x] All migrated handler tests have equivalent Java TestNG tests with error path and boundary coverage
 - [x] `mvn verify` passes with all Java tests, checkstyle, and PMD (exit code 0)
 - [x] Java test suite covers error paths, null validation, and boundary conditions
-- [ ] Deferred handlers migrated in future subtasks
+- [ ] Deferred handlers migrated in future sub-issues

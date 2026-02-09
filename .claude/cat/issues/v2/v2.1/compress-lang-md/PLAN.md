@@ -7,7 +7,7 @@ Compress all lang MD files (1 file in `plugin/lang/`) to reduce token usage whil
 compress-md-files (decomposed)
 
 ## Satisfies
-None - infrastructure/optimization subtask
+None - infrastructure/optimization sub-issue
 
 ## Risk Assessment
 - **Risk Level:** LOW

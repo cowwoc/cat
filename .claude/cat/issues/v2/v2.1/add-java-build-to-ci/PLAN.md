@@ -52,23 +52,23 @@ End user starts session
 
 ## Decomposition
 
-This issue is decomposed into 3 subtasks:
+This issue is decomposed into 3 sub-issues:
 
-### Subtask 1: ci-build-jlink-bundle
+### Sub-issue 1: ci-build-jlink-bundle
 **GitHub Actions CI pipeline** - Build the jlink bundle (JDK + cat-hooks.jar + deps) on push and publish as a GitHub
 release artifact. Modify `jlink-config.sh` to include cat-hooks.jar in the bundle. Create `.github/workflows/` config.
 
-### Subtask 2: session-start-version-check
+### Sub-issue 2: session-start-version-check
 **SessionStart version-based download** - Update `session_start.sh` to compare local bundle version against
 `plugin.json` version. If mismatch, use GitHub API to find and download the correct release. Store version in a marker
 file inside the bundle directory.
 
-### Subtask 3: developer-local-bundle-rebuild
+### Sub-issue 3: developer-local-bundle-rebuild
 **Developer automation** - Provide a way for plugin developers to rebuild the jlink bundle locally when Java source
 files change. This is the local development workflow counterpart to the CI build.
 
 ## Execution Steps
-See individual subtask PLAN.md files for detailed execution steps.
+See individual sub-issue PLAN.md files for detailed execution steps.
 
 ## Success Criteria
 - [ ] End users get a working jlink bundle without needing Maven or JDK installed

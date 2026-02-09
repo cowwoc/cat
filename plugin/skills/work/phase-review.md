@@ -309,7 +309,7 @@ Use AskUserQuestion with options:
 
 **CRITICAL (M248): Distinguish task version from base branch in approval messages.**
 
-**MANDATORY: Include subtask context for decomposed tasks (M251).**
+**MANDATORY: Include sub-issue context for decomposed tasks (M251).**
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Metadata
 - **Parent:** migrate-python-to-java
-- **Wave:** 3 (concurrent with handler subtasks)
+- **Wave:** 3 (concurrent with handler sub-issues)
 - **Estimated Tokens:** 15K
 
 ## Goal

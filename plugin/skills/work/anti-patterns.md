@@ -150,7 +150,7 @@ If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
 | M245 | Ignore get-available-issues.sh | Accept script results |
 | M246 | Manual box characters | Copy-paste from template |
 | M248 | Confuse version/branch | Distinguish task version from base branch |
-| M251 | No subtask context | Include decomposition context |
+| M251 | No sub-issue context | Include decomposition context |
 | M262 | Ignore ERROR in script output | Fail-fast, report error, do NOT continue |
 | M293 | "I'll wait for subagents" | Continue working or prompt user to check back |
 

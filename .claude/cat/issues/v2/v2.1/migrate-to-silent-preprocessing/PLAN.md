@@ -16,7 +16,7 @@ before the LLM sees content. Output is guaranteed correct with no LLM manipulati
 - **Breaking Changes:** Skills must be invoked differently (pass args to preprocessing commands)
 - **Mitigation:** Incremental migration by area, test each before moving to next
 
-## Subtasks
+## Sub-issues
 
 ### 1. update-skill-builder-docs
 Update skill-builder documentation to teach the new `!`command`` mechanism instead of OUTPUT TEMPLATE + handler pattern.
