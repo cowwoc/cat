@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- unify-userpromptsubmit-hooks
 - unify-sessionstart-hooks
 - unify-hook-dispatchers
 - developer-local-bundle-rebuild
