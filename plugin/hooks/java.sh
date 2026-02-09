@@ -155,6 +155,14 @@ run_handler() {
         return 1
     fi
 
+    # Determine full class name (support fully qualified names)
+    local full_class
+    if [[ "$handler_class" == *.* ]]; then
+        full_class="$handler_class"
+    else
+        full_class="io.github.cowwoc.cat.hooks.${handler_class}"
+    fi
+
     # Build Java command line
     local java_opts=(
         "-Xms${JAVA_XMS}"
@@ -168,7 +176,7 @@ run_handler() {
     timeout "${JAVA_TIMEOUT}" "$java_bin" \
         "${java_opts[@]}" \
         -classpath "$classpath" \
-        "cat.hooks.${handler_class}" \
+        "$full_class" \
         "$@"
 }
 
@@ -189,8 +197,8 @@ main() {
     local handler_class="$1"
     shift
 
-    # Validate handler class name (alphanumeric only)
-    if [[ ! "$handler_class" =~ ^[A-Za-z][A-Za-z0-9]*$ ]]; then
+    # Validate handler class name (alphanumeric with optional dots for fully qualified names)
+    if [[ ! "$handler_class" =~ ^[A-Za-z][A-Za-z0-9.]*$ ]]; then
         echo '{"status":"error","message":"Invalid handler class name"}' >&2
         exit 1
     fi

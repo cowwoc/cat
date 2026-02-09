@@ -303,16 +303,11 @@ If validation consistently fails, the compression is too aggressive - iterate or
 
 After presenting validation results for ANY version, show comparison table.
 
-**Token Counting**: Use tiktoken for accurate token counts:
+**Token Counting**: Use JTokkit for accurate token counts:
 
 ```bash
-# Actual token count using tiktoken
-TOKENS=$(python3 -c "
-import tiktoken
-enc = tiktoken.get_encoding('cl100k_base')
-with open('$FILE', 'r') as f:
-    print(len(enc.encode(f.read())))
-")
+# Actual token count using JTokkit (Java tokenizer)
+TOKENS=$("${CLAUDE_PLUGIN_ROOT}/hooks/java.sh" TokenCounter "$FILE" | jq -r ".\"$FILE\"")
 ```
 
 **Table format:**
