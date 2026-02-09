@@ -23,12 +23,12 @@ None
 - **Mitigation:** Move logic to plugin Java handlers; remove settings.json hook entries
 
 ## Files to Modify
-- plugin/hooks/java/src/main/java/com/cat/hooks/bash/BlockWorktreeCd.java - NEW: Port of block-worktree-cd.sh
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetBashPretoolOutput.java - Add BlockWorktreeCd handler
-- plugin/hooks/java/src/main/java/com/cat/hooks/write/ValidateStateMdFormat.java - NEW: Port of validate-state-md-format.sh
-- plugin/hooks/java/src/main/java/com/cat/hooks/EnforceWorktreeIsolation.java - Add ValidateStateMdFormat handler (or new Write dispatcher)
-- plugin/hooks/java/src/test/java/com/cat/hooks/bash/BlockWorktreeCdTest.java - NEW
-- plugin/hooks/java/src/test/java/com/cat/hooks/write/ValidateStateMdFormatTest.java - NEW
+- hooks/src/main/java/com/cat/hooks/bash/BlockWorktreeCd.java - NEW: Port of block-worktree-cd.sh
+- hooks/src/main/java/com/cat/hooks/GetBashPretoolOutput.java - Add BlockWorktreeCd handler
+- hooks/src/main/java/com/cat/hooks/write/ValidateStateMdFormat.java - NEW: Port of validate-state-md-format.sh
+- hooks/src/main/java/com/cat/hooks/EnforceWorktreeIsolation.java - Add ValidateStateMdFormat handler (or new Write dispatcher)
+- hooks/src/test/java/com/cat/hooks/bash/BlockWorktreeCdTest.java - NEW
+- hooks/src/test/java/com/cat/hooks/write/ValidateStateMdFormatTest.java - NEW
 - .claude/settings.json - Remove hooks section entirely
 - .claude/hooks/validate-state-md-format.sh - DELETE
 - .claude/hooks/block-worktree-cd.sh - DELETE

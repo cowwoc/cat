@@ -299,7 +299,7 @@ If ANY of these occur, STOP and report BLOCKED:
 - Verification: Record appears after class declaration
 
 ### Step 3: Verify compilation
-- Action: Run `mvn compile -f plugin/hooks/java/pom.xml`
+- Action: Run `mvn compile -f hooks/pom.xml`
 - Output: BUILD SUCCESS
 - Verification: Exit code 0
 

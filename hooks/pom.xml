@@ -85,7 +85,7 @@
                 <version>3.5.2</version>
                 <configuration>
                     <environmentVariables>
-                        <CLAUDE_PLUGIN_ROOT>${project.basedir}/../..</CLAUDE_PLUGIN_ROOT>
+                        <CLAUDE_PLUGIN_ROOT>${project.basedir}/../plugin</CLAUDE_PLUGIN_ROOT>
                     </environmentVariables>
                 </configuration>
             </plugin>

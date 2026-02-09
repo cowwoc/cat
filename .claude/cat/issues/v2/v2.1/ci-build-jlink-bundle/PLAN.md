@@ -15,7 +15,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 ## Files to Modify
 - `.github/workflows/build-jlink-bundle.yml` - New GitHub Actions workflow
 - `plugin/hooks/jlink-config.sh` - Modify to include cat-hooks.jar in the jlink bundle
-- `plugin/hooks/java/build.sh` - May need updates to output JAR to a location jlink-config.sh can consume
+- `hooks/build.sh` - May need updates to output JAR to a location jlink-config.sh can consume
 
 ## Acceptance Criteria
 - [ ] GitHub Actions workflow triggers on push to relevant branches
@@ -30,7 +30,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
    - Files: `plugin/hooks/jlink-config.sh`
    - After building the jlink runtime, copy cat-hooks.jar and Jackson JARs into a `lib/` directory inside the bundle
    - Write a version marker file (`VERSION`) inside the bundle directory containing the plugin.json version
-   - Update `build_runtime()` to first build cat-hooks.jar via `plugin/hooks/java/build.sh`
+   - Update `build_runtime()` to first build cat-hooks.jar via `hooks/build.sh`
 
 2. **Update java.sh classpath resolution**
    - Files: `plugin/hooks/java.sh`

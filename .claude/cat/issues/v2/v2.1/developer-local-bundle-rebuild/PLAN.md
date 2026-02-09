@@ -28,7 +28,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
    - Files: `plugin/hooks/jlink/build-bundle.sh`
    - Check if JDK 25 is available
    - Compare mtimes of Java source files against the bundle VERSION marker
-   - If stale: run `plugin/hooks/java/build.sh` then `jlink-config.sh build`
+   - If stale: run `hooks/build.sh` then `jlink-config.sh build`
    - Write VERSION marker matching plugin.json version
    - If up-to-date: skip with message
 

@@ -19,11 +19,11 @@ None
 - **Mitigation:** Straightforward port; only 2 scripts
 
 ## Files to Modify
-- plugin/hooks/java/src/main/java/com/cat/hooks/tool/post/DetectAssistantGivingUp.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/tool/post/RemindRestartAfterSkillModification.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetPosttoolOutput.java - Modify to run DetectAssistantGivingUp
-- plugin/hooks/java/src/test/java/com/cat/hooks/tool/post/DetectAssistantGivingUpTest.java - NEW
-- plugin/hooks/java/src/test/java/com/cat/hooks/tool/post/RemindRestartAfterSkillModificationTest.java - NEW
+- hooks/src/main/java/com/cat/hooks/tool/post/DetectAssistantGivingUp.java - NEW
+- hooks/src/main/java/com/cat/hooks/tool/post/RemindRestartAfterSkillModification.java - NEW
+- hooks/src/main/java/com/cat/hooks/GetPosttoolOutput.java - Modify to run DetectAssistantGivingUp
+- hooks/src/test/java/com/cat/hooks/tool/post/DetectAssistantGivingUpTest.java - NEW
+- hooks/src/test/java/com/cat/hooks/tool/post/RemindRestartAfterSkillModificationTest.java - NEW
 - plugin/hooks/hooks.json - Remove separate bash entries, consolidate
 - plugin/hooks/detect-assistant-giving-up.sh - DELETE
 - plugin/hooks/remind-restart-after-skill-modification.sh - DELETE
