@@ -44,7 +44,7 @@ Root tests at `tests/`:
 - `test_validate_state_status.py`
 
 ## Java Test Target
-`plugin/hooks/java/src/test/java/io/github/cowwoc/cat/hooks/test/`
+`hooks/src/test/java/io/github/cowwoc/cat/hooks/test/`
 
 Existing: `HookEntryPointTest.java` (11 tests)
 

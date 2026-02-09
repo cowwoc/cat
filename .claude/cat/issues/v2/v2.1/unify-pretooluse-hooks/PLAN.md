@@ -26,22 +26,22 @@ None
 - **Mitigation:** Careful porting with edge case tests
 
 ## Files to Modify
-- plugin/hooks/java/src/main/java/com/cat/hooks/ask/ - NEW: AskUserQuestion handler package
-- plugin/hooks/java/src/main/java/com/cat/hooks/ask/WarnUnsquashedApproval.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/ask/WarnApprovalWithoutRenderDiff.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetAskPretoolOutput.java - NEW: Dispatcher
-- plugin/hooks/java/src/main/java/com/cat/hooks/edit/ - NEW: Edit handler package
-- plugin/hooks/java/src/main/java/com/cat/hooks/edit/EnforceWorkflowCompletion.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/edit/WarnSkillEditWithoutBuilder.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetEditPretoolOutput.java - NEW: Dispatcher
-- plugin/hooks/java/src/main/java/com/cat/hooks/write/WarnBaseBranchEdit.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/EnforceWorktreeIsolation.java - Modify to also run WarnBaseBranchEdit
-- plugin/hooks/java/src/main/java/com/cat/hooks/task/ - NEW: Task handler package
-- plugin/hooks/java/src/main/java/com/cat/hooks/task/EnforceApprovalBeforeMerge.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetTaskPretoolOutput.java - NEW: Dispatcher
-- plugin/hooks/java/src/test/java/com/cat/hooks/ask/ - NEW: Tests
-- plugin/hooks/java/src/test/java/com/cat/hooks/edit/ - NEW: Tests
-- plugin/hooks/java/src/test/java/com/cat/hooks/task/ - NEW: Tests
+- hooks/src/main/java/com/cat/hooks/ask/ - NEW: AskUserQuestion handler package
+- hooks/src/main/java/com/cat/hooks/ask/WarnUnsquashedApproval.java - NEW
+- hooks/src/main/java/com/cat/hooks/ask/WarnApprovalWithoutRenderDiff.java - NEW
+- hooks/src/main/java/com/cat/hooks/GetAskPretoolOutput.java - NEW: Dispatcher
+- hooks/src/main/java/com/cat/hooks/edit/ - NEW: Edit handler package
+- hooks/src/main/java/com/cat/hooks/edit/EnforceWorkflowCompletion.java - NEW
+- hooks/src/main/java/com/cat/hooks/edit/WarnSkillEditWithoutBuilder.java - NEW
+- hooks/src/main/java/com/cat/hooks/GetEditPretoolOutput.java - NEW: Dispatcher
+- hooks/src/main/java/com/cat/hooks/write/WarnBaseBranchEdit.java - NEW
+- hooks/src/main/java/com/cat/hooks/EnforceWorktreeIsolation.java - Modify to also run WarnBaseBranchEdit
+- hooks/src/main/java/com/cat/hooks/task/ - NEW: Task handler package
+- hooks/src/main/java/com/cat/hooks/task/EnforceApprovalBeforeMerge.java - NEW
+- hooks/src/main/java/com/cat/hooks/GetTaskPretoolOutput.java - NEW: Dispatcher
+- hooks/src/test/java/com/cat/hooks/ask/ - NEW: Tests
+- hooks/src/test/java/com/cat/hooks/edit/ - NEW: Tests
+- hooks/src/test/java/com/cat/hooks/task/ - NEW: Tests
 - plugin/hooks/hooks.json - Consolidate PreToolUse entries by matcher
 - plugin/hooks/warn-unsquashed-approval.sh - DELETE
 - plugin/hooks/warn-approval-without-renderdiff.sh - DELETE

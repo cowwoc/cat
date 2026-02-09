@@ -15,9 +15,9 @@ None
 - **Mitigation:** Port pattern logic carefully; test with known trigger phrases
 
 ## Files to Modify
-- plugin/hooks/java/src/main/java/com/cat/hooks/prompt/DetectGivingUp.java - NEW: Port of detect-giving-up.sh
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetSkillOutput.java - Modify to also run DetectGivingUp handler
-- plugin/hooks/java/src/test/java/com/cat/hooks/prompt/DetectGivingUpTest.java - NEW: Tests
+- hooks/src/main/java/com/cat/hooks/prompt/DetectGivingUp.java - NEW: Port of detect-giving-up.sh
+- hooks/src/main/java/com/cat/hooks/GetSkillOutput.java - Modify to also run DetectGivingUp handler
+- hooks/src/test/java/com/cat/hooks/prompt/DetectGivingUpTest.java - NEW: Tests
 - plugin/hooks/hooks.json - Remove separate detect-giving-up.sh registration
 - plugin/hooks/detect-giving-up.sh - DELETE after migration
 

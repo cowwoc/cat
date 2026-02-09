@@ -778,7 +778,7 @@ overload.
 ## Build Commands
 
 ```bash
-cd plugin/hooks/java
+cd hooks
 
 ./build.sh        # Build JAR (mvn package)
 ./build.sh test   # Run TestNG tests (mvn test)
@@ -834,19 +834,18 @@ module io.github.cowwoc.cat.hooks.test
 ## Project Structure
 
 ```
-plugin/hooks/
-├── java/                    # Maven project root
-│   ├── pom.xml
-│   ├── build.sh
-│   ├── mvnw
-│   └── src/test/java/       # Test module (io.github.cowwoc.cat.hooks.test)
-│       └── io/github/cowwoc/cat/hooks/test/
-│           └── module-info.java
-└── src/                     # Implementation module (io.github.cowwoc.cat.hooks)
-    └── io/github/cowwoc/cat/hooks/
-        ├── module-info.java
-        ├── Config.java
-        ├── HookInput.java
-        ├── HookOutput.java
-        └── Get*Output.java
+hooks/                       # Maven project root
+├── pom.xml
+├── build.sh
+├── mvnw
+├── src/main/java/           # Implementation module (io.github.cowwoc.cat.hooks)
+│   └── io/github/cowwoc/cat/hooks/
+│       ├── module-info.java
+│       ├── Config.java
+│       ├── HookInput.java
+│       ├── HookOutput.java
+│       └── Get*Output.java
+└── src/test/java/           # Test module (io.github.cowwoc.cat.hooks.test)
+    └── io/github/cowwoc/cat/hooks/test/
+        └── module-info.java
 ```

@@ -25,11 +25,11 @@ None - infrastructure/setup task
   - Output: JSON with token counts per file
 
 ## Files to Modify
-- `plugin/hooks/java/pom.xml` - Add JTokkit dependency
+- `hooks/pom.xml` - Add JTokkit dependency
 - `plugin/skills/compare-docs/SKILL.md` - Update token counting command from Python to Java
 
 ## Execution Steps
-1. **Add JTokkit dependency** to `plugin/hooks/java/pom.xml`
+1. **Add JTokkit dependency** to `hooks/pom.xml`
 2. **Create TokenCounter.java** - Accept file paths as args, output JSON token counts
 3. **Update compare-docs SKILL.md** - Replace `python3 -c "import tiktoken..."` with `java -cp cat-hooks.jar io.github.cowwoc.cat.hooks.TokenCounter`
 4. **Test token counting** on sample markdown files

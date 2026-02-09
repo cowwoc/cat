@@ -20,7 +20,7 @@ None - infrastructure/setup task
 ## Already Complete
 
 ### Infrastructure (Complete)
-- Maven project structure: `plugin/hooks/java/pom.xml`, `module-info.java`
+- Maven project structure: `hooks/pom.xml`, `module-info.java`
 - JDK infrastructure:
   - `plugin/hooks/java.sh` - Java hook entry point with correct package prefix
   - `plugin/hooks/session_start.sh` - JDK detection/download logic

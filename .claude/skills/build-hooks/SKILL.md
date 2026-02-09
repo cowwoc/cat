@@ -12,7 +12,7 @@ Build the Java hooks JAR and copy it into the plugin cache for use by hook handl
 ### 1. Build with Maven
 
 ```bash
-mvn -f /workspace/plugin/hooks/java/pom.xml verify
+mvn -f /workspace/hooks/pom.xml verify
 ```
 
 If the build fails, stop and report the error.
@@ -20,7 +20,7 @@ If the build fails, stop and report the error.
 ### 2. Install JAR to Plugin Cache
 
 ```bash
-cp /workspace/plugin/hooks/java/target/cat-hooks.jar \
+cp /workspace/hooks/target/cat-hooks.jar \
    /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/hooks.jar
 ```
 

@@ -18,9 +18,9 @@ None
 - **Mitigation:** Simple file operations; straightforward to port
 
 ## Files to Modify
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetSessionEndOutput.java - NEW: Dispatcher
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/SessionUnlock.java - NEW: Lock cleanup handler
-- plugin/hooks/java/src/test/java/com/cat/hooks/session/SessionUnlockTest.java - NEW
+- hooks/src/main/java/com/cat/hooks/GetSessionEndOutput.java - NEW: Dispatcher
+- hooks/src/main/java/com/cat/hooks/session/SessionUnlock.java - NEW: Lock cleanup handler
+- hooks/src/test/java/com/cat/hooks/session/SessionUnlockTest.java - NEW
 - plugin/hooks/hooks.json - Replace session-unlock.sh with java.sh GetSessionEndOutput
 - plugin/hooks/session-unlock.sh - DELETE
 

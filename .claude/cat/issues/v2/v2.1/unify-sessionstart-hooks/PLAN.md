@@ -22,16 +22,16 @@ None
 - **Mitigation:** Comprehensive tests for each handler; preserve exact output format
 
 ## Files to Modify
-- plugin/hooks/java/src/main/java/com/cat/hooks/GetSessionStartOutput.java - NEW: Main dispatcher
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/ - NEW: Handler package
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/CheckUpgrade.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/CheckUpdateAvailable.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/EchoSessionId.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/CheckRetrospectiveDue.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/InjectSessionInstructions.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/ClearSkillMarkers.java - NEW
-- plugin/hooks/java/src/main/java/com/cat/hooks/session/InjectEnv.java - NEW
-- plugin/hooks/java/src/test/java/com/cat/hooks/session/ - NEW: Tests for each handler
+- hooks/src/main/java/com/cat/hooks/GetSessionStartOutput.java - NEW: Main dispatcher
+- hooks/src/main/java/com/cat/hooks/session/ - NEW: Handler package
+- hooks/src/main/java/com/cat/hooks/session/CheckUpgrade.java - NEW
+- hooks/src/main/java/com/cat/hooks/session/CheckUpdateAvailable.java - NEW
+- hooks/src/main/java/com/cat/hooks/session/EchoSessionId.java - NEW
+- hooks/src/main/java/com/cat/hooks/session/CheckRetrospectiveDue.java - NEW
+- hooks/src/main/java/com/cat/hooks/session/InjectSessionInstructions.java - NEW
+- hooks/src/main/java/com/cat/hooks/session/ClearSkillMarkers.java - NEW
+- hooks/src/main/java/com/cat/hooks/session/InjectEnv.java - NEW
+- hooks/src/test/java/com/cat/hooks/session/ - NEW: Tests for each handler
 - plugin/hooks/hooks.json - Consolidate 7 SessionStart entries into 1 java.sh GetSessionStartOutput
 - plugin/hooks/check-upgrade.sh - DELETE after migration
 - plugin/hooks/check-update-available.sh - DELETE after migration
