@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 /**
  * Validate git filter-branch and history-rewriting commands.
- *
- * <p>Prevents use of --all or --branches flags that would rewrite protected branches.</p>
+ * <p>
+ * Prevents use of --all or --branches flags that would rewrite protected branches.
  */
 public final class ValidateGitFilterBranch implements BashHandler
 {
@@ -24,8 +24,7 @@ public final class ValidateGitFilterBranch implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // BLOCK: dangerous --all or --branches flags with history rewriting
     if (DANGEROUS_FLAGS_PATTERN.matcher(command).find())

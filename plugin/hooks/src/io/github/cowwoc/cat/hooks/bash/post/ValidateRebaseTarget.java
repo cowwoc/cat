@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 
 /**
  * Validate rebase target - warn when using origin/X instead of local X.
- *
- * <p>Trigger: PostToolUse for Bash (git rebase commands)</p>
+ * <p>
+ * Trigger: PostToolUse for Bash (git rebase commands)
  */
 public final class ValidateRebaseTarget implements BashHandler
 {
@@ -29,8 +29,7 @@ public final class ValidateRebaseTarget implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Check for git rebase with origin/ prefix
     if (!REBASE_ORIGIN_PATTERN.matcher(command).find())

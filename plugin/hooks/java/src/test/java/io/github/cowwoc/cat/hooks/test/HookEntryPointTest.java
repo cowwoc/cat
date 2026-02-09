@@ -6,12 +6,12 @@ import io.github.cowwoc.cat.hooks.GetPosttoolOutput;
 import io.github.cowwoc.cat.hooks.GetReadPosttoolOutput;
 import io.github.cowwoc.cat.hooks.GetReadPretoolOutput;
 import io.github.cowwoc.cat.hooks.GetSkillOutput;
+import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.HookOutput;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
@@ -19,70 +19,68 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 /**
  * Tests for hook entry points.
- *
- * <p>These tests verify that each entry point correctly parses JSON input
- * and produces the expected JSON output.</p>
- *
- * <p>Tests are designed for parallel execution - each test is self-contained
- * with no shared state.</p>
+ * <p>
+ * These tests verify that each entry point correctly parses JSON input
+ * and produces the expected JSON output.
+ * <p>
+ * Tests are designed for parallel execution - each test is self-contained
+ * with no shared state.
  */
 public class HookEntryPointTest
 {
   /**
-   * Runs a hook's main method with simulated stdin and captures stdout.
+   * Creates a HookInput from a JSON string.
    *
-   * @param mainMethod the main method to run
-   * @param stdinContent the content to provide as stdin
-   * @return the captured stdout content, trimmed
-   * @throws IOException if an I/O error occurs during stream operations
+   * @param json the JSON input string
+   * @return the parsed HookInput
    */
-  private String runHook(Runnable mainMethod, String stdinContent) throws IOException
+  private HookInput createInput(String json)
   {
-    InputStream originalIn = System.in;
-    PrintStream originalOut = System.out;
+    return HookInput.readFrom(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+  }
 
-    try (ByteArrayInputStream testIn = new ByteArrayInputStream(
-        stdinContent.getBytes(StandardCharsets.UTF_8));
-         ByteArrayOutputStream testOut = new ByteArrayOutputStream())
-    {
-      System.setIn(testIn);
-      System.setOut(new PrintStream(testOut, true, StandardCharsets.UTF_8));
-
-      mainMethod.run();
-
-      return testOut.toString(StandardCharsets.UTF_8).trim();
-    }
-    finally
-    {
-      System.setIn(originalIn);
-      System.setOut(originalOut);
-    }
+  /**
+   * Creates a HookOutput that captures output to a stream.
+   *
+   * @param capture the stream to capture output into
+   * @return a HookOutput writing to the capture stream
+   */
+  private HookOutput createOutput(ByteArrayOutputStream capture)
+  {
+    return new HookOutput(new PrintStream(capture, true, StandardCharsets.UTF_8));
   }
 
   // --- GetSkillOutput tests ---
 
   /**
    * Verifies that GetSkillOutput returns empty JSON when given empty input.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getSkillOutputReturnsEmptyJsonForEmptyInput() throws IOException
+  public void getSkillOutputReturnsEmptyJsonForEmptyInput()
   {
-    String result = runHook(() -> GetSkillOutput.main(new String[]{}), "{}");
+    HookInput input = createInput("{}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetSkillOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
   /**
    * Verifies that GetSkillOutput returns empty JSON when no message is present.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getSkillOutputReturnsEmptyJsonWhenNoMessage() throws IOException
+  public void getSkillOutputReturnsEmptyJsonWhenNoMessage()
   {
-    String result = runHook(
-      () -> GetSkillOutput.main(new String[]{}), "{\"session_id\": \"test\"}");
+    HookInput input = createInput("{\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetSkillOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -90,42 +88,50 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetBashPretoolOutput returns empty JSON for non-Bash tools.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getBashPretoolReturnsEmptyJsonForNonBashTool() throws IOException
+  public void getBashPretoolReturnsEmptyJsonForNonBashTool()
   {
-    String result = runHook(
-      () -> GetBashPretoolOutput.main(new String[]{}), "{\"tool_name\": \"Read\"}");
+    HookInput input = createInput("{\"tool_name\": \"Read\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetBashPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
   /**
    * Verifies that GetBashPretoolOutput returns empty JSON when Bash tool has no command.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getBashPretoolReturnsEmptyJsonWhenNoCommand() throws IOException
+  public void getBashPretoolReturnsEmptyJsonWhenNoCommand()
   {
-    String result = runHook(
-      () -> GetBashPretoolOutput.main(new String[]{}),
-      "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
+    HookInput input = createInput("{\"tool_name\": \"Bash\", \"tool_input\": {}}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetBashPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
   /**
    * Verifies that GetBashPretoolOutput returns empty JSON for Bash tool with command.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getBashPretoolReturnsEmptyJsonWithCommand() throws IOException
+  public void getBashPretoolReturnsEmptyJsonWithCommand()
   {
-    String result = runHook(
-      () -> GetBashPretoolOutput.main(new String[]{}),
+    HookInput input = createInput(
       "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetBashPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -133,14 +139,17 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetBashPosttoolOutput returns empty JSON for non-Bash tools.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getBashPosttoolReturnsEmptyJsonForNonBashTool() throws IOException
+  public void getBashPosttoolReturnsEmptyJsonForNonBashTool()
   {
-    String result = runHook(
-      () -> GetBashPosttoolOutput.main(new String[]{}), "{\"tool_name\": \"Read\"}");
+    HookInput input = createInput("{\"tool_name\": \"Read\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetBashPosttoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -148,28 +157,34 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetReadPretoolOutput returns empty JSON for Read tool.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getReadPretoolReturnsEmptyJsonForReadTool() throws IOException
+  public void getReadPretoolReturnsEmptyJsonForReadTool()
   {
-    String result = runHook(
-      () -> GetReadPretoolOutput.main(new String[]{}),
+    HookInput input = createInput(
       "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetReadPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
   /**
    * Verifies that GetReadPretoolOutput returns empty JSON for unsupported tools.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getReadPretoolReturnsEmptyJsonForUnsupportedTool() throws IOException
+  public void getReadPretoolReturnsEmptyJsonForUnsupportedTool()
   {
-    String result = runHook(
-      () -> GetReadPretoolOutput.main(new String[]{}), "{\"tool_name\": \"Bash\"}");
+    HookInput input = createInput("{\"tool_name\": \"Bash\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetReadPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -177,15 +192,18 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetReadPosttoolOutput returns empty JSON for Grep tool.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getReadPosttoolReturnsEmptyJsonForGrepTool() throws IOException
+  public void getReadPosttoolReturnsEmptyJsonForGrepTool()
   {
-    String result = runHook(
-      () -> GetReadPosttoolOutput.main(new String[]{}),
+    HookInput input = createInput(
       "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetReadPosttoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
@@ -193,27 +211,198 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetPosttoolOutput returns empty JSON when given empty input.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getPosttoolReturnsEmptyJsonForEmptyInput() throws IOException
+  public void getPosttoolReturnsEmptyJsonForEmptyInput()
   {
-    String result = runHook(() -> GetPosttoolOutput.main(new String[]{}), "{}");
+    HookInput input = createInput("{}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetPosttoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 
   /**
    * Verifies that GetPosttoolOutput returns empty JSON with a tool name present.
-   *
-   * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getPosttoolReturnsEmptyJsonWithToolName() throws IOException
+  public void getPosttoolReturnsEmptyJsonWithToolName()
   {
-    String result = runHook(
-      () -> GetPosttoolOutput.main(new String[]{}),
+    HookInput input = createInput(
       "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetPosttoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- HookInput error path tests ---
+
+  /**
+   * Verifies that HookInput.readFrom with malformed JSON returns empty HookInput.
+   */
+  @Test
+  public void hookInputWithMalformedJsonReturnsEmpty()
+  {
+    HookInput input = createInput("not valid json {{{");
+    requireThat(input.isEmpty(), "isEmpty").isTrue();
+  }
+
+  /**
+   * Verifies that HookInput.readFrom with blank input returns empty HookInput.
+   */
+  @Test
+  public void hookInputWithBlankInputReturnsEmpty()
+  {
+    HookInput input = createInput("   ");
+    requireThat(input.isEmpty(), "isEmpty").isTrue();
+  }
+
+  /**
+   * Verifies that HookInput.readFrom with empty string returns empty HookInput.
+   */
+  @Test
+  public void hookInputWithEmptyStringReturnsEmpty()
+  {
+    HookInput input = createInput("");
+    requireThat(input.isEmpty(), "isEmpty").isTrue();
+  }
+
+  /**
+   * Verifies that HookInput.getString with non-string value throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void hookInputGetStringWithNonStringValueThrows()
+  {
+    HookInput input = createInput("{\"count\": 42}");
+    input.getString("count");
+  }
+
+  /**
+   * Verifies that HookInput.getString returns empty string for missing key.
+   */
+  @Test
+  public void hookInputGetStringReturnEmptyForMissingKey()
+  {
+    HookInput input = createInput("{\"key\": \"value\"}");
+    String result = input.getString("nonexistent");
+    requireThat(result, "result").isEqualTo("");
+  }
+
+  /**
+   * Verifies that HookInput.readFrom with null stream throws NullPointerException.
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void hookInputReadFromNullStreamThrows()
+  {
+    HookInput.readFrom(null);
+  }
+
+  /**
+   * Verifies that HookInput.empty returns an empty input.
+   */
+  @Test
+  public void hookInputEmptyReturnsEmptyInput()
+  {
+    HookInput input = HookInput.empty();
+    requireThat(input.isEmpty(), "isEmpty").isTrue();
+  }
+
+  // --- HookOutput error path tests ---
+
+  /**
+   * Verifies that HookOutput.block with blank reason throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void hookOutputBlockWithBlankReasonThrows()
+  {
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+    output.block("   ");
+  }
+
+  /**
+   * Verifies that HookOutput.block with null reason throws NullPointerException.
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void hookOutputBlockWithNullReasonThrows()
+  {
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+    output.block(null);
+  }
+
+  /**
+   * Verifies that HookOutput constructor with null stream throws NullPointerException.
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void hookOutputWithNullStreamThrows()
+  {
+    new HookOutput(null);
+  }
+
+  /**
+   * Verifies that HookOutput.warn with blank warning throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void hookOutputWarnWithBlankWarningThrows()
+  {
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+    output.warn("");
+  }
+
+  /**
+   * Verifies that HookOutput.wrapSystemReminder with blank content throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void hookOutputWrapSystemReminderWithBlankContentThrows()
+  {
+    HookOutput.wrapSystemReminder("   ");
+  }
+
+  /**
+   * Verifies that HookOutput.additionalContext with blank hookEventName throws IllegalArgumentException.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void hookOutputAdditionalContextWithBlankEventNameThrows()
+  {
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+    output.additionalContext("", "some context");
+  }
+
+  /**
+   * Verifies that HookOutput.block produces valid JSON with decision field.
+   */
+  @Test
+  public void hookOutputBlockProducesValidJson()
+  {
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+    output.block("test reason");
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
+  }
+
+  /**
+   * Verifies that HookOutput.empty produces empty JSON object.
+   */
+  @Test
+  public void hookOutputEmptyProducesEmptyJson()
+  {
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+    output.empty();
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
   }
 }

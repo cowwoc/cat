@@ -20,19 +20,19 @@ import java.util.List;
 
 /**
  * get-bash-pretool-output - Unified PreToolUse hook for Bash commands.
- *
- * <p>TRIGGER: PreToolUse (matcher: Bash)</p>
- *
- * <p>Consolidates all Bash command validation hooks into a single Java dispatcher.</p>
- *
- * <p>Handlers can:</p>
+ * <p>
+ * TRIGGER: PreToolUse (matcher: Bash)
+ * <p>
+ * Consolidates all Bash command validation hooks into a single Java dispatcher.
+ * <p>
+ * Handlers can:
  * <ul>
  *   <li>Block commands (return decision=block with reason)</li>
  *   <li>Warn about commands (return warning)</li>
  *   <li>Allow commands (return allow)</li>
  * </ul>
  */
-public final class GetBashPretoolOutput
+public final class GetBashPretoolOutput implements HookHandler
 {
   private static final List<BashHandler> HANDLERS = List.of(
     new BlockLockManipulation(),
@@ -46,25 +46,42 @@ public final class GetBashPretoolOutput
     new ValidateGitOperations(),
     new WarnFileExtraction());
 
-  private GetBashPretoolOutput()
+  /**
+   * Creates a new GetBashPretoolOutput instance.
+   */
+  public GetBashPretoolOutput()
   {
-    // Utility class
   }
 
   /**
    * Entry point for the Bash pretool output hook.
    *
-   * @param _args command line arguments (unused)
+   * @param args command line arguments
    */
-  @SuppressWarnings("UnusedVariable")
-  public static void main(String[] _args)
+  public static void main(String[] args)
   {
     HookInput input = HookInput.readFromStdin();
+    HookOutput output = new HookOutput(System.out);
+    new GetBashPretoolOutput().run(input, output);
+  }
+
+  /**
+   * Processes hook input and writes the result.
+   *
+   * @param input the hook input to process
+   * @param output the hook output writer
+   * @throws NullPointerException if input or output is null
+   */
+  @Override
+  public void run(HookInput input, HookOutput output)
+  {
+    requireThat(input, "input").isNotNull();
+    requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!equalsIgnoreCase(toolName, "Bash"))
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -78,7 +95,7 @@ public final class GetBashPretoolOutput
 
     if (command.isEmpty())
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -95,7 +112,7 @@ public final class GetBashPretoolOutput
         if (result.blocked())
         {
           // Handler blocked the command
-          HookOutput.block(result.reason(), result.additionalContext());
+          output.block(result.reason(), result.additionalContext());
           return;
         }
         if (!result.reason().isEmpty())
@@ -114,6 +131,6 @@ public final class GetBashPretoolOutput
     }
 
     // Allow the command
-    HookOutput.empty();
+    output.empty();
   }
 }

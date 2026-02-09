@@ -4,9 +4,9 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Interface for read tool handlers (Read, Glob, Grep, WebFetch, WebSearch).
- *
- * <p>Read handlers validate read operations before or after execution.
- * PreToolUse handlers can block operations; PostToolUse handlers can only warn.</p>
+ * <p>
+ * Read handlers validate read operations before or after execution.
+ * PreToolUse handlers can block operations; PostToolUse handlers can only warn.
  */
 @FunctionalInterface
 public interface ReadHandler

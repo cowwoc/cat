@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 
 /**
  * Block premature destruction of git reflog (recovery safety net).
- *
- * <p>ADDED: 2026-01-05 after agent ran "git reflog expire --expire=now --all && git gc --prune=now"
- * immediately after git filter-branch, permanently destroying recovery options.</p>
+ * <p>
+ * ADDED: 2026-01-05 after agent ran "git reflog expire --expire=now --all && git gc --prune=now"
+ * immediately after git filter-branch, permanently destroying recovery options.
  */
 public final class BlockReflogDestruction implements BashHandler
 {
@@ -29,8 +29,7 @@ public final class BlockReflogDestruction implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Check for acknowledgment bypass
     if (ACKNOWLEDGMENT_PATTERN.matcher(command).find())

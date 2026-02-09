@@ -77,10 +77,55 @@ requireThat(value).isNotNull();  // Missing name
 
 ## Chaining Validations
 
-Use method chaining for multiple conditions on same value:
+Reuse the same validator across multiple assertions on the same value:
 
 ```java
 requireThat(count, "count").isNotNegative().isLessThan(100);
+
+// Good - single validator, chained calls
+requireThat(result, "result").contains("task1").contains("task2").contains("task3");
+
+// Avoid - redundant validator creation
+requireThat(result, "result").contains("task1");
+requireThat(result, "result").contains("task2");
+requireThat(result, "result").contains("task3");
+```
+
+Use property navigation to validate derived values without creating a new validator:
+
+```java
+// Good - navigate to length via the validator
+requireThat(result, "result").length().isGreaterThan(0);
+
+// Avoid - extracting the property manually
+requireThat(result, "result").isNotNull();
+requireThat(result.length(), "length").isGreaterThan(0);
+```
+
+**Implicit null checks:** Most validation methods throw `NullPointerException` if the value is null, making an
+explicit `isNotNull()` call redundant. Do not chain `isNotNull()` before these methods:
+
+- **String:** `isEmpty`, `isNotEmpty`, `isBlank`, `isNotBlank`, `contains`, `doesNotContain`, `startsWith`,
+  `doesNotStartWith`, `endsWith`, `doesNotEndWith`, `matches`, `isTrimmed`, `isStripped`,
+  `doesNotContainWhitespace`, `length`
+- **Collection:** `isEmpty`, `isNotEmpty`, `contains`, `doesNotContain`, `containsExactly`,
+  `doesNotContainExactly`, `containsAny`, `doesNotContainAny`, `containsAll`, `doesNotContainAll`,
+  `doesNotContainDuplicates`, `size`
+- **Comparable:** `isLessThan`, `isLessThanOrEqualTo`, `isGreaterThan`, `isGreaterThanOrEqualTo`, `isBetween`
+- **Object:** `isInstanceOf`, `isNotInstanceOf`
+
+**Methods that do NOT imply null checks** (use explicit `isNotNull()` if needed):
+- `isEqualTo`, `isNotEqualTo`
+
+```java
+// Good - contains() implies isNotNull()
+requireThat(result, "result").contains("my-task");
+
+// Avoid - redundant null check
+requireThat(result, "result").isNotNull().contains("my-task");
+
+// Good - isEqualTo does NOT imply isNotNull, so include it when needed
+requireThat(result, "result").isNotNull().isEqualTo(expected);
 ```
 
 Use `and()` for validating multiple values together:
@@ -128,6 +173,8 @@ if (!failures.isEmpty())
 | `isEqualTo(v)` / `isNotEqualTo(v)` | Equality |
 | `contains(v)` / `doesNotContain(v)` | Collection membership |
 | `matches(regex)` | String pattern matching |
+| `length()` | Navigate to string/collection length |
+| `size()` | Navigate to collection size |
 
 ## Import
 

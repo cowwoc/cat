@@ -140,13 +140,6 @@
     <!-- Allow catching generic Exception for error handling consolidation -->
     <exclude name="AvoidCatchingGenericException"/>
   </rule>
-  <rule ref="category/java/errorprone.xml/CloseResource">
-    <properties>
-      <property name="types" value="java.util.concurrent.ExecutorService"/>
-      <property name="closeTargets" value="shutdown,shutdownNow"/>
-      <property name="closeAsDefaultTarget" value="true"/>
-    </properties>
-  </rule>
   <!-- Add support for underscore parameters -->
   <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
     <properties>

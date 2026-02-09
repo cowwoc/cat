@@ -633,8 +633,8 @@ public final class GetRenderDiffOutput
     private static final char BOX_VERTICAL = '\u2502';
     private static final char BOX_T_DOWN = '\u252C';
     private static final char BOX_T_UP = '\u2534';
-    private static final char BOX_T_RIGHT = '\u251C';
-    private static final char BOX_T_LEFT = '\u2524';
+    private static final char BOX_RIGHT_INTERSECTION = '\u251C';
+    private static final char BOX_LEFT_INTERSECTION = '\u2524';
     private static final char BOX_CROSS = '\u253C';
 
     // Column widths
@@ -806,10 +806,10 @@ public final class GetRenderDiffOutput
     {
       // Separator after file header
       output.add(
-        BOX_T_RIGHT + fillChar(BOX_HORIZONTAL, OLD_LINE_WIDTH) + BOX_T_DOWN +
+        BOX_RIGHT_INTERSECTION + fillChar(BOX_HORIZONTAL, OLD_LINE_WIDTH) + BOX_T_DOWN +
         fillChar(BOX_HORIZONTAL, SYMBOL_WIDTH) + BOX_T_DOWN +
         fillChar(BOX_HORIZONTAL, NEW_LINE_WIDTH) + BOX_T_DOWN +
-        fillChar(BOX_HORIZONTAL, contentWidth + 1) + BOX_T_LEFT);
+        fillChar(BOX_HORIZONTAL, contentWidth + 1) + BOX_LEFT_INTERSECTION);
 
       // Header row with context
       String contextText;
@@ -828,10 +828,10 @@ public final class GetRenderDiffOutput
 
       // Separator after headers
       output.add(
-        BOX_T_RIGHT + fillChar(BOX_HORIZONTAL, OLD_LINE_WIDTH) + BOX_CROSS +
+        BOX_RIGHT_INTERSECTION + fillChar(BOX_HORIZONTAL, OLD_LINE_WIDTH) + BOX_CROSS +
         fillChar(BOX_HORIZONTAL, SYMBOL_WIDTH) + BOX_CROSS +
         fillChar(BOX_HORIZONTAL, NEW_LINE_WIDTH) + BOX_CROSS +
-        fillChar(BOX_HORIZONTAL, contentWidth + 1) + BOX_T_LEFT);
+        fillChar(BOX_HORIZONTAL, contentWidth + 1) + BOX_LEFT_INTERSECTION);
     }
 
     /**
@@ -922,7 +922,7 @@ public final class GetRenderDiffOutput
 
       output.add(BOX_TOP_LEFT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_TOP_RIGHT);
       output.add(BOX_VERTICAL + " " + fileText + " ".repeat(Math.max(0, padding)) + " " + BOX_VERTICAL);
-      output.add(BOX_T_RIGHT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_T_LEFT);
+      output.add(BOX_RIGHT_INTERSECTION + fillChar(BOX_HORIZONTAL, width - 2) + BOX_LEFT_INTERSECTION);
       String content = "Binary file changed";
       output.add(BOX_VERTICAL + " " + padRight(content, width - 4) + " " + BOX_VERTICAL);
       output.add(BOX_BOTTOM_LEFT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_BOTTOM_RIGHT);
@@ -948,7 +948,7 @@ public final class GetRenderDiffOutput
       }
       else
         output.add(BOX_VERTICAL + " " + fileText + " ".repeat(Math.max(0, padding)) + " " + BOX_VERTICAL);
-      output.add(BOX_T_RIGHT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_T_LEFT);
+      output.add(BOX_RIGHT_INTERSECTION + fillChar(BOX_HORIZONTAL, width - 2) + BOX_LEFT_INTERSECTION);
       String content = "File renamed (no content changes)";
       output.add(BOX_VERTICAL + " " + padRight(content, width - 4) + " " + BOX_VERTICAL);
       output.add(BOX_BOTTOM_LEFT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_BOTTOM_RIGHT);
@@ -978,7 +978,7 @@ public final class GetRenderDiffOutput
       output.add("");
       output.add(BOX_TOP_LEFT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_TOP_RIGHT);
       output.add(BOX_VERTICAL + " " + padRight("Legend", width - 4) + " " + BOX_VERTICAL);
-      output.add(BOX_T_RIGHT + fillChar(BOX_HORIZONTAL, width - 2) + BOX_T_LEFT);
+      output.add(BOX_RIGHT_INTERSECTION + fillChar(BOX_HORIZONTAL, width - 2) + BOX_LEFT_INTERSECTION);
 
       String legendLine = String.join("    ", legendItems);
       output.add(BOX_VERTICAL + "  " + padRight(legendLine, width - 4) + BOX_VERTICAL);

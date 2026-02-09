@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 /**
  * Validate dangerous git operations.
- *
- * <p>Warns or blocks commands like git push --force, reset --hard, etc.</p>
+ * <p>
+ * Warns or blocks commands like git push --force, reset --hard, etc.
  */
 public final class ValidateGitOperations implements BashHandler
 {
@@ -26,8 +26,7 @@ public final class ValidateGitOperations implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Block: git push --force to main/master
     if (FORCE_PUSH_MAIN_PATTERN.matcher(command).find())

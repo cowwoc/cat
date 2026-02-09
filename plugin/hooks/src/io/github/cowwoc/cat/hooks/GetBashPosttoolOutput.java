@@ -14,18 +14,18 @@ import java.util.List;
 
 /**
  * get-bash-posttool-output - Unified PostToolUse hook for Bash commands.
- *
- * <p>TRIGGER: PostToolUse (matcher: Bash)</p>
- *
- * <p>Consolidates all Bash command result validation hooks into a single Java dispatcher.</p>
- *
- * <p>Handlers can:</p>
+ * <p>
+ * TRIGGER: PostToolUse (matcher: Bash)
+ * <p>
+ * Consolidates all Bash command result validation hooks into a single Java dispatcher.
+ * <p>
+ * Handlers can:
  * <ul>
  *   <li>Warn about command results (return warning)</li>
  *   <li>Allow silently (return allow)</li>
  * </ul>
  */
-public final class GetBashPosttoolOutput
+public final class GetBashPosttoolOutput implements HookHandler
 {
   private static final List<BashHandler> HANDLERS = List.of(
     new DetectConcatenatedCommit(),
@@ -33,24 +33,42 @@ public final class GetBashPosttoolOutput
     new ValidateRebaseTarget(),
     new VerifyCommitType());
 
-  private GetBashPosttoolOutput()
+  /**
+   * Creates a new GetBashPosttoolOutput instance.
+   */
+  public GetBashPosttoolOutput()
   {
-    // Utility class
   }
 
   /**
    * Entry point for the Bash posttool output hook.
    *
-   * @param args command line arguments (unused)
+   * @param args command line arguments
    */
   public static void main(String[] args)
   {
     HookInput input = HookInput.readFromStdin();
+    HookOutput output = new HookOutput(System.out);
+    new GetBashPosttoolOutput().run(input, output);
+  }
+
+  /**
+   * Processes hook input and writes the result.
+   *
+   * @param input the hook input to process
+   * @param output the hook output writer
+   * @throws NullPointerException if input or output is null
+   */
+  @Override
+  public void run(HookInput input, HookOutput output)
+  {
+    requireThat(input, "input").isNotNull();
+    requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!equalsIgnoreCase(toolName, "Bash"))
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -64,7 +82,7 @@ public final class GetBashPosttoolOutput
 
     if (command.isEmpty())
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -96,6 +114,6 @@ public final class GetBashPosttoolOutput
     }
 
     // Always allow (PostToolUse cannot block, only warn)
-    HookOutput.empty();
+    output.empty();
   }
 }

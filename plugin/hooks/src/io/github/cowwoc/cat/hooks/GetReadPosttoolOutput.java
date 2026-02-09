@@ -20,7 +20,7 @@ import java.util.Set;
  * - Warn about patterns (return warning)
  * - Allow silently (return null)
  */
-public final class GetReadPosttoolOutput
+public final class GetReadPosttoolOutput implements HookHandler
 {
   private static final List<ReadHandler> HANDLERS = List.of(
       new DetectSequentialTools());
@@ -28,25 +28,42 @@ public final class GetReadPosttoolOutput
   private static final Set<String> SUPPORTED_TOOLS = Set.of(
       "Read", "Glob", "Grep", "WebFetch", "WebSearch");
 
-  private GetReadPosttoolOutput()
+  /**
+   * Creates a new GetReadPosttoolOutput instance.
+   */
+  public GetReadPosttoolOutput()
   {
-    // Utility class
   }
 
   /**
    * Entry point for the Read posttool output hook.
    *
-   * @param _args command line arguments (unused)
+   * @param args command line arguments
    */
-  @SuppressWarnings("UnusedVariable")
-  public static void main(String[] _args)
+  public static void main(String[] args)
   {
     HookInput input = HookInput.readFromStdin();
+    HookOutput output = new HookOutput(System.out);
+    new GetReadPosttoolOutput().run(input, output);
+  }
+
+  /**
+   * Processes hook input and writes the result.
+   *
+   * @param input the hook input to process
+   * @param output the hook output writer
+   * @throws NullPointerException if input or output is null
+   */
+  @Override
+  public void run(HookInput input, HookOutput output)
+  {
+    requireThat(input, "input").isNotNull();
+    requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!SUPPORTED_TOOLS.contains(toolName))
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -79,6 +96,6 @@ public final class GetReadPosttoolOutput
     }
 
     // Always allow (PostToolUse cannot block, only warn)
-    HookOutput.empty();
+    output.empty();
   }
 }

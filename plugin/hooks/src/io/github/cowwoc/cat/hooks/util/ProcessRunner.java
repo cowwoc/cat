@@ -7,9 +7,9 @@ import java.util.List;
 
 /**
  * Utility class for running external processes and capturing output.
- *
- * <p>Provides methods for executing processes and reading their output
- * without triggering PMD's AssignmentInOperand warning.</p>
+ * <p>
+ * Provides methods for executing processes and reading their output
+ * without triggering PMD's AssignmentInOperand warning.
  */
 public final class ProcessRunner
 {

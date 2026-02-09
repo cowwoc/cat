@@ -27,14 +27,10 @@ public final class DisplayUtils
   public static final String BOX_TOP_RIGHT = "╮";
   public static final String BOX_BOTTOM_LEFT = "╰";
   public static final String BOX_BOTTOM_RIGHT = "╯";
-  public static final String BOX_SHARP_TOP_LEFT = "┌";
-  public static final String BOX_SHARP_TOP_RIGHT = "┐";
-  public static final String BOX_SHARP_BOTTOM_LEFT = "└";
-  public static final String BOX_SHARP_BOTTOM_RIGHT = "┘";
   public static final String BOX_VERTICAL = "│";
   public static final String BOX_HORIZONTAL = "─";
-  public static final String BOX_T_LEFT = "├";
-  public static final String BOX_T_RIGHT = "┤";
+  public static final String BOX_LEFT_INTERSECTION = "├";
+  public static final String BOX_RIGHT_INTERSECTION = "┤";
   public static final String HORIZONTAL_LINE = "─";
   public static final String BULLET = "•";
   public static final String ARROW_RIGHT = "→";
@@ -51,19 +47,8 @@ public final class DisplayUtils
   public static final String EMOJI_SHUFFLE = "🔀";
   public static final String EMOJI_CLIPBOARD = "📋";
 
-  // Private box-drawing characters - aliases for internal use
-  private static final String TOP_LEFT = BOX_TOP_LEFT;
-  private static final String TOP_RIGHT = BOX_TOP_RIGHT;
-  private static final String BOTTOM_LEFT = BOX_BOTTOM_LEFT;
-  private static final String BOTTOM_RIGHT = BOX_BOTTOM_RIGHT;
-  private static final String SHARP_TOP_LEFT = BOX_SHARP_TOP_LEFT;
-  private static final String SHARP_TOP_RIGHT = BOX_SHARP_TOP_RIGHT;
-  private static final String SHARP_BOTTOM_LEFT = BOX_SHARP_BOTTOM_LEFT;
-  private static final String SHARP_BOTTOM_RIGHT = BOX_SHARP_BOTTOM_RIGHT;
-  private static final String HORIZONTAL = BOX_HORIZONTAL;
-  private static final String VERTICAL = BOX_VERTICAL;
-  private static final String T_LEFT = BOX_T_LEFT;
-  private static final String T_RIGHT = BOX_T_RIGHT;
+
+  private static final int DEFAULT_PREFIX_LENGTH = 4;
 
   // Progress bar characters
   private static final String PROGRESS_FILLED = "█";
@@ -88,76 +73,27 @@ public final class DisplayUtils
   private final List<String> sortedEmojis;
 
   /**
-   * Creates a DisplayUtils instance with auto-detected terminal and plugin root.
+   * Creates a DisplayUtils instance with auto-detected terminal type.
+   * <p>
+   * Requires the {@code CLAUDE_PLUGIN_ROOT} environment variable to be set.
+   * Fails fast if the variable is undefined or {@code emoji-widths.json} is missing.
    *
-   * @throws IOException if emoji-widths.json cannot be loaded
+   * @throws IOException if {@code CLAUDE_PLUGIN_ROOT} is undefined or {@code emoji-widths.json} cannot be loaded
    */
   public DisplayUtils() throws IOException
   {
-    this(findPluginRoot(), TerminalType.detect());
-  }
+    String envRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
+    if (envRoot == null || envRoot.isEmpty())
+      throw new IOException("CLAUDE_PLUGIN_ROOT environment variable is not set");
 
-  /**
-   * Creates a DisplayUtils instance loading emoji widths from the JSON file.
-   *
-   * @param pluginRoot the plugin root directory containing emoji-widths.json
-   * @param terminalType the terminal type to look up in the JSON
-   * @throws NullPointerException if pluginRoot or terminalType is null
-   * @throws IOException if emoji-widths.json cannot be loaded
-   */
-  private DisplayUtils(Path pluginRoot, TerminalType terminalType) throws IOException
-  {
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(terminalType, "terminalType").isNotNull();
+    Path widthsFile = Path.of(envRoot).resolve("emoji-widths.json");
+    if (!Files.exists(widthsFile))
+      throw new IOException("emoji-widths.json not found at " + widthsFile);
 
-    Path widthsFile = pluginRoot.resolve("emoji-widths.json");
-    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, terminalType);
-
+    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, TerminalType.detect());
     this.emojiWidths = widths;
     this.sortedEmojis = new ArrayList<>(widths.keySet());
     this.sortedEmojis.sort(Comparator.comparingInt(String::length).reversed());
-  }
-
-  /**
-   * Finds the plugin root directory.
-   *
-   * Checks CLAUDE_PLUGIN_ROOT environment variable first, then walks up
-   * from current directory looking for emoji-widths.json.
-   *
-   * @return the plugin root path
-   * @throws IOException if plugin root cannot be found
-   */
-  private static Path findPluginRoot() throws IOException
-  {
-    // Check environment variable first
-    String envRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (envRoot != null && !envRoot.isEmpty())
-    {
-      Path path = Path.of(envRoot);
-      if (Files.exists(path.resolve("emoji-widths.json")))
-        return path;
-    }
-
-    // Walk up from current directory to find emoji-widths.json
-    Path current = Path.of(System.getProperty("user.dir"));
-    for (int i = 0; i < 10; ++i)
-    {
-      Path candidate = current.resolve("plugin").resolve("emoji-widths.json");
-      if (Files.exists(candidate))
-        return candidate.getParent();
-
-      // Also check directly in current
-      candidate = current.resolve("emoji-widths.json");
-      if (Files.exists(candidate))
-        return current;
-
-      Path parent = current.getParent();
-      if (parent == null)
-        break;
-      current = parent;
-    }
-
-    throw new IOException("Cannot find emoji-widths.json - set CLAUDE_PLUGIN_ROOT environment variable");
   }
 
   /**
@@ -180,15 +116,10 @@ public final class DisplayUtils
     if (terminals == null || terminals.isEmpty())
       throw new IOException("No terminals found in " + path);
 
-    // Try to find the specified terminal
     Map<String, Integer> result = new HashMap<>();
     Object terminalData = terminals.get(terminalType.getJsonKey());
-
-    // Fall back to first terminal if specified terminal not found
     if (terminalData == null)
-    {
-      terminalData = terminals.values().iterator().next();
-    }
+      throw new IOException("Terminal type " + terminalType.getJsonKey() + " not found in " + path);
 
     if (terminalData instanceof Map)
     {
@@ -255,53 +186,65 @@ public final class DisplayUtils
    * Build a single box line with content and padding.
    *
    * @param content the content to display
-   * @param maxWidth the maximum content width (excluding borders)
+   * @param minWidth the minimum content width (excluding borders)
    * @return the formatted box line
    */
-  public String buildLine(String content, int maxWidth)
+  public String buildLine(String content, int minWidth)
   {
     requireThat(content, "content").isNotNull();
-    requireThat(maxWidth, "maxWidth").isNotNegative();
+    requireThat(minWidth, "minWidth").isNotNegative();
 
     int contentWidth = displayWidth(content);
-    int padding = maxWidth - contentWidth;
+    int padding = minWidth - contentWidth;
     if (padding < 0)
       padding = 0;
 
-    return VERTICAL + " " + content + " ".repeat(padding) + " " + VERTICAL;
+    return BOX_VERTICAL + " " + content + " ".repeat(padding) + " " + BOX_VERTICAL;
   }
 
   /**
-   * Build a top or bottom border.
+   * Build a top border.
    *
-   * @param maxWidth the maximum content width (excluding borders)
-   * @param isTop true for top border, false for bottom border
-   * @return the formatted border line
+   * @param minWidth the minimum content width (excluding borders)
+   * @return the formatted top border line
    */
-  public String buildBorder(int maxWidth, boolean isTop)
+  public String buildTopBorder(int minWidth)
   {
-    requireThat(maxWidth, "maxWidth").isNotNegative();
+    requireThat(minWidth, "minWidth").isNotNegative();
 
-    int dashCount = maxWidth + 2;
-    String dashes = HORIZONTAL.repeat(dashCount);
-    if (isTop)
-      return TOP_LEFT + dashes + TOP_RIGHT;
-    return BOTTOM_LEFT + dashes + BOTTOM_RIGHT;
+    int dashCount = minWidth + 2;
+    String dashes = BOX_HORIZONTAL.repeat(dashCount);
+    return BOX_TOP_LEFT + dashes + BOX_TOP_RIGHT;
+  }
+
+  /**
+   * Build a bottom border.
+   *
+   * @param minWidth the minimum content width (excluding borders)
+   * @return the formatted bottom border line
+   */
+  public String buildBottomBorder(int minWidth)
+  {
+    requireThat(minWidth, "minWidth").isNotNegative();
+
+    int dashCount = minWidth + 2;
+    String dashes = BOX_HORIZONTAL.repeat(dashCount);
+    return BOX_BOTTOM_LEFT + dashes + BOX_BOTTOM_RIGHT;
   }
 
   /**
    * Build a horizontal separator line.
    *
-   * @param maxWidth the maximum content width (excluding borders)
+   * @param minWidth the minimum content width (excluding borders)
    * @return the formatted separator line
    */
-  public String buildSeparator(int maxWidth)
+  public String buildSeparator(int minWidth)
   {
-    requireThat(maxWidth, "maxWidth").isNotNegative();
+    requireThat(minWidth, "minWidth").isNotNegative();
 
-    int dashCount = maxWidth + 2;
-    String dashes = HORIZONTAL.repeat(dashCount);
-    return T_LEFT + dashes + T_RIGHT;
+    int dashCount = minWidth + 2;
+    String dashes = BOX_HORIZONTAL.repeat(dashCount);
+    return BOX_LEFT_INTERSECTION + dashes + BOX_RIGHT_INTERSECTION;
   }
 
   /**
@@ -362,29 +305,23 @@ public final class DisplayUtils
       separatorIndices = List.of();
 
     if (prefix == null)
-      prefix = HORIZONTAL + HORIZONTAL + HORIZONTAL + " ";  // "--- "
+      prefix = BOX_HORIZONTAL + BOX_HORIZONTAL + BOX_HORIZONTAL + " ";  // "--- "
 
     // Calculate max width
-    int maxContentWidth = 0;
-    for (String line : contentLines)
-    {
-      int w = displayWidth(line);
-      if (w > maxContentWidth)
-        maxContentWidth = w;
-    }
+    int maxContentWidth = calculateMaxWidth(contentLines);
 
     // Account for prefix in header width calculation
     int headerWidth = displayWidth(header) + prefix.length() + 1;  // +1 for space before suffix dashes
-    int maxWidth = Math.max(maxContentWidth, headerWidth);
-    if (minWidth != null && minWidth > maxWidth)
-      maxWidth = minWidth;
+    int boxWidth = Math.max(maxContentWidth, headerWidth);
+    if (minWidth != null && minWidth > boxWidth)
+      boxWidth = minWidth;
 
     // Build header
-    int suffixDashCount = maxWidth - prefix.length() - displayWidth(header) + 1;
+    int suffixDashCount = boxWidth - prefix.length() - displayWidth(header) + 1;
     if (suffixDashCount < 1)
       suffixDashCount = 1;
-    String suffixDashes = HORIZONTAL.repeat(suffixDashCount);
-    String top = TOP_LEFT + prefix + header + " " + suffixDashes + TOP_RIGHT;
+    String suffixDashes = BOX_HORIZONTAL.repeat(suffixDashCount);
+    String top = BOX_TOP_LEFT + prefix + header + " " + suffixDashes + BOX_TOP_RIGHT;
 
     List<String> lines = new ArrayList<>();
     lines.add(top);
@@ -392,11 +329,11 @@ public final class DisplayUtils
     for (int i = 0; i < contentLines.size(); ++i)
     {
       if (separatorIndices.contains(i))
-        lines.add(buildSeparator(maxWidth));
-      lines.add(buildLine(contentLines.get(i), maxWidth));
+        lines.add(buildSeparator(boxWidth));
+      lines.add(buildLine(contentLines.get(i), boxWidth));
     }
 
-    lines.add(buildBorder(maxWidth, false));
+    lines.add(buildBottomBorder(boxWidth));
     return String.join("\n", lines);
   }
 
@@ -453,39 +390,36 @@ public final class DisplayUtils
     requireThat(header, "header").isNotNull();
     requireThat(contentItems, "contentItems").isNotNull();
 
+    List<String> effectiveContent;
     if (contentItems.isEmpty())
-      contentItems = List.of("");
+      effectiveContent = List.of("");
+    else
+      effectiveContent = contentItems;
 
-    int maxContentWidth = 0;
-    for (String item : contentItems)
-    {
-      int w = displayWidth(item);
-      if (w > maxContentWidth)
-        maxContentWidth = w;
-    }
+    int maxContentWidth = calculateMaxWidth(effectiveContent);
 
     int headerWidth = displayWidth(header);
     int headerMinWidth = headerWidth + 1;
 
-    int innerMax = Math.max(headerMinWidth, maxContentWidth);
-    if (forcedWidth != null && forcedWidth > innerMax)
-      innerMax = forcedWidth;
+    int boxWidth = Math.max(headerMinWidth, maxContentWidth);
+    if (forcedWidth != null && forcedWidth > boxWidth)
+      boxWidth = forcedWidth;
 
-    int remaining = innerMax - headerWidth - 1;
+    int remaining = boxWidth - headerWidth - 1;
     if (remaining < 0)
       remaining = 0;
     String dashes;
     if (remaining > 0)
-      dashes = HORIZONTAL.repeat(remaining);
+      dashes = BOX_HORIZONTAL.repeat(remaining);
     else
       dashes = "";
-    String innerTop = TOP_LEFT + HORIZONTAL + " " + header + " " + dashes + TOP_RIGHT;
+    String innerTop = BOX_TOP_LEFT + BOX_HORIZONTAL + " " + header + " " + dashes + BOX_TOP_RIGHT;
 
     List<String> lines = new ArrayList<>();
     lines.add(innerTop);
-    for (String item : contentItems)
-      lines.add(buildLine(item, innerMax));
-    lines.add(buildBorder(innerMax, false));
+    for (String item : effectiveContent)
+      lines.add(buildLine(item, boxWidth));
+    lines.add(buildBottomBorder(boxWidth));
 
     return lines;
   }
@@ -504,16 +438,10 @@ public final class DisplayUtils
     requireThat(title, "title").isNotNull();
     requireThat(contentLines, "contentLines").isNotNull();
 
-    String prefix = HORIZONTAL + " " + icon + " " + title;
+    String prefix = BOX_HORIZONTAL + " " + icon + " " + title;
 
     // Calculate max width from content
-    int maxContentWidth = 0;
-    for (String line : contentLines)
-    {
-      int w = displayWidth(line);
-      if (w > maxContentWidth)
-        maxContentWidth = w;
-    }
+    int maxContentWidth = calculateMaxWidth(contentLines);
 
     int prefixWidth = displayWidth(prefix);
     int innerWidth = Math.max(maxContentWidth, prefixWidth) + 2;
@@ -521,18 +449,18 @@ public final class DisplayUtils
     List<String> lines = new ArrayList<>();
 
     // Top border with embedded prefix
-    String suffixDashes = HORIZONTAL.repeat(innerWidth - prefixWidth);
-    lines.add(TOP_LEFT + prefix + suffixDashes + TOP_RIGHT);
+    String suffixDashes = BOX_HORIZONTAL.repeat(innerWidth - prefixWidth);
+    lines.add(BOX_TOP_LEFT + prefix + suffixDashes + BOX_TOP_RIGHT);
 
     // Content lines
     for (String content : contentLines)
     {
       int padding = innerWidth - displayWidth(content);
-      lines.add(VERTICAL + " " + content + " ".repeat(padding - 1) + VERTICAL);
+      lines.add(BOX_VERTICAL + " " + content + " ".repeat(padding - 1) + BOX_VERTICAL);
     }
 
     // Bottom border
-    lines.add(BOTTOM_LEFT + HORIZONTAL.repeat(innerWidth) + BOTTOM_RIGHT);
+    lines.add(BOX_BOTTOM_LEFT + BOX_HORIZONTAL.repeat(innerWidth) + BOX_BOTTOM_RIGHT);
 
     return String.join("\n", lines);
   }
@@ -541,26 +469,26 @@ public final class DisplayUtils
    * Build a top border with embedded header text.
    *
    * @param header the header text
-   * @param maxWidth the maximum content width
+   * @param minWidth the minimum content width
    * @return the formatted header top line
    */
-  public String buildHeaderTop(String header, int maxWidth)
+  public String buildHeaderTop(String header, int minWidth)
   {
     requireThat(header, "header").isNotNull();
-    requireThat(maxWidth, "maxWidth").isNotNegative();
+    requireThat(minWidth, "minWidth").isNotNegative();
 
-    int innerWidth = maxWidth + 2;
+    int innerWidth = minWidth + 2;
     int headerWidth = displayWidth(header);
-    String prefixDashes = HORIZONTAL + HORIZONTAL + HORIZONTAL + " ";  // 4 chars
-    int suffixDashesCount = innerWidth - 4 - headerWidth - 1;
+    String prefixDashes = BOX_HORIZONTAL + BOX_HORIZONTAL + BOX_HORIZONTAL + " ";
+    int suffixDashesCount = innerWidth - DEFAULT_PREFIX_LENGTH - headerWidth - 1;
     if (suffixDashesCount < 1)
       suffixDashesCount = 1;
-    String suffixDashes = HORIZONTAL.repeat(suffixDashesCount);
-    return TOP_LEFT + prefixDashes + header + " " + suffixDashes + TOP_RIGHT;
+    String suffixDashes = BOX_HORIZONTAL.repeat(suffixDashesCount);
+    return BOX_TOP_LEFT + prefixDashes + header + " " + suffixDashes + BOX_TOP_RIGHT;
   }
 
   /**
-   * Build a concern box with square corners.
+   * Build a concern box.
    *
    * @param severity the severity label
    * @param concerns the list of concerns
@@ -571,31 +499,43 @@ public final class DisplayUtils
     requireThat(severity, "severity").isNotNull();
     requireThat(concerns, "concerns").isNotNull();
 
-    int maxContentWidth = 0;
-    for (String concern : concerns)
-    {
-      int w = displayWidth(concern);
-      if (w > maxContentWidth)
-        maxContentWidth = w;
-    }
+    int maxContentWidth = calculateMaxWidth(concerns);
 
     int headerWidth = displayWidth(severity) + 4;
     int maxWidth = Math.max(maxContentWidth, headerWidth);
 
-    // Square corner box
-    String top = SHARP_TOP_LEFT + HORIZONTAL + " " + severity + " " +
-                 HORIZONTAL.repeat(maxWidth - displayWidth(severity) - 1) + SHARP_TOP_RIGHT;
+    String top = BOX_TOP_LEFT + BOX_HORIZONTAL + " " + severity + " " +
+                 BOX_HORIZONTAL.repeat(maxWidth - displayWidth(severity) - 1) + BOX_TOP_RIGHT;
 
     List<String> lines = new ArrayList<>();
     lines.add(top);
     for (String content : concerns)
     {
       int padding = maxWidth - displayWidth(content);
-      lines.add(VERTICAL + " " + content + " ".repeat(padding) + " " + VERTICAL);
+      lines.add(BOX_VERTICAL + " " + content + " ".repeat(padding) + " " + BOX_VERTICAL);
     }
-    lines.add(SHARP_BOTTOM_LEFT + HORIZONTAL.repeat(maxWidth + 2) + SHARP_BOTTOM_RIGHT);
+    lines.add(BOX_BOTTOM_LEFT + BOX_HORIZONTAL.repeat(maxWidth + 2) + BOX_BOTTOM_RIGHT);
 
     return String.join("\n", lines);
+  }
+
+  /**
+   * Calculates the maximum display width among a list of strings.
+   *
+   * @param lines the lines to measure
+   * @return the maximum display width
+   * @throws NullPointerException if lines is null
+   */
+  private int calculateMaxWidth(List<String> lines)
+  {
+    int max = 0;
+    for (String line : lines)
+    {
+      int width = displayWidth(line);
+      if (width > max)
+        max = width;
+    }
+    return max;
   }
 
   /**

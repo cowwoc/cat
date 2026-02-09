@@ -1,11 +1,15 @@
 package io.github.cowwoc.cat.hooks;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -17,6 +21,12 @@ public final class HookInput
   private final JsonMapper mapper;
   private final JsonNode data;
 
+  /**
+   * Creates a new HookInput.
+   *
+   * @param mapper the JSON mapper
+   * @param data the parsed JSON data
+   */
   private HookInput(JsonMapper mapper, JsonNode data)
   {
     this.mapper = mapper;
@@ -26,7 +36,7 @@ public final class HookInput
   /**
    * Read and parse JSON input from stdin.
    *
-   * @return Parsed hook input, or empty input if stdin is not available or invalid
+   * @return parsed hook input, or empty input if stdin is not available or contains invalid JSON
    */
   public static HookInput readFromStdin()
   {
@@ -38,19 +48,37 @@ public final class HookInput
         // Interactive terminal with no piped input
         return new HookInput(mapper, mapper.createObjectNode());
       }
+    }
+    catch (IOException _)
+    {
+      return new HookInput(mapper, mapper.createObjectNode());
+    }
+    return readFrom(System.in);
+  }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+  /**
+   * Read and parse JSON input from a stream.
+   *
+   * @param inputStream the stream to read from
+   * @return parsed hook input, or empty input if the stream is not available or contains invalid JSON
+   * @throws NullPointerException if inputStream is null
+   */
+  public static HookInput readFrom(InputStream inputStream)
+  {
+    requireThat(inputStream, "inputStream").isNotNull();
+    JsonMapper mapper = JsonMapper.builder().build();
+    try
+    {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
       String raw = reader.lines().collect(Collectors.joining("\n"));
 
       if (raw == null || raw.isBlank())
-      {
         return new HookInput(mapper, mapper.createObjectNode());
-      }
 
       JsonNode node = mapper.readTree(raw);
       return new HookInput(mapper, node);
     }
-    catch (IOException _)
+    catch (JacksonException _)
     {
       return new HookInput(mapper, mapper.createObjectNode());
     }

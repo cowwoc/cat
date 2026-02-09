@@ -8,12 +8,13 @@ import java.nio.file.Paths;
 
 /**
  * Hook: Enforce Worktree Isolation (M252).
- *
- * <p>Blocks Edit/Write operations on plugin/ files when on protected branches (v2.1, main).
- * All plugin development must happen in task-specific worktrees.</p>
- *
- * <p>TRIGGER: PreToolUse for Edit/Write</p>
- * <p>REGISTRATION: plugin/hooks/hooks.json (plugin hook)</p>
+ * <p>
+ * Blocks Edit/Write operations on plugin/ files when on protected branches (v2.1, main).
+ * All plugin development must happen in task-specific worktrees.
+ * <p>
+ * TRIGGER: PreToolUse for Edit/Write
+ * <p>
+ * REGISTRATION: plugin/hooks/hooks.json (plugin hook)
  */
 public final class EnforceWorktreeIsolation
 {
@@ -25,10 +26,11 @@ public final class EnforceWorktreeIsolation
   /**
    * Entry point for the worktree isolation enforcement hook.
    *
-   * @param args command line arguments (unused)
+   * @param args command line arguments
    */
   public static void main(String[] args)
   {
+    HookOutput hookOutput = new HookOutput(System.out);
     try
     {
       HookInput input = HookInput.readFromStdin();
@@ -36,14 +38,14 @@ public final class EnforceWorktreeIsolation
       String toolName = input.getToolName();
       if (!toolName.equals("Edit") && !toolName.equals("Write"))
       {
-        HookOutput.empty();
+        hookOutput.empty();
         return;
       }
 
       JsonNode parameters = input.getObject("parameters");
       if (parameters == null)
       {
-        HookOutput.empty();
+        hookOutput.empty();
         return;
       }
 
@@ -56,13 +58,13 @@ public final class EnforceWorktreeIsolation
 
       if (filePath.isEmpty())
       {
-        HookOutput.empty();
+        hookOutput.empty();
         return;
       }
 
       if (!isPluginFile(filePath))
       {
-        HookOutput.empty();
+        hookOutput.empty();
         return;
       }
 
@@ -107,11 +109,11 @@ public final class EnforceWorktreeIsolation
           "1. Create an issue for it\n" +
           "2. Use /cat:work to create proper worktree\n" +
           "3. Make changes in isolated environment\n";
-        HookOutput.block(message);
+        hookOutput.block(message);
         return;
       }
 
-      HookOutput.empty();
+      hookOutput.empty();
     }
     catch (Exception e)
     {
@@ -119,7 +121,7 @@ public final class EnforceWorktreeIsolation
         "❌ Hook error: " + e.getMessage() + "\n" +
         "\n" +
         "Blocking as fail-safe. Please verify your working environment.";
-      HookOutput.block(errorMessage);
+      hookOutput.block(errorMessage);
     }
   }
 

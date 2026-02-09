@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 
 /**
  * Detect concatenated commit messages after git operations.
- *
- * <p>Trigger: PostToolUse for Bash (git rebase/commit/merge commands)</p>
+ * <p>
+ * Trigger: PostToolUse for Bash (git rebase/commit/merge commands)
  */
 public final class DetectConcatenatedCommit implements BashHandler
 {
@@ -27,8 +27,7 @@ public final class DetectConcatenatedCommit implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Only process git commands
     if (!command.contains("git"))

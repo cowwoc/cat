@@ -9,13 +9,13 @@ import java.util.List;
 
 /**
  * Compute box lines via hook interception.
- *
- * <p>M192: Agent calculated box widths correctly but re-typed output from memory,
+ * <p>
+ * M192: Agent calculated box widths correctly but re-typed output from memory,
  * causing alignment errors. This handler executes Python-based computation
- * and returns results via additionalContext.</p>
- *
- * <p>USAGE: Agent invokes Bash with marker comment:
- * Bash("#BOX_COMPUTE\ncontent1\ncontent2\ncontent3")</p>
+ * and returns results via additionalContext.
+ * <p>
+ * USAGE: Agent invokes Bash with marker comment:
+ * Bash("#BOX_COMPUTE\ncontent1\ncontent2\ncontent3")
  */
 public final class ComputeBoxLines implements BashHandler
 {
@@ -30,8 +30,7 @@ public final class ComputeBoxLines implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Check for the BOX_COMPUTE marker
     String[] lines = command.split("\n");

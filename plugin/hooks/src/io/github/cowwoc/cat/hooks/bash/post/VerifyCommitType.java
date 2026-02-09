@@ -11,11 +11,11 @@ import java.util.regex.Pattern;
 
 /**
  * Verify commit type after git commit completes.
- *
- * <p>Defense-in-depth - catches commits that slip through PreToolUse validation.
- * This is a WARNING hook (does not block) since the commit already happened.</p>
- *
- * <p>Trigger: PostToolUse for Bash (git commit commands)</p>
+ * <p>
+ * Defense-in-depth - catches commits that slip through PreToolUse validation.
+ * This is a WARNING hook (does not block) since the commit already happened.
+ * <p>
+ * Trigger: PostToolUse for Bash (git commit commands)
  */
 public final class VerifyCommitType implements BashHandler
 {
@@ -54,8 +54,7 @@ public final class VerifyCommitType implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Only check git commit commands
     if (!command.contains("git commit"))

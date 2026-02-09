@@ -17,10 +17,10 @@ import java.util.Set;
 
 /**
  * Detects sequential tool execution anti-pattern.
- *
- * <p>Monitors Read/Glob/Grep/WebFetch/WebSearch PostToolUse events and warns
+ * <p>
+ * Monitors Read/Glob/Grep/WebFetch/WebSearch PostToolUse events and warns
  * when multiple sequential single-tool messages are detected, suggesting
- * batching for efficiency.</p>
+ * batching for efficiency.
  */
 public final class DetectSequentialTools implements ReadHandler
 {

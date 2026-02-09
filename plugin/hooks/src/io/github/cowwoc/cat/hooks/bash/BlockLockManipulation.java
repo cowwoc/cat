@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 /**
  * Block direct manipulation of CAT lock files.
- *
- * <p>M096: Agent deleted lock files without user permission.</p>
+ * <p>
+ * M096: Agent deleted lock files without user permission.
  */
 public final class BlockLockManipulation implements BashHandler
 {
@@ -26,8 +26,7 @@ public final class BlockLockManipulation implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Check for rm commands targeting lock files
     if (LOCK_FILE_PATTERN.matcher(command).find())

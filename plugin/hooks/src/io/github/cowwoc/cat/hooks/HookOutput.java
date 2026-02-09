@@ -2,6 +2,8 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import java.io.PrintStream;
+
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -10,17 +12,26 @@ import tools.jackson.databind.node.ObjectNode;
  */
 public final class HookOutput
 {
-  private HookOutput()
+  private final PrintStream out;
+
+  /**
+   * Creates a new HookOutput that writes to the specified stream.
+   *
+   * @param out the output stream to write to
+   * @throws NullPointerException if out is null
+   */
+  public HookOutput(PrintStream out)
   {
-    // Utility class
+    requireThat(out, "out").isNotNull();
+    this.out = out;
   }
 
   /**
    * Output an empty response (allow the operation).
    */
-  public static void empty()
+  public void empty()
   {
-    System.out.println("{}");
+    out.println("{}");
   }
 
   /**
@@ -29,7 +40,7 @@ public final class HookOutput
    * @param reason Reason for blocking
    * @throws IllegalArgumentException if reason is null or blank
    */
-  public static void block(String reason)
+  public void block(String reason)
   {
     requireThat(reason, "reason").isNotBlank();
     JsonMapper mapper = JsonMapper.builder().build();
@@ -46,7 +57,7 @@ public final class HookOutput
    * @param additionalContext Extra context to provide
    * @throws IllegalArgumentException if reason or additionalContext is null or blank
    */
-  public static void block(String reason, String additionalContext)
+  public void block(String reason, String additionalContext)
   {
     requireThat(reason, "reason").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
@@ -64,7 +75,7 @@ public final class HookOutput
    * @param warning Warning message
    * @throws IllegalArgumentException if warning is null or blank
    */
-  public static void warn(String warning)
+  public void warn(String warning)
   {
     requireThat(warning, "warning").isNotBlank();
     System.err.println(warning);
@@ -78,7 +89,7 @@ public final class HookOutput
    * @param additionalContext The context to inject
    * @throws IllegalArgumentException if hookEventName or additionalContext is null or blank
    */
-  public static void additionalContext(String hookEventName, String additionalContext)
+  public void additionalContext(String hookEventName, String additionalContext)
   {
     requireThat(hookEventName, "hookEventName").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
@@ -98,15 +109,15 @@ public final class HookOutput
    * @param mapper The JsonMapper to use for serialization
    * @param node JSON node to output
    */
-  public static void output(JsonMapper mapper, ObjectNode node)
+  public void output(JsonMapper mapper, ObjectNode node)
   {
     try
     {
-      System.out.println(mapper.writeValueAsString(node));
+      out.println(mapper.writeValueAsString(node));
     }
     catch (Exception _)
     {
-      System.out.println("{}");
+      out.println("{}");
     }
   }
 

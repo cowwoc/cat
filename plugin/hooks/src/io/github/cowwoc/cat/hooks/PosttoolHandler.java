@@ -4,9 +4,9 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Interface for general PostToolUse handlers.
- *
- * <p>These handlers process tool results for all tools (not just Bash or Read).
- * They can warn about results or inject additional context.</p>
+ * <p>
+ * These handlers process tool results for all tools (not just Bash or Read).
+ * They can warn about results or inject additional context.
  */
 @FunctionalInterface
 public interface PosttoolHandler
