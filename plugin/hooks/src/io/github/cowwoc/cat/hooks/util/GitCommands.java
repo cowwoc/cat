@@ -10,10 +10,10 @@ import java.util.Locale;
 
 /**
  * Utility class for executing Git commands.
- *
- * <p>Provides common Git operations used across multiple bash handlers.
+ * <p>
+ * Provides common Git operations used across multiple bash handlers.
  * All methods use Locale.ROOT for case conversions and handle errors gracefully
- * by returning empty strings or empty lists.</p>
+ * by returning empty strings or empty lists.
  */
 public final class GitCommands
 {
@@ -263,8 +263,8 @@ public final class GitCommands
 
   /**
    * Converts a string to lowercase using Locale.ROOT.
-   *
-   * <p>This avoids locale-specific issues with case conversion.</p>
+   * <p>
+   * This avoids locale-specific issues with case conversion.
    *
    * @param value the string to convert
    * @return the lowercase string

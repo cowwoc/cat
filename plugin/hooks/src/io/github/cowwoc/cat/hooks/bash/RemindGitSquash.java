@@ -22,8 +22,7 @@ public final class RemindGitSquash implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Check for git rebase -i (interactive)
     if (INTERACTIVE_REBASE_PATTERN.matcher(command).find())

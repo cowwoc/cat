@@ -253,7 +253,7 @@ public final class GetConfigOutput
       sb.append(display.buildLine(content, maxWidth)).append('\n');
 
     // Bottom border
-    sb.append(display.buildBorder(maxWidth, false));
+    sb.append(display.buildBottomBorder(maxWidth));
 
     return sb.toString();
   }

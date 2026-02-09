@@ -134,14 +134,14 @@ public final class Config
    * Get a string configuration value.
    *
    * @param key the configuration key
-   * @return the value as a string, or null if not found
+   * @return the value as a string, or empty string if not found
    */
   public String getString(String key)
   {
     Object value = values.get(key);
     if (value != null)
       return value.toString();
-    return null;
+    return "";
   }
 
   /**

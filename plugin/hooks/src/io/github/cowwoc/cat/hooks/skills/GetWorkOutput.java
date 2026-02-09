@@ -343,7 +343,7 @@ public final class GetWorkOutput
     lines.add(display.buildHeaderTop(header, maxWidth));
     for (String content : contentLines)
       lines.add(display.buildLine(content, maxWidth));
-    lines.add(display.buildBorder(maxWidth, false));
+    lines.add(display.buildBottomBorder(maxWidth));
 
     return String.join("\n", lines);
   }
@@ -466,7 +466,7 @@ public final class GetWorkOutput
     lines.add(display.buildSeparator(maxWidth));
     for (String content : content3)
       lines.add(display.buildLine(content, maxWidth));
-    lines.add(display.buildBorder(maxWidth, false));
+    lines.add(display.buildBottomBorder(maxWidth));
 
     return String.join("\n", lines);
   }
@@ -503,7 +503,7 @@ public final class GetWorkOutput
     lines.add(display.buildSeparator(maxWidth));
     for (String content : footerContent)
       lines.add(display.buildLine(content, maxWidth));
-    lines.add(display.buildBorder(maxWidth, false));
+    lines.add(display.buildBottomBorder(maxWidth));
 
     return String.join("\n", lines);
   }

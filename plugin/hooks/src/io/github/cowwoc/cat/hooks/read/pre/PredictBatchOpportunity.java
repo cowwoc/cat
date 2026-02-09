@@ -17,8 +17,8 @@ import java.util.Set;
 
 /**
  * Tracks sequential Read/Glob/Grep operations and suggests batching.
- *
- * <p>Advisory only - never blocks operations.</p>
+ * <p>
+ * Advisory only - never blocks operations.
  */
 public final class PredictBatchOpportunity implements ReadHandler
 {

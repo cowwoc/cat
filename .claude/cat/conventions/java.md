@@ -79,6 +79,42 @@ private static final int COL_DESC = 20;
 private static final int COL_TYPE = 10;
 ```
 
+### Unused Parameters
+Do not prefix method parameter names with underscores, even if unused. Do not add `@SuppressWarnings("UnusedVariable")`
+for method parameters. Keep the original parameter name as-is:
+
+```java
+// Good - keep original name
+public void visit(Path file, BasicFileAttributes attrs)
+{
+  // attrs not used, but keep the name
+  Files.delete(file);
+}
+
+// Avoid - underscore prefix
+public void visit(Path file, BasicFileAttributes _attrs)
+
+// Avoid - suppression annotation
+@SuppressWarnings("UnusedVariable")
+public void visit(Path file, BasicFileAttributes attrs)
+```
+
+**Exception:** Unused catch parameters must use Java's unnamed variable `_` (required by checkstyle):
+
+```java
+// Good - unnamed catch variable
+catch (IOException _)
+{
+  return fallbackValue;
+}
+
+// Avoid - named but unused catch variable
+catch (IOException e)
+{
+  return fallbackValue;
+}
+```
+
 ### Field Initialization
 Prefer inline initialization over constructor initialization when the value is constant:
 
@@ -253,6 +289,42 @@ if ("Bash".equalsIgnoreCase(toolName))
 ```
 
 ## Documentation
+
+### Javadoc Paragraphs
+Place `<p>` on its own line with no other text. Do not use `</p>` closing tags. No empty lines before or after `<p>`:
+
+```java
+// Good - <p> on its own line, no empty lines around it, no closing tag
+/**
+ * Summary sentence.
+ * <p>
+ * Additional paragraph with more details about the class
+ * or method behavior.
+ * <p>
+ * Another paragraph explaining edge cases.
+ */
+
+// Avoid - <p> inline with text
+/**
+ * <p>This paragraph has text on the same line as the tag.</p>
+ */
+
+// Avoid - empty line before or after <p>
+/**
+ * Summary.
+ *
+ * <p>
+ *
+ * Text here.
+ */
+
+// Avoid - closing </p> tag
+/**
+ * <p>
+ * Text here.
+ * </p>
+ */
+```
 
 ### Javadoc Requirements
 - **All classes and records must have Javadoc** (public and non-public)
@@ -613,29 +685,31 @@ public void emptyInput_returnsEmptyJson() throws IOException
 ```
 
 ### Parallel Execution
-Tests run in parallel. Design for thread safety:
+Tests run in parallel. Test classes must not contain any shared state:
 
-1. **Use try-with-resources** for all resources
-2. **Avoid class fields** - use local variables
-3. **Avoid @BeforeClass/@AfterClass** - initialize in test method
-4. **No shared mutable state**
+1. **No class fields** - use local variables only
+2. **No @BeforeMethod/@AfterMethod/@BeforeClass/@AfterClass** - initialize in each test method
+3. **Use try-with-resources** for all resources (files, streams, temp directories)
+4. **No shared mutable state** - each test must be fully self-contained
+5. **No TestBase classes** - each test method must inline its own setup (e.g., `try (JvmScope scope = new
+   DefaultJvmScope())`). This boilerplate is intentional and preferred over shared helpers or inheritance.
 
 ```java
-// Good - self-contained test
+// Good - self-contained test, inline scope creation
 @Test
 public void testProcess() throws IOException
 {
-  try (var input = new ByteArrayInputStream("test".getBytes()))
+  try (JvmScope scope = new DefaultJvmScope())
   {
-    var result = process(input);
+    var result = process(scope, input);
     requireThat(result, "result").isEqualTo("expected");
   }
 }
 
-// Avoid - shared state
+// Avoid - class fields, setup methods, or shared base classes
 private InputStream sharedInput;  // Don't do this
 
-@BeforeClass
+@BeforeMethod
 public void setup()  // Don't do this
 {
   sharedInput = ...;
@@ -695,6 +769,12 @@ public void displayWidthCalculatesFromConfiguration() throws IOException
 
 **Guideline:** If your test would fail when run on a different machine with different configuration (but the code still works correctly), you're testing implementation details, not requirements.
 
+### Testability Over Convenience
+If code cannot be tested in a thread-safe way (e.g., it reads from `System.in` or writes to `System.out`), ask the
+user's permission to update the API to make it testable. For example, add a method overload that accepts an
+`InputStream` parameter instead of reading from `System.in` directly. The `main()` method can delegate to the testable
+overload.
+
 ## Build Commands
 
 ```bash
@@ -706,7 +786,8 @@ cd plugin/hooks/java
 mvn verify        # Full build validation (compile + test + checkstyle + PMD)
 ```
 
-**Verification:** Always run `mvn verify` before committing Java changes to catch checkstyle/PMD violations.
+**Verification:** Always run `mvn verify` to verify the build. Do not use `mvn test` or `mvn compile` — these skip
+checkstyle and PMD checks, allowing lint violations to go undetected.
 
 ## Module Structure
 

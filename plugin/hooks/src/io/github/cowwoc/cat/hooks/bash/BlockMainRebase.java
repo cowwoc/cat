@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 
 /**
  * Block git rebase on main branch and checkout changes in main worktree.
- *
- * <p>M205: Block ANY checkout in main worktree.</p>
+ * <p>
+ * M205: Block ANY checkout in main worktree.
  */
 public final class BlockMainRebase implements BashHandler
 {
@@ -34,8 +34,7 @@ public final class BlockMainRebase implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     String commandLower = GitCommands.toLowerCase(command);
 

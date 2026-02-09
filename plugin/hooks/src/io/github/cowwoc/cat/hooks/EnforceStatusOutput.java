@@ -12,20 +12,21 @@ import java.util.List;
 
 /**
  * enforce-status-output - Stop hook to enforce verbatim status box output.
- *
- * <p>HOOK: Stop</p>
- * <p>TRIGGER: When /cat:status was invoked in this turn</p>
- *
- * <p>M402: After 3+ documentation-level failures (M341, M395, M401), this hook
- * escalates enforcement to programmatic level.</p>
- *
- * <p>Detects when:</p>
+ * <p>
+ * HOOK: Stop
+ * <p>
+ * TRIGGER: When /cat:status was invoked in this turn
+ * <p>
+ * M402: After 3+ documentation-level failures (M341, M395, M401), this hook
+ * escalates enforcement to programmatic level.
+ * <p>
+ * Detects when:
  * <ol>
  *   <li>User invoked /cat:status in the current turn</li>
  *   <li>Agent's response did NOT contain the status box (╭── characters)</li>
  * </ol>
- *
- * <p>Returns decision=block to force Claude to output the status box verbatim.</p>
+ * <p>
+ * Returns decision=block to force Claude to output the status box verbatim.
  */
 public final class EnforceStatusOutput
 {
@@ -37,10 +38,11 @@ public final class EnforceStatusOutput
   /**
    * Entry point for the status output enforcement hook.
    *
-   * @param args command line arguments (unused)
+   * @param args command line arguments
    */
   public static void main(String[] args)
   {
+    HookOutput hookOutput = new HookOutput(System.out);
     try
     {
       HookInput input = HookInput.readFromStdin();
@@ -60,7 +62,7 @@ public final class EnforceStatusOutput
       }
       if (stopHookActive)
       {
-        HookOutput.empty();
+        hookOutput.empty();
         return;
       }
 
@@ -74,11 +76,11 @@ public final class EnforceStatusOutput
           "the START and END markers. You summarized instead of copy-pasting. " +
           "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
           "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
-        HookOutput.block(reason);
+        hookOutput.block(reason);
       }
       else
       {
-        HookOutput.empty();
+        hookOutput.empty();
       }
     }
     catch (Exception e)
@@ -87,7 +89,7 @@ public final class EnforceStatusOutput
         "❌ Hook error: " + e.getMessage() + "\n" +
         "\n" +
         "Blocking as fail-safe. Please verify your working environment.";
-      HookOutput.block(errorMessage);
+      hookOutput.block(errorMessage);
     }
   }
 

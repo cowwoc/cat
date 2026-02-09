@@ -12,11 +12,11 @@ import java.util.regex.Pattern;
 
 /**
  * Validate commit message uses correct commit types.
- *
- * <p>Blocks commits with invalid types like 'feat:', 'fix:', etc.
- * Requires specific conventional commit types.</p>
- *
- * <p>Also validates that commit type matches file patterns:</p>
+ * <p>
+ * Blocks commits with invalid types like 'feat:', 'fix:', etc.
+ * Requires specific conventional commit types.
+ * <p>
+ * Also validates that commit type matches file patterns:
  * <ul>
  *   <li>docs: only for user-facing files (README, API docs)</li>
  *   <li>config: for Claude-facing files (CLAUDE.md, plugin/, skills/)</li>
@@ -63,8 +63,7 @@ public final class ValidateCommitType implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Only check git commit commands
     if (!GIT_COMMIT_PATTERN.matcher(command).find())

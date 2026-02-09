@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 /**
  * Detect command failures and suggest learning from mistakes.
- *
- * <p>Trigger: PostToolUse for Bash</p>
+ * <p>
+ * Trigger: PostToolUse for Bash
  */
 public final class DetectFailures implements BashHandler
 {
@@ -25,8 +25,7 @@ public final class DetectFailures implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String _command, JsonNode _toolInput, JsonNode toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     if (toolResult == null)
       return Result.allow();

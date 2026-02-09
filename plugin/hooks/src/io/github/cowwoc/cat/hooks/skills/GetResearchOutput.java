@@ -200,20 +200,20 @@ public final class GetResearchOutput
     int innerWidth = 69;
     List<String> lines = new ArrayList<>();
 
-    lines.add(DisplayUtils.BOX_SHARP_TOP_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
-              DisplayUtils.BOX_SHARP_TOP_RIGHT);
+    lines.add(DisplayUtils.BOX_TOP_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
+              DisplayUtils.BOX_TOP_RIGHT);
     lines.add(DisplayUtils.BOX_VERTICAL + " RATING SCORECARD" + " ".repeat(innerWidth - 17) +
               DisplayUtils.BOX_VERTICAL);
-    lines.add(DisplayUtils.BOX_T_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
-              DisplayUtils.BOX_T_RIGHT);
+    lines.add(DisplayUtils.BOX_LEFT_INTERSECTION + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
+              DisplayUtils.BOX_RIGHT_INTERSECTION);
 
     lines.add(buildScorecardRowTriple(
       "Speed", ratings.getOrDefault("Speed", 3),
       "Cost", ratings.getOrDefault("Cost", 3),
       "Quality", ratings.getOrDefault("Quality", 3)));
 
-    lines.add(DisplayUtils.BOX_T_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
-              DisplayUtils.BOX_T_RIGHT);
+    lines.add(DisplayUtils.BOX_LEFT_INTERSECTION + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
+              DisplayUtils.BOX_RIGHT_INTERSECTION);
 
     lines.add(buildScorecardRowTriple(
       "Architect", ratings.getOrDefault("Architect", 3),
@@ -229,8 +229,8 @@ public final class GetResearchOutput
       "Marketing", ratings.getOrDefault("Marketing", 3),
       "Legal", ratings.getOrDefault("Legal", 3)));
 
-    lines.add(DisplayUtils.BOX_SHARP_BOTTOM_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
-              DisplayUtils.BOX_SHARP_BOTTOM_RIGHT);
+    lines.add(DisplayUtils.BOX_BOTTOM_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(innerWidth) +
+              DisplayUtils.BOX_BOTTOM_RIGHT);
 
     return lines;
   }
@@ -282,8 +282,8 @@ public final class GetResearchOutput
               DisplayUtils.BOX_TOP_RIGHT);
     lines.add(DisplayUtils.BOX_VERTICAL + " " + DisplayUtils.EMOJI_MAGNIFIER +
               " Stakeholder Concerns" + " ".repeat(BOX_WIDTH - 25) + DisplayUtils.BOX_VERTICAL);
-    lines.add(DisplayUtils.BOX_T_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(BOX_WIDTH) +
-              DisplayUtils.BOX_T_RIGHT);
+    lines.add(DisplayUtils.BOX_LEFT_INTERSECTION + DisplayUtils.BOX_HORIZONTAL.repeat(BOX_WIDTH) +
+              DisplayUtils.BOX_RIGHT_INTERSECTION);
     lines.add(DisplayUtils.BOX_VERTICAL + " ".repeat(BOX_WIDTH) + DisplayUtils.BOX_VERTICAL);
 
     List<String> stakeholderOrder = List.of(
@@ -331,8 +331,8 @@ public final class GetResearchOutput
         DisplayUtils.BOX_TOP_RIGHT,
       DisplayUtils.BOX_VERTICAL + " " + DisplayUtils.EMOJI_CLIPBOARD + " Recommended Approaches" +
         " ".repeat(BOX_WIDTH - 27) + DisplayUtils.BOX_VERTICAL,
-      DisplayUtils.BOX_T_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(BOX_WIDTH) +
-        DisplayUtils.BOX_T_RIGHT,
+      DisplayUtils.BOX_LEFT_INTERSECTION + DisplayUtils.BOX_HORIZONTAL.repeat(BOX_WIDTH) +
+        DisplayUtils.BOX_RIGHT_INTERSECTION,
       DisplayUtils.BOX_VERTICAL + " ".repeat(BOX_WIDTH) + DisplayUtils.BOX_VERTICAL);
   }
 
@@ -354,7 +354,7 @@ public final class GetResearchOutput
    */
   public static String buildOptionSectionDivider()
   {
-    return DisplayUtils.BOX_T_LEFT + DisplayUtils.BOX_HORIZONTAL.repeat(BOX_WIDTH) +
-           DisplayUtils.BOX_T_RIGHT;
+    return DisplayUtils.BOX_LEFT_INTERSECTION + DisplayUtils.BOX_HORIZONTAL.repeat(BOX_WIDTH) +
+           DisplayUtils.BOX_RIGHT_INTERSECTION;
   }
 }

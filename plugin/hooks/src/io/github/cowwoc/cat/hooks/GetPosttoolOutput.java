@@ -21,30 +21,47 @@ import java.util.List;
  * - Inject additional context (return additionalContext)
  * - Allow silently (return null)
  */
-public final class GetPosttoolOutput
+public final class GetPosttoolOutput implements HookHandler
 {
   private static final List<PosttoolHandler> HANDLERS = List.of(
       new AutoLearnMistakes());
 
-  private GetPosttoolOutput()
+  /**
+   * Creates a new GetPosttoolOutput instance.
+   */
+  public GetPosttoolOutput()
   {
-    // Utility class
   }
 
   /**
    * Entry point for the general posttool output hook.
    *
-   * @param _args command line arguments (unused)
+   * @param args command line arguments
    */
-  @SuppressWarnings("UnusedVariable")
-  public static void main(String[] _args)
+  public static void main(String[] args)
   {
     HookInput input = HookInput.readFromStdin();
+    HookOutput output = new HookOutput(System.out);
+    new GetPosttoolOutput().run(input, output);
+  }
+
+  /**
+   * Processes hook input and writes the result.
+   *
+   * @param input the hook input to process
+   * @param output the hook output writer
+   * @throws NullPointerException if input or output is null
+   */
+  @Override
+  public void run(HookInput input, HookOutput output)
+  {
+    requireThat(input, "input").isNotNull();
+    requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (toolName.isEmpty())
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -82,11 +99,11 @@ public final class GetPosttoolOutput
     if (!additionalContexts.isEmpty())
     {
       String combined = String.join("\n\n", additionalContexts);
-      HookOutput.additionalContext("PostToolUse", combined);
+      output.additionalContext("PostToolUse", combined);
     }
     else
     {
-      HookOutput.empty();
+      output.empty();
     }
   }
 }

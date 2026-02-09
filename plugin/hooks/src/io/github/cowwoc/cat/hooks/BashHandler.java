@@ -4,9 +4,9 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * Interface for bash command handlers.
- *
- * <p>Bash handlers validate bash commands before or after execution.
- * PreToolUse handlers can block commands; PostToolUse handlers can only warn.</p>
+ * <p>
+ * Bash handlers validate bash commands before or after execution.
+ * PreToolUse handlers can block commands; PostToolUse handlers can only warn.
  */
 @FunctionalInterface
 public interface BashHandler

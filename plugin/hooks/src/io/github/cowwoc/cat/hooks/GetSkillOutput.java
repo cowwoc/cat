@@ -17,32 +17,49 @@ import java.util.List;
  * This dispatcher consolidates all UserPromptSubmit hooks into a single Java
  * entry point for prompt pattern checking.
  */
-public final class GetSkillOutput
+public final class GetSkillOutput implements HookHandler
 {
   private static final List<PromptHandler> HANDLERS = List.of(
       new CriticalThinking(),
       new DestructiveOps(),
       new UserIssues());
 
-  private GetSkillOutput()
+  /**
+   * Creates a new GetSkillOutput instance.
+   */
+  public GetSkillOutput()
   {
-    // Utility class
   }
 
   /**
    * Entry point for the skill output hook.
    *
-   * @param _args command line arguments (unused)
+   * @param args command line arguments
    */
-  @SuppressWarnings("UnusedVariable")
-  public static void main(String[] _args)
+  public static void main(String[] args)
   {
     HookInput input = HookInput.readFromStdin();
+    HookOutput output = new HookOutput(System.out);
+    new GetSkillOutput().run(input, output);
+  }
+
+  /**
+   * Processes hook input and writes the result.
+   *
+   * @param input the hook input to process
+   * @param output the hook output writer
+   * @throws NullPointerException if input or output is null
+   */
+  @Override
+  public void run(HookInput input, HookOutput output)
+  {
+    requireThat(input, "input").isNotNull();
+    requireThat(output, "output").isNotNull();
 
     String userPrompt = input.getUserPrompt();
     if (userPrompt.isEmpty())
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -69,17 +86,17 @@ public final class GetSkillOutput
     if (!outputs.isEmpty())
     {
       StringBuilder combined = new StringBuilder();
-      for (String output : outputs)
+      for (String out : outputs)
       {
         if (!combined.isEmpty())
           combined.append('\n');
-        combined.append(HookOutput.wrapSystemReminder(output));
+        combined.append(HookOutput.wrapSystemReminder(out));
       }
-      HookOutput.additionalContext("UserPromptSubmit", combined.toString());
+      output.additionalContext("UserPromptSubmit", combined.toString());
     }
     else
     {
-      HookOutput.empty();
+      output.empty();
     }
   }
 }

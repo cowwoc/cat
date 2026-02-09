@@ -59,8 +59,39 @@ Existing: `HookEntryPointTest.java` (11 tests)
 5. **Compare coverage** - ensure Java tests cover all Python test scenarios
 6. **Run `python3 /workspace/run_tests.py`** to verify Python tests still pass during transition
 
+## Scope
+
+Phase 1 migrates handler tests that validate Java hook output (display formatting, JSON helpers, skill handlers). The
+following Python test files have Java equivalents:
+
+| Python Test | Java Equivalent | Status |
+|---|---|---|
+| `test_display_utils.py` | `DisplayUtilsTest.java` | Migrated |
+| `test_cleanup_handler.py` | `GetCleanupOutputTest.java` | Migrated |
+| `test_help_handler.py` | `GetHelpOutputTest.java` | Migrated |
+| `test_research_handler.py` | `GetResearchOutputTest.java` | Migrated |
+| `test_work_handler.py` | `GetWorkOutputTest.java` | Migrated |
+| `test_add_handler.py` | `HandlerOutputTest.java` | Migrated |
+| `conftest.py` (JSON helpers) | `JsonHelperTest.java` | Migrated |
+| `test_stakeholder_handler.py` | `GetStakeholderOutputTest.java` | Migrated |
+| (init output testing) | `GetInitOutputTest.java` | New |
+| (token report testing) | `GetTokenReportOutputTest.java` | New |
+| (render diff testing) | `GetRenderDiffOutputTest.java` | New |
+| (entry point testing) | `HookEntryPointTest.java` | New |
+
+The following are deferred because their production code counterparts have not yet been migrated to Java:
+
+- `test_status_handler.py` - status handler not yet in Java
+- `test_monitor_subagents_handler.py` - monitor handler not yet in Java
+- `test_add_handler_preload.py` - preload logic not yet in Java
+- `test_config_handler.py` - config handler partially migrated
+- `tests/scripts/test_create_issue.py` - script not yet in Java
+- `tests/scripts/test_get_issue_complete_box.py` - script not yet in Java
+- `tests/scripts/test_work_prepare.py` - script not yet in Java
+- `tests/test_analyze_session.py` - script not yet in Java
+
 ## Acceptance Criteria
-- [ ] All Python test scenarios have equivalent Java TestNG tests
-- [ ] `mvn test` passes with all Java tests (exit code 0)
-- [ ] Test count is equivalent or greater than Python test count
-- [ ] Shared test utilities migrated from conftest.py
+- [x] All migrated handler tests have equivalent Java TestNG tests with error path and boundary coverage
+- [x] `mvn verify` passes with all Java tests, checkstyle, and PMD (exit code 0)
+- [x] Java test suite covers error paths, null validation, and boundary conditions
+- [ ] Deferred handlers migrated in future subtasks

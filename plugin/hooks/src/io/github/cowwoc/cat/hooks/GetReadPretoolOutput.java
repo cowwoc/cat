@@ -21,32 +21,49 @@ import java.util.Set;
  * - Block operations (return block=true with message)
  * - Allow silently (return null)
  */
-public final class GetReadPretoolOutput
+public final class GetReadPretoolOutput implements HookHandler
 {
   private static final List<ReadHandler> HANDLERS = List.of(
       new PredictBatchOpportunity());
 
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
-  private GetReadPretoolOutput()
+  /**
+   * Creates a new GetReadPretoolOutput instance.
+   */
+  public GetReadPretoolOutput()
   {
-    // Utility class
   }
 
   /**
    * Entry point for the Read pretool output hook.
    *
-   * @param _args command line arguments (unused)
+   * @param args command line arguments
    */
-  @SuppressWarnings("UnusedVariable")
-  public static void main(String[] _args)
+  public static void main(String[] args)
   {
     HookInput input = HookInput.readFromStdin();
+    HookOutput output = new HookOutput(System.out);
+    new GetReadPretoolOutput().run(input, output);
+  }
+
+  /**
+   * Processes hook input and writes the result.
+   *
+   * @param input the hook input to process
+   * @param output the hook output writer
+   * @throws NullPointerException if input or output is null
+   */
+  @Override
+  public void run(HookInput input, HookOutput output)
+  {
+    requireThat(input, "input").isNotNull();
+    requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!SUPPORTED_TOOLS.contains(toolName))
     {
-      HookOutput.empty();
+      output.empty();
       return;
     }
 
@@ -64,7 +81,7 @@ public final class GetReadPretoolOutput
         if (result.blocked())
         {
           // Handler blocked the operation
-          HookOutput.block(result.reason(), result.additionalContext());
+          output.block(result.reason(), result.additionalContext());
           return;
         }
         if (!result.reason().isEmpty())
@@ -83,6 +100,6 @@ public final class GetReadPretoolOutput
     }
 
     // Allow the operation
-    HookOutput.empty();
+    output.empty();
   }
 }

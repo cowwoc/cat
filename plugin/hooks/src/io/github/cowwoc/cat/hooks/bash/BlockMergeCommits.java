@@ -7,8 +7,8 @@ import java.util.regex.Pattern;
 
 /**
  * Block merge commits to enforce linear git history.
- *
- * <p>See: Learning M047 - use ff-merge to maintain linear history</p>
+ * <p>
+ * See: Learning M047 - use ff-merge to maintain linear history
  */
 public final class BlockMergeCommits implements BashHandler
 {
@@ -28,8 +28,7 @@ public final class BlockMergeCommits implements BashHandler
   }
 
   @Override
-  @SuppressWarnings("UnusedVariable")
-  public Result check(String command, JsonNode _toolInput, JsonNode _toolResult, String _sessionId)
+  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
     // Skip if not a git merge command
     if (!MERGE_PATTERN.matcher(command).find())
