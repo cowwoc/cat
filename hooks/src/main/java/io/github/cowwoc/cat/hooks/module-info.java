@@ -13,6 +13,7 @@ module io.github.cowwoc.cat.hooks
   exports io.github.cowwoc.cat.hooks.prompt;
   exports io.github.cowwoc.cat.hooks.read.post;
   exports io.github.cowwoc.cat.hooks.read.pre;
+  exports io.github.cowwoc.cat.hooks.session;
   exports io.github.cowwoc.cat.hooks.skills;
   exports io.github.cowwoc.cat.hooks.task;
   exports io.github.cowwoc.cat.hooks.tool.post;

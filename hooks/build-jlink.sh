@@ -42,6 +42,7 @@ readonly -a HANDLERS=(
   "edit-pretool:GetEditPretoolOutput"
   "write-edit-pretool:GetWriteEditPretoolOutput"
   "task-pretool:GetTaskPretoolOutput"
+  "get-session-end-output:GetSessionEndOutput"
 )
 
 # --- Logging ---
