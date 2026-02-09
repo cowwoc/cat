@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- audit-plan-verification
 - fix-is-automatic-module
 - add-jlink-to-maven
 - move-java-integrate-jlink
