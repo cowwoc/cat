@@ -16,22 +16,22 @@
 
 ## Parallel Execution Plan
 
-### Sub-task 1 (Sequential - Must Run First)
+### Sub-issue 1 (Sequential - Must Run First)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | rename-task-scripts | 25K | None |
 
-### Sub-task 2 (Concurrent - After Sub-task 1)
+### Sub-issue 2 (Concurrent - After Sub-issue 1)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | rename-task-in-skills | 35K | rename-task-scripts |
 | rename-task-in-concepts | 30K | rename-task-scripts |
 | rename-task-in-commands | 20K | rename-task-scripts |
 
-### Sub-task 3 (Sequential - After Sub-task 2)
+### Sub-issue 3 (Sequential - After Sub-issue 2)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | rename-task-remaining | 25K | All above |
 
-**Total sub-tasks:** 3
-**Max concurrent subagents:** 3 (in sub-task 2)
+**Total sub-issues:** 3
+**Max concurrent subagents:** 3 (in sub-issue 2)

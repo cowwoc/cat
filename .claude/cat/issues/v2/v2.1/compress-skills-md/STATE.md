@@ -28,5 +28,5 @@ All 5 batches can run in parallel (no file conflicts between batches):
 | compress-skills-batch-4 | 9 | ~135K | None |
 | compress-skills-batch-5 | 9 | ~135K | None |
 
-**Total subtasks:** 5
+**Total sub-issues:** 5
 **Max concurrent subagents:** 5 (all independent)

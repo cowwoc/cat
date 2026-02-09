@@ -966,4 +966,4 @@ TaskOutput issue_id="abc" block=true  # DO NOT do this - wait for notification
 - `cat:monitor-subagents` - Check status of running subagents
 - `cat:collect-results` - Gather results when subagent completes
 - `cat:merge-subagent` - Merge subagent work back to issue branch
-- `cat:decompose-issue` - Creates parallelizable subtasks
+- `cat:decompose-issue` - Creates parallelizable sub-issues

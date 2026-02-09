@@ -7,7 +7,7 @@ Compress skill files batch 1 (files 1-9) using /cat:shrink-doc with equivalence 
 compress-skills-md (decomposed)
 
 ## Satisfies
-None - subtask of parent
+None - sub-issue of parent
 
 ## Risk Assessment
 - **Risk Level:** LOW

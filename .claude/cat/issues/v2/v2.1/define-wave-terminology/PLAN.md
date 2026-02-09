@@ -11,7 +11,7 @@ None - terminology and documentation
 ## Risk Assessment
 - **Risk Level:** LOW
 - **Concerns:** Skills currently use inconsistent terminology for wave-like groupings
-- **Mitigation:** Depends on rename-subtask-to-subissue completing first; wave rename is additive
+- **Mitigation:** Depends on rename-sub-issue-to-subissue completing first; wave rename is additive
 
 ## Files to Modify
 
@@ -23,11 +23,11 @@ None - terminology and documentation
 - Reference migrate-python-to-java as canonical example (5 waves, Wave 3 has 6 concurrent sub-issues)
 
 ### plugin/skills/decompose-issue/SKILL.md - Use wave terminology in parallel execution plan
-- The "Parallel Execution Plan" section currently uses `sub_task_1`, `sub_task_2` as grouping labels
+- The "Parallel Execution Plan" section currently uses `sub_issue_1`, `sub_issue_2` as grouping labels
 - Rename these to `wave_1`, `wave_2`, etc. to match the wave definition
 - Update the plan format to use "Wave N" headings consistent with migrate-python-to-java STATE.md format
 - Instruct agents to group independent sub-issues into waves and document them in the parent STATE.md
-- Note: `sub_task` -> `sub_issue` rename is handled by rename-subtask-to-subissue
+- Note: `sub_task` -> `sub_issue` rename is handled by rename-sub-issue-to-subissue
 
 ### plugin/skills/delegate/SKILL.md - Formalize wave terminology
 - Already uses "wave" (lines 473, 698, 773, 818) for dependency-based parallel grouping
@@ -60,7 +60,7 @@ None - terminology and documentation
    - Define issue, sub-issue, wave with wave matching migrate-python-to-java's usage
 2. **Step 2:** Update decompose-issue SKILL.md to use wave terminology
    - Files: plugin/skills/decompose-issue/SKILL.md
-   - Replace sub_task_N groupings with wave_N, use Wave N headings in STATE.md format
+   - Replace sub_issue_N groupings with wave_N, use Wave N headings in STATE.md format
    - Instruct agents to define waves for decomposed issues
 3. **Step 3:** Formalize wave definition in delegate SKILL.md
    - Files: plugin/skills/delegate/SKILL.md

@@ -5,7 +5,7 @@ Provide a way for plugin developers to rebuild the jlink bundle locally when Jav
 developer workflow counterpart to the CI build.
 
 ## Satisfies
-None - infrastructure subtask of add-java-build-to-ci
+None - infrastructure sub-issue of add-java-build-to-ci
 
 ## Risk Assessment
 - **Risk Level:** LOW

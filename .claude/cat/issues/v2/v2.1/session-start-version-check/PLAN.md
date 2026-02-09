@@ -5,7 +5,7 @@ Update session_start.sh to compare the local jlink bundle version against plugin
 (upgrade or downgrade), use the GitHub API to find and download the correct bundle for the current plugin version.
 
 ## Satisfies
-None - infrastructure subtask of add-java-build-to-ci
+None - infrastructure sub-issue of add-java-build-to-ci
 
 ## Risk Assessment
 - **Risk Level:** LOW
@@ -30,7 +30,7 @@ None - infrastructure subtask of add-java-build-to-ci
 1. **Add version reading logic to session_start.sh**
    - Files: `plugin/hooks/session_start.sh`
    - Read plugin version: `jq -r .version "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`
-   - Read local bundle version: `cat "${jdk_path}/VERSION"` (created by jlink-config.sh in subtask 1)
+   - Read local bundle version: `cat "${jdk_path}/VERSION"` (created by jlink-config.sh in sub-issue 1)
    - Compare: if equal, export CAT_JAVA_HOME and return success immediately
 
 2. **Add GitHub API download logic**

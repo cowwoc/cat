@@ -306,7 +306,7 @@ Use AskUserQuestion:
 - header: "Task Size"
 - question: "Task exceeds soft threshold. How would you like to proceed?"
 - options:
-  - "Decompose into subtasks (Recommended)"
+  - "Decompose into sub-issues (Recommended)"
   - "Proceed anyway"
   - "Abort"
 

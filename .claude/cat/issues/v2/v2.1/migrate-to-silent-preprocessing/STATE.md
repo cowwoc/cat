@@ -8,9 +8,9 @@
 - **Last Updated:** 2026-01-28
 - **Completed:** 2026-01-28
 
-## Subtasks
+## Sub-issues
 
-| Subtask | Status | Dependencies | Description |
+| Sub-issue | Status | Dependencies | Description |
 |---------|--------|--------------|-------------|
 | update-skill-builder-docs | completed | - | Update skill-builder to document new mechanism |
 | migrate-progress-banners | completed | update-skill-builder-docs | Migrate work/progress banner output |

@@ -18,7 +18,7 @@
 
 ## Parallel Execution Plan
 
-### Sub-task 1 (Concurrent - All Independent)
+### Sub-issue 1 (Concurrent - All Independent)
 | Task | Est. Tokens | Files | Dependencies |
 |------|-------------|-------|--------------|
 | compress-skills-md | ~40K | 34 | None |
@@ -28,7 +28,7 @@
 | compress-stakeholders-md | ~16K | 11 | None |
 | compress-lang-md | ~3K | 1 | None |
 
-**Total sub-tasks:** 1 (all can run concurrently)
+**Total sub-issues:** 1 (all can run concurrently)
 **Max concurrent subagents:** 6
 
-All subtasks are independent - they modify different directories with no overlap.
+All sub-issues are independent - they modify different directories with no overlap.
