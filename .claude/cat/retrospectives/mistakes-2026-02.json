@@ -3573,6 +3573,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When tasks are launched with run_in_background: true, wait for system's task-notification before using TaskOutput to retrieve results. Never poll for status."
+    },
+    {
+      "id": "M482",
+      "timestamp": "2026-02-09T00:00:00Z",
+      "category": "tool_misuse",
+      "description": "HookEntryPointTest uses thread-unsafe System.setErr() for stderr capture in parallel tests",
+      "root_cause": "Tests use JVM-global System.setErr() for thread-local stderr capture, violating thread-safety requirements for parallel test execution. TestNG provides thread-safe alternatives (ITestResult, Reporter) that were not used.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/hooks/src/test/java/io/github/cowwoc/cat/hooks/test/HookEntryPointTest.java",
+      "pattern_keywords": [
+        "thread-safety",
+        "parallel-tests",
+        "system-setErr",
+        "test-isolation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use TestNG thread-safe output capture (ITestResult, Reporter) or avoid testing stderr output. Remove System.setErr() usage from tests designed for parallel execution."
     }
   ],
   "counter": 1

@@ -2,8 +2,11 @@ package io.github.cowwoc.cat.hooks.util;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,7 +80,7 @@ public final class GitCommands
       }
       process.waitFor();
     }
-    catch (Exception _)
+    catch (IOException | InterruptedException _)
     {
       // Return empty list - git command failures are expected in some contexts
     }
@@ -120,7 +123,7 @@ public final class GitCommands
       if (branch != null)
         return branch.trim();
     }
-    catch (Exception _)
+    catch (IOException | InterruptedException _)
     {
       // Return empty string - git command failures are expected in some contexts
     }
@@ -134,17 +137,10 @@ public final class GitCommands
    */
   public static boolean isMainWorktree()
   {
-    try
-    {
-      String gitCommon = runGitCommandSingleLine("rev-parse", "--git-common-dir");
-      String gitDir = runGitCommandSingleLine("rev-parse", "--git-dir");
-      if (!gitCommon.isEmpty() && !gitDir.isEmpty())
-        return gitCommon.equals(gitDir) || ".git".equals(gitCommon);
-    }
-    catch (Exception _)
-    {
-      // Return false - git command failures are expected in some contexts
-    }
+    String gitCommon = runGitCommandSingleLine("rev-parse", "--git-common-dir");
+    String gitDir = runGitCommandSingleLine("rev-parse", "--git-dir");
+    if (!gitCommon.isEmpty() && !gitDir.isEmpty())
+      return gitCommon.equals(gitDir) || ".git".equals(gitCommon);
     return false;
   }
 
@@ -184,7 +180,7 @@ public final class GitCommands
       process.waitFor();
       return output.toString().trim();
     }
-    catch (Exception _)
+    catch (IOException | InterruptedException _)
     {
       return "";
     }
@@ -216,7 +212,7 @@ public final class GitCommands
       if (line != null)
         return line.trim();
     }
-    catch (Exception _)
+    catch (IOException | InterruptedException _)
     {
       // Return empty string - git command failures are expected in some contexts
     }
@@ -228,9 +224,9 @@ public final class GitCommands
    *
    * @param reader the reader to read from
    * @param output the StringBuilder to append to
-   * @throws Exception if reading fails
+   * @throws IOException if reading fails
    */
-  private static void readAllLines(BufferedReader reader, StringBuilder output) throws Exception
+  private static void readAllLines(BufferedReader reader, StringBuilder output) throws IOException
   {
     String line = reader.readLine();
     while (line != null)
@@ -247,9 +243,9 @@ public final class GitCommands
    *
    * @param reader the reader to read from
    * @param lines the list to add lines to
-   * @throws Exception if reading fails
+   * @throws IOException if reading fails
    */
-  private static void readLinesIntoList(BufferedReader reader, List<String> lines) throws Exception
+  private static void readLinesIntoList(BufferedReader reader, List<String> lines) throws IOException
   {
     String line = reader.readLine();
     while (line != null)
@@ -259,6 +255,19 @@ public final class GitCommands
         lines.add(trimmed);
       line = reader.readLine();
     }
+  }
+
+  /**
+   * Gets the git directory path.
+   *
+   * @return the git directory, or null if not in a git repository
+   */
+  public static Path getGitDir()
+  {
+    String gitDirPath = runGitCommandSingleLine("rev-parse", "--git-dir");
+    if (!gitDirPath.isEmpty())
+      return Paths.get(gitDirPath);
+    return null;
   }
 
   /**

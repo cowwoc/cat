@@ -3,29 +3,32 @@ package io.github.cowwoc.cat.hooks;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Interface for read tool handlers (Read, Glob, Grep, WebFetch, WebSearch).
+ * Interface for Write/Edit tool handlers.
  * <p>
- * Read handlers validate read operations before or after execution.
- * PreToolUse handlers can block operations; PostToolUse handlers can only warn.
+ * Write/Edit handlers validate write and edit operations before they are executed.
+ * PreToolUse handlers can block edits or inject warnings.
+ * <p>
+ * Result factory methods: FileWriteHandler uses warn() to emit stderr warnings
+ * for non-blocking violations (similar to EditHandler).
  */
 @FunctionalInterface
-public interface ReadHandler
+public interface FileWriteHandler
 {
   /**
-   * The result of a read handler check.
+   * The result of a write/edit handler check.
    *
-   * @param blocked whether the operation should be blocked (PreToolUse only)
+   * @param blocked whether the edit should be blocked (PreToolUse only)
    * @param reason the reason for blocking or warning
-   * @param additionalContext optional additional context to inject
+   * @param additionalContext additional context to inject into the response
    */
   record Result(boolean blocked, String reason, String additionalContext)
   {
     /**
-     * Creates a new read handler result.
+     * Creates a new write/edit handler result.
      *
-     * @param blocked whether the operation should be blocked
+     * @param blocked whether the edit should be blocked
      * @param reason the reason for blocking or warning
-     * @param additionalContext optional additional context to inject
+     * @param additionalContext additional context to inject into the response
      */
     public Result
     {
@@ -78,15 +81,13 @@ public interface ReadHandler
   }
 
   /**
-   * Check a read operation.
+   * Check a write/edit operation.
    *
-   * @param toolName the tool name (Read, Glob, Grep, WebFetch, WebSearch)
    * @param toolInput the tool input JSON
-   * @param toolResult the tool result JSON (null for PreToolUse)
    * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if toolName, toolInput, or sessionId is null
+   * @throws NullPointerException if toolInput or sessionId is null
    * @throws IllegalArgumentException if sessionId is blank
    */
-  Result check(String toolName, JsonNode toolInput, JsonNode toolResult, String sessionId);
+  Result check(JsonNode toolInput, String sessionId);
 }

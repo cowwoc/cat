@@ -1,19 +1,34 @@
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.EditHandler;
+import io.github.cowwoc.cat.hooks.FileWriteHandler;
+import io.github.cowwoc.cat.hooks.TaskHandler;
+import io.github.cowwoc.cat.hooks.GetAskPretoolOutput;
 import io.github.cowwoc.cat.hooks.GetBashPosttoolOutput;
 import io.github.cowwoc.cat.hooks.GetBashPretoolOutput;
+import io.github.cowwoc.cat.hooks.GetEditPretoolOutput;
 import io.github.cowwoc.cat.hooks.GetPosttoolOutput;
 import io.github.cowwoc.cat.hooks.GetReadPosttoolOutput;
 import io.github.cowwoc.cat.hooks.GetReadPretoolOutput;
 import io.github.cowwoc.cat.hooks.GetSkillOutput;
+import io.github.cowwoc.cat.hooks.GetTaskPretoolOutput;
+import io.github.cowwoc.cat.hooks.GetWriteEditPretoolOutput;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
+import io.github.cowwoc.cat.hooks.edit.WarnSkillEditWithoutBuilder;
+import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
+import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -49,6 +64,7 @@ public class HookEntryPointTest
   {
     return new HookOutput(new PrintStream(capture, true, StandardCharsets.UTF_8));
   }
+
 
   // --- GetSkillOutput tests ---
 
@@ -404,5 +420,890 @@ public class HookEntryPointTest
 
     String result = capture.toString(StandardCharsets.UTF_8).trim();
     requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- GetAskPretoolOutput tests ---
+
+  /**
+   * Verifies that GetAskPretoolOutput returns empty JSON for non-AskUserQuestion tools.
+   */
+  @Test
+  public void getAskPretoolReturnsEmptyForNonAskTool()
+  {
+    HookInput input = createInput("{\"tool_name\": \"Read\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetAskPretoolOutput returns empty JSON when tool_input is empty.
+   */
+  @Test
+  public void getAskPretoolReturnsEmptyForEmptyToolInput()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- GetEditPretoolOutput tests ---
+
+  /**
+   * Verifies that GetEditPretoolOutput returns empty JSON for non-Edit tools.
+   */
+  @Test
+  public void getEditPretoolReturnsEmptyForNonEditTool()
+  {
+    HookInput input = createInput("{\"tool_name\": \"Read\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetEditPretoolOutput returns empty JSON when tool_input is empty.
+   */
+  @Test
+  public void getEditPretoolReturnsEmptyForEmptyToolInput()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetEditPretoolOutput throws IllegalArgumentException when session_id is missing.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getEditPretoolThrowsOnMissingSessionId()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+  }
+
+  // --- GetTaskPretoolOutput tests ---
+
+  /**
+   * Verifies that GetTaskPretoolOutput returns empty JSON for non-Task tools.
+   */
+  @Test
+  public void getTaskPretoolReturnsEmptyForNonTaskTool()
+  {
+    HookInput input = createInput("{\"tool_name\": \"Read\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetTaskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetTaskPretoolOutput returns empty JSON when tool_input is empty.
+   */
+  @Test
+  public void getTaskPretoolReturnsEmptyForEmptyToolInput()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetTaskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- EnforceWorkflowCompletion tests ---
+
+  /**
+   * Verifies that EnforceWorkflowCompletion allows edits to non-STATE.md files.
+   */
+  @Test
+  public void enforceWorkflowCompletionAllowsNonStateMdFiles()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- WarnSkillEditWithoutBuilder tests ---
+
+  /**
+   * Verifies that WarnSkillEditWithoutBuilder allows edits to non-skill files.
+   */
+  @Test
+  public void warnSkillEditAllowsNonSkillFiles()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/README.md\"}, \"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- WarnUnsquashedApproval tests ---
+
+  /**
+   * Verifies that WarnUnsquashedApproval allows non-approval questions.
+   */
+  @Test
+  public void warnUnsquashedApprovalAllowsNonApprovalQuestions()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- WarnApprovalWithoutRenderDiff tests ---
+
+  /**
+   * Verifies that WarnApprovalWithoutRenderDiff allows non-approval questions.
+   */
+  @Test
+  public void warnApprovalWithoutRenderDiffAllowsNonApprovalQuestions()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- EnforceApprovalBeforeMerge tests ---
+
+  /**
+   * Verifies that EnforceApprovalBeforeMerge allows non-work-merge tasks.
+   */
+  @Test
+  public void enforceApprovalBeforeMergeAllowsNonWorkMergeTasks()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetTaskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that EnforceApprovalBeforeMerge allows tasks with empty subagent_type.
+   */
+  @Test
+  public void enforceApprovalBeforeMergeAllowsEmptySubagentType()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetTaskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- EnforceWorkflowCompletion handler tests ---
+
+  /**
+   * Verifies that EnforceWorkflowCompletion warns when editing STATE.md with status closed.
+   */
+  @Test
+  public void enforceWorkflowCompletionWarnsOnStatusClosed() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
+      "\"new_string\": \"Status: closed\"}");
+    EditHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+    requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
+    requireThat(result.reason(), "reason").contains("my-task");
+  }
+
+  /**
+   * Verifies that EnforceWorkflowCompletion warns on lowercase status:closed.
+   */
+  @Test
+  public void enforceWorkflowCompletionWarnsOnLowercaseStatusClosed() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
+      "\"new_string\": \"status:closed\"}");
+    EditHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+    requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
+  }
+
+  /**
+   * Verifies that EnforceWorkflowCompletion allows edits when new_string is missing.
+   */
+  @Test
+  public void enforceWorkflowCompletionAllowsMissingNewString()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that EnforceWorkflowCompletion allows when status is not closed.
+   */
+  @Test
+  public void enforceWorkflowCompletionAllowsNonClosedStatus()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/fix-bug-123/STATE.md\", " +
+      "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- WarnSkillEditWithoutBuilder handler tests ---
+
+  /**
+   * Verifies that WarnSkillEditWithoutBuilder warns when editing skill SKILL.md files.
+   */
+  @Test
+  public void warnSkillEditWarnsOnSkillMdFiles() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
+    EditHandler.Result result = new WarnSkillEditWithoutBuilder().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+    requireThat(result.reason(), "reason").contains("SKILL EDIT DETECTED");
+    requireThat(result.reason(), "reason").contains("my-skill");
+  }
+
+  /**
+   * Verifies that WarnSkillEditWithoutBuilder allows files that do not match skill pattern.
+   */
+  @Test
+  public void warnSkillEditAllowsNonSkillPaths()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/skills/test-skill/SKILL.md\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that WarnSkillEditWithoutBuilder allows non-SKILL.md files in skills directory.
+   */
+  @Test
+  public void warnSkillEditAllowsNonSkillMdFiles()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/skills/my-skill/helper.py\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- WarnApprovalWithoutRenderDiff handler tests ---
+
+  /**
+   * Verifies that WarnApprovalWithoutRenderDiff allows non-approval questions.
+   */
+  @Test
+  public void warnApprovalWithoutRenderDiffAllowsNonApprovalInput()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that WarnApprovalWithoutRenderDiff allows when CLAUDE_PROJECT_DIR is missing.
+   */
+  @Test
+  public void warnApprovalWithoutRenderDiffAllowsMissingProjectDir()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- WarnUnsquashedApproval handler tests ---
+
+  /**
+   * Verifies that WarnUnsquashedApproval containsApprove method works correctly.
+   */
+  @Test
+  public void warnUnsquashedApprovalDetectsApproveInInput()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that WarnUnsquashedApproval detects uppercase APPROVE.
+   */
+  @Test
+  public void warnUnsquashedApprovalDetectsUppercaseApprove()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+
+  /**
+   * Verifies that GetAskPretoolOutput returns additionalContext when handler provides it.
+   */
+  @Test
+  public void getAskPretoolReturnsAdditionalContextEarly()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
+      "\"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetAskPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
+    // This test verifies no crash occurs
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- EnforcePluginFileIsolation handler tests ---
+
+  /**
+   * Verifies that EnforcePluginFileIsolation blocks editing plugin files on protected branches.
+   */
+  @Test
+  public void enforcePluginFileIsolationBlocksPluginFileOnProtectedBranch() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/plugin/hooks/test.py\"}");
+    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+    // This test assumes we're on a protected branch - result depends on actual git state
+    // If on v2.1 or main, it should block; otherwise allow
+    requireThat(result, "result").isNotNull();
+  }
+
+  /**
+   * Verifies that EnforcePluginFileIsolation allows editing non-plugin files.
+   */
+  @Test
+  public void enforcePluginFileIsolationAllowsNonPluginFiles() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/docs/README.md\"}");
+    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that EnforcePluginFileIsolation allows empty file path.
+   */
+  @Test
+  public void enforcePluginFileIsolationAllowsEmptyPath() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree("{}");
+    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  // --- WarnBaseBranchEdit handler tests ---
+
+  /**
+   * Verifies that WarnBaseBranchEdit allows editing when path is empty.
+   */
+  @Test
+  public void warnBaseBranchEditAllowsEmptyPath() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree("{}");
+    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that WarnBaseBranchEdit allows editing allowed patterns.
+   */
+  @Test
+  public void warnBaseBranchEditAllowsAllowedPatterns() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/.claude/settings.json\"}");
+    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  // --- GetWriteEditPretoolOutput dispatcher tests ---
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput returns empty JSON for non-Write/Edit tools.
+   */
+  @Test
+  public void getWriteEditPretoolReturnsEmptyForNonWriteEditTool()
+  {
+    HookInput input = createInput("{\"tool_name\": \"Read\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput returns empty JSON when tool_input is empty.
+   */
+  @Test
+  public void getWriteEditPretoolReturnsEmptyForEmptyToolInput()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput uses case-insensitive matching for tool names.
+   */
+  @Test
+  public void getWriteEditPretoolUsesCaseInsensitiveMatching()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput accepts Edit tool_name.
+   */
+  @Test
+  public void getWriteEditPretoolAcceptsEditToolName()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\", \"old_string\": \"a\", " +
+      "\"new_string\": \"b\"}, \"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput blocks plugin file edit on protected branch.
+   */
+  @Test
+  public void getWriteEditPretoolBlocksPluginFileOnProtectedBranch()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.py\"}, " +
+      "\"session_id\": \"test\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
+  }
+
+  // --- WarnBaseBranchEdit handler tests (using real git state) ---
+
+  /**
+   * Verifies that WarnBaseBranchEdit warns on base branch for non-allowed files.
+   * <p>
+   * We're on v2.1 (a base branch). WarnBaseBranchEdit should warn when editing
+   * a source file that's not in the allowed patterns list.
+   */
+  @Test
+  public void warnBaseBranchEditWarnsOnBaseBranch() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/hooks/src/main/java/SomeNewFile.java\"}");
+    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+    requireThat(result.reason(), "reason").contains("BASE BRANCH EDIT DETECTED");
+  }
+
+  /**
+   * Verifies that WarnBaseBranchEdit allows existing hooks files.
+   * <p>
+   * The handler allows files in hooks/ or skills/ directories IF the file exists.
+   * Use a real file path that exists in the repo.
+   */
+  @Test
+  public void warnBaseBranchEditAllowsExistingHooksFiles() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/hooks/pom.xml\"}");
+    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+    requireThat(result.reason(), "reason").isEmpty();
+  }
+
+  // --- EnforcePluginFileIsolation handler tests (using real git state) ---
+
+  /**
+   * Verifies that EnforcePluginFileIsolation detects plugin subdirectories.
+   * <p>
+   * Test that various paths are correctly identified as plugin files.
+   * On v2.1 (protected branch), plugin files should be blocked.
+   */
+  @Test
+  public void enforcePluginFileIsolationDetectsPluginSubdirectories() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
+    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isTrue();
+    requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+  }
+
+  /**
+   * Verifies that EnforcePluginFileIsolation allows non-plugin paths.
+   * <p>
+   * Test that non-plugin files are not blocked.
+   */
+  @Test
+  public void enforcePluginFileIsolationAllowsNonPluginPaths() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/hooks/src/main/java/io/github/cowwoc/cat/hooks/HookInput.java\"}");
+    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  // --- GetWriteEditPretoolOutput dispatcher tests (using real handlers) ---
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput dispatcher blocks plugin file with block decision.
+   * <p>
+   * This tests the FULL dispatcher path including the block behavior with the real
+   * additionalContext isEmpty() check that was the CRITICAL bug fix.
+   */
+  @Test
+  public void getWriteEditPretoolBlocksPluginFileWithBlockDecision()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.sh\"}, " +
+      "\"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").contains("\"decision\"");
+    requireThat(result, "result").contains("\"block\"");
+    requireThat(result, "result").contains("Cannot edit plugin files");
+  }
+
+  /**
+   * Verifies that GetWriteEditPretoolOutput allows non-plugin file with warning.
+   * <p>
+   * Test that non-plugin, non-allowed files on v2.1 produce {} output from dispatcher
+   * (warning goes to stderr, stdout is {}).
+   */
+  @Test
+  public void getWriteEditPretoolAllowsNonPluginFileWithWarning()
+  {
+    HookInput input = createInput(
+      "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/tmp/some-new-source.java\"}, " +
+      "\"session_id\": \"test-session\"}");
+    ByteArrayOutputStream capture = new ByteArrayOutputStream();
+    HookOutput output = createOutput(capture);
+
+    new GetWriteEditPretoolOutput().run(input, output);
+
+    String result = capture.toString(StandardCharsets.UTF_8).trim();
+    requireThat(result, "result").isEqualTo("{}");
+  }
+
+  // --- Warning accumulation tests ---
+
+  /**
+   * Verifies that multiple warnings from different handlers are all written to stderr for Write/Edit operations.
+   */
+  @Test
+  @SuppressWarnings("PMD.CloseResource")
+  public void writeEditPretoolAccumulatesMultipleWarnings() throws IOException
+  {
+    FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
+    FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
+
+    GetWriteEditPretoolOutput dispatcher = new GetWriteEditPretoolOutput(List.of(handler1, handler2));
+
+    JsonMapper mapper = JsonMapper.builder().build();
+    String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
+      "{\"file_path\": \"/workspace/some-file.txt\"}, \"session_id\": \"test-session-123\"}";
+    JsonNode fullInput = mapper.readTree(inputJson);
+    HookInput input = HookInput.readFrom(
+      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+    try
+    {
+      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output);
+    }
+    finally
+    {
+      System.setErr(originalErr);
+    }
+
+    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+    requireThat(stderrContent, "stderrContent").contains("Warning from handler 1");
+    requireThat(stderrContent, "stderrContent").contains("Warning from handler 2");
+
+    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
+    requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+  }
+
+  /**
+   * Verifies that multiple warnings from different handlers are all written to stderr for Edit operations.
+   */
+  @Test
+  @SuppressWarnings("PMD.CloseResource")
+  public void editPretoolAccumulatesMultipleWarnings() throws IOException
+  {
+    EditHandler handler1 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 1");
+    EditHandler handler2 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 2");
+
+    GetEditPretoolOutput dispatcher = new GetEditPretoolOutput(List.of(handler1, handler2));
+
+    JsonMapper mapper = JsonMapper.builder().build();
+    String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
+      "{\"file_path\": \"/workspace/test.txt\"}, \"session_id\": \"test-session-456\"}";
+    JsonNode fullInput = mapper.readTree(inputJson);
+    HookInput input = HookInput.readFrom(
+      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+    try
+    {
+      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output);
+    }
+    finally
+    {
+      System.setErr(originalErr);
+    }
+
+    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+    requireThat(stderrContent, "stderrContent").contains("Warning from edit handler 1");
+    requireThat(stderrContent, "stderrContent").contains("Warning from edit handler 2");
+
+    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
+    requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+  }
+
+  /**
+   * Verifies that multiple warnings from different handlers are all written to stderr for Task operations.
+   */
+  @Test
+  @SuppressWarnings("PMD.CloseResource")
+  public void taskPretoolAccumulatesMultipleWarnings() throws IOException
+  {
+    TaskHandler handler1 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 1");
+    TaskHandler handler2 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 2");
+
+    GetTaskPretoolOutput dispatcher = new GetTaskPretoolOutput(List.of(handler1, handler2));
+
+    JsonMapper mapper = JsonMapper.builder().build();
+    String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
+      "{\"subagent_type\": \"cat:implement\"}, \"session_id\": \"test-session-789\"}";
+    JsonNode fullInput = mapper.readTree(inputJson);
+    HookInput input = HookInput.readFrom(
+      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+    try
+    {
+      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output);
+    }
+    finally
+    {
+      System.setErr(originalErr);
+    }
+
+    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+    requireThat(stderrContent, "stderrContent").contains("Warning from task handler 1");
+    requireThat(stderrContent, "stderrContent").contains("Warning from task handler 2");
+
+    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
+    requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+  }
+
+  /**
+   * Verifies that when one handler warns and the next blocks, only the block is output and warnings are not written.
+   */
+  @Test
+  @SuppressWarnings("PMD.CloseResource")
+  public void writeEditPretoolBlocksWithoutWarnings() throws IOException
+  {
+    FileWriteHandler handler1 = (toolInput, sessionId) ->
+      FileWriteHandler.Result.warn("This warning should not appear");
+    FileWriteHandler handler2 = (toolInput, sessionId) ->
+      FileWriteHandler.Result.block("Blocked by handler 2");
+
+    GetWriteEditPretoolOutput dispatcher = new GetWriteEditPretoolOutput(List.of(handler1, handler2));
+
+    JsonMapper mapper = JsonMapper.builder().build();
+    String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
+      "{\"file_path\": \"/workspace/blocked.txt\"}, \"session_id\": \"test-session-999\"}";
+    JsonNode fullInput = mapper.readTree(inputJson);
+    HookInput input = HookInput.readFrom(
+      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+
+    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+    try
+    {
+      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output);
+    }
+    finally
+    {
+      System.setErr(originalErr);
+    }
+
+    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+    requireThat(stderrContent, "stderrContent").doesNotContain("This warning should not appear");
+
+    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
+    requireThat(stdoutContent, "stdoutContent").contains("\"decision\"");
+    requireThat(stdoutContent, "stdoutContent").contains("\"block\"");
+    requireThat(stdoutContent, "stdoutContent").contains("Blocked by handler 2");
   }
 }

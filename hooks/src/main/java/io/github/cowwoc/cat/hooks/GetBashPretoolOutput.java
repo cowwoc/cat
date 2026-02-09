@@ -111,14 +111,16 @@ public final class GetBashPretoolOutput implements HookHandler
         BashHandler.Result result = handler.check(command, toolInput, null, sessionId);
         if (result.blocked())
         {
-          // Handler blocked the command
-          output.block(result.reason(), result.additionalContext());
+          if (result.additionalContext().isEmpty())
+            output.block(result.reason());
+          else
+            output.block(result.reason(), result.additionalContext());
           return;
         }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
       }
-      catch (Exception e)
+      catch (RuntimeException e)
       {
         System.err.println("get-bash-pretool-output: handler error: " + e.getMessage());
       }
