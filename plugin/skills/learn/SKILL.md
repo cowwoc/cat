@@ -1,6 +1,8 @@
 ---
 description: >
-  MANDATORY: Use after ANY mistake to record learning, perform RCA, and implement prevention.
+  Record mistakes, document failures, and perform root cause analysis.
+  Trigger words: "record this mistake", "document what went wrong", "learn from this", "document the failure".
+  MANDATORY after ANY mistake to implement prevention.
   Integrates token tracking for context-related failures.
 ---
 

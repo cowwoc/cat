@@ -1,5 +1,8 @@
 ---
-description: Research how to implement a issue before planning
+description: >
+  Research how to implement something, look up information, investigate approaches, or find best practices.
+  Trigger words: "research", "look up", "investigate", "best practices", "find out how", "how to implement".
+  Use before planning an issue when technical investigation is needed.
 argument-hint: "<research-type> <topic>"
 allowed-tools:
   - Task

@@ -1,0 +1,99 @@
+{
+  "total_tests": 52,
+  "passed": 37,
+  "failed": 15,
+  "timeout_count": 0,
+  "pass_rate": 71.15384615384616,
+  "skill_stats": {
+    "status": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "add": {
+      "total": 3,
+      "passed": 2,
+      "failed": 1,
+      "activation_rate": 66.66666666666666
+    },
+    "work": {
+      "total": 4,
+      "passed": 1,
+      "failed": 3,
+      "activation_rate": 25.0
+    },
+    "help": {
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "cleanup": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "init": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "remove": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "config": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "learn": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "activation_rate": 50.0
+    },
+    "research": {
+      "total": 3,
+      "passed": 1,
+      "failed": 2,
+      "activation_rate": 33.33333333333333
+    },
+    "monitor-subagents": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "activation_rate": 50.0
+    },
+    "optimize-execution": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "activation_rate": 100.0
+    },
+    "run-retrospective": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "activation_rate": 50.0
+    },
+    "shrink-doc": {
+      "total": 3,
+      "passed": 0,
+      "failed": 3,
+      "activation_rate": 0.0
+    },
+    "debug-env": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "activation_rate": 0.0
+    }
+  }
+}

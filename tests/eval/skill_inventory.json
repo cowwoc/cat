@@ -1,0 +1,89 @@
+{
+  "total_skills": 14,
+  "skills": [
+    {
+      "name": "add",
+      "description": "Use to add a issue to a version OR create a new version (major/minor/patch)",
+      "argument_hint": "[description]",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/add/SKILL.md"
+    },
+    {
+      "name": "cleanup",
+      "description": "Use when session crashed or locks blocking - cleans abandoned worktrees, lock files, and orphaned branches",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/cleanup/SKILL.md"
+    },
+    {
+      "name": "config",
+      "description": "Interactive wizard to customize your CAT settings",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/config/SKILL.md"
+    },
+    {
+      "name": "help",
+      "description": "Use for quick reference to all CAT commands and skills",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/help/SKILL.md"
+    },
+    {
+      "name": "init",
+      "description": "Initialize CAT planning structure (new or existing project)",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/init/SKILL.md"
+    },
+    {
+      "name": "learn",
+      "description": "> MANDATORY: Use after ANY mistake to record learning, perform RCA, and implement prevention. Integrates token tracking for context-related failures.",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/learn/SKILL.md"
+    },
+    {
+      "name": "monitor-subagents",
+      "description": "Check status of running subagents including token usage and context limits",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/monitor-subagents/SKILL.md"
+    },
+    {
+      "name": "optimize-execution",
+      "description": "Use after complex issues to analyze session efficiency and generate optimization recommendations",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/optimize-execution/SKILL.md"
+    },
+    {
+      "name": "remove",
+      "description": "Remove issue or version",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/remove/SKILL.md"
+    },
+    {
+      "name": "research",
+      "description": "Research how to implement a issue before planning",
+      "argument_hint": "<research-type> <topic>",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/research/SKILL.md"
+    },
+    {
+      "name": "run-retrospective",
+      "description": "MANDATORY after learn threshold - analyzes patterns and derives action items",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/run-retrospective/SKILL.md"
+    },
+    {
+      "name": "shrink-doc",
+      "description": "> Use to reduce Claude-facing document size while maintaining execution equivalence. Validates with /compare-docs to ensure no semantic loss.",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/shrink-doc/SKILL.md"
+    },
+    {
+      "name": "status",
+      "description": "Display project progress - versions, issues, and completion status",
+      "argument_hint": "",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/status/SKILL.md"
+    },
+    {
+      "name": "work",
+      "description": "Work on or resume issues - use when user says \"work on\", \"resume\", \"continue\", or \"pick up\" a task",
+      "argument_hint": "[version | taskId | filter] [--override-gate]",
+      "path": "/workspace/.claude/cat/worktrees/2.1-evaluate-skill-activation/plugin/skills/work/SKILL.md"
+    }
+  ]
+}

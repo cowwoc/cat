@@ -1,0 +1,346 @@
+{
+  "test_cases": [
+    {
+      "id": "status-1",
+      "skill": "status",
+      "prompt": "Show me the project status",
+      "category": "explicit"
+    },
+    {
+      "id": "status-2",
+      "skill": "status",
+      "prompt": "What's the current progress?",
+      "category": "implicit"
+    },
+    {
+      "id": "status-3",
+      "skill": "status",
+      "prompt": "List all issues and versions",
+      "category": "implicit"
+    },
+    {
+      "id": "add-1",
+      "skill": "add",
+      "prompt": "Add a new task for fixing the login bug",
+      "category": "explicit"
+    },
+    {
+      "id": "add-2",
+      "skill": "add",
+      "prompt": "Create a new issue to refactor the database layer",
+      "category": "implicit"
+    },
+    {
+      "id": "add-3",
+      "skill": "add",
+      "prompt": "I need to track a new feature: dark mode support",
+      "category": "implicit"
+    },
+    {
+      "id": "work-1",
+      "skill": "work",
+      "prompt": "Work on the next task",
+      "category": "explicit"
+    },
+    {
+      "id": "work-2",
+      "skill": "work",
+      "prompt": "Continue working on the current issue",
+      "category": "explicit"
+    },
+    {
+      "id": "work-3",
+      "skill": "work",
+      "prompt": "Resume the authentication refactor task",
+      "category": "explicit"
+    },
+    {
+      "id": "help-1",
+      "skill": "help",
+      "prompt": "Show me all available commands",
+      "category": "implicit"
+    },
+    {
+      "id": "help-2",
+      "skill": "help",
+      "prompt": "What can I do with CAT?",
+      "category": "implicit"
+    },
+    {
+      "id": "help-3",
+      "skill": "help",
+      "prompt": "List all CAT skills",
+      "category": "implicit"
+    },
+    {
+      "id": "cleanup-1",
+      "skill": "cleanup",
+      "prompt": "Clean up abandoned worktrees",
+      "category": "explicit"
+    },
+    {
+      "id": "cleanup-2",
+      "skill": "cleanup",
+      "prompt": "My session crashed, can you fix the locks?",
+      "category": "implicit"
+    },
+    {
+      "id": "init-1",
+      "skill": "init",
+      "prompt": "Initialize CAT for this project",
+      "category": "explicit"
+    },
+    {
+      "id": "init-2",
+      "skill": "init",
+      "prompt": "Set up the planning structure",
+      "category": "implicit"
+    },
+    {
+      "id": "remove-1",
+      "skill": "remove",
+      "prompt": "Remove the login-fix issue",
+      "category": "explicit"
+    },
+    {
+      "id": "remove-2",
+      "skill": "remove",
+      "prompt": "Delete version 1.2",
+      "category": "explicit"
+    },
+    {
+      "id": "config-1",
+      "skill": "config",
+      "prompt": "Configure my CAT settings",
+      "category": "explicit"
+    },
+    {
+      "id": "config-2",
+      "skill": "config",
+      "prompt": "Change my trust level preferences",
+      "category": "implicit"
+    },
+    {
+      "id": "learn-1",
+      "skill": "learn",
+      "prompt": "Record this mistake: I accidentally committed secrets",
+      "category": "explicit"
+    },
+    {
+      "id": "learn-2",
+      "skill": "learn",
+      "prompt": "Document what went wrong with the test failure",
+      "category": "implicit"
+    },
+    {
+      "id": "research-1",
+      "skill": "research",
+      "prompt": "Research how to implement OAuth2",
+      "category": "explicit"
+    },
+    {
+      "id": "research-2",
+      "skill": "research",
+      "prompt": "Look up best practices for database migrations",
+      "category": "implicit"
+    },
+    {
+      "id": "monitor-subagents-1",
+      "skill": "monitor-subagents",
+      "prompt": "Check the status of running subagents",
+      "category": "explicit"
+    },
+    {
+      "id": "monitor-subagents-2",
+      "skill": "monitor-subagents",
+      "prompt": "How much context are my subagents using?",
+      "category": "implicit"
+    },
+    {
+      "id": "optimize-execution-1",
+      "skill": "optimize-execution",
+      "prompt": "Analyze the efficiency of this session",
+      "category": "explicit"
+    },
+    {
+      "id": "optimize-execution-2",
+      "skill": "optimize-execution",
+      "prompt": "Generate optimization recommendations",
+      "category": "implicit"
+    },
+    {
+      "id": "run-retrospective-1",
+      "skill": "run-retrospective",
+      "prompt": "Run a retrospective on recent learnings",
+      "category": "explicit"
+    },
+    {
+      "id": "run-retrospective-2",
+      "skill": "run-retrospective",
+      "prompt": "Analyze patterns from the last learning session",
+      "category": "implicit"
+    },
+    {
+      "id": "shrink-doc-1",
+      "skill": "shrink-doc",
+      "prompt": "Shrink the PLAN.md file to reduce token usage",
+      "category": "explicit"
+    },
+    {
+      "id": "shrink-doc-2",
+      "skill": "shrink-doc",
+      "prompt": "Compress this documentation while keeping the same meaning",
+      "category": "implicit"
+    },
+    {
+      "id": "negative-1",
+      "skill": null,
+      "prompt": "What's the weather today?",
+      "category": "negative"
+    },
+    {
+      "id": "negative-2",
+      "skill": null,
+      "prompt": "Write a function to calculate fibonacci numbers",
+      "category": "negative"
+    },
+    {
+      "id": "negative-3",
+      "skill": null,
+      "prompt": "Explain how neural networks work",
+      "category": "negative"
+    },
+    {
+      "id": "negative-4",
+      "skill": null,
+      "prompt": "Read the README.md file",
+      "category": "negative"
+    },
+    {
+      "id": "negative-5",
+      "skill": null,
+      "prompt": "Add my email to the .gitignore file",
+      "category": "negative"
+    },
+    {
+      "id": "negative-6",
+      "skill": null,
+      "prompt": "Initialize a new Node.js project with npm",
+      "category": "negative"
+    },
+    {
+      "id": "negative-7",
+      "skill": null,
+      "prompt": "Remove all old git branches from last year",
+      "category": "negative"
+    },
+    {
+      "id": "negative-8",
+      "skill": null,
+      "prompt": "Configure my VS Code settings for Python",
+      "category": "negative"
+    },
+    {
+      "id": "negative-9",
+      "skill": null,
+      "prompt": "What branch am I currently on?",
+      "category": "negative"
+    },
+    {
+      "id": "negative-10",
+      "skill": null,
+      "prompt": "Commit my changes with message 'fix bug'",
+      "category": "negative"
+    },
+    {
+      "id": "negative-11",
+      "skill": null,
+      "prompt": "Push to origin main",
+      "category": "negative"
+    },
+    {
+      "id": "negative-12",
+      "skill": null,
+      "prompt": "List all files in the current directory",
+      "category": "negative"
+    },
+    {
+      "id": "research-with-args",
+      "skill": "research",
+      "prompt": "Research Docker security best practices for production environments",
+      "category": "explicit"
+    },
+    {
+      "id": "work-with-args",
+      "skill": "work",
+      "prompt": "Work on task 2.1-evaluate-skill-activation",
+      "category": "explicit"
+    },
+    {
+      "id": "shrink-doc-with-args",
+      "skill": "shrink-doc",
+      "prompt": "Shrink the STATE.md file in the current directory",
+      "category": "explicit"
+    },
+    {
+      "id": "edge-empty",
+      "skill": null,
+      "prompt": "",
+      "category": "negative"
+    },
+    {
+      "id": "edge-short",
+      "skill": null,
+      "prompt": "hi",
+      "category": "negative"
+    },
+    {
+      "id": "edge-special-chars",
+      "skill": null,
+      "prompt": "What's the {\"status\": \"active\"} of <project>?",
+      "category": "negative"
+    },
+    {
+      "id": "edge-ambiguous-work-add",
+      "skill": null,
+      "prompt": "work on adding a new feature for the dashboard",
+      "category": "negative"
+    },
+    {
+      "id": "edge-skill-name-in-prose",
+      "skill": null,
+      "prompt": "I read a research paper about testing methodologies",
+      "category": "negative"
+    },
+    {
+      "id": "edge-negation",
+      "skill": null,
+      "prompt": "don't add a task, just show me the status",
+      "category": "negative"
+    },
+    {
+      "id": "edge-skill-like-terms",
+      "skill": null,
+      "prompt": "the status update meeting is at 3pm",
+      "category": "negative"
+    },
+    {
+      "id": "edge-multi-request",
+      "skill": null,
+      "prompt": "show status and then work on the next task",
+      "category": "negative"
+    },
+    {
+      "id": "edge-skill-in-context",
+      "skill": null,
+      "prompt": "When I run /cat:status, what information does it show?",
+      "category": "negative"
+    },
+    {
+      "id": "edge-past-tense",
+      "skill": null,
+      "prompt": "I added a new feature yesterday",
+      "category": "negative"
+    }
+  ]
+}
