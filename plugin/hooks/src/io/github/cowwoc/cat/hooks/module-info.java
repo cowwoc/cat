@@ -3,6 +3,7 @@ module io.github.cowwoc.cat.hooks
   requires tools.jackson.databind;
   requires io.github.cowwoc.requirements13.java;
   requires io.github.cowwoc.pouch10.core;
+  requires jtokkit;
 
   exports io.github.cowwoc.cat.hooks;
   exports io.github.cowwoc.cat.hooks.bash;
