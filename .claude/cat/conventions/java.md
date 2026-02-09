@@ -693,6 +693,9 @@ Tests run in parallel. Test classes must not contain any shared state:
 4. **No shared mutable state** - each test must be fully self-contained
 5. **No TestBase classes** - each test method must inline its own setup (e.g., `try (JvmScope scope = new
    DefaultJvmScope())`). This boilerplate is intentional and preferred over shared helpers or inheritance.
+6. **No `System.setErr()`/`System.setOut()`** - these mutate JVM-wide shared state and are not thread-safe. If you need
+   to verify error logging, assert the observable side effects (e.g., file still exists after failed deletion) rather
+   than capturing stderr.
 
 ```java
 // Good - self-contained test, inline scope creation

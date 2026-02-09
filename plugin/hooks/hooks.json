@@ -217,7 +217,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-unlock.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetSessionEndOutput"
           }
         ]
       }
