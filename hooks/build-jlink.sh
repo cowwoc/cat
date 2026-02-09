@@ -113,7 +113,8 @@ is_automatic_module() {
   local jar="$1"
 
   # If JAR already contains module-info.class, it's a named module (not automatic)
-  if jar --list --file="$jar" 2>/dev/null | grep -q "^module-info.class$"; then
+  # Match module-info.class at any depth (root or META-INF/versions/N/ for multi-release JARs)
+  if jar --list --file="$jar" 2>/dev/null | grep -q "module-info\.class"; then
     return 1
   fi
 
