@@ -604,6 +604,28 @@ private Map<String, Object> loadConfig()
 
 ## Exception Handling
 
+### AssertionError vs IllegalStateException
+Throw `AssertionError` when an internal assumption is violated — a condition that should never occur and is not
+preventable by the caller. These represent programming errors or environment invariants.
+
+Throw `IllegalStateException` only when the caller attempts to invoke a method that requires a certain object state, that
+state is queryable, and the caller could have checked before calling.
+
+```java
+// Good - AssertionError for environment invariant (caller cannot prevent or query)
+String envFile = System.getenv("CLAUDE_ENV_FILE");
+if (envFile == null || envFile.isEmpty())
+  throw new AssertionError("CLAUDE_ENV_FILE is not set");
+
+// Good - IllegalStateException for preventable state violation (caller can query)
+public void stop()
+{
+  if (!isRunning())
+    throw new IllegalStateException("Cannot stop: server is not running");
+  // ...
+}
+```
+
 ### Specific Exceptions
 **Throw the most specific exception type possible** - never throw `Exception`:
 
