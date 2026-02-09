@@ -932,28 +932,33 @@ Task tool: subagent for item C   # No polling needed
 | Sequential with reuse | Single Task call, then resume with next item |
 
 **Avoid `run_in_background`** unless you need the main agent to do other work while subagents run.
-Background mode requires TaskOutput to retrieve results, adding complexity and context pollution.
+Background mode requires waiting for task-notification, adding complexity.
 
-**Context Pollution Warning (M373, M376):**
+**Background Task Protocol (M481):**
 
-If you must use background mode, do NOT poll status repeatedly. Each `TaskOutput` call adds
-~500 tokens to context. For batch operations, check git commits directly instead of retrieving
-full TaskOutput:
+When tasks are launched with `run_in_background: true`, **NEVER use TaskOutput to poll or check status**.
+The system will notify you when the task completes via task-notification. Wait for that notification,
+then use TaskOutput to retrieve results.
 
 ```bash
-# ❌ WRONG: Retrieve full output for each subagent (pollutes parent context)
-TaskOutput issue_id="abc" block=true  # Returns truncated but still large output
-TaskOutput issue_id="def" block=true  # More context pollution
+# ❌ WRONG: Poll background tasks for status
+TaskOutput issue_id="abc" block=true  # DO NOT do this - wait for notification
 
-# ✅ CORRECT: Check results via git (minimal context impact)
-git log --oneline HEAD --not base_branch  # See what was committed
-git diff --stat base_branch..HEAD          # See files changed
+# ✅ CORRECT: Wait for task-notification, then retrieve results
+# [System sends task-notification when task completes]
+# Then: TaskOutput issue_id="abc"  # Only after notification
 ```
 
-**Anti-pattern (M293):**
+**The correct pattern for background tasks:**
+1. Launch task with `run_in_background: true`
+2. Do other work while task runs
+3. Wait for system's task-notification (do NOT poll)
+4. After notification, use TaskOutput to retrieve results
+
+**Anti-pattern (M293, M481):**
 ```
-❌ "I'll wait for subagents to complete and notify me"
-✅ "Subagents running. Use TaskOutput with block=true to wait for each."
+❌ "I'll check if the background task is done yet" (polling)
+✅ "Background task launched. I'll wait for notification." (correct)
 ```
 
 ## Related Skills
