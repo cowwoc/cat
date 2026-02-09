@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# java.sh - Intermediary script to invoke Java-based hooks
+# hook.sh - Intermediary script to invoke Java-based hooks
 #
 # This script serves as a bridge between Claude Code's hook system
 # (which executes shell commands) and Java-based hook implementations.
 #
 # Usage:
-#   java.sh <handler-class> [args...]
+#   hook.sh <handler-class> [args...]
 #
 # Environment:
 #   CAT_JAVA_HOME - Path to CAT's custom JDK runtime (required, set by session_start.sh)
@@ -17,7 +17,7 @@
 #   4. Passes stdin and captures stdout/stderr appropriately
 #
 # Example:
-#   echo '{"tool":"Bash","input":"..."}' | java.sh BashPreToolHandler
+#   echo '{"tool":"Bash","input":"..."}' | hook.sh BashPreToolHandler
 
 set -euo pipefail
 
@@ -53,32 +53,10 @@ find_hooks_jar() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-    # Priority 1: Maven target directory (development)
-    local jar_path="${script_dir}/java/target/cat-hooks.jar"
+    local jar_path="${script_dir}/cat-hooks-2.1.jar"
     if [[ -f "$jar_path" ]]; then
         echo "$jar_path"
         return 0
-    fi
-
-    # Priority 2: Installed location (production)
-    jar_path="${script_dir}/java/cat-hooks.jar"
-    if [[ -f "$jar_path" ]]; then
-        echo "$jar_path"
-        return 0
-    fi
-
-    # Priority 3: Using CLAUDE_PLUGIN_ROOT
-    if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
-        jar_path="${CLAUDE_PLUGIN_ROOT}/hooks/java/target/cat-hooks.jar"
-        if [[ -f "$jar_path" ]]; then
-            echo "$jar_path"
-            return 0
-        fi
-        jar_path="${CLAUDE_PLUGIN_ROOT}/hooks/java/cat-hooks.jar"
-        if [[ -f "$jar_path" ]]; then
-            echo "$jar_path"
-            return 0
-        fi
     fi
 
     return 1
