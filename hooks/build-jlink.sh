@@ -108,6 +108,12 @@ stage_dependencies() {
 
 is_automatic_module() {
   local jar="$1"
+
+  # If JAR already contains module-info.class, it's a named module (not automatic)
+  if jar --list --file="$jar" 2>/dev/null | grep -q "^module-info.class$"; then
+    return 1
+  fi
+
   local desc
   # --release=17 ensures multi-release JARs expose their module descriptor
   desc=$(jar --describe-module --file="$jar" --release=17 2>&1) || return 0
