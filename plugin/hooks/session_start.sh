@@ -5,10 +5,10 @@
 # the custom JDK runtime is available for Java hooks.
 #
 # Behavior:
-#   1. Check if custom JDK exists in the expected location
+#   1. Check if cat-hooks-2.1.jar exists in the plugin cache
 #   2. If missing, download pre-built bundle from release artifacts
 #   3. Verify the runtime is functional
-#   4. Export CAT_JAVA_HOME for use by java.sh
+#   4. Export CAT_JAVA_HOME for use by hook.sh
 #
 # The hook is silent on success (only outputs JSON). On failure, it
 # provides instructions for manual setup.
@@ -16,6 +16,9 @@
 set -euo pipefail
 
 # --- Configuration ---
+
+# Where the hooks JAR lives (relative to plugin root)
+readonly HOOKS_JAR_SUBPATH="hooks/cat-hooks-2.1.jar"
 
 # Where the custom JDK runtime lives (relative to plugin root)
 readonly JDK_SUBDIR="runtime/cat-jdk-25"
@@ -159,11 +162,18 @@ main() {
         plugin_root="$CLAUDE_PLUGIN_ROOT"
     fi
 
+    # Check if hooks JAR exists in the plugin cache
+    local hooks_jar="${plugin_root}/${HOOKS_JAR_SUBPATH}"
+    if [[ ! -f "$hooks_jar" ]]; then
+        log_json "warning" "Java hooks JAR not found at ${hooks_jar}. Run /build-hooks to build and install it."
+        return 0
+    fi
+
     local jdk_path="${plugin_root}/${JDK_SUBDIR}"
 
     # Check if runtime already exists and is functional
     if check_existing_runtime "$jdk_path"; then
-        # Export for java.sh
+        # Export for hook.sh
         export CAT_JAVA_HOME="$jdk_path"
         log_json "success" "CAT JDK runtime ready"
         return 0

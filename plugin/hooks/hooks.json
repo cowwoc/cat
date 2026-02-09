@@ -56,6 +56,14 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/inject-env.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session_start.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -63,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetSkillOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetSkillOutput"
           }
         ]
       },
@@ -100,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetBashPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetBashPretoolOutput"
           }
         ]
       },
@@ -109,7 +117,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetReadPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetReadPretoolOutput"
           }
         ]
       },
@@ -145,7 +153,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh EnforceWorktreeIsolation"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh EnforceWorktreeIsolation"
           }
         ]
       },
@@ -164,7 +172,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetPosttoolOutput"
           }
         ]
       },
@@ -181,7 +189,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetBashPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetBashPosttoolOutput"
           }
         ]
       },
@@ -199,7 +207,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetPosttoolOutput"
           }
         ]
       },
@@ -208,7 +216,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetReadPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetReadPosttoolOutput"
           }
         ]
       }
@@ -218,7 +226,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh EnforceStatusOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh EnforceStatusOutput"
           }
         ]
       }
