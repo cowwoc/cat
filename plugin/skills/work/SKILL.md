@@ -1,5 +1,9 @@
 ---
-description: Work on or resume issues - use when user says "work on", "resume", "continue", or "pick up" a task
+description: >
+  Start working on, resume, or continue an existing issue or task.
+  Use when user wants to TAKE ACTION on a task (not just view it).
+  Trigger words: "work on", "resume", "continue working", "pick up", "keep working", "start working".
+  NOT for viewing status - use /cat:status for that.
 argument-hint: "[version | taskId | filter] [--override-gate]"
 allowed-tools:
   - Read

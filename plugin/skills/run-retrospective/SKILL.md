@@ -1,5 +1,9 @@
 ---
-description: MANDATORY after learn threshold - analyzes patterns and derives action items
+description: >
+  Run retrospective analysis on recorded learnings and derive action items from patterns.
+  Trigger words: "run retrospective", "analyze patterns", "learning session", "retrospective on learnings", "patterns from".
+  Analyzes patterns across multiple learning entries, not individual mistakes.
+  MANDATORY after learn threshold is reached.
 user-invocable: true
 ---
 
