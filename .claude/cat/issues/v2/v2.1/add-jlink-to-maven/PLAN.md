@@ -17,7 +17,7 @@ None - infrastructure improvement
 - `plugin/hooks/session_start.sh` - Verify JDK_SUBDIR path still matches output location
 
 ## Acceptance Criteria
-- [ ] `mvn -f hooks/pom.xml verify` produces `target/cat-jdk-25/bin/java`
+- [ ] `mvn -f hooks/pom.xml verify` produces `target/jlink/bin/java`
 - [ ] jlink image includes modules: java.base, java.logging, java.sql, jdk.unsupported
 - [ ] jlink image includes Jackson 3 modules from Maven dependencies
 - [ ] build-hooks skill installs jlink image to `CLAUDE_PLUGIN_ROOT/runtime/cat-jdk-25/`
@@ -35,21 +35,21 @@ None - infrastructure improvement
    - File: `hooks/pom.xml`
    - Add execution bound to `verify` phase (after tests pass)
    - Command: `${java.home}/bin/jlink`
-   - Args: `--module-path target/jlink-libs --add-modules java.base,java.logging,java.sql,jdk.unsupported --output target/cat-jdk-25 --strip-debug --no-man-pages --no-header-files --compress zip-6`
-   - Add `target/cat-jdk-25` to .gitignore if not already
+   - Args: `--module-path target/jlink-libs --add-modules java.base,java.logging,java.sql,jdk.unsupported --output target/jlink --strip-debug --no-man-pages --no-header-files --compress zip-6`
+   - Add `target/jlink` to .gitignore if not already
 
 3. **Step 3: Update build-hooks skill**
    - File: `.claude/skills/build-hooks/SKILL.md`
-   - Add step after JAR install: copy `hooks/target/cat-jdk-25/` to plugin cache `runtime/cat-jdk-25/`
+   - Add step after JAR install: copy `hooks/target/jlink/` to plugin cache `runtime/cat-jdk-25/`
    - Add verification step for jlink image
 
 4. **Step 4: Verify end-to-end**
    - Run `mvn -f hooks/pom.xml verify`
-   - Check `hooks/target/cat-jdk-25/bin/java -version` works
+   - Check `hooks/target/jlink/bin/java -version` works
    - Run build-hooks skill and verify session_start.sh finds the runtime
 
 ## Success Criteria
-- [ ] `mvn -f hooks/pom.xml verify` produces working jlink image at `target/cat-jdk-25/`
+- [ ] `mvn -f hooks/pom.xml verify` produces working jlink image at `target/jlink/`
 - [ ] build-hooks skill installs both JAR and jlink image to plugin cache
 - [ ] session_start.sh debug trace shows JDK runtime verified
 - [ ] All 318+ tests still pass
