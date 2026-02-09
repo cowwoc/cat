@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- fix-multirelease-jar-detection
 - recover-from-drift
 - audit-plan-verification
 - fix-is-automatic-module
@@ -157,3 +158,4 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-autolearn-path-false-positive
 - restructure-learn-tiered
 - replace-prepare-subagent-with-script
+- rename-pretool-posttool
