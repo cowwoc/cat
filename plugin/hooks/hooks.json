@@ -63,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-skill-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetSkillOutput"
           }
         ]
       },
@@ -100,7 +100,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-bash-pretool-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetBashPretoolOutput"
           }
         ]
       },
@@ -109,7 +109,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-read-pretool-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetReadPretoolOutput"
           }
         ]
       },
@@ -164,7 +164,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-posttool-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetPosttoolOutput"
           }
         ]
       },
@@ -181,7 +181,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-bash-posttool-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetBashPosttoolOutput"
           }
         ]
       },
@@ -199,7 +199,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-posttool-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetPosttoolOutput"
           }
         ]
       },
@@ -208,7 +208,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/get-read-posttool-output.py"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh GetReadPosttoolOutput"
           }
         ]
       }
