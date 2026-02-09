@@ -1,11 +1,12 @@
 ---
-description: Build Java hooks and install the JAR into the plugin cache
+description: Build Java hooks and install the jlink runtime image into the plugin cache
 disable-model-invocation: true
 ---
 
 # Build Hooks
 
-Build the Java hooks JAR and copy it into the plugin cache for use by hook handlers.
+Build the self-contained jlink runtime image (includes hooks JAR, all dependencies, and JDK modules) and install it
+into the plugin cache.
 
 ## Steps
 
@@ -15,19 +16,26 @@ Build the Java hooks JAR and copy it into the plugin cache for use by hook handl
 mvn -f /workspace/hooks/pom.xml verify
 ```
 
-If the build fails, stop and report the error.
+This builds the hooks JAR, patches automatic modules, creates the jlink image with launchers, and generates the AppCDS
+archive. If the build fails, stop and report the error.
 
-### 2. Install JAR to Plugin Cache
+### 2. Install jlink Runtime Image to Plugin Cache
 
 ```bash
-cp /workspace/hooks/target/cat-hooks.jar \
-   /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/hooks.jar
+rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin \
+       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/lib \
+       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/conf \
+       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/legal \
+       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/release
+
+cp -r /workspace/hooks/target/jlink/* \
+      /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/
 ```
 
 ### 3. Verify
 
-Confirm the installed JAR exists and report its size:
+Confirm the jlink runtime works:
 
 ```bash
-ls -la /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/hooks.jar
+/home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin/java -version
 ```
