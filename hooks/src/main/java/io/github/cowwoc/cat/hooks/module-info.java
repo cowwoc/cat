@@ -4,6 +4,7 @@ module io.github.cowwoc.cat.hooks
   requires io.github.cowwoc.requirements13.java;
   requires io.github.cowwoc.pouch10.core;
   requires jtokkit;
+  requires java.net.http;
 
   exports io.github.cowwoc.cat.hooks;
   exports io.github.cowwoc.cat.hooks.ask;
@@ -18,5 +19,6 @@ module io.github.cowwoc.cat.hooks
   exports io.github.cowwoc.cat.hooks.task;
   exports io.github.cowwoc.cat.hooks.tool.post;
   exports io.github.cowwoc.cat.hooks.util;
+  exports io.github.cowwoc.cat.hooks.session;
   exports io.github.cowwoc.cat.hooks.write;
 }

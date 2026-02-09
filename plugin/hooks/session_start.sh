@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
-# session_start.sh - Bootstrap the CAT jlink runtime at session start
+# session_start.sh - Bootstrap the CAT jlink runtime and run session handlers
 #
 # Ensures the custom JDK runtime is available for Java hooks by trying
 # (in order): existing install → download pre-built bundle → local build.
-# Exports CAT_JAVA_HOME on success. Silent on success (JSON output only).
+# After JDK is ready, invokes the GetSessionStartOutput Java dispatcher
+# which handles all session start tasks (upgrade check, update check,
+# session ID injection, retrospective reminders, instructions, env injection,
+# skill marker cleanup).
 
 set -euo pipefail
+
+# --- Save stdin early (before any command consumes it) ---
+
+STDIN_CONTENT=""
+if [ ! -t 0 ]; then
+  STDIN_CONTENT=$(cat)
+fi
 
 # --- Configuration ---
 
@@ -190,7 +200,14 @@ main() {
 
   if try_acquire_runtime "$jdk_path" "$plugin_root"; then
     export CAT_JAVA_HOME="$jdk_path"
-    log_json "success" "CAT JDK runtime ready"
+    debug "JDK runtime ready, invoking Java dispatcher"
+
+    # Invoke the GetSessionStartOutput Java dispatcher
+    # It handles all session start tasks: upgrade check, update check, session ID,
+    # retrospective reminders, session instructions, env injection, skill marker cleanup
+    echo "$STDIN_CONTENT" | "$jdk_path/bin/java" \
+      -Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 \
+      -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.GetSessionStartOutput
     return 0
   fi
 
