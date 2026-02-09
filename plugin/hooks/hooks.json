@@ -148,6 +148,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/java.sh EnforceWorktreeIsolation"
           }
         ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/enforce-approval-before-merge.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [

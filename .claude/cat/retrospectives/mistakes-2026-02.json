@@ -3519,6 +3519,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Wait for explicit user approval (select 'Approve and merge' or explicit yes/approve). Silence or system notifications are NOT approval. Apply fail-fast: unknown consent = no consent = STOP."
+    },
+    {
+      "id": "M480",
+      "timestamp": "2026-02-09T01:17:20Z",
+      "category": "protocol_violation",
+      "description": "Main agent merged task without user approval despite trust=medium requiring explicit consent",
+      "root_cause": "No enforcement mechanism exists to block merge when trust=medium and explicit user approval has not been received. M479 recorded the mistake but only updated mistakes.json without implementing prevention hook or code check.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/enforce-approval-before-merge.sh",
+      "pattern_keywords": [
+        "approval",
+        "trust-medium",
+        "consent",
+        "enforcement",
+        "fail-fast"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M479",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When trust != high, PreToolUse hook on Task tool MUST block work-merge spawn until explicit user approval is detected in session history (AskUserQuestion with Approve selected)"
     }
   ],
   "counter": 1
