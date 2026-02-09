@@ -331,7 +331,10 @@ This ensures the user reviews clean commit history, not intermediate implementat
 
 ## Step 6: Approval Gate
 
-**CRITICAL (M390): This step is MANDATORY when trust != "high".**
+**CRITICAL (M390, M479, M480): This step is MANDATORY when trust != "high".**
+
+**Enforced by hook M480:** PreToolUse hook on Task tool blocks work-merge spawn when trust=medium/low
+and no explicit user approval is detected in session history.
 
 ### If trust == "high"
 
@@ -356,6 +359,13 @@ AskUserQuestion:
     - "Request changes" (provide feedback)
     - "Abort"
 ```
+
+**CRITICAL (M479, M480):** Wait for explicit user selection. Do NOT proceed based on:
+- Silence or absence of objection
+- System reminders or notifications
+- Assumed approval
+
+Fail-fast principle: Unknown consent = No consent = STOP.
 
 **If approved:** Continue to Step 7
 
