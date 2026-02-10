@@ -17,6 +17,11 @@ import java.nio.file.StandardOpenOption;
  * Appends {@code CLAUDE_PROJECT_DIR}, {@code CLAUDE_PLUGIN_ROOT}, and
  * {@code CLAUDE_SESSION_ID} to the env file so they are available in all subsequent
  * Bash tool calls.
+ * <p>
+ * Workaround for https://github.com/anthropics/claude-code/issues/24775:
+ * On resumed sessions, CLAUDE_ENV_FILE points to a startup session directory, but the env
+ * loader reads from the resumed session directory. To fix this, we also write the env file
+ * to the resumed session's directory using the session_id from stdin JSON.
  */
 public final class InjectEnv implements SessionStartHandler
 {
@@ -28,11 +33,12 @@ public final class InjectEnv implements SessionStartHandler
   }
 
   /**
-   * Writes environment variables to CLAUDE_ENV_FILE.
+   * Writes environment variables to CLAUDE_ENV_FILE and the resumed session's env directory.
    *
    * @param input the hook input
    * @return an empty result (silent operation)
    * @throws NullPointerException if input is null
+   * @throws AssertionError if required environment variables are not set
    * @throws WrappedCheckedException if writing to the env file fails
    */
   @Override
@@ -58,9 +64,10 @@ public final class InjectEnv implements SessionStartHandler
     if (pluginRoot == null || pluginRoot.isEmpty())
       throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
 
-    String sessionId = System.getenv("CLAUDE_SESSION_ID");
-    if (sessionId == null || sessionId.isEmpty())
-      throw new AssertionError("CLAUDE_SESSION_ID is not set");
+    // CLAUDE_SESSION_ID is empty in the hook environment. Read from stdin JSON instead.
+    String sessionId = input.getSessionId();
+    if (sessionId.isEmpty())
+      throw new AssertionError("session_id not found in hook input");
 
     String content = "export CLAUDE_PROJECT_DIR=\"" + projectDir + "\"\n" +
       "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
@@ -68,13 +75,63 @@ public final class InjectEnv implements SessionStartHandler
 
     try
     {
-      Files.writeString(Path.of(envFile), content, StandardCharsets.UTF_8,
-        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+      writeEnvFile(envPath, content);
+      writeToResumedSessionDir(envPath, sessionId, content);
     }
     catch (IOException e)
     {
       throw WrappedCheckedException.wrap(e);
     }
     return Result.empty();
+  }
+
+  /**
+   * Writes the env content to the provided CLAUDE_ENV_FILE path.
+   *
+   * @param envPath the env file path
+   * @param content the export statements to write
+   * @throws IOException if writing fails
+   */
+  private void writeEnvFile(Path envPath, String content) throws IOException
+  {
+    Files.createDirectories(envPath.getParent());
+    Files.writeString(envPath, content, StandardCharsets.UTF_8,
+      StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+  }
+
+  /**
+   * Writes the env content to the resumed session's env directory.
+   * <p>
+   * Workaround for https://github.com/anthropics/claude-code/issues/24775:
+   * CLAUDE_ENV_FILE may point to a startup session directory that differs from the resumed
+   * session's directory. The env loader reads from the resumed session's sibling directory,
+   * so we write there too.
+   *
+   * @param envPath the CLAUDE_ENV_FILE path (used to derive the session-env base directory)
+   * @param sessionId the session ID from stdin JSON
+   * @param content the export statements to write
+   * @throws IOException if writing fails
+   */
+  private void writeToResumedSessionDir(Path envPath, String sessionId, String content)
+    throws IOException
+  {
+    // CLAUDE_ENV_FILE path structure: .../STARTUP_ID/sessionstart-hook-N.sh
+    // Go up two levels to find the parent of all session directories.
+    Path sessionEnvBase = envPath.getParent().getParent();
+    Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
+
+    // Only write if this is a different directory than what CLAUDE_ENV_FILE already points to
+    if (resumedSessionDir.equals(envPath.getParent()))
+      return;
+
+    Path resumedEnvFile = resumedSessionDir.resolve(envPath.getFileName());
+    if (Files.isSymbolicLink(resumedEnvFile))
+    {
+      System.err.println("InjectEnv: resumed session env file is a symlink - skipping for security");
+      return;
+    }
+    Files.createDirectories(resumedSessionDir);
+    Files.writeString(resumedEnvFile, content, StandardCharsets.UTF_8,
+      StandardOpenOption.CREATE, StandardOpenOption.APPEND);
   }
 }

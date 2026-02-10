@@ -5,6 +5,8 @@
 CLAUDE_PLUGIN_ROOT="$1"
 SKILL="$2"
 CLAUDE_SESSION_ID="$3"
+CLAUDE_PROJECT_DIR="${4:-}"
+export CLAUDE_PROJECT_DIR
 F="/tmp/cat-skills-loaded-$CLAUDE_SESSION_ID"
 
 # Escape sed metacharacters for safe substitution
