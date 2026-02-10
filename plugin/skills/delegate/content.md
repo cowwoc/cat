@@ -466,8 +466,11 @@ if [[ ${#ISSUES[@]} -gt 0 ]]; then
   done
 
   # Group into parallel waves based on dependencies
+  # A wave is a dependency-ordered group of sub-issues that can execute in parallel.
+  # All sub-issues in Wave N must complete before any sub-issue in Wave N+1 can begin.
   # Wave 1: issues with no dependencies in our list
-  # Wave 2: issues that depend on Wave 1 items
+  # Wave 2: issues that depend only on Wave 1 items
+  # Wave 3: issues that depend on Wave 1 or Wave 2 items
   # etc.
 fi
 ```

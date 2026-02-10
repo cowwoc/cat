@@ -467,6 +467,7 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 ```
 
 Delegate handles:
+- Wave-based parallel execution (all files in a single wave since they have no dependencies)
 - Parallel subagent spawning (one per file, each running this full workflow)
 - Fault-tolerant result collection
 - Automatic retry of failed subagents
