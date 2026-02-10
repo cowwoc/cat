@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -40,7 +41,7 @@ public final class SessionUnlockTest
 
       HookInput input = HookInput.empty();
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -71,9 +72,9 @@ public final class SessionUnlockTest
       Files.writeString(taskLock2, "session_id=session456");
 
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes()));
+      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -105,9 +106,9 @@ public final class SessionUnlockTest
       Files.writeString(worktreeLock2, "session456");
 
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes()));
+      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -143,7 +144,7 @@ public final class SessionUnlockTest
 
       HookInput input = HookInput.empty();
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -178,7 +179,7 @@ public final class SessionUnlockTest
 
       HookInput input = HookInput.empty();
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -217,7 +218,7 @@ public final class SessionUnlockTest
 
       HookInput input = HookInput.empty();
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -241,9 +242,9 @@ public final class SessionUnlockTest
     try
     {
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes()));
+      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -252,7 +253,7 @@ public final class SessionUnlockTest
       Path worktreeLockDir = tempDir.resolve(".claude/cat/worktree-locks");
       requireThat(Files.exists(lockDir), "lockDirExists").isFalse();
       requireThat(Files.exists(worktreeLockDir), "worktreeLockDirExists").isFalse();
-      requireThat(outBytes.toString(), "output").contains("{}");
+      requireThat(outBytes.toString(StandardCharsets.UTF_8), "output").contains("{}");
     }
     finally
     {
@@ -280,9 +281,9 @@ public final class SessionUnlockTest
       Files.writeString(lockC, "session_id=session789");
 
       String json = "{\"session_id\": \"session456\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes()));
+      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -307,7 +308,7 @@ public final class SessionUnlockTest
     try
     {
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(null, output, tempDir);
@@ -344,7 +345,7 @@ public final class SessionUnlockTest
   {
     HookInput input = HookInput.empty();
     ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-    PrintStream out = new PrintStream(outBytes);
+    PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
     HookOutput output = new HookOutput(out);
 
     new SessionUnlock().runWithProjectDir(input, output, null);
@@ -370,9 +371,9 @@ public final class SessionUnlockTest
       Files.writeString(worktreeLock, "session123");
 
       String json = "{\"session_id\": \"   \"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes()));
+      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -402,9 +403,9 @@ public final class SessionUnlockTest
       Files.createDirectories(directoryLock);
 
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes()));
+      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -438,7 +439,7 @@ public final class SessionUnlockTest
 
       HookInput input = HookInput.empty();
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
@@ -472,7 +473,7 @@ public final class SessionUnlockTest
 
       HookInput input = HookInput.empty();
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-      PrintStream out = new PrintStream(outBytes);
+      PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
       HookOutput output = new HookOutput(out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
