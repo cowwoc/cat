@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,7 +66,15 @@ public final class GetSessionStartOutput implements HookHandler
   {
     HookInput input = HookInput.readFromStdin();
     HookOutput output = new HookOutput(System.out);
-    new GetSessionStartOutput().run(input, output);
+    try
+    {
+      new GetSessionStartOutput().run(input, output);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      System.err.println("GetSessionStartOutput: " + e.getMessage());
+      System.exit(1);
+    }
   }
 
   /**
@@ -75,6 +84,7 @@ public final class GetSessionStartOutput implements HookHandler
    * @param input the hook input to process
    * @param output the hook output writer
    * @throws NullPointerException if input or output is null
+   * @throws IllegalStateException if any handler fails
    */
   @Override
   public void run(HookInput input, HookOutput output)
@@ -90,6 +100,7 @@ public final class GetSessionStartOutput implements HookHandler
    * @param output the hook output writer
    * @param stderr the stream for handler stderr messages
    * @throws NullPointerException if any parameter is null
+   * @throws IllegalStateException if any handler fails
    */
   public void run(HookInput input, HookOutput output, PrintStream stderr)
   {
@@ -97,7 +108,8 @@ public final class GetSessionStartOutput implements HookHandler
     requireThat(output, "output").isNotNull();
     requireThat(stderr, "stderr").isNotNull();
 
-    StringBuilder combinedContext = new StringBuilder();
+    StringBuilder combinedContext = new StringBuilder(256);
+    List<String> errors = new ArrayList<>();
 
     for (SessionStartHandler handler : handlers)
     {
@@ -115,16 +127,29 @@ public final class GetSessionStartOutput implements HookHandler
       }
       catch (RuntimeException | AssertionError e)
       {
-        stderr.println("GetSessionStartOutput: handler error (" +
-          handler.getClass().getSimpleName() + "): " + e.getMessage());
+        String errorMessage = handler.getClass().getSimpleName() + ": " + e.getMessage();
+        errors.add(errorMessage);
+      }
+    }
+
+    if (!errors.isEmpty())
+    {
+      if (!combinedContext.isEmpty())
+        combinedContext.append("\n\n");
+      combinedContext.append("## SessionStart Handler Errors\n");
+      for (String error : errors)
+      {
+        combinedContext.append("- ").append(error).append('\n');
+        stderr.println("GetSessionStartOutput: handler error (" + error + ")");
       }
     }
 
     if (combinedContext.isEmpty())
-    {
       output.empty();
-      return;
-    }
-    output.additionalContext("SessionStart", combinedContext.toString());
+    else
+      output.additionalContext("SessionStart", combinedContext.toString());
+
+    if (!errors.isEmpty())
+      throw new IllegalStateException("SessionStart handlers failed: " + String.join(", ", errors));
   }
 }
