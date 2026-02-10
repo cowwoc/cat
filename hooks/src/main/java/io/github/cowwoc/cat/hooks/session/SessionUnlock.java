@@ -234,7 +234,10 @@ public final class SessionUnlock implements HookHandler
           Instant lastModified = attrs.lastModifiedTime().toInstant();
 
           if (lastModified.isBefore(staleThreshold))
+          {
             Files.delete(lockFile);
+            messages.add("Stale lock removed: " + lockFile);
+          }
         }
         catch (IOException e)
         {

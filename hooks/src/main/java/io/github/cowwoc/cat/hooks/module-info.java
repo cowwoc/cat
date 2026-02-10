@@ -19,6 +19,5 @@ module io.github.cowwoc.cat.hooks
   exports io.github.cowwoc.cat.hooks.task;
   exports io.github.cowwoc.cat.hooks.tool.post;
   exports io.github.cowwoc.cat.hooks.util;
-  exports io.github.cowwoc.cat.hooks.session;
   exports io.github.cowwoc.cat.hooks.write;
 }
