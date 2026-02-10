@@ -69,7 +69,7 @@ The `session_start.sh` hook runs at each Claude Code session start:
 1. Checks if custom runtime exists at expected path
 2. If missing, attempts to download pre-built bundle
 3. Falls back to building locally if JDK 25 is available
-4. Exports `CAT_JAVA_HOME` for `hook.sh`
+4. Invokes the Java dispatcher for session start tasks
 
 If all methods fail, a warning is logged but the session continues (Python hooks remain available).
 
@@ -80,9 +80,6 @@ Java hooks are invoked through `hook.sh`:
 ```bash
 # Direct invocation
 echo '{"tool":"Bash","input":"..."}' | ./hook.sh BashPreToolHandler
-
-# With environment
-CAT_JAVA_HOME=/path/to/runtime ./hook.sh ValidationHandler
 ```
 
 ### Handler Classes
@@ -98,7 +95,6 @@ CAT_JAVA_HOME=/path/to/runtime ./hook.sh ValidationHandler
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CAT_JAVA_HOME` | (auto) | Path to CAT's custom JDK runtime |
 | `CAT_JAVA_TIMEOUT` | 30 | Timeout for Java hook execution (seconds) |
 | `CAT_JAVA_XMS` | 16m | Initial heap size |
 | `CAT_JAVA_XMX` | 64m | Maximum heap size |
