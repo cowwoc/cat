@@ -2,7 +2,7 @@
 # session_start.sh - Bootstrap the CAT jlink runtime and run session handlers
 #
 # Ensures the custom JDK runtime is available for Java hooks by trying
-# (in order): existing install → download pre-built bundle → local build.
+# (in order): existing install → download pre-built bundle from GitHub.
 # After JDK is ready, invokes the GetSessionStartOutput Java dispatcher
 # which handles all session start tasks (upgrade check, update check,
 # session ID injection, retrospective reminders, instructions, env injection,
@@ -19,7 +19,6 @@ fi
 
 # --- Configuration ---
 
-readonly HOOKS_JAR_SUBPATH="hooks/cat-hooks-2.1.jar"
 readonly JDK_SUBDIR="hooks"
 readonly DOWNLOAD_BASE_URL="https://github.com/cowwoc/cat/releases/download"
 readonly PLUGIN_VERSION="v2.1"
@@ -132,22 +131,10 @@ download_runtime() {
   debug "Runtime installed to $target_dir"
 }
 
-build_runtime_locally() {
-  local plugin_root="$1" target_dir="$2"
-  local build_script="${plugin_root}/hooks/jlink-config.sh"
-
-  [[ -x "$build_script" ]] || { debug "Build script not found: $build_script"; return 1; }
-
-  debug "Building runtime locally via $build_script"
-
-  mkdir -p "$(dirname "$target_dir")"
-  "$build_script" build --output-dir "$(dirname "$target_dir")" 2>&1 || { debug "Local build failed"; return 1; }
-}
-
 # --- Runtime setup with fallback chain ---
 
 try_acquire_runtime() {
-  local jdk_path="$1" plugin_root="$2"
+  local jdk_path="$1"
 
   # Strategy 1: Already installed
   debug "Checking existing runtime..."
@@ -158,12 +145,6 @@ try_acquire_runtime() {
   # Strategy 2: Download pre-built bundle
   debug "Attempting download..."
   if download_runtime "$jdk_path" && check_runtime "$jdk_path"; then
-    return 0
-  fi
-
-  # Strategy 3: Build locally (requires full JDK)
-  debug "Attempting local build..."
-  if build_runtime_locally "$plugin_root" "$jdk_path" && check_runtime "$jdk_path"; then
     return 0
   fi
 
@@ -186,19 +167,11 @@ main() {
     debug "plugin_root=$plugin_root (from script location)"
   fi
 
-  # Verify hooks JAR exists
-  local hooks_jar="${plugin_root}/${HOOKS_JAR_SUBPATH}"
-  debug "Checking hooks JAR at: $hooks_jar"
-  if [[ ! -f "$hooks_jar" ]]; then
-    log_json "warning" "Java hooks JAR not found at ${hooks_jar}. Run /build-hooks to build and install it."
-    return 0
-  fi
-
   # Acquire runtime
   local jdk_path="${plugin_root}/${JDK_SUBDIR}"
   debug "JDK path: $jdk_path"
 
-  if try_acquire_runtime "$jdk_path" "$plugin_root"; then
+  if try_acquire_runtime "$jdk_path"; then
     export CAT_JAVA_HOME="$jdk_path"
     debug "JDK runtime ready, invoking Java dispatcher"
 
@@ -212,9 +185,13 @@ main() {
   fi
 
   # All strategies failed
+  local platform
+  platform=$(get_platform 2>/dev/null || echo "unknown")
+  local archive_name="cat-jdk-25-${platform}.tar.gz"
+  local download_url="${DOWNLOAD_BASE_URL}/${PLUGIN_VERSION}/${archive_name}"
   debug "All acquisition methods failed"
-  log_json "warning" "CAT JDK runtime not available. Java hooks will use system Java if available." \
-    "To enable optimized Java hooks, either:\\n1. Install JDK 25 and run: ${plugin_root}/hooks/jlink-config.sh build\\n2. Download pre-built runtime from GitHub releases"
+  log_json "error" "Failed to download CAT hooks runtime from ${download_url}"
+  return 1
 }
 
 main "$@"
