@@ -151,6 +151,30 @@ Use the most appropriate type for the combined commit (here `config:` since it's
 Even if commits share the same type prefix (e.g., `config:`), they may be different topics.
 The test: "Would reverting this commit break the issue implementation?" If no, it's a different topic.
 
+**Analyze ALL files in each commit (M232):**
+
+When determining commit topics, examine EVERY file modified by the commit, not just one file type:
+
+```bash
+# For each commit, list ALL modified files
+git show --stat <commit-hash>
+
+# Don't stop after seeing one file type
+# A commit may contain BOTH convention changes AND implementation changes
+```
+
+**Example:** A commit with:
+- `.claude/cat/conventions/java.md` (convention file)
+- `hooks/skills/GetCheckpointOutput.java` (implementation)
+- `hooks/skills/GetIssueCompleteOutput.java` (implementation)
+- `hooks/skills/GetNextTaskOutput.java` (implementation)
+
+This commit contains IMPLEMENTATION changes (the 3 Java files) even though it also updates conventions.
+The implementation changes are part of the issue topic and must be squashed with other implementation commits.
+
+**Apply the revert test to ALL files:** If reverting the commit would remove implementation changes from
+the 3 Java files, it breaks the implementation - therefore it's the same topic.
+
 **Rationale:** Squashing by topic preserves meaningful history while reducing noise from incremental fixes.
 
 ## Workflow Selection
