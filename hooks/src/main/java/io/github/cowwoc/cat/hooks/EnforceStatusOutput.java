@@ -49,17 +49,7 @@ public final class EnforceStatusOutput
 
       String transcriptPath = input.getString("transcript_path");
 
-      String stopHookActiveValue = input.getString("stop_hook_active", "false");
-      boolean stopHookActive;
-      if (stopHookActiveValue.equals("true"))
-        stopHookActive = true;
-      else if (stopHookActiveValue.equals("false"))
-        stopHookActive = false;
-      else
-      {
-        throw new IllegalArgumentException("stop_hook_active must be \"true\" or \"false\", got: \"" +
-          stopHookActiveValue + "\"");
-      }
+      boolean stopHookActive = input.getBoolean("stop_hook_active", false);
       if (stopHookActive)
       {
         hookOutput.empty();
