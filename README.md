@@ -174,6 +174,34 @@ CAT includes safeguards that protect your codebase and ensure consistent deliver
 
 ---
 
+## Terminology
+
+### Issue
+An **issue** is an atomic unit of work tracked by CAT. Each issue has a unique ID (e.g., `v2.1-setup-auth`),
+associated files (STATE.md and PLAN.md), and tracks progress from planning through completion.
+
+### Sub-issue
+A **sub-issue** is a child issue created when a parent issue exceeds context limits and must be decomposed.
+Sub-issues follow the same structure as regular issues but exist to break down work into manageable chunks.
+The parent issue's STATE.md lists all sub-issues and their relationships.
+
+### Wave
+A **wave** is a dependency-ordered group of sub-issues that can execute in parallel. Waves are numbered sequentially
+(Wave 1, Wave 2, Wave 3, etc.). All sub-issues in Wave N must complete before any sub-issue in Wave N+1 can begin.
+Wave 1 contains sub-issues with no dependencies. Wave 2 contains sub-issues that depend only on Wave 1, and so on.
+
+Waves are an internal execution concept used during issue decomposition and orchestration. They are not exposed to
+end users but appear in STATE.md files for decomposed issues.
+
+**Example:** The `migrate-python-to-java` issue decomposes into 5 waves:
+- Wave 1: Foundation (1 sub-issue)
+- Wave 2: Core infrastructure (1 sub-issue)
+- Wave 3: Handlers and utilities (6 sub-issues executing concurrently)
+- Wave 4: Tests (1 sub-issue)
+- Wave 5: Cleanup (1 sub-issue)
+
+---
+
 ## Commands
 
 ### Your Main Actions
