@@ -8,15 +8,17 @@
 #   echo '{"tool":"Bash","input":"..."}' | hook.sh GetBashPretoolOutput
 #
 # Environment:
-#   CAT_JAVA_HOME  - Path to jlink runtime image (required, set by session_start.sh)
 #   CAT_JAVA_TIMEOUT - Handler timeout in seconds (default: 30)
 #   CAT_JAVA_XMS     - Initial heap size (default: 16m)
 #   CAT_JAVA_XMX     - Maximum heap size (default: 64m)
+#
+# Note: Java runtime is resolved relative to script location (bin/java).
 
 set -euo pipefail
 
 # --- Configuration ---
 
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly MODULE="io.github.cowwoc.cat.hooks"
 readonly JAVA_TIMEOUT="${CAT_JAVA_TIMEOUT:-30}"
 readonly JAVA_XMS="${CAT_JAVA_XMS:-16m}"
@@ -25,12 +27,7 @@ readonly JAVA_XMX="${CAT_JAVA_XMX:-64m}"
 # --- Functions ---
 
 find_java() {
-  if [[ -z "${CAT_JAVA_HOME:-}" ]]; then
-    echo "Error: CAT_JAVA_HOME not set. Run session_start.sh first." >&2
-    return 1
-  fi
-
-  local java_bin="${CAT_JAVA_HOME}/bin/java"
+  local java_bin="${SCRIPT_DIR}/bin/java"
   if [[ ! -x "$java_bin" ]]; then
     echo "Error: Java binary not found at ${java_bin}" >&2
     return 1
@@ -66,8 +63,8 @@ run_handler() {
   )
 
   # Enable startup archives if present (AppCDS + Leyden AOT → ~8ms startup)
-  local aot_cache="${CAT_JAVA_HOME}/lib/server/aot-cache.aot"
-  local appcds="${CAT_JAVA_HOME}/lib/server/appcds.jsa"
+  local aot_cache="${SCRIPT_DIR}/lib/server/aot-cache.aot"
+  local appcds="${SCRIPT_DIR}/lib/server/appcds.jsa"
   [[ -f "$aot_cache" ]] && java_opts+=("-XX:AOTCache=$aot_cache")
   [[ -f "$appcds" ]]    && java_opts+=("-XX:SharedArchiveFile=$appcds")
 
