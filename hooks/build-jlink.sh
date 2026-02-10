@@ -6,7 +6,7 @@
 #   2. Stage runtime dependency JARs
 #   3. Patch automatic modules with generated module-info.class
 #   4. Create jlink runtime image with per-handler launchers
-#   5. Generate AppCDS + Leyden AOT startup archives (~8ms cold start)
+#   5. Generate Leyden AOT startup archive
 #
 # Usage:
 #   ./build-jlink.sh
@@ -248,26 +248,13 @@ build_jlink_image() {
 
 # --- Phase 5: Generate startup optimization archives ---
 #
-# Two-layer optimization achieving ~8ms cold startup (vs ~300ms baseline):
-#   AppCDS  — memory-mapped application class data, eliminates disk I/O
-#   Leyden  — pre-linked classes + method profiles, eliminates class init
+# Leyden AOT cache with pre-linked classes and method profiles:
+#   Eliminates class initialization overhead
 
 generate_startup_archives() {
   local java_bin="${OUTPUT_DIR}/bin/java"
-  local appcds_archive="${OUTPUT_DIR}/lib/server/appcds.jsa"
   local aot_config="${OUTPUT_DIR}/lib/server/aot-config.aotconf"
   local aot_cache="${OUTPUT_DIR}/lib/server/aot-cache.aot"
-
-  # AppCDS: base CDS (classes.jsa) was created by --generate-cds-archive.
-  # ArchiveClassesAtExit layers application classes on top.
-  log "Generating AppCDS dynamic archive..."
-  run_all_handlers "Training AppCDS" "$java_bin" -XX:ArchiveClassesAtExit="$appcds_archive"
-
-  if [[ ! -f "$appcds_archive" ]]; then
-    log "Warning: Failed to create AppCDS archive"
-    return 0
-  fi
-  log "  AppCDS archive: $(du -h "$appcds_archive" | cut -f1)"
 
   # Leyden AOT: record training data, then create pre-linked cache.
   log "Generating Leyden AOT cache..."

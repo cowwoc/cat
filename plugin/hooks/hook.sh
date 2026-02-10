@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # hook.sh - Bridge between Claude Code's hook system and Java hook handlers
 #
-# Locates the jlink runtime, enables startup archives (AppCDS + Leyden AOT),
+# Locates the jlink runtime, enables Leyden AOT startup archive,
 # and invokes the specified handler class via the Java module system.
 #
 # Usage:
@@ -62,11 +62,9 @@ run_handler() {
     "-Djava.security.egd=file:/dev/./urandom"
   )
 
-  # Enable startup archives if present (AppCDS + Leyden AOT → ~8ms startup)
+  # Enable AOT cache if present (Leyden AOT startup optimization)
   local aot_cache="${SCRIPT_DIR}/lib/server/aot-cache.aot"
-  local appcds="${SCRIPT_DIR}/lib/server/appcds.jsa"
   [[ -f "$aot_cache" ]] && java_opts+=("-XX:AOTCache=$aot_cache")
-  [[ -f "$appcds" ]]    && java_opts+=("-XX:SharedArchiveFile=$appcds")
 
   timeout "${JAVA_TIMEOUT}" "$java_bin" \
     "${java_opts[@]}" \
