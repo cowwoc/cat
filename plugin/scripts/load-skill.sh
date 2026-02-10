@@ -23,6 +23,12 @@ substitute_vars() {
     -e "s|\${CLAUDE_SESSION_ID}|$session_id_escaped|g"
 }
 
+# Run skill handler if present (always runs for dynamic output)
+HANDLER="$CLAUDE_PLUGIN_ROOT/skills/$SKILL/handler.sh"
+if [[ -x "$HANDLER" ]]; then
+  "$HANDLER" | substitute_vars
+fi
+
 if grep -qx "$SKILL" "$F" 2>/dev/null; then
   substitute_vars < "$CLAUDE_PLUGIN_ROOT/skills/reference.md"
 else
