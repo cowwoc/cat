@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# session_start.sh - Bootstrap the CAT jlink runtime and run session handlers
+# session-start.sh - Bootstrap the CAT jlink runtime and run session handlers
 #
 # Ensures the custom JDK runtime is available for Java hooks by trying
 # (in order): existing install → download pre-built bundle from GitHub.
