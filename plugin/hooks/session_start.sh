@@ -191,7 +191,6 @@ main() {
   debug "JDK path: $jdk_path"
 
   if try_acquire_runtime "$jdk_path"; then
-    export CAT_JAVA_HOME="$jdk_path"
     debug "JDK runtime ready, invoking Java dispatcher"
 
     # Invoke the GetSessionStartOutput Java dispatcher
