@@ -65,13 +65,11 @@ the session JSONL file (potentially megabytes of conversation history).
 ### 2. Extract Commit History
 
 ```bash
-cd "${WORKTREE}"
-
 # Get commits made by subagent (since branch creation)
-git log --oneline origin/HEAD..HEAD
+git -C "${WORKTREE}" log --oneline origin/HEAD..HEAD
 
 # Get detailed commit info
-git log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
+git -C "${WORKTREE}" log --format="%H %s" origin/HEAD..HEAD > /tmp/subagent-commits.txt
 ```
 
 ### 3. Parse Token Metrics
@@ -156,13 +154,11 @@ work.md handle_discovered_issues step). This skill only extracts them.
 ### 5. Read Subagent Work Products
 
 ```bash
-cd "${WORKTREE}"
-
 # List modified files
-git diff --name-only origin/HEAD..HEAD
+git -C "${WORKTREE}" diff --name-only origin/HEAD..HEAD
 
 # Get full diff for review
-git diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
+git -C "${WORKTREE}" diff origin/HEAD..HEAD > /tmp/subagent-changes.diff
 ```
 
 ### 6. Extract Subagent Status
@@ -269,13 +265,12 @@ subagents:
 
 ```bash
 # Ensure subagent branch is up to date
-cd "${WORKTREE}"
-git status
+git -C "${WORKTREE}" status
 
 # Note any uncommitted changes
-if [ -n "$(git status --porcelain)" ]; then
+if [ -n "$(git -C "${WORKTREE}" status --porcelain)" ]; then
   echo "WARNING: Uncommitted changes in subagent worktree"
-  git status --short
+  git -C "${WORKTREE}" status --short
 fi
 ```
 

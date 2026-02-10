@@ -44,10 +44,7 @@ git status && git log --oneline -3 && git diff --stat
 ### Use Absolute Paths
 
 ```bash
-# Instead of:
-cd /workspace/.claude/cat/worktrees/issue && git status
-
-# Use:
+# Use git -C to operate on worktrees without changing directory:
 git -C /workspace/.claude/cat/worktrees/issue status
 ```
 
