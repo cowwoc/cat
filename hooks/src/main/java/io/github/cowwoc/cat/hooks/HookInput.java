@@ -148,6 +148,36 @@ public final class HookInput
   }
 
   /**
+   * Get a boolean value from the input.
+   * <p>
+   * Accepts both JSON booleans ({@code true}/{@code false}) and JSON strings
+   * ({@code "true"}/{@code "false"}).
+   *
+   * @param key the key to look up
+   * @param defaultValue the default value if the key is not found
+   * @return the boolean value, or defaultValue if not found
+   * @throws IllegalArgumentException if the value exists but is not a boolean or a string representing a boolean
+   */
+  public boolean getBoolean(String key, boolean defaultValue)
+  {
+    JsonNode node = data.get(key);
+    if (node == null)
+      return defaultValue;
+    if (node.isBoolean())
+      return node.asBoolean();
+    if (node.isString())
+    {
+      String value = node.asString();
+      if (value.equals("true"))
+        return true;
+      if (value.equals("false"))
+        return false;
+      throw new IllegalArgumentException("Expected boolean for key \"" + key + "\", got string: \"" + value + "\"");
+    }
+    throw new IllegalArgumentException("Expected boolean for key \"" + key + "\", got: " + node.getNodeType());
+  }
+
+  /**
    * Get an object node from the input.
    *
    * @param key the key to look up
