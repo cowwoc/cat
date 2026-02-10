@@ -23,8 +23,10 @@ readonly JDK_SUBDIR="hooks"
 readonly DOWNLOAD_BASE_URL="https://github.com/cowwoc/cat/releases/download"
 readonly PLUGIN_VERSION="v2.1"
 
-# --- Debug logging ---
+# --- Logging ---
 
+LOG_LEVEL=""
+LOG_MESSAGE=""
 DEBUG_LINES=""
 
 debug() {
@@ -35,26 +37,37 @@ debug() {
   fi
 }
 
-# --- JSON output ---
+log() {
+  local level="$1" message="$2"
 
-log_json() {
-  local status="$1" message="$2" context="${3:-}"
+  # Accumulate message
+  if [[ -n "$LOG_MESSAGE" ]]; then
+    LOG_MESSAGE="${LOG_MESSAGE}\\n${message}"
+  else
+    LOG_MESSAGE="$message"
+  fi
 
-  # Append debug trace
+  # Escalate level: error > any other level
+  if [[ "$level" == "error" ]]; then
+    LOG_LEVEL="error"
+  elif [[ -z "$LOG_LEVEL" ]]; then
+    LOG_LEVEL="$level"
+  fi
+}
+
+flush_log() {
+  [[ -z "$LOG_MESSAGE" ]] && return 0
+
+  local context=""
   if [[ -n "$DEBUG_LINES" ]]; then
-    local debug_block="[session_start debug]\\n${DEBUG_LINES}"
-    if [[ -n "$context" ]]; then
-      context="${context}\\n\\n${debug_block}"
-    else
-      context="$debug_block"
-    fi
+    context="[session_start debug]\\n${DEBUG_LINES}"
   fi
 
   if [[ -n "$context" ]]; then
     cat <<EOF
 {
-  "status": "$status",
-  "message": "$message",
+  "status": "$LOG_LEVEL",
+  "message": "$LOG_MESSAGE",
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
     "additionalContext": "$context"
@@ -64,10 +77,14 @@ EOF
   else
     cat <<EOF
 {
-  "status": "$status",
-  "message": "$message"
+  "status": "$LOG_LEVEL",
+  "message": "$LOG_MESSAGE"
 }
 EOF
+  fi
+
+  if [[ "$LOG_LEVEL" == "error" ]]; then
+    exit 1
   fi
 }
 
@@ -190,8 +207,8 @@ main() {
   local archive_name="cat-jdk-25-${platform}.tar.gz"
   local download_url="${DOWNLOAD_BASE_URL}/${PLUGIN_VERSION}/${archive_name}"
   debug "All acquisition methods failed"
-  log_json "error" "Failed to download CAT hooks runtime from ${download_url}"
-  return 1
+  log "error" "Failed to download CAT hooks runtime from ${download_url}"
+  flush_log
 }
 
 main "$@"
