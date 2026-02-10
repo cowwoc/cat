@@ -6,6 +6,7 @@ import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -52,7 +53,30 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
     if (!isPluginFile(filePath))
       return FileWriteHandler.Result.allow();
 
-    String branch = GitCommands.getCurrentBranch();
+    String directory = findExistingAncestor(filePath);
+    String branch;
+    try
+    {
+      branch = GitCommands.getCurrentBranch(directory);
+    }
+    catch (IllegalArgumentException | IOException _)
+    {
+      String message =
+        "❌ BLOCKED: Cannot determine branch for plugin file.\n" +
+        "\n" +
+        "**Branch Detection Failed (M252)**\n" +
+        "\n" +
+        "File: " + filePath + "\n" +
+        "Directory: " + directory + "\n" +
+        "\n" +
+        "**Solution:** Use /cat:work to create proper worktree isolation.\n" +
+        "\n" +
+        "**Why this matters:**\n" +
+        "- Branch detection failed - cannot verify safety\n" +
+        "- Plugin files require worktree isolation\n" +
+        "- Use /cat:add and /cat:work for proper setup\n";
+      return FileWriteHandler.Result.block(message);
+    }
 
     if (isProtectedBranch(branch))
     {
@@ -85,7 +109,29 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
   }
 
   /**
+   * Find the first existing ancestor directory of a file path.
+   *
+   * @param filePath the file path to check
+   * @return the first existing ancestor directory, or the file path itself if none found
+   */
+  private static String findExistingAncestor(String filePath)
+  {
+    Path path = Paths.get(filePath);
+    Path current = path.getParent();
+    while (current != null)
+    {
+      if (current.toFile().isDirectory())
+        return current.toString();
+      current = current.getParent();
+    }
+    return filePath;
+  }
+
+  /**
    * Check if branch is protected (v2.1, main, v*.*).
+   * <p>
+   * Protected branches are: main, v2.1, and version branches (v1.0, v2.5, etc.).
+   * Task branches like v2.1-fix-bug are NOT protected.
    *
    * @param branch the branch name
    * @return true if protected, false otherwise
@@ -98,7 +144,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
     if (branch.equals("main") || branch.equals("v2.1"))
       return true;
 
-    return branch.startsWith("v") && branch.contains(".");
+    return branch.startsWith("v") && branch.contains(".") && !branch.contains("-");
   }
 
   /**

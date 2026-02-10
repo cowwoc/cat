@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -65,7 +66,15 @@ public final class VerifyCommitType implements BashHandler
       return Result.allow();
 
     // Get commit message
-    String commitMsg = GitCommands.getLatestCommitMessage();
+    String commitMsg;
+    try
+    {
+      commitMsg = GitCommands.getLatestCommitMessage();
+    }
+    catch (IOException _)
+    {
+      return Result.warn("Failed to retrieve latest commit message for type verification.");
+    }
     if (commitMsg.isEmpty())
       return Result.allow();
 
@@ -79,17 +88,31 @@ public final class VerifyCommitType implements BashHandler
     // Check for docs: used on Claude-facing files
     if (commitType.equals("docs"))
     {
-      Result result = checkDocsOnClaudeFacing();
-      if (result != null)
-        return result;
+      try
+      {
+        Result result = checkDocsOnClaudeFacing();
+        if (result != null)
+          return result;
+      }
+      catch (IOException _)
+      {
+        return Result.warn("Failed to retrieve commit files/hash for docs-on-Claude-facing check.");
+      }
     }
 
     // Check for config: used on source code
     if (commitType.equals("config"))
     {
-      Result result = checkConfigOnSourceCode();
-      if (result != null)
-        return result;
+      try
+      {
+        Result result = checkConfigOnSourceCode();
+        if (result != null)
+          return result;
+      }
+      catch (IOException _)
+      {
+        return Result.warn("Failed to retrieve commit files/hash for config-on-source-code check.");
+      }
     }
 
     return Result.allow();
@@ -99,8 +122,9 @@ public final class VerifyCommitType implements BashHandler
    * Checks if docs: commit type is used on Claude-facing files.
    *
    * @return a warning result if violation found, null otherwise
+   * @throws IOException if the git command fails
    */
-  private Result checkDocsOnClaudeFacing()
+  private Result checkDocsOnClaudeFacing() throws IOException
   {
     String commitFiles = GitCommands.getLatestCommitFiles();
     String commitHash = GitCommands.getLatestCommitHash();
@@ -129,8 +153,9 @@ public final class VerifyCommitType implements BashHandler
    * Checks if config: commit type is used on source code files.
    *
    * @return a warning result if violation found, null otherwise
+   * @throws IOException if the git command fails
    */
-  private Result checkConfigOnSourceCode()
+  private Result checkConfigOnSourceCode() throws IOException
   {
     String commitFiles = GitCommands.getLatestCommitFiles();
     String commitHash = GitCommands.getLatestCommitHash();

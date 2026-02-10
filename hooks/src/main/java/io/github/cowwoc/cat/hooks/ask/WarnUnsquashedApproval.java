@@ -40,9 +40,15 @@ public final class WarnUnsquashedApproval implements AskHandler
     if (!containsApprove(toolInputText))
       return Result.allow();
 
-    Path gitDir = GitCommands.getGitDir();
-    if (gitDir == null)
-      return Result.allow();
+    Path gitDir;
+    try
+    {
+      gitDir = GitCommands.getGitDir();
+    }
+    catch (IOException _)
+    {
+      return Result.withContext("Failed to determine git directory for unsquashed commit check.");
+    }
 
     Path catBaseFile = gitDir.resolve("cat-base");
     if (Files.exists(catBaseFile))

@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -115,10 +116,15 @@ public final class ValidateCommitType implements BashHandler
       // A007: Check for docs: used on Claude-facing files
       if (commitType.equals("docs"))
       {
-        Result result = checkClaudeFacingFiles();
-        if (result != null)
+        try
         {
-          return result;
+          Result result = checkClaudeFacingFiles();
+          if (result != null)
+            return result;
+        }
+        catch (IOException _)
+        {
+          return Result.warn("Failed to retrieve staged files for Claude-facing file check.");
         }
       }
     }
@@ -175,8 +181,9 @@ public final class ValidateCommitType implements BashHandler
    * Checks if staged files include Claude-facing files that shouldn't use docs: commit type.
    *
    * @return a block result if Claude-facing files found, null otherwise
+   * @throws IOException if the git command fails
    */
-  private Result checkClaudeFacingFiles()
+  private Result checkClaudeFacingFiles() throws IOException
   {
     List<String> stagedFiles = GitCommands.getStagedFiles();
     if (stagedFiles.isEmpty())

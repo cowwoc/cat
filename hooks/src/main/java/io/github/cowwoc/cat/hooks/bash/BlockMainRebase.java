@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +53,13 @@ public final class BlockMainRebase implements BashHandler
 
     // Check if rebasing on main
     String currentBranch = getCurrentBranch(command);
+    if (currentBranch == null)
+    {
+      return Result.warn(
+        "⚠️ Branch detection failed while checking rebase safety.\n" +
+        "Cannot determine if rebasing on a protected branch.\n" +
+        "Proceeding without rebase branch check.");
+    }
     if (currentBranch.equals("main"))
     {
       return Result.block("""
@@ -108,14 +116,28 @@ public final class BlockMainRebase implements BashHandler
 
     // Check if currently in /workspace (main worktree)
     String cwd = System.getProperty("user.dir");
-    if ("/workspace".equals(cwd) && GitCommands.isMainWorktree())
+    if ("/workspace".equals(cwd))
     {
-      String target = extractCheckoutTarget(command);
-      if (!isCheckoutFlag(target))
+      boolean mainWorktree;
+      try
       {
-        return Result.block(String.format(
-          "Blocked (M205): Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
-          target));
+        mainWorktree = GitCommands.isMainWorktree();
+      }
+      catch (IOException _)
+      {
+        return Result.warn(
+          "Failed to determine if this is the main worktree while checking checkout safety.\n" +
+          "Proceeding without main worktree check.");
+      }
+      if (mainWorktree)
+      {
+        String target = extractCheckoutTarget(command);
+        if (!isCheckoutFlag(target))
+        {
+          return Result.block(String.format(
+            "Blocked (M205): Cannot checkout '%s' in main worktree. Use issue worktrees instead.",
+            target));
+        }
       }
     }
 
@@ -151,29 +173,37 @@ public final class BlockMainRebase implements BashHandler
    * Determines the current branch for the command's target directory.
    *
    * @param command the bash command (may contain cd to another directory)
-   * @return the branch name, or empty string if unavailable
+   * @return the branch name, or {@code null} if branch detection failed
    */
   private String getCurrentBranch(String command)
   {
     // Check if command cd's to /workspace
     if (CD_WORKSPACE_PATTERN.matcher(command).find())
-    {
       return "main";
-    }
 
     // Check if command cd's elsewhere
     Matcher cdMatcher = CD_TARGET_PATTERN.matcher(command);
     if (cdMatcher.find())
     {
       String targetDir = cdMatcher.group(1).trim();
-      String branch = GitCommands.getCurrentBranch(targetDir);
-      if (!branch.isEmpty())
+      try
       {
-        return branch;
+        return GitCommands.getCurrentBranch(targetDir);
+      }
+      catch (IllegalArgumentException | IOException _)
+      {
+        return null;
       }
     }
 
     // Fallback to current directory
-    return GitCommands.getCurrentBranch();
+    try
+    {
+      return GitCommands.getCurrentBranch();
+    }
+    catch (IOException _)
+    {
+      return null;
+    }
   }
 }
