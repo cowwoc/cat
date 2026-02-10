@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- fix-aotcache-appcds-conflict
 - optimize-hook-json-parser
 - fix-work-prepare-wrong-task
 - remove-cat-java-home
