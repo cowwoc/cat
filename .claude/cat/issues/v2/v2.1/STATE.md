@@ -122,6 +122,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- fix-work-prepare-wrong-task
 - remove-cat-java-home
 - fix-multirelease-jar-detection
 - recover-from-drift
