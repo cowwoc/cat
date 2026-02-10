@@ -202,9 +202,11 @@ git merge "${SUBAGENT_BRANCH}" -m "Inherit partial progress from decomposed pare
 
 ### 8. Generate Parallel Execution Plan
 
-**MANDATORY: Analyze dependencies and create sub-issue-based execution plan.**
+**MANDATORY: Analyze dependencies and create wave-based execution plan.**
 
-After decomposition, determine which sub-issues can run concurrently:
+After decomposition, determine which sub-issues can run concurrently and organize them into waves. A wave is a
+dependency-ordered group of sub-issues that can execute in parallel. All sub-issues in Wave N must complete before any
+sub-issue in Wave N+1 can begin.
 
 ```yaml
 # Dependency analysis
@@ -219,27 +221,27 @@ sub-issues:
     dependencies: []
     estimated_tokens: 20000
 
-# Sub-issue-based parallel plan
+# Wave-based parallel plan
 parallel_execution_plan:
-  sub_issue_1:
+  wave_1:
     # Issues with no dependencies - can run concurrently
     issues: [1.2a-parser-lexer, 1.2c-parser-tests]
     max_concurrent: 2
     reason: "Both have no dependencies, can execute in parallel"
 
-  sub_issue_2:
-    # Issues that depend on sub_issue_1 completion
+  wave_2:
+    # Issues that depend on wave_1 completion
     issues: [1.2b-parser-ast]
-    depends_on: [sub_issue_1]
-    reason: "Depends on 1.2a-parser-lexer from sub_issue_1"
+    depends_on: [wave_1]
+    reason: "Depends on 1.2a-parser-lexer from wave_1"
 
 execution_order:
-  1. Spawn subagents for sub_issue_1 issues (parallel)
-  2. Monitor and collect sub_issue_1 results
-  3. Merge sub_issue_1 branches
-  4. Spawn subagents for sub_issue_2 issues (parallel)
-  5. Monitor and collect sub_issue_2 results
-  6. Merge sub_issue_2 branches
+  1. Spawn subagents for wave_1 issues (parallel)
+  2. Monitor and collect wave_1 results
+  3. Merge wave_1 branches
+  4. Spawn subagents for wave_2 issues (parallel)
+  5. Monitor and collect wave_2 results
+  6. Merge wave_2 branches
 ```
 
 **Output parallel plan to STATE.md:**
@@ -247,24 +249,24 @@ execution_order:
 ```markdown
 ## Parallel Execution Plan
 
-### Sub-issue 1 (Concurrent)
+### Wave 1 (Concurrent)
 | Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2a-parser-lexer | 25K | None |
 | 1.2c-parser-tests | 20K | None |
 
-### Sub-issue 2 (After Sub-issue 1)
+### Wave 2 (After Wave 1)
 | Issue | Est. Tokens | Dependencies |
 |------|-------------|--------------|
 | 1.2b-parser-ast | 30K | 1.2a-parser-lexer |
 
-**Total sub-issues:** 2
-**Max concurrent subagents:** 2
+**Total sub-issues:** 3
+**Max concurrent subagents:** 2 (in wave 1)
 ```
 
 **Conflict detection for parallel issues:**
 
-Ensure no parallel issues modify the same files:
+Ensure no parallel issues within the same wave modify the same files:
 
 ```yaml
 conflict_check:
@@ -273,11 +275,11 @@ conflict_check:
   task_2: 1.2c-parser-tests
     files: [test/parser/ParserIntegrationTest.java]
 
-  overlap: []  # No conflicts - safe to parallelize
+  overlap: []  # No conflicts - safe to parallelize in same wave
 
   # If overlap exists:
   conflict_resolution:
-    move_conflicting_task_to_next_sub_issue: true
+    move_conflicting_task_to_next_wave: true
 ```
 
 ### 9. Update Original Issue for Decomposition
@@ -291,7 +293,7 @@ conflict_check:
 echo "---
 decomposed: true
 decomposed_into: [1.2a, 1.2b, 1.2c]
-parallel_plan: sub_issue_1=[1.2a, 1.2c], sub_issue_2=[1.2b]
+parallel_plan: wave_1=[1.2a, 1.2c], wave_2=[1.2b]
 ---" >> "${TASK_DIR}/PLAN.md"
 
 # Update STATE.md - status stays in-progress, add Decomposed field
