@@ -63,23 +63,35 @@ Use these values: TRUST, VERIFY, AUTO_REMOVE.
 
 Execute the deterministic preparation script directly (no subagent needed).
 
-**Convert filter to glob pattern (if ARGUMENTS contains a filter):**
+**Parse ARGUMENTS to determine routing:**
 
-If ARGUMENTS contains natural language like "skip compression" or "only migration":
-- "skip X" → `--exclude-pattern "X*"` or `--exclude-pattern "*X*"`
-- "only X" → filter result in memory after script returns (script doesn't support inclusion patterns)
+Check ARGUMENTS for task ID patterns or filters, then route accordingly:
+
+```bash
+ISSUE_ID_ARG=""
+EXCLUDE_ARG=""
+
+# Task ID format: VERSION[-SUFFIX] where VERSION is "N.N" (e.g., 2.1, 2.1-fix-work)
+# Suffix allows letters, numbers, dashes, underscores
+if [[ "${ARGUMENTS}" =~ ^[0-9]+\.[0-9]+(-[a-zA-Z0-9_-]+)?$ ]]; then
+  ISSUE_ID_ARG="--issue-id ${ARGUMENTS}"
+# Otherwise check for filter patterns like "skip compression" or "only migration"
+elif [[ -n "${ARGUMENTS}" ]]; then
+  # "skip X" → --exclude-pattern "X*" or "*X*"
+  # "only X" → filter result in memory after script returns (script doesn't support inclusion patterns)
+  # Example: if ARGUMENTS="skip compression", then EXCLUDE_ARG="--exclude-pattern compress*"
+  :  # Set EXCLUDE_ARG based on filter parsing (existing behavior)
+fi
+```
 
 **Call the prepare script:**
 
 ```bash
-EXCLUDE_ARG=""
-# If ARGUMENTS contains exclusion pattern, set EXCLUDE_ARG
-# Example: if ARGUMENTS="skip compression", then EXCLUDE_ARG="--exclude-pattern compress*"
-
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py" \
   --session-id "${CLAUDE_SESSION_ID}" \
   --project-dir "${CLAUDE_PROJECT_DIR}" \
   --trust-level "${TRUST}" \
+  ${ISSUE_ID_ARG} \
   ${EXCLUDE_ARG}
 ```
 
