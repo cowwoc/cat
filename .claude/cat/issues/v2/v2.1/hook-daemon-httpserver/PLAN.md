@@ -3,7 +3,7 @@
 ## Goal
 Replace per-invocation JVM startup with a long-running daemon process that uses JDK's built-in `jdk.httpserver`
 (`com.sun.net.httpserver.HttpServer`). hook.sh becomes a thin bash `/dev/tcp` client, reducing hook latency from ~8ms
-(AOT cold start) to ~2ms (HTTP round-trip on localhost).
+(AOT cold start) to ~4ms (bash spawn + HTTP round-trip on localhost).
 
 ## Satisfies
 Parent: optimize-hook-json-parser (eliminates startup overhead entirely, making jackson-databind optimization moot)
@@ -33,16 +33,16 @@ Parent: optimize-hook-json-parser (eliminates startup overhead entirely, making 
 - Response body: handler output JSON
 
 ### Client Selection (Benchmark Results)
-| Client | Latency | Notes |
-|--------|---------|-------|
-| Java-to-Java TCP | ~245µs | Theoretical best (in-process) |
-| C compiled | ~466µs | Requires binary distribution |
-| bash `/dev/tcp` | ~1.7-2.1ms | **Selected** — zero dependencies, acceptable latency |
-| curl | ~11.5ms | Too slow (process spawn overhead) |
-| Python | ~13-60ms | Too slow (interpreter startup + import) |
+| Client | IPC only | + Process spawn | Notes |
+|--------|----------|-----------------|-------|
+| Java-to-Java TCP | ~245µs | N/A (in-process) | Theoretical best, not usable as hook client |
+| C compiled | ~466µs | ~2-3ms | Requires binary distribution per platform |
+| bash `/dev/tcp` | ~1.8ms | **~4ms** | **Selected** — zero dependencies |
+| curl | ~1ms | ~11.5ms | Process spawn dominates |
+| Python (urllib) | ~1ms | ~50-60ms | Interpreter + import startup |
 
 ### Performance Target
-- Connection + request + response: <2ms median on localhost (bash `/dev/tcp`)
+- End-to-end per hook invocation: ~4ms (bash spawn + `/dev/tcp` + HTTP round-trip)
 - Daemon startup: <500ms (one-time cost at session start)
 - Memory: ~30-50MB resident
 
@@ -77,5 +77,5 @@ Parent: optimize-hook-json-parser (eliminates startup overhead entirely, making 
 ## Success Criteria
 - [ ] `mvn -f hooks/pom.xml verify` exits 0
 - [ ] Daemon handles all existing hook types correctly
-- [ ] Latency benchmark shows <2ms median round-trip (bash `/dev/tcp` client)
+- [ ] Latency benchmark shows <5ms end-to-end per hook invocation (bash spawn + `/dev/tcp`)
 - [ ] Cold-start fallback works when daemon is unavailable
