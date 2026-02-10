@@ -43,6 +43,9 @@ readonly -a HANDLERS=(
   "write-edit-pretool:GetWriteEditPretoolOutput"
   "task-pretool:GetTaskPretoolOutput"
   "get-session-end-output:GetSessionEndOutput"
+  "get-checkpoint-box:skills.GetCheckpointOutput"
+  "get-issue-complete-box:skills.GetIssueCompleteOutput"
+  "get-next-task-box:skills.GetNextTaskOutput"
 )
 
 # --- Logging ---

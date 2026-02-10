@@ -165,6 +165,50 @@ else
 String command = commandNode != null ? commandNode.asString() : "";
 ```
 
+### Switch Over Chained If-Else
+When comparing the same variable against 3 or more constant values, use a `switch` statement instead of chained
+if-else:
+
+```java
+// Good - switch for 3+ comparisons on same variable
+switch (type)
+{
+  case "issue-complete" ->
+  {
+    processIssueComplete();
+  }
+  case "feedback-applied" ->
+  {
+    processFeedbackApplied();
+  }
+  default ->
+  {
+    System.err.println("Invalid type: " + type);
+    System.exit(1);
+  }
+}
+
+// Avoid - chained if-else on same variable
+if (type.equals("issue-complete"))
+{
+  processIssueComplete();
+}
+else if (type.equals("feedback-applied"))
+{
+  processFeedbackApplied();
+}
+else
+{
+  System.err.println("Invalid type: " + type);
+  System.exit(1);
+}
+```
+
+**When if-else is still appropriate:**
+- 2 or fewer branches (simple if/else)
+- Conditions involve different variables or complex expressions
+- Conditions are range-based (`x > 10`) rather than equality-based
+
 ### Early Returns (No Else After Return)
 Do not use `else` after a conditional that always returns or throws:
 
