@@ -68,6 +68,7 @@ flush_log() {
 {
   "status": "$LOG_LEVEL",
   "message": "$LOG_MESSAGE",
+  "systemMessage": "$LOG_MESSAGE",
   "hookSpecificOutput": {
     "hookEventName": "SessionStart",
     "additionalContext": "$context"
@@ -78,7 +79,8 @@ EOF
     cat <<EOF
 {
   "status": "$LOG_LEVEL",
-  "message": "$LOG_MESSAGE"
+  "message": "$LOG_MESSAGE",
+  "systemMessage": "$LOG_MESSAGE"
 }
 EOF
   fi
