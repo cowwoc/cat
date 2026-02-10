@@ -4,6 +4,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
+import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 
@@ -31,10 +32,11 @@ import java.util.List;
 public final class GetWriteEditPretoolOutput implements HookHandler
 {
   // Handlers are checked in order. WarnBaseBranchEdit warns first (non-blocking),
-  // then EnforcePluginFileIsolation blocks if needed. This ensures warnings are
-  // emitted even when plugin file isolation would block the edit.
+  // then blocking handlers (ValidateStateMdFormat, EnforcePluginFileIsolation) run.
+  // This ensures warnings are emitted even when validation would block the edit.
   private static final List<FileWriteHandler> DEFAULT_HANDLERS = List.of(
     new WarnBaseBranchEdit(),
+    new ValidateStateMdFormat(),
     new EnforcePluginFileIsolation());
   private final List<FileWriteHandler> handlers;
 
