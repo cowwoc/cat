@@ -9,7 +9,19 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 /**
  * Output generator for /cat:init skill.
  *
- * Generates init boxes using DisplayUtils.
+ * Generates the sequence of formatted terminal boxes that guide users through the CAT initialization
+ * wizard. Each box provides clear instructions and feedback as users configure their preferences and
+ * set up their first project issue.
+ *
+ * Boxes generated:
+ * - Default gates configuration
+ * - Research skipped notice
+ * - Choose your partner (model selection)
+ * - CAT initialized confirmation
+ * - First issue walkthrough
+ * - First issue created confirmation
+ * - All set summary
+ * - Explore at your own pace
  */
 public final class GetInitOutput
 {
