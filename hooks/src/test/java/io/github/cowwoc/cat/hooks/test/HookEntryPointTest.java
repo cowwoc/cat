@@ -22,15 +22,20 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -1034,17 +1039,26 @@ public class HookEntryPointTest
   /**
    * Verifies that WarnBaseBranchEdit warns on base branch for non-allowed files.
    * <p>
-   * We're on v2.1 (a base branch). WarnBaseBranchEdit should warn when editing
-   * a source file that's not in the allowed patterns list.
+   * Creates a temp git repo on branch 'main' and uses a file path within it
+   * so that branch detection derives from the file path, not the process CWD.
    */
   @Test
   public void warnBaseBranchEditWarnsOnBaseBranch() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/hooks/src/main/java/SomeNewFile.java\"}");
-    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").contains("BASE BRANCH EDIT DETECTED");
+    Path tempDir = createTempGitRepo("main");
+    try
+    {
+      String filePath = tempDir.resolve("hooks/src/main/java/SomeNewFile.java").toString();
+      JsonNode toolInput = JsonMapper.builder().build().readTree(
+        "{\"file_path\": \"" + filePath.replace("\\", "\\\\") + "\"}");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").contains("BASE BRANCH EDIT DETECTED");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -1445,5 +1459,108 @@ public class HookEntryPointTest
       "{\"file_path\": \"/workspace/docs/STATE.md\", \"content\": \"Random content\"}");
     FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
     requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Creates a temporary git repository with the specified branch.
+   *
+   * @param branchName the branch name to create
+   * @return the path to the created git repository
+   * @throws IOException if repository creation fails
+   */
+  private Path createTempGitRepo(String branchName) throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("git-test-");
+
+    runGitCommand(tempDir, "init");
+    runGitCommand(tempDir, "config", "user.email", "test@example.com");
+    runGitCommand(tempDir, "config", "user.name", "Test User");
+
+    Files.writeString(tempDir.resolve("README.md"), "test");
+    runGitCommand(tempDir, "add", "README.md");
+    runGitCommand(tempDir, "commit", "-m", "Initial commit");
+
+    if (!branchName.equals("master") && !branchName.equals("main"))
+    {
+      runGitCommand(tempDir, "checkout", "-b", branchName);
+    }
+    if (branchName.equals("main") && !getCurrentBranchName(tempDir).equals("main"))
+    {
+      runGitCommand(tempDir, "branch", "-m", "main");
+    }
+
+    return tempDir;
+  }
+
+  /**
+   * Runs a git command in the specified directory.
+   *
+   * @param directory the directory to run the command in
+   * @param args the git command arguments
+   */
+  private void runGitCommand(Path directory, String... args)
+  {
+    try
+    {
+      String[] command = new String[args.length + 3];
+      command[0] = "git";
+      command[1] = "-C";
+      command[2] = directory.toString();
+      System.arraycopy(args, 0, command, 3, args.length);
+
+      ProcessBuilder pb = new ProcessBuilder(command);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          line = reader.readLine();
+        }
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        throw new IOException("Git command failed with exit code " + exitCode);
+    }
+    catch (IOException | InterruptedException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+  }
+
+  /**
+   * Gets the current branch name for a directory.
+   *
+   * @param directory the directory to check
+   * @return the branch name
+   */
+  private String getCurrentBranchName(Path directory)
+  {
+    try
+    {
+      ProcessBuilder pb = new ProcessBuilder("git", "-C", directory.toString(), "branch", "--show-current");
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      String branch;
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        branch = reader.readLine();
+      }
+
+      process.waitFor();
+      if (branch != null)
+        return branch.trim();
+      return "";
+    }
+    catch (IOException | InterruptedException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
   }
 }

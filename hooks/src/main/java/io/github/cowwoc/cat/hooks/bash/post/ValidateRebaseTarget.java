@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,10 +48,22 @@ public final class ValidateRebaseTarget implements BashHandler
       return Result.allow();
 
     // Get local and remote commits
-    String localCommit = GitCommands.getCommitHash(remoteBranch);
-    String remoteCommit = GitCommands.getCommitHash("origin/" + remoteBranch);
+    String localCommit;
+    String remoteCommit;
+    try
+    {
+      localCommit = GitCommands.getCommitHash(remoteBranch);
+      remoteCommit = GitCommands.getCommitHash("origin/" + remoteBranch);
+    }
+    catch (IOException _)
+    {
+      return Result.warn(
+        "⚠️ Branch detection failed while validating rebase target: origin/" + remoteBranch + "\n" +
+        "Cannot compare local vs remote commit hashes.\n" +
+        "Proceeding without rebase target validation.");
+    }
 
-    if (!localCommit.isEmpty() && !remoteCommit.isEmpty() && !localCommit.equals(remoteCommit))
+    if (!localCommit.equals(remoteCommit))
     {
       return Result.warn(String.format("""
 
@@ -96,8 +109,15 @@ public final class ValidateRebaseTarget implements BashHandler
   private boolean localBranchExists(String branchName)
   {
     // If we can get its commit hash, it exists
-    String hash = GitCommands.getCommitHash(branchName);
-    return !hash.isEmpty();
+    try
+    {
+      GitCommands.getCommitHash(branchName);
+      return true;
+    }
+    catch (IOException _)
+    {
+      return false;
+    }
   }
 
   /**
