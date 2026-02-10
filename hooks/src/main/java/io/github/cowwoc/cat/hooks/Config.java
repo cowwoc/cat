@@ -161,19 +161,30 @@ public final class Config
 
   /**
    * Get a boolean configuration value.
+   * <p>
+   * Accepts both {@code Boolean} values and strings ({@code "true"}/{@code "false"}).
    *
    * @param key the configuration key
    * @param defaultValue the default value if key not found
    * @return the value as a boolean, or defaultValue if not found
+   * @throws IllegalArgumentException if the value exists but is not a boolean or a string representing a boolean
    */
   public boolean getBoolean(String key, boolean defaultValue)
   {
     Object value = values.get(key);
-    if (value instanceof Boolean b)
-      return b;
-    if (value instanceof String s)
-      return Boolean.parseBoolean(s);
-    return defaultValue;
+    if (value == null)
+      return defaultValue;
+    return switch (value)
+    {
+      case Boolean b -> b;
+      case String s when s.equals("true") -> true;
+      case String s when s.equals("false") -> false;
+      case String s ->
+        throw new IllegalArgumentException("Expected boolean for key \"" + key + "\", got string: \"" + s + "\"");
+      default ->
+        throw new IllegalArgumentException("Expected boolean for key \"" + key + "\", got: " +
+          value.getClass().getSimpleName());
+    };
   }
 
   /**
