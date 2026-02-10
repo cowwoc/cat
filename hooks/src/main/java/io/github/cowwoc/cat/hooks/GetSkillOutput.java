@@ -4,6 +4,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.prompt.CriticalThinking;
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
+import io.github.cowwoc.cat.hooks.prompt.DetectGivingUp;
 import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public final class GetSkillOutput implements HookHandler
   private static final List<PromptHandler> HANDLERS = List.of(
       new CriticalThinking(),
       new DestructiveOps(),
+      new DetectGivingUp(),
       new UserIssues());
 
   /**

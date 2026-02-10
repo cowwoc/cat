@@ -802,6 +802,41 @@ user's permission to update the API to make it testable. For example, add a meth
 `InputStream` parameter instead of reading from `System.in` directly. The `main()` method can delegate to the testable
 overload.
 
+### No Thread.sleep() in Tests
+Avoid using `Thread.sleep()` in tests. There should always be a way to trigger the desired event/condition without
+sleeping:
+
+```java
+// Good - inject Clock to control time
+@Test
+public void rateLimitExpires() throws IOException
+{
+  Instant baseTime = Instant.parse("2025-01-01T00:00:00Z");
+  Clock clock1 = Clock.fixed(baseTime, ZoneOffset.UTC);
+  Clock clock2 = Clock.fixed(baseTime.plusSeconds(2), ZoneOffset.UTC);
+
+  DetectGivingUp handler1 = new DetectGivingUp(clock1);
+  handler1.check(prompt, sessionId);
+
+  DetectGivingUp handler2 = new DetectGivingUp(clock2);
+  handler2.check(prompt, sessionId);  // Time has "passed"
+}
+
+// Avoid - sleeping slows tests and introduces flakiness
+@Test
+public void rateLimitExpires() throws InterruptedException
+{
+  handler.check(prompt, sessionId);
+  Thread.sleep(1100);  // Don't do this
+  handler.check(prompt, sessionId);
+}
+```
+
+**Why:**
+- `Thread.sleep()` makes tests slow and flaky
+- Time-dependent code should accept a `Clock` parameter for testability
+- Fixed clocks make tests deterministic and fast
+
 ## Build Commands
 
 ```bash
