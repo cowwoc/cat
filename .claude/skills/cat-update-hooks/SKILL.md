@@ -16,8 +16,8 @@ into the plugin cache.
 mvn -f /workspace/hooks/pom.xml verify
 ```
 
-This builds the hooks JAR, patches automatic modules, creates the jlink image with launchers, and generates the AppCDS
-archive. If the build fails, stop and report the error.
+This builds the hooks JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
+If the build fails, stop and report the error.
 
 ### 2. Install jlink Runtime Image to Plugin Cache
 
