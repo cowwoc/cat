@@ -6,6 +6,7 @@ import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -98,7 +99,19 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
         return FileWriteHandler.Result.allow();
     }
 
-    String currentBranch = GitCommands.getCurrentBranch();
+    String directory = findExistingAncestor(filePath);
+    String currentBranch;
+    try
+    {
+      currentBranch = GitCommands.getCurrentBranch(directory);
+    }
+    catch (IllegalArgumentException | IOException _)
+    {
+      return FileWriteHandler.Result.warn(
+        "⚠️ Branch detection failed for: " + filePath + "\n" +
+        "Cannot determine if editing on a base branch.\n" +
+        "Proceeding without base branch check.");
+    }
 
     if (isBaseBranch(currentBranch))
     {
@@ -120,7 +133,18 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
       return FileWriteHandler.Result.warn(warning);
     }
 
-    boolean inTaskWorktree = isInTaskWorktree();
+    boolean inTaskWorktree;
+    try
+    {
+      inTaskWorktree = isInTaskWorktree();
+    }
+    catch (IOException _)
+    {
+      return FileWriteHandler.Result.warn(
+        "Failed to determine if in a task worktree for: " + filePath + "\n" +
+        "Cannot verify worktree isolation.\n" +
+        "Proceeding without worktree check.");
+    }
     if (inTaskWorktree && filePath.startsWith("/workspace/"))
     {
       String cwd = System.getProperty("user.dir");
@@ -166,15 +190,33 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
   }
 
   /**
+   * Find the first existing ancestor directory of a file path.
+   *
+   * @param filePath the file path to check
+   * @return the first existing ancestor directory, or the file path itself if none found
+   */
+  private static String findExistingAncestor(String filePath)
+  {
+    Path path = Paths.get(filePath);
+    Path current = path.getParent();
+    while (current != null)
+    {
+      if (current.toFile().isDirectory())
+        return current.toString();
+      current = current.getParent();
+    }
+    return filePath;
+  }
+
+  /**
    * Check if we're in a task worktree.
    *
    * @return true if in a task worktree
+   * @throws IOException if the git command fails
    */
-  private static boolean isInTaskWorktree()
+  private static boolean isInTaskWorktree() throws IOException
   {
     Path gitDir = GitCommands.getGitDir();
-    if (gitDir == null)
-      return false;
     Path catBaseFile = gitDir.resolve("cat-base");
     return Files.exists(catBaseFile);
   }

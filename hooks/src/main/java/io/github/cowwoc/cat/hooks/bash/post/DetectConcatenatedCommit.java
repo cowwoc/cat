@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import tools.jackson.databind.JsonNode;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +39,15 @@ public final class DetectConcatenatedCommit implements BashHandler
       return Result.allow();
 
     // Get the most recent commit message
-    String commitMsg = GitCommands.getLatestCommitMessage();
+    String commitMsg;
+    try
+    {
+      commitMsg = GitCommands.getLatestCommitMessage();
+    }
+    catch (IOException _)
+    {
+      return Result.warn("Failed to retrieve latest commit message for concatenation check.");
+    }
     if (commitMsg.isEmpty())
       return Result.allow();
 
@@ -47,7 +56,15 @@ public final class DetectConcatenatedCommit implements BashHandler
 
     if (coAuthoredCount > 1)
     {
-      String commitHash = GitCommands.getLatestCommitHash();
+      String commitHash;
+      try
+      {
+        commitHash = GitCommands.getLatestCommitHash();
+      }
+      catch (IOException _)
+      {
+        commitHash = "unknown";
+      }
       return Result.warn(String.format("""
 
         CONCATENATED COMMIT MESSAGE DETECTED
