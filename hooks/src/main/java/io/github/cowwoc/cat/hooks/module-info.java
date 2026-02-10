@@ -5,6 +5,7 @@ module io.github.cowwoc.cat.hooks
   requires io.github.cowwoc.pouch10.core;
   requires jtokkit;
   requires java.net.http;
+  requires org.slf4j;
 
   exports io.github.cowwoc.cat.hooks;
   exports io.github.cowwoc.cat.hooks.ask;
