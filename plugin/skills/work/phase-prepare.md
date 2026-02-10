@@ -391,9 +391,8 @@ git worktree add "$WORKTREE_PATH" "$ISSUE_BRANCH" 2>/dev/null || \
 # Store base branch in worktree metadata (auto-deleted when worktree removed)
 echo "$BASE_BRANCH" > "$(git rev-parse --git-common-dir)/worktrees/$ISSUE_BRANCH/cat-base"
 
-# MANDATORY: Change to worktree directory
-cd "$WORKTREE_PATH"
-pwd  # Verify we're in the worktree
+# Verify worktree created successfully
+git -C "$WORKTREE_PATH" status
 ```
 
 **Base Branch Configuration:**
@@ -401,14 +400,14 @@ pwd  # Verify we're in the worktree
 The base branch is stored in the worktree's metadata directory at `.git/worktrees/<task>/cat-base`.
 This file is automatically deleted when the worktree is removed.
 
-**CRITICAL: Main agent MUST work from worktree directory**
+**CRITICAL: All operations must use worktree path**
 
-After creating the worktree, `cd` into it and stay there for the remainder of task execution.
+Use `git -C "$WORKTREE_PATH"` or absolute paths for all operations on the worktree. Never cd into
+worktree directories, as this corrupts shell state when the worktree is later removed (M392, M464).
 
-**Update task STATE.md (AFTER cd into worktree - M326):**
+**Update task STATE.md:**
 
-Set status to `in-progress` and record start time. This update MUST happen after `cd` into the
-worktree, not in the main workspace. Updating STATE.md before entering the worktree causes merge
-conflicts later.
+Set status to `in-progress` and record start time. Use absolute paths to the STATE.md file in the
+worktree to avoid workspace isolation issues.
 
 </step>

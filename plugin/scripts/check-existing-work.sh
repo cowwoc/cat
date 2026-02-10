@@ -53,18 +53,18 @@ fi
 # CHECK FOR EXISTING WORK
 # =============================================================================
 
-# Change to worktree directory
-if ! cd "$WORKTREE_PATH" 2>/dev/null; then
+# Verify worktree exists
+if [[ ! -d "$WORKTREE_PATH" ]]; then
     echo '{"error":"Cannot access worktree: '"$WORKTREE_PATH"'"}' >&2
     exit 1
 fi
 
 # Count commits ahead of base branch
-COMMIT_COUNT=$(git rev-list --count "${BASE_BRANCH}..HEAD" 2>/dev/null || echo "0")
+COMMIT_COUNT=$(git -C "$WORKTREE_PATH" rev-list --count "${BASE_BRANCH}..HEAD" 2>/dev/null || echo "0")
 
 if [[ "$COMMIT_COUNT" -gt 0 ]]; then
     # Get commit summary (first 5 commits, one line each)
-    COMMIT_SUMMARY=$(git log --oneline "${BASE_BRANCH}..HEAD" -5 2>/dev/null | head -5 | tr '\n' '|' | sed 's/|$//')
+    COMMIT_SUMMARY=$(git -C "$WORKTREE_PATH" log --oneline "${BASE_BRANCH}..HEAD" -5 2>/dev/null | head -5 | tr '\n' '|' | sed 's/|$//')
 
     # Output JSON
     cat <<EOF
