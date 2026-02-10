@@ -41,7 +41,7 @@ run_handler() {
 
   local java_bin
   java_bin=$(find_java) || {
-    echo '{"status":"error","message":"CAT jlink runtime not found. Run session_start.sh to install."}' >&2
+    echo '{"status":"error","message":"CAT jlink runtime not found. Run session-start.sh to install."}' >&2
     return 1
   }
 

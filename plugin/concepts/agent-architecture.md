@@ -406,29 +406,39 @@ When user says "[ambiguous term]", ask:
 
 ### Environment Variable Availability (M359, M471)
 
-**CRITICAL: Environment variables like CLAUDE_PLUGIN_ROOT, CLAUDE_PROJECT_DIR, and CLAUDE_SESSION_ID are NOT available in Bash tool calls.**
+Environment variable availability depends on the execution context. Understanding these distinctions prevents common
+path resolution failures.
 
-| Context | Variables Available? | Why |
-|---------|---------------------|-----|
-| Skill preprocessing (`!` lines) | ✅ YES | Set by plugin system before substitution |
-| Bash tool calls | ❌ NO | Plugin env vars not exported to agent's shell |
-| Hook scripts | ✅ YES | Plugin system provides them |
+| Context | CLAUDE_PLUGIN_ROOT | CLAUDE_SESSION_ID | CLAUDE_PROJECT_DIR |
+|---------|-------------------|-------------------|-------------------|
+| Skill preprocessing (`!` subprocess) | String-substituted | String-substituted | ❌ NOT available |
+| Bash tool calls (agent shell) | ✅ Via CLAUDE_ENV_FILE | ✅ Via CLAUDE_ENV_FILE | ✅ Via CLAUDE_ENV_FILE |
+| Hook scripts | ✅ Env var | ✅ Env var | ✅ Env var |
 
-**Common mistake pattern:**
+**Context details:**
 
-```bash
-# ❌ WRONG: This fails in Bash tool - variables are empty
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py"
-# Resolves to: python3 "/scripts/work-prepare.py" → file not found
+1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs load-skill.sh, which processes handler.sh
+   output AND content.md through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are string-substituted.
+   CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When content.md contains
+   `${CLAUDE_PROJECT_DIR}` in code blocks, it passes through as literal text — it resolves later because Claude copies
+   those code blocks into Bash tool calls where the variable IS available via CLAUDE_ENV_FILE.
 
-# ✅ CORRECT: Use literal path or self-discovery
-python3 /home/node/.config/claude/plugins/cache/cat/cat/2.1/scripts/work-prepare.py
-```
+2. **Bash tool calls (agent shell)**: All three variables are available because InjectEnv (Java SessionStart handler)
+   persists them to CLAUDE_ENV_FILE, which is sourced before each Bash command.
 
-**When writing skill documentation:**
-- Bash command examples MUST use literal paths, not `${CLAUDE_*}` variables
-- If a variable appears in skill content, add note: "This path is shown with variables for clarity. In actual Bash commands, use literal paths."
-- Better: Show the actual command the agent should run
+3. **Hook scripts**: All variables provided as environment variables by the plugin system.
+
+**CLAUDE_ENV_FILE injection chain:**
+- Claude Code provides `CLAUDE_ENV_FILE` path and `CLAUDE_PROJECT_DIR` to SessionStart hooks
+- `InjectEnv` (Java handler) writes `export CLAUDE_PROJECT_DIR=...` (and other vars) to CLAUDE_ENV_FILE
+- Claude Code sources CLAUDE_ENV_FILE before each Bash tool call
+- Result: `${CLAUDE_PROJECT_DIR}` resolves in Bash tool calls and in skill content code blocks that Claude executes
+
+**When writing skill content:**
+- Bash command examples CAN use `${CLAUDE_PROJECT_DIR}` — Claude copies them into Bash tool calls where it resolves
+- Handler scripts called from `!` lines do NOT have access to `${CLAUDE_PROJECT_DIR}` as an env var or substitution
+- Skill preprocessing `!` lines must use `"$(pwd)"` instead of `${CLAUDE_PROJECT_DIR}`
+- For CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID, substitution works in both contexts
 
 ### Path Discovery
 
