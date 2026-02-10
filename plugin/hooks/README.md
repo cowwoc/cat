@@ -17,7 +17,7 @@ includes only the modules needed for JSON processing (Jackson 3) and basic I/O o
 | File | Purpose |
 |------|---------|
 | `jlink-config.sh` | Build script for creating the custom runtime |
-| `session_start.sh` | SessionStart hook to bootstrap the JDK |
+| `session-start.sh` | SessionStart hook to bootstrap the JDK |
 | `hook.sh` | Intermediary script for invoking Java hooks |
 
 ## Building the Runtime
@@ -64,7 +64,7 @@ cat-jdk-25/
 
 ## Session Bootstrap
 
-The `session_start.sh` hook runs at each Claude Code session start:
+The `session-start.sh` hook runs at each Claude Code session start:
 
 1. Checks if custom runtime exists at expected path
 2. If missing, attempts to download pre-built bundle
