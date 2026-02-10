@@ -5,27 +5,5 @@
   "attribution": {
     "commit": "",
     "pr": ""
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/workspace/.claude/hooks/validate-state-md-format.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/workspace/.claude/hooks/block-worktree-cd.sh"
-          }
-        ]
-      }
-    ]
   }
 }

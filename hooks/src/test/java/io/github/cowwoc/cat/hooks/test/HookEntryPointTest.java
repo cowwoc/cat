@@ -17,7 +17,10 @@ import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
 import io.github.cowwoc.cat.hooks.edit.WarnSkillEditWithoutBuilder;
+import io.github.cowwoc.cat.hooks.bash.BlockWorktreeCd;
+import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
+import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -1305,5 +1308,142 @@ public class HookEntryPointTest
     requireThat(stdoutContent, "stdoutContent").contains("\"decision\"");
     requireThat(stdoutContent, "stdoutContent").contains("\"block\"");
     requireThat(stdoutContent, "stdoutContent").contains("Blocked by handler 2");
+  }
+
+  // --- BlockWorktreeCd handler tests ---
+
+  /**
+   * Verifies that BlockWorktreeCd blocks cd commands into worktree directories.
+   */
+  @Test
+  public void blockWorktreeCdBlocksCdToWorktree() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"command\": \"cd /workspace/.claude/cat/worktrees/my-task\"}");
+    BashHandler.Result result = new BlockWorktreeCd().check(
+      "cd /workspace/.claude/cat/worktrees/my-task", toolInput, null, "test");
+    requireThat(result.blocked(), "blocked").isTrue();
+    requireThat(result.reason(), "reason").contains("CD INTO WORKTREE BLOCKED");
+    requireThat(result.reason(), "reason").contains("git -C");
+  }
+
+  /**
+   * Verifies that BlockWorktreeCd blocks cd with quotes around path.
+   */
+  @Test
+  public void blockWorktreeCdBlocksCdWithQuotes() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"command\": \"cd '.claude/cat/worktrees/task-name'\"}");
+    BashHandler.Result result = new BlockWorktreeCd().check(
+      "cd '.claude/cat/worktrees/task-name'", toolInput, null, "test");
+    requireThat(result.blocked(), "blocked").isTrue();
+  }
+
+  /**
+   * Verifies that BlockWorktreeCd allows normal cd commands.
+   */
+  @Test
+  public void blockWorktreeCdAllowsNormalCd() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"command\": \"cd /workspace/hooks\"}");
+    BashHandler.Result result = new BlockWorktreeCd().check(
+      "cd /workspace/hooks", toolInput, null, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that BlockWorktreeCd allows git -C commands.
+   */
+  @Test
+  public void blockWorktreeCdAllowsGitC() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"command\": \"git -C /workspace/.claude/cat/worktrees/my-task status\"}");
+    BashHandler.Result result = new BlockWorktreeCd().check(
+      "git -C /workspace/.claude/cat/worktrees/my-task status", toolInput, null, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  // --- ValidateStateMdFormat handler tests ---
+
+  /**
+   * Verifies that ValidateStateMdFormat blocks STATE.md writes missing Status field.
+   */
+  @Test
+  public void validateStateMdFormatBlocksMissingStatus() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+      "\"content\": \"- **Progress:** 50%\\n- **Dependencies:** []\"}");
+    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isTrue();
+    requireThat(result.reason(), "reason").contains("Missing '- **Status:** value'");
+  }
+
+  /**
+   * Verifies that ValidateStateMdFormat blocks STATE.md writes missing Progress field.
+   */
+  @Test
+  public void validateStateMdFormatBlocksMissingProgress() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+      "\"content\": \"- **Status:** pending\\n- **Dependencies:** []\"}");
+    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isTrue();
+    requireThat(result.reason(), "reason").contains("Missing '- **Progress:** value'");
+  }
+
+  /**
+   * Verifies that ValidateStateMdFormat blocks STATE.md writes missing Dependencies field.
+   */
+  @Test
+  public void validateStateMdFormatBlocksMissingDependencies() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+      "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\"}");
+    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isTrue();
+    requireThat(result.reason(), "reason").contains("Missing '- **Dependencies:** [...]'");
+  }
+
+  /**
+   * Verifies that ValidateStateMdFormat allows valid STATE.md content.
+   */
+  @Test
+  public void validateStateMdFormatAllowsValidContent() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+      "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\\n- **Dependencies:** []\"}");
+    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that ValidateStateMdFormat allows non-STATE.md files.
+   */
+  @Test
+  public void validateStateMdFormatAllowsNonStateMdFiles() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/README.md\", \"content\": \"Some content\"}");
+    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
+  }
+
+  /**
+   * Verifies that ValidateStateMdFormat allows STATE.md files outside issues directory.
+   */
+  @Test
+  public void validateStateMdFormatAllowsNonIssueStateMd() throws IOException
+  {
+    JsonNode toolInput = JsonMapper.builder().build().readTree(
+      "{\"file_path\": \"/workspace/docs/STATE.md\", \"content\": \"Random content\"}");
+    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+    requireThat(result.blocked(), "blocked").isFalse();
   }
 }
