@@ -10,7 +10,7 @@ last_updated: 2026-01-20
 ## Summary
 Version migration system and duplicate detection.
 
-## Tasks Completed
+## Issues Completed
 - version-migration-system
 - version-entry-exit-gates
 - duplicate-detection-exploration-M087

@@ -10,7 +10,7 @@ last_updated: 2026-01-20
 ## Summary
 Config command improvements and merge blocking consolidation.
 
-## Tasks Completed
+## Issues Completed
 - cat-config-command
 - fix-emoji-alignment
 - rename-update-config

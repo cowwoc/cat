@@ -8,11 +8,11 @@
 ## Summary
 Abstract storage layer to support multiple issue tracking backends.
 
-## Tasks Pending
+## Issues Pending
 - storage-abstraction-design
 - local-file-backend
 - github-issues-backend
 - add-feedback-command
 
-## Tasks Completed
+## Issues Completed
 (None)

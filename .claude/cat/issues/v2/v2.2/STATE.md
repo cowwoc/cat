@@ -8,7 +8,7 @@
 ## Summary
 Record demo videos showcasing CAT features for marketing and documentation.
 
-## Tasks Pending
+## Issues Pending
 - detect-duplicate-functionality
 - simplify-readme
 - task-management-demo
@@ -16,5 +16,5 @@ Record demo videos showcasing CAT features for marketing and documentation.
 - multi-agent-demo
 - planning-research-demo
 
-## Tasks Completed
+## Issues Completed
 (None)

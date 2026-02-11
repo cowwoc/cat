@@ -11,7 +11,7 @@ last_updated: 2026-01-20
 Final v1.0 release completing the core rewrite with workflow refinements, display improvements, and diff presentation
 before approval gates.
 
-## Tasks Completed
+## Issues Completed
 - config-driven-approach
 - config-terminal-width
 - enforce-subagent-context-limits
