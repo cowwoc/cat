@@ -123,6 +123,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 
 
 ## Issues Pending
+- update-worktree-cd-convention
 - normalize-hook-filenames
 - port-utility-scripts
 - port-workflow-scripts
