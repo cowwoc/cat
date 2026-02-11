@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -1196,6 +1197,29 @@ public final class GetRenderDiffOutput
         width += charWidth;
       }
       return result.toString();
+    }
+  }
+
+  /**
+   * Entry point for command-line invocation.
+   * <p>
+   * Generates rendered diff output for the current project directory.
+   *
+   * @param args command line arguments (unused)
+   */
+  public static void main(String[] args)
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetRenderDiffOutput generator = new GetRenderDiffOutput(scope);
+      String output = generator.getOutput();
+      if (output != null)
+        System.out.print(output);
+    }
+    catch (RuntimeException e)
+    {
+      System.err.println("Error generating diff: " + e.getMessage());
+      System.exit(1);
     }
   }
 }
