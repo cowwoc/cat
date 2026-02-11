@@ -802,4 +802,210 @@ public class GetCleanupOutputTest
       requireThat(noneCount, "noneCount").isGreaterThanOrEqualTo(3);
     }
   }
+
+  // --- Data gathering tests ---
+
+  /**
+   * Verifies that parseWorktreesPorcelain handles empty input.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainHandlesEmptyInput() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<Worktree> result = handler.parseWorktreesPorcelain("");
+
+      requireThat(result, "result").isEmpty();
+    }
+  }
+
+  /**
+   * Verifies that parseWorktreesPorcelain parses single worktree.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainParsesSingleWorktree() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String input = """
+        worktree /workspace
+        HEAD abc1234567890def
+        branch refs/heads/main
+        """;
+
+      List<Worktree> result = handler.parseWorktreesPorcelain(input);
+
+      requireThat(result.size(), "size").isEqualTo(1);
+      requireThat(result.get(0).path(), "path").isEqualTo("/workspace");
+      requireThat(result.get(0).branch(), "branch").isEqualTo("main");
+      requireThat(result.get(0).state(), "state").isEmpty();
+    }
+  }
+
+  /**
+   * Verifies that parseWorktreesPorcelain parses multiple worktrees.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainParsesMultipleWorktrees() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String input = """
+        worktree /workspace
+        HEAD abc1234567890def
+        branch refs/heads/main
+
+        worktree /workspace/.worktrees/task-123
+        HEAD def9876543210abc
+        branch refs/heads/2.1-task-123
+        """;
+
+      List<Worktree> result = handler.parseWorktreesPorcelain(input);
+
+      requireThat(result.size(), "size").isEqualTo(2);
+      requireThat(result.get(0).branch(), "branch1").isEqualTo("main");
+      requireThat(result.get(1).path(), "path2").isEqualTo("/workspace/.worktrees/task-123");
+      requireThat(result.get(1).branch(), "branch2").isEqualTo("2.1-task-123");
+    }
+  }
+
+  /**
+   * Verifies that parseWorktreesPorcelain handles detached state.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainHandlesDetachedState() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String input = """
+        worktree /workspace/.worktrees/detached-task
+        HEAD abc1234567890def
+        branch refs/heads/task-branch
+        detached
+        """;
+
+      List<Worktree> result = handler.parseWorktreesPorcelain(input);
+
+      requireThat(result.size(), "size").isEqualTo(1);
+      requireThat(result.get(0).state(), "state").isEqualTo("detached");
+    }
+  }
+
+  /**
+   * Verifies that parseWorktreesPorcelain handles bare state.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainHandlesBareState() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String input = """
+        worktree /workspace/.git
+        HEAD abc1234567890def
+        branch refs/heads/main
+        bare
+        """;
+
+      List<Worktree> result = handler.parseWorktreesPorcelain(input);
+
+      requireThat(result.size(), "size").isEqualTo(1);
+      requireThat(result.get(0).state(), "state").isEqualTo("bare");
+    }
+  }
+
+  /**
+   * Verifies that parseWorktreesPorcelain extracts branch name from refs path.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainExtractsBranchName() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String input = """
+        worktree /workspace
+        HEAD abc123
+        branch refs/remotes/origin/feature-branch
+        """;
+
+      List<Worktree> result = handler.parseWorktreesPorcelain(input);
+
+      requireThat(result.size(), "size").isEqualTo(1);
+      requireThat(result.get(0).branch(), "branch").isEqualTo("feature-branch");
+    }
+  }
+
+  /**
+   * Verifies that parseWorktreesPorcelain handles worktree without blank line at end.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseWorktreesPorcelainHandlesNoTrailingBlankLine() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String input = """
+        worktree /workspace
+        HEAD abc123
+        branch refs/heads/main""";
+
+      List<Worktree> result = handler.parseWorktreesPorcelain(input);
+
+      requireThat(result.size(), "size").isEqualTo(1);
+      requireThat(result.get(0).branch(), "branch").isEqualTo("main");
+    }
+  }
+
+  /**
+   * Verifies that gatherLocks returns empty list for non-CAT project.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherLocksReturnsEmptyForNonCatProject() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      List<Lock> result = handler.gatherLocks(java.nio.file.Path.of("/nonexistent"));
+
+      requireThat(result, "result").isEmpty();
+    }
+  }
+
+  /**
+   * Verifies that gatherContextFile returns null when file does not exist.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void gatherContextFileReturnsNullWhenMissing() throws IOException
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput handler = new GetCleanupOutput(scope);
+      String result = handler.gatherContextFile(java.nio.file.Path.of("/tmp"));
+
+      requireThat(result, "result").isNull();
+    }
+  }
 }
