@@ -1,6 +1,8 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.GitMergeLinear;
+import io.github.cowwoc.cat.hooks.JvmScope;
+
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -22,7 +24,9 @@ public class GitMergeLinearTest
   @Test
   public void executeRejectsNullTaskBranch() throws IOException
   {
-    GitMergeLinear cmd = new GitMergeLinear();
+    try (JvmScope scope = new TestJvmScope())
+    {
+    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
 
     try
     {
@@ -32,6 +36,7 @@ public class GitMergeLinearTest
     catch (NullPointerException e)
     {
       requireThat(e.getMessage(), "message").contains("taskBranch");
+    }
     }
   }
 
@@ -43,7 +48,9 @@ public class GitMergeLinearTest
   @Test
   public void executeRejectsBlankTaskBranch() throws IOException
   {
-    GitMergeLinear cmd = new GitMergeLinear();
+    try (JvmScope scope = new TestJvmScope())
+    {
+    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
 
     try
     {
@@ -53,6 +60,7 @@ public class GitMergeLinearTest
     catch (IllegalArgumentException e)
     {
       requireThat(e.getMessage(), "message").contains("taskBranch");
+    }
     }
   }
 
@@ -64,7 +72,9 @@ public class GitMergeLinearTest
   @Test
   public void executeRejectsNullBaseBranch() throws IOException
   {
-    GitMergeLinear cmd = new GitMergeLinear();
+    try (JvmScope scope = new TestJvmScope())
+    {
+    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
 
     try
     {
@@ -74,6 +84,7 @@ public class GitMergeLinearTest
     catch (NullPointerException e)
     {
       requireThat(e.getMessage(), "message").contains("baseBranch");
+    }
     }
   }
 
@@ -85,7 +96,9 @@ public class GitMergeLinearTest
   @Test
   public void executeAcceptsEmptyBaseBranch() throws IOException
   {
-    GitMergeLinear cmd = new GitMergeLinear();
+    try (JvmScope scope = new TestJvmScope())
+    {
+    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
 
     try
     {
@@ -94,6 +107,7 @@ public class GitMergeLinearTest
     catch (IOException e)
     {
       requireThat(e.getMessage(), "message").isNotNull();
+    }
     }
   }
 }

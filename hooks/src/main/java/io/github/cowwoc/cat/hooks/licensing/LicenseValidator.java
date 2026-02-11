@@ -34,18 +34,21 @@ public final class LicenseValidator
   };
 
   private final Path pluginRoot;
-  private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JsonMapper mapper;
 
   /**
    * Creates a new license validator.
    *
    * @param pluginRoot the plugin root directory containing config/cat-public-key.pem
-   * @throws NullPointerException if pluginRoot is null
+   * @param mapper the JSON mapper
+   * @throws NullPointerException if {@code pluginRoot} or {@code mapper} are null
    */
-  public LicenseValidator(Path pluginRoot)
+  public LicenseValidator(Path pluginRoot, JsonMapper mapper)
   {
     requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(mapper, "mapper").isNotNull();
     this.pluginRoot = pluginRoot;
+    this.mapper = mapper;
   }
 
   /**
@@ -63,7 +66,7 @@ public final class LicenseValidator
     Config config;
     try
     {
-      config = Config.load(projectDir);
+      config = Config.load(mapper, projectDir);
     }
     catch (Exception _)
     {

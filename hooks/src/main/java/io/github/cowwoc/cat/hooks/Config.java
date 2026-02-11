@@ -49,10 +49,12 @@ public final class Config
    * 2. cat-config.json (project settings)
    * 3. cat-config.local.json (user overrides)
    *
+   * @param mapper the JSON mapper to use for parsing
    * @param projectDir Project root directory containing .claude/cat/
    * @return Loaded configuration
+   * @throws NullPointerException if mapper or projectDir is null
    */
-  public static Config load(Path projectDir)
+  public static Config load(JsonMapper mapper, Path projectDir)
   {
     Map<String, Object> merged = new HashMap<>(DEFAULTS);
 
@@ -64,7 +66,7 @@ public final class Config
     {
       try
       {
-        Map<String, Object> baseConfig = loadJsonFile(baseConfigPath);
+        Map<String, Object> baseConfig = loadJsonFile(mapper, baseConfigPath);
         merged.putAll(baseConfig);
       }
       catch (IOException _)
@@ -79,7 +81,7 @@ public final class Config
     {
       try
       {
-        Map<String, Object> localConfig = loadJsonFile(localConfigPath);
+        Map<String, Object> localConfig = loadJsonFile(mapper, localConfigPath);
         merged.putAll(localConfig);
       }
       catch (IOException _)
@@ -91,20 +93,10 @@ public final class Config
     return new Config(merged);
   }
 
-  /**
-   * Load configuration from current directory.
-   *
-   * @return the loaded configuration
-   */
-  public static Config load()
-  {
-    return load(Path.of("."));
-  }
-
-  private static Map<String, Object> loadJsonFile(Path path) throws IOException
+  private static Map<String, Object> loadJsonFile(JsonMapper mapper, Path path) throws IOException
   {
     String content = Files.readString(path);
-    return JsonMapper.builder().build().readValue(content, MAP_TYPE);
+    return mapper.readValue(content, MAP_TYPE);
   }
 
   /**

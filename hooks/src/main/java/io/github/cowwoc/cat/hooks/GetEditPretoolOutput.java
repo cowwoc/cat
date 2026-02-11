@@ -6,6 +6,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
 import io.github.cowwoc.cat.hooks.edit.WarnSkillEditWithoutBuilder;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +61,13 @@ public final class GetEditPretoolOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetEditPretoolOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(mapper, System.out);
+      new GetEditPretoolOutput().run(input, output);
+    }
   }
 
   /**

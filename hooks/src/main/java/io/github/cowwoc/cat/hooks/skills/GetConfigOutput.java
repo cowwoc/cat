@@ -65,7 +65,7 @@ public final class GetConfigOutput
       return null;
 
     // Load config using the Config class
-    Config config = Config.load(projectRoot);
+    Config config = Config.load(scope.getJsonMapper(), projectRoot);
 
     String trust = config.getString("trust", "medium");
     String verify = config.getString("verify", "changed");

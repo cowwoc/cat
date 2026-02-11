@@ -1,6 +1,5 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
 import org.testng.annotations.Test;
@@ -28,7 +27,7 @@ public class GetNextTaskOutputTest
   @Test
   public void extractScopeFromVersionPrefixedIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       String result = output.extractScopePublic("2.1-add-feature");
@@ -42,7 +41,7 @@ public class GetNextTaskOutputTest
   @Test
   public void extractScopeFromSingleDigitVersion() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       String result = output.extractScopePublic("3-fix-bug");
@@ -56,7 +55,7 @@ public class GetNextTaskOutputTest
   @Test
   public void extractScopeReturnsEmptyForEmptyInput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       String result = output.extractScopePublic("");
@@ -70,7 +69,7 @@ public class GetNextTaskOutputTest
   @Test
   public void extractScopeReturnsUnknownForNoDash() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       String result = output.extractScopePublic("noDashHere");
@@ -84,7 +83,7 @@ public class GetNextTaskOutputTest
   @Test
   public void extractScopePreservesNonNumericPrefix() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       String result = output.extractScopePublic("feature-add-login");
@@ -117,7 +116,7 @@ public class GetNextTaskOutputTest
         """;
       Files.writeString(planPath, planContent);
 
-      try (JvmScope scope = new MainJvmScope())
+      try (JvmScope scope = new TestJvmScope())
       {
         GetNextTaskOutput output = new GetNextTaskOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
@@ -150,7 +149,7 @@ public class GetNextTaskOutputTest
         """;
       Files.writeString(planPath, planContent);
 
-      try (JvmScope scope = new MainJvmScope())
+      try (JvmScope scope = new TestJvmScope())
       {
         GetNextTaskOutput output = new GetNextTaskOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
@@ -173,7 +172,7 @@ public class GetNextTaskOutputTest
     Path tempDir = Files.createTempDirectory("test-issue");
     try
     {
-      try (JvmScope scope = new MainJvmScope())
+      try (JvmScope scope = new TestJvmScope())
       {
         GetNextTaskOutput output = new GetNextTaskOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
@@ -205,7 +204,7 @@ public class GetNextTaskOutputTest
         """;
       Files.writeString(planPath, planContent);
 
-      try (JvmScope scope = new MainJvmScope())
+      try (JvmScope scope = new TestJvmScope())
       {
         GetNextTaskOutput output = new GetNextTaskOutput(scope);
         String goal = output.readIssueGoalPublic(tempDir.toString());
@@ -234,7 +233,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getNextTaskBoxThrowsOnNullCompletedIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox(null, "main", "session123", "/tmp", "");
@@ -247,7 +246,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getNextTaskBoxThrowsOnBlankCompletedIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("", "main", "session123", "/tmp", "");
@@ -260,7 +259,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getNextTaskBoxThrowsOnNullBaseBranch() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", null, "session123", "/tmp", "");
@@ -273,7 +272,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getNextTaskBoxThrowsOnBlankBaseBranch() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", "", "session123", "/tmp", "");
@@ -286,7 +285,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getNextTaskBoxThrowsOnNullSessionId() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", "main", null, "/tmp", "");
@@ -299,7 +298,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getNextTaskBoxThrowsOnBlankSessionId() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", "main", "", "/tmp", "");
@@ -312,7 +311,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getNextTaskBoxThrowsOnNullProjectDir() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", "main", "session123", null, "");
@@ -325,7 +324,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getNextTaskBoxThrowsOnBlankProjectDir() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", "main", "session123", "", "");
@@ -338,7 +337,7 @@ public class GetNextTaskOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getNextTaskBoxThrowsOnNullExcludePattern() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       output.getNextTaskBox("2.1-test", "main", "session123", "/tmp", null);
@@ -351,7 +350,7 @@ public class GetNextTaskOutputTest
   @Test
   public void getNextTaskBoxAcceptsEmptyExcludePattern() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetNextTaskOutput output = new GetNextTaskOutput(scope);
       String result = output.getNextTaskBox("2.1-test", "main", "session123", "/tmp", "");

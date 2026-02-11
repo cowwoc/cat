@@ -1,10 +1,12 @@
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.ExistingWorkChecker;
 import io.github.cowwoc.cat.hooks.util.ExistingWorkChecker.CheckResult;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -260,15 +262,19 @@ public class ExistingWorkCheckerTest
   @Test
   public void toJsonProducesCorrectFormatForNoExistingWork() throws IOException
   {
-    CheckResult result = new CheckResult(false, 0, "");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      CheckResult result = new CheckResult(false, 0, "");
 
-    String json = result.toJson();
+      JsonMapper mapper = scope.getJsonMapper();
+      String json = result.toJson(mapper);
 
-    requireThat(json, "json").contains("\"has_existing_work\"");
-    requireThat(json, "json").contains("false");
-    requireThat(json, "json").contains("\"existing_commits\"");
-    requireThat(json, "json").contains("0");
-    requireThat(json, "json").contains("\"commit_summary\"");
+      requireThat(json, "json").contains("\"has_existing_work\"");
+      requireThat(json, "json").contains("false");
+      requireThat(json, "json").contains("\"existing_commits\"");
+      requireThat(json, "json").contains("0");
+      requireThat(json, "json").contains("\"commit_summary\"");
+    }
   }
 
   /**
@@ -279,16 +285,20 @@ public class ExistingWorkCheckerTest
   @Test
   public void toJsonProducesCorrectFormatForExistingWork() throws IOException
   {
-    CheckResult result = new CheckResult(true, 3, "abc1234 First|def5678 Second");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      CheckResult result = new CheckResult(true, 3, "abc1234 First|def5678 Second");
 
-    String json = result.toJson();
+      JsonMapper mapper = scope.getJsonMapper();
+      String json = result.toJson(mapper);
 
-    requireThat(json, "json").contains("\"has_existing_work\"");
-    requireThat(json, "json").contains("true");
-    requireThat(json, "json").contains("\"existing_commits\"");
-    requireThat(json, "json").contains("3");
-    requireThat(json, "json").contains("\"commit_summary\"");
-    requireThat(json, "json").contains("abc1234");
+      requireThat(json, "json").contains("\"has_existing_work\"");
+      requireThat(json, "json").contains("true");
+      requireThat(json, "json").contains("\"existing_commits\"");
+      requireThat(json, "json").contains("3");
+      requireThat(json, "json").contains("\"commit_summary\"");
+      requireThat(json, "json").contains("abc1234");
+    }
   }
 
   /**

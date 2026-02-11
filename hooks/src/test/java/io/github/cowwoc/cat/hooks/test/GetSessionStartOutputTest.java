@@ -3,6 +3,7 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.GetSessionStartOutput;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckUpgrade;
@@ -37,23 +38,25 @@ public class GetSessionStartOutputTest
   /**
    * Creates a HookInput from a JSON string.
    *
+   * @param mapper the JSON mapper
    * @param json the JSON input string
    * @return the parsed HookInput
    */
-  private HookInput createInput(String json)
+  private HookInput createInput(JsonMapper mapper, String json)
   {
-    return HookInput.readFrom(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
    * Creates a HookOutput that captures output to a stream.
    *
+   * @param mapper the JSON mapper
    * @param capture the stream to capture output into
    * @return a HookOutput writing to the capture stream
    */
-  private HookOutput createOutput(ByteArrayOutputStream capture)
+  private HookOutput createOutput(JsonMapper mapper, ByteArrayOutputStream capture)
   {
-    return new HookOutput(new PrintStream(capture, true, StandardCharsets.UTF_8));
+    return new HookOutput(mapper, new PrintStream(capture, true, StandardCharsets.UTF_8));
   }
 
   // --- EchoSessionId tests ---
@@ -62,24 +65,32 @@ public class GetSessionStartOutputTest
    * Verifies that EchoSessionId returns the session ID as additional context.
    */
   @Test
-  public void echoSessionIdReturnsSessionIdAsContext()
+  public void echoSessionIdReturnsSessionIdAsContext() throws IOException
   {
-    HookInput input = createInput("{\"session_id\": \"test-session-123\"}");
-    SessionStartHandler.Result result = new EchoSessionId().handle(input);
-    requireThat(result.additionalContext(), "additionalContext").isEqualTo("Session ID: test-session-123");
-    requireThat(result.stderr(), "stderr").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session-123\"}");
+      SessionStartHandler.Result result = new EchoSessionId().handle(input);
+      requireThat(result.additionalContext(), "additionalContext").isEqualTo("Session ID: test-session-123");
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
   }
 
   /**
    * Verifies that EchoSessionId returns empty when no session ID is present.
    */
   @Test
-  public void echoSessionIdReturnsEmptyWhenNoSessionId()
+  public void echoSessionIdReturnsEmptyWhenNoSessionId() throws IOException
   {
-    HookInput input = createInput("{}");
-    SessionStartHandler.Result result = new EchoSessionId().handle(input);
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
-    requireThat(result.stderr(), "stderr").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{}");
+      SessionStartHandler.Result result = new EchoSessionId().handle(input);
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
   }
 
   // --- ClearSkillMarkers tests ---
@@ -88,12 +99,16 @@ public class GetSessionStartOutputTest
    * Verifies that ClearSkillMarkers returns empty result (no output).
    */
   @Test
-  public void clearSkillMarkersReturnsEmptyResult()
+  public void clearSkillMarkersReturnsEmptyResult() throws IOException
   {
-    HookInput input = createInput("{}");
-    SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
-    requireThat(result.additionalContext(), "additionalContext").isEmpty();
-    requireThat(result.stderr(), "stderr").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{}");
+      SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
+      requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
   }
 
   /**
@@ -102,27 +117,31 @@ public class GetSessionStartOutputTest
   @Test
   public void clearSkillMarkersSkipsSymlinks() throws IOException
   {
-    Path tmpDir = Files.createTempDirectory("cat-test-markers-");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      // Create a real file and a symlink
-      Path realFile = tmpDir.resolve("cat-skills-loaded-real");
-      Files.writeString(realFile, "test");
-      Path targetFile = tmpDir.resolve("symlink-target");
-      Files.writeString(targetFile, "should-not-be-deleted");
-      Path symlink = tmpDir.resolve("cat-skills-loaded-symlink");
-      Files.createSymbolicLink(symlink, targetFile);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tmpDir = Files.createTempDirectory("cat-test-markers-");
+      try
+      {
+        // Create a real file and a symlink
+        Path realFile = tmpDir.resolve("cat-skills-loaded-real");
+        Files.writeString(realFile, "test");
+        Path targetFile = tmpDir.resolve("symlink-target");
+        Files.writeString(targetFile, "should-not-be-deleted");
+        Path symlink = tmpDir.resolve("cat-skills-loaded-symlink");
+        Files.createSymbolicLink(symlink, targetFile);
 
-      // ClearSkillMarkers operates on /tmp so we just verify the handler returns empty
-      // The symlink skip behavior is validated by the implementation check
-      HookInput input = createInput("{}");
-      SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
-      requireThat(result.additionalContext(), "additionalContext").isEmpty();
-      requireThat(result.stderr(), "stderr").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tmpDir);
+        // ClearSkillMarkers operates on /tmp so we just verify the handler returns empty
+        // The symlink skip behavior is validated by the implementation check
+        HookInput input = createInput(mapper, "{}");
+        SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tmpDir);
+      }
     }
   }
 
@@ -132,43 +151,55 @@ public class GetSessionStartOutputTest
    * Verifies that InjectSessionInstructions returns instructions with session ID.
    */
   @Test
-  public void injectSessionInstructionsIncludesSessionId()
+  public void injectSessionInstructionsIncludesSessionId() throws IOException
   {
-    HookInput input = createInput("{\"session_id\": \"my-session\"}");
-    SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
-    requireThat(result.additionalContext(), "additionalContext").contains("CAT SESSION INSTRUCTIONS");
-    requireThat(result.additionalContext(), "additionalContext").contains("Session ID: my-session");
-    requireThat(result.stderr(), "stderr").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"session_id\": \"my-session\"}");
+      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
+      requireThat(result.additionalContext(), "additionalContext").contains("CAT SESSION INSTRUCTIONS");
+      requireThat(result.additionalContext(), "additionalContext").contains("Session ID: my-session");
+      requireThat(result.stderr(), "stderr").isEmpty();
+    }
   }
 
   /**
    * Verifies that InjectSessionInstructions uses "unknown" when session ID is missing.
    */
   @Test
-  public void injectSessionInstructionsUsesUnknownWhenNoSessionId()
+  public void injectSessionInstructionsUsesUnknownWhenNoSessionId() throws IOException
   {
-    HookInput input = createInput("{}");
-    SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
-    requireThat(result.additionalContext(), "additionalContext").contains("Session ID: unknown");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{}");
+      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
+      requireThat(result.additionalContext(), "additionalContext").contains("Session ID: unknown");
+    }
   }
 
   /**
    * Verifies that InjectSessionInstructions includes key instruction sections.
    */
   @Test
-  public void injectSessionInstructionsIncludesKeyInstructions()
+  public void injectSessionInstructionsIncludesKeyInstructions() throws IOException
   {
-    HookInput input = createInput("{\"session_id\": \"test\"}");
-    SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
-    String context = result.additionalContext();
-    requireThat(context, "context").contains("User Input Handling");
-    requireThat(context, "context").contains("Mandatory Mistake Handling");
-    requireThat(context, "context").contains("Commit Before Review");
-    requireThat(context, "context").contains("Skill Workflow Compliance");
-    requireThat(context, "context").contains("Work Request Handling");
-    requireThat(context, "context").contains("Worktree Isolation");
-    requireThat(context, "context").contains("Fail-Fast Protocol");
-    requireThat(context, "context").contains("Verbatim Output Skills");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
+      SessionStartHandler.Result result = new InjectSessionInstructions().handle(input);
+      String context = result.additionalContext();
+      requireThat(context, "context").contains("User Input Handling");
+      requireThat(context, "context").contains("Mandatory Mistake Handling");
+      requireThat(context, "context").contains("Commit Before Review");
+      requireThat(context, "context").contains("Skill Workflow Compliance");
+      requireThat(context, "context").contains("Work Request Handling");
+      requireThat(context, "context").contains("Worktree Isolation");
+      requireThat(context, "context").contains("Fail-Fast Protocol");
+      requireThat(context, "context").contains("Verbatim Output Skills");
+    }
   }
 
   // --- InjectEnv tests ---
@@ -177,11 +208,15 @@ public class GetSessionStartOutputTest
    * Verifies that InjectEnv throws when CLAUDE_ENV_FILE is not set.
    */
   @Test(expectedExceptions = AssertionError.class)
-  public void injectEnvThrowsWhenNoEnvFile()
+  public void injectEnvThrowsWhenNoEnvFile() throws IOException
   {
-    // CLAUDE_ENV_FILE is not set in the test environment
-    HookInput input = createInput("{}");
-    new InjectEnv().handle(input);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      // CLAUDE_ENV_FILE is not set in the test environment
+      HookInput input = createInput(mapper, "{}");
+      new InjectEnv().handle(input);
+    }
   }
 
   // --- CheckUpdateAvailable tests ---
@@ -199,7 +234,8 @@ public class GetSessionStartOutputTest
       Files.writeString(pluginRoot.resolve("plugin.json"), "{\"version\": \"99.0.0\"}");
       try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
       {
-        HookInput input = createInput("{}");
+        JsonMapper mapper = scope.getJsonMapper();
+        HookInput input = createInput(mapper, "{}");
         SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
@@ -227,7 +263,8 @@ public class GetSessionStartOutputTest
       // No cat-config.json in projectDir → handler returns empty
       try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
       {
-        HookInput input = createInput("{}");
+        JsonMapper mapper = scope.getJsonMapper();
+        HookInput input = createInput(mapper, "{}");
         SessionStartHandler.Result result = new CheckUpgrade(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
@@ -255,7 +292,8 @@ public class GetSessionStartOutputTest
       // No .planning directory → handler returns empty (not a CAT project)
       try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
       {
-        HookInput input = createInput("{}");
+        JsonMapper mapper = scope.getJsonMapper();
+        HookInput input = createInput(mapper, "{}");
         SessionStartHandler.Result result = new CheckRetrospectiveDue(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
@@ -274,103 +312,119 @@ public class GetSessionStartOutputTest
    * Verifies that GetSessionStartOutput returns empty JSON when all handlers return empty.
    */
   @Test
-  public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty()
+  public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
   {
-    SessionStartHandler emptyHandler = input -> SessionStartHandler.Result.empty();
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(emptyHandler));
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler emptyHandler = input -> SessionStartHandler.Result.empty();
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(emptyHandler));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    dispatcher.run(input, output);
+      dispatcher.run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetSessionStartOutput combines context from multiple handlers.
    */
   @Test
-  public void dispatcherCombinesContextFromMultipleHandlers()
+  public void dispatcherCombinesContextFromMultipleHandlers() throws IOException
   {
-    SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("context from handler 1");
-    SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("context from handler 2");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("context from handler 1");
+      SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("context from handler 2");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    dispatcher.run(input, output);
+      dispatcher.run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").contains("context from handler 1");
-    requireThat(result, "result").contains("context from handler 2");
-    requireThat(result, "result").contains("hookSpecificOutput");
-    requireThat(result, "result").contains("SessionStart");
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
+      requireThat(result, "result").contains("context from handler 1");
+      requireThat(result, "result").contains("context from handler 2");
+      requireThat(result, "result").contains("hookSpecificOutput");
+      requireThat(result, "result").contains("SessionStart");
+    }
   }
 
   /**
    * Verifies that GetSessionStartOutput writes stderr from handlers.
    */
   @Test
-  public void dispatcherWritesStderrFromHandlers()
+  public void dispatcherWritesStderrFromHandlers() throws IOException
   {
-    SessionStartHandler handler = input -> SessionStartHandler.Result.stderr("stderr message");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler = input -> SessionStartHandler.Result.stderr("stderr message");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
-    dispatcher.run(input, output, stderrStream);
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
+      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output, stderrStream);
 
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").contains("stderr message");
+      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+      requireThat(stderrContent, "stderrContent").contains("stderr message");
 
-    // No context -> empty output
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8).trim();
-    requireThat(stdoutContent, "stdoutContent").isEqualTo("{}");
+      // No context -> empty output
+      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
+      requireThat(stdoutContent, "stdoutContent").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetSessionStartOutput handles handler exceptions gracefully.
    */
   @Test(expectedExceptions = IllegalStateException.class)
-  public void dispatcherHandlesHandlerExceptionsGracefully()
+  public void dispatcherHandlesHandlerExceptionsGracefully() throws IOException
   {
-    SessionStartHandler failingHandler = input ->
+    try (JvmScope scope = new TestJvmScope())
     {
-      throw new IllegalStateException("test error");
-    };
-    SessionStartHandler goodHandler = input -> SessionStartHandler.Result.context("good context");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler, goodHandler));
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler failingHandler = input ->
+      {
+        throw new IllegalStateException("test error");
+      };
+      SessionStartHandler goodHandler = input -> SessionStartHandler.Result.context("good context");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler, goodHandler));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
+      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
 
-    try
-    {
-      dispatcher.run(input, output, stderrStream);
-    }
-    catch (IllegalStateException e)
-    {
-      // Error should be on stderr
-      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-      requireThat(stderrContent, "stderrContent").contains("handler error");
+      try
+      {
+        dispatcher.run(input, output, stderrStream);
+      }
+      catch (IllegalStateException e)
+      {
+        // Error should be on stderr
+        String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+        requireThat(stderrContent, "stderrContent").contains("handler error");
 
-      // Good handler's context should still be in output
-      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).trim();
-      requireThat(stdoutContent, "stdoutContent").contains("good context");
+        // Good handler's context should still be in output
+        String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
+        requireThat(stdoutContent, "stdoutContent").contains("good context");
 
-      // Re-throw to satisfy expectedExceptions
-      throw e;
+        // Re-throw to satisfy expectedExceptions
+        throw e;
+      }
     }
   }
 
@@ -378,37 +432,41 @@ public class GetSessionStartOutputTest
    * Verifies that failing handler error appears in additionalContext.
    */
   @Test(expectedExceptions = IllegalStateException.class)
-  public void dispatcherIncludesErrorInAdditionalContext()
+  public void dispatcherIncludesErrorInAdditionalContext() throws IOException
   {
-    SessionStartHandler failingHandler = input ->
+    try (JvmScope scope = new TestJvmScope())
     {
-      throw new AssertionError("CLAUDE_SESSION_ID is not set");
-    };
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler));
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler failingHandler = input ->
+      {
+        throw new AssertionError("CLAUDE_SESSION_ID is not set");
+      };
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
+      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
 
-    try
-    {
-      dispatcher.run(input, output, stderrStream);
-    }
-    catch (IllegalStateException e)
-    {
-      // Error should appear in additionalContext
-      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).trim();
-      requireThat(stdoutContent, "stdoutContent").contains("SessionStart Handler Errors");
-      requireThat(stdoutContent, "stdoutContent").contains("CLAUDE_SESSION_ID is not set");
+      try
+      {
+        dispatcher.run(input, output, stderrStream);
+      }
+      catch (IllegalStateException e)
+      {
+        // Error should appear in additionalContext
+        String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
+        requireThat(stdoutContent, "stdoutContent").contains("SessionStart Handler Errors");
+        requireThat(stdoutContent, "stdoutContent").contains("CLAUDE_SESSION_ID is not set");
 
-      // Error should also be on stderr
-      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-      requireThat(stderrContent, "stderrContent").contains("CLAUDE_SESSION_ID is not set");
+        // Error should also be on stderr
+        String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+        requireThat(stderrContent, "stderrContent").contains("CLAUDE_SESSION_ID is not set");
 
-      // Re-throw to satisfy expectedExceptions
-      throw e;
+        // Re-throw to satisfy expectedExceptions
+        throw e;
+      }
     }
   }
 
@@ -416,36 +474,40 @@ public class GetSessionStartOutputTest
    * Verifies that other handlers still produce output when one fails.
    */
   @Test(expectedExceptions = IllegalStateException.class)
-  public void dispatcherContinuesAfterHandlerFailure()
+  public void dispatcherContinuesAfterHandlerFailure() throws IOException
   {
-    SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("handler 1 output");
-    SessionStartHandler failingHandler = input ->
+    try (JvmScope scope = new TestJvmScope())
     {
-      throw new IllegalStateException("handler 2 failed");
-    };
-    SessionStartHandler handler3 = input -> SessionStartHandler.Result.context("handler 3 output");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, failingHandler, handler3));
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("handler 1 output");
+      SessionStartHandler failingHandler = input ->
+      {
+        throw new IllegalStateException("handler 2 failed");
+      };
+      SessionStartHandler handler3 = input -> SessionStartHandler.Result.context("handler 3 output");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, failingHandler, handler3));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
+      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
 
-    try
-    {
-      dispatcher.run(input, output, stderrStream);
-    }
-    catch (IllegalStateException e)
-    {
-      // All handlers' context should be present
-      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).trim();
-      requireThat(stdoutContent, "stdoutContent").contains("handler 1 output");
-      requireThat(stdoutContent, "stdoutContent").contains("handler 3 output");
-      requireThat(stdoutContent, "stdoutContent").contains("handler 2 failed");
+      try
+      {
+        dispatcher.run(input, output, stderrStream);
+      }
+      catch (IllegalStateException e)
+      {
+        // All handlers' context should be present
+        String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
+        requireThat(stdoutContent, "stdoutContent").contains("handler 1 output");
+        requireThat(stdoutContent, "stdoutContent").contains("handler 3 output");
+        requireThat(stdoutContent, "stdoutContent").contains("handler 2 failed");
 
-      // Re-throw to satisfy expectedExceptions
-      throw e;
+        // Re-throw to satisfy expectedExceptions
+        throw e;
+      }
     }
   }
 
@@ -453,75 +515,86 @@ public class GetSessionStartOutputTest
    * Verifies that all handlers succeeding produces no error section.
    */
   @Test
-  public void dispatcherReturnsSuccessWhenAllHandlersSucceed()
+  public void dispatcherReturnsSuccessWhenAllHandlersSucceed() throws IOException
   {
-    SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("output 1");
-    SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("output 2");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("output 1");
+      SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("output 2");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
-    dispatcher.run(input, output, stderrStream);
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
+      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output, stderrStream);
 
-    // No error section in output
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8).trim();
-    requireThat(stdoutContent, "stdoutContent").doesNotContain("SessionStart Handler Errors");
+      // No error section in output
+      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
+      requireThat(stdoutContent, "stdoutContent").doesNotContain("SessionStart Handler Errors");
 
-    // No stderr output
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").isEmpty();
+      // No stderr output
+      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+      requireThat(stderrContent, "stderrContent").isEmpty();
+    }
   }
 
   /**
    * Verifies that GetSessionStartOutput produces valid JSON with hookSpecificOutput.
    */
   @Test
-  public void dispatcherProducesValidJsonWithHookSpecificOutput()
+  public void dispatcherProducesValidJsonWithHookSpecificOutput() throws IOException
   {
-    SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
-    HookInput input = createInput("{\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+      HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    dispatcher.run(input, output);
+      dispatcher.run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    // Parse as JSON to verify it's valid
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode json = mapper.readTree(result);
-    requireThat(json.has("hookSpecificOutput"), "hasHookSpecificOutput").isTrue();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
+      // Parse as JSON to verify it's valid
+      JsonNode json = mapper.readTree(result);
+      requireThat(json.has("hookSpecificOutput"), "hasHookSpecificOutput").isTrue();
 
-    JsonNode hookOutput = json.get("hookSpecificOutput");
-    requireThat(hookOutput.get("hookEventName").asString(), "hookEventName").isEqualTo("SessionStart");
-    requireThat(hookOutput.get("additionalContext").asString(), "additionalContext").contains("test context");
+      JsonNode hookOutput = json.get("hookSpecificOutput");
+      requireThat(hookOutput.get("hookEventName").asString(), "hookEventName").isEqualTo("SessionStart");
+      requireThat(hookOutput.get("additionalContext").asString(), "additionalContext").contains("test context");
+    }
   }
 
   /**
    * Verifies that GetSessionStartOutput with both context and stderr works correctly.
    */
   @Test
-  public void dispatcherHandlesBothContextAndStderr()
+  public void dispatcherHandlesBothContextAndStderr() throws IOException
   {
-    SessionStartHandler handler = input -> SessionStartHandler.Result.both("context msg", "stderr msg");
-    GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler = input -> SessionStartHandler.Result.both("context msg", "stderr msg");
+      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
-    dispatcher.run(input, output, stderrStream);
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
+      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      dispatcher.run(input, output, stderrStream);
 
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").contains("stderr msg");
+      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
+      requireThat(stderrContent, "stderrContent").contains("stderr msg");
 
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8).trim();
-    requireThat(stdoutContent, "stdoutContent").contains("context msg");
+      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
+      requireThat(stdoutContent, "stdoutContent").contains("context msg");
+    }
   }
 
   // --- SessionStartHandler.Result factory tests ---
@@ -666,14 +739,18 @@ public class GetSessionStartOutputTest
   @Test(expectedExceptions = AssertionError.class)
   public void getPluginVersionThrowsForMissingDir() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      VersionUtils.getPluginVersion(tempDir);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = Files.createTempDirectory("cat-test-version-");
+      try
+      {
+        VersionUtils.getPluginVersion(mapper, tempDir);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 
@@ -683,16 +760,20 @@ public class GetSessionStartOutputTest
   @Test
   public void getPluginVersionReadsFromPluginJson() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Files.writeString(tempDir.resolve("plugin.json"), "{\"version\": \"2.5.0\"}");
-      String version = VersionUtils.getPluginVersion(tempDir);
-      requireThat(version, "version").isEqualTo("2.5.0");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = Files.createTempDirectory("cat-test-version-");
+      try
+      {
+        Files.writeString(tempDir.resolve("plugin.json"), "{\"version\": \"2.5.0\"}");
+        String version = VersionUtils.getPluginVersion(mapper, tempDir);
+        requireThat(version, "version").isEqualTo("2.5.0");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 
@@ -702,18 +783,22 @@ public class GetSessionStartOutputTest
   @Test
   public void getPluginVersionFallsBackToClaudePluginDir() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Path claudePluginDir = tempDir.resolve(".claude-plugin");
-      Files.createDirectories(claudePluginDir);
-      Files.writeString(claudePluginDir.resolve("plugin.json"), "{\"version\": \"1.0.3\"}");
-      String version = VersionUtils.getPluginVersion(tempDir);
-      requireThat(version, "version").isEqualTo("1.0.3");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = Files.createTempDirectory("cat-test-version-");
+      try
+      {
+        Path claudePluginDir = tempDir.resolve(".claude-plugin");
+        Files.createDirectories(claudePluginDir);
+        Files.writeString(claudePluginDir.resolve("plugin.json"), "{\"version\": \"1.0.3\"}");
+        String version = VersionUtils.getPluginVersion(mapper, tempDir);
+        requireThat(version, "version").isEqualTo("1.0.3");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 
@@ -723,15 +808,19 @@ public class GetSessionStartOutputTest
   @Test(expectedExceptions = AssertionError.class)
   public void getPluginVersionThrowsWhenNoVersionField() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Files.writeString(tempDir.resolve("plugin.json"), "{\"name\": \"test\"}");
-      VersionUtils.getPluginVersion(tempDir);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = Files.createTempDirectory("cat-test-version-");
+      try
+      {
+        Files.writeString(tempDir.resolve("plugin.json"), "{\"name\": \"test\"}");
+        VersionUtils.getPluginVersion(mapper, tempDir);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 
@@ -741,15 +830,19 @@ public class GetSessionStartOutputTest
   @Test(expectedExceptions = tools.jackson.core.JacksonException.class)
   public void getPluginVersionThrowsForMalformedJson() throws IOException
   {
-    Path tempDir = Files.createTempDirectory("cat-test-version-");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Files.writeString(tempDir.resolve("plugin.json"), "not json");
-      VersionUtils.getPluginVersion(tempDir);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = Files.createTempDirectory("cat-test-version-");
+      try
+      {
+        Files.writeString(tempDir.resolve("plugin.json"), "not json");
+        VersionUtils.getPluginVersion(mapper, tempDir);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 }

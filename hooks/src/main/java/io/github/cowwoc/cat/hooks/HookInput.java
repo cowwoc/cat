@@ -36,11 +36,13 @@ public final class HookInput
   /**
    * Read and parse JSON input from stdin.
    *
+   * @param mapper the JSON mapper to use for parsing
    * @return parsed hook input, or empty input if stdin is not available or contains invalid JSON
+   * @throws NullPointerException if mapper is null
    */
-  public static HookInput readFromStdin()
+  public static HookInput readFromStdin(JsonMapper mapper)
   {
-    JsonMapper mapper = JsonMapper.builder().build();
+    requireThat(mapper, "mapper").isNotNull();
     try
     {
       if (System.console() != null && System.in.available() == 0)
@@ -53,20 +55,21 @@ public final class HookInput
     {
       return new HookInput(mapper, mapper.createObjectNode());
     }
-    return readFrom(System.in);
+    return readFrom(mapper, System.in);
   }
 
   /**
    * Read and parse JSON input from a stream.
    *
+   * @param mapper the JSON mapper to use for parsing
    * @param inputStream the stream to read from
    * @return parsed hook input, or empty input if the stream is not available or contains invalid JSON
-   * @throws NullPointerException if inputStream is null
+   * @throws NullPointerException if mapper or inputStream is null
    */
-  public static HookInput readFrom(InputStream inputStream)
+  public static HookInput readFrom(JsonMapper mapper, InputStream inputStream)
   {
+    requireThat(mapper, "mapper").isNotNull();
     requireThat(inputStream, "inputStream").isNotNull();
-    JsonMapper mapper = JsonMapper.builder().build();
     try
     {
       BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
@@ -87,11 +90,13 @@ public final class HookInput
   /**
    * Create an empty hook input.
    *
+   * @param mapper the JSON mapper to use
    * @return an empty HookInput instance
+   * @throws NullPointerException if mapper is null
    */
-  public static HookInput empty()
+  public static HookInput empty(JsonMapper mapper)
   {
-    JsonMapper mapper = JsonMapper.builder().build();
+    requireThat(mapper, "mapper").isNotNull();
     return new HookInput(mapper, mapper.createObjectNode());
   }
 

@@ -12,17 +12,21 @@ import tools.jackson.databind.node.ObjectNode;
  */
 public final class HookOutput
 {
+  private final JsonMapper mapper;
   private final PrintStream out;
 
   /**
    * Creates a new HookOutput that writes to the specified stream.
    *
+   * @param mapper the JSON mapper to use for serialization
    * @param out the output stream to write to
-   * @throws NullPointerException if out is null
+   * @throws NullPointerException if mapper or out is null
    */
-  public HookOutput(PrintStream out)
+  public HookOutput(JsonMapper mapper, PrintStream out)
   {
+    requireThat(mapper, "mapper").isNotNull();
     requireThat(out, "out").isNotNull();
+    this.mapper = mapper;
     this.out = out;
   }
 
@@ -43,7 +47,6 @@ public final class HookOutput
   public void block(String reason)
   {
     requireThat(reason, "reason").isNotBlank();
-    JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode response = mapper.createObjectNode();
     response.put("decision", "block");
     response.put("reason", reason);
@@ -61,7 +64,6 @@ public final class HookOutput
   {
     requireThat(reason, "reason").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
-    JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode response = mapper.createObjectNode();
     response.put("decision", "block");
     response.put("reason", reason);
@@ -93,7 +95,6 @@ public final class HookOutput
   {
     requireThat(hookEventName, "hookEventName").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
-    JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookSpecific = mapper.createObjectNode();
     hookSpecific.put("hookEventName", hookEventName);
     hookSpecific.put("additionalContext", additionalContext);

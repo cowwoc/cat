@@ -23,7 +23,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class ExistingWorkChecker
 {
-  private static final JsonMapper MAPPER = JsonMapper.builder().build();
   /**
    * Result of checking for existing work.
    *
@@ -49,12 +48,15 @@ public final class ExistingWorkChecker
     /**
      * Converts this result to JSON format matching the bash script output.
      *
+     * @param mapper the JSON mapper to use for serialization
      * @return JSON string representation
+     * @throws NullPointerException if mapper is null
      * @throws IOException if JSON serialization fails
      */
-    public String toJson() throws IOException
+    public String toJson(JsonMapper mapper) throws IOException
     {
-      return MAPPER.writeValueAsString(Map.of(
+      requireThat(mapper, "mapper").isNotNull();
+      return mapper.writeValueAsString(Map.of(
         "has_existing_work", hasExistingWork,
         "existing_commits", existingCommits,
         "commit_summary", commitSummary));

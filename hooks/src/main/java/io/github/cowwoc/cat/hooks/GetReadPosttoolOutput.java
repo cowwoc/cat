@@ -2,7 +2,6 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
@@ -22,17 +21,21 @@ import java.util.Set;
  */
 public final class GetReadPosttoolOutput implements HookHandler
 {
-  private static final List<ReadHandler> HANDLERS = List.of(
-      new DetectSequentialTools());
-
   private static final Set<String> SUPPORTED_TOOLS = Set.of(
       "Read", "Glob", "Grep", "WebFetch", "WebSearch");
 
+  private final List<ReadHandler> handlers;
+
   /**
    * Creates a new GetReadPosttoolOutput instance.
+   *
+   * @param scope the JVM scope providing singleton handlers
+   * @throws NullPointerException if scope is null
    */
-  public GetReadPosttoolOutput()
+  public GetReadPosttoolOutput(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(scope.getDetectSequentialTools());
   }
 
   /**
@@ -42,9 +45,12 @@ public final class GetReadPosttoolOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetReadPosttoolOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope.getJsonMapper(), System.out);
+      new GetReadPosttoolOutput(scope).run(input, output);
+    }
   }
 
   /**
@@ -74,7 +80,7 @@ public final class GetReadPosttoolOutput implements HookHandler
     List<String> warnings = new ArrayList<>();
 
     // Run all read posttool handlers
-    for (ReadHandler handler : HANDLERS)
+    for (ReadHandler handler : handlers)
     {
       try
       {

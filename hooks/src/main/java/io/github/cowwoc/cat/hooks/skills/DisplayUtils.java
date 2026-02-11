@@ -78,10 +78,14 @@ public final class DisplayUtils
    * Requires the {@code CLAUDE_PLUGIN_ROOT} environment variable to be set.
    * Fails fast if the variable is undefined or {@code emoji-widths.json} is missing.
    *
+   * @param mapper the JSON mapper to use for loading configuration
+   * @throws NullPointerException if mapper is null
    * @throws IOException if {@code CLAUDE_PLUGIN_ROOT} is undefined or {@code emoji-widths.json} cannot be loaded
    */
-  public DisplayUtils() throws IOException
+  public DisplayUtils(JsonMapper mapper) throws IOException
   {
+    requireThat(mapper, "mapper").isNotNull();
+
     String envRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
     if (envRoot == null || envRoot.isEmpty())
       throw new IOException("CLAUDE_PLUGIN_ROOT environment variable is not set");
@@ -90,7 +94,7 @@ public final class DisplayUtils
     if (!Files.exists(widthsFile))
       throw new IOException("emoji-widths.json not found at " + widthsFile);
 
-    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, TerminalType.detect());
+    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, TerminalType.detect(), mapper);
     this.emojiWidths = widths;
     this.sortedEmojis = new ArrayList<>(widths.keySet());
     this.sortedEmojis.sort(Comparator.comparingInt(String::length).reversed());
@@ -101,13 +105,14 @@ public final class DisplayUtils
    *
    * @param path the path to emoji-widths.json
    * @param terminalType the terminal type to look up
+   * @param mapper the JSON mapper to use for parsing
    * @return the map of emoji to width
    * @throws IOException if the file cannot be loaded
    */
-  private Map<String, Integer> loadEmojiWidthsFromFile(Path path, TerminalType terminalType) throws IOException
+  private Map<String, Integer> loadEmojiWidthsFromFile(Path path, TerminalType terminalType, JsonMapper mapper)
+    throws IOException
   {
     String content = Files.readString(path);
-    JsonMapper mapper = JsonMapper.builder().build();
     Map<String, Object> data = mapper.readValue(content, MAP_TYPE);
 
     @SuppressWarnings("unchecked")
