@@ -1,4 +1,4 @@
-#\!/usr/bin/env bash
+#!/usr/bin/env bash
 # handler.sh - Generate SCRIPT OUTPUT for /cat:status
 #
 # Called by load-skill.sh on every invocation.
@@ -7,7 +7,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 echo "SCRIPT OUTPUT STATUS DISPLAY:"
 echo
-"${SCRIPT_DIR}/../../scripts/get-status-display.sh" --project-dir "${CLAUDE_PROJECT_DIR}"
+"${PLUGIN_ROOT}/hooks/hook.sh" skills.RunGetStatusOutput

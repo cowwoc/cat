@@ -46,6 +46,7 @@ readonly -a HANDLERS=(
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-task-box:skills.GetNextTaskOutput"
+  "get-status-output:skills.RunGetStatusOutput"
 )
 
 # --- Logging ---
