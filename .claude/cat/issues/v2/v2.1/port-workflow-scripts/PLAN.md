@@ -30,20 +30,20 @@ None - infrastructure/tech debt
 - `plugin/scripts/` - Remove ported scripts
 - `plugin/skills/*/SKILL.md` - Update script invocation paths
 
-## Execution Steps
-1. **Port issue-lock.sh:** File locking with Java FileLock API
-2. **Port check-existing-work.sh:** Simple worktree existence check
-3. **Port create-issue.py:** Directory creation and git commit
-4. **Port load-skill.sh:** Skill file loading and env var substitution
-5. **Port get-progress-banner.sh:** Progress rendering
-6. **Port get-available-issues.sh:** Issue discovery with lock integration
-7. **Port work-prepare.py:** Full preparation orchestration
-8. **Verify JSON output contracts:** All scripts produce identical JSON
-9. **Run tests:** Execute `mvn -f hooks/pom.xml test`
+## Decomposition
+
+Decomposed into 4 sub-issues (2026-02-11):
+
+| Sub-issue | Scripts | Dependencies |
+|-----------|---------|--------------|
+| port-lock-and-worktree | issue-lock.sh, check-existing-work.sh | None |
+| port-standalone-scripts | create-issue.py, load-skill.sh, get-progress-banner.sh | None |
+| port-issue-discovery | get-available-issues.sh, lib/version-utils.sh | port-lock-and-worktree |
+| port-work-prepare | work-prepare.py | port-lock-and-worktree, port-issue-discovery |
 
 ## Success Criteria
 - [ ] All 7 workflow scripts have Java equivalents
 - [ ] JSON output contracts preserved exactly
 - [ ] File locking behavior identical (including stale lock detection)
-- [ ] All tests pass (`mvn -f hooks/pom.xml test`)
+- [ ] All tests pass (`mvn -f hooks/pom.xml verify`)
 - [ ] No bash/Python subprocess spawning for workflow operations
