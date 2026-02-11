@@ -11,7 +11,7 @@
 |-------|---------------|-------------|
 | `Status` | Always | `open`, `in_progress`, or `closed` |
 | `Progress` | Always | `0%` for open, `100%` for closed |
-| `Dependencies` | Always | Issue names this depends on; use `[]` if none |
+| `Dependencies` | Always | Issue names this depends on; use `[]` if none. When decomposed, include all sub-issues |
 | `Last Updated` | Open only | Date of last state change |
 | `Resolution` | Closed only | `implemented`, `duplicate`, `obsolete`, or `won't-fix` |
 | `Completed` | Closed only | Completion date |
