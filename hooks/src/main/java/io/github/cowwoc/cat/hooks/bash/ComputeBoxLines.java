@@ -1,17 +1,21 @@
 package io.github.cowwoc.cat.hooks.bash;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 import io.github.cowwoc.cat.hooks.BashHandler;
-import io.github.cowwoc.cat.hooks.util.ProcessRunner;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * Compute box lines via hook interception.
  * <p>
  * M192: Agent calculated box widths correctly but re-typed output from memory,
- * causing alignment errors. This handler executes Python-based computation
+ * causing alignment errors. This handler computes box lines with correct padding
  * and returns results via additionalContext.
  * <p>
  * USAGE: Agent invokes Bash with marker comment:
@@ -20,13 +24,18 @@ import java.util.List;
 public final class ComputeBoxLines implements BashHandler
 {
   private static final String BOX_COMPUTE_MARKER = "#BOX_COMPUTE";
+  private final JvmScope scope;
 
   /**
    * Creates a new handler for computing box lines.
+   *
+   * @param scope the JVM scope providing access to DisplayUtils
+   * @throws NullPointerException if {@code scope} is null
    */
-  public ComputeBoxLines()
+  public ComputeBoxLines(JvmScope scope)
   {
-    // Handler class
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -34,7 +43,7 @@ public final class ComputeBoxLines implements BashHandler
   {
     // Check for the BOX_COMPUTE marker
     String[] lines = command.split("\n");
-    if (lines.length == 0 || !lines[0].trim().startsWith(BOX_COMPUTE_MARKER))
+    if (lines.length == 0 || !lines[0].startsWith(BOX_COMPUTE_MARKER))
       return Result.allow();
 
     // Extract content items (all lines after the marker)
@@ -42,7 +51,7 @@ public final class ComputeBoxLines implements BashHandler
     if (contentItems.isEmpty())
       return Result.block("BOX_COMPUTE: No content items provided");
 
-    // Execute the Python script to build the box
+    // Build the box natively in Java
     return executeBoxComputation(contentItems);
   }
 
@@ -61,33 +70,35 @@ public final class ComputeBoxLines implements BashHandler
   }
 
   /**
-   * Executes the Python box computation script.
+   * Computes box lines natively in Java using DisplayUtils.
    *
    * @param contentItems the content items to format
    * @return a block result with the computed box output
    */
   private Result executeBoxComputation(List<String> contentItems)
   {
-    try
-    {
-      List<String> cmdArgs = new ArrayList<>();
-      cmdArgs.add("python3");
-      cmdArgs.add("plugin/scripts/build_box_lines.py");
-      cmdArgs.add("--format");
-      cmdArgs.add("lines");
-      cmdArgs.addAll(contentItems);
+    DisplayUtils displayUtils = scope.getDisplayUtils();
 
-      String boxOutput = ProcessRunner.runAndCapture(cmdArgs);
-      if (boxOutput == null)
-        return Result.block("BOX_COMPUTE: Error executing build_box_lines.py");
-
-      return Result.block(
-        "BOX_COMPUTE result (use this output exactly):\n\n" + boxOutput,
-        "Script output box (copy exactly):\n```\n" + boxOutput + "\n```");
-    }
-    catch (Exception e)
+    // Calculate max content width
+    int maxContentWidth = 0;
+    for (String content : contentItems)
     {
-      return Result.block("BOX_COMPUTE: Error computing box: " + e.getMessage());
+      int width = displayUtils.displayWidth(content);
+      if (width > maxContentWidth)
+        maxContentWidth = width;
     }
+
+    // Build box lines
+    StringJoiner boxLines = new StringJoiner("\n");
+    boxLines.add(displayUtils.buildTopBorder(maxContentWidth));
+    for (String content : contentItems)
+      boxLines.add(displayUtils.buildLine(content, maxContentWidth));
+    boxLines.add(displayUtils.buildBottomBorder(maxContentWidth));
+
+    String boxOutput = boxLines.toString();
+
+    return Result.block(
+      "BOX_COMPUTE result (use this output exactly):\n\n" + boxOutput,
+      "Script output box (copy exactly):\n```\n" + boxOutput + "\n```");
   }
 }

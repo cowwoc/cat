@@ -134,7 +134,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -154,7 +154,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -175,7 +175,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");

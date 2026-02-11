@@ -36,24 +36,29 @@ import java.util.List;
  */
 public final class GetBashPretoolOutput implements HookHandler
 {
-  private static final List<BashHandler> HANDLERS = List.of(
-    new BlockLockManipulation(),
-    new BlockMainRebase(),
-    new BlockMergeCommits(),
-    new BlockReflogDestruction(),
-    new BlockWorktreeCd(),
-    new ComputeBoxLines(),
-    new RemindGitSquash(),
-    new ValidateCommitType(),
-    new ValidateGitFilterBranch(),
-    new ValidateGitOperations(),
-    new WarnFileExtraction());
+  private final List<BashHandler> handlers;
 
   /**
-   * Creates a new GetBashPretoolOutput instance.
+   * Creates a new GetBashPretoolOutput instance with the specified JVM scope.
+   *
+   * @param scope the JVM scope providing access to shared resources
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GetBashPretoolOutput()
+  public GetBashPretoolOutput(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(
+      new BlockLockManipulation(),
+      new BlockMainRebase(),
+      new BlockMergeCommits(),
+      new BlockReflogDestruction(),
+      new BlockWorktreeCd(),
+      new ComputeBoxLines(scope),
+      new RemindGitSquash(),
+      new ValidateCommitType(),
+      new ValidateGitFilterBranch(),
+      new ValidateGitOperations(),
+      new WarnFileExtraction());
   }
 
   /**
@@ -68,7 +73,7 @@ public final class GetBashPretoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput(scope).run(input, output);
     }
   }
 
@@ -111,7 +116,7 @@ public final class GetBashPretoolOutput implements HookHandler
     List<String> warnings = new ArrayList<>();
 
     // Run all bash pretool handlers
-    for (BashHandler handler : HANDLERS)
+    for (BashHandler handler : handlers)
     {
       try
       {
