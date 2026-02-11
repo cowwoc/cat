@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import org.testng.annotations.Test;
@@ -21,16 +21,16 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class GetCheckpointOutputTest
 {
   /**
-   * Verifies that getCheckpointIssueComplete returns non-null result.
+   * Verifies that getCheckpointIssueComplete returns output containing the issue name and checkpoint header.
    */
   @Test
-  public void getCheckpointIssueCompleteReturnsNonNull() throws IOException
+  public void getCheckpointIssueCompleteContainsIssueNameAndHeader() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
-      requireThat(result, "result").isNotNull();
+      requireThat(result, "result").contains("2.1-test").contains("CHECKPOINT");
     }
   }
 
@@ -40,7 +40,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsHeader() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -54,7 +54,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsIssueName() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-add-feature", "50000", "25", "v2.1");
@@ -68,7 +68,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsTokens() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -82,7 +82,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsBranch() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -96,7 +96,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointIssueCompleteHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointIssueComplete("2.1-test", "50000", "25", "v2.1");
@@ -107,16 +107,16 @@ public class GetCheckpointOutputTest
   }
 
   /**
-   * Verifies that getCheckpointFeedbackApplied returns non-null result.
+   * Verifies that getCheckpointFeedbackApplied returns output containing the issue name and checkpoint header.
    */
   @Test
-  public void getCheckpointFeedbackAppliedReturnsNonNull() throws IOException
+  public void getCheckpointFeedbackAppliedContainsIssueNameAndHeader() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
-      requireThat(result, "result").isNotNull();
+      requireThat(result, "result").contains("2.1-test").contains("CHECKPOINT");
     }
   }
 
@@ -126,7 +126,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsHeader() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -140,7 +140,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsIteration() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "2", "30", "130", "v2.1");
@@ -154,7 +154,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedContainsTokenMetrics() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -168,7 +168,7 @@ public class GetCheckpointOutputTest
   @Test
   public void getCheckpointFeedbackAppliedHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       String result = output.getCheckpointFeedbackApplied("2.1-test", "1", "30", "130", "v2.1");
@@ -184,7 +184,7 @@ public class GetCheckpointOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getCheckpointIssueCompleteThrowsOnNullIssueName() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete(null, "50000", "25", "v2.1");
@@ -197,7 +197,7 @@ public class GetCheckpointOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getCheckpointIssueCompleteThrowsOnBlankIssueName() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete("", "50000", "25", "v2.1");
@@ -210,7 +210,7 @@ public class GetCheckpointOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getCheckpointIssueCompleteThrowsOnNullTokens() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete("2.1-test", null, "25", "v2.1");
@@ -223,7 +223,7 @@ public class GetCheckpointOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getCheckpointIssueCompleteThrowsOnBlankTokens() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointIssueComplete("2.1-test", "", "25", "v2.1");
@@ -236,7 +236,7 @@ public class GetCheckpointOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getCheckpointFeedbackAppliedThrowsOnNullIteration() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointFeedbackApplied("2.1-test", null, "30", "130", "v2.1");
@@ -249,7 +249,7 @@ public class GetCheckpointOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getCheckpointFeedbackAppliedThrowsOnBlankIteration() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetCheckpointOutput output = new GetCheckpointOutput(scope);
       output.getCheckpointFeedbackApplied("2.1-test", "", "30", "130", "v2.1");

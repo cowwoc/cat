@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import tools.jackson.core.type.TypeReference;
@@ -58,27 +58,30 @@ public final class GetNextTaskOutput
       String projectDir = "";
       String excludePattern = "";
 
-      for (int i = 0; i + 1 < args.length; ++i)
+      for (int i = 0; i + 1 < args.length; i += 2)
       {
         switch (args[i])
         {
-          case "--completed-issue" -> completedIssue = args[++i];
-          case "--base-branch" -> baseBranch = args[++i];
-          case "--session-id" -> sessionId = args[++i];
-          case "--project-dir" -> projectDir = args[++i];
-          case "--exclude-pattern" -> excludePattern = args[++i];
-          default -> {}
+          case "--completed-issue" -> completedIssue = args[i + 1];
+          case "--base-branch" -> baseBranch = args[i + 1];
+          case "--session-id" -> sessionId = args[i + 1];
+          case "--project-dir" -> projectDir = args[i + 1];
+          case "--exclude-pattern" -> excludePattern = args[i + 1];
+          default ->
+          {
+          }
         }
       }
 
       if (completedIssue.isEmpty() || baseBranch.isEmpty() || sessionId.isEmpty() || projectDir.isEmpty())
       {
-        System.err.println("Usage: GetNextTaskOutput --completed-issue ID --base-branch BRANCH --session-id ID --project-dir DIR [--exclude-pattern GLOB]");
+        System.err.println("Usage: GetNextTaskOutput --completed-issue ID --base-branch BRANCH " +
+          "--session-id ID --project-dir DIR [--exclude-pattern GLOB]");
         System.exit(1);
         return;
       }
 
-      try (JvmScope scope = new DefaultJvmScope())
+      try (JvmScope scope = new MainJvmScope())
       {
         GetNextTaskOutput output = new GetNextTaskOutput(scope);
         String box = output.getNextTaskBox(completedIssue, baseBranch, sessionId, projectDir, excludePattern);
@@ -150,7 +153,7 @@ public final class GetNextTaskOutput
 
     Map<String, Object> nextTask = findNextTask(projectDir, sessionId, excludePattern);
 
-    if (nextTask != null)
+    if (!nextTask.isEmpty())
     {
       String nextIssueId = nextTask.getOrDefault("issue_id", "").toString();
       String nextIssuePath = nextTask.getOrDefault("issue_path", "").toString();
@@ -193,8 +196,7 @@ public final class GetNextTaskOutput
         "release",
         projectDir,
         issueId,
-        sessionId
-      );
+        sessionId);
 
       ProcessRunner.runAndCaptureIgnoreExit(command);
     }
@@ -210,7 +212,7 @@ public final class GetNextTaskOutput
    * @param projectDir the project root directory
    * @param sessionId the current session ID
    * @param excludePattern optional glob pattern to exclude issues (may be empty)
-   * @return map with task info if found, null otherwise
+   * @return map with task info if found, empty map otherwise
    */
   private Map<String, Object> findNextTask(String projectDir, String sessionId, String excludePattern)
   {
@@ -218,11 +220,11 @@ public final class GetNextTaskOutput
     {
       String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
       if (pluginRoot == null || pluginRoot.isEmpty())
-        return null;
+        return Map.of();
 
       Path discoveryScript = Path.of(pluginRoot, "scripts", "get-available-issues.sh");
       if (!Files.exists(discoveryScript))
-        return null;
+        return Map.of();
 
       List<String> command = new ArrayList<>();
       command.add(discoveryScript.toString());
@@ -243,7 +245,7 @@ public final class GetNextTaskOutput
 
       String output = ProcessRunner.runAndCapture(command);
       if (output == null)
-        return null;
+        return Map.of();
 
       JsonMapper mapper = JsonMapper.builder().build();
       Map<String, Object> data = mapper.readValue(output, MAP_TYPE);
@@ -251,12 +253,12 @@ public final class GetNextTaskOutput
       String status = data.getOrDefault("status", "").toString();
       if (status.equals("found"))
         return data;
-      return null;
+      return Map.of();
     }
     catch (Exception e)
     {
       System.err.println("WARNING: Failed to find next task: " + e.getMessage());
-      return null;
+      return Map.of();
     }
   }
 

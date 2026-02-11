@@ -1,7 +1,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -210,7 +210,7 @@ public class ConfigTest
   @Test
   public void getConfigOutputFormatsSettingsCorrectly() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = createTempDir();
       try
@@ -230,7 +230,6 @@ public class ConfigTest
         GetConfigOutput handler = new GetConfigOutput(scope);
         String result = handler.getCurrentSettings(tempDir);
 
-        requireThat(result, "result").isNotNull();
         requireThat(result, "result").contains("CURRENT SETTINGS");
         requireThat(result, "result").contains("Trust: high");
         requireThat(result, "result").contains("Verify: all");

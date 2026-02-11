@@ -67,7 +67,6 @@ public final class GitMergeLinear
     checkFastForwardPossible(baseBranch, taskBranch);
 
     String commitMsg = getCommitMessage(taskBranch);
-    String commitShaBefore = getCommitSha(taskBranch);
 
     fastForwardMerge(taskBranch);
 

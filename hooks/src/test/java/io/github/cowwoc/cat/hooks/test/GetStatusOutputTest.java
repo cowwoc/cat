@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import org.testng.annotations.Test;
@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -46,7 +47,7 @@ public class GetStatusOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getOutputRejectsNullProjectDir() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       handler.getOutput(null);
@@ -61,7 +62,7 @@ public class GetStatusOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getOutputRejectsBlankProjectDir() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       handler.getOutput("");
@@ -77,7 +78,7 @@ public class GetStatusOutputTest
   public void noCatDirectoryReturnsErrorMessage() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-no-cat");
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -102,7 +103,7 @@ public class GetStatusOutputTest
     Path catDir = tempDir.resolve(".claude/cat");
     Files.createDirectories(catDir);
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -127,7 +128,7 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Files.createDirectories(issuesDir);
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -152,7 +153,7 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Files.createDirectories(issuesDir);
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -185,7 +186,7 @@ public class GetStatusOutputTest
     Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
     Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -215,7 +216,7 @@ public class GetStatusOutputTest
 
     Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -246,7 +247,7 @@ public class GetStatusOutputTest
 
     Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** in-progress\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -283,7 +284,7 @@ public class GetStatusOutputTest
       "## Dependencies\n" +
       "- task-1\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -316,7 +317,7 @@ public class GetStatusOutputTest
     Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
     Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -346,7 +347,7 @@ public class GetStatusOutputTest
 
     Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -376,7 +377,7 @@ public class GetStatusOutputTest
 
     Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** in-progress\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -406,7 +407,7 @@ public class GetStatusOutputTest
 
     Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -448,7 +449,7 @@ public class GetStatusOutputTest
       "## Dependencies\n" +
       "- another-done-task\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -480,7 +481,7 @@ public class GetStatusOutputTest
       "\n" +
       "## Version 2: Major Refactor (2024)\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -517,7 +518,7 @@ public class GetStatusOutputTest
       "\n" +
       "- **2.1:** Port display scripts\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -545,7 +546,7 @@ public class GetStatusOutputTest
 
     Files.writeString(catDir.resolve("PROJECT.md"), "# My Awesome Project\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -575,7 +576,7 @@ public class GetStatusOutputTest
 
     Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -609,7 +610,7 @@ public class GetStatusOutputTest
     Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
     Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -641,7 +642,7 @@ public class GetStatusOutputTest
     Files.createDirectories(minor11Dir);
     Files.createDirectories(minor20Dir);
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(tempDir.toString());
@@ -672,7 +673,7 @@ public class GetStatusOutputTest
 
     if (Files.isDirectory(path))
     {
-      try (var stream = Files.list(path))
+      try (Stream<Path> stream = Files.list(path))
       {
         for (Path child : stream.toList())
           deleteRecursively(child);
