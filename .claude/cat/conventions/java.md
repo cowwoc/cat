@@ -725,6 +725,43 @@ public String getConfig(String key)
 
 See `plugin/concepts/requirements-api.md` for full API conventions.
 
+## Class Design
+
+### main() in Business Logic Classes
+Classes with testable business logic may include a `main()` method for CLI invocation. Do not extract `main()` into a
+separate command class - this adds a file with no value. The pattern of constructor (used by tests) + `main()` (used by
+`hook.sh` for CLI invocation) is standard and acceptable:
+
+```java
+// Good - business logic class with CLI entry point
+public final class GetRenderDiffOutput
+{
+  public GetRenderDiffOutput(JvmScope scope) { ... }
+
+  public String getOutput() { ... }  // Testable business logic
+
+  public static void main(String[] args)  // CLI entry point via hook.sh
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      String output = new GetRenderDiffOutput(scope).getOutput();
+      if (output != null)
+        System.out.print(output);
+    }
+  }
+}
+
+// Avoid - separate class that just delegates to the real class
+public final class RenderDiffCommand  // Don't create this
+{
+  public static void main(String[] args)
+  {
+    // Trivial delegation adds no value
+    new GetRenderDiffOutput(new MainJvmScope()).getOutput();
+  }
+}
+```
+
 ## Warnings Suppression
 
 ### @SuppressWarnings("unchecked")
