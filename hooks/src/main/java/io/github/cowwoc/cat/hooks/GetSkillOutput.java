@@ -5,7 +5,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.prompt.CriticalThinking;
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
 import io.github.cowwoc.cat.hooks.prompt.DetectGivingUp;
-import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,17 +19,22 @@ import java.util.List;
  */
 public final class GetSkillOutput implements HookHandler
 {
-  private static final List<PromptHandler> HANDLERS = List.of(
-      new CriticalThinking(),
-      new DestructiveOps(),
-      new DetectGivingUp(),
-      new UserIssues());
+  private final List<PromptHandler> handlers;
 
   /**
    * Creates a new GetSkillOutput instance.
+   *
+   * @param scope the JVM scope providing singleton handlers
+   * @throws NullPointerException if scope is null
    */
-  public GetSkillOutput()
+  public GetSkillOutput(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(
+      new CriticalThinking(),
+      new DestructiveOps(),
+      new DetectGivingUp(),
+      scope.getUserIssues());
   }
 
   /**
@@ -40,9 +44,12 @@ public final class GetSkillOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetSkillOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope.getJsonMapper(), System.out);
+      new GetSkillOutput(scope).run(input, output);
+    }
   }
 
   /**
@@ -70,7 +77,7 @@ public final class GetSkillOutput implements HookHandler
     List<String> outputs = new ArrayList<>();
 
     // Run prompt handlers (pattern checking for all prompts)
-    for (PromptHandler handler : HANDLERS)
+    for (PromptHandler handler : handlers)
     {
       try
       {

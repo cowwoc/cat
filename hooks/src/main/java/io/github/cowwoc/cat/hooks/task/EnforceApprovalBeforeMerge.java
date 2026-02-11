@@ -3,6 +3,8 @@ package io.github.cowwoc.cat.hooks.task;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import tools.jackson.databind.JsonNode;
@@ -115,8 +117,11 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     if (projectDir == null || projectDir.isEmpty())
       return "medium";
 
-    Config config = Config.load(Paths.get(projectDir));
-    return config.getString("trust", "medium");
+    try (JvmScope scope = new MainJvmScope())
+    {
+      Config config = Config.load(scope.getJsonMapper(), Paths.get(projectDir));
+      return config.getString("trust", "medium");
+    }
   }
 
   /**

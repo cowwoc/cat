@@ -8,7 +8,6 @@ import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
@@ -30,7 +29,6 @@ import java.util.List;
  */
 public final class CheckUpgrade implements SessionStartHandler
 {
-  private final JsonMapper mapper = JsonMapper.builder().build();
   private final JvmScope scope;
 
   /**
@@ -68,7 +66,7 @@ public final class CheckUpgrade implements SessionStartHandler
     try
     {
       String lastMigratedVersion = getLastMigratedVersion(configFile);
-      String pluginVersion = VersionUtils.getPluginVersion(pluginRoot);
+      String pluginVersion = VersionUtils.getPluginVersion(scope.getJsonMapper(), pluginRoot);
 
       int cmp = VersionUtils.compareVersions(lastMigratedVersion, pluginVersion);
 
@@ -95,7 +93,7 @@ public final class CheckUpgrade implements SessionStartHandler
    */
   private String getLastMigratedVersion(Path configFile) throws IOException
   {
-    JsonNode root = mapper.readTree(Files.readString(configFile));
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(configFile));
     JsonNode versionNode = root.get("last_migrated_version");
     if (versionNode != null && versionNode.isString())
     {
@@ -233,7 +231,7 @@ public final class CheckUpgrade implements SessionStartHandler
     if (!Files.isRegularFile(registryFile))
       return List.of();
 
-    JsonNode root = mapper.readTree(Files.readString(registryFile));
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(registryFile));
     JsonNode migrations = root.get("migrations");
     if (migrations == null || !migrations.isArray())
       return List.of();
@@ -268,10 +266,10 @@ public final class CheckUpgrade implements SessionStartHandler
    */
   private void setLastMigratedVersion(Path configFile, String newVersion) throws IOException
   {
-    JsonNode root = mapper.readTree(Files.readString(configFile));
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(configFile));
     if (root instanceof ObjectNode objectNode)
       objectNode.put("last_migrated_version", newVersion);
-    Files.writeString(configFile, mapper.writeValueAsString(root));
+    Files.writeString(configFile, scope.getJsonMapper().writeValueAsString(root));
   }
 
   /**

@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.MergeAndCleanup;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
@@ -42,10 +43,14 @@ public class MergeAndCleanupTest
   @Test
   public void executeRejectsNullProjectDir() throws IOException
   {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup();
+      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
 
       try
       {
@@ -61,6 +66,7 @@ public class MergeAndCleanupTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -71,10 +77,14 @@ public class MergeAndCleanupTest
   @Test
   public void executeRejectsBlankProjectDir() throws IOException
   {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup();
+      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
 
       try
       {
@@ -90,6 +100,7 @@ public class MergeAndCleanupTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -100,10 +111,14 @@ public class MergeAndCleanupTest
   @Test
   public void executeRejectsNullIssueId() throws IOException
   {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup();
+      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
 
       try
       {
@@ -119,6 +134,7 @@ public class MergeAndCleanupTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -129,10 +145,14 @@ public class MergeAndCleanupTest
   @Test
   public void executeRejectsNonCatProject() throws IOException
   {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup();
+      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
 
       try
       {
@@ -149,6 +169,7 @@ public class MergeAndCleanupTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -159,13 +180,17 @@ public class MergeAndCleanupTest
   @Test
   public void executeAcceptsEmptyWorktreePath() throws IOException
   {
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
     Path tempDir = createTempDir();
     try
     {
       Path catDir = tempDir.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      MergeAndCleanup cmd = new MergeAndCleanup();
+      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
 
       try
       {
@@ -180,6 +205,7 @@ public class MergeAndCleanupTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
     }
   }
 }

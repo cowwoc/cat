@@ -1,9 +1,13 @@
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,9 +33,18 @@ public class DisplayUtilsTest
   @Test
   public void emptyStringHasWidthZero() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    int width = display.displayWidth("");
-    requireThat(width, "width").isEqualTo(0);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      int width = display.displayWidth("");
+      requireThat(width, "width").isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -42,12 +55,21 @@ public class DisplayUtilsTest
   @Test
   public void asciiTextWidthEqualsLength() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    int width1 = display.displayWidth("hello");
-    requireThat(width1, "width1").isEqualTo(5);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      int width1 = display.displayWidth("hello");
+      requireThat(width1, "width1").isEqualTo(5);
 
-    int width2 = display.displayWidth("test string");
-    requireThat(width2, "width2").isEqualTo(11);
+      int width2 = display.displayWidth("test string");
+      requireThat(width2, "width2").isEqualTo(11);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -60,13 +82,22 @@ public class DisplayUtilsTest
   @Test
   public void buildLinePadsShortContent() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String line = display.buildLine("hi", 20);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String line = display.buildLine("hi", 20);
 
-    requireThat(line, "line").startsWith("│").endsWith("│").contains("hi");
+      requireThat(line, "line").startsWith("│").endsWith("│").contains("hi");
 
-    int lineWidth = display.displayWidth(line);
-    requireThat(lineWidth, "lineWidth").isGreaterThan(display.displayWidth("│ hi │"));
+      int lineWidth = display.displayWidth(line);
+      requireThat(lineWidth, "lineWidth").isGreaterThan(display.displayWidth("│ hi │"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -80,15 +111,24 @@ public class DisplayUtilsTest
   @Test
   public void buildLineConsistentWidthAcrossContentTypes() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
 
-    String asciiLine = display.buildLine("hello", 20);
-    String emojiLine = display.buildLine("🐱 cat", 20);
+      String asciiLine = display.buildLine("hello", 20);
+      String emojiLine = display.buildLine("🐱 cat", 20);
 
-    int asciiWidth = display.displayWidth(asciiLine);
-    int emojiWidth = display.displayWidth(emojiLine);
+      int asciiWidth = display.displayWidth(asciiLine);
+      int emojiWidth = display.displayWidth(emojiLine);
 
-    requireThat(asciiWidth, "asciiWidth").isEqualTo(emojiWidth);
+      requireThat(asciiWidth, "asciiWidth").isEqualTo(emojiWidth);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -99,17 +139,26 @@ public class DisplayUtilsTest
   @Test
   public void buildLineDoesNotTruncateLongContent() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
 
-    String longContent = "a".repeat(25);
-    String longLine = display.buildLine(longContent, 20);
-    String shortLine = display.buildLine("short", 20);
+      String longContent = "a".repeat(25);
+      String longLine = display.buildLine(longContent, 20);
+      String shortLine = display.buildLine("short", 20);
 
-    int longWidth = display.displayWidth(longLine);
-    int shortWidth = display.displayWidth(shortLine);
+      int longWidth = display.displayWidth(longLine);
+      int shortWidth = display.displayWidth(shortLine);
 
-    requireThat(longWidth, "longWidth").isGreaterThan(shortWidth);
-    requireThat(longLine, "longLine").contains(longContent);
+      requireThat(longWidth, "longWidth").isGreaterThan(shortWidth);
+      requireThat(longLine, "longLine").contains(longContent);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -120,10 +169,19 @@ public class DisplayUtilsTest
   @Test
   public void buildTopBorderProducesTopBorder() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String border = display.buildTopBorder(10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String border = display.buildTopBorder(10);
 
-    requireThat(border, "border").startsWith("╭").endsWith("╮").contains("─");
+      requireThat(border, "border").startsWith("╭").endsWith("╮").contains("─");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -134,10 +192,19 @@ public class DisplayUtilsTest
   @Test
   public void buildBottomBorderProducesBottomBorder() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String border = display.buildBottomBorder(10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String border = display.buildBottomBorder(10);
 
-    requireThat(border, "border").startsWith("╰").endsWith("╯").contains("─");
+      requireThat(border, "border").startsWith("╰").endsWith("╯").contains("─");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -150,18 +217,27 @@ public class DisplayUtilsTest
   @Test
   public void bordersAlignWithBuildLine() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
 
-    String line = display.buildLine("content", 20);
-    String topBorder = display.buildTopBorder(20);
-    String bottomBorder = display.buildBottomBorder(20);
+      String line = display.buildLine("content", 20);
+      String topBorder = display.buildTopBorder(20);
+      String bottomBorder = display.buildBottomBorder(20);
 
-    int lineWidth = display.displayWidth(line);
-    int topWidth = display.displayWidth(topBorder);
-    int bottomWidth = display.displayWidth(bottomBorder);
+      int lineWidth = display.displayWidth(line);
+      int topWidth = display.displayWidth(topBorder);
+      int bottomWidth = display.displayWidth(bottomBorder);
 
-    requireThat(topWidth, "topWidth").isEqualTo(lineWidth);
-    requireThat(bottomWidth, "bottomWidth").isEqualTo(lineWidth);
+      requireThat(topWidth, "topWidth").isEqualTo(lineWidth);
+      requireThat(bottomWidth, "bottomWidth").isEqualTo(lineWidth);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -172,14 +248,23 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderBoxProducesMultiLineOutput() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderBox("Test Header", List.of("Line 1", "Line 2"));
-    String[] lines = result.split("\n");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderBox("Test Header", List.of("Line 1", "Line 2"));
+      String[] lines = result.split("\n");
 
-    requireThat(lines.length, "lineCount").isGreaterThanOrEqualTo(4);
-    requireThat(lines[0], "firstLine").startsWith("╭");
-    requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
-    requireThat(result, "result").contains("Line 1").contains("Line 2");
+      requireThat(lines.length, "lineCount").isGreaterThanOrEqualTo(4);
+      requireThat(lines[0], "firstLine").startsWith("╭");
+      requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+      requireThat(result, "result").contains("Line 1").contains("Line 2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -190,13 +275,22 @@ public class DisplayUtilsTest
   @Test
   public void buildProgressBarProducesCorrectLength() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
 
-    String bar1 = display.buildProgressBar(50, 10);
-    requireThat(bar1, "bar1").length().isEqualTo(10);
+      String bar1 = display.buildProgressBar(50, 10);
+      requireThat(bar1, "bar1").length().isEqualTo(10);
 
-    String bar2 = display.buildProgressBar(75, 20);
-    requireThat(bar2, "bar2").length().isEqualTo(20);
+      String bar2 = display.buildProgressBar(75, 20);
+      requireThat(bar2, "bar2").length().isEqualTo(20);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -207,10 +301,19 @@ public class DisplayUtilsTest
   @Test
   public void buildProgressBarZeroPercentAllEmpty() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String bar = display.buildProgressBar(0, 10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String bar = display.buildProgressBar(0, 10);
 
-    requireThat(bar, "bar").isEqualTo("░".repeat(10)).doesNotContain("█");
+      requireThat(bar, "bar").isEqualTo("░".repeat(10)).doesNotContain("█");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -221,18 +324,27 @@ public class DisplayUtilsTest
   @Test
   public void buildProgressBarMaxPercentMostlyFilled() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String bar = display.buildProgressBar(99, 10);
-
-    requireThat(bar, "bar").length().isEqualTo(10);
-
-    int emptyCount = 0;
-    for (int i = 0; i < bar.length(); ++i)
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      if (bar.charAt(i) == '░')
-        ++emptyCount;
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String bar = display.buildProgressBar(99, 10);
+
+      requireThat(bar, "bar").length().isEqualTo(10);
+
+      int emptyCount = 0;
+      for (int i = 0; i < bar.length(); ++i)
+      {
+        if (bar.charAt(i) == '░')
+          ++emptyCount;
+      }
+      requireThat(emptyCount, "emptyCount").isLessThanOrEqualTo(1);
     }
-    requireThat(emptyCount, "emptyCount").isLessThanOrEqualTo(1);
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -243,11 +355,20 @@ public class DisplayUtilsTest
   @Test
   public void buildProgressBarPartialProgressHasBothCharacters() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String bar = display.buildProgressBar(50, 10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String bar = display.buildProgressBar(50, 10);
 
-    requireThat(bar, "bar").contains("█").contains("░");
-    requireThat(bar, "bar").length().isEqualTo(10);
+      requireThat(bar, "bar").contains("█").contains("░");
+      requireThat(bar, "bar").length().isEqualTo(10);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   // --- Error path tests ---
@@ -260,8 +381,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = NullPointerException.class)
   public void buildLineWithNullContentThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildLine(null, 20);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildLine(null, 20);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -272,8 +402,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = NullPointerException.class)
   public void buildHeaderBoxWithNullHeaderThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildHeaderBox(null, List.of("content"));
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildHeaderBox(null, List.of("content"));
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -284,8 +423,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = NullPointerException.class)
   public void buildHeaderBoxWithNullContentLinesThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildHeaderBox("Header", null);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildHeaderBox("Header", null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -296,8 +444,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void buildProgressBarNegativePercentThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildProgressBar(-1, 10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildProgressBar(-1, 10);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -308,8 +465,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void buildProgressBarOverHundredPercentThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildProgressBar(101, 10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildProgressBar(101, 10);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -320,8 +486,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void buildProgressBarZeroWidthThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildProgressBar(50, 0);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildProgressBar(50, 0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -332,8 +507,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void buildProgressBarNegativeWidthThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildProgressBar(50, -5);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildProgressBar(50, -5);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -344,8 +528,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = NullPointerException.class)
   public void displayWidthWithNullTextThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.displayWidth(null);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.displayWidth(null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   // --- Boundary condition tests ---
@@ -361,8 +554,17 @@ public class DisplayUtilsTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void buildProgressBarHundredPercentThrows() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    display.buildProgressBar(100, 10);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      display.buildProgressBar(100, 10);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -433,12 +635,21 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderBoxHasBoxStructure() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderBox("Title", List.of("content line"));
-    String[] lines = result.split("\n");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderBox("Title", List.of("content line"));
+      String[] lines = result.split("\n");
 
-    requireThat(lines[0], "firstLine").startsWith("╭");
-    requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+      requireThat(lines[0], "firstLine").startsWith("╭");
+      requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -449,12 +660,21 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderBoxWithEmptyContentProducesValidBox() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderBox("Title", List.of());
-    String[] lines = result.split("\n");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderBox("Title", List.of());
+      String[] lines = result.split("\n");
 
-    requireThat(lines[0], "firstLine").startsWith("╭");
-    requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+      requireThat(lines[0], "firstLine").startsWith("╭");
+      requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -465,10 +685,19 @@ public class DisplayUtilsTest
   @Test
   public void buildLineWithZeroMinWidth() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String line = display.buildLine("content", 0);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String line = display.buildLine("content", 0);
 
-    requireThat(line, "line").startsWith("│").endsWith("│").contains("content");
+      requireThat(line, "line").startsWith("│").endsWith("│").contains("content");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -482,12 +711,21 @@ public class DisplayUtilsTest
   @Test
   public void variationSelectorDoesNotAddWidth() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    // ☑️ is ☑ (U+2611) + variation selector (U+FE0F)
-    int width = display.displayWidth("☑️");
-    // Should be 1 or 2 (emoji width) but not 3 (which would mean the variation selector
-    // was counted as a separate character)
-    requireThat(width, "width").isLessThanOrEqualTo(2);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      // ☑️ is ☑ (U+2611) + variation selector (U+FE0F)
+      int width = display.displayWidth("☑️");
+      // Should be 1 or 2 (emoji width) but not 3 (which would mean the variation selector
+      // was counted as a separate character)
+      requireThat(width, "width").isLessThanOrEqualTo(2);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -498,12 +736,21 @@ public class DisplayUtilsTest
   @Test
   public void boxDrawingCharactersHaveWidthOne() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
 
-    requireThat(display.displayWidth("─"), "horizontalWidth").isEqualTo(1);
-    requireThat(display.displayWidth("│"), "verticalWidth").isEqualTo(1);
-    requireThat(display.displayWidth("╭╮"), "topCornersWidth").isEqualTo(2);
-    requireThat(display.displayWidth("╰╯"), "bottomCornersWidth").isEqualTo(2);
+      requireThat(display.displayWidth("─"), "horizontalWidth").isEqualTo(1);
+      requireThat(display.displayWidth("│"), "verticalWidth").isEqualTo(1);
+      requireThat(display.displayWidth("╭╮"), "topCornersWidth").isEqualTo(2);
+      requireThat(display.displayWidth("╰╯"), "bottomCornersWidth").isEqualTo(2);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   // --- buildSeparator tests (from Python TestBuildSeparator) ---
@@ -516,9 +763,18 @@ public class DisplayUtilsTest
   @Test
   public void buildSeparatorReturnsString() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSeparator(10);
-    requireThat(result, "result").isNotEmpty();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSeparator(10);
+      requireThat(result, "result").isNotEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -529,9 +785,18 @@ public class DisplayUtilsTest
   @Test
   public void buildSeparatorStartsWithLeftConnector() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSeparator(10);
-    requireThat(result, "result").startsWith("├");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSeparator(10);
+      requireThat(result, "result").startsWith("├");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -542,9 +807,18 @@ public class DisplayUtilsTest
   @Test
   public void buildSeparatorEndsWithRightConnector() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSeparator(10);
-    requireThat(result, "result").endsWith("┤");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSeparator(10);
+      requireThat(result, "result").endsWith("┤");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -555,9 +829,18 @@ public class DisplayUtilsTest
   @Test
   public void buildSeparatorContainsDashes() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSeparator(10);
-    requireThat(result, "result").contains("─");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSeparator(10);
+      requireThat(result, "result").contains("─");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -568,10 +851,19 @@ public class DisplayUtilsTest
   @Test
   public void buildSeparatorDashCountIsWidthPlusTwo() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSeparator(10);
-    long dashCount = result.chars().filter(c -> c == '─').count();
-    requireThat(dashCount, "dashCount").isEqualTo(12L);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSeparator(10);
+      long dashCount = result.chars().filter(c -> c == '─').count();
+      requireThat(dashCount, "dashCount").isEqualTo(12L);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -582,13 +874,22 @@ public class DisplayUtilsTest
   @Test
   public void buildSeparatorVariousWidths() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    for (int width : new int[]{5, 20, 50})
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      String result = display.buildSeparator(width);
-      requireThat(result, "result").startsWith("├").endsWith("┤");
-      long dashCount = result.chars().filter(c -> c == '─').count();
-      requireThat(dashCount, "dashCount").isEqualTo((long) (width + 2));
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      for (int width : new int[]{5, 20, 50})
+      {
+        String result = display.buildSeparator(width);
+        requireThat(result, "result").startsWith("├").endsWith("┤");
+        long dashCount = result.chars().filter(c -> c == '─').count();
+        requireThat(dashCount, "dashCount").isEqualTo((long) (width + 2));
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -602,9 +903,18 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderTopReturnsString() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderTop("Header", 20);
-    requireThat(result, "result").isNotEmpty();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderTop("Header", 20);
+      requireThat(result, "result").isNotEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -615,9 +925,18 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderTopStartsWithCorner() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderTop("Test", 20);
-    requireThat(result, "result").startsWith("╭");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderTop("Test", 20);
+      requireThat(result, "result").startsWith("╭");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -628,9 +947,18 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderTopEndsWithCorner() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderTop("Test", 20);
-    requireThat(result, "result").endsWith("╮");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderTop("Test", 20);
+      requireThat(result, "result").endsWith("╮");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -641,9 +969,18 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderTopContainsHeaderText() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderTop("My Header", 30);
-    requireThat(result, "result").contains("My Header");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderTop("My Header", 30);
+      requireThat(result, "result").contains("My Header");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -654,9 +991,18 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderTopHasPrefixDashes() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderTop("Test", 20);
-    requireThat(result, "result").contains("─── ");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderTop("Test", 20);
+      requireThat(result, "result").contains("─── ");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -667,11 +1013,20 @@ public class DisplayUtilsTest
   @Test
   public void buildHeaderTopHasSuffixDashes() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildHeaderTop("Test", 20);
-    String[] parts = result.split("Test ");
-    requireThat(parts.length, "parts.length").isEqualTo(2);
-    requireThat(parts[1], "suffixPart").endsWith("╮").contains("─");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildHeaderTop("Test", 20);
+      String[] parts = result.split("Test ");
+      requireThat(parts.length, "parts.length").isEqualTo(2);
+      requireThat(parts[1], "suffixPart").endsWith("╮").contains("─");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   // --- buildSimpleBox tests (from Python TestBuildSimpleBox) ---
@@ -685,12 +1040,21 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxBasicStructure() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("📊", "Test Title", List.of("Content line"));
-    String[] lines = result.split("\n");
-    requireThat(lines[0], "firstLine").startsWith("╭").endsWith("╮");
-    requireThat(result, "result").contains("📊 Test Title");
-    requireThat(lines[lines.length - 1], "lastLine").startsWith("╰").endsWith("╯");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("📊", "Test Title", List.of("Content line"));
+      String[] lines = result.split("\n");
+      requireThat(lines[0], "firstLine").startsWith("╭").endsWith("╮");
+      requireThat(result, "result").contains("📊 Test Title");
+      requireThat(lines[lines.length - 1], "lastLine").startsWith("╰").endsWith("╯");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -701,10 +1065,19 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxWithMultipleContentLines() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("✅", "Header",
-      List.of("Line 1", "Line 2", "Line 3"));
-    requireThat(result, "result").contains("Line 1").contains("Line 2").contains("Line 3");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("✅", "Header",
+        List.of("Line 1", "Line 2", "Line 3"));
+      requireThat(result, "result").contains("Line 1").contains("Line 2").contains("Line 3");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -715,24 +1088,33 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxContentLinesHaveConsistentWidth() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("📊", "TEST",
-      List.of("Short", "Medium length content", "Longer content line here"));
-    String[] lines = result.split("\n");
-    List<String> contentLines = new ArrayList<>();
-    for (String line : lines)
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      if (line.startsWith("│"))
-        contentLines.add(line);
-    }
-    if (!contentLines.isEmpty())
-    {
-      int firstWidth = display.displayWidth(contentLines.get(0));
-      for (String contentLine : contentLines)
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("📊", "TEST",
+        List.of("Short", "Medium length content", "Longer content line here"));
+      String[] lines = result.split("\n");
+      List<String> contentLines = new ArrayList<>();
+      for (String line : lines)
       {
-        int width = display.displayWidth(contentLine);
-        requireThat(width, "contentLineWidth").isEqualTo(firstWidth);
+        if (line.startsWith("│"))
+          contentLines.add(line);
       }
+      if (!contentLines.isEmpty())
+      {
+        int firstWidth = display.displayWidth(contentLines.get(0));
+        for (String contentLine : contentLines)
+        {
+          int width = display.displayWidth(contentLine);
+          requireThat(width, "contentLineWidth").isEqualTo(firstWidth);
+        }
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -744,12 +1126,21 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxHeaderAndFooterSameWidth() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("✅", "TITLE", List.of("Content"));
-    String[] lines = result.split("\n");
-    int headerWidth = display.displayWidth(lines[0]);
-    int footerWidth = display.displayWidth(lines[lines.length - 1]);
-    requireThat(headerWidth, "headerWidth").isEqualTo(footerWidth);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("✅", "TITLE", List.of("Content"));
+      String[] lines = result.split("\n");
+      int headerWidth = display.displayWidth(lines[0]);
+      int footerWidth = display.displayWidth(lines[lines.length - 1]);
+      requireThat(headerWidth, "headerWidth").isEqualTo(footerWidth);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -760,15 +1151,24 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxAllLinesSameWidth() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("🔧", "Settings",
-      List.of("Option 1: value", "Option 2: longer value here", "Option 3: x"));
-    String[] lines = result.split("\n");
-    int firstWidth = display.displayWidth(lines[0]);
-    for (String line : lines)
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      int width = display.displayWidth(line);
-      requireThat(width, "lineWidth").isEqualTo(firstWidth);
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("🔧", "Settings",
+        List.of("Option 1: value", "Option 2: longer value here", "Option 3: x"));
+      String[] lines = result.split("\n");
+      int firstWidth = display.displayWidth(lines[0]);
+      for (String line : lines)
+      {
+        int width = display.displayWidth(line);
+        requireThat(width, "lineWidth").isEqualTo(firstWidth);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -780,12 +1180,21 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxEmptyContent() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("ℹ️", "INFO", List.of());
-    String[] lines = result.split("\n");
-    requireThat(lines.length, "lineCount").isGreaterThanOrEqualTo(2);
-    requireThat(lines[0], "firstLine").startsWith("╭");
-    requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("ℹ️", "INFO", List.of());
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isGreaterThanOrEqualTo(2);
+      requireThat(lines[0], "firstLine").startsWith("╭");
+      requireThat(lines[lines.length - 1], "lastLine").startsWith("╰");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -796,9 +1205,18 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxEmojiIcon() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String result = display.buildSimpleBox("🐱", "CAT", List.of("Content"));
-    requireThat(result, "result").contains("🐱 CAT");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String result = display.buildSimpleBox("🐱", "CAT", List.of("Content"));
+      requireThat(result, "result").contains("🐱 CAT");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -810,16 +1228,25 @@ public class DisplayUtilsTest
   @Test
   public void buildSimpleBoxLongContent() throws IOException
   {
-    DisplayUtils display = new DisplayUtils();
-    String longLine = "A".repeat(100);
-    String result = display.buildSimpleBox("📊", "Test", List.of(longLine));
-    requireThat(result, "result").contains(longLine);
-    String[] lines = result.split("\n");
-    int firstWidth = display.displayWidth(lines[0]);
-    for (String line : lines)
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      int width = display.displayWidth(line);
-      requireThat(width, "lineWidth").isEqualTo(firstWidth);
+      JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = new DisplayUtils(mapper);
+      String longLine = "A".repeat(100);
+      String result = display.buildSimpleBox("📊", "Test", List.of(longLine));
+      requireThat(result, "result").contains(longLine);
+      String[] lines = result.split("\n");
+      int firstWidth = display.displayWidth(lines[0]);
+      for (String line : lines)
+      {
+        int width = display.displayWidth(line);
+        requireThat(width, "lineWidth").isEqualTo(firstWidth);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

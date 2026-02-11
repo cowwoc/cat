@@ -15,6 +15,7 @@ import io.github.cowwoc.cat.hooks.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +63,13 @@ public final class GetBashPretoolOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetBashPretoolOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(mapper, System.out);
+      new GetBashPretoolOutput().run(input, output);
+    }
   }
 
   /**

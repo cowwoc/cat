@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.WriteAndCommit;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 
@@ -43,6 +44,8 @@ public class WriteAndCommitTest
   @Test
   public void executeRejectsNullFilePath() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
@@ -51,7 +54,7 @@ public class WriteAndCommitTest
       Files.writeString(contentFile, "test content");
       Files.writeString(commitMsgFile, "test commit");
 
-      WriteAndCommit cmd = new WriteAndCommit();
+      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
 
       try
       {
@@ -67,6 +70,7 @@ public class WriteAndCommitTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -77,6 +81,8 @@ public class WriteAndCommitTest
   @Test
   public void executeRejectsBlankFilePath() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
@@ -85,7 +91,7 @@ public class WriteAndCommitTest
       Files.writeString(contentFile, "test content");
       Files.writeString(commitMsgFile, "test commit");
 
-      WriteAndCommit cmd = new WriteAndCommit();
+      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
 
       try
       {
@@ -101,6 +107,7 @@ public class WriteAndCommitTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -111,13 +118,15 @@ public class WriteAndCommitTest
   @Test
   public void executeRejectsMissingContentFile() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
       Path commitMsgFile = tempDir.resolve("commit.txt");
       Files.writeString(commitMsgFile, "test commit");
 
-      WriteAndCommit cmd = new WriteAndCommit();
+      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
 
       try
       {
@@ -134,6 +143,7 @@ public class WriteAndCommitTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -144,13 +154,15 @@ public class WriteAndCommitTest
   @Test
   public void executeRejectsMissingCommitMsgFile() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
       Path contentFile = tempDir.resolve("content.txt");
       Files.writeString(contentFile, "test content");
 
-      WriteAndCommit cmd = new WriteAndCommit();
+      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
 
       try
       {
@@ -166,6 +178,7 @@ public class WriteAndCommitTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
     }
   }
 }

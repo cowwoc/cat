@@ -2,6 +2,7 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.EditHandler;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.GetAskPretoolOutput;
 import io.github.cowwoc.cat.hooks.GetBashPosttoolOutput;
@@ -54,23 +55,25 @@ public class HookEntryPointTest
   /**
    * Creates a HookInput from a JSON string.
    *
+   * @param mapper the JSON mapper
    * @param json the JSON input string
    * @return the parsed HookInput
    */
-  private HookInput createInput(String json)
+  private HookInput createInput(JsonMapper mapper, String json)
   {
-    return HookInput.readFrom(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+    return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
    * Creates a HookOutput that captures output to a stream.
    *
+   * @param mapper the JSON mapper
    * @param capture the stream to capture output into
    * @return a HookOutput writing to the capture stream
    */
-  private HookOutput createOutput(ByteArrayOutputStream capture)
+  private HookOutput createOutput(JsonMapper mapper, ByteArrayOutputStream capture)
   {
-    return new HookOutput(new PrintStream(capture, true, StandardCharsets.UTF_8));
+    return new HookOutput(mapper, new PrintStream(capture, true, StandardCharsets.UTF_8));
   }
 
 
@@ -80,32 +83,40 @@ public class HookEntryPointTest
    * Verifies that GetSkillOutput returns empty JSON when given empty input.
    */
   @Test
-  public void getSkillOutputReturnsEmptyJsonForEmptyInput()
+  public void getSkillOutputReturnsEmptyJsonForEmptyInput() throws IOException
   {
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetSkillOutput().run(input, output);
+      new GetSkillOutput(scope).run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetSkillOutput returns empty JSON when no message is present.
    */
   @Test
-  public void getSkillOutputReturnsEmptyJsonWhenNoMessage()
+  public void getSkillOutputReturnsEmptyJsonWhenNoMessage() throws IOException
   {
-    HookInput input = createInput("{\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetSkillOutput().run(input, output);
+      new GetSkillOutput(scope).run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetBashPretoolOutput tests ---
@@ -114,49 +125,61 @@ public class HookEntryPointTest
    * Verifies that GetBashPretoolOutput returns empty JSON for non-Bash tools.
    */
   @Test
-  public void getBashPretoolReturnsEmptyJsonForNonBashTool()
+  public void getBashPretoolReturnsEmptyJsonForNonBashTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Read\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetBashPretoolOutput returns empty JSON when Bash tool has no command.
    */
   @Test
-  public void getBashPretoolReturnsEmptyJsonWhenNoCommand()
+  public void getBashPretoolReturnsEmptyJsonWhenNoCommand() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Bash\", \"tool_input\": {}}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetBashPretoolOutput returns empty JSON for Bash tool with command.
    */
   @Test
-  public void getBashPretoolReturnsEmptyJsonWithCommand()
+  public void getBashPretoolReturnsEmptyJsonWithCommand() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetBashPretoolOutput().run(input, output);
+      new GetBashPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetBashPosttoolOutput tests ---
@@ -165,16 +188,20 @@ public class HookEntryPointTest
    * Verifies that GetBashPosttoolOutput returns empty JSON for non-Bash tools.
    */
   @Test
-  public void getBashPosttoolReturnsEmptyJsonForNonBashTool()
+  public void getBashPosttoolReturnsEmptyJsonForNonBashTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Read\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetBashPosttoolOutput().run(input, output);
+      new GetBashPosttoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetReadPretoolOutput tests ---
@@ -183,33 +210,41 @@ public class HookEntryPointTest
    * Verifies that GetReadPretoolOutput returns empty JSON for Read tool.
    */
   @Test
-  public void getReadPretoolReturnsEmptyJsonForReadTool()
+  public void getReadPretoolReturnsEmptyJsonForReadTool() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetReadPretoolOutput().run(input, output);
+      new GetReadPretoolOutput(scope).run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetReadPretoolOutput returns empty JSON for unsupported tools.
    */
   @Test
-  public void getReadPretoolReturnsEmptyJsonForUnsupportedTool()
+  public void getReadPretoolReturnsEmptyJsonForUnsupportedTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Bash\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetReadPretoolOutput().run(input, output);
+      new GetReadPretoolOutput(scope).run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetReadPosttoolOutput tests ---
@@ -218,17 +253,21 @@ public class HookEntryPointTest
    * Verifies that GetReadPosttoolOutput returns empty JSON for Grep tool.
    */
   @Test
-  public void getReadPosttoolReturnsEmptyJsonForGrepTool()
+  public void getReadPosttoolReturnsEmptyJsonForGrepTool() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetReadPosttoolOutput().run(input, output);
+      new GetReadPosttoolOutput(scope).run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetPosttoolOutput tests ---
@@ -237,33 +276,41 @@ public class HookEntryPointTest
    * Verifies that GetPosttoolOutput returns empty JSON when given empty input.
    */
   @Test
-  public void getPosttoolReturnsEmptyJsonForEmptyInput()
+  public void getPosttoolReturnsEmptyJsonForEmptyInput() throws IOException
   {
-    HookInput input = createInput("{}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetPosttoolOutput().run(input, output);
+      new GetPosttoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetPosttoolOutput returns empty JSON with a tool name present.
    */
   @Test
-  public void getPosttoolReturnsEmptyJsonWithToolName()
+  public void getPosttoolReturnsEmptyJsonWithToolName() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetPosttoolOutput().run(input, output);
+      new GetPosttoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- HookInput error path tests ---
@@ -272,70 +319,96 @@ public class HookEntryPointTest
    * Verifies that HookInput.readFrom with malformed JSON returns empty HookInput.
    */
   @Test
-  public void hookInputWithMalformedJsonReturnsEmpty()
+  public void hookInputWithMalformedJsonReturnsEmpty() throws IOException
   {
-    HookInput input = createInput("not valid json {{{");
-    requireThat(input.isEmpty(), "isEmpty").isTrue();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "not valid json {{{");
+      requireThat(input.isEmpty(), "isEmpty").isTrue();
+    }
   }
 
   /**
    * Verifies that HookInput.readFrom with blank input returns empty HookInput.
    */
   @Test
-  public void hookInputWithBlankInputReturnsEmpty()
+  public void hookInputWithBlankInputReturnsEmpty() throws IOException
   {
-    HookInput input = createInput("   ");
-    requireThat(input.isEmpty(), "isEmpty").isTrue();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "   ");
+      requireThat(input.isEmpty(), "isEmpty").isTrue();
+    }
   }
 
   /**
    * Verifies that HookInput.readFrom with empty string returns empty HookInput.
    */
   @Test
-  public void hookInputWithEmptyStringReturnsEmpty()
+  public void hookInputWithEmptyStringReturnsEmpty() throws IOException
   {
-    HookInput input = createInput("");
-    requireThat(input.isEmpty(), "isEmpty").isTrue();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "");
+      requireThat(input.isEmpty(), "isEmpty").isTrue();
+    }
   }
 
   /**
    * Verifies that HookInput.getString with non-string value throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void hookInputGetStringWithNonStringValueThrows()
+  public void hookInputGetStringWithNonStringValueThrows() throws IOException
   {
-    HookInput input = createInput("{\"count\": 42}");
-    input.getString("count");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"count\": 42}");
+      input.getString("count");
+    }
   }
 
   /**
    * Verifies that HookInput.getString returns empty string for missing key.
    */
   @Test
-  public void hookInputGetStringReturnEmptyForMissingKey()
+  public void hookInputGetStringReturnEmptyForMissingKey() throws IOException
   {
-    HookInput input = createInput("{\"key\": \"value\"}");
-    String result = input.getString("nonexistent");
-    requireThat(result, "result").isEqualTo("");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"key\": \"value\"}");
+      String result = input.getString("nonexistent");
+      requireThat(result, "result").isEqualTo("");
+    }
   }
 
   /**
    * Verifies that HookInput.readFrom with null stream throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void hookInputReadFromNullStreamThrows()
+  public void hookInputReadFromNullStreamThrows() throws IOException
   {
-    HookInput.readFrom(null);
+    try (JvmScope scope = new TestJvmScope())
+    {
+    HookInput.readFrom(scope.getJsonMapper(), null);
+    }
   }
 
   /**
    * Verifies that HookInput.empty returns an empty input.
    */
   @Test
-  public void hookInputEmptyReturnsEmptyInput()
+  public void hookInputEmptyReturnsEmptyInput() throws IOException
   {
-    HookInput input = HookInput.empty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+    HookInput input = HookInput.empty(scope.getJsonMapper());
     requireThat(input.isEmpty(), "isEmpty").isTrue();
+    }
   }
 
   // --- HookOutput error path tests ---
@@ -344,42 +417,57 @@ public class HookEntryPointTest
    * Verifies that HookOutput.block with blank reason throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void hookOutputBlockWithBlankReasonThrows()
+  public void hookOutputBlockWithBlankReasonThrows() throws IOException
   {
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
-    output.block("   ");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
+      output.block("   ");
+    }
   }
 
   /**
    * Verifies that HookOutput.block with null reason throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void hookOutputBlockWithNullReasonThrows()
+  public void hookOutputBlockWithNullReasonThrows() throws IOException
   {
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
-    output.block(null);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
+      output.block(null);
+    }
   }
 
   /**
    * Verifies that HookOutput constructor with null stream throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void hookOutputWithNullStreamThrows()
+  public void hookOutputWithNullStreamThrows() throws IOException
   {
-    new HookOutput(null);
+    try (JvmScope scope = new TestJvmScope())
+    {
+    new HookOutput(scope.getJsonMapper(), null);
+    }
   }
 
   /**
    * Verifies that HookOutput.warn with blank warning throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void hookOutputWarnWithBlankWarningThrows()
+  public void hookOutputWarnWithBlankWarningThrows() throws IOException
   {
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
-    output.warn("");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
+      output.warn("");
+    }
   }
 
   /**
@@ -395,39 +483,51 @@ public class HookEntryPointTest
    * Verifies that HookOutput.additionalContext with blank hookEventName throws IllegalArgumentException.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void hookOutputAdditionalContextWithBlankEventNameThrows()
+  public void hookOutputAdditionalContextWithBlankEventNameThrows() throws IOException
   {
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
-    output.additionalContext("", "some context");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
+      output.additionalContext("", "some context");
+    }
   }
 
   /**
    * Verifies that HookOutput.block produces valid JSON with decision field.
    */
   @Test
-  public void hookOutputBlockProducesValidJson()
+  public void hookOutputBlockProducesValidJson() throws IOException
   {
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
-    output.block("test reason");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
+      output.block("test reason");
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
+    }
   }
 
   /**
    * Verifies that HookOutput.empty produces empty JSON object.
    */
   @Test
-  public void hookOutputEmptyProducesEmptyJson()
+  public void hookOutputEmptyProducesEmptyJson() throws IOException
   {
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
-    output.empty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
+      output.empty();
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetAskPretoolOutput tests ---
@@ -436,33 +536,41 @@ public class HookEntryPointTest
    * Verifies that GetAskPretoolOutput returns empty JSON for non-AskUserQuestion tools.
    */
   @Test
-  public void getAskPretoolReturnsEmptyForNonAskTool()
+  public void getAskPretoolReturnsEmptyForNonAskTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Read\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetAskPretoolOutput returns empty JSON when tool_input is empty.
    */
   @Test
-  public void getAskPretoolReturnsEmptyForEmptyToolInput()
+  public void getAskPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- GetEditPretoolOutput tests ---
@@ -471,47 +579,59 @@ public class HookEntryPointTest
    * Verifies that GetEditPretoolOutput returns empty JSON for non-Edit tools.
    */
   @Test
-  public void getEditPretoolReturnsEmptyForNonEditTool()
+  public void getEditPretoolReturnsEmptyForNonEditTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Read\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetEditPretoolOutput returns empty JSON when tool_input is empty.
    */
   @Test
-  public void getEditPretoolReturnsEmptyForEmptyToolInput()
+  public void getEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetEditPretoolOutput throws IllegalArgumentException when session_id is missing.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getEditPretoolThrowsOnMissingSessionId()
+  public void getEditPretoolThrowsOnMissingSessionId() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
+    }
   }
 
   // --- GetTaskPretoolOutput tests ---
@@ -520,33 +640,41 @@ public class HookEntryPointTest
    * Verifies that GetTaskPretoolOutput returns empty JSON for non-Task tools.
    */
   @Test
-  public void getTaskPretoolReturnsEmptyForNonTaskTool()
+  public void getTaskPretoolReturnsEmptyForNonTaskTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Read\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetTaskPretoolOutput().run(input, output);
+      new GetTaskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetTaskPretoolOutput returns empty JSON when tool_input is empty.
    */
   @Test
-  public void getTaskPretoolReturnsEmptyForEmptyToolInput()
+  public void getTaskPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetTaskPretoolOutput().run(input, output);
+      new GetTaskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- EnforceWorkflowCompletion tests ---
@@ -555,17 +683,21 @@ public class HookEntryPointTest
    * Verifies that EnforceWorkflowCompletion allows edits to non-STATE.md files.
    */
   @Test
-  public void enforceWorkflowCompletionAllowsNonStateMdFiles()
+  public void enforceWorkflowCompletionAllowsNonStateMdFiles() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- WarnSkillEditWithoutBuilder tests ---
@@ -574,17 +706,21 @@ public class HookEntryPointTest
    * Verifies that WarnSkillEditWithoutBuilder allows edits to non-skill files.
    */
   @Test
-  public void warnSkillEditAllowsNonSkillFiles()
+  public void warnSkillEditAllowsNonSkillFiles() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/README.md\"}, \"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/README.md\"}, \"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- WarnUnsquashedApproval tests ---
@@ -593,18 +729,22 @@ public class HookEntryPointTest
    * Verifies that WarnUnsquashedApproval allows non-approval questions.
    */
   @Test
-  public void warnUnsquashedApprovalAllowsNonApprovalQuestions()
+  public void warnUnsquashedApprovalAllowsNonApprovalQuestions() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- WarnApprovalWithoutRenderDiff tests ---
@@ -613,18 +753,22 @@ public class HookEntryPointTest
    * Verifies that WarnApprovalWithoutRenderDiff allows non-approval questions.
    */
   @Test
-  public void warnApprovalWithoutRenderDiffAllowsNonApprovalQuestions()
+  public void warnApprovalWithoutRenderDiffAllowsNonApprovalQuestions() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- EnforceApprovalBeforeMerge tests ---
@@ -633,35 +777,43 @@ public class HookEntryPointTest
    * Verifies that EnforceApprovalBeforeMerge allows non-work-merge tasks.
    */
   @Test
-  public void enforceApprovalBeforeMergeAllowsNonWorkMergeTasks()
+  public void enforceApprovalBeforeMergeAllowsNonWorkMergeTasks() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetTaskPretoolOutput().run(input, output);
+      new GetTaskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that EnforceApprovalBeforeMerge allows tasks with empty subagent_type.
    */
   @Test
-  public void enforceApprovalBeforeMergeAllowsEmptySubagentType()
+  public void enforceApprovalBeforeMergeAllowsEmptySubagentType() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetTaskPretoolOutput().run(input, output);
+      new GetTaskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- EnforceWorkflowCompletion handler tests ---
@@ -672,13 +824,17 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionWarnsOnStatusClosed() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
-      "\"new_string\": \"Status: closed\"}");
-    EditHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
-    requireThat(result.reason(), "reason").contains("my-task");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
+        "\"new_string\": \"Status: closed\"}");
+      EditHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
+      requireThat(result.reason(), "reason").contains("my-task");
+    }
   }
 
   /**
@@ -687,48 +843,60 @@ public class HookEntryPointTest
   @Test
   public void enforceWorkflowCompletionWarnsOnLowercaseStatusClosed() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
-      "\"new_string\": \"status:closed\"}");
-    EditHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\", " +
+        "\"new_string\": \"status:closed\"}");
+      EditHandler.Result result = new EnforceWorkflowCompletion().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").contains("WORKFLOW COMPLETION CHECK");
+    }
   }
 
   /**
    * Verifies that EnforceWorkflowCompletion allows edits when new_string is missing.
    */
   @Test
-  public void enforceWorkflowCompletionAllowsMissingNewString()
+  public void enforceWorkflowCompletionAllowsMissingNewString() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that EnforceWorkflowCompletion allows when status is not closed.
    */
   @Test
-  public void enforceWorkflowCompletionAllowsNonClosedStatus()
+  public void enforceWorkflowCompletionAllowsNonClosedStatus() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/fix-bug-123/STATE.md\", " +
-      "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/fix-bug-123/STATE.md\", " +
+        "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- WarnSkillEditWithoutBuilder handler tests ---
@@ -739,48 +907,60 @@ public class HookEntryPointTest
   @Test
   public void warnSkillEditWarnsOnSkillMdFiles() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
-    EditHandler.Result result = new WarnSkillEditWithoutBuilder().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").contains("SKILL EDIT DETECTED");
-    requireThat(result.reason(), "reason").contains("my-skill");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
+      EditHandler.Result result = new WarnSkillEditWithoutBuilder().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").contains("SKILL EDIT DETECTED");
+      requireThat(result.reason(), "reason").contains("my-skill");
+    }
   }
 
   /**
    * Verifies that WarnSkillEditWithoutBuilder allows files that do not match skill pattern.
    */
   @Test
-  public void warnSkillEditAllowsNonSkillPaths()
+  public void warnSkillEditAllowsNonSkillPaths() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/skills/test-skill/SKILL.md\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/skills/test-skill/SKILL.md\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that WarnSkillEditWithoutBuilder allows non-SKILL.md files in skills directory.
    */
   @Test
-  public void warnSkillEditAllowsNonSkillMdFiles()
+  public void warnSkillEditAllowsNonSkillMdFiles() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/skills/my-skill/helper.py\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/skills/my-skill/helper.py\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetEditPretoolOutput().run(input, output);
+      new GetEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- WarnApprovalWithoutRenderDiff handler tests ---
@@ -789,36 +969,44 @@ public class HookEntryPointTest
    * Verifies that WarnApprovalWithoutRenderDiff allows non-approval questions.
    */
   @Test
-  public void warnApprovalWithoutRenderDiffAllowsNonApprovalInput()
+  public void warnApprovalWithoutRenderDiffAllowsNonApprovalInput() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that WarnApprovalWithoutRenderDiff allows when CLAUDE_PROJECT_DIR is missing.
    */
   @Test
-  public void warnApprovalWithoutRenderDiffAllowsMissingProjectDir()
+  public void warnApprovalWithoutRenderDiffAllowsMissingProjectDir() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- WarnUnsquashedApproval handler tests ---
@@ -827,38 +1015,46 @@ public class HookEntryPointTest
    * Verifies that WarnUnsquashedApproval containsApprove method works correctly.
    */
   @Test
-  public void warnUnsquashedApprovalDetectsApproveInInput()
+  public void warnUnsquashedApprovalDetectsApproveInInput() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that WarnUnsquashedApproval detects uppercase APPROVE.
    */
   @Test
-  public void warnUnsquashedApprovalDetectsUppercaseApprove()
+  public void warnUnsquashedApprovalDetectsUppercaseApprove() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
 
@@ -866,20 +1062,24 @@ public class HookEntryPointTest
    * Verifies that GetAskPretoolOutput returns additionalContext when handler provides it.
    */
   @Test
-  public void getAskPretoolReturnsAdditionalContextEarly()
+  public void getAskPretoolReturnsAdditionalContextEarly() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
-      "\"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
+        "\"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetAskPretoolOutput().run(input, output);
+      new GetAskPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
-    // This test verifies no crash occurs
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
+      // This test verifies no crash occurs
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- EnforcePluginFileIsolation handler tests ---
@@ -890,12 +1090,16 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationBlocksPluginFileOnProtectedBranch() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/plugin/hooks/test.py\"}");
-    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
-    // On the v2.1 branch (protected), plugin files should be blocked
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/plugin/hooks/test.py\"}");
+      FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+      // On the v2.1 branch (protected), plugin files should be blocked
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+    }
   }
 
   /**
@@ -904,10 +1108,14 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationAllowsNonPluginFiles() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/docs/README.md\"}");
-    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/docs/README.md\"}");
+      FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -916,9 +1124,13 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationAllowsEmptyPath() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree("{}");
-    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{}");
+      FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   // --- WarnBaseBranchEdit handler tests ---
@@ -929,9 +1141,13 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditAllowsEmptyPath() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree("{}");
-    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{}");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -940,10 +1156,14 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditAllowsAllowedPatterns() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/.claude/settings.json\"}");
-    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/.claude/settings.json\"}");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   // --- GetWriteEditPretoolOutput dispatcher tests ---
@@ -952,86 +1172,106 @@ public class HookEntryPointTest
    * Verifies that GetWriteEditPretoolOutput returns empty JSON for non-Write/Edit tools.
    */
   @Test
-  public void getWriteEditPretoolReturnsEmptyForNonWriteEditTool()
+  public void getWriteEditPretoolReturnsEmptyForNonWriteEditTool() throws IOException
   {
-    HookInput input = createInput("{\"tool_name\": \"Read\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetWriteEditPretoolOutput returns empty JSON when tool_input is empty.
    */
   @Test
-  public void getWriteEditPretoolReturnsEmptyForEmptyToolInput()
+  public void getWriteEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetWriteEditPretoolOutput uses case-insensitive matching for tool names.
    */
   @Test
-  public void getWriteEditPretoolUsesCaseInsensitiveMatching()
+  public void getWriteEditPretoolUsesCaseInsensitiveMatching() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetWriteEditPretoolOutput accepts Edit tool_name.
    */
   @Test
-  public void getWriteEditPretoolAcceptsEditToolName()
+  public void getWriteEditPretoolAcceptsEditToolName() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\", \"old_string\": \"a\", " +
-      "\"new_string\": \"b\"}, \"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\", \"old_string\": \"a\", " +
+        "\"new_string\": \"b\"}, \"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   /**
    * Verifies that GetWriteEditPretoolOutput blocks plugin file edit on protected branch.
    */
   @Test
-  public void getWriteEditPretoolBlocksPluginFileOnProtectedBranch()
+  public void getWriteEditPretoolBlocksPluginFileOnProtectedBranch() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.py\"}, " +
-      "\"session_id\": \"test\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.py\"}, " +
+        "\"session_id\": \"test\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
+    }
   }
 
   // --- WarnBaseBranchEdit handler tests (using real git state) ---
@@ -1045,19 +1285,23 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditWarnsOnBaseBranch() throws IOException
   {
-    Path tempDir = createTempGitRepo("main");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      String filePath = tempDir.resolve("hooks/src/main/java/SomeNewFile.java").toString();
-      JsonNode toolInput = JsonMapper.builder().build().readTree(
-        "{\"file_path\": \"" + filePath.replace("\\", "\\\\") + "\"}");
-      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").contains("BASE BRANCH EDIT DETECTED");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempGitRepo("main");
+      try
+      {
+        String filePath = tempDir.resolve("hooks/src/main/java/SomeNewFile.java").toString();
+        JsonNode toolInput = mapper.readTree(
+          "{\"file_path\": \"" + filePath.replace("\\", "\\\\") + "\"}");
+        FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+        requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.reason(), "reason").contains("BASE BRANCH EDIT DETECTED");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 
@@ -1070,11 +1314,15 @@ public class HookEntryPointTest
   @Test
   public void warnBaseBranchEditAllowsExistingHooksFiles() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/hooks/pom.xml\"}");
-    FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
-    requireThat(result.reason(), "reason").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/hooks/pom.xml\"}");
+      FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
+    }
   }
 
   // --- EnforcePluginFileIsolation handler tests (using real git state) ---
@@ -1088,11 +1336,15 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationDetectsPluginSubdirectories() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
-    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
+      FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+    }
   }
 
   /**
@@ -1103,10 +1355,14 @@ public class HookEntryPointTest
   @Test
   public void enforcePluginFileIsolationAllowsNonPluginPaths() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/hooks/src/main/java/io/github/cowwoc/cat/hooks/HookInput.java\"}");
-    FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/hooks/src/main/java/io/github/cowwoc/cat/hooks/HookInput.java\"}");
+      FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   // --- GetWriteEditPretoolOutput dispatcher tests (using real handlers) ---
@@ -1118,20 +1374,24 @@ public class HookEntryPointTest
    * additionalContext isEmpty() check that was the CRITICAL bug fix.
    */
   @Test
-  public void getWriteEditPretoolBlocksPluginFileWithBlockDecision()
+  public void getWriteEditPretoolBlocksPluginFileWithBlockDecision() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.sh\"}, " +
-      "\"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.sh\"}, " +
+        "\"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").contains("\"decision\"");
-    requireThat(result, "result").contains("\"block\"");
-    requireThat(result, "result").contains("Cannot edit plugin files");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").contains("\"decision\"");
+      requireThat(result, "result").contains("\"block\"");
+      requireThat(result, "result").contains("Cannot edit plugin files");
+    }
   }
 
   /**
@@ -1141,18 +1401,22 @@ public class HookEntryPointTest
    * (warning goes to stderr, stdout is {}).
    */
   @Test
-  public void getWriteEditPretoolAllowsNonPluginFileWithWarning()
+  public void getWriteEditPretoolAllowsNonPluginFileWithWarning() throws IOException
   {
-    HookInput input = createInput(
-      "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/tmp/some-new-source.java\"}, " +
-      "\"session_id\": \"test-session\"}");
-    ByteArrayOutputStream capture = new ByteArrayOutputStream();
-    HookOutput output = createOutput(capture);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/tmp/some-new-source.java\"}, " +
+        "\"session_id\": \"test-session\"}");
+      ByteArrayOutputStream capture = new ByteArrayOutputStream();
+      HookOutput output = createOutput(mapper, capture);
 
-    new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditPretoolOutput().run(input, output);
 
-    String result = capture.toString(StandardCharsets.UTF_8).trim();
-    requireThat(result, "result").isEqualTo("{}");
+      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      requireThat(result, "result").isEqualTo("{}");
+    }
   }
 
   // --- Warning accumulation tests ---
@@ -1164,16 +1428,18 @@ public class HookEntryPointTest
   @SuppressWarnings("PMD.CloseResource")
   public void writeEditPretoolAccumulatesMultipleWarnings() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
     FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
 
     GetWriteEditPretoolOutput dispatcher = new GetWriteEditPretoolOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = JsonMapper.builder().build();
+    JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
       "{\"file_path\": \"/workspace/some-file.txt\"}, \"session_id\": \"test-session-123\"}";
     JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(
+    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
       new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
@@ -1182,7 +1448,7 @@ public class HookEntryPointTest
     try
     {
       System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
       dispatcher.run(input, output);
     }
     finally
@@ -1196,6 +1462,7 @@ public class HookEntryPointTest
 
     String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
     requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+    }
   }
 
   /**
@@ -1205,16 +1472,18 @@ public class HookEntryPointTest
   @SuppressWarnings("PMD.CloseResource")
   public void editPretoolAccumulatesMultipleWarnings() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     EditHandler handler1 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 1");
     EditHandler handler2 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 2");
 
     GetEditPretoolOutput dispatcher = new GetEditPretoolOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = JsonMapper.builder().build();
+    JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
       "{\"file_path\": \"/workspace/test.txt\"}, \"session_id\": \"test-session-456\"}";
     JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(
+    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
       new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
@@ -1223,7 +1492,7 @@ public class HookEntryPointTest
     try
     {
       System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
       dispatcher.run(input, output);
     }
     finally
@@ -1237,6 +1506,7 @@ public class HookEntryPointTest
 
     String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
     requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+    }
   }
 
   /**
@@ -1246,16 +1516,18 @@ public class HookEntryPointTest
   @SuppressWarnings("PMD.CloseResource")
   public void taskPretoolAccumulatesMultipleWarnings() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     TaskHandler handler1 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 1");
     TaskHandler handler2 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 2");
 
     GetTaskPretoolOutput dispatcher = new GetTaskPretoolOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = JsonMapper.builder().build();
+    JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
       "{\"subagent_type\": \"cat:implement\"}, \"session_id\": \"test-session-789\"}";
     JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(
+    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
       new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
@@ -1264,7 +1536,7 @@ public class HookEntryPointTest
     try
     {
       System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
       dispatcher.run(input, output);
     }
     finally
@@ -1278,6 +1550,7 @@ public class HookEntryPointTest
 
     String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
     requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+    }
   }
 
   /**
@@ -1287,6 +1560,8 @@ public class HookEntryPointTest
   @SuppressWarnings("PMD.CloseResource")
   public void writeEditPretoolBlocksWithoutWarnings() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     FileWriteHandler handler1 = (toolInput, sessionId) ->
       FileWriteHandler.Result.warn("This warning should not appear");
     FileWriteHandler handler2 = (toolInput, sessionId) ->
@@ -1294,11 +1569,11 @@ public class HookEntryPointTest
 
     GetWriteEditPretoolOutput dispatcher = new GetWriteEditPretoolOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = JsonMapper.builder().build();
+    JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
       "{\"file_path\": \"/workspace/blocked.txt\"}, \"session_id\": \"test-session-999\"}";
     JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(
+    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
       new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
@@ -1307,7 +1582,7 @@ public class HookEntryPointTest
     try
     {
       System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
       dispatcher.run(input, output);
     }
     finally
@@ -1322,6 +1597,7 @@ public class HookEntryPointTest
     requireThat(stdoutContent, "stdoutContent").contains("\"decision\"");
     requireThat(stdoutContent, "stdoutContent").contains("\"block\"");
     requireThat(stdoutContent, "stdoutContent").contains("Blocked by handler 2");
+    }
   }
 
   // --- BlockWorktreeCd handler tests ---
@@ -1332,13 +1608,17 @@ public class HookEntryPointTest
   @Test
   public void blockWorktreeCdBlocksCdToWorktree() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"command\": \"cd /workspace/.claude/cat/worktrees/my-task\"}");
-    BashHandler.Result result = new BlockWorktreeCd().check(
-      "cd /workspace/.claude/cat/worktrees/my-task", toolInput, null, "test");
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("CD INTO WORKTREE BLOCKED");
-    requireThat(result.reason(), "reason").contains("git -C");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"command\": \"cd /workspace/.claude/cat/worktrees/my-task\"}");
+      BashHandler.Result result = new BlockWorktreeCd().check(
+        "cd /workspace/.claude/cat/worktrees/my-task", toolInput, null, "test");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("CD INTO WORKTREE BLOCKED");
+      requireThat(result.reason(), "reason").contains("git -C");
+    }
   }
 
   /**
@@ -1347,11 +1627,15 @@ public class HookEntryPointTest
   @Test
   public void blockWorktreeCdBlocksCdWithQuotes() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"command\": \"cd '.claude/cat/worktrees/task-name'\"}");
-    BashHandler.Result result = new BlockWorktreeCd().check(
-      "cd '.claude/cat/worktrees/task-name'", toolInput, null, "test");
-    requireThat(result.blocked(), "blocked").isTrue();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"command\": \"cd '.claude/cat/worktrees/task-name'\"}");
+      BashHandler.Result result = new BlockWorktreeCd().check(
+        "cd '.claude/cat/worktrees/task-name'", toolInput, null, "test");
+      requireThat(result.blocked(), "blocked").isTrue();
+    }
   }
 
   /**
@@ -1360,11 +1644,15 @@ public class HookEntryPointTest
   @Test
   public void blockWorktreeCdAllowsNormalCd() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"command\": \"cd /workspace/hooks\"}");
-    BashHandler.Result result = new BlockWorktreeCd().check(
-      "cd /workspace/hooks", toolInput, null, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"command\": \"cd /workspace/hooks\"}");
+      BashHandler.Result result = new BlockWorktreeCd().check(
+        "cd /workspace/hooks", toolInput, null, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -1373,11 +1661,15 @@ public class HookEntryPointTest
   @Test
   public void blockWorktreeCdAllowsGitC() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"command\": \"git -C /workspace/.claude/cat/worktrees/my-task status\"}");
-    BashHandler.Result result = new BlockWorktreeCd().check(
-      "git -C /workspace/.claude/cat/worktrees/my-task status", toolInput, null, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"command\": \"git -C /workspace/.claude/cat/worktrees/my-task status\"}");
+      BashHandler.Result result = new BlockWorktreeCd().check(
+        "git -C /workspace/.claude/cat/worktrees/my-task status", toolInput, null, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   // --- ValidateStateMdFormat handler tests ---
@@ -1388,12 +1680,16 @@ public class HookEntryPointTest
   @Test
   public void validateStateMdFormatBlocksMissingStatus() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-      "\"content\": \"- **Progress:** 50%\\n- **Dependencies:** []\"}");
-    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("Missing '- **Status:** value'");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+        "\"content\": \"- **Progress:** 50%\\n- **Dependencies:** []\"}");
+      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing '- **Status:** value'");
+    }
   }
 
   /**
@@ -1402,12 +1698,16 @@ public class HookEntryPointTest
   @Test
   public void validateStateMdFormatBlocksMissingProgress() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-      "\"content\": \"- **Status:** pending\\n- **Dependencies:** []\"}");
-    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("Missing '- **Progress:** value'");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+        "\"content\": \"- **Status:** pending\\n- **Dependencies:** []\"}");
+      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing '- **Progress:** value'");
+    }
   }
 
   /**
@@ -1416,12 +1716,16 @@ public class HookEntryPointTest
   @Test
   public void validateStateMdFormatBlocksMissingDependencies() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-      "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\"}");
-    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("Missing '- **Dependencies:** [...]'");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+        "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\"}");
+      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Missing '- **Dependencies:** [...]'");
+    }
   }
 
   /**
@@ -1430,11 +1734,15 @@ public class HookEntryPointTest
   @Test
   public void validateStateMdFormatAllowsValidContent() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
-      "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\\n- **Dependencies:** []\"}");
-    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \".claude/cat/issues/v2/v2.1/my-task/STATE.md\", " +
+        "\"content\": \"- **Status:** pending\\n- **Progress:** 0%\\n- **Dependencies:** []\"}");
+      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -1443,10 +1751,14 @@ public class HookEntryPointTest
   @Test
   public void validateStateMdFormatAllowsNonStateMdFiles() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/README.md\", \"content\": \"Some content\"}");
-    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/README.md\", \"content\": \"Some content\"}");
+      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -1455,10 +1767,14 @@ public class HookEntryPointTest
   @Test
   public void validateStateMdFormatAllowsNonIssueStateMd() throws IOException
   {
-    JsonNode toolInput = JsonMapper.builder().build().readTree(
-      "{\"file_path\": \"/workspace/docs/STATE.md\", \"content\": \"Random content\"}");
-    FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
-    requireThat(result.blocked(), "blocked").isFalse();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree(
+        "{\"file_path\": \"/workspace/docs/STATE.md\", \"content\": \"Random content\"}");
+      FileWriteHandler.Result result = new ValidateStateMdFormat().check(toolInput, "test");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**

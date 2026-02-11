@@ -1,6 +1,5 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetWorkOutput;
 import io.github.cowwoc.cat.hooks.skills.GetWorkOutput.Approach;
@@ -30,7 +29,7 @@ public class GetWorkOutputTest
   @Test
   public void getNoExecutableTasksReturnsOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getNoExecutableTasks();
@@ -46,7 +45,7 @@ public class GetWorkOutputTest
   @Test
   public void getNoExecutableTasksContainsMessage() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getNoExecutableTasks();
@@ -62,7 +61,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueNotFoundReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueNotFound("my-task", "Did you mean: other-task?");
@@ -79,7 +78,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueNotFoundIncludesSuggestion() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueNotFound("my-task", "Did you mean: other-task?");
@@ -96,7 +95,7 @@ public class GetWorkOutputTest
   @Test
   public void getForkInTheRoadReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       List<Approach> approaches = List.of(
@@ -117,7 +116,7 @@ public class GetWorkOutputTest
   @Test
   public void getForkInTheRoadIncludesApproachNames() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       List<Approach> approaches = List.of(
@@ -138,7 +137,7 @@ public class GetWorkOutputTest
   @Test
   public void getCheckpointIssueCompleteReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getCheckpointIssueComplete(
@@ -160,7 +159,7 @@ public class GetWorkOutputTest
   @Test
   public void getCheckpointIssueCompleteIncludesTimeMetrics() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getCheckpointIssueComplete(
@@ -182,7 +181,7 @@ public class GetWorkOutputTest
   @Test
   public void getCheckpointIssueCompleteIncludesTokenMetrics() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getCheckpointIssueComplete(
@@ -204,7 +203,7 @@ public class GetWorkOutputTest
   @Test
   public void getCheckpointFeedbackAppliedReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getCheckpointFeedbackApplied(
@@ -226,7 +225,7 @@ public class GetWorkOutputTest
   @Test
   public void getCheckpointFeedbackAppliedIncludesIteration() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getCheckpointFeedbackApplied(
@@ -248,7 +247,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -268,7 +267,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextIncludesNextTask() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -288,7 +287,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextIncludesGoal() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -308,7 +307,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextContainsMergedMessage() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -328,7 +327,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -348,7 +347,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextContainsContinuingMessage() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -368,7 +367,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextContainsStopAbortInstructions() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -388,7 +387,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteWithNextContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteWithNext(
@@ -408,7 +407,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueAlreadyCompleteReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueAlreadyComplete(
@@ -429,7 +428,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueAlreadyCompleteIncludesCommitHash() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueAlreadyComplete(
@@ -450,7 +449,7 @@ public class GetWorkOutputTest
   @Test
   public void getScopeCompleteReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getScopeComplete(
@@ -469,7 +468,7 @@ public class GetWorkOutputTest
   @Test
   public void getScopeCompleteIncludesMessage() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getScopeComplete(
@@ -488,7 +487,7 @@ public class GetWorkOutputTest
   @Test
   public void getScopeCompleteContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getScopeComplete(
@@ -507,7 +506,7 @@ public class GetWorkOutputTest
   @Test
   public void getScopeCompleteContainsTasksCompleteMessage() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getScopeComplete(
@@ -526,7 +525,7 @@ public class GetWorkOutputTest
   @Test
   public void getScopeCompleteContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getScopeComplete(
@@ -545,7 +544,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteLowTrustReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteLowTrust(
@@ -565,7 +564,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteLowTrustContainsCatWorkCommand() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteLowTrust(
@@ -585,7 +584,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueCompleteLowTrustContainsNextUp() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueCompleteLowTrust(
@@ -605,7 +604,7 @@ public class GetWorkOutputTest
   @Test
   public void getVersionBoundaryGateReturnsFormattedOutput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getVersionBoundaryGate(
@@ -626,7 +625,7 @@ public class GetWorkOutputTest
   @Test
   public void getVersionBoundaryGateIncludesIssueCount() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getVersionBoundaryGate(
@@ -649,7 +648,7 @@ public class GetWorkOutputTest
   @Test
   public void getCheckpointIssueCompleteContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getCheckpointIssueComplete(
@@ -671,7 +670,7 @@ public class GetWorkOutputTest
   @Test
   public void getForkInTheRoadContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       List<Approach> approaches = List.of(
@@ -692,7 +691,7 @@ public class GetWorkOutputTest
   @Test
   public void getIssueNotFoundContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
       String result = handler.getIssueNotFound("my-task", "suggestion");

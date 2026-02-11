@@ -30,12 +30,18 @@ public final class UserIssues implements PromptHandler
     "ignored", "you ignored", "didn't acknowledge", "didn't respond to",
     "expected behavior");
 
+  private final JsonMapper mapper;
+
   /**
    * Creates a new user issues handler.
+   *
+   * @param mapper the JSON mapper to use for state serialization
+   * @throws NullPointerException if mapper is null
    */
-  public UserIssues()
+  public UserIssues(JsonMapper mapper)
   {
-    // Handler class
+    requireThat(mapper, "mapper").isNotNull();
+    this.mapper = mapper;
   }
 
   @Override
@@ -93,7 +99,6 @@ public final class UserIssues implements PromptHandler
     Path gapsFile = Path.of("/tmp/pending_detection_gaps_" + sessionId + ".json");
     try
     {
-      JsonMapper mapper = JsonMapper.builder().build();
       ObjectNode data;
       if (Files.exists(gapsFile))
         data = (ObjectNode) mapper.readTree(Files.readString(gapsFile));

@@ -249,8 +249,11 @@ public String process(String input)
 
 ### JsonMapper Usage
 - Use `JsonMapper` instead of `ObjectMapper` for JSON parsing
-- Create non-static instances: `JsonMapper.builder().build()`
-- Create mapper where needed, don't use static class-level instances
+- Obtain the shared instance from `JvmScope.getJsonMapper()` — never call `JsonMapper.builder().build()` directly
+- The shared instance is configured with pretty print (`SerializationFeature.INDENT_OUTPUT`)
+- In production code, get the mapper from the `JvmScope` passed to your class
+- In tests, create a `TestJvmScope` and call `scope.getJsonMapper()`
+- In CLI `main()` methods, create a `MainJvmScope` and call `scope.getJsonMapper()`
 
 ### Unicode Characters
 Use literal characters instead of unicode escapes:
@@ -364,7 +367,8 @@ if ("Bash".equalsIgnoreCase(toolName))
 ## Documentation
 
 ### Javadoc Paragraphs
-Place `<p>` on its own line with no other text. Do not use `</p>` closing tags. No empty lines before or after `<p>`:
+Place `<p>` on its own line with no other text. Do not use `</p>` closing tags. Empty lines in a Javadoc description
+must contain `<p>` — never leave a bare `*` line between paragraphs:
 
 ```java
 // Good - <p> on its own line, no empty lines around it, no closing tag
@@ -927,23 +931,34 @@ Tests run in parallel. Test classes must not contain any shared state:
 2. **No @BeforeMethod/@AfterMethod/@BeforeClass/@AfterClass** - initialize in each test method
 3. **Use try-with-resources** for all resources (files, streams, temp directories)
 4. **No shared mutable state** - each test must be fully self-contained
-5. **No TestBase classes** - each test method must inline its own setup (e.g., `try (JvmScope scope = new
-   DefaultJvmScope())`). This boilerplate is intentional and preferred over shared helpers or inheritance.
-6. **No `System.setErr()`/`System.setOut()`** - these mutate JVM-wide shared state and are not thread-safe. Instead:
+5. **No TestBase classes** - each test method must inline its own setup. This boilerplate is intentional and preferred
+   over shared helpers or inheritance.
+6. **Use `TestJvmScope`, not `MainJvmScope`** - tests must never use `MainJvmScope` because it reads environment
+   variables that may not be set in test contexts. Use `TestJvmScope(tempDir, tempDir)` with injectable paths instead.
+7. **Never use scope-provided objects after closing the scope** - objects returned by `JvmScope` (e.g., `JsonMapper`,
+   `DisplayUtils`) must not be used after the scope is closed. Keep the scope open for the entire duration of the test.
+   Do not create helper methods like `getTestMapper()` that open a scope, extract an object, and close the scope.
+8. **No `System.setErr()`/`System.setOut()`** - these mutate JVM-wide shared state and are not thread-safe. Instead:
    - **Design for testability**: Create methods that accept arbitrary streams as parameters, then have `main()` delegate
      to these methods passing `System.in`/`System.out`/`System.err`. Tests pass their own streams.
    - **Assert observable side effects**: When stream injection isn't practical, verify behavior through other means (e.g.,
      file still exists after failed deletion) rather than capturing stderr.
 
 ```java
-// Good - self-contained test, inline scope creation
+// Good - self-contained test with TestJvmScope
 @Test
 public void testProcess() throws IOException
 {
-  try (JvmScope scope = new DefaultJvmScope())
+  Path tempDir = Files.createTempDirectory("test-");
+  try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
   {
+    JsonMapper mapper = scope.getJsonMapper();
     var result = process(scope, input);
     requireThat(result, "result").isEqualTo("expected");
+  }
+  finally
+  {
+    TestUtils.deleteDirectoryRecursively(tempDir);
   }
 }
 

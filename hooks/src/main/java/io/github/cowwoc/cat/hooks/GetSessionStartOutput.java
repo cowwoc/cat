@@ -67,10 +67,11 @@ public final class GetSessionStartOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
     try (JvmScope scope = new MainJvmScope())
     {
+      tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(mapper, System.out);
       new GetSessionStartOutput(scope).run(input, output);
     }
     catch (RuntimeException | AssertionError e)

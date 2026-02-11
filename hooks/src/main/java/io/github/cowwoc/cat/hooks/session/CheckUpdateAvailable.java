@@ -7,7 +7,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
@@ -32,7 +31,6 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   private static final String GITHUB_API_URL =
     "https://api.github.com/repos/cowwoc/cat/releases/latest";
   private static final Duration TIMEOUT = Duration.ofSeconds(5);
-  private final JsonMapper mapper = JsonMapper.builder().build();
   private final JvmScope scope;
 
   /**
@@ -64,7 +62,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
 
     try
     {
-      String currentVersion = VersionUtils.getPluginVersion(pluginRoot);
+      String currentVersion = VersionUtils.getPluginVersion(scope.getJsonMapper(), pluginRoot);
 
       Path cacheDir = projectDir.resolve(".claude/cat/backups/update-check");
       Path cacheFile = cacheDir.resolve("latest_version.json");
@@ -153,7 +151,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
    */
   private String readCachedVersion(Path cacheFile) throws IOException
   {
-    JsonNode root = mapper.readTree(Files.readString(cacheFile));
+    JsonNode root = scope.getJsonMapper().readTree(Files.readString(cacheFile));
     JsonNode versionNode = root.get("version");
     if (versionNode != null && versionNode.isString())
       return versionNode.asString();
@@ -181,7 +179,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
       if (response.statusCode() != 200)
         return "";
 
-      JsonNode root = mapper.readTree(response.body());
+      JsonNode root = scope.getJsonMapper().readTree(response.body());
       JsonNode tagNode = root.get("tag_name");
       if (tagNode == null || !tagNode.isString())
         return "";
@@ -210,10 +208,10 @@ public final class CheckUpdateAvailable implements SessionStartHandler
     try
     {
       Files.createDirectories(cacheDir);
-      ObjectNode node = mapper.createObjectNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
       node.put("version", version);
       node.put("checked", String.valueOf(Instant.now().getEpochSecond()));
-      Files.writeString(cacheFile, mapper.writeValueAsString(node));
+      Files.writeString(cacheFile, scope.getJsonMapper().writeValueAsString(node));
     }
     catch (IOException _)
     {

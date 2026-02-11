@@ -44,18 +44,22 @@ public final class IssueLock
   private static final DateTimeFormatter ISO_FORMATTER =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
 
-  private static final JsonMapper MAPPER = JsonMapper.builder().build();
+  private final JsonMapper mapper;
   private final Path lockDir;
 
   /**
    * Creates a new issue lock manager.
    *
+   * @param mapper the JSON mapper to use for serialization
    * @param projectDir the project root directory containing .claude/cat/
+   * @throws NullPointerException if mapper or projectDir is null
    * @throws IllegalArgumentException if projectDir is not a valid CAT project
    */
-  public IssueLock(Path projectDir)
+  public IssueLock(JsonMapper mapper, Path projectDir)
   {
+    requireThat(mapper, "mapper").isNotNull();
     requireThat(projectDir, "projectDir").isNotNull();
+    this.mapper = mapper;
     Path catDir = projectDir.resolve(".claude").resolve("cat");
     if (!Files.isDirectory(catDir))
     {
@@ -82,10 +86,12 @@ public final class IssueLock
     /**
      * Converts this result to JSON format matching the bash script output.
      *
+     * @param mapper the JSON mapper for serialization
      * @return JSON string representation
+     * @throws NullPointerException if {@code mapper} is null
      * @throws IOException if JSON serialization fails
      */
-    String toJson() throws IOException;
+    String toJson(JsonMapper mapper) throws IOException;
 
     /**
      * Lock successfully acquired.
@@ -100,7 +106,7 @@ public final class IssueLock
        *
        * @param status the operation status
        * @param message the status message
-       * @throws NullPointerException if any parameter is null
+       * @throws NullPointerException if {@code status} or {@code message} are null
        */
       public Acquired
       {
@@ -109,9 +115,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "status", status,
           "message", message));
       }
@@ -150,7 +157,8 @@ public final class IssueLock
        * @param remoteAuthor the remote branch author
        * @param remoteEmail the remote branch author email
        * @param remoteDate the remote branch last commit date
-       * @throws NullPointerException if any parameter is null
+       * @throws NullPointerException if {@code status}, {@code message}, {@code owner}, {@code action},
+       *   {@code guidance}, {@code remoteAuthor}, {@code remoteEmail} or {@code remoteDate} are null
        */
       public Locked
       {
@@ -165,9 +173,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "status", status,
           "message", message,
           "owner", owner,
@@ -194,7 +203,7 @@ public final class IssueLock
        * @param status the operation status
        * @param message the status message
        * @param worktree the worktree path
-       * @throws NullPointerException if any parameter is null
+       * @throws NullPointerException if {@code status}, {@code message} or {@code worktree} are null
        */
       public Updated
       {
@@ -204,9 +213,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "status", status,
           "message", message,
           "worktree", worktree));
@@ -226,7 +236,7 @@ public final class IssueLock
        *
        * @param status the operation status
        * @param message the status message
-       * @throws NullPointerException if any parameter is null
+       * @throws NullPointerException if {@code status} or {@code message} are null
        */
       public Released
       {
@@ -235,9 +245,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "status", status,
           "message", message));
       }
@@ -256,7 +267,7 @@ public final class IssueLock
        *
        * @param status the operation status
        * @param message the error message
-       * @throws NullPointerException if any parameter is null
+       * @throws NullPointerException if {@code status} or {@code message} are null
        */
       public Error
       {
@@ -265,9 +276,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "status", status,
           "message", message));
       }
@@ -291,8 +303,8 @@ public final class IssueLock
        * @param sessionId the session ID that owns the lock
        * @param ageSeconds the lock age in seconds
        * @param worktree the worktree path
-       * @throws NullPointerException if sessionId or worktree is null
-       * @throws IllegalArgumentException if locked is false
+       * @throws NullPointerException if {@code sessionId} or {@code worktree} are null
+       * @throws IllegalArgumentException if {@code locked} is false
        */
       public CheckLocked
       {
@@ -302,9 +314,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "locked", true,
           "session_id", sessionId,
           "age_seconds", ageSeconds,
@@ -325,8 +338,8 @@ public final class IssueLock
        *
        * @param locked always false
        * @param message the status message
-       * @throws NullPointerException if message is null
-       * @throws IllegalArgumentException if locked is true
+       * @throws NullPointerException if {@code message} is null
+       * @throws IllegalArgumentException if {@code locked} is true
        */
       public CheckUnlocked
       {
@@ -335,9 +348,10 @@ public final class IssueLock
       }
 
       @Override
-      public String toJson() throws IOException
+      public String toJson(JsonMapper mapper) throws IOException
       {
-        return MAPPER.writeValueAsString(Map.of(
+        requireThat(mapper, "mapper").isNotNull();
+        return mapper.writeValueAsString(Map.of(
           "locked", false,
           "message", message));
       }
@@ -396,7 +410,7 @@ public final class IssueLock
     {
       String content = Files.readString(lockFile);
       @SuppressWarnings("unchecked")
-      Map<String, Object> lockData = MAPPER.readValue(content, Map.class);
+      Map<String, Object> lockData = mapper.readValue(content, Map.class);
       String existingSession = lockData.get("session_id").toString();
 
       if (existingSession.equals(sessionId))
@@ -454,7 +468,7 @@ public final class IssueLock
       "created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
-    Files.writeString(tempFile, MAPPER.writeValueAsString(lockData));
+    Files.writeString(tempFile, mapper.writeValueAsString(lockData));
 
     try
     {
@@ -495,7 +509,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = MAPPER.readValue(content, Map.class);
+    Map<String, Object> lockData = mapper.readValue(content, Map.class);
     String existingSession = lockData.get("session_id").toString();
 
     if (!existingSession.equals(sessionId))
@@ -511,7 +525,7 @@ public final class IssueLock
       "created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
-    Files.writeString(tempFile, MAPPER.writeValueAsString(updatedData));
+    Files.writeString(tempFile, mapper.writeValueAsString(updatedData));
     Files.move(tempFile, lockFile, StandardCopyOption.REPLACE_EXISTING);
 
     return new LockResult.Updated("updated", "Lock updated with worktree", worktree);
@@ -542,7 +556,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = MAPPER.readValue(content, Map.class);
+    Map<String, Object> lockData = mapper.readValue(content, Map.class);
     String existingSession = lockData.get("session_id").toString();
 
     if (!existingSession.equals(sessionId))
@@ -572,7 +586,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = MAPPER.readValue(content, Map.class);
+    Map<String, Object> lockData = mapper.readValue(content, Map.class);
     String existingSession = lockData.get("session_id").toString();
 
     Files.delete(lockFile);
@@ -597,7 +611,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = MAPPER.readValue(content, Map.class);
+    Map<String, Object> lockData = mapper.readValue(content, Map.class);
 
     String sessionId = lockData.get("session_id").toString();
     long createdAt = ((Number) lockData.get("created_at")).longValue();
@@ -631,7 +645,7 @@ public final class IssueLock
           String issueId = lockFile.getFileName().toString().replace(".lock", "");
           String content = Files.readString(lockFile);
           @SuppressWarnings("unchecked")
-          Map<String, Object> lockData = MAPPER.readValue(content, Map.class);
+          Map<String, Object> lockData = mapper.readValue(content, Map.class);
 
           String sessionId = lockData.get("session_id").toString();
           long createdAt = ((Number) lockData.get("created_at")).longValue();

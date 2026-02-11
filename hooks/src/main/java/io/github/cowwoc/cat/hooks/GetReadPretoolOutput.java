@@ -2,7 +2,6 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
@@ -23,16 +22,20 @@ import java.util.Set;
  */
 public final class GetReadPretoolOutput implements HookHandler
 {
-  private static final List<ReadHandler> HANDLERS = List.of(
-      new PredictBatchOpportunity());
-
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
+
+  private final List<ReadHandler> handlers;
 
   /**
    * Creates a new GetReadPretoolOutput instance.
+   *
+   * @param scope the JVM scope providing singleton handlers
+   * @throws NullPointerException if scope is null
    */
-  public GetReadPretoolOutput()
+  public GetReadPretoolOutput(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(scope.getPredictBatchOpportunity());
   }
 
   /**
@@ -42,9 +45,12 @@ public final class GetReadPretoolOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetReadPretoolOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope.getJsonMapper(), System.out);
+      new GetReadPretoolOutput(scope).run(input, output);
+    }
   }
 
   /**
@@ -73,7 +79,7 @@ public final class GetReadPretoolOutput implements HookHandler
     List<String> warnings = new ArrayList<>();
 
     // Run all read pretool handlers
-    for (ReadHandler handler : HANDLERS)
+    for (ReadHandler handler : handlers)
     {
       try
       {

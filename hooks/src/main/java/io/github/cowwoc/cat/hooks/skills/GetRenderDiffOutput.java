@@ -83,7 +83,7 @@ public final class GetRenderDiffOutput
     requireThat(projectRoot, "projectRoot").isNotNull();
 
     // Load config for terminal width
-    Config config = Config.load(projectRoot);
+    Config config = Config.load(scope.getJsonMapper(), projectRoot);
     int terminalWidth = config.getInt("terminalWidth", 50);
 
     // Detect base branch

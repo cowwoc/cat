@@ -126,7 +126,7 @@ public final class GetTokenReportOutput
 
     try (BufferedReader reader = Files.newBufferedReader(sessionFile))
     {
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       List<JsonNode> entries = new ArrayList<>();
 
       // Read all JSONL entries
