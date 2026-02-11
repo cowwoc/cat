@@ -1,6 +1,5 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetInitOutput;
 import org.testng.annotations.Test;
@@ -29,7 +28,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(3);
@@ -46,7 +45,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxDescribesEntryGates() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(1);
@@ -63,7 +62,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxDescribesExitGates() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(1);
@@ -80,7 +79,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(2);
@@ -97,7 +96,7 @@ public class GetInitOutputTest
   @Test
   public void defaultGatesBoxHandlesZeroVersions() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getDefaultGatesConfigured(0);
@@ -114,7 +113,7 @@ public class GetInitOutputTest
   @Test
   public void researchSkippedBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getResearchSkipped("v2.0");
@@ -131,7 +130,7 @@ public class GetInitOutputTest
   @Test
   public void researchSkippedBoxIncludesExampleVersion() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getResearchSkipped("v3.1");
@@ -148,7 +147,7 @@ public class GetInitOutputTest
   @Test
   public void chooseYourPartnerBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getChooseYourPartner();
@@ -165,7 +164,7 @@ public class GetInitOutputTest
   @Test
   public void chooseYourPartnerBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getChooseYourPartner();
@@ -182,7 +181,7 @@ public class GetInitOutputTest
   @Test
   public void catInitializedBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("high", "medium", "low");
@@ -199,7 +198,7 @@ public class GetInitOutputTest
   @Test
   public void catInitializedBoxShowsPreferences() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("high", "medium", "low");
@@ -217,7 +216,7 @@ public class GetInitOutputTest
   @Test
   public void catInitializedBoxMentionsConfigCommand() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getCatInitialized("medium", "medium", "medium");
@@ -234,7 +233,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueWalkthroughBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueWalkthrough();
@@ -251,7 +250,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("fix-login-bug");
@@ -268,7 +267,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxShowsIssueName() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("add-search-feature");
@@ -285,7 +284,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxShowsLocation() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("my-task");
@@ -302,7 +301,7 @@ public class GetInitOutputTest
   @Test
   public void firstIssueCreatedBoxDescribesFiles() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getFirstIssueCreated("test-task");
@@ -319,7 +318,7 @@ public class GetInitOutputTest
   @Test
   public void allSetBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getAllSet();
@@ -336,7 +335,7 @@ public class GetInitOutputTest
   @Test
   public void allSetBoxListsCommands() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getAllSet();
@@ -354,7 +353,7 @@ public class GetInitOutputTest
   @Test
   public void exploreBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
@@ -371,7 +370,7 @@ public class GetInitOutputTest
   @Test
   public void exploreBoxListsCommands() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();
@@ -389,7 +388,7 @@ public class GetInitOutputTest
   @Test
   public void exploreBoxIncludesStatusTip() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetInitOutput handler = new GetInitOutput(scope);
       String result = handler.getExploreAtYourOwnPace();

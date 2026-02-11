@@ -1,5 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.JsonHelper;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -28,10 +29,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrNullReturnsValueWhenPresent() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-    String result = JsonHelper.getStringOrNull(node, "key");
-    requireThat(result, "result").isEqualTo("value");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
+      String result = JsonHelper.getStringOrNull(node, "key");
+      requireThat(result, "result").isEqualTo("value");
+    }
   }
 
   /**
@@ -42,10 +46,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrNullReturnsNullWhenMissing() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    String result = JsonHelper.getStringOrNull(node, "key");
-    requireThat(result, "result").isNull();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      String result = JsonHelper.getStringOrNull(node, "key");
+      requireThat(result, "result").isNull();
+    }
   }
 
   /**
@@ -56,10 +63,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrNullReturnsNullWhenEmpty() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": \"\"}");
-    String result = JsonHelper.getStringOrNull(node, "key");
-    requireThat(result, "result").isNull();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": \"\"}");
+      String result = JsonHelper.getStringOrNull(node, "key");
+      requireThat(result, "result").isNull();
+    }
   }
 
   /**
@@ -70,10 +80,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrNullReturnsNullWhenNotString() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": 123}");
-    String result = JsonHelper.getStringOrNull(node, "key");
-    requireThat(result, "result").isNull();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": 123}");
+      String result = JsonHelper.getStringOrNull(node, "key");
+      requireThat(result, "result").isNull();
+    }
   }
 
   /**
@@ -84,10 +97,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrDefaultReturnsValueWhenPresent() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-    String result = JsonHelper.getStringOrDefault(node, "key", "default");
-    requireThat(result, "result").isEqualTo("value");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
+      String result = JsonHelper.getStringOrDefault(node, "key", "default");
+      requireThat(result, "result").isEqualTo("value");
+    }
   }
 
   /**
@@ -98,10 +114,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrDefaultReturnsDefaultWhenMissing() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    String result = JsonHelper.getStringOrDefault(node, "key", "default");
-    requireThat(result, "result").isEqualTo("default");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      String result = JsonHelper.getStringOrDefault(node, "key", "default");
+      requireThat(result, "result").isEqualTo("default");
+    }
   }
 
   /**
@@ -112,10 +131,13 @@ public class JsonHelperTest
   @Test
   public void getStringOrDefaultReturnsDefaultWhenEmpty() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": \"\"}");
-    String result = JsonHelper.getStringOrDefault(node, "key", "default");
-    requireThat(result, "result").isEqualTo("default");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": \"\"}");
+      String result = JsonHelper.getStringOrDefault(node, "key", "default");
+      requireThat(result, "result").isEqualTo("default");
+    }
   }
 
   /**
@@ -126,10 +148,13 @@ public class JsonHelperTest
   @Test
   public void getIntOrDefaultReturnsValueWhenPresent() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"count\": 42}");
-    int result = JsonHelper.getIntOrDefault(node, "count", 0);
-    requireThat(result, "result").isEqualTo(42);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"count\": 42}");
+      int result = JsonHelper.getIntOrDefault(node, "count", 0);
+      requireThat(result, "result").isEqualTo(42);
+    }
   }
 
   /**
@@ -140,10 +165,13 @@ public class JsonHelperTest
   @Test
   public void getIntOrDefaultReturnsDefaultWhenMissing() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    int result = JsonHelper.getIntOrDefault(node, "count", 10);
-    requireThat(result, "result").isEqualTo(10);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      int result = JsonHelper.getIntOrDefault(node, "count", 10);
+      requireThat(result, "result").isEqualTo(10);
+    }
   }
 
   /**
@@ -154,10 +182,13 @@ public class JsonHelperTest
   @Test
   public void getIntOrDefaultReturnsDefaultWhenNotNumber() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"count\": \"text\"}");
-    int result = JsonHelper.getIntOrDefault(node, "count", 10);
-    requireThat(result, "result").isEqualTo(10);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"count\": \"text\"}");
+      int result = JsonHelper.getIntOrDefault(node, "count", 10);
+      requireThat(result, "result").isEqualTo(10);
+    }
   }
 
   /**
@@ -168,10 +199,13 @@ public class JsonHelperTest
   @Test
   public void getArrayReturnsListWhenPresent() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"items\": [\"a\", \"b\", \"c\"]}");
-    List<JsonNode> result = JsonHelper.getArray(node, "items");
-    requireThat(result, "result").size().isEqualTo(3);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"items\": [\"a\", \"b\", \"c\"]}");
+      List<JsonNode> result = JsonHelper.getArray(node, "items");
+      requireThat(result, "result").size().isEqualTo(3);
+    }
   }
 
   /**
@@ -182,10 +216,13 @@ public class JsonHelperTest
   @Test
   public void getArrayReturnsEmptyListWhenMissing() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    List<JsonNode> result = JsonHelper.getArray(node, "items");
-    requireThat(result, "result").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      List<JsonNode> result = JsonHelper.getArray(node, "items");
+      requireThat(result, "result").isEmpty();
+    }
   }
 
   /**
@@ -196,10 +233,13 @@ public class JsonHelperTest
   @Test
   public void getArrayReturnsEmptyListWhenNotArray() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"items\": \"text\"}");
-    List<JsonNode> result = JsonHelper.getArray(node, "items");
-    requireThat(result, "result").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"items\": \"text\"}");
+      List<JsonNode> result = JsonHelper.getArray(node, "items");
+      requireThat(result, "result").isEmpty();
+    }
   }
 
   /**
@@ -210,12 +250,15 @@ public class JsonHelperTest
   @Test
   public void getStringArrayReturnsListWhenPresent() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"tags\": [\"tag1\", \"tag2\"]}");
-    List<String> result = JsonHelper.getStringArray(node, "tags");
-    requireThat(result, "result").size().isEqualTo(2);
-    requireThat(result.get(0), "firstTag").isEqualTo("tag1");
-    requireThat(result.get(1), "secondTag").isEqualTo("tag2");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"tags\": [\"tag1\", \"tag2\"]}");
+      List<String> result = JsonHelper.getStringArray(node, "tags");
+      requireThat(result, "result").size().isEqualTo(2);
+      requireThat(result.get(0), "firstTag").isEqualTo("tag1");
+      requireThat(result.get(1), "secondTag").isEqualTo("tag2");
+    }
   }
 
   /**
@@ -226,10 +269,13 @@ public class JsonHelperTest
   @Test
   public void getStringArrayReturnsEmptyListWhenMissing() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    List<String> result = JsonHelper.getStringArray(node, "tags");
-    requireThat(result, "result").isEmpty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      List<String> result = JsonHelper.getStringArray(node, "tags");
+      requireThat(result, "result").isEmpty();
+    }
   }
 
   /**
@@ -240,12 +286,15 @@ public class JsonHelperTest
   @Test
   public void getStringArraySkipsNonStringItems() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"mixed\": [\"text\", 123, \"more\"]}");
-    List<String> result = JsonHelper.getStringArray(node, "mixed");
-    requireThat(result, "result").size().isEqualTo(2);
-    requireThat(result.get(0), "firstItem").isEqualTo("text");
-    requireThat(result.get(1), "secondItem").isEqualTo("more");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"mixed\": [\"text\", 123, \"more\"]}");
+      List<String> result = JsonHelper.getStringArray(node, "mixed");
+      requireThat(result, "result").size().isEqualTo(2);
+      requireThat(result.get(0), "firstItem").isEqualTo("text");
+      requireThat(result.get(1), "secondItem").isEqualTo("more");
+    }
   }
 
   // --- Null validation tests ---
@@ -267,9 +316,12 @@ public class JsonHelperTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getStringOrNullWithNullKeyThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-    JsonHelper.getStringOrNull(node, null);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
+      JsonHelper.getStringOrNull(node, null);
+    }
   }
 
   /**
@@ -280,9 +332,12 @@ public class JsonHelperTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getStringOrNullWithBlankKeyThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-    JsonHelper.getStringOrNull(node, "   ");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
+      JsonHelper.getStringOrNull(node, "   ");
+    }
   }
 
   /**
@@ -302,9 +357,12 @@ public class JsonHelperTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getStringOrDefaultWithNullKeyThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    JsonHelper.getStringOrDefault(node, null, "default");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      JsonHelper.getStringOrDefault(node, null, "default");
+    }
   }
 
   /**
@@ -324,9 +382,12 @@ public class JsonHelperTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getIntOrDefaultWithNullKeyThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    JsonHelper.getIntOrDefault(node, null, 0);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      JsonHelper.getIntOrDefault(node, null, 0);
+    }
   }
 
   /**
@@ -346,9 +407,12 @@ public class JsonHelperTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getArrayWithNullKeyThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    JsonHelper.getArray(node, null);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      JsonHelper.getArray(node, null);
+    }
   }
 
   /**
@@ -368,8 +432,11 @@ public class JsonHelperTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getStringArrayWithNullKeyThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode node = mapper.readTree("{}");
-    JsonHelper.getStringArray(node, null);
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree("{}");
+      JsonHelper.getStringArray(node, null);
+    }
   }
 }

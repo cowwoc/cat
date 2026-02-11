@@ -4,6 +4,8 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommand;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -23,13 +25,18 @@ import java.util.Set;
  */
 public final class WriteAndCommit
 {
-  private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JsonMapper mapper;
 
   /**
    * Creates a new WriteAndCommit instance.
+   *
+   * @param mapper the JSON mapper to use for serialization
+   * @throws NullPointerException if mapper is null
    */
-  public WriteAndCommit()
+  public WriteAndCommit(JsonMapper mapper)
   {
+    requireThat(mapper, "mapper").isNotNull();
+    this.mapper = mapper;
   }
 
   /**
@@ -179,20 +186,24 @@ public final class WriteAndCommit
     String commitMsgFile = args[2];
     boolean executable = args.length == 4 && args[3].equals("--executable");
 
-    WriteAndCommit cmd = new WriteAndCommit();
-    try
+    try (JvmScope scope = new MainJvmScope())
     {
-      String result = cmd.execute(filePath, contentFile, commitMsgFile, executable);
-      System.out.println(result);
-    }
-    catch (IOException e)
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      JsonMapper mapper = scope.getJsonMapper();
+      WriteAndCommit cmd = new WriteAndCommit(mapper);
+      try
+      {
+        String result = cmd.execute(filePath, contentFile, commitMsgFile, executable);
+        System.out.println(result);
+      }
+      catch (IOException e)
+      {
+        System.err.println("""
+          {
+            "status": "error",
+            "message": "%s"
+          }""".formatted(e.getMessage().replace("\"", "\\\"")));
+        System.exit(1);
+      }
     }
   }
 }

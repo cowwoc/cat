@@ -1,10 +1,12 @@
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
 import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,23 +37,27 @@ public class LicenseValidatorTest
    * Verifies that missing config file returns indie tier.
    */
   @Test
-  public void missingConfigFileReturnsIndie()
+  public void missingConfigFileReturnsIndie() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -63,29 +69,33 @@ public class LicenseValidatorTest
   @Test
   public void emptyLicenseTokenReturnsIndie() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Path catDir = tempDir.resolve(".claude").resolve("cat");
-      Files.createDirectories(catDir);
-      Files.writeString(catDir.resolve("cat-config.local.json"), """
-        {
-          "license": ""
-        }
-        """);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.local.json"), """
+          {
+            "license": ""
+          }
+          """);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -97,28 +107,32 @@ public class LicenseValidatorTest
   @Test
   public void validJwtFormatIsParsedCorrectly() throws Exception
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String token = createToken(keyPair.getPrivate(), "team", null, null);
-      writeConfig(tempDir, token);
+        String token = createToken(keyPair.getPrivate(), "team", null, null);
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isTrue();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.TEAM);
-      requireThat(result.expired(), "expired").isFalse();
-      requireThat(result.error(), "error").isEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isTrue();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.TEAM);
+        requireThat(result.expired(), "expired").isFalse();
+        requireThat(result.error(), "error").isEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -130,27 +144,31 @@ public class LicenseValidatorTest
   @Test
   public void invalidJwtFormatReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String token = "invalid.token";
-      writeConfig(tempDir, token);
+        String token = "invalid.token";
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").contains("Invalid token format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").contains("Invalid token format");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -162,25 +180,29 @@ public class LicenseValidatorTest
   @Test
   public void missingPublicKeyReturnsError() throws Exception
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      String token = createToken(keyPair.getPrivate(), "team", null, null);
-      writeConfig(tempDir, token);
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        String token = createToken(keyPair.getPrivate(), "team", null, null);
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").contains("Public key not found");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").contains("Public key not found");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -192,30 +214,34 @@ public class LicenseValidatorTest
   @Test
   public void expiredTokenPastGracePeriodFallsBackToIndie() throws Exception
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      long expiredTime = Instant.now().minusSeconds(10 * 86_400).getEpochSecond();
-      String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
-      writeConfig(tempDir, token);
+        long expiredTime = Instant.now().minusSeconds(10 * 86_400).getEpochSecond();
+        String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isTrue();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.expired(), "expired").isTrue();
-      requireThat(result.inGrace(), "inGrace").isFalse();
-      requireThat(result.warning(), "warning").contains("expired");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isTrue();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.expired(), "expired").isTrue();
+        requireThat(result.inGrace(), "inGrace").isFalse();
+        requireThat(result.warning(), "warning").contains("expired");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -227,31 +253,35 @@ public class LicenseValidatorTest
   @Test
   public void expiredTokenWithinGracePeriodRetainsTierWithWarning() throws Exception
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      long expiredTime = Instant.now().minusSeconds(3 * 86_400).getEpochSecond();
-      String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
-      writeConfig(tempDir, token);
+        long expiredTime = Instant.now().minusSeconds(3 * 86_400).getEpochSecond();
+        String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isTrue();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.TEAM);
-      requireThat(result.expired(), "expired").isTrue();
-      requireThat(result.inGrace(), "inGrace").isTrue();
-      requireThat(result.warning(), "warning").contains("expired");
-      requireThat(result.warning(), "warning").contains("3 days ago");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isTrue();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.TEAM);
+        requireThat(result.expired(), "expired").isTrue();
+        requireThat(result.inGrace(), "inGrace").isTrue();
+        requireThat(result.warning(), "warning").contains("expired");
+        requireThat(result.warning(), "warning").contains("3 days ago");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -263,28 +293,32 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidSignatureReturnsError() throws Exception
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair1 = generateKeyPair();
-      KeyPair keyPair2 = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair1.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair1 = generateKeyPair();
+        KeyPair keyPair2 = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair1.getPublic());
 
-      String token = createToken(keyPair2.getPrivate(), "team", null, null);
-      writeConfig(tempDir, token);
+        String token = createToken(keyPair2.getPrivate(), "team", null, null);
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").contains("Invalid signature");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").contains("Invalid signature");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -296,29 +330,33 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithNoExpirationIsValidIndefinitely() throws Exception
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String token = createToken(keyPair.getPrivate(), "enterprise", null, null);
-      writeConfig(tempDir, token);
+        String token = createToken(keyPair.getPrivate(), "enterprise", null, null);
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isTrue();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.ENTERPRISE);
-      requireThat(result.expired(), "expired").isFalse();
-      requireThat(result.inGrace(), "inGrace").isFalse();
-      requireThat(result.daysRemaining(), "daysRemaining").isEqualTo(0);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isTrue();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.ENTERPRISE);
+        requireThat(result.expired(), "expired").isFalse();
+        requireThat(result.inGrace(), "inGrace").isFalse();
+        requireThat(result.daysRemaining(), "daysRemaining").isEqualTo(0);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -330,27 +368,31 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithOnePartReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String token = "singlepart";
-      writeConfig(tempDir, token);
+        String token = "singlepart";
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").contains("Invalid token format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").contains("Invalid token format");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -362,27 +404,31 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithFourPartsReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String token = "part1.part2.part3.part4";
-      writeConfig(tempDir, token);
+        String token = "part1.part2.part3.part4";
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").contains("Invalid token format");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").contains("Invalid token format");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -394,30 +440,34 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidJsonReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String headerB64 = base64UrlEncode("{\"alg\":\"Ed25519\"}".getBytes(StandardCharsets.UTF_8));
-      String payloadB64 = base64UrlEncode("not-valid-json".getBytes(StandardCharsets.UTF_8));
-      String signatureB64 = base64UrlEncode(new byte[64]);
-      String token = headerB64 + "." + payloadB64 + "." + signatureB64;
-      writeConfig(tempDir, token);
+        String headerB64 = base64UrlEncode("{\"alg\":\"Ed25519\"}".getBytes(StandardCharsets.UTF_8));
+        String payloadB64 = base64UrlEncode("not-valid-json".getBytes(StandardCharsets.UTF_8));
+        String signatureB64 = base64UrlEncode(new byte[64]);
+        String token = headerB64 + "." + payloadB64 + "." + signatureB64;
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").isNotEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").isNotEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 
@@ -429,27 +479,31 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidBase64ReturnsError() throws IOException
   {
-    Path tempDir = createTempDir();
-    Path pluginRoot = createPluginRoot();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      KeyPair keyPair = generateKeyPair();
-      writePublicKey(pluginRoot, keyPair.getPublic());
+      JsonMapper mapper = scope.getJsonMapper();
+      Path tempDir = createTempDir();
+      Path pluginRoot = createPluginRoot();
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
 
-      String token = "not-base64!@#.not-base64!@#.not-base64!@#";
-      writeConfig(tempDir, token);
+        String token = "not-base64!@#.not-base64!@#.not-base64!@#";
+        writeConfig(tempDir, token);
 
-      LicenseValidator validator = new LicenseValidator(pluginRoot);
-      LicenseResult result = validator.validate(tempDir);
+        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseResult result = validator.validate(tempDir);
 
-      requireThat(result.valid(), "valid").isFalse();
-      requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
-      requireThat(result.error(), "error").isNotEmpty();
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-      TestUtils.deleteDirectoryRecursively(pluginRoot);
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.error(), "error").isNotEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
     }
   }
 

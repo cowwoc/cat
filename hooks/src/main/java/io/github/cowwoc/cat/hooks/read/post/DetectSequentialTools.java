@@ -28,12 +28,18 @@ public final class DetectSequentialTools implements ReadHandler
   private static final int WINDOW_SECONDS = 30;
   private static final int THRESHOLD = 3;
 
+  private final JsonMapper mapper;
+
   /**
    * Creates a new sequential tools detector.
+   *
+   * @param mapper the JSON mapper to use for state serialization
+   * @throws NullPointerException if mapper is null
    */
-  public DetectSequentialTools()
+  public DetectSequentialTools(JsonMapper mapper)
   {
-    // Handler class
+    requireThat(mapper, "mapper").isNotNull();
+    this.mapper = mapper;
   }
 
   @Override
@@ -112,7 +118,6 @@ public final class DetectSequentialTools implements ReadHandler
       return new TrackerState(0, 0, List.of());
     try
     {
-      JsonMapper mapper = JsonMapper.builder().build();
       JsonNode node = mapper.readTree(Files.readString(stateFile));
       int lastTime = 0;
       if (node.get("last_tool_time") != null)
@@ -148,7 +153,6 @@ public final class DetectSequentialTools implements ReadHandler
   {
     try
     {
-      JsonMapper mapper = JsonMapper.builder().build();
       ObjectNode node = mapper.createObjectNode();
       node.put("last_tool_time", state.lastToolTime());
       node.put("sequential_count", state.sequentialCount());

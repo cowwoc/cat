@@ -28,18 +28,19 @@ public final class Entitlements
   };
 
   private final Map<String, Object> tiersConfig;
-  private final JsonMapper mapper = JsonMapper.builder().build();
 
   /**
    * Creates a new entitlements resolver.
    *
    * @param pluginRoot the plugin root directory containing config/tiers.json
+   * @param mapper the JSON mapper
    * @throws IOException if tiers.json cannot be read or parsed
-   * @throws NullPointerException if pluginRoot is null
+   * @throws NullPointerException if {@code pluginRoot} or {@code mapper} are null
    */
-  public Entitlements(Path pluginRoot) throws IOException
+  public Entitlements(Path pluginRoot, JsonMapper mapper) throws IOException
   {
     requireThat(pluginRoot, "pluginRoot").isNotNull();
+    requireThat(mapper, "mapper").isNotNull();
 
     Path tiersFile = pluginRoot.resolve("config").resolve("tiers.json");
     if (!Files.exists(tiersFile))

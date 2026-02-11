@@ -4,6 +4,8 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirecto
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
@@ -25,13 +27,18 @@ import java.nio.file.Paths;
  */
 public final class MergeAndCleanup
 {
-  private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JsonMapper mapper;
 
   /**
    * Creates a new MergeAndCleanup instance.
+   *
+   * @param mapper the JSON mapper to use for serialization
+   * @throws NullPointerException if mapper is null
    */
-  public MergeAndCleanup()
+  public MergeAndCleanup(JsonMapper mapper)
   {
+    requireThat(mapper, "mapper").isNotNull();
+    this.mapper = mapper;
   }
 
   /**
@@ -136,7 +143,6 @@ public final class MergeAndCleanup
       return true;
 
     String content = Files.readString(configPath, StandardCharsets.UTF_8);
-    JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode config = (ObjectNode) mapper.readTree(content);
 
     return !config.has("autoRemoveWorktrees") || config.get("autoRemoveWorktrees").asBoolean(true);
@@ -414,20 +420,24 @@ public final class MergeAndCleanup
       System.exit(1);
     }
 
-    MergeAndCleanup cmd = new MergeAndCleanup();
-    try
+    try (JvmScope scope = new MainJvmScope())
     {
-      String result = cmd.execute(projectDir, issueId, sessionId, worktreePath, pluginRoot);
-      System.out.println(result);
-    }
-    catch (IOException e)
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      JsonMapper mapper = scope.getJsonMapper();
+      MergeAndCleanup cmd = new MergeAndCleanup(mapper);
+      try
+      {
+        String result = cmd.execute(projectDir, issueId, sessionId, worktreePath, pluginRoot);
+        System.out.println(result);
+      }
+      catch (IOException e)
+      {
+        System.err.println("""
+          {
+            "status": "error",
+            "message": "%s"
+          }""".formatted(e.getMessage().replace("\"", "\\\"")));
+        System.exit(1);
+      }
     }
   }
 }

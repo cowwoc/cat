@@ -42,54 +42,59 @@ public final class EnforceStatusOutput
    */
   public static void main(String[] args)
   {
-    HookOutput hookOutput = new HookOutput(System.out);
-    try
+    try (JvmScope scope = new MainJvmScope())
     {
-      HookInput input = HookInput.readFromStdin();
-
-      String transcriptPath = input.getString("transcript_path");
-
-      boolean stopHookActive = input.getBoolean("stop_hook_active", false);
-      if (stopHookActive)
+      JsonMapper mapper = scope.getJsonMapper();
+      HookOutput hookOutput = new HookOutput(mapper, System.out);
+      try
       {
-        hookOutput.empty();
-        return;
-      }
+        HookInput input = HookInput.readFromStdin(mapper);
 
-      CheckResult result = checkTranscriptForStatusSkill(transcriptPath);
+        String transcriptPath = input.getString("transcript_path");
 
-      if (result.statusInvoked && !result.hasBoxOutput)
-      {
-        String reason =
-          "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
-          "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
-          "the START and END markers. You summarized instead of copy-pasting. " +
-          "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
-          "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
-        hookOutput.block(reason);
+        boolean stopHookActive = input.getBoolean("stop_hook_active", false);
+        if (stopHookActive)
+        {
+          hookOutput.empty();
+          return;
+        }
+
+        CheckResult result = checkTranscriptForStatusSkill(mapper, transcriptPath);
+
+        if (result.statusInvoked && !result.hasBoxOutput)
+        {
+          String reason =
+            "M402 ENFORCEMENT: /cat:status was invoked but you did NOT output the status box. " +
+            "The skill's MANDATORY OUTPUT REQUIREMENT states: Copy-paste ALL content between " +
+            "the START and END markers. You summarized instead of copy-pasting. " +
+            "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
+            "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
+          hookOutput.block(reason);
+        }
+        else
+        {
+          hookOutput.empty();
+        }
       }
-      else
+      catch (Exception e)
       {
-        hookOutput.empty();
+        String errorMessage =
+          "❌ Hook error: " + e.getMessage() + "\n" +
+          "\n" +
+          "Blocking as fail-safe. Please verify your working environment.";
+        hookOutput.block(errorMessage);
       }
-    }
-    catch (Exception e)
-    {
-      String errorMessage =
-        "❌ Hook error: " + e.getMessage() + "\n" +
-        "\n" +
-        "Blocking as fail-safe. Please verify your working environment.";
-      hookOutput.block(errorMessage);
     }
   }
 
   /**
    * Check the transcript to see if /cat:status was invoked and if output was correct.
    *
+   * @param mapper the JSON mapper to use for parsing
    * @param transcriptPath path to the transcript file
    * @return result indicating whether status was invoked and whether response had box output
    */
-  private static CheckResult checkTranscriptForStatusSkill(String transcriptPath) throws IOException
+  private static CheckResult checkTranscriptForStatusSkill(JsonMapper mapper, String transcriptPath) throws IOException
   {
     if (transcriptPath.isEmpty())
       return new CheckResult(false, true);
@@ -105,7 +110,6 @@ public final class EnforceStatusOutput
     boolean statusInvoked = false;
     boolean hasBoxOutput = false;
 
-    JsonMapper mapper = JsonMapper.builder().build();
     for (String line : recentLines)
     {
       String trimmed = line.trim();

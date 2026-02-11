@@ -247,7 +247,7 @@ public final class GetNextTaskOutput
       if (output == null)
         return Map.of();
 
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       Map<String, Object> data = mapper.readValue(output, MAP_TYPE);
 
       String status = data.getOrDefault("status", "").toString();

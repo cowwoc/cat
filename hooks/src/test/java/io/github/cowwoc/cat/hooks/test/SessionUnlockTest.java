@@ -4,6 +4,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.session.SessionUnlock;
 
 import org.testng.annotations.Test;
@@ -29,6 +30,8 @@ public final class SessionUnlockTest
   @Test
   public void projectLockRemoved() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -39,10 +42,10 @@ public final class SessionUnlockTest
       Path lockFile = lockDir.resolve(projectName + ".lock");
       Files.writeString(lockFile, "locked");
 
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -52,6 +55,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -60,6 +64,8 @@ public final class SessionUnlockTest
   @Test
   public void taskLocksRemovedForSession() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -72,10 +78,11 @@ public final class SessionUnlockTest
       Files.writeString(taskLock2, "session_id=session456");
 
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -86,6 +93,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -94,6 +102,8 @@ public final class SessionUnlockTest
   @Test
   public void legacyWorktreeLocksRemoved() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -106,10 +116,11 @@ public final class SessionUnlockTest
       Files.writeString(worktreeLock2, "session456");
 
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -120,6 +131,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -128,6 +140,8 @@ public final class SessionUnlockTest
   @Test
   public void staleLocksRemoved() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -142,10 +156,10 @@ public final class SessionUnlockTest
       Instant staleTime = Instant.now().minus(25, ChronoUnit.HOURS);
       Files.setLastModifiedTime(staleLock, FileTime.from(staleTime));
 
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -156,6 +170,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -164,6 +179,8 @@ public final class SessionUnlockTest
   @Test
   public void emptySessionIdSkipsLockCleaning() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -177,10 +194,10 @@ public final class SessionUnlockTest
       Files.writeString(taskLock, "session_id=session123");
       Files.writeString(worktreeLock, "session123");
 
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -191,6 +208,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -199,6 +217,8 @@ public final class SessionUnlockTest
   @Test
   public void twentyFourHourBoundaryRespected() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -216,10 +236,10 @@ public final class SessionUnlockTest
       Files.setLastModifiedTime(justWithinBoundary, FileTime.from(within));
       Files.setLastModifiedTime(justBeyondBoundary, FileTime.from(beyond));
 
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -230,6 +250,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -238,14 +259,17 @@ public final class SessionUnlockTest
   @Test
   public void nonexistentLockDirectoryHandledGracefully() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -259,6 +283,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -267,6 +292,8 @@ public final class SessionUnlockTest
   @Test
   public void multipleLocksOnlyCorrectPreserved() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -281,10 +308,11 @@ public final class SessionUnlockTest
       Files.writeString(lockC, "session_id=session789");
 
       String json = "{\"session_id\": \"session456\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -296,6 +324,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -304,18 +333,21 @@ public final class SessionUnlockTest
   @Test(expectedExceptions = NullPointerException.class)
   public void nullInputThrowsException() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(null, output, tempDir);
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
     }
   }
 
@@ -325,15 +357,18 @@ public final class SessionUnlockTest
   @Test(expectedExceptions = NullPointerException.class)
   public void nullOutputThrowsException() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       new SessionUnlock().runWithProjectDir(input, null, tempDir);
     }
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
     }
   }
 
@@ -343,12 +378,15 @@ public final class SessionUnlockTest
   @Test(expectedExceptions = NullPointerException.class)
   public void nullProjectPathThrowsException() throws IOException
   {
-    HookInput input = HookInput.empty();
+    try (JvmScope scope = new TestJvmScope())
+    {
+    HookInput input = HookInput.empty(scope.getJsonMapper());
     ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
     PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-    HookOutput output = new HookOutput(out);
+    HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
     new SessionUnlock().runWithProjectDir(input, output, null);
+    }
   }
 
   /**
@@ -357,6 +395,8 @@ public final class SessionUnlockTest
   @Test
   public void whitespaceSessionIdSkipsLockCleaning() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -371,10 +411,11 @@ public final class SessionUnlockTest
       Files.writeString(worktreeLock, "session123");
 
       String json = "{\"session_id\": \"   \"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -385,6 +426,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -393,6 +435,8 @@ public final class SessionUnlockTest
   @Test
   public void ioExceptionReadingLockFileHandled() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -403,10 +447,11 @@ public final class SessionUnlockTest
       Files.createDirectories(directoryLock);
 
       String json = "{\"session_id\": \"session123\"}";
-      HookInput input = HookInput.readFrom(new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -416,6 +461,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -424,6 +470,8 @@ public final class SessionUnlockTest
   @Test
   public void projectLockDeletionErrorHandledGracefully() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -437,10 +485,10 @@ public final class SessionUnlockTest
       Path nestedFile = lockFile.resolve("nested.txt");
       Files.writeString(nestedFile, "content");
 
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -451,6 +499,7 @@ public final class SessionUnlockTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -459,6 +508,8 @@ public final class SessionUnlockTest
   @Test
   public void staleLockAttributeReadErrorHandledGracefully() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
@@ -471,10 +522,10 @@ public final class SessionUnlockTest
       Path nestedFile = directoryAsLockFile.resolve("nested.txt");
       Files.writeString(nestedFile, "content");
 
-      HookInput input = HookInput.empty();
+      HookInput input = HookInput.empty(scope.getJsonMapper());
       ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
       PrintStream out = new PrintStream(outBytes, false, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(out);
+      HookOutput output = new HookOutput(scope.getJsonMapper(), out);
 
       new SessionUnlock().runWithProjectDir(input, output, tempDir);
 
@@ -484,6 +535,7 @@ public final class SessionUnlockTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
     }
   }
 }

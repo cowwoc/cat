@@ -8,6 +8,7 @@ import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
 import io.github.cowwoc.cat.hooks.bash.post.ValidateRebaseTarget;
 import io.github.cowwoc.cat.hooks.bash.post.VerifyCommitType;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,9 +48,13 @@ public final class GetBashPosttoolOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetBashPosttoolOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(mapper, System.out);
+      new GetBashPosttoolOutput().run(input, output);
+    }
   }
 
   /**

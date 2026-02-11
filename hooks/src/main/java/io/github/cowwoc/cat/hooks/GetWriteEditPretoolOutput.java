@@ -7,6 +7,7 @@ import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,9 +68,13 @@ public final class GetWriteEditPretoolOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetWriteEditPretoolOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(mapper, System.out);
+      new GetWriteEditPretoolOutput().run(input, output);
+    }
   }
 
   /**

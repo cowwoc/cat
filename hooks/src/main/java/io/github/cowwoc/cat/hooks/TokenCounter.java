@@ -58,17 +58,20 @@ public final class TokenCounter
     Encoding encoding = registry.getEncoding("cl100k_base").orElseThrow(
         () -> new IllegalStateException("cl100k_base encoding not found"));
 
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode result = mapper.createObjectNode();
-
-    for (String filePath : args)
+    try (JvmScope scope = new MainJvmScope())
     {
-      requireThat(filePath, "filePath").isNotNull();
-      int tokenCount = countTokens(filePath, encoding);
-      result.put(filePath, tokenCount);
-    }
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode result = mapper.createObjectNode();
 
-    System.out.println(mapper.writeValueAsString(result));
+      for (String filePath : args)
+      {
+        requireThat(filePath, "filePath").isNotNull();
+        int tokenCount = countTokens(filePath, encoding);
+        result.put(filePath, tokenCount);
+      }
+
+      System.out.println(mapper.writeValueAsString(result));
+    }
   }
 
   /**

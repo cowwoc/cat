@@ -4,6 +4,8 @@ import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommand;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
@@ -22,13 +24,18 @@ import java.time.Instant;
  */
 public final class GitMergeLinear
 {
-  private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JsonMapper mapper;
 
   /**
    * Creates a new GitMergeLinear instance.
+   *
+   * @param mapper the JSON mapper to use for serialization
+   * @throws NullPointerException if mapper is null
    */
-  public GitMergeLinear()
+  public GitMergeLinear(JsonMapper mapper)
   {
+    requireThat(mapper, "mapper").isNotNull();
+    this.mapper = mapper;
   }
 
   /**
@@ -401,20 +408,24 @@ public final class GitMergeLinear
       }
     }
 
-    GitMergeLinear cmd = new GitMergeLinear();
-    try
+    try (JvmScope scope = new MainJvmScope())
     {
-      String result = cmd.execute(taskBranch, baseBranch, cleanup);
-      System.out.println(result);
-    }
-    catch (IOException e)
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "%s"
-        }""".formatted(e.getMessage().replace("\"", "\\\"")));
-      System.exit(1);
+      JsonMapper mapper = scope.getJsonMapper();
+      GitMergeLinear cmd = new GitMergeLinear(mapper);
+      try
+      {
+        String result = cmd.execute(taskBranch, baseBranch, cleanup);
+        System.out.println(result);
+      }
+      catch (IOException e)
+      {
+        System.err.println("""
+          {
+            "status": "error",
+            "message": "%s"
+          }""".formatted(e.getMessage().replace("\"", "\\\"")));
+        System.exit(1);
+      }
     }
   }
 }

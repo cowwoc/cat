@@ -1,12 +1,12 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,12 +30,13 @@ public class ConfigTest
    * Verifies that Config uses default trust=medium when config file is missing.
    */
   @Test
-  public void configUsesDefaultTrustWhenConfigMissing()
+  public void configUsesDefaultTrustWhenConfigMissing() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Config config = Config.load(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
       String trust = config.getString("trust");
 
       requireThat(trust, "trust").isEqualTo("medium");
@@ -50,12 +51,13 @@ public class ConfigTest
    * Verifies that Config uses default verify=changed when config file is missing.
    */
   @Test
-  public void configUsesDefaultVerifyWhenConfigMissing()
+  public void configUsesDefaultVerifyWhenConfigMissing() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Config config = Config.load(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
       String verify = config.getString("verify");
 
       requireThat(verify, "verify").isEqualTo("changed");
@@ -70,12 +72,13 @@ public class ConfigTest
    * Verifies that Config uses default autoRemoveWorktrees=true when config file is missing.
    */
   @Test
-  public void configUsesDefaultAutoRemoveWhenConfigMissing()
+  public void configUsesDefaultAutoRemoveWhenConfigMissing() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Config config = Config.load(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
       boolean autoRemove = config.getBoolean("autoRemoveWorktrees", false);
 
       requireThat(autoRemove, "autoRemove").isTrue();
@@ -95,8 +98,9 @@ public class ConfigTest
   public void configReadsValuesFromFile() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".claude").resolve("cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
@@ -107,7 +111,7 @@ public class ConfigTest
         }
         """);
 
-      Config config = Config.load(tempDir);
+      Config config = Config.load(mapper, tempDir);
 
       requireThat(config.getString("trust"), "trust").isEqualTo("high");
       requireThat(config.getString("verify"), "verify").isEqualTo("all");
@@ -128,8 +132,9 @@ public class ConfigTest
   public void configUsesDefaultsForMissingKeys() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".claude").resolve("cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), """
@@ -138,7 +143,7 @@ public class ConfigTest
         }
         """);
 
-      Config config = Config.load(tempDir);
+      Config config = Config.load(mapper, tempDir);
 
       requireThat(config.getString("trust"), "trust").isEqualTo("low");
       requireThat(config.getString("verify"), "verify").isEqualTo("changed");
@@ -162,13 +167,14 @@ public class ConfigTest
   public void configThrowsOnInvalidJson() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
+      JsonMapper mapper = scope.getJsonMapper();
       Path catDir = tempDir.resolve(".claude").resolve("cat");
       Files.createDirectories(catDir);
       Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
 
-      Config.load(tempDir);
+      Config.load(mapper, tempDir);
     }
     finally
     {
@@ -180,12 +186,13 @@ public class ConfigTest
    * Verifies that Config.asMap() returns all default values when no config file exists.
    */
   @Test
-  public void configAsMapReturnsAllDefaults()
+  public void configAsMapReturnsAllDefaults() throws IOException
   {
     Path tempDir = createTempDir();
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
-      Config config = Config.load(tempDir);
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
       Map<String, Object> values = config.asMap();
 
       requireThat(values.get("trust"), "trust").isEqualTo("medium");
@@ -210,37 +217,34 @@ public class ConfigTest
   @Test
   public void getConfigOutputFormatsSettingsCorrectly() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
     {
-      Path tempDir = createTempDir();
-      try
-      {
-        Path catDir = tempDir.resolve(".claude").resolve("cat");
-        Files.createDirectories(catDir);
-        Files.writeString(catDir.resolve("cat-config.json"), """
-          {
-            "trust": "high",
-            "verify": "all",
-            "curiosity": "medium",
-            "patience": "low",
-            "autoRemoveWorktrees": false
-          }
-          """);
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "trust": "high",
+          "verify": "all",
+          "curiosity": "medium",
+          "patience": "low",
+          "autoRemoveWorktrees": false
+        }
+        """);
 
-        GetConfigOutput handler = new GetConfigOutput(scope);
-        String result = handler.getCurrentSettings(tempDir);
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getCurrentSettings(tempDir);
 
-        requireThat(result, "result").contains("CURRENT SETTINGS");
-        requireThat(result, "result").contains("Trust: high");
-        requireThat(result, "result").contains("Verify: all");
-        requireThat(result, "result").contains("Curiosity: medium");
-        requireThat(result, "result").contains("Patience: low");
-        requireThat(result, "result").contains("Keep");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      requireThat(result, "result").contains("CURRENT SETTINGS");
+      requireThat(result, "result").contains("Trust: high");
+      requireThat(result, "result").contains("Verify: all");
+      requireThat(result, "result").contains("Curiosity: medium");
+      requireThat(result, "result").contains("Patience: low");
+      requireThat(result, "result").contains("Keep");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 

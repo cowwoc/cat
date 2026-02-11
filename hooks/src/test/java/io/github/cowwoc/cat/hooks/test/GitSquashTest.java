@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.util.GitSquash;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -42,13 +43,15 @@ public class GitSquashTest
   @Test
   public void executeRejectsNullBaseCommit() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash();
+      GitSquash cmd = new GitSquash(scope.getJsonMapper());
 
       try
       {
@@ -64,6 +67,7 @@ public class GitSquashTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -74,13 +78,15 @@ public class GitSquashTest
   @Test
   public void executeRejectsBlankBaseCommit() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash();
+      GitSquash cmd = new GitSquash(scope.getJsonMapper());
 
       try
       {
@@ -96,18 +102,21 @@ public class GitSquashTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
    * Verifies that execute rejects missing message file.
    */
   @Test
-  public void executeRejectsMissingMessageFile()
+  public void executeRejectsMissingMessageFile() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
-      GitSquash cmd = new GitSquash();
+      GitSquash cmd = new GitSquash(scope.getJsonMapper());
 
       try
       {
@@ -123,6 +132,7 @@ public class GitSquashTest
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
+    }
   }
 
   /**
@@ -133,13 +143,15 @@ public class GitSquashTest
   @Test
   public void executeAcceptsEmptyOriginalBranch() throws IOException
   {
+    try (JvmScope scope = new TestJvmScope())
+    {
     Path tempDir = createTempDir();
     try
     {
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash();
+      GitSquash cmd = new GitSquash(scope.getJsonMapper());
 
       try
       {
@@ -153,6 +165,7 @@ public class GitSquashTest
     finally
     {
       TestUtils.deleteDirectoryRecursively(tempDir);
+    }
     }
   }
 }

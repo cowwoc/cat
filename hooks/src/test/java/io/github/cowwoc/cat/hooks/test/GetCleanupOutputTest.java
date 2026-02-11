@@ -1,7 +1,9 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput;
 import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput.Lock;
 import io.github.cowwoc.cat.hooks.skills.GetCleanupOutput.RemovedCounts;
@@ -34,7 +36,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -56,7 +60,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsWorktreesSection() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -78,7 +84,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsLocksSection() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -100,7 +108,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsBranchesSection() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -122,7 +132,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputContainsStaleRemotesSection() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -144,7 +156,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputShowsContextFile() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -166,7 +180,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputShowsNoneForMissingContext() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -188,7 +204,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesWorktreeData() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Worktree> worktrees = List.of(
@@ -215,7 +233,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesLockData() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Lock> locks = List.of(
@@ -241,7 +261,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesBranchData() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<String> branches = List.of("2.0-task1", "2.0-task2");
@@ -265,7 +287,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesStaleRemoteData() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<StaleRemote> remotes = List.of(
@@ -291,7 +315,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputShowsNoneForEmptyWorktrees() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -313,7 +339,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIncludesCounts() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -336,7 +364,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -357,7 +387,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIncludesWorktreesToRemove() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<WorktreeToRemove> worktrees = List.of(
@@ -381,7 +413,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIncludesBranchesToRemove() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<String> branches = List.of("2.0-old-branch");
@@ -404,7 +438,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIncludesStaleRemotes() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<StaleRemote> remotes = List.of(
@@ -428,7 +464,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsConfirmationPrompt() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -449,7 +487,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsTotalCount() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -470,7 +510,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputShowsNoneForEmptySections() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -491,7 +533,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsLocksToRemoveSection() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -512,7 +556,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -533,7 +579,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsRemovedCounts() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -555,7 +603,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsZeroCounts() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -579,7 +629,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -601,7 +653,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -622,7 +676,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputContainsBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -649,7 +705,9 @@ public class GetCleanupOutputTest
   @Test
   public void surveyOutputIsNonEmpty() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getSurveyOutput(
@@ -677,7 +735,9 @@ public class GetCleanupOutputTest
   @Test
   public void planOutputIsNonEmpty() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getPlanOutput(
@@ -702,7 +762,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputIsNonEmpty() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -723,7 +785,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsRemainingWorktrees() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -744,7 +808,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsRemainingBranches() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -765,7 +831,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsNoneForEmptyRemainingLocks() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -789,7 +857,9 @@ public class GetCleanupOutputTest
   @Test
   public void verifyOutputShowsNoneForAllEmptyRemaining() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String result = handler.getVerifyOutput(
@@ -813,7 +883,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesEmptyInput() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       List<Worktree> result = handler.parseWorktreesPorcelain("");
@@ -830,7 +902,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainParsesSingleWorktree() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -856,7 +930,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainParsesMultipleWorktrees() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -886,7 +962,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesDetachedState() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -911,7 +989,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesBareState() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -936,7 +1016,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainExtractsBranchName() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -960,7 +1042,9 @@ public class GetCleanupOutputTest
   @Test
   public void parseWorktreesPorcelainHandlesNoTrailingBlankLine() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
       String input = """
@@ -983,10 +1067,12 @@ public class GetCleanupOutputTest
   @Test
   public void gatherLocksReturnsEmptyForNonCatProject() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      List<Lock> result = handler.gatherLocks(java.nio.file.Path.of("/nonexistent"));
+      List<Lock> result = handler.gatherLocks(Path.of("/nonexistent"));
 
       requireThat(result, "result").isEmpty();
     }
@@ -1000,10 +1086,12 @@ public class GetCleanupOutputTest
   @Test
   public void gatherContextFileReturnsNullWhenMissing() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    Path projectDir = Files.createTempDirectory("test-project");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       GetCleanupOutput handler = new GetCleanupOutput(scope);
-      String result = handler.gatherContextFile(java.nio.file.Path.of("/tmp"));
+      String result = handler.gatherContextFile(projectDir);
 
       requireThat(result, "result").isNull();
     }

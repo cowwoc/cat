@@ -14,8 +14,6 @@ import java.nio.file.Path;
  */
 public final class VersionUtils
 {
-  private static final JsonMapper MAPPER = JsonMapper.builder().build();
-
   /**
    * Prevents instantiation.
    */
@@ -29,14 +27,16 @@ public final class VersionUtils
    * Searches first in {@code pluginRoot/plugin.json}, then falls back to
    * {@code pluginRoot/.claude-plugin/plugin.json}.
    *
+   * @param mapper the JSON mapper to use for parsing
    * @param pluginRoot the plugin root directory
    * @return the version string
-   * @throws NullPointerException if pluginRoot is null
+   * @throws NullPointerException if mapper or pluginRoot is null
    * @throws AssertionError if plugin.json is not found or the version field is missing/invalid
    * @throws IOException if reading plugin.json fails
    */
-  public static String getPluginVersion(Path pluginRoot) throws IOException
+  public static String getPluginVersion(JsonMapper mapper, Path pluginRoot) throws IOException
   {
+    requireThat(mapper, "mapper").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotNull();
     Path pluginFile = pluginRoot.resolve("plugin.json");
     if (!Files.isRegularFile(pluginFile))
@@ -45,7 +45,7 @@ public final class VersionUtils
       throw new AssertionError("plugin.json not found in " + pluginRoot + " or " +
         pluginRoot.resolve(".claude-plugin"));
 
-    JsonNode root = MAPPER.readTree(Files.readString(pluginFile));
+    JsonNode root = mapper.readTree(Files.readString(pluginFile));
     JsonNode versionNode = root.get("version");
     if (versionNode == null || !versionNode.isString())
       throw new AssertionError("version field missing or invalid in plugin.json");

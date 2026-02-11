@@ -1,6 +1,5 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetRenderDiffOutput;
 import org.testng.annotations.Test;
@@ -32,7 +31,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void nonGitDirectoryReturnsNull() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -63,7 +62,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void noChangesReportsNoChanges() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -103,7 +102,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void changesProduceDiffSummary() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -150,7 +149,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void diffOutputIncludes4ColumnFormat() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -197,7 +196,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void diffOutputIncludesStats() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -243,7 +242,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void diffOutputListsChangedFiles() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try

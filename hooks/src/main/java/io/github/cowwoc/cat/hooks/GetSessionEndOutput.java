@@ -3,6 +3,7 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.session.SessionUnlock;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -33,9 +34,13 @@ public final class GetSessionEndOutput implements HookHandler
    */
   public static void main(String[] args)
   {
-    HookInput input = HookInput.readFromStdin();
-    HookOutput output = new HookOutput(System.out);
-    new GetSessionEndOutput().run(input, output);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(mapper, System.out);
+      new GetSessionEndOutput().run(input, output);
+    }
   }
 
   /**

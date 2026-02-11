@@ -27,12 +27,18 @@ public final class PredictBatchOpportunity implements ReadHandler
   private static final int WARNING_COOLDOWN = 60;
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
+  private final JsonMapper mapper;
+
   /**
    * Creates a new batch opportunity predictor.
+   *
+   * @param mapper the JSON mapper to use for state serialization
+   * @throws NullPointerException if mapper is null
    */
-  public PredictBatchOpportunity()
+  public PredictBatchOpportunity(JsonMapper mapper)
   {
-    // Handler class
+    requireThat(mapper, "mapper").isNotNull();
+    this.mapper = mapper;
   }
 
   @Override
@@ -156,7 +162,6 @@ public final class PredictBatchOpportunity implements ReadHandler
       return new TrackerState(List.of(), 0, 0);
     try
     {
-      JsonMapper mapper = JsonMapper.builder().build();
       JsonNode node = mapper.readTree(Files.readString(trackerFile));
       List<Operation> ops = new ArrayList<>();
       JsonNode opsNode = node.get("operations");
@@ -208,7 +213,6 @@ public final class PredictBatchOpportunity implements ReadHandler
   {
     try
     {
-      JsonMapper mapper = JsonMapper.builder().build();
       ObjectNode node = mapper.createObjectNode();
       ArrayNode opsNode = mapper.createArrayNode();
       for (Operation op : state.operations())

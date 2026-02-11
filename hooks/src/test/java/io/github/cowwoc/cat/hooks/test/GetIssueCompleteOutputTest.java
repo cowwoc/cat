@@ -1,7 +1,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
+
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import org.testng.annotations.Test;
 
@@ -26,7 +26,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsIssueNameAndBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Implement feature X", "main");
@@ -40,7 +40,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Implement feature X", "main");
@@ -54,7 +54,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsCompletedIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-add-login", "2.1-next", "Implement feature X", "main");
@@ -68,7 +68,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsNextIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-add-validation", "Implement feature X", "main");
@@ -82,7 +82,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsNextGoal() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Add user authentication", "main");
@@ -96,7 +96,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsBaseBranch() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Goal text", "v2.1");
@@ -110,7 +110,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxContainsContinuationInstructions() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Goal", "main");
@@ -124,7 +124,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getIssueCompleteBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getIssueCompleteBox("2.1-test", "2.1-next", "Goal", "main");
@@ -140,7 +140,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxContainsScopeNameAndBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v2.1");
@@ -154,7 +154,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v2.1");
@@ -168,7 +168,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxContainsScopeName() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v3.0");
@@ -182,7 +182,7 @@ public class GetIssueCompleteOutputTest
   @Test
   public void getScopeCompleteBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       String result = output.getScopeCompleteBox("v2.1");
@@ -198,7 +198,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getIssueCompleteBoxThrowsOnNullIssueName() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox(null, "2.1-next", "Goal", "main");
@@ -211,7 +211,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getIssueCompleteBoxThrowsOnBlankIssueName() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("", "2.1-next", "Goal", "main");
@@ -224,7 +224,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getIssueCompleteBoxThrowsOnNullNextIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", null, "Goal", "main");
@@ -237,7 +237,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getIssueCompleteBoxThrowsOnBlankNextIssue() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", "", "Goal", "main");
@@ -250,7 +250,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getIssueCompleteBoxThrowsOnNullNextGoal() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", "2.1-next", null, "main");
@@ -263,7 +263,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getIssueCompleteBoxThrowsOnBlankNextGoal() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getIssueCompleteBox("2.1-test", "2.1-next", "", "main");
@@ -276,7 +276,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = NullPointerException.class)
   public void getScopeCompleteBoxThrowsOnNullScope() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getScopeCompleteBox(null);
@@ -289,7 +289,7 @@ public class GetIssueCompleteOutputTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getScopeCompleteBoxThrowsOnBlankScope() throws IOException
   {
-    try (JvmScope scope = new MainJvmScope())
+    try (JvmScope scope = new TestJvmScope())
     {
       GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
       output.getScopeCompleteBox("");

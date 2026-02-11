@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
@@ -31,16 +32,19 @@ public class EnforcePluginFileIsolationTest
    * Verifies that non-plugin files are always allowed.
    */
   @Test
-  public void nonPluginFilesAreAllowed()
+  public void nonPluginFilesAreAllowed() throws IOException
   {
-    EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode input = mapper.createObjectNode();
-    input.put("file_path", "/workspace/README.md");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "/workspace/README.md");
 
-    FileWriteHandler.Result result = handler.check(input, "test-session");
+      FileWriteHandler.Result result = handler.check(input, "test-session");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -50,10 +54,10 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesBlockedOnMain() throws IOException
   {
     Path tempDir = createTempGitRepo("main");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
       input.put("file_path", tempDir.resolve("plugin/hooks/test.py").toString());
 
@@ -75,10 +79,10 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesBlockedOnV21() throws IOException
   {
     Path tempDir = createTempGitRepo("v2.1");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
       input.put("file_path", tempDir.resolve("plugin/skills/test.md").toString());
 
@@ -100,10 +104,10 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesBlockedOnVersionBranch() throws IOException
   {
     Path tempDir = createTempGitRepo("v1.0");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
       input.put("file_path", tempDir.resolve("plugin/commands/test.md").toString());
 
@@ -125,10 +129,10 @@ public class EnforcePluginFileIsolationTest
   public void pluginFilesAllowedOnTaskBranch() throws IOException
   {
     Path tempDir = createTempGitRepo("v2.1-fix-bug");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
       input.put("file_path", tempDir.resolve("plugin/hooks/handler.py").toString());
 
@@ -158,10 +162,10 @@ public class EnforcePluginFileIsolationTest
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = createWorktree(mainDir, worktreesDir, "2.1-test-task");
-      try
+      try (JvmScope scope = new TestJvmScope())
       {
         EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-        JsonMapper mapper = JsonMapper.builder().build();
+        JsonMapper mapper = scope.getJsonMapper();
         ObjectNode input = mapper.createObjectNode();
         input.put("file_path", worktreeDir.resolve("plugin/hooks/test.py").toString());
 
@@ -188,49 +192,58 @@ public class EnforcePluginFileIsolationTest
    * the original path, getCurrentBranch returns empty, and the hook should block.
    */
   @Test
-  public void nonExistentPluginFileIsBlocked()
+  public void nonExistentPluginFileIsBlocked() throws IOException
   {
-    EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode input = mapper.createObjectNode();
-    input.put("file_path", "/nonexistent/path/plugin/test.py");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "/nonexistent/path/plugin/test.py");
 
-    FileWriteHandler.Result result = handler.check(input, "test-session");
+      FileWriteHandler.Result result = handler.check(input, "test-session");
 
-    requireThat(result.blocked(), "blocked").isTrue();
-    requireThat(result.reason(), "reason").contains("Cannot determine branch");
-    requireThat(result.reason(), "reason").contains("Branch Detection Failed");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Cannot determine branch");
+      requireThat(result.reason(), "reason").contains("Branch Detection Failed");
+    }
   }
 
   /**
    * Verifies that empty file path is allowed.
    */
   @Test
-  public void emptyFilePathIsAllowed()
+  public void emptyFilePathIsAllowed() throws IOException
   {
-    EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode input = mapper.createObjectNode();
-    input.put("file_path", "");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", "");
 
-    FileWriteHandler.Result result = handler.check(input, "test-session");
+      FileWriteHandler.Result result = handler.check(input, "test-session");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
    * Verifies that missing file_path field is allowed.
    */
   @Test
-  public void missingFilePathIsAllowed()
+  public void missingFilePathIsAllowed() throws IOException
   {
-    EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-    JsonMapper mapper = JsonMapper.builder().build();
-    ObjectNode input = mapper.createObjectNode();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
 
-    FileWriteHandler.Result result = handler.check(input, "test-session");
+      FileWriteHandler.Result result = handler.check(input, "test-session");
 
-    requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
   }
 
   /**
@@ -240,10 +253,10 @@ public class EnforcePluginFileIsolationTest
   public void deepPluginPathIsDetected() throws IOException
   {
     Path tempDir = createTempGitRepo("main");
-    try
+    try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-      JsonMapper mapper = JsonMapper.builder().build();
+      JsonMapper mapper = scope.getJsonMapper();
       ObjectNode input = mapper.createObjectNode();
       input.put("file_path", tempDir.resolve("some/nested/plugin/deep/file.py").toString());
 

@@ -6,7 +6,6 @@ import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -31,7 +30,6 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
 {
   private static final int DEFAULT_TRIGGER_DAYS = 14;
   private static final int DEFAULT_MISTAKE_THRESHOLD = 10;
-  private final JsonMapper mapper = JsonMapper.builder().build();
   private final JvmScope scope;
 
   /**
@@ -96,7 +94,7 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
 
     if (Files.isRegularFile(indexFile))
     {
-      JsonNode root = mapper.readTree(Files.readString(indexFile));
+      JsonNode root = scope.getJsonMapper().readTree(Files.readString(indexFile));
 
       JsonNode config = root.get("config");
       if (config != null)
@@ -193,7 +191,7 @@ public final class CheckRetrospectiveDue implements SessionStartHandler
       {
         try
         {
-          JsonNode root = mapper.readTree(Files.readString(file));
+          JsonNode root = scope.getJsonMapper().readTree(Files.readString(file));
           JsonNode mistakes = root.get("mistakes");
           if (mistakes != null && mistakes.isArray())
             total += mistakes.size();
