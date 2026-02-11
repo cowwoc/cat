@@ -13,10 +13,10 @@
 | `Progress` | Always | `0%` for open, `100%` for closed |
 | `Dependencies` | Always | Issue names this depends on; use `[]` if none |
 | `Last Updated` | Open only | Date of last state change |
-| `Resolution` | Closed only | `implemented`, `duplicate`, or `obsolete` |
+| `Resolution` | Closed only | `implemented`, `duplicate`, `obsolete`, or `won't-fix` |
 | `Completed` | Closed only | Completion date |
 | `Duplicate Of` | Duplicate only | Issue ID that implemented the fix |
-| `Reason` | Closed (non-implemented) | Why the resolution was chosen |
+| `Reason` | Resolution is non-implemented | Why the resolution was chosen (not used with `Decomposed`) |
 
 ## Resolution Patterns
 
@@ -125,6 +125,7 @@ Summary of what was tested and what needs to be fixed.
 | `implemented` | Issue completed (with or without code changes) | Yes if code changed |
 | `duplicate` | Another issue already did this work | No - reference other issue |
 | `obsolete` | Issue no longer needed (requirements changed) | No |
+| `won't-fix` | Issue intentionally not implemented | No |
 
 ## What Belongs Where
 
