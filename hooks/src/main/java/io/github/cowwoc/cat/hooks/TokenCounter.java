@@ -43,6 +43,7 @@ public final class TokenCounter
    *
    * @param args file paths to count tokens for
    * @throws IOException if file reading fails
+   * @throws NullPointerException if {@code args} contains a null element
    */
   public static void main(String[] args) throws IOException
   {
@@ -77,7 +78,8 @@ public final class TokenCounter
    * @param encoding the encoding to use for tokenization
    * @return the number of tokens
    * @throws IOException if file reading fails
-   * @throws IllegalArgumentException if filePath is blank or file does not exist
+   * @throws NullPointerException if {@code filePath} or {@code encoding} are null
+   * @throws IllegalArgumentException if {@code filePath} is blank or file does not exist
    */
   private static int countTokens(String filePath, Encoding encoding) throws IOException
   {

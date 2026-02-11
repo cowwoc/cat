@@ -409,6 +409,46 @@ Place `<p>` on its own line with no other text. Do not use `</p>` closing tags. 
 - Document return values with `@return`
 - Do not duplicate constraint info in `@param` that is already in `@throws` (e.g., don't write "must not be null" if
   `@throws NullPointerException` documents it)
+- **`@throws` must reference method parameter names** using `{@code paramName}` so readers can trace exception source
+- **Parameter identifiers in `@throws` must ALWAYS use `{@code paramName}` syntax**
+- **When multiple parameters are listed in `@throws`, use plural grammar** (e.g., "are null", not "is null")
+
+```java
+// Good - {@code} annotation and plural grammar
+/**
+ * @param filePath the path to the file
+ * @param encoding the encoding to use
+ * @throws NullPointerException if {@code filePath} or {@code encoding} are null
+ */
+
+// Good - single parameter with {@code}
+/**
+ * @param filePath the path to the file
+ * @throws NullPointerException if {@code filePath} is null
+ */
+
+// Good - references parameter name for container
+/**
+ * @param args file paths to count tokens for
+ * @throws NullPointerException if {@code args} contains a null element
+ */
+
+// Bad - missing {@code} annotation
+/**
+ * @throws NullPointerException if filePath or encoding are null
+ */
+
+// Bad - wrong grammar (singular "is" with multiple parameters)
+/**
+ * @throws NullPointerException if {@code filePath} or {@code encoding} is null
+ */
+
+// Bad - unclear where "file path" comes from
+/**
+ * @param args file paths to count tokens for
+ * @throws NullPointerException if any file path is null
+ */
+```
 
 ```java
 /**

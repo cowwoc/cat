@@ -1,6 +1,6 @@
 # fix-throws-documentation
 
-- **Status:** open
-- **Progress:** 0%
+- **Status:** closed
+- **Progress:** 100%
 - **Dependencies:** []
-- **Last Updated:** 2026-02-11T00:00:00Z
+- **Last Updated:** 2026-02-11
