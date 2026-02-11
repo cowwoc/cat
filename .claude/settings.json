@@ -5,5 +5,9 @@
   "attribution": {
     "commit": "",
     "pr": ""
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "${CLAUDE_PROJECT_DIR}/.claude/statusline-command.sh"
   }
 }
