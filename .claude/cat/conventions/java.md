@@ -284,6 +284,27 @@ private static final char FILLED_CIRCLE = '●';
 private static final char FILLED_CIRCLE = '●';  // \u25CF
 ```
 
+### StringJoiner for Delimited Strings
+Use `StringJoiner` instead of manual `StringBuilder` with delimiter logic:
+
+```java
+// Good - StringJoiner handles delimiters automatically
+StringJoiner summary = new StringJoiner("|");
+for (int i = 0; i < lineCount; ++i)
+  summary.add(lines[i].trim());
+return summary.toString();
+
+// Avoid - manual delimiter tracking with StringBuilder
+StringBuilder summary = new StringBuilder();
+for (int i = 0; i < lineCount; ++i)
+{
+  if (i > 0)
+    summary.append('|');
+  summary.append(lines[i].trim());
+}
+return summary.toString();
+```
+
 ### String Concatenation with Newlines
 Split consecutive newlines across lines for readability:
 
