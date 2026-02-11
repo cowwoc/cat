@@ -8,7 +8,7 @@
 ## Summary
 Prepare CAT for commercial release with pricing tiers and license key system.
 
-## Tasks Completed
+## Issues Completed
 - reorganize-plugin-layout
 - add-clear-guidance-to-next-steps
 - add-display-redesign
@@ -79,5 +79,5 @@ Prepare CAT for commercial release with pricing tiers and license key system.
 - split-retrospective-files-by-time
 - fix-hierarchy-docs
 
-## Tasks Decomposed
+## Issues Decomposed
 - centralize-version-path-resolution (subtasks completed as part of parent)

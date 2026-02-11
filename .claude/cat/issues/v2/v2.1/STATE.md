@@ -8,12 +8,12 @@
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
 
-## Tasks In Progress
+## Issues In Progress
 - compress-concepts-batch-5
 - compress-concepts-md
 - compress-md-files
 
-## Tasks Pending
+## Issues Pending
 - learn-skill-worktree-safety
 - lazy-load-requirements-api
 - split-learn-into-phases
@@ -54,8 +54,55 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-squash-workflow
 - fail-fast-missing-banners
 - replace-precomputed-with-script-output
+- update-worktree-cd-convention
+- normalize-hook-filenames
+- port-utility-scripts
+- port-workflow-scripts
+- port-git-scripts
+- port-display-scripts
+- fix-aotcache-appcds-conflict
+- optimize-hook-json-parser
+- fix-work-prepare-wrong-task
+- remove-cat-java-home
+- fix-multirelease-jar-detection
+- recover-from-drift
+- audit-plan-verification
+- fix-is-automatic-module
+- add-jlink-to-maven
+- move-java-integrate-jlink
+- add-release-plugin-skill
+- add-build-hooks-skill
+- mavenize-java-hooks
+- unify-project-hooks
+- unify-stop-sessionend-hooks
+- unify-posttooluse-hooks
+- unify-pretooluse-hooks
+- unify-userpromptsubmit-hooks
+- unify-sessionstart-hooks
+- unify-hook-dispatchers
+- developer-local-bundle-rebuild
+- session-start-version-check
+- ci-build-jlink-bundle
+- remove-version-from-cat-config
+- fix-merge-base-false-positive
+- define-wave-terminology
+- add-skill-context-router
+- migrate-token-counting
+- cleanup-python-files
+- migrate-python-tests
+- rename-subtask-to-subissue
+- migrate-enforce-hooks
+- fix-decomposed-parent-completion
+- fix-scope-complete-box-alignment
+- fix-progress-banner-newline
+- fix-merge-subagent-worktree-cd
+- fix-retrospective-handler-timezone
+- fix-autolearn-path-false-positive
+- restructure-learn-tiered
+- replace-prepare-subagent-with-script
+- rename-pretool-posttool
 
-## Tasks Completed
+## Issues Completed
 - fix-blocked-tasks-diagnostics
 - add-diagnostic-review-checks
 - acceptance-criteria-options
@@ -120,53 +167,3 @@ Finalize naming conventions and UI polish before recording demo videos.
 - update-skill-builder-docs
 - use-patch-id-for-commit-tracking
 - inject-env-via-jvmscope
-
-
-## Issues Pending
-- update-worktree-cd-convention
-- normalize-hook-filenames
-- port-utility-scripts
-- port-workflow-scripts
-- port-git-scripts
-- port-display-scripts
-- fix-aotcache-appcds-conflict
-- optimize-hook-json-parser
-- fix-work-prepare-wrong-task
-- remove-cat-java-home
-- fix-multirelease-jar-detection
-- recover-from-drift
-- audit-plan-verification
-- fix-is-automatic-module
-- add-jlink-to-maven
-- move-java-integrate-jlink
-- add-release-plugin-skill
-- add-build-hooks-skill
-- mavenize-java-hooks
-- unify-project-hooks
-- unify-stop-sessionend-hooks
-- unify-posttooluse-hooks
-- unify-pretooluse-hooks
-- unify-userpromptsubmit-hooks
-- unify-sessionstart-hooks
-- unify-hook-dispatchers
-- developer-local-bundle-rebuild
-- session-start-version-check
-- ci-build-jlink-bundle
-- remove-version-from-cat-config
-- fix-merge-base-false-positive
-- define-wave-terminology
-- add-skill-context-router
-- migrate-token-counting
-- cleanup-python-files
-- migrate-python-tests
-- rename-subtask-to-subissue
-- migrate-enforce-hooks
-- fix-decomposed-parent-completion
-- fix-scope-complete-box-alignment
-- fix-progress-banner-newline
-- fix-merge-subagent-worktree-cd
-- fix-retrospective-handler-timezone
-- fix-autolearn-path-false-positive
-- restructure-learn-tiered
-- replace-prepare-subagent-with-script
-- rename-pretool-posttool

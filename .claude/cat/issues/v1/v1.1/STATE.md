@@ -10,7 +10,7 @@ last_updated: 2026-01-20
 ## Summary
 Workflow refinements and context injection improvements.
 
-## Tasks Completed
+## Issues Completed
 - retrospective-action-items-A005-A007
 - direct-context-injection
 - remove-prompt-handling

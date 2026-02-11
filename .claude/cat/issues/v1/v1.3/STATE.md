@@ -10,5 +10,5 @@ last_updated: 2026-01-20
 ## Summary
 Bugfix release for SESSION_ID handling in skills.
 
-## Tasks Completed
+## Issues Completed
 - fix-session-id-skills-M058
