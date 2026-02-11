@@ -3625,6 +3625,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Examine ALL files in each commit using git show --stat before classifying topics - a commit with both convention and implementation files is part of the implementation topic"
+    },
+    {
+      "id": "M484",
+      "timestamp": "2026-02-11T15:01:44.108919Z",
+      "category": "protocol_violation",
+      "description": "Subagent used \"squash commit\" instead of specified commit message",
+      "root_cause": "Delegation prompts do not require subagents to report actual commit message used, allowing divergence from specification without detection",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/subagent-delegation.md",
+      "pattern_keywords": [
+        "subagent",
+        "commit-message",
+        "verification",
+        "delegation"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Delegation prompts must require subagents to report commit message used; orchestrator must verify independently"
     }
   ],
   "counter": 1
