@@ -16,7 +16,7 @@
 | `Resolution` | Closed only | `implemented`, `duplicate`, or `obsolete` |
 | `Completed` | Closed only | Completion date |
 | `Duplicate Of` | Duplicate only | Issue ID that implemented the fix |
-| `Reason` | Obsolete only | Why issue is no longer needed |
+| `Reason` | Closed (non-implemented) | Why the resolution was chosen |
 
 ## Resolution Patterns
 
@@ -41,10 +41,11 @@ git log --oneline -- .claude/cat/issues/v{X}/v{X}.{Y}/{issue-name}/STATE.md
 - **Progress:** 100%
 - **Resolution:** duplicate
 - **Duplicate Of:** v{major}.{minor}-{original-issue-name}
+- **Reason:** {why this is a duplicate - what investigation revealed}
 - **Dependencies:** [shared-dependency]
 - **Completed:** {{TIMESTAMP}}
 
-## Resolution Details
+## Reason
 
 Explain WHY this is a duplicate - what investigation revealed.
 
