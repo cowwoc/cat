@@ -30,16 +30,24 @@ public class Example
 ```
 
 ### Single-Statement Blocks
-Omit braces for if/else/for/while with a single statement:
+Omit braces for if/else/for/while with a single-statement body that fits on one visual line.
+Add braces when the body spans multiple visual lines (e.g., string concatenation continuation):
 
 ```java
-// Good - single statement, no braces
+// Good - body is one visual line, no braces
 if (value == null)
   return "";
 for (int i = 0; i < 10; ++i)
   process(i);
-while (hasMore)
-  processNext();
+if (branch == null || branch.isEmpty())
+  throw new IOException("git branch --show-current returned no output in directory: " + directory);
+
+// Good - body spans multiple visual lines, needs braces
+if (!treeDiff.isEmpty())
+{
+  throw new IOException("Working tree doesn't match original HEAD! " +
+    "Rollback: git reset --hard " + backupBranch);
+}
 
 // Good - multiple statements need braces
 if (value == null)
@@ -441,6 +449,29 @@ public record SkillContext(String userPrompt, String sessionId)
 
 ## String Handling
 
+### Text Blocks for Static JSON
+Use text blocks for static JSON strings (error messages, usage output) instead of manual escaping:
+
+```java
+// Good - text block, readable
+System.err.println("""
+  {
+    "status": "error",
+    "message": "Usage: git-squash <base> <last> <msg-file> [branch]"
+  }""");
+
+// Good - dynamic values with String.formatted()
+System.err.println("""
+  {
+    "status": "error",
+    "message": "%s"
+  }""".formatted(e.getMessage().replace("\"", "\\\"")));
+
+// Avoid - manual escaping, hard to read
+System.err.println("{\"status\": \"error\", \"message\": " +
+  "\"Usage: git-squash <base> <last> <msg-file> [branch]\"}");
+```
+
 ### No Null Strings
 Use `""` (empty string) instead of `null` for String values - both for return values and parameters:
 
@@ -717,6 +748,16 @@ catch (IOException e)
   throw WrappedCheckedException.wrap(e);
 }
 
+// Avoid - RuntimeException loses the checked exception type
+try
+{
+  return new DisplayUtils();
+}
+catch (IOException e)
+{
+  throw new RuntimeException(e);  // Don't use this
+}
+
 // Avoid - using specific unchecked exception types
 try
 {
@@ -733,6 +774,60 @@ type, preserving the original exception as the cause. This avoids proliferation 
 unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 
 ## Testing
+
+### No Catch-and-Fail for Unexpected Exceptions
+TestNG's `@Test` already fails tests that throw unexpected exceptions. Do not catch exception types just to manually
+fail — let them propagate naturally:
+
+```java
+// Good - only catch the EXPECTED exception; unexpected ones propagate
+@Test
+public void executeRejectsNullInput() throws IOException
+{
+  try
+  {
+    cmd.execute(null, "value");
+    requireThat(false, "execute").isEqualTo(true);
+  }
+  catch (NullPointerException e)
+  {
+    requireThat(e.getMessage(), "message").contains("input");
+  }
+  // IOException propagates naturally → TestNG fails the test
+}
+
+// Avoid - redundant catch-and-fail
+@Test
+public void executeRejectsNullInput()
+{
+  try
+  {
+    cmd.execute(null, "value");
+    requireThat(false, "execute").isEqualTo(true);
+  }
+  catch (NullPointerException e)
+  {
+    requireThat(e.getMessage(), "message").contains("input");
+  }
+  catch (IOException _)
+  {
+    requireThat(false, "shouldThrowNullPointerException").isEqualTo(true); // Redundant
+  }
+}
+```
+
+**For "accepts" tests** (verifying no validation exception is thrown):
+
+```java
+// Good - catch only the acceptable operational exception
+@Test
+public void executeAcceptsEmptyBranch() throws IOException
+{
+  cmd.execute("HEAD~1", "HEAD", messageFile.toString(), "");
+  // If NPE or IAE is thrown, TestNG fails the test automatically
+  // IOException from git operations is acceptable → declared in throws
+}
+```
 
 ### Test Documentation
 **All test methods must have Javadoc** describing:
