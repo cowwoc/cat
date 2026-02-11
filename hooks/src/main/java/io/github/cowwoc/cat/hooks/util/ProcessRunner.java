@@ -29,7 +29,7 @@ public final class ProcessRunner
      *
      * @param exitCode the process exit code
      * @param stdout the standard output
-     * @throws IllegalArgumentException if stdout is null
+     * @throws NullPointerException if {@code stdout} is null
      */
     public Result
     {
