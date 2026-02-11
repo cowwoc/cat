@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderOutput;
 import io.github.cowwoc.cat.hooks.skills.GetStakeholderOutput.ReviewerStatus;
@@ -31,7 +31,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(
@@ -51,7 +51,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxShowsCounts() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(
@@ -71,7 +71,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxIncludesRunningList() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(
@@ -91,7 +91,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxIncludesSkippedWithReasons() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(
@@ -115,7 +115,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(
@@ -135,7 +135,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxHandlesEmptyRunningList() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(
@@ -155,7 +155,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxContainsHeader() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -176,7 +176,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxShowsIssueName() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -197,7 +197,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxIncludesReviewerStatuses() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -221,7 +221,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxShowsResultAndSummary() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -242,7 +242,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxUsesTreePrefixes() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -265,7 +265,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxHasSeparators() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -286,7 +286,7 @@ public class GetStakeholderOutputTest
   @Test
   public void reviewBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getReviewBox(
@@ -307,7 +307,7 @@ public class GetStakeholderOutputTest
   @Test
   public void criticalConcernBoxContainsSeverity() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getCriticalConcernBox(
@@ -325,7 +325,7 @@ public class GetStakeholderOutputTest
   @Test
   public void criticalConcernBoxIncludesContent() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getCriticalConcernBox(
@@ -344,7 +344,7 @@ public class GetStakeholderOutputTest
   @Test
   public void criticalConcernBoxHasBoxStructure() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getCriticalConcernBox(
@@ -362,7 +362,7 @@ public class GetStakeholderOutputTest
   @Test
   public void highConcernBoxContainsSeverity() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getHighConcernBox(
@@ -380,7 +380,7 @@ public class GetStakeholderOutputTest
   @Test
   public void highConcernBoxIncludesContent() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getHighConcernBox(
@@ -399,7 +399,7 @@ public class GetStakeholderOutputTest
   @Test
   public void concernBoxShowsFileLocationWithConnector() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getCriticalConcernBox(
@@ -417,7 +417,7 @@ public class GetStakeholderOutputTest
   @Test
   public void selectionBoxContentLinesHaveConsistentWidth() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStakeholderOutput handler = new GetStakeholderOutput(scope);
       String result = handler.getSelectionBox(

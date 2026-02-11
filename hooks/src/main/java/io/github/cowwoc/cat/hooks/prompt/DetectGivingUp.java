@@ -39,8 +39,6 @@ public final class DetectGivingUp implements PromptHandler
   private static final String PATTERN_MARKER = "main-giving-up-pattern";
   private static final Pattern QUOTED_TEXT_PATTERN = Pattern.compile("\"[^\"]*\"");
 
-  private final Clock clock;
-
   private static final String CONSTRAINT_RATIONALIZATION_REMINDER = """
     🚨 GIVING UP PATTERN DETECTED - PERSISTENCE REQUIRED
 
@@ -202,6 +200,8 @@ public final class DetectGivingUp implements PromptHandler
     ❌ "Should I ask first?"
 
     Reference: CLAUDE.md "AUTONOMOUS TASK COMPLETION REQUIREMENT\"""";
+
+  private final Clock clock;
 
   /**
    * Creates a new giving up detection handler using the system clock.

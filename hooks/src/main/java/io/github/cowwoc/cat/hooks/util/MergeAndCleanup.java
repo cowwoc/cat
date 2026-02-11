@@ -69,7 +69,7 @@ public final class MergeAndCleanup
     if (worktreePath.isEmpty() || !Files.isDirectory(Paths.get(worktreePath)))
       throw new IOException("Worktree not found for issue branch: " + taskBranch);
 
-    String baseBranch = getBaseBranch(projectDir, worktreePath, taskBranch);
+    String baseBranch = getBaseBranch(projectDir, taskBranch);
 
     if (isWorktreeDirty(worktreePath))
     {
@@ -137,12 +137,9 @@ public final class MergeAndCleanup
 
     String content = Files.readString(configPath, StandardCharsets.UTF_8);
     JsonMapper mapper = JsonMapper.builder().build();
-    var config = mapper.readTree(content);
+    ObjectNode config = (ObjectNode) mapper.readTree(content);
 
-    if (config.has("autoRemoveWorktrees"))
-      return config.get("autoRemoveWorktrees").asBoolean(true);
-
-    return true;
+    return !config.has("autoRemoveWorktrees") || config.get("autoRemoveWorktrees").asBoolean(true);
   }
 
   /**
@@ -174,12 +171,11 @@ public final class MergeAndCleanup
    * Gets the base branch from worktree's cat-base file.
    *
    * @param projectDir the project directory
-   * @param worktreePath the worktree path
    * @param taskBranch the task branch
    * @return the base branch name
    * @throws IOException if the file is missing
    */
-  private String getBaseBranch(String projectDir, String worktreePath, String taskBranch)
+  private String getBaseBranch(String projectDir, String taskBranch)
     throws IOException
   {
     String gitDir = runGitCommandInDirectory(projectDir, "rev-parse", "--git-dir");
@@ -234,7 +230,7 @@ public final class MergeAndCleanup
   {
     try
     {
-      String[] command = new String[]{"git", "-C", worktreePath, "merge-base",
+      String[] command = {"git", "-C", worktreePath, "merge-base",
         "--is-ancestor", baseBranch, "HEAD"};
       ProcessBuilder pb = new ProcessBuilder(command);
       pb.redirectErrorStream(true);

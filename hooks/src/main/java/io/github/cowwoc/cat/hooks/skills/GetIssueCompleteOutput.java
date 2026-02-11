@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 
 import java.util.ArrayList;
@@ -49,20 +49,22 @@ public final class GetIssueCompleteOutput
       String baseBranch = "main";
       String scopeComplete = "";
 
-      for (int i = 0; i + 1 < args.length; ++i)
+      for (int i = 0; i + 1 < args.length; i += 2)
       {
         switch (args[i])
         {
-          case "--issue-name" -> issueName = args[++i];
-          case "--next-issue" -> nextIssue = args[++i];
-          case "--next-goal" -> nextGoal = args[++i];
-          case "--base-branch" -> baseBranch = args[++i];
-          case "--scope-complete" -> scopeComplete = args[++i];
-          default -> {}
+          case "--issue-name" -> issueName = args[i + 1];
+          case "--next-issue" -> nextIssue = args[i + 1];
+          case "--next-goal" -> nextGoal = args[i + 1];
+          case "--base-branch" -> baseBranch = args[i + 1];
+          case "--scope-complete" -> scopeComplete = args[i + 1];
+          default ->
+          {
+          }
         }
       }
 
-      try (JvmScope scope = new DefaultJvmScope())
+      try (JvmScope scope = new MainJvmScope())
       {
         GetIssueCompleteOutput output = new GetIssueCompleteOutput(scope);
 
@@ -75,7 +77,8 @@ public final class GetIssueCompleteOutput
         {
           if (issueName.isEmpty() || nextIssue.isEmpty() || nextGoal.isEmpty())
           {
-            System.err.println("--issue-name, --next-issue, and --next-goal are required unless --scope-complete is used");
+            System.err.println("--issue-name, --next-issue, and --next-goal are required " +
+              "unless --scope-complete is used");
             System.exit(1);
           }
           String box = output.getIssueCompleteBox(issueName, nextIssue, nextGoal, baseBranch);

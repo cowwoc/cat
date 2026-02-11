@@ -117,8 +117,8 @@ public class GetSessionStartOutputTest
       // The symlink skip behavior is validated by the implementation check
       HookInput input = createInput("{}");
       SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
-      requireThat(result, "result").isNotNull();
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
+      requireThat(result.stderr(), "stderr").isEmpty();
     }
     finally
     {
@@ -187,43 +187,85 @@ public class GetSessionStartOutputTest
   // --- CheckUpdateAvailable tests ---
 
   /**
-   * Verifies that CheckUpdateAvailable runs without error when environment is set.
+   * Verifies that CheckUpdateAvailable runs without error and returns empty when no update is available.
    */
   @Test
-  public void checkUpdateAvailableRunsWithEnvironment()
+  public void checkUpdateAvailableRunsWithEnvironment() throws IOException
   {
-    // CLAUDE_PROJECT_DIR and CLAUDE_PLUGIN_ROOT are set in the Claude Code environment
-    HookInput input = createInput("{}");
-    SessionStartHandler.Result result = new CheckUpdateAvailable().handle(input);
-    requireThat(result, "result").isNotNull();
+    Path projectDir = Files.createTempDirectory("cat-test-update-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      Files.writeString(pluginRoot.resolve("plugin.json"), "{\"version\": \"99.0.0\"}");
+      try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+      {
+        HookInput input = createInput("{}");
+        SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(input);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
   }
 
   // --- CheckUpgrade tests ---
 
   /**
-   * Verifies that CheckUpgrade runs without error when environment is set.
+   * Verifies that CheckUpgrade runs without error and returns empty when no config file exists.
    */
   @Test
-  public void checkUpgradeRunsWithEnvironment()
+  public void checkUpgradeRunsWithEnvironment() throws IOException
   {
-    // CLAUDE_PROJECT_DIR and CLAUDE_PLUGIN_ROOT are set in the Claude Code environment
-    HookInput input = createInput("{}");
-    SessionStartHandler.Result result = new CheckUpgrade().handle(input);
-    requireThat(result, "result").isNotNull();
+    Path projectDir = Files.createTempDirectory("cat-test-upgrade-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      // No cat-config.json in projectDir → handler returns empty
+      try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+      {
+        HookInput input = createInput("{}");
+        SessionStartHandler.Result result = new CheckUpgrade(scope).handle(input);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
   }
 
   // --- CheckRetrospectiveDue tests ---
 
   /**
-   * Verifies that CheckRetrospectiveDue runs without error when environment is set.
+   * Verifies that CheckRetrospectiveDue runs without error and returns empty for a non-CAT project.
    */
   @Test
-  public void checkRetrospectiveDueRunsWithEnvironment()
+  public void checkRetrospectiveDueRunsWithEnvironment() throws IOException
   {
-    // CLAUDE_PROJECT_DIR is set in the Claude Code environment
-    HookInput input = createInput("{}");
-    SessionStartHandler.Result result = new CheckRetrospectiveDue().handle(input);
-    requireThat(result, "result").isNotNull();
+    Path projectDir = Files.createTempDirectory("cat-test-retro-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try
+    {
+      // No .planning directory → handler returns empty (not a CAT project)
+      try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+      {
+        HookInput input = createInput("{}");
+        SessionStartHandler.Result result = new CheckRetrospectiveDue(scope).handle(input);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
   }
 
   // --- GetSessionStartOutput dispatcher tests ---

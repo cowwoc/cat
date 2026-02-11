@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import java.io.IOException;
 
@@ -30,7 +30,7 @@ public final class RunGetStatusOutput
     if (projectDir == null || projectDir.isEmpty())
       projectDir = System.getProperty("user.dir");
 
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput generator = new GetStatusOutput(scope);
       String output = generator.getOutput(projectDir);

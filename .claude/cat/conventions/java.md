@@ -895,6 +895,28 @@ assertEquals(result, expected);
 assertTrue(list.contains(item));
 ```
 
+### Validate Return Value Contents, Not Just Non-Null
+Tests must validate the **contents** of return values, not merely that they are non-null. A non-null check proves the method
+returned something but says nothing about correctness.
+
+```java
+// ❌ WRONG: Only checks non-null - passes even if result contains wrong data
+SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(input);
+requireThat(result, "result").isNotNull();
+
+// ✅ CORRECT: Validates the actual content of the result
+SessionStartHandler.Result result = new CheckUpdateAvailable(scope).handle(input);
+requireThat(result.output(), "output").contains("expected text");
+requireThat(result.continueProcessing(), "continueProcessing").isTrue();
+```
+
+**Why:** A test that only asserts `isNotNull()` will pass even when the method returns completely wrong data. The test
+provides false confidence - it "passes" but validates nothing meaningful.
+
+**When `isNotNull()` alone is acceptable:**
+- The test explicitly documents that it only verifies the method doesn't throw (smoke test)
+- The value is an opaque handle where contents are not meaningful to the caller
+
 ### Test Requirements, Not Implementation
 **Tests should validate business requirements with controlled inputs, not assert system configuration or implementation details.**
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -32,7 +33,6 @@ public final class GetStatusOutput
   private static final int MAX_VISIBLE_COMPLETED = 5;
   private static final Set<String> VALID_STATUSES = Set.of("open", "in-progress", "closed", "blocked");
 
-  private final JvmScope scope;
   private final DisplayUtils display;
 
   /**
@@ -44,7 +44,6 @@ public final class GetStatusOutput
   public GetStatusOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.scope = scope;
     this.display = scope.getDisplayUtils();
   }
 
@@ -323,7 +322,7 @@ public final class GetStatusOutput
     if (!matcher.find())
       return "open";
 
-    String rawStatus = matcher.group(1).strip().toLowerCase();
+    String rawStatus = matcher.group(1).strip().toLowerCase(Locale.ROOT);
 
     if (VALID_STATUSES.contains(rawStatus))
       return rawStatus;
@@ -555,9 +554,9 @@ public final class GetStatusOutput
     }
 
     StringBuilder result = new StringBuilder();
-    result.append(display.buildTopBorder(maxContentWidth)).append("\n");
+    result.append(display.buildTopBorder(maxContentWidth)).append('\n');
     for (String item : contentItems)
-      result.append(display.buildLine(item, maxContentWidth)).append("\n");
+      result.append(display.buildLine(item, maxContentWidth)).append('\n');
     result.append(display.buildBottomBorder(maxContentWidth));
 
     return result.toString();
@@ -706,8 +705,8 @@ public final class GetStatusOutput
     String currentMinor = "";
     String inProgressTask = "";
     String nextTask = "";
-    List<MajorVersion> majors = new ArrayList<>();
-    List<MinorVersion> minors = new ArrayList<>();
+    final List<MajorVersion> majors = new ArrayList<>();
+    final List<MinorVersion> minors = new ArrayList<>();
   }
 
   /**

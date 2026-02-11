@@ -893,9 +893,9 @@ public class HookEntryPointTest
     JsonNode toolInput = JsonMapper.builder().build().readTree(
       "{\"file_path\": \"/workspace/plugin/hooks/test.py\"}");
     FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
-    // This test assumes we're on a protected branch - result depends on actual git state
-    // If on v2.1 or main, it should block; otherwise allow
-    requireThat(result, "result").isNotNull();
+    // On the v2.1 branch (protected), plugin files should be blocked
+    requireThat(result.blocked(), "blocked").isTrue();
+    requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
   }
 
   /**

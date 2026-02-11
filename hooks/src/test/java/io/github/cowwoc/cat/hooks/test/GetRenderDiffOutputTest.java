@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetRenderDiffOutput;
 import org.testng.annotations.Test;
@@ -32,7 +32,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void nonGitDirectoryReturnsNull() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -63,7 +63,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void noChangesReportsNoChanges() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -86,7 +86,6 @@ public class GetRenderDiffOutputTest
         String result = handler.getOutput(tempDir);
 
         // HEAD matches main, so no changes
-        requireThat(result, "result").isNotNull();
         requireThat(result, "result").contains("No changes");
       }
       finally
@@ -104,7 +103,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void changesProduceDiffSummary() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -133,7 +132,6 @@ public class GetRenderDiffOutputTest
         GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
-        requireThat(result, "result").isNotNull();
         requireThat(result, "result").contains("Diff Summary").
           contains("file.txt");
       }
@@ -152,7 +150,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void diffOutputIncludes4ColumnFormat() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -181,7 +179,6 @@ public class GetRenderDiffOutputTest
         GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
-        requireThat(result, "result").isNotNull();
         requireThat(result, "result").contains("Rendered Diff (4-column format)").
           contains("FILE:");
       }
@@ -200,7 +197,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void diffOutputIncludesStats() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -229,7 +226,6 @@ public class GetRenderDiffOutputTest
         GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
-        requireThat(result, "result").isNotNull();
         requireThat(result, "result").contains("Insertions:").contains("Deletions:");
       }
       finally
@@ -247,7 +243,7 @@ public class GetRenderDiffOutputTest
   @Test
   public void diffOutputListsChangedFiles() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path tempDir = Files.createTempDirectory("render-diff-test");
       try
@@ -278,7 +274,6 @@ public class GetRenderDiffOutputTest
         GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
-        requireThat(result, "result").isNotNull();
         requireThat(result, "result").contains("Changed Files").
           contains("alpha.txt").contains("beta.txt");
       }

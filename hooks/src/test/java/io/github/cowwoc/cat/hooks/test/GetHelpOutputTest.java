@@ -19,16 +19,16 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class GetHelpOutputTest
 {
   /**
-   * Verifies that getOutput returns non-null result.
+   * Verifies that getOutput returns output containing CAT commands and workflow information.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputReturnsNonNull() throws IOException
+  public void getOutputContainsCatCommandsAndWorkflow() throws IOException
   {
     GetHelpOutput handler = new GetHelpOutput();
     String result = handler.getOutput();
-    requireThat(result, "result").isNotNull();
+    requireThat(result, "result").contains("CAT").contains("Commands").contains("Workflow");
   }
 
   /**
