@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- enforce-state-schema-hook
 - standardize-state-schema
 - learn-skill-worktree-safety
 - lazy-load-requirements-api
