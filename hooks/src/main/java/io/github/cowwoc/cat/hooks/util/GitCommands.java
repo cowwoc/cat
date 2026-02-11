@@ -137,8 +137,10 @@ public final class GitCommands
       throw new IOException("Interrupted while waiting for git command", e);
     }
     if (exitCode != 0)
+    {
       throw new IOException("git branch --show-current failed with exit code " + exitCode +
         " in directory: " + directory);
+    }
     if (branch == null || branch.isEmpty())
       throw new IOException("git branch --show-current returned no output in directory: " + directory);
     return branch.trim();
@@ -176,7 +178,7 @@ public final class GitCommands
    * @return the command output trimmed
    * @throws IOException if the git command fails
    */
-  private static String runGitCommand(String... args) throws IOException
+  public static String runGitCommand(String... args) throws IOException
   {
     String[] command = new String[args.length + 1];
     command[0] = "git";
@@ -197,14 +199,34 @@ public final class GitCommands
     }
     catch (InterruptedException e)
     {
+      process.destroyForcibly();
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while waiting for git command: " +
         String.join(" ", command), e);
     }
     if (exitCode != 0)
+    {
       throw new IOException("git command failed with exit code " + exitCode + ": " +
         String.join(" ", command));
+    }
     return output.toString().trim();
+  }
+
+  /**
+   * Runs a git command in a specific directory and returns all output lines joined with newlines.
+   *
+   * @param directory the directory to run git in
+   * @param args the git command arguments
+   * @return the command output trimmed
+   * @throws IOException if the git command fails
+   */
+  public static String runGitCommandInDirectory(String directory, String... args) throws IOException
+  {
+    String[] dirArgs = new String[args.length + 2];
+    dirArgs[0] = "-C";
+    dirArgs[1] = directory;
+    System.arraycopy(args, 0, dirArgs, 2, args.length);
+    return runGitCommand(dirArgs);
   }
 
   /**
@@ -214,7 +236,7 @@ public final class GitCommands
    * @return the first line of output trimmed
    * @throws IOException if the git command fails, is interrupted, or returns no output
    */
-  private static String runGitCommandSingleLine(String... args) throws IOException
+  public static String runGitCommandSingleLine(String... args) throws IOException
   {
     String[] command = new String[args.length + 1];
     command[0] = "git";
@@ -235,16 +257,36 @@ public final class GitCommands
     }
     catch (InterruptedException e)
     {
+      process.destroyForcibly();
       Thread.currentThread().interrupt();
       throw new IOException("Interrupted while waiting for git command: " +
         String.join(" ", command), e);
     }
     if (exitCode != 0)
+    {
       throw new IOException("git command failed with exit code " + exitCode + ": " +
         String.join(" ", command));
+    }
     if (line == null || line.isEmpty())
       throw new IOException("git command returned no output: " + String.join(" ", command));
     return line.trim();
+  }
+
+  /**
+   * Runs a git command in a specific directory and returns only the first line of output.
+   *
+   * @param directory the directory to run git in
+   * @param args the git command arguments
+   * @return the first line of output trimmed
+   * @throws IOException if the git command fails, is interrupted, or returns no output
+   */
+  public static String runGitCommandSingleLineInDirectory(String directory, String... args) throws IOException
+  {
+    String[] dirArgs = new String[args.length + 2];
+    dirArgs[0] = "-C";
+    dirArgs[1] = directory;
+    System.arraycopy(args, 0, dirArgs, 2, args.length);
+    return runGitCommandSingleLine(dirArgs);
   }
 
   /**
