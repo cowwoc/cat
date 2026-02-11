@@ -45,6 +45,6 @@ Parent: port-utility-scripts
 
 ## Success Criteria
 - [ ] All three licensing scripts have Java equivalents
-- [ ] feature-gate latency reduced from ~481ms to <10ms
+- [ ] feature-gate latency eliminated (no subprocess chaining)
 - [ ] JSON output matches original scripts
 - [ ] All tests pass (`mvn verify`)

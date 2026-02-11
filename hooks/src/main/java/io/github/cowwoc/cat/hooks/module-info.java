@@ -12,6 +12,7 @@ module io.github.cowwoc.cat.hooks
   exports io.github.cowwoc.cat.hooks.bash;
   exports io.github.cowwoc.cat.hooks.bash.post;
   exports io.github.cowwoc.cat.hooks.edit;
+  exports io.github.cowwoc.cat.hooks.licensing;
   exports io.github.cowwoc.cat.hooks.prompt;
   exports io.github.cowwoc.cat.hooks.read.post;
   exports io.github.cowwoc.cat.hooks.read.pre;
