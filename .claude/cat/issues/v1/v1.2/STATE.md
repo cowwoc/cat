@@ -10,7 +10,7 @@ last_updated: 2026-01-20
 ## Summary
 Auto-decomposition, parallel execution, and task locking.
 
-## Tasks Completed
+## Issues Completed
 - M057-concurrent-task-execution-fix
 - rename-version-to-changelog
 - auto-decomposition-parallel-execution

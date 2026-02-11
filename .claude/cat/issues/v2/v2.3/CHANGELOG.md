@@ -6,9 +6,9 @@
 
 Add support for multiple issue tracker backends through a storage abstraction layer.
 
-## Tasks Completed
+## Issues Completed
 
-| Task | Type | Description | Resolution |
+| Issue | Type | Description | Resolution |
 |------|------|-------------|------------|
 | (pending) | - | - | - |
 

@@ -10,7 +10,7 @@ last_updated: 2026-01-20
 ## Summary
 Multi-perspective stakeholder reviews and progress indicators.
 
-## Tasks Completed
+## Issues Completed
 - progress-indicators
 - stakeholder-review-gate
 - state-verification-approval-gate-M085

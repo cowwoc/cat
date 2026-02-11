@@ -10,7 +10,7 @@ last_updated: 2026-01-20
 ## Summary
 Adventure-style workflow enhancements with user preferences.
 
-## Tasks Completed
+## Issues Completed
 - two-stage-planning
 - approach-preference-options
 - adventure-style-status
