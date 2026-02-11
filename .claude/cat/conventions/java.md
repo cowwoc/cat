@@ -493,6 +493,20 @@ System.err.println("{\"status\": \"error\", \"message\": " +
   "\"Usage: git-squash <base> <last> <msg-file> [branch]\"}");
 ```
 
+### Prefer strip() Over trim()
+Use `String.strip()` instead of `String.trim()`. Both remove leading/trailing whitespace, but `strip()` is
+Unicode-aware (handles all Unicode whitespace characters), while `trim()` only handles ASCII whitespace (`<= U+0020`):
+
+```java
+// Good - Unicode-aware whitespace removal
+String clean = input.strip();
+String prefix = input.stripLeading();
+String suffix = input.stripTrailing();
+
+// Avoid - only handles ASCII whitespace
+String clean = input.trim();
+```
+
 ### No Null Strings
 Use `""` (empty string) instead of `null` for String values - both for return values and parameters:
 
