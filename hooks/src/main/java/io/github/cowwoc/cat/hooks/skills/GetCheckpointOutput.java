@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 
 import java.util.ArrayList;
@@ -59,22 +59,24 @@ public final class GetCheckpointOutput
       String iteration = "";
       String total = "";
 
-      for (int i = 0; i + 1 < args.length; ++i)
+      for (int i = 0; i + 1 < args.length; i += 2)
       {
         switch (args[i])
         {
-          case "--type" -> type = args[++i];
-          case "--issue-name" -> issueName = args[++i];
-          case "--tokens" -> tokens = args[++i];
-          case "--percent" -> percent = args[++i];
-          case "--branch" -> branch = args[++i];
-          case "--iteration" -> iteration = args[++i];
-          case "--total" -> total = args[++i];
-          default -> {}
+          case "--type" -> type = args[i + 1];
+          case "--issue-name" -> issueName = args[i + 1];
+          case "--tokens" -> tokens = args[i + 1];
+          case "--percent" -> percent = args[i + 1];
+          case "--branch" -> branch = args[i + 1];
+          case "--iteration" -> iteration = args[i + 1];
+          case "--total" -> total = args[i + 1];
+          default ->
+          {
+          }
         }
       }
 
-      try (JvmScope scope = new DefaultJvmScope())
+      try (JvmScope scope = new MainJvmScope())
       {
         GetCheckpointOutput output = new GetCheckpointOutput(scope);
 

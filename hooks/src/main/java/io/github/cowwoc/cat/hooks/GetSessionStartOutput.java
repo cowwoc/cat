@@ -32,14 +32,17 @@ public final class GetSessionStartOutput implements HookHandler
 
   /**
    * Creates a new GetSessionStartOutput with the default handler list.
+   *
+   * @param scope the JVM scope providing environment configuration
+   * @throws NullPointerException if scope is null
    */
-  public GetSessionStartOutput()
+  public GetSessionStartOutput(JvmScope scope)
   {
     this(List.of(
-      new CheckUpgrade(),
-      new CheckUpdateAvailable(),
+      new CheckUpgrade(scope),
+      new CheckUpdateAvailable(scope),
       new EchoSessionId(),
-      new CheckRetrospectiveDue(),
+      new CheckRetrospectiveDue(scope),
       new InjectSessionInstructions(),
       new ClearSkillMarkers(),
       new InjectEnv()));
@@ -66,9 +69,9 @@ public final class GetSessionStartOutput implements HookHandler
   {
     HookInput input = HookInput.readFromStdin();
     HookOutput output = new HookOutput(System.out);
-    try
+    try (JvmScope scope = new MainJvmScope())
     {
-      new GetSessionStartOutput().run(input, output);
+      new GetSessionStartOutput(scope).run(input, output);
     }
     catch (RuntimeException | AssertionError e)
     {

@@ -3,6 +3,7 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
@@ -32,12 +33,18 @@ public final class CheckUpdateAvailable implements SessionStartHandler
     "https://api.github.com/repos/cowwoc/cat/releases/latest";
   private static final Duration TIMEOUT = Duration.ofSeconds(5);
   private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JvmScope scope;
 
   /**
    * Creates a new CheckUpdateAvailable handler.
+   *
+   * @param scope the JVM scope providing environment configuration
+   * @throws NullPointerException if scope is null
    */
-  public CheckUpdateAvailable()
+  public CheckUpdateAvailable(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -52,19 +59,14 @@ public final class CheckUpdateAvailable implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
-      throw new AssertionError("CLAUDE_PROJECT_DIR is not set");
-
-    String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (pluginRoot == null || pluginRoot.isEmpty())
-      throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
+    Path projectDir = scope.getClaudeProjectDir();
+    Path pluginRoot = scope.getClaudePluginRoot();
 
     try
     {
-      String currentVersion = VersionUtils.getPluginVersion(Path.of(pluginRoot));
+      String currentVersion = VersionUtils.getPluginVersion(pluginRoot);
 
-      Path cacheDir = Path.of(projectDir, ".claude", "cat", "backups", "update-check");
+      Path cacheDir = projectDir.resolve(".claude/cat/backups/update-check");
       Path cacheFile = cacheDir.resolve("latest_version.json");
 
       String latestVersion = getLatestVersion(cacheFile, cacheDir);

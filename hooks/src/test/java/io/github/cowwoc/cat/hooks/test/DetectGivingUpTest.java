@@ -33,6 +33,8 @@ public final class DetectGivingUpTest
     /**
      * Creates a new test session.
      *
+     * @param sessionId the session ID
+     * @param sessionDir the session directory path
      * @throws NullPointerException if any parameter is null
      */
     public TestSession
@@ -141,8 +143,7 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("CODE DISABLING ANTI-PATTERN DETECTED");
+      requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
       requireThat(result, "result").contains("DEBUGGING REQUIRED");
     }
   }
@@ -160,8 +161,7 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("CODE DISABLING ANTI-PATTERN DETECTED");
+      requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
     }
   }
 
@@ -178,10 +178,8 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
-      requireThat(result, "result")
-        .contains("SYSTEMATIC APPROACH REQUIRED");
+      requireThat(result, "result").contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
+      requireThat(result, "result").contains("SYSTEMATIC APPROACH REQUIRED");
     }
   }
 
@@ -198,10 +196,8 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("PROTOCOL VIOLATION DETECTED");
-      requireThat(result, "result")
-        .contains("AUTONOMOUS COMPLETION REQUIRED");
+      requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
+      requireThat(result, "result").contains("AUTONOMOUS COMPLETION REQUIRED");
     }
   }
 
@@ -217,8 +213,7 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("PROTOCOL VIOLATION DETECTED");
+      requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
     }
   }
 
@@ -378,8 +373,7 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("CODE DISABLING ANTI-PATTERN DETECTED");
+      requireThat(result, "result").contains("CODE DISABLING ANTI-PATTERN DETECTED");
     }
   }
 
@@ -396,8 +390,7 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("PROTOCOL VIOLATION DETECTED");
+      requireThat(result, "result").contains("PROTOCOL VIOLATION DETECTED");
     }
   }
 
@@ -442,8 +435,7 @@ public final class DetectGivingUpTest
     try (TestSession session = createTestSession())
     {
       String result = handler.check(prompt, session.sessionId());
-      requireThat(result, "result")
-        .contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
+      requireThat(result, "result").contains("COMPILATION DEBUGGING ABANDONMENT DETECTED");
     }
   }
 

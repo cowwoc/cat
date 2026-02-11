@@ -1,6 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.DefaultJvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetTokenReportOutput;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ public class GetTokenReportOutputTest
   @Test
   public void nonexistentSessionReturnsNull() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       GetTokenReportOutput handler = new GetTokenReportOutput(scope);
       String result = handler.getOutput("nonexistent-session-id-12345");
@@ -48,7 +48,7 @@ public class GetTokenReportOutputTest
   @Test
   public void emptySessionFileReturnsNoSubagentMessage() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       // Create a temp session file in the expected location
       Path sessionDir = Path.of(System.getProperty("user.home"),
@@ -84,7 +84,7 @@ public class GetTokenReportOutputTest
   @Test
   public void sessionWithNoTaskEntriesReturnsNoSubagentMessage() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -119,7 +119,7 @@ public class GetTokenReportOutputTest
   @Test
   public void sessionWithTaskDataProducesSummary() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -162,7 +162,7 @@ public class GetTokenReportOutputTest
   @Test
   public void tokenReportTableHasProperStructure() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -207,7 +207,7 @@ public class GetTokenReportOutputTest
   @Test
   public void multipleSubagentsAreTotaled() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");
@@ -252,7 +252,7 @@ public class GetTokenReportOutputTest
   @Test
   public void contextPercentageIsDisplayed() throws IOException
   {
-    try (JvmScope scope = new DefaultJvmScope())
+    try (JvmScope scope = new MainJvmScope())
     {
       Path sessionDir = Path.of(System.getProperty("user.home"),
         ".config", "claude", "projects", "-workspace");

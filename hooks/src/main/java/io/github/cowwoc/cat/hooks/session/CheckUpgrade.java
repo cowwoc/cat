@@ -3,6 +3,7 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -30,12 +31,18 @@ import java.util.List;
 public final class CheckUpgrade implements SessionStartHandler
 {
   private final JsonMapper mapper = JsonMapper.builder().build();
+  private final JvmScope scope;
 
   /**
    * Creates a new CheckUpgrade handler.
+   *
+   * @param scope the JVM scope providing environment configuration
+   * @throws NullPointerException if scope is null
    */
-  public CheckUpgrade()
+  public CheckUpgrade(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -50,22 +57,18 @@ public final class CheckUpgrade implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
-      throw new AssertionError("CLAUDE_PROJECT_DIR is not set");
+    Path projectDir = scope.getClaudeProjectDir();
 
-    Path configFile = Path.of(projectDir, ".claude", "cat", "cat-config.json");
+    Path configFile = projectDir.resolve(".claude/cat/cat-config.json");
     if (!Files.isRegularFile(configFile))
       return Result.empty();
 
-    String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (pluginRoot == null || pluginRoot.isEmpty())
-      throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
+    Path pluginRoot = scope.getClaudePluginRoot();
 
     try
     {
       String lastMigratedVersion = getLastMigratedVersion(configFile);
-      String pluginVersion = VersionUtils.getPluginVersion(Path.of(pluginRoot));
+      String pluginVersion = VersionUtils.getPluginVersion(pluginRoot);
 
       int cmp = VersionUtils.compareVersions(lastMigratedVersion, pluginVersion);
 
@@ -75,8 +78,7 @@ public final class CheckUpgrade implements SessionStartHandler
       if (cmp > 0)
         return handleDowngrade(lastMigratedVersion, pluginVersion);
 
-      return handleUpgrade(lastMigratedVersion, pluginVersion, configFile, Path.of(pluginRoot),
-        Path.of(projectDir));
+      return handleUpgrade(lastMigratedVersion, pluginVersion, configFile, pluginRoot, projectDir);
     }
     catch (IOException e)
     {
