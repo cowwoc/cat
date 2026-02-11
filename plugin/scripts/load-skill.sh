@@ -16,13 +16,15 @@ escape_sed() {
 
 # Function to substitute environment variables in content
 substitute_vars() {
-  local root_escaped session_id_escaped
+  local root_escaped session_id_escaped project_dir_escaped
   root_escaped=$(escape_sed "$CLAUDE_PLUGIN_ROOT")
   session_id_escaped=$(escape_sed "$CLAUDE_SESSION_ID")
+  project_dir_escaped=$(escape_sed "$CLAUDE_PROJECT_DIR")
 
   sed \
     -e "s|\${CLAUDE_PLUGIN_ROOT}|$root_escaped|g" \
-    -e "s|\${CLAUDE_SESSION_ID}|$session_id_escaped|g"
+    -e "s|\${CLAUDE_SESSION_ID}|$session_id_escaped|g" \
+    -e "s|\${CLAUDE_PROJECT_DIR}|$project_dir_escaped|g"
 }
 
 # Run skill handler if present (always runs for dynamic output)
