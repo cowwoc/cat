@@ -127,8 +127,8 @@ Use the appropriate comment syntax for the file type. The header text is:
     Licensed under the CAT Commercial License.
     See LICENSE.md in the project root for license terms.
 
-The copyright year is the year the file was first created. Do not update it over time. When a file is
-renamed, the copyright year remains the year the original file was created.
+The copyright year is the year the source code was first written. Do not update it over time. When code
+is moved or renamed, the copyright year remains the year the source code was originally written.
 
 See `plugin/concepts/license-header.md` for file-type-specific formats.
 
