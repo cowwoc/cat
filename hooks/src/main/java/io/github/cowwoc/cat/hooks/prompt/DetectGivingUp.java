@@ -1,19 +1,10 @@
 package io.github.cowwoc.cat.hooks.prompt;
 
 import io.github.cowwoc.cat.hooks.PromptHandler;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -24,19 +15,10 @@ import java.util.regex.Pattern;
  * <p>
  * Features:
  * - Composable keyword detection (constraint+abandonment, broken+removal, etc.)
- * - Rate limiting (max 1 detection per second per session)
- * - Session tracking (notify only once per pattern per session)
  * - Quote removal to prevent false positives
- * - Automatic cleanup of stale session directories (7 day TTL)
  */
 public final class DetectGivingUp implements PromptHandler
 {
-  private static final int MAX_PROMPT_LENGTH = 100_000;
-  private static final int RATE_LIMIT_SECONDS = 1;
-  private static final int SESSION_DIR_TTL_DAYS = 7;
-  private static final String SESSION_DIR_PREFIX = "claude-hooks-session-";
-  private static final String RATE_LIMIT_FILE = ".rate_limit_giving_up";
-  private static final String PATTERN_MARKER = "main-giving-up-pattern";
   private static final Pattern QUOTED_TEXT_PATTERN = Pattern.compile("\"[^\"]*\"");
 
   private static final String CONSTRAINT_RATIONALIZATION_REMINDER = """
@@ -201,26 +183,11 @@ public final class DetectGivingUp implements PromptHandler
 
     Reference: CLAUDE.md "AUTONOMOUS TASK COMPLETION REQUIREMENT\"""";
 
-  private final Clock clock;
-
   /**
-   * Creates a new giving up detection handler using the system clock.
+   * Creates a new giving up detection handler.
    */
   public DetectGivingUp()
   {
-    this(Clock.systemUTC());
-  }
-
-  /**
-   * Creates a new giving up detection handler.
-   *
-   * @param clock the clock to use for time-based operations
-   * @throws NullPointerException if clock is null
-   */
-  public DetectGivingUp(Clock clock)
-  {
-    requireThat(clock, "clock").isNotNull();
-    this.clock = clock;
   }
 
   @Override
@@ -231,48 +198,11 @@ public final class DetectGivingUp implements PromptHandler
     if (prompt.isEmpty())
       return "";
 
-    String limitedPrompt;
-    if (prompt.length() > MAX_PROMPT_LENGTH)
-      limitedPrompt = prompt.substring(0, MAX_PROMPT_LENGTH);
-    else
-      limitedPrompt = prompt;
-
-    String sanitizedSessionId = sanitizeSessionId(sessionId);
-    if (sanitizedSessionId.isEmpty())
-      return "";
-
-    Path sessionDir = Path.of("/tmp", SESSION_DIR_PREFIX + sanitizedSessionId);
-    try
-    {
-      Files.createDirectories(sessionDir);
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-
-    if (!checkRateLimit(sessionDir))
-      return "";
-
-    Path patternMarker = sessionDir.resolve(PATTERN_MARKER);
-    if (Files.exists(patternMarker))
-      return "";
-
-    String workingText = removeQuotedSections(limitedPrompt);
+    String workingText = removeQuotedSections(prompt);
     String violationType = detectViolationType(workingText);
 
     if (violationType.isEmpty())
       return "";
-
-    try
-    {
-      Files.writeString(patternMarker, String.valueOf(clock.millis()));
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-    cleanupStaleSessionDirs();
 
     return switch (violationType)
     {
@@ -283,58 +213,6 @@ public final class DetectGivingUp implements PromptHandler
       default -> "";
     };
   }
-
-  /**
-   * Sanitizes session ID to prevent directory traversal attacks.
-   *
-   * @param sessionId the raw session ID
-   * @return sanitized session ID containing only alphanumeric and hyphen characters
-   */
-  private String sanitizeSessionId(String sessionId)
-  {
-    return sessionId.replaceAll("[^a-zA-Z0-9-]", "");
-  }
-
-
-  /**
-   * Checks rate limit for giving up detection.
-   *
-   * @param sessionDir the session directory
-   * @return true if rate limit allows execution, false otherwise
-   * @throws WrappedCheckedException if rate limit file I/O fails
-   */
-  private boolean checkRateLimit(Path sessionDir)
-  {
-    Path rateLimitFile = sessionDir.resolve(RATE_LIMIT_FILE);
-    long currentTime = clock.millis() / 1000;
-
-    if (Files.exists(rateLimitFile))
-    {
-      try
-      {
-        String lastExecutionStr = Files.readString(rateLimitFile).trim();
-        long lastExecution = Long.parseLong(lastExecutionStr);
-        long timeDiff = currentTime - lastExecution;
-        if (timeDiff < RATE_LIMIT_SECONDS)
-          return false;
-      }
-      catch (IOException e)
-      {
-        throw WrappedCheckedException.wrap(e);
-      }
-    }
-
-    try
-    {
-      Files.writeString(rateLimitFile, String.valueOf(currentTime));
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-    return true;
-  }
-
 
   /**
    * Removes quoted sections from text to prevent false positives.
@@ -582,59 +460,5 @@ public final class DetectGivingUp implements PromptHandler
   private boolean hasNumberedOptions(String text)
   {
     return text.contains("1. ") && text.contains("2. ");
-  }
-
-  /**
-   * Cleans up session directories older than 7 days.
-   */
-  private void cleanupStaleSessionDirs()
-  {
-    Path tmpDir = Path.of("/tmp");
-    Instant cutoff = clock.instant().minus(SESSION_DIR_TTL_DAYS, TimeUnit.DAYS.toChronoUnit());
-
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(tmpDir,
-      SESSION_DIR_PREFIX + "*"))
-    {
-      for (Path dir : stream)
-      {
-        try
-        {
-          FileTime lastModified = Files.getLastModifiedTime(dir);
-          if (lastModified.toInstant().isBefore(cutoff))
-            deleteDirectory(dir);
-        }
-        catch (IOException _)
-        {
-          // Continue cleanup even if one dir fails
-        }
-      }
-    }
-    catch (IOException _)
-    {
-      // Non-blocking - silently ignore cleanup failures
-    }
-  }
-
-  /**
-   * Recursively deletes a directory and its contents.
-   *
-   * @param dir the directory to delete
-   * @throws IOException if deletion fails
-   */
-  private void deleteDirectory(Path dir) throws IOException
-  {
-    if (!Files.exists(dir))
-      return;
-
-    if (Files.isDirectory(dir))
-    {
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir))
-      {
-        for (Path entry : stream)
-          deleteDirectory(entry);
-      }
-    }
-
-    Files.delete(dir);
   }
 }

@@ -28,7 +28,7 @@ import java.util.Set;
  * </pre>
  * <p>
  * <b>Included files:</b> Each path in {@code includes.txt} is resolved relative to the plugin root.
- * Included files are wrapped in {@code <include path="...">...</include>} XML tags.
+ * Included files are wrapped in {@code &lt;include path="..."&gt;...&lt;/include&gt;} XML tags.
  * <p>
  * <b>Variable substitution:</b> The following placeholders are replaced in all loaded content:
  * <ul>
