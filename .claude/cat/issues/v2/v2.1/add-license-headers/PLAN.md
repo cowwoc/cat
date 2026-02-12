@@ -124,8 +124,10 @@ Use the appropriate comment syntax for the file type. The header text is:
 
     Copyright (c) 2026 Gili Tzabari. All rights reserved.
 
-    Licensed under the CAT Source-Available Commercial License.
+    Licensed under the CAT Commercial License.
     See LICENSE.md in the project root for license terms.
+
+The copyright year is the year the file was first created. Do not update it over time.
 
 See `plugin/concepts/license-header.md` for file-type-specific formats.
 
