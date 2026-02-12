@@ -38,6 +38,9 @@ invocation wasn't updated to use direct in-process calls.
   with direct in-process invocation; restructure load() method ordering
 - `plugin/skills/status/handler.sh` - Delete (replace with handler class manifest)
 - `plugin/skills/status/handler.class` (or similar) - New file naming the handler class
+- `hooks/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java` - Update class javadoc to reflect new handler
+  mechanism
+- `plugin/hooks/README.md` - Update skill directory structure section to reflect new handler mechanism
 
 ## Success Criteria
 
@@ -45,4 +48,5 @@ invocation wasn't updated to use direct in-process calls.
 - [ ] No handler.sh files remain
 - [ ] Status skill output is identical before and after
 - [ ] load() method has intuitive ordering of inclusions
+- [ ] SkillLoader javadoc and hooks/README.md updated to reflect new handler mechanism
 - [ ] `mvn -f hooks/pom.xml test` passes
