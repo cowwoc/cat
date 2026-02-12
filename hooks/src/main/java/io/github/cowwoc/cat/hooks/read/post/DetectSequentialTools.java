@@ -102,7 +102,7 @@ public final class DetectSequentialTools implements ReadHandler
      * @param lastToolNames list of tool names in sequence
      * @throws AssertionError if {@code lastToolNames} is null
      */
-    public TrackerState
+    TrackerState
     {
       assert that(lastToolNames, "lastToolNames").isNotNull().elseThrow();
     }
