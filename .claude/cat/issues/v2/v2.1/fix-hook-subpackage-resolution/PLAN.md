@@ -31,8 +31,8 @@ hook.sh provides 5 things. All can be handled without it:
 | Capability | Current (hook.sh) | Replacement |
 |---|---|---|
 | JVM tuning flags | Runtime shell logic | `--add-options` baked into jlink image |
-| AOT cache | Dynamic `$SCRIPT_DIR` path | Post-process launchers to inject relative AOT path |
-| Timeout | `timeout 30` shell wrapper | Add `timeout` to hooks.json command strings |
+| AOT cache | Dynamic `$SCRIPT_DIR` path | `--add-options` with fixed relative path `$DIR/../lib/server/aot-cache.aot` |
+| Timeout | `timeout 30` shell wrapper | Unnecessary — Claude Code enforces its own hook timeout (default 60s) |
 | Class name validation | Regex check | Unnecessary — launchers are fixed entry points |
 | Name → FQCN mapping | Broken for subpackages | Unnecessary — launchers already know their FQCN |
 
@@ -42,28 +42,32 @@ hook.sh provides 5 things. All can be handled without it:
 - **Mitigation:** Verify every hooks.json entry and handler.sh caller works after migration
 
 ## Files to Modify
-- `hooks/build-jlink.sh` - Add `--add-options` for JVM flags; add post-processing step to inject AOT cache path and
-  timeout into generated launcher scripts
-- `plugin/hooks/hooks.json` - Change all commands from `hook.sh ClassName` to `timeout 30 bin/launcher-name`
+- `hooks/build-jlink.sh` - Add `--add-options` for JVM flags and AOT cache; post-process launchers to use `exec`
+- `plugin/hooks/hooks.json` - Change all commands from `hook.sh ClassName` to `bin/launcher-name`
 - `plugin/hooks/hook.sh` - Delete this file
 - `plugin/skills/status/handler.sh` - Change from `hook.sh skills.RunGetStatusOutput` to `bin/get-status-output`
 - `plugin/scripts/get-render-diff.sh` - Change from `hook.sh` invocation to direct launcher call
 
 ## Execution Steps
 
-### Step 1: Update build-jlink.sh to bake JVM options into the image
+### Step 1: Update build-jlink.sh to bake JVM options and AOT cache into the image
 
-Add `--add-options` to the jlink command (line 237-245) with these flags:
+Add `--add-options` to the jlink command (line 237-245) with all flags that hook.sh previously provided:
 ```
 --add-options "-Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
 ```
 
+The AOT cache path is deterministic: always at `lib/server/aot-cache.aot` relative to the jlink image root. Since
+`generate_startup_archives()` produces it as part of every successful build, add it unconditionally. However,
+`--add-options` bakes literal strings — it cannot resolve shell variables like `$DIR` at runtime. So AOT cache must be
+handled via launcher post-processing (Step 2).
+
 - Files: `hooks/build-jlink.sh`
 
-### Step 2: Add post-processing step to inject AOT cache into launchers
+### Step 2: Post-process launchers to add AOT cache and exec
 
-After `build_jlink_image()` and `generate_startup_archives()`, add a new phase that post-processes each launcher script
-in `${OUTPUT_DIR}/bin/` to inject the AOT cache flag. Each generated launcher looks like:
+After `generate_startup_archives()`, add a new phase that post-processes each launcher script in `${OUTPUT_DIR}/bin/`.
+Each generated launcher looks like:
 
 ```sh
 #!/bin/sh
@@ -77,14 +81,14 @@ Post-process to become:
 ```sh
 #!/bin/sh
 DIR=`dirname $0`
-AOT_OPTS=""
-[ -f "$DIR/../lib/server/aot-cache.aot" ] && AOT_OPTS="-XX:AOTCache=$DIR/../lib/server/aot-cache.aot"
-exec timeout "${CAT_JAVA_TIMEOUT:-30}" "$DIR/java" $AOT_OPTS -m io.github.cowwoc.cat.hooks/...
+exec "$DIR/java" -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" -m io.github.cowwoc.cat.hooks/...
 ```
 
-This injects: AOT cache detection (conditional), timeout wrapping, and `exec` for clean process replacement.
+The `JLINK_VM_OPTIONS` line is no longer needed since `--add-options` (Step 1) bakes JVM flags into the image's
+`lib/jvm.cfg` or equivalent. The post-processing adds: AOT cache with fixed relative path and `exec` for clean process
+replacement.
 
-Skip the `java` and `keytool` binaries — only post-process launcher scripts that invoke `-m io.github.cowwoc.cat.hooks/`.
+Skip the `java` and `keytool` binaries — only post-process launcher scripts that contain `-m io.github.cowwoc.cat.hooks/`.
 
 - Files: `hooks/build-jlink.sh`
 
@@ -144,6 +148,6 @@ Test a hooks.json entry works: `echo '{}' | /home/node/.config/claude/plugins/ca
 - [ ] `bin/get-status-output` executes successfully and produces status output
 - [ ] All hooks.json entries invoke launchers directly (no hook.sh references remain)
 - [ ] hook.sh is deleted from plugin/hooks/
-- [ ] Launcher scripts include JVM tuning flags, AOT cache detection, and timeout
+- [ ] Launcher scripts include JVM tuning flags (via --add-options) and AOT cache path
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] No regressions in hook invocations
