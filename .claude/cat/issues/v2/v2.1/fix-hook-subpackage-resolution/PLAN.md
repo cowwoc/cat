@@ -84,7 +84,6 @@ exec "$DIR/java" \
   -Xms16m -Xmx64m \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
-  -Djava.security.egd=file:/dev/./urandom \
   -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
   -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.CLASS_NAME "$@"
 ```
