@@ -3651,6 +3651,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Delegation prompts must require subagents to report commit message used; orchestrator must verify independently"
+    },
+    {
+      "id": "M485",
+      "timestamp": "2026-02-12T16:35:28.461024+00:00",
+      "category": "environment_configuration",
+      "description": "Unicode box-drawing characters and emojis render as question marks in /cat:status output",
+      "root_cause": "Container environment locale configured as ASCII (ANSI_X3.4-1968) instead of UTF-8, preventing Unicode character rendering",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status/handler.sh",
+      "pattern_keywords": [
+        "unicode",
+        "encoding",
+        "locale",
+        "utf-8",
+        "display"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Export LANG=C.UTF-8 and LC_ALL=C.UTF-8 in handler scripts before invoking Java binaries that output Unicode"
     }
   ],
   "counter": 1
