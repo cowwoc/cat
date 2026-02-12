@@ -15,22 +15,22 @@ import java.util.List;
  * TRIGGER: PostToolUse (no matcher - runs for all tools)
  *
  * Consolidates general PostToolUse hooks into a single Java dispatcher.
- * For Bash-specific PostToolUse hooks, see GetBashPosttoolOutput.
+ * For Bash-specific PostToolUse hooks, see GetBashPostOutput.
  *
  * Handlers can:
  * - Warn about tool results (return warning string)
  * - Inject additional context (return additionalContext)
  * - Allow silently (return null)
  */
-public final class GetPosttoolOutput implements HookHandler
+public final class GetPostOutput implements HookHandler
 {
   private static final List<PosttoolHandler> HANDLERS = List.of(
       new AutoLearnMistakes());
 
   /**
-   * Creates a new GetPosttoolOutput instance.
+   * Creates a new GetPostOutput instance.
    */
-  public GetPosttoolOutput()
+  public GetPostOutput()
   {
   }
 
@@ -46,7 +46,7 @@ public final class GetPosttoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetPosttoolOutput().run(input, output);
+      new GetPostOutput().run(input, output);
     }
   }
 

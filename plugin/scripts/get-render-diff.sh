@@ -119,19 +119,16 @@ echo ""
 echo "### Diff (4-column format)"
 echo ""
 
-# Generate rendered diff using Java
-# hook.sh is the canonical bridge between bash scripts and Java handlers.
-# It locates the jlink runtime and invokes the class via the Java module system.
-# Pattern: hook.sh <module.ClassName> invokes the class's main() method.
-HOOK_SCRIPT="$SCRIPT_DIR/../hooks/hook.sh"
-if [[ -f "$HOOK_SCRIPT" ]]; then
-    "$HOOK_SCRIPT" skills.GetRenderDiffOutput 2>/dev/null || {
+# Generate rendered diff using Java launcher
+LAUNCHER="$SCRIPT_DIR/../hooks/bin/get-render-diff-output"
+if [[ -f "$LAUNCHER" ]]; then
+    "$LAUNCHER" 2>/dev/null || {
         echo "**Error:** Failed to render diff. Showing raw stats instead."
         echo ""
         git diff --stat "$BASE_BRANCH..HEAD" 2>/dev/null || echo "(unable to get diff stats)"
     }
 else
-    echo "**Error:** hook.sh not found at $HOOK_SCRIPT"
+    echo "**Error:** Launcher not found at $LAUNCHER"
     echo ""
     git diff --stat "$BASE_BRANCH..HEAD" 2>/dev/null || echo "(unable to get diff stats)"
 fi
