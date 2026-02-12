@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.PosttoolHandler;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,10 +83,12 @@ public final class AutoLearnMistakes implements PosttoolHandler
      *
      * @param type the mistake type
      * @param details contextual details about the mistake
+     * @throws AssertionError if {@code type} or {@code details} are blank
      */
     public MistakeDetection
     {
-      // Record validation
+      assert that(type, "type").isNotBlank().elseThrow();
+      assert that(details, "details").isNotBlank().elseThrow();
     }
   }
 

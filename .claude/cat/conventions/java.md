@@ -601,7 +601,9 @@ public String process(String input)
 ### Constructor Validation
 **Always validate constructor arguments** using requirements.java. This applies to both classes and records.
 
-**Records MUST have compact constructors** with validation - never leave the body empty:
+**Records MUST have compact constructors** with validation when parameters need validation. Do not declare a compact
+constructor for records whose constructor does not read or write the record parameters (e.g., boolean-only or
+primitive-only records with no constraints):
 
 ```java
 // Class constructor
@@ -625,9 +627,17 @@ public record Worktree(String path, String branch, String state)
   }
 }
 
-// Avoid - empty record body (no validation)
-public record Worktree(String path, String branch, String state)
+// Good - no compact constructor needed (no validation to perform)
+private record CheckResult(boolean statusInvoked, boolean hasBoxOutput)
 {
+}
+
+// Avoid - empty compact constructor that does nothing
+private record CheckResult(boolean statusInvoked, boolean hasBoxOutput)
+{
+  public CheckResult
+  {
+  }
 }
 ```
 

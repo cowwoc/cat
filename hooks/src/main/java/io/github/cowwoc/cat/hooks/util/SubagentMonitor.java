@@ -1,6 +1,7 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -367,6 +368,18 @@ public final class SubagentMonitor
    */
   private record TokenCounts(int tokens, int compactions)
   {
+    /**
+     * Creates a new token counts record.
+     *
+     * @param tokens total token count
+     * @param compactions total compaction events
+     * @throws AssertionError if {@code tokens} or {@code compactions} are negative
+     */
+    public TokenCounts
+    {
+      assert that(tokens, "tokens").isNotNegative().elseThrow();
+      assert that(compactions, "compactions").isNotNegative().elseThrow();
+    }
   }
 
   /**

@@ -5,6 +5,7 @@ import io.github.cowwoc.cat.hooks.PromptHandler;
 import java.util.ArrayList;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -26,10 +27,12 @@ public final class DestructiveOps implements PromptHandler
      *
      * @param display the display name for the keyword
      * @param pattern the compiled pattern
+     * @throws AssertionError if {@code display} is blank or {@code pattern} is null
      */
     public KeywordPattern
     {
-      // Validation handled by Pattern.compile
+      assert that(display, "display").isNotBlank().elseThrow();
+      assert that(pattern, "pattern").isNotNull().elseThrow();
     }
   }
 
