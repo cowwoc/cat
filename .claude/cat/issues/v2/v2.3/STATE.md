@@ -9,6 +9,7 @@
 Abstract storage layer to support multiple issue tracking backends.
 
 ## Issues Pending
+- add-git-safety-hook
 - storage-abstraction-design
 - local-file-backend
 - github-issues-backend
