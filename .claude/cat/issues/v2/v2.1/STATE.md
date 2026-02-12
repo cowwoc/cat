@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- fix-banner-skip-vs-failfast
 - add-license-headers
 - fix-hook-subpackage-resolution
 - enforce-state-schema-hook
