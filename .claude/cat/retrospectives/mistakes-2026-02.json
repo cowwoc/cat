@@ -3678,6 +3678,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Export LANG=C.UTF-8 and LC_ALL=C.UTF-8 in handler scripts before invoking Java binaries that output Unicode"
+    },
+    {
+      "id": "M486",
+      "timestamp": "2026-02-12T16:52:21.638781Z",
+      "category": "protocol_violation",
+      "description": "Auto-fix iteration skipped re-running stakeholder review - proceeded to squash after fix without verification",
+      "root_cause": "Auto-fix loop protocol (Step 4, lines 305-356) lacks explicit enforcement that ALL iteration steps must complete. While loop condition checks concern severity but does not verify steps 4-6 (re-run review, parse result, check concerns) executed before next iteration.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PLUGIN_ROOT}/skills/work-with-issue/content.md",
+      "pattern_keywords": [
+        "auto-fix",
+        "iteration",
+        "review-verification",
+        "protocol-enforcement"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Complete all iteration steps (fix, re-run review, parse result, check concerns) before exiting auto-fix loop or continuing to next phase"
     }
   ],
   "counter": 1
