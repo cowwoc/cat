@@ -6,6 +6,7 @@ module io.github.cowwoc.cat.hooks
   requires jtokkit;
   requires java.net.http;
   requires org.slf4j;
+  requires ch.qos.logback.classic;
 
   exports io.github.cowwoc.cat.hooks;
   exports io.github.cowwoc.cat.hooks.ask;
