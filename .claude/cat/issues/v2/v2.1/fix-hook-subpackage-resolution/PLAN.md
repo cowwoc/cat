@@ -24,17 +24,29 @@ hook.sh has a flawed dot-detection heuristic (line 50) that assumes any name wit
 the real problem is that hook.sh is an unnecessary indirection layer — jlink already generates per-handler launcher
 scripts that know their exact FQCN.
 
-## Approach: Eliminate hook.sh, use jlink launchers directly
+## Approach: Eliminate hook.sh, generate custom launchers
 
 hook.sh provides 5 things. All can be handled without it:
 
 | Capability | Current (hook.sh) | Replacement |
 |---|---|---|
-| JVM tuning flags | Runtime shell logic | `--add-options` baked into jlink image |
-| AOT cache | Dynamic `$SCRIPT_DIR` path | `--add-options` with fixed relative path `$DIR/../lib/server/aot-cache.aot` |
+| JVM tuning flags | Runtime shell logic | Build-generated launcher scripts |
+| AOT cache | Dynamic `$SCRIPT_DIR` path | Build-generated launcher scripts with `$DIR`-relative path |
 | Timeout | `timeout 30` shell wrapper | Unnecessary — Claude Code enforces its own hook timeout (default 60s) |
 | Class name validation | Regex check | Unnecessary — launchers are fixed entry points |
 | Name → FQCN mapping | Broken for subpackages | Unnecessary — launchers already know their FQCN |
+
+**Why not `--add-options`?** jlink's `--add-options` bakes literal strings into `lib/modules`. It cannot resolve shell
+variables like `$DIR` at runtime, so it cannot reference the AOT cache at a path relative to the image. Tested: the JVM
+resolves `-XX:AOTCache` relative to CWD, not `java.home`, so a literal relative path fails when invoked from a different
+directory.
+
+**Why not `--launcher` + post-processing?** jlink's `--launcher` generates rigid 4-line shell scripts. Post-processing
+them with sed is fragile — tied to jlink's exact output format which can change across JDK versions. Since we already
+have the HANDLERS array with every name:FQCN mapping, we can generate launchers directly with the exact content needed.
+
+**Approach:** Skip both `--add-options` and `--launcher`. Build the jlink image for the runtime only. Then generate our
+own launcher scripts from the HANDLERS array using a simple template.
 
 ## Risk Assessment
 - **Risk Level:** MEDIUM
@@ -42,7 +54,8 @@ hook.sh provides 5 things. All can be handled without it:
 - **Mitigation:** Verify every hooks.json entry and handler.sh caller works after migration
 
 ## Files to Modify
-- `hooks/build-jlink.sh` - Add `--add-options` for JVM flags and AOT cache; post-process launchers to use `exec`
+- `hooks/build-jlink.sh` - Remove `--launcher` and `--add-options`; replace `post_process_launchers()` with
+  `generate_launchers()` that writes scripts from a template using the HANDLERS array
 - `plugin/hooks/hooks.json` - Change all commands from `hook.sh ClassName` to `bin/launcher-name`
 - `plugin/hooks/hook.sh` - Delete this file
 - `plugin/skills/status/handler.sh` - Change from `hook.sh skills.RunGetStatusOutput` to `bin/get-status-output`
@@ -50,45 +63,34 @@ hook.sh provides 5 things. All can be handled without it:
 
 ## Execution Steps
 
-### Step 1: Update build-jlink.sh to bake JVM options and AOT cache into the image
+### Step 1: Replace `--launcher` and `--add-options` with `generate_launchers()`
 
-Add `--add-options` to the jlink command (line 237-245) with all flags that hook.sh previously provided:
-```
---add-options "-Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Djava.security.egd=file:/dev/./urandom"
-```
+In `hooks/build-jlink.sh`:
 
-The AOT cache path is deterministic: always at `lib/server/aot-cache.aot` relative to the jlink image root. Since
-`generate_startup_archives()` produces it as part of every successful build, add it unconditionally. However,
-`--add-options` bakes literal strings — it cannot resolve shell variables like `$DIR` at runtime. So AOT cache must be
-handled via launcher post-processing (Step 2).
+**Remove from `build_jlink_image()`:**
+- The `launcher_args` array construction loop
+- The `"${launcher_args[@]}"` argument to jlink
+- The `--add-options` argument to jlink (if present)
 
-- Files: `hooks/build-jlink.sh`
+**Replace `post_process_launchers()` with `generate_launchers()`:**
 
-### Step 2: Post-process launchers to add AOT cache and exec
-
-After `generate_startup_archives()`, add a new phase that post-processes each launcher script in `${OUTPUT_DIR}/bin/`.
-Each generated launcher looks like:
-
-```sh
-#!/bin/sh
-JLINK_VM_OPTIONS=
-DIR=`dirname $0`
-$DIR/java $JLINK_VM_OPTIONS -m io.github.cowwoc.cat.hooks/...
-```
-
-Post-process to become:
+Add a new function that generates launcher scripts directly from the HANDLERS array. Call it after
+`generate_startup_archives()` (so the AOT cache file exists). Each launcher follows this template:
 
 ```sh
 #!/bin/sh
 DIR=`dirname $0`
-exec "$DIR/java" -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" -m io.github.cowwoc.cat.hooks/...
+exec "$DIR/java" \
+  -Xms16m -Xmx64m \
+  -XX:+UseSerialGC \
+  -XX:TieredStopAtLevel=1 \
+  -Djava.security.egd=file:/dev/./urandom \
+  -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
+  -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.CLASS_NAME "$@"
 ```
 
-The `JLINK_VM_OPTIONS` line is no longer needed since `--add-options` (Step 1) bakes JVM flags into the image's
-`lib/jvm.cfg` or equivalent. The post-processing adds: AOT cache with fixed relative path and `exec` for clean process
-replacement.
-
-Skip the `java` and `keytool` binaries — only post-process launcher scripts that contain `-m io.github.cowwoc.cat.hooks/`.
+The function iterates the HANDLERS array, extracts the launcher name and class name, uses `handler_main()` to get the
+full module/class path, writes the script to `${OUTPUT_DIR}/bin/${name}`, and makes it executable.
 
 - Files: `hooks/build-jlink.sh`
 
@@ -148,6 +150,6 @@ Test a hooks.json entry works: `echo '{}' | /home/node/.config/claude/plugins/ca
 - [ ] `bin/get-status-output` executes successfully and produces status output
 - [ ] All hooks.json entries invoke launchers directly (no hook.sh references remain)
 - [ ] hook.sh is deleted from plugin/hooks/
-- [ ] Launcher scripts include JVM tuning flags (via --add-options) and AOT cache path
+- [ ] Launcher scripts include JVM tuning flags and AOT cache path (generated from template, not post-processed)
 - [ ] `mvn -f hooks/pom.xml test` passes
 - [ ] No regressions in hook invocations
