@@ -1,0 +1,4 @@
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** [fix-load-skill-env-resolution, add-license-headers]
+- **Last Updated:** 2026-02-12
