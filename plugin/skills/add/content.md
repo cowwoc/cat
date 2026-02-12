@@ -1,3 +1,7 @@
+# Add Issue or Version
+
+Unified command for adding issues or versions to the CAT planning structure.
+
 <objective>
 
 Unified command for adding issues or versions to the CAT planning structure. Routes to the appropriate

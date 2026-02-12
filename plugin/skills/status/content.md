@@ -1,3 +1,7 @@
+# Status
+
+Display current CAT project status with versions and issues.
+
 The user wants you to respond with the content from "SCRIPT OUTPUT STATUS DISPLAY" above, verbatim.
 Do NOT add any other text before or after it, except the NEXT STEPS table below.
 
