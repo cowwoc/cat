@@ -1,3 +1,7 @@
+# Remove Issue or Version
+
+Unified command for removing issues or versions from the CAT planning structure.
+
 <objective>
 
 Unified command for removing issues or versions from the CAT planning structure. Routes to the

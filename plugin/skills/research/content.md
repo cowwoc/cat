@@ -1,3 +1,7 @@
+# Research
+
+Provide prompt templates for spawning research subagents.
+
 <objective>
 
 Provide prompt templates for spawning research subagents. Main agent selects appropriate
