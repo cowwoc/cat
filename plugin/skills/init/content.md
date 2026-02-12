@@ -1,3 +1,7 @@
+# Initialize CAT
+
+Initialize CAT planning structure for new or existing projects.
+
 <objective>
 Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
 `.claude/rules/` for always-loaded conventions, and `.claude/cat/conventions/` for on-demand standards.

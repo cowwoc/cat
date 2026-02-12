@@ -1,3 +1,7 @@
+# CAT Configuration
+
+Interactive configuration wizard to customize CAT settings.
+
 <objective>
 
 Interactive configuration wizard to customize CAT settings. Displays current configuration and guides

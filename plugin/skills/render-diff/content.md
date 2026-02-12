@@ -1,3 +1,7 @@
+# Render Diff
+
+Display formatted git diff output.
+
 The user wants you to respond with the content from "SCRIPT OUTPUT RENDER DIFF" above, verbatim.
 Do NOT add any other text before or after it.
 
