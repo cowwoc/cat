@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- add-record-validation
 - refactor-hook-output-as-data
 - simplify-detect-giving-up
 - autofix-high-review-concerns
