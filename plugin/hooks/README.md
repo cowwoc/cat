@@ -1,139 +1,192 @@
-# CAT JDK Infrastructure
+# CAT Hooks Infrastructure
 
-This directory contains scripts for managing the custom JDK runtime used by CAT's Java-based hooks.
+This directory contains the hook system that connects Claude Code events to CAT's Java-based handlers.
 
-## Overview
+## Architecture
 
-CAT uses a minimal JDK 25 runtime created with `jlink` to provide fast startup times for Java hooks. The custom runtime
-includes only the modules needed for JSON processing (Jackson 3) and basic I/O operations.
+```
+Claude Code Hook Event
+        │
+        ▼
+  hooks.json            ─── Maps events to launcher scripts
+        │
+        ▼
+  bin/<launcher>        ─── Generated shell scripts (one per handler)
+        │
+        ▼
+  jlink runtime         ─── Self-contained JDK 25 image (~30-40MB)
+        │
+        ▼
+  Java handler class    ─── Business logic (reads stdin JSON, writes stdout)
+```
 
-**Benefits:**
-- ~30-40MB vs ~300MB for full JDK
-- Faster startup (fewer modules to initialize)
-- Self-contained (no external Java dependency required)
+**Hook events** (PreToolUse, PostToolUse, etc.) are registered in `hooks.json`. Each hook command points to a launcher
+script in the jlink image's `bin/` directory. The launcher invokes a Java handler class with optimized JVM settings
+(serial GC, tiered compilation, Leyden AOT cache).
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `jlink-config.sh` | Build script for creating the custom runtime |
-| `session-start.sh` | SessionStart hook to bootstrap the JDK |
-| `hook.sh` | Intermediary script for invoking Java hooks |
+| `hooks.json` | Maps Claude Code hook events to launcher scripts |
+| `session-start.sh` | SessionStart hook — bootstraps the jlink runtime |
+| `README.md` | This file |
 
-## Building the Runtime
+## jlink Runtime
 
-### Prerequisites
+The jlink image is a self-contained JDK 25 runtime with only the modules needed for hook execution. It includes the
+hooks application JAR, Jackson 3 for JSON processing, and SLF4J/Logback for logging.
 
-- JDK 25 installed (for running jlink)
-- curl (for downloading Jackson jars)
-- ~100MB disk space
+**Benefits:**
+- ~30-40MB vs ~300MB for full JDK
+- Sub-100ms startup with Leyden AOT cache
+- Self-contained (no external Java dependency)
 
-### Build Command
+### Runtime Structure
 
-```bash
-# From plugin root
-./hooks/jlink-config.sh build --output-dir runtime/
-
-# Or with explicit JDK
-JAVA_HOME=/path/to/jdk-25 ./hooks/jlink-config.sh build
 ```
-
-### Configuration Info
-
-```bash
-./hooks/jlink-config.sh info
-```
-
-## Runtime Location
-
-The custom runtime is installed to:
-```
-${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/
-```
-
-Structure:
-```
-cat-jdk-25/
+runtime/cat-jdk-25/
 ├── bin/
-│   └── java          # The Java binary
-├── conf/             # JVM configuration
-├── lib/              # JVM libraries
-│   └── jackson/      # Jackson 3 jars (optional)
-└── release           # Version info
+│   ├── java                     # JVM binary
+│   ├── get-bash-output          # Generated launcher scripts
+│   ├── get-read-output          #   (one per handler class)
+│   ├── get-post-output
+│   └── ...
+└── lib/
+    └── server/
+        └── aot-cache.aot        # Leyden AOT pre-linked cache
 ```
+
+### Building
+
+The build script compiles the hooks Maven project, stages dependencies, patches automatic modules for JPMS
+compatibility, creates the jlink image, generates Leyden AOT caches, and writes per-handler launcher scripts.
+
+```bash
+# From hooks/ directory
+./build-jlink.sh
+```
+
+Output: `hooks/target/jlink/`
+
+The `session-start.sh` hook copies the built image to `${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/` at session start.
+
+**Using the `/cat-update-hooks` skill:** For development workflows, use the `/cat-update-hooks` skill to build and
+install the hooks into your current Claude Code project. This skill handles building, installation, and plugin cache
+updates automatically.
+
+### Handler Registry
+
+Each handler is registered in `build-jlink.sh`'s `HANDLERS` array as `launcher-name:ClassName`. The build generates a
+`bin/<launcher-name>` shell script for each entry.
+
+| Launcher | Class | Hook Event |
+|----------|-------|------------|
+| `get-bash-output` | `GetBashOutput` | PreToolUse (Bash) |
+| `get-bash-post-output` | `GetBashPostOutput` | PostToolUse (Bash) |
+| `get-read-output` | `GetReadOutput` | PreToolUse (Read/Glob/Grep) |
+| `get-read-post-output` | `GetReadPostOutput` | PostToolUse (Read/Glob/Grep) |
+| `get-post-output` | `GetPostOutput` | PostToolUse (all) |
+| `get-skill-output` | `GetSkillOutput` | UserPromptSubmit |
+| `get-ask-output` | `GetAskOutput` | PreToolUse (AskUserQuestion) |
+| `get-edit-output` | `GetEditOutput` | PreToolUse (Edit) |
+| `get-write-edit-output` | `GetWriteEditOutput` | PreToolUse (Write/Edit) |
+| `get-task-output` | `GetTaskOutput` | PreToolUse (Task) |
+| `get-session-end-output` | `GetSessionEndOutput` | SessionEnd |
+| `token-counter` | `TokenCounter` | PostToolUse (all) |
+| `enforce-status` | `EnforceStatusOutput` | Stop |
+| `get-status-output` | `skills.RunGetStatusOutput` | Skill handler (status) |
+| `get-checkpoint-box` | `skills.GetCheckpointOutput` | Skill handler (checkpoint) |
+| `get-issue-complete-box` | `skills.GetIssueCompleteOutput` | Skill handler (issue-complete) |
+| `get-next-task-box` | `skills.GetNextTaskOutput` | Skill handler (next-task) |
+| `get-render-diff-output` | `skills.GetRenderDiffOutput` | Skill handler (render-diff) |
+
+### Launcher Script Format
+
+Each generated launcher is a POSIX shell script:
+
+```sh
+#!/bin/sh
+DIR=`dirname $0`
+exec "$DIR/java" \
+  -Xms16m -Xmx64m \
+  -XX:+UseSerialGC \
+  -XX:TieredStopAtLevel=1 \
+  -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
+  -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.ClassName "$@"
+```
+
+JVM flags: 16-64MB heap, serial GC (minimal overhead for short-lived processes), tier-1 compilation only (fastest
+startup), and Leyden AOT cache for pre-linked classes.
+
+## Skill Directory Structure
+
+Skills are loaded by `SkillLoader` from the plugin's `skills/` directory. Each skill is a subdirectory containing:
+
+```
+plugin-root/
+  skills/
+    reference.md              — Reload text returned on 2nd+ invocations of any skill
+    {skill-name}/
+      content.md              — Main skill content (loaded on first invocation)
+      includes.txt            — Optional; one relative path per line listing files to include
+      handler.sh              — Optional; executable script whose stdout is prepended
+```
+
+### Loading Behavior
+
+**First invocation** of a skill within a session:
+1. Execute `handler.sh` if present (output prepended)
+2. Load files listed in `includes.txt`, each wrapped in `<include path="...">...</include>` XML tags
+3. Load `content.md` (with license header stripped if present)
+4. Substitute variables: `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SESSION_ID}`, `${CLAUDE_PROJECT_DIR}`
+
+**Subsequent invocations** of the same skill within the same session:
+1. Execute `handler.sh` if present (output prepended)
+2. Load `reference.md` instead of content/includes
+
+Session tracking uses a temp file (`/tmp/cat-skills-loaded-{session-id}`) to record which skills have been loaded.
+
+### includes.txt Format
+
+One relative path per line, resolved from the plugin root:
+
+```
+concepts/context1.md
+concepts/context2.md
+```
+
+Each included file is wrapped in XML tags:
+
+```xml
+<include path="concepts/context1.md">
+... file content with variables substituted ...
+</include>
+```
+
+Missing include files are silently skipped.
 
 ## Session Bootstrap
 
 The `session-start.sh` hook runs at each Claude Code session start:
 
-1. Checks if custom runtime exists at expected path
-2. If missing, attempts to download pre-built bundle
-3. Falls back to building locally if JDK 25 is available
-4. Invokes the Java dispatcher for session start tasks
-
-If all methods fail, a warning is logged but the session continues (Python hooks remain available).
-
-## Running Java Hooks
-
-Java hooks are invoked through `hook.sh`:
-
-```bash
-# Direct invocation
-echo '{"tool":"Bash","input":"..."}' | ./hook.sh BashPreToolHandler
-```
-
-### Handler Classes
-
-| Class | Purpose |
-|-------|---------|
-| `BashPreToolHandler` | Pre-tool validation for Bash commands |
-| `BashPostToolHandler` | Post-tool analysis of Bash results |
-| `SkillHandler` | Skill preprocessing and validation |
-| `ValidationHandler` | Commit type and code validation |
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CAT_JAVA_TIMEOUT` | 30 | Timeout for Java hook execution (seconds) |
-| `CAT_JAVA_XMS` | 16m | Initial heap size |
-| `CAT_JAVA_XMX` | 64m | Maximum heap size |
+1. Checks if the jlink runtime exists at `${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/`
+2. If missing, copies from `hooks/target/jlink/` (local build)
+3. Invokes session-start handlers for initialization tasks
 
 ## Troubleshooting
 
 ### "Java not found"
 
 1. Ensure JDK 25 is installed: `java -version`
-2. Set JAVA_HOME: `export JAVA_HOME=/path/to/jdk-25`
-3. Or build the custom runtime: `./hooks/jlink-config.sh build`
-
-### "Hook classpath not found"
-
-The Java hooks JAR is not built yet. This is expected during initial setup. Java hook implementations will be added in
-subsequent tasks.
+2. Build the jlink image: `cd hooks && ./build-jlink.sh`
 
 ### Build fails with "module not found"
 
 Ensure you're using JDK 25 (not just JRE). jlink requires the full JDK.
 
-## Jackson 3 Integration
+### Hook produces no output
 
-The runtime includes Jackson 3.x modules for JSON processing:
-
-- `tools.jackson.core` - Core streaming API
-- `tools.jackson.databind` - Object binding
-- `tools.jackson.annotation` - Annotations
-
-Jackson 3 uses native JPMS modules (not Moditect), providing better compatibility with jlink.
-
-## Platform Support
-
-Pre-built bundles are available for:
-
-| Platform | Architecture |
-|----------|-------------|
-| Linux | x64, aarch64 |
-| macOS | x64, aarch64 |
-| Windows | x64 |
-
-For other platforms, build locally with a JDK 25 installation.
+1. Check `hooks.json` maps the event to the correct launcher
+2. Verify the launcher exists: `ls runtime/cat-jdk-25/bin/<launcher-name>`
+3. Test directly: `echo '{}' | runtime/cat-jdk-25/bin/<launcher-name>`
