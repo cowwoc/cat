@@ -3,66 +3,54 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
-import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
-import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
+import io.github.cowwoc.cat.hooks.ask.WarnApprovalWithoutRenderDiff;
+import io.github.cowwoc.cat.hooks.ask.WarnUnsquashedApproval;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Hook: Enforce Worktree Isolation (M252).
+ * get-ask-pretool-output - Unified PreToolUse hook for AskUserQuestion.
  * <p>
- * Unified PreToolUse hook for Edit/Write operations.
+ * TRIGGER: PreToolUse (matcher: AskUserQuestion)
  * <p>
- * TRIGGER: PreToolUse for Edit/Write
+ * Consolidates all AskUserQuestion validation hooks into a single Java dispatcher.
  * <p>
- * REGISTRATION: plugin/hooks/hooks.json (plugin hook)
- * <p>
- * Consolidates all Edit/Write validation hooks into a single Java dispatcher.
- * <p>
- * Handlers can:
- * <ul>
- *   <li>Block edits (return decision=block with reason)</li>
- *   <li>Warn about edits (return warning)</li>
- *   <li>Allow edits (return allow)</li>
- * </ul>
+ * Handlers can inject additional context or warnings when asking user questions.
  */
-public final class GetWriteEditPretoolOutput implements HookHandler
+public final class GetAskOutput implements HookHandler
 {
-  // Handlers are checked in order. WarnBaseBranchEdit warns first (non-blocking),
-  // then blocking handlers (ValidateStateMdFormat, EnforcePluginFileIsolation) run.
-  // This ensures warnings are emitted even when validation would block the edit.
-  private static final List<FileWriteHandler> DEFAULT_HANDLERS = List.of(
-    new WarnBaseBranchEdit(),
-    new ValidateStateMdFormat(),
-    new EnforcePluginFileIsolation());
-  private final List<FileWriteHandler> handlers;
+  // Handlers are checked in order. Ask handlers inject at most one context (first handler
+  // providing additionalContext wins, then early return). This differs from Edit/Write/Task
+  // dispatchers which accumulate all warnings, because only one context can be injected per question.
+  private static final List<AskHandler> DEFAULT_HANDLERS = List.of(
+    new WarnUnsquashedApproval(),
+    new WarnApprovalWithoutRenderDiff());
+  private final List<AskHandler> handlers;
 
   /**
-   * Creates a new GetWriteEditPretoolOutput instance with default handlers.
+   * Creates a new GetAskOutput instance with default handlers.
    */
-  public GetWriteEditPretoolOutput()
+  public GetAskOutput()
   {
     this.handlers = DEFAULT_HANDLERS;
   }
 
   /**
-   * Creates a new GetWriteEditPretoolOutput instance with custom handlers.
+   * Creates a new GetAskOutput instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if handlers is null
    */
-  public GetWriteEditPretoolOutput(List<FileWriteHandler> handlers)
+  public GetAskOutput(List<AskHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
   }
 
   /**
-   * Entry point for the Write/Edit PreToolUse hook.
+   * Entry point for the AskUserQuestion pretool output hook.
    *
    * @param args command line arguments
    */
@@ -73,7 +61,7 @@ public final class GetWriteEditPretoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
     }
   }
 
@@ -91,7 +79,7 @@ public final class GetWriteEditPretoolOutput implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
-    if (!(equalsIgnoreCase(toolName, "Write") || equalsIgnoreCase(toolName, "Edit")))
+    if (!equalsIgnoreCase(toolName, "AskUserQuestion"))
     {
       output.empty();
       return;
@@ -100,13 +88,12 @@ public final class GetWriteEditPretoolOutput implements HookHandler
     JsonNode toolInput = input.getToolInput();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
-    List<String> warnings = new ArrayList<>();
 
-    for (FileWriteHandler handler : this.handlers)
+    for (AskHandler handler : this.handlers)
     {
       try
       {
-        FileWriteHandler.Result result = handler.check(toolInput, sessionId);
+        AskHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
           if (result.additionalContext().isEmpty())
@@ -115,8 +102,15 @@ public final class GetWriteEditPretoolOutput implements HookHandler
             output.block(result.reason(), result.additionalContext());
           return;
         }
+        // Ask handlers inject context into the question. Only one context can be injected,
+        // so we return on the first handler that provides additionalContext.
+        if (!result.additionalContext().isEmpty())
+        {
+          output.additionalContext("PreToolUse", result.additionalContext());
+          return;
+        }
         if (!result.reason().isEmpty())
-          warnings.add(result.reason());
+          System.err.println(result.reason());
       }
       catch (RuntimeException e)
       {
@@ -124,11 +118,6 @@ public final class GetWriteEditPretoolOutput implements HookHandler
           ": " + e.getMessage());
         return;
       }
-    }
-
-    for (String warning : warnings)
-    {
-      System.err.println(warning);
     }
 
     output.empty();

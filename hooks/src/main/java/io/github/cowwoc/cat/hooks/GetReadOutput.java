@@ -9,37 +9,37 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * get-read-posttool-output - Unified PostToolUse hook for Read/Glob/Grep/WebFetch/WebSearch
+ * get-read-pretool-output - Unified PreToolUse hook for Read/Glob/Grep
  *
- * TRIGGER: PostToolUse (matcher: Read|Glob|Grep|WebFetch|WebSearch)
+ * TRIGGER: PreToolUse (matcher: Read|Glob|Grep)
  *
  * Consolidates read operation validation hooks into a single Java dispatcher.
  *
  * Handlers can:
  * - Warn about patterns (return warning)
+ * - Block operations (return block=true with message)
  * - Allow silently (return null)
  */
-public final class GetReadPosttoolOutput implements HookHandler
+public final class GetReadOutput implements HookHandler
 {
-  private static final Set<String> SUPPORTED_TOOLS = Set.of(
-      "Read", "Glob", "Grep", "WebFetch", "WebSearch");
+  private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
   private final List<ReadHandler> handlers;
 
   /**
-   * Creates a new GetReadPosttoolOutput instance.
+   * Creates a new GetReadOutput instance.
    *
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public GetReadPosttoolOutput(JvmScope scope)
+  public GetReadOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.handlers = List.of(scope.getDetectSequentialTools());
+    this.handlers = List.of(scope.getPredictBatchOpportunity());
   }
 
   /**
-   * Entry point for the Read posttool output hook.
+   * Entry point for the Read pretool output hook.
    *
    * @param args command line arguments
    */
@@ -49,7 +49,7 @@ public final class GetReadPosttoolOutput implements HookHandler
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope.getJsonMapper(), System.out);
-      new GetReadPosttoolOutput(scope).run(input, output);
+      new GetReadOutput(scope).run(input, output);
     }
   }
 
@@ -74,24 +74,30 @@ public final class GetReadPosttoolOutput implements HookHandler
     }
 
     JsonNode toolInput = input.getToolInput();
-    JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
-    // Run all read posttool handlers
+    // Run all read pretool handlers
     for (ReadHandler handler : handlers)
     {
       try
       {
-        ReadHandler.Result result = handler.check(toolName, toolInput, toolResult, sessionId);
-        // PostToolUse cannot block, only warn
+        ReadHandler.Result result = handler.check(toolName, toolInput, null, sessionId);
+        if (result.blocked())
+        {
+          if (result.additionalContext().isEmpty())
+            output.block(result.reason());
+          else
+            output.block(result.reason(), result.additionalContext());
+          return;
+        }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
       }
-      catch (Exception e)
+      catch (RuntimeException e)
       {
-        System.err.println("get-read-posttool-output: handler error: " + e.getMessage());
+        System.err.println("get-read-pretool-output: handler error: " + e.getMessage());
       }
     }
 
@@ -101,7 +107,7 @@ public final class GetReadPosttoolOutput implements HookHandler
       System.err.println(warning);
     }
 
-    // Always allow (PostToolUse cannot block, only warn)
+    // Allow the operation
     output.empty();
   }
 }

@@ -34,17 +34,17 @@ import java.util.List;
  *   <li>Allow commands (return allow)</li>
  * </ul>
  */
-public final class GetBashPretoolOutput implements HookHandler
+public final class GetBashOutput implements HookHandler
 {
   private final List<BashHandler> handlers;
 
   /**
-   * Creates a new GetBashPretoolOutput instance with the specified JVM scope.
+   * Creates a new GetBashOutput instance with the specified JVM scope.
    *
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetBashPretoolOutput(JvmScope scope)
+  public GetBashOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -73,7 +73,7 @@ public final class GetBashPretoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetBashPretoolOutput(scope).run(input, output);
+      new GetBashOutput(scope).run(input, output);
     }
   }
 

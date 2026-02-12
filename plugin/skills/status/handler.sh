@@ -11,4 +11,4 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 echo "SCRIPT OUTPUT STATUS DISPLAY:"
 echo
-"${PLUGIN_ROOT}/hooks/hook.sh" skills.RunGetStatusOutput
+"${PLUGIN_ROOT}/hooks/bin/get-status-output"
