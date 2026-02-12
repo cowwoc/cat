@@ -124,7 +124,7 @@ public final class PredictBatchOpportunity implements ReadHandler
      * @param timestamp the Unix timestamp
      * @throws AssertionError if {@code tool} or {@code path} are null
      */
-    public Operation
+    Operation
     {
       assert that(tool, "tool").isNotNull().elseThrow();
       assert that(path, "path").isNotNull().elseThrow();
@@ -148,7 +148,7 @@ public final class PredictBatchOpportunity implements ReadHandler
      * @param lastWarning Unix timestamp of last warning
      * @throws AssertionError if {@code operations} is null
      */
-    public TrackerState
+    TrackerState
     {
       assert that(operations, "operations").isNotNull().elseThrow();
     }

@@ -29,7 +29,7 @@ public final class DestructiveOps implements PromptHandler
      * @param pattern the compiled pattern
      * @throws AssertionError if {@code display} is blank or {@code pattern} is null
      */
-    public KeywordPattern
+    KeywordPattern
     {
       assert that(display, "display").isNotBlank().elseThrow();
       assert that(pattern, "pattern").isNotNull().elseThrow();

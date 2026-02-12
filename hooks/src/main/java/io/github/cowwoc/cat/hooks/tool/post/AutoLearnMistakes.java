@@ -85,7 +85,7 @@ public final class AutoLearnMistakes implements PosttoolHandler
      * @param details contextual details about the mistake
      * @throws AssertionError if {@code type} or {@code details} are blank
      */
-    public MistakeDetection
+    MistakeDetection
     {
       assert that(type, "type").isNotBlank().elseThrow();
       assert that(details, "details").isNotBlank().elseThrow();
