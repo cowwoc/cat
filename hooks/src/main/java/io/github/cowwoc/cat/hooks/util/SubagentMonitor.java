@@ -375,7 +375,7 @@ public final class SubagentMonitor
      * @param compactions total compaction events
      * @throws AssertionError if {@code tokens} or {@code compactions} are negative
      */
-    public TokenCounts
+    TokenCounts
     {
       assert that(tokens, "tokens").isNotNegative().elseThrow();
       assert that(compactions, "compactions").isNotNegative().elseThrow();
