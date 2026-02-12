@@ -296,11 +296,73 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 ### Handle Review Result
 
-Parse review result:
+Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
 
-- **REVIEW_PASSED**: Continue to Step 5 (squash and approval)
-- **CONCERNS**: Note concerns, continue to Step 5
-- **REJECTED**: If trust=medium, return for user decision; else continue to approval gate
+**Auto-fix loop for HIGH+ concerns:**
+
+Initialize loop counter: `AUTOFIX_ITERATION=0`
+
+**While any concerns have severity >= HIGH and AUTOFIX_ITERATION < 3:**
+
+1. Increment iteration counter: `AUTOFIX_ITERATION++`
+2. Extract HIGH+ concerns (severity, description, location, recommendation)
+3. Spawn implementation subagent to fix the concerns:
+   ```
+   Task tool:
+     description: "Fix review concerns (iteration ${AUTOFIX_ITERATION})"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Fix the following stakeholder review concerns for task ${ISSUE_ID}.
+
+       ## Task Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
+       BASE_BRANCH: ${BASE_BRANCH}
+
+       ## HIGH+ Concerns to Fix
+       ${concerns_formatted}
+
+       ## Instructions
+       - Work in the worktree at ${WORKTREE_PATH}
+       - Fix each concern according to the recommendation
+       - Commit your fixes with appropriate commit messages
+       - Return JSON status when complete
+
+       ## Return Format
+       ```json
+       {
+         "status": "SUCCESS|PARTIAL|FAILED",
+         "commits": [{"hash": "...", "message": "...", "type": "..."}],
+         "files_changed": N,
+         "concerns_addressed": N
+       }
+       ```
+   ```
+4. Re-run stakeholder review:
+   ```
+   Skill tool:
+     skill: "cat:stakeholder-review"
+     args: |
+       {
+         "issue_id": "${ISSUE_ID}",
+         "worktree_path": "${WORKTREE_PATH}",
+         "verify_level": "${VERIFY}",
+         "commits": ${all_commits_json}
+       }
+   ```
+5. Parse new review result
+6. If HIGH+ concerns remain, continue loop (if under iteration limit)
+
+**If HIGH+ concerns persist after 3 iterations:**
+- Note that auto-fix reached iteration limit
+- Store all remaining concerns for display at approval gate
+- Continue to Step 5
+
+**If all concerns are MEDIUM or lower (or no concerns):**
+- Store concerns for display at approval gate
+- Continue to Step 5
 
 **NOTE (M390):** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
 User approval is a SEPARATE gate in Step 6.
@@ -349,8 +411,25 @@ Present a summary and ask for approval:
 ```
 Display task goal from PLAN.md
 Display execution summary (commits, files changed)
-Display review results
+Display review results with concern details
+```
 
+**Determine approval options based on remaining concerns:**
+
+If MEDIUM+ concerns exist:
+```
+AskUserQuestion:
+  header: "Approval"
+  question: "Ready to merge ${ISSUE_ID}?"
+  options:
+    - "Approve and merge"
+    - "Fix remaining concerns" (auto-fix MEDIUM concerns, re-review, then prompt again)
+    - "Request changes" (provide feedback)
+    - "Abort"
+```
+
+If no concerns or only LOW concerns:
+```
 AskUserQuestion:
   header: "Approval"
   question: "Ready to merge ${ISSUE_ID}?"
@@ -368,6 +447,56 @@ AskUserQuestion:
 Fail-fast principle: Unknown consent = No consent = STOP.
 
 **If approved:** Continue to Step 7
+
+**If "Fix remaining concerns" selected:**
+1. Extract MEDIUM+ concerns
+2. Spawn implementation subagent to fix:
+   ```
+   Task tool:
+     description: "Fix remaining concerns (user-requested)"
+     subagent_type: "cat:work-execute"
+     model: "sonnet"
+     prompt: |
+       Fix the following stakeholder review concerns for task ${ISSUE_ID}.
+
+       ## Task Configuration
+       ISSUE_ID: ${ISSUE_ID}
+       WORKTREE_PATH: ${WORKTREE_PATH}
+       BRANCH: ${BRANCH}
+       BASE_BRANCH: ${BASE_BRANCH}
+
+       ## MEDIUM+ Concerns to Fix
+       ${concerns_formatted}
+
+       ## Instructions
+       - Work in the worktree at ${WORKTREE_PATH}
+       - Fix each concern according to the recommendation
+       - Commit your fixes with appropriate commit messages
+       - Return JSON status when complete
+
+       ## Return Format
+       ```json
+       {
+         "status": "SUCCESS|PARTIAL|FAILED",
+         "commits": [{"hash": "...", "message": "...", "type": "..."}],
+         "files_changed": N,
+         "concerns_addressed": N
+       }
+       ```
+   ```
+3. Re-run stakeholder review:
+   ```
+   Skill tool:
+     skill: "cat:stakeholder-review"
+     args: |
+       {
+         "issue_id": "${ISSUE_ID}",
+         "worktree_path": "${WORKTREE_PATH}",
+         "verify_level": "${VERIFY}",
+         "commits": ${all_commits_json}
+       }
+   ```
+4. Return to Step 6 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:
 ```json

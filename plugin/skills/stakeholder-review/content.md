@@ -645,39 +645,22 @@ Repeat as needed for each concern.
 
 <step name="decide">
 
-**Take action based on result:**
+**Return aggregated result to caller:**
 
-**If REJECTED:**
+This skill returns the review outcome for the calling skill (work-with-issue) to handle.
+Auto-fix iteration and user approval gates are managed by the caller, not by this skill.
 
-Behavior depends on trust level:
+**Return structure:**
+- REJECTED status with full concern details (CRITICAL, HIGH, MEDIUM)
+- CONCERNS status with full concern details (HIGH, MEDIUM)
+- APPROVED status with any LOW concerns noted
 
-| Trust | Rejection Behavior |
-|-------|-------------------|
-| `low` | Ask user: Fix / Override / Abort |
-| `medium` | Auto-loop to fix (up to 3 iterations) |
+The calling skill (work-with-issue) is responsible for:
+- Auto-fix iteration for HIGH+ concerns
+- User approval gates for MEDIUM concerns
+- Escalation handling when auto-fix fails
 
-Note: `trust: "high"` skips review entirely, so rejection handling doesn't apply.
-
-For `trust: "low"`:
-1. Present concerns to user with clear explanation
-2. Ask user how to proceed:
-   - "Fix concerns" → Return to implementation phase with concern list
-   - "Override and proceed" → Continue to user approval with concerns noted
-   - "Abort issue" → Stop execution
-
-For `trust: "medium"`:
-1. Automatically loop back to implementation phase with concern list
-2. No user prompt required
-3. Escalate to user only after 3 failed fix attempts
-
-**If CONCERNS:**
-1. Note concerns in issue documentation
-2. Proceed to user approval gate
-3. Include concern summary in approval presentation
-
-**If APPROVED:**
-1. Proceed directly to user approval gate
-2. Note that stakeholder review passed
+**Output the final review status** using the appropriate box from SCRIPT OUTPUT STAKEHOLDER BOXES.
 
 </step>
 
