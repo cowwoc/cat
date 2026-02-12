@@ -35,9 +35,11 @@ if [[ "$input" =~ \"session_id\"[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
 fi
 
 # Extract context usage percentage (pre-calculated by Claude Code)
+# Scale so 83.5% actual usage displays as 100% (effective context limit)
 CONTEXT_PCT=0
 if [[ "$input" =~ \"used_percentage\"[[:space:]]*:[[:space:]]*([0-9]+) ]]; then
-    CONTEXT_PCT="${BASH_REMATCH[1]}"
+    RAW_PCT="${BASH_REMATCH[1]}"
+    CONTEXT_PCT=$(( RAW_PCT * 1000 / 835 ))
     (( CONTEXT_PCT > 100 )) && CONTEXT_PCT=100
 fi
 
