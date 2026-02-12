@@ -102,15 +102,15 @@ Mapping (from HANDLERS array in build-jlink.sh):
 | hooks.json current | hooks.json new |
 |---|---|
 | `hook.sh GetSkillOutput` | `bin/skill` |
-| `hook.sh GetAskPretoolOutput` | `bin/ask-pretool` |
-| `hook.sh GetBashPretoolOutput` | `bin/bash-pretool` |
-| `hook.sh GetReadPretoolOutput` | `bin/read-pretool` |
-| `hook.sh GetEditPretoolOutput` | `bin/edit-pretool` |
-| `hook.sh GetWriteEditPretoolOutput` | `bin/write-edit-pretool` |
-| `hook.sh GetTaskPretoolOutput` | `bin/task-pretool` |
-| `hook.sh GetPosttoolOutput` | `bin/posttool` |
-| `hook.sh GetBashPosttoolOutput` | `bin/bash-posttool` |
-| `hook.sh GetReadPosttoolOutput` | `bin/read-posttool` |
+| `hook.sh GetAskPretoolOutput` | `bin/before-ask` |
+| `hook.sh GetBashPretoolOutput` | `bin/before-bash` |
+| `hook.sh GetReadPretoolOutput` | `bin/before-read` |
+| `hook.sh GetEditPretoolOutput` | `bin/before-edit` |
+| `hook.sh GetWriteEditPretoolOutput` | `bin/before-write-edit` |
+| `hook.sh GetTaskPretoolOutput` | `bin/before-task` |
+| `hook.sh GetPosttoolOutput` | `bin/after-tool` |
+| `hook.sh GetBashPosttoolOutput` | `bin/after-bash` |
+| `hook.sh GetReadPosttoolOutput` | `bin/after-read` |
 | `hook.sh EnforceStatusOutput` | `bin/enforce-status` |
 | `hook.sh GetSessionEndOutput` | `bin/get-session-end-output` |
 
