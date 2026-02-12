@@ -22,29 +22,6 @@ public final class JsonHelper
   }
 
   /**
-   * Gets a string value from a JSON node or returns null.
-   *
-   * @param node the JSON node to read from
-   * @param key the key to retrieve
-   * @return the string value or null if missing, not a string, or empty
-   * @throws NullPointerException if node or key is null
-   */
-  public static String getStringOrNull(JsonNode node, String key)
-  {
-    requireThat(node, "node").isNotNull();
-    requireThat(key, "key").isNotBlank();
-
-    JsonNode child = node.get(key);
-    if (child != null && child.isString())
-    {
-      String value = child.asString();
-      if (value != null && !value.isEmpty())
-        return value;
-    }
-    return null;
-  }
-
-  /**
    * Gets a string value from a JSON node or returns a default.
    *
    * @param node the JSON node to read from

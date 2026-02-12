@@ -22,74 +22,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class JsonHelperTest
 {
   /**
-   * Verifies that getStringOrNull returns string value when present.
-   *
-   * @throws IOException if JSON parsing fails
-   */
-  @Test
-  public void getStringOrNullReturnsValueWhenPresent() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-      String result = JsonHelper.getStringOrNull(node, "key");
-      requireThat(result, "result").isEqualTo("value");
-    }
-  }
-
-  /**
-   * Verifies that getStringOrNull returns null when key is missing.
-   *
-   * @throws IOException if JSON parsing fails
-   */
-  @Test
-  public void getStringOrNullReturnsNullWhenMissing() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode node = mapper.readTree("{}");
-      String result = JsonHelper.getStringOrNull(node, "key");
-      requireThat(result, "result").isNull();
-    }
-  }
-
-  /**
-   * Verifies that getStringOrNull returns null when value is empty string.
-   *
-   * @throws IOException if JSON parsing fails
-   */
-  @Test
-  public void getStringOrNullReturnsNullWhenEmpty() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode node = mapper.readTree("{\"key\": \"\"}");
-      String result = JsonHelper.getStringOrNull(node, "key");
-      requireThat(result, "result").isNull();
-    }
-  }
-
-  /**
-   * Verifies that getStringOrNull returns null when value is not a string.
-   *
-   * @throws IOException if JSON parsing fails
-   */
-  @Test
-  public void getStringOrNullReturnsNullWhenNotString() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode node = mapper.readTree("{\"key\": 123}");
-      String result = JsonHelper.getStringOrNull(node, "key");
-      requireThat(result, "result").isNull();
-    }
-  }
-
-  /**
    * Verifies that getStringOrDefault returns value when present.
    *
    * @throws IOException if JSON parsing fails
@@ -298,47 +230,6 @@ public class JsonHelperTest
   }
 
   // --- Null validation tests ---
-
-  /**
-   * Verifies that getStringOrNull with null node throws NullPointerException.
-   */
-  @Test(expectedExceptions = NullPointerException.class)
-  public void getStringOrNullWithNullNodeThrows()
-  {
-    JsonHelper.getStringOrNull(null, "key");
-  }
-
-  /**
-   * Verifies that getStringOrNull with null key throws NullPointerException.
-   *
-   * @throws IOException if JSON parsing fails
-   */
-  @Test(expectedExceptions = NullPointerException.class)
-  public void getStringOrNullWithNullKeyThrows() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-      JsonHelper.getStringOrNull(node, null);
-    }
-  }
-
-  /**
-   * Verifies that getStringOrNull with blank key throws IllegalArgumentException.
-   *
-   * @throws IOException if JSON parsing fails
-   */
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void getStringOrNullWithBlankKeyThrows() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode node = mapper.readTree("{\"key\": \"value\"}");
-      JsonHelper.getStringOrNull(node, "   ");
-    }
-  }
 
   /**
    * Verifies that getStringOrDefault with null node throws NullPointerException.

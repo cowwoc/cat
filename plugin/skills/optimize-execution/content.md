@@ -31,12 +31,12 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}
 
 ## Analysis Steps
 
-### Step 1: Run Session Analysis Script
+### Step 1: Run Session Analysis
 
-Execute the Python analysis script to extract all mechanical data:
+Execute the session analyzer to extract all mechanical data:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-session.py" "$SESSION_FILE"
+"${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh" run_handler io.github.cowwoc.cat.hooks.util.SessionAnalyzer "$SESSION_FILE"
 ```
 
 The script outputs a JSON object with:
