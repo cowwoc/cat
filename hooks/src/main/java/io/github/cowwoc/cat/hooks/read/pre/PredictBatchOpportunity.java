@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.ReadHandler;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -121,10 +122,12 @@ public final class PredictBatchOpportunity implements ReadHandler
      * @param tool the tool name
      * @param path the file path or pattern
      * @param timestamp the Unix timestamp
+     * @throws AssertionError if {@code tool} or {@code path} are null
      */
     public Operation
     {
-      // Record validation
+      assert that(tool, "tool").isNotNull().elseThrow();
+      assert that(path, "path").isNotNull().elseThrow();
     }
   }
 
@@ -143,10 +146,11 @@ public final class PredictBatchOpportunity implements ReadHandler
      * @param operations list of recent operations
      * @param warningsShown count of warnings shown
      * @param lastWarning Unix timestamp of last warning
+     * @throws AssertionError if {@code operations} is null
      */
     public TrackerState
     {
-      // Record validation
+      assert that(operations, "operations").isNotNull().elseThrow();
     }
   }
 

@@ -4,6 +4,7 @@ import io.github.cowwoc.cat.hooks.ReadHandler;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -99,10 +100,11 @@ public final class DetectSequentialTools implements ReadHandler
      * @param lastToolTime Unix timestamp of last tool execution
      * @param sequentialCount count of sequential operations
      * @param lastToolNames list of tool names in sequence
+     * @throws AssertionError if {@code lastToolNames} is null
      */
     public TrackerState
     {
-      // Record validation
+      assert that(lastToolNames, "lastToolNames").isNotNull().elseThrow();
     }
   }
 
