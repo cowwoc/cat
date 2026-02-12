@@ -727,6 +727,43 @@ See `plugin/concepts/requirements-api.md` for full API conventions.
 
 ## Class Design
 
+### Thread Safety Documentation
+Only document classes that **are** thread-safe. Classes without thread-safety documentation are assumed to be
+thread-unsafe (the default for most classes).
+
+```java
+// Good - document when thread-safe (unusual case)
+/**
+ * Immutable configuration holder.
+ * <p>
+ * <b>Thread Safety:</b> This class is thread-safe.
+ */
+public final class Config
+{
+  // ...
+}
+
+// Good - no thread-safety docs needed (assumed unsafe)
+/**
+ * Processes skill content with variable substitution.
+ */
+public final class SkillLoader
+{
+  // ...
+}
+
+// Avoid - documenting the default (thread-unsafe)
+/**
+ * Processes skill content.
+ * <p>
+ * <b>Thread Safety:</b> This class is NOT thread-safe.
+ */
+public final class SkillLoader
+{
+  // ...
+}
+```
+
 ### main() in Business Logic Classes
 Classes with testable business logic may include a `main()` method for CLI invocation. Do not extract `main()` into a
 separate command class - this adds a file with no value. The pattern of constructor (used by tests) + `main()` (used by
