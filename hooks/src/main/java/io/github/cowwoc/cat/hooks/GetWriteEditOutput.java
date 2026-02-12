@@ -3,7 +3,9 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
+import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
+import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
+import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -11,47 +13,56 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * get-task-pretool-output - Unified PreToolUse hook for Task operations.
+ * Hook: Enforce Worktree Isolation (M252).
  * <p>
- * TRIGGER: PreToolUse (matcher: Task)
+ * Unified PreToolUse hook for Edit/Write operations.
  * <p>
- * Consolidates all Task validation hooks into a single Java dispatcher.
+ * TRIGGER: PreToolUse for Edit/Write
+ * <p>
+ * REGISTRATION: plugin/hooks/hooks.json (plugin hook)
+ * <p>
+ * Consolidates all Edit/Write validation hooks into a single Java dispatcher.
  * <p>
  * Handlers can:
  * <ul>
- *   <li>Block task operations (return decision=block with reason)</li>
- *   <li>Warn about task operations (return warning)</li>
- *   <li>Allow task operations (return allow)</li>
+ *   <li>Block edits (return decision=block with reason)</li>
+ *   <li>Warn about edits (return warning)</li>
+ *   <li>Allow edits (return allow)</li>
  * </ul>
  */
-public final class GetTaskPretoolOutput implements HookHandler
+public final class GetWriteEditOutput implements HookHandler
 {
-  private static final List<TaskHandler> DEFAULT_HANDLERS = List.of(
-    new EnforceApprovalBeforeMerge());
-  private final List<TaskHandler> handlers;
+  // Handlers are checked in order. WarnBaseBranchEdit warns first (non-blocking),
+  // then blocking handlers (ValidateStateMdFormat, EnforcePluginFileIsolation) run.
+  // This ensures warnings are emitted even when validation would block the edit.
+  private static final List<FileWriteHandler> DEFAULT_HANDLERS = List.of(
+    new WarnBaseBranchEdit(),
+    new ValidateStateMdFormat(),
+    new EnforcePluginFileIsolation());
+  private final List<FileWriteHandler> handlers;
 
   /**
-   * Creates a new GetTaskPretoolOutput instance with default handlers.
+   * Creates a new GetWriteEditOutput instance with default handlers.
    */
-  public GetTaskPretoolOutput()
+  public GetWriteEditOutput()
   {
     this.handlers = DEFAULT_HANDLERS;
   }
 
   /**
-   * Creates a new GetTaskPretoolOutput instance with custom handlers.
+   * Creates a new GetWriteEditOutput instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if handlers is null
    */
-  public GetTaskPretoolOutput(List<TaskHandler> handlers)
+  public GetWriteEditOutput(List<FileWriteHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
   }
 
   /**
-   * Entry point for the Task pretool output hook.
+   * Entry point for the Write/Edit PreToolUse hook.
    *
    * @param args command line arguments
    */
@@ -62,7 +73,7 @@ public final class GetTaskPretoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetTaskPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
     }
   }
 
@@ -80,7 +91,7 @@ public final class GetTaskPretoolOutput implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
-    if (!equalsIgnoreCase(toolName, "Task"))
+    if (!(equalsIgnoreCase(toolName, "Write") || equalsIgnoreCase(toolName, "Edit")))
     {
       output.empty();
       return;
@@ -91,11 +102,11 @@ public final class GetTaskPretoolOutput implements HookHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
-    for (TaskHandler handler : this.handlers)
+    for (FileWriteHandler handler : this.handlers)
     {
       try
       {
-        TaskHandler.Result result = handler.check(toolInput, sessionId);
+        FileWriteHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
           if (result.additionalContext().isEmpty())

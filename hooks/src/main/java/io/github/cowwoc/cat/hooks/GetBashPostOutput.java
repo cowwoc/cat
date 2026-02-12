@@ -26,7 +26,7 @@ import java.util.List;
  *   <li>Allow silently (return allow)</li>
  * </ul>
  */
-public final class GetBashPosttoolOutput implements HookHandler
+public final class GetBashPostOutput implements HookHandler
 {
   private static final List<BashHandler> HANDLERS = List.of(
     new DetectConcatenatedCommit(),
@@ -35,9 +35,9 @@ public final class GetBashPosttoolOutput implements HookHandler
     new VerifyCommitType());
 
   /**
-   * Creates a new GetBashPosttoolOutput instance.
+   * Creates a new GetBashPostOutput instance.
    */
-  public GetBashPosttoolOutput()
+  public GetBashPostOutput()
   {
   }
 
@@ -53,7 +53,7 @@ public final class GetBashPosttoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetBashPosttoolOutput().run(input, output);
+      new GetBashPostOutput().run(input, output);
     }
   }
 

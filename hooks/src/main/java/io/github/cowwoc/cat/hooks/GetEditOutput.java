@@ -25,7 +25,7 @@ import java.util.List;
  *   <li>Allow edits (return allow)</li>
  * </ul>
  */
-public final class GetEditPretoolOutput implements HookHandler
+public final class GetEditOutput implements HookHandler
 {
   // Handlers are checked in order. EnforceWorkflowCompletion blocks first if approval is missing,
   // then WarnSkillEditWithoutBuilder warns about skill editing patterns (non-blocking).
@@ -35,20 +35,20 @@ public final class GetEditPretoolOutput implements HookHandler
   private final List<EditHandler> handlers;
 
   /**
-   * Creates a new GetEditPretoolOutput instance with default handlers.
+   * Creates a new GetEditOutput instance with default handlers.
    */
-  public GetEditPretoolOutput()
+  public GetEditOutput()
   {
     this.handlers = DEFAULT_HANDLERS;
   }
 
   /**
-   * Creates a new GetEditPretoolOutput instance with custom handlers.
+   * Creates a new GetEditOutput instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if handlers is null
    */
-  public GetEditPretoolOutput(List<EditHandler> handlers)
+  public GetEditOutput(List<EditHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
@@ -66,7 +66,7 @@ public final class GetEditPretoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
     }
   }
 

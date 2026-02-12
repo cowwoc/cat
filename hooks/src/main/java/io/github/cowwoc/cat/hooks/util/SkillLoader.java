@@ -11,18 +11,34 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Conditional skill loader that loads full content on first invocation
- * and reference text on subsequent invocations within the same session.
+ * Loads skill content from a plugin's skill directory structure.
  * <p>
- * Handles:
- * - Environment variable substitution (${CLAUDE_PLUGIN_ROOT}, ${CLAUDE_SESSION_ID})
- * - Session-based skill loading tracking
- * - Optional skill handler execution
- * - Context file loading
+ * On first invocation for a given skill, loads the full content. On subsequent invocations
+ * within the same session, loads a shorter reference text instead.
  * <p>
- * <b>Thread Safety:</b> This class is NOT thread-safe. Instances should not be shared
- * across threads. The original bash script is single-threaded, and this implementation
- * maintains that constraint.
+ * <b>Skill directory structure:</b>
+ * <pre>
+ * plugin-root/
+ *   skills/
+ *     reference.md              — Reload text returned on 2nd+ invocations
+ *     {skill-name}/
+ *       content.md              — Main skill content (loaded on first invocation)
+ *       includes.txt            — Optional; one relative path per line listing files to include
+ *       handler.sh              — Optional; executable script whose stdout is prepended
+ * </pre>
+ * <p>
+ * <b>Included files:</b> Each path in {@code includes.txt} is resolved relative to the plugin root.
+ * Included files are wrapped in {@code <include path="...">...</include>} XML tags.
+ * <p>
+ * <b>Variable substitution:</b> The following placeholders are replaced in all loaded content:
+ * <ul>
+ *   <li>{@code ${CLAUDE_PLUGIN_ROOT}} — plugin root directory path</li>
+ *   <li>{@code ${CLAUDE_SESSION_ID}} — current session identifier</li>
+ *   <li>{@code ${CLAUDE_PROJECT_DIR}} — project directory path</li>
+ * </ul>
+ * <p>
+ * <b>License header stripping:</b> If {@code content.md} starts with an HTML comment block
+ * containing a copyright notice, it is stripped before returning.
  */
 public final class SkillLoader
 {
@@ -99,25 +115,27 @@ public final class SkillLoader
     }
     else
     {
-      Path contextPath = pluginRoot.resolve("skills/" + skillName + "/context.list");
-      if (Files.exists(contextPath))
+      Path includesPath = pluginRoot.resolve("skills/" + skillName + "/includes.txt");
+      if (Files.exists(includesPath))
       {
-        output.append("<execution_context>\n");
-        String contextList = Files.readString(contextPath, StandardCharsets.UTF_8);
-        for (String line : contextList.split("\n"))
+        String includesList = Files.readString(includesPath, StandardCharsets.UTF_8);
+        for (String line : includesList.split("\n"))
         {
           String trimmed = line.strip();
           if (!trimmed.isEmpty())
           {
-            Path contextFile = pluginRoot.resolve(trimmed);
-            if (Files.exists(contextFile))
+            Path includeFile = pluginRoot.resolve(trimmed);
+            if (Files.exists(includeFile))
             {
-              String contextContent = Files.readString(contextFile, StandardCharsets.UTF_8);
-              output.append(substituteVars(contextContent));
+              output.append("<include path=\"").append(trimmed).append("\">\n");
+              String includeContent = Files.readString(includeFile, StandardCharsets.UTF_8);
+              output.append(substituteVars(includeContent));
+              if (!includeContent.endsWith("\n"))
+                output.append('\n');
+              output.append("</include>\n");
             }
           }
         }
-        output.append("</execution_context>\n");
       }
 
       Path contentPath = pluginRoot.resolve("skills/" + skillName + "/content.md");

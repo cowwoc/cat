@@ -254,12 +254,12 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that load handles context.list file.
+   * Verifies that load handles includes.txt file.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadProcessesContextList() throws IOException
+  public void loadProcessesIncludes() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try
@@ -267,7 +267,7 @@ public class SkillLoaderTest
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Main content\n");
-      Files.writeString(skillDir.resolve("context.list"), "concepts/context1.md\n");
+      Files.writeString(skillDir.resolve("includes.txt"), "concepts/context1.md\n");
 
       Path conceptsDir = tempPluginRoot.resolve("concepts");
       Files.createDirectories(conceptsDir);
@@ -277,9 +277,9 @@ public class SkillLoaderTest
         System.nanoTime(), "");
       String result = loader.load("test-skill");
 
-      requireThat(result, "result").contains("<execution_context>");
+      requireThat(result, "result").contains("<include path=\"concepts/context1.md\">");
+      requireThat(result, "result").contains("</include>");
       requireThat(result, "result").contains("Context file content");
-      requireThat(result, "result").contains("</execution_context>");
       requireThat(result, "result").contains("Main content");
     }
     finally
@@ -331,12 +331,12 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that load handles missing context files gracefully.
+   * Verifies that load handles missing include files gracefully.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadHandlesMissingContextFileGracefully() throws IOException
+  public void loadHandlesMissingIncludeFileGracefully() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try
@@ -344,14 +344,12 @@ public class SkillLoaderTest
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Main content\n");
-      Files.writeString(skillDir.resolve("context.list"), "concepts/missing.md\n");
+      Files.writeString(skillDir.resolve("includes.txt"), "concepts/missing.md\n");
 
       SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       String result = loader.load("test-skill");
 
-      requireThat(result, "result").contains("<execution_context>");
-      requireThat(result, "result").contains("</execution_context>");
       requireThat(result, "result").contains("Main content");
       requireThat(result, "result").doesNotContain("missing.md");
     }

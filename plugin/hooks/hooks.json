@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetSkillOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-skill-output"
           }
         ]
       }
@@ -34,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetAskPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-ask-output"
           }
         ]
       },
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetBashPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-bash-output"
           }
         ]
       },
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetReadPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-read-output"
           }
         ]
       },
@@ -61,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetEditPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-edit-output"
           }
         ]
       },
@@ -70,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetWriteEditPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-write-edit-output"
           }
         ]
       },
@@ -79,7 +79,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetTaskPretoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-task-output"
           }
         ]
       }
@@ -89,7 +89,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-post-output"
           }
         ]
       },
@@ -114,7 +114,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetBashPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-bash-post-output"
           }
         ]
       },
@@ -132,7 +132,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-post-output"
           }
         ]
       },
@@ -141,7 +141,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetReadPosttoolOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-read-post-output"
           }
         ]
       }
@@ -161,7 +161,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh EnforceStatusOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/enforce-status"
           }
         ]
       }
@@ -171,7 +171,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh GetSessionEndOutput"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-session-end-output"
           }
         ]
       }

@@ -4,16 +4,16 @@ import io.github.cowwoc.cat.hooks.EditHandler;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
-import io.github.cowwoc.cat.hooks.GetAskPretoolOutput;
-import io.github.cowwoc.cat.hooks.GetBashPosttoolOutput;
-import io.github.cowwoc.cat.hooks.GetBashPretoolOutput;
-import io.github.cowwoc.cat.hooks.GetEditPretoolOutput;
-import io.github.cowwoc.cat.hooks.GetPosttoolOutput;
-import io.github.cowwoc.cat.hooks.GetReadPosttoolOutput;
-import io.github.cowwoc.cat.hooks.GetReadPretoolOutput;
+import io.github.cowwoc.cat.hooks.GetAskOutput;
+import io.github.cowwoc.cat.hooks.GetBashPostOutput;
+import io.github.cowwoc.cat.hooks.GetBashOutput;
+import io.github.cowwoc.cat.hooks.GetEditOutput;
+import io.github.cowwoc.cat.hooks.GetPostOutput;
+import io.github.cowwoc.cat.hooks.GetReadPostOutput;
+import io.github.cowwoc.cat.hooks.GetReadOutput;
 import io.github.cowwoc.cat.hooks.GetSkillOutput;
-import io.github.cowwoc.cat.hooks.GetTaskPretoolOutput;
-import io.github.cowwoc.cat.hooks.GetWriteEditPretoolOutput;
+import io.github.cowwoc.cat.hooks.GetTaskOutput;
+import io.github.cowwoc.cat.hooks.GetWriteEditOutput;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
@@ -119,10 +119,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetBashPretoolOutput tests ---
+  // --- GetBashOutput tests ---
 
   /**
-   * Verifies that GetBashPretoolOutput returns empty JSON for non-Bash tools.
+   * Verifies that GetBashOutput returns empty JSON for non-Bash tools.
    */
   @Test
   public void getBashPretoolReturnsEmptyJsonForNonBashTool() throws IOException
@@ -134,7 +134,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPretoolOutput(scope).run(input, output);
+      new GetBashOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -142,7 +142,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetBashPretoolOutput returns empty JSON when Bash tool has no command.
+   * Verifies that GetBashOutput returns empty JSON when Bash tool has no command.
    */
   @Test
   public void getBashPretoolReturnsEmptyJsonWhenNoCommand() throws IOException
@@ -154,7 +154,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPretoolOutput(scope).run(input, output);
+      new GetBashOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -162,7 +162,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetBashPretoolOutput returns empty JSON for Bash tool with command.
+   * Verifies that GetBashOutput returns empty JSON for Bash tool with command.
    */
   @Test
   public void getBashPretoolReturnsEmptyJsonWithCommand() throws IOException
@@ -175,17 +175,17 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPretoolOutput(scope).run(input, output);
+      new GetBashOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
 
-  // --- GetBashPosttoolOutput tests ---
+  // --- GetBashPostOutput tests ---
 
   /**
-   * Verifies that GetBashPosttoolOutput returns empty JSON for non-Bash tools.
+   * Verifies that GetBashPostOutput returns empty JSON for non-Bash tools.
    */
   @Test
   public void getBashPosttoolReturnsEmptyJsonForNonBashTool() throws IOException
@@ -197,17 +197,17 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetBashPosttoolOutput().run(input, output);
+      new GetBashPostOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
 
-  // --- GetReadPretoolOutput tests ---
+  // --- GetReadOutput tests ---
 
   /**
-   * Verifies that GetReadPretoolOutput returns empty JSON for Read tool.
+   * Verifies that GetReadOutput returns empty JSON for Read tool.
    */
   @Test
   public void getReadPretoolReturnsEmptyJsonForReadTool() throws IOException
@@ -220,7 +220,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetReadPretoolOutput(scope).run(input, output);
+      new GetReadOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -228,7 +228,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetReadPretoolOutput returns empty JSON for unsupported tools.
+   * Verifies that GetReadOutput returns empty JSON for unsupported tools.
    */
   @Test
   public void getReadPretoolReturnsEmptyJsonForUnsupportedTool() throws IOException
@@ -240,17 +240,17 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetReadPretoolOutput(scope).run(input, output);
+      new GetReadOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
 
-  // --- GetReadPosttoolOutput tests ---
+  // --- GetReadPostOutput tests ---
 
   /**
-   * Verifies that GetReadPosttoolOutput returns empty JSON for Grep tool.
+   * Verifies that GetReadPostOutput returns empty JSON for Grep tool.
    */
   @Test
   public void getReadPosttoolReturnsEmptyJsonForGrepTool() throws IOException
@@ -263,17 +263,17 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetReadPosttoolOutput(scope).run(input, output);
+      new GetReadPostOutput(scope).run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
 
-  // --- GetPosttoolOutput tests ---
+  // --- GetPostOutput tests ---
 
   /**
-   * Verifies that GetPosttoolOutput returns empty JSON when given empty input.
+   * Verifies that GetPostOutput returns empty JSON when given empty input.
    */
   @Test
   public void getPosttoolReturnsEmptyJsonForEmptyInput() throws IOException
@@ -285,7 +285,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetPosttoolOutput().run(input, output);
+      new GetPostOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -293,7 +293,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetPosttoolOutput returns empty JSON with a tool name present.
+   * Verifies that GetPostOutput returns empty JSON with a tool name present.
    */
   @Test
   public void getPosttoolReturnsEmptyJsonWithToolName() throws IOException
@@ -306,7 +306,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetPosttoolOutput().run(input, output);
+      new GetPostOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -530,10 +530,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetAskPretoolOutput tests ---
+  // --- GetAskOutput tests ---
 
   /**
-   * Verifies that GetAskPretoolOutput returns empty JSON for non-AskUserQuestion tools.
+   * Verifies that GetAskOutput returns empty JSON for non-AskUserQuestion tools.
    */
   @Test
   public void getAskPretoolReturnsEmptyForNonAskTool() throws IOException
@@ -545,7 +545,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -553,7 +553,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetAskPretoolOutput returns empty JSON when tool_input is empty.
+   * Verifies that GetAskOutput returns empty JSON when tool_input is empty.
    */
   @Test
   public void getAskPretoolReturnsEmptyForEmptyToolInput() throws IOException
@@ -566,17 +566,17 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
 
-  // --- GetEditPretoolOutput tests ---
+  // --- GetEditOutput tests ---
 
   /**
-   * Verifies that GetEditPretoolOutput returns empty JSON for non-Edit tools.
+   * Verifies that GetEditOutput returns empty JSON for non-Edit tools.
    */
   @Test
   public void getEditPretoolReturnsEmptyForNonEditTool() throws IOException
@@ -588,7 +588,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -596,7 +596,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetEditPretoolOutput returns empty JSON when tool_input is empty.
+   * Verifies that GetEditOutput returns empty JSON when tool_input is empty.
    */
   @Test
   public void getEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
@@ -609,7 +609,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -617,7 +617,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetEditPretoolOutput throws IllegalArgumentException when session_id is missing.
+   * Verifies that GetEditOutput throws IllegalArgumentException when session_id is missing.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getEditPretoolThrowsOnMissingSessionId() throws IOException
@@ -630,14 +630,14 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
     }
   }
 
-  // --- GetTaskPretoolOutput tests ---
+  // --- GetTaskOutput tests ---
 
   /**
-   * Verifies that GetTaskPretoolOutput returns empty JSON for non-Task tools.
+   * Verifies that GetTaskOutput returns empty JSON for non-Task tools.
    */
   @Test
   public void getTaskPretoolReturnsEmptyForNonTaskTool() throws IOException
@@ -649,7 +649,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetTaskPretoolOutput().run(input, output);
+      new GetTaskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -657,7 +657,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetTaskPretoolOutput returns empty JSON when tool_input is empty.
+   * Verifies that GetTaskOutput returns empty JSON when tool_input is empty.
    */
   @Test
   public void getTaskPretoolReturnsEmptyForEmptyToolInput() throws IOException
@@ -670,7 +670,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetTaskPretoolOutput().run(input, output);
+      new GetTaskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -693,7 +693,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -716,7 +716,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -740,7 +740,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -764,7 +764,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -788,7 +788,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetTaskPretoolOutput().run(input, output);
+      new GetTaskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -809,7 +809,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetTaskPretoolOutput().run(input, output);
+      new GetTaskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -870,7 +870,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -892,7 +892,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -934,7 +934,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -956,7 +956,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetEditPretoolOutput().run(input, output);
+      new GetEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -980,7 +980,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1002,7 +1002,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1026,7 +1026,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
@@ -1049,7 +1049,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
@@ -1059,7 +1059,7 @@ public class HookEntryPointTest
 
 
   /**
-   * Verifies that GetAskPretoolOutput returns additionalContext when handler provides it.
+   * Verifies that GetAskOutput returns additionalContext when handler provides it.
    */
   @Test
   public void getAskPretoolReturnsAdditionalContextEarly() throws IOException
@@ -1073,7 +1073,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetAskPretoolOutput().run(input, output);
+      new GetAskOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
@@ -1166,10 +1166,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetWriteEditPretoolOutput dispatcher tests ---
+  // --- GetWriteEditOutput dispatcher tests ---
 
   /**
-   * Verifies that GetWriteEditPretoolOutput returns empty JSON for non-Write/Edit tools.
+   * Verifies that GetWriteEditOutput returns empty JSON for non-Write/Edit tools.
    */
   @Test
   public void getWriteEditPretoolReturnsEmptyForNonWriteEditTool() throws IOException
@@ -1181,7 +1181,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1189,7 +1189,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetWriteEditPretoolOutput returns empty JSON when tool_input is empty.
+   * Verifies that GetWriteEditOutput returns empty JSON when tool_input is empty.
    */
   @Test
   public void getWriteEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
@@ -1202,7 +1202,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1210,7 +1210,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetWriteEditPretoolOutput uses case-insensitive matching for tool names.
+   * Verifies that GetWriteEditOutput uses case-insensitive matching for tool names.
    */
   @Test
   public void getWriteEditPretoolUsesCaseInsensitiveMatching() throws IOException
@@ -1223,7 +1223,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1231,7 +1231,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetWriteEditPretoolOutput accepts Edit tool_name.
+   * Verifies that GetWriteEditOutput accepts Edit tool_name.
    */
   @Test
   public void getWriteEditPretoolAcceptsEditToolName() throws IOException
@@ -1245,7 +1245,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1253,7 +1253,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetWriteEditPretoolOutput blocks plugin file edit on protected branch.
+   * Verifies that GetWriteEditOutput blocks plugin file edit on protected branch.
    */
   @Test
   public void getWriteEditPretoolBlocksPluginFileOnProtectedBranch() throws IOException
@@ -1267,7 +1267,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
@@ -1365,10 +1365,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetWriteEditPretoolOutput dispatcher tests (using real handlers) ---
+  // --- GetWriteEditOutput dispatcher tests (using real handlers) ---
 
   /**
-   * Verifies that GetWriteEditPretoolOutput dispatcher blocks plugin file with block decision.
+   * Verifies that GetWriteEditOutput dispatcher blocks plugin file with block decision.
    * <p>
    * This tests the FULL dispatcher path including the block behavior with the real
    * additionalContext isEmpty() check that was the CRITICAL bug fix.
@@ -1385,7 +1385,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").contains("\"decision\"");
@@ -1395,7 +1395,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetWriteEditPretoolOutput allows non-plugin file with warning.
+   * Verifies that GetWriteEditOutput allows non-plugin file with warning.
    * <p>
    * Test that non-plugin, non-allowed files on v2.1 produce {} output from dispatcher
    * (warning goes to stderr, stdout is {}).
@@ -1412,7 +1412,7 @@ public class HookEntryPointTest
       ByteArrayOutputStream capture = new ByteArrayOutputStream();
       HookOutput output = createOutput(mapper, capture);
 
-      new GetWriteEditPretoolOutput().run(input, output);
+      new GetWriteEditOutput().run(input, output);
 
       String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1433,7 +1433,7 @@ public class HookEntryPointTest
     FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
     FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
 
-    GetWriteEditPretoolOutput dispatcher = new GetWriteEditPretoolOutput(List.of(handler1, handler2));
+    GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
 
     JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
@@ -1477,7 +1477,7 @@ public class HookEntryPointTest
     EditHandler handler1 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 1");
     EditHandler handler2 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 2");
 
-    GetEditPretoolOutput dispatcher = new GetEditPretoolOutput(List.of(handler1, handler2));
+    GetEditOutput dispatcher = new GetEditOutput(List.of(handler1, handler2));
 
     JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
@@ -1521,7 +1521,7 @@ public class HookEntryPointTest
     TaskHandler handler1 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 1");
     TaskHandler handler2 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 2");
 
-    GetTaskPretoolOutput dispatcher = new GetTaskPretoolOutput(List.of(handler1, handler2));
+    GetTaskOutput dispatcher = new GetTaskOutput(List.of(handler1, handler2));
 
     JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
@@ -1567,7 +1567,7 @@ public class HookEntryPointTest
     FileWriteHandler handler2 = (toolInput, sessionId) ->
       FileWriteHandler.Result.block("Blocked by handler 2");
 
-    GetWriteEditPretoolOutput dispatcher = new GetWriteEditPretoolOutput(List.of(handler1, handler2));
+    GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
 
     JsonMapper mapper = scope.getJsonMapper();
     String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +

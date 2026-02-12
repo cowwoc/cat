@@ -30,23 +30,24 @@ readonly MODULE_NAME="io.github.cowwoc.cat.hooks"
 # Handler registry: launcher-name:ClassName
 # Each entry generates a bin/<launcher-name> script in the jlink image.
 readonly -a HANDLERS=(
-  "bash-pretool:GetBashPretoolOutput"
-  "bash-posttool:GetBashPosttoolOutput"
-  "read-pretool:GetReadPretoolOutput"
-  "read-posttool:GetReadPosttoolOutput"
-  "posttool:GetPosttoolOutput"
-  "skill:GetSkillOutput"
+  "get-bash-output:GetBashOutput"
+  "get-bash-post-output:GetBashPostOutput"
+  "get-read-output:GetReadOutput"
+  "get-read-post-output:GetReadPostOutput"
+  "get-post-output:GetPostOutput"
+  "get-skill-output:GetSkillOutput"
   "token-counter:TokenCounter"
   "enforce-status:EnforceStatusOutput"
-  "ask-pretool:GetAskPretoolOutput"
-  "edit-pretool:GetEditPretoolOutput"
-  "write-edit-pretool:GetWriteEditPretoolOutput"
-  "task-pretool:GetTaskPretoolOutput"
+  "get-ask-output:GetAskOutput"
+  "get-edit-output:GetEditOutput"
+  "get-write-edit-output:GetWriteEditOutput"
+  "get-task-output:GetTaskOutput"
   "get-session-end-output:GetSessionEndOutput"
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-task-box:skills.GetNextTaskOutput"
   "get-status-output:skills.RunGetStatusOutput"
+  "get-render-diff-output:skills.GetRenderDiffOutput"
 )
 
 # --- Logging ---
@@ -225,19 +226,11 @@ build_jlink_image() {
 
   local module_path="${HOOKS_JAR}:${STAGING_DIR}"
 
-  local launcher_args=()
-  for handler in "${HANDLERS[@]}"; do
-    local name="${handler%%:*}"
-    local class="${handler##*:}"
-    launcher_args+=("--launcher" "${name}=$(handler_main "$class")")
-  done
-
   rm -rf "$OUTPUT_DIR"
 
   jlink \
     --module-path "$module_path" \
     --add-modules "$MODULE_NAME" \
-    "${launcher_args[@]}" \
     --output "$OUTPUT_DIR" \
     --strip-debug \
     --no-man-pages \
@@ -274,7 +267,7 @@ generate_startup_archives() {
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
     -XX:+AOTClassLinking \
-    -m "$(handler_main GetBashPretoolOutput)" \
+    -m "$(handler_main GetBashOutput)" \
     2>/dev/null; then
     log "Warning: Failed to create AOT cache"
     return 0
@@ -285,7 +278,43 @@ generate_startup_archives() {
   log "Startup archives complete"
 }
 
-# --- Phase 6: Verify ---
+# --- Phase 6: Generate launcher scripts ---
+
+generate_launchers() {
+  log "Generating launcher scripts..."
+
+  local bin_dir="${OUTPUT_DIR}/bin"
+  local aot_cache="../lib/server/aot-cache.aot"
+
+  for handler in "${HANDLERS[@]}"; do
+    local name="${handler%%:*}"
+    local class="${handler##*:}"
+    local launcher="${bin_dir}/${name}"
+    local main_class="$(handler_main "$class")"
+
+    log "  Creating launcher: $name -> $main_class"
+
+    cat > "$launcher" <<'EOF'
+#!/bin/sh
+DIR=`dirname $0`
+exec "$DIR/java" \
+  -Xms16m -Xmx64m \
+  -XX:+UseSerialGC \
+  -XX:TieredStopAtLevel=1 \
+  -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
+  -m MODULE_CLASS "$@"
+EOF
+
+    # Replace MODULE_CLASS placeholder
+    sed -i "s|MODULE_CLASS|$main_class|g" "$launcher"
+    grep -q "$main_class" "$launcher" || error "Failed to generate launcher: $name"
+    chmod +x "$launcher"
+  done
+
+  log "Generated ${#HANDLERS[@]} launcher scripts"
+}
+
+# --- Phase 7: Verify ---
 
 verify_image() {
   log "Verifying jlink image..."
@@ -294,11 +323,11 @@ verify_image() {
     error "java -version failed"
   fi
 
-  log "  Testing bash-pretool launcher..."
-  if echo '{}' | "${OUTPUT_DIR}/bin/bash-pretool" &>/dev/null; then
-    log "  bash-pretool launcher works"
+  log "  Testing get-bash-output launcher..."
+  if echo '{}' | "${OUTPUT_DIR}/bin/get-bash-output" &>/dev/null; then
+    log "  get-bash-output launcher works"
   else
-    log "  Warning: bash-pretool launcher test failed"
+    log "  Warning: get-bash-output launcher test failed"
   fi
 
   log "Verification complete"
@@ -314,6 +343,7 @@ main() {
   patch_automatic_modules
   build_jlink_image
   generate_startup_archives
+  generate_launchers
   verify_image
 
   log "Build complete!"

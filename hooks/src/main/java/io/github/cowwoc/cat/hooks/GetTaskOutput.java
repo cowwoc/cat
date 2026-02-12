@@ -3,54 +3,55 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.ask.WarnApprovalWithoutRenderDiff;
-import io.github.cowwoc.cat.hooks.ask.WarnUnsquashedApproval;
+import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * get-ask-pretool-output - Unified PreToolUse hook for AskUserQuestion.
+ * get-task-pretool-output - Unified PreToolUse hook for Task operations.
  * <p>
- * TRIGGER: PreToolUse (matcher: AskUserQuestion)
+ * TRIGGER: PreToolUse (matcher: Task)
  * <p>
- * Consolidates all AskUserQuestion validation hooks into a single Java dispatcher.
+ * Consolidates all Task validation hooks into a single Java dispatcher.
  * <p>
- * Handlers can inject additional context or warnings when asking user questions.
+ * Handlers can:
+ * <ul>
+ *   <li>Block task operations (return decision=block with reason)</li>
+ *   <li>Warn about task operations (return warning)</li>
+ *   <li>Allow task operations (return allow)</li>
+ * </ul>
  */
-public final class GetAskPretoolOutput implements HookHandler
+public final class GetTaskOutput implements HookHandler
 {
-  // Handlers are checked in order. Ask handlers inject at most one context (first handler
-  // providing additionalContext wins, then early return). This differs from Edit/Write/Task
-  // dispatchers which accumulate all warnings, because only one context can be injected per question.
-  private static final List<AskHandler> DEFAULT_HANDLERS = List.of(
-    new WarnUnsquashedApproval(),
-    new WarnApprovalWithoutRenderDiff());
-  private final List<AskHandler> handlers;
+  private static final List<TaskHandler> DEFAULT_HANDLERS = List.of(
+    new EnforceApprovalBeforeMerge());
+  private final List<TaskHandler> handlers;
 
   /**
-   * Creates a new GetAskPretoolOutput instance with default handlers.
+   * Creates a new GetTaskOutput instance with default handlers.
    */
-  public GetAskPretoolOutput()
+  public GetTaskOutput()
   {
     this.handlers = DEFAULT_HANDLERS;
   }
 
   /**
-   * Creates a new GetAskPretoolOutput instance with custom handlers.
+   * Creates a new GetTaskOutput instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if handlers is null
    */
-  public GetAskPretoolOutput(List<AskHandler> handlers)
+  public GetTaskOutput(List<TaskHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
   }
 
   /**
-   * Entry point for the AskUserQuestion pretool output hook.
+   * Entry point for the Task pretool output hook.
    *
    * @param args command line arguments
    */
@@ -61,7 +62,7 @@ public final class GetAskPretoolOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper, System.out);
-      new GetAskPretoolOutput().run(input, output);
+      new GetTaskOutput().run(input, output);
     }
   }
 
@@ -79,7 +80,7 @@ public final class GetAskPretoolOutput implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
-    if (!equalsIgnoreCase(toolName, "AskUserQuestion"))
+    if (!equalsIgnoreCase(toolName, "Task"))
     {
       output.empty();
       return;
@@ -88,12 +89,13 @@ public final class GetAskPretoolOutput implements HookHandler
     JsonNode toolInput = input.getToolInput();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
+    List<String> warnings = new ArrayList<>();
 
-    for (AskHandler handler : this.handlers)
+    for (TaskHandler handler : this.handlers)
     {
       try
       {
-        AskHandler.Result result = handler.check(toolInput, sessionId);
+        TaskHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
           if (result.additionalContext().isEmpty())
@@ -102,15 +104,8 @@ public final class GetAskPretoolOutput implements HookHandler
             output.block(result.reason(), result.additionalContext());
           return;
         }
-        // Ask handlers inject context into the question. Only one context can be injected,
-        // so we return on the first handler that provides additionalContext.
-        if (!result.additionalContext().isEmpty())
-        {
-          output.additionalContext("PreToolUse", result.additionalContext());
-          return;
-        }
         if (!result.reason().isEmpty())
-          System.err.println(result.reason());
+          warnings.add(result.reason());
       }
       catch (RuntimeException e)
       {
@@ -118,6 +113,11 @@ public final class GetAskPretoolOutput implements HookHandler
           ": " + e.getMessage());
         return;
       }
+    }
+
+    for (String warning : warnings)
+    {
+      System.err.println(warning);
     }
 
     output.empty();
