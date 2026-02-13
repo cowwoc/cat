@@ -6,6 +6,11 @@
       "version": "1.0.8",
       "script": "1.0.8.sh",
       "description": "Add version field to existing configs"
+    },
+    {
+      "version": "1.0.9",
+      "script": "1.0.9.sh",
+      "description": "Replace approach/stakeholderReview/refactoring with leash/caution/curiosity/patience"
     }
   ]
 }

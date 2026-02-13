@@ -12,67 +12,60 @@ with intelligent recommendations based on task characteristics and user preferen
 
 **Show choice point when ALL conditions are met:**
 - PLAN.md has the three standard approaches (Conservative/Balanced/Aggressive)
-- User preference is `balanced` (no auto-selection possible)
+- User's `leash` setting is `short` or `medium`
 
 **Auto-select (skip user prompt) when:**
-- User preference is `conservative` → auto-select Conservative approach
-- User preference is `aggressive` → auto-select Aggressive approach
+- User's `leash` setting is `long` (high trust, autonomous decisions)
+- For `long` leash: auto-select Balanced approach unless task risk is HIGH
 
-**Present choice even with preference when:**
-- Approaches have unusually different tradeoffs
-- HIGH risk task (user should confirm)
+**Present choice even with long leash when:**
+- Task has HIGH risk level (user should confirm)
+- Approaches have significantly different architectural implications
 
-## MANDATORY: Respect User Preferences
+## MANDATORY: Respect User's Leash Setting
 
-**The agent MUST follow the user's approach preference unless there is a compelling technical reason
-to deviate.** The preference in `cat-config.json` represents a standing instruction from the user.
+**The agent MUST respect the user's `leash` setting which controls when to present choices.**
 
-**Compelling technical reasons include:**
-- The preferred approach is technically infeasible (e.g., API doesn't exist)
-- The preferred approach has severe performance implications (quantified, not speculative)
-- The preferred approach would break existing functionality
-- The preferred approach would create security vulnerabilities
+- `short` leash = Present options frequently, user guides most decisions
+- `medium` leash = Present options for meaningful trade-offs only
+- `long` leash = Make autonomous decisions, only present for HIGH risk or significant architecture
 
-**NOT compelling reasons:**
-- Agent judgment that another approach is "cleaner" or "simpler"
-- Agent preference for a different coding style
-- Speculation about future maintainability without evidence
-- Vague concerns like "might be overkill"
+**When presenting options (short/medium leash or high-risk task):**
 
-**If there IS a compelling technical reason to deviate:**
+If there IS a compelling technical reason to recommend one approach:
 
 1. **Explain the specific technical issue** with concrete evidence
 2. **Quantify the impact** where possible (e.g., "adds O(n) scan to every parenthesized expression")
-3. **Present the choice to the user** with the deviation explained
+3. **Present the choice to the user** with the recommendation explained
 4. **Let the user decide** - they may accept the tradeoff
 
-**Example of proper deviation handling:**
+**Example of proper recommendation handling:**
 
 ```
-Your config shows `approach: aggressive`. However, the aggressive approach here
-has a specific performance concern:
+This task has multiple valid approaches:
 
+The Aggressive approach has a specific performance concern:
 - Adds isLambdaExpression() lookahead to EVERY parenthesized expression
 - In typical Java files, this adds ~950 unnecessary scans per 1000 parens
 - Quantified overhead: O(n) per paren where n = tokens until )
 
-The balanced approach achieves the same correctness without this overhead.
+The Balanced approach achieves the same correctness without this overhead.
 
 Would you like to:
 - Proceed with Aggressive (accept overhead for architectural clarity)
 - Use Balanced (targeted fix without overhead)
 ```
 
-**Anti-pattern:** "I selected Balanced because Aggressive seemed like overkill for this task."
-This overrides user preference based on agent judgment, not technical necessity.
+**Anti-pattern:** Auto-selecting an approach when `leash: short` or `leash: medium` without
+presenting the choice to the user.
 
 ## Workflow
 
-### 1. Analyze Task & Preferences
+### 1. Analyze Task & Leash Setting
 
 ```bash
-# Load approach preference
-APPROACH=$(jq -r '.approach // "balanced"' .claude/cat/cat-config.json)
+# Load leash setting (trust level)
+LEASH=$(jq -r '.leash // "medium"' .claude/cat/cat-config.json)
 ```
 
 Read PLAN.md and extract:
@@ -82,33 +75,28 @@ Read PLAN.md and extract:
 
 ### 2. Determine if Choice Point Needed
 
-| Risk Level | User Preference | Decision |
-|------------|-----------------|----------|
-| LOW/MEDIUM | `conservative` | Auto-select Conservative, log to STATE.md |
-| LOW/MEDIUM | `aggressive` | Auto-select Aggressive, log to STATE.md |
-| LOW/MEDIUM | `balanced` | Present choice, no recommendation |
+| Risk Level | Leash Setting | Decision |
+|------------|---------------|----------|
+| LOW/MEDIUM | `long` | Auto-select Balanced, log to STATE.md |
+| LOW/MEDIUM | `medium` | Present choice for meaningful trade-offs |
+| LOW/MEDIUM | `short` | Present choice (user guides decisions) |
 | HIGH | Any | Present choice (user must confirm for high-risk) |
 
 ### 3. Auto-Selection or Recommendation
 
-**If auto-selecting (non-HIGH risk with clear preference):**
+**If auto-selecting (long leash with non-HIGH risk):**
 
 ```
-✓ Approach: [Conservative|Aggressive]
-  (Auto-selected: matches your "{preference}" style)
+✓ Approach: Balanced
+  (Auto-selected: long leash setting, routine trade-off)
 ```
 
 Update PLAN.md "Selected Approach" section and proceed to implementation.
 
 **If presenting choice:**
 
-Generate recommendation based on task characteristics:
-
-| User Preference | Recommended Option | Note |
-|-----------------|-------------------|------|
-| `conservative` | Conservative | "Matches your preference" |
-| `aggressive` | Aggressive | "Matches your preference" |
-| `balanced` | None | User decides |
+Present all three approaches without bias. Let the user decide based on
+their understanding of the project context.
 
 ### 4. Present Fork in the Road
 
@@ -122,7 +110,7 @@ Display with visual formatting (see display-standards.md for box standards):
 ║  Task: [task-name]                                                ║
 ║  Risk: [HIGH - requires confirmation]                             ║
 ║                                                                   ║
-║  [A] 🛡️ Conservative  [⭐ if preference matches]                  ║
+║  [A] 🛡️ Conservative                                              ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: LOW | Tradeoff: [from PLAN.md]                         ║
 ║                                                                   ║
@@ -130,11 +118,11 @@ Display with visual formatting (see display-standards.md for box standards):
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: MEDIUM | Tradeoff: [from PLAN.md]                      ║
 ║                                                                   ║
-║  [C] ⚔️ Aggressive  [⭐ if preference matches]                    ║
+║  [C] ⚔️ Aggressive                                                ║
 ║      [scope from PLAN.md]                                         ║
 ║      Risk: HIGH | Tradeoff: [from PLAN.md]                        ║
 ║                                                                   ║
-║  Your style: [preference]                                         ║
+║  Your leash: [leash setting]                                      ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
 ```
@@ -239,7 +227,7 @@ a comprehensive spec without re-reading the codebase.
 ║  [C] 🔍 Research first                                            ║
 ║      Analyze usage patterns before deciding                       ║
 ║                                                                   ║
-║  Your project style is "Balanced" - either A or B fits.           ║
+║  Your leash is "medium" - presenting options for your decision.   ║
 ║  Which path calls to you?                                         ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
