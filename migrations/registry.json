@@ -11,6 +11,11 @@
       "version": "1.0.9",
       "script": "1.0.9.sh",
       "description": "Replace approach/stakeholderReview/refactoring with trust/verify/curiosity/patience; rename autoCleanupWorktrees to autoRemoveWorktrees"
+    },
+    {
+      "version": "1.0.10",
+      "script": "1.0.10.sh",
+      "description": "Remove yoloMode in favor of trust: high for full autonomy"
     }
   ]
 }
