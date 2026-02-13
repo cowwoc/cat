@@ -15,6 +15,7 @@ set -euo pipefail
 #   verify CURRENT_LEVEL
 #   curiosity CURRENT_LEVEL
 #   patience CURRENT_LEVEL
+#   terminal-width CURRENT_WIDTH
 #   version-gates
 #   gates-for VERSION ENTRY_CONDITIONS EXIT_CONDITIONS
 #   no-gates VERSION
@@ -37,6 +38,7 @@ box_settings() {
     local curiosity="${5:-low}"
     local patience="${6:-high}"
     local auto_remove="${7:-true}"
+    local terminal_width="${8:-120}"
 
     box_top "⚙️ CAT SETTINGS"
     box_empty
@@ -52,6 +54,9 @@ box_settings() {
     box_empty
     box_line "  🧹 CLEANUP"
     box_line "     Auto-remove: ${auto_remove}"
+    box_empty
+    box_line "  📏 DISPLAY"
+    box_line "     Width: ${terminal_width} characters"
     box_empty
     box_line "  📊 VERSION GATES"
     box_line "     Configure entry/exit conditions for versions"
@@ -191,6 +196,32 @@ box_patience() {
     box_bottom
 }
 
+box_terminal_width() {
+    local current="${1:-120}"
+    local desktop_marker="" mobile_marker="" custom_marker=""
+    [[ "$current" == "120" ]] && desktop_marker="(current)"
+    [[ "$current" == "50" ]] && mobile_marker="(current)"
+    if [[ "$current" != "120" && "$current" != "50" ]]; then
+        custom_marker="(current: ${current})"
+    fi
+
+    box_top "📏 DISPLAY WIDTH"
+    box_line "  Select your primary device type"
+    box_divider
+    box_empty
+    box_line "  🖥️  DESKTOP/LAPTOP ${desktop_marker}"
+    box_line "     120 characters - wide format for monitors"
+    box_empty
+    box_line "  📱 MOBILE ${mobile_marker}"
+    box_line "     50 characters - compact for phones"
+    box_empty
+    if [ -n "$custom_marker" ]; then
+        box_line "  ⚙️  CUSTOM ${custom_marker}"
+        box_empty
+    fi
+    box_bottom
+}
+
 box_version_gates() {
     box_top "📊 VERSION GATES"
     box_empty
@@ -306,6 +337,9 @@ case "$BOX_TYPE" in
     patience)
         box_patience "$@"
         ;;
+    terminal-width)
+        box_terminal_width "$@"
+        ;;
     version-gates)
         box_version_gates
         ;;
@@ -337,6 +371,7 @@ case "$BOX_TYPE" in
         echo "  verify CURRENT_LEVEL" >&2
         echo "  curiosity CURRENT_LEVEL" >&2
         echo "  patience CURRENT_LEVEL" >&2
+        echo "  terminal-width CURRENT_WIDTH" >&2
         echo "  version-gates" >&2
         echo "  gates-for VERSION ENTRY_CONDITIONS EXIT_CONDITIONS" >&2
         echo "  no-gates VERSION" >&2
