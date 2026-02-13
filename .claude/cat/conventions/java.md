@@ -308,19 +308,29 @@ for (int i = 0; i < lineCount; ++i)
 return summary.toString();
 ```
 
-### String Concatenation with Newlines
-Split consecutive newlines across lines for readability:
+### Multiline Strings
+**Favor Java text blocks** (triple-quoted strings) over concatenated strings or strings containing `\n` characters:
 
 ```java
-// Good - split newlines for readability
-"First line\n" +
-"\n" +
-"Second line after blank"
+// Good - text block (readable, matches actual output)
+Files.writeString(path, """
+  # Configuration
+  @config/settings.yaml
+  # Notes
+  @config/notes.txt
+  """);
 
-// Avoid - multiple escape sequences per line
-"First line\n\n" +
-"Second line after blank"
+// Avoid - escape sequences (hard to read, error-prone)
+Files.writeString(path, "# Configuration\n@config/settings.yaml\n# Notes\n@config/notes.txt\n");
+
+// Avoid - concatenation with newlines
+Files.writeString(path, "# Configuration\n" +
+  "@config/settings.yaml\n" +
+  "# Notes\n" +
+  "@config/notes.txt\n");
 ```
+
+Text blocks automatically include a newline at each line break. Use `\` at end of line to suppress unwanted newlines.
 
 ### String Comparison (Case-Sensitive)
 Use `variable.equals("literal")` for standard comparisons. Only use `Objects.equals()` when the variable may be null:
