@@ -1,3 +1,13 @@
+@templates/issue-state.md
+@templates/issue-plan.md
+@templates/major-state.md
+@templates/major-plan.md
+@templates/minor-state.md
+@templates/minor-plan.md
+@templates/changelog.md
+@concepts/questioning.md
+@concepts/version-paths.md
+
 # Add Issue or Version
 
 Unified command for adding issues or versions to the CAT planning structure.
@@ -168,7 +178,7 @@ Append custom criteria to the standard list for TASK_TYPE.
 |------|-------------------|
 | Feature | Functionality works, Tests passing, No regressions |
 | Bugfix | Bug fixed, Regression test added, No new issues |
-| Refactor | Behavior unchanged, Tests passing, Code quality improved |
+| Refactor | User-visible behavior unchanged, Tests passing, Code quality improved |
 | Performance | Target met, Benchmarks added, No functionality regression |
 
 Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom additions.

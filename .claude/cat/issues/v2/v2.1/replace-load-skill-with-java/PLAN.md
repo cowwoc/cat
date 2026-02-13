@@ -42,18 +42,18 @@ all 46 skills to communicate loading semantics (loaded on first invocation only;
    - Keep the `CLAUDE_PROJECT_DIR` check
    - The script becomes a thin wrapper: validate args, invoke Java
 
-2. **Rename `content.md` to `first-load.md` across all skills:**
-   - Rename all 46 files: `git mv plugin/skills/{skill}/content.md plugin/skills/{skill}/first-load.md`
-   - Update `SkillLoader.loadContent()` to read `first-load.md` instead of `content.md`
+2. **Rename `content.md` to `first-use.md` across all skills:**
+   - Rename all 46 files: `git mv plugin/skills/{skill}/content.md plugin/skills/{skill}/first-use.md`
+   - Update `SkillLoader.loadContent()` to read `first-use.md` instead of `content.md`
    - Update `SkillLoader` Javadoc that references `content.md`
-   - Update references in `plugin/scripts/load-skill.sh` (line 63: `content.md` → `first-load.md`)
+   - Update references in `plugin/scripts/load-skill.sh` (line 63: `content.md` → `first-use.md`)
    - Update references in `plugin/hooks/README.md`
    - Update references in `plugin/concepts/agent-architecture.md`
-   - Update text references to `content.md` inside `plugin/skills/skill-builder/first-load.md` (after rename)
-   - Update text references to `content.md` inside `plugin/skills/verify-implementation/first-load.md` (after rename)
+   - Update text references to `content.md` inside `plugin/skills/skill-builder/first-use.md` (after rename)
+   - Update text references to `content.md` inside `plugin/skills/verify-implementation/first-use.md` (after rename)
    - Update all test references in `SkillLoaderTest.java` that write to `content.md`
 
-3. **Replace `includes.txt` with `@path` references in `first-load.md`** in SkillLoader (after rename):
+3. **Replace `includes.txt` with `@path` references in `first-use.md`** in SkillLoader (after rename):
    - **Remove `loadIncludes()` method** entirely
    - **Add `@path` expansion to `substituteVars()`** (or a new method called before/after var substitution):
      - Match lines starting with `@` followed by a relative path ending in `.md` or `.json`:
@@ -65,26 +65,26 @@ all 46 skills to communicate loading semantics (loaded on first invocation only;
    - **Processing order:** Expand `@path` references first, then substitute `${VAR}` variables in the combined
      content. This ensures variables inside referenced files are resolved.
 
-4. **Migrate the 4 skills using `includes.txt` to `@path` in `first-load.md`:**
+4. **Migrate the 4 skills using `includes.txt` to `@path` in `first-use.md`:**
 
    | Skill | includes.txt references | Migration |
    |-------|------------------------|-----------|
-   | `remove` | `concepts/version-paths.md` | Add `@concepts/version-paths.md` at top of first-load.md |
-   | `decompose-issue` | `concepts/version-paths.md` | Add `@concepts/version-paths.md` at top of first-load.md |
-   | `init` | `templates/project.md`, `templates/roadmap.md`, `templates/cat-config.json` | Add 3 `@path` lines at top of first-load.md |
-   | `add` | 9 files (templates + concepts) | Add 9 `@path` lines at top of first-load.md |
+   | `remove` | `concepts/version-paths.md` | Add `@concepts/version-paths.md` at top of first-use.md |
+   | `decompose-issue` | `concepts/version-paths.md` | Add `@concepts/version-paths.md` at top of first-use.md |
+   | `init` | `templates/project.md`, `templates/roadmap.md`, `templates/cat-config.json` | Add 3 `@path` lines at top of first-use.md |
+   | `add` | 9 files (templates + concepts) | Add 9 `@path` lines at top of first-use.md |
 
    - Delete all 4 `includes.txt` files after migration
 
 5. **Add tests for `@path` expansion** in `SkillLoaderTest.java`:
-   - Test that `@concepts/file.md` in first-load.md is replaced with file contents (no wrapping)
+   - Test that `@concepts/file.md` in first-use.md is replaced with file contents (no wrapping)
    - Test that variables inside `@path`-expanded content are resolved
    - Test that missing `@path` file causes IOException (fail-fast)
    - Test that `@` in non-path contexts (email addresses, annotations) is not expanded
    - Test existing bindings.json resolution still works
 
 6. **Update refactor acceptance criteria in `/cat:add` stakeholder prompt** in
-   `plugin/skills/add/first-load.md`:
+   `plugin/skills/add/first-use.md`:
    - In the `task_ask_type_and_criteria` step's standard criteria table, change the Refactor row from
      "Behavior unchanged" to "User-visible behavior unchanged"
    - This prevents false contradiction flags when refactoring changes internal implementation while preserving
@@ -97,19 +97,19 @@ all 46 skills to communicate loading semantics (loaded on first invocation only;
 | File | Action | Description |
 |------|--------|-------------|
 | `plugin/scripts/load-skill.sh` | Modify | Replace sed substitution with Java SkillLoader invocation |
-| `hooks/src/main/java/.../SkillLoader.java` | Modify | Remove `loadIncludes()`, add `@path` expansion, read `first-load.md` |
-| `plugin/skills/*/content.md` (46 files) | Rename | Rename to `first-load.md` |
-| `plugin/hooks/README.md` | Modify | Update `content.md` references to `first-load.md` |
-| `plugin/concepts/agent-architecture.md` | Modify | Update `content.md` references to `first-load.md` |
+| `hooks/src/main/java/.../SkillLoader.java` | Modify | Remove `loadIncludes()`, add `@path` expansion, read `first-use.md` |
+| `plugin/skills/*/content.md` (46 files) | Rename | Rename to `first-use.md` |
+| `plugin/hooks/README.md` | Modify | Update `content.md` references to `first-use.md` |
+| `plugin/concepts/agent-architecture.md` | Modify | Update `content.md` references to `first-use.md` |
 | `hooks/src/test/java/.../SkillLoaderTest.java` | Modify | Add tests for `@path` expansion and bindings |
-| `plugin/skills/add/first-load.md` | Modify | Add `@path` refs at top, clarify refactor criteria |
-| `plugin/skills/remove/first-load.md` | Modify | Add `@concepts/version-paths.md` at top |
-| `plugin/skills/remove/includes.txt` | Delete | Replaced by `@path` in first-load.md |
-| `plugin/skills/decompose-issue/first-load.md` | Modify | Add `@concepts/version-paths.md` at top |
-| `plugin/skills/decompose-issue/includes.txt` | Delete | Replaced by `@path` in first-load.md |
-| `plugin/skills/init/first-load.md` | Modify | Add 3 `@path` lines at top |
-| `plugin/skills/init/includes.txt` | Delete | Replaced by `@path` in first-load.md |
-| `plugin/skills/add/includes.txt` | Delete | Replaced by `@path` in first-load.md |
+| `plugin/skills/add/first-use.md` | Modify | Add `@path` refs at top, clarify refactor criteria |
+| `plugin/skills/remove/first-use.md` | Modify | Add `@concepts/version-paths.md` at top |
+| `plugin/skills/remove/includes.txt` | Delete | Replaced by `@path` in first-use.md |
+| `plugin/skills/decompose-issue/first-use.md` | Modify | Add `@concepts/version-paths.md` at top |
+| `plugin/skills/decompose-issue/includes.txt` | Delete | Replaced by `@path` in first-use.md |
+| `plugin/skills/init/first-use.md` | Modify | Add 3 `@path` lines at top |
+| `plugin/skills/init/includes.txt` | Delete | Replaced by `@path` in first-use.md |
+| `plugin/skills/add/includes.txt` | Delete | Replaced by `@path` in first-use.md |
 
 ### Key Constraints
 
@@ -123,14 +123,14 @@ all 46 skills to communicate loading semantics (loaded on first invocation only;
 ## Success Criteria
 
 - [ ] User-visible behavior unchanged: all skills load with variables fully resolved
-- [ ] `${CAT_SKILL_OUTPUT}` in status/first-load.md resolves to actual GetStatusOutput result
+- [ ] `${CAT_SKILL_OUTPUT}` in status/first-use.md resolves to actual GetStatusOutput result
 - [ ] Undefined variables cause fail-fast with clear error message
 - [ ] All three built-in variables (CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR) resolve correctly
-- [ ] `@path` references in first-load.md expand to raw file contents (no wrapping tags)
+- [ ] `@path` references in first-use.md expand to raw file contents (no wrapping tags)
 - [ ] Missing `@path` files cause fail-fast with clear error
-- [ ] All 4 `includes.txt` files deleted and replaced with `@path` in first-load.md
+- [ ] All 4 `includes.txt` files deleted and replaced with `@path` in first-use.md
 - [ ] Integration tests for `@path` expansion, bindings resolution, and variable substitution
-- [ ] All 46 `content.md` files renamed to `first-load.md`
-- [ ] All code/doc references to `content.md` updated to `first-load.md`
+- [ ] All 46 `content.md` files renamed to `first-use.md`
+- [ ] All code/doc references to `content.md` updated to `first-use.md`
 - [ ] Existing SkillLoader tests continue to pass (updated for new filename)
 - [ ] `mvn -f hooks/pom.xml verify` passes

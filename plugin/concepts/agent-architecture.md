@@ -418,8 +418,8 @@ path resolution failures.
 **Context details:**
 
 1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs load-skill.sh, which processes handler.sh
-   output AND content.md through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are string-substituted.
-   CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When content.md contains
+   output AND first-use.md through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are string-substituted.
+   CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When first-use.md contains
    `${CLAUDE_PROJECT_DIR}` in code blocks, it passes through as literal text — it resolves later because Claude copies
    those code blocks into Bash tool calls where the variable IS available via CLAUDE_ENV_FILE.
 
