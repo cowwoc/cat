@@ -322,7 +322,7 @@ escalation: "ESCALATE-2026-01-08-001"
 
 ## Integration with learn-from-mistakes
 
-At the end of `learn-from-mistakes` Step 9 (Record Learning), add:
+At the end of `learn-from-mistakes` Step 11 (Record Learning), add:
 
 ```yaml
 trigger_check:
