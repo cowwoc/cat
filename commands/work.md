@@ -1342,7 +1342,7 @@ Resolution field is MANDATORY. Valid values: `implemented`, `duplicate`, `obsole
 
 **Anti-pattern (M076):** Committing STATE.md separately as "docs: complete task {name}".
 
-Present work summary with adventure-style checkpoint.
+Present work summary with checkpoint display.
 
 **CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
@@ -1352,7 +1352,7 @@ Output format (do NOT wrap in ```):
 ✅ **CHECKPOINT: Task Complete**
 ╭──────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                              │
-│  **Quest:** {task-name}                                                                      │
+│  **Task:** {task-name}                                                                       │
 │  **Approach:** {selected approach from choose_approach step}                                 │
 │                                                                                              │
 ├──────────────────────────────────────────────────────────────────────────────────────────────┤
@@ -1368,11 +1368,11 @@ Users review the task branch which contains merged subagent work, not the intern
 **CRITICAL:** Token metrics MUST be included. If unavailable (e.g., `.completion.json` not found),
 parse session file directly or report "Metrics unavailable - manual review recommended."
 
-Use AskUserQuestion with adventure-style options:
+Use AskUserQuestion with options:
 - header: "Next Step"
 - question: "What would you like to do?"
 - options:
-  - "✓ Approve and merge" - Merge to main, continue adventure
+  - "✓ Approve and merge" - Merge to main, continue to next task
   - "🔍 Review changes first" - I'll examine the diff
   - "✏️ Request changes" - Need modifications before proceeding
   - "✗ Abort" - Discard work entirely
