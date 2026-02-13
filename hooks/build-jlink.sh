@@ -298,7 +298,7 @@ generate_launchers() {
 #!/bin/sh
 DIR=`dirname $0`
 exec "$DIR/java" \
-  -Xms16m -Xmx64m \
+  -Xms16m -Xmx96m \
   -Dstdout.encoding=UTF-8 \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
