@@ -1,0 +1,6 @@
+{
+  "yoloMode": false,
+  "contextLimit": 200000,
+  "targetContextUsage": 40,
+  "autoCleanupWorktrees": true
+}
