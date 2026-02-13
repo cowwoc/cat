@@ -28,7 +28,7 @@ public final class JsonHelper
    * @param key the key to retrieve
    * @param defaultValue the value to return if key is missing, not a string, or empty
    * @return the string value or default
-   * @throws NullPointerException if node or key is null
+   * @throws NullPointerException if {@code node} or {@code key} are null
    */
   public static String getStringOrDefault(JsonNode node, String key, String defaultValue)
   {
