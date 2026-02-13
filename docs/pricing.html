@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAT Pricing - AI Coding That Ships on Schedule</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --accent: #0ea5e9;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        header .tagline {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Pricing Cards */
+        .pricing-section {
+            padding: 60px 0;
+            margin-top: -40px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .pricing-card {
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            position: relative;
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .tier-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .tier-audience {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        .price {
+            margin-bottom: 24px;
+        }
+
+        .price-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .price-period {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+        }
+
+        .feature-list li::before {
+            content: '\2713';
+            color: var(--success);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .cta-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .cta-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .cta-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 2px solid var(--border);
+        }
+
+        .cta-secondary:hover {
+            background: var(--border);
+        }
+
+        /* Feature Comparison Matrix */
+        .comparison-section {
+            padding: 60px 0;
+            background: var(--bg-white);
+        }
+
+        .comparison-section h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: var(--text-dark);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: var(--bg-light);
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .comparison-table th:not(:first-child),
+        .comparison-table td:not(:first-child) {
+            text-align: center;
+            width: 150px;
+        }
+
+        .comparison-table tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        .feature-name {
+            font-weight: 500;
+        }
+
+        .feature-description {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .check {
+            color: var(--success);
+            font-size: 1.25rem;
+        }
+
+        .dash {
+            color: var(--border);
+            font-size: 1.25rem;
+        }
+
+        .category-header {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+
+        .category-header td {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            padding: 60px 0;
+        }
+
+        .faq-section h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: var(--text-dark);
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+        }
+
+        .faq-item {
+            background: var(--bg-white);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-item h3 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: var(--text-dark);
+        }
+
+        .faq-item p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Footer CTA */
+        .footer-cta {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .footer-cta h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .footer-cta p {
+            opacity: 0.9;
+            margin-bottom: 24px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .footer-cta .cta-button {
+            display: inline-block;
+            width: auto;
+            background: white;
+            color: var(--primary);
+        }
+
+        .footer-cta .cta-button:hover {
+            background: var(--bg-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin: 0 auto;
+            }
+
+            .pricing-card.featured {
+                order: -1;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                font-size: 0.85rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 12px 8px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header .tagline {
+                font-size: 1rem;
+            }
+
+            .comparison-section {
+                overflow-x: auto;
+            }
+
+            .comparison-table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>CAT Pricing</h1>
+            <p class="tagline">AI coding that ships on schedule. Choose the plan that fits your team.</p>
+        </div>
+    </header>
+
+    <section class="pricing-section">
+        <div class="container">
+            <div class="pricing-grid">
+                <!-- Indie Tier -->
+                <div class="pricing-card">
+                    <h2 class="tier-name">Indie</h2>
+                    <p class="tier-audience">Solo developers</p>
+                    <div class="price">
+                        <span class="price-amount">Free</span>
+                        <span class="price-period">forever</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li>Full CAT functionality</li>
+                        <li>Hierarchical planning (versions, tasks)</li>
+                        <li>Isolated worktrees for safe execution</li>
+                        <li>Automatic state tracking</li>
+                        <li>Token-aware task sizing</li>
+                        <li>Learn from mistakes</li>
+                        <li>Quality gate reviews</li>
+                        <li>Unlimited projects</li>
+                    </ul>
+                    <a href="https://github.com/cowwoc/cat" class="cta-button cta-secondary">Get Started</a>
+                </div>
+
+                <!-- Team Tier -->
+                <div class="pricing-card featured">
+                    <h2 class="tier-name">Team</h2>
+                    <p class="tier-audience">Teams of 1-50</p>
+                    <div class="price">
+                        <span class="price-amount">$19</span>
+                        <span class="price-period">/seat/month</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li>Everything in Indie, plus:</li>
+                        <li>Collision Prevention</li>
+                        <li>Team Pulse dashboard</li>
+                        <li>Shared Brain conventions</li>
+                        <li>Cross-session Handoff</li>
+                        <li>Branch Policies enforcement</li>
+                        <li>Team Analytics</li>
+                        <li>Project Budgets</li>
+                    </ul>
+                    <a href="https://cat.dev/pricing" class="cta-button cta-primary">Start Team Trial</a>
+                </div>
+
+                <!-- Enterprise Tier -->
+                <div class="pricing-card">
+                    <h2 class="tier-name">Enterprise</h2>
+                    <p class="tier-audience">Organizations 50+</p>
+                    <div class="price">
+                        <span class="price-amount">$49</span>
+                        <span class="price-period">/seat/month</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li>Everything in Team, plus:</li>
+                        <li>SSO/SAML integration</li>
+                        <li>Issue Tracker Sync</li>
+                        <li>Slack/Teams Notifications</li>
+                        <li>Custom LLM Endpoints</li>
+                        <li>Webhook API</li>
+                        <li>Audit Logs</li>
+                        <li>Data Residency options</li>
+                        <li>SLA &amp; Priority Support</li>
+                    </ul>
+                    <a href="mailto:cowwoc2020@gmail.com?subject=CAT%20Enterprise%20Inquiry" class="cta-button cta-secondary">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="comparison-section">
+        <div class="container">
+            <h2>Feature Comparison</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Indie</th>
+                        <th>Team</th>
+                        <th>Enterprise</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Core Features -->
+                    <tr class="category-header">
+                        <td colspan="4">Core Features</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Hierarchical Planning</div>
+                            <div class="feature-description">Organize work into versions and tasks</div>
+                        </td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Isolated Worktrees</div>
+                            <div class="feature-description">Each task runs in its own git worktree</div>
+                        </td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Token-Aware Tasks</div>
+                            <div class="feature-description">Tasks sized to fit within context limits</div>
+                        </td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Quality Gate Reviews</div>
+                            <div class="feature-description">Multi-perspective stakeholder reviews</div>
+                        </td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Learn from Mistakes</div>
+                            <div class="feature-description">CAT analyzes failures and prevents repeats</div>
+                        </td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+
+                    <!-- Team Features -->
+                    <tr class="category-header">
+                        <td colspan="4">Team Collaboration</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Collision Prevention</div>
+                            <div class="feature-description">Automatic task locking prevents two developers from accidentally working on the same task simultaneously</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Team Pulse</div>
+                            <div class="feature-description">Real-time dashboard showing who's working on what across all team members</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Shared Brain</div>
+                            <div class="feature-description">Team-wide coding conventions and preferences enforced automatically across all sessions</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Cross-session Handoff</div>
+                            <div class="feature-description">Pick up exactly where a teammate left off with full context preserved</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Branch Policies</div>
+                            <div class="feature-description">Naming conventions and branch rules enforced automatically, not just suggested</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Team Analytics</div>
+                            <div class="feature-description">Visibility into task completion rates, token usage, and productivity patterns</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Project Budgets</div>
+                            <div class="feature-description">Set token limits per project to prevent runaway API costs</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+
+                    <!-- Enterprise Features -->
+                    <tr class="category-header">
+                        <td colspan="4">Enterprise &amp; Compliance</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">SSO/SAML</div>
+                            <div class="feature-description">Single sign-on integration with your existing identity provider (Okta, Azure AD, etc.)</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Issue Tracker Sync</div>
+                            <div class="feature-description">Bi-directional sync with Jira, Linear, or GitHub Issues</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Slack/Teams Notifications</div>
+                            <div class="feature-description">Task updates posted to your team's communication channels</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Custom LLM Endpoints</div>
+                            <div class="feature-description">Connect to your organization's approved, audited AI models</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Webhook API</div>
+                            <div class="feature-description">Integrate CAT events with your existing CI/CD and workflow tools</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Audit Logs</div>
+                            <div class="feature-description">Complete history of all actions, exportable for compliance reporting</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">Data Residency</div>
+                            <div class="feature-description">Control where your data is stored to meet regulatory requirements</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="feature-name">SLA &amp; Priority Support</div>
+                            <div class="feature-description">Guaranteed response times and dedicated support channel</div>
+                        </td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="dash">&mdash;</span></td>
+                        <td><span class="check">&#10003;</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="faq-section">
+        <div class="container">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3>Can I use Indie for commercial projects?</h3>
+                    <p>Yes! Indie is free for solo developers regardless of whether your project is commercial or personal. You only need Team when you want collaboration features.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What happens if I exceed my seat limit?</h3>
+                    <p>Additional users will see core Indie functionality but won't have access to Team features until you add more seats or an existing seat is released.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Is there a free trial for Team?</h3>
+                    <p>Yes, Team includes a 14-day free trial with full access to all collaboration features. No credit card required to start.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What's the billing cycle?</h3>
+                    <p>Team can be billed monthly or annually (annual saves 2 months). Enterprise is billed annually with volume discounts available.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Can I switch plans anytime?</h3>
+                    <p>Yes, you can upgrade or downgrade at any time. When upgrading, you'll be prorated. When downgrading, the change takes effect at your next billing cycle.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What about offline usage?</h3>
+                    <p>CAT includes a 30-day grace period for license validation, so CI/CD pipelines and air-gapped environments work without interruption.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="footer-cta">
+        <div class="container">
+            <h2>Ready to ship on schedule?</h2>
+            <p>Start with Indie for free. Upgrade when your team grows.</p>
+            <a href="https://github.com/cowwoc/cat" class="cta-button">Get Started Free</a>
+        </div>
+    </section>
+</body>
+</html>
