@@ -1,0 +1,89 @@
+# Plan: fix-git-skill-race-conditions
+
+## Goal
+Fix race conditions across git-* skills where base branch references can advance between operations,
+causing stale files to leak into commits or incorrect merge results.
+
+## Problem
+Multiple git-* skills call `git rev-parse` on the base branch at different points in their workflow.
+If the base branch advances between calls (e.g., another session commits to v2.1), operations use
+inconsistent refs, causing stale files to appear in commits or incorrect merge parents.
+
+**Audit findings (ordered by severity):**
+
+| Skill | Severity | Issue |
+|-------|----------|-------|
+| git-squash | CRITICAL | `git rev-parse` called separately for rebase and commit-tree parent |
+| git-merge-linear | CRITICAL | BASE_BRANCH ref used at lines 157, 173, 190, 241-282 without pinning |
+| git-rebase | MEDIUM | BASE_BRANCH can advance between read and rebase at lines 125-132 |
+| git-amend | LOW | Push status check race at lines 31-44 |
+| git-rewrite-history | LOW | Concurrent gc could remove reflog at lines 148-163 |
+| git-commit | NONE | No race conditions found |
+
+## Satisfies
+None - infrastructure bugfix
+
+## Risk Assessment
+- **Risk Level:** LOW
+- **Concerns:** Changes affect core git workflows used by all /cat:work executions
+- **Mitigation:** Pin-once pattern is simpler than current approach. Each skill's safety pattern unchanged.
+
+## Files to Modify
+- plugin/skills/git-squash/content.md - Pin base reference before rebase, reuse for commit-tree parent
+- plugin/skills/git-merge-linear/content.md - Pin base reference once, reuse across all merge operations
+- plugin/skills/git-rebase/content.md - Pin base reference before rebase operation
+- plugin/skills/git-amend/content.md - Add note about push status race (documentation only)
+
+## Acceptance Criteria
+- [ ] git-squash: Base branch reference resolved once, reused for rebase and commit-tree
+- [ ] git-merge-linear: Base branch reference resolved once, reused across verify/merge/cleanup steps
+- [ ] git-rebase: Base branch reference resolved once before rebase
+- [ ] git-amend: Push status race documented with advisory note
+- [ ] Pin-once pattern applied consistently: `BASE=$(git rev-parse <base-branch>)` before first use
+- [ ] No race window between any operations that depend on the same base ref
+- [ ] Critical Rules warning added to each modified skill
+- [ ] All existing tests pass with no regressions
+
+## Execution Steps
+1. **Step 1:** Fix git-squash Quick Workflow
+   - Files: plugin/skills/git-squash/content.md
+   - Add pin step before rebase: `BASE=$(git rev-parse <base-branch>)`
+   - Change rebase to use pinned ref: `git rebase $BASE`
+   - Change commit-tree to use pinned ref: `git commit-tree $TREE -p $BASE -m "$MESSAGE"`
+   - Remove separate `git rev-parse` call in commit-tree step
+   - Add comment explaining why pinning is necessary (race condition prevention)
+2. **Step 2:** Fix git-squash Interactive Rebase Workflow
+   - Files: plugin/skills/git-squash/content.md
+   - Pin base reference before any operations
+   - Ensure BASE_COMMIT uses the pinned value
+3. **Step 3:** Add Critical Rules warning to git-squash
+   - Files: plugin/skills/git-squash/content.md
+   - Add: "MANDATORY: Pin base branch reference before rebase. Do NOT call git rev-parse on the base
+     branch separately for rebase and commit-tree."
+4. **Step 4:** Fix git-merge-linear base ref pinning
+   - Files: plugin/skills/git-merge-linear/content.md
+   - Add pin step at start of merge workflow: `BASE=$(git rev-parse <base-branch>)`
+   - Replace all subsequent `<base-branch>` references with `$BASE` in merge, verify, and cleanup steps
+   - Ensure merge-base check, fast-forward, and post-merge verification all use same pinned ref
+5. **Step 5:** Add Critical Rules warning to git-merge-linear
+   - Files: plugin/skills/git-merge-linear/content.md
+   - Add: "MANDATORY: Pin base branch reference at workflow start. All merge operations must use the
+     pinned SHA, not the branch name."
+6. **Step 6:** Fix git-rebase base ref pinning
+   - Files: plugin/skills/git-rebase/content.md
+   - Pin BASE_BRANCH ref before rebase operation at lines 125-132
+   - Use pinned ref for the rebase command
+7. **Step 7:** Document git-amend push status race
+   - Files: plugin/skills/git-amend/content.md
+   - Add advisory note at lines 31-44 about push status check race (informational, not a fix)
+   - Note: This is a time-of-check-to-time-of-use (TOCTOU) race with minimal practical impact
+8. **Step 8:** Run existing tests to verify no regressions
+   - Run: mvn -f hooks/pom.xml test
+
+## Success Criteria
+- [ ] Base reference pinned once in git-squash (both workflows)
+- [ ] Base reference pinned once in git-merge-linear (all operations)
+- [ ] Base reference pinned once in git-rebase
+- [ ] Push status race documented in git-amend
+- [ ] Warnings documented in Critical Rules sections
+- [ ] All existing tests pass with no regressions
