@@ -2,18 +2,20 @@
 
 ## Commit Types
 
-**CRITICAL (M255):** Claude-facing instruction files use `config:`, NOT `docs:`.
-
 | Path | Commit Type | Reason |
 |------|-------------|--------|
-| `CLAUDE.md` | `config:` | Claude project instructions |
-| `plugin/concepts/*.md` | `config:` | Claude reference docs |
-| `plugin/commands/*.md` | `config:` | Claude commands |
-| `plugin/skills/*/*.md` | `config:` | Claude skills |
-| `plugin/hooks/*.py` | `config:` | Plugin source code |
-| `README.md`, `docs/` | `docs:` | User-facing documentation |
+| `plugin/**` (except README.md) | `feature:` / `refactor:` / `bugfix:` | Plugin source code and skills |
+| `.claude/cat/issues/` | `planning:` | Issue tracking |
+| `.claude/**` (other), `CLAUDE.md` | `config:` | Project configuration |
+| `**/README.md`, `docs/` | `docs:` | User-facing documentation |
 
-Use `docs:` ONLY for files end-users read (README, API docs, etc.).
+**Rules:**
+- `plugin/` files use semantic types: `feature:` (new capability), `refactor:` (restructure), `bugfix:` (fix), `test:` (tests), `performance:` (optimization)
+- `.claude/cat/issues/` files use `planning:`
+- Other `.claude/` files and `CLAUDE.md` use `config:`
+- `plugin/**/README.md` is `docs:`, not a plugin file
+- Mixed commits: if a commit touches plugin files, the type follows the plugin work (even if `.claude/` files are also modified)
+- If a commit would touch both docs and non-docs files, split it into separate commits
 
 ## Plugin Development
 
