@@ -132,6 +132,8 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.4</version>
 				<configuration>
+					<!-- Force UTF-8 encoding for forked test JVM -->
+					<argLine>-Dstdin.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8</argLine>
 					<environmentVariables>
 						<CLAUDE_PLUGIN_ROOT>${project.basedir}/../plugin</CLAUDE_PLUGIN_ROOT>
 					</environmentVariables>
