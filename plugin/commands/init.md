@@ -442,8 +442,6 @@ Create `.claude/cat/cat-config.json`:
 ```json
 {
   "version": "[CAT_VERSION from above]",
-  "contextLimit": 200000,
-  "targetContextUsage": 40,
   "trust": "[low|medium|high]",
   "verify": "changed",
   "curiosity": "[low|medium|high]",
