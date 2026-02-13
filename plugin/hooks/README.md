@@ -128,7 +128,7 @@ plugin-root/
   skills/
     reference.md              — Reload text returned on 2nd+ invocations of any skill
     {skill-name}/
-      content.md              — Main skill content (loaded on first invocation)
+      first-use.md            — Main skill content (loaded on first invocation)
       includes.txt            — Optional; one relative path per line listing files to include
       bindings.json           — Optional; maps variable names to SkillOutput class names
 ```
@@ -137,7 +137,7 @@ plugin-root/
 
 **First invocation** of a skill within a session:
 1. Load files listed in `includes.txt`, each wrapped in `<include path="...">...</include>` XML tags
-2. Load `content.md` (with license header stripped if present)
+2. Load `first-use.md` (with license header stripped if present)
 3. Substitute variables (built-in and bindings)
 
 **Subsequent invocations** of the same skill within the same session:
@@ -167,7 +167,7 @@ Skills can define custom variables in `bindings.json` that map to `SkillOutput` 
 - Binding variable names must not collide with built-in variables
 - Undefined variables (not built-in, not in bindings) cause `IOException`
 
-**Example content.md using bindings:**
+**Example first-use.md using bindings:**
 ```markdown
 SCRIPT OUTPUT STATUS DISPLAY:
 ${CAT_SKILL_OUTPUT}
