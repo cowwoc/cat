@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- add-race-condition-review-criteria
 - enforce-jvmscope-env-access
 - fix-potentially-complete-false-positive
 - add-wizard-context-headers
