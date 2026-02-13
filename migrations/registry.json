@@ -10,7 +10,7 @@
     {
       "version": "1.0.9",
       "script": "1.0.9.sh",
-      "description": "Replace approach/stakeholderReview/refactoring with leash/caution/curiosity/patience"
+      "description": "Replace approach/stakeholderReview/refactoring with trust/verify/curiosity/patience; rename autoCleanupWorktrees to autoRemoveWorktrees"
     }
   ]
 }

@@ -28,7 +28,7 @@
 ### Cleanup
 - Immediate after successful merge to main
 - Use locking to prevent conflicts
-- `autoCleanupWorktrees` config controls automatic cleanup
+- `autoRemoveWorktrees` config controls automatic removal
 
 ## Merge Flow
 
