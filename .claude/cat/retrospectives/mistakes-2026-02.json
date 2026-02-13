@@ -3704,6 +3704,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Complete all iteration steps (fix, re-run review, parse result, check concerns) before exiting auto-fix loop or continuing to next phase"
+    },
+    {
+      "id": "M487",
+      "timestamp": "2026-02-13T13:48:12Z",
+      "category": "conflicting_guidance",
+      "description": "Execution subagent created two commits (README.md docs:, STATE.md planning:) instead of one commit as required by delegation prompt",
+      "root_cause": "CLAUDE.md commit type rules (`.claude/cat/issues/` \u2192 `planning:`) primed agent to create separate commit for STATE.md, overriding delegation prompt instruction. The Mixed commits exception rule was not applied.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+      "pattern_keywords": [
+        "STATE.md",
+        "commit splitting",
+        "conflicting guidance",
+        "commit types"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "STATE.md updates should be included in the SAME commit as implementation work, using the implementation commit type, not in a separate planning: commit"
     }
   ],
   "counter": 1
