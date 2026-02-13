@@ -122,6 +122,7 @@ Evaluate implementation against these security criteria:
 ### High Priority
 - **Input Validation Gaps**: Missing validation, inadequate sanitization, direct use of user input
 - **Resource Exhaustion**: Unbounded recursion, memory leaks, missing limits on input size/depth
+- **Race Conditions / TOCTOU**: Time-of-check-to-time-of-use gaps, check-then-act without pinning, unprotected shared state between operations
 - **Cryptographic Weaknesses**: Weak algorithms, hardcoded keys, improper random generation
 
 ### Medium Priority
@@ -135,6 +136,23 @@ Before reviewing, understand the application's security context:
 - **Single-user tools**: Focus on resource protection, not data exfiltration
 - **Multi-tenant systems**: Full security hardening required
 - **Internal tools**: Appropriate trust boundaries, not maximum paranoia
+
+## Concurrency Safety Checks
+
+When reviewing code that involves file-system operations, git operations, or shared state access, check for race
+conditions and TOCTOU vulnerabilities:
+
+- **Branch/ref operations**: `git rev-parse` or similar commands called multiple times on the same ref without pinning
+  the result. The ref may change between calls.
+- **File-system TOCTOU**: Checking file existence, then reading/writing without atomic operation. File state may change
+  between check and use.
+- **Lock files**: Check-then-create patterns without atomic creation. Use `O_CREAT|O_EXCL` flag or equivalent
+  atomic file creation.
+- **Shared state**: Reading config files or state files between operations that must be consistent. State may change
+  between reads.
+
+**Note**: These checks are most relevant for bash scripts, git operation skills, and file-based state management. Not
+applicable to pure documentation changes.
 
 ## Review Output Format
 
