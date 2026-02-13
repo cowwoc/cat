@@ -110,7 +110,7 @@ prompts without display creates confusion and poor UX.
 Render settings box using script:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" settings {contextLimit} {targetContextUsage} {trust} {verify} {curiosity} {patience} {autoRemove} > /tmp/config-box.txt
+"${CLAUDE_PLUGIN_ROOT}/scripts/config-box.sh" settings {trust} {verify} {curiosity} {patience} {autoRemove} > /tmp/config-box.txt
 ```
 
 Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
@@ -128,8 +128,6 @@ Show current values in descriptions using data from read-config step.
 - header: "Settings"
 - question: "What would you like to configure?"
 - options:
-  - label: "🧠 Context Limits"
-    description: "Currently: {contextLimit}k / {targetContextUsage}%"
   - label: "🐱 CAT Behavior"
     description: "Currently: {trust} · {verify} · {curiosity} · {patience}"
   - label: "🧹 Cleanup"
@@ -141,34 +139,10 @@ Show current values in descriptions using data from read-config step.
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
-</step>
-
-<step name="context-limits">
-
-**🧠 Context Limits selection:**
-
-Display current settings, then AskUserQuestion:
-- header: "Context"
-- question: "What would you like to adjust?"
-- options (show current values in descriptions):
-  - label: "Context window size"
-    description: "Currently: {contextLimit} tokens"
-  - label: "Target usage threshold"
-    description: "Currently: {targetContextUsage}%"
-  - label: "← Back"
-    description: "Return to main menu"
-
-**For context limit** (prefix ONLY the option matching current contextLimit with "✅ "):
-- "200,000 tokens - Claude Opus (Recommended)"
-- "128,000 tokens - Claude Sonnet"
-- "Custom value"
-
-**For target usage** (prefix ONLY the option matching current targetContextUsage with "✅ "):
-- "30% - Conservative, lots of headroom"
-- "40% - Balanced (Recommended)"
-- "50% - Aggressive, maximize task size"
+**Note:** Context limits are fixed and not configurable. See agent-architecture.md § Context Limit Constants.
 
 </step>
+
 
 <step name="cat-behavior">
 
@@ -593,13 +567,13 @@ Then use Read tool on `/tmp/config-box.txt` and output contents VERBATIM.
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `contextLimit` | number | 200000 | Context window size |
-| `targetContextUsage` | number | 40 | Decomposition threshold (%) |
 | `trust` | string | "medium" | Trust level (controls review and autonomy) |
 | `verify` | string | "changed" | What verification runs before commits |
 | `curiosity` | string | "low" | Exploration beyond immediate task |
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
+
+**Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
 ### Trust Values
 - `low` — Asks before fixing review issues. Presents options frequently.
