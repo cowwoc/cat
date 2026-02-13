@@ -183,6 +183,7 @@ When trust >= medium, CAT auto-continues to the next task within scope.
 |---------|--------------|
 | `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
 | `/cat:config` | Change your preferences |
+| `/cat:learn` | Analyze and learn from mistakes |
 | `/cat:remove` | Remove a task or version |
 
 ---
