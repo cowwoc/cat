@@ -264,21 +264,21 @@ For each minor version PLAN.md, add:
 
 After applying defaults, display:
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  📊 Default gates configured for {N} versions:               │
-│                                                              │
-│  Entry gates: Work proceeds sequentially                     │
-│  • Each minor waits for previous minor to complete           │
-│  • Each major waits for previous major to complete           │
-│                                                              │
-│  Exit gates: Standard completion criteria                    │
-│  • Minor versions: all tasks must complete                   │
-│  • Major versions: all minor versions must complete          │
-│                                                              │
-│  To customize gates for any version:                         │
-│  → /cat:config → 📊 Version Gates                            │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+╭─ 📊 Default gates configured for {N} versions ────────────────────╮
+├───────────────────────────────────────────────────────────────────┤
+
+   Entry gates: Work proceeds sequentially
+   • Each minor waits for previous minor to complete
+   • Each major waits for previous major to complete
+
+   Exit gates: Standard completion criteria
+   • Minor versions: all tasks must complete
+   • Major versions: all minor versions must complete
+
+   To customize gates for any version:
+   → /cat:config → 📊 Version Gates
+
+╰───────────────────────────────────────────────────────────────────╯
 ```
 
 **If "Configure per version":**
@@ -318,20 +318,19 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 
 <step name="adventure_style">
 
-**Choose Your Adventurer - Capture development style preferences**
+**Choose Your Companion - Capture development style preferences**
 
 Display welcome banner:
 ```
-╔═══════════════════════════════════════════════════════════════════╗
-║  🎮 CHOOSE YOUR ADVENTURER                                        ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║  Every adventurer has a style. These questions shape how your     ║
-║  AI companion navigates the coding quest ahead.                   ║
-║                                                                   ║
-║  Choose wisely - your preferences guide every decision.           ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+╭─ 🎮 CHOOSE YOUR COMPANION ────────────────────────────────────────╮
+├───────────────────────────────────────────────────────────────────┤
+
+   Every adventurer has a style. These questions shape how your
+   AI companion navigates the coding quest ahead.
+
+   Choose wisely - your preferences guide every decision.
+
+╰───────────────────────────────────────────────────────────────────╯
 ```
 
 AskUserQuestion: header="Trust", question="How do you command your companion?", options=[
@@ -409,21 +408,20 @@ git commit -m "docs: initialize CAT planning structure"
 
 Display completion banner:
 ```
-╔═══════════════════════════════════════════════════════════════════╗
-║  ⚔️ YOUR QUEST BEGINS                                             ║
-╠═══════════════════════════════════════════════════════════════════╣
-║                                                                   ║
-║  ADVENTURER PROFILE                                               ║
-║  ─────────────────────────────────────────────────────────────────║
-║  Command Style:  [trust]                                          ║
-║  Exploration:    [curiosity]                                      ║
-║  Opportunity:    [patience]                                       ║
-║  Quest Mode:     [interactive|yolo]                               ║
-║                                                                   ║
-║  Your companion awaits your command.                              ║
-║  Reforge your style anytime: /cat:config                          ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+╭─ ⚔️ YOUR QUEST BEGINS ────────────────────────────────────────────╮
+├───────────────────────────────────────────────────────────────────┤
+
+   COMPANION PROFILE
+   ─────────────────────────────────────────────────────────────────
+   Command Style:  [trust]
+   Exploration:    [curiosity]
+   Opportunity:    [patience]
+   Quest Mode:     [interactive|yolo]
+
+   Your companion awaits your command.
+   Reforge your style anytime: /cat:config
+
+╰───────────────────────────────────────────────────────────────────╯
 ```
 
 **New projects:**

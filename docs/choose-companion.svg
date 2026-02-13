@@ -16,7 +16,7 @@
   <rect x="2" y="26" width="596" height="10" fill="url(#headerGrad2)"/>
   <line x1="2" y1="34" x2="598" y2="34" stroke="#4a5568" stroke-width="1"/>
   <!-- Header text -->
-  <text x="300" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR ADVENTURER</text>
+  <text x="300" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR COMPANION</text>
   <!-- Question -->
   <text x="300" y="60" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="13">How do you command your companion?</text>
   <!-- Options -->

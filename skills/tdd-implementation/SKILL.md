@@ -19,29 +19,28 @@ Use Test-Driven Development for features that benefit from upfront behavior spec
 ## TDD State Machine
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│                              TDD STATE MACHINE                                    │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                   │
-│   [START] ──► [RED] ──► [GREEN] ──► [REFACTOR] ──► [VERIFY] ──► [COMPLETE]       │
-│               │  ▲       │           │              │                             │
-│               ▼  │       ▼           ▼              ▼                             │
-│           Write  │   Write impl   Clean up     Run ORIGINAL                      │
-│           test   │   Run test     Run tests    use-case!                         │
-│           MUST   │   MUST PASS    MUST PASS       │                              │
-│           FAIL   │                                │                              │
-│                  │                    ┌───────────┴───────────┐                  │
-│                  │                    ▼                       ▼                  │
-│                  │               STILL FAILS?             WORKS!                 │
-│                  │                    │                       │                  │
-│                  └────────────────────┘                       ▼                  │
-│                   Test didn't capture                    [COMPLETE]              │
-│                   the REAL bug - write                                           │
-│                   NEW test that fails                                            │
-│                   for same reason as                                             │
-│                   original use-case                                              │
-│                                                                                   │
-└──────────────────────────────────────────────────────────────────────────────────┘
+╭─ TDD STATE MACHINE ───────────────────────────────────────────────────────────────╮
+├───────────────────────────────────────────────────────────────────────────────────┤
+
+   [START] ──► [RED] ──► [GREEN] ──► [REFACTOR] ──► [VERIFY] ──► [COMPLETE]
+               │  ▲       │           │              │
+               ▼  │       ▼           ▼              ▼
+           Write  │   Write impl   Clean up     Run ORIGINAL
+           test   │   Run test     Run tests    use-case!
+           MUST   │   MUST PASS    MUST PASS       │
+           FAIL   │                                │
+                  │                    ┌───────────┴───────────┐
+                  │                    ▼                       ▼
+                  │               STILL FAILS?             WORKS!
+                  │                    │                       │
+                  └────────────────────┘                       ▼
+                   Test didn't capture                    [COMPLETE]
+                   the REAL bug - write
+                   NEW test that fails
+                   for same reason as
+                   original use-case
+
+╰───────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 **Release transitions are VERIFIED by actually running tests.**
