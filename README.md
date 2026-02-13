@@ -80,7 +80,7 @@ Your answers shape how CAT makes decisions throughout your project.
 ### Step 4: Begin the Quest
 
 ```bash
-/cat:execute-task
+/cat:work
 ```
 
 CAT spawns a subagent in an isolated worktree, executes the task, and presents
@@ -159,7 +159,7 @@ Adventures are more fun when you're not worried about falling:
 |---------|--------------|
 | `/cat:init` | Start a new adventure (creates project structure) |
 | `/cat:status` | View your adventure map with progress |
-| `/cat:execute-task` | Begin or continue a quest |
+| `/cat:work` | Begin or continue a quest |
 | `/cat:help` | Quick reference for all commands |
 
 ### Building Your Map
@@ -296,7 +296,7 @@ features in unknown domains.
 **Clear the fog** — Run `/clear` between tasks to start fresh with full context.
 
 **Trust the process** — CAT tracks state automatically. If a session ends
-mid-task, just run `/cat:execute-task` to continue where you left off.
+mid-task, just run `/cat:work` to continue where you left off.
 
 ---
 
