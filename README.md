@@ -176,7 +176,7 @@ Adventures are more fun when you're not worried about falling:
 | Command | What It Does |
 |---------|--------------|
 | `/cat:cleanup` | Clear abandoned worktrees and orphaned branches |
-| `/cat:update-config` | Change your adventurer style |
+| `/cat:config` | Change your adventurer style |
 | `/cat:remove-task` | Remove a quest from the map |
 
 ---
@@ -217,10 +217,10 @@ when tasks need decomposition.
 **targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
 200K (80K tokens), CAT warns that the task may need decomposition.
 
-**approach** — Controls recommendations when multiple implementation paths exist:
-- `conservative` — Recommends safer, incremental approaches; avoids architectural changes
-- `balanced` — No automatic recommendation; presents options neutrally
-- `aggressive` — Recommends comprehensive solutions; favors thoroughness over speed
+**approach** — Controls how CAT chooses when multiple implementation paths exist:
+- `conservative` — Auto-selects targeted fixes; avoids refactoring; fewer files touched
+- `balanced` — You decide at each fork; CAT presents options without recommendation
+- `aggressive` — Auto-selects root-cause solutions; refactors when it improves code quality
 
 **stakeholderReview** — Controls when the 5-perspective review gate runs:
 - `always` — Run stakeholder review on every task
