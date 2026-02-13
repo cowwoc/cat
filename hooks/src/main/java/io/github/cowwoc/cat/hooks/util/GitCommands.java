@@ -143,7 +143,7 @@ public final class GitCommands
     }
     if (branch == null || branch.isEmpty())
       throw new IOException("git branch --show-current returned no output in directory: " + directory);
-    return branch.trim();
+    return branch.strip();
   }
 
   /**
@@ -209,7 +209,7 @@ public final class GitCommands
       throw new IOException("git command failed with exit code " + exitCode + ": " +
         String.join(" ", command));
     }
-    return output.toString().trim();
+    return output.toString().strip();
   }
 
   /**
@@ -269,7 +269,7 @@ public final class GitCommands
     }
     if (line == null || line.isEmpty())
       throw new IOException("git command returned no output: " + String.join(" ", command));
-    return line.trim();
+    return line.strip();
   }
 
   /**
@@ -320,7 +320,7 @@ public final class GitCommands
     String line = reader.readLine();
     while (line != null)
     {
-      String trimmed = line.trim();
+      String trimmed = line.strip();
       if (!trimmed.isEmpty())
         lines.add(trimmed);
       line = reader.readLine();

@@ -308,7 +308,7 @@ public final class GetRenderDiffOutput
       if (process.exitValue() != 0)
         return null;
 
-      return output.trim();
+      return output.strip();
     }
     catch (IOException | InterruptedException _)
     {
@@ -560,7 +560,7 @@ public final class GetRenderDiffOutput
             currentFile,
             Integer.parseInt(match.group(1)),
             Integer.parseInt(match.group(2)),
-            match.group(3).trim());
+            match.group(3).strip());
           currentHunk.commit = currentCommit;
           ++i;
           continue;
@@ -607,7 +607,7 @@ public final class GetRenderDiffOutput
         return;
 
       // First non-empty line is subject
-      commit.subject = lines.get(0).trim();
+      commit.subject = lines.get(0).strip();
 
       // Rest is body
       if (lines.size() > 1)

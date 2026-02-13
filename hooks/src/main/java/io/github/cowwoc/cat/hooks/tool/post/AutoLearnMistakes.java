@@ -300,7 +300,7 @@ public final class AutoLearnMistakes implements PosttoolHandler
     StringBuilder result = new StringBuilder();
     for (String line : output.split("\n"))
     {
-      String stripped = line.trim();
+      String stripped = line.strip();
       if (stripped.startsWith("{") && (stripped.contains("\"type\":") ||
           stripped.contains("\"parentUuid\":") || stripped.contains("\"sessionId\":")))
         continue;
@@ -326,7 +326,7 @@ public final class AutoLearnMistakes implements PosttoolHandler
     Pattern commitPattern = Pattern.compile("^[a-f0-9]{7,}");
     for (String line : output.split("\n"))
     {
-      if (line.trim().startsWith("\""))
+      if (line.strip().startsWith("\""))
         continue;
       if (line.startsWith("+") || line.startsWith("-") || line.startsWith("@"))
         continue;

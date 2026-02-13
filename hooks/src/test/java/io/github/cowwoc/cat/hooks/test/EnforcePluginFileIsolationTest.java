@@ -381,7 +381,7 @@ public class EnforcePluginFileIsolationTest
 
       process.waitFor();
       if (branch != null)
-        return branch.trim();
+        return branch.strip();
       return "";
     }
     catch (IOException | InterruptedException e)

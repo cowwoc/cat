@@ -94,7 +94,7 @@ public class HookEntryPointTest
 
       new GetSkillOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -114,7 +114,7 @@ public class HookEntryPointTest
 
       new GetSkillOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -136,7 +136,7 @@ public class HookEntryPointTest
 
       new GetBashOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -156,7 +156,7 @@ public class HookEntryPointTest
 
       new GetBashOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -177,7 +177,7 @@ public class HookEntryPointTest
 
       new GetBashOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -199,7 +199,7 @@ public class HookEntryPointTest
 
       new GetBashPostOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -222,7 +222,7 @@ public class HookEntryPointTest
 
       new GetReadOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -242,7 +242,7 @@ public class HookEntryPointTest
 
       new GetReadOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -265,7 +265,7 @@ public class HookEntryPointTest
 
       new GetReadPostOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -287,7 +287,7 @@ public class HookEntryPointTest
 
       new GetPostOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -308,7 +308,7 @@ public class HookEntryPointTest
 
       new GetPostOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -507,7 +507,7 @@ public class HookEntryPointTest
       HookOutput output = createOutput(mapper, capture);
       output.block("test reason");
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
     }
   }
@@ -525,7 +525,7 @@ public class HookEntryPointTest
       HookOutput output = createOutput(mapper, capture);
       output.empty();
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -547,7 +547,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -568,7 +568,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -590,7 +590,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -611,7 +611,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -651,7 +651,7 @@ public class HookEntryPointTest
 
       new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -672,7 +672,7 @@ public class HookEntryPointTest
 
       new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -695,7 +695,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -718,7 +718,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -742,7 +742,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -766,7 +766,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -790,7 +790,7 @@ public class HookEntryPointTest
 
       new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -811,7 +811,7 @@ public class HookEntryPointTest
 
       new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -872,7 +872,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -894,7 +894,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -936,7 +936,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -958,7 +958,7 @@ public class HookEntryPointTest
 
       new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -982,7 +982,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1004,7 +1004,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1028,7 +1028,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
     }
@@ -1051,7 +1051,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
     }
@@ -1075,7 +1075,7 @@ public class HookEntryPointTest
 
       new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
       // This test verifies no crash occurs
       requireThat(result, "result").isEqualTo("{}");
@@ -1183,7 +1183,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1204,7 +1204,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1225,7 +1225,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1247,7 +1247,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1269,7 +1269,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
     }
   }
@@ -1387,7 +1387,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").contains("\"decision\"");
       requireThat(result, "result").contains("\"block\"");
       requireThat(result, "result").contains("Cannot edit plugin files");
@@ -1414,7 +1414,7 @@ public class HookEntryPointTest
 
       new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = capture.toString(StandardCharsets.UTF_8).strip();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1871,7 +1871,7 @@ public class HookEntryPointTest
 
       process.waitFor();
       if (branch != null)
-        return branch.trim();
+        return branch.strip();
       return "";
     }
     catch (IOException | InterruptedException e)

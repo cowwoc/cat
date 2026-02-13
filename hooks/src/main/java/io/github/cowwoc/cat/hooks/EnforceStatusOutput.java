@@ -112,7 +112,7 @@ public final class EnforceStatusOutput
 
     for (String line : recentLines)
     {
-      String trimmed = line.trim();
+      String trimmed = line.strip();
       if (trimmed.isEmpty())
         continue;
 

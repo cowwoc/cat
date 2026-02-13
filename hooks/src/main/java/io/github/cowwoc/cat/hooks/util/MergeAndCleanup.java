@@ -193,7 +193,7 @@ public final class MergeAndCleanup
         ". Cannot determine base branch.");
     }
 
-    return Files.readString(catBasePath, StandardCharsets.UTF_8).trim();
+    return Files.readString(catBasePath, StandardCharsets.UTF_8).strip();
   }
 
   /**
