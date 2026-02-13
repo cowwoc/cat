@@ -23,10 +23,10 @@
   <text x="180" y="65" fill="#718096" font-family="monospace" font-size="13">→ Jump right in (5 minutes)</text>
 
   <text x="30" y="95" fill="#63b3ed" font-family="monospace" font-size="13" font-weight="bold">[B]</text>
-  <text x="70" y="95" fill="#e2e8f0" font-family="monospace" font-size="13">How It Works</text>
+  <text x="70" y="95" fill="#e2e8f0" font-family="monospace" font-size="13">Philosophy</text>
   <text x="180" y="95" fill="#718096" font-family="monospace" font-size="13">→ Understand the approach first</text>
 
   <text x="30" y="125" fill="#f6ad55" font-family="monospace" font-size="13" font-weight="bold">[C]</text>
-  <text x="70" y="125" fill="#e2e8f0" font-family="monospace" font-size="13">Commands</text>
+  <text x="70" y="125" fill="#e2e8f0" font-family="monospace" font-size="13">Deep Dive</text>
   <text x="180" y="125" fill="#718096" font-family="monospace" font-size="13">→ Full reference documentation</text>
 </svg>
