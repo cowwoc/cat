@@ -27,7 +27,7 @@ CLAUDE_SESSION_ID="$3"
 # Invoke Java SkillLoader
 "$CLAUDE_PLUGIN_ROOT/hooks/bin/java" \
   -Xms16m \
-  -Xmx64m \
+  -Xmx96m \
   -Dstdout.encoding=UTF-8 \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
