@@ -70,10 +70,10 @@ Stakeholders run in review mode during:
 2. **Analyze**: Stakeholders review implementation against their criteria
 3. **Report**: Each returns structured JSON with concerns and severity
 4. **Aggregate**: Main agent collects and evaluates all concerns
-5. **Decide**: Based on trust level:
-   - `low`: Ask user to fix, override, or abort
-   - `medium`: Auto-loop to fix (up to 3 iterations)
-   - `high`: Skips review entirely (autonomous mode)
+5. **Decide**: Based on verify level:
+   - `none`: Skips review entirely
+   - `changed`: Run reviews, auto-loop to fix if rejected
+   - `all`: Run reviews, auto-loop to fix if rejected
 
 ## Research Process
 
