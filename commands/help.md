@@ -40,16 +40,17 @@ MAJOR -> MINOR -> TASK
 └── v{n}/
     ├── STATE.md                  # Major version state
     ├── PLAN.md                   # Business-level plan
-    ├── CHANGELOG.md              # Major changelog
+    ├── CHANGELOG.md              # Major changelog (aggregates tasks)
     └── v{n}.{m}/
         ├── STATE.md              # Minor version state
         ├── PLAN.md               # Feature-level plan
-        ├── CHANGELOG.md          # Minor changelog
+        ├── CHANGELOG.md          # Minor changelog (aggregates tasks)
         └── {name}/
             ├── STATE.md          # Task state
-            ├── PLAN.md           # Technical-level plan
-            └── CHANGELOG.md      # Task changelog
+            └── PLAN.md           # Technical-level plan
 ```
+
+> Task changelog content is embedded in commit messages (see execute-task commit format).
 
 ## Core Commands
 
