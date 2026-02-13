@@ -113,7 +113,7 @@ Track for each exit gate task:
 
 <step name="render">
 
-**Render adventure-style visual tree:**
+**Render visual status tree:**
 
 **IMPORTANT: Output styled text DIRECTLY - do NOT use Bash tool for rendering.**
 
@@ -159,7 +159,7 @@ The box width should accommodate the content, not force line breaks.
 
 **Use this exact format (substitute actual values):**
 
-╭─── 🗺️ YOUR ADVENTURE - {PROJECT_NAME} ────────────────────────────╮
+╭─── 🐱 CAT - {PROJECT_NAME} ─────────────────────────────────────────╮
 │                                                                    │
 │  📊 Overall: [████████████████████████████████████░░░░░░░░░] **{PERCENT}%**
 │  🏆 **{COMPLETED}/{TOTAL}** tasks complete                         │
@@ -188,7 +188,7 @@ The box width should accommodate the content, not force line breaks.
 │  ╰──────────────────────────────────────────────────────╯          │
 │                                                                    │
 ├────────────────────────────────────────────────────────────────────┤
-│  🎯 **Current Quest:** v{N}.{M} - {Minor version description}      │
+│  🎯 **Active Task:** v{N}.{M} - {Minor version description}        │
 │  📋 **Available tasks:** {N} pending                               │
 ├────────────────────────────────────────────────────────────────────┤
 │                                                                    │
@@ -325,7 +325,7 @@ The table options change based on current state:
 | Has pending tasks | Execute a task | Add new task |
 | All tasks complete for minor | Add new task | Add minor version |
 | All minors complete for major | Add minor version | Add major version |
-| All complete | 🎉 Quest complete! | (no options needed) |
+| All complete | 🎉 All tasks complete! | (no options needed) |
 
 </step>
 
