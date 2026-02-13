@@ -53,7 +53,7 @@ import java.util.regex.Pattern;
  * </ul>
  * <p>
  * Custom bindings from {@code bindings.json} are also substituted when referenced. Undefined variables
- * (neither built-in nor in bindings) cause an {@link IOException}.
+ * (neither built-in nor in bindings) are passed through unchanged, matching Claude Code's native behavior.
  * <p>
  * <b>License header stripping:</b> If {@code first-use.md} starts with an HTML comment block
  * containing a copyright notice, it is stripped before returning.
@@ -309,7 +309,7 @@ public final class SkillLoader
     {
       result.append(expanded, lastEnd, matcher.start());
       String varName = matcher.group(1);
-      String replacement = resolveVariable(varName, bindings, skillName);
+      String replacement = resolveVariable(varName, bindings);
       result.append(replacement);
       lastEnd = matcher.end();
     }
@@ -323,11 +323,10 @@ public final class SkillLoader
    *
    * @param varName the variable name (without ${} delimiters)
    * @param bindings the bindings map for the current skill
-   * @param skillName the skill name (for error messages)
-   * @return the resolved value
-   * @throws IOException if the variable is undefined or resolution fails
+   * @return the resolved value, or the original {@code ${varName}} literal if undefined
+   * @throws IOException if binding resolution fails
    */
-  private String resolveVariable(String varName, Map<String, String> bindings, String skillName)
+  private String resolveVariable(String varName, Map<String, String> bindings)
     throws IOException
   {
     if (varName.equals("CLAUDE_PLUGIN_ROOT"))
@@ -348,9 +347,8 @@ public final class SkillLoader
       return output;
     }
 
-    throw new IOException("Undefined variable ${" + varName + "} in skill '" + skillName + "'. " +
-      "Not defined in bindings.json and not a built-in variable. " +
-      "Built-in variables: " + BUILT_IN_VARIABLES);
+    // Pass through unknown variables unchanged (matches Claude Code's native behavior)
+    return "${" + varName + "}";
   }
 
   /**

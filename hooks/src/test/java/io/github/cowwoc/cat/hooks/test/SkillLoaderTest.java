@@ -447,12 +447,12 @@ Content
   }
 
   /**
-   * Verifies that load throws IOException for undefined variable.
+   * Verifies that load passes through undefined variables as literals.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test(expectedExceptions = IOException.class)
-  public void loadRejectsUndefinedVariable() throws IOException
+  @Test
+  public void loadPassesThroughUndefinedVariable() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -465,7 +465,9 @@ Value: ${UNDEFINED_VAR}
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
-      loader.load("test-skill");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("Value: ${UNDEFINED_VAR}");
     }
     finally
     {
@@ -1068,6 +1070,81 @@ Next line
       int contentIndex = result.indexOf("Content without newline");
       int nextIndex = result.indexOf("Next line");
       requireThat(contentIndex, "contentIndex").isLessThan(nextIndex);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that multiple unknown variables are all passed through as literals.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadPassesThroughMultipleUnknownVariables() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+Branch: ${BASE}
+Other: ${SOME_UNKNOWN}
+Root: ${CLAUDE_PLUGIN_ROOT}
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Branch: ${BASE}").
+        contains("Other: ${SOME_UNKNOWN}").
+        contains("Root: " + tempPluginRoot).
+        doesNotContain("${CLAUDE_PLUGIN_ROOT}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that unknown variables in @path-expanded content are passed through as literals.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadPassesThroughUnknownVarsInExpandedPaths() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path conceptsDir = tempPluginRoot.resolve("concepts");
+      Files.createDirectories(conceptsDir);
+      Files.writeString(conceptsDir.resolve("version-paths.md"), """
+```bash
+git checkout ${BASE}
+```
+""");
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+@concepts/version-paths.md
+# Main
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("git checkout ${BASE}").
+        contains("# Main");
     }
     finally
     {
