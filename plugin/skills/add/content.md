@@ -459,6 +459,113 @@ If no requirements defined in parent version: Satisfies = None
 
 </step>
 
+<step name="task_validate_criteria">
+
+**Validate acceptance criteria against requirements:**
+
+This step ensures acceptance criteria comprehensively cover the task requirements before PLAN.md creation.
+Addresses the known gap (M462) where incorrect acceptance criteria primed incorrect implementations.
+
+**Prepare validation context:**
+
+Gather the following for validation:
+- TASK_DESCRIPTION (from task_gather_intent)
+- TASK_TYPE (from task_ask_type_and_criteria)
+- ACCEPTANCE_CRITERIA (from task_ask_type_and_criteria)
+- All ancestor version requirements (from task_select_requirements and ancestor PLAN.md files)
+
+**Spawn requirements stakeholder subagent:**
+
+Use Task tool to spawn a cat:stakeholder-requirements subagent with the following prompt:
+
+```
+You are validating acceptance criteria for a CAT issue before PLAN.md creation.
+
+**Task Description:**
+{TASK_DESCRIPTION}
+
+**Task Type:**
+{TASK_TYPE}
+
+**Proposed Acceptance Criteria:**
+{ACCEPTANCE_CRITERIA}
+
+**Ancestor Version Requirements Satisfied:**
+{Selected REQ-XXX requirements from all ancestor versions, or "None"}
+
+**Your validation responsibilities:**
+
+1. **Completeness Check:** Break TASK_DESCRIPTION into discrete requirements. Verify each requirement has at least one corresponding acceptance criterion. List any missing requirements.
+
+2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the acceptance criteria address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 PLAN.md and v2 PLAN.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding acceptance criterion.
+
+3. **Contradiction Check:** Verify no criterion contradicts the task goal or established principles (e.g., M462 pattern: fail-fast criteria must not require recovery instructions).
+
+**Output format:**
+
+COMPLETENESS: [PASS|FAIL]
+Missing requirements (if FAIL): [list each missing requirement]
+
+VERSION_REQUIREMENTS: [PASS|FAIL|N/A]
+Unaddressed requirements (if FAIL): [list each REQ-XXX with missing criteria]
+
+CONTRADICTIONS: [PASS|FAIL]
+Contradictions found (if FAIL): [describe each contradiction with reference to principle]
+
+ADDITIONAL_CRITERIA: [list additional criteria to add, or "None"]
+```
+
+Capture the subagent's response.
+
+**Handle subagent failure:**
+
+If the subagent fails to return output, times out, or returns unparseable output:
+- Display: "Requirements validation could not be completed. Proceeding with existing criteria."
+- Skip validation processing and proceed to next step (task_create)
+
+If the subagent returns output but individual fields are missing or unparseable:
+- Treat missing fields as PASS (no issues detected for that check)
+- Process any successfully returned fields normally
+
+**Process validation results:**
+
+Parse the subagent response to extract:
+- COMPLETENESS status
+- VERSION_REQUIREMENTS status
+- CONTRADICTIONS status
+- ADDITIONAL_CRITERIA list
+
+**If COMPLETENESS is FAIL or VERSION_REQUIREMENTS is FAIL:**
+
+- Auto-add the criteria from ADDITIONAL_CRITERIA to ACCEPTANCE_CRITERIA
+- Display to user:
+  ```
+  Added missing acceptance criteria:
+  {list each added criterion}
+  ```
+
+**If CONTRADICTIONS is FAIL:**
+
+- Display contradictions to user
+- Use AskUserQuestion:
+  - header: "Acceptance Criteria Contradiction"
+  - question: "The following contradictions were found in acceptance criteria. How should we proceed?"
+  - Provide the contradiction details from subagent
+  - options:
+    - "Revise criteria manually" - Let me rewrite the problematic criteria
+    - "Remove contradicting criteria" - Remove the criteria that contradict principles
+    - "Override - criteria are correct" - Proceed with criteria as-is (I understand the risk)
+
+- If "Revise criteria manually": use AskUserQuestion to gather revised ACCEPTANCE_CRITERIA
+- If "Remove contradicting criteria": auto-remove the contradicting criteria identified by subagent
+- If "Override": proceed without changes
+
+**If all checks PASS:**
+
+Proceed silently to next step (no user interaction needed).
+
+</step>
+
 <step name="task_create">
 
 **Note branching strategy information:**
