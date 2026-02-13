@@ -190,28 +190,47 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "adventureMode": {
-    "enabled": true,
-    "preferences": {
-      "approach": "balanced",
-      "stakeholderReview": "high-risk-only",
-      "refactoring": "opportunistic"
-    }
-  }
+  "approach": "balanced",
+  "stakeholderReview": "high-risk-only",
+  "refactoring": "opportunistic"
 }
 ```
 
-### Mode Selection
+### Options Reference
 
-**Interactive Mode** (`yoloMode: false`) — *Recommended*
-- Checkpoints after each task
-- You review and approve changes
-- Full control over what gets merged
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `yoloMode` | boolean | `false` | Skip all approval gates when `true` |
+| `contextLimit` | number | `200000` | Total context window size in tokens |
+| `targetContextUsage` | number | `40` | Soft limit percentage for task size |
+| `approach` | string | `balanced` | Risk tolerance for approach selection |
+| `stakeholderReview` | string | `high-risk-only` | When to run multi-perspective reviews |
+| `refactoring` | string | `opportunistic` | Cleanup behavior for adjacent code |
 
-**YOLO Mode** (`yoloMode: true`) — *For the bold*
-- Automatic progression
-- Skips approval checkpoints
-- Best for well-defined, low-risk work
+**yoloMode**
+- `false` (Interactive) — Checkpoints after each task, you review and approve changes
+- `true` (YOLO) — Automatic progression, skips approval checkpoints
+
+**contextLimit** — The maximum tokens available in your model's context window. Used to calculate
+when tasks need decomposition.
+
+**targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
+200K (80K tokens), CAT warns that the task may need decomposition.
+
+**approach** — Controls recommendations when multiple implementation paths exist:
+- `conservative` — Recommends safer, incremental approaches; avoids architectural changes
+- `balanced` — No automatic recommendation; presents options neutrally
+- `aggressive` — Recommends comprehensive solutions; favors thoroughness over speed
+
+**stakeholderReview** — Controls when the 5-perspective review gate runs:
+- `always` — Run stakeholder review on every task
+- `high-risk-only` — Only review tasks marked HIGH risk in PLAN.md
+- `never` — Skip stakeholder reviews entirely
+
+**refactoring** — Controls opportunistic cleanup of code adjacent to changes:
+- `avoid` — Never touch code outside the immediate task scope
+- `opportunistic` — Clean up obviously related code when low-risk
+- `eager` — Actively improve surrounding code quality
 
 ---
 
