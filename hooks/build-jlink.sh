@@ -46,7 +46,7 @@ readonly -a HANDLERS=(
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-task-box:skills.GetNextTaskOutput"
-  "get-status-output:skills.RunGetStatusOutput"
+  "get-status-output:skills.GetStatusOutput"
   "get-render-diff-output:skills.GetRenderDiffOutput"
 )
 
@@ -299,7 +299,9 @@ generate_launchers() {
 DIR=`dirname $0`
 exec "$DIR/java" \
   -Xms16m -Xmx96m \
+  -Dstdin.encoding=UTF-8 \
   -Dstdout.encoding=UTF-8 \
+  -Dstderr.encoding=UTF-8 \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
   -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
