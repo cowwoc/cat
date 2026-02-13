@@ -71,6 +71,32 @@ project/
 - Always provide meaningful error messages
 - Log errors with context (what failed, why, how to fix)
 
+### Error Message Content
+
+**MANDATORY:** Error messages must include enough information to reproduce the problem and understand every element of
+the message without needing to inspect source code.
+
+**Required elements:**
+- **Source location:** Which file (and line number if applicable) triggered the error
+- **What failed:** The specific operation or value that caused the problem
+- **Context:** All relevant state needed to understand the error elements (e.g., list of valid values, expected format)
+
+**Example — bad:**
+```
+Error loading skill: Undefined variable ${ARGUMENTS} in skill 'work'.
+Not defined in bindings.json and not a built-in variable.
+Built-in variables: [CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR]
+```
+Problem: Which file contains `${ARGUMENTS}`? What does bindings.json contain? Not reproducible without investigation.
+
+**Example — good:**
+```
+Error invoking skill 'work': first-use.md:14 references undefined variable ${ARGUMENTS}.
+Not a built-in variable or binding.
+Built-in variables: [CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR]
+bindings.json: {} (empty)
+```
+
 ### Fail-Fast Principle
 
 **MANDATORY:** Prefer failing immediately with a clear error over using fallback values.
