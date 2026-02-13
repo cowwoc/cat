@@ -17,10 +17,10 @@ Prepare CAT for commercial release with pricing tiers, license key system, and b
 - requirements-at-all-version-levels
 - pricing-page
 - polish-readme-for-smb
+- showcase-template
 
 ## Tasks Pending
 - fix-config-documentation
-- showcase-template
 - task-management-demo
 - multi-agent-demo
 - planning-research-demo
