@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -756,5 +757,25 @@ public final class GetStatusOutput implements SkillOutput
     String sessionId = "";
     long ageSeconds;
     String worktree = "";
+  }
+
+  /**
+   * Main entry point.
+   *
+   * @param args command line arguments (unused)
+   */
+  public static void main(String[] args)
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetStatusOutput generator = new GetStatusOutput(scope);
+      String output = generator.getOutput();
+      System.out.println(output);
+    }
+    catch (IOException e)
+    {
+      System.err.println("Error generating status: " + e.getMessage());
+      System.exit(1);
+    }
   }
 }
