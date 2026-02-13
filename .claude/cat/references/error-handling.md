@@ -53,7 +53,7 @@ Lines 45-52 have conflicting changes from:
 **Suggested Actions:**
 1. Review conflict in Parser.java
 2. Decide which changes to keep
-3. Resume with /cat:execute-task
+3. Resume with /cat:work
 ```
 
 ## Unplanned Issues
@@ -81,5 +81,5 @@ Recommendation: Decompose work earlier when context-related patterns emerge.
 If session ends during subagent execution:
 1. STATE.md reflects last known state
 2. Worktree may exist with partial work
-3. User resumes with `/cat:execute-task`
+3. User resumes with `/cat:work`
 4. Main agent assesses state and continues or restarts

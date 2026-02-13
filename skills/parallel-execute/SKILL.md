@@ -21,26 +21,26 @@ them. Essential for efficient use of CAT's multi-agent capabilities.
 
 ## Auto-Trigger from Decomposition
 
-When `/cat:execute-task` triggers auto-decomposition (task exceeds context threshold),
+When `/cat:work` triggers auto-decomposition (task exceeds context threshold),
 this skill is automatically invoked for parallel execution:
 
 ```
-execute-task → analyze_task_size → (exceeds threshold) → decompose-task → parallel-execute
+work → analyze_task_size → (exceeds threshold) → decompose-task → parallel-execute
 ```
 
 **Integration workflow:**
 
-1. `execute-task` estimates task size > threshold (e.g., 80K tokens)
-2. `execute-task` auto-invokes `decompose-task`
+1. `work` estimates task size > threshold (e.g., 80K tokens)
+2. `work` auto-invokes `decompose-task`
 3. `decompose-task` creates subtasks and generates parallel execution plan
 4. `decompose-task` identifies sub-task-based parallelization
-5. `execute-task` auto-invokes `parallel-execute` with the sub-task plan
+5. `work` auto-invokes `parallel-execute` with the sub-task plan
 6. `parallel-execute` spawns subagents for each sub-task
 
 **Example auto-trigger flow:**
 
 ```yaml
-# execute-task detects large task
+# work detects large task
 task: 1.2-implement-parser
 estimated_tokens: 120000
 threshold: 80000  # 40% of 200K
