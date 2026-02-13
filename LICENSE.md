@@ -4,11 +4,13 @@ Version 1.0
 
 ## Hi! Here's what you need to know:
 
-| Tier | Price | Who it's for |
-|------|-------|--------------|
-| **Indie** | Free | Solo developers — full CAT, single user |
-| **Team** | $19/seat/month | 1-50 seats — adds collaboration features |
-| **Enterprise** | $49/seat/month | 50+ seats — adds compliance & integrations |
+| Tier | Who it's for |
+|------|--------------|
+| **Indie** | Solo developers — full CAT, single user, always free |
+| **Team** | Teams of 1-50 — adds collaboration features |
+| **Enterprise** | Organizations 50+ — adds compliance & integrations |
+
+For current pricing, see [PRICING.md](docs/PRICING.md).
 
 **Indie is free** - Working alone? Building a side project? Learning?
 You get full CAT functionality at no cost. No time limits, no feature crippling.
@@ -112,9 +114,9 @@ all core CAT functionality but excludes Team Features and Enterprise Features.
 
 ## Team and Enterprise Features Require a Paid License
 
-**Access to Team Features requires a Team license ($19/seat/month).**
+**Access to Team Features requires a Team license.**
 
-**Access to Enterprise Features requires an Enterprise license ($49/seat/month).**
+**Access to Enterprise Features requires an Enterprise license.**
 
 **Payment and Renewal Terms:**
 
