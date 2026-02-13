@@ -1,6 +1,6 @@
 # <img src="docs/cat-logo.svg" height="36" alt="CAT logo"> CAT: AI Agents that land on their feet
 
-A Claude Code plugin for structured project execution with multi-agent orchestration.
+Development should be **fun** AND **reliable**. CAT makes both happen.
 
 ```
 MAJOR VERSION -> MINOR VERSION -> TASK
@@ -9,14 +9,32 @@ MAJOR VERSION -> MINOR VERSION -> TASK
 
 ## Why CAT?
 
-Large projects fail in AI assistants because context windows overflow. CAT solves this by:
+### 🎮 Fun: Your Development Adventure
 
-- **Hierarchical planning** - Break work into Major > Minor > Task levels
-- **Token-aware execution** - Tasks sized to fit within context limits
-- **Multi-agent orchestration** - Subagents execute in isolated worktrees
-- **Quality gates** - Approval checkpoints prevent runaway changes
-- **Automatic state tracking** - Never lose progress between sessions
-- **Continuous improvement** - Learns from mistakes and runs regular retrospectives
+Large AI projects often feel like babysitting—constant hand-holding, context loss,
+unpredictable results. CAT transforms this into an engaging experience:
+
+- **Your Adventure, Your Choices** - Express your style once, make meaningful choices
+  at genuine decision points, watch your project unfold
+- **Smart Recommendations** - When you face a fork in the road, CAT suggests the
+  best path based on task characteristics (but you always choose)
+- **Visual Progress** - See your adventure map, track decisions made, celebrate
+  completed quests
+- **Flow State** - Routine tasks auto-proceed; you're only interrupted when your
+  input genuinely matters
+
+### 🛡️ Reliable: Trust the Process
+
+Fun without reliability is chaos. CAT ensures your adventure has guardrails:
+
+- **Hierarchical Planning** - Break work into Major > Minor > Task levels
+- **Token-Aware Execution** - Tasks sized to fit within context limits
+- **Multi-Agent Orchestration** - Subagents execute in isolated worktrees
+- **Quality Gates** - Stakeholder reviews catch issues before merge
+- **Automatic State Tracking** - Never lose progress between sessions
+- **Continuous Improvement** - Learns from mistakes, runs retrospectives
+
+**The Balance:** Reliability enables trust. Trust enables flow. Flow enables fun.
 
 ## Quick Start
 
@@ -54,6 +72,23 @@ Large projects fail in AI assistants because context windows overflow. CAT solve
 # Execute tasks
 /cat:execute-task
 ```
+
+## Development Philosophy
+
+CAT is built on a simple insight: **development is more fun when you can trust the process**.
+
+When you trust that:
+- Context won't overflow mid-task
+- Progress won't be lost between sessions
+- Quality gates will catch problems
+- Mistakes will be learned from
+
+...then you can relax into the adventure. Make bold choices. Try the comprehensive
+refactor. Let the system handle the bookkeeping while you focus on the creative decisions.
+
+**Your Role:** Express your style, make meaningful choices, guide the direction.
+
+**CAT's Role:** Handle execution, track state, ensure quality, learn and improve.
 
 ## Commands Reference
 
@@ -151,7 +186,15 @@ Edit `.claude/cat/cat-config.json`:
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "autoCleanupWorktrees": true
+  "autoCleanupWorktrees": true,
+  "adventureMode": {
+    "enabled": true,
+    "preferences": {
+      "approach": "balanced",
+      "stakeholderReview": "high-risk-only",
+      "refactoring": "opportunistic"
+    }
+  }
 }
 ```
 
@@ -162,6 +205,16 @@ Edit `.claude/cat/cat-config.json`:
 | `yoloMode` | boolean | `false` | When `true`, skips approval gates and auto-proceeds. When `false`, requires user approval at each task completion. |
 | `contextLimit` | number | `200000` | Total context window size in tokens. Set based on your Claude model's limit. |
 | `targetContextUsage` | number | `40` | Target maximum context usage as a percentage (40 = 40%). Tasks are sized to stay within this limit. At 200K context, 40 means ~80K tokens per task. |
+
+### Adventure Mode Preferences
+
+These preferences shape how CAT makes autonomous decisions. Set during `/cat:init` or update with `/cat:update-preferences`.
+
+| Preference | Values | Effect |
+|------------|--------|--------|
+| `approach` | `conservative`, `balanced`, `aggressive` | Influences approach recommendations at decision points |
+| `stakeholderReview` | `always`, `high-risk-only`, `never` | Controls when multi-perspective review triggers |
+| `refactoring` | `avoid`, `opportunistic`, `eager` | Determines cleanup behavior on adjacent code |
 | `autoCleanupWorktrees` | boolean | `true` | When `true`, automatically removes worktrees and task branches after successful merge. When `false`, keeps them for manual inspection. |
 
 ### Operating Modes
@@ -287,4 +340,7 @@ effort.
 
 ## License
 
-Apache-2.0 License - see [LICENSE](LICENSE)
+CAT Source-Available Commercial License - see [LICENSE.md](LICENSE.md)
+
+Free for personal use and small organizations (< $100K/year revenue).
+Commercial use requires a paid license.
