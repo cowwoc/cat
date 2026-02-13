@@ -6,9 +6,9 @@
 
 **NEVER manually run `git reset --soft` for squashing.** Always use this skill.
 
-Manual `git reset --soft` captures working directory state, which may contain stale files
-if the worktree diverged from its base branch. This skill uses `commit-tree` which creates
-commits from committed tree objects, ignoring working directory entirely.
+Manual `git reset --soft` captures working directory state, which may contain stale files if the worktree diverged from
+its base branch. This skill uses `commit-tree` which creates commits from committed tree objects, ignoring working
+directory entirely.
 
 **What goes wrong with manual reset:**
 1. Worktree created from base at commit A
@@ -17,62 +17,6 @@ commits from committed tree objects, ignoring working directory entirely.
 4. Commit captures pre-fix file versions, reverting the fixes
 
 **This skill prevents this** by using `commit-tree` to build from HEAD's tree object.
-
-## Parallel Initial Investigation
-
-**OPTIMIZATION: Run initial git commands in parallel to reduce round-trips.**
-
-Before starting any squash workflow, gather information concurrently:
-
-```bash
-# Run these commands in parallel (use & and wait)
-git rev-parse HEAD &
-git status --porcelain &
-git log --oneline <base>..HEAD &
-git diff --stat <base>..HEAD &
-wait
-
-# All results now available for workflow selection
-```
-
-This reduces the initial investigation from 4+ sequential commands to a single parallel batch.
-
-## Safety Pattern: Backup-Verify-Cleanup
-
-**ALWAYS follow this pattern:**
-1. Create timestamped backup branch
-2. Execute the squash
-3. **Verify immediately** - no changes lost or added
-4. Cleanup backup only after verification passes
-
-## Delegate Complex Squash Operations
-
-**MANDATORY: Delegate complex squash operations to a subagent.**
-
-Complex squash operations include:
-- Squashing by topic when commits are interleaved (different topics mixed together)
-- Non-adjacent commit squashing requiring reordering
-- Any operation that may cause merge conflicts due to reordering
-- Squashing 5+ commits with multiple topics
-
-**Why delegate:**
-- Subagent isolation prevents main context pollution from conflict resolution
-- Failed squash attempts don't waste main agent context
-- Subagent can retry with different strategies if conflicts occur
-
-**Delegation pattern:**
-```
-Use the Task tool with subagent_type="general-purpose" and prompt:
-"Squash the commits from <base> to HEAD by topic.
-Current commits: [list commits]
-Desired groupings: [describe topic groupings]
-Create backup first, verify no changes lost after squash."
-```
-
-**Simple squash (do NOT delegate):**
-- Squashing all commits into one (single topic)
-- Adjacent commits that don't require reordering
-- Quick workflow with commits already at branch tip
 
 ## Read PROJECT.md Squash Policy
 
@@ -127,29 +71,13 @@ config: add handler registry with null handling and conventions
 docs: update README
 ```
 
-**Example - Implementation + Refactor:** If branch has these commits:
-```
-feature: migrate bash handlers to Java
-refactor: consolidate duplicate code in utility classes
-config: update Java conventions
-```
-
-Squash to:
-```
-config: migrate bash handlers to Java with utility consolidation
-config: update Java conventions
-```
-
-The `feature:` and `refactor:` commits affect the same code (the Java handlers), so they belong together.
-Use the most appropriate type for the combined commit (here `config:` since it's plugin code).
-
 **What is NOT the same topic (keep separate):**
 - Learning/retrospective changes (M310) - these are meta-work, not issue implementation
 - Changes to shared infrastructure (build-verification.md, session instructions)
 - Convention updates that don't directly enable the implementation
 
-Even if commits share the same type prefix (e.g., `config:`), they may be different topics.
-The test: "Would reverting this commit break the issue implementation?" If no, it's a different topic.
+Even if commits share the same type prefix (e.g., `config:`), they may be different topics. The test: "Would reverting
+this commit break the issue implementation?" If no, it's a different topic.
 
 **Analyze ALL files in each commit (M232):**
 
@@ -163,19 +91,8 @@ git show --stat <commit-hash>
 # A commit may contain BOTH convention changes AND implementation changes
 ```
 
-**Example:** A commit with:
-- `.claude/cat/conventions/java.md` (convention file)
-- `hooks/skills/GetCheckpointOutput.java` (implementation)
-- `hooks/skills/GetIssueCompleteOutput.java` (implementation)
-- `hooks/skills/GetNextTaskOutput.java` (implementation)
-
-This commit contains IMPLEMENTATION changes (the 3 Java files) even though it also updates conventions.
-The implementation changes are part of the issue topic and must be squashed with other implementation commits.
-
-**Apply the revert test to ALL files:** If reverting the commit would remove implementation changes from
-the 3 Java files, it breaks the implementation - therefore it's the same topic.
-
-**Rationale:** Squashing by topic preserves meaningful history while reducing noise from incremental fixes.
+Apply the revert test to ALL files: If reverting the commit would remove implementation changes, it breaks the
+implementation - therefore it's the same topic.
 
 ## Workflow Selection
 
@@ -187,112 +104,57 @@ LAST_COMMIT="<last-commit-to-squash>"
 BRANCH_TIP=$(git rev-parse HEAD)
 
 if [ "$(git rev-parse $LAST_COMMIT)" = "$BRANCH_TIP" ]; then
-    echo "Commits at tip → Use Quick Workflow (commit-tree)"
+    echo "Commits at tip → Use Quick Workflow (script)"
 else
     echo "Commits in middle of history → Use Interactive Rebase Workflow"
 fi
 ```
 
-## Planning Commit Pattern Detection
-
-**Detect common "feature + planning STATE.md update" pattern.**
-
-Before squashing, check if the commit sequence follows this pattern:
-1. Implementation commit(s): `feature:`, `bugfix:`, `refactor:`, etc.
-2. Final commit(s): `planning:` or `config:` with only `.claude/cat/issues/` changes
-
-**Detection logic:**
-```bash
-# Get the last commit's type and files
-LAST_COMMIT=$(git log -1 --format="%s" HEAD)
-LAST_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
-
-# Check if last commit is planning-only
-if [[ "$LAST_COMMIT" =~ ^planning: ]] && \
-   [[ "$LAST_FILES" =~ \.claude/cat/issues/ ]] && \
-   ! echo "$LAST_FILES" | grep -qv "\.claude/cat/"; then
-    echo "PATTERN DETECTED: Final commit is planning-only STATE.md update"
-    # This pattern indicates STATE.md should be preserved in squash
-fi
-```
-
-**When pattern detected:**
-- Extract final STATE.md content before squash
-- After squash, ensure STATE.md reflects final state (not intermediate)
-- Include planning changes in implementation commit per M076
-
 ## Quick Workflow (Commits at Branch Tip Only)
 
 **Use ONLY when squashing the most recent commits on a branch.**
 
-```bash
-# 1. Verify commits are at tip
-git log --oneline -1  # Should show <last-commit-to-squash>
-
-# 2. MANDATORY: Rebase on base branch HEAD before squashing
-# Ensures we don't absorb base branch changes into the squash.
-# If base advanced after worktree creation, squashing without rebase
-# captures stale versions of files that were fixed on base.
-git rebase <base-branch>
-
-# 3. Create backup
-BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
-git branch "$BACKUP"
-```
-
-### Verification Gate (M191): Backup Created
-
-**BLOCKING: Do NOT proceed until backup is verified.**
+### Script Invocation
 
 ```bash
-if ! git show-ref --verify --quiet "refs/heads/$BACKUP"; then
-  echo "ERROR: Backup branch '$BACKUP' was not created"
-  echo "Do NOT proceed with squash without backup."
-  exit 1
-fi
-echo "✓ Backup verified: $BACKUP"
+"$(git rev-parse --show-toplevel)/plugin/scripts/git-squash-quick.sh" "<base-branch>" "$MESSAGE" "$WORKTREE_PATH"
 ```
 
-```bash
-# 4. Verify clean working directory
-git status --porcelain  # Must be empty
+The script implements: rebase onto base, backup, commit-tree squash, verify, cleanup. Outputs JSON on success.
 
-# 5. Create squashed commit using commit-tree (M305)
-# This uses COMMIT content directly, ignoring working directory state.
-# Prevents stale worktree files from being captured in the squash.
-TREE=$(git rev-parse HEAD^{tree})
-MESSAGE="Unified message describing what code does"
-NEW_COMMIT=$(git commit-tree "$TREE" -p <base-commit> -m "$MESSAGE")
+### Result Handling
 
-# 6. Move branch to new squashed commit
-git reset --hard "$NEW_COMMIT"
-
-# 7. Verify result
-git diff "$BACKUP"  # Must be empty (same content)
-git rev-list --count <base-commit>..HEAD  # Must be 1
-
-# 8. Cleanup backup
-git branch -D "$BACKUP"
-```
-
-**Why commit-tree instead of soft reset? (M305)**
-
-The old approach (`git reset --soft` + `git commit`) captured working directory state.
-If the worktree diverged from its base branch, stale file versions would be included.
-
-`git commit-tree` creates a commit directly from HEAD's tree object, which contains
-exactly what the commits contain - ignoring working directory entirely.
+| Status | Meaning | Agent Recovery Action |
+|--------|---------|----------------------|
+| `OK` | Squash completed successfully | Report success with commit hash |
+| `REBASE_CONFLICT` | Conflict during pre-squash rebase | Agent decides: resolve conflict and retry, or abort |
+| `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat |
+| `ERROR` | Rebase or squash failed | Check backup_branch and error message for details |
 
 ## Interactive Rebase Workflow (Commits in Middle of History)
 
 **Use when commits to squash have other commits after them.**
 
+### Safety Pattern: Backup-Verify-Cleanup
+
+**ALWAYS follow this pattern:**
+1. Create timestamped backup branch
+2. Execute the rebase
+3. Handle conflicts if any
+4. **Verify immediately** - no changes lost or added
+5. Cleanup backup only after verification passes
+
+### Interactive Rebase Steps
+
 ```bash
-# 1. Create backup of current branch
+# 1. Pin base branch reference to prevent race conditions
+BASE=$(git rev-parse <base-branch>)
+
+# 2. Create backup of current branch
 BACKUP="backup-before-squash-$(date +%Y%m%d-%H%M%S)"
 git branch "$BACKUP"
 
-# 2. Create sequence editor script
+# 3. Create sequence editor script
 FIRST_COMMIT="<first-commit-to-squash>"  # Keep this one, squash others into it
 COMMITS_TO_SQUASH="<second-commit> <third-commit> ..."  # These get squashed
 
@@ -302,7 +164,7 @@ $(for c in $COMMITS_TO_SQUASH; do echo "sed -i 's/^pick $c/squash $c/' \"\$1\"";
 EOF
 chmod +x /tmp/squash-editor.sh
 
-# 3. Create commit message editor script
+# 4. Create commit message editor script
 cat > /tmp/msg-editor.sh << 'EOF'
 #!/bin/bash
 cat > "$1" << 'MSG'
@@ -311,50 +173,55 @@ MSG
 EOF
 chmod +x /tmp/msg-editor.sh
 
-# 4. Run interactive rebase
+# 5. Run interactive rebase
 # NOTE: Use GIT_EDITOR (not EDITOR) - git uses GIT_EDITOR for commit messages during rebase
-BASE_COMMIT="<parent-of-first-commit>"
+# Use pinned base ref to ensure consistency
+BASE_COMMIT=$(git rev-parse $BASE^)  # Parent of base for rebase
 GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh GIT_EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
 
-# 5. Verify no changes lost
+# 6. Verify no changes lost
 git diff "$BACKUP"  # Must be empty
 
-# 6. Cleanup
+# 7. Cleanup
 git branch -D "$BACKUP"
 rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 ```
 
+### Delegate Complex Squash Operations
+
+**MANDATORY: Delegate complex squash operations to a subagent.**
+
+Complex squash operations include:
+- Squashing by topic when commits are interleaved (different topics mixed together)
+- Non-adjacent commit squashing requiring reordering
+- Any operation that may cause merge conflicts due to reordering
+- Squashing 5+ commits with multiple topics
+
+**Why delegate:**
+- Subagent isolation prevents main context pollution from conflict resolution
+- Failed squash attempts don't waste main agent context
+- Subagent can retry with different strategies if conflicts occur
+
+**Simple squash (do NOT delegate):**
+- Squashing all commits into one (single topic)
+- Adjacent commits that don't require reordering
+- Quick workflow with commits already at branch tip
+
 ## Critical Rules
 
-### Check for Unintended Deletions (M238)
+### Pin Base Branch Reference (Race Condition Prevention)
 
-**NOTE: The Quick Workflow now uses `commit-tree` (M305), which avoids this issue entirely
-by using commit content directly instead of working directory state.**
+**MANDATORY: Pin base branch reference before rebase. Do NOT call git rev-parse on the base branch separately for
+rebase and commit-tree.**
 
-This section applies only if you manually use `git reset --soft`:
-
-When using `git reset --soft <base>`, the index reflects your working tree state. If the base
-branch has files your branch never received (e.g., new files added to base after your branch
-diverged), the soft reset will stage those files as DELETIONS.
-
-**Before committing after soft reset:**
-
+The base branch can advance between operations, causing race conditions. Always pin once at the start and use the
+pinned variable throughout:
 ```bash
-# Check what will be deleted relative to base
-git diff --name-status HEAD | grep "^D"
-
-# If unexpected deletions appear, restore from base:
-git checkout <base> -- <path-to-unexpected-deleted-file>
-
-# Then amend the commit
-git commit --amend --no-edit
+BASE=$(git rev-parse <base-branch>)  # Pin once
+git rebase $BASE                      # Use pinned ref
+# ... later ...
+git commit-tree "$TREE" -p $BASE -m "$MESSAGE"  # Use same pinned ref
 ```
-
-**Why this happens:**
-1. Branch created from older base commit
-2. New files added to base branch later
-3. Worktree never received these files (no merge/rebase from base)
-4. Soft reset stages "delete files that exist on base but not in working tree"
 
 ### Preserve Commit Type Boundaries When Squashing
 
@@ -365,19 +232,6 @@ Key rules when squashing:
 - **Different commit types** (`feature:` vs `docs:`) → keep separate
 - **Related same-type commits** → can combine
 - **Implementation + refactor of same code** → combine into one commit
-
-**Before squashing, analyze commit types:**
-
-```bash
-# List commits with their types
-git log --oneline <base>..HEAD | while read hash msg; do
-    type=$(echo "$msg" | cut -d: -f1)
-    echo "$type: $hash ${msg#*: }"
-done | sort -t: -k1
-
-# Group by type to determine squash strategy
-git log --format="%s" <base>..HEAD | cut -d: -f1 | sort | uniq -c
-```
 
 ### Automatic STATE.md Preservation
 
@@ -406,36 +260,6 @@ When squashing commits that include STATE.md updates:
    fi
    ```
 
-**Why this matters:**
-- Squashing can revert STATE.md to earlier commit's version
-- Final state (status: completed, progress: 100%) must be preserved
-- Per M076: STATE.md belongs in same commit as implementation
-
-### Use Correct Workflow for Commit Position
-
-```bash
-# WRONG - Using soft reset workflow for mid-history commits
-git checkout <mid-history-commit>
-git reset --soft <base>
-git branch -f main HEAD  # LOSES all commits after the squash range!
-
-# CORRECT - Use interactive rebase for mid-history commits
-GIT_SEQUENCE_EDITOR=... git rebase -i <base>  # Preserves all commits
-```
-
-### Position HEAD First (Quick Workflow Only)
-
-**NOTE: With commit-tree approach (M305), HEAD must be at the last commit to squash,
-since we use `HEAD^{tree}` to get the final tree state.**
-
-```bash
-# Verify HEAD is at the last commit you want included
-git log --oneline -1  # Should show <last-commit-to-squash>
-
-# If not, checkout first
-git checkout <last-commit-to-squash>
-```
-
 ### Write Meaningful Commit Messages
 
 ```bash
@@ -453,16 +277,6 @@ feature: add login form with validation
 
 See `git-commit` skill for detailed message guidance.
 
-### Verify Immediately After Commit
-
-```bash
-# Check no changes lost
-git diff "$BACKUP"  # Empty = success
-
-# Check commit count
-git rev-list --count <base>..HEAD  # Should be 1
-```
-
 ## Squash vs Fixup
 
 | Command | Message Behavior | When to Use |
@@ -472,64 +286,16 @@ git rev-list --count <base>..HEAD  # Should be 1
 
 **When in doubt, use squash** - you can edit the combined message.
 
-## Non-Adjacent Commits
-
-For commits separated by others, use interactive rebase:
-
-```bash
-git rebase -i <base-commit>
-
-# In editor: Move commits to be adjacent, mark with 'squash'
-# Example:
-#   pick abc123 Target commit
-#   squash def456 Commit to combine (MOVED here)
-#   pick ghi789 Other commit (unchanged)
-```
-
-### Conflict Pre-Computation for Non-Adjacent Commits
-
-**Before attempting to squash non-adjacent commits, analyze potential conflicts:**
-
-```bash
-# Identify files modified by multiple commits in the range
-echo "Conflict risk analysis:"
-git diff --name-only <base>..HEAD | while read file; do
-    commits=$(git log --oneline <base>..HEAD -- "$file" | wc -l)
-    if [[ $commits -gt 1 ]]; then
-        echo "  ⚠️ $file: modified by $commits commits"
-    fi
-done
-
-# Check for same-line modifications (highest risk)
-for file in $(git diff --name-only <base>..HEAD); do
-    git log -p <base>..HEAD -- "$file" | grep -E "^@@" | sort | uniq -d && \
-        echo "  🔴 $file: same lines modified by multiple commits - HIGH RISK"
-done
-```
-
-**Risk Levels:**
-| Risk | Pattern | Recommendation |
-|------|---------|----------------|
-| LOW | Different files per commit | Safe to squash |
-| MEDIUM | Same file, different lines | Usually safe |
-| HIGH | Same file, same lines | Manual resolution likely needed |
-
 ## Error Recovery
 
-```bash
-# If anything goes wrong:
-git reset --hard $BACKUP
-
-# Or check reflog:
-git reflog
-git reset --hard HEAD@{N}
-```
+If anything goes wrong:
+- Restore from backup: `git reset --hard $BACKUP`
+- Or check reflog: `git reflog` then `git reset --hard HEAD@{N}`
 
 ## Success Criteria
 
 - [ ] Backup created before squash
-- [ ] HEAD positioned at correct last commit
 - [ ] No changes lost (diff with backup is empty)
-- [ ] Single commit created with all changes
+- [ ] Single commit created with all changes (or commits properly grouped by topic)
 - [ ] Meaningful commit message (not "squashed commits")
 - [ ] Backup removed after verification

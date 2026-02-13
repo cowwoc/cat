@@ -38,11 +38,19 @@ None - infrastructure bugfix
 - [ ] git-squash: Base branch reference resolved once, reused for rebase and commit-tree
 - [ ] git-merge-linear: Base branch reference resolved once, reused across verify/merge/cleanup steps
 - [ ] git-rebase: Base branch reference resolved once before rebase
-- [ ] git-amend: Push status race documented with advisory note
+- [ ] git-amend: Post-amend TOCTOU detection implemented to warn if race occurred
 - [ ] Pin-once pattern applied consistently: `BASE=$(git rev-parse <base-branch>)` before first use
 - [ ] No race window between any operations that depend on the same base ref
 - [ ] Critical Rules warning added to each modified skill
 - [ ] All existing tests pass with no regressions
+- [ ] git-merge-linear deterministic workflow extracted to plugin/scripts/git-merge-linear.sh
+- [ ] git-squash quick workflow extracted to plugin/scripts/git-squash-quick.sh
+- [ ] Scripts produce JSON output for machine parsing
+- [ ] Skills reference scripts while retaining full documentation
+- [ ] All 4 git operation scripts produce JSON output with status field
+- [ ] Each failure mode has a distinct status code (CONFLICT, FF_FAILED, NOT_LINEAR, etc.)
+- [ ] Error JSON includes enough context for agent recovery (backup_branch, conflicting_files, etc.)
+- [ ] Scripts fail fast - no attempt at recovery, just clear error reporting
 
 ## Execution Steps
 1. **Step 1:** Fix git-squash Quick Workflow
@@ -73,17 +81,36 @@ None - infrastructure bugfix
    - Files: plugin/skills/git-rebase/content.md
    - Pin BASE_BRANCH ref before rebase operation at lines 125-132
    - Use pinned ref for the rebase command
-7. **Step 7:** Document git-amend push status race
+7. **Step 7:** Add post-amend TOCTOU detection to git-amend
    - Files: plugin/skills/git-amend/content.md
-   - Add advisory note at lines 31-44 about push status check race (informational, not a fix)
-   - Note: This is a time-of-check-to-time-of-use (TOCTOU) race with minimal practical impact
+   - Record OLD_HEAD before amend operation
+   - After amend completes, check if OLD_HEAD was pushed to remote during the amend window
+   - If race detected, warn user that force-with-lease push is needed
+   - This converts a silent race into an immediately detected condition
 8. **Step 8:** Run existing tests to verify no regressions
    - Run: mvn -f hooks/pom.xml test
+9. **Step 9:** Extract git-merge-linear deterministic workflow to script
+   - Create: plugin/scripts/git-merge-linear.sh
+   - Implements: pin base, check divergence, check deletions, squash, merge-base verify, fast-forward, verify, cleanup
+   - Update git-merge-linear/content.md to reference script
+10. **Step 10:** Extract git-squash quick workflow to script
+    - Create: plugin/scripts/git-squash-quick.sh
+    - Implements: pin base, rebase, backup, commit-tree, verify, cleanup
+    - Update git-squash/content.md to reference script
+11. **Step 11:** Run tests to verify no regressions
+    - Run: mvn -f hooks/pom.xml test
+12. **Step 12:** Create git-rebase-safe.sh and git-amend-safe.sh scripts
+    - Create: plugin/scripts/git-rebase-safe.sh with backup, conflict detection, fail-fast
+    - Create: plugin/scripts/git-amend-safe.sh with TOCTOU detection, fail-fast
+    - Update skills to reference scripts
+13. **Step 13:** Enhance existing scripts with additional fail-fast error paths
+    - Enhance: plugin/scripts/git-merge-linear.sh with specific error JSON for each failure mode
+    - Enhance: plugin/scripts/git-squash-quick.sh with rebase conflict and verify failure handling
 
 ## Success Criteria
 - [ ] Base reference pinned once in git-squash (both workflows)
 - [ ] Base reference pinned once in git-merge-linear (all operations)
 - [ ] Base reference pinned once in git-rebase
-- [ ] Push status race documented in git-amend
+- [ ] Post-amend TOCTOU detection implemented in git-amend
 - [ ] Warnings documented in Critical Rules sections
 - [ ] All existing tests pass with no regressions
