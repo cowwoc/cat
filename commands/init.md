@@ -281,19 +281,12 @@ Create `.claude/cat/cat-config.json`:
   "mode": "[mode from step]",
   "initialized": "[date]",
   "source": "[new|existing]",
-  "adventureMode": {
-    "enabled": true,
-    "preferences": {
-      "approach": "[conservative|balanced|aggressive]",
-      "stakeholderReview": "[always|high-risk-only|never]",
-      "refactoring": "[avoid|opportunistic|eager]"
-    },
-    "autoProceeed": {
-      "singleApproach": true,
-      "lowRiskTasks": true,
-      "cleanExecution": true
-    }
-  }
+  "yoloMode": false,
+  "contextLimit": 200000,
+  "targetContextUsage": 40,
+  "approach": "[conservative|balanced|aggressive]",
+  "stakeholderReview": "[always|high-risk-only|never]",
+  "refactoring": "[avoid|opportunistic|eager]"
 }
 ```
 
