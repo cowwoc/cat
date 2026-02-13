@@ -23,7 +23,9 @@ did not wire the production skill loading path to use it. The production path st
 
 ## Approach
 
-Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink runtime.
+Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink runtime. Also replace
+`includes.txt` with inline `@path` references in `content.md` that SkillLoader expands by inlining file contents
+(no wrapping tags), matching Claude Code's built-in `@file` behavior.
 
 ### Execution Steps
 
@@ -39,28 +41,60 @@ Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink
    - Keep the `CLAUDE_PROJECT_DIR` check
    - The script becomes a thin wrapper: validate args, invoke Java
 
-2. **Add integration test for SkillLoader bindings resolution** in `SkillLoaderTest.java`:
-   - Test that `load()` resolves `bindings.json` variables to actual output (not placeholder text)
-   - Verify that `${CAT_SKILL_OUTPUT}` does NOT appear in the resolved output
-   - The existing `loadResolvesBindingsJsonVariables` test already covers this, but add a test that specifically
-     verifies the status skill's content.md pattern (placeholder surrounded by other text)
+2. **Replace `includes.txt` with `@path` references in `content.md`** in SkillLoader:
+   - **Remove `loadIncludes()` method** entirely
+   - **Add `@path` expansion to `substituteVars()`** (or a new method called before/after var substitution):
+     - Match lines starting with `@` followed by a relative path ending in `.md` or `.json`:
+       pattern `^@(.+\.(?:md|json))$` (whole line match, no leading whitespace)
+     - Resolve path relative to plugin root (same as includes.txt did)
+     - Replace the `@path` line with the raw file contents (no `<include>` wrapping)
+     - Fail-fast if the referenced file does not exist
+     - Apply variable substitution to the inlined content (so `${VAR}` in referenced files resolves)
+   - **Processing order:** Expand `@path` references first, then substitute `${VAR}` variables in the combined
+     content. This ensures variables inside referenced files are resolved.
 
-3. **Update refactor acceptance criteria in `/cat:add` stakeholder prompt** in
+3. **Migrate the 4 skills using `includes.txt` to `@path` in `content.md`:**
+
+   | Skill | includes.txt references | Migration |
+   |-------|------------------------|-----------|
+   | `remove` | `concepts/version-paths.md` | Add `@concepts/version-paths.md` at top of content.md |
+   | `decompose-issue` | `concepts/version-paths.md` | Add `@concepts/version-paths.md` at top of content.md |
+   | `init` | `templates/project.md`, `templates/roadmap.md`, `templates/cat-config.json` | Add 3 `@path` lines at top of content.md |
+   | `add` | 9 files (templates + concepts) | Add 9 `@path` lines at top of content.md |
+
+   - Delete all 4 `includes.txt` files after migration
+
+4. **Add tests for `@path` expansion** in `SkillLoaderTest.java`:
+   - Test that `@concepts/file.md` in content.md is replaced with file contents (no wrapping)
+   - Test that variables inside `@path`-expanded content are resolved
+   - Test that missing `@path` file causes IOException (fail-fast)
+   - Test that `@` in non-path contexts (email addresses, annotations) is not expanded
+   - Test existing bindings.json resolution still works
+
+5. **Update refactor acceptance criteria in `/cat:add` stakeholder prompt** in
    `plugin/skills/add/content.md`:
    - In the `task_ask_type_and_criteria` step's standard criteria table, change the Refactor row from
      "Behavior unchanged" to "User-visible behavior unchanged"
    - This prevents false contradiction flags when refactoring changes internal implementation while preserving
      external behavior
 
-4. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass
+6. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass
 
 ### Files to Modify
 
 | File | Action | Description |
 |------|--------|-------------|
 | `plugin/scripts/load-skill.sh` | Modify | Replace sed substitution with Java SkillLoader invocation |
-| `hooks/src/test/java/.../SkillLoaderTest.java` | Modify | Add integration test for bindings resolution |
-| `plugin/skills/add/content.md` | Modify | Clarify refactor criteria: "User-visible behavior unchanged" |
+| `hooks/src/main/java/.../SkillLoader.java` | Modify | Remove `loadIncludes()`, add `@path` expansion |
+| `hooks/src/test/java/.../SkillLoaderTest.java` | Modify | Add tests for `@path` expansion and bindings |
+| `plugin/skills/add/content.md` | Modify | Add `@path` refs at top, clarify refactor criteria |
+| `plugin/skills/remove/content.md` | Modify | Add `@concepts/version-paths.md` at top |
+| `plugin/skills/remove/includes.txt` | Delete | Replaced by `@path` in content.md |
+| `plugin/skills/decompose-issue/content.md` | Modify | Add `@concepts/version-paths.md` at top |
+| `plugin/skills/decompose-issue/includes.txt` | Delete | Replaced by `@path` in content.md |
+| `plugin/skills/init/content.md` | Modify | Add 3 `@path` lines at top |
+| `plugin/skills/init/includes.txt` | Delete | Replaced by `@path` in content.md |
+| `plugin/skills/add/includes.txt` | Delete | Replaced by `@path` in content.md |
 
 ### Key Constraints
 
@@ -68,6 +102,8 @@ Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink
 - JVM flags match session-start.sh: `-Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1`
 - SkillLoader.main() accepts: `plugin-root skill-name session-id [project-dir]`
 - Module invocation: `-m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader`
+- `@path` references use bare file contents (no XML wrapping) to match Claude Code's built-in `@file` behavior
+- `@path` pattern: `^@(.+\.(?:md|json))$` — must be the entire line, path ends in `.md` or `.json`
 
 ## Success Criteria
 
@@ -75,6 +111,9 @@ Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink
 - [ ] `${CAT_SKILL_OUTPUT}` in status/content.md resolves to actual GetStatusOutput result
 - [ ] Undefined variables cause fail-fast with clear error message
 - [ ] All three built-in variables (CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR) resolve correctly
-- [ ] Integration test verifying bindings.json resolution through SkillLoader
+- [ ] `@path` references in content.md expand to raw file contents (no wrapping tags)
+- [ ] Missing `@path` files cause fail-fast with clear error
+- [ ] All 4 `includes.txt` files deleted and replaced with `@path` in content.md
+- [ ] Integration tests for `@path` expansion, bindings resolution, and variable substitution
 - [ ] Existing SkillLoader tests continue to pass
 - [ ] `mvn -f hooks/pom.xml verify` passes
