@@ -402,7 +402,7 @@ Possible reasons:
 - No tasks defined yet
 
 Use /cat:status to see current state and gate status.
-Use /cat:add-task to add new tasks.
+Use /cat:add to add new tasks.
 
 If you believe locks are from crashed sessions, run /cat:cleanup.
 ```
@@ -1711,8 +1711,7 @@ See `.claude/cat/workflows/version-completion.md` for:
 Minor version {major}.{minor} is complete!
 
 Use `/cat:status` to see overall progress.
-Use `/cat:add-task` to add more tasks.
-Use `/cat:add-minor-version` to add a new minor version.
+Use `/cat:add` to add more tasks or versions.
 
 ---
 ```
