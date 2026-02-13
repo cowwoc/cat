@@ -36,7 +36,7 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}
 Execute the session analyzer to extract all mechanical data:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/hook.sh" run_handler io.github.cowwoc.cat.hooks.util.SessionAnalyzer "$SESSION_FILE"
+"${CLAUDE_PLUGIN_ROOT}/hooks/bin/session-analyzer" "$SESSION_FILE"
 ```
 
 The script outputs a JSON object with:
