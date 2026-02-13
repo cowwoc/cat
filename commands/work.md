@@ -1150,13 +1150,21 @@ Use AskUserQuestion to capture decision.
 TRUST_LEVEL=$(jq -r '.trust // "medium"' .claude/cat/cat-config.json)
 ```
 
-**Review triggering:**
+**Review triggering (based on verify level, NOT trust):**
 
-| Trust | Action |
-|-------|--------|
-| `high` | Skip review (autonomous mode) |
-| `medium` | Run review |
-| `low` | Run review |
+| Verify | Action |
+|--------|--------|
+| `none` | Skip all stakeholder reviews |
+| `changed` | Run stakeholder reviews |
+| `all` | Run stakeholder reviews |
+
+```bash
+VERIFY_LEVEL=$(jq -r '.verify // "changed"' .claude/cat/cat-config.json)
+if [[ "$VERIFY_LEVEL" == "none" ]]; then
+  echo "⚡ Stakeholder review: SKIPPED (verify: none)"
+  # Skip to approval_gate
+fi
+```
 
 **High-risk detection:** Read the task's PLAN.md Risk Assessment section. Task is high-risk if ANY of:
 - Risk section mentions "breaking change", "data loss", "security", "production"
@@ -1173,11 +1181,15 @@ to identify concerns from multiple perspectives before presenting to user.
 
 | Stakeholder | Focus | Reference |
 |-------------|-------|-----------|
+| requirements | Requirement satisfaction | stakeholders/requirements.md |
 | architect | System design, modules, APIs | stakeholders/architect.md |
 | security | Vulnerabilities, validation | stakeholders/security.md |
 | quality | Code quality, complexity | stakeholders/quality.md |
 | tester | Test coverage, edge cases | stakeholders/tester.md |
 | performance | Efficiency, resources | stakeholders/performance.md |
+| ux | Usability, accessibility | stakeholders/ux.md |
+| sales | Customer value, positioning | stakeholders/sales.md |
+| marketing | Messaging, go-to-market | stakeholders/marketing.md |
 
 **Execution:**
 
