@@ -21,7 +21,7 @@
 ```
 
 > **NOTE**: Task-level CHANGELOG.md is not created. Task changelog content is embedded
-> in commit messages (see commit message format in execute-task command).
+> in commit messages (see commit message format in work command).
 
 ## Version Semantics
 

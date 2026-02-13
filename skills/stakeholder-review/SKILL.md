@@ -14,7 +14,7 @@ perspectives (architecture, security, quality, testing, performance) before user
 
 ## When to Use
 
-- After implementation phase completes in `/cat:execute-task`
+- After implementation phase completes in `/cat:work`
 - Before the user approval gate
 - When significant code changes need multi-perspective validation
 
@@ -226,7 +226,7 @@ For `trust: "medium"`:
 
 ## Output Format
 
-Return structured result for integration with execute-task:
+Return structured result for integration with work:
 
 ```json
 {
@@ -248,7 +248,7 @@ Return structured result for integration with execute-task:
 }
 ```
 
-## Integration with execute-task
+## Integration with work
 
 This skill is invoked automatically after the implementation phase:
 
