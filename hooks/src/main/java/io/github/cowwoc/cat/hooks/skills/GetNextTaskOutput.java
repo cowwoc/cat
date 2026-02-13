@@ -281,7 +281,7 @@ public final class GetNextTaskOutput
       int goalStart = -1;
       for (int i = 0; i < lines.size(); ++i)
       {
-        String line = lines.get(i).trim();
+        String line = lines.get(i).strip();
         if (line.startsWith("## Goal"))
         {
           goalStart = i + 1;
@@ -296,16 +296,16 @@ public final class GetNextTaskOutput
       for (int i = goalStart; i < lines.size(); ++i)
       {
         String line = lines.get(i);
-        if (line.trim().startsWith("##"))
+        if (line.strip().startsWith("##"))
           break;
         goalLines.add(line.stripTrailing());
       }
 
-      String goal = String.join("\n", goalLines).trim();
+      String goal = String.join("\n", goalLines).strip();
 
       String[] paragraphs = goal.split("\n\n");
       if (paragraphs.length > 0)
-        return paragraphs[0].trim();
+        return paragraphs[0].strip();
       return goal;
     }
     catch (IOException _)
