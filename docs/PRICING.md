@@ -1,6 +1,6 @@
 # CAT Pricing
 
-> **CAT: A Coding Partner You Can Count On**
+> **CAT: Your Coding Partner That Grows With You**
 >
 > Build on solid ground, not a house of cards.
 
@@ -43,9 +43,9 @@ at genuine decision points.
 
 ## Pricing Plans
 
-### Indie — Free for solo developers
+### Indie — $0 / forever
 
-*For solo developers*
+*For solo builders*
 
 **Reliable, focused assistance:**
 - Does what you ask—nothing more

@@ -4,31 +4,21 @@ Version 1.0
 
 ## Hi! Here's what you need to know:
 
-| Tier | Who it's for |
-|------|--------------|
-| **Indie** | Solo developers — full CAT, single user, always free |
-| **Team** | Teams of 1-50 — adds collaboration features |
-| **Enterprise** | Organizations 50+ — adds compliance & integrations |
+| Tier | Price | Who it's for |
+|------|-------|--------------|
+| **Indie** | Free | Solo builders — full CAT, single user |
+| **Team** | $19/seat/month | Teams of 1-50 — adds collaboration features |
+| **Enterprise** | $49/seat/month | 50+ seats — adds compliance & integrations |
 
-For current pricing, see [PRICING.md](docs/PRICING.md).
-
-**Indie is free** - Working alone? Building a side project? Learning?
+**Indie is free forever** - Working alone? Building a side project? Learning?
 You get full CAT functionality at no cost. No time limits, no feature crippling.
 
 **Team unlocks collaboration** - When you need task locking (so two devs don't
 work the same task), shared config, team analytics, or cross-session handoff,
-upgrade to Team. Solo developers may purchase Team for a single seat if they
-want collaboration features for future team growth or personal use.
+upgrade to Team.
 
 **Enterprise adds compliance** - SSO/SAML, audit logs, issue tracker sync,
 Slack integration, custom LLM endpoints, SLA support.
-
-**Billing basics:**
-- Team: monthly or annual (annual = 2 months free)
-- Enterprise: annual only
-- Cancel anytime, 30 days before renewal
-- If payment fails, you have 14 days to fix it before downgrade to Indie
-- Working offline? 30-day grace period so CI/CD and air-gapped setups work fine
 
 **Building a product with CAT?**
 - If your product runs CAT for your users (like a code formatting SaaS),
@@ -79,7 +69,7 @@ includes, but is not limited to:
 - Use by employees in the course of their employment (covered under employer's license)
 - Use by contractors performing work for a licensed organization (covered under that organization's license while performing such work)
 - Use in developing, testing, or deploying commercial products or services
-- Use in providing paid consulting or professional services (requires consultant's own license unless client provides access under their license)
+- Use in providing paid consulting or professional services
 
 **"Indie Use"** means use by a single individual user, regardless of whether
 that use is personal or commercial. Indie Use is free and does not require
@@ -114,45 +104,13 @@ all core CAT functionality but excludes Team Features and Enterprise Features.
 
 ## Team and Enterprise Features Require a Paid License
 
-**Access to Team Features requires a Team license.**
+**Access to Team Features requires a Team license ($19/seat/month).**
 
-**Access to Enterprise Features requires an Enterprise license.**
-
-**Payment and Renewal Terms:**
-
-- **Team licenses** are billed monthly or annually at Your choice. Annual billing
-  provides two months free (pay for 10 months, receive 12 months of access).
-- **Enterprise licenses** are billed annually. Volume discounts may be available
-  for large deployments; contact the Licensor for details.
-- Licenses renew automatically unless cancelled at least thirty (30) days before
-  the renewal date. You may cancel at any time through Your account dashboard.
-- Upon cancellation or non-renewal, paid features will be disabled at the end of
-  the current billing period. Your data and configurations will be retained for
-  ninety (90) days to allow for reactivation or export.
-
-**Payment Failure**: If a payment fails, the Licensor will attempt to process
-the payment up to three (3) times over a fourteen (14) day period. You will
-receive email notification of each failed attempt. If payment cannot be
-collected after the retry period, Your license will be downgraded to Indie
-tier and paid features will be disabled. To restore access, update Your
-payment method and contact support.
+**Access to Enterprise Features requires an Enterprise license ($49/seat/month).**
 
 If You wish to use Team Features or Enterprise Features, You must purchase
 the appropriate license directly from the Licensor. See https://cat.dev/pricing
 for current pricing and terms.
-
-**Seat Limits**: Each Team or Enterprise license includes a defined number of
-seats. A "seat" represents one unique user (identified by machine or account).
-When all licensed seats are in use, additional users will be unable to access
-paid features until either: (a) an existing seat is released (via deactivation),
-or (b) additional seats are purchased. Core Indie functionality remains
-available to all users regardless of seat limits.
-
-**Grace Periods**: If the Software cannot validate Your license due to network
-unavailability, You will have a thirty (30) day grace period during which paid
-features remain accessible. After the grace period expires, paid features will
-be disabled until validation succeeds. This grace period is designed to prevent
-disruption to CI/CD pipelines and offline development environments.
 
 ## Runtime Redistribution Requires Per-User Licensing
 
