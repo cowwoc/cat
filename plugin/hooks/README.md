@@ -130,22 +130,60 @@ plugin-root/
     {skill-name}/
       content.md              — Main skill content (loaded on first invocation)
       includes.txt            — Optional; one relative path per line listing files to include
-      handler.sh              — Optional; executable script whose stdout is prepended
+      bindings.json           — Optional; maps variable names to SkillOutput class names
 ```
 
 ### Loading Behavior
 
 **First invocation** of a skill within a session:
-1. Execute `handler.sh` if present (output prepended)
-2. Load files listed in `includes.txt`, each wrapped in `<include path="...">...</include>` XML tags
-3. Load `content.md` (with license header stripped if present)
-4. Substitute variables: `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SESSION_ID}`, `${CLAUDE_PROJECT_DIR}`
+1. Load files listed in `includes.txt`, each wrapped in `<include path="...">...</include>` XML tags
+2. Load `content.md` (with license header stripped if present)
+3. Substitute variables (built-in and bindings)
 
 **Subsequent invocations** of the same skill within the same session:
-1. Execute `handler.sh` if present (output prepended)
-2. Load `reference.md` instead of content/includes
+1. Load `reference.md` instead of content/includes
+2. Substitute variables (built-in and bindings)
 
 Session tracking uses a temp file (`/tmp/cat-skills-loaded-{session-id}`) to record which skills have been loaded.
+
+### Variable Bindings
+
+Skills can define custom variables in `bindings.json` that map to `SkillOutput` classes. When a variable is referenced in content (e.g., `${CAT_SKILL_OUTPUT}`), the class is instantiated and invoked to generate the substitution value.
+
+**bindings.json format:**
+```json
+{
+  "CAT_SKILL_OUTPUT": "io.github.cowwoc.cat.hooks.skills.GetStatusOutput"
+}
+```
+
+**Built-in variables** (always available):
+- `${CLAUDE_PLUGIN_ROOT}` - plugin root directory path
+- `${CLAUDE_SESSION_ID}` - current session identifier
+- `${CLAUDE_PROJECT_DIR}` - project directory path
+
+**Binding requirements:**
+- SkillOutput class must have a constructor accepting `JvmScope` parameter
+- Binding variable names must not collide with built-in variables
+- Undefined variables (not built-in, not in bindings) cause `IOException`
+
+**Example content.md using bindings:**
+```markdown
+SCRIPT OUTPUT STATUS DISPLAY:
+${CAT_SKILL_OUTPUT}
+
+# Status
+
+The user wants you to respond with the content from "SCRIPT OUTPUT STATUS DISPLAY" above, verbatim.
+```
+
+### Handler Classes
+
+Handler classes must implement `io.github.cowwoc.cat.hooks.util.SkillOutput` interface:
+- Constructor accepting `JvmScope` parameter
+- `getOutput()` method returning dynamic content
+- Handler is instantiated and invoked in-process (no subprocess spawn)
+- Handlers are invoked lazily (only when their variable is referenced)
 
 ### includes.txt Format
 
