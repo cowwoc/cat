@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 80">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#718096"/>
+    </marker>
+  </defs>
+  <!-- Background -->
+  <rect x="0" y="0" width="500" height="80" fill="#1a1a2e" rx="4"/>
+
+  <!-- PENDING -->
+  <circle cx="60" cy="25" r="12" fill="none" stroke="#a0aec0" stroke-width="2"/>
+  <text x="60" y="55" text-anchor="middle" fill="#a0aec0" font-family="monospace" font-size="11">PENDING</text>
+
+  <!-- Arrow 1 -->
+  <line x1="80" y1="25" x2="175" y2="25" stroke="#718096" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- IN-PROGRESS -->
+  <circle cx="220" cy="25" r="12" fill="none" stroke="#f6e05e" stroke-width="2"/>
+  <text x="220" y="30" text-anchor="middle" fill="#f6e05e" font-family="monospace" font-size="14">→</text>
+  <text x="220" y="55" text-anchor="middle" fill="#f6e05e" font-family="monospace" font-size="11">IN-PROGRESS</text>
+
+  <!-- Arrow 2 -->
+  <line x1="260" y1="25" x2="355" y2="25" stroke="#718096" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+  <!-- COMPLETED -->
+  <circle cx="400" cy="25" r="12" fill="none" stroke="#48bb78" stroke-width="2"/>
+  <text x="400" y="30" text-anchor="middle" fill="#48bb78" font-family="monospace" font-size="14">✓</text>
+  <text x="400" y="55" text-anchor="middle" fill="#48bb78" font-family="monospace" font-size="11">COMPLETED</text>
+</svg>
