@@ -232,9 +232,84 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 
 </step>
 
+<step name="adventure_style">
+
+**Choose Your Adventurer - Capture development style preferences**
+
+Display welcome banner:
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  🎮 WELCOME TO YOUR DEVELOPMENT ADVENTURE                         ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  A few quick questions to understand your style.                  ║
+║  (These shape how CAT makes decisions throughout the project)     ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+
+AskUserQuestion: header="Approach", question="Development approach?", options=[
+  "🛡️ Conservative - minimal changes, thorough testing, avoid risk",
+  "⚖️ Balanced - pragmatic tradeoffs, reasonable coverage (Recommended)",
+  "⚔️ Aggressive - comprehensive improvements, move fast, refactor freely"
+]
+
+AskUserQuestion: header="Review", question="When should CAT trigger stakeholder review?", options=[
+  "Always before merging",
+  "Only for high-risk or cross-module changes (Recommended)",
+  "Never - I'll request when needed"
+]
+
+AskUserQuestion: header="Refactoring", question="Refactoring appetite?", options=[
+  "Avoid - only fix what's broken",
+  "Opportunistic - clean up adjacent code when natural (Recommended)",
+  "Eager - improve code quality proactively"
+]
+
+Map responses to preference values:
+- Approach: conservative | balanced | aggressive
+- Stakeholder Review: always | high-risk-only | never
+- Refactoring: avoid | opportunistic | eager
+
+</step>
+
 <step name="config">
 
-Create `.claude/cat/cat-config.json`: `{"mode": "[mode]", "initialized": "[date]", "source": "[new|existing]"}`
+Create `.claude/cat/cat-config.json`:
+```json
+{
+  "mode": "[mode from step]",
+  "initialized": "[date]",
+  "source": "[new|existing]",
+  "adventureMode": {
+    "enabled": true,
+    "preferences": {
+      "approach": "[conservative|balanced|aggressive]",
+      "stakeholderReview": "[always|high-risk-only|never]",
+      "refactoring": "[avoid|opportunistic|eager]"
+    },
+    "autoProceeed": {
+      "singleApproach": true,
+      "lowRiskTasks": true,
+      "cleanExecution": true
+    }
+  }
+}
+```
+
+Append to PROJECT.md (after Key Decisions):
+```markdown
+
+## User Preferences
+
+These preferences shape how CAT makes autonomous decisions:
+
+- **Development Approach:** [conservative|balanced|aggressive]
+- **Stakeholder Review:** [always|high-risk-only|never]
+- **Refactoring Appetite:** [avoid|opportunistic|eager]
+
+Update anytime with: `/cat:update-preferences`
+```
 
 </step>
 
@@ -248,6 +323,21 @@ git commit -m "docs: initialize CAT planning structure"
 </step>
 
 <step name="done">
+
+Display completion banner:
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  ✨ YOUR ADVENTURE AWAITS                                         ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  Style: [approach] │ Reviews: [stakeholderReview]                 ║
+║  Refactoring: [refactoring] │ Mode: [interactive|yolo]            ║
+║                                                                   ║
+║  These preferences will guide autonomous decisions.               ║
+║  Change anytime with: /cat:update-preferences                     ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
 
 **New projects:**
 ```

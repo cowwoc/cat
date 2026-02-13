@@ -24,12 +24,12 @@ parent task branch.
 
 Display progress at each step using this format:
 ```
-[Step N/6] Step description (P% | Xs elapsed | ~Ys remaining)
+[Step N/8] Step description (P% | Xs elapsed | ~Ys remaining)
 ✅ Completed: result summary
 ```
 
 Steps: 1. Verify completion, 2. Extract commits, 3. Parse metrics, 4. Read work products, 5. Extract
-status, 6. Compile report
+status, 6. Report metrics to user, 7. Update STATE.md, 8. Prepare for merge
 
 ### 1. Verify Subagent Completion
 
