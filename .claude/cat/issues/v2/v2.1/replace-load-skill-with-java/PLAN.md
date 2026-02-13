@@ -45,7 +45,14 @@ Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink
    - The existing `loadResolvesBindingsJsonVariables` test already covers this, but add a test that specifically
      verifies the status skill's content.md pattern (placeholder surrounded by other text)
 
-3. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass
+3. **Update refactor acceptance criteria in `/cat:add` stakeholder prompt** in
+   `plugin/skills/add/content.md`:
+   - In the `task_ask_type_and_criteria` step's standard criteria table, change the Refactor row from
+     "Behavior unchanged" to "User-visible behavior unchanged"
+   - This prevents false contradiction flags when refactoring changes internal implementation while preserving
+     external behavior
+
+4. **Run `mvn -f hooks/pom.xml verify`** to confirm all tests pass
 
 ### Files to Modify
 
@@ -53,6 +60,7 @@ Replace `load-skill.sh` with a call to Java `SkillLoader.main()` using the jlink
 |------|--------|-------------|
 | `plugin/scripts/load-skill.sh` | Modify | Replace sed substitution with Java SkillLoader invocation |
 | `hooks/src/test/java/.../SkillLoaderTest.java` | Modify | Add integration test for bindings resolution |
+| `plugin/skills/add/content.md` | Modify | Clarify refactor criteria: "User-visible behavior unchanged" |
 
 ### Key Constraints
 
