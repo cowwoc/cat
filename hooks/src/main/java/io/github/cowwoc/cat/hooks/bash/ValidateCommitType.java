@@ -143,7 +143,7 @@ public final class ValidateCommitType implements BashHandler
     // Check HEREDOC first (more specific pattern)
     Matcher heredocMatcher = HEREDOC_PATTERN.matcher(command);
     if (heredocMatcher.find())
-      return heredocMatcher.group(1).trim();
+      return heredocMatcher.group(1).strip();
 
     // Pattern 2: Simple -m "message" or -m 'message'
     Matcher simpleMatcher = SIMPLE_MESSAGE_PATTERN.matcher(command);
@@ -172,7 +172,7 @@ public final class ValidateCommitType implements BashHandler
     {
       if (i > 0)
         normalizedMessage.append('\n');
-      normalizedMessage.append(messageLines[i].trim());
+      normalizedMessage.append(messageLines[i].strip());
     }
     return normalizedMessage.toString();
   }

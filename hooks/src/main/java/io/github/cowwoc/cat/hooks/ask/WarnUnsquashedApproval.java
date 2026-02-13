@@ -80,7 +80,7 @@ public final class WarnUnsquashedApproval implements AskHandler
   {
     try
     {
-      String baseBranch = Files.readString(catBaseFile).trim();
+      String baseBranch = Files.readString(catBaseFile).strip();
       if (baseBranch.isEmpty())
         return Result.allow();
 
@@ -89,7 +89,7 @@ public final class WarnUnsquashedApproval implements AskHandler
 
       if (result.exitCode() == 0 && !result.stdout().isEmpty())
       {
-        int commitCount = Integer.parseInt(result.stdout().trim());
+        int commitCount = Integer.parseInt(result.stdout().strip());
         if (commitCount > 2)
         {
           String warning = "⚠️ PRE-APPROVAL CHECK FAILED: UNSQUASHED COMMITS (M199)\n" +

@@ -122,7 +122,7 @@ public final class GitMergeLinear
         ". Recreate worktree with /cat:work.");
     }
 
-    return Files.readString(catBasePath, StandardCharsets.UTF_8).trim();
+    return Files.readString(catBasePath, StandardCharsets.UTF_8).strip();
   }
 
   /**
@@ -267,7 +267,7 @@ public final class GitMergeLinear
   private void verifyLinearHistory() throws IOException
   {
     String parents = runGitCommandSingleLine("log", "-1", "--format=%p", "HEAD");
-    String[] parentArray = parents.trim().split("\\s+");
+    String[] parentArray = parents.strip().split("\\s+");
     if (parentArray.length > 1)
       throw new IOException("Merge commit detected! History is not linear.");
   }

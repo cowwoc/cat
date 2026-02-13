@@ -185,7 +185,7 @@ public final class BlockMainRebase implements BashHandler
     Matcher cdMatcher = CD_TARGET_PATTERN.matcher(command);
     if (cdMatcher.find())
     {
-      String targetDir = cdMatcher.group(1).trim();
+      String targetDir = cdMatcher.group(1).strip();
       try
       {
         return GitCommands.getCurrentBranch(targetDir);

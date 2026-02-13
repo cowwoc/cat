@@ -139,9 +139,9 @@ public final class GetStatusOutput implements SkillOutput
           String matched = versionMatcher.group(1);
           int parenIndex = matched.indexOf('(');
           if (parenIndex >= 0)
-            majorName = matched.substring(0, parenIndex).trim();
+            majorName = matched.substring(0, parenIndex).strip();
           else
-            majorName = matched.trim();
+            majorName = matched.strip();
         }
 
         Path majorStateFile = majorDir.resolve("STATE.md");
@@ -242,7 +242,7 @@ public final class GetStatusOutput implements SkillOutput
               Pattern.MULTILINE);
             Matcher minorMatcher = minorPattern.matcher(roadmapContent);
             if (minorMatcher.find())
-              desc = minorMatcher.group(1).trim();
+              desc = minorMatcher.group(1).strip();
 
             totalCompleted += localCompleted;
             totalTasks += localTotal;

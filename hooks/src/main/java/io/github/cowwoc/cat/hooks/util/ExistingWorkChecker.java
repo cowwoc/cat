@@ -93,7 +93,7 @@ public final class ExistingWorkChecker
     int commitCount;
     try
     {
-      commitCount = Integer.parseInt(countOutput.trim());
+      commitCount = Integer.parseInt(countOutput.strip());
     }
     catch (NumberFormatException _)
     {
@@ -110,7 +110,7 @@ public final class ExistingWorkChecker
       StringJoiner summary = new StringJoiner("|");
 
       for (int i = 0; i < lineCount; ++i)
-        summary.add(lines[i].trim());
+        summary.add(lines[i].strip());
 
       return new CheckResult(true, commitCount, summary.toString());
     }

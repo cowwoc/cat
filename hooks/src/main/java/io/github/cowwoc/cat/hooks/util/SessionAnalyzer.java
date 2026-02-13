@@ -189,7 +189,7 @@ public final class SessionAnalyzer
         if (line == null)
           break;
         ++lineNum;
-        line = line.trim();
+        line = line.strip();
         if (line.isEmpty())
           continue;
 
