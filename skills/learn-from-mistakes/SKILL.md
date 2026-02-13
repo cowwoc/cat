@@ -239,6 +239,32 @@ verification:
 
 **MANDATORY: Persist learning to file, not just context.**
 
+**CRITICAL VALIDATION - Before recording, verify prevention is REAL:**
+
+```yaml
+prevention_path_validation:
+  # INVALID paths (will cause recurrence):
+  invalid_examples:
+    - "N/A"
+    - "N/A - behavioral change"
+    - "behavioral"
+    - "process change"
+    - ""  # empty
+    - "TBD"
+
+  # VALID paths (actual files that were changed):
+  valid_examples:
+    - "/workspace/cat/commands/execute-task.md"
+    - ".claude/hooks/validate-commit.sh"
+    - "src/main/java/Parser.java"
+
+  # Rule: prevention_path MUST be a real file path that was actually modified
+  # "Behavioral change" without enforcement is NOT prevention - it WILL recur
+```
+
+**If you cannot identify a real file to change, you have NOT implemented prevention.**
+Go back to step 7 and find a code/config/documentation fix.
+
 **File:** `.claude/cat/retrospectives/mistakes.json`
 
 ```bash
