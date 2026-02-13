@@ -24,7 +24,7 @@ when a task exceeds safe context bounds.
 ### 1. Analyze Current Task Scope
 
 ```bash
-TASK_DIR=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/task/${TASK_NAME}"
+TASK_DIR=".claude/cat/v${MAJOR}/v${MAJOR}.${MINOR}/${TASK_NAME}"
 
 # Read current PLAN.md
 cat "${TASK_DIR}/PLAN.md"
@@ -63,9 +63,9 @@ Analyze PLAN.md for natural boundaries:
 # New tasks: parser-lexer, parser-ast, parser-semantic (within same minor)
 
 # Create directories for new tasks
-mkdir -p ".claude/cat/v1/v1.2/task/parser-lexer"
-mkdir -p ".claude/cat/v1/v1.2/task/parser-ast"
-mkdir -p ".claude/cat/v1/v1.2/task/parser-semantic"
+mkdir -p ".claude/cat/v1/v1.2/parser-lexer"
+mkdir -p ".claude/cat/v1/v1.2/parser-ast"
+mkdir -p ".claude/cat/v1/v1.2/parser-semantic"
 ```
 
 ### 4. Create PLAN.md for Each New Task
