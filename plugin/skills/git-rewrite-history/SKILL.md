@@ -1,6 +1,6 @@
 ---
 name: git-rewrite-history
-description: Rewrite git history using git-filter-repo (not filter-branch)
+description: Use instead of `git filter-branch` - uses safer git-filter-repo with --partial for recoverability
 ---
 
 # Git Rewrite History Skill
