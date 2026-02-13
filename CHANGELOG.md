@@ -4,7 +4,30 @@
 
 ### 2026-01-14: v1.6
 
-*In development*
+**Adventure Mode**
+
+Introduces the "fun AND reliable" philosophy with adventure-style workflow enhancements.
+
+**New Features:**
+- **Adventure Mode**: Express development style preferences during `/cat:init`
+- **Choose Approach**: "Fork in the Road" decision points with smart recommendations
+- **Visual Status**: Adventure-style progress display in `/cat:status`
+- **User Preferences**: Approach (conservative/balanced/aggressive), stakeholder review
+  frequency, refactoring appetite - stored in cat-config.json
+
+**Skills:**
+- `choose-approach` - Present approach options at task forks with recommendations
+- `update-config` - Modify adventure style preferences after init
+
+**Workflow Enhancements:**
+- Enhanced approval gate with adventure-style checkpoint display
+- 15-step execute-task flow (added approach selection)
+- Progress bars show user style and preferences
+
+**Documentation:**
+- README rewrite with "fun AND reliable" philosophy
+- New "Development Philosophy" section
+- Adventure mode configuration documentation
 
 ### 2026-01-14: v1.5
 
