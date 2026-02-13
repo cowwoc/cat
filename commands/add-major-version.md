@@ -168,6 +168,60 @@ Loop until "Create it" selected.
 
 </step>
 
+<step name="research">
+
+**Run parallel stakeholder research:**
+
+Spawn 8 stakeholder agents in parallel using `parallel-execute` skill with `mode: research`:
+
+```yaml
+stakeholders:
+  - architect: "Research stack selection and architecture patterns for {vision summary}"
+  - security: "Research security risks and secure patterns for {vision summary}"
+  - quality: "Research quality patterns and anti-patterns for {vision summary}"
+  - tester: "Research testing strategies and edge cases for {vision summary}"
+  - performance: "Research performance characteristics and pitfalls for {vision summary}"
+  - ux: "Research UX patterns and usability considerations for {vision summary}"
+  - sales: "Research customer value, competitive positioning, and objection handling for {vision summary}"
+  - marketing: "Research positioning, messaging, and go-to-market for {vision summary}"
+```
+
+**Each agent receives:**
+- Vision summary from discuss step
+- Features list from discuss step
+- `mode: research` parameter
+- Reference to their stakeholder definition file
+
+**Aggregate findings:**
+
+Collect JSON responses from all stakeholders and merge into a unified research structure:
+
+```yaml
+research:
+  stack:
+    # From architect
+  architecture:
+    # From architect
+  security:
+    # From security
+  quality:
+    # From quality
+  testing:
+    # From tester
+  performance:
+    # From performance
+  ux:
+    # From ux
+  sources:
+    # Combined from all stakeholders
+  openQuestions:
+    # Combined from all stakeholders
+```
+
+**Store research findings for inclusion in PLAN.md.**
+
+</step>
+
 <step name="configure_gates">
 
 **Configure entry and exit gates for Major Version:**
