@@ -1,5 +1,6 @@
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillLoader;
 import org.testng.annotations.Test;
 
@@ -25,7 +26,15 @@ public class SkillLoaderTest
   @Test(expectedExceptions = NullPointerException.class)
   public void constructorRejectsNullPluginRoot() throws IOException
   {
-    new SkillLoader(null, "session123", "/project");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, null, "session123", "/project");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
   }
 
   /**
@@ -36,7 +45,15 @@ public class SkillLoaderTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void constructorRejectsEmptyPluginRoot() throws IOException
   {
-    new SkillLoader("", "session123", "/project");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "", "session123", "/project");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
   }
 
   /**
@@ -47,7 +64,15 @@ public class SkillLoaderTest
   @Test(expectedExceptions = NullPointerException.class)
   public void constructorRejectsNullSessionId() throws IOException
   {
-    new SkillLoader("/plugin", null, "/project");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", null, "/project");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
   }
 
   /**
@@ -58,7 +83,15 @@ public class SkillLoaderTest
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void constructorRejectsEmptySessionId() throws IOException
   {
-    new SkillLoader("/plugin", "", "/project");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", "", "/project");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
   }
 
   /**
@@ -70,9 +103,9 @@ public class SkillLoaderTest
   public void constructorAcceptsEmptyProjectDir() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       requireThat(loader, "loader").isNotNull();
     }
@@ -91,13 +124,13 @@ public class SkillLoaderTest
   public void loadSubstitutesPluginRootVariable() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Path: ${CLAUDE_PLUGIN_ROOT}/file.txt\n");
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       String result = loader.load("test-skill");
 
@@ -119,14 +152,14 @@ public class SkillLoaderTest
   public void loadSubstitutesSessionIdVariable() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Session: ${CLAUDE_SESSION_ID}\n");
 
       String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), uniqueSession, "");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Session: " + uniqueSession);
@@ -147,13 +180,13 @@ public class SkillLoaderTest
   public void loadSubstitutesProjectDirVariable() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Project: ${CLAUDE_PROJECT_DIR}/data\n");
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "/workspace");
       String result = loader.load("test-skill");
 
@@ -175,13 +208,13 @@ public class SkillLoaderTest
   public void loadReturnsContentOnFirstInvocation() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Full skill content here\n");
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       String result = loader.load("test-skill");
 
@@ -202,7 +235,7 @@ public class SkillLoaderTest
   public void loadReturnsReferenceOnSecondInvocation() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
@@ -211,7 +244,7 @@ public class SkillLoaderTest
       Path skillsDir = tempPluginRoot.resolve("skills");
       Files.writeString(skillsDir.resolve("reference.md"), "Reference text\n");
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
 
       String firstResult = loader.load("test-skill");
@@ -236,12 +269,12 @@ public class SkillLoaderTest
   public void loadHandlesMissingContentFile() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/empty-skill");
       Files.createDirectories(skillDir);
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       String result = loader.load("empty-skill");
 
@@ -262,7 +295,7 @@ public class SkillLoaderTest
   public void loadProcessesIncludes() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
@@ -273,7 +306,7 @@ public class SkillLoaderTest
       Files.createDirectories(conceptsDir);
       Files.writeString(conceptsDir.resolve("context1.md"), "Context file content\n");
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       String result = loader.load("test-skill");
 
@@ -297,9 +330,9 @@ public class SkillLoaderTest
   public void loadRejectsNullSkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       loader.load(null);
     }
@@ -318,9 +351,9 @@ public class SkillLoaderTest
   public void loadRejectsEmptySkillName() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       loader.load("");
     }
@@ -339,14 +372,14 @@ public class SkillLoaderTest
   public void loadHandlesMissingIncludeFileGracefully() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
       Files.writeString(skillDir.resolve("content.md"), "Main content\n");
       Files.writeString(skillDir.resolve("includes.txt"), "concepts/missing.md\n");
 
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), "session-" +
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
       String result = loader.load("test-skill");
 
@@ -368,7 +401,7 @@ public class SkillLoaderTest
   public void loadHandlesNestedVariableReferences() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
@@ -377,7 +410,7 @@ public class SkillLoaderTest
       Files.writeString(skillDir.resolve("content.md"), content);
 
       String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(tempPluginRoot.toString(), uniqueSession, "/workspace");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "/workspace");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Path: " + tempPluginRoot + "/contains_" + uniqueSession);
@@ -385,6 +418,175 @@ public class SkillLoaderTest
       requireThat(result, "result").doesNotContain("${CLAUDE_PLUGIN_ROOT}");
       requireThat(result, "result").doesNotContain("${CLAUDE_SESSION_ID}");
       requireThat(result, "result").doesNotContain("${CLAUDE_PROJECT_DIR}");
+    }
+    finally
+    {
+      deleteRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load resolves bindings.json variables when present.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadResolvesBindingsJsonVariables() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    Path tempProjectDir = Files.createTempDirectory("skill-loader-project");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempProjectDir))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/status");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("bindings.json"),
+        "{\"CAT_SKILL_OUTPUT\": \"io.github.cowwoc.cat.hooks.skills.GetStatusOutput\"}");
+      Files.writeString(skillDir.resolve("content.md"), "Status: ${CAT_SKILL_OUTPUT}\nDone\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), tempProjectDir.toString());
+      String result = loader.load("status");
+
+      requireThat(result, "result").contains("Status:");
+      requireThat(result, "result").doesNotContain("${CAT_SKILL_OUTPUT}");
+      requireThat(result, "result").contains("Done");
+    }
+    finally
+    {
+      deleteRecursively(tempPluginRoot);
+      deleteRecursively(tempProjectDir);
+    }
+  }
+
+  /**
+   * Verifies that load throws IOException when bindings.json contains reserved variable name.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class)
+  public void loadRejectsReservedVariableInBindings() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("bindings.json"),
+        "{\"CLAUDE_PLUGIN_ROOT\": \"io.github.cowwoc.cat.hooks.skills.GetStatusOutput\"}");
+      Files.writeString(skillDir.resolve("content.md"), "Content\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      loader.load("test-skill");
+    }
+    finally
+    {
+      deleteRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load throws IOException for undefined variable.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class)
+  public void loadRejectsUndefinedVariable() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("content.md"), "Value: ${UNDEFINED_VAR}\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      loader.load("test-skill");
+    }
+    finally
+    {
+      deleteRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load works with no bindings.json file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadWorksWithoutBindingsJson() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("content.md"),
+        "Root: ${CLAUDE_PLUGIN_ROOT}\nSession: ${CLAUDE_SESSION_ID}\n");
+
+      String uniqueSession = "test-" + System.nanoTime();
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("Root: " + tempPluginRoot);
+      requireThat(result, "result").contains("Session: " + uniqueSession);
+    }
+    finally
+    {
+      deleteRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load works with empty bindings.json file.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadWorksWithEmptyBindingsJson() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("bindings.json"), "{}");
+      Files.writeString(skillDir.resolve("content.md"), "Root: ${CLAUDE_PLUGIN_ROOT}\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("Root: " + tempPluginRoot);
+    }
+    finally
+    {
+      deleteRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load throws IOException for invalid class name in bindings.json.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class)
+  public void loadRejectsInvalidBindingClassName() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("bindings.json"),
+        "{\"MY_VAR\": \"com.example.NonExistentClass\"}");
+      Files.writeString(skillDir.resolve("content.md"), "Value: ${MY_VAR}\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      loader.load("test-skill");
     }
     finally
     {
