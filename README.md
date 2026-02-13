@@ -235,6 +235,7 @@ Your CAT settings live in `.claude/cat/cat-config.json`:
 | `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
 | `patience` | string | `high` | When CAT acts on discovered opportunities |
 | `terminalWidth` | number | `120` | Display width in characters for output formatting |
+| `autoRemoveWorktrees` | boolean | `true` | Auto-cleanup worktrees on task completion |
 
 **trust** — How much trust you place in CAT to make decisions:
 - `low` — CAT presents options frequently; you guide most decisions

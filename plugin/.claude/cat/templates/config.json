@@ -1,6 +1,5 @@
 {
   "version": "${CAT_VERSION}",
-  "yoloMode": false,
   "autoRemoveWorktrees": true,
   "trust": "medium",
   "verify": "changed",
