@@ -48,7 +48,7 @@ List all major versions:
 for d in .claude/cat/v[0-9]*/; do
     MAJOR=$(basename "$d" | sed 's/v//')
     MINOR_COUNT=$(ls -1d "$d"v$MAJOR.[0-9]* 2>/dev/null | wc -l)
-    TASK_COUNT=$(find "$d" -name "STATE.md" -path "*/task/*/STATE.md" 2>/dev/null | wc -l)
+    TASK_COUNT=$(find "$d" -mindepth 3 -maxdepth 3 -name "STATE.md" 2>/dev/null | wc -l)
     STATUS=$(grep "Status:" "$d/STATE.md" 2>/dev/null | sed 's/.*: //' || echo "unknown")
     echo "Major $MAJOR: $MINOR_COUNT minor versions, $TASK_COUNT tasks ($STATUS)"
 done
@@ -78,7 +78,7 @@ MAJOR_PATH=".claude/cat/v$MAJOR"
 
 ```bash
 # Find any tasks that are not completed
-INCOMPLETE=$(find "$MAJOR_PATH" -name "STATE.md" -path "*/task/*/STATE.md" \
+INCOMPLETE=$(find "$MAJOR_PATH" -mindepth 3 -maxdepth 3 -name "STATE.md" \
     -exec grep -l "Status: pending\|Status: in-progress" {} \; 2>/dev/null)
 ```
 
@@ -134,7 +134,7 @@ Use AskUserQuestion:
 
 ```bash
 MINOR_COUNT=$(ls -1d "$MAJOR_PATH"/v$MAJOR.[0-9]* 2>/dev/null | wc -l)
-TASK_COUNT=$(find "$MAJOR_PATH" -name "STATE.md" -path "*/task/*/STATE.md" 2>/dev/null | wc -l)
+TASK_COUNT=$(find "$MAJOR_PATH" -mindepth 3 -maxdepth 3 -name "STATE.md" 2>/dev/null | wc -l)
 ```
 
 </step>

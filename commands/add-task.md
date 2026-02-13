@@ -102,7 +102,7 @@ if ! echo "$TASK_NAME" | grep -qE '^[a-z][a-z0-9-]{0,48}[a-z0-9]$'; then
 fi
 
 # Check uniqueness within minor version
-if [ -d ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/task/$TASK_NAME" ]; then
+if [ -d ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME" ]; then
     echo "ERROR: Task '$TASK_NAME' already exists in version $MAJOR.$MINOR"
     exit 1
 fi
@@ -175,7 +175,7 @@ Ask inline: "What are the acceptance criteria? How will we know this task is com
 **Create task directory structure:**
 
 ```bash
-TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/task/$TASK_NAME"
+TASK_PATH=".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME"
 mkdir -p "$TASK_PATH"
 ```
 
@@ -340,7 +340,7 @@ Recalculate progress and update task count.
 **Commit task creation:**
 
 ```bash
-git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/task/$TASK_NAME/"
+git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/$TASK_NAME/"
 git add ".claude/cat/v$MAJOR/v$MAJOR.$MINOR/STATE.md"
 git commit -m "$(cat <<'EOF'
 docs: add task {task-name} to {major}.{minor}
@@ -359,7 +359,7 @@ EOF
 ```
 Task created:
 
-- Path: .claude/cat/v{major}/v{major}.{minor}/task/{task-name}/
+- Path: .claude/cat/v{major}/v{major}.{minor}/{task-name}/
 - Type: {task-type}
 - Dependencies: {deps or "None"}
 

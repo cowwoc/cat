@@ -45,7 +45,7 @@ MAJOR -> MINOR -> TASK
         ├── STATE.md              # Minor version state
         ├── PLAN.md               # Feature-level plan
         ├── CHANGELOG.md          # Minor changelog
-        └── task/{name}/
+        └── {name}/
             ├── STATE.md          # Task state
             ├── PLAN.md           # Technical-level plan
             └── CHANGELOG.md      # Task changelog
@@ -69,7 +69,7 @@ Add CAT structure to an existing codebase.
 
 ### Task Execution
 
-**`/cat:execute-task [major.minor/task-name]`**
+**`/cat:execute-task [id]`** (id format: `major.minor-task-name`)
 Execute the next available task.
 - Creates worktree and task branch
 - Spawns subagent for execution
@@ -110,7 +110,7 @@ Add a new major version.
 
 ### Removing Structure
 
-**`/cat:remove-task [major.minor/task-name]`**
+**`/cat:remove-task [id]`** (id format: `major.minor-task-name`)
 Remove a task.
 - Validates no work in progress
 - Checks for dependent tasks

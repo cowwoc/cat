@@ -4,7 +4,7 @@
 
 ```
 MAJOR VERSION -> MINOR VERSION -> TASK
-     v1/            v1.0/          task/setup-auth/
+     v1/            v1.0/          setup-auth/
 ```
 
 ## Why CAT?
@@ -61,7 +61,7 @@ Large projects fail in AI assistants because context windows overflow. CAT solve
 | Command | Description |
 |---------|-------------|
 | `/cat:init` | Initialize CAT structure (new or existing project). Guided wizard creates PROJECT.md, ROADMAP.md, and config. |
-| `/cat:execute-task [path]` | Execute a task. Creates worktree, runs work, handles approval gate, merges to main. Path format: `1.0/task-name` |
+| `/cat:execute-task [id]` | Execute a task. Creates worktree, runs work, handles approval gate, merges to main. ID format: `1.0-task-name` |
 | `/cat:status` | Show visual tree of all versions and tasks with progress bars and status indicators. |
 | `/cat:help` | Display complete command and skill reference. |
 
@@ -106,11 +106,10 @@ your-project/
             ├── STATE.md        # Minor version state
             ├── PLAN.md         # Feature-level plan
             ├── CHANGELOG.md    # Minor changelog
-            └── task/
-                └── setup-auth/     # Individual task
-                    ├── STATE.md    # Task state (pending/in-progress/completed)
-                    ├── PLAN.md     # Detailed execution steps
-                    └── CHANGELOG.md # What the task accomplished
+            └── setup-auth/     # Individual task
+                ├── STATE.md    # Task state (pending/in-progress/completed)
+                ├── PLAN.md     # Detailed execution steps
+                └── CHANGELOG.md # What the task accomplished
 ```
 
 ## Configuration

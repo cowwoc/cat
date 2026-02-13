@@ -609,7 +609,7 @@ mkdir -p .claude/cat
 For each major version in ROADMAP.md:
 
 ```bash
-mkdir -p ".claude/cat/v{major}/v{major}.{minor}/task/{task-name}"
+mkdir -p ".claude/cat/v{major}/v{major}.{minor}/{task-name}"
 ```
 
 **Create STATE.md, PLAN.md, and CHANGELOG.md for each task using imported content.**
