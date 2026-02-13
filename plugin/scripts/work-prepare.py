@@ -452,7 +452,7 @@ def check_base_branch_commits(
 
     # Filter out planning commits that just add issue definitions (false positives).
     # These mention the issue name but don't implement it.
-    planning_prefixes = ("planning:", "config: add issue", "config: add task", "config: mark")
+    planning_prefixes = ("planning:", "config: add issue", "config: add task", "config: mark", "config: decompose")
     lines = result.stdout.strip().splitlines()
     filtered = []
     for line in lines:
