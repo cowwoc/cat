@@ -2,11 +2,27 @@
 # Conditional skill loader: loads full content on first invocation,
 # tiny reference on subsequent invocations within the same session.
 
+# Required parameters - fail fast if missing
+if [[ -z "${1:-}" ]]; then
+  echo "ERROR: CLAUDE_PLUGIN_ROOT (arg 1) is required" >&2
+  exit 1
+fi
+if [[ -z "${2:-}" ]]; then
+  echo "ERROR: SKILL name (arg 2) is required" >&2
+  exit 1
+fi
+if [[ -z "${3:-}" ]]; then
+  echo "ERROR: CLAUDE_SESSION_ID (arg 3) is required" >&2
+  exit 1
+fi
+if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
+  echo "ERROR: CLAUDE_PROJECT_DIR environment variable is not set" >&2
+  exit 1
+fi
+
 CLAUDE_PLUGIN_ROOT="$1"
 SKILL="$2"
 CLAUDE_SESSION_ID="$3"
-CLAUDE_PROJECT_DIR="${4:-}"
-export CLAUDE_PROJECT_DIR
 F="/tmp/cat-skills-loaded-$CLAUDE_SESSION_ID"
 
 # Escape sed metacharacters for safe substitution
