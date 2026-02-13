@@ -2,13 +2,21 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
+import tools.jackson.core.type.TypeReference;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Loads skill content from a plugin's skill directory structure.
@@ -24,51 +32,76 @@ import java.util.Set;
  *     {skill-name}/
  *       content.md              — Main skill content (loaded on first invocation)
  *       includes.txt            — Optional; one relative path per line listing files to include
- *       handler.sh              — Optional; executable script whose stdout is prepended
+ *       bindings.json           — Optional; maps variable names to SkillOutput class names
  * </pre>
+ * <p>
+ * <b>Variable bindings:</b> If {@code bindings.json} exists, it maps variable names to fully-qualified
+ * class names implementing {@link SkillOutput}. When a variable is referenced in content (e.g.,
+ * {@code ${CAT_SKILL_OUTPUT}}), the class is instantiated and {@link SkillOutput#getOutput()} is invoked
+ * to produce the substitution value. Binding variables must not collide with built-in variable names.
  * <p>
  * <b>Included files:</b> Each path in {@code includes.txt} is resolved relative to the plugin root.
  * Included files are wrapped in {@code &lt;include path="..."&gt;...&lt;/include&gt;} XML tags.
  * <p>
- * <b>Variable substitution:</b> The following placeholders are replaced in all loaded content:
+ * <b>Variable substitution:</b> The following built-in placeholders are replaced in all loaded content:
  * <ul>
  *   <li>{@code ${CLAUDE_PLUGIN_ROOT}} — plugin root directory path</li>
  *   <li>{@code ${CLAUDE_SESSION_ID}} — current session identifier</li>
  *   <li>{@code ${CLAUDE_PROJECT_DIR}} — project directory path</li>
  * </ul>
  * <p>
+ * Custom bindings from {@code bindings.json} are also substituted when referenced. Undefined variables
+ * (neither built-in nor in bindings) cause an {@link IOException}.
+ * <p>
  * <b>License header stripping:</b> If {@code content.md} starts with an HTML comment block
  * containing a copyright notice, it is stripped before returning.
  */
 public final class SkillLoader
 {
+  private static final Set<String> BUILT_IN_VARIABLES = Set.of(
+    "CLAUDE_PLUGIN_ROOT",
+    "CLAUDE_SESSION_ID",
+    "CLAUDE_PROJECT_DIR");
+  private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+  private static final TypeReference<Map<String, String>> BINDINGS_TYPE = new TypeReference<>()
+  {
+  };
+
+  private final JvmScope scope;
   private final Path pluginRoot;
   private final String sessionId;
   private final String projectDir;
   private final Path sessionFile;
   private final Set<String> loadedSkills;
+  private final Map<String, Map<String, String>> bindingsCache;
+  private final Map<String, String> bindingOutputCache;
 
   /**
    * Creates a new SkillLoader instance.
    *
+   * @param scope the JVM scope for accessing shared services
    * @param pluginRoot the Claude plugin root directory
    * @param sessionId the Claude session ID
    * @param projectDir the Claude project directory (may be empty)
-   * @throws NullPointerException if {@code pluginRoot} or {@code sessionId} are null
+   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, or {@code sessionId} are null
    * @throws IllegalArgumentException if {@code pluginRoot} or {@code sessionId} are blank
    * @throws IOException if the session file cannot be read
    */
-  public SkillLoader(String pluginRoot, String sessionId, String projectDir) throws IOException
+  public SkillLoader(JvmScope scope, String pluginRoot, String sessionId, String projectDir) throws IOException
   {
+    requireThat(scope, "scope").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(projectDir, "projectDir").isNotNull();
 
+    this.scope = scope;
     this.pluginRoot = Paths.get(pluginRoot);
     this.sessionId = sessionId;
     this.projectDir = projectDir;
     this.sessionFile = Paths.get(System.getProperty("java.io.tmpdir"), "cat-skills-loaded-" + sessionId);
     this.loadedSkills = new HashSet<>();
+    this.bindingsCache = new HashMap<>();
+    this.bindingOutputCache = new HashMap<>();
 
     if (Files.exists(sessionFile))
     {
@@ -97,54 +130,17 @@ public final class SkillLoader
 
     StringBuilder output = new StringBuilder(4096);
 
-    Path handlerPath = pluginRoot.resolve("skills/" + skillName + "/handler.sh");
-    if (Files.exists(handlerPath) && Files.isExecutable(handlerPath))
-    {
-      String handlerOutput = executeHandler(handlerPath);
-      output.append(substituteVars(handlerOutput));
-    }
-
     if (loadedSkills.contains(skillName))
     {
-      Path referencePath = pluginRoot.resolve("skills/reference.md");
-      if (Files.exists(referencePath))
-      {
-        String reference = Files.readString(referencePath, StandardCharsets.UTF_8);
-        output.append(substituteVars(reference));
-      }
+      String reference = loadReference(skillName);
+      output.append(reference);
     }
     else
     {
-      Path includesPath = pluginRoot.resolve("skills/" + skillName + "/includes.txt");
-      if (Files.exists(includesPath))
-      {
-        String includesList = Files.readString(includesPath, StandardCharsets.UTF_8);
-        for (String line : includesList.split("\n"))
-        {
-          String trimmed = line.strip();
-          if (!trimmed.isEmpty())
-          {
-            Path includeFile = pluginRoot.resolve(trimmed);
-            if (Files.exists(includeFile))
-            {
-              output.append("<include path=\"").append(trimmed).append("\">\n");
-              String includeContent = Files.readString(includeFile, StandardCharsets.UTF_8);
-              output.append(substituteVars(includeContent));
-              if (!includeContent.endsWith("\n"))
-                output.append('\n');
-              output.append("</include>\n");
-            }
-          }
-        }
-      }
-
-      Path contentPath = pluginRoot.resolve("skills/" + skillName + "/content.md");
-      if (Files.exists(contentPath))
-      {
-        String content = Files.readString(contentPath, StandardCharsets.UTF_8);
-        output.append(substituteVars(content));
-      }
-
+      String includes = loadIncludes(skillName);
+      output.append(includes);
+      String content = loadContent(skillName);
+      output.append(content);
       markSkillLoaded(skillName);
     }
 
@@ -152,52 +148,219 @@ public final class SkillLoader
   }
 
   /**
-   * Executes a skill handler script and returns its output.
+   * Loads bindings from bindings.json file for a skill.
    *
-   * @param handlerPath the path to the handler script
-   * @return the handler output
-   * @throws IOException if the handler execution fails
+   * @param skillName the skill name
+   * @return the bindings map (variable name to class name), or empty map if no bindings file
+   * @throws IOException if bindings file is invalid or contains reserved variable names
    */
-  private String executeHandler(Path handlerPath) throws IOException
+  private Map<String, String> loadBindings(String skillName) throws IOException
   {
-    ProcessBuilder pb = new ProcessBuilder(handlerPath.toString());
-    pb.redirectErrorStream(true);
-    Process process = pb.start();
-    String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-    try
+    if (bindingsCache.containsKey(skillName))
+      return bindingsCache.get(skillName);
+
+    Path bindingsPath = pluginRoot.resolve("skills/" + skillName + "/bindings.json");
+    if (!Files.exists(bindingsPath))
     {
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        throw new IOException("Handler script failed with exit code " + exitCode + ": " + handlerPath);
+      Map<String, String> emptyBindings = Map.of();
+      bindingsCache.put(skillName, emptyBindings);
+      return emptyBindings;
     }
-    catch (InterruptedException e)
+
+    String content = Files.readString(bindingsPath, StandardCharsets.UTF_8);
+    Map<String, String> bindings = scope.getJsonMapper().readValue(content, BINDINGS_TYPE);
+
+    for (String varName : bindings.keySet())
     {
-      Thread.currentThread().interrupt();
-      throw new IOException("Interrupted while waiting for handler: " + handlerPath, e);
+      if (BUILT_IN_VARIABLES.contains(varName))
+      {
+        throw new IOException("bindings.json for skill '" + skillName + "' contains reserved variable name: " +
+          varName + ". Built-in variables cannot be overridden: " + BUILT_IN_VARIABLES);
+      }
     }
-    return output;
+
+    bindingsCache.put(skillName, bindings);
+    return bindings;
   }
 
   /**
-   * Substitutes environment variable placeholders in content.
+   * Loads the reference text for subsequent skill invocations.
+   *
+   * @param skillName the skill name (for variable binding resolution)
+   * @return the reference content with variables substituted, or empty string if no reference
+   * @throws IOException if reference file cannot be read
+   */
+  private String loadReference(String skillName) throws IOException
+  {
+    Path referencePath = pluginRoot.resolve("skills/reference.md");
+    if (!Files.exists(referencePath))
+      return "";
+
+    String reference = Files.readString(referencePath, StandardCharsets.UTF_8);
+    return substituteVars(reference, skillName);
+  }
+
+  /**
+   * Loads included files listed in includes.txt.
+   *
+   * @param skillName the skill name
+   * @return the included content wrapped in XML tags with variables substituted
+   * @throws IOException if include files cannot be read
+   */
+  private String loadIncludes(String skillName) throws IOException
+  {
+    Path includesPath = pluginRoot.resolve("skills/" + skillName + "/includes.txt");
+    if (!Files.exists(includesPath))
+      return "";
+
+    StringBuilder output = new StringBuilder(1024);
+    String includesList = Files.readString(includesPath, StandardCharsets.UTF_8);
+    for (String line : includesList.split("\n"))
+    {
+      String trimmed = line.strip();
+      if (!trimmed.isEmpty())
+      {
+        Path includeFile = pluginRoot.resolve(trimmed);
+        if (Files.exists(includeFile))
+        {
+          String openTag = "<include path=\"" + trimmed + "\">\n";
+          output.append(openTag);
+          String includeContent = Files.readString(includeFile, StandardCharsets.UTF_8);
+          String substituted = substituteVars(includeContent, skillName);
+          output.append(substituted);
+          if (!includeContent.endsWith("\n"))
+            output.append('\n');
+          output.append("</include>\n");
+        }
+      }
+    }
+    return output.toString();
+  }
+
+  /**
+   * Loads the main skill content from content.md.
+   *
+   * @param skillName the skill name
+   * @return the content with variables substituted, or empty string if no content file
+   * @throws IOException if content file cannot be read
+   */
+  private String loadContent(String skillName) throws IOException
+  {
+    Path contentPath = pluginRoot.resolve("skills/" + skillName + "/content.md");
+    if (!Files.exists(contentPath))
+      return "";
+
+    String content = Files.readString(contentPath, StandardCharsets.UTF_8);
+    return substituteVars(content, skillName);
+  }
+
+  /**
+   * Substitutes variable placeholders in content.
    * <p>
-   * Replaces these placeholders with their configured values:
+   * Replaces built-in variables:
    * <ul>
    *   <li>{@code ${CLAUDE_PLUGIN_ROOT}} - plugin root directory path</li>
    *   <li>{@code ${CLAUDE_SESSION_ID}} - current session identifier</li>
    *   <li>{@code ${CLAUDE_PROJECT_DIR}} - project directory path</li>
    * </ul>
+   * <p>
+   * Also replaces custom binding variables from bindings.json. When a binding variable is referenced,
+   * the corresponding SkillOutput class is instantiated and invoked to generate the substitution value.
    *
    * @param content the content to process
-   * @return the content with all recognized placeholders replaced
+   * @param skillName the skill name (for loading bindings)
+   * @return the content with all variables substituted
+   * @throws IOException if variable resolution fails or undefined variable is referenced
    */
-  private String substituteVars(String content)
+  private String substituteVars(String content, String skillName) throws IOException
   {
-    String result = content;
-    result = result.replace("${CLAUDE_PLUGIN_ROOT}", pluginRoot.toString());
-    result = result.replace("${CLAUDE_SESSION_ID}", sessionId);
-    result = result.replace("${CLAUDE_PROJECT_DIR}", projectDir);
-    return result;
+    Map<String, String> bindings = loadBindings(skillName);
+    Matcher matcher = VAR_PATTERN.matcher(content);
+    StringBuilder result = new StringBuilder();
+    int lastEnd = 0;
+
+    while (matcher.find())
+    {
+      result.append(content, lastEnd, matcher.start());
+      String varName = matcher.group(1);
+      String replacement = resolveVariable(varName, bindings, skillName);
+      result.append(replacement);
+      lastEnd = matcher.end();
+    }
+    result.append(content.substring(lastEnd));
+
+    return result.toString();
+  }
+
+  /**
+   * Resolves a single variable to its value.
+   *
+   * @param varName the variable name (without ${} delimiters)
+   * @param bindings the bindings map for the current skill
+   * @param skillName the skill name (for error messages)
+   * @return the resolved value
+   * @throws IOException if the variable is undefined or resolution fails
+   */
+  private String resolveVariable(String varName, Map<String, String> bindings, String skillName)
+    throws IOException
+  {
+    if (varName.equals("CLAUDE_PLUGIN_ROOT"))
+      return pluginRoot.toString();
+    if (varName.equals("CLAUDE_SESSION_ID"))
+      return sessionId;
+    if (varName.equals("CLAUDE_PROJECT_DIR"))
+      return projectDir;
+
+    if (bindings.containsKey(varName))
+    {
+      String className = bindings.get(varName);
+      String cached = bindingOutputCache.get(className);
+      if (cached != null)
+        return cached;
+      String output = invokeBinding(className);
+      bindingOutputCache.put(className, output);
+      return output;
+    }
+
+    throw new IOException("Undefined variable: ${" + varName + "} in skill '" + skillName + "'. " +
+      "Not a built-in variable and not defined in bindings.json. " +
+      "Built-in variables: " + BUILT_IN_VARIABLES);
+  }
+
+  /**
+   * Invokes a SkillOutput binding class to generate output.
+   *
+   * @param className the fully-qualified class name
+   * @return the output from the binding
+   * @throws IOException if class instantiation or invocation fails
+   */
+  private String invokeBinding(String className) throws IOException
+  {
+    try
+    {
+      Class<?> bindingClass = Class.forName(className);
+      Constructor<?> constructor = bindingClass.getConstructor(JvmScope.class);
+      SkillOutput binding = (SkillOutput) constructor.newInstance(scope);
+      String output = binding.getOutput();
+      if (output == null)
+      {
+        throw new IOException("Binding class " + className +
+          " returned null from getOutput(). SkillOutput.getOutput() must never return null.");
+      }
+      return output;
+    }
+    catch (ClassNotFoundException e)
+    {
+      throw new IOException("Binding class not found: " + className, e);
+    }
+    catch (NoSuchMethodException e)
+    {
+      throw new IOException("Binding class missing required constructor(JvmScope): " + className, e);
+    }
+    catch (ReflectiveOperationException e)
+    {
+      throw new IOException("Failed to invoke binding class: " + className, e);
+    }
   }
 
   /**
@@ -222,9 +385,8 @@ public final class SkillLoader
    * plugin-root skill-name session-id [project-dir]
    *
    * @param args command-line arguments: plugin-root skill-name session-id [project-dir]
-   * @throws IOException if the operation fails
    */
-  public static void main(String[] args) throws IOException
+  public static void main(String[] args)
   {
     if (args.length < 3 || args.length > 4)
     {
@@ -241,9 +403,9 @@ public final class SkillLoader
     else
       projectDir = "";
 
-    SkillLoader loader = new SkillLoader(pluginRoot, sessionId, projectDir);
-    try
+    try (JvmScope scope = new MainJvmScope())
     {
+      SkillLoader loader = new SkillLoader(scope, pluginRoot, sessionId, projectDir);
       String result = loader.load(skillName);
       System.out.print(result);
     }

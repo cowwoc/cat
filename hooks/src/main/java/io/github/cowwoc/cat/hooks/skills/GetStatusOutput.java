@@ -15,12 +15,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Output generator for /cat:status skill.
- *
+ * <p>
  * Renders comprehensive project status display including:
  * - Overall progress bar with task completion percentage
  * - Active agents working on issues
@@ -28,12 +29,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * - Task lists for active minors (in-progress, blocked, open, and recent completed tasks)
  * - Actionable footer showing current/next task commands
  */
-public final class GetStatusOutput
+public final class GetStatusOutput implements SkillOutput
 {
   private static final int MAX_VISIBLE_COMPLETED = 5;
   private static final Set<String> VALID_STATUSES = Set.of("open", "in-progress", "closed", "blocked");
 
   private final DisplayUtils display;
+  private final JvmScope scope;
 
   /**
    * Creates a GetStatusOutput instance.
@@ -44,23 +46,23 @@ public final class GetStatusOutput
   public GetStatusOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
     this.display = scope.getDisplayUtils();
   }
 
   /**
-   * Generates the complete status display for the project.
+   * Generates the complete status display for the project using the configured project directory.
    *
-   * @param projectDir the project root directory
    * @return the formatted status display, or error message if CAT not initialized
-   * @throws NullPointerException if projectDir is null
-   * @throws IllegalArgumentException if projectDir is blank
+   * @throws AssertionError if the project directory is not configured
    * @throws IOException if an I/O error occurs
    */
-  public String getOutput(String projectDir) throws IOException
+  @Override
+  public String getOutput() throws IOException
   {
-    requireThat(projectDir, "projectDir").isNotBlank();
+    Path projectDir = scope.getClaudeProjectDir();
 
-    Path catDir = Path.of(projectDir).resolve(".claude/cat");
+    Path catDir = projectDir.resolve(".claude/cat");
     if (!Files.isDirectory(catDir))
       return "No CAT project found. Run /cat:init to initialize.";
 
