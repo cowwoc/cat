@@ -30,8 +30,7 @@ import java.util.regex.Pattern;
  *   skills/
  *     reference.md              — Reload text returned on 2nd+ invocations
  *     {skill-name}/
- *       content.md              — Main skill content (loaded on first invocation)
- *       includes.txt            — Optional; one relative path per line listing files to include
+ *       first-use.md            — Main skill content (loaded on first invocation)
  *       bindings.json           — Optional; maps variable names to SkillOutput class names
  * </pre>
  * <p>
@@ -40,8 +39,11 @@ import java.util.regex.Pattern;
  * {@code ${CAT_SKILL_OUTPUT}}), the class is instantiated and {@link SkillOutput#getOutput()} is invoked
  * to produce the substitution value. Binding variables must not collide with built-in variable names.
  * <p>
- * <b>Included files:</b> Each path in {@code includes.txt} is resolved relative to the plugin root.
- * Included files are wrapped in {@code &lt;include path="..."&gt;...&lt;/include&gt;} XML tags.
+ * <b>File inclusion via @path:</b> Lines in {@code first-use.md} starting with {@code @} followed by a
+ * relative path containing at least one {@code /} (e.g., {@code @concepts/version-paths.md},
+ * {@code @config/settings.yaml}) are replaced with the raw file contents (no wrapping). Any file extension
+ * is allowed. Paths are resolved relative to the plugin root. Variable substitution is applied to the
+ * inlined content. Missing files cause an {@link IOException}.
  * <p>
  * <b>Variable substitution:</b> The following built-in placeholders are replaced in all loaded content:
  * <ul>
@@ -53,7 +55,7 @@ import java.util.regex.Pattern;
  * Custom bindings from {@code bindings.json} are also substituted when referenced. Undefined variables
  * (neither built-in nor in bindings) cause an {@link IOException}.
  * <p>
- * <b>License header stripping:</b> If {@code content.md} starts with an HTML comment block
+ * <b>License header stripping:</b> If {@code first-use.md} starts with an HTML comment block
  * containing a copyright notice, it is stripped before returning.
  */
 public final class SkillLoader
@@ -63,6 +65,7 @@ public final class SkillLoader
     "CLAUDE_SESSION_ID",
     "CLAUDE_PROJECT_DIR");
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+  private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
   private static final TypeReference<Map<String, String>> BINDINGS_TYPE = new TypeReference<>()
   {
   };
@@ -137,8 +140,6 @@ public final class SkillLoader
     }
     else
     {
-      String includes = loadIncludes(skillName);
-      output.append(includes);
       String content = loadContent(skillName);
       output.append(content);
       markSkillLoaded(skillName);
@@ -174,8 +175,8 @@ public final class SkillLoader
     {
       if (BUILT_IN_VARIABLES.contains(varName))
       {
-        throw new IOException("bindings.json for skill '" + skillName + "' contains reserved variable name: " +
-          varName + ". Built-in variables cannot be overridden: " + BUILT_IN_VARIABLES);
+        throw new IOException("Binding variable '" + varName + "' in skill '" + skillName +
+          "' is reserved. Built-in variables cannot be overridden: " + BUILT_IN_VARIABLES);
       }
     }
 
@@ -200,45 +201,9 @@ public final class SkillLoader
     return substituteVars(reference, skillName);
   }
 
-  /**
-   * Loads included files listed in includes.txt.
-   *
-   * @param skillName the skill name
-   * @return the included content wrapped in XML tags with variables substituted
-   * @throws IOException if include files cannot be read
-   */
-  private String loadIncludes(String skillName) throws IOException
-  {
-    Path includesPath = pluginRoot.resolve("skills/" + skillName + "/includes.txt");
-    if (!Files.exists(includesPath))
-      return "";
-
-    StringBuilder output = new StringBuilder(1024);
-    String includesList = Files.readString(includesPath, StandardCharsets.UTF_8);
-    for (String line : includesList.split("\n"))
-    {
-      String trimmed = line.strip();
-      if (!trimmed.isEmpty())
-      {
-        Path includeFile = pluginRoot.resolve(trimmed);
-        if (Files.exists(includeFile))
-        {
-          String openTag = "<include path=\"" + trimmed + "\">\n";
-          output.append(openTag);
-          String includeContent = Files.readString(includeFile, StandardCharsets.UTF_8);
-          String substituted = substituteVars(includeContent, skillName);
-          output.append(substituted);
-          if (!includeContent.endsWith("\n"))
-            output.append('\n');
-          output.append("</include>\n");
-        }
-      }
-    }
-    return output.toString();
-  }
 
   /**
-   * Loads the main skill content from content.md.
+   * Loads the main skill content from first-use.md.
    *
    * @param skillName the skill name
    * @return the content with variables substituted, or empty string if no content file
@@ -246,12 +211,72 @@ public final class SkillLoader
    */
   private String loadContent(String skillName) throws IOException
   {
-    Path contentPath = pluginRoot.resolve("skills/" + skillName + "/content.md");
+    Path contentPath = pluginRoot.resolve("skills/" + skillName + "/first-use.md");
     if (!Files.exists(contentPath))
       return "";
 
     String content = Files.readString(contentPath, StandardCharsets.UTF_8);
     return substituteVars(content, skillName);
+  }
+
+  /**
+   * Expands @path references in content.
+   * <p>
+   * Lines starting with {@code @} followed by a relative path containing at least one {@code /}
+   * (e.g., {@code @concepts/version-paths.md}, {@code @config/settings.yaml}) are replaced with
+   * the raw file contents. Any file extension is allowed. Paths are resolved relative to the plugin
+   * root. Missing files cause an {@link IOException}.
+   *
+   * @param content the content to process
+   * @return the content with all @path references expanded
+   * @throws IOException if a referenced file cannot be read or circular reference is detected
+   */
+  private String expandPaths(String content) throws IOException
+  {
+    return expandPaths(content, new HashSet<>());
+  }
+
+  /**
+   * Expands @path references in content with cycle detection.
+   *
+   * @param content the content to process
+   * @param visitedPaths the set of paths already being expanded (for cycle detection)
+   * @return the content with all @path references expanded
+   * @throws IOException if a referenced file cannot be read or circular reference is detected
+   */
+  private String expandPaths(String content, Set<Path> visitedPaths) throws IOException
+  {
+    Matcher matcher = PATH_PATTERN.matcher(content);
+    StringBuilder result = new StringBuilder();
+    int lastEnd = 0;
+
+    while (matcher.find())
+    {
+      result.append(content, lastEnd, matcher.start());
+      String relativePath = matcher.group(1);
+      Path filePath = pluginRoot.resolve(relativePath).toAbsolutePath().normalize();
+      if (!Files.exists(filePath))
+      {
+        throw new IOException("@path reference '" + relativePath + "' not found. " +
+          "Resolved to: " + filePath);
+      }
+      if (visitedPaths.contains(filePath))
+      {
+        throw new IOException("Circular @path reference detected: " + relativePath + ". " +
+          "Resolved to: " + filePath);
+      }
+      visitedPaths.add(filePath);
+      String fileContent = Files.readString(filePath, StandardCharsets.UTF_8);
+      String expandedContent = expandPaths(fileContent, visitedPaths);
+      visitedPaths.remove(filePath);
+      result.append(expandedContent);
+      if (!expandedContent.endsWith("\n"))
+        result.append('\n');
+      lastEnd = matcher.end();
+    }
+    result.append(content.substring(lastEnd));
+
+    return result.toString();
   }
 
   /**
@@ -274,20 +299,21 @@ public final class SkillLoader
    */
   private String substituteVars(String content, String skillName) throws IOException
   {
+    String expanded = expandPaths(content);
     Map<String, String> bindings = loadBindings(skillName);
-    Matcher matcher = VAR_PATTERN.matcher(content);
+    Matcher matcher = VAR_PATTERN.matcher(expanded);
     StringBuilder result = new StringBuilder();
     int lastEnd = 0;
 
     while (matcher.find())
     {
-      result.append(content, lastEnd, matcher.start());
+      result.append(expanded, lastEnd, matcher.start());
       String varName = matcher.group(1);
       String replacement = resolveVariable(varName, bindings, skillName);
       result.append(replacement);
       lastEnd = matcher.end();
     }
-    result.append(content.substring(lastEnd));
+    result.append(expanded.substring(lastEnd));
 
     return result.toString();
   }
@@ -322,8 +348,8 @@ public final class SkillLoader
       return output;
     }
 
-    throw new IOException("Undefined variable: ${" + varName + "} in skill '" + skillName + "'. " +
-      "Not a built-in variable and not defined in bindings.json. " +
+    throw new IOException("Undefined variable ${" + varName + "} in skill '" + skillName + "'. " +
+      "Not defined in bindings.json and not a built-in variable. " +
       "Built-in variables: " + BUILT_IN_VARIABLES);
   }
 
@@ -344,8 +370,8 @@ public final class SkillLoader
       String output = binding.getOutput();
       if (output == null)
       {
-        throw new IOException("Binding class " + className +
-          " returned null from getOutput(). SkillOutput.getOutput() must never return null.");
+        throw new IOException("Binding class '" + className + "' returned null from getOutput(). " +
+          "SkillOutput.getOutput() must never return null.");
       }
       return output;
     }
@@ -356,6 +382,10 @@ public final class SkillLoader
     catch (NoSuchMethodException e)
     {
       throw new IOException("Binding class missing required constructor(JvmScope): " + className, e);
+    }
+    catch (IOException e)
+    {
+      throw e;
     }
     catch (ReflectiveOperationException e)
     {

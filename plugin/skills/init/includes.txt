@@ -1,3 +1,0 @@
-templates/project.md
-templates/roadmap.md
-templates/cat-config.json
