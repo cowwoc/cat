@@ -97,8 +97,6 @@ Update task STATE.md:
 - **Last Updated:** {timestamp}
 ```
 
-Update task CHANGELOG.md with changes.
-
 ### 8. Approval Gate (Interactive Mode)
 
 Present to user:

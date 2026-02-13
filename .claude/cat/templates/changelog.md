@@ -1,67 +1,61 @@
-# Changelog: {task-name}
+# Changelog: {version-name}
+
+> **NOTE**: This template is for MINOR and MAJOR version changelogs only.
+> Task-level changelogs are NOT created as separate files - task changelog content
+> is embedded in commit messages instead.
 
 **Completed**: {YYYY-MM-DD}
 
-## Problem Solved
+## Summary
 
-[Explain WHY this task was needed - what wasn't working or was missing]
+[One-line description of what this version accomplished]
 
-- {First problem or limitation that necessitated this work}
-- {Second problem if applicable}
+## Tasks Completed
 
-## Solution Implemented
+| Task | Type | Description |
+|------|------|-------------|
+| {task-name} | {type} | {brief description} |
 
-[Explain HOW the problem was solved - the approach taken]
+## Key Changes
 
-- {Key implementation detail 1}
-- {Key implementation detail 2}
-- {Additional details as needed}
+[High-level summary of the changes across all tasks]
 
-## Files Created
+- {Change 1}
+- {Change 2}
 
-[List ACTUAL file paths with descriptions - not placeholders]
+## Files Changed
 
-- `{actual/path/to/NewFile.java}` - {brief description of purpose}
-- `{actual/path/to/TestFile.java}` - {number} tests
+[Aggregate of files created/modified across all tasks]
 
-## Files Modified
+### Created
+- `{path/to/NewFile.java}` - {purpose}
 
-[List ACTUAL file paths with what was changed]
+### Modified
+- `{path/to/ExistingFile.java}` - {what changed}
 
-- `{actual/path/to/ExistingFile.java}` - {what was changed}
+## Technical Highlights
 
-## Test Coverage
+[Notable technical decisions or patterns established across tasks]
 
-[List the scenarios covered by tests]
-
-- {Test scenario 1}
-- {Test scenario 2}
-- {Additional scenarios as applicable}
+- {Highlight 1}
+- {Highlight 2}
 
 ## Quality
 
-- {Number} tests passing
-- Zero Checkstyle/PMD violations (or note any exceptions)
-- Build successful
+- {Total tests added/modified}
+- {Build status}
+- {Other quality metrics}
 
 ---
 
-## Optional Sections (include when applicable)
+## Related Commits
 
-### Decisions Made
+Find all commits for this version:
 
-[Document key decisions with rationale - omit if none]
+```bash
+# For minor version 1.0:
+git log --oneline --grep="Task ID: v1.0-"
 
-- {Decision 1}: {rationale}
-
-### Known Limitations
-
-[Document accepted limitations - omit if none]
-
-- {Limitation}: {why it was accepted or deferred}
-
-### Deviations from Plan
-
-[Document any deviations from the original plan - omit if executed as planned]
-
-- {Deviation}: {reason and impact}
+# For specific task within the version:
+git log --oneline --grep="Task ID: v1.0-{task-name}"
+```

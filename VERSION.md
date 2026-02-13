@@ -31,9 +31,11 @@ CAT v2.0 is a complete reimagining of the plugin, introducing:
 **Document Types:**
 - `STATE.md` - Task metadata and status tracking
 - `PLAN.md` - Template-based planning (feature, bugfix, refactor)
-- `CHANGELOG.md` - Task completion record with commits
+- `CHANGELOG.md` - Minor/major version changelog (aggregates tasks)
 - `ROADMAP.md` - Major/minor version overview
 - `PROJECT.md` - Project overview and goals
+
+> **NOTE**: Task-level changelog content is embedded in commit messages, not separate files.
 
 **Configuration:**
 - `cat-config.json` with yoloMode, contextLimit, targetContextUsage settings

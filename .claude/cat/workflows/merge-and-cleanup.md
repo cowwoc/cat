@@ -138,20 +138,12 @@ Update minor STATE.md progress.
 Update major STATE.md progress.
 Update ROADMAP.md if needed.
 
-### 10. Update Changelog
+### 10. Update Changelogs
 
-Append to task CHANGELOG.md:
-```markdown
-## [{task-name}] - {date}
+Update minor/major CHANGELOG.md to include completed task summary.
 
-### Added
-- Switch statement parsing support
-
-### Fixed
-- Empty block handling edge case
-```
-
-Propagate to minor/major CHANGELOG.md as appropriate.
+> **NOTE**: Task changelog content is embedded in commit messages, not separate files.
+> Minor/major version CHANGELOG.md files aggregate completed tasks.
 
 ## Yolo Mode Differences
 
