@@ -12,6 +12,9 @@ marketing materials.
 ## Dependencies
 - Requires v2.0 (Licensing) complete
 
+## Exit Gate Tasks
+- enforce-jvmscope-env-access
+
 ## Success Criteria
 - All user-facing terminology finalized
 - Command output displays correctly aligned
