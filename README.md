@@ -114,9 +114,10 @@ During `/cat:init`, you choose your adventurer style:
 
 | Preference | What it Controls |
 |------------|------------------|
-| **Approach** | How CAT recommends paths at decision points |
-| **Stakeholder Review** | When to summon the review council |
-| **Refactoring** | Whether to clean up code you pass by |
+| **Leash** | How much you trust CAT to make decisions autonomously |
+| **Caution** | How thoroughly CAT verifies changes before checkpoints |
+| **Curiosity** | Whether CAT notices optimization opportunities beyond the task |
+| **Patience** | When CAT acts on discovered opportunities |
 
 These aren't just settings—they're how CAT learns to think like you.
 
@@ -189,9 +190,10 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
   "yoloMode": false,
   "contextLimit": 200000,
   "targetContextUsage": 40,
-  "approach": "balanced",
-  "stakeholderReview": "high-risk-only",
-  "refactoring": "opportunistic"
+  "leash": "medium",
+  "caution": "moderate",
+  "curiosity": "low",
+  "patience": "high"
 }
 ```
 
@@ -202,9 +204,10 @@ Your adventure settings live in `.claude/cat/cat-config.json`:
 | `yoloMode` | boolean | `false` | Skip all approval gates when `true` |
 | `contextLimit` | number | `200000` | Total context window size in tokens |
 | `targetContextUsage` | number | `40` | Soft limit percentage for task size |
-| `approach` | string | `balanced` | Risk tolerance for approach selection |
-| `stakeholderReview` | string | `high-risk-only` | When to run multi-perspective reviews |
-| `refactoring` | string | `opportunistic` | Cleanup behavior for adjacent code |
+| `leash` | string | `medium` | How much you trust CAT to decide autonomously |
+| `caution` | string | `moderate` | Verification depth before checkpoints |
+| `curiosity` | string | `low` | Whether CAT notices opportunities beyond the task |
+| `patience` | string | `high` | When CAT acts on discovered opportunities |
 
 **yoloMode**
 - `false` (Interactive) — Checkpoints after each task, you review and approve changes
@@ -216,20 +219,29 @@ when tasks need decomposition.
 **targetContextUsage** — Percentage of `contextLimit` that triggers context warnings. At 40% of
 200K (80K tokens), CAT warns that the task may need decomposition.
 
-**approach** — Controls how CAT chooses when multiple implementation paths exist:
-- `conservative` — Auto-selects targeted fixes; avoids refactoring; fewer files touched
-- `balanced` — You decide at each fork; CAT presents options without recommendation
-- `aggressive` — Auto-selects root-cause solutions; refactors when it improves code quality
+**leash** — How much trust you place in CAT to make decisions:
+- `short` — CAT presents options frequently; you guide most decisions
+- `medium` — CAT presents options for meaningful trade-offs; handles routine choices
+- `long` — CAT decides autonomously; only presents HIGH risk or architectural choices
 
-**stakeholderReview** — Controls when the 5-perspective review gate runs:
-- `always` — Run stakeholder review on every task
-- `high-risk-only` — Only review tasks marked HIGH risk in PLAN.md
-- `never` — Skip stakeholder reviews entirely
+**caution** — How thoroughly CAT verifies changes before presenting them:
+- `relaxed` — Build verification only; fastest iteration
+- `moderate` — Build + test verification; balanced confidence
+- `vigilant` — Build + test + lint; highest confidence before checkpoint
 
-**refactoring** — Controls opportunistic cleanup of code adjacent to changes:
-- `avoid` — Never touch code outside the immediate task scope
-- `opportunistic` — Clean up obviously related code when low-risk
-- `eager` — Actively improve surrounding code quality
+**curiosity** — Whether CAT notices optimization opportunities while working:
+- `low` — Stays focused; only completes the assigned task
+- `medium` — Notes obvious issues in touched files; documents but doesn't act
+- `high` — Actively explores for improvements; documents opportunities found
+
+**patience** — When CAT acts on opportunities discovered during work:
+- `low` — Acts immediately on high-priority discoveries (benefit/cost > 3)
+- `medium` — Defers most discoveries; acts on critical issues only
+- `high` — Defers all discoveries to backlog; maximum focus on current task
+
+**Note:** Stakeholder review (architect, security, quality, tester, performance) runs automatically
+based on task characteristics—not a global setting. High-risk indicators like security changes,
+5+ files touched, or public API modifications trigger the review council.
 
 ---
 
