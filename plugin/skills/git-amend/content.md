@@ -2,61 +2,41 @@
 
 **Purpose**: Safely amend the most recent commit with proper verification checks.
 
-## Safety Rules
+## When to Use
 
-### Only Amend When ALL Conditions Are Met
+Only amend when ALL conditions are met:
 
 1. **HEAD commit was created by you** in this session
 2. **Commit has NOT been pushed** to remote
 3. **You intend to modify HEAD** (not an earlier commit)
 
-```bash
-# Check if pushed:
-git status
-# Look for: "Your branch is ahead of 'origin/main' by X commits"
-# "up to date" = already pushed (amending creates divergent history)
-```
+## Script Invocation
 
-## Quick Workflow
-
-### Verification Gate (M191): HEAD Safe to Amend
-
-**BLOCKING: Do NOT proceed until safety is verified.**
+For deterministic amend with TOCTOU race detection:
 
 ```bash
-# 1. Verify HEAD is the commit you want to amend
-git log --oneline -1
-
-# 2. Verify not pushed to remote
-PUSH_STATUS=$(git status --porcelain -b | head -1)
-if echo "$PUSH_STATUS" | grep -q "ahead"; then
-  echo "✓ Commit not pushed - safe to amend"
-elif echo "$PUSH_STATUS" | grep -q "behind\|up to date"; then
-  echo "ERROR: HEAD commit appears to be pushed to remote"
-  echo "Amending will create divergent history requiring force push."
-  echo ""
-  echo "Options:"
-  echo "1. Create a new commit instead of amending"
-  echo "2. Use git commit --amend with explicit force push (dangerous)"
-  exit 1
-else
-  echo "⚠ Could not determine push status - verify manually before amending"
-fi
-```
-
-```bash
-# 3. Make your changes (edit files, stage new files)
-git add <files>
-
-# 4. Amend the commit
-git commit --amend
-
+"$(git rev-parse --show-toplevel)/plugin/scripts/git-amend-safe.sh" --no-edit "$WORKTREE_PATH"
 # Or with new message:
-git commit --amend -m "New message"
-
-# Or keep same message:
-git commit --amend --no-edit
+"$(git rev-parse --show-toplevel)/plugin/scripts/git-amend-safe.sh" --message "new msg" "$WORKTREE_PATH"
 ```
+
+The script verifies push status before amending and detects if the original commit was pushed during the amend window.
+
+### Result Handling
+
+| Status | Meaning | Agent Recovery Action |
+|--------|---------|----------------------|
+| `OK` | Amend completed successfully | Report new_head, confirm no race detected |
+| `RACE_DETECTED` | Original commit was pushed during amend | Inform user that force-with-lease push is needed: `git push --force-with-lease` |
+| `ALREADY_PUSHED` | Commit already pushed to remote before amend | Inform user that amending would create divergent history. Recommend creating new commit instead |
+| `ERROR` | Amend operation failed | Check error message for details |
+
+**On RACE_DETECTED status:** The amend succeeded, but the original commit was pushed to remote during the operation.
+User must use `git push --force-with-lease` to update remote. This is safer than `--force` as it prevents overwriting
+work pushed by others.
+
+**On ALREADY_PUSHED status:** Do NOT proceed with amend. Advise user to create a new commit instead of amending to
+avoid rewriting history that may have been pulled by others.
 
 ## Common Use Cases
 
@@ -117,8 +97,8 @@ git rebase --continue
 
 ## Error Recovery
 
+If amend was wrong, check reflog for original:
 ```bash
-# If amend was wrong, check reflog for original:
 git reflog
 git reset --hard HEAD@{1}  # Go back to before amend
 ```

@@ -25,60 +25,53 @@ if echo "$MERGE_POLICY" | grep -qi "MUST.*merge commit"; then
 fi
 ```
 
-## Safety Pattern: Backup-Verify-Cleanup
+## Common Operations
 
-**ALWAYS follow this pattern:**
-1. Create timestamped backup branch
-2. Execute the rebase
-3. Handle conflicts if any
-4. **Verify immediately** - history is correct
-5. Cleanup backup only after verification passes
+### Rebase onto base branch (Deterministic Script)
 
-## Quick Workflow
+For deterministic execution with automatic backup and conflict detection:
 
 ```bash
-# 1. Create backup
-BACKUP="backup-before-rebase-$(date +%Y%m%d-%H%M%S)"
-git branch "$BACKUP"
+"$(git rev-parse --show-toplevel)/plugin/scripts/git-rebase-safe.sh" "$WORKTREE_PATH" "$BASE_BRANCH"
 ```
 
-### Verification Gate (M191): Backup Created
+If BASE_BRANCH not provided, the script reads from the cat-base file. The script outputs JSON.
 
-**BLOCKING: Do NOT proceed until backup is verified.**
+#### Result Handling
+
+| Status | Meaning | Agent Recovery Action |
+|--------|---------|----------------------|
+| `OK` | Rebase completed successfully | Report commits rebased, verify no content changes |
+| `CONFLICT` | Rebase stopped due to conflicts | Agent examines conflicting_files and decides: manual resolution, alternative strategy, or abort. Backup preserved at backup_branch |
+| `ERROR` | Rebase failed (not a conflict) | Check backup_branch and error message. Restore from backup if needed |
+
+**On CONFLICT status:** Agent should examine the conflicting files to determine the best strategy:
+- If conflicts are simple (whitespace, formatting), attempt manual resolution
+- If conflicts involve complex logic changes, consider alternative merge strategy
+- If uncertain, abort and restore from backup
+
+### Interactive rebase (reorder, edit, squash)
+
+For operations requiring judgment (reordering commits, editing history, complex squashing):
 
 ```bash
-# Verify backup branch exists
-if ! git show-ref --verify --quiet "refs/heads/$BACKUP"; then
-  echo "ERROR: Backup branch '$BACKUP' was not created"
-  echo "Do NOT proceed with rebase without backup."
-  exit 1
-fi
-echo "✓ Backup verified: $BACKUP"
-```
+git rebase -i <base-commit>
 
-```bash
-# 2. Verify clean working directory
-git status --porcelain  # Must be empty
-
-# 3. Execute rebase
-git rebase <target-branch>
-
-# 4. Handle conflicts if any (see below)
-
-# 5. Verify result
-git log --oneline -10
-git diff "$BACKUP"  # Content should match (just different history)
-
-# 6. Cleanup backup
-git branch -D "$BACKUP"
+# In editor:
+# pick   - use commit as-is
+# reword - change commit message
+# edit   - stop to amend commit
+# squash - combine with previous commit
+# fixup  - like squash but discard message
+# drop   - remove commit
 ```
 
 ## Handling Conflicts
 
 **CRITICAL: Persist through conflicts. Never switch to cherry-pick mid-rebase (M241).**
 
-Rebase conflicts are normal and expected when branches have diverged. The solution is to resolve
-conflicts and continue, not to abandon rebase for cherry-picking.
+Rebase conflicts are normal and expected when branches have diverged. The solution is to resolve conflicts and continue,
+not to abandon rebase for cherry-picking.
 
 ```bash
 # When rebase stops due to conflict:
@@ -103,9 +96,9 @@ git reset --hard "$BACKUP"
 
 ### "Skipped previously applied" Messages
 
-When rebasing, git may report "skipped previously applied commit" for commits whose changes already
-exist on the target branch (perhaps added via separate commits). This is normal - git detects
-content duplication and skips redundant commits. Continue the rebase.
+When rebasing, git may report "skipped previously applied commit" for commits whose changes already exist on the target
+branch (perhaps added via separate commits). This is normal - git detects content duplication and skips redundant
+commits. Continue the rebase.
 
 ### Why Rebase Over Cherry-Pick
 
@@ -114,36 +107,8 @@ content duplication and skips redundant commits. Continue the rebase.
 | Rebase | Preserves linear history, single operation | Must resolve conflicts sequentially |
 | Cherry-pick | Can select specific commits | Creates duplicate commits, complex history |
 
-**Rule:** Always complete a rebase. Cherry-pick is only appropriate for extracting a single commit
-to a different branch, not for integrating branch changes.
-
-## Common Operations
-
-### Rebase onto base branch
-```bash
-# Detect base branch from worktree metadata (fail-fast if missing)
-CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
-if [[ ! -f "$CAT_BASE_FILE" ]]; then
-  echo "ERROR: cat-base file not found. Recreate worktree with /cat:work." >&2
-  exit 1
-fi
-BASE_BRANCH=$(cat "$CAT_BASE_FILE")
-
-git rebase "$BASE_BRANCH"
-```
-
-### Interactive rebase (reorder, edit, squash)
-```bash
-git rebase -i <base-commit>
-
-# In editor:
-# pick   - use commit as-is
-# reword - change commit message
-# edit   - stop to amend commit
-# squash - combine with previous commit
-# fixup  - like squash but discard message
-# drop   - remove commit
-```
+**Rule:** Always complete a rebase. Cherry-pick is only appropriate for extracting a single commit to a different
+branch, not for integrating branch changes.
 
 ## Safe Rebase Patterns
 
@@ -161,22 +126,15 @@ git rebase main
 
 ## Error Recovery
 
-```bash
-# If rebase went wrong:
-git rebase --abort
-
-# Or restore from backup:
-git reset --hard $BACKUP
-
-# Or check reflog:
-git reflog
-git reset --hard HEAD@{N}
-```
+If rebase went wrong:
+- Abort rebase: `git rebase --abort`
+- Restore from backup: `git reset --hard $BACKUP`
+- Check reflog: `git reflog` then `git reset --hard HEAD@{N}`
 
 ## Verification After Amend/Fixup Operations
 
-**CRITICAL: When using rebase to amend or fixup a historical commit, verify the target commit
-actually contains the expected changes.**
+**CRITICAL: When using rebase to amend or fixup a historical commit, verify the target commit actually contains the
+expected changes.**
 
 ```bash
 # After rebase completes, verify the target commit has expected files
@@ -194,8 +152,8 @@ git show "$NEW_COMMIT" -- path/to/expected/file.md
 # If file is NOT in the commit, the amend/fixup FAILED silently
 ```
 
-**Common failure mode (M244):** Rebase reports "Successfully rebased" but the fixup commit was
-dropped due to conflicts. Always verify the target commit's contents before proceeding.
+**Common failure mode (M244):** Rebase reports "Successfully rebased" but the fixup commit was dropped due to
+conflicts. Always verify the target commit's contents before proceeding.
 
 ## Success Criteria
 
