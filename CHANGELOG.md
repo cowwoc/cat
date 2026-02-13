@@ -18,7 +18,7 @@ Introduces automated version migration system and workflow stability improvement
 - **Duplicate Detection**: Exploration step now detects duplicate tasks (M087)
 
 **Documentation:**
-- README: Added version and autoCleanupWorktrees config options
+- README: Added version and autoRemoveWorktrees config options
 - README: Updated problem section with visual diagram
 - Token tracking guidance for compaction scenarios
 - Pre-edit self-check for main agent (M088)
