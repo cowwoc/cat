@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 160">
+  <defs>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2d3748"/>
+      <stop offset="100%" style="stop-color:#1a202c"/>
+    </linearGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+  </defs>
+  <!-- Main box -->
+  <rect x="2" y="2" width="496" height="156" rx="8" fill="url(#bodyGrad)" stroke="#4a5568" stroke-width="2"/>
+  <!-- Header -->
+  <rect x="2" y="2" width="496" height="32" rx="8" fill="url(#headerGrad)"/>
+  <rect x="2" y="26" width="496" height="10" fill="url(#headerGrad)"/>
+  <line x1="2" y1="34" x2="498" y2="34" stroke="#4a5568" stroke-width="1"/>
+  <!-- Header text -->
+  <text x="250" y="24" text-anchor="middle" fill="#f7fafc" font-family="monospace" font-size="14" font-weight="bold">CHOOSE YOUR PATH</text>
+  <!-- Options -->
+  <text x="30" y="65" fill="#68d391" font-family="monospace" font-size="13" font-weight="bold">[A]</text>
+  <text x="70" y="65" fill="#e2e8f0" font-family="monospace" font-size="13">Quick Start</text>
+  <text x="180" y="65" fill="#718096" font-family="monospace" font-size="13">→ Jump right in (5 minutes)</text>
+
+  <text x="30" y="95" fill="#63b3ed" font-family="monospace" font-size="13" font-weight="bold">[B]</text>
+  <text x="70" y="95" fill="#e2e8f0" font-family="monospace" font-size="13">Philosophy</text>
+  <text x="180" y="95" fill="#718096" font-family="monospace" font-size="13">→ Understand the approach first</text>
+
+  <text x="30" y="125" fill="#f6ad55" font-family="monospace" font-size="13" font-weight="bold">[C]</text>
+  <text x="70" y="125" fill="#e2e8f0" font-family="monospace" font-size="13">Deep Dive</text>
+  <text x="180" y="125" fill="#718096" font-family="monospace" font-size="13">→ Full reference documentation</text>
+</svg>

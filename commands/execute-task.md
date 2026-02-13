@@ -29,8 +29,8 @@ This is CAT's core execution command. It:
 5. Monitors token usage throughout
 6. Runs stakeholder review gate (multi-perspective quality review)
 7. Loops back to fix concerns if review rejects
-8. Runs user approval gate (interactive mode)
-9. Squashes commits by type
+8. Squashes commits by type
+9. Runs user approval gate (interactive mode)
 10. Merges task branch to main
 11. Cleans up worktrees
 12. Updates STATE.md
@@ -56,8 +56,8 @@ This workflow has 15 steps. Display progress at each step using the format from
 9. Collect subagent results
 10. Evaluate token usage
 11. Run stakeholder review
-12. User approval gate
-13. Squash commits
+12. Squash commits
+13. User approval gate
 14. Merge to main
 15. Update state and changelog
 

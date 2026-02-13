@@ -84,6 +84,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/validate-commit-type.sh"
+          },
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/validate-git-operations.sh"
           },
           {
