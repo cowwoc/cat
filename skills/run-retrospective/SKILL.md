@@ -345,4 +345,4 @@ trigger_check:
 
 - `cat:learn-from-mistakes` - Records individual mistakes, triggers this skill
 - `cat:token-report` - Provides context metrics for analysis
-- `cat:execute-task` - Can be used to implement action items
+- `cat:work` - Can be used to implement action items

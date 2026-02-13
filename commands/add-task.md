@@ -485,7 +485,7 @@ Task created:
 
 **Execute this task:**
 
-`/cat:execute-task {major}.{minor}/{task-name}`
+`/cat:work {major}.{minor}/{task-name}`
 
 **Or add another task:**
 

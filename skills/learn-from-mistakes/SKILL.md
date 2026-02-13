@@ -336,7 +336,7 @@ Before implementing prevention, check if it already exists:
 existing_prevention_check:
   question: "Does documentation/process already cover this?"
   check_locations:
-    - Workflow files (execute-task.md, etc.)
+    - Workflow files (work.md, etc.)
     - CLAUDE.md / project instructions
     - Skill documentation
     - Existing hooks
@@ -370,7 +370,7 @@ failed prevention. You must escalate to a level that will actually work.
 
 # ❌ WRONG: Record prevention as "documentation" pointing to same workflow
 prevention_type: documentation
-prevention_path: "execute-task.md"  # Already says MANDATORY - and it FAILED!
+prevention_path: "work.md"  # Already says MANDATORY - and it FAILED!
 
 # ✅ CORRECT: Escalate to hook that enforces the behavior
 prevention_type: hook
@@ -483,7 +483,7 @@ prevention_path_validation:
     - "TBD"
 
   valid_examples:
-    - "/workspace/cat/commands/execute-task.md"
+    - "/workspace/cat/commands/work.md"
     - ".claude/hooks/validate-commit.sh"
     - "src/main/java/Parser.java"
 
@@ -868,7 +868,7 @@ to conceptually do. Always invoke the actual skill.
 situation: "Workflow said MANDATORY but agent ignored it"
 recorded_prevention:
   type: documentation
-  path: "execute-task.md"  # Same file that was already ignored!
+  path: "work.md"  # Same file that was already ignored!
 # This is NOT prevention - the documentation already failed!
 
 # ✅ CORRECT: Escalate to enforcement
