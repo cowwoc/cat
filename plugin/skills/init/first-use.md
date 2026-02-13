@@ -1,3 +1,7 @@
+@templates/project.md
+@templates/roadmap.md
+@templates/cat-config.json
+
 # Initialize CAT
 
 Initialize CAT planning structure for new or existing projects.

@@ -1,3 +1,5 @@
+@concepts/version-paths.md
+
 # Decompose Issue
 
 ## Purpose

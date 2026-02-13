@@ -1,3 +1,5 @@
+@concepts/version-paths.md
+
 # Remove Issue or Version
 
 Unified command for removing issues or versions from the CAT planning structure.
