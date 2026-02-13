@@ -380,7 +380,7 @@ AskUserQuestion: header="Mode", question="How to work?", options=["Interactive -
 
 </step>
 
-<step name="adventure_style">
+<step name="behavior_style">
 
 **Choose Your Companion - Capture development style preferences**
 
@@ -389,8 +389,8 @@ Display welcome banner (ZWSP lines appear blank but contain U+200B):
 🎮 CHOOSE YOUR COMPANION
 ╭───────────────────────────────────────────────────────────────────╮
 ​
-      Every adventurer has a style. These questions shape how your
-      AI companion navigates the coding quest ahead.
+      Every developer has a style. These questions shape how your
+      AI companion approaches the work ahead.
 ​
       Choose wisely - your preferences guide every decision.
 ​
@@ -403,13 +403,13 @@ AskUserQuestion: header="Trust", question="How do you command your companion?", 
 ]
 
 AskUserQuestion: header="Curiosity", question="How should your companion explore the dungeon?", options=[
-  "🎯 Focused Scout - stay on the quest path, ignore side passages",
+  "🎯 Focused - stay on the task, ignore tangents",
   "🗺️ Observant Explorer - note interesting finds, but stay on mission (Recommended)",
   "🔮 Thorough Investigator - map every corner, document all discoveries"
 ]
 
 AskUserQuestion: header="Patience", question="When your companion spots treasure off the path...", options=[
-  "📜 Log it for later - add to the quest backlog, maintain focus",
+  "📜 Log it for later - add to backlog, maintain focus",
   "⚖️ Quick assessment - grab low-hanging fruit, note the rest (Recommended)",
   "💎 Seize the moment - if it's valuable, claim it now"
 ]
@@ -470,7 +470,7 @@ git commit -m "docs: initialize CAT planning structure"
 
 Display completion banner (ZWSP lines appear blank but contain U+200B):
 
-⚔️ YOUR QUEST BEGINS
+🚀 CAT INITIALIZED
 ╭───────────────────────────────────────────────────────────────────╮
 ​
       COMPANION PROFILE
@@ -478,7 +478,7 @@ Display completion banner (ZWSP lines appear blank but contain U+200B):
       Command Style:  [trust]
       Exploration:    [curiosity]
       Opportunity:    [patience]
-      Quest Mode:     [interactive|yolo]
+      Mode:           [interactive|yolo]
 ​
       Your companion awaits your command.
       Reforge your style anytime: /cat:config

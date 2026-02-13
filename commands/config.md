@@ -1,6 +1,6 @@
 ---
 name: cat:config
-description: Interactive wizard to customize your CAT adventure settings
+description: Interactive wizard to customize your CAT settings
 model: haiku
 context: fork
 allowed-tools:
@@ -12,8 +12,8 @@ allowed-tools:
 
 <objective>
 
-Interactive configuration wizard to customize CAT settings. Displays current configuration in adventure
-style and guides users through modifying their preferences.
+Interactive configuration wizard to customize CAT settings. Displays current configuration and guides
+users through modifying their preferences.
 
 </objective>
 
@@ -33,18 +33,18 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 <step name="display-settings">
 
-**Display adventure settings screen:**
+**Display settings screen:**
 
 **IMPORTANT: Output styled text DIRECTLY - do NOT use Bash tool for rendering.**
 
 ```
-╭─── ⚙️ ADVENTURE SETTINGS ─────────────────────────────────╮
+╭─── ⚙️ CAT SETTINGS ───────────────────────────────────────╮
 │                                                            │
 │  🧠 CONTEXT LIMITS                                         │
 │     Window:  {contextLimit} tokens                         │
 │     Target:  {targetContextUsage}% before split            │
 │                                                            │
-│  🐱 CAT BEHAVIOR                                           │
+│  🐱 BEHAVIOR                                               │
 │     Trust:     {trust || "medium"}                         │
 │     Verify:    {verify || "changed"}                       │
 │     Curiosity: {curiosity || "low"}                        │
@@ -557,7 +557,7 @@ If changes were made:
 │  • {setting1}: {old} → {new}                               │
 │  • {setting2}: {old} → {new}                               │
 │                                                            │
-│  Your adventure continues with new settings!               │
+│  Settings updated!                                         │
 │                                                            │
 ╰────────────────────────────────────────────────────────────╯
 ```
@@ -609,7 +609,7 @@ If no changes:
 
 <success_criteria>
 
-- [ ] Current configuration displayed in adventure theme
+- [ ] Current configuration displayed
 - [ ] User navigated wizard successfully
 - [ ] Settings updated in cat-config.json using safe jq pattern
 - [ ] Version gates viewable and editable via wizard
