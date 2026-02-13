@@ -28,6 +28,7 @@ CLAUDE_SESSION_ID="$3"
 "$CLAUDE_PLUGIN_ROOT/hooks/bin/java" \
   -Xms16m \
   -Xmx64m \
+  -Dstdout.encoding=UTF-8 \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
   -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader \
