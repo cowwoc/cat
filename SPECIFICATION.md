@@ -455,7 +455,7 @@ Subagents read their session file to track usage:
 {
   "yoloMode": false,
   "contextLimit": 200000,
-  "targetContextUsage": 0.4,
+  "targetContextUsage": 40,
   "autoCleanupWorktrees": true
 }
 ```
@@ -464,7 +464,7 @@ Subagents read their session file to track usage:
 |-------|------|---------|-------------|
 | yoloMode | boolean | false | Skip approval gates, auto-proceed |
 | contextLimit | number | 200000 | Total context window in tokens |
-| targetContextUsage | number | 0.4 | Target max usage (40% = 80K tokens) |
+| targetContextUsage | number | 40 | Target max usage as percentage (40 = 40% = 80K tokens) |
 | autoCleanupWorktrees | boolean | true | Clean worktrees after merge |
 
 ---

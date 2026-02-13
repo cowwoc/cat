@@ -209,7 +209,7 @@ cat-config.json:
 {
   "yoloMode": false,           // Skip approval gates
   "contextLimit": 200000,      // Total context window
-  "targetContextUsage": 0.4,   // Soft limit (40%)
+  "targetContextUsage": 40,    // Soft limit (40%)
   "autoCleanupWorktrees": true // Clean after merge
 }
 ```
