@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TEMPLATE: Update the title for your specific feature -->
+    <title>[Feature Name] - CAT Feature Demo</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --accent: #0ea5e9;
+            --bg-light: #f8fafc;
+            --bg-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        header .tagline {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Description Section */
+        .description-section {
+            padding: 60px 0;
+            background: var(--bg-white);
+        }
+
+        .description-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .description-content h2 {
+            font-size: 2rem;
+            margin-bottom: 24px;
+            color: var(--text-dark);
+        }
+
+        .description-content p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+
+        /* Video Section */
+        .video-section {
+            padding: 60px 0;
+            background: var(--bg-light);
+        }
+
+        .video-section h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: var(--text-dark);
+        }
+
+        .video-container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--bg-white);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-wrapper iframe,
+        .video-wrapper video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .video-caption {
+            padding: 16px 24px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Code Example Section (Optional) */
+        .code-section {
+            padding: 60px 0;
+            background: var(--bg-white);
+        }
+
+        .code-section h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            color: var(--text-dark);
+        }
+
+        .code-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .code-header {
+            background: #0f172a;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .code-dot.red { background: #ef4444; }
+        .code-dot.yellow { background: #eab308; }
+        .code-dot.green { background: #22c55e; }
+
+        .code-filename {
+            margin-left: 12px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .code-content {
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .code-content pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #e2e8f0;
+        }
+
+        .code-content .comment { color: #64748b; }
+        .code-content .keyword { color: #f472b6; }
+        .code-content .string { color: #a5f3fc; }
+        .code-content .function { color: #fbbf24; }
+
+        /* Footer CTA */
+        .footer-cta {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .footer-cta h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .footer-cta p {
+            opacity: 0.9;
+            margin-bottom: 24px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            background: white;
+            color: var(--primary);
+        }
+
+        .cta-button:hover {
+            background: var(--bg-light);
+        }
+
+        .cta-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            margin-left: 16px;
+        }
+
+        .cta-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .description-content {
+                padding: 0 16px;
+            }
+
+            .video-container {
+                margin: 0 16px;
+                border-radius: 12px;
+            }
+
+            .code-container {
+                margin: 0 16px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            header .tagline {
+                font-size: 1rem;
+            }
+
+            .description-content h2,
+            .video-section h2,
+            .code-section h2 {
+                font-size: 1.5rem;
+            }
+
+            .description-content p {
+                font-size: 1rem;
+            }
+
+            .footer-cta h2 {
+                font-size: 1.5rem;
+            }
+
+            .cta-button {
+                display: block;
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto 16px;
+            }
+
+            .cta-secondary {
+                margin-left: 0;
+            }
+
+            .code-content pre {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER SECTION
+         Update: h1 with feature name, tagline with brief description
+    -->
+    <header>
+        <div class="container">
+            <h1>[Feature Name]</h1>
+            <p class="tagline">[Brief tagline describing the feature's main benefit]</p>
+        </div>
+    </header>
+
+    <!-- DESCRIPTION SECTION
+         Update: 2-3 sentences explaining the feature in more detail
+    -->
+    <section class="description-section">
+        <div class="container">
+            <div class="description-content">
+                <h2>How It Works</h2>
+                <p>
+                    [First sentence explaining what the feature does and why it matters.
+                    This should capture the user's attention and convey the core value.]
+                </p>
+                <p>
+                    [Second sentence providing more detail about how the feature works
+                    or what problems it solves. Include specific benefits.]
+                </p>
+                <p>
+                    [Optional third sentence with additional context, use cases,
+                    or technical details that help users understand the feature.]
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- VIDEO SECTION
+         Update: Replace the iframe src with your video URL
+         Supported: YouTube, Vimeo, or self-hosted video files
+
+         For YouTube: Use embed URL format
+         Example: https://www.youtube.com/embed/VIDEO_ID
+
+         For self-hosted: Replace iframe with video element
+         Example: <video controls><source src="video.mp4" type="video/mp4"></video>
+    -->
+    <section class="video-section">
+        <div class="container">
+            <h2>See It In Action</h2>
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <!-- YouTube/Vimeo embed -->
+                    <iframe
+                        src="https://www.youtube.com/embed/VIDEO_ID"
+                        title="[Feature Name] Demo"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+
+                    <!-- Alternative: Self-hosted video (uncomment to use)
+                    <video controls poster="video-thumbnail.png">
+                        <source src="demo.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    -->
+                </div>
+                <p class="video-caption">
+                    [Brief description of what the video demonstrates]
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CODE EXAMPLE SECTION (Optional)
+         Remove this entire section if not needed for your feature
+         Update: filename, code content with syntax highlighting classes
+    -->
+    <section class="code-section">
+        <div class="container">
+            <h2>Quick Example</h2>
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="code-dot red"></span>
+                    <span class="code-dot yellow"></span>
+                    <span class="code-dot green"></span>
+                    <span class="code-filename">terminal</span>
+                </div>
+                <div class="code-content">
+                    <pre><span class="comment"># Example command or code snippet</span>
+<span class="keyword">$</span> cat <span class="function">/command-name</span>
+
+<span class="comment"># Expected output or result</span>
+<span class="string">[Output description or example result]</span></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER CTA SECTION
+         Update: Customize call-to-action text and links
+    -->
+    <section class="footer-cta">
+        <div class="container">
+            <h2>Ready to Try [Feature Name]?</h2>
+            <p>Get started with CAT and experience this feature for yourself.</p>
+            <a href="https://github.com/cowwoc/cat" class="cta-button">Get Started Free</a>
+            <a href="pricing.html" class="cta-button cta-secondary">View Pricing</a>
+        </div>
+    </section>
+</body>
+</html>
