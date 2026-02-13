@@ -48,6 +48,7 @@ readonly -a HANDLERS=(
   "get-next-task-box:skills.GetNextTaskOutput"
   "get-status-output:skills.GetStatusOutput"
   "get-render-diff-output:skills.GetRenderDiffOutput"
+  "session-analyzer:util.SessionAnalyzer"
 )
 
 # --- Logging ---
