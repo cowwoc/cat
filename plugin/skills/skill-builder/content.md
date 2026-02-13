@@ -798,6 +798,108 @@ If script fails, skill expansion fails visibly.
 - No fallback path means no error-prone manual computation
 - Forces fixing the root cause (broken script) rather than masking it
 
+### Script Extraction: Deterministic Bash Must Be External
+
+**MANDATORY: Skills must not contain inline bash for deterministic operations.**
+
+All deterministic bash belongs in external script files (plugin/scripts/). Skills contain only:
+- **When to use**: Conditions and prerequisites for the operation
+- **Script invocation**: Single bash command to invoke the script
+- **Result handling table**: JSON status codes → meaning → agent recovery action
+- **Judgment-dependent guidance**: Conflict resolution strategy, commit message construction, error recovery decisions
+
+Scripts (bash or python in plugin/scripts/) handle:
+- All deterministic git/file/system operations
+- Input validation and fail-fast error reporting
+- Structured JSON output for both success and error cases
+- Backup creation and verification
+
+#### Architecture: Hybrid Workflow
+
+```
+┌─────────────────────┐     ┌──────────────────────┐
+│   Skill (markdown)  │     │   Script (bash/py)   │
+│                     │     │                      │
+│ • When to use       │────>│ • Deterministic ops  │
+│ • Invoke script     │     │ • JSON output        │
+│ • Handle results    │<────│ • Fail-fast errors   │
+│ • Recovery guidance │     │ • Backup/verify      │
+└─────────────────────┘     └──────────────────────┘
+```
+
+#### When to Extract
+
+Extract to a script when:
+- Skill section has 3+ sequential bash operations that always execute the same logic
+- Operations have no judgment decisions (no branching based on Claude's analysis)
+- Claude reads bash from markdown then generates nearly identical bash via tool calls
+
+#### When NOT to Extract
+
+Keep in skill markdown when:
+- Operations require Claude's judgment (conflict resolution, commit message construction from topic analysis)
+- Interactive workflows need user input mid-stream
+- One-off operations that won't be repeated
+
+#### Script Conventions
+
+- Location: `plugin/scripts/<skill-name>.sh` or `plugin/scripts/<operation>.sh`
+- Header: `#!/usr/bin/env bash` with `set -euo pipefail`
+- Arguments: positional or from environment, with fail-fast validation
+- Output: JSON to stdout, errors to stderr
+- Exit codes: 0 success, 1 failure
+- Invocation from skill: `"$(git rev-parse --show-toplevel)/plugin/scripts/<name>.sh" "$ARG1" "$ARG2"`
+
+#### Result Handling Table Pattern
+
+Skills should include a table mapping script JSON status codes to agent actions:
+
+```markdown
+| Status | Meaning | Agent Recovery Action |
+|--------|---------|----------------------|
+| OK | Operation succeeded | Continue workflow |
+| CONFLICT | Merge/rebase conflict | Examine files, decide resolution strategy |
+| DIVERGED | Base branch advanced | Rebase onto base, retry |
+| ERROR | Unexpected failure | Read message, report to user |
+```
+
+#### Example: Before and After
+
+**Before** (348 lines of inline bash in skill):
+```markdown
+### Step 2: Check for Divergence
+\```bash
+BASE=$(git rev-parse "$BASE_BRANCH")
+DIVERGED=$(git rev-list --count "HEAD..$BASE")
+if [[ "$DIVERGED" -gt 0 ]]; then
+  echo "ERROR: ..."
+  exit 1
+fi
+\```
+### Step 3: Check File Deletions
+\```bash
+DELETED=$(git diff --name-status "$BASE..HEAD" | grep "^D")
+...
+\```
+[... 10 more steps with inline bash ...]
+```
+
+**After** (97 lines — invocation + result handling):
+```markdown
+## Execute
+\```bash
+"$(git rev-parse --show-toplevel)/plugin/scripts/git-merge-linear.sh" "$WORKTREE_PATH"
+\```
+
+## Handle Results
+| Status | Meaning | Recovery |
+|--------|---------|----------|
+| OK | Merged | Done |
+| FF_FAILED | Base advanced | Rebase, retry |
+| DIVERGED | New base commits | Rebase, retry |
+| DELETIONS | Suspicious removals | Investigate resolution |
+```
+
 ### Shared Dependencies
 
 When multiple branches require the same condition, note it once and reference it:
