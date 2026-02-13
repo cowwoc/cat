@@ -47,6 +47,8 @@ The script outputs a JSON object with:
   - `cache_candidates`: Repeated identical operations
   - `batch_candidates`: Consecutive similar operations
   - `parallel_candidates`: Independent operations in same message
+  - `pipeline_candidates`: Dependent operations where next phase can start with partial output from current phase
+  - `script_extraction_candidates`: Deterministic multi-step operations that could be extracted into standalone scripts
   - `summary`: Overall session statistics
 - `subagents`: Dictionary of agentId to per-subagent analysis (same structure as main)
 - `combined`: Aggregated metrics across main agent and all subagents
@@ -114,15 +116,52 @@ Compile analysis into actionable recommendations based on the script output:
 1. **Batching opportunities**: Use `batch_candidates` to identify consecutive operations that could be combined
 2. **Caching opportunities**: Use `cache_candidates` to identify repeated operations
 3. **Parallel opportunities**: Use `parallel_candidates` to identify independent operations that could run in parallel
-4. **Token optimization**: Use `token_usage` to identify high-cost operations
-5. **Output management**: Use `output_sizes` and UX categorization to suggest hiding/summarizing patterns
+4. **Pipelining opportunities**: Use `pipeline_candidates` to identify dependent operations where phase N+1 can start with partial output from phase N
+5. **Script extraction opportunities**: Use `script_extraction_candidates` to identify deterministic multi-step operations embedded in skill markdown that could be extracted into standalone scripts
+6. **Token optimization**: Use `token_usage` to identify high-cost operations
+7. **Output management**: Use `output_sizes` and UX categorization to suggest hiding/summarizing patterns
 
 Generate a comprehensive analysis report with specific recommendations for:
 - Which operations to batch together
 - Which results to cache or reference from context
 - Which independent operations to parallelize
+- Which dependent operations could use pipelining
+- Which deterministic workflows could be extracted to scripts
 - Which tool outputs to hide or summarize
 - Configuration rules for Claude Code UX
+
+### Optimization Pattern Details
+
+#### Pipelining Opportunities
+
+**Definition**: Dependent operations where phase N+1 can start with partial output from phase N, rather than waiting for complete output.
+
+**Detection Criteria**: Sequential phases where phase N+1 only needs partial output from phase N to begin work.
+
+**Examples**:
+- Stakeholder review spawn after diff available, before commit squash (review needs diff, not squash order)
+- PLAN.md read overlapping with lock acquisition (independent operations masked as sequential)
+- Implementation subagent start after first execution step read, before full PLAN.md parse
+
+**Applicability Note**: Claude Code tool calls are sequential within a message. Pipelining applies when skill steps have false serial dependencies - reordering steps to overlap output availability with consumption can reduce total wall-clock time even though tool calls remain sequential.
+
+#### Script Extraction Opportunities
+
+**Principle**: Skills must not contain inline bash for deterministic operations. All deterministic bash
+belongs in external script files. Skills contain only: when to use, script invocation, result handling,
+and judgment-dependent guidance.
+
+This principle is enforced by `/cat:skill-builder`. When optimize-execution detects skill files with
+inline bash, recommend running `/cat:skill-builder` on the skill to extract deterministic operations
+into scripts.
+
+**Detection**: Any skill file containing bash code blocks with deterministic operations (no judgment
+branching, no user interaction) is a candidate for script extraction.
+
+**Impact**: High — reduces token consumption (Claude doesn't read/reason about implementation), ensures
+deterministic execution, and produces fewer tool call round-trips.
+
+See `/cat:skill-builder` for the full script extraction architecture and hybrid workflow pattern.
 
 ## Output Format
 
@@ -137,6 +176,8 @@ The skill produces a JSON structure with main agent metrics, subagent analysis, 
     "cache_candidates": [...],
     "batch_candidates": [...],
     "parallel_candidates": [...],
+    "pipeline_candidates": [...],
+    "script_extraction_candidates": [...],
     "summary": {
       "total_tool_calls": 45,
       "unique_tools": ["Read", "Grep", "Edit"],
@@ -151,6 +192,8 @@ The skill produces a JSON structure with main agent metrics, subagent analysis, 
       "cache_candidates": [...],
       "batch_candidates": [...],
       "parallel_candidates": [...],
+      "pipeline_candidates": [...],
+      "script_extraction_candidates": [...],
       "summary": {
         "total_tool_calls": 23,
         "unique_tools": ["Read", "Bash"],
@@ -195,6 +238,19 @@ After running the analysis script, categorize tool outputs and generate recommen
       "tools": ["Grep", "Glob"],
       "context": "Independent searches in same directory",
       "recommendation": "Execute in parallel for faster results"
+    },
+    {
+      "type": "pipelinable",
+      "phases": ["generate_diff", "spawn_reviewer"],
+      "context": "Reviewer only needs diff, not subsequent squash operation",
+      "recommendation": "Spawn reviewer immediately after diff available"
+    },
+    {
+      "type": "script_extractable",
+      "skill": "git-merge-linear",
+      "bash_lines": 348,
+      "context": "Deterministic git operations with no judgment required",
+      "recommendation": "Extract to standalone script with JSON output"
     }
   ],
   "optimizations": [
@@ -217,6 +273,22 @@ After running the analysis script, categorize tool outputs and generate recommen
       "impact": "medium",
       "description": "3 independent Grep operations executed sequentially",
       "recommendation": "Use parallel tool calls in single response"
+    },
+    {
+      "category": "pipeline",
+      "impact": "medium",
+      "description": "Stakeholder review waited for commit squash to complete",
+      "current_cost": "Sequential: diff generation + squash + review spawn",
+      "optimized_cost": "Pipelined: diff generation + parallel(squash, review spawn)",
+      "implementation": "Reorder skill steps to spawn reviewer immediately after diff available"
+    },
+    {
+      "category": "script_extraction",
+      "impact": "high",
+      "description": "git-merge-linear skill executes 15 sequential bash commands for deterministic merge",
+      "current_cost": "15 tool calls, ~348 lines markdown, Claude reads and reasons each step",
+      "optimized_cost": "1 script call, ~167 lines script + 97 lines skill markdown, deterministic execution",
+      "implementation": "Extract to plugin/hooks/scripts/git-merge-linear.sh with JSON output"
     }
   ],
   "uxRelevance": {
@@ -298,6 +370,22 @@ For a session with 45 tool calls building a feature:
       "impact": "medium",
       "description": "CLAUDE.md read 4 times, content unchanged",
       "recommendation": "Read once at session start, reference from context"
+    },
+    {
+      "category": "pipeline",
+      "impact": "low",
+      "description": "Lock acquisition and PLAN.md read executed sequentially",
+      "current_cost": "Sequential operations with no true dependency",
+      "optimized_cost": "Reorder to overlap independent operations",
+      "implementation": "Read PLAN.md first, then acquire lock while analyzing"
+    },
+    {
+      "category": "script_extraction",
+      "impact": "medium",
+      "description": "5 sequential bash commands performing deterministic validation",
+      "current_cost": "5 tool calls, Claude reasons about each step",
+      "optimized_cost": "1 script call with structured JSON output",
+      "implementation": "Extract validation logic to standalone script"
     }
   ],
   "uxRelevance": {
