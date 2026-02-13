@@ -93,24 +93,25 @@ done
 <step name="check_uncommitted">
 **CRITICAL: Check for uncommitted work before cleanup:**
 
+**MANDATORY: Run git commands from main directory using `-C` flag. NEVER `cd` into a worktree that
+will be deleted - this makes the shell unusable after deletion.**
+
 For each worktree to be removed:
 ```bash
 WORKTREE_PATH="<path-from-git-worktree-list>"
 
-# Check for uncommitted changes
-cd "$WORKTREE_PATH"
-if [[ -n "$(git status --porcelain)" ]]; then
+# Check for uncommitted changes (use -C flag, NEVER cd into worktree)
+if [[ -n "$(git -C "$WORKTREE_PATH" status --porcelain)" ]]; then
   echo "WARNING: Uncommitted changes in $WORKTREE_PATH"
-  git status --short
+  git -C "$WORKTREE_PATH" status --short
   echo ""
   echo "Options:"
   echo "1. Commit the changes first"
-  echo "2. Stash the changes: git stash"
-  echo "3. Discard changes: git checkout -- . (DESTRUCTIVE)"
+  echo "2. Stash the changes: git -C $WORKTREE_PATH stash"
+  echo "3. Discard changes: git -C $WORKTREE_PATH checkout -- . (DESTRUCTIVE)"
   echo "4. Skip this worktree"
   # ASK USER before proceeding
 fi
-cd -
 ```
 
 **NEVER remove a worktree with uncommitted changes without explicit user approval.**
@@ -181,6 +182,8 @@ echo "Cleanup complete"
 </process>
 
 <safety_rules>
+- NEVER `cd` into a worktree that will be deleted (use `git -C <path>` instead) - deleting a directory
+  you're in makes the shell unusable
 - ALWAYS check for uncommitted changes before removing worktrees
 - ALWAYS ask user before removing anything with uncommitted work
 - ALWAYS remove worktree BEFORE deleting its branch
