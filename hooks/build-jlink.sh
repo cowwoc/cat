@@ -299,6 +299,7 @@ generate_launchers() {
 DIR=`dirname $0`
 exec "$DIR/java" \
   -Xms16m -Xmx64m \
+  -Dstdout.encoding=UTF-8 \
   -XX:+UseSerialGC \
   -XX:TieredStopAtLevel=1 \
   -XX:AOTCache="$DIR/../lib/server/aot-cache.aot" \
