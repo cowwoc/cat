@@ -45,6 +45,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - hide-add-skill-bash-output
 - remove-scope-question-from-add-wizard
 - rename-script-output-to-render-output
+- rename-script-output-to-skill-output
 - hide-issue-complete-bash-output
 - wrap-markdown-files-120-chars
 - move-config-read-to-work-handler
