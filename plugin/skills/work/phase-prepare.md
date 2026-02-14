@@ -402,8 +402,7 @@ This file is automatically deleted when the worktree is removed.
 
 **CRITICAL: All operations must use worktree path**
 
-Use `git -C "$WORKTREE_PATH"` or absolute paths for all operations on the worktree. Never cd into
-worktree directories, as this corrupts shell state when the worktree is later removed (M392, M464).
+You may `cd` into the worktree to work. However, before the worktree is removed (during merge/cleanup), ensure your shell is NOT inside the worktree directory.
 
 **Update task STATE.md:**
 

@@ -248,8 +248,9 @@ worktree and makes edits there. This corrupts main and other parallel issues.
 # Verify current location
 pwd
 
-# If in wrong location, use absolute paths or git -C for all subsequent operations
-git -C /workspace/.claude/cat/worktrees/<issue-name> status
+# If in wrong location, cd to the correct directory
+cd /workspace/.claude/cat/worktrees/<issue-name>
+git status
 ```
 
 ### Merge Conflict
