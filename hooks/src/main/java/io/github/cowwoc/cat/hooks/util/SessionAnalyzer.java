@@ -4,6 +4,8 @@ import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -70,6 +72,12 @@ public final class SessionAnalyzer
       JsonNode result = analyzer.analyzeSession(Path.of(args[0]));
       System.out.println(mapper.writeValueAsString(result));
     }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(SessionAnalyzer.class);
+      log.error("Unexpected error", e);
+      throw e;
+    }
   }
 
 
@@ -95,6 +103,7 @@ public final class SessionAnalyzer
     ObjectNode subagentsNode = mapper.createObjectNode();
     List<JsonNode> allAnalyses = new ArrayList<>();
     allAnalyses.add(mainAnalysis);
+    ArrayNode warnings = mapper.createArrayNode();
 
     for (Path subagentPath : subagentPaths)
     {
@@ -107,7 +116,7 @@ public final class SessionAnalyzer
       }
       catch (IOException e)
       {
-        System.err.println("Warning: Failed to analyze subagent " + agentId + ": " + e.getMessage());
+        warnings.add("Warning: Failed to analyze subagent " + agentId + ": " + e.getMessage());
       }
     }
 
@@ -117,6 +126,8 @@ public final class SessionAnalyzer
     result.set("main", mainAnalysis);
     result.set("subagents", subagentsNode);
     result.set("combined", combined);
+    if (!warnings.isEmpty())
+      result.set("warnings", warnings);
 
     return result;
   }
@@ -179,6 +190,7 @@ public final class SessionAnalyzer
     requireThat(filePath, "filePath").isNotNull();
 
     List<JsonNode> entries = new ArrayList<>();
+    List<String> parseWarnings = new ArrayList<>();
     try (BufferedReader reader = Files.newBufferedReader(filePath))
     {
       String line;
@@ -189,7 +201,7 @@ public final class SessionAnalyzer
         if (line == null)
           break;
         ++lineNum;
-        line = line.strip();
+        line = line.trim();
         if (line.isEmpty())
           continue;
 
@@ -199,7 +211,7 @@ public final class SessionAnalyzer
         }
         catch (JacksonException e)
         {
-          System.err.println("Warning: Skipping malformed line " + lineNum + ": " + e.getMessage());
+          parseWarnings.add("Warning: Skipping malformed line " + lineNum + ": " + e.getMessage());
         }
       }
     }

@@ -17,6 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Linear git merge operation with backup and safety checks.
  * <p>
@@ -122,7 +124,7 @@ public final class GitMergeLinear
         ". Recreate worktree with /cat:work.");
     }
 
-    return Files.readString(catBasePath, StandardCharsets.UTF_8).strip();
+    return Files.readString(catBasePath, StandardCharsets.UTF_8).trim();
   }
 
   /**
@@ -267,7 +269,7 @@ public final class GitMergeLinear
   private void verifyLinearHistory() throws IOException
   {
     String parents = runGitCommandSingleLine("log", "-1", "--format=%p", "HEAD");
-    String[] parentArray = parents.strip().split("\\s+");
+    String[] parentArray = parents.trim().split("\\s+");
     if (parentArray.length > 1)
       throw new IOException("Merge commit detected! History is not linear.");
   }
@@ -426,6 +428,12 @@ public final class GitMergeLinear
           }""".formatted(e.getMessage().replace("\"", "\\\"")));
         System.exit(1);
       }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GitMergeLinear.class);
+      log.error("Unexpected error", e);
+      throw e;
+    }
     }
   }
 }

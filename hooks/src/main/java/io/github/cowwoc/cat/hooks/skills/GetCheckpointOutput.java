@@ -8,6 +8,8 @@ import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Output generator for checkpoint boxes used by the {@code /cat:work} skill's review phase.
  * <p>
@@ -109,6 +111,12 @@ public final class GetCheckpointOutput
           }
         }
       }
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GetCheckpointOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
     catch (Exception e)
     {

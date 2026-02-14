@@ -9,6 +9,8 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * get-posttool-output - Unified PostToolUse hook for all tools
  *
@@ -45,30 +47,39 @@ public final class GetPostOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetPostOutput().run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetPostOutput().run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(GetPostOutput.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (toolName.isEmpty())
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
@@ -76,6 +87,7 @@ public final class GetPostOutput implements HookHandler
 
     List<String> warnings = new ArrayList<>();
     List<String> additionalContexts = new ArrayList<>();
+    List<String> errorWarnings = new ArrayList<>();
 
     // Run all general posttool handlers
     for (PosttoolHandler handler : HANDLERS)
@@ -90,25 +102,27 @@ public final class GetPostOutput implements HookHandler
       }
       catch (Exception e)
       {
-        System.err.println("get-posttool-output: handler error: " + e.getMessage());
+        errorWarnings.add("get-posttool-output: handler error: " + e.getMessage());
       }
     }
 
-    // Output warnings to stderr
-    for (String warning : warnings)
-    {
-      System.err.println(warning);
-    }
+    // Combine all warnings
+    List<String> allWarnings = new ArrayList<>();
+    allWarnings.addAll(warnings);
+    allWarnings.addAll(errorWarnings);
 
     // Build response with additionalContext if present
+    String jsonOutput;
     if (!additionalContexts.isEmpty())
     {
       String combined = String.join("\n\n", additionalContexts);
-      output.additionalContext("PostToolUse", combined);
+      jsonOutput = output.additionalContext("PostToolUse", combined);
     }
     else
     {
-      output.empty();
+      jsonOutput = output.empty();
     }
+
+    return new HookResult(jsonOutput, allWarnings);
   }
 }

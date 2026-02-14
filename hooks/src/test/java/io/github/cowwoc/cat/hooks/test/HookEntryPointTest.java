@@ -29,10 +29,8 @@ import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,17 +61,6 @@ public class HookEntryPointTest
     return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 
-  /**
-   * Creates a HookOutput that captures output to a stream.
-   *
-   * @param mapper the JSON mapper
-   * @param capture the stream to capture output into
-   * @return a HookOutput writing to the capture stream
-   */
-  private HookOutput createOutput(JsonMapper mapper, ByteArrayOutputStream capture)
-  {
-    return new HookOutput(mapper, new PrintStream(capture, true, StandardCharsets.UTF_8));
-  }
 
 
   // --- GetSkillOutput tests ---
@@ -88,13 +75,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetSkillOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetSkillOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
     }
   }
 
@@ -108,13 +93,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetSkillOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetSkillOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
     }
   }
 
@@ -130,12 +113,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetBashOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -150,12 +132,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetBashOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -171,12 +152,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetBashOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -193,12 +173,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetBashPostOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashPostOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -216,12 +195,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetReadOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetReadOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -236,12 +214,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetReadOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetReadOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -259,12 +236,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetReadPostOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetReadPostOutput(scope).run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -281,12 +257,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetPostOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -302,12 +277,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetPostOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -421,8 +395,7 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
       output.block("   ");
     }
   }
@@ -436,37 +409,18 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
       output.block(null);
     }
   }
 
   /**
-   * Verifies that HookOutput constructor with null stream throws NullPointerException.
+   * Verifies that HookOutput constructor with null mapper throws NullPointerException.
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void hookOutputWithNullStreamThrows() throws IOException
+  public void hookOutputWithNullMapperThrows()
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-    new HookOutput(scope.getJsonMapper(), null);
-    }
-  }
-
-  /**
-   * Verifies that HookOutput.warn with blank warning throws IllegalArgumentException.
-   */
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void hookOutputWarnWithBlankWarningThrows() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
-      output.warn("");
-    }
+    new HookOutput(null);
   }
 
   /**
@@ -487,8 +441,7 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
       output.additionalContext("", "some context");
     }
   }
@@ -502,11 +455,9 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
-      output.block("test reason");
+      HookOutput output = new HookOutput(mapper);
+      String result = output.block("test reason");
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
     }
   }
@@ -520,11 +471,9 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
-      output.empty();
+      HookOutput output = new HookOutput(mapper);
+      String result = output.empty();
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -541,12 +490,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -562,12 +510,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -584,12 +531,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -605,12 +551,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -626,8 +571,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
       new GetEditOutput().run(input, output);
     }
@@ -645,12 +589,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -666,12 +609,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -689,12 +631,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -712,12 +653,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/README.md\"}, \"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -736,12 +676,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -760,12 +699,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -784,12 +722,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -805,12 +742,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -866,12 +802,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -888,12 +823,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/fix-bug-123/STATE.md\", " +
         "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -930,12 +864,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/skills/test-skill/SKILL.md\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -952,12 +885,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/skills/my-skill/helper.py\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -976,12 +908,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -998,12 +929,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1022,12 +952,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
     }
@@ -1045,12 +974,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
       requireThat(result, "result").isEqualTo("{}");
     }
@@ -1069,12 +997,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
         "\"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
       // This test verifies no crash occurs
       requireThat(result, "result").isEqualTo("{}");
@@ -1177,12 +1104,11 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1198,12 +1124,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1219,12 +1144,11 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1241,12 +1165,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\", \"old_string\": \"a\", " +
         "\"new_string\": \"b\"}, \"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1263,12 +1186,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.py\"}, " +
         "\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
     }
   }
@@ -1381,12 +1303,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.sh\"}, " +
         "\"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").contains("\"decision\"");
       requireThat(result, "result").contains("\"block\"");
       requireThat(result, "result").contains("Cannot edit plugin files");
@@ -1408,12 +1329,11 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/tmp/some-new-source.java\"}, " +
         "\"session_id\": \"test-session\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).trim();
+      String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
@@ -1421,184 +1341,127 @@ public class HookEntryPointTest
   // --- Warning accumulation tests ---
 
   /**
-   * Verifies that multiple warnings from different handlers are all written to stderr for Write/Edit operations.
+   * Verifies that multiple warnings from different handlers are all returned in HookResult.warnings().
    */
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void writeEditPretoolAccumulatesMultipleWarnings() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
-    FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
+      FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
+      FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
 
-    GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
+      GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = scope.getJsonMapper();
-    String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
-      "{\"file_path\": \"/workspace/some-file.txt\"}, \"session_id\": \"test-session-123\"}";
-    JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+      JsonMapper mapper = scope.getJsonMapper();
+      String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
+        "{\"file_path\": \"/workspace/some-file.txt\"}, \"session_id\": \"test-session-123\"}";
+      JsonNode fullInput = mapper.readTree(inputJson);
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    PrintStream originalErr = System.err;
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    try
-    {
-      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output);
-    }
-    finally
-    {
-      System.setErr(originalErr);
-    }
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").contains("Warning from handler 1");
-    requireThat(stderrContent, "stderrContent").contains("Warning from handler 2");
-
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
-    requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+      requireThat(result.warnings(), "warnings").contains("Warning from handler 1");
+      requireThat(result.warnings(), "warnings").contains("Warning from handler 2");
+      requireThat(result.output(), "output").doesNotContain("\"decision\"");
     }
   }
 
   /**
-   * Verifies that multiple warnings from different handlers are all written to stderr for Edit operations.
+   * Verifies that multiple warnings from different handlers are all returned in HookResult.warnings()
+   * for Edit operations.
    */
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void editPretoolAccumulatesMultipleWarnings() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    EditHandler handler1 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 1");
-    EditHandler handler2 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 2");
+      EditHandler handler1 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 1");
+      EditHandler handler2 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 2");
 
-    GetEditOutput dispatcher = new GetEditOutput(List.of(handler1, handler2));
+      GetEditOutput dispatcher = new GetEditOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = scope.getJsonMapper();
-    String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
-      "{\"file_path\": \"/workspace/test.txt\"}, \"session_id\": \"test-session-456\"}";
-    JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+      JsonMapper mapper = scope.getJsonMapper();
+      String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
+        "{\"file_path\": \"/workspace/test.txt\"}, \"session_id\": \"test-session-456\"}";
+      JsonNode fullInput = mapper.readTree(inputJson);
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    PrintStream originalErr = System.err;
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    try
-    {
-      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output);
-    }
-    finally
-    {
-      System.setErr(originalErr);
-    }
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").contains("Warning from edit handler 1");
-    requireThat(stderrContent, "stderrContent").contains("Warning from edit handler 2");
-
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
-    requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+      requireThat(result.warnings(), "warnings").contains("Warning from edit handler 1");
+      requireThat(result.warnings(), "warnings").contains("Warning from edit handler 2");
+      requireThat(result.output(), "output").doesNotContain("\"decision\"");
     }
   }
 
   /**
-   * Verifies that multiple warnings from different handlers are all written to stderr for Task operations.
+   * Verifies that multiple warnings from different handlers are all returned in HookResult.warnings()
+   * for Task operations.
    */
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void taskPretoolAccumulatesMultipleWarnings() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    TaskHandler handler1 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 1");
-    TaskHandler handler2 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 2");
+      TaskHandler handler1 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 1");
+      TaskHandler handler2 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 2");
 
-    GetTaskOutput dispatcher = new GetTaskOutput(List.of(handler1, handler2));
+      GetTaskOutput dispatcher = new GetTaskOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = scope.getJsonMapper();
-    String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
-      "{\"subagent_type\": \"cat:implement\"}, \"session_id\": \"test-session-789\"}";
-    JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+      JsonMapper mapper = scope.getJsonMapper();
+      String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
+        "{\"subagent_type\": \"cat:implement\"}, \"session_id\": \"test-session-789\"}";
+      JsonNode fullInput = mapper.readTree(inputJson);
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    PrintStream originalErr = System.err;
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    try
-    {
-      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output);
-    }
-    finally
-    {
-      System.setErr(originalErr);
-    }
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").contains("Warning from task handler 1");
-    requireThat(stderrContent, "stderrContent").contains("Warning from task handler 2");
-
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
-    requireThat(stdoutContent, "stdoutContent").doesNotContain("\"decision\"");
+      requireThat(result.warnings(), "warnings").contains("Warning from task handler 1");
+      requireThat(result.warnings(), "warnings").contains("Warning from task handler 2");
+      requireThat(result.output(), "output").doesNotContain("\"decision\"");
     }
   }
 
   /**
-   * Verifies that when one handler warns and the next blocks, only the block is output and warnings are not written.
+   * Verifies that when one handler warns and the next blocks, only the block is output and warnings are not included.
    */
   @Test
-  @SuppressWarnings("PMD.CloseResource")
   public void writeEditPretoolBlocksWithoutWarnings() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    FileWriteHandler handler1 = (toolInput, sessionId) ->
-      FileWriteHandler.Result.warn("This warning should not appear");
-    FileWriteHandler handler2 = (toolInput, sessionId) ->
-      FileWriteHandler.Result.block("Blocked by handler 2");
+      FileWriteHandler handler1 = (toolInput, sessionId) ->
+        FileWriteHandler.Result.warn("This warning should not appear");
+      FileWriteHandler handler2 = (toolInput, sessionId) ->
+        FileWriteHandler.Result.block("Blocked by handler 2");
 
-    GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
+      GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
 
-    JsonMapper mapper = scope.getJsonMapper();
-    String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
-      "{\"file_path\": \"/workspace/blocked.txt\"}, \"session_id\": \"test-session-999\"}";
-    JsonNode fullInput = mapper.readTree(inputJson);
-    HookInput input = HookInput.readFrom(scope.getJsonMapper(),
-      new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
+      JsonMapper mapper = scope.getJsonMapper();
+      String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
+        "{\"file_path\": \"/workspace/blocked.txt\"}, \"session_id\": \"test-session-999\"}";
+      JsonNode fullInput = mapper.readTree(inputJson);
+      HookInput input = HookInput.readFrom(scope.getJsonMapper(),
+        new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    PrintStream originalErr = System.err;
-    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-    try
-    {
-      System.setErr(new PrintStream(stderr, true, StandardCharsets.UTF_8));
-      HookOutput output = new HookOutput(scope.getJsonMapper(), new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output);
-    }
-    finally
-    {
-      System.setErr(originalErr);
-    }
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-    String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-    requireThat(stderrContent, "stderrContent").doesNotContain("This warning should not appear");
-
-    String stdoutContent = stdout.toString(StandardCharsets.UTF_8);
-    requireThat(stdoutContent, "stdoutContent").contains("\"decision\"");
-    requireThat(stdoutContent, "stdoutContent").contains("\"block\"");
-    requireThat(stdoutContent, "stdoutContent").contains("Blocked by handler 2");
+      requireThat(result.warnings(), "warnings").doesNotContain("This warning should not appear");
+      requireThat(result.output(), "output").contains("\"decision\"");
+      requireThat(result.output(), "output").contains("\"block\"");
+      requireThat(result.output(), "output").contains("Blocked by handler 2");
     }
   }
 
+  // --- BlockWorktreeCd handler tests ---
   // --- ValidateStateMdFormat handler tests ---
 
   /**

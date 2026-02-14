@@ -3,6 +3,8 @@ package io.github.cowwoc.cat.hooks.skills;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -90,7 +92,8 @@ public final class GetNextTaskOutput
     }
     catch (Exception e)
     {
-      System.err.println("ERROR generating next task box: " + e.getMessage());
+      Logger log = LoggerFactory.getLogger(GetNextTaskOutput.class);
+      log.error("ERROR generating next task box", e);
       System.out.println();
       if (args.length >= 2)
       {
@@ -149,9 +152,10 @@ public final class GetNextTaskOutput
     requireThat(projectDir, "projectDir").isNotBlank();
     requireThat(excludePattern, "excludePattern").isNotNull();
 
-    releaseLock(projectDir, completedIssue, sessionId);
+    List<String> warnings = new ArrayList<>();
+    releaseLock(projectDir, completedIssue, sessionId, warnings);
 
-    Map<String, Object> nextTask = findNextTask(projectDir, sessionId, excludePattern);
+    Map<String, Object> nextTask = findNextTask(projectDir, sessionId, excludePattern, warnings);
 
     if (!nextTask.isEmpty())
     {
@@ -178,8 +182,9 @@ public final class GetNextTaskOutput
    * @param projectDir the project root directory
    * @param issueId the issue ID to release
    * @param sessionId the current session ID
+   * @param warnings list to collect warning messages
    */
-  private void releaseLock(String projectDir, String issueId, String sessionId)
+  private void releaseLock(String projectDir, String issueId, String sessionId, List<String> warnings)
   {
     try
     {
@@ -202,7 +207,7 @@ public final class GetNextTaskOutput
     }
     catch (Exception e)
     {
-      System.err.println("WARNING: Failed to release lock for " + issueId + ": " + e.getMessage());
+      warnings.add("WARNING: Failed to release lock for " + issueId + ": " + e.getMessage());
     }
   }
 
@@ -212,9 +217,11 @@ public final class GetNextTaskOutput
    * @param projectDir the project root directory
    * @param sessionId the current session ID
    * @param excludePattern optional glob pattern to exclude issues (may be empty)
+   * @param warnings list to collect warning messages
    * @return map with task info if found, empty map otherwise
    */
-  private Map<String, Object> findNextTask(String projectDir, String sessionId, String excludePattern)
+  private Map<String, Object> findNextTask(String projectDir, String sessionId, String excludePattern,
+    List<String> warnings)
   {
     try
     {
@@ -257,7 +264,7 @@ public final class GetNextTaskOutput
     }
     catch (Exception e)
     {
-      System.err.println("WARNING: Failed to find next task: " + e.getMessage());
+      warnings.add("WARNING: Failed to find next task: " + e.getMessage());
       return Map.of();
     }
   }
@@ -281,7 +288,7 @@ public final class GetNextTaskOutput
       int goalStart = -1;
       for (int i = 0; i < lines.size(); ++i)
       {
-        String line = lines.get(i).strip();
+        String line = lines.get(i).trim();
         if (line.startsWith("## Goal"))
         {
           goalStart = i + 1;
@@ -296,16 +303,16 @@ public final class GetNextTaskOutput
       for (int i = goalStart; i < lines.size(); ++i)
       {
         String line = lines.get(i);
-        if (line.strip().startsWith("##"))
+        if (line.trim().startsWith("##"))
           break;
         goalLines.add(line.stripTrailing());
       }
 
-      String goal = String.join("\n", goalLines).strip();
+      String goal = String.join("\n", goalLines).trim();
 
       String[] paragraphs = goal.split("\n\n");
       if (paragraphs.length > 0)
-        return paragraphs[0].strip();
+        return paragraphs[0].trim();
       return goal;
     }
     catch (IOException _)

@@ -10,6 +10,8 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * get-task-pretool-output - Unified PreToolUse hook for Task operations.
  * <p>
@@ -61,30 +63,39 @@ public final class GetTaskOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetTaskOutput().run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetTaskOutput().run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(GetTaskOutput.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!equalsIgnoreCase(toolName, "Task"))
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
     String sessionId = input.getSessionId();
@@ -98,28 +109,24 @@ public final class GetTaskOutput implements HookHandler
         TaskHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
+          String jsonOutput;
           if (result.additionalContext().isEmpty())
-            output.block(result.reason());
+            jsonOutput = output.block(result.reason());
           else
-            output.block(result.reason(), result.additionalContext());
-          return;
+            jsonOutput = output.block(result.reason(), result.additionalContext());
+          return HookResult.withoutWarnings(jsonOutput);
         }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
       }
       catch (RuntimeException e)
       {
-        output.block("Hook handler failed: " + handler.getClass().getSimpleName() +
+        String jsonOutput = output.block("Hook handler failed: " + handler.getClass().getSimpleName() +
           ": " + e.getMessage());
-        return;
+        return HookResult.withoutWarnings(jsonOutput);
       }
     }
 
-    for (String warning : warnings)
-    {
-      System.err.println(warning);
-    }
-
-    output.empty();
+    return new HookResult(output.empty(), warnings);
   }
 }

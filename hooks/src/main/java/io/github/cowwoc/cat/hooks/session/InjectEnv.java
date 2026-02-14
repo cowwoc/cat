@@ -36,7 +36,7 @@ public final class InjectEnv implements SessionStartHandler
    * Writes environment variables to CLAUDE_ENV_FILE and the resumed session's env directory.
    *
    * @param input the hook input
-   * @return an empty result (silent operation)
+   * @return a result with warnings if symlinks were skipped, otherwise empty
    * @throws NullPointerException if input is null
    * @throws AssertionError if required environment variables are not set
    * @throws WrappedCheckedException if writing to the env file fails
@@ -51,10 +51,7 @@ public final class InjectEnv implements SessionStartHandler
 
     Path envPath = Path.of(envFile);
     if (Files.isSymbolicLink(envPath))
-    {
-      System.err.println("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
-      return Result.empty();
-    }
+      return Result.context("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
 
     String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
     if (projectDir == null || projectDir.isEmpty())
@@ -76,7 +73,9 @@ public final class InjectEnv implements SessionStartHandler
     try
     {
       writeEnvFile(envPath, content);
-      writeToResumedSessionDir(envPath, sessionId, content);
+      String warning = writeToResumedSessionDir(envPath, sessionId, content);
+      if (!warning.isEmpty())
+        return Result.context(warning);
     }
     catch (IOException e)
     {
@@ -110,9 +109,10 @@ public final class InjectEnv implements SessionStartHandler
    * @param envPath the CLAUDE_ENV_FILE path (used to derive the session-env base directory)
    * @param sessionId the session ID from stdin JSON
    * @param content the export statements to write
+   * @return warning message if symlink was skipped, empty string otherwise
    * @throws IOException if writing fails
    */
-  private void writeToResumedSessionDir(Path envPath, String sessionId, String content)
+  private String writeToResumedSessionDir(Path envPath, String sessionId, String content)
     throws IOException
   {
     // CLAUDE_ENV_FILE path structure: .../STARTUP_ID/sessionstart-hook-N.sh
@@ -122,16 +122,14 @@ public final class InjectEnv implements SessionStartHandler
 
     // Only write if this is a different directory than what CLAUDE_ENV_FILE already points to
     if (resumedSessionDir.equals(envPath.getParent()))
-      return;
+      return "";
 
     Path resumedEnvFile = resumedSessionDir.resolve(envPath.getFileName());
     if (Files.isSymbolicLink(resumedEnvFile))
-    {
-      System.err.println("InjectEnv: resumed session env file is a symlink - skipping for security");
-      return;
-    }
+      return "InjectEnv: resumed session env file is a symlink - skipping for security";
     Files.createDirectories(resumedSessionDir);
     Files.writeString(resumedEnvFile, content, StandardCharsets.UTF_8,
       StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+    return "";
   }
 }

@@ -7,11 +7,12 @@ package io.github.cowwoc.cat.hooks;
 public interface HookHandler
 {
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
-  void run(HookInput input, HookOutput output);
+  HookResult run(HookInput input, HookOutput output);
 }

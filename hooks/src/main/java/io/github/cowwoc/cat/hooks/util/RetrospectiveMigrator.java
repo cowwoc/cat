@@ -4,6 +4,8 @@ import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -77,8 +79,16 @@ public final class RetrospectiveMigrator
     {
       JsonMapper mapper = scope.getJsonMapper();
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(Path.of(projectDir), dryRun);
-      System.out.println(mapper.writeValueAsString(result));
+      MigrationResult result = migrator.migrate(Path.of(projectDir), dryRun);
+      for (String message : result.messages())
+        System.out.println(message);
+      System.out.println(mapper.writeValueAsString(result.stats()));
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(RetrospectiveMigrator.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 
@@ -86,19 +96,20 @@ public final class RetrospectiveMigrator
   /**
    * Migrates retrospective files to time-based split format.
    * <p>
-   * Returns a JSON object with migration stats. If dry run is enabled, shows what would be done
+   * Returns a result with output messages and migration stats. If dry run is enabled, shows what would be done
    * without making changes.
    *
    * @param projectDir path to project root directory
    * @param dryRun if true, show what would be done without making changes
-   * @return JSON object containing migration statistics
+   * @return migration result containing output messages and JSON statistics
    * @throws NullPointerException if projectDir is null
    * @throws IOException if file operations fail
    */
-  public JsonNode migrate(Path projectDir, boolean dryRun) throws IOException
+  public MigrationResult migrate(Path projectDir, boolean dryRun) throws IOException
   {
     requireThat(projectDir, "projectDir").isNotNull();
 
+    List<String> messages = new ArrayList<>();
     Path retroDir = projectDir.resolve(".claude").resolve("cat").resolve("retrospectives");
 
     if (!Files.exists(retroDir))
@@ -106,8 +117,8 @@ public final class RetrospectiveMigrator
       ObjectNode result = mapper.createObjectNode();
       result.put("status", "skipped");
       result.put("reason", "directory not found");
-      System.out.println("No retrospectives directory found at " + retroDir);
-      return result;
+      messages.add("No retrospectives directory found at " + retroDir);
+      return new MigrationResult(messages, result);
     }
 
     Path mistakesFile = retroDir.resolve("mistakes.json");
@@ -119,8 +130,8 @@ public final class RetrospectiveMigrator
       ObjectNode result = mapper.createObjectNode();
       result.put("status", "skipped");
       result.put("reason", "already migrated");
-      System.out.println("Migration already complete: " + indexFile + " exists");
-      return result;
+      messages.add("Migration already complete: " + indexFile + " exists");
+      return new MigrationResult(messages, result);
     }
 
     ObjectNode mistakesData = mapper.createObjectNode();
@@ -218,25 +229,25 @@ public final class RetrospectiveMigrator
     else
       prefix = "";
 
-    System.out.println();
-    System.out.println(prefix + "Migration Summary:");
-    System.out.println("  Mistakes: " + mistakesTotal + " total");
+    messages.add("");
+    messages.add(prefix + "Migration Summary:");
+    messages.add("  Mistakes: " + mistakesTotal + " total");
     List<String> sortedMistakePeriods = new ArrayList<>(mistakesByPeriod.keySet());
     sortedMistakePeriods.sort(String::compareTo);
     for (String period : sortedMistakePeriods)
-      System.out.println("    " + period + ": " + mistakesByPeriod.get(period).size() + " mistakes");
+      messages.add("    " + period + ": " + mistakesByPeriod.get(period).size() + " mistakes");
 
-    System.out.println("  Retrospectives: " + retrospectivesTotal + " total");
+    messages.add("  Retrospectives: " + retrospectivesTotal + " total");
     List<String> sortedRetroPeriods = new ArrayList<>(retrosByPeriod.keySet());
     sortedRetroPeriods.sort(String::compareTo);
     for (String period : sortedRetroPeriods)
-      System.out.println("    " + period + ": " + retrosByPeriod.get(period).size() + " retrospectives");
+      messages.add("    " + period + ": " + retrosByPeriod.get(period).size() + " retrospectives");
 
     if (dryRun)
     {
-      System.out.println();
-      System.out.println("Dry run complete. No files were modified.");
-      return stats;
+      messages.add("");
+      messages.add("Dry run complete. No files were modified.");
+      return new MigrationResult(messages, stats);
     }
 
     ArrayNode filesCreated = mapper.createArrayNode();
@@ -259,7 +270,7 @@ public final class RetrospectiveMigrator
 
       Files.writeString(splitFile, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(splitData));
       filesCreated.add(splitFile.toString());
-      System.out.println("  Created: " + splitFile.getFileName());
+      messages.add("  Created: " + splitFile.getFileName());
     }
 
     for (String period : retroPeriods)
@@ -280,15 +291,15 @@ public final class RetrospectiveMigrator
 
       Files.writeString(splitFile, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(splitData));
       filesCreated.add(splitFile.toString());
-      System.out.println("  Created: " + splitFile.getFileName());
+      messages.add("  Created: " + splitFile.getFileName());
     }
 
     Files.writeString(indexFile, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(indexData));
     filesCreated.add(indexFile.toString());
-    System.out.println("  Created: " + indexFile.getFileName());
+    messages.add("  Created: " + indexFile.getFileName());
 
-    System.out.println();
-    System.out.println("Verifying migration...");
+    messages.add("");
+    messages.add("Verifying migration...");
 
     int totalInSplits = 0;
     for (Path mistakesSplit : Files.list(retroDir).
@@ -302,39 +313,39 @@ public final class RetrospectiveMigrator
 
     if (totalInSplits != mistakesTotal)
     {
-      System.out.println("  ERROR: Mistake count mismatch!");
-      System.out.println("    Original: " + mistakesTotal);
-      System.out.println("    In splits: " + totalInSplits);
+      messages.add("  ERROR: Mistake count mismatch!");
+      messages.add("    Original: " + mistakesTotal);
+      messages.add("    In splits: " + totalInSplits);
       ObjectNode errorResult = mapper.createObjectNode();
       errorResult.put("status", "error");
       errorResult.put("reason", "count mismatch");
       errorResult.setAll(stats);
-      return errorResult;
+      return new MigrationResult(messages, errorResult);
     }
 
-    System.out.println("  Verified: " + totalInSplits + " mistakes preserved correctly");
+    messages.add("  Verified: " + totalInSplits + " mistakes preserved correctly");
 
     if (Files.exists(mistakesFile))
     {
       Path backupFile = retroDir.resolve("mistakes.json.backup");
       Files.move(mistakesFile, backupFile);
-      System.out.println("  Backed up: mistakes.json -> mistakes.json.backup");
+      messages.add("  Backed up: mistakes.json -> mistakes.json.backup");
     }
 
     if (Files.exists(retroFile))
     {
       Path backupFile = retroDir.resolve("retrospectives.json.backup");
       Files.move(retroFile, backupFile);
-      System.out.println("  Backed up: retrospectives.json -> retrospectives.json.backup");
+      messages.add("  Backed up: retrospectives.json -> retrospectives.json.backup");
     }
 
-    System.out.println();
-    System.out.println("Migration complete!");
+    messages.add("");
+    messages.add("Migration complete!");
 
     stats.set("files_created", filesCreated);
     stats.put("status", "success");
 
-    return stats;
+    return new MigrationResult(messages, stats);
   }
 
   /**
@@ -374,5 +385,27 @@ public final class RetrospectiveMigrator
     }
 
     throw new IllegalArgumentException("Cannot parse timestamp: " + timestamp);
+  }
+
+  /**
+   * Result of a migration operation.
+   *
+   * @param messages output messages to be printed
+   * @param stats JSON statistics object
+   */
+  public record MigrationResult(List<String> messages, JsonNode stats)
+  {
+    /**
+     * Creates a new migration result.
+     *
+     * @param messages output messages to be printed
+     * @param stats JSON statistics object
+     * @throws NullPointerException if {@code messages} or {@code stats} are null
+     */
+    public MigrationResult
+    {
+      requireThat(messages, "messages").isNotNull();
+      requireThat(stats, "stats").isNotNull();
+    }
   }
 }

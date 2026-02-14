@@ -3,6 +3,8 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckUpgrade;
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarkers;
@@ -11,7 +13,6 @@ import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,49 +72,38 @@ public final class GetSessionStartOutput implements HookHandler
     {
       tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetSessionStartOutput(scope).run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetSessionStartOutput(scope).run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
     }
-    catch (RuntimeException | AssertionError e)
+    catch (RuntimeException | Error e)
     {
-      System.err.println("GetSessionStartOutput: " + e.getMessage());
-      System.exit(1);
+      Logger log = LoggerFactory.getLogger(GetSessionStartOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 
   /**
    * Processes hook input by running all session start handlers and combining their output.
-   * Delegates to {@link #run(HookInput, HookOutput, PrintStream)} with {@code System.err}.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
-   * @throws IllegalStateException if any handler fails
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
-  {
-    run(input, output, System.err);
-  }
-
-  /**
-   * Processes hook input by running all session start handlers and combining their output.
-   * Handler stderr messages are written to the provided stream.
-   *
-   * @param input the hook input to process
-   * @param output the hook output writer
-   * @param stderr the stream for handler stderr messages
-   * @throws NullPointerException if any parameter is null
-   * @throws IllegalStateException if any handler fails
-   */
-  public void run(HookInput input, HookOutput output, PrintStream stderr)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
-    requireThat(stderr, "stderr").isNotNull();
 
     StringBuilder combinedContext = new StringBuilder(256);
     List<String> errors = new ArrayList<>();
+    List<String> warnings = new ArrayList<>();
 
     for (SessionStartHandler handler : handlers)
     {
@@ -121,7 +111,7 @@ public final class GetSessionStartOutput implements HookHandler
       {
         SessionStartHandler.Result result = handler.handle(input);
         if (!result.stderr().isEmpty())
-          stderr.println(result.stderr());
+          warnings.add(result.stderr());
         if (!result.additionalContext().isEmpty())
         {
           if (!combinedContext.isEmpty())
@@ -144,16 +134,16 @@ public final class GetSessionStartOutput implements HookHandler
       for (String error : errors)
       {
         combinedContext.append("- ").append(error).append('\n');
-        stderr.println("GetSessionStartOutput: handler error (" + error + ")");
+        warnings.add("GetSessionStartOutput: handler error (" + error + ")");
       }
     }
 
+    String jsonOutput;
     if (combinedContext.isEmpty())
-      output.empty();
+      jsonOutput = output.empty();
     else
-      output.additionalContext("SessionStart", combinedContext.toString());
+      jsonOutput = output.additionalContext("SessionStart", combinedContext.toString());
 
-    if (!errors.isEmpty())
-      throw new IllegalStateException("SessionStart handlers failed: " + String.join(", ", errors));
+    return new HookResult(jsonOutput, warnings);
   }
 }

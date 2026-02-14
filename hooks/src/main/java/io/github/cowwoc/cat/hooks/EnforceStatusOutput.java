@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * enforce-status-output - Stop hook to enforce verbatim status box output.
  * <p>
@@ -45,7 +47,8 @@ public final class EnforceStatusOutput
     try (JvmScope scope = new MainJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookOutput hookOutput = new HookOutput(mapper, System.out);
+      HookOutput hookOutput = new HookOutput(mapper);
+      String output;
       try
       {
         HookInput input = HookInput.readFromStdin(mapper);
@@ -55,7 +58,8 @@ public final class EnforceStatusOutput
         boolean stopHookActive = input.getBoolean("stop_hook_active", false);
         if (stopHookActive)
         {
-          hookOutput.empty();
+          output = hookOutput.empty();
+          System.out.println(output);
           return;
         }
 
@@ -69,11 +73,11 @@ public final class EnforceStatusOutput
             "the START and END markers. You summarized instead of copy-pasting. " +
             "OUTPUT THE COMPLETE STATUS BOX NOW - including the ╭── border, all issue lines, " +
             "the NEXT STEPS table, and the Legend. Do NOT summarize or interpret.";
-          hookOutput.block(reason);
+          output = hookOutput.block(reason);
         }
         else
         {
-          hookOutput.empty();
+          output = hookOutput.empty();
         }
       }
       catch (Exception e)
@@ -82,8 +86,15 @@ public final class EnforceStatusOutput
           "❌ Hook error: " + e.getMessage() + "\n" +
           "\n" +
           "Blocking as fail-safe. Please verify your working environment.";
-        hookOutput.block(errorMessage);
+        output = hookOutput.block(errorMessage);
       }
+      System.out.println(output);
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(EnforceStatusOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 
@@ -112,7 +123,7 @@ public final class EnforceStatusOutput
 
     for (String line : recentLines)
     {
-      String trimmed = line.strip();
+      String trimmed = line.trim();
       if (trimmed.isEmpty())
         continue;
 

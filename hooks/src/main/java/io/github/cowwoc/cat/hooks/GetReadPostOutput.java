@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * get-read-posttool-output - Unified PostToolUse hook for Read/Glob/Grep/WebFetch/WebSearch
  *
@@ -48,36 +50,42 @@ public final class GetReadPostOutput implements HookHandler
     try (JvmScope scope = new MainJvmScope())
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper(), System.out);
+      HookOutput output = new HookOutput(scope.getJsonMapper());
       new GetReadPostOutput(scope).run(input, output);
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(GetReadPostOutput.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!SUPPORTED_TOOLS.contains(toolName))
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
+    List<String> errorWarnings = new ArrayList<>();
 
     // Run all read posttool handlers
     for (ReadHandler handler : handlers)
@@ -91,17 +99,16 @@ public final class GetReadPostOutput implements HookHandler
       }
       catch (Exception e)
       {
-        System.err.println("get-read-posttool-output: handler error: " + e.getMessage());
+        errorWarnings.add("get-read-posttool-output: handler error: " + e.getMessage());
       }
     }
 
-    // Output warnings if any
-    for (String warning : warnings)
-    {
-      System.err.println(warning);
-    }
+    // Combine all warnings
+    List<String> allWarnings = new ArrayList<>();
+    allWarnings.addAll(warnings);
+    allWarnings.addAll(errorWarnings);
 
     // Always allow (PostToolUse cannot block, only warn)
-    output.empty();
+    return new HookResult(output.empty(), allWarnings);
   }
 }

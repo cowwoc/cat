@@ -154,6 +154,7 @@ public final class CheckUpgrade implements SessionStartHandler
 
     // Run migrations
     StringBuilder migrationLog = new StringBuilder(128);
+    List<String> warnings = new ArrayList<>();
     boolean failed = false;
 
     Path migrationsDir = pluginRoot.resolve("migrations");
@@ -166,14 +167,14 @@ public final class CheckUpgrade implements SessionStartHandler
         Path realMigrationsDir = migrationsDir.toRealPath();
         if (!realPath.startsWith(realMigrationsDir))
         {
-          System.err.println("CheckUpgrade: Migration script escapes migrations directory: " + scriptPath);
+          warnings.add("CheckUpgrade: Migration script escapes migrations directory: " + scriptPath);
           migrationLog.append("\n- ").append(migration.version()).append(": SKIPPED (invalid path)");
           continue;
         }
       }
       catch (IOException _)
       {
-        System.err.println("CheckUpgrade: Cannot resolve migration script path: " + scriptPath);
+        warnings.add("CheckUpgrade: Cannot resolve migration script path: " + scriptPath);
         migrationLog.append("\n- ").append(migration.version()).append(": SKIPPED (unresolvable path)");
         continue;
       }
@@ -202,6 +203,8 @@ public final class CheckUpgrade implements SessionStartHandler
         "**Backup preserved at**: " + backupPath + "\n" +
         "\n" +
         "Please review the error and try again, or restore from backup.";
+      if (!warnings.isEmpty())
+        message = message + "\n\nWarnings:\n" + String.join("\n", warnings);
       return Result.context(message);
     }
 
@@ -209,6 +212,8 @@ public final class CheckUpgrade implements SessionStartHandler
 
     String stderrMessage = "\n" +
       "CAT UPGRADED from version " + lastMigratedVersion + " to " + pluginVersion + "\n";
+    if (!warnings.isEmpty())
+      stderrMessage = stderrMessage + "Warnings:\n" + String.join("\n", warnings) + "\n";
     String contextMessage = "CAT upgraded from " + lastMigratedVersion + " to " + pluginVersion +
       ". Backup at: " + backupPath;
 
