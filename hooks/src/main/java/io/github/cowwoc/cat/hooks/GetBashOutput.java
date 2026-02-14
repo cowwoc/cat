@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import io.github.cowwoc.cat.hooks.bash.BlockMergeCommits;
 import io.github.cowwoc.cat.hooks.bash.BlockReflogDestruction;
+import io.github.cowwoc.cat.hooks.bash.BlockUnsafeRemoval;
 import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import io.github.cowwoc.cat.hooks.bash.ValidateCommitType;
@@ -60,6 +61,7 @@ public final class GetBashOutput implements HookHandler
       new BlockMainRebase(),
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
+      new BlockUnsafeRemoval(),
       new ComputeBoxLines(scope),
       new RemindGitSquash(),
       new ValidateCommitType(),
