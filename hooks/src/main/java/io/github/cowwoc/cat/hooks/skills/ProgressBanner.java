@@ -20,7 +20,7 @@ import tools.jackson.databind.json.JsonMapper;
  * - ◉ Active
  * - ✗ Failed
  * <p>
- * Workflow phases: Preparing, Executing, Reviewing, Merging
+ * Workflow phases: Preparing, Implementing, Confirming, Reviewing, Merging
  */
 public final class ProgressBanner
 {
@@ -35,9 +35,14 @@ public final class ProgressBanner
     PREPARING,
 
     /**
-     * Executing phase - implementation work.
+     * Implementing phase - implementation work.
      */
-    EXECUTING,
+    IMPLEMENTING,
+
+    /**
+     * Confirming phase - acceptance criteria confirmation.
+     */
+    CONFIRMING,
 
     /**
      * Reviewing phase - code review and validation.
@@ -102,7 +107,7 @@ public final class ProgressBanner
   }
 
   /**
-   * Generates all four phase banners.
+   * Generates all five phase banners.
    *
    * @param issueId the issue ID (may be empty for generic banner)
    * @return formatted output with all phase banners
@@ -114,19 +119,23 @@ public final class ProgressBanner
 
     StringBuilder output = new StringBuilder(512);
 
-    output.append("**Preparing phase** (◉ on Preparing):\n").
+    output.append("**Preparing phase** (◉ ○ ○ ○ ○):\n").
       append("```\n").
       append(buildBanner(issueId, Phase.PREPARING)).
       append("\n```\n\n").
-      append("**Executing phase** (● ◉ pattern):\n").
+      append("**Implementing phase** (● ◉ ○ ○ ○):\n").
       append("```\n").
-      append(buildBanner(issueId, Phase.EXECUTING)).
+      append(buildBanner(issueId, Phase.IMPLEMENTING)).
       append("\n```\n\n").
-      append("**Reviewing phase** (● ● ◉ pattern):\n").
+      append("**Confirming phase** (● ● ◉ ○ ○):\n").
+      append("```\n").
+      append(buildBanner(issueId, Phase.CONFIRMING)).
+      append("\n```\n\n").
+      append("**Reviewing phase** (● ● ● ◉ ○):\n").
       append("```\n").
       append(buildBanner(issueId, Phase.REVIEWING)).
       append("\n```\n\n").
-      append("**Merging phase** (● ● ● ◉ pattern):\n").
+      append("**Merging phase** (● ● ● ● ◉):\n").
       append("```\n").
       append(buildBanner(issueId, Phase.MERGING)).
       append("\n```");
@@ -159,12 +168,13 @@ public final class ProgressBanner
   private String buildBanner(String issueId, Phase currentPhase)
   {
     String p1 = phaseSymbol(Phase.PREPARING, currentPhase);
-    String p2 = phaseSymbol(Phase.EXECUTING, currentPhase);
-    String p3 = phaseSymbol(Phase.REVIEWING, currentPhase);
-    String p4 = phaseSymbol(Phase.MERGING, currentPhase);
+    String p2 = phaseSymbol(Phase.IMPLEMENTING, currentPhase);
+    String p3 = phaseSymbol(Phase.CONFIRMING, currentPhase);
+    String p4 = phaseSymbol(Phase.REVIEWING, currentPhase);
+    String p5 = phaseSymbol(Phase.MERGING, currentPhase);
 
-    String phaseContent = "  " + p1 + " Preparing ────── " + p2 + " Executing ────── " +
-      p3 + " Reviewing ────── " + p4 + " Merging ";
+    String phaseContent = "  " + p1 + " Preparing ────── " + p2 + " Implementing ────── " +
+      p3 + " Confirming ────── " + p4 + " Reviewing ────── " + p5 + " Merging ";
     int phaseWidth = display.displayWidth(phaseContent);
 
     String headerContent;
@@ -237,7 +247,7 @@ public final class ProgressBanner
 
           Arguments:
             issue-id       Issue ID to display (positional, auto-discover if omitted)
-            --phase        Phase to render (preparing|executing|reviewing|merging)
+            --phase        Phase to render (preparing|implementing|confirming|reviewing|merging)
             --all-phases   Generate all phase banners (default)
             --project-dir  Project directory for auto-discovery
             --session-id   Session ID for issue locking
@@ -274,11 +284,12 @@ public final class ProgressBanner
       switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
       {
         case "preparing" -> phase = Phase.PREPARING;
-        case "executing" -> phase = Phase.EXECUTING;
+        case "implementing" -> phase = Phase.IMPLEMENTING;
+        case "confirming" -> phase = Phase.CONFIRMING;
         case "reviewing" -> phase = Phase.REVIEWING;
         case "merging" -> phase = Phase.MERGING;
         default -> throw new IllegalArgumentException(
-          "Unknown phase '" + phaseStr + "'. Valid: preparing, executing, reviewing, merging");
+          "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
       }
       System.out.println(banner.generateBanner(issueId, phase));
     }
