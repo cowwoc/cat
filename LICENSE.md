@@ -1,4 +1,4 @@
-# CAT Source-Available Commercial License
+# CAT Commercial License
 
 Version 1.0
 

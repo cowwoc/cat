@@ -11,7 +11,7 @@ Introduces the "fun AND reliable" philosophy with adventure-style workflow:
 - Update-preferences skill to modify preferences after init
 - Enhanced status output with colored progress bars and adventure-style display
 - Enhanced approval gate with checkpoint-style presentation
-- License change to CAT Source-Available Commercial License
+- License change to CAT Commercial License
 
 ## Acceptance Criteria
 - [x] Implementation complete

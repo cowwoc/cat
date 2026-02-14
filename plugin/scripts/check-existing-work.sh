@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # check-existing-work.sh - Check if a task branch has existing commits (M362)
 #
 # This is a deterministic check that does NOT require LLM decision-making.

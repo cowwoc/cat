@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Hook: validate-worktree-branch.sh
 # Trigger: PreToolUse for Bash
 # Purpose: Ensure operations stay in correct worktree/branch

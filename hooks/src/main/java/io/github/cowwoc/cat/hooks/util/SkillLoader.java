@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
 package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -68,6 +74,9 @@ public final class SkillLoader
     "CLAUDE_PROJECT_DIR");
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
+  private static final Pattern LICENSE_HEADER_PATTERN = Pattern.compile(
+    "\\A(---\\n.*?\\n---\\n)?<!--\\n.*?Copyright.*?-->\\n?\\n?",
+    Pattern.DOTALL);
   private static final TypeReference<Map<String, String>> BINDINGS_TYPE = new TypeReference<>()
   {
   };
@@ -200,6 +209,7 @@ public final class SkillLoader
       return "";
 
     String reference = Files.readString(referencePath, StandardCharsets.UTF_8);
+    reference = stripLicenseHeader(reference);
     return substituteVars(reference, skillName);
   }
 
@@ -218,7 +228,28 @@ public final class SkillLoader
       return "";
 
     String content = Files.readString(contentPath, StandardCharsets.UTF_8);
+    content = stripLicenseHeader(content);
     return substituteVars(content, skillName);
+  }
+
+  /**
+   * Strips license header HTML comments from the beginning of markdown content.
+   * <p>
+   * Removes {@code <!-- ... -->} blocks at the start of content (optionally preceded by YAML
+   * frontmatter) that contain a copyright notice. This saves tokens when serving skill content.
+   *
+   * @param content the content to process
+   * @return the content with license header removed, or unchanged if no license header found
+   */
+  private static String stripLicenseHeader(String content)
+  {
+    Matcher matcher = LICENSE_HEADER_PATTERN.matcher(content);
+    if (!matcher.find())
+      return content;
+    String frontmatter = matcher.group(1);
+    if (frontmatter != null)
+      return frontmatter + content.substring(matcher.end());
+    return content.substring(matcher.end());
   }
 
   /**
@@ -444,12 +475,11 @@ public final class SkillLoader
       System.err.println("Error loading skill: " + e.getMessage());
       System.exit(1);
     }
-  catch (RuntimeException | Error e)
-  {
-    
+    catch (RuntimeException | Error e)
+    {
       Logger log = LoggerFactory.getLogger(SkillLoader.class);
       log.error("Unexpected error", e);
-    throw e;
-  }
+      throw e;
+    }
   }
 }

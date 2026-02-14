@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.EditHandler;
@@ -18,7 +24,6 @@ import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
 import io.github.cowwoc.cat.hooks.edit.WarnSkillEditWithoutBuilder;
-import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;

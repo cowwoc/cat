@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Phase 3: Prevent
 
 This phase identifies prevention strategies, evaluates quality, implements fixes, and verifies no new priming.

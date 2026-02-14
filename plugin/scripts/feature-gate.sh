@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Feature gate - checks if user's tier allows a feature
 # Usage: feature-gate.sh <feature> [--json]
 # Exit codes: 0=allowed, 1=blocked, 2=error

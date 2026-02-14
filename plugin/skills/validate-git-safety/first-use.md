@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Validate Git Safety Skill
 
 **Purpose**: Validate git history-rewriting operations won't affect protected branches or cause unintended data loss.

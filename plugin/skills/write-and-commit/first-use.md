@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Write and Commit Skill
 
 **Purpose**: Create a new file and commit it in a single atomic operation, reducing LLM round-trips from 4-5 to 2-3.

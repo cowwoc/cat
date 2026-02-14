@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Git Commit Message Skill
 
 **Purpose**: Provide guidance for writing clear, descriptive commit messages that explain WHAT the code does and WHY.

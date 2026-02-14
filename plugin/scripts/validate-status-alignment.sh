@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Validate status display alignment before rendering
 # Usage: validate-status-alignment.sh < proposed_output
 # Returns 0 if valid, 1 if alignment issues found

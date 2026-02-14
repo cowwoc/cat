@@ -68,3 +68,24 @@ need updating.
 3. If unsure about a convention, re-read the relevant section
 
 This ensures consistent code style (Allman braces, 2-space indent, TestNG, JsonMapper for Java).
+
+## License Headers
+
+**MANDATORY:** All new source files must include a license header at the top.
+
+Use the appropriate comment syntax for the file type. The header text is:
+
+    Copyright (c) 2026 Gili Tzabari. All rights reserved.
+
+    Licensed under the CAT Commercial License.
+    See LICENSE.md in the project root for license terms.
+
+The copyright year is the year the source code was first written. Do not update it over time. When code is moved or
+renamed, the copyright year remains the year the source code was originally written.
+
+**IMPORTANT:** No blank line should appear between the license header and the first line of code (package declaration,
+imports, etc.). The header should be immediately followed by the code.
+
+See `plugin/concepts/license-header.md` for file-type-specific formats.
+
+JSON and XML files are exempt (JSON has no comment syntax; XML files are configuration files).

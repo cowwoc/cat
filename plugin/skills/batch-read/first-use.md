@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Batch Read Skill
 
 **Purpose**: Find files matching a pattern and read them in a single atomic operation, reducing LLM round-trips from 1+N

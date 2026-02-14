@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Work With Issue: Direct Phase Orchestration
 
 Execute all work phases (execute, verify, review, merge) with the main agent directly orchestrating each phase.
