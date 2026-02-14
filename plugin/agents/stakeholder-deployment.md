@@ -89,6 +89,11 @@ deeply enough to make informed infrastructure decisions about [topic].
 
 ## Review Mode (default)
 
+## Working Directory
+
+The delegation prompt MUST specify a working directory. Read and modify files ONLY within that directory. Do NOT access
+files outside it.
+
 ## Holistic Review
 
 **Review changes in context of the entire project's deployment posture, not just the diff.**
