@@ -19,26 +19,26 @@ to detect it before the squash/merge phase propagates the bad message.
 - **Mitigation:** Verification is advisory (warns orchestrator) not blocking
 
 ## Files to Modify
-- `plugin/skills/work-with-issue/content.md` - Add verification step after execution phase
+- `plugin/skills/work-with-issue/first-use.md` - Add verification step after execution phase
 
 ## Acceptance Criteria
 - [ ] After execution subagent returns, orchestrator runs `git log` on the worktree to get actual commit messages
 - [ ] Orchestrator compares actual messages against subagent-reported messages
-- [ ] Mismatch triggers a warning and optional fix (amend commit message)
+- [ ] Mismatch triggers mandatory fix (amend commit message before proceeding to review)
 
 ## Execution Steps
-1. **Add commit message verification after execution result parsing:** In `plugin/skills/work-with-issue/content.md`,
+1. **Add commit message verification after execution result parsing:** In `plugin/skills/work-with-issue/first-use.md`,
    after the "Handle Execution Result" section (around line 253), add instructions for the orchestrator to verify
    commit messages by running `git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD` and comparing against
    the subagent's reported `commits[].message` values.
-   - Files: `plugin/skills/work-with-issue/content.md`
+   - Files: `plugin/skills/work-with-issue/first-use.md`
 
-2. **Add mismatch handling:** When a mismatch is detected, the orchestrator should log a warning and optionally amend
-   the commit message using `git -C ${WORKTREE_PATH} commit --amend -m "correct message"` (if single commit) or flag
-   for manual review (if multiple commits).
-   - Files: `plugin/skills/work-with-issue/content.md`
+2. **Add mismatch handling:** When a mismatch is detected, the orchestrator must amend the commit message using
+   `git -C ${WORKTREE_PATH} commit --amend -m "correct message"` (if single commit) or interactive rebase for multiple
+   commits.
+   - Files: `plugin/skills/work-with-issue/first-use.md`
 
 ## Success Criteria
-- [ ] work-with-issue content.md includes commit message verification step
+- [ ] work-with-issue first-use.md includes commit message verification step
 - [ ] Verification compares git log output against subagent-reported messages
-- [ ] Mismatch produces a visible warning in orchestrator output
+- [ ] Mismatch triggers mandatory amend operation to fix commit messages
