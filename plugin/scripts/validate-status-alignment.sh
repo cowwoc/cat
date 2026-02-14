@@ -13,6 +13,11 @@
 
 set -euo pipefail
 
+if [[ $# -gt 0 ]]; then
+  echo "ERROR: $(basename "$0") accepts no arguments, got $#" >&2
+  exit 1
+fi
+
 # Read input
 input=$(cat)
 

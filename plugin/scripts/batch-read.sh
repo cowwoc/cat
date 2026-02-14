@@ -50,7 +50,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     *)
-      echo "ERROR: Unknown option: $1" >&2
+      echo "ERROR: $(basename "$0"): unknown argument: $1" >&2
       echo "Usage: batch-read.sh <pattern> [--max-files N] [--context-lines N] [--type TYPE]" >&2
       exit 1
       ;;
