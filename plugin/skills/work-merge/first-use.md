@@ -86,21 +86,21 @@ Before merge, ensure STATE.md is updated in the implementation commit:
 - **Resolution:** implemented
 ```
 
-### Step 3: Rebase task branch onto base (no cd)
+### Step 3: Rebase task branch onto base
 
-**CRITICAL: Use git -C, not cd into the worktree.** Running `git rebase BASE BRANCH` from the main
-workspace checks out the task branch, switching the main worktree off the base branch. The M205 hook
-then blocks checking it back out.
-
-Use `git -C` to operate on the worktree without changing directory:
+Rebase the task branch onto the base branch:
 
 ```bash
+cd ${WORKTREE_PATH}
+
 # Fetch latest base branch state
 git fetch origin ${BASE_BRANCH} 2>/dev/null || true
 
-# Rebase task branch onto current base (via git -C, no cd)
-git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
+# Rebase onto current base
+git rebase ${BASE_BRANCH}
 ```
+
+**Note:** Before Step 5 (worktree removal), ensure your shell is NOT inside the worktree directory.
 
 **If rebase has conflicts:** Return CONFLICT status. Do NOT fall back to merge commit.
 
@@ -116,10 +116,11 @@ If rebase fails with conflicts:
 ### Step 5: Remove Worktree, Merge, and Cleanup (M433)
 
 ```bash
-# Use git -C to operate on main workspace without cd
-git -C /workspace worktree remove ${WORKTREE_PATH} --force &&
-  git -C /workspace merge --ff-only ${BRANCH} &&
-  git -C /workspace branch -d ${BRANCH} &&
+# Exit worktree before removing it
+cd /workspace
+git worktree remove ${WORKTREE_PATH} --force &&
+  git merge --ff-only ${BRANCH} &&
+  git branch -d ${BRANCH} &&
   "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}"
 ```
 

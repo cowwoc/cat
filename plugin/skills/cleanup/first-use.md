@@ -16,7 +16,7 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 
 ## Safety Rules
 
-- NEVER cd into a worktree that will be deleted - use `git -C <path>` instead
+- Before removing a worktree, ensure your shell is NOT inside it (cd out first if needed)
   *(Enforced by hook M342 - removal blocked if cwd is inside target)*
 - ALWAYS check for uncommitted changes before removing worktrees
 - ALWAYS ask user before removing anything with uncommitted work
@@ -106,7 +106,7 @@ Present classification:
 
 ### Step 3: Check for Uncommitted Work
 
-**CRITICAL: Use `git -C <path>` - NEVER cd into a worktree that will be deleted.**
+**CRITICAL: Before removing a worktree, ensure your shell is NOT inside it.** If you are inside the worktree, `cd /workspace` first.
 
 For each worktree identified as abandoned:
 

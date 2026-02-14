@@ -41,12 +41,17 @@ git diff --stat
 git status && git log --oneline -3 && git diff --stat
 ```
 
-### Use Absolute Paths
+### Worktree Directory Safety
+
+You may `cd` into worktrees to work. However, before removing a directory (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed.
 
 ```bash
-# Use git -C to operate on worktrees without changing directory:
-git -C /workspace/.claude/cat/worktrees/issue status
+# Safe pattern when removing a worktree:
+cd /workspace  # Exit the worktree first
+git worktree remove /workspace/.claude/cat/worktrees/issue
 ```
+
+See `/cat:safe-rm` for detailed guidance on safe directory removal.
 
 ## Linear History Workflow
 
