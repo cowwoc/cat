@@ -18,6 +18,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Atomic write and commit operation.
  * <p>
@@ -204,6 +206,12 @@ public final class WriteAndCommit
           }""".formatted(e.getMessage().replace("\"", "\\\"")));
         System.exit(1);
       }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
+      log.error("Unexpected error", e);
+      throw e;
+    }
     }
   }
 }

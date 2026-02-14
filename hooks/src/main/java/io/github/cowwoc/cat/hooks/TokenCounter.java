@@ -13,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Token counter utility for markdown files.
  * <p>
@@ -72,6 +74,13 @@ public final class TokenCounter
 
       System.out.println(mapper.writeValueAsString(result));
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(TokenCounter.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 
   /**

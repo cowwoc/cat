@@ -3,6 +3,8 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.prompt.CriticalThinking;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
 import io.github.cowwoc.cat.hooks.prompt.DetectGivingUp;
 
@@ -47,34 +49,43 @@ public final class GetSkillOutput implements HookHandler
     try (JvmScope scope = new MainJvmScope())
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper(), System.out);
-      new GetSkillOutput(scope).run(input, output);
+      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookResult result = new GetSkillOutput(scope).run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GetSkillOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String userPrompt = input.getUserPrompt();
     if (userPrompt.isEmpty())
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> outputs = new ArrayList<>();
+    List<String> warnings = new ArrayList<>();
 
     // Run prompt handlers (pattern checking for all prompts)
     for (PromptHandler handler : handlers)
@@ -87,11 +98,12 @@ public final class GetSkillOutput implements HookHandler
       }
       catch (Exception e)
       {
-        System.err.println("get-skill-output: prompt handler error: " + e.getMessage());
+        warnings.add("get-skill-output: prompt handler error: " + e.getMessage());
       }
     }
 
-    // Output combined results
+    // Build combined results
+    String jsonOutput;
     if (!outputs.isEmpty())
     {
       StringBuilder combined = new StringBuilder();
@@ -101,11 +113,13 @@ public final class GetSkillOutput implements HookHandler
           combined.append('\n');
         combined.append(HookOutput.wrapSystemReminder(out));
       }
-      output.additionalContext("UserPromptSubmit", combined.toString());
+      jsonOutput = output.additionalContext("UserPromptSubmit", combined.toString());
     }
     else
     {
-      output.empty();
+      jsonOutput = output.empty();
     }
+
+    return new HookResult(jsonOutput, warnings);
   }
 }

@@ -22,6 +22,8 @@ import io.github.cowwoc.cat.hooks.MainJvmScope;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Output generator for render-diff skill.
  *
@@ -308,7 +310,7 @@ public final class GetRenderDiffOutput
       if (process.exitValue() != 0)
         return null;
 
-      return output.strip();
+      return output.trim();
     }
     catch (IOException | InterruptedException _)
     {
@@ -560,7 +562,7 @@ public final class GetRenderDiffOutput
             currentFile,
             Integer.parseInt(match.group(1)),
             Integer.parseInt(match.group(2)),
-            match.group(3).strip());
+            match.group(3).trim());
           currentHunk.commit = currentCommit;
           ++i;
           continue;
@@ -607,7 +609,7 @@ public final class GetRenderDiffOutput
         return;
 
       // First non-empty line is subject
-      commit.subject = lines.get(0).strip();
+      commit.subject = lines.get(0).trim();
 
       // Rest is body
       if (lines.size() > 1)
@@ -1216,8 +1218,10 @@ public final class GetRenderDiffOutput
       if (output != null)
         System.out.print(output);
     }
-    catch (RuntimeException e)
+    catch (RuntimeException | Error e)
     {
+      Logger log = LoggerFactory.getLogger(GetRenderDiffOutput.class);
+      log.error("Unexpected error", e);
       System.err.println("Error generating diff: " + e.getMessage());
       System.exit(1);
     }

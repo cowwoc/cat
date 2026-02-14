@@ -2,8 +2,6 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import java.io.PrintStream;
-
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -13,54 +11,54 @@ import tools.jackson.databind.node.ObjectNode;
 public final class HookOutput
 {
   private final JsonMapper mapper;
-  private final PrintStream out;
 
   /**
-   * Creates a new HookOutput that writes to the specified stream.
+   * Creates a new HookOutput.
    *
    * @param mapper the JSON mapper to use for serialization
-   * @param out the output stream to write to
-   * @throws NullPointerException if mapper or out is null
+   * @throws NullPointerException if {@code mapper} is null
    */
-  public HookOutput(JsonMapper mapper, PrintStream out)
+  public HookOutput(JsonMapper mapper)
   {
     requireThat(mapper, "mapper").isNotNull();
-    requireThat(out, "out").isNotNull();
     this.mapper = mapper;
-    this.out = out;
   }
 
   /**
-   * Output an empty response (allow the operation).
+   * Returns an empty response (allow the operation).
+   *
+   * @return empty JSON object
    */
-  public void empty()
+  public String empty()
   {
-    out.println("{}");
+    return "{}";
   }
 
   /**
-   * Output a block decision.
+   * Builds a block decision.
    *
    * @param reason Reason for blocking
-   * @throws IllegalArgumentException if reason is null or blank
+   * @return JSON string with block decision
+   * @throws IllegalArgumentException if {@code reason} is null or blank
    */
-  public void block(String reason)
+  public String block(String reason)
   {
     requireThat(reason, "reason").isNotBlank();
     ObjectNode response = mapper.createObjectNode();
     response.put("decision", "block");
     response.put("reason", reason);
-    output(mapper, response);
+    return toJson(response);
   }
 
   /**
-   * Output a block decision with additional context.
+   * Builds a block decision with additional context.
    *
    * @param reason Reason for blocking
    * @param additionalContext Extra context to provide
-   * @throws IllegalArgumentException if reason or additionalContext is null or blank
+   * @return JSON string with block decision and context
+   * @throws IllegalArgumentException if {@code reason} or {@code additionalContext} are null or blank
    */
-  public void block(String reason, String additionalContext)
+  public String block(String reason, String additionalContext)
   {
     requireThat(reason, "reason").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
@@ -68,30 +66,18 @@ public final class HookOutput
     response.put("decision", "block");
     response.put("reason", reason);
     response.put("additionalContext", additionalContext);
-    output(mapper, response);
+    return toJson(response);
   }
 
   /**
-   * Output a warning to stderr (but allow the operation).
-   *
-   * @param warning Warning message
-   * @throws IllegalArgumentException if warning is null or blank
-   */
-  public void warn(String warning)
-  {
-    requireThat(warning, "warning").isNotBlank();
-    System.err.println(warning);
-    empty();
-  }
-
-  /**
-   * Output additional context via hookSpecificOutput.
+   * Builds additional context via hookSpecificOutput.
    *
    * @param hookEventName The hook event name (e.g., "UserPromptSubmit", "PostToolUse")
    * @param additionalContext The context to inject
-   * @throws IllegalArgumentException if hookEventName or additionalContext is null or blank
+   * @return JSON string with hook-specific output
+   * @throws IllegalArgumentException if {@code hookEventName} or {@code additionalContext} are null or blank
    */
-  public void additionalContext(String hookEventName, String additionalContext)
+  public String additionalContext(String hookEventName, String additionalContext)
   {
     requireThat(hookEventName, "hookEventName").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
@@ -101,24 +87,24 @@ public final class HookOutput
 
     ObjectNode response = mapper.createObjectNode();
     response.set("hookSpecificOutput", hookSpecific);
-    output(mapper, response);
+    return toJson(response);
   }
 
   /**
-   * Output raw JSON.
+   * Converts a JSON node to a string.
    *
-   * @param mapper The JsonMapper to use for serialization
-   * @param node JSON node to output
+   * @param node JSON node to serialize
+   * @return JSON string, or empty object if serialization fails
    */
-  public void output(JsonMapper mapper, ObjectNode node)
+  public String toJson(ObjectNode node)
   {
     try
     {
-      out.println(mapper.writeValueAsString(node));
+      return mapper.writeValueAsString(node);
     }
     catch (Exception _)
     {
-      out.println("{}");
+      return "{}";
     }
   }
 

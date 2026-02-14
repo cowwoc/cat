@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Loads skill content from a plugin's skill directory structure.
  * <p>
@@ -64,7 +66,7 @@ public final class SkillLoader
     "CLAUDE_PLUGIN_ROOT",
     "CLAUDE_SESSION_ID",
     "CLAUDE_PROJECT_DIR");
-  private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)\\}");
+  private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
   private static final TypeReference<Map<String, String>> BINDINGS_TYPE = new TypeReference<>()
   {
@@ -442,5 +444,12 @@ public final class SkillLoader
       System.err.println("Error loading skill: " + e.getMessage());
       System.exit(1);
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(SkillLoader.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 }

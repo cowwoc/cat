@@ -7,6 +7,8 @@ import io.github.cowwoc.cat.hooks.bash.post.DetectConcatenatedCommit;
 import io.github.cowwoc.cat.hooks.bash.post.DetectFailures;
 import io.github.cowwoc.cat.hooks.bash.post.ValidateRebaseTarget;
 import io.github.cowwoc.cat.hooks.bash.post.VerifyCommitType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -52,30 +54,38 @@ public final class GetBashPostOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetBashPostOutput().run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetBashPostOutput().run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GetBashPostOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!equalsIgnoreCase(toolName, "Bash"))
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
     JsonNode commandNode = toolInput.get("command");
@@ -86,15 +96,13 @@ public final class GetBashPostOutput implements HookHandler
       command = "";
 
     if (command.isEmpty())
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
+    List<String> errorWarnings = new ArrayList<>();
 
     // Run all bash posttool handlers
     for (BashHandler handler : HANDLERS)
@@ -108,17 +116,16 @@ public final class GetBashPostOutput implements HookHandler
       }
       catch (Exception e)
       {
-        System.err.println("get-bash-posttool-output: handler error: " + e.getMessage());
+        errorWarnings.add("get-bash-posttool-output: handler error: " + e.getMessage());
       }
     }
 
-    // Output warnings if any
-    for (String warning : warnings)
-    {
-      System.err.println(warning);
-    }
+    // Combine all warnings
+    List<String> allWarnings = new ArrayList<>();
+    allWarnings.addAll(warnings);
+    allWarnings.addAll(errorWarnings);
 
     // Always allow (PostToolUse cannot block, only warn)
-    output.empty();
+    return new HookResult(output.empty(), allWarnings);
   }
 }

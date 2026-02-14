@@ -59,7 +59,7 @@ public final class RetrospectiveMigratorTest
     try
     {
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, false);
+      JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("skipped");
       requireThat(result.path("reason").asString(), "reason").isEqualTo("directory not found");
@@ -90,7 +90,7 @@ public final class RetrospectiveMigratorTest
       Files.writeString(indexFile, "{}");
 
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, false);
+      JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("skipped");
       requireThat(result.path("reason").asString(), "reason").isEqualTo("already migrated");
@@ -129,7 +129,7 @@ public final class RetrospectiveMigratorTest
       Files.writeString(mistakesFile, mistakesJson);
 
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, true);
+      JsonNode result = migrator.migrate(tempDir, true).stats();
 
       requireThat(result.path("mistakes_total").asInt(), "mistakes_total").isEqualTo(2);
       requireThat(result.path("mistakes_by_period").path("2025-01").asInt(), "jan_mistakes").
@@ -178,7 +178,7 @@ public final class RetrospectiveMigratorTest
       Files.writeString(mistakesFile, mistakesJson);
 
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, false);
+      JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
       requireThat(result.path("mistakes_total").asInt(), "mistakes_total").isEqualTo(3);
@@ -243,7 +243,7 @@ public final class RetrospectiveMigratorTest
       Files.writeString(retroFile, retroJson);
 
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, false);
+      JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
       requireThat(result.path("retrospectives_total").asInt(), "retrospectives_total").isEqualTo(2);
@@ -420,7 +420,7 @@ public final class RetrospectiveMigratorTest
     try
     {
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, false);
+      JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
     }
@@ -460,7 +460,7 @@ public final class RetrospectiveMigratorTest
       Files.writeString(mistakesFile, mistakesJson);
 
       RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
-      JsonNode result = migrator.migrate(tempDir, false);
+      JsonNode result = migrator.migrate(tempDir, false).stats();
 
       requireThat(result.path("status").asString(), "status").isEqualTo("success");
       requireThat(result.path("mistakes_by_period").path("2025-01").asInt(), "jan_count").

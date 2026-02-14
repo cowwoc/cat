@@ -10,6 +10,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * get-ask-pretool-output - Unified PreToolUse hook for AskUserQuestion.
  * <p>
@@ -60,30 +62,39 @@ public final class GetAskOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetAskOutput().run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetAskOutput().run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(GetAskOutput.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!equalsIgnoreCase(toolName, "AskUserQuestion"))
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
     String sessionId = input.getSessionId();
@@ -96,30 +107,31 @@ public final class GetAskOutput implements HookHandler
         AskHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
+          String jsonOutput;
           if (result.additionalContext().isEmpty())
-            output.block(result.reason());
+            jsonOutput = output.block(result.reason());
           else
-            output.block(result.reason(), result.additionalContext());
-          return;
+            jsonOutput = output.block(result.reason(), result.additionalContext());
+          return HookResult.withoutWarnings(jsonOutput);
         }
         // Ask handlers inject context into the question. Only one context can be injected,
         // so we return on the first handler that provides additionalContext.
         if (!result.additionalContext().isEmpty())
         {
-          output.additionalContext("PreToolUse", result.additionalContext());
-          return;
+          String jsonOutput = output.additionalContext("PreToolUse", result.additionalContext());
+          return HookResult.withoutWarnings(jsonOutput);
         }
         if (!result.reason().isEmpty())
-          System.err.println(result.reason());
+          return new HookResult(output.empty(), List.of(result.reason()));
       }
       catch (RuntimeException e)
       {
-        output.block("Hook handler failed: " + handler.getClass().getSimpleName() +
+        String jsonOutput = output.block("Hook handler failed: " + handler.getClass().getSimpleName() +
           ": " + e.getMessage());
-        return;
+        return HookResult.withoutWarnings(jsonOutput);
       }
     }
 
-    output.empty();
+    return HookResult.withoutWarnings(output.empty());
   }
 }
