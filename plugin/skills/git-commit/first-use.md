@@ -163,6 +163,52 @@ feature: add login form with validation and error handling
 - Loading states and error display
 ```
 
+### Enhanced Format for Task Commits
+
+The final squashed commit message MUST include changelog content. The commit diff already shows Files Modified, Files
+Created, and Test Coverage - omit these from the message.
+
+```
+{type}: {concise description}
+
+## Problem Solved
+[WHY this task was needed - what wasn't working or was missing]
+- {Problem 1}
+- {Problem 2 if applicable}
+
+## Solution Implemented
+[HOW the problem was solved - the approach taken]
+- {Key implementation detail 1}
+- {Key implementation detail 2}
+
+## Decisions Made (optional)
+- {Decision}: {rationale}
+
+## Known Limitations (optional)
+- {Limitation}: {why accepted or deferred}
+
+## Deviations from Plan (optional)
+- {Deviation}: {reason and impact}
+```
+
+**Example:**
+
+```
+feature: add lambda expression parsing
+
+## Problem Solved
+- Parser failed on multi-parameter lambdas: `(a, b) -> a + b`
+- 318 parsing errors in Spring Framework codebase
+
+## Solution Implemented
+- Added lookahead in parsePostfix() to detect lambda arrow
+- Reused existing parameter parsing for lambda parameters
+- Handles both inferred and explicit type parameters
+
+## Decisions Made
+- Reuse parameter parsing: Maintains consistency with method parameters
+```
+
 ## Commit Types (MANDATORY)
 
 **CRITICAL:** When working in a CAT-managed project, use ONLY these types:
