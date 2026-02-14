@@ -6,7 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,6 +24,9 @@ import java.util.stream.Stream;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
+import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
+import io.github.cowwoc.cat.hooks.licensing.Tier;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -45,6 +50,7 @@ public final class GetStatusOutput implements SkillOutput
 
   private final DisplayUtils display;
   private final JvmScope scope;
+  private Map<String, String> branchStatusCache;
 
   /**
    * Creates a GetStatusOutput instance.
@@ -75,8 +81,17 @@ public final class GetStatusOutput implements SkillOutput
     if (!Files.isDirectory(catDir))
       return "No CAT project found. Run /cat:init to initialize.";
 
+    Path pluginRoot = scope.getClaudePluginRoot();
+    LicenseValidator validator = new LicenseValidator(pluginRoot, scope.getJsonMapper());
+    LicenseResult licenseResult = validator.validate(projectDir);
+
     Path issuesDir = catDir.resolve("issues");
-    StatusData statusData = collectStatusData(issuesDir, catDir);
+
+    if (licenseResult.tier().compareTo(Tier.TEAM) >= 0)
+      branchStatusCache = loadBranchStatuses(projectDir);
+    else
+      branchStatusCache = Map.of();
+    StatusData statusData = collectStatusData(issuesDir, catDir, licenseResult);
 
     if (statusData.error != null)
       return statusData.error;
@@ -89,10 +104,12 @@ public final class GetStatusOutput implements SkillOutput
    *
    * @param issuesDir the issues directory
    * @param catDir the CAT root directory
+   * @param licenseResult the license validation result
    * @return the collected status data
    * @throws IOException if an I/O error occurs
    */
-  private StatusData collectStatusData(Path issuesDir, Path catDir) throws IOException
+  private StatusData collectStatusData(Path issuesDir, Path catDir, LicenseResult licenseResult)
+    throws IOException
   {
     if (!Files.isDirectory(issuesDir))
     {
@@ -155,7 +172,10 @@ public final class GetStatusOutput implements SkillOutput
         Path majorStateFile = majorDir.resolve("STATE.md");
         String majorStatus = "open";
         if (Files.exists(majorStateFile))
-          majorStatus = getTaskStatus(majorStateFile);
+        {
+          String content = Files.readString(majorStateFile);
+          majorStatus = parseStatusFromContent(content);
+        }
 
         MajorVersion major = new MajorVersion();
         major.id = majorId;
@@ -194,6 +214,10 @@ public final class GetStatusOutput implements SkillOutput
                 sorted().
                 toList();
 
+              // Two-pass loop is intentional for dependency resolution:
+              // Pass 1: Collect all task statuses into allTaskStatuses map
+              // Pass 2: Build task objects with blockedBy lists resolved from the map
+              // This ensures dependencies can reference tasks defined later in the directory listing
               for (Path taskDir : taskDirs)
               {
                 String taskName = taskDir.getFileName().toString();
@@ -203,46 +227,15 @@ public final class GetStatusOutput implements SkillOutput
                 if (!Files.exists(stateFile) && !Files.exists(planFile))
                   continue;
 
-                String status = getTaskStatus(stateFile);
+                String status = getTaskStatus(stateFile, catDir, minorNum, taskName, licenseResult);
                 allTaskStatuses.put(taskName, status);
               }
 
-              for (Path taskDir : taskDirs)
-              {
-                String taskName = taskDir.getFileName().toString();
-                Path stateFile = taskDir.resolve("STATE.md");
-                Path planFile = taskDir.resolve("PLAN.md");
-
-                if (!Files.exists(stateFile) && !Files.exists(planFile))
-                  continue;
-
-                String status = getTaskStatus(stateFile);
-                List<String> dependencies = getTaskDependencies(stateFile);
-                ++localTotal;
-
-                List<String> blockedBy = new ArrayList<>();
-                for (String dep : dependencies)
-                {
-                  String depStatus = allTaskStatuses.getOrDefault(dep, "open");
-                  if (!depStatus.equals("closed"))
-                    blockedBy.add(dep);
-                }
-
-                long mtime = Files.getLastModifiedTime(taskDir).toMillis();
-
-                Task task = new Task();
-                task.name = taskName;
-                task.status = status;
-                task.dependencies = dependencies;
-                task.blockedBy = blockedBy;
-                task.mtime = mtime;
-                tasks.add(task);
-
-                if (status.equals("closed"))
-                  ++localCompleted;
-                else if (status.equals("in-progress"))
-                  localInprog = taskName;
-              }
+              TaskStats stats = buildMinorVersionTasks(taskDirs, catDir, minorNum, licenseResult,
+                allTaskStatuses, tasks);
+              localTotal = stats.total;
+              localCompleted = stats.completed;
+              localInprog = stats.inProgress;
             }
 
             String desc = "";
@@ -317,28 +310,110 @@ public final class GetStatusOutput implements SkillOutput
 
   /**
    * Gets task status from STATE.md file.
+   * <p>
+   * If STATE.md status is "open", checks for lock files (Indie tier) and git branches (Team tier)
+   * to determine if the task is actually in-progress.
    *
    * @param stateFile the STATE.md file path
+   * @param catDir the CAT directory (for lock file lookup)
+   * @param minorNum the minor version number (e.g., "2.1")
+   * @param taskName the task name
+   * @param licenseResult the license validation result
    * @return the normalized status
    * @throws IOException if an I/O error occurs
    */
-  private String getTaskStatus(Path stateFile) throws IOException
+  private String getTaskStatus(Path stateFile, Path catDir, String minorNum, String taskName,
+    LicenseResult licenseResult) throws IOException
   {
     if (!Files.exists(stateFile))
       return "open";
 
     String content = Files.readString(stateFile);
+    String status = parseStatusFromContent(content);
+
+    if (status.equals("open"))
+    {
+      String lockFileName = minorNum + "-" + taskName + ".lock";
+      Path lockFile = catDir.resolve("locks").resolve(lockFileName);
+      if (Files.exists(lockFile))
+        return "in-progress";
+
+      if (licenseResult.tier().compareTo(Tier.TEAM) >= 0)
+      {
+        Path issueRelPath = stateFile.getParent();
+        Path projectRoot = catDir.getParent().getParent();
+        String relPath = projectRoot.relativize(issueRelPath).toString();
+        String branchStatus = branchStatusCache.get(relPath);
+        if ("in-progress".equals(branchStatus))
+          return "in-progress";
+      }
+    }
+
+    return status;
+  }
+
+  /**
+   * Parses the status field from STATE.md content.
+   *
+   * @param content the STATE.md file content
+   * @return the normalized status, or "open" if not found or invalid
+   */
+  public String parseStatusFromContent(String content)
+  {
     Pattern pattern = Pattern.compile("^- \\*\\*Status:\\*\\*\\s*(.+)$", Pattern.MULTILINE);
     Matcher matcher = pattern.matcher(content);
     if (!matcher.find())
       return "open";
 
     String rawStatus = matcher.group(1).strip().toLowerCase(Locale.ROOT);
-
     if (VALID_STATUSES.contains(rawStatus))
       return rawStatus;
-
     return "open";
+  }
+
+  /**
+   * Executes a git command and returns the output lines.
+   * <p>
+   * Handles process lifecycle, stream reading, and cleanup.
+   *
+   * @param projectDir the project root directory
+   * @param args the git command arguments
+   * @return list of output lines (empty list on failure)
+   * @throws IOException if an I/O error occurs
+   */
+  private List<String> executeGitCommand(Path projectDir, String... args) throws IOException
+  {
+    ProcessBuilder pb = new ProcessBuilder(args);
+    pb.directory(projectDir.toFile());
+    pb.redirectErrorStream(true);
+
+    Process process = pb.start();
+    List<String> lines = new ArrayList<>();
+
+    try (BufferedReader reader = new BufferedReader(
+      new InputStreamReader(process.getInputStream(), java.nio.charset.StandardCharsets.UTF_8)))
+    {
+      String line = reader.readLine();
+      while (line != null)
+      {
+        lines.add(line);
+        line = reader.readLine();
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        return List.of();
+
+      return lines;
+    }
+    catch (InterruptedException _)
+    {
+      return List.of();
+    }
+    finally
+    {
+      process.destroy();
+    }
   }
 
   /**
@@ -603,6 +678,188 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
+   * Loads the status of issues from git branches by scanning for STATE.md changes.
+   * <p>
+   * For each branch, finds STATE.md files that differ from the base branch,
+   * reads their status, and builds a map of issue path to status.
+   *
+   * @param projectDir the project root directory
+   * @return map from issue relative path to status on branch
+   * @throws IOException if git command fails
+   */
+  private Map<String, String> loadBranchStatuses(Path projectDir) throws IOException
+  {
+    Map<String, String> statusMap = new HashMap<>();
+
+    String baseBranch = getBaseBranch(projectDir);
+    if (baseBranch.isEmpty())
+      return Map.of();
+
+    List<String> branches = getAllBranches(projectDir);
+
+    for (String branch : branches)
+    {
+      if (branch.equals(baseBranch))
+        continue;
+
+      List<String> changedStateFiles = getChangedStateFiles(projectDir, baseBranch, branch);
+
+      for (String stateFilePath : changedStateFiles)
+      {
+        String status = getStatusFromBranch(projectDir, branch, stateFilePath);
+        if (!status.isEmpty())
+        {
+          String issueRelPath = stateFilePath.replace("/STATE.md", "");
+          statusMap.putIfAbsent(issueRelPath, status);
+        }
+      }
+    }
+
+    return statusMap;
+  }
+
+  /**
+   * Gets the base branch for the current repository.
+   *
+   * @param projectDir the project root directory
+   * @return the base branch name, or empty string if not found
+   * @throws IOException if git command fails
+   */
+  private String getBaseBranch(Path projectDir) throws IOException
+  {
+    List<String> lines = executeGitCommand(projectDir, "git", "rev-parse", "--abbrev-ref", "HEAD");
+    if (lines.isEmpty())
+      return "";
+
+    String branch = lines.get(0).strip();
+    if (branch.matches("v[0-9]+\\.[0-9]+"))
+      return branch;
+
+    return "";
+  }
+
+  /**
+   * Gets all branches in the repository.
+   * <p>
+   * Branch names are validated to ensure they match the expected pattern.
+   * Invalid branch names are skipped.
+   *
+   * @param projectDir the project root directory
+   * @return list of valid branch names
+   * @throws IOException if git command fails
+   */
+  private List<String> getAllBranches(Path projectDir) throws IOException
+  {
+    List<String> lines = executeGitCommand(projectDir, "git", "branch", "--format=%(refname:short)");
+    List<String> branches = new ArrayList<>();
+
+    Pattern validBranchPattern = Pattern.compile("[a-zA-Z0-9._/-]+");
+    for (String line : lines)
+    {
+      String branch = line.strip();
+      if (!branch.isEmpty() && validBranchPattern.matcher(branch).matches())
+        branches.add(branch);
+    }
+
+    return branches;
+  }
+
+  /**
+   * Gets the list of STATE.md files that changed between base branch and the given branch.
+   * <p>
+   * File paths are validated to ensure they are within the expected directory
+   * and do not contain path traversal sequences.
+   *
+   * @param projectDir the project root directory
+   * @param baseBranch the base branch name
+   * @param branch the branch to compare
+   * @return list of valid changed STATE.md file paths relative to project root
+   * @throws IOException if git command fails
+   */
+  private List<String> getChangedStateFiles(Path projectDir, String baseBranch, String branch)
+    throws IOException
+  {
+    List<String> lines = executeGitCommand(projectDir, "git", "diff", "--name-only",
+      baseBranch + "..." + branch, "--", ".claude/cat/issues/**/STATE.md");
+
+    List<String> changedFiles = new ArrayList<>();
+    for (String line : lines)
+    {
+      String filePath = line.strip();
+      if (isValidStateFilePath(filePath))
+        changedFiles.add(filePath);
+    }
+
+    return changedFiles;
+  }
+
+  /**
+   * Validates a STATE.md file path from git output.
+   * <p>
+   * Valid paths must:
+   * - Not contain ".." sequences (path traversal)
+   * - Start with ".claude/cat/issues/"
+   * - End with "/STATE.md"
+   *
+   * @param filePath the file path to validate
+   * @return true if the path is valid
+   */
+  public boolean isValidStateFilePath(String filePath)
+  {
+    if (filePath.isEmpty())
+      return false;
+    if (filePath.contains(".."))
+      return false;
+    if (!filePath.startsWith(".claude/cat/issues/"))
+      return false;
+    if (!filePath.endsWith("/STATE.md"))
+      return false;
+    return true;
+  }
+
+  /**
+   * Reads the status from a STATE.md file on a specific branch.
+   * <p>
+   * Branch names are validated before use in git commands.
+   *
+   * @param projectDir the project root directory
+   * @param branch the branch name
+   * @param filePath the file path relative to project root
+   * @return the normalized status, or empty string if not found
+   * @throws IOException if git command fails
+   */
+  private String getStatusFromBranch(Path projectDir, String branch, String filePath) throws IOException
+  {
+    if (!isValidBranchName(branch))
+      return "";
+
+    List<String> lines = executeGitCommand(projectDir, "git", "show", branch + ":" + filePath);
+    if (lines.isEmpty())
+      return "";
+
+    StringBuilder content = new StringBuilder();
+    for (String line : lines)
+      content.append(line).append('\n');
+
+    return parseStatusFromContent(content.toString());
+  }
+
+  /**
+   * Validates a branch name.
+   * <p>
+   * Valid branch names must match: [a-zA-Z0-9._/-]+
+   *
+   * @param branch the branch name to validate
+   * @return true if the branch name is valid
+   */
+  public boolean isValidBranchName(String branch)
+  {
+    if (branch == null || branch.isEmpty())
+      return false;
+    return branch.matches("[a-zA-Z0-9._/-]+");
+  }
+
+  /**
    * Gets list of active agents from lock files.
    *
    * @param catDir the CAT directory
@@ -701,6 +958,79 @@ public final class GetStatusOutput implements SkillOutput
   private String formatSessionId(String sessionId)
   {
     return sessionId;
+  }
+
+  /**
+   * Builds the task list for a minor version by processing task directories.
+   * <p>
+   * Creates Task objects with resolved dependency information, tracking completion
+   * counts and in-progress status.
+   *
+   * @param taskDirs the list of task directories to process
+   * @param catDir the CAT root directory
+   * @param minorNum the minor version number (e.g., "2.1")
+   * @param licenseResult the license validation result
+   * @param allTaskStatuses map of task name to status (from first pass)
+   * @param tasks the list to populate with Task objects
+   * @return task statistics including total, completed, and in-progress task name
+   * @throws IOException if an I/O error occurs
+   */
+  private TaskStats buildMinorVersionTasks(List<Path> taskDirs, Path catDir, String minorNum,
+    LicenseResult licenseResult, Map<String, String> allTaskStatuses, List<Task> tasks) throws IOException
+  {
+    int total = 0;
+    int completed = 0;
+    String inProgress = "";
+
+    for (Path taskDir : taskDirs)
+    {
+      String taskName = taskDir.getFileName().toString();
+      Path stateFile = taskDir.resolve("STATE.md");
+      Path planFile = taskDir.resolve("PLAN.md");
+
+      if (!Files.exists(stateFile) && !Files.exists(planFile))
+        continue;
+
+      String status = getTaskStatus(stateFile, catDir, minorNum, taskName, licenseResult);
+      List<String> dependencies = getTaskDependencies(stateFile);
+      ++total;
+
+      List<String> blockedBy = new ArrayList<>();
+      for (String dep : dependencies)
+      {
+        String depStatus = allTaskStatuses.getOrDefault(dep, "open");
+        if (!depStatus.equals("closed"))
+          blockedBy.add(dep);
+      }
+
+      long mtime = Files.getLastModifiedTime(taskDir).toMillis();
+
+      Task task = new Task();
+      task.name = taskName;
+      task.status = status;
+      task.dependencies = dependencies;
+      task.blockedBy = blockedBy;
+      task.mtime = mtime;
+      tasks.add(task);
+
+      if (status.equals("closed"))
+        ++completed;
+      else if (status.equals("in-progress"))
+        inProgress = taskName;
+    }
+
+    return new TaskStats(total, completed, inProgress);
+  }
+
+  /**
+   * Holds task statistics for a minor version.
+   *
+   * @param total the total number of tasks
+   * @param completed the number of completed tasks
+   * @param inProgress the name of the in-progress task, or empty string if none
+   */
+  private record TaskStats(int total, int completed, String inProgress)
+  {
   }
 
   /**
