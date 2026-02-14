@@ -15,6 +15,11 @@
 # Example:
 #   "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "status display" "/cat:status"
 
+if [[ $# -ne 2 ]]; then
+  echo "ERROR: $(basename "$0") requires exactly 2 arguments, got $#" >&2
+  exit 1
+fi
+
 WHAT="${1:-preprocessor output}"
 COMMAND="${2:-the command}"
 
