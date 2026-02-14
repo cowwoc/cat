@@ -637,6 +637,476 @@ public class GetStatusOutputTest
   }
 
   /**
+   * Verifies that open task with lock file shows as in-progress.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void lockFilePresenceMakesOpenTaskInProgress() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-lock-inprog");
+    Path catDir = tempDir.resolve(".claude/cat");
+    Path issuesDir = catDir.resolve("issues");
+    Path majorDir = issuesDir.resolve("v2");
+    Path minorDir = majorDir.resolve("v2.1");
+    Path taskDir = minorDir.resolve("my-task");
+    Files.createDirectories(taskDir);
+
+    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+
+    Path locksDir = catDir.resolve("locks");
+    Files.createDirectories(locksDir);
+    Files.writeString(locksDir.resolve("2.1-my-task.lock"),
+      "session_id=test-session\n" +
+      "created_at=1234567890\n" +
+      "worktree=/some/path\n");
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput();
+
+      requireThat(result, "result").contains("🔄 my-task");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that open task without lock file stays pending.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void noLockFileKeepsOpenTaskPending() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-no-lock");
+    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+    Path majorDir = issuesDir.resolve("v2");
+    Path minorDir = majorDir.resolve("v2.1");
+    Path taskDir = minorDir.resolve("pending-task");
+    Files.createDirectories(taskDir);
+
+    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput();
+
+      requireThat(result, "result").contains("🔳 pending-task");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that closed task with lock file stays closed.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void closedTaskIgnoresLockFile() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-closed-lock");
+    Path catDir = tempDir.resolve(".claude/cat");
+    Path issuesDir = catDir.resolve("issues");
+    Path majorDir = issuesDir.resolve("v2");
+    Path minorDir = majorDir.resolve("v2.1");
+    Path task1Dir = minorDir.resolve("done-task");
+    Path task2Dir = minorDir.resolve("open-task");
+    Files.createDirectories(task1Dir);
+    Files.createDirectories(task2Dir);
+
+    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
+
+    Path locksDir = catDir.resolve("locks");
+    Files.createDirectories(locksDir);
+    Files.writeString(locksDir.resolve("2.1-done-task.lock"),
+      "session_id=test-session\n" +
+      "created_at=1234567890\n" +
+      "worktree=/some/path\n");
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String result = handler.getOutput();
+
+      requireThat(result, "result").contains("☑️ done-task");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseStatusFromContent extracts valid status.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseStatusFromContentExtractsValidStatus() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-parse-status");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String content = "- **Status:** in-progress\n- **Owner:** alice\n";
+
+      String status = handler.parseStatusFromContent(content);
+
+      requireThat(status, "status").isEqualTo("in-progress");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseStatusFromContent handles invalid status values.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseStatusFromContentReturnsOpenForInvalidStatus() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-invalid-status");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String content = "- **Status:** invalid-value\n";
+
+      String status = handler.parseStatusFromContent(content);
+
+      requireThat(status, "status").isEqualTo("open");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseStatusFromContent returns open when status field is missing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseStatusFromContentReturnsOpenForMissingStatus() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-missing-status");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String content = "- **Owner:** alice\n- **Created:** 2024-01-01\n";
+
+      String status = handler.parseStatusFromContent(content);
+
+      requireThat(status, "status").isEqualTo("open");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseStatusFromContent handles case-insensitive status values.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseStatusFromContentHandlesCaseInsensitiveStatus() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-case-status");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      String content = "- **Status:** CLOSED\n";
+
+      String status = handler.parseStatusFromContent(content);
+
+      requireThat(status, "status").isEqualTo("closed");
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseStatusFromContent handles all valid status values.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseStatusFromContentHandlesAllValidStatuses() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-all-statuses");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] validStatuses = {"open", "in-progress", "closed", "blocked"};
+      for (String expected : validStatuses)
+      {
+        String content = "- **Status:** " + expected + "\n";
+        String actual = handler.parseStatusFromContent(content);
+        requireThat(actual, "status").isEqualTo(expected);
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidBranchName accepts valid branch names.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidBranchNameAcceptsValidNames() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-valid-branch");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] validBranches = {
+        "v2.1-my-task",
+        "feature/cool-thing",
+        "main",
+        "v1.0",
+        "user_branch",
+        "fix.bug"
+      };
+
+      for (String branch : validBranches)
+      {
+        boolean valid = handler.isValidBranchName(branch);
+        requireThat(valid, "valid").isTrue();
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidBranchName rejects invalid branch names.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidBranchNameRejectsInvalidNames() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-invalid-branch");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] invalidBranches = {
+        "branch with spaces",
+        "branch\nwith\nnewline",
+        "branch;with;semicolon",
+        "branch&with&ampersand",
+        "branch|with|pipe",
+        ""
+      };
+
+      for (String branch : invalidBranches)
+      {
+        boolean valid = handler.isValidBranchName(branch);
+        requireThat(valid, "valid").isFalse();
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidBranchName handles null input.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidBranchNameRejectsNull() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-null-branch");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      boolean valid = handler.isValidBranchName(null);
+
+      requireThat(valid, "isValidBranchName(null)").isFalse();
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidStateFilePath accepts valid STATE.md paths.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidStateFilePathAcceptsValidPaths() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-valid-path");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] validPaths = {
+        ".claude/cat/issues/v1/v1.0/task-1/STATE.md",
+        ".claude/cat/issues/v2/v2.1/my-feature/STATE.md",
+        ".claude/cat/issues/v10/v10.5/long_task_name/STATE.md"
+      };
+
+      for (String path : validPaths)
+      {
+        boolean valid = handler.isValidStateFilePath(path);
+        requireThat(valid, "valid").isTrue();
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidStateFilePath rejects path traversal attempts.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidStateFilePathRejectsPathTraversal() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-path-traversal");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] traversalPaths = {
+        ".claude/cat/issues/../../../etc/passwd",
+        ".claude/cat/issues/v1/../v2/STATE.md",
+        ".claude/cat/issues/v1/v1.0/../v1.1/task/STATE.md"
+      };
+
+      for (String path : traversalPaths)
+      {
+        boolean valid = handler.isValidStateFilePath(path);
+        requireThat(valid, "valid").isFalse();
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidStateFilePath rejects wrong prefix.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidStateFilePathRejectsWrongPrefix() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-wrong-prefix");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] wrongPrefixPaths = {
+        "other/directory/STATE.md",
+        "claude/cat/issues/v1/v1.0/task/STATE.md",
+        ".claude/issues/v1/v1.0/task/STATE.md"
+      };
+
+      for (String path : wrongPrefixPaths)
+      {
+        boolean valid = handler.isValidStateFilePath(path);
+        requireThat(valid, "valid").isFalse();
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidStateFilePath rejects wrong suffix.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidStateFilePathRejectsWrongSuffix() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-wrong-suffix");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      String[] wrongSuffixPaths = {
+        ".claude/cat/issues/v1/v1.0/task/PLAN.md",
+        ".claude/cat/issues/v1/v1.0/task/README.md",
+        ".claude/cat/issues/v1/v1.0/task/state.md"
+      };
+
+      for (String path : wrongSuffixPaths)
+      {
+        boolean valid = handler.isValidStateFilePath(path);
+        requireThat(valid, "valid").isFalse();
+      }
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that isValidStateFilePath rejects empty string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void isValidStateFilePathRejectsEmptyString() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-empty-path");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+
+      boolean valid = handler.isValidStateFilePath("");
+
+      requireThat(valid, "isValidStateFilePath(\"\")").isFalse();
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
    * Recursively deletes a directory and all its contents.
    *
    * @param path the directory to delete
