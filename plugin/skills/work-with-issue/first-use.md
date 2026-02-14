@@ -510,8 +510,8 @@ Display review results with concern details
 If MEDIUM+ concerns exist:
 ```
 AskUserQuestion:
-  header: "Approval"
-  question: "Ready to merge ${ISSUE_ID}?"
+  header: "${ISSUE_ID}"
+  question: "Ready to merge ${ISSUE_ID}? (Goal: ${TASK_GOAL})"
   options:
     - "Approve and merge"
     - "Fix remaining concerns" (auto-fix MEDIUM concerns, re-review, then prompt again)
@@ -522,8 +522,8 @@ AskUserQuestion:
 If no concerns or only LOW concerns:
 ```
 AskUserQuestion:
-  header: "Approval"
-  question: "Ready to merge ${ISSUE_ID}?"
+  header: "${ISSUE_ID}"
+  question: "Ready to merge ${ISSUE_ID}? (Goal: ${TASK_GOAL})"
   options:
     - "Approve and merge"
     - "Request changes" (provide feedback)
