@@ -136,8 +136,14 @@ with STATE.md not reflecting completion (e.g., stale merge overwrote status).
 
 1. Display the suspicious commits from `suspicious_commits` field
 2. Use AskUserQuestion to ask user whether the issue is already complete:
-   - **"Already complete"** - Fix STATE.md to closed, release lock, clean up worktree, select next task
-   - **"Not complete, continue"** - Proceed to Phase 2 normally
+   ```
+   AskUserQuestion:
+     header: "${issue_id}"
+     question: "Is ${issue_id} already complete?"
+     options:
+       - "Already complete" (Fix STATE.md to closed, release lock, clean up worktree, select next task)
+       - "Not complete, continue" (Proceed to Phase 2 normally)
+   ```
 3. Do NOT proceed to Phase 2 without user confirmation
 
 **Store phase 1 results:**
