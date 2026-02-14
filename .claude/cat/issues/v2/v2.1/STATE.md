@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- reimplement-render-diff-java
 - optimize-verify-subagent-count
 - strip-orphaned-work-docs
 - add-work-with-issue-banners
