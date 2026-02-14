@@ -8,6 +8,8 @@ import java.util.List;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Output generator for issue complete boxes.
  *
@@ -85,6 +87,12 @@ public final class GetIssueCompleteOutput
           System.out.println(box);
         }
       }
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GetIssueCompleteOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
     catch (Exception e)
     {

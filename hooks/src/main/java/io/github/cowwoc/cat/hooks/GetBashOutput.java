@@ -4,6 +4,8 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import io.github.cowwoc.cat.hooks.bash.BlockMergeCommits;
 import io.github.cowwoc.cat.hooks.bash.BlockReflogDestruction;
@@ -35,6 +37,7 @@ import java.util.List;
  */
 public final class GetBashOutput implements HookHandler
 {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   private final List<BashHandler> handlers;
 
   /**
@@ -70,30 +73,38 @@ public final class GetBashOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetBashOutput(scope).run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetBashOutput(scope).run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GetBashOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
     if (!equalsIgnoreCase(toolName, "Bash"))
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
     JsonNode commandNode = toolInput.get("command");
@@ -104,10 +115,7 @@ public final class GetBashOutput implements HookHandler
       command = "";
 
     if (command.isEmpty())
-    {
-      output.empty();
-      return;
-    }
+      return HookResult.withoutWarnings(output.empty());
 
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
@@ -121,28 +129,23 @@ public final class GetBashOutput implements HookHandler
         BashHandler.Result result = handler.check(command, toolInput, null, sessionId);
         if (result.blocked())
         {
+          String jsonOutput;
           if (result.additionalContext().isEmpty())
-            output.block(result.reason());
+            jsonOutput = output.block(result.reason());
           else
-            output.block(result.reason(), result.additionalContext());
-          return;
+            jsonOutput = output.block(result.reason(), result.additionalContext());
+          return new HookResult(jsonOutput, warnings);
         }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
       }
       catch (RuntimeException e)
       {
-        System.err.println("get-bash-pretool-output: handler error: " + e.getMessage());
+        log.error("get-bash-pretool-output: handler error", e);
       }
     }
 
-    // Output warnings if any
-    for (String warning : warnings)
-    {
-      System.err.println(warning);
-    }
-
     // Allow the command
-    output.empty();
+    return new HookResult(output.empty(), warnings);
   }
 }

@@ -20,6 +20,8 @@ import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Output generator for /cat:status skill.
  * <p>
@@ -139,9 +141,9 @@ public final class GetStatusOutput implements SkillOutput
           String matched = versionMatcher.group(1);
           int parenIndex = matched.indexOf('(');
           if (parenIndex >= 0)
-            majorName = matched.substring(0, parenIndex).strip();
+            majorName = matched.substring(0, parenIndex).trim();
           else
-            majorName = matched.strip();
+            majorName = matched.trim();
         }
 
         Path majorStateFile = majorDir.resolve("STATE.md");
@@ -242,7 +244,7 @@ public final class GetStatusOutput implements SkillOutput
               Pattern.MULTILINE);
             Matcher minorMatcher = minorPattern.matcher(roadmapContent);
             if (minorMatcher.find())
-              desc = minorMatcher.group(1).strip();
+              desc = minorMatcher.group(1).trim();
 
             totalCompleted += localCompleted;
             totalTasks += localTotal;
@@ -777,5 +779,12 @@ public final class GetStatusOutput implements SkillOutput
       System.err.println("Error generating status: " + e.getMessage());
       System.exit(1);
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 }

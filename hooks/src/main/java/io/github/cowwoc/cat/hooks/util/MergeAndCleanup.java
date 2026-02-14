@@ -6,6 +6,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
@@ -193,7 +195,7 @@ public final class MergeAndCleanup
         ". Cannot determine base branch.");
     }
 
-    return Files.readString(catBasePath, StandardCharsets.UTF_8).strip();
+    return Files.readString(catBasePath, StandardCharsets.UTF_8).trim();
   }
 
   /**
@@ -438,6 +440,12 @@ public final class MergeAndCleanup
           }""".formatted(e.getMessage().replace("\"", "\\\"")));
         System.exit(1);
       }
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 }

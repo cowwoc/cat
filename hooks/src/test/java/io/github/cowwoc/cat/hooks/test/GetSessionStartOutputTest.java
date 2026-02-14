@@ -18,9 +18,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,17 +45,6 @@ public class GetSessionStartOutputTest
     return HookInput.readFrom(mapper, new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
   }
 
-  /**
-   * Creates a HookOutput that captures output to a stream.
-   *
-   * @param mapper the JSON mapper
-   * @param capture the stream to capture output into
-   * @return a HookOutput writing to the capture stream
-   */
-  private HookOutput createOutput(JsonMapper mapper, ByteArrayOutputStream capture)
-  {
-    return new HookOutput(mapper, new PrintStream(capture, true, StandardCharsets.UTF_8));
-  }
 
   // --- EchoSessionId tests ---
 
@@ -321,13 +308,11 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(emptyHandler));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).strip();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
   }
 
@@ -345,24 +330,22 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).strip();
-      requireThat(result, "result").contains("context from handler 1");
-      requireThat(result, "result").contains("context from handler 2");
-      requireThat(result, "result").contains("hookSpecificOutput");
-      requireThat(result, "result").contains("SessionStart");
+      requireThat(result.output(), "output").contains("context from handler 1");
+      requireThat(result.output(), "output").contains("context from handler 2");
+      requireThat(result.output(), "output").contains("hookSpecificOutput");
+      requireThat(result.output(), "output").contains("SessionStart");
     }
   }
 
   /**
-   * Verifies that GetSessionStartOutput writes stderr from handlers.
+   * Verifies that GetSessionStartOutput returns warnings from handlers.
    */
   @Test
-  public void dispatcherWritesStderrFromHandlers() throws IOException
+  public void dispatcherReturnsWarningsFromHandlers() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -371,25 +354,20 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output, stderrStream);
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-      requireThat(stderrContent, "stderrContent").contains("stderr message");
+      requireThat(result.warnings(), "warnings").contains("stderr message");
 
       // No context -> empty output
-      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
-      requireThat(stdoutContent, "stdoutContent").isEqualTo("{}");
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
   }
 
   /**
    * Verifies that GetSessionStartOutput handles handler exceptions gracefully.
    */
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test
   public void dispatcherHandlesHandlerExceptionsGracefully() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -403,35 +381,21 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler, goodHandler));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(mapper);
 
-      try
-      {
-        dispatcher.run(input, output, stderrStream);
-      }
-      catch (IllegalStateException e)
-      {
-        // Error should be on stderr
-        String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-        requireThat(stderrContent, "stderrContent").contains("handler error");
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-        // Good handler's context should still be in output
-        String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
-        requireThat(stdoutContent, "stdoutContent").contains("good context");
-
-        // Re-throw to satisfy expectedExceptions
-        throw e;
-      }
+      requireThat(result.output(), "output").contains("good context");
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.warnings(), "warnings").isNotEmpty();
+      requireThat(result.warnings().getFirst(), "firstWarning").contains("test error");
     }
   }
 
   /**
    * Verifies that failing handler error appears in additionalContext.
    */
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test
   public void dispatcherIncludesErrorInAdditionalContext() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -444,36 +408,20 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(mapper);
 
-      try
-      {
-        dispatcher.run(input, output, stderrStream);
-      }
-      catch (IllegalStateException e)
-      {
-        // Error should appear in additionalContext
-        String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
-        requireThat(stdoutContent, "stdoutContent").contains("SessionStart Handler Errors");
-        requireThat(stdoutContent, "stdoutContent").contains("CLAUDE_SESSION_ID is not set");
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-        // Error should also be on stderr
-        String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-        requireThat(stderrContent, "stderrContent").contains("CLAUDE_SESSION_ID is not set");
-
-        // Re-throw to satisfy expectedExceptions
-        throw e;
-      }
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.output(), "output").contains("CLAUDE_SESSION_ID is not set");
+      requireThat(result.warnings(), "warnings").isNotEmpty();
     }
   }
 
   /**
    * Verifies that other handlers still produce output when one fails.
    */
-  @Test(expectedExceptions = IllegalStateException.class)
+  @Test
   public void dispatcherContinuesAfterHandlerFailure() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
@@ -488,26 +436,15 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, failingHandler, handler3));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
+      HookOutput output = new HookOutput(mapper);
 
-      try
-      {
-        dispatcher.run(input, output, stderrStream);
-      }
-      catch (IllegalStateException e)
-      {
-        // All handlers' context should be present
-        String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
-        requireThat(stdoutContent, "stdoutContent").contains("handler 1 output");
-        requireThat(stdoutContent, "stdoutContent").contains("handler 3 output");
-        requireThat(stdoutContent, "stdoutContent").contains("handler 2 failed");
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-        // Re-throw to satisfy expectedExceptions
-        throw e;
-      }
+      requireThat(result.output(), "output").contains("handler 1 output");
+      requireThat(result.output(), "output").contains("handler 3 output");
+      requireThat(result.output(), "output").contains("SessionStart Handler Errors");
+      requireThat(result.output(), "output").contains("handler 2 failed");
+      requireThat(result.warnings(), "warnings").isNotEmpty();
     }
   }
 
@@ -525,19 +462,14 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output, stderrStream);
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       // No error section in output
-      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
-      requireThat(stdoutContent, "stdoutContent").doesNotContain("SessionStart Handler Errors");
+      requireThat(result.output(), "output").doesNotContain("SessionStart Handler Errors");
 
-      // No stderr output
-      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-      requireThat(stderrContent, "stderrContent").isEmpty();
+      // No warnings
+      requireThat(result.warnings(), "warnings").isEmpty();
     }
   }
 
@@ -554,14 +486,12 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
-      ByteArrayOutputStream capture = new ByteArrayOutputStream();
-      HookOutput output = createOutput(mapper, capture);
+      HookOutput output = new HookOutput(mapper);
 
-      dispatcher.run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-      String result = capture.toString(StandardCharsets.UTF_8).strip();
       // Parse as JSON to verify it's valid
-      JsonNode json = mapper.readTree(result);
+      JsonNode json = mapper.readTree(result.output());
       requireThat(json.has("hookSpecificOutput"), "hasHookSpecificOutput").isTrue();
 
       JsonNode hookOutput = json.get("hookSpecificOutput");
@@ -571,10 +501,10 @@ public class GetSessionStartOutputTest
   }
 
   /**
-   * Verifies that GetSessionStartOutput with both context and stderr works correctly.
+   * Verifies that GetSessionStartOutput with both context and warnings works correctly.
    */
   @Test
-  public void dispatcherHandlesBothContextAndStderr() throws IOException
+  public void dispatcherHandlesBothContextAndWarnings() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -583,17 +513,11 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
       HookInput input = createInput(mapper, "{}");
-      ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-      ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-      PrintStream stderrStream = new PrintStream(stderr, true, StandardCharsets.UTF_8);
-      HookOutput output = new HookOutput(mapper, new PrintStream(stdout, true, StandardCharsets.UTF_8));
-      dispatcher.run(input, output, stderrStream);
+      HookOutput output = new HookOutput(mapper);
+      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
-      String stderrContent = stderr.toString(StandardCharsets.UTF_8);
-      requireThat(stderrContent, "stderrContent").contains("stderr msg");
-
-      String stdoutContent = stdout.toString(StandardCharsets.UTF_8).strip();
-      requireThat(stdoutContent, "stdoutContent").contains("context msg");
+      requireThat(result.warnings(), "warnings").contains("stderr msg");
+      requireThat(result.output(), "output").contains("context msg");
     }
   }
 

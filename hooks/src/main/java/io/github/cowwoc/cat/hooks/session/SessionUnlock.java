@@ -5,6 +5,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.HookHandler;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.HookResult;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -42,11 +43,12 @@ public final class SessionUnlock implements HookHandler
    * Processes hook input and releases locks.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
@@ -55,7 +57,7 @@ public final class SessionUnlock implements HookHandler
     if (projectDir == null || projectDir.isEmpty())
       throw new AssertionError("CLAUDE_PROJECT_DIR environment variable is not set");
 
-    runWithProjectDir(input, output, Paths.get(projectDir));
+    return runWithProjectDir(input, output, Paths.get(projectDir));
   }
 
   /**
@@ -64,11 +66,12 @@ public final class SessionUnlock implements HookHandler
    * This method is public for testing purposes.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
+   * @param output the hook output builder for creating responses
    * @param projectPath the project directory path
-   * @throws NullPointerException if any parameter is null
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input}, {@code output}, or {@code projectPath} are null
    */
-  public void runWithProjectDir(HookInput input, HookOutput output, Path projectPath)
+  public HookResult runWithProjectDir(HookInput input, HookOutput output, Path projectPath)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
@@ -91,14 +94,11 @@ public final class SessionUnlock implements HookHandler
 
       cleanStaleLocks(projectPath, messages);
 
-      for (String message : messages)
-        System.err.println(message);
-
-      output.empty();
+      return new HookResult(output.empty(), messages);
     }
     catch (Exception e)
     {
-      output.warn("SessionUnlock error: " + e.getMessage());
+      return new HookResult(output.empty(), List.of("SessionUnlock error: " + e.getMessage()));
     }
   }
 
@@ -121,7 +121,7 @@ public final class SessionUnlock implements HookHandler
       }
       catch (IOException e)
       {
-        System.err.println("Failed to delete project lock " + lockFile + ": " + e.getMessage());
+        messages.add("Failed to delete project lock " + lockFile + ": " + e.getMessage());
       }
     }
   }
@@ -178,14 +178,14 @@ public final class SessionUnlock implements HookHandler
           }
           catch (IOException e)
           {
-            System.err.println("Failed to delete lock " + lockFile + ": " + e.getMessage());
+            messages.add("Failed to delete lock " + lockFile + ": " + e.getMessage());
           }
         }
       }
     }
     catch (IOException e)
     {
-      System.err.println("Failed to iterate locks in " + lockDir + ": " + e.getMessage());
+      messages.add("Failed to iterate locks in " + lockDir + ": " + e.getMessage());
     }
   }
 
@@ -241,13 +241,13 @@ public final class SessionUnlock implements HookHandler
         }
         catch (IOException e)
         {
-          System.err.println("Failed to process lock file " + lockFile + ": " + e.getMessage());
+          messages.add("Failed to process lock file " + lockFile + ": " + e.getMessage());
         }
       }
     }
     catch (IOException e)
     {
-      System.err.println("Failed to iterate locks in " + lockDir + ": " + e.getMessage());
+      messages.add("Failed to iterate locks in " + lockDir + ": " + e.getMessage());
     }
   }
 }

@@ -5,8 +5,11 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.session.SessionUnlock;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * get-session-end-output - Unified SessionEnd hook for CAT
  * <p>
@@ -38,34 +41,51 @@ public final class GetSessionEndOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper, System.out);
-      new GetSessionEndOutput().run(input, output);
+      HookOutput output = new HookOutput(mapper);
+      HookResult result = new GetSessionEndOutput().run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
     }
+  catch (RuntimeException | Error e)
+  {
+    
+      Logger log = LoggerFactory.getLogger(GetSessionEndOutput.class);
+      log.error("Unexpected error", e);
+    throw e;
+  }
   }
 
   /**
-   * Processes hook input and writes the result.
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
-   * @param output the hook output writer
-   * @throws NullPointerException if input or output is null
+   * @param output the hook output builder for creating responses
+   * @return the hook result containing JSON output and warnings
+   * @throws NullPointerException if {@code input} or {@code output} are null
    */
   @Override
-  public void run(HookInput input, HookOutput output)
+  public HookResult run(HookInput input, HookOutput output)
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
+
+    List<String> allWarnings = new ArrayList<>();
 
     for (HookHandler handler : HANDLERS)
     {
       try
       {
-        handler.run(input, output);
+        HookResult result = handler.run(input, output);
+        allWarnings.addAll(result.warnings());
       }
       catch (Exception e)
       {
-        System.err.println("get-session-end-output: handler error: " + e.getMessage());
+        allWarnings.add("get-session-end-output: handler error: " + e.getMessage());
       }
     }
+
+    return new HookResult(output.empty(), allWarnings);
   }
 }

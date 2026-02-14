@@ -6,6 +6,8 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -390,6 +392,12 @@ public final class GitSquash
           }""".formatted(e.getMessage().replace("\"", "\\\"")));
         System.exit(1);
       }
+    }
+    catch (RuntimeException | Error e)
+    {
+      Logger log = LoggerFactory.getLogger(GitSquash.class);
+      log.error("Unexpected error", e);
+      throw e;
     }
   }
 }
