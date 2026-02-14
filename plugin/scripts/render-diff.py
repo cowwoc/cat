@@ -4,10 +4,10 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 """
-render-diff.py - Transform git diff to 4-column table format
+render-diff.py - Transform git diff to 2-column table format
 
 Optimized for approval gate reviews. Converts unified diff format into
-a structured table with old/new line numbers, change symbols, and content.
+a structured table with dynamic line numbers and content.
 
 Usage:
     git diff main..HEAD | ./render-diff.py
@@ -15,9 +15,10 @@ Usage:
     ./render-diff.py diff-output.txt
 
 Features:
-    - 4-column format: Old line | Symbol | New line | Content
+    - 2-column format: Line number | Indicator+Content
+    - Dynamic line number width (sized to max line number in hunk)
     - Commit message headers when using git log -p output
-    - Hunk context (function name) in column header
+    - Hunk context (function name) in separator row
     - Word-level diff highlighting with [] brackets
     - Whitespace visualization (· for spaces, → for tabs)
     - Binary and renamed file indicators
@@ -62,11 +63,6 @@ BOX_T_UP = '┴'
 BOX_T_RIGHT = '├'
 BOX_T_LEFT = '┤'
 BOX_CROSS = '┼'
-
-# Column widths (fixed)
-COL_OLD = 4   # Old line number
-COL_SYM = 3   # Symbol (+/-)
-COL_NEW = 4   # New line number
 
 
 @dataclass
@@ -160,21 +156,45 @@ def visualize_whitespace(line: str, used: UsedSymbols) -> str:
 
 
 class DiffRenderer:
-    """Render diff in 4-column table format."""
+    """Render diff in 2-column table format."""
 
     def __init__(self, width: int = 50):
         self.width = width
-        # Calculate content width: total - borders - col widths - internal padding
-        # │Old │ x │New │ Content │ = 17 fixed chars
-        self.content_width = width - 17
         self.used = UsedSymbols()
         self.output: list[str] = []
+        # Per-hunk state (set before rendering each hunk)
+        self.col_line = 0
+        self.content_width = 0
+
+    def _calc_col_width(self, hunk: DiffHunk) -> int:
+        """Calculate the line number column width for a hunk (max 4 digits = 9999)."""
+        max_line = 0
+        old_line = hunk.old_start
+        new_line = hunk.new_start
+
+        for line in hunk.lines:
+            if not line:
+                continue
+            if line.startswith('+'):
+                max_line = max(max_line, new_line)
+                new_line += 1
+            elif line.startswith('-'):
+                max_line = max(max_line, old_line)
+                old_line += 1
+            elif line.startswith(' '):
+                max_line = max(max_line, new_line)
+                old_line += 1
+                new_line += 1
+
+        # Return digit count, capped at 4
+        return min(4, max(2, len(str(max_line))))
 
     def render(self, diff: ParsedDiff) -> str:
         """Render the complete diff."""
         self.output = []
         first_box = True
         current_commit = None
+        current_file = None
 
         # Group hunks by commit for rendering
         def get_commit_for_file(filename: str) -> Optional[Commit]:
@@ -212,7 +232,7 @@ class DiffRenderer:
                 first_box = False
                 self._print_renamed_file(old_path, new_path)
 
-        # Render each hunk as a separate box
+        # Render each hunk
         for hunk in diff.hunks:
             if hunk.file in [bf for bf in diff.binary_files]:
                 continue
@@ -222,9 +242,24 @@ class DiffRenderer:
                 self.output.append('')
             first_box = False
 
-            self._print_hunk_top(hunk.file)
-            self._print_column_header(hunk.context)
+            # Set up per-hunk rendering state
+            self.col_line = self._calc_col_width(hunk)
+            # content_width = total - left│ - col_line - mid│ - 2 indicator chars - right│
+            self.content_width = self.width - self.col_line - 5
+
+            # First hunk for this file: print top border with filename
+            if hunk.file != current_file:
+                current_file = hunk.file
+                self._print_hunk_top(hunk.file)
+                self._print_hunk_separator(hunk.context)
+            else:
+                # Subsequent hunk for same file: just separator
+                self._print_hunk_separator(hunk.context)
+
             self._render_hunk_content(hunk)
+
+        # Print bottom border for last hunk
+        if diff.hunks:
             self._print_hunk_bottom()
 
         # Print legend
@@ -255,54 +290,63 @@ class DiffRenderer:
         self.output.append(f"{BOX_BOTTOM_LEFT}{fill_char(BOX_HORIZONTAL, self.width - 2)}{BOX_BOTTOM_RIGHT}")
 
     def _print_hunk_top(self, filename: str):
-        """Print hunk box top with file header."""
-        file_text = f"FILE: {filename}"
+        """Print hunk box top with filename embedded in border."""
+        # Format: ╭──┬─ filename ─╮
+        file_text = f" {filename} "
         file_len = display_width(file_text)
-        padding = self.width - 4 - file_len
 
-        self.output.append(f"{BOX_TOP_LEFT}{fill_char(BOX_HORIZONTAL, self.width - 2)}{BOX_TOP_RIGHT}")
-        self.output.append(f"{BOX_VERTICAL} {file_text}{' ' * padding} {BOX_VERTICAL}")
+        # Available space for filename: total - corners - col marker - padding
+        available = self.width - 2 - self.col_line - 3  # -3 for ┬─ and final ─
 
-    def _print_column_header(self, context: str):
-        """Print column header row with hunk context."""
-        # Separator after file header
-        self.output.append(
-            f"{BOX_T_RIGHT}{fill_char(BOX_HORIZONTAL, COL_OLD)}{BOX_T_DOWN}"
-            f"{fill_char(BOX_HORIZONTAL, COL_SYM)}{BOX_T_DOWN}"
-            f"{fill_char(BOX_HORIZONTAL, COL_NEW)}{BOX_T_DOWN}"
-            f"{fill_char(BOX_HORIZONTAL, self.content_width + 1)}{BOX_T_LEFT}"
-        )
+        if file_len > available:
+            # Truncate filename
+            file_text = f" {truncate_to_width(filename, available - 5)}... "
+            file_len = display_width(file_text)
 
-        # Header row with context
-        context_text = f"⌁ {context}" if context else ""
+        # Left side: ╭ + col_line dashes + ┬─
+        left_part = f"{BOX_TOP_LEFT}{fill_char(BOX_HORIZONTAL, self.col_line)}{BOX_T_DOWN}{BOX_HORIZONTAL}"
+        # Right side: remaining dashes + ╮
+        right_dashes = self.width - len(left_part) - file_len - 1
+
+        self.output.append(f"{left_part}{file_text}{fill_char(BOX_HORIZONTAL, right_dashes)}{BOX_TOP_RIGHT}")
+
+    def _print_hunk_separator(self, context: str):
+        """Print hunk separator with context."""
+        # Format: ├──┼─ ⌁ context ─┤
+        context_text = f" ⌁ {context} " if context else " "
         ctx_len = display_width(context_text)
-        if ctx_len > self.content_width:
-            context_text = truncate_to_width(context_text, self.content_width - 1) + "…"
 
-        self.output.append(
-            f"{BOX_VERTICAL}{pad_num('Old', COL_OLD)}{BOX_VERTICAL}   "
-            f"{BOX_VERTICAL}{pad_num('New', COL_NEW)}{BOX_VERTICAL} "
-            f"{context_text.ljust(self.content_width)}{BOX_VERTICAL}"
-        )
+        # Available space: total - corners - col marker - padding
+        available = self.width - 2 - self.col_line - 3  # -3 for ┼─ and final ─
 
-        # Separator after headers
-        self.output.append(
-            f"{BOX_T_RIGHT}{fill_char(BOX_HORIZONTAL, COL_OLD)}{BOX_CROSS}"
-            f"{fill_char(BOX_HORIZONTAL, COL_SYM)}{BOX_CROSS}"
-            f"{fill_char(BOX_HORIZONTAL, COL_NEW)}{BOX_CROSS}"
-            f"{fill_char(BOX_HORIZONTAL, self.content_width + 1)}{BOX_T_LEFT}"
-        )
+        if ctx_len > available:
+            # Truncate context
+            context_text = f" ⌁ {truncate_to_width(context, available - 6)}… "
+            ctx_len = display_width(context_text)
 
-    def _print_row(self, old_num: str, symbol: str, new_num: str, content: str):
-        """Print a content row, handling wrapping for long lines."""
+        # Left side: ├ + col_line dashes + ┼─
+        left_part = f"{BOX_T_RIGHT}{fill_char(BOX_HORIZONTAL, self.col_line)}{BOX_CROSS}{BOX_HORIZONTAL}"
+        # Right side: remaining dashes + ┤
+        right_dashes = self.width - len(left_part) - ctx_len - 1
+
+        self.output.append(f"{left_part}{context_text}{fill_char(BOX_HORIZONTAL, right_dashes)}{BOX_T_LEFT}")
+
+    def _print_row(self, line_num: int, indicator: str, content: str):
+        """Print a content row, handling wrapping for long lines.
+
+        Args:
+            line_num: Line number to display (0 for continuation lines)
+            indicator: Two-character indicator ('- ', '+ ', or '  ')
+            content: Line content
+        """
         content_len = display_width(content)
+        line_str = str(line_num) if line_num > 0 else ''
 
         if content_len <= self.content_width:
-            # Fits on one line - use ljust for padding
+            # Fits on one line - use padding for alignment
             padded_content = content + ' ' * (self.content_width - content_len)
             self.output.append(
-                f"{BOX_VERTICAL}{pad_num(old_num, COL_OLD)}{BOX_VERTICAL} {symbol} "
-                f"{BOX_VERTICAL}{pad_num(new_num, COL_NEW)}{BOX_VERTICAL} "
+                f"{BOX_VERTICAL}{line_str:>{self.col_line}}{BOX_VERTICAL}{indicator}"
                 f"{padded_content}{BOX_VERTICAL}"
             )
         else:
@@ -310,8 +354,7 @@ class DiffRenderer:
             self.used.wrap = True
             first_part = content[:self.content_width - 1]
             self.output.append(
-                f"{BOX_VERTICAL}{pad_num(old_num, COL_OLD)}{BOX_VERTICAL} {symbol} "
-                f"{BOX_VERTICAL}{pad_num(new_num, COL_NEW)}{BOX_VERTICAL} "
+                f"{BOX_VERTICAL}{line_str:>{self.col_line}}{BOX_VERTICAL}{indicator}"
                 f"{first_part}↩{BOX_VERTICAL}"
             )
 
@@ -321,27 +364,24 @@ class DiffRenderer:
                 if part_len <= self.content_width:
                     padded = remaining + ' ' * (self.content_width - part_len)
                     self.output.append(
-                        f"{BOX_VERTICAL}{' ' * COL_OLD}{BOX_VERTICAL}   "
-                        f"{BOX_VERTICAL}{' ' * COL_NEW}{BOX_VERTICAL} "
+                        f"{BOX_VERTICAL}{' ' * self.col_line}{BOX_VERTICAL}  "
                         f"{padded}{BOX_VERTICAL}"
                     )
                     remaining = ''
                 else:
                     next_part = remaining[:self.content_width - 1]
                     self.output.append(
-                        f"{BOX_VERTICAL}{' ' * COL_OLD}{BOX_VERTICAL}   "
-                        f"{BOX_VERTICAL}{' ' * COL_NEW}{BOX_VERTICAL} "
+                        f"{BOX_VERTICAL}{' ' * self.col_line}{BOX_VERTICAL}  "
                         f"{next_part}↩{BOX_VERTICAL}"
                     )
                     remaining = remaining[self.content_width - 1:]
 
     def _print_hunk_bottom(self):
         """Print hunk box bottom."""
+        # Format: ╰──┴───╯
         self.output.append(
-            f"{BOX_BOTTOM_LEFT}{fill_char(BOX_HORIZONTAL, COL_OLD)}{BOX_T_UP}"
-            f"{fill_char(BOX_HORIZONTAL, COL_SYM)}{BOX_T_UP}"
-            f"{fill_char(BOX_HORIZONTAL, COL_NEW)}{BOX_T_UP}"
-            f"{fill_char(BOX_HORIZONTAL, self.content_width + 1)}{BOX_BOTTOM_RIGHT}"
+            f"{BOX_BOTTOM_LEFT}{fill_char(BOX_HORIZONTAL, self.col_line)}{BOX_T_UP}"
+            f"{fill_char(BOX_HORIZONTAL, self.width - self.col_line - 2)}{BOX_BOTTOM_RIGHT}"
         )
 
     def _print_binary_file(self, filename: str):
@@ -432,7 +472,7 @@ class DiffRenderer:
             lcontent = line_contents[i]
 
             if ltype == 'ctx':
-                self._print_row(str(old_line), ' ', str(new_line), lcontent)
+                self._print_row(new_line, '  ', lcontent)
                 old_line += 1
                 new_line += 1
                 i += 1
@@ -449,31 +489,31 @@ class DiffRenderer:
                     if is_whitespace_only_change(del_content, add_content):
                         del_vis = visualize_whitespace(del_content, self.used)
                         add_vis = visualize_whitespace(add_content, self.used)
-                        self._print_row(str(old_line), '-', '', del_vis)
+                        self._print_row(old_line, '- ', del_vis)
                         old_line += 1
                         i += 1
                         self.used.plus = True
-                        self._print_row('', '+', str(new_line), add_vis)
+                        self._print_row(new_line, '+ ', add_vis)
                         new_line += 1
                         i += 1
                     else:
                         # Show full lines without inline highlighting
-                        self._print_row(str(old_line), '-', '', del_content)
+                        self._print_row(old_line, '- ', del_content)
                         old_line += 1
                         i += 1
                         self.used.plus = True
-                        self._print_row('', '+', str(new_line), add_content)
+                        self._print_row(new_line, '+ ', add_content)
                         new_line += 1
                         i += 1
                 else:
                     # Just a deletion
-                    self._print_row(str(old_line), '-', '', lcontent)
+                    self._print_row(old_line, '- ', lcontent)
                     old_line += 1
                     i += 1
 
             elif ltype == 'add':
                 self.used.plus = True
-                self._print_row('', '+', str(new_line), lcontent)
+                self._print_row(new_line, '+ ', lcontent)
                 new_line += 1
                 i += 1
 
