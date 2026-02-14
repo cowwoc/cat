@@ -3785,6 +3785,31 @@
         "catches_variations": true
       },
       "correct_behavior": "Invoke AskUserQuestion immediately at approval gate. Only explicit selection of 'Approve and merge' option constitutes approval. Do NOT ask conversational questions like 'Want to proceed?' - user responses to such questions are NOT approval."
+    },
+    {
+      "id": "M490",
+      "timestamp": "2026-02-14T04:30:01-05:00",
+      "category": "protocol_violation",
+      "description": "Main agent edited PLAN.md via /workspace/ absolute path instead of worktree-relative path during approval gate, leaving unstaged change in main workspace",
+      "root_cause": "Agent executed Write/Edit on absolute /workspace/ path while operating in worktree context, bypassing isolation. Existing documentation (M267 in CLAUDE.md) was not consulted or followed. ACTION module failure in Taxonomy classification.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/hooks/block-workspace-path-in-worktree.py",
+      "pattern_keywords": [
+        "worktree_isolation",
+        "absolute_path",
+        "workspace_bypass"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M252",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use worktree-relative paths or paths within worktree directory when operating in a worktree context. Never use absolute /workspace/ paths."
     }
   ],
   "counter": 1
