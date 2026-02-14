@@ -1,8 +1,9 @@
 # Plan: Update Diff Column Format
 
 ## Goal
-Merge the separate "Old" and "New" line number columns into a single "Line" column showing both numbers, and reorder
-columns so +/- follows immediately after. This reduces visual noise and makes diffs more compact.
+Redesign the diff table from a 4-column layout (Old | New | Symbol | Content) to a compact 2-column layout
+(Line+Symbol | Content). Line numbers are dynamic-width, the +/- indicator sits immediately after the `│` separator,
+and content always starts at the same column.
 
 ## Satisfies
 - None (usability improvement)
@@ -12,48 +13,70 @@ refactor
 
 ## Risk Assessment
 - **Risk Level:** LOW
-- **Concerns:** Column width changes affect content_width calculation; wrapped lines must still align
+- **Concerns:** Dynamic column width requires per-hunk calculation; wrapped lines must still align
 - **Mitigation:** All formatting logic is in one file; manual visual verification
 
 ## Files to Modify
 - `plugin/scripts/render-diff.py` - Column constants, header, row rendering, separators, wrapping
 
+## Target Format
+```
+╭──┬─ plugin/scripts/render-diff.py ───────────────────────────────────╮
+├──┼─ ⌁ BOX_T_LEFT = '┤' ─────────────────────────────────────────────┤
+│64│  BOX_CROSS = '┼'                                                  │
+│65│                                                                    │
+│66│  # Column widths (fixed)                                           │
+│67│- COL_OLD = 4   # Old line number                                   │
+│67│+ COL_LINE = 7  # Line number (format: old:new)                     │
+│68│  COL_SYM = 3   # Symbol (+/-)                                      │
+│69│- COL_NEW = 4   # New line number                                   │
+│70│                                                                    │
+╰──┴────────────────────────────────────────────────────────────────────╯
+```
+
 ## Acceptance Criteria
-- [ ] "Old" and "New" columns replaced by single "Line" column showing `old:new` format
-- [ ] For context lines: shows `old:new` (e.g., `42:42`)
-- [ ] For deletions: shows `old:` (e.g., `42:`)
-- [ ] For additions: shows `:new` (e.g., `:43`)
-- [ ] +/- symbol column follows immediately after the Line column
-- [ ] Content column remains last
-- [ ] Header row shows "Line" instead of "Old" and "New"
-- [ ] Box-drawing separators updated for new column count (3 columns instead of 4)
-- [ ] Wrapped continuation lines align correctly with new layout
-- [ ] content_width recalculated for new fixed-width overhead
+- [ ] 2-column layout: line number column `│` indicator+content column
+- [ ] Line number column width is dynamic, sized to max line number digits in each hunk
+- [ ] All lines show line numbers: context=new line, deletion=old line, addition=new line
+- [ ] After `│` separator: `- ` for deletions, `+ ` for additions, `  ` (2 spaces) for context
+- [ ] Content always starts at the same column position regardless of line type
+- [ ] Wrapped continuation lines have blank line number column and `  ` indicator
+- [ ] Compact header: file name in top border row, no separate "Line" label row
+- [ ] Hunk context in `├──┼─ ⌁ context ─┤` separator (replaces old column header row)
+- [ ] Column markers in all structural borders: `┬` (top), `┼` (hunk sep), `┴` (bottom)
+- [ ] Remove `COL_OLD`, `COL_NEW`, `COL_SYM` constants; replace with dynamic `col_line` per hunk
+- [ ] content_width recalculated per hunk based on dynamic line column width
+- [ ] Max displayable line number is 9999 (4 digits)
+- [ ] Multi-hunk same file: subsequent hunks use `├──┼─ ⌁ context ─┤` as separator
 
 ## Execution Steps
-1. **Update column constants:** Replace `COL_OLD=4` and `COL_NEW=4` with `COL_LINE=7` (enough for `nnn:nnn`).
-   Remove `COL_NEW`. Keep `COL_SYM=3`.
-   - Files: `plugin/scripts/render-diff.py` lines 62-65
-2. **Update content_width calculation:** Recalculate fixed overhead. Current: 17 chars
-   (`│` + 4 + `│` + 3 + `│` + 4 + `│` + space + `│` = 17). New: 3 columns instead of 4, so
-   `│` + 7 + `│` + 3 + `│` + space + content + `│` = 14 fixed chars.
-   - Files: `plugin/scripts/render-diff.py` line 164-165
-3. **Update `_print_column_header`:** Change header from `Old`/`New` to single `Line` label. Update separator
-   box-drawing to use 3 columns.
-   - Files: `plugin/scripts/render-diff.py` lines 262-290
-4. **Update `_print_row`:** Change signature from `(old_num, symbol, new_num, content)` to
-   `(line_num, symbol, content)` where `line_num` is the pre-formatted `old:new` string. Update row formatting
-   to use COL_LINE and 3 columns.
-   - Files: `plugin/scripts/render-diff.py` lines 292-332
-5. **Update `_print_hunk_bottom`:** Update box-drawing for 3 columns.
-   - Files: `plugin/scripts/render-diff.py` lines 334-341
-6. **Update all `_print_row` call sites:** Format line numbers as `old:new`, `old:`, or `:new` before calling.
-   - Files: `plugin/scripts/render-diff.py` lines 421-477
-7. **Update `_print_hunk_top`:** If it has column-related separators, update for 3-column layout.
-   - Files: `plugin/scripts/render-diff.py` lines 253-260
-8. **Visual verification:** Run render-diff on a real diff and verify output looks correct.
+1. **Remove fixed column constants:** Delete `COL_OLD`, `COL_NEW`, `COL_SYM`. Add a helper method
+   `_calc_col_width(hunk)` that returns the digit count for the max line number in the hunk, capped at 4.
+   - Files: `plugin/scripts/render-diff.py`
+2. **Add per-hunk rendering state:** Before rendering each hunk, calculate `col_line` (digit width) and
+   `content_width` (total width - `│` - col_line - `│` - 2 indicator chars - content - `│` = col_line + 5 fixed).
+   - Files: `plugin/scripts/render-diff.py`
+3. **Update `_print_hunk_top`:** Embed file name in top border with `┬` at column boundary:
+   `╭──┬─ filename ─╮`. Only print for first hunk of each file.
+   - Files: `plugin/scripts/render-diff.py`
+4. **Replace `_print_column_header` with `_print_hunk_separator`:** Render `├──┼─ ⌁ context ─┤`
+   with `┼` at the column boundary. No separate header label row.
+   - Files: `plugin/scripts/render-diff.py`
+5. **Update `_print_row`:** New signature `(line_num, indicator, content)` where `indicator` is `- `, `+ `, or `  `.
+   Format: `│{line_num:>col_line}│{indicator}{content padded}│`. Handle wrapping with blank line number and `  `.
+   - Files: `plugin/scripts/render-diff.py`
+6. **Update `_print_hunk_bottom`:** Render `╰──┴───╯` with `┴` at column boundary.
+   - Files: `plugin/scripts/render-diff.py`
+7. **Update `_render_hunk_content` call sites:** Pass line numbers as integers (not formatted strings).
+   Context lines pass new_line, deletions pass old_line, additions pass new_line. Indicator is `- `, `+ `, or `  `.
+   - Files: `plugin/scripts/render-diff.py`
+8. **Handle multi-hunk same file:** Track current file. First hunk gets `_print_hunk_top` + `_print_hunk_separator`.
+   Subsequent hunks for same file get only `_print_hunk_separator` (no top border/filename).
+   - Files: `plugin/scripts/render-diff.py`
+9. **Visual verification:** Run render-diff on a real diff and verify output matches target format.
 
 ## Success Criteria
-- [ ] Diff output uses 3 columns: Line, +/-, Content
-- [ ] All box-drawing characters align correctly
-- [ ] Line wrapping continuation rows align with new column layout
+- [ ] Diff output uses 2 visual columns with dynamic line number width
+- [ ] All box-drawing characters align correctly including `┬`/`┼`/`┴` column markers
+- [ ] Line wrapping continuation rows align with content column
+- [ ] Multiple hunks in same file share one file header box
