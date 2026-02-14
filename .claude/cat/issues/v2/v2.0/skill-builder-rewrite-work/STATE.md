@@ -2,9 +2,9 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Resolution:** not-applicable
+- **Resolution:** not-applicable (no longer needed)
 - **Dependencies:** []
-- **Completed:** 2026-01-22
+- **Blocks:** []
 - **Last Updated:** 2026-01-22
 
 ## Notes

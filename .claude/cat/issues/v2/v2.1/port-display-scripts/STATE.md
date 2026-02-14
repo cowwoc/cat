@@ -3,9 +3,7 @@
 - **Status:** in-progress
 - **Progress:** 0%
 - **Dependencies:** []
-- **Decomposed:** true
-- **Decomposed At:** 2026-02-10
-- **Reason:** Issue exceeded context threshold (69K tokens used, subagent blocked on scope)
+- **Blocks:** []
 - **Last Updated:** 2026-02-10
 
 ## Decomposed Into

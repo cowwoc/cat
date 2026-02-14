@@ -3,8 +3,9 @@
 - **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
-- **Dependencies:** [rename-task-in-concepts]
-- **Completed:** 2026-02-01
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-02-13
 
 ## Implementation
 

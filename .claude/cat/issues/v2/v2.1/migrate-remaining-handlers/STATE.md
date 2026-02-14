@@ -3,9 +3,9 @@
 - **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
-- **Dependencies:** [migrate-progress-banners, migrate-status-displays]
+- **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-01-28
-- **Completed:** 2026-01-28
 
 ## Summary
 

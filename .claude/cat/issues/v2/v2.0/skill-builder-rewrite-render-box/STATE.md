@@ -2,10 +2,9 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Resolution:** obsolete
+- **Resolution:** obsolete (Superseded by remove-box-rendering-infrastructure task)
 - **Dependencies:** []
-- **Obsolete Reason:** Superseded by remove-box-rendering-infrastructure task
-- **Completed:** 2026-01-22 13:15
+- **Blocks:** []
 - **Last Updated:** 2026-01-22
 
 ## Notes

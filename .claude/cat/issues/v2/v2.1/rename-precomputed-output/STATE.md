@@ -2,5 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Dependencies:** [unify-output-template-delivery]
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-01-31

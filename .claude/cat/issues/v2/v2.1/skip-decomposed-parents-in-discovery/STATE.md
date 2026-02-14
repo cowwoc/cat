@@ -2,9 +2,10 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-01-28
-- **Completed:** 2026-01-28
 
 ## Outcome
 The discovery script now correctly skips decomposed parent tasks and finds their executable sub-issues instead. When a

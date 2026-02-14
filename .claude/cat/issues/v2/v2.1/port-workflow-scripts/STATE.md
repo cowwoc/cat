@@ -2,9 +2,8 @@
 
 - **Status:** in-progress
 - **Progress:** 0%
-- **Decomposed:** true
-- **Decomposed At:** 2026-02-11
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-11
 
 ## Decomposed Into

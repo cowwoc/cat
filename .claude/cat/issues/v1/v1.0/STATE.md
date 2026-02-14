@@ -1,11 +1,11 @@
-# v1.0 State: Core Rewrite
+# State
 
-## Status
 - **Status:** closed
 - **Progress:** 100%
-- **Started:** 2026-01-12
-- **Completed:** 2026-01-20
-last_updated: 2026-01-20
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-01-20
 
 ## Summary
 Implemented new hierarchy, multi-agent orchestration, token-aware decomposition, new commands (init, work, status, add,

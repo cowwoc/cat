@@ -1,9 +1,15 @@
+# State
+
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-02-13
+
+
 # v2.1 State: Pre-Demo Polish
 
 ## Status
 - **Status:** in-progress
 - **Progress:** 76%
-- **Dependencies:** [v2.0]
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.

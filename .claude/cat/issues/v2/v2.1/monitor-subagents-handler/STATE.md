@@ -2,6 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-01-29
-- **Completed:** 2026-01-29

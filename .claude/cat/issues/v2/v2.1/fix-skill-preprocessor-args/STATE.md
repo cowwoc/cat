@@ -1,11 +1,11 @@
-# State: fix-skill-preprocessor-args
+# State
 
 - **Status:** closed
 - **Progress:** 100%
-- **Dependencies:** []
-- **Last Updated:** 2026-02-02
-- **Completed:** 2026-02-02
 - **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-02-02
 
 ## Implementation Summary
 

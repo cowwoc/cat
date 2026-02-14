@@ -1,11 +1,11 @@
-# Patch Version 1.2 State: Auto-Decomposition
+# State
 
-## Status
 - **Status:** closed
 - **Progress:** 100%
-- **Started:** 2026-01-12
-- **Completed:** 2026-01-12
-last_updated: 2026-01-20
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-01-12
 
 ## Summary
 Auto-decomposition, parallel execution, and task locking.
