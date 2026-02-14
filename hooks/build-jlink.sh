@@ -55,6 +55,7 @@ readonly -a HANDLERS=(
   "get-render-diff-output:skills.GetRenderDiffOutput"
   "session-analyzer:util.SessionAnalyzer"
   "progress-banner:skills.ProgressBanner"
+  "verify-audit:skills.VerifyAudit"
 )
 
 # --- Logging ---
