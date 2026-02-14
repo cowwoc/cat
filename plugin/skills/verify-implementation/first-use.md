@@ -77,135 +77,84 @@ Output:
 
 **Extract acceptance criteria and file specifications from PLAN.md:**
 
-Parse PLAN.md to identify what needs verification:
+Use the Java CLI tool to parse PLAN.md and extract acceptance criteria, file specs, and grouped criteria.
 
-1. **Acceptance Criteria**: Lines under `## Acceptance Criteria` that start with `- [ ]`
-2. **File Changes**: Lines under `## Files to Modify` or mentioned in Execution Steps
+```bash
+HOOKS_BIN="${WORKTREE_PATH}/hooks/target/jlink/bin"
+if [[ ! -x "$HOOKS_BIN/verify-audit" ]]; then
+  HOOKS_BIN="/workspace/hooks/target/jlink/bin"
+fi
 
-```python
-import re
+PARSED=$("$HOOKS_BIN/verify-audit" parse "${ISSUE_PATH}/PLAN.md")
 
-def extract_acceptance_criteria(plan_content):
-    """Extract checklist items from Acceptance Criteria section."""
-    criteria = []
-    in_section = False
+# Extract data from JSON output
+CRITERIA=$(echo "$PARSED" | python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['criteria']))")
+FILE_SPECS_MODIFY=$(echo "$PARSED" | python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['file_specs']['modify']))")
+FILE_SPECS_DELETE=$(echo "$PARSED" | python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['file_specs']['delete']))")
+GROUPS=$(echo "$PARSED" | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)['groups']))")
 
-    for line in plan_content.split('\n'):
-        if line.startswith('## Acceptance Criteria'):
-            in_section = True
-            continue
-        if in_section and line.startswith('##'):
-            break
-        if in_section:
-            # Handle indentation variations and both checked/unchecked items
-            stripped = line.strip()
-            if stripped.startswith('- [ ]'):
-                criterion = stripped[6:].strip()  # Remove "- [ ] "
-                criteria.append(criterion)
-            elif stripped.startswith('- [x]'):
-                criterion = stripped[6:].strip()  # Remove "- [x] "
-                criteria.append(criterion)
+CRITERIA_COUNT=$(echo "$CRITERIA" | grep -c . || echo 0)
+FILE_COUNT_MODIFY=$(echo "$FILE_SPECS_MODIFY" | grep -c . || echo 0)
+FILE_COUNT_DELETE=$(echo "$FILE_SPECS_DELETE" | grep -c . || echo 0)
+TOTAL_FILES=$((FILE_COUNT_MODIFY + FILE_COUNT_DELETE))
 
-    return criteria
-
-def extract_file_specs(plan_content):
-    """Extract file change specifications from PLAN.md."""
-    files_to_modify = []
-    files_to_delete = []
-
-    # Look in "Files to Modify" section
-    in_section = False
-    for line in plan_content.split('\n'):
-        if line.startswith('## Files to Modify'):
-            in_section = True
-            continue
-        if in_section and line.startswith('##'):
-            break
-        if in_section and line.strip().startswith('-'):
-            # Extract file path (everything before first " - ")
-            match = re.match(r'^\s*-\s+([^\s]+)', line)
-            if match:
-                item = match.group(1)
-                # Filter out non-file items (must contain '/' or have file extension)
-                if '/' in item or '.' in item:
-                    files_to_modify.append(item)
-
-    # Look in "Files to Delete" section
-    in_section = False
-    for line in plan_content.split('\n'):
-        if line.startswith('## Files to Delete'):
-            in_section = True
-            continue
-        if in_section and line.startswith('##'):
-            break
-        if in_section and line.strip().startswith('-'):
-            # Extract file path
-            match = re.match(r'^\s*-\s+([^\s]+)', line)
-            if match:
-                item = match.group(1)
-                # Filter out non-file items (must contain '/' or have file extension)
-                if '/' in item or '.' in item:
-                    files_to_delete.append(item)
-
-    # Also scan Execution Steps for file mentions and deletion keywords
-    # Best-effort heuristic scanning - may not catch all file references
-    in_steps = False
-    for line in plan_content.split('\n'):
-        if line.startswith('## Execution Steps'):
-            in_steps = True
-            continue
-        if in_steps and line.startswith('##'):
-            break
-        if in_steps:
-            # Primary: Look for "Files: path/to/file.ext" prefix
-            match = re.search(r'Files?:\s+([^\s,]+(?:\.[a-z]+)?)', line, re.IGNORECASE)
-            if match:
-                file_path = match.group(1)
-                if file_path not in files_to_modify:
-                    files_to_modify.append(file_path)
-
-            # Secondary: Scan for file-path-like patterns (word/word/file.ext)
-            # Matches paths with at least one '/' and a file extension
-            path_matches = re.findall(r'\b([a-zA-Z0-9_-]+(?:/[a-zA-Z0-9_-]+)+\.[a-z]+)\b', line)
-            for file_path in path_matches:
-                if file_path not in files_to_modify:
-                    files_to_modify.append(file_path)
-
-            # Look for deletion keywords with file paths
-            if re.search(r'\b(delete|remove|rm)\b', line, re.IGNORECASE):
-                # Try to extract file path mentioned in deletion context
-                match = re.search(r'([a-zA-Z0-9_/.-]+\.[a-z]+)', line)
-                if match:
-                    file_path = match.group(1)
-                    if file_path not in files_to_delete:
-                        files_to_delete.append(file_path)
-
-    return {'modify': files_to_modify, 'delete': files_to_delete}
+echo "◆ Found ${CRITERIA_COUNT} acceptance criteria and ${TOTAL_FILES} file specifications"
 ```
 
-Output:
-```
-◆ Found {N} acceptance criteria and {M} file specifications
-```
+The Java tool extracts:
+1. **Acceptance Criteria**: Lines under `## Acceptance Criteria` section that start with `- [ ]` or `- [x]`
+2. **File Specifications**: Files listed under `## Files to Modify`, `## Files to Delete`, and mentioned in `## Execution Steps`
+3. **Grouped Criteria**: Criteria grouped by their file dependencies to optimize verification
 
 </step>
 
 <step name="spawn_verifiers">
 
-**Spawn verification subagents for each criterion:**
+**Spawn verification subagents with optimized grouping:**
 
-For each acceptance criterion, spawn a verification subagent using the Task tool.
+The Java tool has already grouped acceptance criteria by their file dependencies. Spawn one subagent per group to minimize redundant file reads.
 
-**Subagent prompt structure:**
+```bash
+# Iterate through groups and spawn subagents
+SUBAGENT_DATA=$(echo "$GROUPS" | python3 -c "
+import sys
+import json
 
-```
-You are a verification agent auditing implementation compliance with a planned acceptance criterion.
+groups = json.load(sys.stdin)
 
-## Acceptance Criterion
-{criterion_text}
+for idx, group in enumerate(groups):
+    files = group['files']
+    criteria = group['criteria']
+
+    # Build file list for prompt
+    file_list = '\n'.join(f'- {f}' for f in files)
+
+    # Build unified prompt (always returns JSON array for consistency)
+    if len(criteria) == 1:
+        criterion_section = f'## Acceptance Criterion\n{criteria[0]}'
+    else:
+        criterion_lines = '\n'.join(f'{i+1}. {c}' for i, c in enumerate(criteria))
+        criterion_section = f'## Acceptance Criteria\n{criterion_lines}'
+
+    format_section = '''## Response Format
+Return JSON array with one entry per criterion (even if only one criterion):
+[
+  {
+    \"criterion\": \"criterion text\",
+    \"status\": \"Done|Partial|Missing\",
+    \"evidence\": [
+      {\"type\": \"file_exists|content_match|command_output\", \"detail\": \"...\"}
+    ],
+    \"notes\": \"Any additional observations\"
+  }
+]'''
+
+    prompt = f'''You are a verification agent auditing implementation compliance with planned acceptance criteria.
+
+{criterion_section}
 
 ## Task
-Verify whether this criterion is satisfied in the codebase.
+Verify whether {'this criterion is' if len(criteria) == 1 else 'EACH criterion is'} satisfied in the codebase.
 
 Use these tools to investigate:
 - Read: Check file contents
@@ -219,48 +168,55 @@ For each criterion, provide:
 2. Evidence: File paths, line numbers, command outputs
 3. Notes: Any discrepancies or concerns
 
-If a criterion cannot be definitively verified, set status to Missing with an explanation of why
-verification was not possible. Do not guess or assume.
+If a criterion cannot be definitively verified, set status to Missing with an explanation of why verification was not possible. Do not guess or assume.
 
 ## File Context
 These files were specified in PLAN.md:
 {file_list}
 
-## Response Format
-Return JSON only:
-{
-  "criterion": "criterion text",
-  "status": "Done|Partial|Missing",
-  "evidence": [
-    {"type": "file_exists|content_match|command_output", "detail": "..."}
-  ],
-  "notes": "Any additional observations"
-}
+{format_section}
 
-Be thorough but efficient. Check actual implementation, not just file existence.
-```
+Be thorough but efficient. Check actual implementation, not just file existence.'''
 
-**Parallel spawning:**
-Spawn all verifiers in parallel to reduce total execution time. Collect results as they complete.
+    # Output Task tool invocation data
+    print(f'SUBAGENT_GROUP_{idx}')
+    print(json.dumps({'prompt': prompt, 'criteria_count': len(criteria)}))
+")
 
-```bash
-# Spawn each verifier subagent
-for criterion in "${CRITERIA[@]}"; do
-  # Use Task tool with subagent_type and model specified
-  # Pass criterion and file context
-  # Store task ID for result collection
+# Store prompts for Task tool invocations
+declare -a PROMPTS
+while IFS= read -r line; do
+  if [[ "$line" =~ ^SUBAGENT_GROUP_([0-9]+)$ ]]; then
+    read -r data_line
+    PROMPT=$(echo "$data_line" | python3 -c "import sys, json; print(json.load(sys.stdin)['prompt'])")
+    PROMPTS+=("$PROMPT")
+
+    echo "◆ Prepared verification subagent for group ${BASH_REMATCH[1]}"
+  fi
+done <<< "$SUBAGENT_DATA"
+
+echo ""
+echo "SPAWN_VERIFICATION_SUBAGENTS"
+echo "GROUP_COUNT=${#PROMPTS[@]}"
+for idx in "${!PROMPTS[@]}"; do
+  echo "PROMPT_${idx}<<PROMPT_EOF"
+  echo "${PROMPTS[$idx]}"
+  echo "PROMPT_EOF"
 done
 ```
 
-**Example Task tool invocation:**
+After the bash script outputs the group prompts above, **immediately spawn verification subagents**:
 
-```json
-{
-  "subagent_type": "general-purpose",
-  "model": "haiku",
-  "prompt": "You are a verification agent auditing implementation compliance with a planned acceptance criterion.\n\n## Acceptance Criterion\nAll modified files follow Python 3.10+ syntax\n\n## Task\nVerify whether this criterion is satisfied in the codebase.\n\nUse these tools to investigate:\n- Read: Check file contents\n- Glob: Find files by pattern\n- Grep: Search for specific content\n- Bash: Run verification commands (git log, test commands, etc.)\n\n## Evidence Requirements\nFor each criterion, provide:\n1. Status: Done|Partial|Missing\n2. Evidence: File paths, line numbers, command outputs\n3. Notes: Any discrepancies or concerns\n\nIf a criterion cannot be definitively verified, set status to Missing with an explanation of why verification was not possible. Do not guess or assume.\n\n## File Context\nThese files were specified in PLAN.md:\n- plugin/hooks/verify_plan.py\n- plugin/skills/verify-implementation/first-use.md\n\n## Response Format\nReturn JSON only:\n{\n  \"criterion\": \"criterion text\",\n  \"status\": \"Done|Partial|Missing\",\n  \"evidence\": [\n    {\"type\": \"file_exists|content_match|command_output\", \"detail\": \"...\"}\n  ],\n  \"notes\": \"Any additional observations\"\n}\n\nBe thorough but efficient. Check actual implementation, not just file existence."
-}
-```
+1. For each PROMPT_N in the output, invoke the Task tool with:
+   - `subagent_type: "general-purpose"`
+   - `model: "haiku"` (verification is straightforward - check files against criteria)
+   - `prompt: <the full prompt text between PROMPT_EOF markers>`
+
+2. Store all returned task IDs for result collection in the next step.
+
+3. Spawn all subagents in parallel (multiple Task tool calls in a single message). They will run concurrently and return results together.
+
+Each subagent verifies all criteria in its group against the same file context, avoiding redundant reads.
 
 </step>
 
@@ -283,201 +239,107 @@ This is done separately from criterion verification for complete coverage.
 
 ```bash
 # Verify files that should be modified
-for file in "${FILE_SPECS_MODIFY[@]}"; do
+declare -A FILE_MODIFY_RESULTS
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
   if [[ -f "$file" ]]; then
-    # Check git history for this file
-    if git log --oneline --follow -- "$file" | head -5; then
-      FILE_STATUS="exists_and_modified"
+    if git log --oneline --follow -- "$file" | head -5 >/dev/null 2>&1; then
+      FILE_MODIFY_RESULTS["$file"]="exists_and_modified"
     else
-      FILE_STATUS="exists_not_modified"
+      FILE_MODIFY_RESULTS["$file"]="exists_not_modified"
     fi
   else
-    FILE_STATUS="missing"
+    FILE_MODIFY_RESULTS["$file"]="missing"
   fi
-
-  # Record file verification result
-  echo "File to modify: $file -> $FILE_STATUS"
-done
+done <<< "$FILE_SPECS_MODIFY"
 
 # Verify files that should be deleted
-for file in "${FILE_SPECS_DELETE[@]}"; do
+declare -A FILE_DELETE_RESULTS
+while IFS= read -r file; do
+  [[ -z "$file" ]] && continue
   if [[ ! -e "$file" ]]; then
-    # Verify it was actually deleted (not just never existed)
-    if git log --all --oneline -- "$file" | head -5; then
-      FILE_STATUS="deleted_confirmed"
+    if git log --all --oneline -- "$file" | head -5 >/dev/null 2>&1; then
+      FILE_DELETE_RESULTS["$file"]="deleted_confirmed"
     else
-      FILE_STATUS="never_existed"
+      FILE_DELETE_RESULTS["$file"]="never_existed"
     fi
   else
-    FILE_STATUS="still_exists"
+    FILE_DELETE_RESULTS["$file"]="still_exists"
   fi
-
-  # Record deletion verification result
-  echo "File to delete: $file -> $FILE_STATUS"
-done
+done <<< "$FILE_SPECS_DELETE"
 ```
 
 </step>
 
 <step name="collect_results">
 
-**Collect verification results from subagents:**
+**Collect verification results and generate report:**
 
-Wait for all verification subagents to complete and collect their JSON responses.
+Wait for all verification subagents to complete. Use TaskOutput to retrieve each subagent's JSON response.
 
-Parse each response and build aggregated status.
-
-```python
-def aggregate_results(verifier_results, file_modify_results, file_delete_results):
-    """Aggregate all verification results."""
-    done_count = 0
-    partial_count = 0
-    missing_count = 0
-    file_done_count = 0
-    file_missing_count = 0
-
-    all_results = []
-
-    # Process criterion verifications
-    for result in verifier_results:
-        if result['status'] == 'Done':
-            done_count += 1
-        elif result['status'] == 'Partial':
-            partial_count += 1
-        elif result['status'] == 'Missing':
-            missing_count += 1
-
-        all_results.append({
-            'type': 'criterion',
-            'criterion': result['criterion'],
-            'status': result['status'],
-            'evidence': result['evidence'],
-            'notes': result.get('notes', '')
-        })
-
-    # Process file modification verifications
-    for file_path, status in file_modify_results.items():
-        if status == 'exists_and_modified':
-            file_status = 'Done'
-            file_done_count += 1
-        else:
-            file_status = 'Missing'
-            file_missing_count += 1
-
-        all_results.append({
-            'type': 'file_modify',
-            'file': file_path,
-            'status': file_status,
-            'evidence': [{'type': 'file_check', 'detail': status}]
-        })
-
-    # Process file deletion verifications
-    for file_path, status in file_delete_results.items():
-        if status == 'deleted_confirmed':
-            file_status = 'Done'
-            file_done_count += 1
-        elif status == 'never_existed':
-            file_status = 'Missing'
-            file_missing_count += 1
-        else:  # still_exists
-            file_status = 'Missing'
-            file_missing_count += 1
-
-        all_results.append({
-            'type': 'file_delete',
-            'file': file_path,
-            'status': file_status,
-            'evidence': [{'type': 'deletion_check', 'detail': status}]
-        })
-
-    return {
-        'total_criteria': len(verifier_results),
-        'done': done_count,
-        'partial': partial_count,
-        'missing': missing_count,
-        'file_done': file_done_count,
-        'file_missing': file_missing_count,
-        'results': all_results
-    }
+Each subagent returns a JSON array of criterion objects (even for single-criterion groups):
 ```
+[
+  {"criterion": "...", "status": "Done|Partial|Missing", "evidence": [...], "notes": "..."}
+]
+```
+
+Aggregate all criterion results into a single `criteria_results` array, then combine with file verification results and generate the report using the Java CLI tool.
+
+```bash
+# Prepare aggregated results JSON (criteria + file verification)
+# The criteria_results array contains all criterion objects from all subagents
+# The file_results contains FILE_MODIFY_RESULTS and FILE_DELETE_RESULTS from verify_files step
+
+# Example structure:
+# {
+#   "criteria_results": [
+#     {"criterion": "...", "status": "Done", "evidence": [...], "notes": "..."},
+#     {"criterion": "...", "status": "Partial", "evidence": [...], "notes": "..."},
+#     ...
+#   ],
+#   "file_results": {
+#     "modify": {"file1": "exists_and_modified", "file2": "missing", ...},
+#     "delete": {"file3": "deleted_confirmed", ...}
+#   }
+# }
+
+# Generate formatted report using Java CLI tool
+REPORT=$("$HOOKS_BIN/verify-audit" report --issue-id "$ISSUE_ID" <<< "$RESULTS_JSON")
+```
+
+The Java tool:
+1. Parses the verification results JSON
+2. Counts Done/Partial/Missing criteria and file verifications
+3. Determines overall assessment (COMPLETE/PARTIAL/INCOMPLETE)
+4. Renders a formatted box report with criteria details and file verification status
 
 </step>
 
 <step name="report">
 
-**Generate structured audit report:**
+**Output the audit report:**
 
-Output a comprehensive report showing verification status for all criteria and files.
+Display the report generated by the Java CLI tool. The report includes:
 
-```
-╔══════════════════════════════════════════════════════════════════════════════╗
-║ AUDIT REPORT: {ISSUE_ID}                                                     ║
-╠══════════════════════════════════════════════════════════════════════════════╣
-║ Summary                                                                      ║
-║   Acceptance Criteria:                                                      ║
-║     Total:        {total}                                                   ║
-║     ✓ Done:       {done}                                                    ║
-║     ◐ Partial:    {partial}                                                 ║
-║     ✗ Missing:    {missing}                                                 ║
-║   File Verifications:                                                       ║
-║     ✓ Done:       {file_done}                                               ║
-║     ✗ Missing:    {file_missing}                                            ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+1. **Summary Box**: Overall counts and assessment
+2. **Criteria Verification Details**: Per-criterion status, evidence, and notes
+3. **File Verification Details**: File existence and modification status
+4. **JSON Summary Line**: Machine-readable assessment for downstream processing
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-ACCEPTANCE CRITERIA VERIFICATION
-
-{for each criterion}
-  [{status_icon}] {criterion_text}
-
-      Evidence:
-      {for each evidence item}
-        • {evidence.type}: {evidence.detail}
-      {end}
-
-      {if notes}
-      Notes: {notes}
-      {end}
-{end}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-FILE SPECIFICATIONS VERIFICATION
-
-Files to Modify:
-{for each file in modify list}
-  [{status_icon}] {file_path}
-      {file_status_detail}
-{end}
-
-{if delete list not empty}
-Files to Delete:
-{for each file in delete list}
-  [{status_icon}] {file_path}
-      {deletion_status_detail}
-{end}
-{endif}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-OVERALL ASSESSMENT
-
-{if missing_count > 0}
-⚠ INCOMPLETE: {missing_count} criteria not satisfied
-  Review missing items and re-run implementation if needed.
-{elif partial_count > 0}
-⚠ PARTIAL: {partial_count} criteria partially satisfied
-  Review partial items for completeness.
-{else}
-✓ COMPLETE: All acceptance criteria satisfied
-{endif}
+```bash
+echo "$REPORT"
 ```
 
 **Status Icons:**
 - `✓` - Done (fully satisfied)
 - `◐` - Partial (partially satisfied)
 - `✗` - Missing (not satisfied)
+
+**Overall Assessment:**
+- **COMPLETE**: All criteria Done, all files verified
+- **PARTIAL**: Some criteria Partial, no Missing
+- **INCOMPLETE**: Any criteria Missing or files not verified
 
 </step>
 
@@ -487,7 +349,7 @@ OVERALL ASSESSMENT
 
 **Subagent usage:** Verification subagents use Read, Glob, Grep, and Bash tools to investigate the codebase. Their internal tool calls are invisible to the user.
 
-**Performance:** Spawning verifiers in parallel reduces total execution time. For N criteria, execution time is roughly constant (limited by longest verification).
+**Performance optimization:** Criteria are grouped by file dependencies before spawning subagents. When multiple criteria reference the same files, a single subagent verifies all of them together, reading each file only once. This reduces token usage from ~187K to ~30-40K for typical single-file issues. Criteria referencing different files are still verified in parallel.
 
 **No auto-fix:** This skill reports findings only. If issues are found, the user must decide whether to re-run implementation or accept the current state.
 

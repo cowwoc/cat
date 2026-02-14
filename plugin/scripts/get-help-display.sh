@@ -14,6 +14,11 @@
 
 set -euo pipefail
 
+if [[ $# -gt 0 ]]; then
+  echo "ERROR: $(basename "$0") accepts no arguments, got $#" >&2
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Call Python to generate help display

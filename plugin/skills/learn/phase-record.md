@@ -217,7 +217,55 @@ fi
 
 Do not proceed until verification confirms the entry exists.
 
-## Step 12: Update Retrospective Counter and Commit
+## Step 12: Commit Prevention Changes
+
+**MANDATORY: Commit prevention changes to the active worktree BEFORE recording retrospective.**
+
+Prevention changes from Phase 3 (Step 9) must be committed to the active issue worktree if one exists, otherwise to the
+main workspace. Retrospective metadata always goes to the main workspace.
+
+```bash
+# Determine commit location: worktree if active, otherwise main workspace
+if [[ -f "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-base" ]]; then
+  PREVENTION_DIR="$PWD"  # Already in a worktree
+else
+  # Check for active worktrees
+  ACTIVE_WORKTREE=$(find "${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
+  if [[ -n "$ACTIVE_WORKTREE" ]]; then
+    PREVENTION_DIR="$ACTIVE_WORKTREE"
+  else
+    PREVENTION_DIR="${CLAUDE_PROJECT_DIR}"
+  fi
+fi
+
+# Stage prevention files in the target directory
+cd "$PREVENTION_DIR"
+PREVENTION_FILES=("${files_modified[@]}")  # From Phase 3 JSON
+
+for file in "${PREVENTION_FILES[@]}"; do
+  if [[ ! -f "$file" ]]; then
+    echo "ERROR: Prevention file not found: $file"
+    echo "Phase 3 claimed to modify this file but it doesn't exist."
+    exit 1
+  fi
+  git add "$file"
+done
+
+# Commit prevention changes
+PREVENTION_COMMIT_MSG="feature: add prevention for ${NEXT_ID}"
+git commit -m "$PREVENTION_COMMIT_MSG"
+PREVENTION_COMMIT_HASH=$(git rev-parse --short HEAD)
+
+echo "Prevention committed at $PREVENTION_COMMIT_HASH (in $PREVENTION_DIR)"
+```
+
+**Why commit prevention to the worktree:**
+
+Prevention changes modify plugin source code, skills, or hooks. Committing to the worktree ensures they flow through
+the normal merge and review process. If the worktree is aborted, the prevention is lost but can be re-implemented.
+Retrospective metadata (`.claude/cat/retrospectives/`) goes to the main workspace since it is shared infrastructure.
+
+## Step 13: Update Retrospective Counter and Commit
 
 **MANDATORY: Update counter and commit files together.**
 
@@ -325,8 +373,10 @@ Your final message MUST be ONLY this JSON (no other text):
   "learning_id": "M123",
   "memory_updated": true,
   "counter_updated": true,
-  "committed": true,
-  "commit_hash": "abc123",
+  "prevention_committed": true,
+  "prevention_commit_hash": "abc1234",
+  "retrospective_committed": true,
+  "retrospective_commit_hash": "def5678",
   "retrospective_triggered": false,
   "retrospective_status": "5/10 mistakes, 3/7 days"
 }

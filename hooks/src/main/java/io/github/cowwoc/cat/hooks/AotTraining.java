@@ -6,13 +6,17 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
 import io.github.cowwoc.cat.hooks.skills.GetRenderDiffOutput;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
+import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
 import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -30,15 +34,24 @@ public final class AotTraining
 
   /**
    * Runs all handlers with empty input to generate AOT training data.
+   * <p>
+   * SYNC: Keep handler list synchronized with HANDLERS array in hooks/build-jlink.sh.
+   * When adding a new handler, update both locations:
+   * <ul>
+   *   <li>Add launcher entry to HANDLERS array in build-jlink.sh</li>
+   *   <li>Add training invocation to this method</li>
+   * </ul>
    *
    * @param args command line arguments (unused)
+   * @throws Exception if training fails
    */
   @SuppressWarnings("ResultOfMethodCallIgnored")
-  public static void main(String[] args)
+  public static void main(String[] args) throws Exception
   {
     try (JvmScope scope = new MainJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
+      DisplayUtils display = scope.getDisplayUtils();
       HookInput input = HookInput.empty(mapper);
       HookOutput output = new HookOutput(mapper);
 
@@ -60,6 +73,29 @@ public final class AotTraining
       // Calling getOutput() would read the filesystem, which is unnecessary for training.
       new GetStatusOutput(scope);
       new GetRenderDiffOutput(scope);
+
+      // VerifyAudit training - create temp file for parse() and minimal JSON for report()
+      Path tempDir = Files.createTempDirectory("aot-training-");
+      try
+      {
+        Path planFile = tempDir.resolve("PLAN.md");
+        Files.writeString(planFile, """
+          # Plan
+          ## Acceptance Criteria
+          - [ ] Test criterion
+          ## Files to Modify
+          - test.md
+          """);
+
+        VerifyAudit audit = new VerifyAudit(mapper, display);
+        audit.parse(planFile);
+        audit.report("test-issue", "{\"criteria_results\": [], \"file_results\": {\"modify\": {}, \"delete\": {}}}");
+      }
+      finally
+      {
+        Files.deleteIfExists(tempDir.resolve("PLAN.md"));
+        Files.deleteIfExists(tempDir);
+      }
 
       // Reference arg-based classes to force class loading without invoking main()
       // (their main() calls System.exit on missing args)

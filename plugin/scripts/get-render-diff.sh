@@ -31,7 +31,8 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         *)
-            shift
+            echo "ERROR: $(basename "$0"): unknown argument: $1" >&2
+            exit 1
             ;;
     esac
 done
