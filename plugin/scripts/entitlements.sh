@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Entitlement resolver for CAT tier-based features
 # Usage: entitlements.sh <tier> [feature]
 #   With feature: returns 0 if entitled, 1 if not

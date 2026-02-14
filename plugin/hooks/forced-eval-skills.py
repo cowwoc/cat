@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
 """UserPromptSubmit hook: inject forced-eval instruction for low-activation skills.
 
 This hook injects a system-reminder that forces Claude to explicitly evaluate whether

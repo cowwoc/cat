@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # render-add-complete.sh - Render issue/version creation completion box
 #
 # USAGE: render-add-complete.sh --type <issue|version> [options]

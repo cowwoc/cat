@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
 package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -57,13 +63,12 @@ public final class GetReadOutput implements HookHandler
         System.err.println(warning);
       System.out.println(result.output());
     }
-  catch (RuntimeException | Error e)
-  {
-    
+    catch (RuntimeException | Error e)
+    {
       Logger log = LoggerFactory.getLogger(GetReadOutput.class);
       log.error("Unexpected error", e);
-    throw e;
-  }
+      throw e;
+    }
   }
 
   /**

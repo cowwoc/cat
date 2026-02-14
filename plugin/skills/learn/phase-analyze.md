@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Phase 2: Analyze
 
 This phase documents the mistake, gathers context metrics, performs root cause analysis, and verifies depth.

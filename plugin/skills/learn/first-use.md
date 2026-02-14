@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Learn From Mistakes: Tiered Orchestrator
 
 Analyze mistakes using 5-whys with CAT-specific consideration of conversation length and context

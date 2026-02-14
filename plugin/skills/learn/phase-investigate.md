@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Phase 1: Investigate
 
 This phase verifies the event sequence and analyzes the documentation path to understand what caused the mistake.

@@ -1,3 +1,7 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
 """
 Tests for check-existing-work.sh (M362, M363).
 

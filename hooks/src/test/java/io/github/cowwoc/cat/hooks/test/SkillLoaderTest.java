@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -1145,6 +1151,163 @@ git checkout ${BASE}
       requireThat(result, "result").
         contains("git checkout ${BASE}").
         contains("# Main");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load strips license header from first-use.md content.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadStripsLicenseHeaderFromContent() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"),
+        "<!--\n" +
+        "Copyright (c) 2026 Gili Tzabari. All rights reserved.\n" +
+        "Licensed under the CAT Commercial License.\n" +
+        "See LICENSE.md in the project root for license terms.\n" +
+        "-->\n" +
+        "# Skill Content\n" +
+        "Body text here\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("# Skill Content").
+        contains("Body text here").
+        doesNotContain("Copyright").
+        doesNotContain("<!--");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load strips license header from reference.md content.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadStripsLicenseHeaderFromReference() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+Full skill content
+""");
+
+      Path skillsDir = tempPluginRoot.resolve("skills");
+      Files.writeString(skillsDir.resolve("reference.md"),
+        "<!--\n" +
+        "Copyright (c) 2026 Gili Tzabari. All rights reserved.\n" +
+        "Licensed under the CAT Commercial License.\n" +
+        "See LICENSE.md in the project root for license terms.\n" +
+        "-->\n" +
+        "Reference text\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+
+      // First load to mark skill as loaded
+      loader.load("test-skill");
+
+      // Second load returns reference
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Reference text").
+        doesNotContain("Copyright").
+        doesNotContain("<!--");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load strips license header but preserves YAML frontmatter.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadStripsLicenseHeaderPreservesFrontmatter() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"),
+        "---\n" +
+        "name: test-skill\n" +
+        "---\n" +
+        "<!--\n" +
+        "Copyright (c) 2026 Gili Tzabari. All rights reserved.\n" +
+        "Licensed under the CAT Commercial License.\n" +
+        "See LICENSE.md in the project root for license terms.\n" +
+        "-->\n" +
+        "# Skill Content\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("---").
+        contains("name: test-skill").
+        contains("# Skill Content").
+        doesNotContain("Copyright").
+        doesNotContain("<!--");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load preserves content without a license header.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadPreservesContentWithoutLicenseHeader() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+# No License Header
+Regular content here
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("# No License Header").
+        contains("Regular content here");
     }
     finally
     {

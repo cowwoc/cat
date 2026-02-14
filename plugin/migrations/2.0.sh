@@ -1,4 +1,8 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
 set -euo pipefail
 
 # Migration to 2.0: Add Research and Requirements sections to PLAN.md files

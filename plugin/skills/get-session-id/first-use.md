@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Get Session ID Skill
 
 **Purpose**: The session ID is automatically available in skills and commands via `${CLAUDE_SESSION_ID}`.

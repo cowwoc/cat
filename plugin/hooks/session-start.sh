@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # session-start.sh - Bootstrap the CAT jlink runtime and run session handlers
 #
 # Ensures the custom JDK runtime is available for Java hooks by trying

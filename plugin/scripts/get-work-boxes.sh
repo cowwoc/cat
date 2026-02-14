@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # get-work-boxes.sh - Generate work skill box templates
 #
 # USAGE: get-work-boxes.sh

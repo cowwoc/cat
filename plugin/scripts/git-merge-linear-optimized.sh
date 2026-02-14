@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Git Linear Merge Optimized Script
 # Merges task branch to base branch with linear history (86% faster than manual workflow)
 #

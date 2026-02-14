@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Version Path Resolution
 
 > **See also:** [hierarchy.md](hierarchy.md) for version semantics and dependency rules.

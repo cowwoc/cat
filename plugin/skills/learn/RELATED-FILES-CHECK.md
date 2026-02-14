@@ -1,4 +1,9 @@
-# Check Related Files for Similar Mistakes
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
+# Check Related Files for Similar Mistakes (M341)
 
 Lazy-loaded after fixing a file to check if similar files have the same vulnerability.
 

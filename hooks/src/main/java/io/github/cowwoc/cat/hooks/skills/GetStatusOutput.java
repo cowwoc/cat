@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
 package io.github.cowwoc.cat.hooks.skills;
 
 import java.io.IOException;
@@ -779,12 +785,11 @@ public final class GetStatusOutput implements SkillOutput
       System.err.println("Error generating status: " + e.getMessage());
       System.exit(1);
     }
-  catch (RuntimeException | Error e)
-  {
-    
+    catch (RuntimeException | Error e)
+    {
       Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
       log.error("Unexpected error", e);
-    throw e;
-  }
+      throw e;
+    }
   }
 }

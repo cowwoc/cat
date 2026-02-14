@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # issue-lock.sh - Issue-level locking for concurrent CAT execution
 #
 # Provides atomic lock acquisition with persistent locks.

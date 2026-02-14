@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # get-config-display.sh - Generate properly aligned config display box
 #
 # USAGE: get-config-display.sh <project-dir>

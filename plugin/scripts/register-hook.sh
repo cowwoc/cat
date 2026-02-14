@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Register Hook Script
 # Creates hook scripts with proper error handling and registers them in settings.json
 #

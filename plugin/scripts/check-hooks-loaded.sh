@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # check-hooks-loaded.sh - Detect if hooks are loaded after plugin install
 #
 # Usage: check-hooks-loaded.sh "what's missing" "command to retry"

@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Write and Commit Script
 # Creates a file and commits it atomically (60-75% faster than step-by-step)
 #

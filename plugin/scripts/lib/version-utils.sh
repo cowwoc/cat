@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # Version utilities for flexible version schema support
 # Supports: MAJOR (1), MAJOR.MINOR (1.0), MAJOR.MINOR.PATCH (1.0.0)
 

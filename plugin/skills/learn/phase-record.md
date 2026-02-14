@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Phase 4: Record
 
 This phase verifies the prevention works, records the learning in MEMORY.md, updates the retrospective counter, and
