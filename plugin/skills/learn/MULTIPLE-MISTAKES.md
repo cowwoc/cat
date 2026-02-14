@@ -1,4 +1,4 @@
-# Multiple Independent Mistakes (M378)
+# Multiple Independent Mistakes
 
 Lazy-loaded when investigation reveals multiple separate issues.
 

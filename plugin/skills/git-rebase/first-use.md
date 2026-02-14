@@ -68,7 +68,7 @@ git rebase -i <base-commit>
 
 ## Handling Conflicts
 
-**CRITICAL: Persist through conflicts. Never switch to cherry-pick mid-rebase (M241).**
+**CRITICAL: Persist through conflicts. Never switch to cherry-pick mid-rebase.**
 
 Rebase conflicts are normal and expected when branches have diverged. The solution is to resolve conflicts and continue,
 not to abandon rebase for cherry-picking.
@@ -152,7 +152,7 @@ git show "$NEW_COMMIT" -- path/to/expected/file.md
 # If file is NOT in the commit, the amend/fixup FAILED silently
 ```
 
-**Common failure mode (M244):** Rebase reports "Successfully rebased" but the fixup commit was dropped due to
+**Common failure mode:** Rebase reports "Successfully rebased" but the fixup commit was dropped due to
 conflicts. Always verify the target commit's contents before proceeding.
 
 ## Success Criteria

@@ -35,7 +35,7 @@ mistake:
 **CAT-specific: Always collect token data**
 
 ```bash
-# Replace with actual subagent session ID (M359 - env vars not available in bash)
+# Replace with actual subagent session ID
 SESSION_ID="actual-subagent-session-id-here"
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${SESSION_ID}.jsonl"
 
@@ -71,8 +71,8 @@ SESSION_DURATION=$(calculate_duration "${SESSION_FILE}")
 - Memory reliance (didn't re-verify)?
 - Environment state mismatch?
 - Documentation ignored (rule existed)?
-- **Documentation priming (M269)?** - Did docs teach wrong approach?
-- **Architectural flaw (M408)?** - Is LLM being asked to fight its training? (See Step 4d)
+- **Documentation priming?** - Did docs teach wrong approach?
+- **Architectural flaw?** - Is LLM being asked to fight its training? (See Step 4d)
 
 **Record the method used** in the final JSON entry:
 
@@ -111,14 +111,14 @@ rca_depth_check:
     if_answer_is_no: "RCA is incomplete - behavioral changes without enforcement recur"
     your_answer: "_______________"
 
-  # Question 4: Is this a recurring failure? (M408)
+  # Question 4: Is this a recurring failure?
   recurring_pattern:
     question: "Has this type of failure occurred before? Check recurrence_of in mistakes.json"
     if_yes_multiple: "Previous fixes FAILED - dig deeper into WHY they failed"
     if_3_plus_recurrences: "ARCHITECTURAL issue likely - see Step 4d"
     your_answer: "_______________"
 
-  # Question 5: Prevention vs Detection (M422)
+  # Question 5: Prevention vs Detection
   fix_type:
     question: "Does your proposed fix PREVENT the problem, or DETECT/MITIGATE after it occurs?"
     prevention: "Makes the wrong thing impossible or the right thing automatic"
@@ -132,7 +132,7 @@ rca_depth_check:
     your_fix_type: "prevention | detection | mitigation"
 ```
 
-**Prevention vs Detection Examples (M422):**
+**Prevention vs Detection Examples:**
 
 | Problem | Detection Fix (❌) | Prevention Fix (✅) |
 |---------|-------------------|---------------------|
@@ -144,7 +144,7 @@ rca_depth_check:
 **Key insight:** If your first instinct is "add a check/verification", you haven't found the root cause.
 The root cause is whatever made the wrong thing possible. Fix THAT.
 
-**BLOCKING CONDITION (M299):**
+**BLOCKING CONDITION:**
 
 If ANY answer is blank or says "agent should have...":
 - STOP - RCA is incomplete
@@ -156,13 +156,13 @@ If ANY answer is blank or says "agent should have...":
 Stopping at "agent did X wrong" is describing the SYMPTOM, not the CAUSE.
 The cause is always in the system that allowed or encouraged the wrong action.
 
-## Step 4c: Multiple Independent Mistakes (M378)
+## Step 4c: Multiple Independent Mistakes
 
 **If investigation reveals multiple independent mistakes:** Read `MULTIPLE-MISTAKES.md` and follow its workflow.
 
 Each independent mistake gets its own `/cat:learn` invocation with full RCA and prevention implementation.
 
-## Step 4d: Architectural Root Cause Analysis (M408)
+## Step 4d: Architectural Root Cause Analysis
 
 **CRITICAL: Check for recurring patterns that indicate architectural flaws.**
 
@@ -200,7 +200,7 @@ training will repeatedly fail despite documentation fixes:
 | Exact reproduction | Interpretation instinct | User-centric framing |
 | Strict protocol following | Flexible helpfulness | Enforcement hooks |
 
-**NOTE (M410):** The `continue: false` + `stopReason` bypass pattern does NOT work.
+**NOTE:** The `continue: false` + `stopReason` bypass pattern does NOT work.
 Claude Code adds "Operation stopped by hook:" prefix to all stopReason values, making output appear
 like an error message. Do not attempt to bypass the LLM for output - use user-centric framing instead.
 
@@ -236,7 +236,7 @@ minimal - remove all explanatory content that could prime analytical thinking.
 }
 ```
 
-## Step 4e: Investigate Hook Workarounds (M398)
+## Step 4e: Investigate Hook Workarounds
 
 **If mistake involves bypassing a hook:** Read `HOOK-WORKAROUNDS.md` and follow its investigation checklist.
 

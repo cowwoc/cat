@@ -37,7 +37,7 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 <step name="display-settings">
 
-**MANDATORY (M130/A021) - Display-Before-Prompt Protocol:**
+**MANDATORY - Display-Before-Prompt Protocol:**
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
@@ -55,7 +55,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 <step name="main-menu">
 
-**CHECKPOINT (M132): Verify settings box was displayed in previous step. If not, STOP and output it now.**
+**CHECKPOINT: Verify settings box was displayed in previous step. If not, STOP and output it now.**
 
 **Present main menu using AskUserQuestion:**
 
@@ -86,7 +86,7 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **🐱 CAT Behavior selection:**
 
-**MANDATORY (M137) - Display behavior summary BEFORE prompting:**
+**MANDATORY - Display behavior summary BEFORE prompting:**
 
 Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES.
 

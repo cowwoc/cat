@@ -107,7 +107,7 @@ git commit -m "config: close obsolete issue {issue-name}
 "
 ```
 
-## Stopping Work on an Issue (M278)
+## Stopping Work on an Issue
 
 **CRITICAL:** When user says "abort the issue" or "stop the issue", this means
 "stop working now, restore to open" - NOT "mark as closed".
@@ -177,7 +177,7 @@ case "$RESOLUTION" in
 esac
 ```
 
-## Validation Issue Completion (M126)
+## Validation Issue Completion
 
 **MANDATORY**: Validation issues with non-zero errors are NOT complete until either:
 1. **All errors are resolved** (0 errors), OR

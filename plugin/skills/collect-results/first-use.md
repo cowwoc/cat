@@ -175,7 +175,7 @@ cat "${WORKTREE}/COMPLETION_REPORT.md" 2>/dev/null
 
 ### 7. MANDATORY: Report Token Metrics to User
 
-**CRITICAL (M096): Verify token values before reporting - never estimate or guess.**
+**CRITICAL: Verify token values before reporting - never estimate or guess.**
 
 Before presenting metrics, verify you have ACTUAL measured values:
 
@@ -195,12 +195,12 @@ fi
 # If value seems unreasonably low (< 10K for implementation), verify source
 ```
 
-**Anti-pattern (M096):** Presenting token metrics without actually reading them from `.completion.json`
+**Anti-pattern:** Presenting token metrics without actually reading them from `.completion.json`
 or session file. Claiming "subagent used X tokens" without verification is a measurement bug.
 
 **Before updating state, present token metrics to user.**
 
-**CRITICAL: Output directly WITHOUT code blocks (M125).** Markdown `**bold**` renders correctly
+**CRITICAL: Output directly WITHOUT code blocks.** Markdown `**bold**` renders correctly
 when output as plain text, but shows as literal asterisks inside triple-backtick code blocks.
 
 Output format (do NOT wrap in ```):

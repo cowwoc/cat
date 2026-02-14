@@ -595,7 +595,7 @@ for review in reviews:
 
 **Decision rules:**
 
-**NOTE (M390):** These statuses indicate stakeholder review outcome, NOT user approval to merge.
+**NOTE:** These statuses indicate stakeholder review outcome, NOT user approval to merge.
 User approval is a separate gate that follows stakeholder review.
 
 | Condition | Decision |

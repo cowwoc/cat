@@ -84,7 +84,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 This indicates Phase 1 (prepare) has completed and work phases are starting.
 
-## Step 2: Verify Lock Ownership (M444)
+## Step 2: Verify Lock Ownership
 
 **Before any execution, verify the lock for this issue belongs to the current session.**
 
@@ -155,14 +155,14 @@ Skill tool:
   args: "path/to/file.md"
 ```
 
-**Complete each skill fully before delegation (M440).** Pre-invoked skills may have built-in
+**Complete each skill fully before delegation.** Pre-invoked skills may have built-in
 iteration loops, validation gates, or multi-step workflows. Run each skill to its documented
 completion state before passing results to the implementation subagent. Do NOT pass intermediate
 or failed results to the subagent for manual fixing — that bypasses the skill's quality gates.
 
 Capture the output from these skills - the implementation subagent will need the results.
 
-### Delegation Prompt Construction (M455)
+### Delegation Prompt Construction
 
 **Pass PLAN.md execution steps verbatim without interpretive summarization.**
 
@@ -455,14 +455,14 @@ Initialize loop counter: `AUTOFIX_ITERATION=0`
 - Store concerns for display at approval gate
 - Continue to Step 5
 
-**NOTE (M390):** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
+**NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
 User approval is a SEPARATE gate in Step 6.
 
-## Step 6: Squash Commits Before Review (M446, M450)
+## Step 6: Squash Commits Before Review
 
 **Squash worktree commits by topic into clean, reviewable commits before presenting the approval gate.**
 
-**Rebase onto current base first (M450).** The base branch may have advanced since the worktree was
+**Rebase onto current base first.** The base branch may have advanced since the worktree was
 created (e.g., learning commits, other merges). Rebase ensures squashing only captures task changes:
 
 ```bash
@@ -474,7 +474,7 @@ Then use `/cat:git-squash` to consolidate commits:
 - All implementation work + STATE.md closure into 1 feature/bugfix commit
 - Target: 1 commit (STATE.md belongs with implementation, not in a separate commit)
 
-**CRITICAL: STATE.md file grouping (M076):**
+**CRITICAL: STATE.md file grouping:**
 - STATE.md status changes belong IN THE SAME COMMIT as the implementation work
 - Do NOT create separate `planning:` or `config:` commits for STATE.md updates
 - Commit type should match the implementation work (`feature:`, `bugfix:`, `config:`, etc.)
@@ -484,7 +484,7 @@ This ensures the user reviews clean commit history, not intermediate implementat
 
 ## Step 7: Approval Gate
 
-**CRITICAL (M390, M479, M480): This step is MANDATORY when trust != "high".**
+**CRITICAL: This step is MANDATORY when trust != "high".**
 
 **Enforced by hook M480:** PreToolUse hook on Task tool blocks work-merge spawn when trust=medium/low
 and no explicit user approval is detected in session history.
@@ -530,7 +530,7 @@ AskUserQuestion:
     - "Abort"
 ```
 
-**CRITICAL (M479, M480):** Wait for explicit user selection. Do NOT proceed based on:
+**CRITICAL:** Wait for explicit user selection. Do NOT proceed based on:
 - Silence or absence of objection
 - System reminders or notifications
 - Assumed approval

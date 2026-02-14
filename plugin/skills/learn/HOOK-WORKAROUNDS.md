@@ -1,4 +1,4 @@
-# Investigate Hook Workarounds (M398)
+# Investigate Hook Workarounds
 
 Lazy-loaded when a mistake involves bypassing or working around a hook.
 

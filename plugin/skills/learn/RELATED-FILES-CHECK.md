@@ -1,4 +1,4 @@
-# Check Related Files for Similar Mistakes (M341)
+# Check Related Files for Similar Mistakes
 
 Lazy-loaded after fixing a file to check if similar files have the same vulnerability.
 
