@@ -3836,6 +3836,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Before removing any directory (rm -rf, git worktree remove), ensure shell cwd is not inside target. Hook now blocks unsafe removals automatically."
+    },
+    {
+      "id": "M491",
+      "timestamp": "2026-02-14T04:45:15-05:00",
+      "category": "prompt_engineering",
+      "description": "Stakeholder reviewers read from /workspace/ instead of worktree path, reviewing old code and incorrectly rejecting implementation",
+      "root_cause": "Stakeholder agent definitions lack worktree isolation instructions, causing subagents to default to /workspace/ paths when not explicitly directed otherwise",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/agents/stakeholder-*.md",
+      "pattern_keywords": [
+        "worktree",
+        "file-path",
+        "stakeholder",
+        "delegation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When delegating to stakeholder reviewers in worktree context, stakeholder agents must read all files from the worktree path prefix specified in the delegation prompt"
     }
   ],
   "counter": 1
