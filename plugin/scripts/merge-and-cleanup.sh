@@ -1,4 +1,9 @@
 #!/bin/bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # merge-and-cleanup.sh - Merge issue branch and clean up worktree/branch/lock
 #
 # Handles the happy path of the merging phase for CAT's /cat:work command:

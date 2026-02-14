@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
 set -euo pipefail
 
 # git-squash-quick.sh - Deterministic squash via commit-tree with race condition prevention

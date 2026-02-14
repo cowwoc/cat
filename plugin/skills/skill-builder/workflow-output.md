@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Clean Output Standards
 
 ([BANG] = the exclamation mark, written as placeholder to avoid preprocessor expansion)

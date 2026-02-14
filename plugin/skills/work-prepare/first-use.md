@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Work Phase: Prepare
 
 **ALGORITHM DOCUMENTATION ONLY. Runtime logic implemented in `plugin/scripts/work-prepare.py`.**

@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+#
 # jlink-config.sh - Configuration and build script for CAT's custom JDK runtime
 #
 # Creates a minimal JDK 25 runtime with Jackson 3 modules using jlink.

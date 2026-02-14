@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Safe Remove Skill
 
 **Purpose**: Prevent shell session breakage by verifying working directory before `rm -rf` operations.

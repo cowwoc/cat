@@ -399,7 +399,7 @@ Open an issue to discuss before investing significant effort.
 
 ## License
 
-CAT Source-Available Commercial License — see [LICENSE.md](LICENSE.md)
+CAT Commercial License — see [LICENSE.md](LICENSE.md)
 
 **Free for solo developers.** See [pricing](docs/PRICING.md) for team and enterprise options.
 

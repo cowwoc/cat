@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Skill: verify-implementation
 
 Post-execution verification that systematically checks all planned changes from PLAN.md were actually implemented in the codebase.
