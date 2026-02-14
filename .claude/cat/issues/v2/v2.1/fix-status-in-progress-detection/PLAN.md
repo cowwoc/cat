@@ -13,10 +13,12 @@ Detect in-progress status using a tiered strategy:
 
 - **Indie tier:** Check for lock files in `.claude/cat/locks/`. Lock files are local to the machine, which matches the
   Indie tier's single-developer use case.
-- **Team tier:** Also check for git branches matching `{version}-{issue-name}`. Branches span across machines, enabling
-  team members to see each other's in-progress work.
+- **Team tier:** Also scan git branches for changed STATE.md files. For each branch, read the STATE.md status on that
+  branch. If the status is non-"open" (e.g., "in-progress", "blocked"), map it to the corresponding issue. Branches
+  span across machines, enabling team members to see each other's in-progress work.
 
-Both checks only apply when STATE.md status is `open` — closed/blocked statuses take precedence.
+Both checks only apply when STATE.md status is `open` in the main workspace — closed/blocked statuses in the main
+workspace take precedence.
 
 ## Risk Assessment
 - **Risk Level:** LOW
@@ -30,21 +32,22 @@ Both checks only apply when STATE.md status is `open` — closed/blocked statuse
 
 ## Acceptance Criteria
 - [ ] Indie tier: issues with an active lock file show as 🔄 in `/cat:status`
-- [ ] Team tier: issues with an active branch (e.g., `2.1-optimize-verify-subagent-count`) also show as 🔄
-- [ ] Issues without a lock file or branch still show as 🔳 (pending/open)
-- [ ] Closed issues with leftover lock files or branches are not incorrectly shown as in-progress (closed status takes
-  precedence)
-- [ ] Branch detection uses local git operations only (no network calls)
+- [ ] Team tier: issues with STATE.md changed to "in-progress" on a branch show as 🔄
+- [ ] Issues with STATE.md still "open" on branches (or no branch at all) show as 🔳 (pending/open)
+- [ ] Closed issues in the main workspace are not incorrectly shown as in-progress, even if their STATE.md on a branch
+  says "in-progress" (closed status in main workspace takes precedence)
+- [ ] Branch scanning uses local git operations only (no network calls)
 
 ## Execution Steps
 1. **Add lock file detection:** In `getTaskStatus()`, after reading STATE.md, if status is `open`, check if a lock file
    exists at `.claude/cat/locks/{version}-{issue-name}.lock`. If it does, return `in-progress`.
    - Files: `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`
-2. **Add branch detection for Team tier:** If the current license tier is Team or higher, also check if a git branch
-   `{version}-{issue-name}` exists. Cache the branch list once per status invocation.
+2. **Add branch scanning for Team tier:** If the current license tier is Team or higher, scan all branches for changed
+   STATE.md files (compared to base branch). For each changed STATE.md, read its status from the branch. Build a map
+   from issue path to branch status. Cache this map once per status invocation.
    - Files: `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`
-3. **Update method signature:** `getTaskStatus()` needs the issue name and version context to construct lock file and
-   branch names.
+3. **Update method signature:** `getTaskStatus()` needs the issue relative path to look up branch status in the cached
+   map.
    - Files: `hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java`
 4. **Run tests:** Verify existing tests pass and add tests for lock-file and branch-based status detection.
    - Files: `hooks/src/test/java/...`
