@@ -363,7 +363,19 @@ the space-separated list of stakeholders to run.
 3. Include diff summary as supplementary context
 4. Use stakeholder selection from analyze_context step
 
+**Worktree Isolation:** When reviewing work done in a worktree, ALL git commands and file reads
+MUST execute from within the worktree directory. The `WORKTREE_PATH` from the skill arguments
+specifies the correct location. Running git commands from `/workspace/` reads the base branch
+(pre-implementation state), not the worktree branch (post-implementation state).
+
 ```bash
+# CRITICAL: Set working directory to worktree if provided in arguments
+# WORKTREE_PATH comes from the skill's JSON arguments (e.g., /workspace/.claude/cat/worktrees/2.1-issue-name)
+# All subsequent git commands and file reads MUST use this directory
+if [[ -n "${WORKTREE_PATH}" ]]; then
+    cd "${WORKTREE_PATH}" || { echo "ERROR: Cannot cd to worktree: ${WORKTREE_PATH}"; exit 1; }
+fi
+
 # Get changed files
 CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
 
@@ -518,6 +530,10 @@ Spawn each stakeholder with this prompt:
 
 ```
 You are the {stakeholder} stakeholder reviewing an implementation.
+
+## Working Directory
+You MUST work exclusively within this directory: {WORKTREE_PATH}
+All file reads, searches, and git commands must target this directory. Do NOT access files outside it.
 
 ## Your Role
 {content of agents/stakeholder-{stakeholder}.md}
