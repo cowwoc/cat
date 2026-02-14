@@ -2,6 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
-- **Created From:** 2.1-port-display-scripts
+- **Blocks:** []
 - **Last Updated:** 2026-02-10

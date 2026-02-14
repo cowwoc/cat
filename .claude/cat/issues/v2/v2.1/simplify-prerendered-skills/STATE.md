@@ -2,7 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Completed:** 2026-02-04
-- **Resolution:** merged
+- **Resolution:** duplicate (merged into another issue)
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-04

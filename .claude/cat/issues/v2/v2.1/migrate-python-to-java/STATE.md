@@ -3,9 +3,8 @@
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-06
-- **Decomposed At:** 2026-01-26
-- **Reason:** Task exceeded context threshold (50 files = ~220K tokens)
 
 ## Decomposed Into
 - java-jdk-infrastructure (JDK bundle, bootstrap scripts)

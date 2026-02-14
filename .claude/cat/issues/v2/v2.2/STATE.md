@@ -1,9 +1,15 @@
+# State
+
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-02-13
+
+
 # v2.2 State: Demos & Marketing
 
 ## Status
 - **Status:** open
 - **Progress:** 0%
-- **Dependencies:** [v2.1]
 
 ## Summary
 Record demo videos showcasing CAT features for marketing and documentation.

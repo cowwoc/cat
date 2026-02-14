@@ -4,9 +4,8 @@
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** []
-- **Decomposed:** true
+- **Blocks:** []
 - **Last Updated:** 2026-01-28
-- **Completed:** 2026-01-28
 
 ## Sub-issues
 

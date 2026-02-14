@@ -2,10 +2,9 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** duplicate (Already)
 - **Dependencies:** []
-- **Resolution:** duplicate
-- **Duplicate Of:** Already implemented via warn-approval-without-renderdiff.sh
-- **Completed:** 2026-01-31
+- **Blocks:** []
 - **Last Updated:** 2026-01-31
 
 ## Notes

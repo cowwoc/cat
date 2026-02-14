@@ -2,6 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Created From:** 2.1-port-workflow-scripts
+- **Resolution:** implemented
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-11
