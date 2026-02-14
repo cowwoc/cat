@@ -13,7 +13,7 @@ CAT provides git skills that handle edge cases correctly. Prefer these over raw 
 
 **Why skills are preferred:**
 - Handle pre-flight checks (divergence, dirty state)
-- Respect hook constraints (M205, M047)
+- Respect hook constraints
 - Include rollback/recovery on failure
 - Work correctly from issue worktrees
 

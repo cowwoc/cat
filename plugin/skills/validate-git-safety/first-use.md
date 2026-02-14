@@ -58,7 +58,7 @@ git push --force-with-lease
 git branch -f v21 <new-commit>
 ```
 
-## Worktree Verification (M101)
+## Worktree Verification
 
 **During CAT issue execution, NEVER operate on the main `/workspace` worktree.**
 

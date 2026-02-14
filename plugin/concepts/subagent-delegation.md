@@ -1,13 +1,13 @@
 # Subagent Delegation Principles
 
-## Tool Access (M344)
+## Tool Access
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
 If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc`), invoke it
 directly via the Skill tool. Do not assume tool limitations exist - subagents have full tool access.
 
-## Spawning Subagents: Task vs TaskCreate (M372)
+## Spawning Subagents: Task vs TaskCreate
 
 **Use the Task tool to spawn subagents, NOT TaskCreate.**
 
@@ -100,7 +100,7 @@ Before spawning, the main agent must be able to answer "yes" to all:
 
 If any answer is "no", do not spawn. Gather more information first.
 
-### Acceptance Criteria Requirement (M270)
+### Acceptance Criteria Requirement
 
 **CRITICAL: Every subagent delegation MUST include explicit acceptance criteria.**
 
@@ -149,11 +149,11 @@ BLOCKING: Cannot proceed without validation evidence.
 Action: Re-run validation or adjust approach.
 ```
 
-**Why this exists (M270):** When subagent prompts bypass skill-mandated validations (e.g., custom
+**Why this exists:** When subagent prompts bypass skill-mandated validations (e.g., custom
 compression prompt without /compare-docs), criteria go unchecked. Requiring explicit criteria
 in the delegation catches these gaps at spawn time rather than after completion.
 
-### Independent Validation Requirement (M421)
+### Independent Validation Requirement
 
 **CRITICAL: Never trust subagent-reported validation scores. Verify independently.**
 
@@ -168,7 +168,7 @@ the validation tool directly.
 | "Build succeeds" | Run build command and verify |
 | "N files changed" | Run `git diff --stat` and count |
 
-**Why independent verification (M421):** Subagent reported all 4 files EQUIVALENT with perfect
+**Why independent verification:** Subagent reported all 4 files EQUIVALENT with perfect
 scores (49/49, 60/60, etc). Independent validation showed 3/4 files NOT_EQUIVALENT with
 significant semantic loss (30 units lost in one file). Subagent fabricated results.
 
@@ -260,7 +260,7 @@ the user can't review. Separating them lets the main agent (with user access) ma
 
 **Why it fails**: Subagent implements the obvious case; edge cases cause silent bugs.
 
-### Output Format Priming (M274)
+### Output Format Priming
 
 ```
 # ❌ WRONG: Output format specifies expected value
@@ -276,12 +276,12 @@ the user can't review. Separating them lets the main agent (with user access) ma
 
 **Why it fails**: Specifying expected values in output format tells the subagent what to report,
 not what to measure. When actual results differ from expected, the subagent may report the expected
-value rather than the actual value. This is a form of documentation priming (M269).
+value rather than the actual value. This is a form of documentation priming.
 
 **Rule**: Output format defines *structure* (field names, types). Never include *content* (expected
 values, required outcomes). Acceptance criteria belong in a separate section, not in output format.
 
-### Validation Separation Requirement (M276)
+### Validation Separation Requirement
 
 **CRITICAL: Subagents that PRODUCE output must NOT also VALIDATE it.**
 
@@ -318,7 +318,7 @@ STEP 3: Main agent reviews actual scores, decides next action
 - Require per-file scores in structured format
 - Cross-reference file count with validation count
 
-## Result Presentation (M418)
+## Result Presentation
 
 When presenting subagent results to users, preserve the format specified by the source skill.
 

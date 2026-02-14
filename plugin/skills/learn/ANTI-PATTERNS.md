@@ -80,7 +80,7 @@ prevention: |
 # Key insight: Verify what you WANT, not what you DON'T want
 ```
 
-## Invoke the skill first when user says "Learn from mistakes" (M072)
+## Invoke the skill first when user says "Learn from mistakes"
 
 ```yaml
 # ❌ WRONG: Fix immediate problem, skip skill invocation
@@ -97,7 +97,7 @@ agent: [implements prevention]
 agent: [then fixes immediate problem]
 ```
 
-## Escalate to enforcement when documentation failed (M084)
+## Escalate to enforcement when documentation failed
 
 ```yaml
 # ❌ WRONG: Documentation already existed and was ignored

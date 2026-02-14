@@ -1,4 +1,4 @@
-# Verify Fix Doesn't Introduce Priming (M370)
+# Verify Fix Doesn't Introduce Priming
 
 Lazy-loaded after implementing documentation fixes to verify no new priming patterns introduced.
 

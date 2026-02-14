@@ -4,7 +4,7 @@
 
 Every subagent prompt MUST include these items based on past mistakes:
 
-## STATE.md Requirements (M076, M077, M085, M087, M092)
+## STATE.md Requirements
 
 ```
 STATE.md UPDATE (required in SAME commit as implementation):
@@ -128,7 +128,7 @@ if [ "${ACTUAL_TOKENS}" -ge "${HARD_LIMIT}" ]; then
 fi
 ```
 
-## Skill Delegation Requirement (M264)
+## Skill Delegation Requirement
 
 When delegating a skill to a subagent, the subagent MUST:
 1. Invoke the exact same skill (not apply its "principles" manually)
@@ -142,7 +142,7 @@ When delegating a skill to a subagent, the subagent MUST:
 "Invoke /cat:{skill-name} and return its output to the parent agent."
 ```
 
-## Skill Postcondition Reporting (M258)
+## Skill Postcondition Reporting
 
 When delegating a skill that has postconditions, the prompt MUST require the subagent to report
 the skill's validation output. Each skill defines its own postconditions in its SKILL.md.

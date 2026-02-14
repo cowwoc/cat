@@ -376,7 +376,7 @@ Structure the skill document with:
 4. **Procedure**: The forward steps from Step 6, calling functions as needed
 5. **Verification**: How to confirm success
 
-**Frontmatter description must be trigger-oriented (M430)**:
+**Frontmatter description must be trigger-oriented**:
 
 The description is used for **intent routing** — it tells Claude WHEN to invoke this skill based
 on user input. Include ONLY trigger conditions and synonyms. Exclude implementation details
@@ -963,7 +963,7 @@ Before proceeding to [next step], you MUST show explicit [calculations/results]:
 
 Call `max_content_width(all_content_items)`.
 
-**MANDATORY CALCULATION GATE (M191):**
+**MANDATORY CALCULATION GATE:**
 
 Before proceeding to Step 4, you MUST show explicit width calculations:
 
@@ -985,7 +985,7 @@ Hand-writing approximate output without calculation causes alignment errors.
 [Uses the calculated values from Step 3]
 ```
 
-### No Embedded Box Drawings in Skills (M217)
+### No Embedded Box Drawings in Skills
 
 **Critical rule**: Skills MUST NOT contain embedded box-drawing examples in their instructions.
 Embedded boxes cause agents to manually render similar output instead of using preprocessing.
@@ -1051,7 +1051,7 @@ architecture flowcharts) are acceptable because:
 - [ ] Visual patterns (circles, bars, etc.) handled by preprocessing scripts
 - [ ] All display rendering uses exclamation-backtick preprocessing
 
-### Conditional Information Principle (M256)
+### Conditional Information Principle
 
 **Critical rule**: Formatting details (emoji meanings, box characters, column widths) belong
 in preprocessing scripts, not in skill documentation.
@@ -1117,7 +1117,7 @@ If YES to any: Move the information to the preprocessing script.
 output (boxes, tables, formatted text), the gate must require showing the **exact artifact strings**
 that will appear in the output, not just the numeric calculations.
 
-**The failure pattern (M192)**:
+**The failure pattern**:
 1. Agent correctly calculates widths, counts, positions
 2. Agent understands the formula for constructing output
 3. Agent **re-types** the output from memory instead of copying calculated artifacts
@@ -1136,7 +1136,7 @@ build_line("📊 Status", 20) = "│ 📊 Status          │"  (padding: 10)
                               This exact string goes to output
 ```
 
-**MANDATORY BUILD RESULTS GATE (M192):**
+**MANDATORY BUILD RESULTS GATE:**
 
 Before writing final output, verify:
 - [ ] Each artifact (line, cell, row) has an explicit string recorded above
@@ -1148,7 +1148,7 @@ Step 4 before proceeding. Re-typing output causes errors even when calculations 
 ```
 
 **Key distinctions**:
-| Calculation Gate (M191) | Artifact Gate (M192) |
+| Calculation Gate | Artifact Gate |
 |------------------------|----------------------|
 | Shows numeric values | Shows exact output strings |
 | "max_width = 20" | `"│ content      │"` |
@@ -1428,14 +1428,14 @@ Do NOT add any other text before or after it.
 **FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT HELP DISPLAY" above, preprocessing FAILED. STOP.
 ```
 
-**first-use.md pattern for handler-preprocessed skills (M471):**
+**first-use.md pattern for handler-preprocessed skills:**
 
 The thin wrapper first-use.md MUST follow this exact pattern:
 1. Line 1: `The user wants you to respond with the content from "SCRIPT OUTPUT X" above, verbatim.`
 2. Line 2: `Do NOT add any other text before or after it.`
 3. FAIL-FAST block if marker is missing
 
-**Anti-pattern (M471) - meta-description that agents echo literally:**
+**Anti-pattern - meta-description that agents echo literally:**
 ```markdown
 The handler has injected the help reference as additional context
 (look for "SCRIPT OUTPUT HELP DISPLAY" marker above).
@@ -1559,7 +1559,7 @@ Skill(skill="other-skill", args="text with \"quotes\" and $vars")
 
 ---
 
-## Priming Prevention Checklist (M256, M269, M274)
+## Priming Prevention Checklist
 
 **Critical**: Skills can accidentally TEACH agents to bypass proper workflows. Before finalizing,
 verify the skill doesn't prime agents for incorrect behavior.
@@ -1574,7 +1574,7 @@ verify the skill doesn't prime agents for incorrect behavior.
 
 **Correct ordering**: WHAT to invoke → WHAT postconditions to verify → (internals hidden)
 
-### Output Format Check (M274)
+### Output Format Check
 
 Output format specifications must define **structure only**, never **expected content**.
 
@@ -1632,13 +1632,13 @@ Verify orchestrator-facing content is separated from internal agent content:
 and WHAT results to expect. If the orchestrator could do the issue after reading the doc,
 the doc has exposed too much.
 
-**Critical (M278)**: External file existence does NOT automatically mean encapsulation is complete.
+**Critical**: External file existence does NOT automatically mean encapsulation is complete.
 Even when an internal doc (e.g., COMPRESSION-AGENT.md) contains the full algorithm, verify the
 orchestrator doc contains ZERO actionable guidance. Partial information like "preserve section
 headers" or "condense explanatory text" can still prime manual attempts. The orchestrator doc
 should contain only: what to invoke, postconditions to verify, and fail-fast conditions.
 
-### Delegation Safety Check (M276)
+### Delegation Safety Check
 
 If the skill will be delegated to subagents:
 
@@ -1651,7 +1651,7 @@ If the skill will be delegated to subagents:
 **Anti-pattern**: Telling a subagent "validation score must be 1.0" primes fabrication.
 Instead: "Run /compare-docs and report the actual score."
 
-### Reference Information Check (M256)
+### Reference Information Check
 
 Formatting details belong in preprocessing scripts, not skill documentation:
 
@@ -1697,15 +1697,15 @@ Step 1: Display status
 - [ ] **Architecture decision made**: Direct vs. Delegated vs. Handler preprocessing
 - [ ] **Direct**: Script collects all inputs → use [BANG]`script.sh` in skill
 - [ ] **Delegated**: LLM determines data → Skill A invokes Skill B with args
-- [ ] **Handler**: Python handler generates SCRIPT OUTPUT → thin first-use.md outputs verbatim (M471)
-- [ ] **Computation extracted to preprocessing scripts** (M192/M215)
+- [ ] **Handler**: Python handler generates SCRIPT OUTPUT → thin first-use.md outputs verbatim
+- [ ] **Computation extracted to preprocessing scripts**
 - [ ] **No manual formatting in skill** - all rendering via preprocessing
-- [ ] **No embedded box drawings in skill instructions or examples** (M217)
+- [ ] **No embedded box drawings in skill instructions or examples**
 - [ ] Box-drawing characters only appear in preprocessing scripts
 - [ ] Visual patterns handled by scripts, not documented in skill
 - [ ] Verification criteria exist for the goal
 
-### Priming Prevention (M256, M269, M274, M276)
+### Priming Prevention
 
 - [ ] **Information ordering**: "Invoke skill" appears BEFORE any algorithm details
 - [ ] **No Functions/Prerequisites sections** teaching manual construction
@@ -1715,7 +1715,7 @@ Step 1: Display status
 - [ ] **Delegation-safe**: No expected scores in acceptance criteria
 - [ ] **Formatting details in preprocessing scripts**, not skill doc
 
-### Subagent Skill Preloading (M432)
+### Subagent Skill Preloading
 
 When a skill spawns subagents (via Task tool), check whether those subagents would benefit from
 having skills preloaded via frontmatter.

@@ -60,7 +60,7 @@ Choose the model based on issue complexity:
 | Issue Type | Model | Reasoning |
 |-----------|-------|-----------|
 | Skill invocation (orchestration only) | `haiku` | Skill is pure orchestration, subagent just runs it |
-| Skill invocation (skill exposes algorithm) | `sonnet` | Skill doc shows HOW to do it; haiku will apply algorithm manually (M376) |
+| Skill invocation (skill exposes algorithm) | `sonnet` | Skill doc shows HOW to do it; haiku will apply algorithm manually |
 | Simple file operations | `haiku` | Explicit instructions, no reasoning needed |
 | Run commands, check output | `haiku` | Purely mechanical execution |
 | Code refactoring | `sonnet` | Requires understanding patterns and context |
@@ -133,11 +133,11 @@ CRITICAL REQUIREMENTS (enforced by hooks):
 - Always use git-filter-repo instead of git filter-branch
 - Preserve .git/refs/original unless user explicitly requests deletion
 - Include tests for bugfixes in the SAME commit as the fix
-- (M386) If task references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
+- If task references skills (e.g., /cat:shrink-doc), MUST invoke them - do NOT manually reimplement
 
-COMMIT SEPARATION (M089):
+COMMIT SEPARATION:
 - .claude/rules/ updates → separate config: commit (not bundled with bugfix/feature)
-- STATE.md updates → same commit as implementation (M076/M077)
+- STATE.md updates → same commit as implementation
 
 These are ABSOLUTE rules. Violation will be detected and blocked.
 ```
@@ -193,7 +193,7 @@ This skill respects issue-level locking. Before spawning, verify the parent agen
 The lock should have been acquired by `/cat:work`. Subagents inherit lock ownership through
 their worktree association (recorded in the lock file).
 
-**MANDATORY: Verify Lock Ownership (M082)**
+**MANDATORY: Verify Lock Ownership**
 
 After any lock acquisition attempt, verify ownership by reading the actual lock file:
 
@@ -220,10 +220,10 @@ fi
 echo "Lock verified: $LOCK_FILE owned by current session"
 ```
 
-**Anti-pattern (M082):** Trusting lock script return value without verifying the actual lock file.
+**Anti-pattern:** Trusting lock script return value without verifying the actual lock file.
 Lock directory must be `.claude/cat/locks/` (NOT `/tmp/cat-locks/` or other paths).
 
-**After session restart (M083):** Re-run lock verification commands. Always re-verify state after
+**After session restart:** Re-run lock verification commands. Always re-verify state after
 restart - the filesystem may have changed while the session was inactive.
 
 ## Main Agent Responsibilities (BEFORE Delegating)
@@ -522,7 +522,7 @@ Task tool invocation:
 
     WORKING DIRECTORY: ${WORKTREE_PATH}
 
-    CONTEXT FROM CALLER (M426):
+    CONTEXT FROM CALLER:
     [Include relevant context the subagent needs to execute this skill properly:
      - Goal: Why is this skill being invoked? What larger task does it serve?
      - Constraints: Any requirements from PLAN.md or parent task
@@ -536,7 +536,7 @@ Task tool invocation:
 
     POSTCONDITION REPORTING: Report validation score and pass/fail.
 
-    SKILL OUTPUT CAPTURE (M426): If the skill produces user-visible output (validation
+    SKILL OUTPUT CAPTURE: If the skill produces user-visible output (validation
     results, compression stats, comparison tables), include the FULL textual output
     in your completion JSON under "skill_output". Users cannot see subagent tool calls.
 
@@ -662,7 +662,7 @@ COMPLETION_JSON="${WORKTREE}/.completion.json"
 STATUS=$(jq -r '.status' "$COMPLETION_JSON")
 TOKENS=$(jq -r '.tokensUsed' "$COMPLETION_JSON")
 
-# For skill delegations: extract postcondition values AND skill output (M426)
+# For skill delegations: extract postcondition values AND skill output
 if [[ -n "$SKILL" ]]; then
   VALIDATION_SCORE=$(jq -r '.validationScore // "N/A"' "$COMPLETION_JSON")
   POSTCONDITION_MET=$(jq -r '.postconditionMet // "unknown"' "$COMPLETION_JSON")
@@ -670,7 +670,7 @@ if [[ -n "$SKILL" ]]; then
 fi
 ```
 
-**Forward Skill Output to User (M426):**
+**Forward Skill Output to User:**
 
 If `skill_output` is non-empty, display it to the user. Subagent tool calls are invisible,
 so this is the only way users see what skills like `/cat:shrink-doc` actually did.
@@ -838,7 +838,7 @@ wave_2: [1.2b]        # Depends on 1.2a
 /cat:delegate --sequential --skill migrate-schema v1-to-v2 v2-to-v3
 ```
 
-### Describe skill principles instead of invoking (M264)
+### Describe skill principles instead of invoking
 
 ```
 # ❌ WRONG - Tells subagent to apply principles
@@ -848,7 +848,7 @@ wave_2: [1.2b]        # Depends on 1.2a
 "Invoke /cat:shrink-doc {file} and report the validation score."
 ```
 
-### Require postcondition reporting (M258)
+### Require postcondition reporting
 
 ```
 # ❌ WRONG - No postcondition reporting required
@@ -858,7 +858,7 @@ wave_2: [1.2b]        # Depends on 1.2a
 "Run /cat:shrink-doc on each file. Report: validation_score, postcondition_met (true/false)."
 ```
 
-### Verify findings through delegation, not direct investigation (M147)
+### Verify findings through delegation, not direct investigation
 
 ```
 # ❌ WRONG - Main agent investigates subagent findings directly
@@ -914,7 +914,7 @@ The exploration subagent handles three phases internally:
 | `DUPLICATE` | Issue already implemented elsewhere | Mark as duplicate, skip |
 | `BLOCKED` | Cannot proceed (missing deps, etc.) | Present blocker to user |
 
-## Waiting for Subagent Completion (M293)
+## Waiting for Subagent Completion
 
 **Preferred: Use multiple blocking Task calls in a single message.**
 
@@ -937,7 +937,7 @@ Task tool: subagent for item C   # No polling needed
 **Avoid `run_in_background`** unless you need the main agent to do other work while subagents run.
 Background mode requires waiting for task-notification, adding complexity.
 
-**Background Task Protocol (M481):**
+**Background Task Protocol:**
 
 When tasks are launched with `run_in_background: true`, **NEVER use TaskOutput to poll or check status**.
 The system will notify you when the task completes via task-notification. Wait for that notification,
@@ -958,7 +958,7 @@ TaskOutput issue_id="abc" block=true  # DO NOT do this - wait for notification
 3. Wait for system's task-notification (do NOT poll)
 4. After notification, use TaskOutput to retrieve results
 
-**Anti-pattern (M293, M481):**
+**Anti-pattern:**
 ```
 ❌ "I'll check if the background task is done yet" (polling)
 ✅ "Background task launched. I'll wait for notification." (correct)

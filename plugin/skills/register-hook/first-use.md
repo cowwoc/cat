@@ -4,7 +4,7 @@
 
 **Performance**: Ensures hooks work correctly, prevents registration errors, enforces restart requirement
 
-## Hook Registration Locations (M405)
+## Hook Registration Locations
 
 | Hook Type | Location | Use Case |
 |-----------|----------|----------|

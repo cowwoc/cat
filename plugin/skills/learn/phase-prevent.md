@@ -132,7 +132,7 @@ If `would_have_blocked: false` or `prevents_root_cause: false`:
 - Return to RCA and dig deeper into WHY the mistake occurred
 - Find prevention that addresses the actual failure point
 
-**Fix Source, Not Symptoms (M355):**
+**Fix Source, Not Symptoms:**
 
 When a mistake involves incorrect output from a subagent or downstream process:
 
@@ -162,7 +162,7 @@ prevention: "Review delegation prompt for priming; fix skill instructions if amb
 prevents_root_cause: true  # Subagent now produces correct results
 ```
 
-**Note (M357):** Identical scores (e.g., all 1.0) do NOT inherently indicate fabrication. Multiple files
+**Note:** Identical scores (e.g., all 1.0) do NOT inherently indicate fabrication. Multiple files
 can legitimately achieve the same score. When results differ from expectations, investigate the prompt
 or skill methodology - don't add validation layers.
 
@@ -293,7 +293,7 @@ action: "STOP. Escalate to hook, validation, or code_fix instead."
 
 **If you cannot identify NEW prevention stronger than what already exists, you have NOT learned.**
 
-## Step 8b: Check for Misleading Documentation (M256)
+## Step 8b: Check for Misleading Documentation
 
 **CRITICAL: Documentation may have ACTIVELY MISLED the agent toward the wrong approach.**
 
@@ -327,7 +327,7 @@ The checklist covers:
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
-**CRITICAL (M470): After editing a file, use Read tool to verify your change is present.**
+**CRITICAL: After editing a file, use Read tool to verify your change is present.**
 
 Do not proceed to the blocking gate below until you have:
 1. Used Edit or Write tool to modify the file
@@ -336,7 +336,7 @@ Do not proceed to the blocking gate below until you have:
 
 If the file content does NOT contain your change, the edit failed - you MUST retry the edit.
 
-**Escalation and Layered Prevention (M342):**
+**Escalation and Layered Prevention:**
 
 When escalating from documentation to hook/validation, **keep both layers** but align them:
 
@@ -359,7 +359,7 @@ When escalating from documentation to hook/validation, **keep both layers** but 
 
 This creates defense-in-depth: guidance prevents most mistakes, enforcement catches the rest.
 
-**Script vs Skill Instructions (M363):**
+**Script vs Skill Instructions:**
 
 Before adding prevention to a skill, ask: **Does this require LLM decision-making?**
 
@@ -380,7 +380,7 @@ Before adding prevention to a skill, ask: **Does this require LLM decision-makin
 
 **When in doubt, ask:** "Could a bash script do this with no LLM?" If yes → script with tests.
 
-### Fix Location Checklist (M419 - MANDATORY)
+### Fix Location Checklist
 
 **BLOCKING: Complete this checklist BEFORE editing any file for prevention.**
 
@@ -409,7 +409,7 @@ fix_location_checklist:
     not_editing_because_convenient: true  # Confirm you're not just editing current file
 ```
 
-**Common mistake (M419):** Editing the file you're currently working with because it's convenient,
+**Common mistake:** Editing the file you're currently working with because it's convenient,
 instead of finding the appropriate depth. Example: Putting "use Tokens header for compression" in
 work-with-issue.md (generic) instead of subagent-delegation.md (concept doc for all result presentation).
 
@@ -431,10 +431,10 @@ at the deepest level where they're relevant to maximize fix propagation.
 **Example:** M277 (validation separation) belongs in `shrink-doc/SKILL.md` (skill-specific validation)
 not `work.md` (generic workflow) because the per-file subagent pattern is shrink-doc-specific.
 
-**Verification question (M297):** Before committing a fix, ask: "Is this rule specific to one skill/context,
+**Verification question:** Before committing a fix, ask: "Is this rule specific to one skill/context,
 or genuinely applies to all issues?" If specific → find the skill doc. If generic → workflow doc is correct.
 
-**Generalize prevention to match fix location scope (M440).** When the fix location is a document that
+**Generalize prevention to match fix location scope.** When the fix location is a document that
 handles multiple skills/scenarios, write the prevention in general terms — not specific to the skill that
 triggered the problem. The fix should cover all similar cases.
 
@@ -448,7 +448,7 @@ Example: If shrink-doc's iteration loop was bypassed, and the fix goes in work-w
 all skills), write "complete each skill fully before delegation" — not "complete shrink-doc's iteration
 loop before delegation."
 
-**Language requirements for documentation/prompt changes (M177):**
+**Language requirements for documentation/prompt changes:**
 
 When prevention involves updating documentation, prompts, or instructions, use **positive actionable
 language** that guides toward correct behavior rather than warning against mistakes.
@@ -474,7 +474,7 @@ language** that guides toward correct behavior rather than warning against mista
 Keep negative language only when no actionable positive alternative exists (e.g., security warnings
 where the "don't" is the entire point).
 
-**Fail-Fast Error Handling (M361):**
+**Fail-Fast Error Handling:**
 
 When implementing prevention that modifies error handling, apply the fail-fast principle:
 
@@ -489,7 +489,7 @@ When implementing prevention that modifies error handling, apply the fail-fast p
 - If you can't verify an operation is safe, block it
 - Never allow potentially dangerous operations to proceed when validation fails
 
-**Example (M361):**
+**Example:**
 ```python
 # ❌ WRONG: Allow when can't validate
 cwd = context.get("cwd")
@@ -502,7 +502,7 @@ if not cwd:
     return {"decision": "block", "reason": "Cannot verify safety - cwd missing"}
 ```
 
-**Complete Fix Requirement for Documentation Priming (M345):**
+**Complete Fix Requirement for Documentation Priming:**
 
 When documentation primed the agent for wrong behavior, the fix must be **complete**:
 
@@ -514,7 +514,7 @@ When documentation primed the agent for wrong behavior, the fix must be **comple
 
 **The fix must make correct behavior possible, not just prohibit wrong behavior.**
 
-**MANDATORY: Preserve Output Format When Possible (M345):**
+**MANDATORY: Preserve Output Format When Possible:**
 
 When a skill cannot produce its intended output due to missing automation:
 
@@ -549,10 +549,10 @@ complete_fix_checklist:
     do_not: "Unilaterally change output format"
 ```
 
-**Anti-pattern (M345):** Adding "NEVER do X" without ensuring the agent CAN do Y.
-**Anti-pattern (M345):** Changing output format without user consent.
+**Anti-pattern:** Adding "NEVER do X" without ensuring the agent CAN do Y.
+**Anti-pattern:** Changing output format without user consent.
 
-**Missing Preprocessing Output (M452):**
+**Missing Preprocessing Output:**
 
 When a handler/preprocessing script should have provided output but didn't, fail-fast. Do NOT add
 fallback behavior that teaches the LLM to run scripts directly or gather data manually.
@@ -590,7 +590,7 @@ prevention_action:
         Each milestone = potential decomposition point.
 ```
 
-**BLOCKING GATE (M134/A022) - Prevention File Edit Verification:**
+**BLOCKING GATE - Prevention File Edit Verification:**
 
 BEFORE proceeding to next step, you MUST complete this gate:
 
@@ -612,18 +612,18 @@ BEFORE proceeding to next step, you MUST complete this gate:
    - Return here and fill in the file path(s)
    - Only then proceed to next step
 
-4. **Why this gate exists (M134/M135):**
+4. **Why this gate exists:**
    Recording `prevention_implemented: true` without editing a file is FALSE.
    The prevention_path in the JSON entry MUST match a file listed above.
    If they don't match, the learning system is corrupted.
 
-## Step 9b: Verify Fix Doesn't Introduce Priming (M370)
+## Step 9b: Verify Fix Doesn't Introduce Priming
 
 **MANDATORY: After editing documentation, read `PRIMING-VERIFICATION.md` to verify no new priming introduced.**
 
 Quick check: Do edited files contain concrete values (1.0, SUCCESS) in output formats? Replace with placeholders.
 
-## Step 9c: Check Related Files for Similar Mistakes (M341)
+## Step 9c: Check Related Files for Similar Mistakes
 
 **MANDATORY: After fixing a file, read `RELATED-FILES-CHECK.md` to find and fix similar vulnerabilities.**
 

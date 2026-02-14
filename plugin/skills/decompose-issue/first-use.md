@@ -127,14 +127,14 @@ dependencies:
 
 ### 6. Update STATE.md Files
 
-**Parent Issue Status Lifecycle (M263, M467):**
+**Parent Issue Status Lifecycle:**
 
 When a issue is decomposed, the parent issue status follows this lifecycle:
 1. `open` → `in-progress` (when decomposition starts)
 2. Remains `in-progress` while sub-issues execute
 3. `in-progress` → `closed` (only when ALL sub-issues are implemented and tested AND parent acceptance criteria are met)
 
-**Closing Decomposed Parents (M467):**
+**Closing Decomposed Parents:**
 
 When /cat:work selects a decomposed parent (all sub-issues closed), verify parent acceptance criteria before closure:
 

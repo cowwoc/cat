@@ -32,7 +32,7 @@ Use ONLY these types when committing in a CAT-managed project:
 | `config` | Config, tooling, deps, **Claude-facing docs** | `config: update CLAUDE.md rules` |
 | `planning` | Planning system updates (ROADMAP, STATE) | `planning: add issue 5 summary` |
 
-**Commit Type by File Location (M089, M133):**
+**Commit Type by File Location:**
 
 | File Location | Commit Type | Examples |
 |---------------|-------------|----------|
@@ -46,7 +46,7 @@ Use ONLY these types when committing in a CAT-managed project:
 **Key test:** Is the file in `.claude/cat/`? → Use `planning:`. Is it Claude behavior config? → Use `config:`. Is it for
 end users? → Use `docs:`.
 
-**CRITICAL: Commit type = WHAT changed, not WHERE (M134)**
+**CRITICAL: Commit type = WHAT changed, not WHERE**
 
 File location determines the DEFAULT type, but the nature of the change takes precedence:
 
@@ -109,7 +109,7 @@ Commits are tracked via STATE.md file history, not commit footers.
 Any changes to an issue's STATE.md (marking complete, updating status, adding notes) are part of
 implementing that issue and belong in the same commit as the code changes.
 
-**Convention/Infrastructure Updates (M317):**
+**Convention/Infrastructure Updates:**
 
 Convention updates discovered during issue work belong on the **base branch**, not the issue branch:
 

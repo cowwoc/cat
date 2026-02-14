@@ -19,7 +19,7 @@ objective validation instead of prescriptive rules.
 
 ---
 
-## CRITICAL: Always Use This Skill (M294, M296)
+## CRITICAL: Always Use This Skill
 
 **NEVER manually compress files and validate with /compare-docs directly.**
 
@@ -31,7 +31,7 @@ Manual compression bypasses:
 If you compress manually and get NOT_EQUIVALENT, you must manually iterate.
 If you use this skill, iteration happens automatically until status = EQUIVALENT.
 
-**MANDATORY: Report validation status (M296)**
+**MANDATORY: Report validation status**
 
 When compressing files (even partially), you MUST report:
 - Validation status per file (EQUIVALENT or NOT_EQUIVALENT from /compare-docs)
@@ -144,7 +144,7 @@ fi
 
 ### Step 3: Invoke Compression Agent
 
-**⚠️ ENCAPSULATION (M269)**: The compression algorithm is in a separate internal document.
+**⚠️ ENCAPSULATION**: The compression algorithm is in a separate internal document.
 Do NOT attempt to compress manually - invoke the subagent which will read its own instructions.
 
 **Subagent invocation** (use Task tool, not TaskCreate - see M372 in subagent-delegation.md):
@@ -163,7 +163,7 @@ Task tool:
     Use the Write tool to save the compressed version.
 ```
 
-**Why separate documents (M269)**: The compression algorithm is intentionally NOT in this file.
+**Why separate documents**: The compression algorithm is intentionally NOT in this file.
 If you can see HOW to compress, you might bypass the skill and do it manually - which skips
 validation. The subagent reads COMPRESSION-AGENT.md; you (the orchestrator) only invoke and validate.
 
@@ -238,7 +238,7 @@ After agent completes:
    head -5 /tmp/compressed-{{filename}}-v${VERSION}.md | grep -q "^---$" || echo "⚠️ WARNING: YAML frontmatter missing!"
    ```
 
-4. **Run validation via /cat:delegate (M371)**:
+4. **Run validation via /cat:delegate**:
 
    Use `/cat:delegate` for ALL validation (single or multiple files). The compare-docs skill
    handles extraction, comparison, and report generation.
@@ -247,7 +247,7 @@ After agent completes:
    /cat:delegate --skill compare-docs /tmp/original-{{filename}} /tmp/compressed-{{filename}}-v${VERSION}.md
    ```
 
-   **Why delegate (M371)**: Delegate handles:
+   **Why delegate**: Delegate handles:
    - Subagent spawning with appropriate model selection (opus for validation)
    - Isolation of validation context from main agent
    - Result collection and formatting
@@ -285,7 +285,7 @@ the ORIGINAL document state from before /shrink-doc was invoked.
 
 **Threshold**: EQUIVALENT status required (no "close enough" - see M254)
 
-**COMMIT GATE (M335)**: Files may ONLY be committed after validation passes:
+**COMMIT GATE**: Files may ONLY be committed after validation passes:
 - Status = NOT_EQUIVALENT → File MUST NOT be applied or committed
 - Status = EQUIVALENT → File may be applied and committed
 - Skipped validation → File MUST NOT be applied or committed
@@ -366,7 +366,7 @@ Re-invoking agent with feedback to fix issues...
 ```
 → Go to Step 6 (Iteration)
 
-**⚠️ MANDATORY: Validation Gate (M254)**
+**⚠️ MANDATORY: Validation Gate**
 
 **BLOCKING REQUIREMENT**: Complete this validation BEFORE making any approval decision.
 
@@ -394,7 +394,7 @@ else:
 2. **Extract** the LOST section from the report (lists units that need restoration)
 3. **Proceed** directly to Step 6 (Iteration Loop) with that feedback
 
-**Why this gate exists (M254)**: Completion bias causes agents to rationalize "close enough". Only EQUIVALENT status
+**Why this gate exists**: Completion bias causes agents to rationalize "close enough". Only EQUIVALENT status
 permits approval. No exceptions.
 
 ---
@@ -458,7 +458,7 @@ No exceptions. Status is ONLY valid if it comes from /compare-docs output.
 
 ---
 
-## Multiple Files: Use /cat:delegate (M369)
+## Multiple Files: Use /cat:delegate
 
 **For compressing multiple files**, use `/cat:delegate`:
 
@@ -476,13 +476,13 @@ Delegate handles:
 **Do NOT manually spawn Task tools for batch operations** - delegate already implements
 parallel execution, fault tolerance, and retry logic.
 
-**Per-file validation (M265, M346):** Each file MUST be validated individually. Report results:
+**Per-file validation:** Each file MUST be validated individually. Report results:
 
 | File | Tokens Before | Tokens After | Reduction | Preserved | Status |
 |------|---------------|--------------|-----------|-----------|--------|
 | {filename} | {count} | {count} | {%} | {X}/{Y} | {EQUIVALENT/NOT_EQUIVALENT} |
 
-**Validation separation (M277):** Compression subagents must NOT validate their own work.
+**Validation separation:** Compression subagents must NOT validate their own work.
 Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 ---
@@ -491,7 +491,7 @@ Each shrink-doc subagent spawns SEPARATE validation subagents per Step 4.
 
 **Agent Type**: MUST use `subagent_type: "general-purpose"`
 
-**Validation Tool**: Use `/cat:delegate --skill compare-docs` (M371) - delegate handles subagent
+**Validation Tool**: Use `/cat:delegate --skill compare-docs` - delegate handles subagent
 spawning and result collection.
 
 **Validation Baseline**: On first invocation, save original document to

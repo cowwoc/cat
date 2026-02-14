@@ -75,7 +75,7 @@ See individual skill files for full contracts:
 - work-with-issue/SKILL.md (orchestrates execute/review/merge)
 - work-merge/SKILL.md
 
-## CRITICAL: Worktree Isolation (M101)
+## CRITICAL: Worktree Isolation
 
 **ALL issue implementation work MUST happen in the issue worktree, NEVER in `/workspace` main.**
 
@@ -87,14 +87,14 @@ See individual skill files for full contracts:
 +-- parser/src/...             <- NEVER edit these files during issue execution
 ```
 
-## Issue Discovery (M282)
+## Issue Discovery
 
 **MANDATORY: Use get-available-issues.sh script. FAIL-FAST if script fails.**
 
 The work-prepare subagent handles discovery internally. Main agent receives the result
 as JSON with issue_id, worktree_path, and other metadata.
 
-## Lock Management (M097)
+## Lock Management
 
 Locks are acquired by work-prepare subagent and released by work-merge subagent.
 Main agent tracks lock status but doesn't manage locks directly.

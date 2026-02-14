@@ -315,7 +315,7 @@ Proceed directly to `git add <files> && git commit`.
 
 ## Checklist Before Committing
 
-- [ ] **In correct worktree** (M101): `pwd` shows issue worktree, NOT `/workspace`
+- [ ] **In correct worktree**: `pwd` shows issue worktree, NOT `/workspace`
 - [ ] Subject line is imperative mood ("Add", not "Added")
 - [ ] Subject line is specific (not "Update files")
 - [ ] Subject line is under 72 characters
@@ -324,7 +324,7 @@ Proceed directly to `git add <files> && git commit`.
 - [ ] For squashed commits: synthesized meaningful summary
 - [ ] Message would make sense in git history 6 months from now
 
-## Worktree Verification (M101)
+## Worktree Verification
 
 **Before committing in a CAT issue, verify you're in the issue worktree:**
 

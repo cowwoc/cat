@@ -18,22 +18,22 @@ Verify actual event sequence using get-history:
 # Look for: When stated? Action order? User corrections? Actual trigger?
 ```
 
-**Anti-Pattern (M037):** Root cause analysis based on memory without get-history verification.
+**Anti-Pattern:** Root cause analysis based on memory without get-history verification.
 Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
-## Step 1b: Analyze Documentation Path (M269, M274, M381)
+## Step 1b: Analyze Documentation Path
 
 **CRITICAL: ALWAYS check documentation path FIRST after collecting history.**
 
-**MANDATORY FIRST STEP (M381):** Before any other analysis, identify what documents/skills the agent
+**MANDATORY FIRST STEP:** Before any other analysis, identify what documents/skills the agent
 read and check if they caused the mistake. Do NOT skip to "agent error" conclusions without first
 checking if documentation primed the wrong behavior.
 
 Using the session history from Step 1, identify all documents the agent read.
 
-**NOTE (M359):** `CLAUDE_SESSION_ID` is available in skill preprocessing but NOT exported to bash.
+**NOTE:** `CLAUDE_SESSION_ID` is available in skill preprocessing but NOT exported to bash.
 You must substitute the actual session ID value in bash commands, not use the variable reference.
 
 ```bash
@@ -57,7 +57,7 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
   jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Skill") |
     .input.skill + " " + (.input.args // "")' 2>/dev/null
 
-# Find Issue prompts (delegation prompts are documents too!) (M274)
+# Find Issue prompts (delegation prompts are documents too!)
 echo "=== Issue Delegation Prompts ==="
 grep '"type":"assistant"' "$SESSION_FILE" | \
   jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Issue") |
@@ -71,9 +71,9 @@ grep '"type":"assistant"' "$SESSION_FILE" | \
 | Algorithm before invocation | "How to compress: 1. Remove redundancy..." | Agent bypasses skill |
 | Output format with values | "validation_score: 1.0 (required)" | Agent fabricates output |
 | Cost/efficiency language | "This spawns 2 subagents..." | Agent takes shortcuts |
-| Conflicting general guidance (M407) | "Be concise" + "copy verbatim" | General overrides specific |
+| Conflicting general guidance | "Be concise" + "copy verbatim" | General overrides specific |
 
-**SKILL EXECUTION FAILURES - Use skill-builder (M408):**
+**SKILL EXECUTION FAILURES - Use skill-builder:**
 
 When the mistake involves an agent failing to execute a **skill** correctly (wrong output, skipped steps,
 manual construction instead of preprocessing), analyze the skill using skill-builder:
@@ -90,19 +90,19 @@ Read the skill file and apply skill-builder's Priming Prevention Checklist:
 **Reference:** See `/cat:skill-builder` § "Priming Prevention Checklist" for the complete checklist.
 If skill has structural issues, fix the SKILL as part of prevention, not just add behavioral guidance.
 
-**MANDATORY CHECK (M405):** After checking documents read, ALSO ask:
+**MANDATORY CHECK:** After checking documents read, ALSO ask:
 1. **Could agent do the right thing?** Search for documentation of the CORRECT approach
 2. **If no documentation exists:** Root cause is `missing_documentation`, not `assumption`
 3. **If wrong approach is documented but right approach isn't:** Fix BOTH (remove priming AND add guidance)
 
-**CHECK FOR CONFLICTING GUIDANCE (M407):** Also check if general instructions conflict with specific requirements:
+**CHECK FOR CONFLICTING GUIDANCE:** Also check if general instructions conflict with specific requirements:
 - Does system prompt say "be concise" while skill requires verbatim output?
 - Does critical thinking prompt say "analyze" while skill requires copy-paste?
 - Does general guidance favor interpretation while skill needs literal execution?
 When found: The specific skill requirement should take precedence, but add enforcement (hook) since general
 guidance may override documented specific requirements.
 
-**For tool invocation errors (M381):**
+**For tool invocation errors:**
 
 When a mistake involves invoking a tool/skill with wrong parameters:
 1. Read the tool's actual interface (Parameters section, supported flags)
@@ -110,14 +110,14 @@ When a mistake involves invoking a tool/skill with wrong parameters:
 3. Check what documentation showed similar-looking parameters that may have primed the incorrect usage
 4. The cause is often "saw parameter X used somewhere, assumed it applies to tool Y"
 
-**For subagent mistakes, ALSO check the Issue prompt that spawned it (M274):**
+**For subagent mistakes, ALSO check the Issue prompt that spawned it:**
 
 The delegation prompt IS the primary "document" the subagent received. Check it for:
 - Expected values embedded in output format (e.g., "score: 1.0 (required)")
 - Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
 - Any content telling the subagent what to report vs what to measure
 
-**CHECK FOR TECHNICALLY IMPOSSIBLE INSTRUCTIONS (M429):**
+**CHECK FOR TECHNICALLY IMPOSSIBLE INSTRUCTIONS:**
 
 When a subagent fails to follow instructions, check whether the instructions were **technically possible** given Claude
 Code's subagent architecture:
@@ -158,7 +158,7 @@ technically_impossible_check:
 3. The skill/workflow documentation is the source of the bug
 4. Do NOT add "agent should have..." instructions - they cannot help
 
-**CHECK FOR MISSING SKILL PRELOADING (M431):**
+**CHECK FOR MISSING SKILL PRELOADING:**
 
 When a subagent fails to follow skill-based guidance correctly, check whether the subagent would
 have benefited from having skills preloaded via frontmatter.
@@ -228,7 +228,7 @@ subagent_skills_analysis:
 }
 ```
 
-**CRITICAL: Trace the FULL priming chain (M425):**
+**CRITICAL: Trace the FULL priming chain:**
 
 When the main agent wrote a bad delegation prompt, ask: **What primed the MAIN AGENT to write that prompt?**
 
