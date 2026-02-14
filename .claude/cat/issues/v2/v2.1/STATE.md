@@ -14,6 +14,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- strip-orphaned-work-docs
 - add-work-with-issue-banners
 - rename-hooks-to-engine
 - add-pipelining-to-optimize-execution
