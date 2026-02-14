@@ -1,13 +1,17 @@
 # Plan: add-wizard-context-headers
 
 ## Current State
-Skills that use AskUserQuestion in wizard flows do not consistently indicate which issue or workflow the question
-relates to. When multiple operations are in progress or the user returns to a session, it can be unclear which
-task a question belongs to.
+When AskUserQuestion prompts appear during wizard flows (approval gates, review decisions, task selection), the
+question text and header don't include the issue ID or goal. The user sees generic questions like "Ready to merge?"
+without knowing which issue they're approving. This is confusing when returning to a session or when multiple
+operations are in progress.
 
 ## Target State
-All AskUserQuestion calls in wizard flows include context about which issue or workflow is active, either in the
-header field or the question text. Users always know what they are responding to.
+All AskUserQuestion calls in issue-aware wizard flows include the issue ID AND a brief goal description in the
+question text. Users always know which issue and what goal they are responding to.
+
+Example - before: `"Ready to merge 2.1-fix-bug?"`
+Example - after: `"Ready to merge 2.1-fix-bug? (Goal: Fix UTF-8 encoding in all JVM launchers)"`
 
 ## Satisfies
 None - UX improvement
@@ -18,47 +22,33 @@ None - UX improvement
 - **Mitigation:** Changes are cosmetic; test that wizard flows still function correctly
 
 ## Files to Modify
-Skills using AskUserQuestion that operate in issue/task context (24 files across skills):
-- plugin/skills/add/content.md - Issue creation wizard questions
-- plugin/skills/work-with-issue/content.md - Work phase questions (approval gate, review)
-- plugin/skills/work/content.md - Task selection questions
-- plugin/skills/work/SKILL.md - Work orchestration questions
-- plugin/skills/work/phase-prepare.md - Preparation phase questions
-- plugin/skills/work/phase-review.md - Review phase questions
-- plugin/skills/work/phase-execute.md - Execution phase questions
-- plugin/skills/work/phase-merge.md - Merge phase questions
-- plugin/skills/work/deviation-rules.md - Deviation handling questions
-- plugin/skills/learn/content.md - Learning wizard questions
-- plugin/skills/learn/phase-prevent.md - Prevention phase questions
-- plugin/skills/learn/phase-record.md - Record phase questions
-- plugin/skills/remove/content.md - Removal confirmation questions
-- plugin/skills/research/content.md - Research workflow questions
-- plugin/skills/config/content.md - Configuration wizard questions
-- plugin/skills/init/content.md - Initialization wizard questions
-- plugin/skills/cleanup/content.md - Cleanup confirmation questions
-- plugin/skills/skill-builder/content.md - Skill builder questions
+Skill files that contain AskUserQuestion instructions where issue context is available at runtime:
+- plugin/skills/work-with-issue/content.md - Approval gate, review decisions (has ISSUE_ID and TASK_GOAL)
+- plugin/skills/work/content.md - Potentially complete handling, next task selection
+- plugin/skills/work/SKILL.md - Potentially complete handling, next task (has issue_id and goal)
+- plugin/skills/learn/content.md - Learning wizard (has mistake context, not issue-specific)
+- plugin/skills/remove/content.md - Removal confirmation (has issue/version context)
 
-Note: Some files (SKILL.md variants) may have AskUserQuestion in documentation context rather than
-active wizard flows. Only modify files where AskUserQuestion is used in active user-facing wizards.
+Note: Only modify files where (1) AskUserQuestion is an active instruction for the agent to execute AND
+(2) the issue ID or goal is available as a variable at runtime. Files like config, init, research, cleanup,
+and skill-builder are workflow wizards without issue context - use workflow name only if helpful.
 
 ## Acceptance Criteria
-- [ ] All AskUserQuestion calls in issue-context wizards include the issue ID or workflow name
-- [ ] Headers or question text clearly identify which task/workflow the question belongs to
-- [ ] Context is added consistently across all affected skills
+- [ ] AskUserQuestion calls in /cat:work approval gate include issue ID and goal in question text
+- [ ] AskUserQuestion calls in /cat:work potentially-complete handling include issue ID
+- [ ] AskUserQuestion calls in /cat:work-with-issue include issue ID and goal
+- [ ] Question text format: includes `(Goal: <brief goal>)` where goal is available
 - [ ] No behavioral changes to wizard flows
-- [ ] Tests passing
-- [ ] No regressions to existing skills
+- [ ] Tests passing (mvn -f hooks/pom.xml verify)
 
 ## Execution Steps
-1. **Step 1:** Audit all 24 files to identify which AskUserQuestion calls are in active wizard flows
-   vs documentation/examples. Create a list of actual changes needed.
-2. **Step 2:** For each file with active wizard AskUserQuestion calls, add context to the header
-   or question text. Pattern: include issue ID (e.g., "Approval [2.1-issue-name]") or workflow
-   name (e.g., "Config Wizard") in the header field.
-3. **Step 3:** Run existing tests to verify no regressions
-   - Run: mvn -f hooks/pom.xml verify
+1. **Step 1:** Audit each file in "Files to Modify" to identify AskUserQuestion instructions where the agent
+   has access to ISSUE_ID and TASK_GOAL variables at runtime. List the exact AskUserQuestion calls to modify.
+2. **Step 2:** For each identified call, update the question text to include the issue ID and goal.
+   Pattern: append `(Goal: ${TASK_GOAL})` or similar to the question string where the goal variable is
+   available. For the header field, include the issue ID if space permits (max 12 chars).
+3. **Step 3:** Run existing tests to verify no regressions: `mvn -f hooks/pom.xml verify`
 
 ## Success Criteria
-- [ ] All wizard AskUserQuestion calls include contextual information
-- [ ] Users can identify which workflow they are responding to
+- [ ] Users can identify which issue AND its goal when answering wizard questions
 - [ ] All existing tests pass with no regressions
