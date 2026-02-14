@@ -2,11 +2,9 @@
 
 - **Status:** open
 - **Progress:** 0%
+- **Parent:** compress-md-files
 - **Dependencies:** [migrate-to-silent-preprocessing, prevent-plan-md-priming, migrate-python-to-java]
-- **Created From:** compress-md-files
-- **Decomposed:** true
-- **Decomposed At:** 2026-02-03
-- **Reason:** Task exceeded context threshold (45 files × ~15K tokens/file = 675K tokens)
+- **Blocks:** []
 - **Last Updated:** 2026-02-03
 
 ## Decomposed Into

@@ -2,9 +2,10 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-01-31
-- **Worktree:** /workspace/.worktrees/2.1-unify-output-template-delivery
 
 ## Completion Notes
 

@@ -2,6 +2,7 @@
 
 - **Status:** open
 - **Progress:** 0%
+- **Parent:** compress-skills-md
 - **Dependencies:** [prevent-plan-md-priming, migrate-python-to-java]
-- **Created From:** compress-skills-md
+- **Blocks:** []
 - **Last Updated:** 2026-02-03

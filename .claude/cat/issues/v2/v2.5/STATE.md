@@ -3,6 +3,7 @@
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** [v2.4]
+- **Blocks:** []
 - **Last Updated:** 2026-02-03
 
 ## Issues Pending

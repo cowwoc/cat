@@ -3,9 +3,8 @@
 - **Status:** in-progress
 - **Progress:** 40%
 - **Dependencies:** [migrate-python-to-java]
-- **Decomposed:** true
-- **Decomposed At:** 2026-02-01T17:00:00Z
-- **Reason:** Task exceeded context threshold (17 files × ~40K tokens/file = ~680K tokens, exceeds 200K limit)
+- **Blocks:** []
+- **Last Updated:** 2026-02-13
 
 ## Decomposed Into
 - compress-concepts-batch-1 (agent-related: 3 files)

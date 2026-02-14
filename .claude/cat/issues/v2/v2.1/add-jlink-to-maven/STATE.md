@@ -2,5 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Dependencies:** [move-java-out-of-plugin]
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-09

@@ -2,7 +2,8 @@
 
 - **Status:** closed
 - **Progress:** 0%
-- **Created From:** compress-concepts-md
+- **Resolution:** won't-fix (abandoned)
+- **Parent:** compress-concepts-md
 - **Dependencies:** []
-- **Abandoned:** 2026-02-02
-- **Reason:** Validation uncertainty - agents fabricating compare-docs scores
+- **Blocks:** []
+- **Last Updated:** 2026-02-13

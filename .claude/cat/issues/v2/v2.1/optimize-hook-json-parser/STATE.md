@@ -1,12 +1,10 @@
 # State
 
 - **Status:** closed
-- **Resolution:** won't-fix
-- **Reason:** Hook aggregator pattern is simpler and sufficient. See benchmarks below.
 - **Progress:** 25%
-- **Decomposed:** true
-- **Decomposed At:** 2026-02-10
+- **Resolution:** won't-fix (Hook aggregator pattern is simpler and sufficient. See benchmarks below.)
 - **Dependencies:** [hook-sh-fix, json-core-api-migration, json-complex-handler-migration, build-optimize-validate]
+- **Blocks:** []
 - **Last Updated:** 2026-02-11
 
 ## Decomposed Into

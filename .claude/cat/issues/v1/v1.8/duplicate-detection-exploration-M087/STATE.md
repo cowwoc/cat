@@ -3,5 +3,6 @@
 - **Status:** closed
 - **Progress:** 100%
 - **Resolution:** implemented
-- **Version:** v1.8
 - **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-02-13

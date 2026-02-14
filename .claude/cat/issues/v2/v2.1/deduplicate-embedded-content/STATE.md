@@ -1,9 +1,11 @@
-# State: deduplicate-embedded-content
+# State
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
-- **Completed At:** 2026-01-26
+- **Blocks:** []
+- **Last Updated:** 2026-01-26
 
 ## Summary
 Extracted `build_header_box()` from `stakeholder_handler.py` to `status_handler.py` where other

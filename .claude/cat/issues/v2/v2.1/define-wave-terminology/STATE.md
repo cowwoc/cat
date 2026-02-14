@@ -2,5 +2,7 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Dependencies:** [rename-subtask-to-subissue]
+- **Resolution:** implemented
+- **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-10

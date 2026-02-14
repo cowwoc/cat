@@ -2,10 +2,10 @@
 
 - **Status:** closed
 - **Progress:** 100%
+- **Resolution:** implemented
 - **Dependencies:** []
+- **Blocks:** []
 - **Last Updated:** 2026-02-04
-- **Completed:** 2026-02-04
-- **Resolution:** implemented (commit f4b5aa4d)
 
 ## Implementation
 

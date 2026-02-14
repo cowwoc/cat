@@ -2,9 +2,9 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Started:** 2026-01-29
-- **Created From:** migrate-python-to-java
+- **Resolution:** implemented
 - **Dependencies:** [java-core-hooks]
+- **Blocks:** []
 - **Last Updated:** 2026-01-29
 
 ## Completed Work

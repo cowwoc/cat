@@ -1,12 +1,11 @@
-# rename-task-scripts
+# State
 
 - **Status:** closed
 - **Progress:** 100%
-- **Dependencies:** []
-- **Assignee:** (unassigned)
-- **Priority:** normal
 - **Resolution:** implemented
-- **Completed:** 2026-01-26
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-01-26
 
 ## Changes
 
