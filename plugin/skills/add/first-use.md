@@ -604,6 +604,7 @@ Use appropriate template format:
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** [{dep1}, {dep2}] or []
+- **Blocks:** []
 - **Last Updated:** {timestamp}
 ```
 

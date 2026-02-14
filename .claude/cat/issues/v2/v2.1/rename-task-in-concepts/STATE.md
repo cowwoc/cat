@@ -4,8 +4,7 @@
 - **Progress:** 100%
 - **Resolution:** implemented
 - **Dependencies:** [rename-task-scripts]
-- **Created From:** 2.1-rename-task-to-issue
-- **Completed:** 2026-01-29
+- **Blocks:** []
 - **Last Updated:** 2026-01-29
 
 ## Changes

@@ -2,11 +2,10 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Resolution:** duplicate
-- **Duplicate Of:** 2.1-compress-skills-md
-- **Completed:** 2026-01-27
+- **Resolution:** duplicate (2.1-compress-skills-md)
+- **Parent:** compress-md-files
 - **Dependencies:** []
-- **Created From:** compress-md-files
+- **Blocks:** []
 - **Last Updated:** 2026-01-27
 
 ## Notes

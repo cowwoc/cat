@@ -2,6 +2,7 @@
 
 - **Status:** open
 - **Progress:** 0%
+- **Parent:** compress-md-files
 - **Dependencies:** [migrate-to-silent-preprocessing, prevent-plan-md-priming, migrate-python-to-java]
-- **Created From:** compress-md-files
+- **Blocks:** []
 - **Last Updated:** 2026-01-26

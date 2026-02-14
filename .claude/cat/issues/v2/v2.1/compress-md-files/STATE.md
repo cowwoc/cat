@@ -2,11 +2,9 @@
 
 - **Status:** in-progress
 - **Progress:** 33%
-- **Decomposed:** true
 - **Dependencies:** [migrate-python-to-java]
+- **Blocks:** []
 - **Last Updated:** 2026-01-26
-- **Decomposed At:** 2026-01-26
-- **Reason:** Task exceeded context threshold (86 files = ~258K tokens)
 
 ## Decomposed Into
 - compress-skills-md (34 files)

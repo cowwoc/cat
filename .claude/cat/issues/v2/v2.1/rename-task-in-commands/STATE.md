@@ -2,10 +2,10 @@
 
 - **Status:** closed
 - **Progress:** 100%
-- **Resolution:** duplicate
+- **Resolution:** duplicate (see parent issue)
+- **Parent:** 2.1-rename-task-to-issue
 - **Dependencies:** [rename-task-scripts]
-- **Created From:** 2.1-rename-task-to-issue
-- **Completed:** 2026-01-30
+- **Blocks:** []
 - **Last Updated:** 2026-01-30
 
 ## Notes

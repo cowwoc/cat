@@ -3,6 +3,7 @@
 - **Status:** open
 - **Progress:** 50%
 - **Dependencies:** [showcase-template]
+- **Blocks:** []
 - **Last Updated:** 2026-01-23
 
 ## Notes
