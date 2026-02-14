@@ -70,13 +70,13 @@ Return JSON on failure:
 }
 ```
 
-**Extended failure info (M441):** When returning NO_TASKS, include `blocked_tasks` and `locked_tasks`
+**Extended failure info:** When returning NO_TASKS, include `blocked_tasks` and `locked_tasks`
 arrays so the parent agent can report WHY no tasks are available. Also include `closed_count` and
 `total_count` for context. Omit empty arrays.
 
 ## Critical Constraints
 
-### Use Existing Scripts (M364)
+### Use Existing Scripts
 
 **MANDATORY: Use `get-available-issues.sh` for task discovery. NEVER reimplement its logic.**
 
@@ -94,7 +94,7 @@ If the script doesn't support a needed feature (like filtering by name):
 **NEVER** write custom Python/bash to traverse issues directories and check STATE.md files.
 That logic already exists in the script and is tested.
 
-### No Temporary State Mutations (M365)
+### No Temporary State Mutations
 
 **MANDATORY: NEVER modify STATE.md files temporarily to influence discovery.**
 
@@ -124,7 +124,7 @@ Temporary mutations that rely on cleanup code are unsafe because:
 
 ### Step 2: Find Available Task
 
-Use the discovery script with `--exclude-pattern` when arguments contain a filter (M435):
+Use the discovery script with `--exclude-pattern` when arguments contain a filter:
 
 ```bash
 # Convert natural language filter to glob pattern:
@@ -144,7 +144,7 @@ Parse the result and handle statuses:
 - `not_found` - Return NO_TASKS with extended info (see below)
 - `locked` - Return LOCKED status with owner info
 
-**Extended failure info (M441):** When discovery returns `not_found`, gather diagnostic context
+**Extended failure info:** When discovery returns `not_found`, gather diagnostic context
 before returning NO_TASKS. Scan issue directories to report why no tasks are available:
 
 ```bash
@@ -196,7 +196,7 @@ done
 Include these fields in the NO_TASKS JSON response. This allows the parent agent to explain
 to the user exactly why no tasks are executable.
 
-**Filtering (M364, M435):** Use `--exclude-pattern` for exclusion filters. The script handles
+**Filtering:** Use `--exclude-pattern` for exclusion filters. The script handles
 glob matching natively and continues searching for the next eligible issue after excluding matches.
 Only use in-memory filtering for inclusion filters (e.g., "only migration") where the script
 has no native support.
@@ -228,7 +228,7 @@ git worktree add -b "${ISSUE_BRANCH}" "${WORKTREE_PATH}" HEAD
 echo "${BASE_BRANCH}" > "$(git rev-parse --git-common-dir)/worktrees/${ISSUE_BRANCH}/cat-base"
 ```
 
-### Step 5: Verify Worktree Branch (M351)
+### Step 5: Verify Worktree Branch
 
 **MANDATORY: Verify the worktree is on the correct branch before proceeding.**
 
@@ -242,15 +242,15 @@ if [[ "$ACTUAL_BRANCH" != "$ISSUE_BRANCH" ]]; then
 fi
 ```
 
-**Why this matters (M351):** Without verification, a worktree may be created but remain on the base
+**Why this matters:** Without verification, a worktree may be created but remain on the base
 branch, causing commits to go to the wrong branch and bypass the review/merge workflow.
 
-### Step 6: Check for Existing Work (M362, M363, M394)
+### Step 6: Check for Existing Work
 
 **MANDATORY: Use the check-existing-work.sh script to detect existing commits.**
 
 This check is deterministic (no LLM decision-making required) so it's implemented as a script
-with full test coverage (M363).
+with full test coverage.
 
 ```bash
 EXISTING_WORK_RESULT=$("${CLAUDE_PLUGIN_ROOT}/scripts/check-existing-work.sh" \
@@ -266,17 +266,17 @@ EXISTING_COMMITS=$(echo "$EXISTING_WORK_RESULT" | jq -r '.existing_commits')
 COMMIT_SUMMARY=$(echo "$EXISTING_WORK_RESULT" | jq -r '.commit_summary')
 ```
 
-**Why this matters (M362):** Without checking for existing commits, the orchestrator spawns
+**Why this matters:** Without checking for existing commits, the orchestrator spawns
 an execution subagent for work that's already done. When `has_existing_work: true`, the main
 agent should skip execution phase and proceed directly to review/merge.
 
-**Why a script (M363):** This check is entirely deterministic - it just runs git commands and
+**Why a script:** This check is entirely deterministic - it just runs git commands and
 returns JSON. Using a script instead of inline LLM instructions ensures:
 - Test coverage for the detection logic
 - Consistent behavior across invocations
 - No risk of LLM misimplementing the check
 
-### Step 6b: Check for Work Merged to Base (M394)
+### Step 6b: Check for Work Merged to Base
 
 **MANDATORY: Check if task was already implemented on base branch.**
 
@@ -295,7 +295,7 @@ if [[ -n "$TASK_COMMITS" ]]; then
 fi
 ```
 
-**Why this matters (M394):** Work may be implemented directly on the base branch without using
+**Why this matters:** Work may be implemented directly on the base branch without using
 the task workflow (e.g., previous session implemented work but didn't update STATE.md, or
 manual work outside `/cat:work`). When suspicious commits are found:
 
@@ -306,7 +306,7 @@ manual work outside `/cat:work`). When suspicious commits are found:
 **This prevents duplicate work** when STATE.md shows `in-progress` but the actual implementation
 already exists on the base branch.
 
-### Step 7: Update STATE.md (M432)
+### Step 7: Update STATE.md
 
 **MANDATORY: Update STATE.md in the WORKTREE, not in the main workspace.**
 
@@ -341,7 +341,7 @@ Output the JSON result with all required fields.
 - Script returns error: Return ERROR with message
 - Lock unavailable: Return LOCKED, do NOT investigate
 - Task exceeds hard limit: Return OVERSIZED
-- **Worktree on wrong branch (M351):** Clean up and return ERROR
+- **Worktree on wrong branch:** Clean up and return ERROR
 
 ## Context Loaded
 

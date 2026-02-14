@@ -90,7 +90,7 @@ output_tokens` from message.usage) which only shows response overhead.
 
 ---
 
-## Token Estimate Variance Check (M099)
+## Token Estimate Variance Check
 
 After collecting actual token usage, compare against estimate from issue analysis:
 

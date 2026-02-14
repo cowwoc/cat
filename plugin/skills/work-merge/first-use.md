@@ -113,7 +113,7 @@ If rebase fails with conflicts:
 
 **NEVER fall back to merge commit.** Linear history is mandatory.
 
-### Step 5: Remove Worktree, Merge, and Cleanup (M433)
+### Step 5: Remove Worktree, Merge, and Cleanup
 
 ```bash
 # Exit worktree before removing it
@@ -124,12 +124,12 @@ git worktree remove ${WORKTREE_PATH} --force &&
   "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}"
 ```
 
-### Step 6: Auto-Complete Decomposed Parent (M434, M467)
+### Step 6: Auto-Complete Decomposed Parent
 
 After merging, check if this issue is a sub-issue of a decomposed parent. If all sibling
 sub-issues are now implemented and tested, mark the parent as completed.
 
-**LIMITATION (M467):** This auto-completion only checks sub-issue status, NOT parent acceptance criteria.
+**LIMITATION:** This auto-completion only checks sub-issue status, NOT parent acceptance criteria.
 If parent has acceptance criteria beyond sub-issues being completed, auto-closure may be premature.
 When /cat:work selects the parent later, it must verify parent PLAN.md acceptance criteria per
 decompose-issue § Closing Decomposed Parents.

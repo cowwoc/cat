@@ -2,7 +2,7 @@
 
 **Purpose**: Safely squash multiple commits into one with automatic backup, verification, and cleanup.
 
-## MANDATORY: Use This Skill (M385)
+## MANDATORY: Use This Skill
 
 **NEVER manually run `git reset --soft` for squashing.** Always use this skill.
 
@@ -72,14 +72,14 @@ docs: update README
 ```
 
 **What is NOT the same topic (keep separate):**
-- Learning/retrospective changes (M310) - these are meta-work, not issue implementation
+- Learning/retrospective changes - these are meta-work, not issue implementation
 - Changes to shared infrastructure (build-verification.md, session instructions)
 - Convention updates that don't directly enable the implementation
 
 Even if commits share the same type prefix (e.g., `config:`), they may be different topics. The test: "Would reverting
 this commit break the issue implementation?" If no, it's a different topic.
 
-**Analyze ALL files in each commit (M232):**
+**Analyze ALL files in each commit:**
 
 When determining commit topics, examine EVERY file modified by the commit, not just one file type:
 
@@ -228,7 +228,7 @@ git commit-tree "$TREE" -p $BASE -m "$MESSAGE"  # Use same pinned ref
 **CRITICAL: Follow commit grouping rules from [commit-types.md](../../concepts/commit-types.md).**
 
 Key rules when squashing:
-- **Issue STATE.md** → same commit as implementation (M076)
+- **Issue STATE.md** → same commit as implementation
 - **Different commit types** (`feature:` vs `docs:`) → keep separate
 - **Related same-type commits** → can combine
 - **Implementation + refactor of same code** → combine into one commit

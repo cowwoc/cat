@@ -99,9 +99,9 @@ Parse the JSON output from stdout.
 | ERROR | Display error, stop |
 | No JSON / empty | Subagent failed to produce output - display error, release lock if acquired, stop |
 
-**Parsing the result (M448):** The script returns JSON to stdout. Parse it directly.
+**Parsing the result:** The script returns JSON to stdout. Parse it directly.
 
-**No-result handling (M441, M444):** If the prepare script returns no parseable JSON (empty output
+**No-result handling:** If the prepare script returns no parseable JSON (empty output
 or malformed JSON), treat as ERROR and STOP. Do NOT attempt to reconstruct the result by listing
 worktrees or reading lock files. Artifacts from other sessions may exist and will mislead you into
 working on the wrong task.
@@ -109,7 +109,7 @@ working on the wrong task.
 Display: "Prepare phase failed to return a result. The script may have encountered an error."
 Then STOP. Do not proceed to work-with-issue.
 
-**NO_TASKS Guidance (M396, M441):**
+**NO_TASKS Guidance:**
 
 When prepare phase returns NO_TASKS, use extended failure fields to provide specific diagnostics:
 
@@ -129,7 +129,7 @@ Fallback to `message` field if extended fields are absent:
 
 **NEVER suggest working on a previous version** - if user is on v2.1, suggesting v2.0 is unhelpful.
 
-**Potentially Complete Handling (M443):**
+**Potentially Complete Handling:**
 
 When prepare returns READY with `potentially_complete: true`, work may already exist on the base branch
 with STATE.md not reflecting completion (e.g., stale merge overwrote status).

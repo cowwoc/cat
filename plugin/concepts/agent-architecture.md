@@ -20,7 +20,7 @@
 - Execute implementation work
 - Work in worktrees except for merging
 
-### No Exceptions for "Small Fixes" (M097)
+### No Exceptions for "Small Fixes"
 
 **MANDATORY**: Main agent NEVER edits source code directly, even for:
 - Merge conflict resolution (spawn subagent)
@@ -33,7 +33,7 @@
 The delegation boundary exists for quality and traceability, not efficiency.
 "Quick fixes" bypass fresh context and create untraceable changes.
 
-**MANDATORY Pre-Edit Self-Check (M088):**
+**MANDATORY Pre-Edit Self-Check:**
 
 BEFORE using the Edit tool on ANY source file (.java, .md code docs, etc.), STOP and verify:
 
@@ -360,7 +360,7 @@ When a subagent exceeds the hard limit:
 
 **MANDATORY**: Verify paths and config values before use. Common failure patterns documented below.
 
-### Worktree Path Handling (M267)
+### Worktree Path Handling
 
 When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/issue-name/`):
 
@@ -378,7 +378,7 @@ When working in a worktree (e.g., `/workspace/.claude/cat/worktrees/issue-name/`
 **Anti-pattern**: Creating files with `/workspace/` prefix while in worktree - changes go to main workspace instead of
 issue worktree.
 
-### Config File Resolution (M268)
+### Config File Resolution
 
 Config files may not exist in worktrees due to `.gitignore`:
 
@@ -402,7 +402,7 @@ fi
 
 **Anti-pattern**: Reading config from cwd in worktree, getting default values instead of user's configured values.
 
-### Terminology Disambiguation (M266)
+### Terminology Disambiguation
 
 Ambiguous terms require user clarification before action:
 
@@ -422,7 +422,7 @@ When user says "[ambiguous term]", ask:
 
 **Anti-pattern**: Interpreting "abort" as permanent abandonment without asking.
 
-### Environment Variable Availability (M359, M471)
+### Environment Variable Availability
 
 Environment variable availability depends on the execution context. Understanding these distinctions prevents common
 path resolution failures.
@@ -476,7 +476,7 @@ CAT scripts use **self-discovery** to find paths, avoiding dependency on environ
 **Session ID** is the exception - it must be extracted from context (SessionStart hook injects
 "Session ID: ..." into conversation via additionalContext).
 
-## Hook Registration Architecture (M404)
+## Hook Registration Architecture
 
 Claude Code supports hooks at two levels with different registration locations:
 
@@ -520,7 +520,7 @@ Project-specific hooks are registered in `.claude/settings.json`:
 
 These override or supplement plugin hooks for project-specific behavior.
 
-### Common Mistake (M404)
+### Common Mistake
 
 When investigating plugin hook behavior, check `plugin/hooks/hooks.json` first, not
 `.claude/settings.json`. The project settings file is for user-defined project hooks,

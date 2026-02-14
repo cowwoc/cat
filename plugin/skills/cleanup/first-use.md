@@ -23,7 +23,7 @@ All abandoned CAT artifacts (worktrees, locks, branches) are identified and clea
 - ALWAYS remove worktree BEFORE deleting its branch
 - NEVER force-delete branches that might have unmerged commits
 
-### STATE.md Reset Safety (M399)
+### STATE.md Reset Safety
 
 **When resetting stuck `in-progress` tasks, verify implementation status first:**
 

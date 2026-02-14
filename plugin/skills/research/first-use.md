@@ -26,7 +26,7 @@ with proper configuration, and receives structured research results.
 - Topic is well-understood and no research needed
 - Just need to read a few files (use Read/Grep directly)
 
-**Main agent only (M429):** This skill provides templates for spawning research subagents.
+**Main agent only:** This skill provides templates for spawning research subagents.
 Subagents cannot spawn other subagents, so this skill cannot be invoked from within a subagent.
 Reference: concepts/delegation-rules.md
 

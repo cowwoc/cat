@@ -89,7 +89,7 @@ To review: `git diff main..{branch}`
 
 ### 6. Update Issue STATE.md (BEFORE merge)
 
-**CRITICAL (M070): STATE.md must be in same commit as implementation.**
+**CRITICAL: STATE.md must be in same commit as implementation.**
 
 Before squashing/merging, update issue STATE.md to closed in the issue branch:
 
@@ -150,7 +150,7 @@ git merge {issue-branch} --no-ff
 
 ### 8. Worktree Cleanup
 
-**CRITICAL (M324): Change directory to main workspace BEFORE removing worktree.**
+**CRITICAL: Change directory to main workspace BEFORE removing worktree.**
 
 The shell's current working directory persists between Bash tool calls. If cwd is inside the
 worktree being removed, the deletion will succeed but leave the shell in an invalid state
@@ -227,7 +227,7 @@ git branch -d <branch-name>
 
 ## Error Recovery
 
-### CRITICAL: Worktree Location During Error Recovery (M101)
+### CRITICAL: Worktree Location During Error Recovery
 
 **When handling errors (especially merge conflicts), verify you're in the correct worktree:**
 

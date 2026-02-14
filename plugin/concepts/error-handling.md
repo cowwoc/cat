@@ -186,7 +186,7 @@ Lines 45-52 have conflicting changes from:
 3. Resume with /cat:work
 ```
 
-### Main Agent Response to Subagent Skill Failures (M429)
+### Main Agent Response to Subagent Skill Failures
 
 **CRITICAL: When a subagent fails to invoke a skill, main agent must NOT do the work manually.**
 
@@ -221,7 +221,7 @@ Main agent MUST:
 | Retry with explicit instructions | Add "You MUST use Skill tool, NOT manual implementation" |
 | Escalate to user | If retries fail, ask user how to proceed |
 
-**Anti-pattern (M429):**
+**Anti-pattern:**
 ```
 # BAD - Main agent sees subagent failure and decides to "just do it"
 Subagent: "FAILED: recursion issues with /cat:shrink-doc"

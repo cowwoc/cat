@@ -84,7 +84,7 @@ git worktree remove /workspace/.claude/cat/worktrees/issue-name --force  # Shell
 2. `cd /workspace` (or main workspace path)
 3. THEN run `git worktree remove`
 
-## When to Use `cd` (M398)
+## When to Use `cd`
 
 General guidance says "avoid `cd` to maintain working directory" - but this skill is an **exception**.
 

@@ -165,6 +165,17 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 **Rationale:** Code and documentation should describe current state and intent, not narrate their own evolution. Git
 history provides the authoritative record of changes.
 
+### M-Code References
+
+M-code labels (e.g., `(M088)`, `(M252)`) must not appear in agent-facing documentation (`plugin/skills/`,
+`plugin/concepts/`, `plugin/agents/`). These labels consume context tokens without providing value to agents.
+
+Keep M-codes only in:
+- `MEMORY.md` — human-readable session reference
+- `CLAUDE.md` — project configuration
+- `.claude/rules/` — project rules
+- `.claude/cat/retrospectives/` — historical record
+
 ## Shell Efficiency
 
 **Chain independent commands** with `&&` in a single Bash call instead of separate tool calls.

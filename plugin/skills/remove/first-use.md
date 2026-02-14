@@ -13,7 +13,7 @@ appropriate workflow based on user selection.
 
 <terminology>
 
-**CRITICAL DISAMBIGUATION (M250):**
+**CRITICAL DISAMBIGUATION:**
 
 When user says "abort issue", this is AMBIGUOUS:
 - "Abort" could mean: cleanup worktree/branch while KEEPING issue in planning (most common intent)

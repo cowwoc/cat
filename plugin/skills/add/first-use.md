@@ -259,7 +259,7 @@ Use AskUserQuestion:
 
 <step name="task_validate_version">
 
-**Validate selected version exists AND is not completed (M168):**
+**Validate selected version exists AND is not completed:**
 
 Verify the selected version exists in HANDLER_DATA.versions:
 - Check if version number matches a version in the list
@@ -337,7 +337,7 @@ If name already exists:
 
 <step name="task_discuss">
 
-**Gather additional issue context (M374 - skip obvious questions):**
+**Gather additional issue context:**
 
 Note: Issue description and type were already captured in task_gather_intent step.
 Use TASK_DESCRIPTION and TASK_TYPE from that step.
@@ -348,7 +348,7 @@ Initialize UNKNOWNS as empty list.
 
 Use HANDLER_DATA.versions[selected_version].issue_count to determine if this is the first issue.
 
-**2. Smart defaults based on context (M374):**
+**2. Smart defaults based on context:**
 
 **If issue_count = 0 (first issue in version):**
 - Set DEPENDENCIES = [] (no issues to depend on)
@@ -474,7 +474,7 @@ If no requirements defined in parent version: Satisfies = None
 **Validate acceptance criteria against requirements:**
 
 This step ensures acceptance criteria comprehensively cover the task requirements before PLAN.md creation.
-Addresses the known gap (M462) where incorrect acceptance criteria primed incorrect implementations.
+Addresses the known gap where incorrect acceptance criteria primed incorrect implementations.
 
 **Prepare validation context:**
 
@@ -610,7 +610,7 @@ Use appropriate template (Feature, Bugfix, or Refactor) from issue-plan.md refer
 outcomes). Do NOT include expected values like "score = 1.0" in Execution Steps as this primes subagents to fabricate
 results.
 
-**PLAN.md Comprehensiveness (M430):** The PLAN.md must be comprehensive enough for a haiku-level
+**PLAN.md Comprehensiveness:** The PLAN.md must be comprehensive enough for a haiku-level
 model to implement mechanically without making architectural decisions. Include:
 - Exact file paths to create/modify
 - Specific code patterns or formats to use
@@ -620,7 +620,7 @@ model to implement mechanically without making architectural decisions. Include:
 If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md
 is not detailed enough. The subagent should only decide "how to write the code", not "what approach to take".
 
-**Batch Execution Check (M427):** When the issue involves multiple files AND a skill (e.g., compress 9 files with
+**Batch Execution Check:** When the issue involves multiple files AND a skill (e.g., compress 9 files with
 /cat:shrink-doc):
 1. Read the target skill's documentation for batch/parallel execution patterns
 2. If the skill documents using `/cat:delegate` for multiple files, write execution steps to use delegate
@@ -669,7 +669,7 @@ Check the JSON output for success status.
 
 <step name="task_check_parent_decomposition">
 
-**Check if parent task is decomposed (M468):**
+**Check if parent task is decomposed:**
 
 After creating a sub-issue, verify if it's being added to a decomposed parent issue.
 
@@ -688,7 +688,7 @@ if [[ -f "${PARENT_ISSUE_DIR}/STATE.md" ]] && grep -q "^## Decomposed Into" "${P
   echo "IMPORTANT: The parent task ${PARENT_NAME} cannot be closed or merged"
   echo "until ALL sub-issues (including this new one) are completed and closed."
   echo ""
-  echo "Completion requirements (M467):"
+  echo "Completion requirements:"
   echo "  1. All sub-issues must be individually completed and closed"
   echo "  2. Parent's own acceptance criteria must be verified"
   echo "  3. Only then can the parent be marked complete"
@@ -697,7 +697,7 @@ if [[ -f "${PARENT_ISSUE_DIR}/STATE.md" ]] && grep -q "^## Decomposed Into" "${P
 fi
 ```
 
-This check ensures the agent is reminded that decomposed parents require all sub-issues to be completed before the parent can be closed or merged, preventing premature parent completion (M467, M468).
+This check ensures the agent is reminded that decomposed parents require all sub-issues to be completed before the parent can be closed or merged, preventing premature parent completion.
 
 </step>
 
@@ -1004,7 +1004,7 @@ Use AskUserQuestion:
 
 Based on response, ask follow-up questions using AskUserQuestion.
 
-**3. Boundaries (M374 - skip unless user mentioned exclusions):**
+**3. Boundaries:**
 
 Only ask about scope boundaries if user's previous answers mentioned:
 - "later", "future", "not yet", "eventually"
@@ -1055,7 +1055,7 @@ Present for review with AskUserQuestion.
 
 <step name="version_configure_gates">
 
-**Apply standard gates with option for customization (M374):**
+**Apply standard gates with option for customization:**
 
 Standard gates are applied automatically - do not ask users to confirm obvious requirements.
 

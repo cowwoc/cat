@@ -20,7 +20,7 @@ Reference for categorizing mistakes in `/cat:learn`.
 | architecture_issue | Structural or design-level mistake |
 | documentation_violation | Violated documented standard (not workflow protocol) |
 | giving_up | Presented options instead of implementing, or stopped prematurely |
-| misleading_documentation | Documentation primed agent for wrong approach (M269) |
+| misleading_documentation | Documentation primed agent for wrong approach |
 
 ## Common Root Cause Patterns
 

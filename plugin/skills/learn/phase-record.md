@@ -71,7 +71,7 @@ Go back to step 9 and find a code/config/documentation fix.
 
 1. **Directory path**: Files MUST be in `.claude/cat/retrospectives/`, NOT `.claude/retrospectives/`.
 
-2. **prevention_path format (M040)**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative
+2. **prevention_path format**: MUST use `${CLAUDE_PROJECT_DIR}` prefix for project-relative
 paths:
    ```yaml
    # INVALID - relative paths break when cwd changes
@@ -83,7 +83,7 @@ paths:
    prevention_path: "/workspace/cat/skills/my-skill/SKILL.md"
    ```
 
-3. **Plugin source vs cache (M041)**: When fixing CAT plugin files, edit SOURCE not CACHE:
+3. **Plugin source vs cache**: When fixing CAT plugin files, edit SOURCE not CACHE:
    ```yaml
    # WRONG - edits lost on plugin update
    ~/.config/claude/plugins/cache/claude-code-cat/cat/1.1/skills/...
@@ -189,7 +189,7 @@ See [mistake-categories.md](mistake-categories.md) for full category list, preve
 patterns.
 
 **Common categories:** protocol_violation, prompt_engineering, context_degradation, tool_misuse,
-assumption_without_verification, misleading_documentation (M269)
+assumption_without_verification, misleading_documentation
 
 **Use jq to append to current month's split file:**
 
@@ -200,7 +200,7 @@ jq --argjson new '{...new entry...}' '.mistakes += [$new]' \
   && mv "$MISTAKES_FILE.tmp" "$MISTAKES_FILE"
 ```
 
-**CRITICAL (M470): After appending, verify the entry exists in the file.**
+**CRITICAL: After appending, verify the entry exists in the file.**
 
 ```bash
 # Verify the new entry was written successfully
@@ -258,7 +258,7 @@ git -C "${CLAUDE_PROJECT_DIR}" add "$MISTAKES_FILE" "$INDEX_FILE"
 COMMIT_OUTPUT=$(git -C "${CLAUDE_PROJECT_DIR}" commit -m "config: record learning ${NEXT_ID} - {short description}" 2>&1)
 COMMIT_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse --short HEAD)
 
-# CRITICAL (M470): Verify commit succeeded and capture actual hash
+# CRITICAL: Verify commit succeeded and capture actual hash
 if [[ $? -ne 0 ]]; then
   echo "ERROR: Commit failed: $COMMIT_OUTPUT"
   exit 1
@@ -291,7 +291,7 @@ else
 fi
 ```
 
-**If triggered, MUST use AskUserQuestion (M071):**
+**If triggered, MUST use AskUserQuestion:**
 
 ```yaml
 retrospective_trigger:
@@ -305,7 +305,7 @@ retrospective_trigger:
       - "Skip this cycle" - Reset counter without running
 ```
 
-**Anti-pattern (M071):** Printing "retrospective should be triggered" without using AskUserQuestion
+**Anti-pattern:** Printing "retrospective should be triggered" without using AskUserQuestion
 to give user explicit choice.
 
 ## Output Format
