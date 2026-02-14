@@ -261,8 +261,14 @@ generate_startup_archives() {
   local aot_cache="${OUTPUT_DIR}/lib/server/aot-cache.aot"
 
   # Leyden AOT: record training data, then create pre-linked cache.
-  log "Generating Leyden AOT cache..."
-  run_all_handlers "Recording AOT" "$java_bin" -XX:AOTMode=record -XX:AOTConfiguration="$aot_config"
+  # Uses a single AotTraining class that exercises all handlers in one JVM invocation,
+  # replacing 20 separate JVM launches (~19s -> ~1s).
+  log "Recording AOT training data..."
+  "$java_bin" \
+    -XX:AOTMode=record \
+    -XX:AOTConfiguration="$aot_config" \
+    -m "$(handler_main AotTraining)" \
+    2>/dev/null || true
 
   if [[ ! -f "$aot_config" ]]; then
     log "Warning: Failed to record AOT configuration"
