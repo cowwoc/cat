@@ -87,6 +87,11 @@ in [topic] systems and how experienced testers catch those bugs.
 
 ## Review Mode (default)
 
+## Working Directory
+
+The delegation prompt MUST specify a working directory. Read and modify files ONLY within that directory. Do NOT access
+files outside it.
+
 ## Holistic Review
 
 **Review changes in context of the entire project's test coverage, not just the diff.**
