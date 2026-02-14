@@ -33,6 +33,24 @@
 The delegation boundary exists for quality and traceability, not efficiency.
 "Quick fixes" bypass fresh context and create untraceable changes.
 
+**MANDATORY Pre-Edit Self-Check (M088):**
+
+BEFORE using the Edit tool on ANY source file (.java, .md code docs, etc.), STOP and verify:
+
+1. **Am I the main agent?** (orchestrating a CAT task)
+2. **Is this a source/documentation file?** (not STATE.md, PLAN.md, CHANGELOG.md)
+3. **Is a subagent already running or could one be spawned?**
+
+If answers are YES/YES/YES → **SPAWN SUBAGENT INSTEAD**
+
+**This applies even for "simple" changes:**
+- Variable renaming → subagent
+- Comment updates → subagent
+- Style fixes → subagent
+- Convention updates to style guides → subagent
+
+**Rationale:** "Simple" edits bypass the delegation boundary. If it touches code, delegate it.
+
 ### Work Request Handling
 
 **Default behavior:** When a user requests work, the main agent proposes issue creation first.
