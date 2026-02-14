@@ -72,7 +72,8 @@ public class ProgressBannerTest
     ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
     String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
     requireThat(result, "result").contains("Preparing");
-    requireThat(result, "result").contains("Executing");
+    requireThat(result, "result").contains("Implementing");
+    requireThat(result, "result").contains("Confirming");
     requireThat(result, "result").contains("Reviewing");
     requireThat(result, "result").contains("Merging");
   }
@@ -104,26 +105,27 @@ public class ProgressBannerTest
     ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
     String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
     requireThat(result, "result").contains("◉ Preparing");
-    requireThat(result, "result").contains("○ Executing");
+    requireThat(result, "result").contains("○ Implementing");
   }
 
   /**
-   * Verifies that generateBanner for executing phase shows complete then active symbols.
+   * Verifies that generateBanner for implementing phase shows complete then active symbols.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void generateBannerExecutingPhaseShowsCompleteAndActive() throws IOException
+  public void generateBannerImplementingPhaseShowsCompleteAndActive() throws IOException
   {
     ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.EXECUTING);
+    String result = banner.generateBanner("2.1-test-issue", Phase.IMPLEMENTING);
     requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("◉ Executing");
+    requireThat(result, "result").contains("◉ Implementing");
+    requireThat(result, "result").contains("○ Confirming");
     requireThat(result, "result").contains("○ Reviewing");
   }
 
   /**
-   * Verifies that generateBanner for reviewing phase shows two complete then active.
+   * Verifies that generateBanner for reviewing phase shows three complete then active.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -133,7 +135,8 @@ public class ProgressBannerTest
     ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
     String result = banner.generateBanner("2.1-test-issue", Phase.REVIEWING);
     requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("● Executing");
+    requireThat(result, "result").contains("● Implementing");
+    requireThat(result, "result").contains("● Confirming");
     requireThat(result, "result").contains("◉ Reviewing");
     requireThat(result, "result").contains("○ Merging");
   }
@@ -149,7 +152,8 @@ public class ProgressBannerTest
     ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
     String result = banner.generateBanner("2.1-test-issue", Phase.MERGING);
     requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("● Executing");
+    requireThat(result, "result").contains("● Implementing");
+    requireThat(result, "result").contains("● Confirming");
     requireThat(result, "result").contains("● Reviewing");
     requireThat(result, "result").contains("◉ Merging");
   }
@@ -194,7 +198,7 @@ public class ProgressBannerTest
   }
 
   /**
-   * Verifies that generateAllPhases produces output with all four phases.
+   * Verifies that generateAllPhases produces output with all five phases.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -204,7 +208,8 @@ public class ProgressBannerTest
     ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
     String result = banner.generateAllPhases("2.1-test-issue");
     requireThat(result, "result").contains("**Preparing phase**");
-    requireThat(result, "result").contains("**Executing phase**");
+    requireThat(result, "result").contains("**Implementing phase**");
+    requireThat(result, "result").contains("**Confirming phase**");
     requireThat(result, "result").contains("**Reviewing phase**");
     requireThat(result, "result").contains("**Merging phase**");
   }
@@ -240,7 +245,7 @@ public class ProgressBannerTest
       if (line.contains("2.1-my-issue"))
         ++issueIdCount;
     }
-    requireThat(issueIdCount, "issueIdCount").isGreaterThanOrEqualTo(4);
+    requireThat(issueIdCount, "issueIdCount").isGreaterThanOrEqualTo(5);
   }
 
   /**
@@ -396,7 +401,8 @@ public class ProgressBannerTest
     requireThat(lines[1], "middleLine").startsWith("│");
     requireThat(lines[1], "middleLine").endsWith("│");
     requireThat(lines[1], "middleLine").contains("◉ Preparing");
-    requireThat(lines[1], "middleLine").contains("○ Executing");
+    requireThat(lines[1], "middleLine").contains("○ Implementing");
+    requireThat(lines[1], "middleLine").contains("○ Confirming");
     requireThat(lines[1], "middleLine").contains("○ Reviewing");
     requireThat(lines[1], "middleLine").contains("○ Merging");
     requireThat(lines[2], "bottomLine").startsWith("╰");
@@ -407,5 +413,40 @@ public class ProgressBannerTest
     int bottomLength = lines[2].length();
     requireThat(topLength, "topLength").isEqualTo(bottomLength);
     requireThat(middleLength, "middleLength").isEqualTo(bottomLength);
+  }
+
+  /**
+   * Verifies that generateBanner for confirming phase shows correct symbol pattern.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void generateBannerConfirmingPhaseShowsCorrectPattern() throws IOException
+  {
+    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
+    String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
+    requireThat(result, "result").contains("● Preparing");
+    requireThat(result, "result").contains("● Implementing");
+    requireThat(result, "result").contains("◉ Confirming");
+    requireThat(result, "result").contains("○ Reviewing");
+    requireThat(result, "result").contains("○ Merging");
+  }
+
+  /**
+   * Verifies that phaseSymbol returns correct symbols relative to CONFIRMING phase.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void confirmingPhaseSymbolsAreCorrect() throws IOException
+  {
+    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
+    String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
+
+    requireThat(result, "result").contains("● Preparing");
+    requireThat(result, "result").contains("● Implementing");
+    requireThat(result, "result").contains("◉ Confirming");
+    requireThat(result, "result").contains("○ Reviewing");
+    requireThat(result, "result").contains("○ Merging");
   }
 }

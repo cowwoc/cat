@@ -54,6 +54,7 @@ readonly -a HANDLERS=(
   "get-status-output:skills.GetStatusOutput"
   "get-render-diff-output:skills.GetRenderDiffOutput"
   "session-analyzer:util.SessionAnalyzer"
+  "progress-banner:skills.ProgressBanner"
 )
 
 # --- Logging ---
