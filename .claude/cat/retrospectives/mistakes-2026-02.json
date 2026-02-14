@@ -3889,6 +3889,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After auto-fix addresses specific stakeholder concerns, re-invoke stakeholder-review with revalidate_stakeholders parameter targeting only affected stakeholders (e.g., ['design'] after fixing design concerns) instead of full re-review"
+    },
+    {
+      "id": "M493",
+      "timestamp": "2026-02-14T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Merge subagent removed worktree while shell was inside it, corrupting shell session",
+      "root_cause": "work-merge skill buries critical safety instruction ('cd /workspace before removal') as a note between steps instead of explicit numbered step. Haiku subagent skipped the note and removed worktree while shell was inside it.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-merge/first-use.md",
+      "pattern_keywords": [
+        "worktree_removal",
+        "shell_corruption",
+        "directory_safety"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M464",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Create explicit numbered Step 5: 'Exit Worktree' with MANDATORY cd /workspace and verification pwd check, before Step 6: 'Remove Worktree'. Make safety instruction impossible to skip.",
+      "fix_blocked_by_hook": true,
+      "fix_requires_worktree": true
     }
   ],
   "counter": 1
