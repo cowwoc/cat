@@ -7,12 +7,13 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,26 +42,33 @@ public final class BlockUnsafeRemoval implements BashHandler
   @Override
   public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
   {
-    String commandLower = command.toLowerCase();
-
-    // Check rm -rf commands
-    if (commandLower.contains("rm") && (commandLower.contains("-r") || commandLower.contains("-rf")))
+    try
     {
-      Result rmResult = checkRmCommand(command);
-      if (rmResult != null)
-        return rmResult;
-    }
+      String commandLower = command.toLowerCase(Locale.ENGLISH);
 
-    // Check git worktree remove commands
-    if (commandLower.contains("git") && commandLower.contains("worktree") &&
-        commandLower.contains("remove"))
+      // Check rm -rf commands
+      if (commandLower.contains("rm") && (commandLower.contains("-r") || commandLower.contains("-rf")))
+      {
+        Result rmResult = checkRmCommand(command);
+        if (rmResult != null)
+          return rmResult;
+      }
+
+      // Check git worktree remove commands
+      if (commandLower.contains("git") && commandLower.contains("worktree") &&
+          commandLower.contains("remove"))
+      {
+        Result worktreeResult = checkWorktreeRemove(command);
+        if (worktreeResult != null)
+          return worktreeResult;
+      }
+
+      return Result.allow();
+    }
+    catch (IOException e)
     {
-      Result worktreeResult = checkWorktreeRemove(command);
-      if (worktreeResult != null)
-        return worktreeResult;
+      throw WrappedCheckedException.wrap(e);
     }
-
-    return Result.allow();
   }
 
   /**
@@ -69,7 +77,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param command the bash command
    * @return a block result if unsafe removal detected, null otherwise
    */
-  private Result checkRmCommand(String command)
+  private Result checkRmCommand(String command) throws IOException
   {
     String cwd = extractCwd(command);
     Matcher matcher = RM_PATTERN.matcher(command);
@@ -117,7 +125,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param command the bash command
    * @return a block result if unsafe removal detected, null otherwise
    */
-  private Result checkWorktreeRemove(String command)
+  private Result checkWorktreeRemove(String command) throws IOException
   {
     String cwd = extractCwd(command);
     Matcher matcher = WORKTREE_REMOVE_PATTERN.matcher(command);
@@ -202,23 +210,13 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @param targetPath the target deletion path
    * @return true if cwd would be deleted
    */
-  private boolean isInsideOrEqual(Path cwdPath, Path targetPath)
+  private boolean isInsideOrEqual(Path cwdPath, Path targetPath) throws IOException
   {
-    try
-    {
-      // Normalize and resolve to real paths
-      Path realCwd = cwdPath.toRealPath();
-      Path realTarget = targetPath.toRealPath();
+    // Normalize and resolve to real paths
+    Path realCwd = cwdPath.toRealPath();
+    Path realTarget = targetPath.toRealPath();
 
-      // Check equality or if cwd starts with target
-      return realCwd.equals(realTarget) || realCwd.startsWith(realTarget);
-    }
-    catch (IOException _)
-    {
-      // If paths don't exist, fall back to string comparison
-      Path normalCwd = cwdPath.normalize();
-      Path normalTarget = targetPath.normalize();
-      return normalCwd.equals(normalTarget) || normalCwd.startsWith(normalTarget);
-    }
+    // Check equality or if cwd starts with target
+    return realCwd.equals(realTarget) || realCwd.startsWith(realTarget);
   }
 }

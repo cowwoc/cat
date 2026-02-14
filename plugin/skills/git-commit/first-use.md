@@ -35,10 +35,10 @@ fi
 ### 1. Describe WHAT the Code Does, Not the Process
 
 ```
-# WRONG - Describes the process
-Squashed commits
-Combined multiple commits
-Merged feature branch
+# WRONG - Describes the process (NEVER use these)
+❌ "Squashed commits"
+❌ "Combined multiple commits"
+❌ "Merged feature branch"
 
 # CORRECT - Describes what the code does
 Add user authentication with JWT tokens
@@ -286,10 +286,10 @@ Update code
 Fix bugs
 Refactor
 
-# Just the Process
-Squashed commits
-Merged feature branch
-Combined work
+# Just the Process (NEVER use these)
+❌ "Squashed commits"
+❌ "Merged feature branch"
+❌ "Combined work"
 
 # Too Technical
 Change variable name from x to userCount
