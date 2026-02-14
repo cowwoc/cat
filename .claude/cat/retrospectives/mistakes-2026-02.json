@@ -3862,6 +3862,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When delegating to stakeholder reviewers in worktree context, stakeholder agents must read all files from the worktree path prefix specified in the delegation prompt"
+    },
+    {
+      "id": "M492",
+      "timestamp": "2026-02-14T21:40:07Z",
+      "category": "architectural_flaw",
+      "description": "Main agent re-ran full stakeholder review (6 parallel subagents, ~50K+ tokens) 3 times after auto-fix iterations instead of targeting specific stakeholders",
+      "root_cause": "Architectural gap: stakeholder-review skill lacks selective re-review capability. Skill only supports full review invocation, forcing main agent to re-run all 6 stakeholders after each auto-fix iteration instead of targeting specific stakeholders whose concerns were addressed.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review/first-use.md",
+      "pattern_keywords": [
+        "stakeholder-review",
+        "auto-fix",
+        "iteration",
+        "targeted-review",
+        "token-optimization"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After auto-fix addresses specific stakeholder concerns, re-invoke stakeholder-review with revalidate_stakeholders parameter targeting only affected stakeholders (e.g., ['design'] after fixing design concerns) instead of full re-review"
     }
   ],
   "counter": 1
