@@ -7,7 +7,6 @@ import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
 import io.github.cowwoc.cat.hooks.bash.BlockMergeCommits;
 import io.github.cowwoc.cat.hooks.bash.BlockReflogDestruction;
-import io.github.cowwoc.cat.hooks.bash.BlockWorktreeCd;
 import io.github.cowwoc.cat.hooks.bash.ComputeBoxLines;
 import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import io.github.cowwoc.cat.hooks.bash.ValidateCommitType;
@@ -52,7 +51,6 @@ public final class GetBashOutput implements HookHandler
       new BlockMainRebase(),
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
-      new BlockWorktreeCd(),
       new ComputeBoxLines(scope),
       new RemindGitSquash(),
       new ValidateCommitType(),

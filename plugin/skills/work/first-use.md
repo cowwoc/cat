@@ -34,25 +34,15 @@ scripts or construct boxes.
 
 ## Critical Constraints
 
-### Never cd into Worktrees (M392)
+### Worktree Directory Safety
 
-**MANDATORY: Main agent must NEVER cd into worktree directories.**
+**Work from inside the worktree.** After setup, `cd` into the worktree directory and work from there.
 
-The merge phase removes worktrees after completion. If main agent's shell is inside a worktree
-when it's deleted, the shell session becomes corrupted (all commands fail with exit code 1).
+**CRITICAL SAFETY RULE:** Before removing a worktree (during merge/cleanup), ensure your shell is
+NOT inside the worktree directory. If a shell is inside a directory when it's deleted, the shell
+session becomes corrupted (all commands fail with exit code 1).
 
-**FORBIDDEN:**
-```bash
-cd /workspace/.claude/cat/worktrees/2.1-issue-name && git log
-```
-
-**ALLOWED:**
-```bash
-git -C /workspace/.claude/cat/worktrees/2.1-issue-name log
-```
-
-All worktree operations are delegated to subagents, which have their own shell sessions.
-Main agent should only read results and orchestrate.
+**Use `/cat:safe-rm`** before removing worktrees to verify no shells are inside the target directory.
 
 ## Configuration
 

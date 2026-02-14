@@ -177,7 +177,7 @@ git branch --show-current && git log --oneline -3 && git diff --stat
 # Bad: 3 separate tool calls for independent checks
 ```
 
-**Use `git -C`** instead of `cd` + `git` to operate on worktrees without changing directory.
+**Worktree directory safety:** You may `cd` into worktrees to work. However, before removing a directory (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm`.
 
 ## Testing
 
