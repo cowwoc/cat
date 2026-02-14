@@ -162,10 +162,19 @@ Skills can define custom variables in `bindings.json` that map to `SkillOutput` 
 - `${CLAUDE_SESSION_ID}` - current session identifier
 - `${CLAUDE_PROJECT_DIR}` - project directory path
 
+**Variable resolution behavior:**
+
+When the SkillLoader encounters a `${...}` variable reference in skill content, it resolves it using this precedence:
+1. **Built-in variables** - resolved to their runtime values
+2. **Binding variables** - resolved by invoking the corresponding SkillOutput class
+3. **Unknown variables** - passed through as literal text (e.g., `${UNKNOWN}` remains `${UNKNOWN}`)
+
+This pass-through behavior matches Claude Code's native variable handling, allowing skills to include variables that
+will be processed downstream by Claude Code itself.
+
 **Binding requirements:**
 - SkillOutput class must have a constructor accepting `JvmScope` parameter
 - Binding variable names must not collide with built-in variables
-- Undefined variables (not built-in, not in bindings) cause `IOException`
 
 **Example first-use.md using bindings:**
 ```markdown
