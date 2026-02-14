@@ -222,7 +222,7 @@ Task tool:
     - If steps say to invoke a skill that was pre-invoked above, use the provided results
     - Update STATE.md in the SAME commit as implementation (status: closed, progress: 100%)
     - Run tests if applicable
-    - Commit your changes with appropriate commit message format
+    - Commit your changes using the commit type from PLAN.md (e.g., `feature:`, `bugfix:`, `docs:`). The commit message must follow the format: `<type>: <descriptive summary>`. Example: `feature: add user authentication with JWT tokens`. Do NOT use generic messages like 'squash commit' or 'fix'.
 
     ## Return Format
     Return JSON when complete:
@@ -262,9 +262,72 @@ Task tool:
 
 Parse the subagent result:
 
-- **SUCCESS/PARTIAL**: Store metrics, proceed to Step 4
+- **SUCCESS/PARTIAL**: Store metrics, proceed to verification
 - **FAILED**: Return FAILED status with error details
 - **BLOCKED**: Return FAILED with blocker info
+
+### Verify Commit Messages
+
+After execution completes, verify that the subagent used the correct commit messages and amend any mismatches before
+proceeding to stakeholder review.
+
+**Note the expected commit message before spawning the subagent:**
+
+The delegation prompt specifies the commit message format the subagent should use. The expected commit type is
+determined per-commit based on what the orchestrator specified in the delegation prompt. Issues may produce multiple
+commit types (e.g., `feature:` for implementation + `docs:` for documentation). Each commit's type prefix should match
+what the orchestrator instructed for that specific deliverable.
+
+**Get actual commit messages from git:**
+
+```bash
+git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD
+```
+
+This returns lines of: `<commit-hash> <commit-subject>`.
+
+**Error handling:** If git log fails (non-zero exit code), log a warning and skip verification. Verification failures
+should not block the workflow.
+
+**Compare against subagent-reported messages:**
+
+1. Check if the execution result's `commits[]` array is empty. If empty, skip verification.
+2. Check if git log returned no commits. If no commits, skip verification.
+3. For each commit in the `commits[]` array:
+   - Extract the reported `hash` and `message` values
+   - Find the corresponding line in git log output by matching the hash
+   - If hash not found in git log output, treat as HIGH severity (subagent reporting error)
+   - If found, compare the reported message against the actual commit subject from git log
+   - Verify the commit message uses the expected type prefix specified in the delegation prompt
+
+**If commit count mismatch detected:**
+
+If the number of commits in `commits[]` differs from the number of lines in git log output:
+- Extra commits in git log (not in reported array): Log WARNING - note them but do not amend (not actionable)
+- Missing commits (in reported array but not in git log): Log HIGH severity - indicates subagent reporting error
+
+**If message mismatch detected:**
+
+When a mismatch is detected, the orchestrator MUST amend the commit(s) to use the correct message:
+
+For single commit:
+```bash
+git -C ${WORKTREE_PATH} commit --amend -m "<correct message>"
+```
+
+For multiple commits: Use interactive rebase or sequential amend from oldest to newest to fix each incorrect message.
+
+Track all amendments and include in the approval gate summary:
+
+```
+## Commit Message Verification
+⚠ Mismatches detected and corrected:
+  - af069982: "squash commit" → "feature: add verification step"
+  - b1234abc: "fix" → "bugfix: correct parameter validation"
+```
+
+**If all messages match:**
+- Continue silently to Step 4
 
 ## Step 4: Confirm Implementation
 
@@ -485,6 +548,16 @@ Then use `/cat:git-squash` to consolidate commits:
 
 - All implementation work + STATE.md closure into 1 feature/bugfix commit
 - Target: 1 commit (STATE.md belongs with implementation, not in a separate commit)
+
+**Commit message for squash:** Use the primary implementation commit's message from the execution result. If multiple
+topics exist, use the most significant commit's message. The squash script requires the message as its second argument:
+
+```bash
+"$(git rev-parse --show-toplevel)/plugin/scripts/git-squash-quick.sh" "${BASE_BRANCH}" "<commit message from execution result>" "${WORKTREE_PATH}"
+```
+
+Do NOT use generic messages like "squash commit", "squash commits", or "combined work". The main agent already has the
+commits from the execution result — reuse the primary implementation commit's message as the squash message
 
 **CRITICAL: STATE.md file grouping:**
 - STATE.md status changes belong IN THE SAME COMMIT as the implementation work
