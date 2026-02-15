@@ -30,11 +30,11 @@ Filters are interpreted by the prepare phase subagent using natural language und
 
 ## Progress Display
 
-The user wants you to respond with the preparing banner from "SCRIPT OUTPUT PROGRESS BANNERS" above, verbatim.
+The user wants you to respond with the preparing banner from "SKILL OUTPUT PROGRESS BANNERS" above, verbatim.
 Do NOT add any other text before or after it.
 
-**FAIL-FAST (ESCALATE-A008):** If you do NOT see "SCRIPT OUTPUT PROGRESS BANNERS" and
-"SCRIPT OUTPUT WORK BOXES" markers above, then preprocessing FAILED. STOP. Do NOT manually run
+**FAIL-FAST (ESCALATE-A008):** If you do NOT see "SKILL OUTPUT PROGRESS BANNERS" and
+"SKILL OUTPUT WORK BOXES" markers above, then preprocessing FAILED. STOP. Do NOT manually run
 scripts or construct boxes.
 
 ## Critical Constraints
@@ -220,7 +220,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/get-next-task-box.py" \
 
 If the original ARGUMENTS contained a filter (e.g., "skip compression"), add `--exclude-pattern "compress*"`.
 
-**Copy the script output VERBATIM.** Do NOT attempt to modify, reformat, or reconstruct the box.
+**Copy the skill output VERBATIM.** Do NOT attempt to modify, reformat, or reconstruct the box.
 
 **Parse the box to determine next task status:**
 - If box contains "**Next:**" followed by an issue ID → next task found

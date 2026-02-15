@@ -1256,7 +1256,7 @@ public void rateLimitExpires() throws InterruptedException
 ## Build Commands
 
 ```bash
-cd hooks
+cd engine
 
 ./build.sh        # Build JAR (mvn package)
 ./build.sh test   # Run TestNG tests (mvn test)
@@ -1312,7 +1312,7 @@ module io.github.cowwoc.cat.hooks.test
 ## Project Structure
 
 ```
-hooks/                       # Maven project root
+engine/                      # Maven project root
 ├── pom.xml
 ├── build.sh
 ├── mvnw

@@ -71,7 +71,7 @@ Standard markdown sections (`## Purpose`, `## Procedure`, `## Verification`) are
 ```markdown
 ## Purpose
 
-Display script output help content.
+Display skill output help content.
 
 ---
 
@@ -1411,8 +1411,8 @@ skill content.
 │   Handler            │     │   first-use.md (thin)   │
 │   (Python)           │     │                          │
 │                      │     │ "Output the content from │
-│ Runs script/logic    │──→  │  SCRIPT OUTPUT X above,  │
-│ Returns SCRIPT OUTPUT│     │  verbatim."              │
+│ Runs script/logic    │──→  │  SKILL OUTPUT X above,  │
+│ Returns SKILL OUTPUT│     │  verbatim."              │
 │ as additionalContext │     │                          │
 └──────────────────────┘     └──────────────────────────┘
 ```
@@ -1422,28 +1422,28 @@ skill content.
 Handler (`skill_handlers/help_handler.py`):
 ```python
 def handle(self, context):
-    return "SCRIPT OUTPUT HELP DISPLAY:\n\n" + rendered_help
+    return "SKILL OUTPUT HELP DISPLAY:\n\n" + rendered_help
 ```
 
 first-use.md:
 ```markdown
-The user wants you to respond with the content from "SCRIPT OUTPUT HELP DISPLAY" above, verbatim.
+The user wants you to respond with the content from "SKILL OUTPUT HELP DISPLAY" above, verbatim.
 Do NOT add any other text before or after it.
 
-**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT HELP DISPLAY" above, preprocessing FAILED. STOP.
+**FAIL-FAST:** If you do NOT see "SKILL OUTPUT HELP DISPLAY" above, preprocessing FAILED. STOP.
 ```
 
 **first-use.md pattern for handler-preprocessed skills:**
 
 The thin wrapper first-use.md MUST follow this exact pattern:
-1. Line 1: `The user wants you to respond with the content from "SCRIPT OUTPUT X" above, verbatim.`
+1. Line 1: `The user wants you to respond with the content from "SKILL OUTPUT X" above, verbatim.`
 2. Line 2: `Do NOT add any other text before or after it.`
 3. FAIL-FAST block if marker is missing
 
 **Anti-pattern - meta-description that agents echo literally:**
 ```markdown
 The handler has injected the help reference as additional context
-(look for "SCRIPT OUTPUT HELP DISPLAY" marker above).
+(look for "SKILL OUTPUT HELP DISPLAY" marker above).
 ```
 This text gets echoed to the user verbatim because the agent treats it as output content.
 
@@ -1451,12 +1451,12 @@ This text gets echoed to the user verbatim because the agent treats it as output
 
 | Aspect | Handler (runs every invocation) | first-use.md (loaded once per session) |
 |--------|--------------------------------|--------------------------------------|
-| Output | Fresh SCRIPT OUTPUT based on current args | Static behavioral instructions |
+| Output | Fresh SKILL OUTPUT based on current args | Static behavioral instructions |
 | Args | Parses args from `context["user_prompt"]` | References `$ARGUMENTS` for conditional logic |
 | Changes | Different output each call | Same instructions, reused via reference.md |
 
 For skills with argument-dependent behavior (e.g., `/cat:work` vs `/cat:work 2.1-task`), the handler
-generates argument-specific SCRIPT OUTPUT while first-use.md contains the static conditional logic
+generates argument-specific SKILL OUTPUT while first-use.md contains the static conditional logic
 ("if ARGUMENTS contains a filter, do X"). Both work correctly on subsequent invocations: the handler
 re-runs with new args, and the agent follows the already-loaded first-use.md instructions.
 
@@ -1478,7 +1478,7 @@ re-runs with new args, and the agent follows the already-loaded first-use.md ins
 
 **Benefits of handler pattern**:
 - **Session-efficient**: The full skill content loads only once per session (via `load-skill.sh`).
-  Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (SCRIPT OUTPUT)
+  Subsequent invocations load a tiny reference (~2 lines) instead. The handler output (SKILL OUTPUT)
   is fresh every time, but the skill instructions are not re-loaded, saving significant context.
   After context compaction, `clear_skill_markers.py` (SessionStart hook) resets the markers so skills
   re-load in full automatically.
@@ -1702,7 +1702,7 @@ Step 1: Display status
 - [ ] **Architecture decision made**: Direct vs. Delegated vs. Handler preprocessing
 - [ ] **Direct**: Script collects all inputs → use [BANG]`script.sh` in skill
 - [ ] **Delegated**: LLM determines data → Skill A invokes Skill B with args
-- [ ] **Handler**: Python handler generates SCRIPT OUTPUT → thin first-use.md outputs verbatim
+- [ ] **Handler**: Python handler generates SKILL OUTPUT → thin first-use.md outputs verbatim
 - [ ] **Computation extracted to preprocessing scripts**
 - [ ] **No manual formatting in skill** - all rendering via preprocessing
 - [ ] **No embedded box drawings in skill instructions or examples**

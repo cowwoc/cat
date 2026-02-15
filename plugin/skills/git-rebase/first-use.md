@@ -40,7 +40,7 @@ For deterministic execution with automatic backup and conflict detection:
 "$(git rev-parse --show-toplevel)/plugin/scripts/git-rebase-safe.sh" "$WORKTREE_PATH" "$BASE_BRANCH"
 ```
 
-If BASE_BRANCH not provided, the script reads from the cat-base file. The script outputs JSON.
+If BASE_BRANCH not provided, the script reads from the cat-base file. The skill outputs JSON.
 
 #### Result Handling
 

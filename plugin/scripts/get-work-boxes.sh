@@ -8,7 +8,7 @@
 #
 # USAGE: get-work-boxes.sh
 #
-# OUTPUTS: Work box templates (script output)
+# OUTPUTS: Work box templates (skill output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

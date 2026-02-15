@@ -30,7 +30,7 @@ Let caller/user decide next action
 
 ## Fail-Fast Patterns
 
-### 1. Script Output Handler Output
+### 1. Skill Output Handler Output
 
 Skills that depend on handler-computed output must fail if output is missing.
 

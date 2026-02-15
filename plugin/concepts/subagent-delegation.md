@@ -356,7 +356,7 @@ If so, use that format - don't compose your own.
 |--------|-----------------|---------|
 | /shrink-doc | SKILL.md lines 308-311 | Table with "Tokens" header |
 | /compare-docs | SKILL.md output section | Comparison report format |
-| /cat:status | Handler preprocessing | Status box (script output) |
+| /cat:status | Handler preprocessing | Status box (skill output) |
 
 **Pattern for presenting skill results:**
 

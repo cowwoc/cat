@@ -1,11 +1,11 @@
 ---
-description: Build Java hooks and install the jlink runtime image into the plugin cache
+description: Build Java engine and install the jlink runtime image into the plugin cache
 disable-model-invocation: true
 ---
 
-# Build Hooks
+# Build Engine
 
-Build the self-contained jlink runtime image (includes hooks JAR, all dependencies, and JDK modules) and install it
+Build the self-contained jlink runtime image (includes engine JAR, all dependencies, and JDK modules) and install it
 into the plugin cache.
 
 ## Steps
@@ -13,10 +13,10 @@ into the plugin cache.
 ### 1. Build with Maven
 
 ```bash
-mvn -f /workspace/hooks/pom.xml verify
+mvn -f /workspace/engine/pom.xml verify
 ```
 
-This builds the hooks JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
+This builds the engine JAR, patches automatic modules, creates the jlink image with launchers, and generates the AOT cache.
 If the build fails, stop and report the error.
 
 ### 2. Install jlink Runtime Image to Plugin Cache
@@ -28,7 +28,7 @@ rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin \
        /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/legal \
        /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/release
 
-cp -r /workspace/hooks/target/jlink/* \
+cp -r /workspace/engine/target/jlink/* \
       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/
 ```
 
