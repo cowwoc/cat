@@ -62,6 +62,28 @@ SkillLoader can parse the `-m` argument to extract the fully-qualified class nam
 - `GetWorkOutput` (no SkillOutput, no main)
 - Plus others that currently have no CLI entry point
 
+### Claude Code Preprocessor Behavior (Empirically Tested)
+
+Tested via nested Claude instances with 7 scenarios. Results:
+
+| Scenario | Exit | What Claude Receives |
+|----------|------|---------------------|
+| stdout only | 0 | stdout content substituted directly |
+| stderr only | 0 | stderr content substituted directly (treated same as stdout) |
+| stdout + stderr | 0 | stdout and stderr concatenated, no markers |
+| stderr only | 1 | `<error>Bash command failed for pattern "!`cmd`": [stderr]\nSTDERR_CONTENT</error>` |
+| stdout only | 1 | `<error>Bash command failed for pattern "!`cmd`": STDOUT_CONTENT</error>` |
+| stdout + stderr | 1 | `<error>Bash command failed for pattern "!`cmd`": STDOUT_CONTENT\n[stderr]\nSTDERR_CONTENT</error>` |
+| stderr only | 2 | Same as exit 1 — exit code value doesn't change format |
+
+**Rules to replicate:**
+1. **Exit 0**: Concatenate stdout + stderr (in that order). Substitute into content. No wrapping.
+2. **Non-zero exit**: Wrap in `<error>Bash command failed for pattern "!`<original-directive>`": <content></error>`
+3. **`[stderr]` marker**: On non-zero exit, if stderr exists, prepend `[stderr]\n` before stderr content. If stdout
+   also exists, stdout comes first, then `[stderr]\n`, then stderr.
+4. **Exit code 1 vs 2**: Identical treatment — only zero vs non-zero matters.
+5. **Content never discarded**: All output included regardless of exit code.
+
 ## Execution Steps
 
 ### Step 1: Add main() to GetStatuslineOutput
@@ -80,17 +102,30 @@ For `GetStatusOutput` and `GetRetrospectiveOutput`:
 
 ### Step 3: Update SkillLoader to process preprocessor directives
 
-In `SkillLoader.java`, add a new processing step in `substituteVars()` (or a new method):
+In `SkillLoader.java`, add a new processing step (after variable substitution so `${CLAUDE_PLUGIN_ROOT}` is resolved):
 
-1. Scan content for lines matching the preprocessor directive pattern:
-   `!\x60"${CLAUDE_PLUGIN_ROOT}/hooks/bin/<launcher>" [args]\x60`
-2. For each match, parse the launcher name from the path
+1. Scan content for lines matching the preprocessor directive pattern. After variable substitution, directives will
+   look like: `` !`"/resolved/path/hooks/bin/<launcher>" [args]` ``
+2. For each match, parse the launcher name from the resolved path
 3. Read the launcher script at `pluginRoot/hooks/bin/<launcher>`
-4. Extract the `-m` module/class argument to get the fully-qualified class name
-5. Load the class, find `main(String[])`, and invoke it with captured args
-6. Capture stdout output (redirect System.out to ByteArrayOutputStream)
-7. Replace the directive line with the captured output
-8. If stderr has content, throw IOException with the stderr text
+4. Extract the `-m module/class` argument to get the fully-qualified class name
+5. Load the class via `Class.forName()`, find `public static void main(String[])`, invoke with captured args
+6. Capture stdout and stderr separately (redirect `System.out` and `System.err` to `ByteArrayOutputStream` instances,
+   restore originals after invocation)
+7. Handle exit behavior — `main()` methods that call `System.exit()` must be intercepted. Install a SecurityManager
+   or use a custom approach to catch exit calls and capture the exit code without killing the JVM.
+
+**Output formatting (must match Claude Code's native behavior):**
+
+- **Exit 0 (normal return from main):** Concatenate stdout + stderr. Replace the directive line with the combined
+  content.
+- **Non-zero exit (System.exit(N) or exception):** Format as:
+  `` <error>Bash command failed for pattern "!`<original-directive>`": <content></error> ``
+  Where `<content>` is:
+  - If only stdout: stdout content
+  - If only stderr: `[stderr]\n` + stderr content
+  - If both: stdout + `\n[stderr]\n` + stderr content
+- **Exception from main():** Treat as non-zero exit. Write exception message to stderr stream before formatting.
 
 ### Step 4: Update skill MD files to use preprocessor directives
 
@@ -128,10 +163,15 @@ Delete `engine/.../util/SkillOutput.java`.
 Update `SkillLoaderTest.java`:
 - Remove tests for bindings.json (`loadResolvesBindingsJsonVariables`, `loadRejectsReservedVariableInBindings`, etc.)
 - Add tests for preprocessor directive processing:
-  - Test that directives referencing known launchers are resolved in-JVM
-  - Test that arguments are passed correctly
-  - Test that stderr content causes IOException
-  - Test that unknown launchers pass through unchanged
+  - Test exit 0 stdout-only: directive replaced with stdout content
+  - Test exit 0 stderr-only: directive replaced with stderr content (same as stdout)
+  - Test exit 0 both: directive replaced with stdout + stderr concatenated, no markers
+  - Test non-zero exit stderr-only: wrapped in `<error>...:[stderr]\nSTDERR</error>`
+  - Test non-zero exit stdout-only: wrapped in `<error>...:STDOUT</error>`
+  - Test non-zero exit both: wrapped in `<error>...:STDOUT\n[stderr]\nSTDERR</error>`
+  - Test that arguments are passed correctly to main()
+  - Test that unknown launchers (not in hooks/bin/) pass through unchanged
+  - Test that `${CLAUDE_PLUGIN_ROOT}` is resolved before directive processing
 
 ### Step 8: Run tests
 
