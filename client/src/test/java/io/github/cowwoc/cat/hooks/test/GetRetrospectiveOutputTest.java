@@ -23,6 +23,24 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class GetRetrospectiveOutputTest
 {
   /**
+   * Verifies that getOutput rejects unexpected arguments.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getOutputRejectsUnexpectedArguments() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
+      handler.getOutput(new String[]{"unexpected"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that missing retrospectives directory produces an error.
    */
   @Test
@@ -32,7 +50,7 @@ public final class GetRetrospectiveOutputTest
     try (TestJvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ERROR:");
       requireThat(output, "output").contains("Retrospectives directory not found");
     }
@@ -55,7 +73,7 @@ public final class GetRetrospectiveOutputTest
       Files.createDirectories(retroDir);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ERROR:");
       requireThat(output, "output").contains("Index file not found");
     }
@@ -80,7 +98,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, "{ invalid json }");
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      handler.getOutput();
+      handler.getOutput(new String[0]);
     }
     finally
     {
@@ -123,7 +141,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE STATUS:");
       requireThat(output, "output").contains("Retrospective not triggered");
       requireThat(output, "output").contains("Days since last retrospective: 1/7");
@@ -170,7 +188,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Trigger: 8 days since last retrospective (threshold: 7)");
       requireThat(output, "output").contains("Period analyzed:");
@@ -217,7 +235,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Trigger: 12 mistakes accumulated (threshold: 10)");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
@@ -279,7 +297,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Trigger: First retrospective with 1 logged mistakes");
     }
@@ -343,7 +361,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Action item effectiveness:");
       requireThat(output, "output").contains("A001: effective");
       requireThat(output, "output").contains("A002: ineffective");
@@ -389,7 +407,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Pattern status:");
       requireThat(output, "output").contains("(no patterns)");
     }
@@ -434,7 +452,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Open action items:");
       requireThat(output, "output").contains("(no action items)");
     }
@@ -480,7 +498,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      handler.getOutput();
+      handler.getOutput(new String[0]);
     }
     finally
     {
@@ -526,7 +544,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      handler.getOutput();
+      handler.getOutput(new String[0]);
     }
     finally
     {
@@ -588,7 +606,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("P001: active (occurrences: 5/2)");
       requireThat(output, "output").contains("P003: monitoring (occurrences: 7/1)");
       requireThat(output, "output").doesNotContain("P002");
@@ -665,7 +683,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Open action items:");
       requireThat(output, "output").doesNotContain("A005");
 
@@ -755,7 +773,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Category breakdown:");
       requireThat(output, "output").contains("protocol_violation: 2");
       requireThat(output, "output").contains("test_failure: 1");
@@ -825,7 +843,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Mistakes analyzed: 1");
       requireThat(output, "output").contains("valid_category: 1");
@@ -879,7 +897,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("A001 (medium)");
     }
     finally
@@ -920,7 +938,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE STATUS:");
       requireThat(output, "output").contains("Days since last retrospective: 1/7");
       requireThat(output, "output").contains("Mistakes accumulated: 5/10");
@@ -972,7 +990,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("(no open action items)");
     }
     finally
@@ -1023,7 +1041,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
     finally
@@ -1063,7 +1081,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
     finally
@@ -1112,7 +1130,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").contains("P001: active (occurrences: 0/0)");
     }
     finally
@@ -1170,7 +1188,7 @@ public final class GetRetrospectiveOutputTest
       Files.writeString(indexFile, indexContent);
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
-      String output = handler.getOutput();
+      String output = handler.getOutput(new String[0]);
       requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("First retrospective with 1 logged mistakes");
     }

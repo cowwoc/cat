@@ -20,7 +20,7 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-${CAT_RETROSPECTIVE_OUTPUT}
+!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-retrospective-output"`
 
 **MANDATORY: Check for SKILL OUTPUT RETROSPECTIVE in context first.**
 
@@ -44,11 +44,7 @@ The handler precomputes:
 1. Output the error message
 2. STOP - cannot proceed
 
-**If NO SKILL OUTPUT found:**
-```
-FAIL: Handler output not found in context.
-Check that GetRetrospectiveOutput.java is registered in bindings.json.
-```
+**FAIL-FAST:** If you do NOT see "SKILL OUTPUT STATUS DISPLAY" above, preprocessing FAILED. STOP.
 Do NOT manually gather data - the handler provides all necessary analysis.
 
 ## Trigger Conditions
