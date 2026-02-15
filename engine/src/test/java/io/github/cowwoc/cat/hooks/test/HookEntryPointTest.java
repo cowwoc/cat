@@ -1248,7 +1248,7 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path enginePom = Path.of("engine/pom.xml").toAbsolutePath();
+      Path enginePom = Path.of("pom.xml").toAbsolutePath();
       String toolInputJson = String.format("{\"file_path\": \"%s\"}", enginePom.toString().replace("\\", "\\\\"));
       JsonNode toolInput = mapper.readTree(toolInputJson);
       FileWriteHandler.Result result = new WarnBaseBranchEdit().check(toolInput, "test");
