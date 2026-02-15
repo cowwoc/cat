@@ -12,7 +12,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,18 +31,18 @@ import org.slf4j.LoggerFactory;
  */
 public final class GitMergeLinear
 {
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new GitMergeLinear instance.
    *
-   * @param mapper the JSON mapper to use for serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GitMergeLinear(JsonMapper mapper)
+  public GitMergeLinear(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -352,7 +351,7 @@ public final class GitMergeLinear
     int commitCount, boolean cleanup, boolean worktreeRemoved, boolean branchDeleted, long duration)
     throws IOException
   {
-    ObjectNode json = mapper.createObjectNode();
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "success");
     json.put("message", "Linear merge completed successfully");
     json.put("duration_seconds", duration);
@@ -365,7 +364,7 @@ public final class GitMergeLinear
     json.put("branch_deleted", branchDeleted);
     json.put("timestamp", Instant.now().toString());
 
-    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
   /**
@@ -418,8 +417,7 @@ public final class GitMergeLinear
 
     try (JvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      GitMergeLinear cmd = new GitMergeLinear(mapper);
+      GitMergeLinear cmd = new GitMergeLinear(scope);
       try
       {
         String result = cmd.execute(taskBranch, baseBranch, cleanup);

@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -123,7 +122,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, "");
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("tool_frequency").size(),
@@ -177,7 +176,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("tool_frequency").size(),
@@ -244,7 +243,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("token_usage").size(),
@@ -295,7 +294,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode outputSizes = result.path("output_sizes");
@@ -347,7 +346,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("cache_candidates").size(),
@@ -403,7 +402,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("batch_candidates").size(),
@@ -450,7 +449,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(result.path("parallel_candidates").size(),
@@ -525,7 +524,7 @@ public final class SessionAnalyzerTest
       Files.writeString(subagent2, subagent2Jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       requireThat(result.has("main"), "has_main").isTrue();
@@ -595,7 +594,7 @@ public final class SessionAnalyzerTest
       Files.writeString(subagent1, subagent1Jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSession(mainSession);
 
       JsonNode combined = result.path("combined");
@@ -659,7 +658,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       requireThat(
@@ -693,7 +692,7 @@ public final class SessionAnalyzerTest
       Files.writeString(tempFile, jsonl);
 
       SessionAnalyzer analyzer =
-        new SessionAnalyzer(JsonMapper.builder().build());
+        new SessionAnalyzer(new TestJvmScope());
       JsonNode result = analyzer.analyzeSingleAgent(tempFile);
 
       JsonNode outputSizes = result.path("output_sizes");

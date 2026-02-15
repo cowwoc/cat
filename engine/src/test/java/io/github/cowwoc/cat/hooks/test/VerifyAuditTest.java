@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,8 +34,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -79,8 +77,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -122,8 +119,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -178,8 +174,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -246,8 +241,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -289,9 +283,7 @@ public final class VerifyAuditTest
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       String inputJson = """
         {
@@ -344,9 +336,7 @@ public final class VerifyAuditTest
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       String inputJson = """
         {
@@ -404,9 +394,7 @@ public final class VerifyAuditTest
     Path tempDir = Files.createTempDirectory("verify-audit-test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       String allDone = """
         {
@@ -461,8 +449,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -499,8 +486,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """
@@ -542,8 +528,7 @@ public final class VerifyAuditTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       Path planFile = tempDir.resolve("PLAN.md");
       Files.writeString(planFile, """

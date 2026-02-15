@@ -208,7 +208,7 @@ public class GetSessionStartOutputTest
       JsonMapper mapper = scope.getJsonMapper();
       // CLAUDE_ENV_FILE is not set in the test environment
       HookInput input = createInput(mapper, "{}");
-      new InjectEnv().handle(input);
+      new InjectEnv(scope).handle(input);
     }
   }
 
@@ -314,7 +314,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(emptyHandler));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -336,7 +336,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -360,7 +360,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("stderr message");
@@ -387,7 +387,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler, goodHandler));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -414,7 +414,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -442,7 +442,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, failingHandler, handler3));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -468,7 +468,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       // No error section in output
@@ -492,7 +492,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
@@ -519,7 +519,7 @@ public class GetSessionStartOutputTest
       GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
 
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("stderr msg");

@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.licensing;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
@@ -38,16 +39,16 @@ public final class Entitlements
   /**
    * Creates a new entitlements resolver.
    *
-   * @param pluginRoot the plugin root directory containing config/tiers.json
-   * @param mapper the JSON mapper
+   * @param scope the JVM scope providing plugin root and JSON mapper
    * @throws IOException if tiers.json cannot be read or parsed
-   * @throws NullPointerException if {@code pluginRoot} or {@code mapper} are null
+   * @throws NullPointerException if {@code scope} is null
    */
-  public Entitlements(Path pluginRoot, JsonMapper mapper) throws IOException
+  public Entitlements(JvmScope scope) throws IOException
   {
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(mapper, "mapper").isNotNull();
+    requireThat(scope, "scope").isNotNull();
 
+    Path pluginRoot = scope.getClaudePluginRoot();
+    JsonMapper mapper = scope.getJsonMapper();
     Path tiersFile = pluginRoot.resolve("config").resolve("tiers.json");
     if (!Files.exists(tiersFile))
       throw new IOException("Tier configuration not found: " + tiersFile);

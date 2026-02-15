@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,28 +80,25 @@ public final class DisplayUtils
   private final List<String> sortedEmojis;
 
   /**
-   * Creates a DisplayUtils instance with auto-detected terminal type.
-   * <p>
-   * Requires the {@code CLAUDE_PLUGIN_ROOT} environment variable to be set.
-   * Fails fast if the variable is undefined or {@code emoji-widths.json} is missing.
+   * Creates a DisplayUtils instance.
    *
-   * @param mapper the JSON mapper to use for loading configuration
-   * @throws NullPointerException if mapper is null
-   * @throws IOException if {@code CLAUDE_PLUGIN_ROOT} is undefined or {@code emoji-widths.json} cannot be loaded
+   * @param scope the JVM scope providing JSON mapper, plugin root, and terminal type
+   * @throws NullPointerException if {@code scope} is null
+   * @throws IOException if {@code emoji-widths.json} cannot be loaded
    */
-  public DisplayUtils(JsonMapper mapper) throws IOException
+  public DisplayUtils(JvmScope scope) throws IOException
   {
-    requireThat(mapper, "mapper").isNotNull();
+    requireThat(scope, "scope").isNotNull();
 
-    String envRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (envRoot == null || envRoot.isEmpty())
-      throw new IOException("CLAUDE_PLUGIN_ROOT environment variable is not set");
+    JsonMapper mapper = scope.getJsonMapper();
+    Path pluginRoot = scope.getClaudePluginRoot();
+    TerminalType terminalType = scope.getTerminalType();
 
-    Path widthsFile = Path.of(envRoot).resolve("emoji-widths.json");
+    Path widthsFile = pluginRoot.resolve("emoji-widths.json");
     if (!Files.exists(widthsFile))
       throw new IOException("emoji-widths.json not found at " + widthsFile);
 
-    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, TerminalType.detect(), mapper);
+    Map<String, Integer> widths = loadEmojiWidthsFromFile(widthsFile, terminalType, mapper);
     this.emojiWidths = widths;
     this.sortedEmojis = new ArrayList<>(widths.keySet());
     this.sortedEmojis.sort(Comparator.comparingInt(String::length).reversed());

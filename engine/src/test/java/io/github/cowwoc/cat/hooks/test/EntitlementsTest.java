@@ -10,7 +10,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.licensing.Entitlements;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,10 +32,7 @@ public final class EntitlementsTest
   @Test
   public void indieTierHasBasicFeatures() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -46,9 +42,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
 
         requireThat(entitlements.hasFeature(Tier.INDIE, "single-agent-execution"), "hasFeature").
           isTrue();
@@ -72,10 +70,7 @@ public final class EntitlementsTest
   @Test
   public void teamTierIncludesIndieFeatures() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -89,9 +84,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
 
         requireThat(entitlements.hasFeature(Tier.TEAM, "single-agent-execution"), "hasIndieFeature").
           isTrue();
@@ -113,10 +110,7 @@ public final class EntitlementsTest
   @Test
   public void enterpriseTierIncludesAllFeatures() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -134,9 +128,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
 
         requireThat(entitlements.hasFeature(Tier.ENTERPRISE, "single-agent-execution"), "hasIndieFeature").
           isTrue();
@@ -160,10 +156,7 @@ public final class EntitlementsTest
   @Test
   public void getRequiredTierReturnsMinimumTier() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -181,9 +174,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
 
         requireThat(entitlements.getRequiredTier("single-agent-execution"), "indieFeature").
           isEqualTo(Optional.of(Tier.INDIE));
@@ -209,10 +204,7 @@ public final class EntitlementsTest
   @Test
   public void getTierFeaturesIncludesInherited() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -226,9 +218,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
 
         Set<String> teamFeatures = entitlements.getTierFeatures(Tier.TEAM);
         requireThat(teamFeatures, "teamFeatures").contains("feature-a");
@@ -251,10 +245,7 @@ public final class EntitlementsTest
   @Test
   public void unknownTierThrowsException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -264,9 +255,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
 
         try
         {
@@ -293,10 +286,7 @@ public final class EntitlementsTest
   @Test
   public void circularTierReferenceDoesNotStackOverflow() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -311,9 +301,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
         Set<String> features = entitlements.getTierFeatures(Tier.INDIE);
 
         requireThat(features, "features").contains("feature-a");
@@ -335,10 +327,7 @@ public final class EntitlementsTest
   @Test
   public void missingFeaturesArrayReturnsEmpty() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "indie": {
@@ -347,9 +336,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
         Set<String> features = entitlements.getTierFeatures(Tier.INDIE);
 
         requireThat(features.size(), "size").isEqualTo(0);
@@ -369,10 +360,7 @@ public final class EntitlementsTest
   @Test
   public void includesNonexistentTierReturnsOwnFeatures() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempTiersConfig("""
+    Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
             "team": {
@@ -383,9 +371,11 @@ public final class EntitlementsTest
         }
         """);
 
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
       try
       {
-        Entitlements entitlements = new Entitlements(tempDir, mapper);
+        Entitlements entitlements = new Entitlements(scope);
         Set<String> features = entitlements.getTierFeatures(Tier.TEAM);
 
         requireThat(features, "features").contains("feature-a");

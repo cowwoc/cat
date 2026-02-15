@@ -12,7 +12,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,18 +32,18 @@ import org.slf4j.LoggerFactory;
  */
 public final class WriteAndCommit
 {
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new WriteAndCommit instance.
    *
-   * @param mapper the JSON mapper to use for serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public WriteAndCommit(JsonMapper mapper)
+  public WriteAndCommit(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -157,7 +156,7 @@ public final class WriteAndCommit
   private String buildSuccessJson(String filePath, boolean executable, boolean fileExisted,
     String commitSha, String workingDir, long duration) throws IOException
   {
-    ObjectNode json = mapper.createObjectNode();
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "success");
     json.put("message", "File created and committed successfully");
     json.put("duration_seconds", duration);
@@ -168,7 +167,7 @@ public final class WriteAndCommit
     json.put("working_directory", workingDir);
     json.put("timestamp", Instant.now().toString());
 
-    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
   /**
@@ -196,8 +195,7 @@ public final class WriteAndCommit
 
     try (JvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      WriteAndCommit cmd = new WriteAndCommit(mapper);
+      WriteAndCommit cmd = new WriteAndCommit(scope);
       try
       {
         String result = cmd.execute(filePath, contentFile, commitMsgFile, executable);

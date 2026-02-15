@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,18 +34,18 @@ import java.nio.file.Paths;
  */
 public final class MergeAndCleanup
 {
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new MergeAndCleanup instance.
    *
-   * @param mapper the JSON mapper to use for serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public MergeAndCleanup(JsonMapper mapper)
+  public MergeAndCleanup(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -151,7 +150,7 @@ public final class MergeAndCleanup
       return true;
 
     String content = Files.readString(configPath, StandardCharsets.UTF_8);
-    ObjectNode config = (ObjectNode) mapper.readTree(content);
+    ObjectNode config = (ObjectNode) scope.getJsonMapper().readTree(content);
 
     return !config.has("autoRemoveWorktrees") || config.get("autoRemoveWorktrees").asBoolean(true);
   }
@@ -371,7 +370,7 @@ public final class MergeAndCleanup
     boolean worktreeRemoved, boolean branchDeleted, boolean lockReleased, long duration)
     throws IOException
   {
-    ObjectNode json = mapper.createObjectNode();
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "success");
     json.put("message", "Merged and cleaned up issue");
     json.put("issue_id", issueId);
@@ -382,7 +381,7 @@ public final class MergeAndCleanup
     json.put("lock_released", lockReleased);
     json.put("duration_seconds", duration);
 
-    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
   /**
@@ -417,21 +416,10 @@ public final class MergeAndCleanup
       }
     }
 
-    String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (pluginRoot == null || pluginRoot.isEmpty())
-    {
-      System.err.println("""
-        {
-          "status": "error",
-          "message": "CLAUDE_PLUGIN_ROOT must be set"
-        }""");
-      System.exit(1);
-    }
-
     try (JvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      MergeAndCleanup cmd = new MergeAndCleanup(mapper);
+      String pluginRoot = scope.getClaudePluginRoot().toString();
+      MergeAndCleanup cmd = new MergeAndCleanup(scope);
       try
       {
         String result = cmd.execute(projectDir, issueId, sessionId, worktreePath, pluginRoot);

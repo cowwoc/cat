@@ -49,10 +49,7 @@ public final class GetConfigOutput
    */
   public String getCurrentSettings()
   {
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isBlank())
-      return null;
-    return getCurrentSettings(Path.of(projectDir));
+    return getCurrentSettings(scope.getClaudeProjectDir());
   }
 
   /**

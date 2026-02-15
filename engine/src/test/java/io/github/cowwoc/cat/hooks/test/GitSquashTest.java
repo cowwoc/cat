@@ -57,7 +57,7 @@ public class GitSquashTest
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash(scope.getJsonMapper());
+      GitSquash cmd = new GitSquash(scope);
 
       try
       {
@@ -92,7 +92,7 @@ public class GitSquashTest
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash(scope.getJsonMapper());
+      GitSquash cmd = new GitSquash(scope);
 
       try
       {
@@ -122,7 +122,7 @@ public class GitSquashTest
     Path tempDir = createTempDir();
     try
     {
-      GitSquash cmd = new GitSquash(scope.getJsonMapper());
+      GitSquash cmd = new GitSquash(scope);
 
       try
       {
@@ -157,7 +157,7 @@ public class GitSquashTest
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash(scope.getJsonMapper());
+      GitSquash cmd = new GitSquash(scope);
 
       try
       {

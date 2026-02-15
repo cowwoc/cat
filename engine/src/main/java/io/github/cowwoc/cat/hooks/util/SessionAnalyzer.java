@@ -9,12 +9,12 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
@@ -42,18 +42,18 @@ public final class SessionAnalyzer
 {
   private static final int MIN_BATCH_SIZE = 2;
   private static final Pattern AGENT_ID_PATTERN = Pattern.compile("\"agentId\"\\s*:\\s*\"([^\"]+)\"");
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new session analyzer.
    *
-   * @param mapper the JSON mapper for parsing and serialization
-   * @throws NullPointerException if {@code mapper} is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public SessionAnalyzer(JsonMapper mapper)
+  public SessionAnalyzer(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -73,10 +73,9 @@ public final class SessionAnalyzer
     }
     try (MainJvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      SessionAnalyzer analyzer = new SessionAnalyzer(mapper);
+      SessionAnalyzer analyzer = new SessionAnalyzer(scope);
       JsonNode result = analyzer.analyzeSession(Path.of(args[0]));
-      System.out.println(mapper.writeValueAsString(result));
+      System.out.println(scope.getJsonMapper().writeValueAsString(result));
     }
     catch (RuntimeException | Error e)
     {
@@ -106,10 +105,10 @@ public final class SessionAnalyzer
     JsonNode mainAnalysis = analyzeSingleAgent(entries);
     List<Path> subagentPaths = discoverSubagents(entries, filePath);
 
-    ObjectNode subagentsNode = mapper.createObjectNode();
+    ObjectNode subagentsNode = scope.getJsonMapper().createObjectNode();
     List<JsonNode> allAnalyses = new ArrayList<>();
     allAnalyses.add(mainAnalysis);
-    ArrayNode warnings = mapper.createArrayNode();
+    ArrayNode warnings = scope.getJsonMapper().createArrayNode();
 
     for (Path subagentPath : subagentPaths)
     {
@@ -128,7 +127,7 @@ public final class SessionAnalyzer
 
     JsonNode combined = buildCombinedAnalysis(allAnalyses);
 
-    ObjectNode result = mapper.createObjectNode();
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
     result.set("main", mainAnalysis);
     result.set("subagents", subagentsNode);
     result.set("combined", combined);
@@ -171,7 +170,7 @@ public final class SessionAnalyzer
 
     List<ToolUse> toolUses = extractToolUses(entries);
 
-    ObjectNode result = mapper.createObjectNode();
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
     result.set("tool_frequency", calculateToolFrequency(toolUses));
     result.set("token_usage", calculateTokenUsage(entries, toolUses));
     result.set("output_sizes", extractOutputSizes(entries));
@@ -213,7 +212,7 @@ public final class SessionAnalyzer
 
         try
         {
-          entries.add(mapper.readTree(line));
+          entries.add(scope.getJsonMapper().readTree(line));
         }
         catch (JacksonException e)
         {
@@ -282,12 +281,12 @@ public final class SessionAnalyzer
     for (ToolUse tool : toolUses)
       frequency.merge(tool.name(), 1, Integer::sum);
 
-    ArrayNode result = mapper.createArrayNode();
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
     frequency.entrySet().stream().
       sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue())).
       forEach(entry ->
       {
-        ObjectNode node = mapper.createObjectNode();
+        ObjectNode node = scope.getJsonMapper().createObjectNode();
         node.put("tool", entry.getKey());
         node.put("count", entry.getValue());
         result.add(node);
@@ -347,12 +346,12 @@ public final class SessionAnalyzer
       ++stats.count;
     }
 
-    ArrayNode result = mapper.createArrayNode();
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
     toolTokenUsage.entrySet().stream().
       sorted((e1, e2) -> Integer.compare(e2.getValue().inputTokens, e1.getValue().inputTokens)).
       forEach(entry ->
       {
-        ObjectNode node = mapper.createObjectNode();
+        ObjectNode node = scope.getJsonMapper().createObjectNode();
         node.put("tool", entry.getKey());
         node.put("total_input_tokens", entry.getValue().inputTokens);
         node.put("total_output_tokens", entry.getValue().outputTokens);
@@ -407,10 +406,10 @@ public final class SessionAnalyzer
 
     sizes.sort((a, b) -> Integer.compare(b.length(), a.length()));
 
-    ArrayNode result = mapper.createArrayNode();
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
     for (OutputSize size : sizes)
     {
-      ObjectNode node = mapper.createObjectNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
       node.put("tool_use_id", size.toolUseId());
       node.put("output_length", size.length());
       result.add(node);
@@ -449,11 +448,11 @@ public final class SessionAnalyzer
 
     candidates.sort((a, b) -> Integer.compare(b.repeatCount(), a.repeatCount()));
 
-    ArrayNode result = mapper.createArrayNode();
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
     for (CacheCandidate candidate : candidates)
     {
-      ObjectNode node = mapper.createObjectNode();
-      ObjectNode operation = mapper.createObjectNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
+      ObjectNode operation = scope.getJsonMapper().createObjectNode();
       operation.put("name", candidate.name());
       operation.set("input", candidate.input());
       node.set("operation", operation);
@@ -477,7 +476,7 @@ public final class SessionAnalyzer
     requireThat(toolUses, "toolUses").isNotNull();
 
     if (toolUses.isEmpty())
-      return mapper.createArrayNode();
+      return scope.getJsonMapper().createArrayNode();
 
     List<BatchCandidate> batches = new ArrayList<>();
     List<ToolUse> currentBatch = new ArrayList<>();
@@ -502,10 +501,10 @@ public final class SessionAnalyzer
 
     batches.sort((a, b) -> Integer.compare(b.count(), a.count()));
 
-    ArrayNode result = mapper.createArrayNode();
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
     for (BatchCandidate batch : batches)
     {
-      ObjectNode node = mapper.createObjectNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
       node.put("tool", batch.tool());
       node.put("consecutive_count", batch.count());
       node.put("optimization", "BATCH_CANDIDATE");
@@ -549,12 +548,12 @@ public final class SessionAnalyzer
 
     candidates.sort((a, b) -> Integer.compare(b.count(), a.count()));
 
-    ArrayNode result = mapper.createArrayNode();
+    ArrayNode result = scope.getJsonMapper().createArrayNode();
     for (ParallelCandidate candidate : candidates)
     {
-      ObjectNode node = mapper.createObjectNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
       node.put("message_id", candidate.messageId());
-      ArrayNode toolsArray = mapper.createArrayNode();
+      ArrayNode toolsArray = scope.getJsonMapper().createArrayNode();
       for (String tool : candidate.tools())
         toolsArray.add(tool);
       node.set("parallel_tools", toolsArray);
@@ -586,9 +585,9 @@ public final class SessionAnalyzer
     List<String> sortedTools = new ArrayList<>(uniqueTools);
     sortedTools.sort(String::compareTo);
 
-    ObjectNode summary = mapper.createObjectNode();
+    ObjectNode summary = scope.getJsonMapper().createObjectNode();
     summary.put("total_tool_calls", toolUses.size());
-    ArrayNode toolsArray = mapper.createArrayNode();
+    ArrayNode toolsArray = scope.getJsonMapper().createArrayNode();
     for (String tool : sortedTools)
       toolsArray.add(tool);
     summary.set("unique_tools", toolsArray);
@@ -730,23 +729,23 @@ public final class SessionAnalyzer
       }
     }
 
-    ArrayNode toolFreqArray = mapper.createArrayNode();
+    ArrayNode toolFreqArray = scope.getJsonMapper().createArrayNode();
     toolFrequency.entrySet().stream().
       sorted((e1, e2) -> Integer.compare(e2.getValue(), e1.getValue())).
       forEach(entry ->
       {
-        ObjectNode node = mapper.createObjectNode();
+        ObjectNode node = scope.getJsonMapper().createObjectNode();
         node.put("tool", entry.getKey());
         node.put("count", entry.getValue());
         toolFreqArray.add(node);
       });
 
-    ArrayNode tokenUsageArray = mapper.createArrayNode();
+    ArrayNode tokenUsageArray = scope.getJsonMapper().createArrayNode();
     tokenUsage.entrySet().stream().
       sorted((e1, e2) -> Integer.compare(e2.getValue().inputTokens, e1.getValue().inputTokens)).
       forEach(entry ->
       {
-        ObjectNode node = mapper.createObjectNode();
+        ObjectNode node = scope.getJsonMapper().createObjectNode();
         node.put("tool", entry.getKey());
         node.put("total_input_tokens", entry.getValue().inputTokens);
         node.put("total_output_tokens", entry.getValue().outputTokens);
@@ -754,14 +753,14 @@ public final class SessionAnalyzer
         tokenUsageArray.add(node);
       });
 
-    ArrayNode cacheCandidatesArray = mapper.createArrayNode();
+    ArrayNode cacheCandidatesArray = scope.getJsonMapper().createArrayNode();
     cacheOps.values().stream().
       filter(c -> c.count > 1).
       sorted((a, b) -> Integer.compare(b.count, a.count)).
       forEach(candidate ->
       {
-        ObjectNode node = mapper.createObjectNode();
-        ObjectNode operation = mapper.createObjectNode();
+        ObjectNode node = scope.getJsonMapper().createObjectNode();
+        ObjectNode operation = scope.getJsonMapper().createObjectNode();
         operation.put("name", candidate.name);
         operation.set("input", candidate.input);
         node.set("operation", operation);
@@ -773,17 +772,17 @@ public final class SessionAnalyzer
     List<String> sortedTools = new ArrayList<>(uniqueTools);
     sortedTools.sort(String::compareTo);
 
-    ArrayNode toolsArray = mapper.createArrayNode();
+    ArrayNode toolsArray = scope.getJsonMapper().createArrayNode();
     for (String tool : sortedTools)
       toolsArray.add(tool);
 
-    ObjectNode summaryNode = mapper.createObjectNode();
+    ObjectNode summaryNode = scope.getJsonMapper().createObjectNode();
     summaryNode.put("total_tool_calls", totalToolCalls);
     summaryNode.set("unique_tools", toolsArray);
     summaryNode.put("total_entries", totalEntries);
     summaryNode.put("agent_count", analyses.size());
 
-    ObjectNode combined = mapper.createObjectNode();
+    ObjectNode combined = scope.getJsonMapper().createObjectNode();
     combined.set("tool_frequency", toolFreqArray);
     combined.set("cache_candidates", cacheCandidatesArray);
     combined.set("token_usage", tokenUsageArray);

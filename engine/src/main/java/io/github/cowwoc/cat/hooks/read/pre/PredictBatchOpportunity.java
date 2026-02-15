@@ -6,12 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.read.pre;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ReadHandler;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -34,18 +34,18 @@ public final class PredictBatchOpportunity implements ReadHandler
   private static final int WARNING_COOLDOWN = 60;
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new batch opportunity predictor.
    *
-   * @param mapper the JSON mapper to use for state serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON scope.getJsonMapper()
+   * @throws NullPointerException if {@code scope} is null
    */
-  public PredictBatchOpportunity(JsonMapper mapper)
+  public PredictBatchOpportunity(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -172,7 +172,7 @@ public final class PredictBatchOpportunity implements ReadHandler
       return new TrackerState(List.of(), 0, 0);
     try
     {
-      JsonNode node = mapper.readTree(Files.readString(trackerFile));
+      JsonNode node = scope.getJsonMapper().readTree(Files.readString(trackerFile));
       List<Operation> ops = new ArrayList<>();
       JsonNode opsNode = node.get("operations");
       if (opsNode != null && opsNode.isArray())
@@ -223,11 +223,11 @@ public final class PredictBatchOpportunity implements ReadHandler
   {
     try
     {
-      ObjectNode node = mapper.createObjectNode();
-      ArrayNode opsNode = mapper.createArrayNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
+      ArrayNode opsNode = scope.getJsonMapper().createArrayNode();
       for (Operation op : state.operations())
       {
-        ObjectNode opNode = mapper.createObjectNode();
+        ObjectNode opNode = scope.getJsonMapper().createObjectNode();
         opNode.put("tool", op.tool());
         opNode.put("path", op.path());
         opNode.put("timestamp", op.timestamp());
@@ -236,7 +236,7 @@ public final class PredictBatchOpportunity implements ReadHandler
       node.set("operations", opsNode);
       node.put("warnings_shown", state.warningsShown());
       node.put("last_warning", state.lastWarning());
-      Files.writeString(trackerFile, mapper.writeValueAsString(node));
+      Files.writeString(trackerFile, scope.getJsonMapper().writeValueAsString(node));
     }
     catch (IOException _)
     {

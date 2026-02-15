@@ -56,7 +56,7 @@ public class MergeAndCleanupTest
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
+      MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
       try
       {
@@ -90,7 +90,7 @@ public class MergeAndCleanupTest
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
+      MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
       try
       {
@@ -124,7 +124,7 @@ public class MergeAndCleanupTest
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
+      MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
       try
       {
@@ -158,7 +158,7 @@ public class MergeAndCleanupTest
     Path tempDir = createTempDir();
     try
     {
-      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
+      MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
       try
       {
@@ -196,7 +196,7 @@ public class MergeAndCleanupTest
       Path catDir = tempDir.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      MergeAndCleanup cmd = new MergeAndCleanup(scope.getJsonMapper());
+      MergeAndCleanup cmd = new MergeAndCleanup(scope);
 
       try
       {

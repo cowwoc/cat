@@ -6,11 +6,14 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner.Phase;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -30,9 +33,17 @@ public class ProgressBannerTest
   @Test
   public void generateBannerProducesOutput() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    requireThat(result, "result").isNotEmpty();
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      requireThat(result, "result").isNotEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -43,9 +54,17 @@ public class ProgressBannerTest
   @Test
   public void generateBannerIncludesIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    requireThat(result, "result").contains("2.1-test-issue");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      requireThat(result, "result").contains("2.1-test-issue");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -56,9 +75,17 @@ public class ProgressBannerTest
   @Test
   public void generateBannerIncludesCatEmoji() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    requireThat(result, "result").contains("🐱");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      requireThat(result, "result").contains("🐱");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -69,13 +96,21 @@ public class ProgressBannerTest
   @Test
   public void generateBannerIncludesPhaseNames() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    requireThat(result, "result").contains("Preparing");
-    requireThat(result, "result").contains("Implementing");
-    requireThat(result, "result").contains("Confirming");
-    requireThat(result, "result").contains("Reviewing");
-    requireThat(result, "result").contains("Merging");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      requireThat(result, "result").contains("Preparing");
+      requireThat(result, "result").contains("Implementing");
+      requireThat(result, "result").contains("Confirming");
+      requireThat(result, "result").contains("Reviewing");
+      requireThat(result, "result").contains("Merging");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -86,12 +121,20 @@ public class ProgressBannerTest
   @Test
   public void generateBannerProducesBoxStructure() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    requireThat(result, "result").contains("╭");
-    requireThat(result, "result").contains("╮");
-    requireThat(result, "result").contains("╰");
-    requireThat(result, "result").contains("╯");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      requireThat(result, "result").contains("╭");
+      requireThat(result, "result").contains("╮");
+      requireThat(result, "result").contains("╰");
+      requireThat(result, "result").contains("╯");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -102,10 +145,18 @@ public class ProgressBannerTest
   @Test
   public void generateBannerPreparingPhaseShowsActiveSymbol() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    requireThat(result, "result").contains("◉ Preparing");
-    requireThat(result, "result").contains("○ Implementing");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      requireThat(result, "result").contains("◉ Preparing");
+      requireThat(result, "result").contains("○ Implementing");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -116,12 +167,20 @@ public class ProgressBannerTest
   @Test
   public void generateBannerImplementingPhaseShowsCompleteAndActive() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.IMPLEMENTING);
-    requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("◉ Implementing");
-    requireThat(result, "result").contains("○ Confirming");
-    requireThat(result, "result").contains("○ Reviewing");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.IMPLEMENTING);
+      requireThat(result, "result").contains("● Preparing");
+      requireThat(result, "result").contains("◉ Implementing");
+      requireThat(result, "result").contains("○ Confirming");
+      requireThat(result, "result").contains("○ Reviewing");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -132,13 +191,21 @@ public class ProgressBannerTest
   @Test
   public void generateBannerReviewingPhaseShowsProgressPattern() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.REVIEWING);
-    requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("● Implementing");
-    requireThat(result, "result").contains("● Confirming");
-    requireThat(result, "result").contains("◉ Reviewing");
-    requireThat(result, "result").contains("○ Merging");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.REVIEWING);
+      requireThat(result, "result").contains("● Preparing");
+      requireThat(result, "result").contains("● Implementing");
+      requireThat(result, "result").contains("● Confirming");
+      requireThat(result, "result").contains("◉ Reviewing");
+      requireThat(result, "result").contains("○ Merging");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -149,13 +216,21 @@ public class ProgressBannerTest
   @Test
   public void generateBannerMergingPhaseShowsFinalPattern() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.MERGING);
-    requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("● Implementing");
-    requireThat(result, "result").contains("● Confirming");
-    requireThat(result, "result").contains("● Reviewing");
-    requireThat(result, "result").contains("◉ Merging");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.MERGING);
+      requireThat(result, "result").contains("● Preparing");
+      requireThat(result, "result").contains("● Implementing");
+      requireThat(result, "result").contains("● Confirming");
+      requireThat(result, "result").contains("● Reviewing");
+      requireThat(result, "result").contains("◉ Merging");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -166,11 +241,19 @@ public class ProgressBannerTest
   @Test
   public void generateBannerHandlesEmptyIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("", Phase.PREPARING);
-    requireThat(result, "result").isNotEmpty();
-    requireThat(result, "result").contains("🐱");
-    requireThat(result, "result").contains("Preparing");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("", Phase.PREPARING);
+      requireThat(result, "result").isNotEmpty();
+      requireThat(result, "result").contains("🐱");
+      requireThat(result, "result").contains("Preparing");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -181,8 +264,16 @@ public class ProgressBannerTest
   @Test(expectedExceptions = NullPointerException.class)
   public void generateBannerRejectsNullIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    banner.generateBanner(null, Phase.PREPARING);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      banner.generateBanner(null, Phase.PREPARING);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -193,8 +284,16 @@ public class ProgressBannerTest
   @Test(expectedExceptions = NullPointerException.class)
   public void generateBannerRejectsNullPhase() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    banner.generateBanner("2.1-test-issue", null);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      banner.generateBanner("2.1-test-issue", null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -205,13 +304,21 @@ public class ProgressBannerTest
   @Test
   public void generateAllPhasesIncludesAllPhases() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateAllPhases("2.1-test-issue");
-    requireThat(result, "result").contains("**Preparing phase**");
-    requireThat(result, "result").contains("**Implementing phase**");
-    requireThat(result, "result").contains("**Confirming phase**");
-    requireThat(result, "result").contains("**Reviewing phase**");
-    requireThat(result, "result").contains("**Merging phase**");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateAllPhases("2.1-test-issue");
+      requireThat(result, "result").contains("**Preparing phase**");
+      requireThat(result, "result").contains("**Implementing phase**");
+      requireThat(result, "result").contains("**Confirming phase**");
+      requireThat(result, "result").contains("**Reviewing phase**");
+      requireThat(result, "result").contains("**Merging phase**");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -222,9 +329,17 @@ public class ProgressBannerTest
   @Test
   public void generateAllPhasesUsesCodeBlocks() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateAllPhases("2.1-test-issue");
-    requireThat(result, "result").contains("```");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateAllPhases("2.1-test-issue");
+      requireThat(result, "result").contains("```");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -235,17 +350,25 @@ public class ProgressBannerTest
   @Test
   public void generateAllPhasesIncludesIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateAllPhases("2.1-my-issue");
-
-    String[] lines = result.split("\n");
-    int issueIdCount = 0;
-    for (String line : lines)
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      if (line.contains("2.1-my-issue"))
-        ++issueIdCount;
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateAllPhases("2.1-my-issue");
+
+      String[] lines = result.split("\n");
+      int issueIdCount = 0;
+      for (String line : lines)
+      {
+        if (line.contains("2.1-my-issue"))
+          ++issueIdCount;
+      }
+      requireThat(issueIdCount, "issueIdCount").isGreaterThanOrEqualTo(5);
     }
-    requireThat(issueIdCount, "issueIdCount").isGreaterThanOrEqualTo(5);
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -256,8 +379,16 @@ public class ProgressBannerTest
   @Test(expectedExceptions = NullPointerException.class)
   public void generateAllPhasesRejectsNullIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    banner.generateAllPhases(null);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      banner.generateAllPhases(null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -268,11 +399,19 @@ public class ProgressBannerTest
   @Test
   public void generateGenericPreparingBannerProducesOutput() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateGenericPreparingBanner();
-    requireThat(result, "result").isNotEmpty();
-    requireThat(result, "result").contains("🐱");
-    requireThat(result, "result").contains("```");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateGenericPreparingBanner();
+      requireThat(result, "result").isNotEmpty();
+      requireThat(result, "result").contains("🐱");
+      requireThat(result, "result").contains("```");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -283,9 +422,17 @@ public class ProgressBannerTest
   @Test
   public void generateGenericPreparingBannerIncludesExplanation() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateGenericPreparingBanner();
-    requireThat(result, "result").contains("Issue will be identified after preparation completes");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateGenericPreparingBanner();
+      requireThat(result, "result").contains("Issue will be identified after preparation completes");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -296,10 +443,18 @@ public class ProgressBannerTest
   @Test
   public void generateBannerProducesThreeLines() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    String[] lines = result.split("\n");
-    requireThat(lines.length, "lineCount").isEqualTo(3);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(3);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -310,10 +465,18 @@ public class ProgressBannerTest
   @Test
   public void generateBannerFirstLineStartsWithTopLeft() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    String[] lines = result.split("\n");
-    requireThat(lines[0], "firstLine").startsWith("╭");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      String[] lines = result.split("\n");
+      requireThat(lines[0], "firstLine").startsWith("╭");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -324,10 +487,18 @@ public class ProgressBannerTest
   @Test
   public void generateBannerLastLineStartsWithBottomLeft() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    String[] lines = result.split("\n");
-    requireThat(lines[2], "lastLine").startsWith("╰");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      String[] lines = result.split("\n");
+      requireThat(lines[2], "lastLine").startsWith("╰");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -338,10 +509,18 @@ public class ProgressBannerTest
   @Test
   public void generateBannerMiddleLineStartsWithVertical() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
-    String[] lines = result.split("\n");
-    requireThat(lines[1], "middleLine").startsWith("│");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+      String[] lines = result.split("\n");
+      requireThat(lines[1], "middleLine").startsWith("│");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -352,17 +531,25 @@ public class ProgressBannerTest
   @Test
   public void generateBannerHandlesLongIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String longId = "2.1-" + "a".repeat(100);
-    String result = banner.generateBanner(longId, Phase.PREPARING);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String longId = "2.1-" + "a".repeat(100);
+      String result = banner.generateBanner(longId, Phase.PREPARING);
 
-    String[] lines = result.split("\n");
-    requireThat(lines.length, "lineCount").isEqualTo(3);
-    requireThat(result, "result").contains("╭");
-    requireThat(result, "result").contains("╮");
-    requireThat(result, "result").contains("╰");
-    requireThat(result, "result").contains("╯");
-    requireThat(result, "result").contains(longId);
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(3);
+      requireThat(result, "result").contains("╭");
+      requireThat(result, "result").contains("╮");
+      requireThat(result, "result").contains("╰");
+      requireThat(result, "result").contains("╯");
+      requireThat(result, "result").contains(longId);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -373,13 +560,21 @@ public class ProgressBannerTest
   @Test
   public void generateBannerHandlesUnicodeIssueId() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String unicodeId = "2.1-tëst-üñicödé";
-    String result = banner.generateBanner(unicodeId, Phase.PREPARING);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String unicodeId = "2.1-tëst-üñicödé";
+      String result = banner.generateBanner(unicodeId, Phase.PREPARING);
 
-    requireThat(result, "result").contains(unicodeId);
-    requireThat(result, "result").contains("╭");
-    requireThat(result, "result").contains("╮");
+      requireThat(result, "result").contains(unicodeId);
+      requireThat(result, "result").contains("╭");
+      requireThat(result, "result").contains("╮");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -390,29 +585,37 @@ public class ProgressBannerTest
   @Test
   public void generateBannerProducesConsistentStructure() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.PREPARING);
 
-    String[] lines = result.split("\n");
-    requireThat(lines.length, "lineCount").isEqualTo(3);
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(3);
 
-    requireThat(lines[0], "topLine").startsWith("╭─ 🐱 2.1-test-issue");
-    requireThat(lines[0], "topLine").endsWith("╮");
-    requireThat(lines[1], "middleLine").startsWith("│");
-    requireThat(lines[1], "middleLine").endsWith("│");
-    requireThat(lines[1], "middleLine").contains("◉ Preparing");
-    requireThat(lines[1], "middleLine").contains("○ Implementing");
-    requireThat(lines[1], "middleLine").contains("○ Confirming");
-    requireThat(lines[1], "middleLine").contains("○ Reviewing");
-    requireThat(lines[1], "middleLine").contains("○ Merging");
-    requireThat(lines[2], "bottomLine").startsWith("╰");
-    requireThat(lines[2], "bottomLine").endsWith("╯");
+      requireThat(lines[0], "topLine").startsWith("╭─ 🐱 2.1-test-issue");
+      requireThat(lines[0], "topLine").endsWith("╮");
+      requireThat(lines[1], "middleLine").startsWith("│");
+      requireThat(lines[1], "middleLine").endsWith("│");
+      requireThat(lines[1], "middleLine").contains("◉ Preparing");
+      requireThat(lines[1], "middleLine").contains("○ Implementing");
+      requireThat(lines[1], "middleLine").contains("○ Confirming");
+      requireThat(lines[1], "middleLine").contains("○ Reviewing");
+      requireThat(lines[1], "middleLine").contains("○ Merging");
+      requireThat(lines[2], "bottomLine").startsWith("╰");
+      requireThat(lines[2], "bottomLine").endsWith("╯");
 
-    int topLength = lines[0].length();
-    int middleLength = lines[1].length();
-    int bottomLength = lines[2].length();
-    requireThat(topLength, "topLength").isEqualTo(bottomLength);
-    requireThat(middleLength, "middleLength").isEqualTo(bottomLength);
+      int topLength = lines[0].length();
+      int middleLength = lines[1].length();
+      int bottomLength = lines[2].length();
+      requireThat(topLength, "topLength").isEqualTo(bottomLength);
+      requireThat(middleLength, "middleLength").isEqualTo(bottomLength);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -423,13 +626,21 @@ public class ProgressBannerTest
   @Test
   public void generateBannerConfirmingPhaseShowsCorrectPattern() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
-    requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("● Implementing");
-    requireThat(result, "result").contains("◉ Confirming");
-    requireThat(result, "result").contains("○ Reviewing");
-    requireThat(result, "result").contains("○ Merging");
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
+      requireThat(result, "result").contains("● Preparing");
+      requireThat(result, "result").contains("● Implementing");
+      requireThat(result, "result").contains("◉ Confirming");
+      requireThat(result, "result").contains("○ Reviewing");
+      requireThat(result, "result").contains("○ Merging");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 
   /**
@@ -440,13 +651,21 @@ public class ProgressBannerTest
   @Test
   public void confirmingPhaseSymbolsAreCorrect() throws IOException
   {
-    ProgressBanner banner = new ProgressBanner(tools.jackson.databind.json.JsonMapper.builder().build());
-    String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
+      String result = banner.generateBanner("2.1-test-issue", Phase.CONFIRMING);
 
-    requireThat(result, "result").contains("● Preparing");
-    requireThat(result, "result").contains("● Implementing");
-    requireThat(result, "result").contains("◉ Confirming");
-    requireThat(result, "result").contains("○ Reviewing");
-    requireThat(result, "result").contains("○ Merging");
+      requireThat(result, "result").contains("● Preparing");
+      requireThat(result, "result").contains("● Implementing");
+      requireThat(result, "result").contains("◉ Confirming");
+      requireThat(result, "result").contains("○ Reviewing");
+      requireThat(result, "result").contains("○ Merging");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
   }
 }

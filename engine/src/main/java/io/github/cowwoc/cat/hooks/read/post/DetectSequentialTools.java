@@ -6,12 +6,12 @@
  */
 package io.github.cowwoc.cat.hooks.read.post;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.ReadHandler;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -35,18 +35,18 @@ public final class DetectSequentialTools implements ReadHandler
   private static final int WINDOW_SECONDS = 30;
   private static final int THRESHOLD = 3;
 
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new sequential tools detector.
    *
-   * @param mapper the JSON mapper to use for state serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON scope.getJsonMapper()
+   * @throws NullPointerException if {@code scope} is null
    */
-  public DetectSequentialTools(JsonMapper mapper)
+  public DetectSequentialTools(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -126,7 +126,7 @@ public final class DetectSequentialTools implements ReadHandler
       return new TrackerState(0, 0, List.of());
     try
     {
-      JsonNode node = mapper.readTree(Files.readString(stateFile));
+      JsonNode node = scope.getJsonMapper().readTree(Files.readString(stateFile));
       int lastTime = 0;
       if (node.get("last_tool_time") != null)
         lastTime = node.get("last_tool_time").asInt();
@@ -161,14 +161,14 @@ public final class DetectSequentialTools implements ReadHandler
   {
     try
     {
-      ObjectNode node = mapper.createObjectNode();
+      ObjectNode node = scope.getJsonMapper().createObjectNode();
       node.put("last_tool_time", state.lastToolTime());
       node.put("sequential_count", state.sequentialCount());
-      ArrayNode names = mapper.createArrayNode();
+      ArrayNode names = scope.getJsonMapper().createArrayNode();
       for (String name : state.lastToolNames())
         names.add(name);
       node.set("last_tool_names", names);
-      Files.writeString(stateFile, mapper.writeValueAsString(node));
+      Files.writeString(stateFile, scope.getJsonMapper().writeValueAsString(node));
     }
     catch (IOException _)
     {

@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.skills;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Map;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
@@ -96,17 +97,31 @@ public enum TerminalType
    */
   public static TerminalType detect()
   {
+    return detect(System.getenv());
+  }
+
+  /**
+   * Detects the terminal type from the provided environment variables.
+   *
+   * @param env the environment variables map
+   * @return the detected terminal type, or UNKNOWN if not detected
+   * @throws NullPointerException if {@code env} is null
+   */
+  public static TerminalType detect(Map<String, String> env)
+  {
+    assert that(env, "env").isNotNull().elseThrow();
+
     // Windows Terminal
-    if (System.getenv("WT_SESSION") != null)
+    if (env.get("WT_SESSION") != null)
       return WINDOWS_TERMINAL;
 
     // VS Code
-    String termProgram = System.getenv("TERM_PROGRAM");
-    if ("vscode".equals(termProgram) || System.getenv("VSCODE_INJECTION") != null)
+    String termProgram = env.get("TERM_PROGRAM");
+    if ("vscode".equals(termProgram) || env.get("VSCODE_INJECTION") != null)
       return VSCODE;
 
     // iTerm2
-    if ("iTerm.app".equals(termProgram) || System.getenv("ITERM_SESSION_ID") != null)
+    if ("iTerm.app".equals(termProgram) || env.get("ITERM_SESSION_ID") != null)
       return ITERM;
 
     // Apple Terminal
@@ -114,27 +129,27 @@ public enum TerminalType
       return APPLE_TERMINAL;
 
     // Konsole
-    if (System.getenv("KONSOLE_VERSION") != null)
+    if (env.get("KONSOLE_VERSION") != null)
       return KONSOLE;
 
     // GNOME Terminal
-    if (System.getenv("GNOME_TERMINAL_SCREEN") != null || System.getenv("VTE_VERSION") != null)
+    if (env.get("GNOME_TERMINAL_SCREEN") != null || env.get("VTE_VERSION") != null)
       return GNOME_TERMINAL;
 
     // Kitty
-    if (System.getenv("KITTY_WINDOW_ID") != null)
+    if (env.get("KITTY_WINDOW_ID") != null)
       return KITTY;
 
     // WezTerm
-    if (System.getenv("WEZTERM_PANE") != null)
+    if (env.get("WEZTERM_PANE") != null)
       return WEZTERM;
 
     // Alacritty
-    if (System.getenv("ALACRITTY_SOCKET") != null || System.getenv("ALACRITTY_LOG") != null)
+    if (env.get("ALACRITTY_SOCKET") != null || env.get("ALACRITTY_LOG") != null)
       return ALACRITTY;
 
     // ConEmu
-    if (System.getenv("ConEmuPID") != null)
+    if (env.get("ConEmuPID") != null)
       return CONEMU;
 
     // Hyper

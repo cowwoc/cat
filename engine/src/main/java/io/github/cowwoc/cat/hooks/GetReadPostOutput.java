@@ -56,7 +56,7 @@ public final class GetReadPostOutput implements HookHandler
     try (JvmScope scope = new MainJvmScope())
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
       new GetReadPostOutput(scope).run(input, output);
     }
     catch (RuntimeException | Error e)

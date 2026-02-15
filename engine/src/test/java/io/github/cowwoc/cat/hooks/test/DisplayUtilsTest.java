@@ -9,7 +9,6 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,8 +41,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       int width = display.displayWidth("");
       requireThat(width, "width").isEqualTo(0);
     }
@@ -64,8 +62,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       int width1 = display.displayWidth("hello");
       requireThat(width1, "width1").isEqualTo(5);
 
@@ -91,8 +88,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String line = display.buildLine("hi", 20);
 
       requireThat(line, "line").startsWith("│").endsWith("│").contains("hi");
@@ -120,8 +116,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
 
       String asciiLine = display.buildLine("hello", 20);
       String emojiLine = display.buildLine("🐱 cat", 20);
@@ -148,8 +143,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
 
       String longContent = "a".repeat(25);
       String longLine = display.buildLine(longContent, 20);
@@ -178,8 +172,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String border = display.buildTopBorder(10);
 
       requireThat(border, "border").startsWith("╭").endsWith("╮").contains("─");
@@ -201,8 +194,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String border = display.buildBottomBorder(10);
 
       requireThat(border, "border").startsWith("╰").endsWith("╯").contains("─");
@@ -226,8 +218,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
 
       String line = display.buildLine("content", 20);
       String topBorder = display.buildTopBorder(20);
@@ -257,8 +248,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderBox("Test Header", List.of("Line 1", "Line 2"));
       String[] lines = result.split("\n");
 
@@ -284,8 +274,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
 
       String bar1 = display.buildProgressBar(50, 10);
       requireThat(bar1, "bar1").length().isEqualTo(10);
@@ -310,8 +299,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String bar = display.buildProgressBar(0, 10);
 
       requireThat(bar, "bar").isEqualTo("░".repeat(10)).doesNotContain("█");
@@ -333,8 +321,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String bar = display.buildProgressBar(99, 10);
 
       requireThat(bar, "bar").length().isEqualTo(10);
@@ -364,8 +351,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String bar = display.buildProgressBar(50, 10);
 
       requireThat(bar, "bar").contains("█").contains("░");
@@ -390,8 +376,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildLine(null, 20);
     }
     finally
@@ -411,8 +396,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildHeaderBox(null, List.of("content"));
     }
     finally
@@ -432,8 +416,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildHeaderBox("Header", null);
     }
     finally
@@ -453,8 +436,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(-1, 10);
     }
     finally
@@ -474,8 +456,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(101, 10);
     }
     finally
@@ -495,8 +476,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(50, 0);
     }
     finally
@@ -516,8 +496,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(50, -5);
     }
     finally
@@ -537,8 +516,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.displayWidth(null);
     }
     finally
@@ -563,8 +541,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       display.buildProgressBar(100, 10);
     }
     finally
@@ -644,8 +621,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderBox("Title", List.of("content line"));
       String[] lines = result.split("\n");
 
@@ -669,8 +645,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderBox("Title", List.of());
       String[] lines = result.split("\n");
 
@@ -694,8 +669,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String line = display.buildLine("content", 0);
 
       requireThat(line, "line").startsWith("│").endsWith("│").contains("content");
@@ -720,8 +694,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       // ☑️ is ☑ (U+2611) + variation selector (U+FE0F)
       int width = display.displayWidth("☑️");
       // Should be 1 or 2 (emoji width) but not 3 (which would mean the variation selector
@@ -745,8 +718,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
 
       requireThat(display.displayWidth("─"), "horizontalWidth").isEqualTo(1);
       requireThat(display.displayWidth("│"), "verticalWidth").isEqualTo(1);
@@ -772,8 +744,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
       requireThat(result, "result").isNotEmpty();
     }
@@ -794,8 +765,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
       requireThat(result, "result").startsWith("├");
     }
@@ -816,8 +786,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
       requireThat(result, "result").endsWith("┤");
     }
@@ -838,8 +807,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
       requireThat(result, "result").contains("─");
     }
@@ -860,8 +828,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSeparator(10);
       long dashCount = result.chars().filter(c -> c == '─').count();
       requireThat(dashCount, "dashCount").isEqualTo(12L);
@@ -883,8 +850,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       for (int width : new int[]{5, 20, 50})
       {
         String result = display.buildSeparator(width);
@@ -912,8 +878,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Header", 20);
       requireThat(result, "result").isNotEmpty();
     }
@@ -934,8 +899,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
       requireThat(result, "result").startsWith("╭");
     }
@@ -956,8 +920,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
       requireThat(result, "result").endsWith("╮");
     }
@@ -978,8 +941,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("My Header", 30);
       requireThat(result, "result").contains("My Header");
     }
@@ -1000,8 +962,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
       requireThat(result, "result").contains("─── ");
     }
@@ -1022,8 +983,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildHeaderTop("Test", 20);
       String[] parts = result.split("Test ");
       requireThat(parts.length, "parts.length").isEqualTo(2);
@@ -1049,8 +1009,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("📊", "Test Title", List.of("Content line"));
       String[] lines = result.split("\n");
       requireThat(lines[0], "firstLine").startsWith("╭").endsWith("╮");
@@ -1074,8 +1033,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("✅", "Header",
         List.of("Line 1", "Line 2", "Line 3"));
       requireThat(result, "result").contains("Line 1").contains("Line 2").contains("Line 3");
@@ -1097,8 +1055,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("📊", "TEST",
         List.of("Short", "Medium length content", "Longer content line here"));
       String[] lines = result.split("\n");
@@ -1135,8 +1092,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("✅", "TITLE", List.of("Content"));
       String[] lines = result.split("\n");
       int headerWidth = display.displayWidth(lines[0]);
@@ -1160,8 +1116,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("🔧", "Settings",
         List.of("Option 1: value", "Option 2: longer value here", "Option 3: x"));
       String[] lines = result.split("\n");
@@ -1189,8 +1144,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("ℹ️", "INFO", List.of());
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isGreaterThanOrEqualTo(2);
@@ -1214,8 +1168,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String result = display.buildSimpleBox("🐱", "CAT", List.of("Content"));
       requireThat(result, "result").contains("🐱 CAT");
     }
@@ -1237,8 +1190,7 @@ public class DisplayUtilsTest
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = new DisplayUtils(mapper);
+      DisplayUtils display = new DisplayUtils(scope);
       String longLine = "A".repeat(100);
       String result = display.buildSimpleBox("📊", "Test", List.of(longLine));
       requireThat(result, "result").contains(longLine);

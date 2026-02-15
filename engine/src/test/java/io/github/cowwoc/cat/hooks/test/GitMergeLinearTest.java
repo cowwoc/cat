@@ -32,7 +32,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
+    GitMergeLinear cmd = new GitMergeLinear(scope);
 
     try
     {
@@ -56,7 +56,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
+    GitMergeLinear cmd = new GitMergeLinear(scope);
 
     try
     {
@@ -80,7 +80,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
+    GitMergeLinear cmd = new GitMergeLinear(scope);
 
     try
     {
@@ -104,7 +104,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope.getJsonMapper());
+    GitMergeLinear cmd = new GitMergeLinear(scope);
 
     try
     {
