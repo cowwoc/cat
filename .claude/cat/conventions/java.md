@@ -613,7 +613,12 @@ public String process(String input)
 
 **Records MUST have compact constructors** with validation when parameters need validation. Do not declare a compact
 constructor for records whose constructor does not read or write the record parameters (e.g., boolean-only or
-primitive-only records with no constraints):
+primitive-only records with no constraints).
+
+**MANDATORY checks for records:**
+- String parameters: validate `.isNotNull()` (or `.isNotBlank()` if empty strings are invalid)
+- Numeric parameters with constraints: validate `.isPositive()`, `.isGreaterThanOrEqualTo(0)`, etc.
+- Object parameters that may be null: document this explicitly in the record's Javadoc
 
 ```java
 // Class constructor
@@ -634,6 +639,17 @@ public record Worktree(String path, String branch, String state)
     requireThat(branch, "branch").isNotBlank();
     // state may be empty, but not null
     requireThat(state, "state").isNotNull();
+  }
+}
+
+// Good - record with numeric validation
+public record DiffStats(int filesChanged, int insertions, int deletions)
+{
+  public DiffStats
+  {
+    requireThat(filesChanged, "filesChanged").isGreaterThanOrEqualTo(0);
+    requireThat(insertions, "insertions").isGreaterThanOrEqualTo(0);
+    requireThat(deletions, "deletions").isGreaterThanOrEqualTo(0);
   }
 }
 
