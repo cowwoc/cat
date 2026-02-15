@@ -1028,9 +1028,14 @@ public final class GetStatusOutput implements SkillOutput
    * @param total the total number of tasks
    * @param completed the number of completed tasks
    * @param inProgress the name of the in-progress task, or empty string if none
+   * @throws NullPointerException if {@code inProgress} is null
    */
   private record TaskStats(int total, int completed, String inProgress)
   {
+    TaskStats
+    {
+      requireThat(inProgress, "inProgress").isNotNull();
+    }
   }
 
   /**
