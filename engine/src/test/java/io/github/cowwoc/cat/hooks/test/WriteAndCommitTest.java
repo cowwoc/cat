@@ -60,7 +60,7 @@ public class WriteAndCommitTest
       Files.writeString(contentFile, "test content");
       Files.writeString(commitMsgFile, "test commit");
 
-      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
+      WriteAndCommit cmd = new WriteAndCommit(scope);
 
       try
       {
@@ -97,7 +97,7 @@ public class WriteAndCommitTest
       Files.writeString(contentFile, "test content");
       Files.writeString(commitMsgFile, "test commit");
 
-      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
+      WriteAndCommit cmd = new WriteAndCommit(scope);
 
       try
       {
@@ -132,7 +132,7 @@ public class WriteAndCommitTest
       Path commitMsgFile = tempDir.resolve("commit.txt");
       Files.writeString(commitMsgFile, "test commit");
 
-      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
+      WriteAndCommit cmd = new WriteAndCommit(scope);
 
       try
       {
@@ -168,7 +168,7 @@ public class WriteAndCommitTest
       Path contentFile = tempDir.resolve("content.txt");
       Files.writeString(contentFile, "test content");
 
-      WriteAndCommit cmd = new WriteAndCommit(scope.getJsonMapper());
+      WriteAndCommit cmd = new WriteAndCommit(scope);
 
       try
       {

@@ -12,7 +12,6 @@ import io.github.cowwoc.cat.hooks.licensing.LicenseValidator;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,14 +44,13 @@ public class LicenseValidatorTest
   @Test
   public void missingConfigFileReturnsIndie() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -75,11 +73,10 @@ public class LicenseValidatorTest
   @Test
   public void emptyLicenseTokenReturnsIndie() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         Path catDir = tempDir.resolve(".claude").resolve("cat");
@@ -90,7 +87,7 @@ public class LicenseValidatorTest
           }
           """);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -113,11 +110,10 @@ public class LicenseValidatorTest
   @Test
   public void validJwtFormatIsParsedCorrectly() throws Exception
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -126,7 +122,7 @@ public class LicenseValidatorTest
         String token = createToken(keyPair.getPrivate(), "team", null, null);
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
@@ -150,11 +146,10 @@ public class LicenseValidatorTest
   @Test
   public void invalidJwtFormatReturnsError() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -163,7 +158,7 @@ public class LicenseValidatorTest
         String token = "invalid.token";
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -186,18 +181,17 @@ public class LicenseValidatorTest
   @Test
   public void missingPublicKeyReturnsError() throws Exception
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
         String token = createToken(keyPair.getPrivate(), "team", null, null);
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -220,11 +214,10 @@ public class LicenseValidatorTest
   @Test
   public void expiredTokenPastGracePeriodFallsBackToIndie() throws Exception
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -234,7 +227,7 @@ public class LicenseValidatorTest
         String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
@@ -259,11 +252,10 @@ public class LicenseValidatorTest
   @Test
   public void expiredTokenWithinGracePeriodRetainsTierWithWarning() throws Exception
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -273,7 +265,7 @@ public class LicenseValidatorTest
         String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
@@ -299,11 +291,10 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidSignatureReturnsError() throws Exception
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair1 = generateKeyPair();
@@ -313,7 +304,7 @@ public class LicenseValidatorTest
         String token = createToken(keyPair2.getPrivate(), "team", null, null);
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -336,11 +327,10 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithNoExpirationIsValidIndefinitely() throws Exception
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -349,7 +339,7 @@ public class LicenseValidatorTest
         String token = createToken(keyPair.getPrivate(), "enterprise", null, null);
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
@@ -374,11 +364,10 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithOnePartReturnsError() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -387,7 +376,7 @@ public class LicenseValidatorTest
         String token = "singlepart";
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -410,11 +399,10 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithFourPartsReturnsError() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -423,7 +411,7 @@ public class LicenseValidatorTest
         String token = "part1.part2.part3.part4";
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -446,11 +434,10 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidJsonReturnsError() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -462,7 +449,7 @@ public class LicenseValidatorTest
         String token = headerB64 + "." + payloadB64 + "." + signatureB64;
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
@@ -485,11 +472,10 @@ public class LicenseValidatorTest
   @Test
   public void tokenWithInvalidBase64ReturnsError() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempDir();
-      Path pluginRoot = createPluginRoot();
       try
       {
         KeyPair keyPair = generateKeyPair();
@@ -498,7 +484,7 @@ public class LicenseValidatorTest
         String token = "not-base64!@#.not-base64!@#.not-base64!@#";
         writeConfig(tempDir, token);
 
-        LicenseValidator validator = new LicenseValidator(pluginRoot, mapper);
+        LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();

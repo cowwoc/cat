@@ -70,9 +70,15 @@ public final class GetTokenReportOutput
    */
   public String getOutput()
   {
-    String sessionId = System.getenv("CLAUDE_SESSION_ID");
-    if (sessionId == null || sessionId.isBlank())
+    String sessionId;
+    try
+    {
+      sessionId = scope.getClaudeSessionId();
+    }
+    catch (AssertionError _)
+    {
       return null;
+    }
     return getOutput(sessionId);
   }
 

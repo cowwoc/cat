@@ -83,7 +83,7 @@ public final class GetWriteEditOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       HookResult result = new GetWriteEditOutput().run(input, output);
 
       for (String warning : result.warnings())

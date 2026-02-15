@@ -6,7 +6,6 @@
  */
 package io.github.cowwoc.cat.hooks;
 
-import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
@@ -51,9 +50,8 @@ public final class AotTraining
     try (JvmScope scope = new MainJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
       HookInput input = HookInput.empty(mapper);
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       // Hook handlers with run(HookInput, HookOutput)
       String envDir = System.getenv("CLAUDE_CONFIG_DIR");
@@ -69,11 +67,11 @@ public final class AotTraining
       new GetReadPostOutput(scope).run(input, output);
       new GetPostOutput(claudeConfigDir).run(input, output);
       new GetSkillOutput(scope).run(input, output);
-      new GetAskOutput().run(input, output);
+      new GetAskOutput(scope).run(input, output);
       new GetEditOutput().run(input, output);
       new GetWriteEditOutput().run(input, output);
-      new GetTaskOutput().run(input, output);
-      new GetSessionEndOutput().run(input, output);
+      new GetTaskOutput(scope).run(input, output);
+      new GetSessionEndOutput(scope).run(input, output);
       new GetSessionStartOutput(scope).run(input, output);
 
       // Skill handlers - construct to load class graphs.
@@ -94,7 +92,7 @@ public final class AotTraining
           - test.md
           """);
 
-        VerifyAudit audit = new VerifyAudit(mapper, display);
+        VerifyAudit audit = new VerifyAudit(scope);
         audit.parse(planFile);
         audit.report("test-issue", "{\"criteria_results\": [], \"file_results\": {\"modify\": {}, \"delete\": {}}}");
       }

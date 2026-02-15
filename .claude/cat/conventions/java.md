@@ -830,7 +830,7 @@ public final class GetRenderDiffOutput
   }
 }
 
-// Avoid - dependency injection of individual services
+// Avoid - passing individual scope components
 public final class GetRenderDiffOutput
 {
   private final JsonMapper jsonMapper;
@@ -843,6 +843,11 @@ public final class GetRenderDiffOutput
   }
 }
 ```
+
+**Pass the scope, not its components.** If a constructor or method takes one or more parameters derived from a
+ServiceLocator scope like `JvmScope`, pass the scope directly instead. The class should pull whatever it needs from
+the scope internally. This keeps constructors stable when new dependencies are added and avoids proliferating scope
+accessors through call chains.
 
 **Scope implementations:**
 - `MainJvmScope` — production use (in `main()` methods), reads environment configuration
