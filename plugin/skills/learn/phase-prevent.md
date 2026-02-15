@@ -564,7 +564,7 @@ fallback behavior that teaches the LLM to run scripts directly or gather data ma
 
 | Prevention Pattern | Wrong | Correct |
 |-------------------|-------|---------|
-| Missing script output | Add script command as fallback | Skip output or error — fix the handler |
+| Missing skill output | Add script command as fallback | Skip output or error — fix the handler |
 | Missing handler data | Teach LLM to read files manually | Error — fix the handler |
 
 Adding script commands as fallbacks teaches the agent to bypass preprocessing — which is the same

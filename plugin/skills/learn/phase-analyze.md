@@ -100,7 +100,7 @@ rca_depth_check:
   action_level_why:
     question: "Why did the agent take THIS action instead of the correct one?"
     example_shallow: "Agent manually constructed instead of using template"
-    example_deep: "SCRIPT OUTPUT CONTENT taught construction algorithm, priming manual approach"
+    example_deep: "SKILL OUTPUT CONTENT taught construction algorithm, priming manual approach"
     your_answer: "_______________"
 
   # Question 2: Can you trace to a SYSTEM/DOCUMENT cause?

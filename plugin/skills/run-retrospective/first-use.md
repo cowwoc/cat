@@ -18,11 +18,11 @@ Implements the full workflow defined in `retrospectives.json`.
 - After significant project milestones
 - When pattern recurrence is suspected
 
-## Script Output Analysis
+## Skill Output Analysis
 
 ${CAT_RETROSPECTIVE_OUTPUT}
 
-**MANDATORY: Check for SCRIPT OUTPUT RETROSPECTIVE in context first.**
+**MANDATORY: Check for SKILL OUTPUT RETROSPECTIVE in context first.**
 
 The handler precomputes:
 - Trigger condition check (time-based and count-based)
@@ -32,19 +32,19 @@ The handler precomputes:
 - Pattern status summary
 - Open action items list
 
-**If `SCRIPT OUTPUT RETROSPECTIVE ANALYSIS:` found:**
+**If `SKILL OUTPUT RETROSPECTIVE ANALYSIS:` found:**
 1. Output the analysis EXACTLY as provided
 2. Continue with workflow steps 5-9 (pattern identification, action derivation, etc.)
 
-**If `SCRIPT OUTPUT RETROSPECTIVE STATUS:` found:**
+**If `SKILL OUTPUT RETROSPECTIVE STATUS:` found:**
 1. Output the status message
 2. STOP - retrospective not triggered
 
-**If `SCRIPT OUTPUT RETROSPECTIVE ERROR:` found:**
+**If `SKILL OUTPUT RETROSPECTIVE ERROR:` found:**
 1. Output the error message
 2. STOP - cannot proceed
 
-**If NO SCRIPT OUTPUT found:**
+**If NO SKILL OUTPUT found:**
 ```
 FAIL: Handler output not found in context.
 Check that GetRetrospectiveOutput.java is registered in bindings.json.
@@ -64,7 +64,7 @@ triggers:
 ## Workflow (Post-Handler)
 
 The handler performs steps 1-4 (trigger check, gathering, categorization, effectiveness).
-Continue from step 5 using the script output analysis.
+Continue from step 5 using the skill output analysis.
 
 ### 5. Identify New Patterns
 

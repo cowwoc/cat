@@ -313,20 +313,20 @@ fi
 
 ### Output Format
 
-**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
 Handler stakeholder_review_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
 Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
-After context analysis, use the **STAKEHOLDER_SELECTION** box from SCRIPT OUTPUT STAKEHOLDER BOXES.
+After context analysis, use the **STAKEHOLDER_SELECTION** box from SKILL OUTPUT STAKEHOLDER BOXES.
 Replace placeholders with actual selection data.
 
-**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
 Handler stakeholder_review_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -633,9 +633,9 @@ User approval is a separate gate that follows stakeholder review.
 
 **Generate compact review report:**
 
-**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
 Handler stakeholder_review_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -643,12 +643,12 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 Output the review results:
 
-**Summary box:** Use the **STAKEHOLDER_REVIEW** box from SCRIPT OUTPUT STAKEHOLDER BOXES.
+**Summary box:** Use the **STAKEHOLDER_REVIEW** box from SKILL OUTPUT STAKEHOLDER BOXES.
 Replace placeholders with actual reviewer results.
 
-**If SCRIPT OUTPUT STAKEHOLDER BOXES not found:**
+**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT STAKEHOLDER BOXES not found.
+FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
 Handler stakeholder_review_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -681,7 +681,7 @@ The calling skill (work-with-issue) is responsible for:
 - User approval gates for MEDIUM concerns
 - Escalation handling when auto-fix fails
 
-**Output the final review status** using the appropriate box from SCRIPT OUTPUT STAKEHOLDER BOXES.
+**Output the final review status** using the appropriate box from SKILL OUTPUT STAKEHOLDER BOXES.
 
 </step>
 

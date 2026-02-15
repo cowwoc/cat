@@ -8,7 +8,7 @@
 #
 # USAGE: get-help-display.sh
 #
-# OUTPUTS: Help content for /cat:help (script output)
+# OUTPUTS: Help content for /cat:help (skill output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

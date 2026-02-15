@@ -21,14 +21,14 @@ about intervention or result collection.
 
 ## Progress Output (MANDATORY)
 
-**Check for SCRIPT OUTPUT MONITOR SUBAGENTS in context.**
+**Check for SKILL OUTPUT MONITOR SUBAGENTS in context.**
 
 If found: Output the JSON EXACTLY as provided. Do NOT invoke scripts or Bash commands.
 
 If NOT found: **FAIL immediately.**
 
 ```
-ERROR: SCRIPT OUTPUT MONITOR SUBAGENTS not found.
+ERROR: SKILL OUTPUT MONITOR SUBAGENTS not found.
 Handler monitor_subagents_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -91,8 +91,8 @@ For accurate token metrics on completed subagents, use `/cat:token-report` which
 # ❌ Invoking shell script (exposes tool calls to user)
 ${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh
 
-# ✅ Use script output handler output
-# Check for SCRIPT OUTPUT MONITOR SUBAGENTS in context
+# ✅ Use skill output handler output
+# Check for SKILL OUTPUT MONITOR SUBAGENTS in context
 ```
 
 ### Treat compaction as intervention signal
