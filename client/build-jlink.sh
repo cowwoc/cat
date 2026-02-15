@@ -52,6 +52,8 @@ readonly -a HANDLERS=(
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-task-box:skills.GetNextTaskOutput"
   "get-status-output:skills.GetStatusOutput"
+  "get-statusline-output:skills.GetStatuslineOutput"
+  "get-retrospective-output:skills.GetRetrospectiveOutput"
   "get-render-diff-output:skills.GetRenderDiffOutput"
   "session-analyzer:util.SessionAnalyzer"
   "progress-banner:skills.ProgressBanner"

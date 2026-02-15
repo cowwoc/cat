@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2026 Gili Tzabari. All rights reserved.
+ *
+ * Licensed under the CAT Commercial License.
+ * See LICENSE.md in the project root for license terms.
+ */
 package io.github.cowwoc.cat.hooks.skills;
 
 import java.io.IOException;
@@ -5,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
@@ -39,12 +46,16 @@ public final class GetStatuslineOutput implements SkillOutput
   /**
    * Generates the statusline check output showing whether a statusLine configuration exists.
    *
+   * @param args the arguments from the preprocessor directive (must be empty)
    * @return the formatted check result in JSON format
+   * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if {@code args} is not empty
    * @throws IOException if an I/O error occurs
    */
   @Override
-  public String getOutput() throws IOException
+  public String getOutput(String[] args) throws IOException
   {
+    requireThat(args, "args").length().isEqualTo(0);
     Path settingsFile = projectDir.resolve(".claude/settings.json");
 
     if (!Files.exists(settingsFile))
@@ -114,5 +125,25 @@ public final class GetStatuslineOutput implements SkillOutput
   {
     requireThat(value, "value").isNotNull();
     return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+  }
+
+  /**
+   * Main entry point.
+   *
+   * @param args command line arguments (unused)
+   */
+  public static void main(String[] args)
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetStatuslineOutput generator = new GetStatuslineOutput(scope);
+      String output = generator.getOutput(args);
+      System.out.print(output);
+    }
+    catch (IOException e)
+    {
+      System.err.println("Error generating statusline output: " + e.getMessage());
+      System.exit(1);
+    }
   }
 }

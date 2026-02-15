@@ -92,6 +92,24 @@ See individual skill files for full contracts:
 +-- parser/src/...             <- NEVER edit these files during issue execution
 ```
 
+## CRITICAL: Commit Before Stopping in Worktrees
+
+**When working in a worktree, commit all changes before requesting user review or stopping work.**
+
+The user environment cannot access uncommitted changes in your worktree. If you stop with uncommitted
+changes, the user has no way to review your work.
+
+**Required workflow:**
+1. Make code changes in the worktree
+2. Commit changes with descriptive message
+3. THEN present work for review or stop
+
+**Verification:** Before stopping, run `git status` in the worktree. If it shows modified files,
+commit them first.
+
+This requirement applies to all worktree work, including implementation subagents and
+manual debugging sessions.
+
 ## Issue Discovery
 
 **MANDATORY: Use get-available-issues.sh script. FAIL-FAST if script fails.**

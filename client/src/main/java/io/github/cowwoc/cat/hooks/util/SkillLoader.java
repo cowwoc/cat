@@ -10,16 +10,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
-import tools.jackson.core.type.TypeReference;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,13 +35,7 @@ import org.slf4j.LoggerFactory;
  *     reference.md              — Reload text returned on 2nd+ invocations
  *     {skill-name}/
  *       first-use.md            — Main skill content (loaded on first invocation)
- *       bindings.json           — Optional; maps variable names to SkillOutput class names
  * </pre>
- * <p>
- * <b>Variable bindings:</b> If {@code bindings.json} exists, it maps variable names to fully-qualified
- * class names implementing {@link SkillOutput}. When a variable is referenced in content (e.g.,
- * {@code ${CAT_SKILL_OUTPUT}}), the class is instantiated and {@link SkillOutput#getOutput()} is invoked
- * to produce the substitution value. Binding variables must not collide with built-in variable names.
  * <p>
  * <b>File inclusion via @path:</b> Lines in {@code first-use.md} starting with {@code @} followed by a
  * relative path containing at least one {@code /} (e.g., {@code @concepts/version-paths.md},
@@ -60,26 +50,25 @@ import org.slf4j.LoggerFactory;
  *   <li>{@code ${CLAUDE_PROJECT_DIR}} — project directory path</li>
  * </ul>
  * <p>
- * Custom bindings from {@code bindings.json} are also substituted when referenced. Undefined variables
- * (neither built-in nor in bindings) are passed through unchanged, matching Claude Code's native behavior.
+ * Undefined variables are passed through unchanged, matching Claude Code's native behavior.
+ * <p>
+ * <b>Preprocessor directives:</b> Lines containing {@code !`"path" [args]`} patterns are processed
+ * after variable substitution. When the path references a known Java launcher in {@code hooks/bin/},
+ * instantiates the class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])}
+ * to replace the directive with the output.
  * <p>
  * <b>License header stripping:</b> If {@code first-use.md} starts with an HTML comment block
  * containing a copyright notice, it is stripped before returning.
  */
 public final class SkillLoader
 {
-  private static final Set<String> BUILT_IN_VARIABLES = Set.of(
-    "CLAUDE_PLUGIN_ROOT",
-    "CLAUDE_SESSION_ID",
-    "CLAUDE_PROJECT_DIR");
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
   private static final Pattern LICENSE_HEADER_PATTERN = Pattern.compile(
     "\\A(---\\n.*?\\n---\\n)?<!--\\n.*?Copyright.*?-->\\n?\\n?",
     Pattern.DOTALL);
-  private static final TypeReference<Map<String, String>> BINDINGS_TYPE = new TypeReference<>()
-  {
-  };
+  private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
+    "!`\"([^\"]+)\"(\\s+[^`]+)?`");
 
   private final JvmScope scope;
   private final Path pluginRoot;
@@ -87,8 +76,6 @@ public final class SkillLoader
   private final String projectDir;
   private final Path sessionFile;
   private final Set<String> loadedSkills;
-  private final Map<String, Map<String, String>> bindingsCache;
-  private final Map<String, String> bindingOutputCache;
 
   /**
    * Creates a new SkillLoader instance.
@@ -114,8 +101,6 @@ public final class SkillLoader
     this.projectDir = projectDir;
     this.sessionFile = Paths.get(System.getProperty("java.io.tmpdir"), "cat-skills-loaded-" + sessionId);
     this.loadedSkills = new HashSet<>();
-    this.bindingsCache = new HashMap<>();
-    this.bindingOutputCache = new HashMap<>();
 
     if (Files.exists(sessionFile))
     {
@@ -146,7 +131,7 @@ public final class SkillLoader
 
     if (loadedSkills.contains(skillName))
     {
-      String reference = loadReference(skillName);
+      String reference = loadReference();
       output.append(reference);
     }
     else
@@ -159,50 +144,14 @@ public final class SkillLoader
     return output.toString();
   }
 
-  /**
-   * Loads bindings from bindings.json file for a skill.
-   *
-   * @param skillName the skill name
-   * @return the bindings map (variable name to class name), or empty map if no bindings file
-   * @throws IOException if bindings file is invalid or contains reserved variable names
-   */
-  private Map<String, String> loadBindings(String skillName) throws IOException
-  {
-    if (bindingsCache.containsKey(skillName))
-      return bindingsCache.get(skillName);
-
-    Path bindingsPath = pluginRoot.resolve("skills/" + skillName + "/bindings.json");
-    if (!Files.exists(bindingsPath))
-    {
-      Map<String, String> emptyBindings = Map.of();
-      bindingsCache.put(skillName, emptyBindings);
-      return emptyBindings;
-    }
-
-    String content = Files.readString(bindingsPath, StandardCharsets.UTF_8);
-    Map<String, String> bindings = scope.getJsonMapper().readValue(content, BINDINGS_TYPE);
-
-    for (String varName : bindings.keySet())
-    {
-      if (BUILT_IN_VARIABLES.contains(varName))
-      {
-        throw new IOException("Binding variable '" + varName + "' in skill '" + skillName +
-          "' is reserved. Built-in variables cannot be overridden: " + BUILT_IN_VARIABLES);
-      }
-    }
-
-    bindingsCache.put(skillName, bindings);
-    return bindings;
-  }
 
   /**
    * Loads the reference text for subsequent skill invocations.
    *
-   * @param skillName the skill name (for variable binding resolution)
    * @return the reference content with variables substituted, or empty string if no reference
    * @throws IOException if reference file cannot be read
    */
-  private String loadReference(String skillName) throws IOException
+  private String loadReference() throws IOException
   {
     Path referencePath = pluginRoot.resolve("skills/reference.md");
     if (!Files.exists(referencePath))
@@ -210,7 +159,7 @@ public final class SkillLoader
 
     String reference = Files.readString(referencePath, StandardCharsets.UTF_8);
     reference = stripLicenseHeader(reference);
-    return substituteVars(reference, skillName);
+    return substituteVars(reference);
   }
 
 
@@ -229,7 +178,7 @@ public final class SkillLoader
 
     String content = Files.readString(contentPath, StandardCharsets.UTF_8);
     content = stripLicenseHeader(content);
-    return substituteVars(content, skillName);
+    return substituteVars(content);
   }
 
   /**
@@ -322,18 +271,15 @@ public final class SkillLoader
    *   <li>{@code ${CLAUDE_PROJECT_DIR}} - project directory path</li>
    * </ul>
    * <p>
-   * Also replaces custom binding variables from bindings.json. When a binding variable is referenced,
-   * the corresponding SkillOutput class is instantiated and invoked to generate the substitution value.
+   * After variable substitution, processes preprocessor directives to invoke Java classes in-JVM.
    *
    * @param content the content to process
-   * @param skillName the skill name (for loading bindings)
-   * @return the content with all variables substituted
-   * @throws IOException if variable resolution fails or undefined variable is referenced
+   * @return the content with all variables substituted and preprocessor directives processed
+   * @throws IOException if variable resolution fails
    */
-  private String substituteVars(String content, String skillName) throws IOException
+  private String substituteVars(String content) throws IOException
   {
     String expanded = expandPaths(content);
-    Map<String, String> bindings = loadBindings(skillName);
     Matcher matcher = VAR_PATTERN.matcher(expanded);
     StringBuilder result = new StringBuilder();
     int lastEnd = 0;
@@ -342,25 +288,142 @@ public final class SkillLoader
     {
       result.append(expanded, lastEnd, matcher.start());
       String varName = matcher.group(1);
-      String replacement = resolveVariable(varName, bindings);
+      String replacement = resolveVariable(varName);
       result.append(replacement);
       lastEnd = matcher.end();
     }
     result.append(expanded.substring(lastEnd));
 
+    return processPreprocessorDirectives(result.toString());
+  }
+
+  /**
+   * Processes preprocessor directives in content.
+   * <p>
+   * Scans for patterns like {@code !`"path/to/launcher" [args]`} and when the launcher refers to a
+   * known Java class in {@code hooks/bin/}, instantiates the class as a {@link SkillOutput} and
+   * calls {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
+   *
+   * @param content the content to process
+   * @return the content with preprocessor directives replaced by their output
+   * @throws IOException if directive processing fails
+   */
+  private String processPreprocessorDirectives(String content) throws IOException
+  {
+    Matcher matcher = PREPROCESSOR_DIRECTIVE_PATTERN.matcher(content);
+    StringBuilder result = new StringBuilder();
+    int lastEnd = 0;
+
+    while (matcher.find())
+    {
+      result.append(content, lastEnd, matcher.start());
+      String launcherPath = matcher.group(1);
+      String argumentsToken = matcher.group(2);
+      String[] arguments;
+      if (argumentsToken != null)
+        arguments = argumentsToken.strip().split("\\s+");
+      else
+        arguments = new String[0];
+
+      String originalDirective = matcher.group(0);
+      String output = executeDirective(launcherPath, arguments, originalDirective);
+      result.append(output);
+      lastEnd = matcher.end();
+    }
+    result.append(content.substring(lastEnd));
+
     return result.toString();
+  }
+
+  /**
+   * Executes a preprocessor directive by invoking the corresponding Java class.
+   *
+   * @param launcherPath the path to the launcher script
+   * @param arguments the arguments to pass to getOutput()
+   * @param originalDirective the original directive text for error messages
+   * @return the output from the directive execution
+   * @throws IOException if execution fails
+   */
+  private String executeDirective(String launcherPath, String[] arguments, String originalDirective)
+    throws IOException
+  {
+    Path launcherFile = Paths.get(launcherPath);
+    String launcherName = launcherFile.getFileName().toString();
+    Path expectedLauncher = pluginRoot.resolve("hooks/bin/" + launcherName);
+
+    if (!Files.exists(expectedLauncher))
+      return originalDirective;
+
+    String launcherContent = Files.readString(expectedLauncher, StandardCharsets.UTF_8);
+    String className = extractClassName(launcherContent);
+    if (className.isEmpty())
+      return originalDirective;
+
+    return invokeSkillOutput(className, arguments, originalDirective);
+  }
+
+  /**
+   * Extracts the fully-qualified class name from a launcher script.
+   * <p>
+   * Looks for patterns like: {@code java -m module/class}
+   *
+   * @param launcherContent the launcher script content
+   * @return the fully-qualified class name, or empty string if not found
+   */
+  private String extractClassName(String launcherContent)
+  {
+    Pattern pattern = Pattern.compile("java.*?-m\\s+(\\S+)/(\\S+)");
+    Matcher matcher = pattern.matcher(launcherContent);
+    if (matcher.find())
+      return matcher.group(2);
+    return "";
+  }
+
+  /**
+   * Instantiates a SkillOutput class and invokes getOutput().
+   *
+   * @param className the fully-qualified class name
+   * @param arguments the arguments to pass to getOutput()
+   * @param originalDirective the original directive text for error messages
+   * @return the output from getOutput()
+   * @throws IOException if invocation fails
+   */
+  private String invokeSkillOutput(String className, String[] arguments, String originalDirective)
+    throws IOException
+  {
+    try
+    {
+      Class<?> targetClass = Class.forName(className);
+      Object instance = targetClass.getConstructor(JvmScope.class).newInstance(scope);
+      if (!(instance instanceof SkillOutput skillOutput))
+      {
+        throw new IOException("Class " + className + " does not implement SkillOutput");
+      }
+      return skillOutput.getOutput(arguments);
+    }
+    catch (IOException e)
+    {
+      throw e;
+    }
+    catch (Exception e)
+    {
+      Throwable cause = e;
+      if (e instanceof java.lang.reflect.InvocationTargetException && e.getCause() != null)
+        cause = e.getCause();
+      String errorMsg = cause.getMessage();
+      if (errorMsg == null)
+        errorMsg = cause.getClass().getName();
+      return "<error>Preprocessor directive failed for \"" + originalDirective + "\": " + errorMsg + "</error>";
+    }
   }
 
   /**
    * Resolves a single variable to its value.
    *
    * @param varName the variable name (without ${} delimiters)
-   * @param bindings the bindings map for the current skill
    * @return the resolved value, or the original {@code ${varName}} literal if undefined
-   * @throws IOException if binding resolution fails
    */
-  private String resolveVariable(String varName, Map<String, String> bindings)
-    throws IOException
+  private String resolveVariable(String varName)
   {
     if (varName.equals("CLAUDE_PLUGIN_ROOT"))
       return pluginRoot.toString();
@@ -369,59 +432,8 @@ public final class SkillLoader
     if (varName.equals("CLAUDE_PROJECT_DIR"))
       return projectDir;
 
-    if (bindings.containsKey(varName))
-    {
-      String className = bindings.get(varName);
-      String cached = bindingOutputCache.get(className);
-      if (cached != null)
-        return cached;
-      String output = invokeBinding(className);
-      bindingOutputCache.put(className, output);
-      return output;
-    }
-
     // Pass through unknown variables unchanged (matches Claude Code's native behavior)
     return "${" + varName + "}";
-  }
-
-  /**
-   * Invokes a SkillOutput binding class to generate output.
-   *
-   * @param className the fully-qualified class name
-   * @return the output from the binding
-   * @throws IOException if class instantiation or invocation fails
-   */
-  private String invokeBinding(String className) throws IOException
-  {
-    try
-    {
-      Class<?> bindingClass = Class.forName(className);
-      Constructor<?> constructor = bindingClass.getConstructor(JvmScope.class);
-      SkillOutput binding = (SkillOutput) constructor.newInstance(scope);
-      String output = binding.getOutput();
-      if (output == null)
-      {
-        throw new IOException("Binding class '" + className + "' returned null from getOutput(). " +
-          "SkillOutput.getOutput() must never return null.");
-      }
-      return output;
-    }
-    catch (ClassNotFoundException e)
-    {
-      throw new IOException("Binding class not found: " + className, e);
-    }
-    catch (NoSuchMethodException e)
-    {
-      throw new IOException("Binding class missing required constructor(JvmScope): " + className, e);
-    }
-    catch (IOException e)
-    {
-      throw e;
-    }
-    catch (ReflectiveOperationException e)
-    {
-      throw new IOException("Failed to invoke binding class: " + className, e);
-    }
   }
 
   /**
