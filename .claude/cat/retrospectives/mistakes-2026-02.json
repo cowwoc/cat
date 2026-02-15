@@ -4125,6 +4125,33 @@
         "catches_variations": true
       },
       "correct_behavior": "check_base_branch_commits() should use multiple detection strategies: 1) exact substring match (fast path), 2) keyword-based search for paraphrased messages (split issue name, search for commits with 2+ matching keywords), 3) file-based search (check for commits modifying files listed in PLAN.md)"
+    },
+    {
+      "id": "M502",
+      "timestamp": "2026-02-15T17:15:17Z",
+      "category": "git_operation_failure",
+      "description": "Squash captured unrelated v2.1 files because worktree had diverged from base branch and commit-tree used stale HEAD^{tree}",
+      "root_cause": "git-squash-quick.sh uses commit-tree with HEAD^{tree} without verifying HEAD is up-to-date with base branch. When worktree has diverged (base advanced), HEAD^{tree} reflects stale state, and commit-tree creates a commit that includes/excludes files based on divergence point rather than worktree's actual changes.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "validation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/git-squash-quick.sh",
+      "pattern_keywords": [
+        "squash",
+        "worktree",
+        "stale",
+        "diverged",
+        "commit-tree"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "git-squash-quick.sh must verify worktree is not behind base branch (git rev-list --count HEAD..BASE) before attempting squash. If behind, exit with STALE_WORKTREE error requiring rebase first."
     }
   ],
   "counter": 1
