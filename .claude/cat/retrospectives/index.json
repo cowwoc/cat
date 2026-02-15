@@ -858,9 +858,9 @@
       "description": "Add fallback banner script re-invocation when pre-rendered banners unavailable due to context compaction. Skills should include script path for manual re-invocation.",
       "category": "protocol_violation",
       "pattern_id": "PATTERN-008",
-      "status": "open",
+      "status": "implemented",
       "created_date": "2026-02-06T19:00:00Z",
-      "completed_date": null,
+      "completed_date": "2026-02-16T09:43:10.733071+00:00",
       "related_mistakes": [
         "M452"
       ],
@@ -869,7 +869,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "implementation": "M452 prevention updated work-with-issue skill to include explicit progress-banner script commands at every phase step, eliminating dependency on pre-rendered context."
     },
     {
       "id": "A020",
