@@ -4072,6 +4072,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Stakeholder agents must verify java.md lines 611-638 (constructor validation) for all records. Check that records with String/numeric/object parameters have compact constructors with requireThat() validation."
+    },
+    {
+      "id": "M500",
+      "timestamp": "2026-02-15T18:00:00Z",
+      "category": "tool_implementation_bug",
+      "description": "git-squash-quick.sh accumulated 6 orphaned backup-before-squash-* branches when script failed after backup creation (line 84) but before backup deletion (line 134)",
+      "root_cause": "git-squash-quick.sh creates backup branches at line 84 but only deletes them at line 134 if all intermediate steps succeed. When validation failures occur between these lines (e.g., dirty working directory check at lines 95-98), script exits without cleanup. No trap handler exists to remove backups on failure. Rapid retry attempts compounded accumulation.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/git-squash-quick.sh",
+      "pattern_keywords": [
+        "backup_branch",
+        "squash",
+        "cleanup",
+        "trap_handler",
+        "orphaned"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "git-squash-quick.sh should use a trap handler to clean up backup branches on any exit (success or failure). Should also detect and warn about existing orphaned backup-before-squash-* branches before creating new ones."
     }
   ],
   "counter": 1
