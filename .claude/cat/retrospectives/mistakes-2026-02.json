@@ -4126,6 +4126,32 @@
         "catches_variations": true
       },
       "correct_behavior": "NEVER use manual git reset --soft for squashing. Always use /cat:git-squash skill which validates commit messages and uses commit-tree to avoid working directory state capture."
+    },
+    {
+      "id": "M504",
+      "timestamp": "2026-02-16T09:22:40Z",
+      "category": "protocol_violation",
+      "description": "Main agent displayed raw JSON result object to user after stakeholder review instead of using human-friendly box report only",
+      "root_cause": "SKILL OUTPUT structure mixed human-facing output (box report) with machine-facing output (JSON result object) in a single output stream without clear separation of audiences",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/2.1-refactor-skill-output-to-preprocessor/plugin/skills/stakeholder-review/first-use.md",
+      "pattern_keywords": [
+        "output_format",
+        "json_display",
+        "user_interface",
+        "skill_orchestration"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Display only human-friendly box reports to users; return JSON result object as internal contract for orchestrating agent to parse"
     }
   ],
   "counter": 1
