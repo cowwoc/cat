@@ -81,8 +81,7 @@ public final class GetStatusOutput implements SkillOutput
     if (!Files.isDirectory(catDir))
       return "No CAT project found. Run /cat:init to initialize.";
 
-    Path pluginRoot = scope.getClaudePluginRoot();
-    LicenseValidator validator = new LicenseValidator(pluginRoot, scope.getJsonMapper());
+    LicenseValidator validator = new LicenseValidator(scope);
     LicenseResult licenseResult = validator.validate(projectDir);
 
     Path issuesDir = catDir.resolve("issues");
@@ -487,9 +486,15 @@ public final class GetStatusOutput implements SkillOutput
                      data.overallCompleted + "/" + data.overallTotal + " tasks");
     contentItems.add("");
 
-    String currentSession = System.getenv("CLAUDE_SESSION_ID");
-    if (currentSession == null)
+    String currentSession;
+    try
+    {
+      currentSession = scope.getClaudeSessionId();
+    }
+    catch (AssertionError _)
+    {
       currentSession = "";
+    }
     List<Agent> agents = getActiveAgents(catDir, currentSession);
 
     if (!agents.isEmpty())

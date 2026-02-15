@@ -12,12 +12,12 @@ import io.github.cowwoc.cat.hooks.HookHandler;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.HookResult;
+import io.github.cowwoc.cat.hooks.JvmScope;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,12 +37,18 @@ import java.util.List;
 public final class SessionUnlock implements HookHandler
 {
   private static final long STALE_LOCK_AGE_SECONDS = 24L * 60L * 60L;
+  private final JvmScope scope;
 
   /**
    * Creates a new SessionUnlock handler.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public SessionUnlock()
+  public SessionUnlock(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -58,12 +64,7 @@ public final class SessionUnlock implements HookHandler
   {
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
-
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
-      throw new AssertionError("CLAUDE_PROJECT_DIR environment variable is not set");
-
-    return runWithProjectDir(input, output, Paths.get(projectDir));
+    return runWithProjectDir(input, output, scope.getClaudeProjectDir());
   }
 
   /**

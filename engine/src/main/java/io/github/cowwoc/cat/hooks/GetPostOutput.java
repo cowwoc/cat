@@ -63,7 +63,7 @@ public final class GetPostOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       Path claudeConfigDir = resolveClaudeConfigDir();
       HookResult result = new GetPostOutput(claudeConfigDir).run(input, output);
 

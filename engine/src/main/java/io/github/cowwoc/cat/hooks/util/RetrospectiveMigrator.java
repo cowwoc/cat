@@ -9,11 +9,11 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -46,18 +46,18 @@ public final class RetrospectiveMigrator
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
   };
 
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new retrospective migrator.
    *
-   * @param mapper the JSON mapper for parsing and serialization
-   * @throws NullPointerException if {@code mapper} is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public RetrospectiveMigrator(JsonMapper mapper)
+  public RetrospectiveMigrator(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -83,12 +83,11 @@ public final class RetrospectiveMigrator
 
     try (MainJvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      RetrospectiveMigrator migrator = new RetrospectiveMigrator(mapper);
+      RetrospectiveMigrator migrator = new RetrospectiveMigrator(scope);
       MigrationResult result = migrator.migrate(Path.of(projectDir), dryRun);
       for (String message : result.messages())
         System.out.println(message);
-      System.out.println(mapper.writeValueAsString(result.stats()));
+      System.out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
     }
     catch (RuntimeException | Error e)
     {
@@ -120,7 +119,7 @@ public final class RetrospectiveMigrator
 
     if (!Files.exists(retroDir))
     {
-      ObjectNode result = mapper.createObjectNode();
+      ObjectNode result = scope.getJsonMapper().createObjectNode();
       result.put("status", "skipped");
       result.put("reason", "directory not found");
       messages.add("No retrospectives directory found at " + retroDir);
@@ -133,29 +132,29 @@ public final class RetrospectiveMigrator
 
     if (Files.exists(indexFile))
     {
-      ObjectNode result = mapper.createObjectNode();
+      ObjectNode result = scope.getJsonMapper().createObjectNode();
       result.put("status", "skipped");
       result.put("reason", "already migrated");
       messages.add("Migration already complete: " + indexFile + " exists");
       return new MigrationResult(messages, result);
     }
 
-    ObjectNode mistakesData = mapper.createObjectNode();
-    mistakesData.set("mistakes", mapper.createArrayNode());
+    ObjectNode mistakesData = scope.getJsonMapper().createObjectNode();
+    mistakesData.set("mistakes", scope.getJsonMapper().createArrayNode());
 
-    ObjectNode retroData = mapper.createObjectNode();
+    ObjectNode retroData = scope.getJsonMapper().createObjectNode();
     retroData.putNull("last_retrospective");
     retroData.put("mistake_count_since_last", 0);
-    ObjectNode config = mapper.createObjectNode();
+    ObjectNode config = scope.getJsonMapper().createObjectNode();
     config.put("mistake_count_threshold", 5);
     config.put("trigger_interval_days", 7);
     retroData.set("config", config);
 
     if (Files.exists(mistakesFile))
-      mistakesData = (ObjectNode) mapper.readTree(Files.readString(mistakesFile));
+      mistakesData = (ObjectNode) scope.getJsonMapper().readTree(Files.readString(mistakesFile));
 
     if (Files.exists(retroFile))
-      retroData = (ObjectNode) mapper.readTree(Files.readString(retroFile));
+      retroData = (ObjectNode) scope.getJsonMapper().readTree(Files.readString(retroFile));
 
     Map<String, List<JsonNode>> mistakesByPeriod = new HashMap<>();
     JsonNode mistakesNode = mistakesData.path("mistakes");
@@ -187,35 +186,35 @@ public final class RetrospectiveMigrator
       }
     }
 
-    ObjectNode indexData = mapper.createObjectNode();
+    ObjectNode indexData = scope.getJsonMapper().createObjectNode();
     indexData.put("version", "2.0");
     indexData.set("config", retroData.path("config"));
     indexData.set("last_retrospective", retroData.path("last_retrospective"));
     indexData.put("mistake_count_since_last", retroData.path("mistake_count_since_last").asInt(0));
 
-    ArrayNode mistakeFiles = mapper.createArrayNode();
+    ArrayNode mistakeFiles = scope.getJsonMapper().createArrayNode();
     List<String> mistakePeriods = new ArrayList<>(mistakesByPeriod.keySet());
     mistakePeriods.sort(String::compareTo);
     for (String period : mistakePeriods)
       mistakeFiles.add("mistakes-" + period + ".json");
 
-    ArrayNode retroFiles = mapper.createArrayNode();
+    ArrayNode retroFiles = scope.getJsonMapper().createArrayNode();
     List<String> retroPeriods = new ArrayList<>(retrosByPeriod.keySet());
     retroPeriods.sort(String::compareTo);
     for (String period : retroPeriods)
       retroFiles.add("retrospectives-" + period + ".json");
 
-    ObjectNode filesNode = mapper.createObjectNode();
+    ObjectNode filesNode = scope.getJsonMapper().createObjectNode();
     filesNode.set("mistakes", mistakeFiles);
     filesNode.set("retrospectives", retroFiles);
     indexData.set("files", filesNode);
 
-    ObjectNode stats = mapper.createObjectNode();
+    ObjectNode stats = scope.getJsonMapper().createObjectNode();
     int mistakesTotal = 0;
     if (mistakesNode.isArray())
       mistakesTotal = mistakesNode.size();
     stats.put("mistakes_total", mistakesTotal);
-    ObjectNode mistakesByPeriodNode = mapper.createObjectNode();
+    ObjectNode mistakesByPeriodNode = scope.getJsonMapper().createObjectNode();
     for (Map.Entry<String, List<JsonNode>> entry : mistakesByPeriod.entrySet())
       mistakesByPeriodNode.put(entry.getKey(), entry.getValue().size());
     stats.set("mistakes_by_period", mistakesByPeriodNode);
@@ -224,7 +223,7 @@ public final class RetrospectiveMigrator
     if (retrospectivesNode.isArray())
       retrospectivesTotal = retrospectivesNode.size();
     stats.put("retrospectives_total", retrospectivesTotal);
-    ObjectNode retrosByPeriodNode = mapper.createObjectNode();
+    ObjectNode retrosByPeriodNode = scope.getJsonMapper().createObjectNode();
     for (Map.Entry<String, List<JsonNode>> entry : retrosByPeriod.entrySet())
       retrosByPeriodNode.put(entry.getKey(), entry.getValue().size());
     stats.set("retrospectives_by_period", retrosByPeriodNode);
@@ -256,12 +255,12 @@ public final class RetrospectiveMigrator
       return new MigrationResult(messages, stats);
     }
 
-    ArrayNode filesCreated = mapper.createArrayNode();
+    ArrayNode filesCreated = scope.getJsonMapper().createArrayNode();
 
     for (String period : mistakePeriods)
     {
       Path splitFile = retroDir.resolve("mistakes-" + period + ".json");
-      ObjectNode splitData = mapper.createObjectNode();
+      ObjectNode splitData = scope.getJsonMapper().createObjectNode();
       splitData.put("period", period);
 
       List<JsonNode> periodMistakes = new ArrayList<>(mistakesByPeriod.get(period));
@@ -269,12 +268,13 @@ public final class RetrospectiveMigrator
         getStringOrDefault(a, "timestamp", "").compareTo(
           getStringOrDefault(b, "timestamp", "")));
 
-      ArrayNode mistakesArray = mapper.createArrayNode();
+      ArrayNode mistakesArray = scope.getJsonMapper().createArrayNode();
       for (JsonNode mistake : periodMistakes)
         mistakesArray.add(mistake);
       splitData.set("mistakes", mistakesArray);
 
-      Files.writeString(splitFile, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(splitData));
+      String json = scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(splitData);
+      Files.writeString(splitFile, json);
       filesCreated.add(splitFile.toString());
       messages.add("  Created: " + splitFile.getFileName());
     }
@@ -282,7 +282,7 @@ public final class RetrospectiveMigrator
     for (String period : retroPeriods)
     {
       Path splitFile = retroDir.resolve("retrospectives-" + period + ".json");
-      ObjectNode splitData = mapper.createObjectNode();
+      ObjectNode splitData = scope.getJsonMapper().createObjectNode();
       splitData.put("period", period);
 
       List<JsonNode> periodRetros = new ArrayList<>(retrosByPeriod.get(period));
@@ -290,17 +290,18 @@ public final class RetrospectiveMigrator
         getStringOrDefault(a, "timestamp", "").compareTo(
           getStringOrDefault(b, "timestamp", "")));
 
-      ArrayNode retrosArray = mapper.createArrayNode();
+      ArrayNode retrosArray = scope.getJsonMapper().createArrayNode();
       for (JsonNode retro : periodRetros)
         retrosArray.add(retro);
       splitData.set("retrospectives", retrosArray);
 
-      Files.writeString(splitFile, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(splitData));
+      String json = scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(splitData);
+      Files.writeString(splitFile, json);
       filesCreated.add(splitFile.toString());
       messages.add("  Created: " + splitFile.getFileName());
     }
 
-    Files.writeString(indexFile, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(indexData));
+    Files.writeString(indexFile, scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(indexData));
     filesCreated.add(indexFile.toString());
     messages.add("  Created: " + indexFile.getFileName());
 
@@ -313,7 +314,7 @@ public final class RetrospectiveMigrator
         p.getFileName().toString().endsWith(".json")).
       toList())
     {
-      JsonNode splitData = mapper.readTree(Files.readString(mistakesSplit));
+      JsonNode splitData = scope.getJsonMapper().readTree(Files.readString(mistakesSplit));
       totalInSplits += splitData.path("mistakes").size();
     }
 
@@ -322,7 +323,7 @@ public final class RetrospectiveMigrator
       messages.add("  ERROR: Mistake count mismatch!");
       messages.add("    Original: " + mistakesTotal);
       messages.add("    In splits: " + totalInSplits);
-      ObjectNode errorResult = mapper.createObjectNode();
+      ObjectNode errorResult = scope.getJsonMapper().createObjectNode();
       errorResult.put("status", "error");
       errorResult.put("reason", "count mismatch");
       errorResult.setAll(stats);
