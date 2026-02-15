@@ -7,7 +7,7 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,6 +45,10 @@ import org.slf4j.LoggerFactory;
  */
 public final class GetRenderDiffOutput
 {
+  /**
+   * Maximum number of files to display in the summary.
+   */
+  private static final int MAX_FILES_DISPLAYED = 20;
   /**
    * The JVM scope for accessing shared services.
    */
@@ -89,7 +93,7 @@ public final class GetRenderDiffOutput
         GitCommands.runGitCommandInDirectory(projectRoot.toString(), "rev-parse", "--verify", branch);
         return true;
       }
-      catch (IOException e)
+      catch (IOException _)
       {
         return false;
       }
@@ -120,7 +124,7 @@ public final class GetRenderDiffOutput
         }
         return result;
       }
-      catch (IOException e)
+      catch (IOException _)
       {
         return List.of();
       }
@@ -166,7 +170,7 @@ public final class GetRenderDiffOutput
           }
         }
       }
-      catch (IOException e)
+      catch (IOException _)
       {
         // Return empty stats on error
       }
@@ -189,7 +193,7 @@ public final class GetRenderDiffOutput
         return GitCommands.runGitCommandSingleLineInDirectory(projectRoot.toString(), "rev-parse", "--abbrev-ref",
           "HEAD");
       }
-      catch (IOException e)
+      catch (IOException _)
       {
         return null;
       }
@@ -211,7 +215,7 @@ public final class GetRenderDiffOutput
         return GitCommands.runGitCommandSingleLineInDirectory(projectRoot.toString(), "rev-parse", "--abbrev-ref",
           "@{upstream}");
       }
-      catch (IOException e)
+      catch (IOException _)
       {
         return null;
       }
@@ -234,7 +238,7 @@ public final class GetRenderDiffOutput
       {
         return GitCommands.runGitCommandInDirectory(projectRoot.toString(), "diff", baseBranch + "..HEAD");
       }
-      catch (IOException e)
+      catch (IOException _)
       {
         return null;
       }
@@ -418,11 +422,6 @@ public final class GetRenderDiffOutput
     String fileList = buildFileSummary(changedFiles);
     return buildOutputString(baseBranch, stats, rendered, fileList);
   }
-
-  /**
-   * Maximum number of files to display in the summary.
-   */
-  private static final int MAX_FILES_DISPLAYED = 20;
 
   /**
    * Builds a summary list of changed files.
@@ -900,10 +899,7 @@ public final class GetRenderDiffOutput
         return true;
 
       match = HUNK_HEADER.matcher(line);
-      if (match.matches())
-        return handleHunkHeader(match, state);
-
-      return false;
+      return match.matches() && handleHunkHeader(match, state);
     }
 
     /**
@@ -1210,6 +1206,7 @@ public final class GetRenderDiffOutput
      *
      * @param text the text to substring
      * @param maxDisplayWidth the maximum display width
+     * @param display the display utilities for width calculation
      * @return the substring with display width at most maxDisplayWidth
      */
     private static String substringByDisplayWidth(String text, int maxDisplayWidth, DisplayUtils display)
@@ -1627,7 +1624,6 @@ public final class GetRenderDiffOutput
 
         return segments;
       }
-
     }
 
     /**
