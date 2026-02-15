@@ -930,19 +930,16 @@ public class GetRenderDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputWithoutArgsReturnsNullWhenEnvNotSet() throws IOException
+  public void getOutputWithoutArgsReturnsErrorForNonGitDir() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
       String result = handler.getOutput();
 
-      // When CLAUDE_PROJECT_DIR is not set, getOutput() returns null
-      String envValue = System.getenv("CLAUDE_PROJECT_DIR");
-      if (envValue == null || envValue.isBlank())
-        requireThat(result, "result").isNull();
-      else
-        requireThat(result, "result").isNotNull();
+      // TestJvmScope provides a temp dir that is not a git repo,
+      // so getOutput() returns an error about base branch not found
+      requireThat(result, "result").contains("Base branch not found");
     }
   }
 
