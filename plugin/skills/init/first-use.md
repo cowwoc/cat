@@ -17,7 +17,7 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 </objective>
 
 
-**FAIL-FAST:** If you do NOT see "SCRIPT OUTPUT INIT BOXES" above, preprocessing FAILED. STOP.
+**FAIL-FAST:** If you do NOT see "SKILL OUTPUT INIT BOXES" above, preprocessing FAILED. STOP.
 Do NOT manually construct output or invoke scripts.
 
 <process>
@@ -324,12 +324,12 @@ For each minor version PLAN.md, add:
 - All issues complete
 ```
 
-After applying defaults, use the **default_gates_configured** box from SCRIPT OUTPUT INIT BOXES.
+After applying defaults, use the **default_gates_configured** box from SKILL OUTPUT INIT BOXES.
 Replace `{N}` with the version count.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -411,11 +411,11 @@ Note in PROJECT.md:
 - Research not run during init. Use `/cat:research {version}` for pending versions.
 ```
 
-Use the **research_skipped** box from SCRIPT OUTPUT INIT BOXES.
+Use the **research_skipped** box from SKILL OUTPUT INIT BOXES.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -429,11 +429,11 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 **Choose Your Partner - Capture development style preferences**
 
-Use the **choose_your_partner** box from SCRIPT OUTPUT INIT BOXES.
+Use the **choose_your_partner** box from SKILL OUTPUT INIT BOXES.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -857,12 +857,12 @@ git commit -m "docs: initialize CAT planning structure"
 
 <step name="done">
 
-Use the **cat_initialized** box from SCRIPT OUTPUT INIT BOXES.
+Use the **cat_initialized** box from SKILL OUTPUT INIT BOXES.
 Replace `{trust}`, `{curiosity}`, `{patience}` with actual preference values.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -896,11 +896,11 @@ options=[
 
 **If "Yes, guide me":**
 
-Use the **first_task_walkthrough** box from SCRIPT OUTPUT INIT BOXES.
+Use the **first_task_walkthrough** box from SKILL OUTPUT INIT BOXES.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -958,12 +958,12 @@ git add ".claude/cat/"
 git commit -m "docs: add first issue - ${TASK_NAME}"
 ```
 
-7. Use the **first_task_created** box from SCRIPT OUTPUT INIT BOXES.
+7. Use the **first_task_created** box from SKILL OUTPUT INIT BOXES.
    Replace `{issue-name}` with the actual sanitized issue name.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -979,11 +979,11 @@ AskUserQuestion: header="Start Work", question="Ready to start working on this i
 
 **If "No, I'll start later":**
 
-Use the **all_set** box from SCRIPT OUTPUT INIT BOXES.
+Use the **all_set** box from SKILL OUTPUT INIT BOXES.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -991,11 +991,11 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 **If "No, I'll explore" (from initial question):**
 
-Use the **explore_at_your_own_pace** box from SCRIPT OUTPUT INIT BOXES.
+Use the **explore_at_your_own_pace** box from SKILL OUTPUT INIT BOXES.
 
-**If SCRIPT OUTPUT INIT BOXES not found:**
+**If SKILL OUTPUT INIT BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT INIT BOXES not found.
+FAIL: SKILL OUTPUT INIT BOXES not found.
 Handler init_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```

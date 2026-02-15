@@ -44,7 +44,7 @@ Execute the session analyzer to extract all mechanical data:
 "${CLAUDE_PLUGIN_ROOT}/hooks/bin/session-analyzer" "$SESSION_FILE"
 ```
 
-The script outputs a JSON object with:
+The skill outputs a JSON object with:
 - `main`: Main agent analysis containing:
   - `tool_frequency`: Count of each tool type used
   - `token_usage`: Token consumption per tool type
@@ -107,7 +107,7 @@ ux_relevance_categories:
       - Repeated git branch checks
 ```
 
-Using the script output, categorize each tool usage pattern by UX relevance. Consider:
+Using the skill output, categorize each tool usage pattern by UX relevance. Consider:
 - Tools in `cache_candidates` (repeated operations) are often LOW relevance
 - Tools with errors are HIGH relevance
 - File modifications (Write, Edit) are HIGH relevance
@@ -116,7 +116,7 @@ Using the script output, categorize each tool usage pattern by UX relevance. Con
 
 ### Step 3: Generate Recommendations
 
-Compile analysis into actionable recommendations based on the script output:
+Compile analysis into actionable recommendations based on the skill output:
 
 1. **Batching opportunities**: Use `batch_candidates` to identify consecutive operations that could be combined
 2. **Caching opportunities**: Use `cache_candidates` to identify repeated operations

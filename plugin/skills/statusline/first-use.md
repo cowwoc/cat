@@ -16,7 +16,7 @@ Configure the user's Claude Code statusline to use CAT's custom statusline scrip
 
 ---
 
-SCRIPT OUTPUT STATUSLINE CHECK:
+SKILL OUTPUT STATUSLINE CHECK:
 ${CAT_SKILL_OUTPUT}
 
 ---
@@ -27,7 +27,7 @@ ${CAT_SKILL_OUTPUT}
 
 **Check for existing statusline configuration:**
 
-Read the status from "SCRIPT OUTPUT STATUSLINE CHECK" above. Parse the JSON and determine the next step:
+Read the status from "SKILL OUTPUT STATUSLINE CHECK" above. Parse the JSON and determine the next step:
 
 | Status | Meaning | Action |
 |--------|---------|--------|
