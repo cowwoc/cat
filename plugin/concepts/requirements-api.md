@@ -101,10 +101,11 @@ Use property navigation to validate derived values without creating a new valida
 ```java
 // Good - navigate to length via the validator
 requireThat(result, "result").length().isGreaterThan(0);
+requireThat(args, "args").length().isEqualTo(0);
 
 // Avoid - extracting the property manually
-requireThat(result, "result").isNotNull();
-requireThat(result.length(), "length").isGreaterThan(0);
+requireThat(result.length(), "result.length").isGreaterThan(0);
+requireThat(args.length, "args.length").isEqualTo(0);
 ```
 
 **Implicit null checks:** Most validation methods throw `NullPointerException` if the value is null, making an

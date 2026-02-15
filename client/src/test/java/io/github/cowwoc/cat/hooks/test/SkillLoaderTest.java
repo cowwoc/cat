@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SkillLoader;
-import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -386,71 +385,6 @@ Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
     }
   }
 
-  /**
-   * Verifies that load resolves bindings.json variables when present.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadResolvesBindingsJsonVariables() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    Path tempProjectDir = Files.createTempDirectory("skill-loader-project");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempProjectDir))
-    {
-      Path skillDir = tempPluginRoot.resolve("skills/status");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"),
-        "{\"CAT_SKILL_OUTPUT\": \"io.github.cowwoc.cat.hooks.skills.GetStatusOutput\"}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-Status: ${CAT_SKILL_OUTPUT}
-Done
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), tempProjectDir.toString());
-      String result = loader.load("status");
-
-      requireThat(result, "result").
-        contains("Status:").
-        doesNotContain("${CAT_SKILL_OUTPUT}").
-        contains("Done");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-      TestUtils.deleteDirectoryRecursively(tempProjectDir);
-    }
-  }
-
-  /**
-   * Verifies that load throws IOException when bindings.json contains reserved variable name.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = IOException.class)
-  public void loadRejectsReservedVariableInBindings() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"),
-        "{\"CLAUDE_PLUGIN_ROOT\": \"io.github.cowwoc.cat.hooks.skills.GetStatusOutput\"}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-Content
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-      loader.load("test-skill");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
   /**
    * Verifies that load passes through undefined variables as literals.
@@ -513,64 +447,6 @@ Session: ${CLAUDE_SESSION_ID}
     }
   }
 
-  /**
-   * Verifies that load works with empty bindings.json file.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadWorksWithEmptyBindingsJson() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"), "{}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-Root: ${CLAUDE_PLUGIN_ROOT}
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").contains("Root: " + tempPluginRoot);
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
-   * Verifies that load throws IOException for invalid class name in bindings.json.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = IOException.class)
-  public void loadRejectsInvalidBindingClassName() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"),
-        "{\"MY_VAR\": \"com.example.NonExistentClass\"}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-Value: ${MY_VAR}
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-      loader.load("test-skill");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
   /**
    * Verifies that load expands @path references in first-use.md.
@@ -712,48 +588,6 @@ Email: user@example.com
     }
   }
 
-  /**
-   * Verifies that bindings.json resolution still works with @path expansion.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadResolvesBindingsWithPathExpansion() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    Path tempProjectDir = Files.createTempDirectory("skill-loader-project");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempProjectDir))
-    {
-      Path conceptsDir = tempPluginRoot.resolve("concepts");
-      Files.createDirectories(conceptsDir);
-      Files.writeString(conceptsDir.resolve("context.md"), """
-Binding: ${CAT_SKILL_OUTPUT}
-""");
-
-      Path skillDir = tempPluginRoot.resolve("skills/status");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"),
-        "{\"CAT_SKILL_OUTPUT\": \"io.github.cowwoc.cat.hooks.skills.GetStatusOutput\"}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-@concepts/context.md
-# Status
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), tempProjectDir.toString());
-      String result = loader.load("status");
-
-      requireThat(result, "result").
-        contains("Binding:").
-        doesNotContain("${CAT_SKILL_OUTPUT}").
-        contains("# Status");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-      TestUtils.deleteDirectoryRecursively(tempProjectDir);
-    }
-  }
 
   /**
    * Verifies that circular @path references are detected and rejected.
@@ -904,42 +738,6 @@ Plain text content
     }
   }
 
-  /**
-   * Verifies that load rejects malformed bindings.json.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadRejectsMalformedBindingsJson() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"), "{\"VAR\": invalid json}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-Content: ${VAR}
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-
-      try
-      {
-        loader.load("test-skill");
-        requireThat(false, "load").isEqualTo(true);
-      }
-      catch (Exception e)
-      {
-        requireThat(e.getMessage(), "message").contains("invalid");
-      }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
   /**
    * Verifies that load expands @path references with special characters in filenames.
@@ -978,34 +776,6 @@ Content with spaces in filename
     }
   }
 
-  /**
-   * Verifies that load rejects binding class that returns null.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test(expectedExceptions = IOException.class)
-  public void loadRejectsBindingReturningNull() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
-      Files.createDirectories(skillDir);
-      Files.writeString(skillDir.resolve("bindings.json"),
-        "{\"NULL_OUTPUT\": \"io.github.cowwoc.cat.hooks.test.SkillLoaderTest$NullSkillOutput\"}");
-      Files.writeString(skillDir.resolve("first-use.md"), """
-Value: ${NULL_OUTPUT}
-""");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-      loader.load("test-skill");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
 
   /**
    * Verifies that load ignores @path in the middle of a line.
@@ -1316,25 +1086,146 @@ Regular content here
   }
 
   /**
-   * Test helper that implements SkillOutput and returns null.
+   * Verifies that preprocessor directive passes through when launcher not found.
+   *
+   * @throws IOException if an I/O error occurs
    */
-  public static final class NullSkillOutput implements SkillOutput
+  @Test
+  public void loadPassesThroughUnknownLauncher() throws IOException
   {
-    /**
-     * Creates a new instance.
-     *
-     * @param scope the JVM scope (required by SkillLoader reflection)
-     * @throws NullPointerException if {@code scope} is null
-     */
-    public NullSkillOutput(JvmScope scope)
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      requireThat(scope, "scope").isNotNull();
-    }
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/nonexistent-launcher"`
+Done
+""");
 
-    @Override
-    public String getOutput()
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("!`\"" + tempPluginRoot + "/hooks/bin/nonexistent-launcher\"`").
+        contains("Done");
+    }
+    finally
     {
-      return null;
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that CLAUDE_PLUGIN_ROOT is resolved before preprocessor directive processing.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadResolvesVariablesBeforePreprocessorDirectives() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+Root: ${CLAUDE_PLUGIN_ROOT}
+Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Root: " + tempPluginRoot).
+        doesNotContain("${CLAUDE_PLUGIN_ROOT}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that preprocessor directive invokes SkillOutput and replaces directive with output.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadInvokesSkillOutputForKnownLauncher() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Output: NO_ARGS_OUTPUT").
+        contains("Done").
+        doesNotContain("!`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that preprocessor directive passes arguments to SkillOutput.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadPassesArgumentsToSkillOutput() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output" arg1 arg2`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Output: ARGS:arg1,arg2").
+        contains("Done").
+        doesNotContain("!`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
 }

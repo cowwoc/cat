@@ -46,6 +46,26 @@ public class GetStatusOutputTest
 
 
   /**
+   * Verifies that getOutput rejects unexpected arguments.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getOutputRejectsUnexpectedArguments() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      handler.getOutput(new String[]{"unexpected"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that missing CAT directory returns error message.
    *
    * @throws IOException if an I/O error occurs
@@ -57,7 +77,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").isEqualTo("No CAT project found. Run /cat:init to initialize.");
     }
@@ -82,7 +102,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").isEqualTo("No planning structure found. Run /cat:init to initialize.");
     }
@@ -107,7 +127,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("Overall:").contains("0% · 0/1 tasks");
     }
@@ -132,7 +152,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
     }
@@ -165,7 +185,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("50% · 1/2 tasks");
     }
@@ -195,7 +215,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("v2: Version 2").
         contains("v2.0: (0/1)").contains("my-task");
@@ -226,7 +246,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("🔄 active-task");
     }
@@ -263,7 +283,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("🚫 task-2 (blocked by: task-1)");
     }
@@ -296,7 +316,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("☑️ done-task");
     }
@@ -326,7 +346,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("🔳 open-task");
     }
@@ -356,7 +376,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("Current: /cat:work v1.0-active-task");
     }
@@ -386,7 +406,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("Next: /cat:work v1.0-next-task");
     }
@@ -428,7 +448,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("No open tasks available");
     }
@@ -460,7 +480,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("v2: Major Refactor");
     }
@@ -497,7 +517,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("v2.1: Port display scripts");
     }
@@ -525,7 +545,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").isNotEmpty();
     }
@@ -555,7 +575,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("🔄 v1.0:");
     }
@@ -589,7 +609,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("☑️ v1.0:");
     }
@@ -621,7 +641,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       int pos10 = result.indexOf("v1.0");
       int pos11 = result.indexOf("v1.1");
@@ -664,7 +684,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("🔄 my-task");
     }
@@ -694,7 +714,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("🔳 pending-task");
     }
@@ -735,7 +755,7 @@ public class GetStatusOutputTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
-      String result = handler.getOutput();
+      String result = handler.getOutput(new String[0]);
 
       requireThat(result, "result").contains("☑️ done-task");
     }
