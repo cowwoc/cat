@@ -4,7 +4,7 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# build.sh - Build CAT engine using Maven
+# build.sh - Build CAT client using Maven
 #
 # Usage:
 #   ./build.sh              Build the JAR
@@ -29,7 +29,7 @@ case "${1:-build}" in
         echo "Clean complete."
         ;;
     build)
-        echo "Building CAT engine JAR..."
+        echo "Building CAT client JAR..."
         "$MVN" package -DskipTests -q
         echo "Done: ${SCRIPT_DIR}/target/cat-hooks-2.1.jar"
         ;;

@@ -30,7 +30,7 @@ public final class VerifyCommitType implements BashHandler
     "CLAUDE.md",
     "plugin/",            // CAT plugin directory (A007: M255, M306)
     ".claude/",
-    "engine/",
+    "client/",
     "skills/",
     "concepts/",
     "commands/",

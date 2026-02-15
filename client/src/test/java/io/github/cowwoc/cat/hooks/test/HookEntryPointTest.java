@@ -1237,9 +1237,9 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that WarnBaseBranchEdit allows existing engine files.
+   * Verifies that WarnBaseBranchEdit allows existing client files.
    * <p>
-   * The handler allows files in engine/ or skills/ directories IF the file exists.
+   * The handler allows files in client/ or skills/ directories IF the file exists.
    * Use a real file path that exists in the repo.
    */
   @Test
@@ -1291,7 +1291,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \"/workspace/engine/src/main/java/io/github/cowwoc/cat/hooks/HookInput.java\"}");
+        "{\"file_path\": \"/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/HookInput.java\"}");
       FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
     }
