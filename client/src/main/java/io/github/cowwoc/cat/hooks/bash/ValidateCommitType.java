@@ -44,12 +44,12 @@ public final class ValidateCommitType implements BashHandler
     "revert");      // Revert commit
 
   // Files that are Claude-facing and should use config:, not docs:
-  // Per M255, M306: plugin/, CLAUDE.md, .claude/, engine/, skills/, etc.
+  // Per M255, M306: plugin/, CLAUDE.md, .claude/, client/, skills/, etc.
   private static final List<String> CLAUDE_FACING_PATTERNS = Arrays.asList(
     "CLAUDE.md",
     "plugin/",         // CAT plugin directory (M255, M306)
     ".claude/",        // Claude config directory
-    "engine/",         // Engine scripts
+    "client/",         // Client scripts
     "skills/",         // Skill definitions
     "concepts/",       // Concept documents
     "commands/");      // Command definitions

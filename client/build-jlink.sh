@@ -4,10 +4,10 @@
 # Licensed under the CAT Commercial License.
 # See LICENSE.md in the project root for license terms.
 #
-# build-jlink.sh - Create a self-contained jlink image with engine application and dependencies
+# build-jlink.sh - Create a self-contained jlink image with client application and dependencies
 #
 # Pipeline:
-#   1. Build the engine JAR (if needed)
+#   1. Build the client JAR (if needed)
 #   2. Stage runtime dependency JARs
 #   3. Patch automatic modules with generated module-info.class
 #   4. Create jlink runtime image with per-handler launchers
@@ -84,7 +84,7 @@ run_all_handlers() {
   done
 }
 
-# --- Phase 1: Build engine JAR ---
+# --- Phase 1: Build client JAR ---
 
 ensure_hooks_jar() {
   if [[ -f "$HOOKS_JAR" ]]; then
@@ -92,11 +92,11 @@ ensure_hooks_jar() {
     return 0
   fi
 
-  log "Building engine JAR..."
+  log "Building client JAR..."
   cd "$PROJECT_DIR"
   ./mvnw package -DskipTests -q
 
-  [[ -f "$HOOKS_JAR" ]] || error "Failed to build engine JAR"
+  [[ -f "$HOOKS_JAR" ]] || error "Failed to build client JAR"
   log "Engine JAR built successfully"
 }
 

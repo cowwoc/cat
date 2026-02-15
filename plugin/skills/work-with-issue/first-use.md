@@ -81,7 +81,7 @@ Display the **Preparing phase** banner by running:
 **If the command fails or produces no output**, STOP immediately:
 ```
 FAIL: progress-banner launcher failed for phase 'preparing'.
-The jlink image may not be built. Run: mvn -f engine/pom.xml verify
+The jlink image may not be built. Run: mvn -f client/pom.xml verify
 ```
 Do NOT skip the banner or continue without it.
 

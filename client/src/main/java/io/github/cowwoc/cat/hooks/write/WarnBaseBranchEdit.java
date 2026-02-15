@@ -31,12 +31,12 @@ import java.util.List;
  * <p>
  * Allowed without warning:
  * <ul>
- *   <li>.claude/cat/, .claude/rules/, .claude/settings* (orchestration only, not commands/engine)</li>
+ *   <li>.claude/cat/, .claude/rules/, .claude/settings* (orchestration only, not commands/client)</li>
  *   <li>STATE.md, PLAN.md, CHANGELOG.md, ROADMAP.md files</li>
  *   <li>CLAUDE.md, PROJECT.md (project instructions)</li>
  *   <li>retrospectives/ directory</li>
  *   <li>mistakes.json, retrospectives.json</li>
- *   <li>engine/, skills/ directories (only for existing files)</li>
+ *   <li>client/, skills/ directories (only for existing files)</li>
  *   <li>When in a issue worktree editing orchestration files only</li>
  * </ul>
  */
@@ -98,7 +98,7 @@ public final class WarnBaseBranchEdit implements FileWriteHandler
         return FileWriteHandler.Result.allow();
     }
 
-    if (filePath.contains("engine/") || filePath.contains("skills/"))
+    if (filePath.contains("client/") || filePath.contains("skills/"))
     {
       Path path = Paths.get(filePath);
       if (Files.exists(path))
