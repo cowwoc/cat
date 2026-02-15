@@ -239,9 +239,9 @@ public final class VerifyAudit
     String fileDetails = renderFileDetails(fileResults);
 
     StringBuilder output = new StringBuilder(1024);
-    output.append(reportBox).append('\n').append('\n');
-    output.append(criteriaDetails).append('\n').append('\n');
-    output.append(fileDetails).append('\n');
+    output.append(reportBox).append('\n').append('\n').
+      append(criteriaDetails).append('\n').append('\n').
+      append(fileDetails).append('\n');
 
     ObjectNode summary = mapper.createObjectNode();
     summary.put("total", total);
@@ -574,9 +574,9 @@ public final class VerifyAudit
   private String renderCriteriaDetails(JsonNode criteriaResults)
   {
     StringBuilder output = new StringBuilder(512);
-    output.append("━".repeat(80)).append('\n');
-    output.append("ACCEPTANCE CRITERIA VERIFICATION").append('\n');
-    output.append("━".repeat(80)).append('\n').append('\n');
+    output.append("━".repeat(80)).append('\n').
+      append("ACCEPTANCE CRITERIA VERIFICATION").append('\n').
+      append("━".repeat(80)).append('\n').append('\n');
 
     int index = 1;
     for (JsonNode result : criteriaResults)
@@ -591,7 +591,7 @@ public final class VerifyAudit
       else
         statusSymbol = "✗";
 
-      output.append(index).append(". ").append(statusSymbol).append(" ").append(status).
+      output.append(index).append(". ").append(statusSymbol).append(' ').append(status).
         append(": ").append(criterion).append('\n');
 
       JsonNode evidence = result.path("evidence");
@@ -626,9 +626,9 @@ public final class VerifyAudit
   private String renderFileDetails(JsonNode fileResults)
   {
     StringBuilder output = new StringBuilder(256);
-    output.append("━".repeat(80)).append('\n');
-    output.append("FILE SPECIFICATIONS").append('\n');
-    output.append("━".repeat(80)).append('\n').append('\n');
+    output.append("━".repeat(80)).append('\n').
+      append("FILE SPECIFICATIONS").append('\n').
+      append("━".repeat(80)).append('\n').append('\n');
 
     JsonNode modifyResults = fileResults.path("modify");
     if (modifyResults.isObject() && modifyResults.size() > 0)
@@ -644,7 +644,7 @@ public final class VerifyAudit
           symbol = "✓";
         else
           symbol = "✗";
-        output.append("  ").append(symbol).append(" ").append(file).append(" -> ").append(status).append('\n');
+        output.append("  ").append(symbol).append(' ').append(file).append(" -> ").append(status).append('\n');
       }
       output.append('\n');
     }
@@ -663,7 +663,7 @@ public final class VerifyAudit
           symbol = "✓";
         else
           symbol = "✗";
-        output.append("  ").append(symbol).append(" ").append(file).append(" -> ").append(status).append('\n');
+        output.append("  ").append(symbol).append(' ').append(file).append(" -> ").append(status).append('\n');
       }
       output.append('\n');
     }

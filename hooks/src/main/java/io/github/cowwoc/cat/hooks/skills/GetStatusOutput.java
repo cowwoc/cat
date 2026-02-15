@@ -201,9 +201,6 @@ public final class GetStatusOutput implements SkillOutput
             String minorId = minorDir.getFileName().toString();
             String minorNum = minorId.substring(1);
 
-            int localCompleted = 0;
-            int localTotal = 0;
-            String localInprog = "";
             List<Task> tasks = new ArrayList<>();
             Map<String, String> allTaskStatuses = new HashMap<>();
 
@@ -233,62 +230,63 @@ public final class GetStatusOutput implements SkillOutput
 
               TaskStats stats = buildMinorVersionTasks(taskDirs, catDir, minorNum, licenseResult,
                 allTaskStatuses, tasks);
-              localTotal = stats.total;
-              localCompleted = stats.completed;
-              localInprog = stats.inProgress;
-            }
+              int localTotal = stats.total;
+              int localCompleted = stats.completed;
+              String localInprog = stats.inProgress;
 
-            String desc = "";
-            Pattern minorPattern = Pattern.compile("^- \\*\\*" + Pattern.quote(minorNum) + ":\\*\\*\\s+([^(]+)",
-              Pattern.MULTILINE);
-            Matcher minorMatcher = minorPattern.matcher(roadmapContent);
-            if (minorMatcher.find())
-              desc = minorMatcher.group(1).trim();
+              String desc = "";
+              Pattern minorPattern = Pattern.compile(
+                "^- \\*\\*" + Pattern.quote(minorNum) + ":\\*\\*\\s+([^(]+)",
+                Pattern.MULTILINE);
+              Matcher minorMatcher = minorPattern.matcher(roadmapContent);
+              if (minorMatcher.find())
+                desc = minorMatcher.group(1).trim();
 
-            totalCompleted += localCompleted;
-            totalTasks += localTotal;
+              totalCompleted += localCompleted;
+              totalTasks += localTotal;
 
-            if (currentMinor.isEmpty())
-            {
-              if (!localInprog.isEmpty())
+              if (currentMinor.isEmpty())
               {
-                currentMinor = minorId;
-                inProgressTask = localInprog;
-              }
-              else if (localCompleted < localTotal)
-              {
-                currentMinor = minorId;
-                for (Task task : tasks)
+                if (!localInprog.isEmpty())
                 {
-                  if (task.status.equals("open") && task.blockedBy.isEmpty())
-                  {
-                    nextTask = task.name;
-                    break;
-                  }
+                  currentMinor = minorId;
+                  inProgressTask = localInprog;
                 }
-                if (nextTask.isEmpty())
+                else if (localCompleted < localTotal)
                 {
+                  currentMinor = minorId;
                   for (Task task : tasks)
                   {
-                    if (task.status.equals("open"))
+                    if (task.status.equals("open") && task.blockedBy.isEmpty())
                     {
                       nextTask = task.name;
                       break;
                     }
                   }
+                  if (nextTask.isEmpty())
+                  {
+                    for (Task task : tasks)
+                    {
+                      if (task.status.equals("open"))
+                      {
+                        nextTask = task.name;
+                        break;
+                      }
+                    }
+                  }
                 }
               }
-            }
 
-            MinorVersion minor = new MinorVersion();
-            minor.id = minorId;
-            minor.major = majorId;
-            minor.description = desc;
-            minor.completed = localCompleted;
-            minor.total = localTotal;
-            minor.inProgress = localInprog;
-            minor.tasks = tasks;
-            data.minors.add(minor);
+              MinorVersion minor = new MinorVersion();
+              minor.id = minorId;
+              minor.major = majorId;
+              minor.description = desc;
+              minor.completed = localCompleted;
+              minor.total = localTotal;
+              minor.inProgress = localInprog;
+              minor.tasks = tasks;
+              data.minors.add(minor);
+            }
           }
         }
       }
@@ -810,11 +808,7 @@ public final class GetStatusOutput implements SkillOutput
       return false;
     if (filePath.contains(".."))
       return false;
-    if (!filePath.startsWith(".claude/cat/issues/"))
-      return false;
-    if (!filePath.endsWith("/STATE.md"))
-      return false;
-    return true;
+    return filePath.startsWith(".claude/cat/issues/") && filePath.endsWith("/STATE.md");
   }
 
   /**
