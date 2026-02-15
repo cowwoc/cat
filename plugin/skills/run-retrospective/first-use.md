@@ -20,6 +20,8 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Script Output Analysis
 
+${CAT_RETROSPECTIVE_OUTPUT}
+
 **MANDATORY: Check for SCRIPT OUTPUT RETROSPECTIVE in context first.**
 
 The handler precomputes:
@@ -45,7 +47,7 @@ The handler precomputes:
 **If NO SCRIPT OUTPUT found:**
 ```
 FAIL: Handler output not found in context.
-Check that run_retrospective_handler.py is registered and running.
+Check that GetRetrospectiveOutput.java is registered in bindings.json.
 ```
 Do NOT manually gather data - the handler provides all necessary analysis.
 
