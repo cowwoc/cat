@@ -32,7 +32,7 @@ setup_git_repo() {
 
     # Initialize git repo in /tmp (allowed by hook)
     cd "$TEST_TEMP_DIR" || return 1
-    git init --quiet
+    git init --quiet --initial-branch=main
     git config user.email "test@test.com"
     git config user.name "Test User"
     git config core.autocrlf false
