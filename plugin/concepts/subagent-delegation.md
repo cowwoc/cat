@@ -5,12 +5,31 @@ See LICENSE.md in the project root for license terms.
 -->
 # Subagent Delegation Principles
 
+## Capability Limitations
+
+If any step requires a tool or capability you don't have access to (e.g., Skill tool, spawning subagents), return
+BLOCKED status immediately. Do NOT silently substitute or work around missing capabilities.
+
+When a delegation prompt instructs you to use a specific tool that is unavailable, fail-fast with:
+
+```json
+{
+  "status": "BLOCKED",
+  "reason": "Required tool not available: {tool_name}",
+  "requested_capability": "{what the prompt asked for}",
+  "available_alternatives": []
+}
+```
+
+Do NOT attempt to use different tools, rewrite the approach, or continue without the required capability. The
+orchestrating agent needs to know the exact blocker to adjust its delegation strategy.
+
 ## Tool Access
 
 **General-purpose subagents have access to ALL tools**, including Task and Skill.
 
-If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc`), invoke it
-directly via the Skill tool. Do not assume tool limitations exist - subagents have full tool access.
+If a PLAN.md or delegation prompt specifies using a skill (e.g., `/cat:shrink-doc`), invoke it directly via the Skill
+tool. Do not assume tool limitations exist - subagents have full tool access.
 
 ## Spawning Subagents: Task vs TaskCreate
 
