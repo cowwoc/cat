@@ -11,7 +11,7 @@
 # Arguments:
 #   project-dir    Project root directory (contains .claude/cat/) - REQUIRED
 #
-# OUTPUTS: Box display with correct alignment (script output)
+# OUTPUTS: Box display with correct alignment (skill output)
 
 set -euo pipefail
 
@@ -27,7 +27,7 @@ Arguments:
   project-dir    Project root directory (contains .claude/cat/) - REQUIRED
 
 Outputs:
-  Box display with correct alignment for config settings (script output)
+  Box display with correct alignment for config settings (skill output)
 EOF
 }
 

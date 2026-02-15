@@ -46,7 +46,7 @@ steps under the same number.
 **MANDATORY: Run all tests before presenting any task for user review.**
 
 ```bash
-mvn -f hooks/pom.xml test
+mvn -f engine/pom.xml test
 ```
 
 All tests must pass (exit code 0) before requesting user approval.

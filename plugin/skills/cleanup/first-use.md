@@ -55,13 +55,13 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-**Look for script output survey in SCRIPT OUTPUT SURVEY DISPLAY above.**
+**Look for skill output survey in SKILL OUTPUT SURVEY DISPLAY above.**
 
 If found, copy and output that box EXACTLY as shown.
 
-**If SCRIPT OUTPUT SURVEY DISPLAY not found:**
+**If SKILL OUTPUT SURVEY DISPLAY not found:**
 ```
-FAIL: SCRIPT OUTPUT SURVEY DISPLAY not found.
+FAIL: SKILL OUTPUT SURVEY DISPLAY not found.
 Handler cleanup_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```

@@ -15,7 +15,7 @@
 #   --project-dir Directory containing .claude/cat/ (for auto-discovery)
 #   --session-id  Session ID for issue locking (for auto-discovery)
 #
-# OUTPUTS: Banner(s) with correct alignment (script output)
+# OUTPUTS: Banner(s) with correct alignment (skill output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

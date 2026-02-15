@@ -178,12 +178,12 @@ will be processed downstream by Claude Code itself.
 
 **Example first-use.md using bindings:**
 ```markdown
-SCRIPT OUTPUT STATUS DISPLAY:
+SKILL OUTPUT STATUS DISPLAY:
 ${CAT_SKILL_OUTPUT}
 
 # Status
 
-The user wants you to respond with the content from "SCRIPT OUTPUT STATUS DISPLAY" above, verbatim.
+The user wants you to respond with the content from "SKILL OUTPUT STATUS DISPLAY" above, verbatim.
 ```
 
 ### Handler Classes

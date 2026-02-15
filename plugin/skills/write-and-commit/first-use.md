@@ -150,7 +150,7 @@ MSG
   --executable
 ```
 
-**Script Output**:
+**Skill Output**:
 ```json
 {
   "status": "success",

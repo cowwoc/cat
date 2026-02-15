@@ -18,9 +18,9 @@ users through modifying their preferences.
 
 <process>
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -46,11 +46,11 @@ If file doesn't exist, inform user to run `/cat:init` first.
 
 BLOCKING REQUIREMENT: You MUST output a visual display box BEFORE calling AskUserQuestion.
 
-Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES (provided by config_handler.py).
+Use the **CURRENT_SETTINGS** box from SKILL OUTPUT CONFIG BOXES (provided by config_handler.py).
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -93,11 +93,11 @@ If user selects "Other" and types "done", "exit", or "back", proceed to exit ste
 
 **MANDATORY - Display behavior summary BEFORE prompting:**
 
-Use the **CURRENT_SETTINGS** box from SCRIPT OUTPUT CONFIG BOXES.
+Use the **CURRENT_SETTINGS** box from SKILL OUTPUT CONFIG BOXES.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -297,11 +297,11 @@ jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/c
 
 **📊 Version Gates configuration:**
 
-Use the **VERSION_GATES_OVERVIEW** box from SCRIPT OUTPUT CONFIG BOXES.
+Use the **VERSION_GATES_OVERVIEW** box from SKILL OUTPUT CONFIG BOXES.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -343,12 +343,12 @@ cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from SCRIPT OUTPUT CONFIG BOXES.
+Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from SKILL OUTPUT CONFIG BOXES.
 Replace `{version}` and gate descriptions with actual values.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -424,12 +424,12 @@ Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Use the **GATES_UPDATED** box from SCRIPT OUTPUT CONFIG BOXES.
+Use the **GATES_UPDATED** box from SKILL OUTPUT CONFIG BOXES.
 Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -455,12 +455,12 @@ jq '.settingName = "newValue"' .claude/cat/cat-config.json > .claude/cat/cat-con
 
 **Confirm change and return to parent menu:**
 
-Use the **SETTING_UPDATED** box from SCRIPT OUTPUT CONFIG BOXES.
+Use the **SETTING_UPDATED** box from SKILL OUTPUT CONFIG BOXES.
 Replace `{setting-name}`, `{old-value}`, `{new-value}` with actual values.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -481,11 +481,11 @@ Examples:
 
 If changes were made:
 
-Use the **CONFIGURATION_SAVED** box from SCRIPT OUTPUT CONFIG BOXES.
+Use the **CONFIGURATION_SAVED** box from SKILL OUTPUT CONFIG BOXES.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```
@@ -493,11 +493,11 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
 If no changes:
 
-Use the **NO_CHANGES** box from SCRIPT OUTPUT CONFIG BOXES.
+Use the **NO_CHANGES** box from SKILL OUTPUT CONFIG BOXES.
 
-**If SCRIPT OUTPUT CONFIG BOXES not found:**
+**If SKILL OUTPUT CONFIG BOXES not found:**
 ```
-FAIL: SCRIPT OUTPUT CONFIG BOXES not found.
+FAIL: SKILL OUTPUT CONFIG BOXES not found.
 Handler config_handler.py should have provided this via additionalContext.
 Check that hooks are properly loaded.
 ```

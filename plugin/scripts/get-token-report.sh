@@ -8,7 +8,7 @@
 #
 # USAGE: get-token-report.sh --session-id <id>
 #
-# OUTPUTS: Token usage table (script output)
+# OUTPUTS: Token usage table (skill output)
 #
 # This script is designed to be called via silent preprocessing (!`command`).
 

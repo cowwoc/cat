@@ -19,7 +19,7 @@ Fixing one file while leaving identical vulnerabilities in similar files means t
 ```yaml
 pattern_fixed:
   file_type: "skill"  # skill, hook, handler, config, etc.
-  vulnerability: "weak copy-paste instruction for script output content"
+  vulnerability: "weak copy-paste instruction for skill output content"
   fix_applied: "added prominent MANDATORY OUTPUT REQUIREMENT header"
 ```
 
@@ -28,7 +28,7 @@ pattern_fixed:
 ```bash
 # Examples by file type:
 
-# Skills with script output content
+# Skills with skill output content
 grep -l '!\`' plugin/skills/*/SKILL.md
 
 # Handlers with similar validation

@@ -205,7 +205,7 @@ for idx in "${!PROMPTS[@]}"; do
 done
 ```
 
-After the bash script outputs the group prompts above, **immediately spawn verification subagents**:
+After the bash skill outputs the group prompts above, **immediately spawn verification subagents**:
 
 1. For each PROMPT_N in the output, invoke the Task tool with:
    - `subagent_type: "general-purpose"`
