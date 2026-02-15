@@ -258,16 +258,21 @@ public class HookEntryPointTest
   @Test
   public void getPosttoolReturnsEmptyJsonForEmptyInput() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(mapper);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput(tempDir).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -277,17 +282,22 @@ public class HookEntryPointTest
   @Test
   public void getPosttoolReturnsEmptyJsonWithToolName() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(mapper);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput(tempDir).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 

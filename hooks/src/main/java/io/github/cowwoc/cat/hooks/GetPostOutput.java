@@ -9,16 +9,19 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.tool.post.AutoLearnMistakes;
+import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
+import io.github.cowwoc.cat.hooks.tool.post.RemindRestartAfterSkillModification;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-posttool-output - Unified PostToolUse hook for all tools
+ * get-post-output - Unified PostToolUse hook for all tools
  *
  * TRIGGER: PostToolUse (no matcher - runs for all tools)
  *
@@ -32,18 +35,25 @@ import org.slf4j.LoggerFactory;
  */
 public final class GetPostOutput implements HookHandler
 {
-  private static final List<PosttoolHandler> HANDLERS = List.of(
-      new AutoLearnMistakes());
+  private final List<PostToolHandler> handlers;
 
   /**
-   * Creates a new GetPostOutput instance.
+   * Creates a new GetPostOutput instance with the specified Claude config directory.
+   *
+   * @param claudeConfigDir the Claude config directory path
+   * @throws NullPointerException if {@code claudeConfigDir} is null
    */
-  public GetPostOutput()
+  public GetPostOutput(Path claudeConfigDir)
   {
+    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    this.handlers = List.of(
+      new AutoLearnMistakes(),
+      new DetectAssistantGivingUp(claudeConfigDir),
+      new RemindRestartAfterSkillModification());
   }
 
   /**
-   * Entry point for the general posttool output hook.
+   * Entry point for the general post-tool output hook.
    *
    * @param args command line arguments
    */
@@ -54,7 +64,8 @@ public final class GetPostOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(mapper);
-      HookResult result = new GetPostOutput().run(input, output);
+      Path claudeConfigDir = resolveClaudeConfigDir();
+      HookResult result = new GetPostOutput(claudeConfigDir).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -66,6 +77,19 @@ public final class GetPostOutput implements HookHandler
       log.error("Unexpected error", e);
       throw e;
     }
+  }
+
+  /**
+   * Resolves the Claude config directory from environment or defaults to ~/.claude.
+   *
+   * @return the Claude config directory path
+   */
+  private static Path resolveClaudeConfigDir()
+  {
+    String envDir = System.getenv("CLAUDE_CONFIG_DIR");
+    if (envDir != null && !envDir.isEmpty())
+      return Path.of(envDir);
+    return Path.of(System.getProperty("user.home"), ".claude");
   }
 
   /**
@@ -94,12 +118,12 @@ public final class GetPostOutput implements HookHandler
     List<String> additionalContexts = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
 
-    // Run all general posttool handlers
-    for (PosttoolHandler handler : HANDLERS)
+    // Run all general post-tool handlers
+    for (PostToolHandler handler : handlers)
     {
       try
       {
-        PosttoolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
+        PostToolHandler.Result result = handler.check(toolName, toolResult, sessionId, input.getRaw());
         if (!result.warning().isEmpty())
           warnings.add(result.warning());
         if (!result.additionalContext().isEmpty())
@@ -107,7 +131,7 @@ public final class GetPostOutput implements HookHandler
       }
       catch (Exception e)
       {
-        errorWarnings.add("get-posttool-output: handler error: " + e.getMessage());
+        errorWarnings.add("get-post-output: handler error: " + e.getMessage());
       }
     }
 
