@@ -20,6 +20,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
+- restructure-pricing-tiers
 - unify-work-preparing-banner
 - fix-verbatim-reinvocation
 - reimplement-render-diff-java
