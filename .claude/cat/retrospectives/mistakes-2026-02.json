@@ -5,7 +5,7 @@
       "id": "M340",
       "timestamp": "2026-02-01T12:00:00Z",
       "category": "assumption_without_verification",
-      "description": "Status box misaligned because robot emoji (\ud83e\udd16) missing from emoji-widths.json, causing width miscalculation",
+      "description": "Status box misaligned because robot emoji (🤖) missing from emoji-widths.json, causing width miscalculation",
       "root_cause": "show-active-agents-in-status task added robot emoji to status display but did not add it to emoji-widths.json. Emoji not in widths file defaults to char-by-char counting (width 1 per code unit) instead of correct display width (2).",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -318,7 +318,7 @@
       "timestamp": "2026-02-02T05:00:00Z",
       "category": "protocol_violation",
       "description": "compare-docs executed with single comparison run for 2 of 3 files instead of mandatory two-run validation despite M350 requirement",
-      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1\u21922\u21924, making the 'go back' step easy to skip due to completion bias after getting a result.",
+      "root_cause": "Step 3 'Repeat Steps 1-2' was structurally separate from execution flow. Natural progression was 1→2→4, making the 'go back' step easy to skip due to completion bias after getting a result.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -836,7 +836,7 @@
         "misleading_section": "System reminder says 'consider using TaskCreate'; skill said 'Task tool:' without clarification",
         "priming_type": "tool_name_confusion",
         "how_it_misled": "Agent heard 'TaskCreate' from system, saw 'Task tool' in skill, conflated them",
-        "fix_required": "Added explicit clarification in skill that Task \u2260 TaskCreate"
+        "fix_required": "Added explicit clarification in skill that Task ≠ TaskCreate"
       }
     },
     {
@@ -1013,7 +1013,7 @@
       "id": "M385",
       "timestamp": "2026-02-04T12:00:00Z",
       "category": "tool_misuse",
-      "description": "Squash operation reverted a bugfix (emoji width 2\u21921) because git reset --soft captured stale worktree state instead of committed tree",
+      "description": "Squash operation reverted a bugfix (emoji width 2→1) because git reset --soft captured stale worktree state instead of committed tree",
       "root_cause": "Manual git reset --soft captures working directory state. When worktree diverged from base branch (base had newer commits with fixes), the soft reset staged deletions/reversions of those fixes because they weren't in the working directory. The commit-tree approach in git-squash skill avoids this by using committed tree objects directly.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
@@ -1583,7 +1583,7 @@
         "document": "plugin/skills/register-hook/SKILL.md",
         "misleading_section": "Throughout - 15+ mentions of hooks in settings.json",
         "priming_type": "ambient_association",
-        "how_it_misled": "Repeated hooks\u2192settings.json association without clarifying plugin vs project hooks",
+        "how_it_misled": "Repeated hooks→settings.json association without clarifying plugin vs project hooks",
         "fix_required": "Add clarification distinguishing project hooks (settings.json) from plugin hooks (hooks.json)"
       }
     },
@@ -2519,14 +2519,14 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Complete iterative skills (shrink-doc) fully at main agent level \u2014 all files must reach EQUIVALENT status before passing results to implementation subagent"
+      "correct_behavior": "Complete iterative skills (shrink-doc) fully at main agent level — all files must reach EQUIVALENT status before passing results to implementation subagent"
     },
     {
       "id": "M441",
       "timestamp": "2026-02-06T14:00:00Z",
       "category": "model_selection",
       "description": "Prepare phase subagent (haiku) exhausted turn budget without producing JSON output - used 31K tokens, 14 tool calls, 27 assistant messages before hitting limit",
-      "root_cause": "Haiku model specified for prepare phase in work/SKILL.md. Prepare phase requires reading SKILL.md, running discovery script, creating worktree, verifying branch, checking existing work, and updating STATE.md \u2014 too many steps for haiku's token efficiency. Haiku produced verbose intermediate reasoning instead of executing efficiently.",
+      "root_cause": "Haiku model specified for prepare phase in work/SKILL.md. Prepare phase requires reading SKILL.md, running discovery script, creating worktree, verifying branch, checking existing work, and updating STATE.md — too many steps for haiku's token efficiency. Haiku produced verbose intermediate reasoning instead of executing efficiently.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "skill",
@@ -2546,7 +2546,7 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "Use sonnet for prepare phase \u2014 it has enough steps (8) and complexity (script execution, worktree creation, branch verification) to require a capable model. Reserve haiku for truly mechanical single-step operations."
+      "correct_behavior": "Use sonnet for prepare phase — it has enough steps (8) and complexity (script execution, worktree creation, branch verification) to require a capable model. Reserve haiku for truly mechanical single-step operations."
     },
     {
       "id": "M442",
@@ -2712,7 +2712,7 @@
       "timestamp": "2026-02-06T12:00:00Z",
       "category": "assumption_without_verification",
       "description": "Main agent concluded prepare subagent returned no parseable JSON, but subagent had actually produced valid READY JSON. Main agent failed to extract JSON from Task tool result text.",
-      "root_cause": "Two compounding issues: (1) Subagent prompt said 'Return JSON per the output contract' which is vague \u2014 subagent may output JSON mid-work then continue with explanation text, making the final returned message not pure JSON. (2) Work skill had no guidance for main agent on how to extract JSON from subagent result text \u2014 only had 'no result' handling, not 'result contains JSON embedded in text' handling.",
+      "root_cause": "Two compounding issues: (1) Subagent prompt said 'Return JSON per the output contract' which is vague — subagent may output JSON mid-work then continue with explanation text, making the final returned message not pure JSON. (2) Work skill had no guidance for main agent on how to extract JSON from subagent result text — only had 'no result' handling, not 'result contains JSON embedded in text' handling.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "skill",
@@ -3710,7 +3710,7 @@
       "timestamp": "2026-02-13T13:48:12Z",
       "category": "conflicting_guidance",
       "description": "Execution subagent created two commits (README.md docs:, STATE.md planning:) instead of one commit as required by delegation prompt",
-      "root_cause": "CLAUDE.md commit type rules (`.claude/cat/issues/` \u2192 `planning:`) primed agent to create separate commit for STATE.md, overriding delegation prompt instruction. The Mixed commits exception rule was not applied.",
+      "root_cause": "CLAUDE.md commit type rules (`.claude/cat/issues/` → `planning:`) primed agent to create separate commit for STATE.md, overriding delegation prompt instruction. The Mixed commits exception rule was not applied.",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
       "prevention_type": "documentation",
@@ -3995,6 +3995,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Design stakeholder must search for existing utility classes (TestUtils, *Helper, *Util) when reviewing test files with new helper methods, and flag HIGH severity duplication if equivalent functionality exists"
+    },
+    {
+      "id": "M497",
+      "timestamp": "2026-02-15T03:24:00Z",
+      "category": "misleading_documentation",
+      "description": "ActionItemSummary record created without compact constructor parameter validation",
+      "root_cause": "Example code in GetStatusOutput.java (TaskStats record, lines 1032-1034) violates java.md convention by omitting compact constructor validation. Implementation agent read this file as reference, copied the pattern, and created ActionItemSummary without validation.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/hooks/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java",
+      "pattern_keywords": [
+        "record",
+        "validation",
+        "example-code",
+        "priming"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Records with String or object parameters must have compact constructors with requireThat() validation per java.md conventions"
     }
   ],
   "counter": 1
