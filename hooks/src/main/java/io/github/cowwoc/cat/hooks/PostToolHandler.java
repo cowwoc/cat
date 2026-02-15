@@ -15,10 +15,10 @@ import tools.jackson.databind.JsonNode;
  * They can warn about results or inject additional context.
  */
 @FunctionalInterface
-public interface PosttoolHandler
+public interface PostToolHandler
 {
   /**
-   * The result of a posttool handler check.
+   * The result of a post-tool handler check.
    *
    * @param warning optional warning message
    * @param additionalContext optional additional context to inject
@@ -26,7 +26,7 @@ public interface PosttoolHandler
   record Result(String warning, String additionalContext)
   {
     /**
-     * Creates a new posttool handler result.
+     * Creates a new post-tool handler result.
      *
      * @param warning optional warning message
      * @param additionalContext optional additional context to inject
@@ -75,7 +75,7 @@ public interface PosttoolHandler
      * @param additionalContext the context to inject
      * @return a combined result
      */
-    public static Result both(String warning, String additionalContext)
+    public static Result warnAndContext(String warning, String additionalContext)
     {
       return new Result(warning, additionalContext);
     }

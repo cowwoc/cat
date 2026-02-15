@@ -56,11 +56,18 @@ public final class AotTraining
       HookOutput output = new HookOutput(mapper);
 
       // Hook handlers with run(HookInput, HookOutput)
+      String envDir = System.getenv("CLAUDE_CONFIG_DIR");
+      Path claudeConfigDir;
+      if (envDir != null && !envDir.isEmpty())
+        claudeConfigDir = Path.of(envDir);
+      else
+        claudeConfigDir = Path.of(System.getProperty("user.home"), ".claude");
+
       new GetBashOutput(scope).run(input, output);
       new GetBashPostOutput().run(input, output);
       new GetReadOutput(scope).run(input, output);
       new GetReadPostOutput(scope).run(input, output);
-      new GetPostOutput().run(input, output);
+      new GetPostOutput(claudeConfigDir).run(input, output);
       new GetSkillOutput(scope).run(input, output);
       new GetAskOutput().run(input, output);
       new GetEditOutput().run(input, output);
