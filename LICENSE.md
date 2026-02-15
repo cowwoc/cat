@@ -1,33 +1,34 @@
 # CAT Commercial License
 
-Version 1.0
+Version 1.1
 
 ## Hi! Here's what you need to know:
 
 | Tier | Who it's for |
 |------|--------------|
-| **Indie** | Solo developers — full CAT, single user, always free |
-| **Team** | Teams of 1-50 — adds collaboration features |
-| **Enterprise** | Organizations 50+ — adds compliance & integrations |
+| **Core** | Free edition —core workflow, single user |
+| **Pro** | Professional developers and teams —adds advanced features and collaboration |
+| **Enterprise** | Organizations 50+ —adds compliance & integrations |
 
 For current pricing, see [PRICING.md](docs/PRICING.md).
 
-**Indie is free** - Working alone? Building a side project? Learning?
-You get full CAT functionality at no cost. No time limits, no feature crippling.
+**Core is free** - Core provides the essential AI coding workflow: plan-work-commit-merge,
+worktree isolation, git safety, and basic hooks. No time limits.
 
-**Team unlocks collaboration** - When you need task locking (so two devs don't
-work the same task), shared config, team analytics, or cross-session handoff,
-upgrade to Team. Solo developers may purchase Team for a single seat if they
-want collaboration features for future team growth or personal use.
+**Pro unlocks advanced features and collaboration** - When you need stakeholder reviews,
+mistake learning/RCA, task decomposition, research, token tracking,
+or any team collaboration features (task locking, shared config,
+team analytics, cross-session handoff), upgrade to Pro. Any user may purchase Pro
+for a single seat.
 
 **Enterprise adds compliance** - SSO/SAML, audit logs, issue tracker sync,
-Slack integration, custom LLM endpoints, SLA support.
+Slack integration, webhook APIs, SLA support.
 
 **Billing basics:**
-- Team: monthly or annual (annual = 2 months free)
+- Pro: monthly or annual (annual = 2 months free)
 - Enterprise: annual only
 - Cancel anytime, 30 days before renewal
-- If payment fails, you have 14 days to fix it before downgrade to Indie
+- If payment fails, you have 14 days to fix it before downgrade to Core
 - Working offline? 30-day grace period so CI/CD and air-gapped setups work fine
 
 **Building a product with CAT?**
@@ -81,46 +82,57 @@ includes, but is not limited to:
 - Use in developing, testing, or deploying commercial products or services
 - Use in providing paid consulting or professional services (requires consultant's own license unless client provides access under their license)
 
-**"Indie Use"** means use by a single individual user, regardless of whether
-that use is personal or commercial. Indie Use is free and does not require
-a paid license, but is limited to a single user seat.
+**"Core Use"** means use of Core Features by a single individual user,
+regardless of whether that use is personal or commercial. Core Use is free
+and does not require a paid license, but is limited to a single user seat.
 
-**"Team Features"** means collaboration functionality including but not limited
-to: task locking, shared configuration sync, team activity feeds, cross-session
-handoff, branch naming policies, team analytics, and project token budgets.
+**"Core Features"** means the basic workflow functionality including:
+plan-work-commit-merge task orchestration, worktree isolation, basic commit
+hooks, git safety tools, and status and init commands.
+
+**"Pro Features"** means advanced productivity and collaboration functionality
+including but not limited to: stakeholder reviews, mistake learning and RCA,
+task decomposition, multi-stakeholder research, token usage tracking,
+single-agent and multi-agent
+execution, parallel task execution, all commands and skills access, collision
+prevention, team pulse dashboard, shared brain conventions, context
+preservation, branch policies, team analytics, project budgets, Slack/Discord
+notifications, GitHub PR integration, CI status awareness, GitHub Issues sync,
+and Linear sync.
 
 **"Enterprise Features"** means compliance and integration functionality
-including but not limited to: SSO/SAML authentication, audit log export,
-issue tracker synchronization, messaging platform notifications, custom LLM
-endpoints, webhook APIs, data residency options, and SLA support.
+including but not limited to: SSO/SAML authentication, SCIM provisioning,
+audit log export, compliance data export, human review gates, issue tracker
+synchronization (Jira), messaging platform notifications (Microsoft Teams),
+webhook APIs, data residency options, priority support, and SLA guarantees.
 
 **"Derivative Work"** means any work that is based on or derived from the
 Software, including modifications, translations, adaptations, and works
 that incorporate substantial portions of the Software.
 
-## Grant of Rights for Indie Use
+## Grant of Rights for Core Use
 
 Subject to the terms of this license, the Licensor grants You a worldwide,
 royalty-free, non-exclusive, non-transferable license to:
 
-1. Use the Software for Indie Use (single user, personal or commercial)
+1. Use the Software for Core Use (single user, personal or commercial)
 2. Copy and distribute the Software
 3. Modify the Software and create Derivative Works
 4. Distribute Derivative Works
 
-**Indie Use is free** — A single individual may use CAT for any purpose,
-including commercial work, without purchasing a license. This grant covers
-all core CAT functionality but excludes Team Features and Enterprise Features.
+**Core Use is free** —A single individual may use CAT Core Features for any
+purpose, including commercial work, without purchasing a license. This grant
+covers Core Features only and excludes Pro Features and Enterprise Features.
 
-## Team and Enterprise Features Require a Paid License
+## Pro and Enterprise Features Require a Paid License
 
-**Access to Team Features requires a Team license.**
+**Access to Pro Features requires a Pro license.**
 
 **Access to Enterprise Features requires an Enterprise license.**
 
 **Payment and Renewal Terms:**
 
-- **Team licenses** are billed monthly or annually at Your choice. Annual billing
+- **Pro licenses** are billed monthly or annually at Your choice. Annual billing
   provides two months free (pay for 10 months, receive 12 months of access).
 - **Enterprise licenses** are billed annually. Volume discounts may be available
   for large deployments; contact the Licensor for details.
@@ -133,19 +145,19 @@ all core CAT functionality but excludes Team Features and Enterprise Features.
 **Payment Failure**: If a payment fails, the Licensor will attempt to process
 the payment up to three (3) times over a fourteen (14) day period. You will
 receive email notification of each failed attempt. If payment cannot be
-collected after the retry period, Your license will be downgraded to Indie
+collected after the retry period, Your license will be downgraded to Core
 tier and paid features will be disabled. To restore access, update Your
 payment method and contact support.
 
-If You wish to use Team Features or Enterprise Features, You must purchase
+If You wish to use Pro Features or Enterprise Features, You must purchase
 the appropriate license directly from the Licensor. See https://cat.dev/pricing
 for current pricing and terms.
 
-**Seat Limits**: Each Team or Enterprise license includes a defined number of
+**Seat Limits**: Each Pro or Enterprise license includes a defined number of
 seats. A "seat" represents one unique user (identified by machine or account).
 When all licensed seats are in use, additional users will be unable to access
 paid features until either: (a) an existing seat is released (via deactivation),
-or (b) additional seats are purchased. Core Indie functionality remains
+or (b) additional seats are purchased. Core functionality remains
 available to all users regardless of seat limits.
 
 **Grace Periods**: If the Software cannot validate Your license due to network
@@ -164,9 +176,9 @@ who benefits from the Software's functionality must have their own valid
 commercial license from the Licensor.**
 
 Examples:
-- A SaaS code formatting service that uses CAT → each user needs a license
-- A hosted IDE that invokes CAT for users → each user needs a license
-- A CI/CD platform that runs CAT for customers → each customer needs a license
+- A SaaS code formatting service that uses CAT →each user needs a license
+- A hosted IDE that invokes CAT for users →each user needs a license
+- A CI/CD platform that runs CAT for customers →each customer needs a license
 
 **Internal tooling exception**: If Your organization uses CAT solely for
 internal development purposes (e.g., formatting Your own codebase during
