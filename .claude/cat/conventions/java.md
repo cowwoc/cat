@@ -1317,7 +1317,7 @@ module io.github.cowwoc.cat.hooks.test
 ## Project Structure
 
 ```
-engine/                      # Maven project root
+client/                      # Maven project root
 ├── pom.xml
 ├── build.sh
 ├── mvnw
