@@ -10,7 +10,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.licensing.FeatureGate;
 import io.github.cowwoc.cat.hooks.licensing.Tier;
 import org.testng.annotations.Test;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,15 +30,14 @@ public final class FeatureGateTest
   @Test
   public void noLicenseDefaultsToIndie() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path pluginRoot = createTempPluginRoot();
-      Path projectDir = Files.createTempDirectory("project-");
+    Path pluginRoot = createTempPluginRoot();
+    Path projectDir = Files.createTempDirectory("project-");
 
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
       try
       {
-        FeatureGate gate = FeatureGate.create(pluginRoot, mapper);
+        FeatureGate gate = FeatureGate.create(scope);
         FeatureGate.GateResult result = gate.check(projectDir, "single-agent-execution");
 
         requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
@@ -61,15 +59,14 @@ public final class FeatureGateTest
   @Test
   public void indieTierBlockedFromTeamFeatures() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path pluginRoot = createTempPluginRoot();
-      Path projectDir = Files.createTempDirectory("project-");
+    Path pluginRoot = createTempPluginRoot();
+    Path projectDir = Files.createTempDirectory("project-");
 
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
       try
       {
-        FeatureGate gate = FeatureGate.create(pluginRoot, mapper);
+        FeatureGate gate = FeatureGate.create(scope);
         FeatureGate.GateResult result = gate.check(projectDir, "multi-agent-orchestration");
 
         requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
@@ -93,15 +90,14 @@ public final class FeatureGateTest
   @Test
   public void allowedFeaturesHaveEmptyMessage() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path pluginRoot = createTempPluginRoot();
-      Path projectDir = Files.createTempDirectory("project-");
+    Path pluginRoot = createTempPluginRoot();
+    Path projectDir = Files.createTempDirectory("project-");
 
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
       try
       {
-        FeatureGate gate = FeatureGate.create(pluginRoot, mapper);
+        FeatureGate gate = FeatureGate.create(scope);
         FeatureGate.GateResult result = gate.check(projectDir, "single-agent-execution");
 
         requireThat(result.allowed(), "allowed").isTrue();
@@ -125,15 +121,14 @@ public final class FeatureGateTest
   @Test
   public void nonexistentFeaturesBlocked() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path pluginRoot = createTempPluginRoot();
-      Path projectDir = Files.createTempDirectory("project-");
+    Path pluginRoot = createTempPluginRoot();
+    Path projectDir = Files.createTempDirectory("project-");
 
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
       try
       {
-        FeatureGate gate = FeatureGate.create(pluginRoot, mapper);
+        FeatureGate gate = FeatureGate.create(scope);
         FeatureGate.GateResult result = gate.check(projectDir, "nonexistent-feature");
 
         requireThat(result.allowed(), "allowed").isFalse();
@@ -155,15 +150,14 @@ public final class FeatureGateTest
   @Test
   public void nullFeatureThrowsException() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path pluginRoot = createTempPluginRoot();
-      Path projectDir = Files.createTempDirectory("project-");
+    Path pluginRoot = createTempPluginRoot();
+    Path projectDir = Files.createTempDirectory("project-");
 
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
       try
       {
-        FeatureGate gate = FeatureGate.create(pluginRoot, mapper);
+        FeatureGate gate = FeatureGate.create(scope);
 
         try
         {

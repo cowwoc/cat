@@ -80,7 +80,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetSkillOutput(scope).run(input, output);
 
@@ -98,7 +98,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetSkillOutput(scope).run(input, output);
 
@@ -118,7 +118,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
 
@@ -137,7 +137,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
 
@@ -157,7 +157,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
 
@@ -178,7 +178,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashPostOutput().run(input, output);
 
@@ -200,7 +200,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetReadOutput(scope).run(input, output);
 
@@ -219,7 +219,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetReadOutput(scope).run(input, output);
 
@@ -241,7 +241,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetReadPostOutput(scope).run(input, output);
 
@@ -263,7 +263,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput(tempDir).run(input, output);
 
@@ -288,7 +288,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput(tempDir).run(input, output);
 
@@ -409,8 +409,7 @@ public class HookEntryPointTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       output.block("   ");
     }
   }
@@ -423,8 +422,7 @@ public class HookEntryPointTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       output.block(null);
     }
   }
@@ -455,8 +453,7 @@ public class HookEntryPointTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       output.additionalContext("", "some context");
     }
   }
@@ -469,8 +466,7 @@ public class HookEntryPointTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       String result = output.block("test reason");
 
       requireThat(result, "result").contains("\"decision\"").contains("\"block\"").contains("\"test reason\"");
@@ -485,8 +481,7 @@ public class HookEntryPointTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       String result = output.empty();
 
       requireThat(result, "result").isEqualTo("{}");
@@ -505,9 +500,9 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -525,9 +520,9 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -546,7 +541,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -566,7 +561,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -586,7 +581,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       new GetEditOutput().run(input, output);
     }
@@ -604,9 +599,9 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -624,9 +619,9 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -646,7 +641,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -668,7 +663,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/README.md\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -691,9 +686,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What is your name?\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -714,9 +709,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -737,9 +732,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Task\", \"tool_input\": {\"subagent_type\": \"cat:implement\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -757,9 +752,9 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetTaskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -817,7 +812,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/my-task/STATE.md\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -838,7 +833,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \".claude/cat/v2/v2.1/fix-bug-123/STATE.md\", " +
         "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -879,7 +874,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/skills/test-skill/SKILL.md\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -900,7 +895,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/skills/my-skill/helper.py\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
 
@@ -923,9 +918,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"What color?\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -944,9 +939,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Approve?\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -967,9 +962,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Ready to approve?\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
@@ -989,9 +984,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"APPROVE changes?\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
@@ -1012,9 +1007,9 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {\"question\": \"Continue?\"}, " +
         "\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetAskOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
@@ -1119,7 +1114,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1139,7 +1134,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1159,7 +1154,7 @@ public class HookEntryPointTest
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1180,7 +1175,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\", \"old_string\": \"a\", " +
         "\"new_string\": \"b\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1201,7 +1196,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.py\"}, " +
         "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1319,7 +1314,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.sh\"}, " +
         "\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1345,7 +1340,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/tmp/some-new-source.java\"}, " +
         "\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
 
@@ -1376,7 +1371,7 @@ public class HookEntryPointTest
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("Warning from handler 1");
@@ -1406,7 +1401,7 @@ public class HookEntryPointTest
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("Warning from edit handler 1");
@@ -1436,7 +1431,7 @@ public class HookEntryPointTest
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("Warning from task handler 1");
@@ -1467,7 +1462,7 @@ public class HookEntryPointTest
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").doesNotContain("This warning should not appear");

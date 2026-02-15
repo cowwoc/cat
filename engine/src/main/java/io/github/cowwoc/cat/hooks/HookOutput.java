@@ -8,7 +8,6 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -16,18 +15,18 @@ import tools.jackson.databind.node.ObjectNode;
  */
 public final class HookOutput
 {
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new HookOutput.
    *
-   * @param mapper the JSON mapper to use for serialization
-   * @throws NullPointerException if {@code mapper} is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public HookOutput(JsonMapper mapper)
+  public HookOutput(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -50,7 +49,7 @@ public final class HookOutput
   public String block(String reason)
   {
     requireThat(reason, "reason").isNotBlank();
-    ObjectNode response = mapper.createObjectNode();
+    ObjectNode response = scope.getJsonMapper().createObjectNode();
     response.put("decision", "block");
     response.put("reason", reason);
     return toJson(response);
@@ -68,7 +67,7 @@ public final class HookOutput
   {
     requireThat(reason, "reason").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
-    ObjectNode response = mapper.createObjectNode();
+    ObjectNode response = scope.getJsonMapper().createObjectNode();
     response.put("decision", "block");
     response.put("reason", reason);
     response.put("additionalContext", additionalContext);
@@ -87,11 +86,11 @@ public final class HookOutput
   {
     requireThat(hookEventName, "hookEventName").isNotBlank();
     requireThat(additionalContext, "additionalContext").isNotBlank();
-    ObjectNode hookSpecific = mapper.createObjectNode();
+    ObjectNode hookSpecific = scope.getJsonMapper().createObjectNode();
     hookSpecific.put("hookEventName", hookEventName);
     hookSpecific.put("additionalContext", additionalContext);
 
-    ObjectNode response = mapper.createObjectNode();
+    ObjectNode response = scope.getJsonMapper().createObjectNode();
     response.set("hookSpecificOutput", hookSpecific);
     return toJson(response);
   }
@@ -106,7 +105,7 @@ public final class HookOutput
   {
     try
     {
-      return mapper.writeValueAsString(node);
+      return scope.getJsonMapper().writeValueAsString(node);
     }
     catch (Exception _)
     {

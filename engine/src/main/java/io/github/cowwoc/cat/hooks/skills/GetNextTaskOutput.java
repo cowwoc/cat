@@ -194,11 +194,7 @@ public final class GetNextTaskOutput
   {
     try
     {
-      String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-      if (pluginRoot == null || pluginRoot.isEmpty())
-        return;
-
-      Path lockScript = Path.of(pluginRoot, "scripts", "issue-lock.sh");
+      Path lockScript = scope.getClaudePluginRoot().resolve("scripts").resolve("issue-lock.sh");
       if (!Files.exists(lockScript))
         return;
 
@@ -231,11 +227,7 @@ public final class GetNextTaskOutput
   {
     try
     {
-      String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-      if (pluginRoot == null || pluginRoot.isEmpty())
-        return Map.of();
-
-      Path discoveryScript = Path.of(pluginRoot, "scripts", "get-available-issues.sh");
+      Path discoveryScript = scope.getClaudePluginRoot().resolve("scripts").resolve("get-available-issues.sh");
       if (!Files.exists(discoveryScript))
         return Map.of();
 

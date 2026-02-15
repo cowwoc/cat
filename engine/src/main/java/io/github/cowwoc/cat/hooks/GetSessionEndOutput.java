@@ -26,14 +26,18 @@ import org.slf4j.LoggerFactory;
  */
 public final class GetSessionEndOutput implements HookHandler
 {
-  private static final List<HookHandler> HANDLERS = List.of(
-    new SessionUnlock());
+  private final List<HookHandler> handlers;
 
   /**
    * Creates a new GetSessionEndOutput instance.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GetSessionEndOutput()
+  public GetSessionEndOutput(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(new SessionUnlock(scope));
   }
 
   /**
@@ -47,8 +51,8 @@ public final class GetSessionEndOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
-      HookResult result = new GetSessionEndOutput().run(input, output);
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new GetSessionEndOutput(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -78,7 +82,7 @@ public final class GetSessionEndOutput implements HookHandler
 
     List<String> allWarnings = new ArrayList<>();
 
-    for (HookHandler handler : HANDLERS)
+    for (HookHandler handler : handlers)
     {
       try
       {

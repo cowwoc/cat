@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.licensing;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import tools.jackson.databind.json.JsonMapper;
+import io.github.cowwoc.cat.hooks.JvmScope;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,19 +40,17 @@ public final class FeatureGate
   }
 
   /**
-   * Creates a new feature gate from plugin root.
+   * Creates a new feature gate from JVM scope.
    *
-   * @param pluginRoot the plugin root directory
-   * @param mapper the JSON mapper
+   * @param scope the JVM scope providing plugin root and JSON mapper
    * @return a new feature gate
    * @throws IOException if tiers.json cannot be loaded
-   * @throws NullPointerException if {@code pluginRoot} or {@code mapper} are null
+   * @throws NullPointerException if {@code scope} is null
    */
-  public static FeatureGate create(Path pluginRoot, JsonMapper mapper) throws IOException
+  public static FeatureGate create(JvmScope scope) throws IOException
   {
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(mapper, "mapper").isNotNull();
-    return new FeatureGate(new LicenseValidator(pluginRoot, mapper), new Entitlements(pluginRoot, mapper));
+    requireThat(scope, "scope").isNotNull();
+    return new FeatureGate(new LicenseValidator(scope), new Entitlements(scope));
   }
 
   /**

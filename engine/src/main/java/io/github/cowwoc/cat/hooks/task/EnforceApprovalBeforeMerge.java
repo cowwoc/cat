@@ -10,7 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import tools.jackson.databind.JsonNode;
@@ -35,11 +34,18 @@ import java.util.Locale;
  */
 public final class EnforceApprovalBeforeMerge implements TaskHandler
 {
+  private final JvmScope scope;
+
   /**
    * Creates a new EnforceApprovalBeforeMerge handler.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public EnforceApprovalBeforeMerge()
+  public EnforceApprovalBeforeMerge(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -119,15 +125,8 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
    */
   private String getTrustLevel()
   {
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
-      return "medium";
-
-    try (JvmScope scope = new MainJvmScope())
-    {
-      Config config = Config.load(scope.getJsonMapper(), Paths.get(projectDir));
-      return config.getString("trust", "medium");
-    }
+    Config config = Config.load(scope.getJsonMapper(), scope.getClaudeProjectDir());
+    return config.getString("trust", "medium");
   }
 
   /**
