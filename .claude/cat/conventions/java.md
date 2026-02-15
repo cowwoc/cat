@@ -784,6 +784,61 @@ public final class SkillLoader
 }
 ```
 
+### Service Access via Pouch Scopes (No Dependency Injection)
+Do not use dependency injection frameworks (Spring, Guice, Dagger, etc.). Use [pouch](https://github.com/cowwoc/pouch)
+scope-based ServiceLocators for inversion of control. Scopes are explicit objects passed through constructors that
+provide access to shared services — no reflection, no annotations, no proxies, no config files. The dependency graph is
+verified at compile-time.
+
+**Scopes represent contexts where values remain constant.** `JvmScope` spans the application lifetime. Child scopes
+(e.g., `RequestScope`) inherit from parent scopes, matching resource lifetimes. This prevents impossible configurations
+like an HTTP request outliving its database connection.
+
+```java
+// Good - pouch scope passed through constructor
+public final class GetRenderDiffOutput
+{
+  private final JvmScope scope;
+
+  public GetRenderDiffOutput(JvmScope scope)
+  {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
+  }
+
+  public String getOutput()
+  {
+    JsonMapper jsonMapper = scope.getJsonMapper();
+    DisplayUtils display = scope.getDisplayUtils();
+    // ...
+  }
+}
+
+// Avoid - dependency injection of individual services
+public final class GetRenderDiffOutput
+{
+  private final JsonMapper jsonMapper;
+  private final DisplayUtils display;
+
+  public GetRenderDiffOutput(JsonMapper jsonMapper, DisplayUtils display)
+  {
+    this.jsonMapper = jsonMapper;
+    this.display = display;
+  }
+}
+```
+
+**Scope implementations:**
+- `MainJvmScope` — production use (in `main()` methods), reads environment configuration
+- `TestJvmScope` — test use, accepts injectable paths: `new TestJvmScope(tempDir, tempDir)`
+
+**Why pouch over DI frameworks:**
+- No magic — explicit constructor wiring, fully debuggable code flow
+- Compile-time dependency graph verification (no runtime surprises)
+- Scope hierarchy enforces resource lifetime constraints
+- Each test instantiates its own scope hierarchy, executing as if in a separate JVM
+- `JvmScope` lifecycle management (via `try-with-resources`) handles cleanup
+
 ### main() in Business Logic Classes
 Classes with testable business logic may include a `main()` method for CLI invocation. Do not extract `main()` into a
 separate command class - this adds a file with no value. The pattern of constructor (used by tests) + `main()` (used by
