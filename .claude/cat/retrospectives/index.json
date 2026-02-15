@@ -808,9 +808,9 @@
       "description": "Enforce Python for all comparison/conditional logic in bash handlers. Add detection for !=, ==, // operators in Bash commands. Current skill-level prevention (M431) insufficient.",
       "category": "tool_misuse",
       "pattern_id": "PATTERN-015",
-      "status": "open",
+      "status": "closed_wontfix",
       "created_date": "2026-02-06T19:00:00Z",
-      "completed_date": null,
+      "completed_date": "2026-02-16T09:46:34.135846+00:00",
       "related_mistakes": [
         "M431",
         "M448",
@@ -821,7 +821,8 @@
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
-      }
+      },
+      "implementation": "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed \u2014 the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
     },
     {
       "id": "A018",
