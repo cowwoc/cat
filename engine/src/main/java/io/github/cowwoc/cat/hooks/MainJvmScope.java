@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
 import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
+import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.pouch10.core.ConcurrentLazyReference;
 
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
@@ -37,7 +38,7 @@ public final class MainJvmScope implements JvmScope
   {
     try
     {
-      return new DisplayUtils(jsonMapper.getValue());
+      return new DisplayUtils(this);
     }
     catch (IOException e)
     {
@@ -45,11 +46,11 @@ public final class MainJvmScope implements JvmScope
     }
   });
   private final ConcurrentLazyReference<DetectSequentialTools> detectSequentialTools =
-    ConcurrentLazyReference.create(() -> new DetectSequentialTools(getJsonMapper()));
+    ConcurrentLazyReference.create(() -> new DetectSequentialTools(this));
   private final ConcurrentLazyReference<PredictBatchOpportunity> predictBatchOpportunity =
-    ConcurrentLazyReference.create(() -> new PredictBatchOpportunity(getJsonMapper()));
+    ConcurrentLazyReference.create(() -> new PredictBatchOpportunity(this));
   private final ConcurrentLazyReference<UserIssues> userIssues =
-    ConcurrentLazyReference.create(() -> new UserIssues(getJsonMapper()));
+    ConcurrentLazyReference.create(() -> new UserIssues(this));
   private final ConcurrentLazyReference<Path> claudeProjectDir = ConcurrentLazyReference.create(() ->
   {
     String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
@@ -64,6 +65,22 @@ public final class MainJvmScope implements JvmScope
       throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
     return Path.of(pluginRoot);
   });
+  private final ConcurrentLazyReference<String> claudeSessionId = ConcurrentLazyReference.create(() ->
+  {
+    String sessionId = System.getenv("CLAUDE_SESSION_ID");
+    if (sessionId == null || sessionId.isEmpty())
+      throw new AssertionError("CLAUDE_SESSION_ID is not set");
+    return sessionId;
+  });
+  private final ConcurrentLazyReference<Path> claudeEnvFile = ConcurrentLazyReference.create(() ->
+  {
+    String envFile = System.getenv("CLAUDE_ENV_FILE");
+    if (envFile == null || envFile.isEmpty())
+      throw new AssertionError("CLAUDE_ENV_FILE is not set");
+    return Path.of(envFile);
+  });
+  private final ConcurrentLazyReference<TerminalType> terminalType =
+    ConcurrentLazyReference.create(TerminalType::detect);
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
@@ -92,6 +109,27 @@ public final class MainJvmScope implements JvmScope
   {
     ensureOpen();
     return claudePluginRoot.getValue();
+  }
+
+  @Override
+  public String getClaudeSessionId()
+  {
+    ensureOpen();
+    return claudeSessionId.getValue();
+  }
+
+  @Override
+  public Path getClaudeEnvFile()
+  {
+    ensureOpen();
+    return claudeEnvFile.getValue();
+  }
+
+  @Override
+  public TerminalType getTerminalType()
+  {
+    ensureOpen();
+    return terminalType.getValue();
   }
 
   @Override

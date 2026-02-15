@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -50,22 +51,21 @@ public final class IssueLock
   private static final DateTimeFormatter ISO_FORMATTER =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC);
 
-  private final JsonMapper mapper;
+  private final JvmScope scope;
   private final Path lockDir;
 
   /**
    * Creates a new issue lock manager.
    *
-   * @param mapper the JSON mapper to use for serialization
-   * @param projectDir the project root directory containing .claude/cat/
-   * @throws NullPointerException if mapper or projectDir is null
-   * @throws IllegalArgumentException if projectDir is not a valid CAT project
+   * @param scope the JVM scope providing JSON mapper and project directory
+   * @throws NullPointerException if {@code scope} is null
+   * @throws IllegalArgumentException if the project directory is not a valid CAT project
    */
-  public IssueLock(JsonMapper mapper, Path projectDir)
+  public IssueLock(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    requireThat(projectDir, "projectDir").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
+    Path projectDir = scope.getClaudeProjectDir();
     Path catDir = projectDir.resolve(".claude").resolve("cat");
     if (!Files.isDirectory(catDir))
     {
@@ -416,7 +416,7 @@ public final class IssueLock
     {
       String content = Files.readString(lockFile);
       @SuppressWarnings("unchecked")
-      Map<String, Object> lockData = mapper.readValue(content, Map.class);
+      Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
       String existingSession = lockData.get("session_id").toString();
 
       if (existingSession.equals(sessionId))
@@ -474,7 +474,7 @@ public final class IssueLock
       "created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
-    Files.writeString(tempFile, mapper.writeValueAsString(lockData));
+    Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(lockData));
 
     try
     {
@@ -515,7 +515,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = mapper.readValue(content, Map.class);
+    Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
     String existingSession = lockData.get("session_id").toString();
 
     if (!existingSession.equals(sessionId))
@@ -531,7 +531,7 @@ public final class IssueLock
       "created_iso", createdIso);
 
     Path tempFile = lockDir.resolve(sanitizeIssueId(issueId) + ".lock." + ProcessHandle.current().pid());
-    Files.writeString(tempFile, mapper.writeValueAsString(updatedData));
+    Files.writeString(tempFile, scope.getJsonMapper().writeValueAsString(updatedData));
     Files.move(tempFile, lockFile, StandardCopyOption.REPLACE_EXISTING);
 
     return new LockResult.Updated("updated", "Lock updated with worktree", worktree);
@@ -562,7 +562,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = mapper.readValue(content, Map.class);
+    Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
     String existingSession = lockData.get("session_id").toString();
 
     if (!existingSession.equals(sessionId))
@@ -592,7 +592,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = mapper.readValue(content, Map.class);
+    Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
     String existingSession = lockData.get("session_id").toString();
 
     Files.delete(lockFile);
@@ -617,7 +617,7 @@ public final class IssueLock
 
     String content = Files.readString(lockFile);
     @SuppressWarnings("unchecked")
-    Map<String, Object> lockData = mapper.readValue(content, Map.class);
+    Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
 
     String sessionId = lockData.get("session_id").toString();
     long createdAt = ((Number) lockData.get("created_at")).longValue();
@@ -651,7 +651,7 @@ public final class IssueLock
           String issueId = lockFile.getFileName().toString().replace(".lock", "");
           String content = Files.readString(lockFile);
           @SuppressWarnings("unchecked")
-          Map<String, Object> lockData = mapper.readValue(content, Map.class);
+          Map<String, Object> lockData = scope.getJsonMapper().readValue(content, Map.class);
 
           String sessionId = lockData.get("session_id").toString();
           long createdAt = ((Number) lockData.get("created_at")).longValue();

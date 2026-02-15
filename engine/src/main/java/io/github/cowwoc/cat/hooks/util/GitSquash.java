@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -33,19 +32,19 @@ import java.time.format.DateTimeFormatter;
  */
 public final class GitSquash
 {
-  private final JsonMapper mapper;
+  private final JvmScope scope;
   private String backupBranch = "";
 
   /**
    * Creates a new GitSquash instance.
    *
-   * @param mapper the JSON mapper to use for serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GitSquash(JsonMapper mapper)
+  public GitSquash(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -340,7 +339,7 @@ public final class GitSquash
   private String buildSuccessJson(int commitCount, String squashedCommit, long duration)
     throws IOException
   {
-    ObjectNode json = mapper.createObjectNode();
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "success");
     json.put("message", "Squash completed successfully: " + commitCount + " commits → 1 commit");
     json.put("duration_seconds", duration);
@@ -350,7 +349,7 @@ public final class GitSquash
     json.put("working_directory", System.getProperty("user.dir"));
     json.put("timestamp", Instant.now().toString());
 
-    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
   }
 
   /**
@@ -382,8 +381,7 @@ public final class GitSquash
 
     try (JvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      GitSquash cmd = new GitSquash(mapper);
+      GitSquash cmd = new GitSquash(scope);
       try
       {
         String result = cmd.execute(baseCommit, lastCommit, messageFile, originalBranch);

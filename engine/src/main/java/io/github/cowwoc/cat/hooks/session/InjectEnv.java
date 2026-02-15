@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.session;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.HookInput;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
@@ -31,11 +32,18 @@ import java.nio.file.StandardOpenOption;
  */
 public final class InjectEnv implements SessionStartHandler
 {
+  private final JvmScope scope;
+
   /**
    * Creates a new InjectEnv handler.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public InjectEnv()
+  public InjectEnv(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -51,27 +59,17 @@ public final class InjectEnv implements SessionStartHandler
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    String envFile = System.getenv("CLAUDE_ENV_FILE");
-    if (envFile == null || envFile.isEmpty())
-      throw new AssertionError("CLAUDE_ENV_FILE is not set");
-
-    Path envPath = Path.of(envFile);
+    Path envPath = scope.getClaudeEnvFile();
     if (Files.isSymbolicLink(envPath))
       return Result.context("InjectEnv: CLAUDE_ENV_FILE is a symlink - skipping for security");
-
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
-      throw new AssertionError("CLAUDE_PROJECT_DIR is not set");
-
-    String pluginRoot = System.getenv("CLAUDE_PLUGIN_ROOT");
-    if (pluginRoot == null || pluginRoot.isEmpty())
-      throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
 
     // CLAUDE_SESSION_ID is empty in the hook environment. Read from stdin JSON instead.
     String sessionId = input.getSessionId();
     if (sessionId.isEmpty())
       throw new AssertionError("session_id not found in hook input");
 
+    String projectDir = scope.getClaudeProjectDir().toString();
+    String pluginRoot = scope.getClaudePluginRoot().toString();
     String content = "export CLAUDE_PROJECT_DIR=\"" + projectDir + "\"\n" +
       "export CLAUDE_PLUGIN_ROOT=\"" + pluginRoot + "\"\n" +
       "export CLAUDE_SESSION_ID=\"" + sessionId + "\"\n";

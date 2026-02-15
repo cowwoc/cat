@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.prompt.UserIssues;
 import io.github.cowwoc.cat.hooks.read.post.DetectSequentialTools;
 import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
+import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Path;
@@ -44,6 +45,32 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   Path getClaudePluginRoot();
+
+  /**
+   * Returns the Claude session ID.
+   *
+   * @return the session ID
+   * @throws AssertionError if the session ID is not configured
+   * @throws IllegalStateException if this scope is closed
+   */
+  String getClaudeSessionId();
+
+  /**
+   * Returns the path to the Claude environment file.
+   *
+   * @return the environment file path
+   * @throws AssertionError if the env file is not configured
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getClaudeEnvFile();
+
+  /**
+   * Returns the detected terminal type.
+   *
+   * @return the terminal type
+   * @throws IllegalStateException if this scope is closed
+   */
+  TerminalType getTerminalType();
 
   /**
    * Returns the shared JSON mapper configured with pretty print output.

@@ -6,8 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.prompt;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.PromptHandler;
-import tools.jackson.databind.json.JsonMapper;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import tools.jackson.databind.node.ArrayNode;
@@ -36,18 +36,18 @@ public final class UserIssues implements PromptHandler
     "ignored", "you ignored", "didn't acknowledge", "didn't respond to",
     "expected behavior");
 
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new user issues handler.
    *
-   * @param mapper the JSON mapper to use for state serialization
-   * @throws NullPointerException if mapper is null
+   * @param scope the JVM scope providing JSON scope.getJsonMapper()
+   * @throws NullPointerException if {@code scope} is null
    */
-  public UserIssues(JsonMapper mapper)
+  public UserIssues(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -107,16 +107,16 @@ public final class UserIssues implements PromptHandler
     {
       ObjectNode data;
       if (Files.exists(gapsFile))
-        data = (ObjectNode) mapper.readTree(Files.readString(gapsFile));
+        data = (ObjectNode) scope.getJsonMapper().readTree(Files.readString(gapsFile));
       else
       {
-        data = mapper.createObjectNode();
+        data = scope.getJsonMapper().createObjectNode();
         data.put("created", timestamp);
-        data.set("gaps", mapper.createArrayNode());
+        data.set("gaps", scope.getJsonMapper().createArrayNode());
       }
 
       ArrayNode gaps = (ArrayNode) data.get("gaps");
-      ObjectNode gap = mapper.createObjectNode();
+      ObjectNode gap = scope.getJsonMapper().createObjectNode();
       gap.put("id", gapId);
       gap.put("pattern", pattern);
       String userMessage;
@@ -130,7 +130,7 @@ public final class UserIssues implements PromptHandler
       gap.put("test_written", false);
       gaps.add(gap);
 
-      Files.writeString(gapsFile, mapper.writeValueAsString(data));
+      Files.writeString(gapsFile, scope.getJsonMapper().writeValueAsString(data));
     }
     catch (IOException _)
     {

@@ -8,8 +8,9 @@ package io.github.cowwoc.cat.hooks.skills;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import java.io.IOException;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Generates progress banners for CAT workflow phases.
@@ -60,19 +61,18 @@ public final class ProgressBanner
   private static final String ACTIVE = "◉";
   private static final String CAT_EMOJI = "🐱";
 
-  private final DisplayUtils display;
+  private final JvmScope scope;
 
   /**
    * Creates a new ProgressBanner instance.
    *
-   * @param mapper the JSON mapper for DisplayUtils
-   * @throws NullPointerException if {@code mapper} is null
-   * @throws IOException if DisplayUtils cannot be initialized
+   * @param scope the JVM scope providing display utilities
+   * @throws NullPointerException if {@code scope} is null
    */
-  public ProgressBanner(JsonMapper mapper) throws IOException
+  public ProgressBanner(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    this.display = new DisplayUtils(mapper);
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -175,19 +175,19 @@ public final class ProgressBanner
 
     String phaseContent = "  " + p1 + " Preparing ────── " + p2 + " Implementing ────── " +
       p3 + " Confirming ────── " + p4 + " Reviewing ────── " + p5 + " Merging ";
-    int phaseWidth = display.displayWidth(phaseContent);
+    int phaseWidth = scope.getDisplayUtils().displayWidth(phaseContent);
 
     String headerContent;
     int headerWidth;
     if (issueId.isEmpty())
     {
       headerContent = DisplayUtils.BOX_HORIZONTAL + " " + CAT_EMOJI + " ";
-      headerWidth = display.displayWidth(headerContent);
+      headerWidth = scope.getDisplayUtils().displayWidth(headerContent);
     }
     else
     {
       headerContent = DisplayUtils.BOX_HORIZONTAL + " " + CAT_EMOJI + " " + issueId + " ";
-      headerWidth = display.displayWidth(headerContent);
+      headerWidth = scope.getDisplayUtils().displayWidth(headerContent);
     }
 
     int innerWidth = Math.max(headerWidth, phaseWidth);
@@ -267,8 +267,9 @@ public final class ProgressBanner
     if (phaseStr.isEmpty())
       allPhases = true;
 
-    JsonMapper mapper = JsonMapper.builder().build();
-    ProgressBanner banner = new ProgressBanner(mapper);
+    try (JvmScope scope = new MainJvmScope())
+    {
+      ProgressBanner banner = new ProgressBanner(scope);
 
     if (issueId.isEmpty())
     {
@@ -292,6 +293,7 @@ public final class ProgressBanner
           "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
       }
       System.out.println(banner.generateBanner(issueId, phase));
+    }
     }
   }
 }

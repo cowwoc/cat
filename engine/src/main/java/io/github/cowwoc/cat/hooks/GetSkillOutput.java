@@ -55,7 +55,7 @@ public final class GetSkillOutput implements HookHandler
     try (JvmScope scope = new MainJvmScope())
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
       HookResult result = new GetSkillOutput(scope).run(input, output);
 
       for (String warning : result.warnings())

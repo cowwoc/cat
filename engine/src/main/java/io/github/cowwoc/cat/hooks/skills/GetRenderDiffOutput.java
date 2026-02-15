@@ -360,10 +360,7 @@ public final class GetRenderDiffOutput
    */
   public String getOutput()
   {
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isBlank())
-      return null;
-    return getOutput(Path.of(projectDir));
+    return getOutput(scope.getClaudeProjectDir());
   }
 
   /**

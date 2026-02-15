@@ -52,7 +52,7 @@ public final class GetSessionStartOutput implements HookHandler
       new CheckRetrospectiveDue(scope),
       new InjectSessionInstructions(),
       new ClearSkillMarkers(),
-      new InjectEnv()));
+      new InjectEnv(scope)));
   }
 
   /**
@@ -78,7 +78,7 @@ public final class GetSessionStartOutput implements HookHandler
     {
       tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       HookResult result = new GetSessionStartOutput(scope).run(input, output);
 
       for (String warning : result.warnings())

@@ -34,16 +34,18 @@ import org.slf4j.LoggerFactory;
  */
 public final class GetTaskOutput implements HookHandler
 {
-  private static final List<TaskHandler> DEFAULT_HANDLERS = List.of(
-    new EnforceApprovalBeforeMerge());
   private final List<TaskHandler> handlers;
 
   /**
    * Creates a new GetTaskOutput instance with default handlers.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GetTaskOutput()
+  public GetTaskOutput(JvmScope scope)
   {
-    this.handlers = DEFAULT_HANDLERS;
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(new EnforceApprovalBeforeMerge(scope));
   }
 
   /**
@@ -69,8 +71,8 @@ public final class GetTaskOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
-      HookResult result = new GetTaskOutput().run(input, output);
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new GetTaskOutput(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);

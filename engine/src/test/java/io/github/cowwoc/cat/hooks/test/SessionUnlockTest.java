@@ -29,6 +29,17 @@ import java.time.temporal.ChronoUnit;
 public final class SessionUnlockTest
 {
   /**
+   * Creates a SessionUnlock instance for testing.
+   *
+   * @param scope the JVM scope
+   * @return a new SessionUnlock instance
+   */
+  private SessionUnlock createSessionUnlock(JvmScope scope)
+  {
+    return new SessionUnlock(scope);
+  }
+
+  /**
    * Verifies that project lock file is removed when it exists.
    */
   @Test
@@ -47,9 +58,9 @@ public final class SessionUnlockTest
       Files.writeString(lockFile, "locked");
 
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
     }
@@ -82,9 +93,9 @@ public final class SessionUnlockTest
       String json = "{\"session_id\": \"session123\"}";
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(taskLock1), "taskLock1Exists").isFalse();
       requireThat(Files.exists(taskLock2), "taskLock2Exists").isTrue();
@@ -118,9 +129,9 @@ public final class SessionUnlockTest
       String json = "{\"session_id\": \"session123\"}";
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(worktreeLock1), "worktreeLock1Exists").isFalse();
       requireThat(Files.exists(worktreeLock2), "worktreeLock2Exists").isTrue();
@@ -155,9 +166,9 @@ public final class SessionUnlockTest
       Files.setLastModifiedTime(staleLock, FileTime.from(staleTime));
 
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(staleLock), "staleLockExists").isFalse();
       requireThat(Files.exists(freshLock), "freshLockExists").isTrue();
@@ -191,9 +202,9 @@ public final class SessionUnlockTest
       Files.writeString(worktreeLock, "session123");
 
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(taskLock), "taskLockExists").isTrue();
       requireThat(Files.exists(worktreeLock), "worktreeLockExists").isTrue();
@@ -231,9 +242,9 @@ public final class SessionUnlockTest
       Files.setLastModifiedTime(justBeyondBoundary, FileTime.from(beyond));
 
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(justWithinBoundary), "justWithinBoundary").isTrue();
       requireThat(Files.exists(justBeyondBoundary), "justBeyondBoundary").isFalse();
@@ -259,9 +270,10 @@ public final class SessionUnlockTest
       String json = "{\"session_id\": \"session123\"}";
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult result = new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      io.github.cowwoc.cat.hooks.HookResult result = createSessionUnlock(scope).
+        runWithProjectDir(input, output, tempDir);
 
       Path lockDir = tempDir.resolve(".claude/cat/locks");
       Path worktreeLockDir = tempDir.resolve(".claude/cat/worktree-locks");
@@ -300,9 +312,9 @@ public final class SessionUnlockTest
       String json = "{\"session_id\": \"session456\"}";
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(lockA), "lockA").isTrue();
       requireThat(Files.exists(lockB), "lockB").isFalse();
@@ -326,9 +338,9 @@ public final class SessionUnlockTest
     Path tempDir = Files.createTempDirectory("session-unlock-test");
     try
     {
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(null, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(null, output, tempDir);
     }
     finally
     {
@@ -349,7 +361,7 @@ public final class SessionUnlockTest
     try
     {
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      new SessionUnlock().runWithProjectDir(input, null, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, null, tempDir);
     }
     finally
     {
@@ -367,9 +379,9 @@ public final class SessionUnlockTest
     try (JvmScope scope = new TestJvmScope())
     {
     HookInput input = HookInput.empty(scope.getJsonMapper());
-    HookOutput output = new HookOutput(scope.getJsonMapper());
+    HookOutput output = new HookOutput(scope);
 
-    new SessionUnlock().runWithProjectDir(input, output, null);
+    createSessionUnlock(scope).runWithProjectDir(input, output, null);
     }
   }
 
@@ -397,9 +409,9 @@ public final class SessionUnlockTest
       String json = "{\"session_id\": \"   \"}";
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(taskLock), "taskLockExists").isTrue();
       requireThat(Files.exists(worktreeLock), "worktreeLockExists").isTrue();
@@ -431,9 +443,9 @@ public final class SessionUnlockTest
       String json = "{\"session_id\": \"session123\"}";
       HookInput input = HookInput.readFrom(scope.getJsonMapper(),
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(directoryLock), "directoryLockExists").isTrue();
     }
@@ -466,9 +478,9 @@ public final class SessionUnlockTest
       Files.writeString(nestedFile, "content");
 
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       // IOException was caught gracefully — lock file still exists (deletion failed)
       requireThat(Files.exists(lockFile), "lockFileStillExists").isTrue();
@@ -501,9 +513,9 @@ public final class SessionUnlockTest
       Files.writeString(nestedFile, "content");
 
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      HookOutput output = new HookOutput(scope.getJsonMapper());
+      HookOutput output = new HookOutput(scope);
 
-      new SessionUnlock().runWithProjectDir(input, output, tempDir);
+      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
 
       // IOException was caught gracefully — directory-as-lock still exists (deletion failed)
       requireThat(Files.exists(directoryAsLockFile), "directoryLockStillExists").isTrue();

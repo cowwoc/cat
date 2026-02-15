@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.ask;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.AskHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
 import tools.jackson.databind.JsonNode;
 
@@ -39,11 +40,18 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
   private static final Pattern BOX_CHARS = Pattern.compile("[╭╮╰╯│├┤]");
   private static final Pattern MANUAL_DIFF_SIGNS = Pattern.compile("^\\+\\+\\+|^---|^@@", Pattern.MULTILINE);
 
+  private final JvmScope scope;
+
   /**
    * Creates a new WarnApprovalWithoutRenderDiff handler.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public WarnApprovalWithoutRenderDiff()
+  public WarnApprovalWithoutRenderDiff(JvmScope scope)
   {
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   @Override
@@ -56,11 +64,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
     if (!toolInputText.toLowerCase(Locale.ROOT).contains("approve"))
       return Result.allow();
 
-    String projectDir = System.getenv("CLAUDE_PROJECT_DIR");
-    if (projectDir == null || projectDir.isEmpty())
-      return Result.allow();
-
-    Path catDir = Paths.get(projectDir, ".claude", "cat");
+    Path catDir = scope.getClaudeProjectDir().resolve(".claude").resolve("cat");
     if (!Files.isDirectory(catDir))
       return Result.allow();
 

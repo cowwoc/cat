@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -56,22 +55,18 @@ public final class VerifyAudit
   {
   };
 
-  private final JsonMapper mapper;
-  private final DisplayUtils display;
+  private final JvmScope scope;
 
   /**
    * Creates a new VerifyAudit instance.
    *
-   * @param mapper the JSON mapper
-   * @param display the display utilities
-   * @throws NullPointerException if {@code mapper} or {@code display} are null
+   * @param scope the JVM scope providing JSON mapper and display utilities
+   * @throws NullPointerException if {@code scope} is null
    */
-  public VerifyAudit(JsonMapper mapper, DisplayUtils display)
+  public VerifyAudit(JvmScope scope)
   {
-    requireThat(mapper, "mapper").isNotNull();
-    requireThat(display, "display").isNotNull();
-    this.mapper = mapper;
-    this.display = display;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -113,33 +108,33 @@ public final class VerifyAudit
     FileSpecs fileSpecs = extractFileSpecs(content);
     List<CriteriaGroup> groups = groupCriteriaByFiles(criteria, fileSpecs);
 
-    ObjectNode root = mapper.createObjectNode();
-    ArrayNode criteriaArray = mapper.createArrayNode();
+    ObjectNode root = scope.getJsonMapper().createObjectNode();
+    ArrayNode criteriaArray = scope.getJsonMapper().createArrayNode();
     for (String criterion : criteria)
       criteriaArray.add(criterion);
     root.set("criteria", criteriaArray);
 
-    ObjectNode fileSpecsNode = mapper.createObjectNode();
-    ArrayNode modifyArray = mapper.createArrayNode();
+    ObjectNode fileSpecsNode = scope.getJsonMapper().createObjectNode();
+    ArrayNode modifyArray = scope.getJsonMapper().createArrayNode();
     for (String file : fileSpecs.modify())
       modifyArray.add(file);
-    ArrayNode deleteArray = mapper.createArrayNode();
+    ArrayNode deleteArray = scope.getJsonMapper().createArrayNode();
     for (String file : fileSpecs.delete())
       deleteArray.add(file);
     fileSpecsNode.set("modify", modifyArray);
     fileSpecsNode.set("delete", deleteArray);
     root.set("file_specs", fileSpecsNode);
 
-    ArrayNode groupsArray = mapper.createArrayNode();
+    ArrayNode groupsArray = scope.getJsonMapper().createArrayNode();
     for (CriteriaGroup group : groups)
     {
-      ObjectNode groupNode = mapper.createObjectNode();
-      ArrayNode filesArray = mapper.createArrayNode();
+      ObjectNode groupNode = scope.getJsonMapper().createObjectNode();
+      ArrayNode filesArray = scope.getJsonMapper().createArrayNode();
       for (String file : group.files())
         filesArray.add(file);
       groupNode.set("files", filesArray);
 
-      ArrayNode critArray = mapper.createArrayNode();
+      ArrayNode critArray = scope.getJsonMapper().createArrayNode();
       for (String criterion : group.criteria())
         critArray.add(criterion);
       groupNode.set("criteria", critArray);
@@ -147,7 +142,7 @@ public final class VerifyAudit
     }
     root.set("groups", groupsArray);
 
-    return mapper.writeValueAsString(root);
+    return scope.getJsonMapper().writeValueAsString(root);
   }
 
   /**
@@ -196,7 +191,7 @@ public final class VerifyAudit
     requireThat(issueId, "issueId").isNotNull();
     requireThat(resultsJson, "resultsJson").isNotNull();
 
-    JsonNode root = mapper.readTree(resultsJson);
+    JsonNode root = scope.getJsonMapper().readTree(resultsJson);
     JsonNode criteriaResults = root.path("criteria_results");
     JsonNode fileResults = root.path("file_results");
 
@@ -243,7 +238,7 @@ public final class VerifyAudit
       append(criteriaDetails).append('\n').append('\n').
       append(fileDetails).append('\n');
 
-    ObjectNode summary = mapper.createObjectNode();
+    ObjectNode summary = scope.getJsonMapper().createObjectNode();
     summary.put("total", total);
     summary.put("done", done);
     summary.put("partial", partial);
@@ -251,7 +246,7 @@ public final class VerifyAudit
     summary.put("file_done", fileDone);
     summary.put("file_missing", fileMissing);
     summary.put("assessment", assessment);
-    output.append(mapper.writeValueAsString(summary));
+    output.append(scope.getJsonMapper().writeValueAsString(summary));
 
     return output.toString();
   }
@@ -495,7 +490,7 @@ public final class VerifyAudit
     int fileDone, int fileMissing)
   {
     String headerContent = DisplayUtils.BOX_HORIZONTAL + " AUDIT REPORT: " + issueId + " ";
-    int headerWidth = display.displayWidth(headerContent);
+    int headerWidth = scope.getDisplayUtils().displayWidth(headerContent);
 
     int contentWidth = Math.max(headerWidth, 76);
     int topPadding = contentWidth - headerWidth;
@@ -530,7 +525,7 @@ public final class VerifyAudit
    */
   private void appendBoxLine(StringBuilder output, String content, int boxWidth)
   {
-    int contentDisplayWidth = display.displayWidth(content);
+    int contentDisplayWidth = scope.getDisplayUtils().displayWidth(content);
     int padding = boxWidth - contentDisplayWidth;
     output.append(DisplayUtils.BOX_VERTICAL).append(content).
       append(" ".repeat(padding)).
@@ -552,7 +547,7 @@ public final class VerifyAudit
 
     if (results.isObject() && results.size() > 0)
     {
-      Map<String, String> statusMap = mapper.convertValue(results, MAP_STRING_TYPE);
+      Map<String, String> statusMap = scope.getJsonMapper().convertValue(results, MAP_STRING_TYPE);
       for (String status : statusMap.values())
       {
         if (status.equals(successStatus))
@@ -634,7 +629,7 @@ public final class VerifyAudit
     if (modifyResults.isObject() && modifyResults.size() > 0)
     {
       output.append("Files to Modify:").append('\n');
-      Map<String, String> modifyMap = mapper.convertValue(modifyResults, MAP_STRING_TYPE);
+      Map<String, String> modifyMap = scope.getJsonMapper().convertValue(modifyResults, MAP_STRING_TYPE);
       for (Map.Entry<String, String> entry : modifyMap.entrySet())
       {
         String file = entry.getKey();
@@ -653,7 +648,7 @@ public final class VerifyAudit
     if (deleteResults.isObject() && deleteResults.size() > 0)
     {
       output.append("Files to Delete:").append('\n');
-      Map<String, String> deleteMap = mapper.convertValue(deleteResults, MAP_STRING_TYPE);
+      Map<String, String> deleteMap = scope.getJsonMapper().convertValue(deleteResults, MAP_STRING_TYPE);
       for (Map.Entry<String, String> entry : deleteMap.entrySet())
       {
         String file = entry.getKey();
@@ -697,9 +692,7 @@ public final class VerifyAudit
     String subcommand = args[0];
     try (JvmScope scope = new MainJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      DisplayUtils display = scope.getDisplayUtils();
-      VerifyAudit audit = new VerifyAudit(mapper, display);
+      VerifyAudit audit = new VerifyAudit(scope);
 
       if (subcommand.equals("parse"))
       {

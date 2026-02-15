@@ -38,13 +38,12 @@ public class IssueLockTest
   @Test
   public void acquireSucceedsWhenNoLockExists() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         LockResult result = lock.acquire("test-issue", sessionId, "/path/to/worktree");
@@ -69,13 +68,12 @@ public class IssueLockTest
   @Test
   public void acquireIsIdempotentForSameSession() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
@@ -101,13 +99,12 @@ public class IssueLockTest
   @Test
   public void acquireFailsWhenLockedByAnotherSession() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId1 = UUID.randomUUID().toString();
         String sessionId2 = UUID.randomUUID().toString();
 
@@ -137,13 +134,12 @@ public class IssueLockTest
   @Test
   public void acquireRejectsInvalidSessionId() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
 
         try
         {
@@ -171,13 +167,12 @@ public class IssueLockTest
   @Test
   public void updateSucceedsWhenLockOwned() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "");
@@ -203,13 +198,12 @@ public class IssueLockTest
   @Test
   public void updateFailsWhenLockOwnedByAnotherSession() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId1 = UUID.randomUUID().toString();
         String sessionId2 = UUID.randomUUID().toString();
 
@@ -236,13 +230,12 @@ public class IssueLockTest
   @Test
   public void updateFailsWhenNoLockExists() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         LockResult result = lock.update("test-issue", sessionId, "/new/worktree");
@@ -267,13 +260,12 @@ public class IssueLockTest
   @Test
   public void releaseSucceedsWhenLockOwned() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
@@ -299,13 +291,12 @@ public class IssueLockTest
   @Test
   public void releaseFailsWhenLockOwnedByAnotherSession() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId1 = UUID.randomUUID().toString();
         String sessionId2 = UUID.randomUUID().toString();
 
@@ -332,13 +323,12 @@ public class IssueLockTest
   @Test
   public void releaseSucceedsWhenNoLockExists() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         LockResult result = lock.release("test-issue", sessionId);
@@ -363,13 +353,12 @@ public class IssueLockTest
   @Test
   public void forceReleaseRemovesLockRegardlessOfOwner() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
@@ -396,13 +385,12 @@ public class IssueLockTest
   @Test
   public void forceReleaseSucceedsWhenNoLockExists() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
 
         LockResult result = lock.forceRelease("test-issue");
 
@@ -426,13 +414,12 @@ public class IssueLockTest
   @Test
   public void checkReturnsUnlockedWhenNoLockExists() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
 
         LockResult result = lock.check("test-issue");
 
@@ -456,13 +443,12 @@ public class IssueLockTest
   @Test
   public void checkReturnsLockedStatusWhenLockExists() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "/path/to/worktree");
@@ -490,13 +476,12 @@ public class IssueLockTest
   @Test
   public void listReturnsEmptyListWhenNoLocksExist() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
 
         List<LockListEntry> locks = lock.list();
 
@@ -517,13 +502,12 @@ public class IssueLockTest
   @Test
   public void listReturnsAllLocks() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId1 = UUID.randomUUID().toString();
         String sessionId2 = UUID.randomUUID().toString();
 
@@ -569,13 +553,12 @@ public class IssueLockTest
   @Test
   public void listSkipsMalformedLockFiles() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("valid-issue", sessionId, "/path/to/worktree");
@@ -604,10 +587,9 @@ public class IssueLockTest
   @Test
   public void checkHandlesMissingCreatedAtField() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
         Path lockDir = tempDir.resolve(".claude").resolve("cat").resolve("locks");
@@ -617,7 +599,7 @@ public class IssueLockTest
         String invalidLock = "{\"session_id\": \"12345678-1234-1234-1234-123456789012\"}";
         Files.writeString(lockFile, invalidLock);
 
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
 
         try
         {
@@ -644,13 +626,12 @@ public class IssueLockTest
   @Test
   public void lockFileSanitizesIssueIdWithSlashes() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("v2.1/fix-bug", sessionId, "/path/to/worktree");
@@ -763,13 +744,12 @@ public class IssueLockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      JsonMapper mapper = scope.getJsonMapper();
       Path tempDir = createTempDir();
       try
       {
         try
         {
-          new IssueLock(mapper, tempDir);
+          new IssueLock(scope);
           requireThat(false, "shouldThrow").isTrue();
         }
         catch (IllegalArgumentException e)
@@ -792,13 +772,12 @@ public class IssueLockTest
   @Test
   public void updatePreservesCreatedAt() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("test-issue", sessionId, "/initial/worktree");
@@ -831,13 +810,12 @@ public class IssueLockTest
   @Test
   public void lockFileSanitizesBackslashesInIssueId() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("v2.1\\fix-bug", sessionId, "/path/to/worktree");
@@ -862,13 +840,12 @@ public class IssueLockTest
   @Test
   public void lockFileSanitizesColonsInIssueId() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = createTempProject();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = createTempProject();
       try
       {
-        IssueLock lock = new IssueLock(mapper, tempDir);
+        IssueLock lock = new IssueLock(scope);
         String sessionId = UUID.randomUUID().toString();
 
         lock.acquire("issue:123", sessionId, "/path/to/worktree");

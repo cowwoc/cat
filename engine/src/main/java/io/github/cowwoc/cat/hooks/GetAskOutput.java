@@ -29,20 +29,20 @@ import org.slf4j.LoggerFactory;
  */
 public final class GetAskOutput implements HookHandler
 {
-  // Handlers are checked in order. Ask handlers inject at most one context (first handler
-  // providing additionalContext wins, then early return). This differs from Edit/Write/Task
-  // dispatchers which accumulate all warnings, because only one context can be injected per question.
-  private static final List<AskHandler> DEFAULT_HANDLERS = List.of(
-    new WarnUnsquashedApproval(),
-    new WarnApprovalWithoutRenderDiff());
   private final List<AskHandler> handlers;
 
   /**
    * Creates a new GetAskOutput instance with default handlers.
+   *
+   * @param scope the JVM scope
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GetAskOutput()
+  public GetAskOutput(JvmScope scope)
   {
-    this.handlers = DEFAULT_HANDLERS;
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(
+      new WarnUnsquashedApproval(),
+      new WarnApprovalWithoutRenderDiff(scope));
   }
 
   /**
@@ -68,8 +68,8 @@ public final class GetAskOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
-      HookResult result = new GetAskOutput().run(input, output);
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new GetAskOutput(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);

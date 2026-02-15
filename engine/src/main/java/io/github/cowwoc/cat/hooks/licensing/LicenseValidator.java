@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.licensing;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ import java.util.Base64;
 import java.util.Map;
 
 import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Validates Ed25519-signed JWT license tokens.
@@ -39,22 +39,18 @@ public final class LicenseValidator
   {
   };
 
-  private final Path pluginRoot;
-  private final JsonMapper mapper;
+  private final JvmScope scope;
 
   /**
    * Creates a new license validator.
    *
-   * @param pluginRoot the plugin root directory containing config/cat-public-key.pem
-   * @param mapper the JSON mapper
-   * @throws NullPointerException if {@code pluginRoot} or {@code mapper} are null
+   * @param scope the JVM scope providing plugin root and JSON mapper
+   * @throws NullPointerException if {@code scope} is null
    */
-  public LicenseValidator(Path pluginRoot, JsonMapper mapper)
+  public LicenseValidator(JvmScope scope)
   {
-    requireThat(pluginRoot, "pluginRoot").isNotNull();
-    requireThat(mapper, "mapper").isNotNull();
-    this.pluginRoot = pluginRoot;
-    this.mapper = mapper;
+    requireThat(scope, "scope").isNotNull();
+    this.scope = scope;
   }
 
   /**
@@ -72,7 +68,7 @@ public final class LicenseValidator
     Config config;
     try
     {
-      config = Config.load(mapper, projectDir);
+      config = Config.load(scope.getJsonMapper(), projectDir);
     }
     catch (Exception _)
     {
@@ -85,7 +81,7 @@ public final class LicenseValidator
       return LicenseResult.indie();
 
     // Find public key
-    Path keyPath = pluginRoot.resolve("config").resolve("cat-public-key.pem");
+    Path keyPath = scope.getClaudePluginRoot().resolve("config").resolve("cat-public-key.pem");
     if (!Files.exists(keyPath))
       return LicenseResult.error("Public key not found");
 
@@ -164,7 +160,7 @@ public final class LicenseValidator
       // Decode payload
       byte[] payloadBytes = base64UrlDecode(payloadB64);
       String payloadJson = new String(payloadBytes, StandardCharsets.UTF_8);
-      Map<String, Object> payload = mapper.readValue(payloadJson, MAP_TYPE);
+      Map<String, Object> payload = scope.getJsonMapper().readValue(payloadJson, MAP_TYPE);
 
       // Extract fields
       String tierString = (String) payload.getOrDefault("tier", "indie");

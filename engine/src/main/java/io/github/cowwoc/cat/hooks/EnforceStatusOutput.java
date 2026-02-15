@@ -53,7 +53,7 @@ public final class EnforceStatusOutput
     try (JvmScope scope = new MainJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      HookOutput hookOutput = new HookOutput(mapper);
+      HookOutput hookOutput = new HookOutput(scope);
       String output;
       try
       {

@@ -294,7 +294,7 @@ public final class GetCleanupOutput
 
     try
     {
-      IssueLock lockManager = new IssueLock(scope.getJsonMapper(), projectDir);
+      IssueLock lockManager = new IssueLock(scope);
       List<IssueLock.LockListEntry> entries = lockManager.list();
 
       List<Lock> locks = new ArrayList<>();

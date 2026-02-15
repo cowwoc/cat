@@ -60,7 +60,7 @@ public final class GetBashPostOutput implements HookHandler
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
-      HookOutput output = new HookOutput(mapper);
+      HookOutput output = new HookOutput(scope);
       HookResult result = new GetBashPostOutput().run(input, output);
 
       for (String warning : result.warnings())
