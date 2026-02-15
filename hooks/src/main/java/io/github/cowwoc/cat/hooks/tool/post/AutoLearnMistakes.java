@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.tool.post;
 
-import io.github.cowwoc.cat.hooks.PosttoolHandler;
+import io.github.cowwoc.cat.hooks.PostToolHandler;
 import tools.jackson.databind.JsonNode;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * Monitors tool results for error patterns including build failures, test failures,
  * protocol violations, merge conflicts, and self-acknowledged mistakes.
  */
-public final class AutoLearnMistakes implements PosttoolHandler
+public final class AutoLearnMistakes implements PostToolHandler
 {
   private final Map<String, Integer> sessionIdToLineCount = new HashMap<>();
 
