@@ -4152,6 +4152,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Display only human-friendly box reports to users; return JSON result object as internal contract for orchestrating agent to parse"
+    },
+    {
+      "id": "M505",
+      "timestamp": "2026-02-16T15:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent made code changes in worktree but stopped without committing, preventing user review",
+      "root_cause": "No documented requirement or enforcement that worktree changes must be committed before stopping work. Agent ACTION module failed to complete the required sequence (edit + commit).",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/2.1-refactor-skill-output-to-preprocessor/plugin/concepts/work.md",
+      "pattern_keywords": [
+        "worktree",
+        "commit",
+        "review",
+        "uncommitted"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Commit all changes in worktree before requesting user review or stopping work"
     }
   ],
   "counter": 1
