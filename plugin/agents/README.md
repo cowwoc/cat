@@ -33,14 +33,14 @@ injected into the subagent's context at startup.
 - Use this to ensure subagents have all necessary guidance without manual skill calls
 
 **Example use case:**
-A git merge agent needs to know about git-squash and git-rebase procedures. By
-listing these skills in the frontmatter, the agent has this knowledge immediately
-available without requiring explicit skill invocations during execution.
+A git merge agent needs to know about merge and rebase procedures. By listing these
+skills in the frontmatter, the agent has this knowledge immediately available without
+requiring explicit skill invocations during execution. Scripts like `git-squash-quick.sh`
+are called directly and do not need skill preloading.
 
 ```yaml
 skills:
-  - git-squash
-  - git-rebase
+  - git-merge-linear
   - validate-git-safety
 ```
 
@@ -88,7 +88,7 @@ All stakeholder files have been migrated to this directory with proper agent for
 - stakeholder-ux.md
 
 ### From `plugin/skills/` (subagent-style skills)
-- work-merge (needs git-squash, git-rebase, validate-git-safety preloaded)
+- work-merge (calls git-squash-quick.sh directly, needs git-merge-linear, validate-git-safety preloaded)
 - Future skills that use delegation patterns
 
 ## Directory Structure

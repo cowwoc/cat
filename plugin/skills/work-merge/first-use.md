@@ -66,17 +66,47 @@ Group commits into categories:
 - Implementation: feature, bugfix, refactor, test, docs
 - Infrastructure: config
 
-Squash each category into a single commit using `/cat:git-squash`:
+Squash each category into a single commit by calling `git-squash-quick.sh` directly:
 
-**NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft` (captures
-stale working directory state per M385). Always use `/cat:git-squash` which uses `commit-tree`
-to create commits from committed tree objects.
+**NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft` (captures stale working
+directory state). Always use `git-squash-quick.sh` which uses `commit-tree` to create commits from committed tree
+objects.
+
+Derive the commit message from the COMMITS input JSON. The merge subagent is responsible for
+constructing a valid message before calling the script:
+- Use the first implementation commit's message as the base (it already has the correct type prefix)
+- If multiple implementation commits exist, append a summary of additional work after the base message
+  (e.g., first commit "feature: add parser" + test commit → "feature: add parser with tests")
+- The message MUST match the format `type: description` where type is one of: feature, bugfix,
+  refactor, test, performance, config, planning, docs. The description must start with a non-whitespace
+  character. The script rejects invalid messages.
 
 ```bash
+# Example: Extract commit message from COMMITS JSON
+PRIMARY_MESSAGE=$(echo "$COMMITS" | python3 -c "import sys, json; commits = json.load(sys.stdin); print(commits[0]['message'])")
+
+# Squash implementation commits
+"${CLAUDE_PLUGIN_ROOT}/scripts/git-squash-quick.sh" "${BASE_BRANCH}" "$PRIMARY_MESSAGE" "${WORKTREE_PATH}"
+
 # Target: 1-2 commits max
 # - Implementation commit (all feature/bugfix/test work)
 # - Config commit (optional, if config changes exist)
 ```
+
+**Handle script result:**
+
+The script validates the commit message format before any git operations. If validation fails, it
+exits with status 1 and prints a plain text error to stderr (not JSON). Ensure your commit message
+follows the format `type: description` before calling the script.
+
+If validation passes, the script returns JSON to stdout:
+
+| Status | Meaning | Agent Action |
+|--------|---------|--------------|
+| OK | Squash succeeded | Continue to Step 2 |
+| REBASE_CONFLICT | Conflict during pre-squash rebase | Return CONFLICT status with conflicting files from JSON |
+| VERIFY_FAILED | Content changed during squash | Restore from backup branch in JSON, report ERROR |
+| ERROR | Rebase or other failure | Report error message from JSON, do not proceed |
 
 If work-with-issue already squashed commits in Step 5, skip this step entirely.
 

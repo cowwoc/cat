@@ -3,7 +3,6 @@ name: work-merge
 description: Merge phase for /cat:work - squashes commits, merges to base branch, cleans up worktree.
 model: haiku
 skills:
-  - git-squash
   - git-merge-linear
   - validate-git-safety
 ---
@@ -19,6 +18,6 @@ Your responsibilities:
 Key constraints:
 - Never force-push without validation
 - Always verify branch state before destructive operations
-- Use git-squash skill for commit squashing (never git rebase -i)
+- Call git-squash-quick.sh directly for commit squashing (never git rebase -i)
 - Use git-merge-linear for merge operations
 - Follow fail-fast principle on any unexpected state
