@@ -126,6 +126,10 @@ Evaluate implementation against these quality criteria:
 
 ### High Priority
 - **Code Duplication**: Repeated logic that should be extracted, copy-paste violations
+  - **MANDATORY**: When reviewing new utility classes, inner classes, or helper methods, search the codebase for existing utilities with similar names or functionality
+  - Use Grep and Glob tools to search for: class names, method signatures, similar patterns
+  - Example: reviewing `GitCommands` inner class → search for `class.*GitCommands` across codebase
+  - Flag duplication of existing public utilities as HIGH severity
 - **Excessive Complexity**: Methods with high cyclomatic complexity, deeply nested conditionals
 - **Poor Cohesion**: Classes with unrelated responsibilities, methods doing too many things
 
@@ -133,6 +137,9 @@ Evaluate implementation against these quality criteria:
 - **Magic Numbers**: Hardcoded values that should be named constants
 - **Missing Documentation**: Public APIs without clear documentation
 - **Inconsistent Patterns**: Code that doesn't follow established patterns in the codebase
+- **Convention Violations**: Code that violates project-specific conventions
+  - When conventions are provided in your context, verify compliance against each rule
+  - Flag violations with reference to specific convention section
 - **File Necessity**: New or modified files that may be unnecessary, redundant, or could be consolidated with existing
   files
 
