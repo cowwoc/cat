@@ -930,17 +930,19 @@ public class GetRenderDiffOutputTest
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getOutputWithoutArgsUsesEnvironmentVariable() throws IOException
+  public void getOutputWithoutArgsReturnsNullWhenEnvNotSet() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
       String result = handler.getOutput();
 
-      // CLAUDE_PROJECT_DIR may be set in test environment
-      // If not set or invalid, should return null or error message
-      // If set and valid, should return diff output
-      requireThat(result, "result").isNotNull();
+      // When CLAUDE_PROJECT_DIR is not set, getOutput() returns null
+      String envValue = System.getenv("CLAUDE_PROJECT_DIR");
+      if (envValue == null || envValue.isBlank())
+        requireThat(result, "result").isNull();
+      else
+        requireThat(result, "result").isNotNull();
     }
   }
 
