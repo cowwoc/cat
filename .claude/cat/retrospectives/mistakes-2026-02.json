@@ -4021,6 +4021,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Records with String or object parameters must have compact constructors with requireThat() validation per java.md conventions"
+    },
+    {
+      "id": "M498",
+      "timestamp": "2026-02-15T16:21:27Z",
+      "category": "stakeholder_review_gap",
+      "description": "Design stakeholder failed to detect GitCommands duplication and unicode escape violations in 7+ review rounds",
+      "root_cause": "Stakeholder agent lacked instructions to search codebase for utility duplication and verify convention compliance",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "config",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/agents/stakeholder-design.md",
+      "pattern_keywords": [
+        "stakeholder",
+        "code_review",
+        "duplication",
+        "conventions"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Design stakeholder must search codebase for existing utilities when reviewing new classes and verify convention compliance when conventions provided"
     }
   ],
   "counter": 1
