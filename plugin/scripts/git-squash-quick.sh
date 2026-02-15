@@ -16,6 +16,15 @@ BASE_BRANCH="${1:?ERROR: BASE_BRANCH required as first argument}"
 COMMIT_MESSAGE="${2:?ERROR: COMMIT_MESSAGE required as second argument}"
 WORKTREE_PATH="${3:-.}"
 
+# Cleanup handler: delete backup branch if script exits after creating it
+BACKUP=""
+cleanup_backup() {
+  if [[ -n "$BACKUP" ]]; then
+    git -C "$WORKTREE_PATH" branch -D "$BACKUP" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup_backup EXIT
+
 # Validate commit message format
 if ! echo "$COMMIT_MESSAGE" | grep -qE '^(feature|bugfix|refactor|test|performance|config|planning|docs): \S'; then
   cat >&2 <<EOF
@@ -56,6 +65,10 @@ if [[ $REBASE_EXIT -ne 0 ]]; then
   # Abort rebase to return to clean state
   git -C "$WORKTREE_PATH" rebase --abort 2>/dev/null || true
 
+  # Preserve rebase conflict backup for caller recovery (clear so trap doesn't delete)
+  REBASE_BACKUP="$BACKUP"
+  BACKUP=""
+
   if [[ -n "$CONFLICTING_FILES" ]]; then
     # Format conflicting files as JSON array
     FILES_JSON=$(echo "$CONFLICTING_FILES" | python3 -c "import sys, json; print(json.dumps([line.strip() for line in sys.stdin if line.strip()]))")
@@ -63,7 +76,7 @@ if [[ $REBASE_EXIT -ne 0 ]]; then
     cat >&2 <<EOF
 {
   "status": "REBASE_CONFLICT",
-  "backup_branch": "$BACKUP",
+  "backup_branch": "$REBASE_BACKUP",
   "message": "Conflict during pre-squash rebase",
   "conflicting_files": $FILES_JSON
 }
@@ -72,7 +85,7 @@ EOF
     cat >&2 <<EOF
 {
   "status": "ERROR",
-  "backup_branch": "$BACKUP",
+  "backup_branch": "$REBASE_BACKUP",
   "message": "Rebase failed: $REBASE_OUTPUT"
 }
 EOF
@@ -110,10 +123,13 @@ git -C "$WORKTREE_PATH" reset --hard "$NEW_COMMIT"
 DIFF_OUTPUT=$(git -C "$WORKTREE_PATH" diff "$BACKUP" 2>&1)
 if [[ -n "$DIFF_OUTPUT" ]]; then
   DIFF_STAT=$(git -C "$WORKTREE_PATH" diff "$BACKUP" --stat 2>&1)
+  # Preserve backup for investigation (clear so trap doesn't delete)
+  VERIFY_BACKUP="$BACKUP"
+  BACKUP=""
   cat >&2 <<EOF
 {
   "status": "VERIFY_FAILED",
-  "backup_branch": "$BACKUP",
+  "backup_branch": "$VERIFY_BACKUP",
   "message": "Content changed during squash - backup preserved",
   "diff_stat": $(echo "$DIFF_STAT" | python3 -c "import sys, json; print(json.dumps(sys.stdin.read()))")
 }
@@ -127,11 +143,14 @@ if [[ "$COMMIT_COUNT" -ne 1 ]]; then
   echo "ERROR: Expected 1 commit from base, got $COMMIT_COUNT" >&2
   echo "Restoring backup..." >&2
   git -C "$WORKTREE_PATH" reset --hard "$BACKUP"
+  # Backup used for restore — clear so trap doesn't delete
+  BACKUP=""
   exit 1
 fi
 
-# Delete backup
+# Delete backup (clear variable so trap doesn't re-delete)
 git -C "$WORKTREE_PATH" branch -D "$BACKUP" >/dev/null
+BACKUP=""
 
 # Output JSON for machine parsing
 cat <<EOF
