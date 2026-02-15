@@ -16,6 +16,28 @@ BASE_BRANCH="${1:?ERROR: BASE_BRANCH required as first argument}"
 COMMIT_MESSAGE="${2:?ERROR: COMMIT_MESSAGE required as second argument}"
 WORKTREE_PATH="${3:-.}"
 
+# Validate commit message format
+if ! echo "$COMMIT_MESSAGE" | grep -qE '^(feature|bugfix|refactor|test|performance|config|planning|docs): \S'; then
+  cat >&2 <<EOF
+ERROR: Invalid commit message format.
+
+Commit message must start with a valid type prefix:
+  feature:     New capability
+  bugfix:      Bug fix
+  refactor:    Code restructure
+  test:        Test addition/modification
+  performance: Optimization
+  config:      Configuration change
+  planning:    Issue tracking
+  docs:        Documentation
+
+Received: $COMMIT_MESSAGE
+
+Example: feature: add user authentication
+EOF
+  exit 1
+fi
+
 # Pin base branch reference BEFORE rebase to prevent race conditions
 BASE=$(git -C "$WORKTREE_PATH" rev-parse "$BASE_BRANCH")
 
