@@ -9,28 +9,17 @@ package io.github.cowwoc.cat.hooks.util;
 import java.io.IOException;
 
 /**
- * Interface for skill handlers that generate dynamic output.
- * <p>
- * Skill handlers are invoked by {@link SkillLoader} when their variable is referenced in skill content.
- * Each handler provides contextual output based on the current project state.
- * <p>
- * <b>Implementation requirements:</b> Implementing classes must provide a public constructor
- * accepting a single {@link io.github.cowwoc.cat.hooks.JvmScope} parameter. The class is
- * registered in a skill's {@code bindings.json} file and instantiated via reflection by
- * {@link SkillLoader}.
- *
- * @see SkillLoader
+ * Interface for classes that generate skill output for preprocessor directives.
  */
-@FunctionalInterface
 public interface SkillOutput
 {
   /**
-   * Generates the handler output.
-   * <p>
-   * The output is substituted into the skill content wherever the bound variable is referenced.
+   * Generates the output for this skill.
    *
-   * @return the handler output, never null
-   * @throws IOException if generation fails
+   * @param args the arguments from the preprocessor directive
+   * @return the generated output
+   * @throws NullPointerException if {@code args} is null
+   * @throws IOException if an I/O error occurs
    */
-  String getOutput() throws IOException;
+  String getOutput(String[] args) throws IOException;
 }

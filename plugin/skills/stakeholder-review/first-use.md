@@ -687,7 +687,13 @@ The calling skill (work-with-issue) is responsible for:
 
 ## Output Format
 
-Return structured result for integration with work:
+**User-Facing Output:**
+
+Display review results to the user using the STAKEHOLDER REVIEW box from SKILL OUTPUT STAKEHOLDER BOXES. The box report provides all information users need (stakeholder names, concern counts, icons, overall result).
+
+**Machine-Facing Return Value (DO NOT DISPLAY TO USER):**
+
+Return the structured result below as your final message for the orchestrating agent to parse. This JSON is an internal contract for integration with the work-with-issue workflow - it should NOT be displayed to end users as they have already seen the human-friendly box report above.
 
 ```json
 {

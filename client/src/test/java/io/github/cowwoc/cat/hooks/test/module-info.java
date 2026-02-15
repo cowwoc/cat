@@ -13,5 +13,5 @@ module io.github.cowwoc.cat.hooks.test
   requires tools.jackson.databind;
   requires io.github.cowwoc.pouch10.core;
 
-  exports io.github.cowwoc.cat.hooks.test to org.testng;
+  exports io.github.cowwoc.cat.hooks.test to org.testng, io.github.cowwoc.cat.hooks;
 }

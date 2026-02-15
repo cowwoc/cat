@@ -68,13 +68,17 @@ public final class GetStatusOutput implements SkillOutput
   /**
    * Generates the complete status display for the project using the configured project directory.
    *
+   * @param args the arguments from the preprocessor directive (must be empty)
    * @return the formatted status display, or error message if CAT not initialized
    * @throws AssertionError if the project directory is not configured
+   * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if {@code args} is not empty
    * @throws IOException if an I/O error occurs
    */
   @Override
-  public String getOutput() throws IOException
+  public String getOutput(String[] args) throws IOException
   {
+    requireThat(args, "args").length().isEqualTo(0);
     Path projectDir = scope.getClaudeProjectDir();
 
     Path catDir = projectDir.resolve(".claude/cat");
@@ -1111,7 +1115,7 @@ public final class GetStatusOutput implements SkillOutput
     try (JvmScope scope = new MainJvmScope())
     {
       GetStatusOutput generator = new GetStatusOutput(scope);
-      String output = generator.getOutput();
+      String output = generator.getOutput(args);
       System.out.println(output);
     }
     catch (IOException e)
