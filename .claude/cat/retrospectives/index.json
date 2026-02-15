@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-08T13:37:10.924863+00:00",
-  "mistake_count_since_last": 26,
+  "last_retrospective": "2026-02-16T09:40:08.086328+00:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -336,21 +336,64 @@
     {
       "pattern_id": "PATTERN-016",
       "pattern": "squash_commit_corruption",
-      "occurrences_total": 2,
-      "occurrences_after_fix": 0,
+      "occurrences_total": 6,
+      "occurrences_after_fix": 4,
       "first_seen": "2026-02-06T12:54:53Z",
-      "last_seen": "2026-02-06T18:10:00Z",
+      "last_seen": "2026-02-16T09:38:00Z",
       "last_action_date": null,
       "status": "new",
       "effectiveness": "pending",
       "preventions": [
         "M450",
-        "M451"
+        "M451",
+        "M484",
+        "M488",
+        "M500",
+        "M503"
       ],
       "related_action_items": [
         "A018"
       ],
-      "note": "Git squash operations produce incorrect results - absorbing base branch changes or miscategorizing files. Squash skill needs rebase-first requirement and clearer file grouping rules."
+      "note": "Git squash operations produce incorrect results - manual squash bypass, stale worktree capture, generic commit messages. Now enforced by RemindGitSquash hook blocking git reset --soft."
+    },
+    {
+      "pattern_id": "PATTERN-017",
+      "pattern": "approval_gate_bypass",
+      "occurrences_total": 3,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-08T14:00:00Z",
+      "last_seen": "2026-02-10T12:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M479",
+        "M480",
+        "M489"
+      ],
+      "related_action_items": [
+        "A020"
+      ],
+      "note": "Agent bypasses approval gate when trust=medium. Merges without formal AskUserQuestion, or interprets conversational 'yes' as approval instead of requiring explicit option selection."
+    },
+    {
+      "pattern_id": "PATTERN-018",
+      "pattern": "stakeholder_review_quality",
+      "occurrences_total": 4,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-08T14:00:00Z",
+      "last_seen": "2026-02-15T12:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M478",
+        "M496",
+        "M498",
+        "M499"
+      ],
+      "related_action_items": [],
+      "note": "Stakeholder reviewers (design, testing) fail to detect duplication, missing validation, and code quality issues. Reviewers read wrong branch or miss patterns spanning multiple files."
     }
   ],
   "action_items": [
@@ -791,13 +834,22 @@
       "completed_date": null,
       "related_mistakes": [
         "M450",
-        "M451"
+        "M451",
+        "M484",
+        "M488",
+        "M500",
+        "M503"
       ],
       "effectiveness_check": {
         "mistakes_before": 2,
-        "mistakes_after": null,
-        "post_fix_mistakes": [],
-        "verdict": "pending"
+        "mistakes_after": 4,
+        "post_fix_mistakes": [
+          "M484",
+          "M488",
+          "M500",
+          "M503"
+        ],
+        "verdict": "ineffective"
       }
     },
     {
@@ -814,6 +866,28 @@
       ],
       "effectiveness_check": {
         "mistakes_before": 1,
+        "mistakes_after": null,
+        "post_fix_mistakes": [],
+        "verdict": "pending"
+      }
+    },
+    {
+      "id": "A020",
+      "priority": "high",
+      "description": "Enforce approval gate: PreToolUse hook on Task(work-merge) must verify AskUserQuestion with 'Approve and merge' was selected when trust != high. Conversational responses are NOT approval.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-017",
+      "status": "implemented",
+      "created_date": "2026-02-16T09:40:08.086328+00:00",
+      "completed_date": "2026-02-16T09:40:08.086328+00:00",
+      "related_mistakes": [
+        "M479",
+        "M480",
+        "M489"
+      ],
+      "implementation": "M489 prevention added Approval Gate Protocol to .claude/rules/hooks.md. M480 added PreToolUse hook blocking work-merge spawn without explicit approval. Both already committed.",
+      "effectiveness_check": {
+        "mistakes_before": 3,
         "mistakes_after": null,
         "post_fix_mistakes": [],
         "verdict": "pending"
