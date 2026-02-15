@@ -61,12 +61,16 @@ public final class GetRetrospectiveOutput implements SkillOutput
   /**
    * Generates the retrospective output.
    *
+   * @param args the arguments from the preprocessor directive (must be empty)
    * @return the retrospective analysis or status message
+   * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if {@code args} is not empty
    * @throws IOException if an I/O error occurs
    */
   @Override
-  public String getOutput() throws IOException
+  public String getOutput(String[] args) throws IOException
   {
+    requireThat(args, "args").length().isEqualTo(0);
     Path projectDir = scope.getClaudeProjectDir();
     Path retroDir = projectDir.resolve(".claude/cat/retrospectives");
 
@@ -528,7 +532,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     try (JvmScope scope = new MainJvmScope())
     {
       GetRetrospectiveOutput generator = new GetRetrospectiveOutput(scope);
-      String output = generator.getOutput();
+      String output = generator.getOutput(args);
       System.out.print(output);
     }
     catch (IOException e)

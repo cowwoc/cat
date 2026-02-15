@@ -17,7 +17,7 @@ Configure the user's Claude Code statusline to use CAT's custom statusline scrip
 ---
 
 SKILL OUTPUT STATUSLINE CHECK:
-${CAT_SKILL_OUTPUT}
+!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-statusline-output"`
 
 ---
 
