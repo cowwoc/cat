@@ -1,49 +1,92 @@
 {
   "$schema": "./tiers.schema.json",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "tiers": {
-    "indie": {
-      "name": "Indie",
-      "description": "For individual developers",
+    "core": {
+      "name": "Core",
+      "description": "The reliable AI coding workflow",
       "features": [
-        "single-agent-execution",
         "basic-task-management",
         "local-worktrees",
         "basic-commit-hooks",
+        "git-safety-tools",
         "status-command",
         "init-command"
       ]
     },
-    "team": {
-      "name": "Team",
-      "description": "For small teams",
+    "pro": {
+      "name": "Pro",
+      "description": "Advanced capabilities for professional developers",
       "features": [
+        "single-agent-execution",
         "multi-agent-orchestration",
         "parallel-task-execution",
         "stakeholder-reviews",
         "token-usage-tracking",
         "learn",
         "task-decomposition",
+        "research-skill",
         "all-commands",
-        "all-skills"
+        "all-skills",
+        "collision-prevention",
+        "team-pulse",
+        "shared-brain",
+        "context-preservation",
+        "branch-policies",
+        "team-analytics",
+        "project-budgets",
+        "slack-discord-notifications",
+        "github-pr-integration",
+        "ci-status-awareness",
+        "github-issues-sync",
+        "linear-sync"
       ],
-      "includes": "indie"
+      "includes": "core"
     },
     "enterprise": {
       "name": "Enterprise",
       "description": "For organizations with compliance needs",
       "features": [
+        "sso-saml",
+        "scim-provisioning",
         "audit-logging",
-        "custom-hooks",
         "compliance-export",
         "human-review-gates",
+        "jira-sync",
+        "teams-notifications",
+        "webhook-api",
+        "data-residency",
         "priority-support",
         "sla-guarantees"
       ],
-      "includes": "team"
+      "includes": "pro"
     }
   },
   "features": {
+    "basic-task-management": {
+      "description": "Create and track tasks with plan-work-commit-merge workflow",
+      "category": "planning"
+    },
+    "local-worktrees": {
+      "description": "Isolated git worktrees for tasks",
+      "category": "isolation"
+    },
+    "basic-commit-hooks": {
+      "description": "Pre-commit validation hooks",
+      "category": "hooks"
+    },
+    "git-safety-tools": {
+      "description": "Backup, safe-rm, squash, rebase safety wrappers",
+      "category": "safety"
+    },
+    "status-command": {
+      "description": "View project status",
+      "category": "commands"
+    },
+    "init-command": {
+      "description": "Initialize CAT structure",
+      "category": "commands"
+    },
     "single-agent-execution": {
       "description": "Execute tasks with single subagent",
       "category": "execution"
@@ -56,20 +99,8 @@
       "description": "Run independent tasks concurrently",
       "category": "execution"
     },
-    "basic-task-management": {
-      "description": "Create and track tasks",
-      "category": "planning"
-    },
-    "task-decomposition": {
-      "description": "Auto-decompose oversized tasks",
-      "category": "planning"
-    },
-    "local-worktrees": {
-      "description": "Isolated git worktrees for tasks",
-      "category": "isolation"
-    },
     "stakeholder-reviews": {
-      "description": "Multi-perspective code review",
+      "description": "Multi-perspective code review with 11 stakeholders",
       "category": "quality"
     },
     "token-usage-tracking": {
@@ -77,16 +108,80 @@
       "category": "monitoring"
     },
     "learn": {
-      "description": "Retrospective analysis and improvement",
+      "description": "Mistake learning, RCA, and retrospective analysis",
       "category": "quality"
     },
-    "basic-commit-hooks": {
-      "description": "Pre-commit validation hooks",
-      "category": "hooks"
+    "task-decomposition": {
+      "description": "Auto-decompose oversized tasks",
+      "category": "planning"
     },
-    "custom-hooks": {
-      "description": "User-defined hook scripts",
-      "category": "hooks"
+    "research-skill": {
+      "description": "Multi-stakeholder research before implementation",
+      "category": "quality"
+    },
+    "all-commands": {
+      "description": "Access to all CAT commands",
+      "category": "commands"
+    },
+    "all-skills": {
+      "description": "Access to all CAT skills",
+      "category": "skills"
+    },
+    "collision-prevention": {
+      "description": "Prevent multiple devs working same task",
+      "category": "collaboration"
+    },
+    "team-pulse": {
+      "description": "Real-time team activity dashboard",
+      "category": "collaboration"
+    },
+    "shared-brain": {
+      "description": "Team-wide conventions enforced automatically",
+      "category": "collaboration"
+    },
+    "context-preservation": {
+      "description": "Cross-session handoff with decision context",
+      "category": "collaboration"
+    },
+    "branch-policies": {
+      "description": "Branch naming conventions enforced",
+      "category": "collaboration"
+    },
+    "team-analytics": {
+      "description": "Team activity and productivity analytics",
+      "category": "collaboration"
+    },
+    "project-budgets": {
+      "description": "Token budget limits per project",
+      "category": "collaboration"
+    },
+    "slack-discord-notifications": {
+      "description": "Notifications to Slack and Discord",
+      "category": "integrations"
+    },
+    "github-pr-integration": {
+      "description": "GitHub pull request integration",
+      "category": "integrations"
+    },
+    "ci-status-awareness": {
+      "description": "CI/CD pipeline status awareness",
+      "category": "integrations"
+    },
+    "github-issues-sync": {
+      "description": "Sync with GitHub Issues",
+      "category": "integrations"
+    },
+    "linear-sync": {
+      "description": "Sync with Linear",
+      "category": "integrations"
+    },
+    "sso-saml": {
+      "description": "SSO/SAML authentication via WorkOS",
+      "category": "compliance"
+    },
+    "scim-provisioning": {
+      "description": "SCIM user provisioning",
+      "category": "compliance"
     },
     "audit-logging": {
       "description": "Detailed operation audit trail",
@@ -100,21 +195,21 @@
       "description": "Mandatory human approval points",
       "category": "compliance"
     },
-    "status-command": {
-      "description": "View project status",
-      "category": "commands"
+    "jira-sync": {
+      "description": "Sync with Jira",
+      "category": "integrations"
     },
-    "init-command": {
-      "description": "Initialize CAT structure",
-      "category": "commands"
+    "teams-notifications": {
+      "description": "Microsoft Teams notifications",
+      "category": "integrations"
     },
-    "all-commands": {
-      "description": "Access to all CAT commands",
-      "category": "commands"
+    "webhook-api": {
+      "description": "Webhook API for custom integrations",
+      "category": "integrations"
     },
-    "all-skills": {
-      "description": "Access to all CAT skills",
-      "category": "skills"
+    "data-residency": {
+      "description": "Control where data is stored",
+      "category": "compliance"
     },
     "priority-support": {
       "description": "Priority support channel",

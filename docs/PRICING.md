@@ -4,7 +4,7 @@
 >
 > Build on solid ground, not a house of cards.
 
----
+—-
 
 ## The Problem with AI Projects
 
@@ -22,7 +22,7 @@ accumulates. Your codebase looks productive but crumbles under pressure.
 
 Two failure modes. Same root cause: **AI that races ahead instead of moving forward with you.**
 
----
+—-
 
 ## CAT Flips This Around
 
@@ -39,33 +39,46 @@ at genuine decision points.
 
 **The goal isn't to write more code. It's to write code you can trust.**
 
----
+—-
 
 ## Pricing Plans
 
-### Indie — Free for solo developers
+### Core — Free
 
-*For solo developers*
+*The reliable AI coding workflow*
 
-**Reliable, focused assistance:**
-- Does what you ask—nothing more
-- Task orchestration that tracks every step
-- Git safety skills—backup before destructive operations
-- Mistake learning—errors recorded and prevented
-- Token tracking so you know what you're spending
+**A solid foundation for any project:**
+- Task orchestration with plan-work-commit-merge workflow
+- Git safety tools—backup before destructive operations
+- Worktree isolation for every task
+- Basic commit hooks for validation
+- Unlimited projects
 
-You stay in control. CAT stays on task.
+Start building on solid ground.
 
----
+—-
 
-### Team — $19 / seat / month
+### Pro — $19 / seat / month
 
-*Coordination without chaos*
+*Everything you need to ship*
 
-Everything in Indie, plus:
+Everything in Core, plus:
+
+**Advanced Features:**
 
 | Feature | Description |
-|---------|-------------|
+|————-|——————-|
+| **Stakeholder Reviews** | 11-perspective code review catches what you miss |
+| **Mistake Learning (RCA)** | Errors recorded, analyzed, and prevented |
+| **Research** | Multi-stakeholder research before implementation |
+| **Token Tracking** | Know exactly what you're spending |
+| **Task Decomposition** | Auto-decompose oversized tasks |
+| **All Commands & Skills** | Full access to every CAT capability |
+
+**Team Collaboration:**
+
+| Feature | Description |
+|————-|——————-|
 | **Collision Prevention** | No two devs work the same task by accident |
 | **Team Pulse** | See who's working on what, in real-time |
 | **Shared Brain** | Team-wide conventions enforced automatically |
@@ -74,34 +87,33 @@ Everything in Indie, plus:
 | **Team analytics** | Visibility into what's actually happening |
 | **Project budgets** | Token limits prevent runaway costs |
 
-1-50 seats · Billed monthly or annually (2 months free)
+Includes a 14-day free trial. No credit card required.
 
-Your team moves together. No one races ahead alone.
+1-50 seats. Billed monthly or annually (2 months free).
 
----
+—-
 
 ### Enterprise — $49 / seat / month
 
-*Reliability at scale*
+*Compliance and control at scale*
 
-Everything in Team, plus:
+Everything in Pro, plus:
 
 | Feature | Description |
-|---------|-------------|
+|————-|——————-|
 | **SSO/SAML** | Identity management you already trust |
 | **Issue tracker sync** | Jira, Linear, GitHub Issues stay in sync |
 | **Slack/Teams notifications** | Updates where your team already works |
-| **Custom LLM endpoints** | Use approved, audited models |
 | **Webhook API** | Integrate with your existing workflows |
 | **Audit logs** | Every action traceable and exportable |
 | **Data residency** | Control where your data lives |
 | **SLA & priority support** | Guaranteed response when you need it |
 
-Unlimited seats · Annual billing · Volume discounts available
+Unlimited seats. Annual billing. Volume discounts available.
 
 Enterprise reliability. Enterprise accountability.
 
----
+—-
 
 ## Why CAT?
 
@@ -135,7 +147,7 @@ AI generates code faster than you review it
 Other AI tools optimize for speed and autonomy.
 CAT optimizes for reliability and control.
 
----
+—-
 
 ## FAQ
 
@@ -154,20 +166,25 @@ existing form or create new component?" instead of deciding for you.
 Commit-before-proceed workflow. Every change is reviewable before CAT moves on. No silent
 accumulation of untested code.
 
-**Can solo developers buy Team features?**
+**Can solo developers buy Pro features?**
 
-Yes. If you want collaboration features for yourself (or you're preparing to hire), you can
-purchase Team at any time.
-
-**What happens if our team shrinks below 50 seats?**
-
-Nothing changes. You stay on your current plan. You can also downgrade to Indie if you become a
-solo operation again.
+Yes. If you want advanced features like stakeholder reviews, learning/RCA, or team
+collaboration—or you're preparing to hire—you can purchase Pro at any time.
 
 **Is there a free trial?**
 
-Team includes a 14-day free trial, no credit card required. Enterprise trials are
-available—contact sales.
+All new users get a 14-day Pro trial, no credit card required. You experience the full product
+before deciding. After the trial, you can upgrade to Pro or continue with Core.
+
+**What happens when the trial ends?**
+
+Your workspace stays intact. You keep access to Core features (plan-work-commit-merge, git safety,
+worktree isolation). Pro features like stakeholder reviews, learning, and collaboration become
+unavailable until you upgrade.
+
+**What happens if our team shrinks below 50 seats?**
+
+Nothing changes. You stay on your current plan. You can downgrade tiers at any time.
 
 **How does billing work?**
 
@@ -175,10 +192,10 @@ Monthly or annual. Annual billing saves you 2 months (pay for 10, get 12).
 
 **Can we self-host?**
 
-Enterprise includes options for custom LLM endpoints and data residency. Full self-hosted
-deployments available—contact sales.
+Enterprise includes options for data residency. Full self-hosted deployments
+available—contact sales.
 
----
+—-
 
 ## Contact
 
