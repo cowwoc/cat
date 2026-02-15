@@ -4,5 +4,5 @@
 - **Progress:** 100%
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-14
-- **Resolution:** implemented - Added commit message verification to work-with-issue orchestrator to validate subagent commits follow semantic commit conventions.
+- **Last Updated:** 2026-02-15
+- **Resolution:** implemented - Restructured pricing from persona-based (Indie/Team/Enterprise) to edition-based (Core/Pro/Enterprise) across tiers.json, PRICING-STRATEGY.md, PRICING.md, and LICENSE.md.
