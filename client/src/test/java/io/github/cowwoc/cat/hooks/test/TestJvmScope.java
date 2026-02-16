@@ -55,6 +55,7 @@ public final class TestJvmScope implements JvmScope
     ConcurrentLazyReference.create(() -> new UserIssues(this));
   private final Path claudeProjectDir;
   private final Path claudePluginRoot;
+  private final Path claudeConfigDir;
   private final String claudeSessionId;
   private final Path claudeEnvFile;
   private final TerminalType terminalType;
@@ -69,6 +70,7 @@ public final class TestJvmScope implements JvmScope
     {
       this.claudeProjectDir = Files.createTempDirectory("test-project");
       this.claudePluginRoot = Files.createTempDirectory("test-plugin");
+      this.claudeConfigDir = Files.createTempDirectory("test-config");
       this.claudeSessionId = "test-session";
       this.claudeEnvFile = Files.createTempFile("test-env", ".sh");
       this.terminalType = TerminalType.WINDOWS_TERMINAL;
@@ -95,6 +97,7 @@ public final class TestJvmScope implements JvmScope
     requireThat(claudePluginRoot, "claudePluginRoot").isNotNull();
     this.claudeProjectDir = claudeProjectDir;
     this.claudePluginRoot = claudePluginRoot;
+    this.claudeConfigDir = claudeProjectDir;
     this.claudeSessionId = "test-session";
     try
     {
@@ -130,6 +133,7 @@ public final class TestJvmScope implements JvmScope
     requireThat(terminalType, "terminalType").isNotNull();
     this.claudeProjectDir = claudeProjectDir;
     this.claudePluginRoot = claudePluginRoot;
+    this.claudeConfigDir = claudeProjectDir;
     this.claudeSessionId = claudeSessionId;
     this.claudeEnvFile = claudeEnvFile;
     this.terminalType = terminalType;
@@ -161,6 +165,13 @@ public final class TestJvmScope implements JvmScope
   {
     ensureOpen();
     return claudePluginRoot;
+  }
+
+  @Override
+  public Path getClaudeConfigDir()
+  {
+    ensureOpen();
+    return claudeConfigDir;
   }
 
   @Override
