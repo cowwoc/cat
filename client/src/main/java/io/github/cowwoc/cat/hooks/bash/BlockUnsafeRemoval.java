@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.bash;
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
@@ -59,7 +60,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       // Check rm -rf commands
       if (commandLower.contains("rm") && hasRecursiveFlag(command))
       {
-        Result rmResult = checkRmCommand(command, workingDirectory);
+        Result rmResult = checkRmCommand(command, workingDirectory, sessionId);
         if (rmResult != null)
           return rmResult;
       }
@@ -68,7 +69,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       if (commandLower.contains("git") && commandLower.contains("worktree") &&
           commandLower.contains("remove"))
       {
-        Result worktreeResult = checkWorktreeRemove(command, workingDirectory);
+        Result worktreeResult = checkWorktreeRemove(command, workingDirectory, sessionId);
         if (worktreeResult != null)
           return worktreeResult;
       }
@@ -207,13 +208,13 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @return a block result if unsafe removal detected, null otherwise
    * @throws IOException if path operations fail
    */
-  private Result checkRmCommand(String command, String workingDirectory) throws IOException
+  private Result checkRmCommand(String command, String workingDirectory, String sessionId) throws IOException
   {
     List<String> targets = extractRmTargets(command);
 
     for (String target : targets)
     {
-      Result blockResult = checkProtectedPaths(target, workingDirectory, "rm (recursive)");
+      Result blockResult = checkProtectedPaths(target, workingDirectory, sessionId, "rm (recursive)");
       if (blockResult != null)
         return blockResult;
     }
@@ -229,7 +230,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @return a block result if unsafe removal detected, null otherwise
    * @throws IOException if path operations fail
    */
-  private Result checkWorktreeRemove(String command, String workingDirectory) throws IOException
+  private Result checkWorktreeRemove(String command, String workingDirectory, String sessionId) throws IOException
   {
     Matcher matcher = WORKTREE_REMOVE_PATTERN.matcher(command);
 
@@ -240,7 +241,7 @@ public final class BlockUnsafeRemoval implements BashHandler
         continue;
 
       // Check if deletion would affect protected paths
-      Result blockResult = checkProtectedPaths(target, workingDirectory, "git worktree remove");
+      Result blockResult = checkProtectedPaths(target, workingDirectory, sessionId, "git worktree remove");
       if (blockResult != null)
         return blockResult;
     }
@@ -257,9 +258,10 @@ public final class BlockUnsafeRemoval implements BashHandler
    * @return a block result if protected paths would be affected, null otherwise
    * @throws IOException if path operations fail
    */
-  private Result checkProtectedPaths(String target, String workingDirectory, String commandType) throws IOException
+  private Result checkProtectedPaths(String target, String workingDirectory, String sessionId,
+    String commandType) throws IOException
   {
-    Set<Path> protectedPaths = getProtectedPaths(workingDirectory);
+    Set<Path> protectedPaths = getProtectedPaths(workingDirectory, sessionId);
     if (protectedPaths.isEmpty())
       return null;
 
@@ -304,14 +306,18 @@ public final class BlockUnsafeRemoval implements BashHandler
    * <ul>
    *   <li>Main worktree root (derived from git structure)</li>
    *   <li>Current session's CWD (from hook input)</li>
-   *   <li>All active worktrees (from lock files)</li>
+   *   <li>Locked worktrees owned by other sessions</li>
    * </ul>
+   * <p>
+   * Worktrees locked by the current session are NOT protected, allowing the owning
+   * session to clean up its own worktrees during merge/cleanup.
    *
    * @param workingDirectory the shell's current working directory
+   * @param sessionId the current session ID
    * @return set of protected paths
    * @throws IOException if path operations fail
    */
-  private Set<Path> getProtectedPaths(String workingDirectory) throws IOException
+  private Set<Path> getProtectedPaths(String workingDirectory, String sessionId) throws IOException
   {
     Set<Path> paths = new HashSet<>();
 
@@ -324,7 +330,7 @@ public final class BlockUnsafeRemoval implements BashHandler
     {
       paths.add(mainWorktree.toRealPath());
 
-      // 3. Locked worktrees - read .claude/cat/locks/*.lock
+      // 3. Locked worktrees owned by OTHER sessions
       Path locksDir = mainWorktree.resolve(".claude/cat/locks");
       if (Files.isDirectory(locksDir))
       {
@@ -332,6 +338,10 @@ public final class BlockUnsafeRemoval implements BashHandler
         {
           for (Path lockFile : stream)
           {
+            // Skip worktrees owned by the current session
+            if (isOwnedBySession(lockFile, sessionId))
+              continue;
+
             // Lock file name = {issue-id}.lock
             // Worktree path = {mainWorktree}/.claude/cat/worktrees/{issue-id}
             String fileName = lockFile.getFileName().toString();
@@ -350,6 +360,33 @@ public final class BlockUnsafeRemoval implements BashHandler
       paths.add(cwdPath.toRealPath());
 
     return paths;
+  }
+
+  /**
+   * Checks if a lock file is owned by the given session.
+   *
+   * @param lockFile the lock file path
+   * @param sessionId the session ID to check against
+   * @return true if the lock is owned by the given session
+   */
+  private boolean isOwnedBySession(Path lockFile, String sessionId)
+  {
+    if (sessionId.isEmpty())
+      return false;
+    try
+    {
+      String content = Files.readString(lockFile);
+      JsonMapper mapper = JsonMapper.builder().build();
+      JsonNode lock = mapper.readTree(content);
+      JsonNode lockSessionNode = lock.get("session_id");
+      if (lockSessionNode == null || !lockSessionNode.isString())
+        return false;
+      return sessionId.equals(lockSessionNode.asString());
+    }
+    catch (IOException _)
+    {
+      return false;
+    }
   }
 
   /**

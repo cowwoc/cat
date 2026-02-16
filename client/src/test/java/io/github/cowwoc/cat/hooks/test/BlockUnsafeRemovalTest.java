@@ -225,9 +225,13 @@ public final class BlockUnsafeRemovalTest
     Path worktreePath = worktreesDir.resolve("task-123");
     Files.createDirectories(worktreePath);
 
-    // Create lock file
+    // Create lock file owned by a different session
     Path lockFile = locksDir.resolve("task-123.lock");
-    Files.writeString(lockFile, "locked");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "other-session",
+        "created_at": 1771266833
+      }""");
 
     try
     {
@@ -240,6 +244,91 @@ public final class BlockUnsafeRemovalTest
       requireThat(result.blocked(), "blocked").isTrue();
       requireThat(result.reason(), "reason").contains("UNSAFE");
       requireThat(result.reason(), "reason").contains("Protected: " + worktreePath.toRealPath());
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that the owning session can remove its own locked worktree.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void owningSessionCanRemoveLockedWorktree() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-456");
+    Files.createDirectories(worktreePath);
+
+    // Create lock file owned by the SAME session
+    Path lockFile = locksDir.resolve("task-456.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "my-session",
+        "created_at": 1771266833
+      }""");
+
+    try
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval();
+      String workingDirectory = tempDir.toString();
+      String command = "git worktree remove " + worktreePath + " --force";
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a different session cannot remove another session's locked worktree.
+   *
+   * @throws IOException if test setup fails
+   */
+  @Test
+  public void differentSessionCannotRemoveLockedWorktree() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path gitDir = tempDir.resolve(".git");
+    Files.createDirectory(gitDir);
+    Path locksDir = tempDir.resolve(".claude/cat/locks");
+    Files.createDirectories(locksDir);
+    Path worktreesDir = tempDir.resolve(".claude/cat/worktrees");
+    Files.createDirectories(worktreesDir);
+    Path worktreePath = worktreesDir.resolve("task-789");
+    Files.createDirectories(worktreePath);
+
+    // Create lock file owned by a different session
+    Path lockFile = locksDir.resolve("task-789.lock");
+    Files.writeString(lockFile, """
+      {
+        "session_id": "other-session",
+        "created_at": 1771266833
+      }""");
+
+    try
+    {
+      BlockUnsafeRemoval handler = new BlockUnsafeRemoval();
+      String workingDirectory = tempDir.toString();
+      String command = "git worktree remove " + worktreePath + " --force";
+
+      BashHandler.Result result = handler.check(command, workingDirectory, null, null, "my-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("UNSAFE");
     }
     finally
     {
