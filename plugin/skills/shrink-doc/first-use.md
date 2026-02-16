@@ -240,7 +240,8 @@ After agent completes:
 
 3. **Verify YAML frontmatter preserved** (if compressing slash command):
    ```bash
-   head -5 /tmp/compressed-{{filename}}-v${VERSION}.md | grep -q "^---$" || echo "⚠️ WARNING: YAML frontmatter missing!"
+   head -5 /tmp/compressed-{{filename}}-v${VERSION}.md | grep -q "^---$" || \
+     echo "⚠️ WARNING: YAML frontmatter missing!"
    ```
 
 4. **Run validation via /cat:delegate**:
@@ -394,7 +395,7 @@ else:
   DECISION = "ITERATE"
 ```
 
-**FAIL-FAST**: If DECISION=ITERATE:
+**Iteration required**: If DECISION=ITERATE:
 1. **STOP** - do not ask user for approval
 2. **Extract** the LOST section from the report (lists units that need restoration)
 3. **Proceed** directly to Step 6 (Iteration Loop) with that feedback

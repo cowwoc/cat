@@ -65,7 +65,8 @@ Choose the model based on issue complexity:
 | Issue Type | Model | Reasoning |
 |-----------|-------|-----------|
 | Skill invocation (orchestration only) | `haiku` | Skill is pure orchestration, subagent just runs it |
-| Skill invocation (skill exposes algorithm) | `sonnet` | Skill doc shows HOW to do it; haiku will apply algorithm manually |
+| Skill invocation (skill exposes algorithm) | `sonnet` | Skill doc shows HOW to do it; haiku will apply |
+|                                             |          | algorithm manually |
 | Simple file operations | `haiku` | Explicit instructions, no reasoning needed |
 | Run commands, check output | `haiku` | Purely mechanical execution |
 | Code refactoring | `sonnet` | Requires understanding patterns and context |
@@ -338,19 +339,19 @@ If ANY of these occur, STOP and report BLOCKED:
 | Commit message format | Exact text, not guidelines |
 | **STATE.md update** | Issue STATE.md must be updated to completed IN THE SAME COMMIT |
 
-### Fail-Fast Requirements
+### Error Handling Requirements
 
-**CRITICAL**: Every prompt must include fail-fast conditions.
+**CRITICAL**: Every prompt must include error handling conditions.
 
 ```bash
 # Always include:
-FAIL-FAST CONDITIONS:
+ERROR CONDITIONS:
 - If [specific condition], report "BLOCKED: [reason]" and stop
 - Report status and return to main agent for decisions
 - Main agent handles all workarounds and fallback choices
 ```
 
-Subagents use fail-fast behavior: report BLOCKED and stop. Fallback decisions require user oversight.
+Subagents report BLOCKED and stop on errors. Fallback decisions require user oversight.
 
 ### Prompt Completeness Checklist
 
@@ -545,7 +546,7 @@ Task tool invocation:
     results, compression stats, comparison tables), include the FULL textual output
     in your completion JSON under "skill_output". Users cannot see subagent tool calls.
 
-    FAIL-FAST: If skill fails validation, report BLOCKED.
+    ERROR HANDLING: If skill fails validation, report BLOCKED.
 ```
 
 **For CAT issue delegation - simple issues (haiku):**
@@ -648,7 +649,8 @@ Task tool:
     Report approximate token usage after completion.
 ```
 
-**Why soft limit for reuse**: Quality degrades after 40-50% context usage (agent-architecture.md § Quality Degradation).
+**Why soft limit for reuse**: Quality degrades after 40-50% context usage (agent-architecture.md § Quality
+Degradation).
 Spawning fresh subagents above soft limit maintains output quality.
 
 **When NOT to reuse:**
