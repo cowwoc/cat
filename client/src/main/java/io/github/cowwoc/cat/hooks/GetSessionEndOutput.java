@@ -17,7 +17,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-session-end-output - Unified SessionEnd hook for CAT
+ * Unified SessionEnd hook for CAT
  * <p>
  * TRIGGER: SessionEnd
  * <p>
