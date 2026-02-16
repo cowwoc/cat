@@ -416,6 +416,8 @@ must contain `<p>` — never leave a bare `*` line between paragraphs:
 ### Javadoc Requirements
 - **All classes and records must have Javadoc** (public and non-public)
 - **All methods must have Javadoc** (including interface methods and private methods)
+- **`@Override` methods do not need Javadoc** unless the override changes the contract or adds important implementation
+  details beyond what the parent documents
 - **All constructors must have Javadoc** (including record compact constructors)
 - **All thrown exceptions must be documented with `@throws`** (including interface methods that expect implementations
   to validate parameters)
