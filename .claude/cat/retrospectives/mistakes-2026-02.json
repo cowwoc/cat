@@ -4204,6 +4204,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Check pwd before any rm -rf or git worktree remove. If cwd is inside target, cd to safe location first. See /cat:safe-rm skill."
+    },
+    {
+      "id": "M507",
+      "timestamp": "2026-02-17T06:41:45-05:00",
+      "category": "protocol_violation",
+      "description": "Subagent created git commit with message 'squash commit' instead of descriptive message during interactive rebase squash",
+      "root_cause": "Interactive Rebase Workflow template in git-squash/first-use.md shows message editor script with placeholder but provides no guidance on generating actual commit message content, and bypasses validation that exists in Quick Workflow",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash/first-use.md",
+      "pattern_keywords": [
+        "commit-message",
+        "squash",
+        "interactive-rebase",
+        "placeholder"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Generate unified commit message from existing commit messages before creating message editor script, analyzing all commits being squashed to craft meaningful message"
     }
   ],
   "counter": 1
