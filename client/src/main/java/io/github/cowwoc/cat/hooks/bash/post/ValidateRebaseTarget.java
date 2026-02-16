@@ -36,7 +36,8 @@ public final class ValidateRebaseTarget implements BashHandler
   }
 
   @Override
-  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
     // Check for git rebase with origin/ prefix
     if (!REBASE_ORIGIN_PATTERN.matcher(command).find())

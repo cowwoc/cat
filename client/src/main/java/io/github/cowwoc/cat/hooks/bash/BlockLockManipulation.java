@@ -32,7 +32,8 @@ public final class BlockLockManipulation implements BashHandler
   }
 
   @Override
-  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
     // Check for rm commands targeting lock files
     if (LOCK_FILE_PATTERN.matcher(command).find())
