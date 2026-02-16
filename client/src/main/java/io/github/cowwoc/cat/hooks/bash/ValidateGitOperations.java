@@ -32,7 +32,8 @@ public final class ValidateGitOperations implements BashHandler
   }
 
   @Override
-  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
     // Block: git push --force to main/master
     if (FORCE_PUSH_MAIN_PATTERN.matcher(command).find())

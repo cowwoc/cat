@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * get-skill-output - Unified UserPromptSubmit hook for CAT
+ * Unified UserPromptSubmit hook for CAT
  *
  * TRIGGER: UserPromptSubmit
  *

@@ -21,7 +21,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-post-output - Unified PostToolUse hook for all tools
+ * Unified PostToolUse hook for all tools
  *
  * TRIGGER: PostToolUse (no matcher - runs for all tools)
  *

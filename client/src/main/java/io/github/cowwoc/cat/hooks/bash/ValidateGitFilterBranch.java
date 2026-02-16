@@ -30,7 +30,8 @@ public final class ValidateGitFilterBranch implements BashHandler
   }
 
   @Override
-  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
     // BLOCK: dangerous --all or --branches flags with history rewriting
     if (DANGEROUS_FLAGS_PATTERN.matcher(command).find())

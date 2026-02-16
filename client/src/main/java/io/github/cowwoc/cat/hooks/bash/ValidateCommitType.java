@@ -70,7 +70,8 @@ public final class ValidateCommitType implements BashHandler
   }
 
   @Override
-  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
     // Only check git commit commands
     if (!GIT_COMMIT_PATTERN.matcher(command).find())
