@@ -56,6 +56,14 @@ public interface JvmScope extends AutoCloseable
   String getClaudeSessionId();
 
   /**
+   * Returns the Claude config directory (typically {@code ~/.claude}).
+   *
+   * @return the config directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  Path getClaudeConfigDir();
+
+  /**
    * Returns the path to the Claude environment file.
    *
    * @return the environment file path
