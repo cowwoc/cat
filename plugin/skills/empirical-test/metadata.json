@@ -1,5 +1,0 @@
-{
-  "name": "empirical-test",
-  "description": "Empirically test agent compliance with controlled experiments",
-  "aliases": ["etest", "compliance-test"]
-}
