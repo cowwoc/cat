@@ -405,14 +405,21 @@ public final class SkillLoader
     {
       throw e;
     }
-    catch (Exception e)
+    catch (java.lang.reflect.InvocationTargetException e)
     {
-      Throwable cause = e;
-      if (e instanceof java.lang.reflect.InvocationTargetException && e.getCause() != null)
-        cause = e.getCause();
+      Throwable cause = e.getCause();
+      if (cause == null)
+        cause = e;
       String errorMsg = cause.getMessage();
       if (errorMsg == null)
         errorMsg = cause.getClass().getName();
+      return "<error>Preprocessor directive failed for \"" + originalDirective + "\": " + errorMsg + "</error>";
+    }
+    catch (Exception e)
+    {
+      String errorMsg = e.getMessage();
+      if (errorMsg == null)
+        errorMsg = e.getClass().getName();
       return "<error>Preprocessor directive failed for \"" + originalDirective + "\": " + errorMsg + "</error>";
     }
   }
