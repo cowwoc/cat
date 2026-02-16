@@ -4178,6 +4178,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Commit all changes in worktree before requesting user review or stopping work"
+    },
+    {
+      "id": "M506",
+      "timestamp": "2026-02-16T11:49:23Z",
+      "category": "protocol_violation",
+      "description": "Agent executed git worktree remove while shell cwd was inside target, breaking shell session",
+      "root_cause": "Agent violated documented protocol (.claude/rules/common.md line 191 references /cat:safe-rm) by not checking pwd before git worktree remove. Documentation existed but lacked enforcement mechanism (hook).",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/hooks/validate-safe-rm.py",
+      "pattern_keywords": [
+        "safe-rm",
+        "worktree-removal",
+        "cwd-validation",
+        "shell-breakage"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Check pwd before any rm -rf or git worktree remove. If cwd is inside target, cd to safe location first. See /cat:safe-rm skill."
     }
   ],
   "counter": 1
