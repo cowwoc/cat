@@ -707,6 +707,14 @@ The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 Do NOT skip the banner or continue without it.
 
+**Exit the worktree directory before spawning the merge subagent:**
+
+```bash
+# Move to /workspace before spawning merge subagent
+# Prevents parent shell corruption when the subagent removes the worktree
+cd /workspace
+```
+
 Spawn a merge subagent (haiku model - mechanical operations only):
 
 ```
