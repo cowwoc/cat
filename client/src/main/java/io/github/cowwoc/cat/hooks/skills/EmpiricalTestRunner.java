@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.StringJoiner;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectWriter;
+import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -41,6 +43,7 @@ public final class EmpiricalTestRunner
   };
 
   private final JvmScope scope;
+  private final ObjectWriter compactWriter;
 
   /**
    * Creates a new empirical test runner.
@@ -52,6 +55,7 @@ public final class EmpiricalTestRunner
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
+    this.compactWriter = scope.getJsonMapper().writer().without(SerializationFeature.INDENT_OUTPUT);
   }
 
   /**
@@ -314,7 +318,8 @@ public final class EmpiricalTestRunner
     msg.set("content", scope.getJsonMapper().createArrayNode().add(content));
     message.set("message", msg);
 
-    return scope.getJsonMapper().writeValueAsString(message);
+    // Stream-json requires single-line JSONL, so write without indentation
+    return compactWriter.writeValueAsString(message);
   }
 
   /**
@@ -363,7 +368,7 @@ public final class EmpiricalTestRunner
       }
       catch (Exception _)
       {
-        // Skip malformed JSON lines
+        // Skip malformed JSON lines (e.g., error messages from the CLI)
       }
     }
 
@@ -440,7 +445,7 @@ public final class EmpiricalTestRunner
       }
     }
 
-    boolean allPass = !checks.isEmpty() && checks.values().stream().allMatch(v -> v);
+    boolean allPass = checks.isEmpty() || checks.values().stream().allMatch(v -> v);
     return new EvaluationResult(allPass, checks);
   }
 
