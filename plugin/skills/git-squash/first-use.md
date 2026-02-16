@@ -170,25 +170,33 @@ $(for c in $COMMITS_TO_SQUASH; do echo "sed -i 's/^pick $c/squash $c/' \"\$1\"";
 EOF
 chmod +x /tmp/squash-editor.sh
 
-# 4. Create commit message editor script
-cat > /tmp/msg-editor.sh << 'EOF'
+# 4. Generate unified commit message from existing commits
+# Review all commit messages being squashed
+git log --oneline $FIRST_COMMIT^..HEAD
+# Example: abc1234 config: add handler registry
+#          def5678 config: fix null handling
+# Craft unified message that describes the complete change
+MESSAGE="config: add handler registry with null handling"
+
+# 5. Create commit message editor script
+cat > /tmp/msg-editor.sh << EOF
 #!/bin/bash
-cat > "$1" << 'MSG'
-<your unified commit message here>
+cat > "\$1" << 'MSG'
+$MESSAGE
 MSG
 EOF
 chmod +x /tmp/msg-editor.sh
 
-# 5. Run interactive rebase
+# 7. Run interactive rebase
 # NOTE: Use GIT_EDITOR (not EDITOR) - git uses GIT_EDITOR for commit messages during rebase
 # Use pinned base ref to ensure consistency
 BASE_COMMIT=$(git rev-parse $BASE^)  # Parent of base for rebase
 GIT_SEQUENCE_EDITOR=/tmp/squash-editor.sh GIT_EDITOR=/tmp/msg-editor.sh git rebase -i $BASE_COMMIT
 
-# 6. Verify no changes lost
+# 8. Verify no changes lost
 git diff "$BACKUP"  # Must be empty
 
-# 7. Cleanup
+# 9. Cleanup
 git branch -D "$BACKUP"
 rm /tmp/squash-editor.sh /tmp/msg-editor.sh
 ```
