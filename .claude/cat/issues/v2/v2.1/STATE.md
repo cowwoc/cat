@@ -18,8 +18,13 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-concepts-batch-5
 - compress-concepts-md
 - compress-md-files
+- unify-userpromptsubmit-hooks
+- unify-posttooluse-hooks
+- unify-project-hooks
 
 ## Issues Pending
+- unify-posttooluse-failure-hooks
+- cleanup-orphaned-hook-scripts
 - refactor-skill-output-to-preprocessor
 - restructure-pricing-tiers
 - unify-work-preparing-banner
@@ -106,13 +111,9 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-release-plugin-skill
 - add-build-hooks-skill
 - mavenize-java-hooks
-- unify-project-hooks
 - unify-stop-sessionend-hooks
-- unify-posttooluse-hooks
 - unify-pretooluse-hooks
-- unify-userpromptsubmit-hooks
 - unify-sessionstart-hooks
-- unify-hook-dispatchers
 - developer-local-bundle-rebuild
 - session-start-version-check
 - ci-build-jlink-bundle
