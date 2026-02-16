@@ -1,0 +1,16 @@
+# State: empirical-test-tool-use-priming
+
+- **Status:** open
+- **Progress:** 0%
+- **Dependencies:** []
+- **Blocks:** []
+- **Last Updated:** 2026-02-17
+
+## Acceptance Criteria
+
+| # | Criterion | Status |
+|---|-----------|--------|
+| 1 | String priming messages still work as user messages (backward compatible) | Pending |
+| 2 | Object priming messages with type: "tool_use" generate proper tool_use + assistant + tool_result sequences | Pending |
+| 3 | Test runner can simulate a conversation with completed Bash tool calls before the test prompt | Pending |
+| 4 | Skill documentation updated with structured priming examples | Pending |
