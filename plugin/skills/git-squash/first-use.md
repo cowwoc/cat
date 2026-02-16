@@ -29,7 +29,8 @@ directory entirely.
 
 ```bash
 # Read squash policy from PROJECT.md
-SQUASH_POLICY=$(grep -A10 "### Squash Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "Strategy:" | sed 's/.*Strategy:\s*//' | head -1)
+SQUASH_POLICY=$(grep -A10 "### Squash Policy" .claude/cat/PROJECT.md 2>/dev/null | grep "Strategy:" | \
+  sed 's/.*Strategy:\s*//' | head -1)
 
 if [[ "$SQUASH_POLICY" == *"keep all"* || "$SQUASH_POLICY" == *"Keep all"* || "$SQUASH_POLICY" == *"keep-all"* ]]; then
   echo "⚠️ PROJECT.md configured for 'Keep all commits'"
