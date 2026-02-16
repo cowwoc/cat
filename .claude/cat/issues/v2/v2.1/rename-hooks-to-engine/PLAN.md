@@ -67,7 +67,7 @@ git mv /workspace/hooks /workspace/engine
 **`/workspace/.claude/skills/cat-update-hooks/SKILL.md`:**
 - `mvn -f /workspace/hooks/pom.xml verify` → `mvn -f /workspace/engine/pom.xml verify`
 - `hooks/target/jlink` → `engine/target/jlink`
-- Consider renaming the skill itself to `cat-update-engine`
+- Consider renaming the skill itself to `cat-update-client`
 
 **`/workspace/.claude/rules/hooks.md`:**
 - Review for any references to the hooks directory (vs plugin hooks)
