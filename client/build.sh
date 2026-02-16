@@ -31,7 +31,7 @@ case "${1:-build}" in
     build)
         echo "Building CAT client JAR..."
         "$MVN" package -DskipTests -q
-        echo "Done: ${SCRIPT_DIR}/target/cat-hooks-2.1.jar"
+        echo "Done: ${SCRIPT_DIR}/target/cat-client-2.1.jar"
         ;;
     test)
         "$MVN" test

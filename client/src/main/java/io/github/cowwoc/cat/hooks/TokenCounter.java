@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * Counts tokens using the cl100k_base encoding (used by GPT-4 and Claude).
  * Outputs JSON with token counts per file.
  * <p>
- * Usage: java -cp cat-hooks-2.1.jar io.github.cowwoc.cat.hooks.TokenCounter file1.md file2.md
+ * Usage: java -cp cat-client-2.1.jar io.github.cowwoc.cat.hooks.TokenCounter file1.md file2.md
  * <p>
  * Output format:
  * <pre>

@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>io.github.cowwoc.cat.hooks</groupId>
-	<artifactId>cat-hooks</artifactId>
+	<groupId>io.github.cowwoc.cat</groupId>
+	<artifactId>cat-client</artifactId>
 	<version>2.1</version>
 	<packaging>jar</packaging>
 
-	<name>CAT Hooks</name>
-	<description>Java hooks for CAT plugin</description>
+	<name>CAT client</name>
+	<description>Client-side implementation of the CAT plugin</description>
 
 	<properties>
 		<maven.version>3.9.12</maven.version>
