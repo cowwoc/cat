@@ -71,8 +71,9 @@ Build the initial test configuration to reproduce the failure.
         "must_not_use_tools": []
     },
     "priming_messages": [
-        "Run `git branch --show-current`",
-        "Run `git log --oneline -3`"
+        "User message text",
+        {"type": "tool_use", "tool": "Bash", "input": {"command": "git branch --show-current"}, "output": "v2.1"},
+        {"type": "tool_use", "tool": "Bash", "input": {"command": "git log --oneline -3"}, "output": "abc123 feat"}
     ],
     "configs": {
         "A_baseline": "[The exact prompt/skill content that fails]"
@@ -80,14 +81,36 @@ Build the initial test configuration to reproduce the failure.
 }
 ```
 
-**Priming messages** simulate prior conversation context. Include tool-use turns if the failure happens after tool use.
-Omit them to test without prior context.
+**Priming messages** simulate prior conversation context. Each message can be:
+- **String** - Sent as a user message (backward compatible)
+- **Object with type "tool_use"** - Generates assistant tool_use + user tool_result messages
+
+Use tool_use priming to simulate scenarios where the failure occurs after tool execution (e.g., after running `git
+branch` or `/cat:status`). This is critical for reproducing failures that only occur in post-tool-use context.
 
 **Success criteria** define what constitutes a passing trial:
 - `must_contain`: Strings that must appear in agent output (case-insensitive)
 - `must_not_contain`: Strings that indicate failure
 - `must_use_tools`: Tools the agent must invoke
 - `must_not_use_tools`: Tools the agent must not invoke
+
+**Priming message examples:**
+
+```json
+"priming_messages": [
+  "User asked: What is the current branch?",
+  {"type": "tool_use", "tool": "Bash", "input": {"command": "git branch --show-current"}, "output": "main"},
+  {"type": "tool_use", "tool": "Read", "input": {"file_path": "/workspace/README.md"}, "output": "# Project\n..."}
+]
+```
+
+This generates the conversation:
+1. User message: "User asked: What is the current branch?"
+2. Assistant tool_use: Bash with command "git branch --show-current"
+3. User tool_result: "main"
+4. Assistant tool_use: Read with file_path "/workspace/README.md"
+5. User tool_result: "# Project\n..."
+6. User message: [test prompt]
 
 ## Step 3: Run Baseline and Confirm Failure
 
