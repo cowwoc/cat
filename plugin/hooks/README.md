@@ -67,7 +67,7 @@ compatibility, creates the jlink image, generates Leyden AOT caches, and writes 
 ./build-jlink.sh
 ```
 
-Output: `hooks/target/jlink/`
+Output: `client/target/jlink/`
 
 The `session-start.sh` hook copies the built image to `${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/` at session start.
 
@@ -220,7 +220,7 @@ Missing include files are silently skipped.
 The `session-start.sh` hook runs at each Claude Code session start:
 
 1. Checks if the jlink runtime exists at `${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/`
-2. If missing, copies from `hooks/target/jlink/` (local build)
+2. If missing, copies from `client/target/jlink/` (local build)
 3. Invokes session-start handlers for initialization tasks
 
 ## Troubleshooting
