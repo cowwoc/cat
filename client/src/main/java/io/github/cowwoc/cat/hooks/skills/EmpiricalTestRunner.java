@@ -165,7 +165,11 @@ public final class EmpiricalTestRunner
       if (result.pass())
         ++passes;
 
-      String status = result.pass() ? "PASS" : "FAIL";
+      String status;
+      if (result.pass())
+        status = "PASS";
+      else
+        status = "FAIL";
       String preview = "";
       if (!result.pass() && !result.outputPreview().isEmpty())
         preview = " [" + result.outputPreview().substring(0, Math.min(80, result.outputPreview().length())) + "]";
@@ -176,7 +180,11 @@ public final class EmpiricalTestRunner
       System.out.flush();
     }
 
-    int rate = trials > 0 ? Math.round(passes * 100.0f / trials) : 0;
+    int rate;
+    if (trials > 0)
+      rate = Math.round(passes * 100.0f / trials);
+    else
+      rate = 0;
     return new ConfigResult(name, trials, passes, rate, results);
   }
 
@@ -246,13 +254,17 @@ public final class EmpiricalTestRunner
       EvaluationResult evaluation = evaluateOutput(parsed.texts(), parsed.toolUses(), criteria);
 
       String preview = String.join("\n", parsed.texts());
-      String truncatedPreview = preview.length() > 300 ?
-        preview.substring(0, 300).replace("\n", "\\n") :
-        preview.replace("\n", "\\n");
+      String truncatedPreview;
+      if (preview.length() > 300)
+        truncatedPreview = preview.substring(0, 300).replace("\n", "\\n");
+      else
+        truncatedPreview = preview.replace("\n", "\\n");
 
-      List<String> toolsUsed = parsed.toolUses().size() > 5 ?
-        parsed.toolUses().subList(0, 5) :
-        parsed.toolUses();
+      List<String> toolsUsed;
+      if (parsed.toolUses().size() > 5)
+        toolsUsed = parsed.toolUses().subList(0, 5);
+      else
+        toolsUsed = parsed.toolUses();
 
       return new TrialResult(evaluation.pass(), evaluation.checks(), elapsed, truncatedPreview,
         toolsUsed, "");
@@ -380,7 +392,12 @@ public final class EmpiricalTestRunner
     {
       for (String term : mustContain)
       {
-        String key = "contains:" + (term.length() > 50 ? term.substring(0, 50) : term);
+        String truncatedTerm;
+        if (term.length() > 50)
+          truncatedTerm = term.substring(0, 50);
+        else
+          truncatedTerm = term;
+        String key = "contains:" + truncatedTerm;
         checks.put(key, lowerText.contains(term.toLowerCase(Locale.ROOT)));
       }
     }
@@ -391,7 +408,12 @@ public final class EmpiricalTestRunner
     {
       for (String term : mustNotContain)
       {
-        String key = "not_contains:" + (term.length() > 50 ? term.substring(0, 50) : term);
+        String truncatedTerm;
+        if (term.length() > 50)
+          truncatedTerm = term.substring(0, 50);
+        else
+          truncatedTerm = term;
+        String key = "not_contains:" + truncatedTerm;
         checks.put(key, !lowerText.contains(term.toLowerCase(Locale.ROOT)));
       }
     }
