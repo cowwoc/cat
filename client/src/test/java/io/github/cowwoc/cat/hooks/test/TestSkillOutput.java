@@ -40,6 +40,11 @@ public final class TestSkillOutput implements SkillOutput
    */
   public static void main(String[] args)
   {
-    System.out.print(args.length == 0 ? "NO_ARGS_OUTPUT" : "ARGS:" + String.join(",", args));
+    String output;
+    if (args.length == 0)
+      output = "NO_ARGS_OUTPUT";
+    else
+      output = "ARGS:" + String.join(",", args);
+    System.out.print(output);
   }
 }
