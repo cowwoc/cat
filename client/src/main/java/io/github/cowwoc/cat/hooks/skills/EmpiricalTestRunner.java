@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectWriter;
@@ -86,8 +88,8 @@ public final class EmpiricalTestRunner
     Map<String, Object> criteria = (Map<String, Object>) config.getOrDefault("success_criteria",
       new HashMap<>());
     @SuppressWarnings("unchecked")
-    List<String> primingMessages = (List<String>) config.getOrDefault("priming_messages",
-      new ArrayList<>());
+    List<PrimingMessage> primingMessages = PrimingMessage.fromRawList(
+      (List<Object>) config.getOrDefault("priming_messages", new ArrayList<>()));
     @SuppressWarnings("unchecked")
     Map<String, String> configs = (Map<String, String>) config.getOrDefault("configs",
       new HashMap<>());
@@ -145,6 +147,20 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Calculates the pass rate as a percentage.
+   *
+   * @param passes the number of passing trials
+   * @param trials the total number of trials
+   * @return the pass rate as a percentage (0-100)
+   */
+  public static int calculateRate(int passes, int trials)
+  {
+    if (trials <= 0)
+      return 0;
+    return Math.round(passes * 100.0f / trials);
+  }
+
+  /**
    * Runs all trials for a single configuration.
    *
    * @param name the configuration name
@@ -156,7 +172,7 @@ public final class EmpiricalTestRunner
    * @param cwd the working directory
    * @return the configuration result
    */
-  private ConfigResult runConfig(String name, String prompt, List<String> primingMessages,
+  private ConfigResult runConfig(String name, String prompt, List<PrimingMessage> primingMessages,
     Map<String, Object> criteria, int trials, String model, Path cwd)
   {
     List<TrialResult> results = new ArrayList<>();
@@ -176,7 +192,7 @@ public final class EmpiricalTestRunner
         status = "FAIL";
       String preview = "";
       if (!result.pass() && !result.outputPreview().isEmpty())
-        preview = " [" + result.outputPreview().substring(0, Math.min(80, result.outputPreview().length())) + "]";
+        preview = " [" + truncatePreview(result.outputPreview(), 80) + "]";
       else if (result.error() != null && !result.error().isEmpty())
         preview = " [ERROR: " + result.error() + "]";
 
@@ -184,42 +200,34 @@ public final class EmpiricalTestRunner
       System.out.flush();
     }
 
-    int rate;
-    if (trials > 0)
-      rate = Math.round(passes * 100.0f / trials);
-    else
-      rate = 0;
+    int rate = calculateRate(passes, trials);
     return new ConfigResult(name, trials, passes, rate, results);
   }
 
   /**
-   * Runs a single trial and evaluates the result.
+   * Truncates a string to the specified maximum length.
    *
-   * @param primingMessages list of priming messages
-   * @param testPrompt the test prompt
-   * @param criteria the success criteria
-   * @param model the model name
-   * @param cwd the working directory
-   * @return the trial result
+   * @param text the text to truncate
+   * @param maxLength the maximum length
+   * @return the truncated text
    */
-  private TrialResult runTrial(List<String> primingMessages, String testPrompt,
-    Map<String, Object> criteria, String model, Path cwd)
+  private static String truncatePreview(String text, int maxLength)
   {
-    List<String> command = new ArrayList<>();
-    command.add("claude");
-    command.add("-p");
-    command.add("--model");
-    command.add(model);
-    command.add("--input-format");
-    command.add("stream-json");
-    command.add("--output-format");
-    command.add("stream-json");
-    command.add("--verbose");
-    command.add("--no-session-persistence");
-    command.add("--dangerously-skip-permissions");
+    if (text.length() > maxLength)
+      return text.substring(0, maxLength);
+    return text;
+  }
 
-    String input = buildInput(primingMessages, testPrompt);
-
+  /**
+   * Executes the claude CLI process with the given input.
+   *
+   * @param command the command to execute
+   * @param input the input to send to the process
+   * @param cwd the working directory
+   * @return the process result with output, elapsed time, and error
+   */
+  private ProcessResult executeClaudeProcess(List<String> command, String input, Path cwd)
+  {
     long startTime = System.currentTimeMillis();
     try
     {
@@ -245,40 +253,72 @@ public final class EmpiricalTestRunner
         }
       }
 
-      boolean completed = process.waitFor(DEFAULT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
+      boolean completed = process.waitFor(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
       long elapsed = (System.currentTimeMillis() - startTime) / 1000;
 
       if (!completed)
       {
         process.destroyForcibly();
-        return new TrialResult(false, new HashMap<>(), elapsed, "", new ArrayList<>(), "timeout");
+        return new ProcessResult("", elapsed, "timeout");
       }
 
-      ParsedOutput parsed = parseOutput(output.toString());
-      EvaluationResult evaluation = evaluateOutput(parsed.texts(), parsed.toolUses(), criteria);
-
-      String preview = String.join("\n", parsed.texts());
-      String truncatedPreview;
-      if (preview.length() > 300)
-        truncatedPreview = preview.substring(0, 300).replace("\n", "\\n");
-      else
-        truncatedPreview = preview.replace("\n", "\\n");
-
-      List<String> toolsUsed;
-      if (parsed.toolUses().size() > 5)
-        toolsUsed = parsed.toolUses().subList(0, 5);
-      else
-        toolsUsed = parsed.toolUses();
-
-      return new TrialResult(evaluation.pass(), evaluation.checks(), elapsed, truncatedPreview,
-        toolsUsed, "");
+      return new ProcessResult(output.toString(), elapsed, "");
     }
     catch (IOException | InterruptedException e)
     {
       long elapsed = (System.currentTimeMillis() - startTime) / 1000;
-      return new TrialResult(false, new HashMap<>(), elapsed, "", new ArrayList<>(),
-        e.getMessage());
+      return new ProcessResult("", elapsed, e.getMessage());
     }
+  }
+
+  /**
+   * Runs a single trial and evaluates the result.
+   *
+   * @param primingMessages list of priming messages
+   * @param testPrompt the test prompt
+   * @param criteria the success criteria
+   * @param model the model name
+   * @param cwd the working directory
+   * @return the trial result
+   */
+  private TrialResult runTrial(List<PrimingMessage> primingMessages, String testPrompt,
+    Map<String, Object> criteria, String model, Path cwd)
+  {
+    List<String> command = new ArrayList<>();
+    command.add("claude");
+    command.add("-p");
+    command.add("--model");
+    command.add(model);
+    command.add("--input-format");
+    command.add("stream-json");
+    command.add("--output-format");
+    command.add("stream-json");
+    command.add("--verbose");
+    command.add("--no-session-persistence");
+    command.add("--dangerously-skip-permissions");
+
+    String input = buildInput(primingMessages, testPrompt);
+
+    ProcessResult processResult = executeClaudeProcess(command, input, cwd);
+
+    if (!processResult.error().isEmpty())
+      return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
+        new ArrayList<>(), processResult.error());
+
+    ParsedOutput parsed = parseOutput(processResult.output());
+    EvaluationResult evaluation = evaluateOutput(parsed.texts(), parsed.toolUses(), criteria);
+
+    String preview = String.join("\n", parsed.texts());
+    String truncatedPreview = truncatePreview(preview, 300).replace("\n", "\\n");
+
+    List<String> toolsUsed;
+    if (parsed.toolUses().size() > 5)
+      toolsUsed = parsed.toolUses().subList(0, 5);
+    else
+      toolsUsed = parsed.toolUses();
+
+    return new TrialResult(evaluation.pass(), evaluation.checks(), processResult.elapsed(),
+      truncatedPreview, toolsUsed, "");
   }
 
   /**
@@ -287,14 +327,52 @@ public final class EmpiricalTestRunner
    * @param primingMessages the priming messages
    * @param testPrompt the test prompt
    * @return the stream-json input string
+   * @throws NullPointerException if {@code primingMessages} or {@code testPrompt} are null
    */
-  private String buildInput(List<String> primingMessages, String testPrompt)
+  public String buildInput(List<PrimingMessage> primingMessages, String testPrompt)
   {
+    requireThat(primingMessages, "primingMessages").isNotNull();
+    requireThat(testPrompt, "testPrompt").isNotNull();
     StringJoiner joiner = new StringJoiner("\n");
-    for (String msg : primingMessages)
-      joiner.add(makeUserMessage(msg));
+    int toolUseCounter = 0;
+    for (PrimingMessage msg : primingMessages)
+    {
+      switch (msg)
+      {
+        case PrimingMessage.UserMessage userMsg ->
+          joiner.add(makeUserMessage(userMsg.text()));
+        case PrimingMessage.ToolUse toolUse ->
+        {
+          String toolUseId = "toolu_priming_" + toolUseCounter;
+          ++toolUseCounter;
+          joiner.add(makeToolUseMessage(toolUseId, toolUse.tool(), toolUse.input()));
+          joiner.add(makeToolResultMessage(toolUseId, toolUse.output()));
+        }
+      }
+    }
     joiner.add(makeUserMessage(testPrompt));
     return joiner.toString();
+  }
+
+  /**
+   * Creates a stream-json message with the common envelope structure.
+   *
+   * @param envelopeType the type field for the outer envelope ("user" or "assistant")
+   * @param role the role field for the inner message ("user" or "assistant")
+   * @param contentBlock the content block to include in the message
+   * @return the compact JSON string
+   */
+  private String buildMessage(String envelopeType, String role, ObjectNode contentBlock)
+  {
+    ObjectNode message = scope.getJsonMapper().createObjectNode();
+    message.put("type", envelopeType);
+
+    ObjectNode msg = scope.getJsonMapper().createObjectNode();
+    msg.put("role", role);
+    msg.set("content", scope.getJsonMapper().createArrayNode().add(contentBlock));
+    message.set("message", msg);
+
+    return compactWriter.writeValueAsString(message);
   }
 
   /**
@@ -305,21 +383,45 @@ public final class EmpiricalTestRunner
    */
   private String makeUserMessage(String text)
   {
-    ObjectNode message = scope.getJsonMapper().createObjectNode();
-    message.put("type", "user");
-
-    ObjectNode msg = scope.getJsonMapper().createObjectNode();
-    msg.put("role", "user");
-
     ObjectNode content = scope.getJsonMapper().createObjectNode();
     content.put("type", "text");
     content.put("text", text);
+    return buildMessage("user", "user", content);
+  }
 
-    msg.set("content", scope.getJsonMapper().createArrayNode().add(content));
-    message.set("message", msg);
+  /**
+   * Creates a stream-json assistant message with tool_use.
+   *
+   * @param toolUseId the unique ID for the tool use
+   * @param toolName the name of the tool
+   * @param toolInput the tool input as a map
+   * @return the JSON message string
+   */
+  private String makeToolUseMessage(String toolUseId, String toolName,
+    Map<String, Object> toolInput)
+  {
+    ObjectNode content = scope.getJsonMapper().createObjectNode();
+    content.put("type", "tool_use");
+    content.put("id", toolUseId);
+    content.put("name", toolName);
+    content.set("input", scope.getJsonMapper().valueToTree(toolInput));
+    return buildMessage("assistant", "assistant", content);
+  }
 
-    // Stream-json requires single-line JSONL, so write without indentation
-    return compactWriter.writeValueAsString(message);
+  /**
+   * Creates a stream-json user message with tool_result.
+   *
+   * @param toolUseId the ID from the tool_use message
+   * @param toolOutput the tool output content
+   * @return the JSON message string
+   */
+  private String makeToolResultMessage(String toolUseId, String toolOutput)
+  {
+    ObjectNode content = scope.getJsonMapper().createObjectNode();
+    content.put("type", "tool_result");
+    content.put("tool_use_id", toolUseId);
+    content.put("content", toolOutput);
+    return buildMessage("user", "user", content);
   }
 
   /**
@@ -327,9 +429,11 @@ public final class EmpiricalTestRunner
    *
    * @param output the raw output from claude CLI
    * @return the parsed output
+   * @throws NullPointerException if {@code output} is null
    */
-  private ParsedOutput parseOutput(String output)
+  public ParsedOutput parseOutput(String output)
   {
+    requireThat(output, "output").isNotNull();
     List<String> texts = new ArrayList<>();
     List<String> toolUses = new ArrayList<>();
 
@@ -376,16 +480,44 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Evaluates criteria by checking whether items are present or absent in a searchable collection,
+   * and adds results to the checks map.
+   *
+   * @param items the list of items to check
+   * @param keyPrefix the prefix for check keys (e.g., "contains" or "uses_tool")
+   * @param expectPresent true if items should be present, false if they should be absent
+   * @param isPresent a predicate that tests whether an item is found
+   * @param checks the map to add check results to
+   */
+  private static void evaluateCriteria(List<String> items, String keyPrefix,
+    boolean expectPresent, Predicate<String> isPresent, Map<String, Boolean> checks)
+  {
+    for (String item : items)
+    {
+      String key = keyPrefix + ":" + item;
+      boolean found = isPresent.test(item);
+      if (expectPresent)
+        checks.put(key, found);
+      else
+        checks.put(key, !found);
+    }
+  }
+
+  /**
    * Evaluates output against success criteria.
    *
    * @param texts the text outputs
    * @param toolUses the tool uses
    * @param criteria the success criteria map
    * @return the evaluation result
+   * @throws NullPointerException if {@code texts}, {@code toolUses}, or {@code criteria} are null
    */
-  private EvaluationResult evaluateOutput(List<String> texts, List<String> toolUses,
+  public EvaluationResult evaluateOutput(List<String> texts, List<String> toolUses,
     Map<String, Object> criteria)
   {
+    requireThat(texts, "texts").isNotNull();
+    requireThat(toolUses, "toolUses").isNotNull();
+    requireThat(criteria, "criteria").isNotNull();
     String fullText = String.join("\n", texts);
     String lowerText = fullText.toLowerCase(Locale.ROOT);
 
@@ -394,56 +526,24 @@ public final class EmpiricalTestRunner
     @SuppressWarnings("unchecked")
     List<String> mustContain = (List<String>) criteria.get("must_contain");
     if (mustContain != null)
-    {
-      for (String term : mustContain)
-      {
-        String truncatedTerm;
-        if (term.length() > 50)
-          truncatedTerm = term.substring(0, 50);
-        else
-          truncatedTerm = term;
-        String key = "contains:" + truncatedTerm;
-        checks.put(key, lowerText.contains(term.toLowerCase(Locale.ROOT)));
-      }
-    }
+      evaluateCriteria(mustContain, "contains", true,
+        term -> lowerText.contains(term.toLowerCase(Locale.ROOT)), checks);
 
     @SuppressWarnings("unchecked")
     List<String> mustNotContain = (List<String>) criteria.get("must_not_contain");
     if (mustNotContain != null)
-    {
-      for (String term : mustNotContain)
-      {
-        String truncatedTerm;
-        if (term.length() > 50)
-          truncatedTerm = term.substring(0, 50);
-        else
-          truncatedTerm = term;
-        String key = "not_contains:" + truncatedTerm;
-        checks.put(key, !lowerText.contains(term.toLowerCase(Locale.ROOT)));
-      }
-    }
+      evaluateCriteria(mustNotContain, "not_contains", false,
+        term -> lowerText.contains(term.toLowerCase(Locale.ROOT)), checks);
 
     @SuppressWarnings("unchecked")
     List<String> mustUseTools = (List<String>) criteria.get("must_use_tools");
     if (mustUseTools != null)
-    {
-      for (String tool : mustUseTools)
-      {
-        String key = "uses_tool:" + tool;
-        checks.put(key, toolUses.contains(tool));
-      }
-    }
+      evaluateCriteria(mustUseTools, "uses_tool", true, toolUses::contains, checks);
 
     @SuppressWarnings("unchecked")
     List<String> mustNotUseTools = (List<String>) criteria.get("must_not_use_tools");
     if (mustNotUseTools != null)
-    {
-      for (String tool : mustNotUseTools)
-      {
-        String key = "not_uses_tool:" + tool;
-        checks.put(key, !toolUses.contains(tool));
-      }
-    }
+      evaluateCriteria(mustNotUseTools, "not_uses_tool", false, toolUses::contains, checks);
 
     boolean allPass = checks.isEmpty() || checks.values().stream().allMatch(v -> v);
     return new EvaluationResult(allPass, checks);
@@ -511,30 +611,39 @@ public final class EmpiricalTestRunner
 
     for (int i = 0; i < args.length; ++i)
     {
-      if (args[i].equals("--config") && i + 1 < args.length)
+      if (i + 1 >= args.length)
+        continue;
+      switch (args[i])
       {
-        configPath = Path.of(args[i + 1]);
-        ++i;
-      }
-      else if (args[i].equals("--trials") && i + 1 < args.length)
-      {
-        trials = Integer.parseInt(args[i + 1]);
-        ++i;
-      }
-      else if (args[i].equals("--model") && i + 1 < args.length)
-      {
-        model = args[i + 1];
-        ++i;
-      }
-      else if (args[i].equals("--cwd") && i + 1 < args.length)
-      {
-        cwd = Path.of(args[i + 1]);
-        ++i;
-      }
-      else if (args[i].equals("--output") && i + 1 < args.length)
-      {
-        outputPath = Path.of(args[i + 1]);
-        ++i;
+        case "--config" ->
+        {
+          configPath = Path.of(args[i + 1]);
+          ++i;
+        }
+        case "--trials" ->
+        {
+          trials = Integer.parseInt(args[i + 1]);
+          ++i;
+        }
+        case "--model" ->
+        {
+          model = args[i + 1];
+          ++i;
+        }
+        case "--cwd" ->
+        {
+          cwd = Path.of(args[i + 1]);
+          ++i;
+        }
+        case "--output" ->
+        {
+          outputPath = Path.of(args[i + 1]);
+          ++i;
+        }
+        default ->
+        {
+          // Ignore unknown arguments
+        }
       }
     }
 
@@ -553,12 +662,23 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Result of executing the claude CLI process.
+   *
+   * @param output the process output
+   * @param elapsed the elapsed time in seconds
+   * @param error the error message, or empty string if none
+   */
+  private record ProcessResult(String output, long elapsed, String error)
+  {
+  }
+
+  /**
    * Parsed output containing text blocks and tool uses.
    *
    * @param texts the list of text outputs
    * @param toolUses the list of tool use names
    */
-  private record ParsedOutput(List<String> texts, List<String> toolUses)
+  public record ParsedOutput(List<String> texts, List<String> toolUses)
   {
   }
 
@@ -568,7 +688,7 @@ public final class EmpiricalTestRunner
    * @param pass whether all checks passed
    * @param checks the map of check name to result
    */
-  private record EvaluationResult(boolean pass, Map<String, Boolean> checks)
+  public record EvaluationResult(boolean pass, Map<String, Boolean> checks)
   {
   }
 
