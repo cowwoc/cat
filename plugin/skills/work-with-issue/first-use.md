@@ -660,7 +660,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        }
        ```
    ```
-3. Re-run stakeholder review:
+3. **MANDATORY: Re-run stakeholder review after fixes:**
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
@@ -672,6 +672,10 @@ Fail-fast principle: Unknown consent = No consent = STOP.
          "commits": ${all_commits_json}
        }
    ```
+   **The review MUST be re-run to:**
+   - Verify the concerns were actually resolved
+   - Detect new concerns introduced by the fixes
+   - Provide updated results to the user at the approval gate
 4. Return to Step 7 approval gate with updated results
 
 **If changes requested:** Return to user with feedback for iteration. Return status:

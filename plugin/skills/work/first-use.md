@@ -17,10 +17,13 @@ its own context, keeping main agent context minimal (~5-10K tokens).
 | Empty | `/cat:work` | Work on next available task |
 | Version | `/cat:work 2.1` | Work on tasks in version 2.1 |
 | Task ID | `/cat:work 2.1-migrate-api` | Work on specific task |
+| Bare name | `/cat:work migrate-api` | Work on specific task by name only (resolves to current branch version) |
 | Filter | `/cat:work skip compression` | Filter task selection (natural language) |
 
 **Flags:**
 - `--override-gate` - Skip approval gate (use with caution)
+
+**Bare name format:** Issue name without version prefix, starting with a letter (e.g., `fix-work-prepare-issue-name-matching`). If multiple versions contain the same issue name, prefers the version matching the current git branch. Falls back to first match if no branch version match exists.
 
 **Filter examples:**
 - `skip compression tasks` - exclude tasks with "compression" in name
@@ -70,12 +73,23 @@ EXCLUDE_ARG=""
 # Suffix allows letters, numbers, dashes, underscores
 if [[ "${ARGUMENTS}" =~ ^[0-9]+\.[0-9]+(-[a-zA-Z0-9_-]+)?$ ]]; then
   ISSUE_ID_ARG="--issue-id ${ARGUMENTS}"
+# Bare issue name format: starts with a letter (e.g., fix-work-prepare-issue-name-matching)
+elif [[ "${ARGUMENTS}" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+  ISSUE_ID_ARG="--issue-id ${ARGUMENTS}"
 # Otherwise check for filter patterns like "skip compression" or "only migration"
 elif [[ -n "${ARGUMENTS}" ]]; then
-  # "skip X" → --exclude-pattern "X*" or "*X*"
-  # "only X" → filter result in memory after script returns (script doesn't support inclusion patterns)
-  # Example: if ARGUMENTS="skip compression", then EXCLUDE_ARG="--exclude-pattern compress*"
-  :  # Set EXCLUDE_ARG based on filter parsing (existing behavior)
+  # H1: Check if ARGUMENTS matches filter patterns (skip/only)
+  if [[ "${ARGUMENTS}" =~ ^(skip|only) ]]; then
+    # "skip X" → --exclude-pattern "X*" or "*X*"
+    # "only X" → filter result in memory after script returns (script doesn't support inclusion patterns)
+    # Example: if ARGUMENTS="skip compression", then EXCLUDE_ARG="--exclude-pattern compress*"
+    :  # Set EXCLUDE_ARG based on filter parsing (existing behavior)
+  else
+    # Unrecognized argument format - warn user but proceed (filter parsing may handle it)
+    echo "WARNING: Unrecognized argument format: '${ARGUMENTS}'" >&2
+    echo "Expected: version (2.1), task ID (2.1-issue-name), bare name (issue-name), or filter (skip X / only X)" >&2
+    echo "Proceeding with filter parsing..." >&2
+  fi
 fi
 ```
 
