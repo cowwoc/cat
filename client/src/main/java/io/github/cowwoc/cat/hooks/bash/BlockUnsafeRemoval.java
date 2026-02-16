@@ -205,6 +205,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    *
    * @param command the bash command
    * @param workingDirectory the shell's current working directory
+   * @param sessionId the current session ID
    * @return a block result if unsafe removal detected, null otherwise
    * @throws IOException if path operations fail
    */
@@ -227,6 +228,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    *
    * @param command the bash command
    * @param workingDirectory the shell's current working directory
+   * @param sessionId the current session ID
    * @return a block result if unsafe removal detected, null otherwise
    * @throws IOException if path operations fail
    */
@@ -254,6 +256,7 @@ public final class BlockUnsafeRemoval implements BashHandler
    *
    * @param target the deletion target path
    * @param workingDirectory the shell's current working directory
+   * @param sessionId the current session ID
    * @param commandType the command type for error messages
    * @return a block result if protected paths would be affected, null otherwise
    * @throws IOException if path operations fail
