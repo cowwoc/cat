@@ -5,15 +5,19 @@ See LICENSE.md in the project root for license terms.
 -->
 # Skill: verify-implementation
 
-Post-execution verification that systematically checks all planned changes from PLAN.md were actually implemented in the codebase.
+Post-execution verification that systematically checks all planned changes from PLAN.md were actually implemented in
+the codebase.
 
 ## Purpose
 
-Verify that the implementation matches what was planned in the issue's PLAN.md file. This is a read-only audit that reports findings without making changes. The skill is invoked automatically by `/cat:work` between the execute and review phases.
+Verify that the implementation matches what was planned in the issue's PLAN.md file. This is a read-only audit that
+reports findings without making changes. The skill is invoked automatically by `/cat:work` between the execute and
+review phases.
 
 ## When to Use
 
-- Invoked by `/cat:work` between execute and review phases to verify PLAN.md acceptance criteria before stakeholder quality review
+- Invoked by `/cat:work` between execute and review phases to verify PLAN.md acceptance criteria before stakeholder
+  quality review
 
 ## Arguments Format
 
@@ -52,7 +56,8 @@ Parse JSON arguments provided by `/cat:work` to extract issue context.
 # Parse JSON arguments from /cat:work
 ISSUE_ID=$(echo "${ARGUMENTS}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('issue_id', ''))")
 ISSUE_PATH=$(echo "${ARGUMENTS}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('issue_path', ''))")
-WORKTREE_PATH=$(echo "${ARGUMENTS}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('worktree_path', ''))")
+WORKTREE_PATH=$(echo "${ARGUMENTS}" | \
+  python3 -c "import sys, json; print(json.load(sys.stdin).get('worktree_path', ''))")
 
 if [[ -z "$ISSUE_ID" ]] || [[ -z "$ISSUE_PATH" ]]; then
   echo "FAIL: Missing required JSON arguments (issue_id, issue_path)"
@@ -88,9 +93,12 @@ fi
 PARSED=$("$HOOKS_BIN/verify-audit" parse "${ISSUE_PATH}/PLAN.md")
 
 # Extract data from JSON output
-CRITERIA=$(echo "$PARSED" | python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['criteria']))")
-FILE_SPECS_MODIFY=$(echo "$PARSED" | python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['file_specs']['modify']))")
-FILE_SPECS_DELETE=$(echo "$PARSED" | python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['file_specs']['delete']))")
+CRITERIA=$(echo "$PARSED" | \
+  python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['criteria']))")
+FILE_SPECS_MODIFY=$(echo "$PARSED" | \
+  python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['file_specs']['modify']))")
+FILE_SPECS_DELETE=$(echo "$PARSED" | \
+  python3 -c "import sys, json; data = json.load(sys.stdin); print('\n'.join(data['file_specs']['delete']))")
 GROUPS=$(echo "$PARSED" | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)['groups']))")
 
 CRITERIA_COUNT=$(echo "$CRITERIA" | grep -c . || echo 0)
@@ -103,7 +111,8 @@ echo "◆ Found ${CRITERIA_COUNT} acceptance criteria and ${TOTAL_FILES} file sp
 
 The Java tool extracts:
 1. **Acceptance Criteria**: Lines under `## Acceptance Criteria` section that start with `- [ ]` or `- [x]`
-2. **File Specifications**: Files listed under `## Files to Modify`, `## Files to Delete`, and mentioned in `## Execution Steps`
+2. **File Specifications**: Files listed under `## Files to Modify`, `## Files to Delete`, and mentioned in
+   `## Execution Steps`
 3. **Grouped Criteria**: Criteria grouped by their file dependencies to optimize verification
 
 </step>
@@ -112,7 +121,8 @@ The Java tool extracts:
 
 **Spawn verification subagents with optimized grouping:**
 
-The Java tool has already grouped acceptance criteria by their file dependencies. Spawn one subagent per group to minimize redundant file reads.
+The Java tool has already grouped acceptance criteria by their file dependencies. Spawn one subagent per group to
+minimize redundant file reads.
 
 ```bash
 # Iterate through groups and spawn subagents
@@ -168,7 +178,8 @@ For each criterion, provide:
 2. Evidence: File paths, line numbers, command outputs
 3. Notes: Any discrepancies or concerns
 
-If a criterion cannot be definitively verified, set status to Missing with an explanation of why verification was not possible. Do not guess or assume.
+If a criterion cannot be definitively verified, set status to Missing with an explanation of why verification was not
+possible. Do not guess or assume.
 
 ## File Context
 These files were specified in PLAN.md:
@@ -214,7 +225,8 @@ After the bash skill outputs the group prompts above, **immediately spawn verifi
 
 2. Store all returned task IDs for result collection in the next step.
 
-3. Spawn all subagents in parallel (multiple Task tool calls in a single message). They will run concurrently and return results together.
+3. Spawn all subagents in parallel (multiple Task tool calls in a single message). They will run concurrently and
+   return results together.
 
 Each subagent verifies all criteria in its group against the same file context, avoiding redundant reads.
 
@@ -284,7 +296,8 @@ Each subagent returns a JSON array of criterion objects (even for single-criteri
 ]
 ```
 
-Aggregate all criterion results into a single `criteria_results` array, then combine with file verification results and generate the report using the Java CLI tool.
+Aggregate all criterion results into a single `criteria_results` array, then combine with file verification results
+and generate the report using the Java CLI tool.
 
 ```bash
 # Prepare aggregated results JSON (criteria + file verification)
@@ -347,11 +360,16 @@ echo "$REPORT"
 
 **Read-only operation:** This skill never modifies files. It only reads and reports.
 
-**Subagent usage:** Verification subagents use Read, Glob, Grep, and Bash tools to investigate the codebase. Their internal tool calls are invisible to the user.
+**Subagent usage:** Verification subagents use Read, Glob, Grep, and Bash tools to investigate the codebase. Their
+internal tool calls are invisible to the user.
 
-**Performance optimization:** Criteria are grouped by file dependencies before spawning subagents. When multiple criteria reference the same files, a single subagent verifies all of them together, reading each file only once. This reduces token usage from ~187K to ~30-40K for typical single-file issues. Criteria referencing different files are still verified in parallel.
+**Performance optimization:** Criteria are grouped by file dependencies before spawning subagents. When multiple
+criteria reference the same files, a single subagent verifies all of them together, reading each file only once. This
+reduces token usage from ~187K to ~30-40K for typical single-file issues. Criteria referencing different files are
+still verified in parallel.
 
-**No auto-fix:** This skill reports findings only. If issues are found, the user must decide whether to re-run implementation or accept the current state.
+**No auto-fix:** This skill reports findings only. If issues are found, the user must decide whether to re-run
+implementation or accept the current state.
 
 ## Related Skills
 
@@ -360,9 +378,12 @@ echo "$REPORT"
 
 ## Limitations
 
-- **Heuristic-based verification:** Automated checks parse PLAN.md structure and verify file operations, but cannot replace human review for semantic correctness.
-- **Parse-dependent:** Only verifies what can be parsed from PLAN.md. If acceptance criteria or file specifications are not explicitly documented, they will not be verified.
-- **No semantic understanding:** Verifies that code exists and was modified, but cannot judge whether implementation correctly satisfies the intent behind acceptance criteria.
+- **Heuristic-based verification:** Automated checks parse PLAN.md structure and verify file operations, but cannot
+  replace human review for semantic correctness.
+- **Parse-dependent:** Only verifies what can be parsed from PLAN.md. If acceptance criteria or file specifications
+  are not explicitly documented, they will not be verified.
+- **No semantic understanding:** Verifies that code exists and was modified, but cannot judge whether implementation
+  correctly satisfies the intent behind acceptance criteria.
 - **Limited to documented plans:** Cannot verify undocumented requirements or implicit expectations.
 
 ## Example Usage
