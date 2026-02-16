@@ -24,7 +24,7 @@ Determine which issue is currently being worked on by checking for worktree cont
 3. If not in a worktree, look for `.git/cat-base` to identify the current issue
 4. Read the PLAN.md file
 
-**FAIL-FAST:** If you cannot locate PLAN.md, output:
+**Error handling:** If you cannot locate PLAN.md, output:
 ```
 ERROR: Cannot locate PLAN.md for current issue.
 You may not be in an active worktree or the issue structure is invalid.

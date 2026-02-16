@@ -17,8 +17,6 @@ Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADM
 </objective>
 
 
-**FAIL-FAST:** If you do NOT see "SKILL OUTPUT INIT BOXES" above, preprocessing FAILED. STOP.
-Do NOT manually construct output or invoke scripts.
 
 <process>
 

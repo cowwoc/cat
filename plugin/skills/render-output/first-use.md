@@ -7,6 +7,6 @@ See LICENSE.md in the project root for license terms.
 
 Display preprocessed output verbatim.
 
-The user wants you to respond with this text verbatim:
+Echo the following text exactly as it appears, with no changes:
 
 $ARGUMENTS

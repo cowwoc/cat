@@ -148,7 +148,9 @@ Session tracking uses a temp file (`/tmp/cat-skills-loaded-{session-id}`) to rec
 
 ### Variable Bindings
 
-Skills can define custom variables in `bindings.json` that map to `SkillOutput` classes. When a variable is referenced in content (e.g., `${CAT_SKILL_OUTPUT}`), the class is instantiated and invoked to generate the substitution value.
+Skills can define custom variables in `bindings.json` that map to `SkillOutput` classes. When a variable is
+referenced in content (e.g., `${CAT_SKILL_OUTPUT}`), the class is instantiated and invoked to generate the
+substitution value.
 
 **bindings.json format:**
 ```json

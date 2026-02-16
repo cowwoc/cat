@@ -44,9 +44,6 @@ The handler precomputes:
 1. Output the error message
 2. STOP - cannot proceed
 
-**FAIL-FAST:** If you do NOT see "SKILL OUTPUT STATUS DISPLAY" above, preprocessing FAILED. STOP.
-Do NOT manually gather data - the handler provides all necessary analysis.
-
 ## Trigger Conditions
 
 Retrospective is triggered when EITHER condition is met:
@@ -161,7 +158,8 @@ if [ ! -f "$RETRO_SPLIT_FILE" ]; then
   echo "{\"period\":\"$YEAR_MONTH\",\"retrospectives\":[]}" > "$RETRO_SPLIT_FILE"
   # Add to index
   jq --arg f "retrospectives-${YEAR_MONTH}.json" \
-    'if (.files.retrospectives | index($f)) then . else .files.retrospectives += [$f] | .files.retrospectives |= sort end' \
+    'if (.files.retrospectives | index($f)) then . else .files.retrospectives += [$f] | \
+      .files.retrospectives |= sort end' \
     "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
 fi
 
