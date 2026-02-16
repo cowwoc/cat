@@ -156,7 +156,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, \"session_id\": \"test-session\"}");
+        "{\"tool_name\": \"Bash\", \"tool_input\": {\"command\": \"ls -la\"}, " +
+          "\"session_id\": \"test-session\", \"cwd\": \"/workspace\"}");
       HookOutput output = new HookOutput(scope);
 
       io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);

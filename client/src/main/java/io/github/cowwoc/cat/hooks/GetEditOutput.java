@@ -20,7 +20,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-edit-pretool-output - Unified PreToolUse hook for Edit operations.
+ * Unified PreToolUse hook for Edit operations.
  * <p>
  * TRIGGER: PreToolUse (matcher: Edit)
  * <p>

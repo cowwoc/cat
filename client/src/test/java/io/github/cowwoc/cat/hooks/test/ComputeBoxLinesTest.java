@@ -37,7 +37,7 @@ public class ComputeBoxLinesTest
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
-      BashHandler.Result result = handler.check("echo hello", null, null, "session1");
+      BashHandler.Result result = handler.check("echo hello", "", null, null, "session1");
       requireThat(result.blocked(), "blocked").isFalse();
     }
     finally
@@ -59,7 +59,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nHello World";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -96,7 +96,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nLine 1\nLine 2\nLine 3";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -131,7 +131,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\n📊 Overall: 91%\n🏆 112/122 tasks";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -170,7 +170,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -195,7 +195,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nShort\nMedium length\nVery long content line here";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -239,7 +239,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nTest content";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String additionalContext = result.additionalContext();
@@ -265,7 +265,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "   #BOX_COMPUTE\nContent";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -288,7 +288,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "echo 'test'\n#BOX_COMPUTE\nContent";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -311,7 +311,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nX";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -343,7 +343,7 @@ public class ComputeBoxLinesTest
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String longContent = "A".repeat(100);
       String command = "#BOX_COMPUTE\n" + longContent;
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -385,7 +385,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\n─── Header\n│ Column │";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -410,7 +410,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nStatus: ✅ Complete\nTasks: 🏆 10/10";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();
@@ -435,7 +435,7 @@ public class ComputeBoxLinesTest
     {
       ComputeBoxLines handler = new ComputeBoxLines(scope);
       String command = "#BOX_COMPUTE\nLine 1\n\nLine 3";
-      BashHandler.Result result = handler.check(command, null, null, "session1");
+      BashHandler.Result result = handler.check(command, "", null, null, "session1");
 
       requireThat(result.blocked(), "blocked").isTrue();
       String message = result.reason();

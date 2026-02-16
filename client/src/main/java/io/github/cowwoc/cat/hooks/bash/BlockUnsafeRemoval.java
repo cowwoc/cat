@@ -10,26 +10,35 @@ import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
+
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Block rm -rf and git worktree remove when shell cwd is inside target directory.
+ * Block rm -rf and git worktree remove when deletion would affect protected paths.
  * <p>
- * M464, M491: Prevent shell session corruption from deleting current working directory.
+ * M464, M491: Prevent shell session corruption from deleting current working directory
+ * or other active worktrees.
+ * <p>
+ * Protection strategy: Build a set of protected paths (main worktree, session CWD,
+ * locked worktrees) and block deletion if any protected path is inside or equal to
+ * the deletion target.
  */
 public final class BlockUnsafeRemoval implements BashHandler
 {
-  private static final Pattern RM_PATTERN =
-    Pattern.compile("\\brm\\s+(-[^\\s]*r[^\\s]*\\s+)?([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
   private static final Pattern WORKTREE_REMOVE_PATTERN =
-    Pattern.compile("\\bgit\\s+worktree\\s+remove\\s+([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
-  private static final Pattern CD_PATTERN =
-    Pattern.compile("^cd\\s+['\"]?([^'\";&|]+)['\"]?");
+    Pattern.compile("\\bgit\\s+worktree\\s+remove\\s+(?:-[^\\s]+\\s+)*([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
 
   /**
    * Creates a new handler for blocking unsafe directory removal.
@@ -40,16 +49,17 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   @Override
-  public Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId)
+  public Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult,
+    String sessionId)
   {
     try
     {
       String commandLower = command.toLowerCase(Locale.ENGLISH);
 
       // Check rm -rf commands
-      if (commandLower.contains("rm") && (commandLower.contains("-r") || commandLower.contains("-rf")))
+      if (commandLower.contains("rm") && hasRecursiveFlag(command))
       {
-        Result rmResult = checkRmCommand(command);
+        Result rmResult = checkRmCommand(command, workingDirectory);
         if (rmResult != null)
           return rmResult;
       }
@@ -58,7 +68,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       if (commandLower.contains("git") && commandLower.contains("worktree") &&
           commandLower.contains("remove"))
       {
-        Result worktreeResult = checkWorktreeRemove(command);
+        Result worktreeResult = checkWorktreeRemove(command, workingDirectory);
         if (worktreeResult != null)
           return worktreeResult;
       }
@@ -72,62 +82,155 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   /**
-   * Checks if an rm command would delete the shell's current working directory.
+   * Checks whether the command contains a recursive flag for rm.
+   * Looks for -r or -R as standalone flags or combined with other flags.
    *
    * @param command the bash command
-   * @return a block result if unsafe removal detected, null otherwise
+   * @return true if a recursive flag is present, false otherwise
    */
-  private Result checkRmCommand(String command) throws IOException
+  private boolean hasRecursiveFlag(String command)
   {
-    String cwd = extractCwd(command);
-    Matcher matcher = RM_PATTERN.matcher(command);
+    Pattern flagPattern = Pattern.compile("(?:^|\\s)-[^\\s]*[rR]");
+    return flagPattern.matcher(command).find() || command.contains("--recursive");
+  }
 
-    while (matcher.find())
+  /**
+   * Extracts path arguments from an rm command.
+   * Handles options before, between, and after paths.
+   *
+   * @param command the bash command
+   * @return list of path arguments
+   */
+  private List<String> extractRmTargets(String command)
+  {
+    List<String> targets = new ArrayList<>();
+
+    // Find "rm" and extract everything after it until shell operators
+    int rmIndex = command.toLowerCase(Locale.ENGLISH).indexOf("rm");
+    if (rmIndex == -1)
+      return targets;
+
+    // Extract the portion after "rm" until we hit a shell operator
+    String afterRm = command.substring(rmIndex + 2);
+    int operatorIndex = afterRm.length();
+    for (char operator : new char[] {';', '&', '|', '>'})
     {
-      String target = matcher.group(2);
-      if (target == null || target.isEmpty())
+      int index = afterRm.indexOf(operator);
+      if (index != -1 && index < operatorIndex)
+        operatorIndex = index;
+    }
+    String rmArgs = afterRm.substring(0, operatorIndex);
+
+    // Tokenize by whitespace, respecting quotes
+    List<String> tokens = tokenize(rmArgs);
+
+    boolean endOfOptions = false;
+    for (String token : tokens)
+    {
+      if (token.equals("--"))
+      {
+        endOfOptions = true;
+        continue;
+      }
+
+      // After --, everything is a path even if it starts with -
+      if (endOfOptions)
+      {
+        targets.add(token);
+        continue;
+      }
+
+      // Skip flag tokens (starting with -)
+      if (token.startsWith("-"))
         continue;
 
-      // Resolve target path
-      Path targetPath = resolvePath(target, cwd);
-      Path cwdPath = Paths.get(cwd);
+      // Non-flag tokens are paths
+      targets.add(token);
+    }
 
-      // Check if cwd is inside target or equals target
-      if (isInsideOrEqual(cwdPath, targetPath))
+    return targets;
+  }
+
+  /**
+   * Tokenizes a string by whitespace, respecting single and double quotes.
+   *
+   * @param input the input string
+   * @return list of tokens
+   */
+  private List<String> tokenize(String input)
+  {
+    List<String> tokens = new ArrayList<>();
+    StringBuilder current = new StringBuilder();
+    boolean inSingleQuote = false;
+    boolean inDoubleQuote = false;
+
+    for (int i = 0; i < input.length(); ++i)
+    {
+      char c = input.charAt(i);
+
+      if (c == '\'' && !inDoubleQuote)
       {
-        return Result.block(String.format("""
-          UNSAFE DIRECTORY REMOVAL BLOCKED (M464, M491)
-
-          Attempted: rm -rf %s
-          Problem:   Shell's current directory is inside target directory
-          Current:   %s
-
-          WHY THIS IS BLOCKED:
-          - Deleting your current directory corrupts the shell session
-          - All subsequent Bash commands will fail with "Exit code 1"
-          - Recovery requires restarting Claude Code entirely
-
-          WHAT TO DO:
-          1. Change directory first: cd /workspace (or parent directory)
-          2. Then delete: rm -rf %s
-
-          See: /cat:safe-rm for detailed safe removal protocol
-          """, target, cwd, target));
+        inSingleQuote = !inSingleQuote;
+        continue;
       }
+
+      if (c == '"' && !inSingleQuote)
+      {
+        inDoubleQuote = !inDoubleQuote;
+        continue;
+      }
+
+      if (Character.isWhitespace(c) && !inSingleQuote && !inDoubleQuote)
+      {
+        if (current.length() > 0)
+        {
+          tokens.add(current.toString());
+          current.setLength(0);
+        }
+        continue;
+      }
+
+      current.append(c);
+    }
+
+    if (current.length() > 0)
+      tokens.add(current.toString());
+
+    return tokens;
+  }
+
+  /**
+   * Checks if an rm command would delete any protected path.
+   *
+   * @param command the bash command
+   * @param workingDirectory the shell's current working directory
+   * @return a block result if unsafe removal detected, null otherwise
+   * @throws IOException if path operations fail
+   */
+  private Result checkRmCommand(String command, String workingDirectory) throws IOException
+  {
+    List<String> targets = extractRmTargets(command);
+
+    for (String target : targets)
+    {
+      Result blockResult = checkProtectedPaths(target, workingDirectory, "rm (recursive)");
+      if (blockResult != null)
+        return blockResult;
     }
 
     return null;
   }
 
   /**
-   * Checks if a git worktree remove command would delete the shell's current working directory.
+   * Checks if a git worktree remove command would delete any protected path.
    *
    * @param command the bash command
+   * @param workingDirectory the shell's current working directory
    * @return a block result if unsafe removal detected, null otherwise
+   * @throws IOException if path operations fail
    */
-  private Result checkWorktreeRemove(String command) throws IOException
+  private Result checkWorktreeRemove(String command, String workingDirectory) throws IOException
   {
-    String cwd = extractCwd(command);
     Matcher matcher = WORKTREE_REMOVE_PATTERN.matcher(command);
 
     while (matcher.find())
@@ -136,31 +239,58 @@ public final class BlockUnsafeRemoval implements BashHandler
       if (target == null || target.isEmpty())
         continue;
 
-      // Resolve target path
-      Path targetPath = resolvePath(target, cwd);
-      Path cwdPath = Paths.get(cwd);
+      // Check if deletion would affect protected paths
+      Result blockResult = checkProtectedPaths(target, workingDirectory, "git worktree remove");
+      if (blockResult != null)
+        return blockResult;
+    }
 
-      // Check if cwd is inside target or equals target
-      if (isInsideOrEqual(cwdPath, targetPath))
+    return null;
+  }
+
+  /**
+   * Checks if deletion target would affect any protected paths.
+   *
+   * @param target the deletion target path
+   * @param workingDirectory the shell's current working directory
+   * @param commandType the command type for error messages
+   * @return a block result if protected paths would be affected, null otherwise
+   * @throws IOException if path operations fail
+   */
+  private Result checkProtectedPaths(String target, String workingDirectory, String commandType) throws IOException
+  {
+    Set<Path> protectedPaths = getProtectedPaths(workingDirectory);
+    if (protectedPaths.isEmpty())
+      return null;
+
+    // Resolve target path (may not exist yet, so use normalize not toRealPath)
+    Path targetPath = resolvePath(target, workingDirectory);
+
+    // Check if any protected path is inside or equal to the target
+    for (Path protectedPath : protectedPaths)
+    {
+      if (isInsideOrEqual(protectedPath, targetPath))
       {
         return Result.block(String.format("""
-          UNSAFE WORKTREE REMOVAL BLOCKED (M464, M491)
+          UNSAFE DIRECTORY REMOVAL BLOCKED (M464, M491)
 
-          Attempted: git worktree remove %s
-          Problem:   Shell's current directory is inside worktree being removed
-          Current:   %s
+          Attempted: %s %s
+          Problem:   A protected path is inside the deletion target
+          Protected: %s
+          Target:    %s
 
           WHY THIS IS BLOCKED:
-          - Removing a worktree while inside it corrupts the shell session
+          - Deleting a directory containing your current location corrupts the shell session
+          - Deleting active worktrees causes loss of uncommitted work
           - All subsequent Bash commands will fail with "Exit code 1"
           - Recovery requires restarting Claude Code entirely
 
           WHAT TO DO:
-          1. Change directory first: cd /workspace
-          2. Then remove worktree: git worktree remove %s --force
+          1. Change directory first: cd /workspace (or a safe parent directory)
+          2. Then delete: %s %s
 
           See: /cat:safe-rm for detailed safe removal protocol
-          """, target, cwd, target));
+          """, commandType, target, protectedPath, targetPath, commandType, target));
       }
     }
 
@@ -168,23 +298,80 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   /**
-   * Extracts the effective cwd from a command (handles inline cd).
+   * Builds a set of protected paths that should not be deleted.
+   * <p>
+   * Protected paths include:
+   * <ul>
+   *   <li>Main worktree root (derived from git structure)</li>
+   *   <li>Current session's CWD (from hook input)</li>
+   *   <li>All active worktrees (from lock files)</li>
+   * </ul>
    *
-   * @param command the bash command
-   * @return the effective cwd
+   * @param workingDirectory the shell's current working directory
+   * @return set of protected paths
+   * @throws IOException if path operations fail
    */
-  private String extractCwd(String command)
+  private Set<Path> getProtectedPaths(String workingDirectory) throws IOException
   {
-    Matcher cdMatcher = CD_PATTERN.matcher(command);
-    if (cdMatcher.find())
+    Set<Path> paths = new HashSet<>();
+
+    if (workingDirectory.isEmpty())
+      return paths;
+
+    // 1. Main worktree root - walk up from cwd to find .git DIRECTORY (not file)
+    Path mainWorktree = findMainWorktree(workingDirectory);
+    if (mainWorktree != null)
     {
-      String target = cdMatcher.group(1).strip();
-      Path targetPath = Paths.get(target);
-      if (targetPath.isAbsolute())
-        return target;
-      return Paths.get(System.getProperty("user.dir"), target).normalize().toString();
+      paths.add(mainWorktree.toRealPath());
+
+      // 3. Locked worktrees - read .claude/cat/locks/*.lock
+      Path locksDir = mainWorktree.resolve(".claude/cat/locks");
+      if (Files.isDirectory(locksDir))
+      {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(locksDir, "*.lock"))
+        {
+          for (Path lockFile : stream)
+          {
+            // Lock file name = {issue-id}.lock
+            // Worktree path = {mainWorktree}/.claude/cat/worktrees/{issue-id}
+            String fileName = lockFile.getFileName().toString();
+            String issueId = fileName.substring(0, fileName.length() - 5); // Remove ".lock"
+            Path worktreePath = mainWorktree.resolve(".claude/cat/worktrees/" + issueId);
+            if (Files.isDirectory(worktreePath))
+              paths.add(worktreePath.toRealPath());
+          }
+        }
+      }
     }
-    return System.getProperty("user.dir");
+
+    // 2. Current session's CWD
+    Path cwdPath = Paths.get(workingDirectory);
+    if (Files.exists(cwdPath))
+      paths.add(cwdPath.toRealPath());
+
+    return paths;
+  }
+
+  /**
+   * Finds the main worktree root by walking up from cwd.
+   * <p>
+   * A .git directory (not file) indicates the main worktree.
+   * A .git file indicates a sub-worktree.
+   *
+   * @param workingDirectory the starting directory
+   * @return the main worktree root, or null if not found
+   */
+  private Path findMainWorktree(String workingDirectory)
+  {
+    Path current = Paths.get(workingDirectory);
+    while (current != null)
+    {
+      Path gitPath = current.resolve(".git");
+      if (Files.isDirectory(gitPath))
+        return current;
+      current = current.getParent();
+    }
+    return null;
   }
 
   /**
@@ -204,19 +391,16 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   /**
-   * Checks if cwdPath is inside targetPath or equal to it.
+   * Checks if a path is inside a parent directory or equal to it.
    *
-   * @param cwdPath the current working directory path
-   * @param targetPath the target deletion path
-   * @return true if cwd would be deleted
+   * @param path the path to check (must be resolved via toRealPath)
+   * @param parent the potential parent directory (must be normalized)
+   * @return true if path is inside parent or equal to it
    */
-  private boolean isInsideOrEqual(Path cwdPath, Path targetPath) throws IOException
+  private boolean isInsideOrEqual(Path path, Path parent)
   {
-    // Normalize and resolve to real paths
-    Path realCwd = cwdPath.toRealPath();
-    Path realTarget = targetPath.toRealPath();
-
-    // Check equality or if cwd starts with target
-    return realCwd.equals(realTarget) || realCwd.startsWith(realTarget);
+    assert that(path, "path").isNotNull().elseThrow();
+    assert that(parent, "parent").isNotNull().elseThrow();
+    return path.equals(parent) || path.startsWith(parent);
   }
 }

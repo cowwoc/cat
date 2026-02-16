@@ -87,12 +87,13 @@ public interface BashHandler
    * Check a bash command.
    *
    * @param command the bash command string
+   * @param workingDirectory the shell's current working directory from hook input, or empty string if unavailable
    * @param toolInput the full tool input JSON
    * @param toolResult the tool result JSON (null for PreToolUse)
    * @param sessionId the session ID
    * @return the check result
-   * @throws NullPointerException if command, toolInput, or sessionId is null
+   * @throws NullPointerException if command, workingDirectory, toolInput, or sessionId is null
    * @throws IllegalArgumentException if sessionId is blank
    */
-  Result check(String command, JsonNode toolInput, JsonNode toolResult, String sessionId);
+  Result check(String command, String workingDirectory, JsonNode toolInput, JsonNode toolResult, String sessionId);
 }

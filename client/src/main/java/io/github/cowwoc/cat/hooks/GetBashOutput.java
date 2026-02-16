@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * get-bash-pretool-output - Unified PreToolUse hook for Bash commands.
+ * Unified PreToolUse hook for Bash commands.
  * <p>
  * TRIGGER: PreToolUse (matcher: Bash)
  * <p>
@@ -127,6 +127,8 @@ public final class GetBashOutput implements HookHandler
 
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
+    String workingDirectory = input.getString("cwd");
+    requireThat(workingDirectory, "workingDirectory").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
     // Run all bash pretool handlers
@@ -134,7 +136,7 @@ public final class GetBashOutput implements HookHandler
     {
       try
       {
-        BashHandler.Result result = handler.check(command, toolInput, null, sessionId);
+        BashHandler.Result result = handler.check(command, workingDirectory, toolInput, null, sessionId);
         if (result.blocked())
         {
           String jsonOutput;

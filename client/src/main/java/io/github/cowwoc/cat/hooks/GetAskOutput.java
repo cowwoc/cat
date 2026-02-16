@@ -19,7 +19,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-ask-pretool-output - Unified PreToolUse hook for AskUserQuestion.
+ * Unified PreToolUse hook for AskUserQuestion.
  * <p>
  * TRIGGER: PreToolUse (matcher: AskUserQuestion)
  * <p>
