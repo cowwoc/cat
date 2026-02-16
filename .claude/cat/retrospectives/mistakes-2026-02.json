@@ -4230,6 +4230,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Generate unified commit message from existing commit messages before creating message editor script, analyzing all commits being squashed to craft meaningful message"
+    },
+    {
+      "id": "M508",
+      "timestamp": "2026-02-17T18:19:05Z",
+      "category": "protocol_violation",
+      "description": "Agent manually constructed /cat:status display instead of echoing preprocessor-generated content as explicitly required by skill instruction",
+      "root_cause": "ARCHITECTURAL: LLM training to synthesize and be helpful conflicts with verbatim echo instruction. Despite preprocessing hook (get-status-output), enforcement hook (enforce-status), and explicit skill instruction to echo verbatim, agent defaulted to manual construction. Multiple prevention layers (M256, M341, M402, M407, M473) have failed, indicating fundamental training conflict.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status/first-use.md",
+      "pattern_keywords": [
+        "verbatim",
+        "echo",
+        "protocol_violation",
+        "architectural",
+        "user-centric-framing"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M407",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use minimal user-centric framing pattern: 'The user wants you to respond with this text verbatim:' followed by preprocessor output, with no explanatory text that primes analytical thinking"
     }
   ],
   "counter": 1
