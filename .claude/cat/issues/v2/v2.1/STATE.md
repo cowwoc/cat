@@ -2,14 +2,14 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-13
+- **Last Updated:** 2026-02-17
 
 
 # v2.1 State: Pre-Demo Polish
 
 ## Status
 - **Status:** in-progress
-- **Progress:** 76%
+- **Progress:** 35%
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
@@ -20,7 +20,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-md-files
 
 ## Issues Pending
-- fix-merge-parent-shell-corruption
 - refactor-skill-output-to-preprocessor
 - restructure-pricing-tiers
 - unify-work-preparing-banner
@@ -137,6 +136,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - rename-pretool-posttool
 
 ## Issues Completed
+- fix-merge-parent-shell-corruption
 - fix-blocked-tasks-diagnostics
 - add-diagnostic-review-checks
 - acceptance-criteria-options
