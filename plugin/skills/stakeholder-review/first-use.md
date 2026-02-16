@@ -255,8 +255,18 @@ SELECTED=$(echo "$SELECTED" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 ### File-Based Override Logic (Review Mode)
 
 ```bash
-# Get changed files
-CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
+# Get changed files from base branch to HEAD (captures all commits since worktree creation)
+# Read base branch from cat-base metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
+WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
+CAT_BASE_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+    echo "ERROR: cat-base metadata not found: $CAT_BASE_FILE" >&2
+    echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
+    exit 1
+fi
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+
+CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
 
 # Check for file-based overrides
 if echo "$CHANGED_FILES" | grep -qE '(ui/|frontend/|\.tsx$|\.vue$)'; then
@@ -376,8 +386,18 @@ if [[ -n "${WORKTREE_PATH}" ]]; then
     cd "${WORKTREE_PATH}" || { echo "ERROR: Cannot cd to worktree: ${WORKTREE_PATH}"; exit 1; }
 fi
 
-# Get changed files
-CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD 2>/dev/null || git diff --name-only --cached)
+# Get changed files from base branch to HEAD (captures all commits since worktree creation)
+# Read base branch from cat-base metadata (fail-fast if missing - stakeholder-review always runs in worktrees)
+WORKTREE_NAME=$(basename "$PWD" 2>/dev/null)
+CAT_BASE_FILE="$(git rev-parse --git-common-dir)/worktrees/${WORKTREE_NAME}/cat-base"
+if [[ ! -f "$CAT_BASE_FILE" ]]; then
+    echo "ERROR: cat-base metadata not found: $CAT_BASE_FILE" >&2
+    echo "Stakeholder review requires worktree context. Run via /cat:work." >&2
+    exit 1
+fi
+BASE_BRANCH=$(cat "$CAT_BASE_FILE")
+
+CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD" 2>/dev/null || git diff --name-only --cached)
 
 # Detect primary language from file extensions
 PRIMARY_LANG=$(echo "$CHANGED_FILES" | grep -oE '\.[a-z]+$' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}' | tr -d '.')
@@ -470,13 +490,13 @@ for file in $CHANGED_FILES; do
 
             # Diff with 100 lines of context for this file
             FILE_CONTENTS="${FILE_CONTENTS}\n#### Changes (with 100 lines context):\n\`\`\`diff\n"
-            FILE_CONTENTS="${FILE_CONTENTS}$(git diff HEAD~1..HEAD -U100 -- "$file" 2>/dev/null)\n\`\`\`\n"
+            FILE_CONTENTS="${FILE_CONTENTS}$(git diff "${BASE_BRANCH}..HEAD" -U100 -- "$file" 2>/dev/null)\n\`\`\`\n"
         fi
     fi
 done
 
 # Also prepare full diff for supplementary context (smaller context for overview)
-DIFF_SUMMARY=$(git diff HEAD~1..HEAD -U3 2>/dev/null || git diff --cached -U3)
+DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cached -U3)
 ```
 
 **Holistic context enables:**
