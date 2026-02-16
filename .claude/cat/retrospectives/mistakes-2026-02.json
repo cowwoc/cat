@@ -25,6 +25,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Always re-run stakeholder review after addressing concerns to verify fixes resolved issues and introduced no new problems"
+    },
+    {
+      "id": "M344",
+      "timestamp": "2026-02-17T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "stakeholder-review skill uses HEAD~1..HEAD for file diff, missing commits when worktree has multiple changes",
+      "root_cause": "Skill assumes single-commit workflow but CAT allows iteration. HEAD~1 refers to previous commit in worktree, not base branch",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review/first-use.md",
+      "pattern_keywords": [
+        "stakeholder-review",
+        "HEAD~1..HEAD",
+        "git diff",
+        "file context",
+        "worktree commits"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use base_branch..HEAD for diff operations to capture all commits since worktree diverged from base branch. Read base_branch from cat-base worktree metadata file, fallback to HEAD~1 for non-worktree scenarios"
     }
   ]
 }
