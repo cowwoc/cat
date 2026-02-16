@@ -58,6 +58,7 @@ readonly -a HANDLERS=(
   "session-analyzer:util.SessionAnalyzer"
   "progress-banner:skills.ProgressBanner"
   "verify-audit:skills.VerifyAudit"
+  "empirical-test-runner:skills.EmpiricalTestRunner"
 )
 
 # --- Logging ---
