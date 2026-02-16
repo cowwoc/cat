@@ -85,19 +85,24 @@ providing context or motivation behind your instructions helps Claude better und
 - **Mitigation:** Verify skills still load and display correctly after changes
 
 ## Files to Modify
-- `plugin/skills/status/first-use.md` - Replace FAIL-FAST with explanatory guard
-- `plugin/skills/token-report/first-use.md` - Replace FAIL-FAST with explanatory guard
-- `plugin/skills/help/first-use.md` - Replace FAIL-FAST with explanatory guard
-- `plugin/skills/render-diff/first-use.md` - Replace FAIL-FAST with explanatory guard
+- `plugin/skills/status/first-use.md` - Replace FAIL-FAST with explanatory guard, remove description and legend
+- `plugin/skills/token-report/first-use.md` - Replace FAIL-FAST with explanatory guard, remove description
+- `plugin/skills/help/first-use.md` - Replace FAIL-FAST with explanatory guard, remove description
+- `plugin/skills/render-diff/first-use.md` - Replace FAIL-FAST with explanatory guard, remove description
 - `plugin/skills/work/first-use.md` - Replace FAIL-FAST with explanatory guard
-- `plugin/skills/init/first-use.md` - Replace FAIL-FAST with explanatory guard
-- `plugin/skills/run-retrospective/first-use.md` - Replace FAIL-FAST with explanatory guard
+- `plugin/skills/init/first-use.md` - Remove FAIL-FAST block
+- `plugin/skills/run-retrospective/first-use.md` - Remove FAIL-FAST block
 - `plugin/skills/skill-builder/first-use.md` - Update template to use explanatory guard pattern
+- `plugin/skills/delegate/first-use.md` - Replace FAIL-FAST terminology with descriptive alternatives
+- `plugin/skills/recover-from-drift/first-use.md` - Replace FAIL-FAST label with "Error handling"
+- `plugin/skills/shrink-doc/first-use.md` - Replace FAIL-FAST label with "Iteration required"
+- `plugin/skills/render-output/first-use.md` - Update echo instruction wording
 
 ## Acceptance Criteria
-- [ ] No `**FAIL-FAST:**` blocks remain in skill files (except delegate/shrink-doc which use FAIL-FAST for different
-  purposes)
+- [ ] No `**FAIL-FAST:**` blocks remain in any skill files
+- [ ] No "FAIL-FAST" terminology used as bold instruction labels in any skill
 - [ ] All verbatim output skills use the explanatory guard pattern
+- [ ] Description lines removed from verbatim output skills (degrade haiku 100% → 60%)
 - [ ] `skill-builder/first-use.md` template recommends explanatory guard pattern
 - [ ] All affected skills load correctly via load-skill.sh
 
