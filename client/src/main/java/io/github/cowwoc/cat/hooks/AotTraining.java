@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.GetCheckpointOutput;
 import io.github.cowwoc.cat.hooks.skills.GetIssueCompleteOutput;
 import io.github.cowwoc.cat.hooks.skills.GetNextTaskOutput;
@@ -104,6 +105,7 @@ public final class AotTraining
       referenceClass(GetNextTaskOutput.class);
       referenceClass(SessionAnalyzer.class);
       referenceClass(ProgressBanner.class);
+      referenceClass(EmpiricalTestRunner.class);
     }
   }
 

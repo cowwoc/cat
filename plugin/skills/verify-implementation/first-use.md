@@ -85,12 +85,12 @@ Output:
 Use the Java CLI tool to parse PLAN.md and extract acceptance criteria, file specs, and grouped criteria.
 
 ```bash
-HOOKS_BIN="${WORKTREE_PATH}/hooks/target/jlink/bin"
-if [[ ! -x "$HOOKS_BIN/verify-audit" ]]; then
-  HOOKS_BIN="/workspace/hooks/target/jlink/bin"
+CLIENT_BIN="${WORKTREE_PATH}/client/target/jlink/bin"
+if [[ ! -x "$CLIENT_BIN/verify-audit" ]]; then
+  CLIENT_BIN="/workspace/client/target/jlink/bin"
 fi
 
-PARSED=$("$HOOKS_BIN/verify-audit" parse "${ISSUE_PATH}/PLAN.md")
+PARSED=$("$CLIENT_BIN/verify-audit" parse "${ISSUE_PATH}/PLAN.md")
 
 # Extract data from JSON output
 CRITERIA=$(echo "$PARSED" | \
@@ -318,7 +318,7 @@ and generate the report using the Java CLI tool.
 # }
 
 # Generate formatted report using Java CLI tool
-REPORT=$("$HOOKS_BIN/verify-audit" report --issue-id "$ISSUE_ID" <<< "$RESULTS_JSON")
+REPORT=$("$CLIENT_BIN/verify-audit" report --issue-id "$ISSUE_ID" <<< "$RESULTS_JSON")
 ```
 
 The Java tool:
