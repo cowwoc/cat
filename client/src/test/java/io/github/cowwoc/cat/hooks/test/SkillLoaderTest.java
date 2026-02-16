@@ -1190,6 +1190,162 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   }
 
   /**
+   * Verifies that IOException from SkillOutput.getOutput() propagates as IOException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IOException.class,
+    expectedExceptionsMessageRegExp = "simulated IO failure")
+  public void loadPropagatesIoExceptionFromSkillOutput() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsIo "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      loader.load("test-skill");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that RuntimeException from SkillOutput.getOutput() returns an error string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadReturnsErrorStringForRuntimeException() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsRuntime "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("<error>Preprocessor directive failed for").
+        contains("simulated runtime failure").
+        contains("</error>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that InvocationTargetException from constructor returns error string with cause message.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadReturnsErrorStringForConstructorException() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsFromConstructor "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("<error>Preprocessor directive failed for").
+        contains("constructor failure").
+        contains("</error>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that exception with null message uses class name in error string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadReturnsClassNameForNullExceptionMessage() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/bash
+        java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsNullMessage "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("<error>Preprocessor directive failed for").
+        contains("java.lang.IllegalStateException").
+        contains("</error>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
    * Verifies that preprocessor directive passes arguments to SkillOutput.
    *
    * @throws IOException if an I/O error occurs

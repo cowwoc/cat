@@ -658,6 +658,18 @@ Your final message MUST be ONLY this JSON (no other text):
   ],
   "prevention_description": "What was changed and why",
   "priming_verified": true,
-  "related_files_checked": true
+  "related_files_checked": true,
+  "files_to_modify": [
+    {
+      "path": "/absolute/path/to/file1",
+      "change_type": "add_section|modify_section|add_validation|create_new",
+      "rationale": "Why this file needs to change"
+    }
+  ],
+  "task_creation_info": {
+    "suggested_title": "Short title for prevention task",
+    "suggested_description": "Detailed description for /cat:add",
+    "suggested_acceptance_criteria": ["criterion 1", "criterion 2"]
+  }
 }
 ```
