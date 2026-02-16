@@ -120,6 +120,8 @@ parse_args() {
                         SCOPE="minor"
                     elif [[ "$TARGET" =~ ^[0-9]+\.[0-9]+-[a-zA-Z0-9_-]+$ ]]; then
                         SCOPE="issue"
+                    elif [[ "$TARGET" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+                        SCOPE="bare_name"
                     fi
                 fi
                 shift
@@ -585,6 +587,106 @@ find_first_incomplete_minor() {
 # =============================================================================
 
 find_next_issue() {
+    # Bare issue name requested (e.g., "fix-work-prepare-issue-name-matching")
+    # This handler resolves a bare issue name to a full issue ID, then delegates to the issue handler.
+    # Resolution strategy: prefer current branch version, fall back to first match if multiple versions exist.
+    if [[ "$SCOPE" == "bare_name" && -n "$TARGET" ]]; then
+        local bare_name="$TARGET"
+
+        # H5: Re-validate bare_name before using in find (belt-and-suspenders defense)
+        # Already validated by parse_args regex, but re-check to prevent any injection risk
+        if ! [[ "$bare_name" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
+            echo '{"status":"error","message":"Invalid bare issue name format: '"$bare_name"'"}' >&2
+            return 1
+        fi
+
+        # Search all issue directories for matching issue name
+        local matching_issues=()
+        for issue_dir in $(find "$CAT_DIR" -type d -name "$bare_name" 2>/dev/null); do
+            if [[ -f "$issue_dir/STATE.md" ]]; then
+                matching_issues+=("$issue_dir")
+            fi
+        done
+
+        if [[ ${#matching_issues[@]} -eq 0 ]]; then
+            echo '{"status":"not_found","message":"No issue found with name '"$bare_name"'"}'
+            return 1
+        fi
+
+        # If multiple matches, prefer the version matching the current git branch
+        local selected_issue_dir=""
+        if [[ ${#matching_issues[@]} -gt 1 ]]; then
+            local current_branch
+            current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+
+            # M6: Log warning if branch detection fails
+            if [[ -z "$current_branch" ]]; then
+                echo "WARNING: Could not detect current git branch - using first match for bare name '$bare_name'" >&2
+            fi
+
+            # Extract version from branch name (e.g., "v2.1" or "2.1-issue-name" -> "2.1")
+            local branch_version=""
+            if [[ "$current_branch" =~ ^v?([0-9]+\.[0-9]+) ]]; then
+                branch_version="${BASH_REMATCH[1]}"
+            fi
+
+            # H6: Use string glob matching instead of regex to avoid unescaped dot metacharacter
+            if [[ -n "$branch_version" ]]; then
+                for issue_dir in "${matching_issues[@]}"; do
+                    if [[ "$issue_dir" == *"/v${branch_version}/"* ]]; then
+                        selected_issue_dir="$issue_dir"
+                        break
+                    fi
+                done
+            fi
+
+            # M1: Log warning when falling back to first match
+            if [[ -z "$selected_issue_dir" ]]; then
+                echo "WARNING: Multiple versions found for bare name '$bare_name', no branch version match - using first match" >&2
+                selected_issue_dir="${matching_issues[0]}"
+            fi
+        else
+            selected_issue_dir="${matching_issues[0]}"
+        fi
+
+        # Extract version components from the selected path
+        # Path format: .../v2/v2.1/issue-name/STATE.md
+        local path_parts
+        IFS='/' read -ra path_parts <<< "$selected_issue_dir"
+        local major minor issue_name
+
+        # Find the version directory (e.g., "v2.1")
+        for i in "${!path_parts[@]}"; do
+            if [[ "${path_parts[$i]}" =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
+                major="${BASH_REMATCH[1]}"
+                minor="${BASH_REMATCH[2]}"
+                # Issue name is the next directory (C1, M2: validate it matches bare_name)
+                local extracted_name="${path_parts[$((i+1))]}"
+                if [[ "$extracted_name" == "$bare_name" ]]; then
+                    issue_name="$extracted_name"
+                else
+                    echo '{"status":"error","message":"Path validation failed: extracted name '"$extracted_name"' does not match requested bare name '"$bare_name"' in path '"$selected_issue_dir"'"}' >&2
+                    return 1
+                fi
+                break
+            fi
+        done
+
+        # M5: Improve error message to show expected vs actual path format
+        if [[ -z "$major" || -z "$minor" || -z "$issue_name" ]]; then
+            echo '{"status":"error","message":"Failed to parse version from path '"$selected_issue_dir"'. Expected format: .../vMAJOR/vMAJOR.MINOR/issue-name/"}' >&2
+            return 1
+        fi
+
+        # M4: Construct full issue ID and delegate to the issue scope handler
+        # This delegation allows bare_name resolution to reuse all the validation logic in the issue handler
+        # (status checks, dependency checks, lock acquisition, etc.)
+        local full_issue_id="${major}.${minor}-${issue_name}"
+        SCOPE="issue"
+        TARGET="$full_issue_id"
+        # Continue to the existing issue handler below
+    fi
+
     # Specific issue requested
     if [[ "$SCOPE" == "issue" && -n "$TARGET" ]]; then
         # Parse issue ID: major.minor-issue-name
