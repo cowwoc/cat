@@ -11,6 +11,7 @@ import java.io.IOException;
 /**
  * Interface for classes that generate skill output for preprocessor directives.
  */
+@FunctionalInterface
 public interface SkillOutput
 {
   /**
