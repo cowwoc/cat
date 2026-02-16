@@ -1,10 +1,10 @@
 # State
 
 - **Status:** open
-- **Progress:** 0%
+- **Progress:** 50%
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-09
+- **Last Updated:** 2026-02-17
 
 ## Decomposed Into
 - unify-sessionstart-hooks
@@ -13,3 +13,5 @@
 - unify-posttooluse-hooks
 - unify-stop-sessionend-hooks
 - unify-project-hooks
+- unify-posttooluse-failure-hooks
+- cleanup-orphaned-hook-scripts
