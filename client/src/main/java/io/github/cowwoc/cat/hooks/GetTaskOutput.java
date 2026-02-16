@@ -19,7 +19,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-task-pretool-output - Unified PreToolUse hook for Task operations.
+ * Unified PreToolUse hook for Task operations.
  * <p>
  * TRIGGER: PreToolUse (matcher: Task)
  * <p>

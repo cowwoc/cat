@@ -17,7 +17,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-read-posttool-output - Unified PostToolUse hook for Read/Glob/Grep/WebFetch/WebSearch
+ * Unified PostToolUse hook for Read/Glob/Grep/WebFetch/WebSearch
  *
  * TRIGGER: PostToolUse (matcher: Read|Glob|Grep|WebFetch|WebSearch)
  *

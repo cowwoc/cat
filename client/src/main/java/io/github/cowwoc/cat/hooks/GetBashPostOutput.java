@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * get-bash-posttool-output - Unified PostToolUse hook for Bash commands.
+ * Unified PostToolUse hook for Bash commands.
  * <p>
  * TRIGGER: PostToolUse (matcher: Bash)
  * <p>
@@ -107,6 +107,8 @@ public final class GetBashPostOutput implements HookHandler
     JsonNode toolResult = input.getToolResult();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
+    String workingDirectory = input.getString("cwd");
+    requireThat(workingDirectory, "workingDirectory").isNotBlank();
     List<String> warnings = new ArrayList<>();
     List<String> errorWarnings = new ArrayList<>();
 
@@ -115,7 +117,7 @@ public final class GetBashPostOutput implements HookHandler
     {
       try
       {
-        BashHandler.Result result = handler.check(command, toolInput, toolResult, sessionId);
+        BashHandler.Result result = handler.check(command, workingDirectory, toolInput, toolResult, sessionId);
         // PostToolUse cannot block, only warn
         if (!result.reason().isEmpty())
           warnings.add(result.reason());

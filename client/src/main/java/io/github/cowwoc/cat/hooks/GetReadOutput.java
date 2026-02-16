@@ -17,7 +17,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * get-read-pretool-output - Unified PreToolUse hook for Read/Glob/Grep
+ * Unified PreToolUse hook for Read/Glob/Grep
  *
  * TRIGGER: PreToolUse (matcher: Read|Glob|Grep)
  *
