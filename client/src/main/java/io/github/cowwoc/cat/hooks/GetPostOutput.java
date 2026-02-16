@@ -64,8 +64,7 @@ public final class GetPostOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      Path claudeConfigDir = resolveClaudeConfigDir();
-      HookResult result = new GetPostOutput(claudeConfigDir).run(input, output);
+      HookResult result = new GetPostOutput(scope.getClaudeConfigDir()).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -77,19 +76,6 @@ public final class GetPostOutput implements HookHandler
       log.error("Unexpected error", e);
       throw e;
     }
-  }
-
-  /**
-   * Resolves the Claude config directory from environment or defaults to ~/.claude.
-   *
-   * @return the Claude config directory path
-   */
-  private static Path resolveClaudeConfigDir()
-  {
-    String envDir = System.getenv("CLAUDE_CONFIG_DIR");
-    if (envDir != null && !envDir.isEmpty())
-      return Path.of(envDir);
-    return Path.of(System.getProperty("user.home"), ".claude");
   }
 
   /**

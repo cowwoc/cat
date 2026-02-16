@@ -65,6 +65,13 @@ public final class MainJvmScope implements JvmScope
       throw new AssertionError("CLAUDE_PLUGIN_ROOT is not set");
     return Path.of(pluginRoot);
   });
+  private final ConcurrentLazyReference<Path> claudeConfigDir = ConcurrentLazyReference.create(() ->
+  {
+    String configDir = System.getenv("CLAUDE_CONFIG_DIR");
+    if (configDir != null && !configDir.isEmpty())
+      return Path.of(configDir);
+    return Path.of(System.getProperty("user.home"), ".claude");
+  });
   private final ConcurrentLazyReference<String> claudeSessionId = ConcurrentLazyReference.create(() ->
   {
     String sessionId = System.getenv("CLAUDE_SESSION_ID");
@@ -109,6 +116,13 @@ public final class MainJvmScope implements JvmScope
   {
     ensureOpen();
     return claudePluginRoot.getValue();
+  }
+
+  @Override
+  public Path getClaudeConfigDir()
+  {
+    ensureOpen();
+    return claudeConfigDir.getValue();
   }
 
   @Override
