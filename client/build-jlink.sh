@@ -29,7 +29,7 @@ readonly TARGET_DIR="${PROJECT_DIR}/target"
 readonly STAGING_DIR="${TARGET_DIR}/jlink-staging"
 readonly PATCH_DIR="${TARGET_DIR}/module-patches"
 readonly OUTPUT_DIR="${TARGET_DIR}/jlink"
-readonly HOOKS_JAR="${TARGET_DIR}/cat-hooks-2.1.jar"
+readonly HOOKS_JAR="${TARGET_DIR}/cat-client-2.1.jar"
 readonly MODULE_NAME="io.github.cowwoc.cat.hooks"
 
 # Handler registry: launcher-name:ClassName
