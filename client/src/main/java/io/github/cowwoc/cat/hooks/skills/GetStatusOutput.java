@@ -513,6 +513,13 @@ public final class GetStatusOutput implements SkillOutput
       contentItems.add("");
     }
 
+    // Pass 1: Build inner content for each major version and calculate the maximum box width.
+    record MajorVersionBox(String header, List<String> innerContent)
+    {
+    }
+    List<MajorVersionBox> majorVersionBoxes = new ArrayList<>();
+    int maxInnerWidth = 0;
+
     for (MajorVersion major : data.majors)
     {
       List<MinorVersion> majorMinors = data.minors.stream().
@@ -620,7 +627,16 @@ public final class GetStatusOutput implements SkillOutput
       }
 
       String header = "📦 " + major.id + ": " + major.name;
-      List<String> innerBoxLines = display.buildInnerBox(header, innerContent);
+      majorVersionBoxes.add(new MajorVersionBox(header, innerContent));
+      int naturalWidth = display.calculateBoxWidth(header, innerContent);
+      if (naturalWidth > maxInnerWidth)
+        maxInnerWidth = naturalWidth;
+    }
+
+    // Pass 2: Render each major version box using the maximum width for uniform alignment.
+    for (MajorVersionBox box : majorVersionBoxes)
+    {
+      List<String> innerBoxLines = display.buildInnerBox(box.header(), box.innerContent(), maxInnerWidth);
       contentItems.addAll(innerBoxLines);
       contentItems.add("");
     }
