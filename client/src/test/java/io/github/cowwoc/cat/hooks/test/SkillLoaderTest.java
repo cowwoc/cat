@@ -1346,6 +1346,100 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   }
 
   /**
+   * Verifies that extractClassName handles multi-line launcher scripts with line continuations.
+   */
+  @Test
+  public void extractClassNameHandlesMultiLineLauncher()
+  {
+    String launcherContent = """
+      #!/bin/sh
+      DIR=`dirname $0`
+      exec "$DIR/java" \\
+        -Xms16m -Xmx96m \\
+        -XX:+UseSerialGC \\
+        -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.skills.GetStatusOutput "$@"
+      """;
+
+    String className = SkillLoader.extractClassName(launcherContent);
+    requireThat(className, "className").isEqualTo("io.github.cowwoc.cat.hooks.skills.GetStatusOutput");
+  }
+
+  /**
+   * Verifies that extractClassName handles single-line launcher scripts.
+   */
+  @Test
+  public void extractClassNameHandlesSingleLineLauncher()
+  {
+    String launcherContent = """
+      #!/bin/sh
+      exec java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.GetSkillOutput
+      """;
+
+    String className = SkillLoader.extractClassName(launcherContent);
+    requireThat(className, "className").isEqualTo("io.github.cowwoc.cat.hooks.GetSkillOutput");
+  }
+
+  /**
+   * Verifies that extractClassName returns empty string for launcher without -m flag.
+   */
+  @Test
+  public void extractClassNameReturnsEmptyForMissingModule()
+  {
+    String launcherContent = """
+      #!/bin/sh
+      exec java -jar app.jar
+      """;
+
+    String className = SkillLoader.extractClassName(launcherContent);
+    requireThat(className, "className").isEmpty();
+  }
+
+  /**
+   * Verifies that executeDirective throws IOException when launcher exists but class name
+   * cannot be extracted (fail-fast instead of silent fallback).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadThrowsWhenClassExtractionFails() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Files.createDirectories(hooksDir);
+      // Launcher without -m pattern, so extractClassName always returns empty
+      Files.writeString(hooksDir.resolve("test-output"), """
+        #!/bin/sh
+        exec java -jar app.jar "$@"
+        """);
+
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(skillDir);
+      Files.writeString(skillDir.resolve("first-use.md"), """
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output" arg1 arg2`
+        Done
+        """);
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "");
+      try
+      {
+        loader.load("test-skill");
+        requireThat(false, "load").isEqualTo(true);
+      }
+      catch (IOException e)
+      {
+        requireThat(e.getMessage(), "message").contains("Failed to extract class name from launcher");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
    * Verifies that preprocessor directive passes arguments to SkillOutput.
    *
    * @throws IOException if an I/O error occurs
