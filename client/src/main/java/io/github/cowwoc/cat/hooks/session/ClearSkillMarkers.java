@@ -11,15 +11,19 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.HookInput;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Cleans up accumulated skill marker files from previous sessions.
+ * Deletes the session skill marker file so that skills reload with full content.
  * <p>
- * Removes {@code /tmp/cat-skills-loaded-*} files that track which skills have been
- * loaded in each session. These files accumulate over time as sessions start and end.
+ * The marker file {@code /tmp/cat-skills-loaded-{sessionId}} tracks which skills have been
+ * loaded in the current session. Deleting it forces a fresh skill load on the next invocation.
+ * <p>
+ * This handler is registered for both {@code SessionStart} (so skills load fresh at session start)
+ * and {@code PreCompact} (so skills reload after context compaction).
+ *
+ * @see io.github.cowwoc.cat.hooks.util.SkillLoader
  */
 public final class ClearSkillMarkers implements SessionStartHandler
 {
@@ -31,38 +35,29 @@ public final class ClearSkillMarkers implements SessionStartHandler
   }
 
   /**
-   * Deletes skill marker files from /tmp.
+   * Deletes the current session's skill marker file from /tmp.
    *
-   * @param input the hook input (not used, but required by interface)
+   * @param input the hook input containing the {@code session_id} field
    * @return an empty result (silent operation)
-   * @throws NullPointerException if input is null
+   * @throws NullPointerException if {@code input} is null
    */
   @Override
   public Result handle(HookInput input)
   {
     requireThat(input, "input").isNotNull();
-    Path tmpDir = Path.of("/tmp");
-    if (!Files.isDirectory(tmpDir))
+    String sessionId = input.getSessionId();
+    if (sessionId.isEmpty())
       return Result.empty();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(tmpDir, "cat-skills-loaded-*"))
+    Path markerFile = Path.of("/tmp/cat-skills-loaded-" + sessionId);
+    if (Files.isSymbolicLink(markerFile))
+      return Result.empty();
+    try
     {
-      for (Path path : stream)
-      {
-        try
-        {
-          if (Files.isSymbolicLink(path))
-            continue;
-          Files.deleteIfExists(path);
-        }
-        catch (IOException _)
-        {
-          // Silently ignore deletion failures
-        }
-      }
+      Files.deleteIfExists(markerFile);
     }
     catch (IOException _)
     {
-      // Silently ignore directory stream failures
+      // Silently ignore deletion failures
     }
     return Result.empty();
   }

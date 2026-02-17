@@ -140,6 +140,16 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/clear-skill-markers-on-compact"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [

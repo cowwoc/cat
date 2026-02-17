@@ -89,10 +89,10 @@ public class GetSessionStartOutputTest
   // --- ClearSkillMarkers tests ---
 
   /**
-   * Verifies that ClearSkillMarkers returns empty result (no output).
+   * Verifies that ClearSkillMarkers returns empty result when no session ID is present.
    */
   @Test
-  public void clearSkillMarkersReturnsEmptyResult() throws IOException
+  public void clearSkillMarkersReturnsEmptyResultWhenNoSessionId() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -105,6 +105,33 @@ public class GetSessionStartOutputTest
   }
 
   /**
+   * Verifies that ClearSkillMarkers deletes the marker file for the current session.
+   */
+  @Test
+  public void clearSkillMarkersDeletesCurrentSessionMarker() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      String sessionId = "test-session-" + System.nanoTime();
+      Path markerFile = Path.of("/tmp/cat-skills-loaded-" + sessionId);
+      Files.writeString(markerFile, "marker");
+      try
+      {
+        HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+        SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
+        requireThat(result.additionalContext(), "additionalContext").isEmpty();
+        requireThat(result.stderr(), "stderr").isEmpty();
+        requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
+      }
+      finally
+      {
+        Files.deleteIfExists(markerFile);
+      }
+    }
+  }
+
+  /**
    * Verifies that ClearSkillMarkers skips symlinks in /tmp.
    */
   @Test
@@ -113,27 +140,24 @@ public class GetSessionStartOutputTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      Path tmpDir = Files.createTempDirectory("cat-test-markers-");
+      String sessionId = "test-symlink-" + System.nanoTime();
+      Path targetFile = Path.of("/tmp/cat-skills-loaded-symlink-target-" + sessionId);
+      Path symlink = Path.of("/tmp/cat-skills-loaded-" + sessionId);
+      Files.writeString(targetFile, "should-not-be-deleted");
+      Files.createSymbolicLink(symlink, targetFile);
       try
       {
-        // Create a real file and a symlink
-        Path realFile = tmpDir.resolve("cat-skills-loaded-real");
-        Files.writeString(realFile, "test");
-        Path targetFile = tmpDir.resolve("symlink-target");
-        Files.writeString(targetFile, "should-not-be-deleted");
-        Path symlink = tmpDir.resolve("cat-skills-loaded-symlink");
-        Files.createSymbolicLink(symlink, targetFile);
-
-        // ClearSkillMarkers operates on /tmp so we just verify the handler returns empty
-        // The symlink skip behavior is validated by the implementation check
-        HookInput input = createInput(mapper, "{}");
+        HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
         SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
+        // Symlink should not have been deleted
+        requireThat(Files.isSymbolicLink(symlink), "symlinkExists").isTrue();
       }
       finally
       {
-        TestUtils.deleteDirectoryRecursively(tmpDir);
+        Files.deleteIfExists(symlink);
+        Files.deleteIfExists(targetFile);
       }
     }
   }

@@ -91,7 +91,7 @@ Problem: Which file contains `${ARGUMENTS}`? What does bindings.json contain? No
 
 **Example — good:**
 ```
-Error invoking skill 'work': first-use.md:14 references undefined variable ${ARGUMENTS}.
+Error invoking skill 'work': SKILL.md:14 references undefined variable ${ARGUMENTS}.
 Not a built-in variable or binding.
 Built-in variables: [CLAUDE_PLUGIN_ROOT, CLAUDE_SESSION_ID, CLAUDE_PROJECT_DIR]
 bindings.json: {} (empty)
