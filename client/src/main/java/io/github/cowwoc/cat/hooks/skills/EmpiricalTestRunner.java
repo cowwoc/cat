@@ -128,7 +128,14 @@ public final class EmpiricalTestRunner
       output.set("criteria", scope.getJsonMapper().valueToTree(criteria));
       output.set("results", scope.getJsonMapper().valueToTree(allResults));
 
-      Files.writeString(outputPath, scope.getJsonMapper().writeValueAsString(output));
+      try
+      {
+        Files.writeString(outputPath, scope.getJsonMapper().writeValueAsString(output));
+      }
+      catch (IOException e)
+      {
+        throw new IOException("Failed to write JSON results to: " + outputPath, e);
+      }
       System.out.println();
       System.out.println("Full results written to: " + outputPath);
     }
@@ -702,7 +709,7 @@ public final class EmpiricalTestRunner
    * @param toolsUsed the list of tools used
    * @param error the error message if any
    */
-  private record TrialResult(boolean pass, Map<String, Boolean> checks, long elapsed,
+  public record TrialResult(boolean pass, Map<String, Boolean> checks, long elapsed,
     String outputPreview, List<String> toolsUsed, String error)
   {
   }
@@ -716,7 +723,7 @@ public final class EmpiricalTestRunner
    * @param rate the pass rate as a percentage
    * @param results the list of trial results
    */
-  private record ConfigResult(String name, int trials, int passes, int rate,
+  public record ConfigResult(String name, int trials, int passes, int rate,
     List<TrialResult> results)
   {
   }
