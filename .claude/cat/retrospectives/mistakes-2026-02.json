@@ -162,6 +162,33 @@
         "catches_variations": true
       },
       "correct_behavior": "merge-and-cleanup.sh should delete all backup-before-squash-* branches after a successful merge. Add a step between branch deletion and lock release that runs: git branch | grep 'backup-before-squash-' | while read b; do git branch -D $b; done"
+    },
+    {
+      "id": "M349",
+      "timestamp": "2026-02-18T22:17:37Z",
+      "category": "incorrect_implementation",
+      "description": "Status display inner boxes rendered with individually-sized widths, causing inner right borders to appear at different horizontal positions (jagged right edges)",
+      "root_cause": "generateStatusDisplay() calls buildInnerBox() for each major version without coordinating widths. Each call independently calculates boxWidth from its own content, so boxes with more content are wider. Different-width inner boxes placed in the outer box create visually jagged right borders even though the OUTER box right border aligns correctly.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java",
+      "pattern_keywords": [
+        "box-alignment",
+        "inner-box-width",
+        "status-display",
+        "buildInnerBox",
+        "uniform-width"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pre-calculate the maximum inner box content width across all major versions, then pass that as forcedWidth to each buildInnerBox() call so all inner boxes render at uniform width."
     }
   ]
 }
