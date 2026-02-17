@@ -134,6 +134,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Before spawning the work-merge subagent, run 'cd /workspace' so the main agent's shell CWD is not inside the worktree when the subagent removes it."
+    },
+    {
+      "id": "M348",
+      "timestamp": "2026-02-18T19:30:42Z",
+      "category": "protocol_violation",
+      "description": "merge-and-cleanup.sh did not delete backup-before-squash-* branches left by git-squash-quick.sh after successful merge",
+      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success — it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/merge-and-cleanup.sh",
+      "pattern_keywords": [
+        "backup-branch",
+        "squash-cleanup",
+        "merge-and-cleanup",
+        "git-squash-quick",
+        "orphaned-branches",
+        "approval-gate-retry"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "merge-and-cleanup.sh should delete all backup-before-squash-* branches after a successful merge. Add a step between branch deletion and lock release that runs: git branch | grep 'backup-before-squash-' | while read b; do git branch -D $b; done"
     }
   ]
 }
