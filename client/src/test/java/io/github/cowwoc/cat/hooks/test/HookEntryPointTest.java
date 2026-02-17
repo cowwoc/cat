@@ -1128,7 +1128,7 @@ public class HookEntryPointTest
       FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
       // On the v2.1 branch (protected), plugin files should be blocked
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files");
     }
   }
 
@@ -1369,14 +1369,14 @@ public class HookEntryPointTest
         "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
       FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot edit plugin files");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files");
     }
   }
 
   /**
-   * Verifies that EnforcePluginFileIsolation allows non-plugin paths.
+   * Verifies that EnforcePluginFileIsolation allows non-source paths.
    * <p>
-   * Test that non-plugin files are not blocked.
+   * Test that non-plugin, non-client files are not blocked.
    */
   @Test
   public void enforcePluginFileIsolationAllowsNonPluginPaths() throws IOException
@@ -1385,7 +1385,7 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \"/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/HookInput.java\"}");
+        "{\"file_path\": \"/workspace/docs/README.md\"}");
       FileWriteHandler.Result result = new EnforcePluginFileIsolation().check(toolInput, "test");
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -1415,7 +1415,7 @@ public class HookEntryPointTest
       String result = hookResult.output().trim();
       requireThat(result, "result").contains("\"decision\"");
       requireThat(result, "result").contains("\"block\"");
-      requireThat(result, "result").contains("Cannot edit plugin files");
+      requireThat(result, "result").contains("Cannot edit source files");
     }
   }
 

@@ -162,6 +162,17 @@ Phase: Record
 {record.user_summary or phase_summaries.record}
 ```
 
+**If prevent.prevention_implemented is false:**
+
+The prevent phase could not implement prevention directly because the current branch is protected and the prevention
+requires source code changes. Create a CAT issue from the task_creation_info:
+
+1. Display to user: "Prevention requires code changes that cannot be committed on protected branch {branch}. Creating
+   follow-up issue."
+2. The task_creation_info from the prevent phase contains suggested_title, suggested_description, and
+   suggested_acceptance_criteria
+3. Continue to Step 4 (Display Final Summary) - note that prevention_implemented is false in the summary
+
 **Error handling:**
 
 | Condition | Action |
