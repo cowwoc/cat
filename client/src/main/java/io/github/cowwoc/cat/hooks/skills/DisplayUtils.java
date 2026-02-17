@@ -399,22 +399,13 @@ public final class DisplayUtils
     requireThat(header, "header").isNotNull();
     requireThat(contentItems, "contentItems").isNotNull();
 
-    List<String> effectiveContent;
-    if (contentItems.isEmpty())
-      effectiveContent = List.of("");
-    else
-      effectiveContent = contentItems;
+    List<String> effectiveContent = effectiveContent(contentItems);
 
-    int maxContentWidth = calculateMaxWidth(effectiveContent);
-
-    int headerWidth = displayWidth(header);
-    int headerMinWidth = headerWidth + 1;
-
-    int boxWidth = Math.max(headerMinWidth, maxContentWidth);
+    int boxWidth = calculateBoxWidth(header, contentItems);
     if (forcedWidth != null && forcedWidth > boxWidth)
       boxWidth = forcedWidth;
 
-    int remaining = boxWidth - headerWidth - 1;
+    int remaining = boxWidth - displayWidth(header) - 1;
     if (remaining < 0)
       remaining = 0;
     String dashes;
@@ -526,6 +517,41 @@ public final class DisplayUtils
     lines.add(BOX_BOTTOM_LEFT + BOX_HORIZONTAL.repeat(maxWidth + 2) + BOX_BOTTOM_RIGHT);
 
     return String.join("\n", lines);
+  }
+
+  /**
+   * Calculates the natural box width for an inner box with the given header and content items.
+   * <p>
+   * The natural box width is determined by the wider of: the header width plus one, or the maximum
+   * content item display width. This mirrors the width calculation in {@link #buildInnerBox}.
+   *
+   * @param header the header text
+   * @param contentItems the content lines (may be empty)
+   * @return the natural box width
+   * @throws NullPointerException if {@code header} or {@code contentItems} are null
+   */
+  public int calculateBoxWidth(String header, List<String> contentItems)
+  {
+    requireThat(header, "header").isNotNull();
+    requireThat(contentItems, "contentItems").isNotNull();
+
+    int maxContentWidth = calculateMaxWidth(effectiveContent(contentItems));
+    int headerMinWidth = displayWidth(header) + 1;
+    return Math.max(headerMinWidth, maxContentWidth);
+  }
+
+  /**
+   * Returns the content items to use for box rendering. If the list is empty, returns a single empty
+   * string so the box renders one blank line instead of collapsing.
+   *
+   * @param contentItems the original content items
+   * @return the effective content items (never empty)
+   */
+  private List<String> effectiveContent(List<String> contentItems)
+  {
+    if (contentItems.isEmpty())
+      return List.of("");
+    return contentItems;
   }
 
   /**
