@@ -125,12 +125,24 @@ EOF
   exit 1
 fi
 
-# Fast-forward base branch to current HEAD without checking out
-FF_OUTPUT=$(git -C "$WORKTREE_PATH" push . "HEAD:${BASE_BRANCH}" 2>&1)
-FF_EXIT=$?
-
-if [[ $FF_EXIT -ne 0 ]]; then
-  cat >&2 <<EOF
+# Fast-forward base branch to current HEAD
+HEAD_SHA=$(git -C "$WORKTREE_PATH" rev-parse HEAD)
+if ! FF_OUTPUT=$(git -C "$WORKTREE_PATH" push . "HEAD:${BASE_BRANCH}" 2>&1); then
+  if echo "$FF_OUTPUT" | grep -q "branch is currently checked out"; then
+    # Base branch is checked out in main worktree — merge from there to update ref, index, and working tree
+    if ! FF_OUTPUT=$(git -C "$MAIN_REPO" merge --ff-only "$HEAD_SHA" 2>&1); then
+      cat >&2 <<EOF
+{
+  "status": "FF_FAILED",
+  "message": "Fast-forward merge failed in main worktree: $FF_OUTPUT",
+  "base_branch": "$BASE_BRANCH",
+  "recovery_hint": "rebase_needed"
+}
+EOF
+      exit 1
+    fi
+  else
+    cat >&2 <<EOF
 {
   "status": "FF_FAILED",
   "message": "Base branch advanced during merge",
@@ -138,7 +150,8 @@ if [[ $FF_EXIT -ne 0 ]]; then
   "recovery_hint": "rebase_needed"
 }
 EOF
-  exit 1
+    exit 1
+  fi
 fi
 
 # Verify base branch was updated
