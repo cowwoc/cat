@@ -40,8 +40,8 @@ are called directly and do not need skill preloading.
 
 ```yaml
 skills:
-  - git-merge-linear
-  - validate-git-safety
+  - cat:git-merge-linear-first-use
+  - cat:validate-git-safety-first-use
 ```
 
 ## Example Agent

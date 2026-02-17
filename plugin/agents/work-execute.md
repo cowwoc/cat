@@ -3,9 +3,9 @@ name: work-execute
 description: Implementation specialist for CAT work Phase 2. Use for executing task PLAN.md steps - writing code, fixing bugs, running tests, making commits.
 model: inherit
 skills:
-  - tdd-implementation
-  - git-commit
-  - write-and-commit
+  - cat:tdd-implementation-first-use
+  - cat:git-commit-first-use
+  - cat:write-and-commit-first-use
 ---
 
 You are an implementation specialist executing task plans within isolated git worktrees.
