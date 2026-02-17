@@ -11,10 +11,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -33,11 +35,14 @@ import org.slf4j.LoggerFactory;
  * plugin-root/
  *   skills/
  *     reference.md              — Reload text returned on 2nd+ invocations
- *     {skill-name}/
- *       first-use.md            — Main skill content (loaded on first invocation)
+ *     {skill-name}-first-use/
+ *       SKILL.md                — Skill content with optional {@code <skill>} and {@code <output>} tags
  * </pre>
  * <p>
- * <b>File inclusion via @path:</b> Lines in {@code first-use.md} starting with {@code @} followed by a
+ * <b>Tag-based content:</b> The SKILL.md file may use XML-like tags to separate
+ * the static skill instructions ({@code <skill>}) from the dynamic preprocessor output ({@code <output>}).
+ * <p>
+ * <b>File inclusion via @path:</b> Lines in skill content starting with {@code @} followed by a
  * relative path containing at least one {@code /} (e.g., {@code @concepts/version-paths.md},
  * {@code @config/settings.yaml}) are replaced with the raw file contents (no wrapping). Any file extension
  * is allowed. Paths are resolved relative to the plugin root. Variable substitution is applied to the
@@ -57,8 +62,14 @@ import org.slf4j.LoggerFactory;
  * instantiates the class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])}
  * to replace the directive with the output.
  * <p>
- * <b>License header stripping:</b> If {@code first-use.md} starts with an HTML comment block
+ * <b>License header stripping:</b> If {@code reference.md} starts with an HTML comment block
  * containing a copyright notice, it is stripped before returning.
+ * <p>
+ * <b>Skill output wrapping:</b> Successful preprocessor directive output is wrapped in
+ * {@code <output>} XML tags. If the tag is absent from the directive result, the agent knows
+ * preprocessing failed.
+ *
+ * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarkers
  */
 public final class SkillLoader
 {
@@ -69,6 +80,34 @@ public final class SkillLoader
     Pattern.DOTALL);
   private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
     "!`\"([^\"]+)\"(\\s+[^`]+)?`");
+  private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
+    "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
+  private static final Pattern SKILL_TAG_PATTERN = Pattern.compile(
+    "<skill>(.*?)</skill>", Pattern.DOTALL);
+  private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
+    "<output>(.*?)</output>", Pattern.DOTALL);
+
+  /**
+   * Parsed skill tags from a {@code -first-use} SKILL.md file.
+   *
+   * @param skillBody the content inside the {@code <skill>} tag
+   * @param outputBody the content inside the {@code <output>} tag (may be empty)
+   */
+  private record SkillTags(String skillBody, String outputBody)
+  {
+    /**
+     * Creates a new SkillTags instance.
+     *
+     * @param skillBody the content inside the {@code <skill>} tag
+     * @param outputBody the content inside the {@code <output>} tag (may be empty)
+     * @throws NullPointerException if {@code skillBody} or {@code outputBody} are null
+     */
+    private SkillTags
+    {
+      requireThat(skillBody, "skillBody").isNotNull();
+      requireThat(outputBody, "outputBody").isNotNull();
+    }
+  }
 
   private final JvmScope scope;
   private final Path pluginRoot;
@@ -116,6 +155,11 @@ public final class SkillLoader
 
   /**
    * Loads a skill, returning full content on first load or reference on subsequent loads.
+   * <p>
+   * When the skill has a {@code -first-use} companion SKILL.md with {@code <skill>} and
+   * {@code <output>} tags, the {@code <skill>} section (wrapped in tags) is returned on first
+   * load and the reference on subsequent loads. The {@code <output>} section (dynamic preprocessor
+   * content) is always appended regardless of whether it is the first or subsequent load.
    *
    * @param skillName the skill name
    * @return the skill content with environment variables substituted
@@ -127,8 +171,31 @@ public final class SkillLoader
   {
     requireThat(skillName, "skillName").isNotBlank();
 
-    StringBuilder output = new StringBuilder(4096);
+    String content = loadContent(skillName);
+    SkillTags tags = parseSkillTags(content);
 
+    if (tags != null)
+    {
+      // -first-use pattern with <skill>/<output> tags
+      StringBuilder output = new StringBuilder(4096);
+      if (loadedSkills.contains(skillName))
+      {
+        String reference = loadReference();
+        output.append(reference);
+      }
+      else
+      {
+        output.append("<skill>\n").append(substituteVars(tags.skillBody())).append("\n</skill>");
+        markSkillLoaded(skillName);
+      }
+      // Always execute <output> preprocessor (fresh data each invocation)
+      if (!tags.outputBody().isEmpty())
+        output.append("\n\n").append(substituteVars(tags.outputBody()));
+      return output.toString();
+    }
+
+    // Content without tags — apply variable substitution
+    StringBuilder output = new StringBuilder(4096);
     if (loadedSkills.contains(skillName))
     {
       String reference = loadReference();
@@ -136,11 +203,9 @@ public final class SkillLoader
     }
     else
     {
-      String content = loadContent(skillName);
-      output.append(content);
+      output.append(substituteVars(content));
       markSkillLoaded(skillName);
     }
-
     return output.toString();
   }
 
@@ -164,21 +229,23 @@ public final class SkillLoader
 
 
   /**
-   * Loads the main skill content from first-use.md.
+   * Loads the skill content from the {@code -first-use} companion SKILL.md.
+   * <p>
+   * Returns content with YAML frontmatter stripped but without variable substitution (so tags can
+   * be parsed first by {@link #load(String)}).
    *
    * @param skillName the skill name
-   * @return the content with variables substituted, or empty string if no content file
+   * @return the content, or empty string if no content file exists
    * @throws IOException if content file cannot be read
    */
   private String loadContent(String skillName) throws IOException
   {
-    Path contentPath = pluginRoot.resolve("skills/" + skillName + "/first-use.md");
+    Path contentPath = pluginRoot.resolve("skills/" + skillName + "-first-use/SKILL.md");
     if (!Files.exists(contentPath))
       return "";
-
     String content = Files.readString(contentPath, StandardCharsets.UTF_8);
-    content = stripLicenseHeader(content);
-    return substituteVars(content);
+    content = stripFrontmatter(content);
+    return content;
   }
 
   /**
@@ -199,6 +266,45 @@ public final class SkillLoader
     if (frontmatter != null)
       return frontmatter + content.substring(matcher.end());
     return content.substring(matcher.end());
+  }
+
+  /**
+   * Strips YAML frontmatter from the beginning of content.
+   * <p>
+   * Removes the leading {@code ---\n...\n---\n} block if present. This is used when loading
+   * {@code -first-use} SKILL.md files which carry frontmatter for Claude Code's own use.
+   *
+   * @param content the content to process
+   * @return the content with YAML frontmatter removed, or unchanged if none found
+   */
+  private static String stripFrontmatter(String content)
+  {
+    Matcher matcher = FRONTMATTER_PATTERN.matcher(content);
+    if (matcher.find())
+      return content.substring(matcher.end());
+    return content;
+  }
+
+  /**
+   * Parses {@code <skill>} and {@code <output>} tags from content.
+   *
+   * @param content the content to parse
+   * @return the parsed tags, or {@code null} if no {@code <skill>} tag is found
+   */
+  private static SkillTags parseSkillTags(String content)
+  {
+    Matcher skillMatcher = SKILL_TAG_PATTERN.matcher(content);
+    if (!skillMatcher.find())
+      return null;
+    String skillBody = skillMatcher.group(1).strip();
+
+    Matcher outputMatcher = OUTPUT_TAG_PATTERN.matcher(content);
+    String outputBody;
+    if (outputMatcher.find())
+      outputBody = outputMatcher.group(1).strip();
+    else
+      outputBody = "";
+    return new SkillTags(skillBody, outputBody);
   }
 
   /**
@@ -404,13 +510,13 @@ public final class SkillLoader
       {
         throw new IOException("Class " + className + " does not implement SkillOutput");
       }
-      return skillOutput.getOutput(arguments);
+      return "<output>\n" + skillOutput.getOutput(arguments) + "\n</output>";
     }
     catch (IOException e)
     {
       throw e;
     }
-    catch (java.lang.reflect.InvocationTargetException e)
+    catch (InvocationTargetException e)
     {
       Throwable cause = e.getCause();
       if (cause == null)
@@ -486,8 +592,8 @@ public final class SkillLoader
   {
     loadedSkills.add(skillName);
     Files.writeString(sessionFile, skillName + "\n", StandardCharsets.UTF_8,
-      java.nio.file.StandardOpenOption.CREATE,
-      java.nio.file.StandardOpenOption.APPEND);
+      StandardOpenOption.CREATE,
+      StandardOpenOption.APPEND);
   }
 
   /**
