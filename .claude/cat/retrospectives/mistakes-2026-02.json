@@ -245,6 +245,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before presenting the approval gate in Step 7, verify STATE.md status is 'closed'. If not closed, update STATE.md and amend the last commit to include the closure before proceeding."
+    },
+    {
+      "id": "M352",
+      "timestamp": "2026-02-18T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Convention file change placed in feature commit instead of refactor commit when establishing and applying a new Java convention",
+      "root_cause": "CLAUDE.md commit type rules did not address the case where a convention file change and its application across files are the same logical unit. The agent split by file location (java.md -> config-like) rather than by topic (establish+apply convention = refactor unit).",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+      "pattern_keywords": [
+        "commit-grouping",
+        "convention-file",
+        "java-md",
+        "refactor-commit",
+        "mixed-commit"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When adding a new convention to java.md AND applying it across files in the same session, include the java.md change in the SAME commit as the refactoring work. Group commits by topic (establish + apply = one unit), not by file location."
     }
   ]
 }
