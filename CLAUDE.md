@@ -15,6 +15,7 @@
 - Other `.claude/` files and `CLAUDE.md` use `config:`
 - `plugin/**/README.md` is `docs:`, not a plugin file
 - Mixed commits: if a commit touches plugin files, the type follows the plugin work (even if `.claude/` files are also modified)
+- **Convention changes belong with their application (M352):** When adding a new convention to a language or style file (e.g., `java.md`) AND applying it across files in the same session, include the convention file change in the SAME commit as the files that apply it. Group by topic (establish + apply = one unit), not by file location.
 - **STATE.md belongs with implementation (M487):** When closing an issue, STATE.md updates belong in the SAME commit as the implementation work, using the implementation's commit type (feature:/bugfix:/docs:/etc), NOT in a separate planning: commit
 - If a commit would touch both docs and non-docs files, split it into separate commits
 
