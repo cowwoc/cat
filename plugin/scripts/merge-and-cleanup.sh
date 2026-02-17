@@ -290,12 +290,19 @@ if ! git -C "$WORKTREE_PATH" merge-base --is-ancestor "$BASE_BRANCH" HEAD 2>/dev
   error_json 4 "Fast-forward merge not possible. Issue branch has diverged from $BASE_BRANCH. Rebase required."
 fi
 
-# Perform the fast-forward merge using git push from within the worktree
-# This updates the base branch to point to HEAD without checking it out
+# Perform the fast-forward merge
 COMMIT_SHA=$(git -C "$WORKTREE_PATH" rev-parse --short HEAD)
+HEAD_SHA=$(git -C "$WORKTREE_PATH" rev-parse HEAD)
 
 if ! PUSH_ERROR=$(git -C "$WORKTREE_PATH" push . "HEAD:$BASE_BRANCH" 2>&1); then
-  error_json 4 "Fast-forward merge failed: $PUSH_ERROR. Rebase may be required."
+  if echo "$PUSH_ERROR" | grep -q "branch is currently checked out"; then
+    # Base branch is checked out in main worktree — merge from there to update ref, index, and working tree
+    if ! PUSH_ERROR=$(git -C "$PROJECT_DIR" merge --ff-only "$HEAD_SHA" 2>&1); then
+      error_json 4 "Fast-forward merge failed in main worktree: $PUSH_ERROR. Rebase may be required."
+    fi
+  else
+    error_json 4 "Fast-forward merge failed: $PUSH_ERROR. Rebase may be required."
+  fi
 fi
 
 progress_done "Merged commit $COMMIT_SHA to $BASE_BRANCH"
