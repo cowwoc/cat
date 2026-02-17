@@ -1418,12 +1418,12 @@ public final class EmpiricalTestRunnerTest
       JsonNode firstTrial = node.path("results").get(0);
       requireThat(firstTrial.path("pass").asBoolean(false), "firstTrialPass").isTrue();
       requireThat(firstTrial.path("elapsed").asLong(0L), "firstTrialElapsed").isEqualTo(5L);
-      requireThat(firstTrial.path("outputPreview").asString(""), "firstTrialOutputPreview")
-        .isEqualTo("Hello world");
+      requireThat(firstTrial.path("outputPreview").asString(""), "firstTrialOutputPreview").
+        isEqualTo("Hello world");
       requireThat(firstTrial.path("toolsUsed").isArray(), "firstTrialToolsUsedIsArray").isTrue();
       requireThat(firstTrial.path("toolsUsed").size(), "firstTrialToolsUsedSize").isEqualTo(1);
-      requireThat(firstTrial.path("toolsUsed").get(0).asString(""), "firstTrialTool")
-        .isEqualTo("Bash");
+      requireThat(firstTrial.path("toolsUsed").get(0).asString(""), "firstTrialTool").
+        isEqualTo("Bash");
       requireThat(firstTrial.path("checks").isObject(), "firstTrialChecksIsObject").isTrue();
       requireThat(firstTrial.path("checks").path("contains:hello").asBoolean(false),
         "firstTrialContainsHello").isTrue();
@@ -1431,8 +1431,8 @@ public final class EmpiricalTestRunnerTest
       JsonNode secondTrial = node.path("results").get(1);
       requireThat(secondTrial.path("pass").asBoolean(true), "secondTrialPass").isFalse();
       requireThat(secondTrial.path("elapsed").asLong(0L), "secondTrialElapsed").isEqualTo(3L);
-      requireThat(secondTrial.path("outputPreview").asString(""), "secondTrialOutputPreview")
-        .isEqualTo("no match");
+      requireThat(secondTrial.path("outputPreview").asString(""), "secondTrialOutputPreview").
+        isEqualTo("no match");
       requireThat(secondTrial.path("toolsUsed").isArray(), "secondTrialToolsUsedIsArray").isTrue();
       requireThat(secondTrial.path("toolsUsed").size(), "secondTrialToolsUsedSize").isEqualTo(0);
       requireThat(secondTrial.path("checks").path("contains:hello").asBoolean(true),
@@ -1470,8 +1470,8 @@ public final class EmpiricalTestRunnerTest
 
       requireThat(node.path("pass").asBoolean(false), "pass").isTrue();
       requireThat(node.path("elapsed").asLong(0L), "elapsed").isEqualTo(7L);
-      requireThat(node.path("outputPreview").asString(""), "outputPreview")
-        .isEqualTo("expected output text");
+      requireThat(node.path("outputPreview").asString(""), "outputPreview").
+        isEqualTo("expected output text");
       requireThat(node.path("toolsUsed").isArray(), "toolsUsedIsArray").isTrue();
       requireThat(node.path("toolsUsed").size(), "toolsUsedSize").isEqualTo(2);
       requireThat(node.path("error").asString("x"), "error").isEqualTo("");
