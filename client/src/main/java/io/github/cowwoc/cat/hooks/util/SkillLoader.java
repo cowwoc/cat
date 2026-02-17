@@ -115,9 +115,10 @@ public final class SkillLoader
    * @param scope the JVM scope for accessing shared services
    * @param pluginRoot the Claude plugin root directory
    * @param sessionId the Claude session ID
-   * @param projectDir the Claude project directory (may be empty)
-   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, or {@code sessionId} are null
-   * @throws IllegalArgumentException if {@code pluginRoot} or {@code sessionId} are blank
+   * @param projectDir the Claude project directory
+   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code sessionId}, or {@code projectDir}
+   *   are null
+   * @throws IllegalArgumentException if {@code pluginRoot}, {@code sessionId}, or {@code projectDir} are blank
    * @throws IOException if the session file cannot be read
    */
   public SkillLoader(JvmScope scope, String pluginRoot, String sessionId, String projectDir) throws IOException
@@ -125,7 +126,7 @@ public final class SkillLoader
     requireThat(scope, "scope").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
-    requireThat(projectDir, "projectDir").isNotNull();
+    requireThat(projectDir, "projectDir").isNotBlank();
 
     this.scope = scope;
     this.pluginRoot = Paths.get(pluginRoot);
@@ -564,26 +565,22 @@ public final class SkillLoader
    * <p>
    * Provides CLI entry point to replace the original load-skill script.
    * Invoked as: java -cp hooks.jar io.github.cowwoc.cat.hooks.util.SkillLoader
-   * plugin-root skill-name session-id [project-dir]
+   * plugin-root skill-name session-id project-dir
    *
-   * @param args command-line arguments: plugin-root skill-name session-id [project-dir]
+   * @param args command-line arguments: plugin-root skill-name session-id project-dir
    */
   public static void main(String[] args)
   {
-    if (args.length < 3 || args.length > 4)
+    if (args.length != 4)
     {
-      System.err.println("Usage: load-skill <plugin-root> <skill-name> <session-id> [project-dir]");
+      System.err.println("Usage: load-skill <plugin-root> <skill-name> <session-id> <project-dir>");
       System.exit(1);
     }
 
     String pluginRoot = args[0];
     String skillName = args[1];
     String sessionId = args[2];
-    String projectDir;
-    if (args.length == 4)
-      projectDir = args[3];
-    else
-      projectDir = "";
+    String projectDir = args[3];
 
     try (JvmScope scope = new MainJvmScope())
     {
