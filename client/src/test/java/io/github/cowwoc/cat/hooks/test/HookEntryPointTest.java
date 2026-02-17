@@ -762,6 +762,99 @@ public class HookEntryPointTest
     }
   }
 
+  // --- EnforceWorktreeSafetyBeforeMerge tests ---
+
+  /**
+   * Verifies that EnforceWorktreeSafetyBeforeMerge allows non-work-merge tasks even when CWD is inside a worktree.
+   */
+  @Test
+  public void enforceWorktreeSafetyAllowsNonMergeTasksInsideWorktree() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:implement\"}");
+      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
+        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      TaskHandler.Result result = handler.check(toolInput, "test-session",
+        "/workspace/.claude/cat/worktrees/2.1-my-task");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+  }
+
+  /**
+   * Verifies that EnforceWorktreeSafetyBeforeMerge blocks work-merge spawn when CWD is inside a worktree.
+   */
+  @Test
+  public void enforceWorktreeSafetyBlocksMergeWhenCwdInsideWorktree() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
+        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      TaskHandler.Result result = handler.check(toolInput, "test-session",
+        "/workspace/.claude/cat/worktrees/2.1-my-task");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("BLOCKED");
+      requireThat(result.reason(), "reason").contains("/workspace/.claude/cat/worktrees/2.1-my-task");
+    }
+  }
+
+  /**
+   * Verifies that EnforceWorktreeSafetyBeforeMerge allows work-merge spawn when CWD is not inside a worktree.
+   */
+  @Test
+  public void enforceWorktreeSafetyAllowsMergeWhenCwdIsWorkspace() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
+        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      TaskHandler.Result result = handler.check(toolInput, "test-session", "/workspace");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+  }
+
+  /**
+   * Verifies that EnforceWorktreeSafetyBeforeMerge allows work-merge spawn when CWD is empty.
+   */
+  @Test
+  public void enforceWorktreeSafetyAllowsMergeWhenCwdIsEmpty() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
+        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      TaskHandler.Result result = handler.check(toolInput, "test-session", "");
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+  }
+
+  /**
+   * Verifies that EnforceWorktreeSafetyBeforeMerge blocks when CWD is a subdirectory of a worktree.
+   */
+  @Test
+  public void enforceWorktreeSafetyBlocksMergeWhenCwdIsSubdirOfWorktree() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
+      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
+        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      TaskHandler.Result result = handler.check(toolInput, "test-session",
+        "/workspace/.claude/cat/worktrees/2.1-my-task/src/main/java");
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("BLOCKED");
+    }
+  }
+
   // --- EnforceWorkflowCompletion handler tests ---
 
   /**
@@ -1420,8 +1513,8 @@ public class HookEntryPointTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      TaskHandler handler1 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 1");
-      TaskHandler handler2 = (toolInput, sessionId) -> TaskHandler.Result.warn("Warning from task handler 2");
+      TaskHandler handler1 = (toolInput, sessionId, cwd) -> TaskHandler.Result.warn("Warning from task handler 1");
+      TaskHandler handler2 = (toolInput, sessionId, cwd) -> TaskHandler.Result.warn("Warning from task handler 2");
 
       GetTaskOutput dispatcher = new GetTaskOutput(List.of(handler1, handler2));
 
