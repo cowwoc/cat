@@ -28,19 +28,21 @@ import org.slf4j.LoggerFactory;
  * Loads skill content from a plugin's skill directory structure.
  * <p>
  * On first invocation for a given skill, loads the full content. On subsequent invocations
- * within the same session, loads a shorter reference text instead.
+ * within the same session, generates a shorter reference text dynamically instead.
  * <p>
  * <b>Skill directory structure:</b>
  * <pre>
  * plugin-root/
  *   skills/
- *     reference.md              — Reload text returned on 2nd+ invocations
  *     {skill-name}-first-use/
- *       SKILL.md                — Skill content with optional {@code <skill>} and {@code <output>} tags
+ *       SKILL.md                — Skill content with optional {@code <output>} tag
  * </pre>
  * <p>
- * <b>Tag-based content:</b> The SKILL.md file may use XML-like tags to separate
- * the static skill instructions ({@code <skill>}) from the dynamic preprocessor output ({@code <output>}).
+ * <b>Tag-based content:</b> The SKILL.md file may contain an optional {@code <output>} tag that separates
+ * static instructions from dynamic preprocessor content. Everything before the {@code <output>} tag is
+ * treated as skill instructions. On first use, the instructions are output directly. On subsequent uses,
+ * a brief reference instruction is generated dynamically. The {@code <output>} section is always wrapped
+ * in {@code <output skill="X">} tags (where X is the skill name) and appended on every invocation.
  * <p>
  * <b>File inclusion via @path:</b> Lines in skill content starting with {@code @} followed by a
  * relative path containing at least one {@code /} (e.g., {@code @concepts/version-paths.md},
@@ -61,13 +63,6 @@ import org.slf4j.LoggerFactory;
  * after variable substitution. When the path references a known Java launcher in {@code hooks/bin/},
  * instantiates the class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])}
  * to replace the directive with the output.
- * <p>
- * <b>License header stripping:</b> If {@code reference.md} starts with an HTML comment block
- * containing a copyright notice, it is stripped before returning.
- * <p>
- * <b>Skill output wrapping:</b> Successful preprocessor directive output is wrapped in
- * {@code <output>} XML tags. If the tag is absent from the directive result, the agent knows
- * preprocessing failed.
  *
  * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarkers
  */
@@ -75,36 +70,34 @@ public final class SkillLoader
 {
   private static final Pattern VAR_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
   private static final Pattern PATH_PATTERN = Pattern.compile("^@(.+/.+)$", Pattern.MULTILINE);
-  private static final Pattern LICENSE_HEADER_PATTERN = Pattern.compile(
-    "\\A(---\\n.*?\\n---\\n)?<!--\\n.*?Copyright.*?-->\\n?\\n?",
-    Pattern.DOTALL);
   private static final Pattern PREPROCESSOR_DIRECTIVE_PATTERN = Pattern.compile(
     "!`\"([^\"]+)\"(\\s+[^`]+)?`");
   private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
     "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
-  private static final Pattern SKILL_TAG_PATTERN = Pattern.compile(
-    "<skill>(.*?)</skill>", Pattern.DOTALL);
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
     "<output>(.*?)</output>", Pattern.DOTALL);
 
   /**
-   * Parsed skill tags from a {@code -first-use} SKILL.md file.
+   * Parsed content from a {@code -first-use} SKILL.md file.
+   * <p>
+   * The {@code instructions} are output directly on first use. The {@code outputBody}
+   * is wrapped in {@code <output skill="X">} tags on every invocation.
    *
-   * @param skillBody the content inside the {@code <skill>} tag
+   * @param instructions the content before the {@code <output>} tag
    * @param outputBody the content inside the {@code <output>} tag (may be empty)
    */
-  private record SkillTags(String skillBody, String outputBody)
+  private record ParsedContent(String instructions, String outputBody)
   {
     /**
-     * Creates a new SkillTags instance.
+     * Creates a new ParsedContent instance.
      *
-     * @param skillBody the content inside the {@code <skill>} tag
+     * @param instructions the content before the {@code <output>} tag
      * @param outputBody the content inside the {@code <output>} tag (may be empty)
-     * @throws NullPointerException if {@code skillBody} or {@code outputBody} are null
+     * @throws NullPointerException if {@code instructions} or {@code outputBody} are null
      */
-    private SkillTags
+    private ParsedContent
     {
-      requireThat(skillBody, "skillBody").isNotNull();
+      requireThat(instructions, "instructions").isNotNull();
       requireThat(outputBody, "outputBody").isNotNull();
     }
   }
@@ -154,12 +147,14 @@ public final class SkillLoader
   }
 
   /**
-   * Loads a skill, returning full content on first load or reference on subsequent loads.
+   * Loads a skill, returning full content on first load or a dynamically generated reference on
+   * subsequent loads.
    * <p>
-   * When the skill has a {@code -first-use} companion SKILL.md with {@code <skill>} and
-   * {@code <output>} tags, the {@code <skill>} section (wrapped in tags) is returned on first
-   * load and the reference on subsequent loads. The {@code <output>} section (dynamic preprocessor
-   * content) is always appended regardless of whether it is the first or subsequent load.
+   * When the skill has a {@code -first-use} companion SKILL.md with an {@code <output>} tag,
+   * the instructions before the tag are returned on first load and a brief reference instruction
+   * on subsequent loads. The {@code <output>} section (dynamic preprocessor content) is always
+   * wrapped in {@code <output skill="X">} tags and appended regardless of whether it is the
+   * first or subsequent load.
    *
    * @param skillName the skill name
    * @return the skill content with environment variables substituted
@@ -172,25 +167,31 @@ public final class SkillLoader
     requireThat(skillName, "skillName").isNotBlank();
 
     String content = loadContent(skillName);
-    SkillTags tags = parseSkillTags(content);
+    ParsedContent parsed = parseContent(content);
 
-    if (tags != null)
+    if (parsed != null)
     {
-      // -first-use pattern with <skill>/<output> tags
+      // -first-use pattern with <output> tag
       StringBuilder output = new StringBuilder(4096);
       if (loadedSkills.contains(skillName))
       {
-        String reference = loadReference();
-        output.append(reference);
+        output.append("The `<output skill=\"").append(skillName).
+          append("\">` tag below contains updated pre-rendered terminal output. ").
+          append("Follow the same instructions from earlier: copy the tag content ").
+          append("character-for-character into your response.");
       }
       else
       {
-        output.append("<skill>\n").append(substituteVars(tags.skillBody())).append("\n</skill>");
+        output.append(substituteVars(parsed.instructions()));
         markSkillLoaded(skillName);
       }
       // Always execute <output> preprocessor (fresh data each invocation)
-      if (!tags.outputBody().isEmpty())
-        output.append("\n\n").append(substituteVars(tags.outputBody()));
+      if (!parsed.outputBody().isEmpty())
+      {
+        String processedOutput = substituteVars(parsed.outputBody());
+        output.append("\n\n<output skill=\"").append(skillName).append("\">\n").
+          append(processedOutput).append("\n</output>");
+      }
       return output.toString();
     }
 
@@ -198,8 +199,11 @@ public final class SkillLoader
     StringBuilder output = new StringBuilder(4096);
     if (loadedSkills.contains(skillName))
     {
-      String reference = loadReference();
-      output.append(reference);
+      output.append("""
+        The skill instructions were already loaded earlier in this conversation.
+        Use the Skill tool to invoke this skill again with the same arguments.
+        The skill script generates fresh, accurate output on every invocation.
+        Execute the skill instructions in FULL - do NOT summarize, paraphrase, or abbreviate any output.""");
     }
     else
     {
@@ -207,24 +211,6 @@ public final class SkillLoader
       markSkillLoaded(skillName);
     }
     return output.toString();
-  }
-
-
-  /**
-   * Loads the reference text for subsequent skill invocations.
-   *
-   * @return the reference content with variables substituted, or empty string if no reference
-   * @throws IOException if reference file cannot be read
-   */
-  private String loadReference() throws IOException
-  {
-    Path referencePath = pluginRoot.resolve("skills/reference.md");
-    if (!Files.exists(referencePath))
-      return "";
-
-    String reference = Files.readString(referencePath, StandardCharsets.UTF_8);
-    reference = stripLicenseHeader(reference);
-    return substituteVars(reference);
   }
 
 
@@ -249,26 +235,6 @@ public final class SkillLoader
   }
 
   /**
-   * Strips license header HTML comments from the beginning of markdown content.
-   * <p>
-   * Removes {@code <!-- ... -->} blocks at the start of content (optionally preceded by YAML
-   * frontmatter) that contain a copyright notice. This saves tokens when serving skill content.
-   *
-   * @param content the content to process
-   * @return the content with license header removed, or unchanged if no license header found
-   */
-  private static String stripLicenseHeader(String content)
-  {
-    Matcher matcher = LICENSE_HEADER_PATTERN.matcher(content);
-    if (!matcher.find())
-      return content;
-    String frontmatter = matcher.group(1);
-    if (frontmatter != null)
-      return frontmatter + content.substring(matcher.end());
-    return content.substring(matcher.end());
-  }
-
-  /**
    * Strips YAML frontmatter from the beginning of content.
    * <p>
    * Removes the leading {@code ---\n...\n---\n} block if present. This is used when loading
@@ -286,25 +252,22 @@ public final class SkillLoader
   }
 
   /**
-   * Parses {@code <skill>} and {@code <output>} tags from content.
+   * Parses content into instructions and output body using the {@code <output>} tag as delimiter.
+   * <p>
+   * Everything before the {@code <output>} tag is treated as instructions. The content inside
+   * the {@code <output>} tag is the preprocessor directive body.
    *
    * @param content the content to parse
-   * @return the parsed tags, or {@code null} if no {@code <skill>} tag is found
+   * @return the parsed content, or {@code null} if no {@code <output>} tag is found
    */
-  private static SkillTags parseSkillTags(String content)
+  private static ParsedContent parseContent(String content)
   {
-    Matcher skillMatcher = SKILL_TAG_PATTERN.matcher(content);
-    if (!skillMatcher.find())
-      return null;
-    String skillBody = skillMatcher.group(1).strip();
-
     Matcher outputMatcher = OUTPUT_TAG_PATTERN.matcher(content);
-    String outputBody;
-    if (outputMatcher.find())
-      outputBody = outputMatcher.group(1).strip();
-    else
-      outputBody = "";
-    return new SkillTags(skillBody, outputBody);
+    if (!outputMatcher.find())
+      return null;
+    String instructions = content.substring(0, outputMatcher.start()).strip();
+    String outputBody = outputMatcher.group(1).strip();
+    return new ParsedContent(instructions, outputBody);
   }
 
   /**
@@ -510,7 +473,7 @@ public final class SkillLoader
       {
         throw new IOException("Class " + className + " does not implement SkillOutput");
       }
-      return "<output>\n" + skillOutput.getOutput(arguments) + "\n</output>";
+      return skillOutput.getOutput(arguments);
     }
     catch (IOException e)
     {
