@@ -252,11 +252,8 @@ for file in "${PREVENTION_FILES[@]}"; do
 done
 
 # Commit prevention changes
-# Include Learn-Prevention trailer so the squash step in /cat:work preserves this commit separately
 PREVENTION_COMMIT_MSG="feature: add prevention for ${NEXT_ID}"
-git commit -m "${PREVENTION_COMMIT_MSG}
-
-Learn-Prevention: ${NEXT_ID}"
+git commit -m "$PREVENTION_COMMIT_MSG"
 PREVENTION_COMMIT_HASH=$(git rev-parse --short HEAD)
 
 echo "Prevention committed at $PREVENTION_COMMIT_HASH (in $PREVENTION_DIR)"
