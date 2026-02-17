@@ -3,7 +3,6 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<skill>
 # Configure CAT Statusline
 
 Install and configure Claude Code's statusline to display CAT context information including git worktree, model name,
@@ -120,8 +119,6 @@ Restart Claude Code or start a new session to see it in action.
 - [ ] Success message displayed to user
 
 </success_criteria>
-</skill>
-
 <output>
 !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-statusline-output"`
 </output>
