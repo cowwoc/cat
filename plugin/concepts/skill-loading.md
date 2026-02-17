@@ -23,7 +23,7 @@ How to register, invoke, and reference skills for main agents and subagents in C
 {skill-name}/
   SKILL.md        — Frontmatter (description, user-invocable) + preprocessor directive or content
 {skill-name}-first-use/
-  SKILL.md        — Companion skill content with optional <skill> and <output> tags
+  SKILL.md        — Companion skill content as plain markdown
 reference.md      — Short content returned on subsequent invocations (optional; empty if absent)
 ```
 
@@ -83,9 +83,9 @@ also invoked by the parent agent.
 
 ## `-first-use` Skill Pattern
 
-The `-first-use` pattern separates static skill instructions from dynamic preprocessor output. Instead of
-embedding a preprocessor directive inside the skill content, create a companion skill directory named
-`{skill-name}-first-use/` with a `SKILL.md` file that uses XML-like tags.
+The `-first-use` pattern provides a companion skill directory for subagent preloading. The companion SKILL.md
+contains the full static instructions for the skill and is injected directly into the subagent's context via
+`skills:` frontmatter.
 
 ### Architecture
 
@@ -94,7 +94,7 @@ plugin/skills/
   {skill-name}/
     SKILL.md            — Main skill entry point (preprocessor directive calls SkillLoader)
   {skill-name}-first-use/
-    SKILL.md            — Companion: static instructions + dynamic output, separated by tags
+    SKILL.md            — Companion: full static instructions for subagent preloading
 ```
 
 The companion SKILL.md contains:
@@ -105,27 +105,11 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<skill name="{skill-name}">
-# Skill Instructions
+# Skill Title
 
-Static instructions the agent follows. These are loaded once (on first invocation) and
-replaced by the reference text on subsequent invocations.
-</skill>
-
-<output name="{skill-name}">
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-{skill-name}-output"`
-</output>
+Full skill instructions as plain markdown. These instructions are injected directly into the
+subagent's context when the agent is spawned via the Task tool.
 ```
-
-### How SkillLoader Processes the Companion File
-
-When `load("{skill-name}")` is called:
-
-1. SkillLoader checks for `skills/{skill-name}-first-use/SKILL.md` first
-2. If found, strips YAML frontmatter and license header, then parses `<skill>` and `<output>` tags
-3. **First invocation:** Returns `<skill>` body (with variable substitution) + `<output>` body
-4. **Subsequent invocations:** Returns reference text + `<output>` body
-5. The `<output>` body is always appended (fresh preprocessor data each invocation)
 
 ### Loading Paths
 
@@ -136,7 +120,7 @@ When `load("{skill-name}")` is called:
 
 **Why subagents reference `-first-use` directly:**
 - Subagents use `skills:` frontmatter, which preprocesses and injects SKILL.md content
-- By pointing at `{skill-name}-first-use`, subagents get the full instructions + output in one step
+- By pointing at `{skill-name}-first-use`, subagents get the full instructions in one step
 - This bypasses the SkillLoader marker file, so the parent's "already loaded" state doesn't affect the
   subagent
 
@@ -145,8 +129,7 @@ When `load("{skill-name}")` is called:
 1. Create directory: `plugin/skills/{skill-name}-first-use/`
 2. Create `SKILL.md` with:
    - YAML frontmatter (`user-invocable: false`)
-   - `<skill>` tag containing all static instructions
-   - `<output>` tag containing the preprocessor directive
+   - Full skill instructions as plain markdown
 3. Update any subagent frontmatter that preloads the skill to reference `cat:{skill-name}-first-use`
 
 ### Visibility
@@ -206,7 +189,7 @@ Skill tool invocations to ensure reliable resolution.
 # ✅ Frontmatter: content injected at spawn (preprocessor runs)
 ---
 skills:
-  - cat:git-merge-linear
+  - cat:git-merge-linear-first-use
 ---
 
 # ✅ Skill tool: content loaded on demand during execution
