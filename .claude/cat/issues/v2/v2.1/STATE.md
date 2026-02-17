@@ -23,6 +23,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - unify-project-hooks
 
 ## Issues Pending
+- fix-status-box-alignment
 - prevent-squash-discarding-learn-commits
 - fix-work-prepare-issue-name-matching
 - unify-posttooluse-failure-hooks
