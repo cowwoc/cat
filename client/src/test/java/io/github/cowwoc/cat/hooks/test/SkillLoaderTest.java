@@ -101,23 +101,40 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that constructor accepts empty project directory.
+   * Verifies that constructor rejects null project directory.
    *
    * @throws IOException if an I/O error occurs
    */
-  @Test
-  public void constructorAcceptsEmptyProjectDir() throws IOException
+  @Test(expectedExceptions = NullPointerException.class)
+  public void constructorRejectsNullProjectDir() throws IOException
   {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-      requireThat(loader, "loader").isNotNull();
+      new SkillLoader(scope, "/plugin", "session123", null);
     }
     finally
     {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that constructor rejects empty project directory.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void constructorRejectsEmptyProjectDir() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      new SkillLoader(scope, "/plugin", "session123", "");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
@@ -139,7 +156,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -170,7 +187,7 @@ Session: ${CLAUDE_SESSION_ID}
 """);
 
       String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -232,7 +249,7 @@ Full skill content here
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Full skill content here");
@@ -261,7 +278,7 @@ Full skill content
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").contains("Full skill content");
@@ -293,7 +310,7 @@ Full skill content
       Files.createDirectories(skillDir);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("empty-skill");
 
       requireThat(result, "result").isNotNull();
@@ -316,7 +333,7 @@ Full skill content
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       loader.load(null);
     }
     finally
@@ -337,7 +354,7 @@ Full skill content
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       loader.load("");
     }
     finally
@@ -400,7 +417,7 @@ Value: ${UNDEFINED_VAR}
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").contains("Value: ${UNDEFINED_VAR}");
@@ -430,7 +447,7 @@ Session: ${CLAUDE_SESSION_ID}
 """);
 
       String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "");
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -469,7 +486,7 @@ Context file content
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -508,7 +525,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -540,7 +557,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       loader.load("test-skill");
     }
     finally
@@ -570,7 +587,7 @@ Email: user@example.com
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -614,7 +631,7 @@ Content B
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
 
       try
       {
@@ -666,7 +683,7 @@ Conclusion section
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -718,7 +735,7 @@ Plain text content
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -759,7 +776,7 @@ Content with spaces in filename
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -797,7 +814,7 @@ See @concepts/note.md for details
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -833,7 +850,7 @@ Next line
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -869,7 +886,7 @@ Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -911,7 +928,7 @@ git checkout ${BASE}
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -944,7 +961,7 @@ git checkout ${BASE}
         "# Skill Content\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -976,7 +993,7 @@ Regular content here
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1008,7 +1025,7 @@ Done
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1040,7 +1057,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1079,7 +1096,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1120,7 +1137,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       loader.load("test-skill");
     }
     finally
@@ -1155,7 +1172,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1195,7 +1212,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1235,7 +1252,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1326,7 +1343,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       try
       {
         loader.load("test-skill");
@@ -1371,7 +1388,7 @@ Output content here.
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1416,7 +1433,7 @@ Dynamic output.
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
@@ -1463,7 +1480,7 @@ Skill body without output.
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1503,7 +1520,7 @@ Output content.
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
@@ -1545,7 +1562,7 @@ Output content.
         """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
+        System.nanoTime(), "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
