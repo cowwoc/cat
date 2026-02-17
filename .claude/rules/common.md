@@ -106,7 +106,7 @@ bindings.json: {} (empty)
 - Example: Falling back to "main" when the base branch should be "v1.10" causes merges to wrong branch
 - Fail-fast errors are easier to debug than mysterious wrong behavior
 
-**Pattern:**
+**Pattern (Bash):**
 ```bash
 # ❌ WRONG: Silent fallback
 BASE_BRANCH=$(cat "$CONFIG_FILE" 2>/dev/null || echo "main")
@@ -120,6 +120,21 @@ fi
 BASE_BRANCH=$(cat "$CONFIG_FILE")
 ```
 
+**Pattern (Java):**
+```java
+// ❌ WRONG: Silent fallback (returns empty string for invalid format)
+if (!SESSION_ID_PATTERN.matcher(value).matches()) {
+    log.warn("Invalid session_id format: '{}', treating as empty", value);
+    return "";
+}
+
+// ✅ CORRECT: Fail-fast with exception
+if (!SESSION_ID_PATTERN.matcher(value).matches()) {
+    throw new IllegalArgumentException("Invalid session_id format: '" + value +
+        "'. Expected UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).");
+}
+```
+
 **When fallbacks ARE acceptable:**
 - User-facing defaults (e.g., terminal width defaults to 80)
 - Non-critical display settings
@@ -128,6 +143,7 @@ BASE_BRANCH=$(cat "$CONFIG_FILE")
 **When fallbacks are NOT acceptable:**
 - Branch names (wrong branch = wrong merge target)
 - File paths (wrong path = data loss or corruption)
+- Identifiers used to construct file paths (e.g., session IDs used in file path creation)
 - Security settings (wrong default = vulnerability)
 - Any value that affects data integrity
 
