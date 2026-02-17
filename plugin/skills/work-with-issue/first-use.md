@@ -544,59 +544,6 @@ created (e.g., learning commits, other merges). Rebase ensures squashing only ca
 git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
 ```
 
-### Preserve Learn Prevention Commits
-
-Before squashing, detect commits from `/cat:learn` that carry a `Learn-Prevention:` trailer. These commits contain
-prevention fixes recorded during this work session and must survive the squash as a separate commit.
-
-```bash
-LEARN_COMMITS=$(git -C ${WORKTREE_PATH} log --format="%H" --grep="Learn-Prevention:" --reverse ${BASE_BRANCH}..HEAD)
-```
-
-**If learn commits exist** (`$LEARN_COMMITS` is non-empty):
-
-1. Save the learn commit patches to a temporary directory:
-
-   ```bash
-   LEARN_PATCH_DIR="/tmp/learn-patches-${ISSUE_ID}"
-   mkdir -p "$LEARN_PATCH_DIR"
-   for HASH in $LEARN_COMMITS; do
-     git -C ${WORKTREE_PATH} format-patch -1 "$HASH" -o "$LEARN_PATCH_DIR/"
-   done
-   ```
-
-2. Collect the learn commit messages for reference:
-
-   ```bash
-   LEARN_MSG=$(git -C ${WORKTREE_PATH} log --format="%s%n%b" --grep="Learn-Prevention:" ${BASE_BRANCH}..HEAD)
-   ```
-
-3. Proceed with normal squash (squashes all commits including learn ones into one implementation commit).
-
-4. Apply the learn patches on top as a separate commit:
-
-   ```bash
-   git -C ${WORKTREE_PATH} am "$LEARN_PATCH_DIR"/*.patch
-   ```
-
-   If `am` fails due to conflicts (e.g., the same file was changed by both implementation and learn):
-
-   ```bash
-   git -C ${WORKTREE_PATH} am --abort
-   for patch in "$LEARN_PATCH_DIR"/*.patch; do
-     git -C ${WORKTREE_PATH} apply "$patch" || true
-   done
-   git -C ${WORKTREE_PATH} add -A
-   git -C ${WORKTREE_PATH} commit -m "config: apply learn prevention fixes" \
-     --trailer "Learn-Prevention: aggregated"
-   ```
-
-5. Clean up: `rm -rf "$LEARN_PATCH_DIR"`
-
-**If no learn commits exist:** proceed with the squash step below (no change in behavior).
-
-### Squash Implementation Commits
-
 Then use `/cat:git-squash` to consolidate commits:
 
 - All implementation work + STATE.md closure into 1 feature/bugfix commit
