@@ -3,8 +3,8 @@ name: work-merge
 description: Merge phase for /cat:work - squashes commits, merges to base branch, cleans up worktree.
 model: haiku
 skills:
-  - git-merge-linear
-  - validate-git-safety
+  - cat:git-merge-linear-first-use
+  - cat:validate-git-safety-first-use
 ---
 
 You are a merge specialist handling the final phase of CAT work execution.
