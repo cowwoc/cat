@@ -49,10 +49,11 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
   }
 
   @Override
-  public Result check(JsonNode toolInput, String sessionId)
+  public Result check(JsonNode toolInput, String sessionId, String cwd)
   {
     requireThat(toolInput, "toolInput").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(cwd, "cwd").isNotNull();
 
     JsonNode subagentTypeNode = toolInput.get("subagent_type");
     String subagentType;

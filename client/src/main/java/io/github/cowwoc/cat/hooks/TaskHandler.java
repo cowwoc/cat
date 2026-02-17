@@ -91,9 +91,10 @@ public interface TaskHandler
    *
    * @param toolInput the tool input JSON
    * @param sessionId the session ID
+   * @param cwd the current working directory of the Claude Code session, or empty string if unavailable
    * @return the check result
-   * @throws NullPointerException if toolInput or sessionId is null
-   * @throws IllegalArgumentException if sessionId is blank
+   * @throws NullPointerException if {@code toolInput}, {@code sessionId}, or {@code cwd} are null
+   * @throws IllegalArgumentException if {@code sessionId} is blank
    */
-  Result check(JsonNode toolInput, String sessionId);
+  Result check(JsonNode toolInput, String sessionId, String cwd);
 }
