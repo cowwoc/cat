@@ -52,6 +52,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Use base_branch..HEAD for diff operations to capture all commits since worktree diverged from base branch. Read base_branch from cat-base worktree metadata file, fallback to HEAD~1 for non-worktree scenarios"
+    },
+    {
+      "id": "M345",
+      "timestamp": "2026-02-17T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent reported failure when Skill tool re-invocation returned re-invocation instructions instead of echoing previously generated skill output",
+      "root_cause": "reference.md re-invocation instructions only say to use the Skill tool again, but give no guidance for when the Skill tool itself returns re-invocation instructions (the loop case). No fallback path was documented for this scenario.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/reference.md",
+      "pattern_keywords": [
+        "re-invocation",
+        "skill-loop",
+        "status",
+        "echo-output",
+        "protocol_violation",
+        "preprocessor"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When Skill tool re-invocation returns the same re-invocation instructions again, search conversation history for the most recent skill output and echo it verbatim. Do not report failure."
     }
   ]
 }
