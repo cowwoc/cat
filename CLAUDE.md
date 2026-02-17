@@ -29,6 +29,14 @@ The cache is a read-only copy that gets overwritten on plugin updates.
 relative paths like `plugin/skills/` instead of absolute paths like `/workspace/plugin/`. Absolute paths to
 `/workspace/` bypass worktree isolation and modify the main workspace instead.
 
+## Skill Loading
+
+Before creating, modifying, or debugging skills or agent `skills:` frontmatter, read `plugin/concepts/skill-loading.md`.
+
+Key points:
+- Plugin skills use the `cat:` prefix (e.g., `cat:git-squash`)
+- Subagents share the parent's session ID, so skill marker files are shared state
+
 ## Skill Step Numbering
 
 All skill steps must be 1-based and sequential (Step 1, Step 2, Step 3, etc.).

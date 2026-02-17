@@ -102,8 +102,8 @@ See LICENSE.md in the project root for license terms.
 # Document Title
 ```
 
-**Skill files:** For CAT plugin skills, the license header goes in `first-use.md` only, NOT in `SKILL.md`. The
-`SKILL.md` file is a metadata file and is exempt from license headers.
+**Skill files:** All `SKILL.md` files in plugin skills (both main and `-first-use` companion) are exempt from license
+headers. SkillLoader processes these files and license headers would waste tokens.
 
 ### JSON Files (*.json)
 
@@ -115,7 +115,7 @@ The following files do not require license headers:
 
 - `*.json` files (no comment syntax)
 - `*.xml` files (configuration files, no semantic code)
-- `SKILL.md` files in plugin skills (license goes in `first-use.md` instead)
+- All `SKILL.md` files in plugin skills (both main and `-first-use` companion)
 - Files in `.claude/cat/issues/` (planning artifacts)
 - Files in `.claude/cat/` config directory
 - `LICENSE.md` itself

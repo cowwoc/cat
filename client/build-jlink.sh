@@ -59,6 +59,7 @@ readonly -a HANDLERS=(
   "progress-banner:skills.ProgressBanner"
   "verify-audit:skills.VerifyAudit"
   "empirical-test-runner:skills.EmpiricalTestRunner"
+  "clear-skill-markers-on-compact:ClearSkillMarkersOnCompact"
 )
 
 # --- Logging ---
