@@ -44,7 +44,7 @@ public final class EmpiricalTestRunnerTest
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
 
-      String result = runner.buildInput(new ArrayList<PrimingMessage>(), "hello world");
+      String result = runner.buildInput(new ArrayList<>(), "hello world");
 
       // Should be a single line (one user message)
       String[] lines = result.split("\n");
@@ -1092,7 +1092,8 @@ public final class EmpiricalTestRunnerTest
 
       String output = """
         {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"thinking"}]}}
-        {"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"Bash","id":"123","input":{}}]}}
+        {"type":"assistant","message":{"role":"assistant","content":\
+        [{"type":"tool_use","name":"Bash","id":"123","input":{}}]}}
         {"type":"result","result":"done"}
         """;
 

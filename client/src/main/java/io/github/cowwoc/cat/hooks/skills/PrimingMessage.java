@@ -30,6 +30,7 @@ public sealed interface PrimingMessage
     /**
      * Creates a new user message.
      *
+     * @param text the message text
      * @throws NullPointerException if {@code text} is null
      */
     public UserMessage
@@ -50,6 +51,9 @@ public sealed interface PrimingMessage
     /**
      * Creates a new tool use message.
      *
+     * @param tool the tool name
+     * @param input the tool input parameters
+     * @param output the tool output content
      * @throws NullPointerException if {@code tool}, {@code input}, or {@code output} are null
      */
     public ToolUse
