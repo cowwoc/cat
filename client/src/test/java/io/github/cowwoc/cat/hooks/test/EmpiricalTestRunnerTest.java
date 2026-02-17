@@ -1383,4 +1383,105 @@ public final class EmpiricalTestRunnerTest
       requireThat(e.getMessage(), "message").contains("output");
     }
   }
+
+  /**
+   * Verifies that ConfigResult serializes to valid JSON with all expected fields.
+   */
+  @Test
+  public void configResultSerializesToJson() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      List<EmpiricalTestRunner.TrialResult> trialResults = List.of(
+        new EmpiricalTestRunner.TrialResult(true, Map.of("contains:hello", true), 5L,
+          "Hello world", List.of("Bash"), ""),
+        new EmpiricalTestRunner.TrialResult(false, Map.of("contains:hello", false), 3L,
+          "no match", List.of(), ""));
+      EmpiricalTestRunner.ConfigResult configResult =
+        new EmpiricalTestRunner.ConfigResult("test-config", 2, 1, 50, trialResults);
+
+      String json = mapper.writeValueAsString(configResult);
+      JsonNode node = mapper.readTree(json);
+
+      requireThat(node.path("name").asString(""), "name").isEqualTo("test-config");
+      requireThat(node.path("trials").asInt(0), "trials").isEqualTo(2);
+      requireThat(node.path("passes").asInt(0), "passes").isEqualTo(1);
+      requireThat(node.path("rate").asInt(0), "rate").isEqualTo(50);
+      requireThat(node.path("results").isArray(), "resultsIsArray").isTrue();
+      requireThat(node.path("results").size(), "resultsSize").isEqualTo(2);
+
+      JsonNode firstTrial = node.path("results").get(0);
+      requireThat(firstTrial.path("pass").asBoolean(false), "firstTrialPass").isTrue();
+      requireThat(firstTrial.path("elapsed").asLong(0L), "firstTrialElapsed").isEqualTo(5L);
+      requireThat(firstTrial.path("outputPreview").asString(""), "firstTrialOutputPreview")
+        .isEqualTo("Hello world");
+      requireThat(firstTrial.path("toolsUsed").isArray(), "firstTrialToolsUsedIsArray").isTrue();
+      requireThat(firstTrial.path("toolsUsed").size(), "firstTrialToolsUsedSize").isEqualTo(1);
+      requireThat(firstTrial.path("toolsUsed").get(0).asString(""), "firstTrialTool")
+        .isEqualTo("Bash");
+      requireThat(firstTrial.path("checks").isObject(), "firstTrialChecksIsObject").isTrue();
+      requireThat(firstTrial.path("checks").path("contains:hello").asBoolean(false),
+        "firstTrialContainsHello").isTrue();
+
+      JsonNode secondTrial = node.path("results").get(1);
+      requireThat(secondTrial.path("pass").asBoolean(true), "secondTrialPass").isFalse();
+      requireThat(secondTrial.path("elapsed").asLong(0L), "secondTrialElapsed").isEqualTo(3L);
+      requireThat(secondTrial.path("outputPreview").asString(""), "secondTrialOutputPreview")
+        .isEqualTo("no match");
+      requireThat(secondTrial.path("toolsUsed").isArray(), "secondTrialToolsUsedIsArray").isTrue();
+      requireThat(secondTrial.path("toolsUsed").size(), "secondTrialToolsUsedSize").isEqualTo(0);
+      requireThat(secondTrial.path("checks").path("contains:hello").asBoolean(true),
+        "secondTrialContainsHello").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that TrialResult serializes to valid JSON with all expected fields.
+   */
+  @Test
+  public void trialResultSerializesToJson() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      EmpiricalTestRunner.TrialResult trialResult = new EmpiricalTestRunner.TrialResult(
+        true,
+        Map.of("contains:expected", true, "not_contains:error", true),
+        7L,
+        "expected output text",
+        List.of("Bash", "Read"),
+        "");
+
+      String json = mapper.writeValueAsString(trialResult);
+      JsonNode node = mapper.readTree(json);
+
+      requireThat(node.path("pass").asBoolean(false), "pass").isTrue();
+      requireThat(node.path("elapsed").asLong(0L), "elapsed").isEqualTo(7L);
+      requireThat(node.path("outputPreview").asString(""), "outputPreview")
+        .isEqualTo("expected output text");
+      requireThat(node.path("toolsUsed").isArray(), "toolsUsedIsArray").isTrue();
+      requireThat(node.path("toolsUsed").size(), "toolsUsedSize").isEqualTo(2);
+      requireThat(node.path("error").asString("x"), "error").isEqualTo("");
+      requireThat(node.path("checks").isObject(), "checksIsObject").isTrue();
+      requireThat(node.path("checks").path("contains:expected").asBoolean(false),
+        "containsExpected").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

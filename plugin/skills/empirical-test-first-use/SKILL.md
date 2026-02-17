@@ -30,14 +30,16 @@ Use when documentation is correct but agents don't follow instructions reliably.
 
 ## Methodology
 
-This skill implements a 6-step empirical testing methodology:
+This skill implements an 8-step empirical testing methodology:
 
 1. **Define** the compliance failure (what should happen vs what does happen)
-2. **Hypothesize** which elements cause the failure
-3. **Isolate** variables with controlled test configurations (change one thing at a time)
-4. **Measure** success rates across N trials per configuration
-5. **Fix** by testing candidate solutions with the same methodology
-6. **Report** findings with data tables
+2. **Baseline** reproduce the failure with a controlled test config
+3. **Examine** full agent responses to understand what the agent actually produced
+4. **Hypothesize** which elements cause the failure
+5. **Isolate** variables with controlled test configurations (change one thing at a time)
+6. **Analyze** results to identify the root cause
+7. **Fix** by testing candidate solutions with the same methodology
+8. **Report** findings with data tables
 
 ## Step 1: Define the Failure
 
@@ -144,7 +146,33 @@ fi
 If the baseline shows 80%+ success, the failure may depend on specific conversation context. Add more priming messages
 or adjust the test prompt to match the real failure scenario.
 
-## Step 4: Isolate Variables
+## Step 4: Examine Full Agent Responses
+
+When baseline confirms failure (0-70% success rate), run with `--output` to capture full agent responses before
+proceeding to isolation. The summary output shows only a short preview — full responses reveal *why* the agent failed.
+
+```bash
+"$CLIENT_BIN/empirical-test-runner" \
+    --config /tmp/empirical-test-config.json \
+    --trials 5 \
+    --model haiku \
+    --output /tmp/empirical-test-baseline.json
+```
+
+Open `/tmp/empirical-test-baseline.json` and examine the `results` field. Each trial contains:
+- `outputPreview`: a 300-character preview of the agent's response
+- `toolsUsed`: which tools the agent called
+- `checks`: which success criteria passed or failed
+
+**Multi-message evaluation warning:** When `priming_messages` exist, the agent processes each message and produces a
+response. Failures in priming responses (e.g., a tool_use turn) do not indicate the test prompt failed — they may be
+expected intermediate steps. Check which specific response triggered the `success_criteria` evaluation. Only the final
+response to the test prompt is evaluated against the criteria.
+
+Use the full output to form a hypothesis about *what* the agent produced (hallucinating content, refusing to act, using
+wrong format) before attempting isolation. Isolation experiments are more targeted when the failure mode is understood.
+
+## Step 5: Isolate Variables
 
 Generate test configurations that vary one element at a time from the failing baseline. Each hypothesis becomes a config.
 
@@ -173,7 +201,7 @@ Update the config file with isolation configs and re-run:
     --model haiku
 ```
 
-## Step 5: Analyze Results
+## Step 6: Analyze Results
 
 Read the results table. The root cause is identified by which config restores high success rates.
 
@@ -201,7 +229,7 @@ improvements:
 }
 ```
 
-## Step 6: Test the Fix
+## Step 7: Test the Fix
 
 Once the root cause is identified, create the candidate fix and test it in production context:
 
@@ -226,7 +254,7 @@ Once the root cause is identified, create the candidate fix and test it in produ
 | 70-89% | Fix helps but may need additional changes |
 | Below 70% | Fix is insufficient, return to isolation |
 
-## Step 7: Report Findings
+## Step 8: Report Findings
 
 Present a summary report to the user:
 
