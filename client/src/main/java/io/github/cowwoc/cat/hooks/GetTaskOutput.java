@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.task.EnforceApprovalBeforeMerge;
+import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -45,7 +46,7 @@ public final class GetTaskOutput implements HookHandler
   public GetTaskOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.handlers = List.of(new EnforceApprovalBeforeMerge(scope));
+    this.handlers = List.of(new EnforceWorktreeSafetyBeforeMerge(), new EnforceApprovalBeforeMerge(scope));
   }
 
   /**
@@ -107,13 +108,14 @@ public final class GetTaskOutput implements HookHandler
     JsonNode toolInput = input.getToolInput();
     String sessionId = input.getSessionId();
     requireThat(sessionId, "sessionId").isNotBlank();
+    String cwd = input.getString("cwd");
     List<String> warnings = new ArrayList<>();
 
     for (TaskHandler handler : this.handlers)
     {
       try
       {
-        TaskHandler.Result result = handler.check(toolInput, sessionId);
+        TaskHandler.Result result = handler.check(toolInput, sessionId, cwd);
         if (result.blocked())
         {
           String jsonOutput;
