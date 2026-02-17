@@ -272,6 +272,34 @@
         "catches_variations": true
       },
       "correct_behavior": "When adding a new convention to java.md AND applying it across files in the same session, include the java.md change in the SAME commit as the refactoring work. Group commits by topic (establish + apply = one unit), not by file location."
+    },
+    {
+      "id": "M353",
+      "timestamp": "2026-02-18T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent output status skill meta-instructions to user instead of only copying the <output> tag content verbatim",
+      "root_cause": "status-first-use/SKILL.md uses negative instructional framing ('Do NOT summarize...') which per M408 triggers LLM analytical/processing mode instead of mechanical verbatim copy mode. The NEXT STEPS table is embedded in the instruction block, causing the agent to reproduce it as instruction text AND again as user-facing output (duplication). User-centric framing ('The user wants you to respond with this text verbatim:') is required to trigger correct mechanical execution.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status-first-use/SKILL.md",
+      "pattern_keywords": [
+        "verbatim-output",
+        "negative-framing",
+        "meta-instructions-leaked",
+        "status-skill",
+        "user-centric-framing",
+        "M408-pattern"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Replace negative instructional framing with user-centric framing: 'The user wants you to respond with the following text verbatim:' followed by the <output> tag. Move NEXT STEPS out of the instruction block and into a separate 'append after verbatim content' instruction to prevent duplication."
     }
   ]
 }
