@@ -357,22 +357,27 @@ public final class SkillLoader
     String launcherContent = Files.readString(expectedLauncher, StandardCharsets.UTF_8);
     String className = extractClassName(launcherContent);
     if (className.isEmpty())
-      return originalDirective;
-
+    {
+      throw new IOException("Failed to extract class name from launcher: " + expectedLauncher +
+        ". Expected '-m module/class' pattern in launcher content.");
+    }
     return invokeSkillOutput(className, arguments, originalDirective);
   }
 
   /**
    * Extracts the fully-qualified class name from a launcher script.
    * <p>
-   * Looks for patterns like: {@code java -m module/class}
+   * Looks for patterns like {@code java -m module/class}, including multi-line launcher scripts
+   * that use shell line continuations ({@code \} + newline) between {@code java} and {@code -m}.
    *
    * @param launcherContent the launcher script content
    * @return the fully-qualified class name, or empty string if not found
+   * @throws NullPointerException if {@code launcherContent} is null
    */
-  private String extractClassName(String launcherContent)
+  public static String extractClassName(String launcherContent)
   {
-    Pattern pattern = Pattern.compile("java.*?-m\\s+(\\S+)/(\\S+)");
+    requireThat(launcherContent, "launcherContent").isNotNull();
+    Pattern pattern = Pattern.compile("java.*?-m\\s+(\\S+)/(\\S+)", Pattern.DOTALL);
     Matcher matcher = pattern.matcher(launcherContent);
     if (matcher.find())
       return matcher.group(2);
