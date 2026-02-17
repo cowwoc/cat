@@ -80,6 +80,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When Skill tool re-invocation returns the same re-invocation instructions again, search conversation history for the most recent skill output and echo it verbatim. Do not report failure."
+    },
+    {
+      "id": "M346",
+      "timestamp": "2026-02-18T15:42:02Z",
+      "category": "misleading_documentation",
+      "description": "Orchestrator used \"squash commit\" as squash message instead of the primary implementation commit message",
+      "root_cause": "work-with-issue-first-use/SKILL.md mismatch correction example displayed \"squash commit\" as a sample bad message, normalizing that string as a recognizable commit message pattern. Combined with v2.1 git history containing a prior squash commit with the same message, the LLM was primed to produce \"squash commit\" when executing Step 6 squash. The git-squash-quick.sh validation script would have rejected this message, but the orchestrator bypassed it with direct git commands.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue-first-use/SKILL.md",
+      "pattern_keywords": [
+        "squash-commit",
+        "commit-message",
+        "priming",
+        "mismatch-example",
+        "work-with-issue"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use the primary implementation commit message from the execution result as the squash message. The squash script git-squash-quick.sh validates the message format and would reject non-descriptive messages like \"squash commit\"."
     }
   ]
 }
