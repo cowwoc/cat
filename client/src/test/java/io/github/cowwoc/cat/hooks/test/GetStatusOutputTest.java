@@ -7,12 +7,15 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -1119,6 +1122,64 @@ public class GetStatusOutputTest
       boolean valid = handler.isValidStateFilePath("");
 
       requireThat(valid, "isValidStateFilePath(\"\")").isFalse();
+    }
+    finally
+    {
+      deleteRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that inner version boxes have the same visual width when major versions have different
+   * content lengths, ensuring right borders align vertically.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void innerBoxesHaveUniformWidthAcrossMajorVersions() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-alignment");
+    Path issuesDir = tempDir.resolve(".claude/cat/issues");
+
+    // Major v1 has many tasks (wider content)
+    Path major1Dir = issuesDir.resolve("v1");
+    Path minor10Dir = major1Dir.resolve("v1.0");
+    for (int i = 1; i <= 5; ++i)
+    {
+      Path taskDir = minor10Dir.resolve("long-task-name-number-" + i);
+      Files.createDirectories(taskDir);
+      Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    }
+
+    // Major v2 has one short task (narrower content)
+    Path major2Dir = issuesDir.resolve("v2");
+    Path minor20Dir = major2Dir.resolve("v2.0");
+    Path shortTaskDir = minor20Dir.resolve("x");
+    Files.createDirectories(shortTaskDir);
+    Files.writeString(shortTaskDir.resolve("STATE.md"), "- **Status:** open\n");
+
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetStatusOutput handler = new GetStatusOutput(scope);
+      DisplayUtils display = new DisplayUtils(scope);
+      String result = handler.getOutput(new String[0]);
+
+      // Extract lines that are inner box lines (start with ╭ or │ or ╰)
+      List<String> innerBoxLines = new ArrayList<>();
+      for (String line : result.split("\n"))
+      {
+        if (line.startsWith("╭") || line.startsWith("│") || line.startsWith("╰"))
+          innerBoxLines.add(line);
+      }
+
+      // All inner box lines (borders and content) must have the same display width
+      requireThat(innerBoxLines, "innerBoxLines").isNotEmpty();
+      int expectedWidth = display.displayWidth(innerBoxLines.get(0));
+      for (int i = 0; i < innerBoxLines.size(); ++i)
+      {
+        int actualWidth = display.displayWidth(innerBoxLines.get(i));
+        requireThat(actualWidth, "innerBoxLines[" + i + "].displayWidth").isEqualTo(expectedWidth);
+      }
     }
     finally
     {
