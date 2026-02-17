@@ -107,6 +107,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use the primary implementation commit message from the execution result as the squash message. The squash script git-squash-quick.sh validates the message format and would reject non-descriptive messages like \"squash commit\"."
+    },
+    {
+      "id": "M347",
+      "timestamp": "2026-02-18T19:25:45Z",
+      "category": "protocol_violation",
+      "description": "Main agent spawned work-merge subagent while shell CWD was inside the worktree, causing shell session corruption after worktree removal",
+      "root_cause": "Documentation in work-with-issue-first-use/SKILL.md (line 719) instructs agent to cd /workspace before spawning the merge subagent, but agent failed to comply. The instruction existed but the protocol was violated. Subagent operates in its own shell context so checking subagent CWD does not help - the MAIN agent must exit the worktree before delegation.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "hook",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/task/EnforceWorktreeSafetyBeforeMerge.java",
+      "pattern_keywords": [
+        "worktree-removal",
+        "cwd-corruption",
+        "shell-session",
+        "work-merge",
+        "cd-before-spawn"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before spawning the work-merge subagent, run 'cd /workspace' so the main agent's shell CWD is not inside the worktree when the subagent removes it."
     }
   ]
 }
