@@ -327,6 +327,33 @@ The checklist covers:
 
 ## Step 9: Implement Prevention
 
+### Issue Worktree Gate
+
+Before implementing prevention, check if you are in an issue worktree:
+
+```bash
+CAT_BASE_FILE="$(git rev-parse --git-dir)/cat-base"
+IN_ISSUE_WORKTREE=$([[ -f "$CAT_BASE_FILE" ]] && echo "true" || echo "false")
+```
+
+**If NOT in an issue worktree** (`IN_ISSUE_WORKTREE` is `false`) **AND prevention_type is `code_fix` or `hook`**:
+
+- Do NOT edit source files (`plugin/` or `client/` directories)
+- Set `prevention_implemented` to `false` in your output JSON
+- Populate `task_creation_info` with enough detail to create a follow-up issue:
+  - `suggested_title`: Short description of the prevention needed
+  - `suggested_description`: Full description including what files to modify and why
+  - `suggested_acceptance_criteria`: List of criteria to verify the prevention works
+
+**If prevention_type is `skill`, `process`, `documentation`, or `config`**:
+- These are safe to commit directly on any branch
+- Proceed with implementation as normal
+
+**If in an issue worktree** (`IN_ISSUE_WORKTREE` is `true`):
+- Proceed with implementation as normal regardless of prevention_type
+
+---
+
 **MANDATORY: Take concrete action. Prevention without action changes nothing.**
 
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
@@ -644,6 +671,7 @@ Your final message MUST be ONLY this JSON (no other text):
   "status": "COMPLETE",
   "user_summary": "1-3 sentence summary of what this phase did (for display to user between phases)",
   "prevention_type": "code_fix|hook|validation|config|skill|process|documentation",
+  "prevention_implemented": true,
   "prevention_level": 1,
   "prevention_quality": {
     "verification_type": "positive|negative",

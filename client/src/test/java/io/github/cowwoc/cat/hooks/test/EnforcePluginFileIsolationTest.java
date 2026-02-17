@@ -20,14 +20,15 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Tests for EnforcePluginFileIsolation hook.
  * <p>
- * Tests verify that plugin files are properly blocked on protected branches
- * and allowed on task branches and in worktrees.
+ * Tests verify that plugin/ and client/ source files are properly blocked outside of issue worktrees
+ * and allowed inside issue worktrees (identified by the presence of a cat-base file).
  * <p>
  * Tests are designed for parallel execution - each test is self-contained
  * with no shared state.
@@ -54,7 +55,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files on protected branch 'main' are blocked.
+   * Verifies that plugin files in a repo without cat-base (e.g., on main) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnMain() throws IOException
@@ -70,7 +71,7 @@ public class EnforcePluginFileIsolationTest
       FileWriteHandler.Result result = handler.check(input, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot edit plugin files on protected branch 'main'");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
     }
     finally
     {
@@ -79,7 +80,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files on protected branch 'v2.1' are blocked.
+   * Verifies that plugin files in a repo without cat-base (e.g., on v2.1) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnV21() throws IOException
@@ -95,7 +96,7 @@ public class EnforcePluginFileIsolationTest
       FileWriteHandler.Result result = handler.check(input, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot edit plugin files on protected branch 'v2.1'");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
     }
     finally
     {
@@ -104,7 +105,7 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files on version branch 'v1.0' are blocked.
+   * Verifies that plugin files in a repo without cat-base (e.g., on version branch v1.0) are blocked.
    */
   @Test
   public void pluginFilesBlockedOnVersionBranch() throws IOException
@@ -120,7 +121,7 @@ public class EnforcePluginFileIsolationTest
       FileWriteHandler.Result result = handler.check(input, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot edit plugin files on protected branch 'v1.0'");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
     }
     finally
     {
@@ -129,22 +130,26 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files on task branch are allowed.
+   * Verifies that plugin files in an issue worktree (with cat-base) are allowed.
    */
   @Test
   public void pluginFilesAllowedOnTaskBranch() throws IOException
   {
     Path tempDir = createTempGitRepo("v2.1-fix-bug");
-    try (JvmScope scope = new TestJvmScope())
+    try
     {
-      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-      JsonMapper mapper = scope.getJsonMapper();
-      ObjectNode input = mapper.createObjectNode();
-      input.put("file_path", tempDir.resolve("plugin/hooks/handler.py").toString());
+      createCatBaseFile(tempDir);
+      try (JvmScope scope = new TestJvmScope())
+      {
+        EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+        JsonMapper mapper = scope.getJsonMapper();
+        ObjectNode input = mapper.createObjectNode();
+        input.put("file_path", tempDir.resolve("plugin/hooks/handler.py").toString());
 
-      FileWriteHandler.Result result = handler.check(input, "test-session");
+        FileWriteHandler.Result result = handler.check(input, "test-session");
 
-      requireThat(result.blocked(), "blocked").isFalse();
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
     }
     finally
     {
@@ -153,10 +158,10 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files in a worktree directory on task branch are allowed.
+   * Verifies that plugin files in a worktree directory with cat-base are allowed.
    * <p>
-   * This tests the bug fix: before the fix, the hook would check the parent workspace
-   * branch (v2.1) instead of the worktree's own branch (2.1-task-name), incorrectly blocking.
+   * This tests the core use case: worktrees created by /cat:work have a cat-base file
+   * in their git directory and edits in them must be permitted.
    */
   @Test
   public void pluginFilesAllowedInWorktree() throws IOException
@@ -168,16 +173,20 @@ public class EnforcePluginFileIsolationTest
       Files.createDirectories(worktreesDir);
 
       Path worktreeDir = createWorktree(mainDir, worktreesDir, "2.1-test-task");
-      try (JvmScope scope = new TestJvmScope())
+      try
       {
-        EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
-        JsonMapper mapper = scope.getJsonMapper();
-        ObjectNode input = mapper.createObjectNode();
-        input.put("file_path", worktreeDir.resolve("plugin/hooks/test.py").toString());
+        createCatBaseFile(worktreeDir);
+        try (JvmScope scope = new TestJvmScope())
+        {
+          EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+          JsonMapper mapper = scope.getJsonMapper();
+          ObjectNode input = mapper.createObjectNode();
+          input.put("file_path", worktreeDir.resolve("plugin/hooks/test.py").toString());
 
-        FileWriteHandler.Result result = handler.check(input, "test-session");
+          FileWriteHandler.Result result = handler.check(input, "test-session");
 
-        requireThat(result.blocked(), "blocked").isFalse();
+          requireThat(result.blocked(), "blocked").isFalse();
+        }
       }
       finally
       {
@@ -192,10 +201,10 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that non-existent file paths trigger branch detection failure.
+   * Verifies that non-existent file paths trigger blocking when no issue worktree can be detected.
    * <p>
    * When the file and all its ancestors don't exist, findExistingAncestor returns
-   * the original path, getCurrentBranch returns empty, and the hook should block.
+   * the original path, isIssueWorktree returns false, and the hook should block.
    */
   @Test
   public void nonExistentPluginFileIsBlocked() throws IOException
@@ -210,8 +219,7 @@ public class EnforcePluginFileIsolationTest
       FileWriteHandler.Result result = handler.check(input, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot determine branch");
-      requireThat(result.reason(), "reason").contains("Branch Detection Failed");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
     }
   }
 
@@ -253,7 +261,86 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Verifies that plugin files with 'plugin' as a subdirectory path component are detected.
+   * Verifies that client files in a repo without cat-base (e.g., on main) are blocked.
+   */
+  @Test
+  public void clientFilesBlockedOnMain() throws IOException
+  {
+    Path tempDir = createTempGitRepo("main");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", tempDir.resolve("client/src/main/java/Test.java").toString());
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that client files in a repo without cat-base (e.g., on v2.1) are blocked.
+   */
+  @Test
+  public void clientFilesBlockedOnV21() throws IOException
+  {
+    Path tempDir = createTempGitRepo("v2.1");
+    try (JvmScope scope = new TestJvmScope())
+    {
+      EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+      JsonMapper mapper = scope.getJsonMapper();
+      ObjectNode input = mapper.createObjectNode();
+      input.put("file_path", tempDir.resolve("client/src/test/java/TestFoo.java").toString());
+
+      FileWriteHandler.Result result = handler.check(input, "test-session");
+
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that client files in an issue worktree (with cat-base) are allowed.
+   */
+  @Test
+  public void clientFilesAllowedOnTaskBranch() throws IOException
+  {
+    Path tempDir = createTempGitRepo("v2.1-fix-bug");
+    try
+    {
+      createCatBaseFile(tempDir);
+      try (JvmScope scope = new TestJvmScope())
+      {
+        EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
+        JsonMapper mapper = scope.getJsonMapper();
+        ObjectNode input = mapper.createObjectNode();
+        input.put("file_path", tempDir.resolve("client/src/main/java/Handler.java").toString());
+
+        FileWriteHandler.Result result = handler.check(input, "test-session");
+
+        requireThat(result.blocked(), "blocked").isFalse();
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that plugin files with 'plugin' as a subdirectory path component are detected and blocked
+   * when not in an issue worktree.
    */
   @Test
   public void deepPluginPathIsDetected() throws IOException
@@ -269,7 +356,7 @@ public class EnforcePluginFileIsolationTest
       FileWriteHandler.Result result = handler.check(input, "test-session");
 
       requireThat(result.blocked(), "blocked").isTrue();
-      requireThat(result.reason(), "reason").contains("Cannot edit plugin files on protected branch 'main'");
+      requireThat(result.reason(), "reason").contains("Cannot edit source files outside of an issue worktree");
     }
     finally
     {
@@ -325,6 +412,26 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
+   * Creates a {@code cat-base} file in the git directory of the given repository.
+   * <p>
+   * This simulates an issue worktree created by {@code /cat:work}. The file content is
+   * the base branch name (e.g., "v2.1").
+   *
+   * @param repoDir the repository directory
+   * @throws IOException if the git command fails or file creation fails
+   */
+  private void createCatBaseFile(Path repoDir) throws IOException
+  {
+    String gitDirPath = runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
+    Path gitDir;
+    if (Paths.get(gitDirPath).isAbsolute())
+      gitDir = Paths.get(gitDirPath);
+    else
+      gitDir = repoDir.resolve(gitDirPath);
+    Files.writeString(gitDir.resolve("cat-base"), "v2.1");
+  }
+
+  /**
    * Runs a git command in the specified directory.
    *
    * @param directory the directory to run the command in
@@ -359,6 +466,53 @@ public class EnforcePluginFileIsolationTest
         throw new IOException("Git command failed with exit code " + exitCode);
     }
     catch (IOException | InterruptedException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+  }
+
+  /**
+   * Runs a git command in the specified directory and returns its output.
+   *
+   * @param directory the directory to run the command in
+   * @param args the git command arguments
+   * @return the trimmed output of the command
+   * @throws IOException if the git command fails
+   */
+  private String runGitCommandWithOutput(Path directory, String... args) throws IOException
+  {
+    try
+    {
+      String[] command = new String[args.length + 3];
+      command[0] = "git";
+      command[1] = "-C";
+      command[2] = directory.toString();
+      System.arraycopy(args, 0, command, 3, args.length);
+
+      ProcessBuilder pb = new ProcessBuilder(command);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+
+      StringBuilder output = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          if (output.length() > 0)
+            output.append('\n');
+          output.append(line);
+          line = reader.readLine();
+        }
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+        throw new IOException("Git command failed with exit code " + exitCode);
+      return output.toString().strip();
+    }
+    catch (InterruptedException e)
     {
       throw WrappedCheckedException.wrap(e);
     }
