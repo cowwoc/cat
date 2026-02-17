@@ -1226,7 +1226,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   }
 
   /**
-   * Verifies that RuntimeException from SkillOutput.getOutput() returns an error string.
+   * Verifies that RuntimeException from SkillOutput.getOutput() returns a user-friendly error message.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1255,9 +1255,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<error>Preprocessor directive failed for").
+        contains("Preprocessor Error").
         contains("simulated runtime failure").
-        contains("</error>");
+        contains("/cat:feedback");
     }
     finally
     {
@@ -1266,7 +1266,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   }
 
   /**
-   * Verifies that InvocationTargetException from constructor returns error string with cause message.
+   * Verifies that InvocationTargetException from constructor returns a user-friendly error message with cause.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1295,9 +1295,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<error>Preprocessor directive failed for").
+        contains("Preprocessor Error").
         contains("constructor failure").
-        contains("</error>");
+        contains("/cat:feedback");
     }
     finally
     {
@@ -1306,7 +1306,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   }
 
   /**
-   * Verifies that exception with null message uses class name in error string.
+   * Verifies that exception with null message uses class name in the user-friendly error message.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1335,9 +1335,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<error>Preprocessor directive failed for").
+        contains("Preprocessor Error").
         contains("java.lang.IllegalStateException").
-        contains("</error>");
+        contains("/cat:feedback");
     }
     finally
     {
