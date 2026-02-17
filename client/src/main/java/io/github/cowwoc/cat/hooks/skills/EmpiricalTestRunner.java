@@ -313,9 +313,17 @@ public final class EmpiricalTestRunner
         new ArrayList<>(), processResult.error());
 
     ParsedOutput parsed = parseOutput(processResult.output());
-    EvaluationResult evaluation = evaluateOutput(parsed.texts(), parsed.toolUses(), criteria);
 
-    String preview = String.join("\n", parsed.texts());
+    // Evaluate only the last assistant response (the one answering the test prompt).
+    // Earlier responses are from priming messages and should not affect pass/fail.
+    List<String> lastResponse;
+    if (parsed.texts().isEmpty())
+      lastResponse = parsed.texts();
+    else
+      lastResponse = List.of(parsed.texts().getLast());
+    EvaluationResult evaluation = evaluateOutput(lastResponse, parsed.toolUses(), criteria);
+
+    String preview = String.join("\n", lastResponse);
     String truncatedPreview = truncatePreview(preview, 300).replace("\n", "\\n");
 
     List<String> toolsUsed;
