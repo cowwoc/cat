@@ -217,6 +217,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Throw IllegalArgumentException when sessionId format is invalid, since sessionId is used to construct file paths"
+    },
+    {
+      "id": "M351",
+      "timestamp": "2026-02-18T18:38:00Z",
+      "category": "protocol_violation",
+      "description": "Main agent presented approval gate before verifying STATE.md was closed; implementation subagent committed code but STATE.md remained in-progress",
+      "root_cause": "work-with-issue-first-use/SKILL.md Step 7 (Approval Gate) has no verification that STATE.md is closed before presenting the gate. The skill instructs the subagent to close STATE.md (Step 3 delegation prompt) but never verifies compliance prior to the approval gate.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue-first-use/SKILL.md",
+      "pattern_keywords": [
+        "state-md",
+        "approval-gate",
+        "closed-status",
+        "subagent-compliance",
+        "work-with-issue",
+        "protocol-violation"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before presenting the approval gate in Step 7, verify STATE.md status is 'closed'. If not closed, update STATE.md and amend the last commit to include the closure before proceeding."
     }
   ]
 }
