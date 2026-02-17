@@ -418,15 +418,43 @@ public final class SkillLoader
       String errorMsg = cause.getMessage();
       if (errorMsg == null)
         errorMsg = cause.getClass().getName();
-      return "<error>Preprocessor directive failed for \"" + originalDirective + "\": " + errorMsg + "</error>";
+      return buildPreprocessorErrorMessage(originalDirective, errorMsg);
     }
     catch (Exception e)
     {
       String errorMsg = e.getMessage();
       if (errorMsg == null)
         errorMsg = e.getClass().getName();
-      return "<error>Preprocessor directive failed for \"" + originalDirective + "\": " + errorMsg + "</error>";
+      return buildPreprocessorErrorMessage(originalDirective, errorMsg);
     }
+  }
+
+  /**
+   * Builds a user-friendly error message when a preprocessor directive fails.
+   * <p>
+   * The message includes the directive that failed, the error details, and instructions for
+   * filing a bug report using {@code /cat:feedback}.
+   *
+   * @param originalDirective the original preprocessor directive text that failed
+   * @param errorMsg the error message from the exception
+   * @return a user-friendly error message with bug report instructions
+   */
+  private static String buildPreprocessorErrorMessage(String originalDirective, String errorMsg)
+  {
+    return """
+
+      ---
+      **Preprocessor Error**
+
+      A preprocessor directive failed while loading this skill.
+
+      **Directive:** `%s`
+      **Error:** %s
+
+      To report this bug, run: `/cat:feedback`
+      ---
+
+      """.formatted(originalDirective, errorMsg);
   }
 
   /**
