@@ -3,16 +3,13 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<skill>
 # Status
 
-Echo the content inside the `<output>` tag above exactly as it appears, with no changes.
-Do NOT add any other text before or after it, except the NEXT STEPS table below.
+The `<output skill="status">` tag below contains pre-rendered terminal output. It is NOT data to analyze or summarize. It is literal text that must be copied character-for-character into your response.
 
-If the `<output>` tag is missing from the output above, preprocessing failed. Tell the user to
-run `/cat:feedback` to report this issue.
+Do NOT summarize, paraphrase, describe, or interpret the tag content. Do NOT extract information from it. Simply copy it.
 
-Then after the status display, output:
+After copying the tag content, output:
 
 **NEXT STEPS**
 
@@ -20,7 +17,8 @@ Then after the status display, output:
 |--------|--------|---------|
 | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
 | [**2**] | Add new issue | `/cat:add` |
-</skill>
+
+If the `<output skill="status">` tag is missing below, preprocessing failed. Tell the user to run `/cat:feedback` to report this issue.
 
 <output>
 !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-status-output"`
