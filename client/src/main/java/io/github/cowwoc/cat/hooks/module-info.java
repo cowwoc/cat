@@ -29,4 +29,5 @@ module io.github.cowwoc.cat.hooks
   exports io.github.cowwoc.cat.hooks.tool.post;
   exports io.github.cowwoc.cat.hooks.util;
   exports io.github.cowwoc.cat.hooks.write;
+  opens io.github.cowwoc.cat.hooks.skills to tools.jackson.databind;
 }

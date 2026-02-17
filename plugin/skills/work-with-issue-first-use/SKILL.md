@@ -327,8 +327,8 @@ Track all amendments and include in the approval gate summary:
 ```
 ## Commit Message Verification
 ⚠ Mismatches detected and corrected:
-  - af069982: "squash commit" → "feature: add verification step"
-  - b1234abc: "fix" → "bugfix: correct parameter validation"
+  - af069982: "<placeholder>" → "feature: add verification step"
+  - b1234abc: "<placeholder>" → "bugfix: correct parameter validation"
 ```
 
 **If all messages match:**
