@@ -189,6 +189,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Pre-calculate the maximum inner box content width across all major versions, then pass that as forcedWidth to each buildInnerBox() call so all inner boxes render at uniform width."
+    },
+    {
+      "id": "M350",
+      "timestamp": "2026-02-18T22:45:00Z",
+      "category": "protocol_violation",
+      "description": "Implemented empty-string fallback for invalid sessionId format instead of throwing exception",
+      "root_cause": "The fail-fast principle in common.md only showed Bash examples and did not list identifiers used to construct file paths as non-acceptable fallbacks; the HookInput.getString() pattern of returning empty string primed the agent to use the same pattern for getSessionId()",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/rules/common.md",
+      "pattern_keywords": [
+        "fail-fast",
+        "fallback",
+        "empty-string",
+        "session-id",
+        "file-path",
+        "java"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Throw IllegalArgumentException when sessionId format is invalid, since sessionId is used to construct file paths"
     }
   ]
 }
