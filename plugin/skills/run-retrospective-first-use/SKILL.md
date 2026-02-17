@@ -3,7 +3,6 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<skill>
 # Run Retrospective
 
 ## Purpose
@@ -323,8 +322,6 @@ Before completing retrospective:
 - `cat:learn` - Records individual mistakes, triggers this skill
 - `cat:token-report` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items
-</skill>
-
 <output>
 !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-retrospective-output"`
 </output>

@@ -244,7 +244,7 @@ Full skill content here
   }
 
   /**
-   * Verifies that load loads reference on second invocation.
+   * Verifies that load returns dynamic reference on second invocation for non-tagged skills.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -260,11 +260,6 @@ Full skill content here
 Full skill content
 """);
 
-      Path skillsDir = tempPluginRoot.resolve("skills");
-      Files.writeString(skillsDir.resolve("reference.md"), """
-Reference text
-""");
-
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
         System.nanoTime(), "");
 
@@ -273,7 +268,8 @@ Reference text
 
       String secondResult = loader.load("test-skill");
       requireThat(secondResult, "secondResult").
-        contains("Reference text").
+        contains("skill instructions were already loaded").
+        contains("Use the Skill tool to invoke this skill again").
         doesNotContain("Full skill content");
     }
     finally
@@ -929,52 +925,6 @@ git checkout ${BASE}
   }
 
   /**
-   * Verifies that load strips license header from reference.md content.
-   *
-   * @throws IOException if an I/O error occurs
-   */
-  @Test
-  public void loadStripsLicenseHeaderFromReference() throws IOException
-  {
-    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
-    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
-    {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
-      Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
-Full skill content
-""");
-
-      Path skillsDir = tempPluginRoot.resolve("skills");
-      Files.writeString(skillsDir.resolve("reference.md"),
-        "<!--\n" +
-        "Copyright (c) 2026 Gili Tzabari. All rights reserved.\n" +
-        "Licensed under the CAT Commercial License.\n" +
-        "See LICENSE.md in the project root for license terms.\n" +
-        "-->\n" +
-        "Reference text\n");
-
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
-        System.nanoTime(), "");
-
-      // First load to mark skill as loaded
-      loader.load("test-skill");
-
-      // Second load returns reference
-      String result = loader.load("test-skill");
-
-      requireThat(result, "result").
-        contains("Reference text").
-        doesNotContain("Copyright").
-        doesNotContain("<!--");
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
-    }
-  }
-
-  /**
    * Verifies that load strips YAML frontmatter from companion SKILL.md.
    *
    * @throws IOException if an I/O error occurs
@@ -1133,9 +1083,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<output>").
         contains("NO_ARGS_OUTPUT").
-        contains("</output>").
         contains("Done").
         doesNotContain("!`");
     }
@@ -1397,7 +1345,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
 
   /**
    * Verifies that load uses the {@code -first-use} companion SKILL.md when present,
-   * returning the skill body combined with the output body.
+   * returning the instructions combined with the output body.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1415,9 +1363,7 @@ description: "Test skill"
 user-invocable: false
 ---
 
-<skill>
 Skill instructions here.
-</skill>
 
 <output>
 Output content here.
@@ -1429,10 +1375,10 @@ Output content here.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<skill>").
         contains("Skill instructions here.").
-        contains("</skill>").
+        contains("<output skill=\"test-skill\">").
         contains("Output content here.").
+        contains("</output>").
         doesNotContain("description:").
         doesNotContain("user-invocable:");
     }
@@ -1444,7 +1390,7 @@ Output content here.
 
   /**
    * Verifies that on the second invocation of a skill with a {@code -first-use} companion,
-   * the reference text is returned while the output body is still appended.
+   * the dynamic reference text is returned while the output body is still appended.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1462,18 +1408,11 @@ description: "Test skill"
 user-invocable: false
 ---
 
-<skill>
 Full skill instructions.
-</skill>
 
 <output>
 Dynamic output.
 </output>
-""");
-
-      Path skillsDir = tempPluginRoot.resolve("skills");
-      Files.writeString(skillsDir.resolve("reference.md"), """
-Reference text for subsequent loads.
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1481,17 +1420,18 @@ Reference text for subsequent loads.
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
-        contains("<skill>").
         contains("Full skill instructions.").
-        contains("</skill>").
-        contains("Dynamic output.");
+        contains("<output skill=\"test-skill\">").
+        contains("Dynamic output.").
+        contains("</output>");
 
       String secondResult = loader.load("test-skill");
       requireThat(secondResult, "secondResult").
-        contains("Reference text for subsequent loads.").
+        contains("copy the tag content character-for-character").
+        contains("<output skill=\"test-skill\">").
         contains("Dynamic output.").
-        doesNotContain("Full skill instructions.").
-        doesNotContain("<skill>");
+        contains("</output>").
+        doesNotContain("Full skill instructions.");
     }
     finally
     {
@@ -1500,13 +1440,13 @@ Reference text for subsequent loads.
   }
 
   /**
-   * Verifies that a {@code -first-use} SKILL.md with only a {@code <skill>} tag and no
-   * {@code <output>} tag works correctly.
+   * Verifies that a {@code -first-use} SKILL.md without an {@code <output>} tag is treated
+   * as non-tagged content and returned directly.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void loadHandlesSkillTagsWithoutOutputTag() throws IOException
+  public void loadHandlesContentWithoutOutputTag() throws IOException
   {
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
@@ -1519,9 +1459,7 @@ description: "Test skill"
 user-invocable: false
 ---
 
-<skill>
 Skill body without output.
-</skill>
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1529,9 +1467,7 @@ Skill body without output.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<skill>").
-        contains("Skill body without output.").
-        contains("</skill>");
+        contains("Skill body without output.");
     }
     finally
     {
@@ -1540,7 +1476,8 @@ Skill body without output.
   }
 
   /**
-   * Verifies that load strips YAML frontmatter from a {@code -first-use} SKILL.md file.
+   * Verifies that load strips YAML frontmatter from a {@code -first-use} SKILL.md file
+   * that uses the {@code <output>} tag.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1558,9 +1495,11 @@ description: "Internal skill. Do not invoke directly."
 user-invocable: false
 ---
 
-<skill>
 Content after frontmatter.
-</skill>
+
+<output>
+Output content.
+</output>
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1568,9 +1507,9 @@ Content after frontmatter.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<skill>").
         contains("Content after frontmatter.").
-        contains("</skill>").
+        contains("<output skill=\"test-skill\">").
+        contains("Output content.").
         doesNotContain("description:").
         doesNotContain("user-invocable:");
     }
@@ -1610,9 +1549,7 @@ Content after frontmatter.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("<output>").
         contains("ARGS:arg1,arg2").
-        contains("</output>").
         contains("Done").
         doesNotContain("!`");
     }
