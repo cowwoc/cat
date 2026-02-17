@@ -22,6 +22,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.StringJoiner;
 
 /**
@@ -58,9 +59,9 @@ public final class GitHubFeedback
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
-    this.httpClient = HttpClient.newBuilder()
-      .connectTimeout(REQUEST_TIMEOUT)
-      .build();
+    this.httpClient = HttpClient.newBuilder().
+      connectTimeout(REQUEST_TIMEOUT).
+      build();
   }
 
   /**
@@ -85,14 +86,14 @@ public final class GitHubFeedback
       "repo:" + REPOSITORY + " is:issue " + query, StandardCharsets.UTF_8);
     URI uri = URI.create(GITHUB_API_BASE + "/search/issues?q=" + encodedQuery + "&per_page=10");
 
-    HttpRequest request = HttpRequest.newBuilder()
-      .uri(uri)
-      .timeout(REQUEST_TIMEOUT)
-      .header("Accept", "application/vnd.github+json")
-      .header("User-Agent", "cowwoc-cat-feedback/1.0")
-      .header("X-GitHub-Api-Version", "2022-11-28")
-      .GET()
-      .build();
+    HttpRequest request = HttpRequest.newBuilder().
+      uri(uri).
+      timeout(REQUEST_TIMEOUT).
+      header("Accept", "application/vnd.github+json").
+      header("User-Agent", "cowwoc-cat-feedback/1.0").
+      header("X-GitHub-Api-Version", "2022-11-28").
+      GET().
+      build();
 
     HttpResponse<String> response;
     try
@@ -159,10 +160,10 @@ public final class GitHubFeedback
     String encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8);
     String encodedBody = URLEncoder.encode(body, StandardCharsets.UTF_8);
 
-    StringBuilder urlBuilder = new StringBuilder();
-    urlBuilder.append(GITHUB_BASE).append('/').append(REPOSITORY).append("/issues/new");
-    urlBuilder.append("?title=").append(encodedTitle);
-    urlBuilder.append("&body=").append(encodedBody);
+    StringBuilder urlBuilder = new StringBuilder(128);
+    urlBuilder.append(GITHUB_BASE).append('/').append(REPOSITORY).append("/issues/new").
+      append("?title=").append(encodedTitle).
+      append("&body=").append(encodedBody);
 
     if (!labels.isEmpty())
     {
@@ -195,7 +196,7 @@ public final class GitHubFeedback
    */
   private static void openInBrowser(String url) throws IOException
   {
-    String osName = System.getProperty("os.name", "").toLowerCase();
+    String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
     ProcessBuilder processBuilder;
     if (osName.contains("win"))
       processBuilder = new ProcessBuilder("cmd", "/c", "start", "", url);
@@ -218,6 +219,79 @@ public final class GitHubFeedback
     {
       Thread.currentThread().interrupt();
       throw new IOException("Browser open request was interrupted for URL: " + url, e);
+    }
+  }
+
+  /**
+   * Prints an error JSON message to stderr and exits with code 1.
+   *
+   * @param message the error message
+   */
+  @SuppressWarnings("PMD.DoNotTerminateVM")
+  private static void exitWithError(String message)
+  {
+    System.err.println("""
+      {
+        "status": "error",
+        "message": "%s"
+      }""".formatted(message.replace("\"", "\\\"")));
+    System.exit(1);
+  }
+
+  /**
+   * Runs the "search" subcommand.
+   *
+   * @param feedback the GitHub feedback instance
+   * @param args the command-line arguments
+   */
+  private static void runSearch(GitHubFeedback feedback, String[] args)
+  {
+    String query = args[1];
+    try
+    {
+      String result = feedback.searchIssues(query);
+      System.out.println(result);
+    }
+    catch (IOException e)
+    {
+      exitWithError(e.getMessage());
+    }
+  }
+
+  /**
+   * Runs the "open" subcommand.
+   *
+   * @param feedback the GitHub feedback instance
+   * @param args the command-line arguments
+   */
+  private static void runOpen(GitHubFeedback feedback, String[] args)
+  {
+    if (args.length < 3)
+    {
+      exitWithError("Usage: GitHubFeedback open <title> <body> [labels]");
+      return;
+    }
+    String title = args[1];
+    String body = args[2];
+    String labels;
+    if (args.length >= 4)
+    {
+      StringJoiner joiner = new StringJoiner(",");
+      for (int i = 3; i < args.length; ++i)
+        joiner.add(args[i]);
+      labels = joiner.toString();
+    }
+    else
+      labels = "";
+
+    try
+    {
+      String result = feedback.openIssue(title, body, labels);
+      System.out.println(result);
+    }
+    catch (IOException e)
+    {
+      exitWithError(e.getMessage());
     }
   }
 
@@ -254,73 +328,10 @@ public final class GitHubFeedback
 
       switch (subcommand)
       {
-        case "search" ->
-        {
-          String query = args[1];
-          try
-          {
-            String result = feedback.searchIssues(query);
-            System.out.println(result);
-          }
-          catch (IOException e)
-          {
-            System.err.println("""
-              {
-                "status": "error",
-                "message": "%s"
-              }""".formatted(e.getMessage().replace("\"", "\\\"")));
-            System.exit(1);
-          }
-        }
-        case "open" ->
-        {
-          if (args.length < 3)
-          {
-            System.err.println("""
-              {
-                "status": "error",
-                "message": "Usage: GitHubFeedback open <title> <body> [labels]"
-              }""");
-            System.exit(1);
-            return;
-          }
-          String title = args[1];
-          String body = args[2];
-          String labels;
-          if (args.length >= 4)
-          {
-            StringJoiner joiner = new StringJoiner(",");
-            for (int i = 3; i < args.length; ++i)
-              joiner.add(args[i]);
-            labels = joiner.toString();
-          }
-          else
-            labels = "";
-
-          try
-          {
-            String result = feedback.openIssue(title, body, labels);
-            System.out.println(result);
-          }
-          catch (IOException e)
-          {
-            System.err.println("""
-              {
-                "status": "error",
-                "message": "%s"
-              }""".formatted(e.getMessage().replace("\"", "\\\"")));
-            System.exit(1);
-          }
-        }
-        default ->
-        {
-          System.err.println("""
-            {
-              "status": "error",
-              "message": "Unknown subcommand: %s. Use 'search' or 'open'."
-            }""".formatted(subcommand));
-          System.exit(1);
-        }
+        case "search" -> runSearch(feedback, args);
+        case "open" -> runOpen(feedback, args);
+        default -> exitWithError(
+          "Unknown subcommand: %s. Use 'search' or 'open'.".formatted(subcommand));
       }
     }
   }
