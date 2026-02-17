@@ -293,7 +293,7 @@ public final class TestJvmScope implements JvmScope
     Path current = startPath.toAbsolutePath().normalize();
     while (current != null)
     {
-      if (Files.exists(current.resolve("plugin")) && Files.exists(current.resolve("hooks")))
+      if (Files.exists(current.resolve("plugin")) && Files.exists(current.resolve("client")))
       {
         return current;
       }
