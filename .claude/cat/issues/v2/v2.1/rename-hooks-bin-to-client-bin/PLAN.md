@@ -11,7 +11,22 @@ None - infrastructure rename
 - **Concerns:** Mechanical text replacement; no logic changes
 - **Mitigation:** Grep before and after to confirm zero remaining references in source code
 
-## Files to Modify (remaining)
+## Files to Modify
+- plugin/hooks/hooks.json - 14 occurrences
+- plugin/skills/work-with-issue-first-use/SKILL.md - 5 occurrences
+- plugin/skills/skill-builder-first-use/SKILL.md - 2 occurrences
+- plugin/skills/work-first-use/SKILL.md - 1 occurrence
+- plugin/skills/stakeholder-review-box/SKILL.md - 1 occurrence
+- plugin/skills/stakeholder-concern-box/SKILL.md - 1 occurrence
+- plugin/skills/stakeholder-selection-box/SKILL.md - 1 occurrence
+- plugin/skills/status-first-use/SKILL.md - 1 occurrence
+- plugin/skills/statusline-first-use/SKILL.md - 1 occurrence
+- plugin/skills/work-complete/SKILL.md - 1 occurrence
+- plugin/skills/work-complete-first-use/SKILL.md - 1 occurrence
+- plugin/skills/run-retrospective-first-use/SKILL.md - 1 occurrence
+- plugin/skills/optimize-execution-first-use/SKILL.md - 1 occurrence
+- plugin/concepts/silent-execution.md - 1 occurrence
+- plugin/scripts/get-render-diff.sh - 1 occurrence
 - client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java - 3 occurrences (lines 67, 473, 521)
 - client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java - 17 occurrences
 
