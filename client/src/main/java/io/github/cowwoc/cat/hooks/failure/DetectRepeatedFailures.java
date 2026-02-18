@@ -38,27 +38,44 @@ public final class DetectRepeatedFailures implements PostToolHandler
   private static final int FAILURE_THRESHOLD = 2;
   private static final Duration FILE_TTL = Duration.ofDays(1);
   private static final Duration CLEANUP_INTERVAL = Duration.ofHours(6);
+  private static final Path DEFAULT_TRACKING_DIRECTORY = Path.of("/tmp");
   private final Clock clock;
+  private final Path trackingDirectory;
   private Instant lastCleanup = Instant.EPOCH;
 
   /**
-   * Creates a new DetectRepeatedFailures handler using the system UTC clock.
+   * Creates a new DetectRepeatedFailures handler using the system UTC clock and the default tracking
+   * directory ({@code /tmp}).
    */
   public DetectRepeatedFailures()
   {
-    this(Clock.systemUTC());
+    this(Clock.systemUTC(), DEFAULT_TRACKING_DIRECTORY);
   }
 
   /**
-   * Creates a new DetectRepeatedFailures handler.
+   * Creates a new DetectRepeatedFailures handler with the default tracking directory ({@code /tmp}).
    *
    * @param clock the clock to use for time-based operations
    * @throws NullPointerException if {@code clock} is null
    */
   public DetectRepeatedFailures(Clock clock)
   {
+    this(clock, DEFAULT_TRACKING_DIRECTORY);
+  }
+
+  /**
+   * Creates a new DetectRepeatedFailures handler.
+   *
+   * @param clock             the clock to use for time-based operations
+   * @param trackingDirectory the directory where tracking files are stored
+   * @throws NullPointerException if {@code clock} or {@code trackingDirectory} are null
+   */
+  public DetectRepeatedFailures(Clock clock, Path trackingDirectory)
+  {
     requireThat(clock, "clock").isNotNull();
+    requireThat(trackingDirectory, "trackingDirectory").isNotNull();
     this.clock = clock;
+    this.trackingDirectory = trackingDirectory;
   }
 
   @Override
@@ -66,7 +83,7 @@ public final class DetectRepeatedFailures implements PostToolHandler
   {
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
 
     int failureCount = readFailureCount(trackingFile);
     ++failureCount;
@@ -143,9 +160,9 @@ public final class DetectRepeatedFailures implements PostToolHandler
       return;
     lastCleanup = now;
 
-    Path tmpDir = Path.of("/tmp");
     Instant cutoff = now.minus(FILE_TTL);
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(tmpDir, "cat-failure-tracking-*.count"))
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(trackingDirectory,
+      "cat-failure-tracking-*.count"))
     {
       for (Path p : stream)
         deleteIfExpired(p, cutoff);
