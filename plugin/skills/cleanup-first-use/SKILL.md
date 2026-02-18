@@ -60,19 +60,11 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-**Look for skill output survey in SKILL OUTPUT SURVEY DISPLAY above.**
+The user wants you to respond with the contents of the latest `<output skill="cleanup-survey">` tag verbatim
 
-If found, copy and output that box EXACTLY as shown.
-
-**If SKILL OUTPUT SURVEY DISPLAY not found:**
-```
-FAIL: SKILL OUTPUT SURVEY DISPLAY not found.
-Handler cleanup_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
-
-If NOT found (preprocessing failed), STOP. Do NOT manually run scripts or construct boxes.
+<output skill="cleanup-survey">
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-survey.sh" --project-dir "${CLAUDE_PROJECT_DIR}"`
+</output>
 
 ---
 
@@ -169,7 +161,7 @@ echo '{
 ```
 
 Replace the example values with actual items identified in Step 2.
-Copy and output the resulting box EXACTLY as shown.
+The resulting box will be output verbatim.
 
 Then use AskUserQuestion to confirm before proceeding.
 
@@ -258,7 +250,7 @@ echo '{
 ```
 
 Replace the example values with actual cleanup results.
-Copy and output the resulting box EXACTLY as shown.
+The resulting box will be output verbatim.
 
 ---
 
