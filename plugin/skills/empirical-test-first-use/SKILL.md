@@ -77,6 +77,10 @@ Build the initial test configuration to reproduce the failure.
         "must_use_tools": [],
         "must_not_use_tools": []
     },
+    "system_prompt": "Optional string passed as --append-system-prompt to claude CLI",
+    "system_reminders": [
+        "Content injected as <system-reminder> tags in the test prompt user message"
+    ],
     "priming_messages": [
         "User message text",
         {"type": "tool_use", "tool": "Bash", "input": {"command": "git branch --show-current"}, "output": "v2.1"},
@@ -94,6 +98,13 @@ Build the initial test configuration to reproduce the failure.
 
 Use tool_use priming to simulate scenarios where the failure occurs after tool execution (e.g., after running `git
 branch` or `/cat:status`). This is critical for reproducing failures that only occur in post-tool-use context.
+
+**System prompt** is an optional string passed as `--append-system-prompt` to the claude CLI, simulating project
+instructions like CLAUDE.md content that would be present in a real session.
+
+**System reminders** are optional strings injected into the test prompt user message, each wrapped in
+`<system-reminder>` tags. This simulates hook-injected system reminders that appear in production sessions and can
+affect agent behavior.
 
 **Success criteria** define what constitutes a passing trial:
 - `must_contain`: Strings that must appear in agent output (case-insensitive)
