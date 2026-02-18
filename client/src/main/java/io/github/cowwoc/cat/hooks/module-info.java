@@ -8,6 +8,7 @@ module io.github.cowwoc.cat.hooks
 {
   requires tools.jackson.databind;
   requires io.github.cowwoc.requirements13.java;
+  requires io.github.cowwoc.requirements13.jackson;
   requires io.github.cowwoc.pouch10.core;
   requires jtokkit;
   requires java.net.http;
