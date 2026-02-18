@@ -117,5 +117,5 @@ Restart Claude Code or start a new session to see it in action.
 
 </success_criteria>
 <output skill="statusline">
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-statusline-output"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-statusline-output"`
 </output>
