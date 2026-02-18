@@ -5,7 +5,7 @@
     "trigger_interval_days": 7
   },
   "last_retrospective": "2026-02-18T22:26:53Z",
-  "mistake_count_since_last": 2,
+  "mistake_count_since_last": 3,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -822,7 +822,7 @@
         "post_fix_mistakes": [],
         "verdict": "pending"
       },
-      "implementation": "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed — the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
+      "implementation": "Root cause was incorrect quoting, not a bash limitation. jq filters in double quotes expose != to zsh history expansion; single quotes prevent this. Variable interpolation should use jq --arg instead of shell interpolation. No hook needed \u2014 the fix is proper quoting discipline, not banning bash comparisons. No recurrences since 2026-02-06."
     },
     {
       "id": "A018",

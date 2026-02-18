@@ -140,7 +140,7 @@
       "timestamp": "2026-02-18T19:30:42Z",
       "category": "protocol_violation",
       "description": "merge-and-cleanup.sh did not delete backup-before-squash-* branches left by git-squash-quick.sh after successful merge",
-      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success — it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
+      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success \u2014 it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "code_fix",
@@ -300,6 +300,43 @@
         "catches_variations": true
       },
       "correct_behavior": "Replace negative instructional framing with user-centric framing: 'The user wants you to respond with the following text verbatim:' followed by the <output> tag. Move NEXT STEPS out of the instruction block and into a separate 'append after verbatim content' instruction to prevent duplication."
+    },
+    {
+      "id": "M354",
+      "timestamp": "2026-02-19T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent skipped verbatim echo of status box content and only output the NEXT STEPS table when invoking /cat:status",
+      "root_cause": "status-first-use/SKILL.md instruction ordering places NEXT STEPS table between the instruction and the <output> tag, causing the agent to treat NEXT STEPS as the target output and the <output> tag content as preprocessing data already consumed. The agent read the instruction ('The user wants you to respond with the contents verbatim') but identified NEXT STEPS (the most visible content after the instruction) as what to produce, skipping the actual box. Structural fix required: move NEXT STEPS after the <output> tag so content order mirrors output order.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status-first-use/SKILL.md",
+      "pattern_keywords": [
+        "verbatim-output",
+        "status-skill",
+        "skipped-box-content",
+        "instruction-ordering",
+        "output-tag-position",
+        "NEXT-STEPS-only"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M353",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Restructure status-first-use/SKILL.md so the <output skill='status'> tag appears BEFORE the NEXT STEPS table, mirroring the output order. Agent reads instruction -> sees <output> tag -> echoes box -> appends NEXT STEPS. Content position should match production order.",
+      "task_creation_info": {
+        "suggested_title": "Fix status-first-use instruction ordering to prevent box content skip",
+        "suggested_description": "Move NEXT STEPS table in status-first-use/SKILL.md to appear AFTER the <output skill='status'> tag so the document content order mirrors the required output order. Current ordering (instruction -> NEXT STEPS table -> <output> tag) causes the agent to identify NEXT STEPS as the output target and skip echoing the box content. New ordering: instruction -> <output> tag -> NEXT STEPS table.",
+        "suggested_acceptance_criteria": [
+          "status-first-use/SKILL.md: <output skill='status'> tag appears before NEXT STEPS table",
+          "Agent echoes full status box content verbatim before NEXT STEPS table",
+          "Empirical test on haiku with production-size content achieves >= 90% compliance"
+        ]
+      }
     }
   ]
 }
