@@ -9,15 +9,11 @@ package io.github.cowwoc.cat.hooks.test;
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import org.testng.annotations.Test;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,7 +56,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void pluginFilesBlockedOnMain() throws IOException
   {
-    Path tempDir = createTempGitRepo("main");
+    Path tempDir = TestUtils.createTempGitRepo("main");
     try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -85,7 +81,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void pluginFilesBlockedOnV21() throws IOException
   {
-    Path tempDir = createTempGitRepo("v2.1");
+    Path tempDir = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -110,7 +106,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void pluginFilesBlockedOnVersionBranch() throws IOException
   {
-    Path tempDir = createTempGitRepo("v1.0");
+    Path tempDir = TestUtils.createTempGitRepo("v1.0");
     try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -135,7 +131,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void pluginFilesAllowedOnTaskBranch() throws IOException
   {
-    Path tempDir = createTempGitRepo("v2.1-fix-bug");
+    Path tempDir = TestUtils.createTempGitRepo("v2.1-fix-bug");
     try
     {
       createCatBaseFile(tempDir);
@@ -166,13 +162,13 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void pluginFilesAllowedInWorktree() throws IOException
   {
-    Path mainDir = createTempGitRepo("v2.1");
+    Path mainDir = TestUtils.createTempGitRepo("v2.1");
     try
     {
       Path worktreesDir = mainDir.resolve(".claude/cat/worktrees");
       Files.createDirectories(worktreesDir);
 
-      Path worktreeDir = createWorktree(mainDir, worktreesDir, "2.1-test-task");
+      Path worktreeDir = TestUtils.createWorktree(mainDir, worktreesDir, "2.1-test-task");
       try
       {
         createCatBaseFile(worktreeDir);
@@ -190,7 +186,7 @@ public class EnforcePluginFileIsolationTest
       }
       finally
       {
-        runGitCommand(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.runGitCommand(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
         TestUtils.deleteDirectoryRecursively(worktreeDir);
       }
     }
@@ -266,7 +262,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void clientFilesBlockedOnMain() throws IOException
   {
-    Path tempDir = createTempGitRepo("main");
+    Path tempDir = TestUtils.createTempGitRepo("main");
     try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -291,7 +287,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void clientFilesBlockedOnV21() throws IOException
   {
-    Path tempDir = createTempGitRepo("v2.1");
+    Path tempDir = TestUtils.createTempGitRepo("v2.1");
     try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -316,7 +312,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void clientFilesAllowedOnTaskBranch() throws IOException
   {
-    Path tempDir = createTempGitRepo("v2.1-fix-bug");
+    Path tempDir = TestUtils.createTempGitRepo("v2.1-fix-bug");
     try
     {
       createCatBaseFile(tempDir);
@@ -345,7 +341,7 @@ public class EnforcePluginFileIsolationTest
   @Test
   public void deepPluginPathIsDetected() throws IOException
   {
-    Path tempDir = createTempGitRepo("main");
+    Path tempDir = TestUtils.createTempGitRepo("main");
     try (JvmScope scope = new TestJvmScope())
     {
       EnforcePluginFileIsolation handler = new EnforcePluginFileIsolation();
@@ -365,53 +361,6 @@ public class EnforcePluginFileIsolationTest
   }
 
   /**
-   * Creates a temporary git repository with the specified branch.
-   *
-   * @param branchName the branch name to create
-   * @return the path to the created git repository
-   * @throws IOException if repository creation fails
-   */
-  private Path createTempGitRepo(String branchName) throws IOException
-  {
-    Path tempDir = Files.createTempDirectory("git-test-");
-
-    runGitCommand(tempDir, "init");
-    runGitCommand(tempDir, "config", "user.email", "test@example.com");
-    runGitCommand(tempDir, "config", "user.name", "Test User");
-
-    Files.writeString(tempDir.resolve("README.md"), "test");
-    runGitCommand(tempDir, "add", "README.md");
-    runGitCommand(tempDir, "commit", "-m", "Initial commit");
-
-    if (!branchName.equals("master") && !branchName.equals("main"))
-    {
-      runGitCommand(tempDir, "checkout", "-b", branchName);
-    }
-    if (branchName.equals("main") && !getCurrentBranch(tempDir).equals("main"))
-    {
-      runGitCommand(tempDir, "branch", "-m", "main");
-    }
-
-    return tempDir;
-  }
-
-  /**
-   * Creates a git worktree in the specified directory.
-   *
-   * @param mainRepo the main repository path
-   * @param worktreesDir the worktrees parent directory
-   * @param branchName the branch name for the worktree
-   * @return the path to the created worktree
-   * @throws IOException if worktree creation fails
-   */
-  private Path createWorktree(Path mainRepo, Path worktreesDir, String branchName) throws IOException
-  {
-    Path worktreePath = worktreesDir.resolve(branchName);
-    runGitCommand(mainRepo, "worktree", "add", "-b", branchName, worktreePath.toString());
-    return worktreePath;
-  }
-
-  /**
    * Creates a {@code cat-base} file in the git directory of the given repository.
    * <p>
    * This simulates an issue worktree created by {@code /cat:work}. The file content is
@@ -422,131 +371,12 @@ public class EnforcePluginFileIsolationTest
    */
   private void createCatBaseFile(Path repoDir) throws IOException
   {
-    String gitDirPath = runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
+    String gitDirPath = TestUtils.runGitCommandWithOutput(repoDir, "rev-parse", "--git-dir");
     Path gitDir;
     if (Paths.get(gitDirPath).isAbsolute())
       gitDir = Paths.get(gitDirPath);
     else
       gitDir = repoDir.resolve(gitDirPath);
     Files.writeString(gitDir.resolve("cat-base"), "v2.1");
-  }
-
-  /**
-   * Runs a git command in the specified directory.
-   *
-   * @param directory the directory to run the command in
-   * @param args the git command arguments
-   */
-  private void runGitCommand(Path directory, String... args)
-  {
-    try
-    {
-      String[] command = new String[args.length + 3];
-      command[0] = "git";
-      command[1] = "-C";
-      command[2] = directory.toString();
-      System.arraycopy(args, 0, command, 3, args.length);
-
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        String line = reader.readLine();
-        while (line != null)
-        {
-          line = reader.readLine();
-        }
-      }
-
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        throw new IOException("Git command failed with exit code " + exitCode);
-    }
-    catch (IOException | InterruptedException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
-   * Runs a git command in the specified directory and returns its output.
-   *
-   * @param directory the directory to run the command in
-   * @param args the git command arguments
-   * @return the trimmed output of the command
-   * @throws IOException if the git command fails
-   */
-  private String runGitCommandWithOutput(Path directory, String... args) throws IOException
-  {
-    try
-    {
-      String[] command = new String[args.length + 3];
-      command[0] = "git";
-      command[1] = "-C";
-      command[2] = directory.toString();
-      System.arraycopy(args, 0, command, 3, args.length);
-
-      ProcessBuilder pb = new ProcessBuilder(command);
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      StringBuilder output = new StringBuilder();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        String line = reader.readLine();
-        while (line != null)
-        {
-          if (output.length() > 0)
-            output.append('\n');
-          output.append(line);
-          line = reader.readLine();
-        }
-      }
-
-      int exitCode = process.waitFor();
-      if (exitCode != 0)
-        throw new IOException("Git command failed with exit code " + exitCode);
-      return output.toString().strip();
-    }
-    catch (InterruptedException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-  }
-
-  /**
-   * Gets the current branch name for a directory.
-   *
-   * @param directory the directory to check
-   * @return the branch name
-   */
-  private String getCurrentBranch(Path directory)
-  {
-    try
-    {
-      ProcessBuilder pb = new ProcessBuilder("git", "-C", directory.toString(), "branch", "--show-current");
-      pb.redirectErrorStream(true);
-      Process process = pb.start();
-
-      String branch;
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
-      {
-        branch = reader.readLine();
-      }
-
-      process.waitFor();
-      if (branch != null)
-        return branch.strip();
-      return "";
-    }
-    catch (IOException | InterruptedException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
   }
 }

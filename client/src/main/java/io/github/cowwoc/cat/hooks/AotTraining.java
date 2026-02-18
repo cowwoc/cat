@@ -63,7 +63,7 @@ public final class AotTraining
       new GetSkillOutput(scope).run(input, output);
       new GetAskOutput(scope).run(input, output);
       new GetEditOutput().run(input, output);
-      new GetWriteEditOutput().run(input, output);
+      new GetWriteEditOutput(scope).run(input, output);
       new GetTaskOutput(scope).run(input, output);
       new GetSessionEndOutput(scope).run(input, output);
       new GetSessionStartOutput(scope).run(input, output);
