@@ -101,7 +101,7 @@ arguments:
   - completedIssue
   - baseBranch
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-next-task-box" $completedIssue $baseBranch`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-task-box" $completedIssue $baseBranch`
 ```
 
 When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:

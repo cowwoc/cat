@@ -53,7 +53,7 @@ session becomes corrupted (all commands fail with exit code 1).
 Values are pre-loaded by handler preprocessing (shown above in CONFIGURATION section).
 Use these values: TRUST, VERIFY, AUTO_REMOVE.
 
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" --phase preparing`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" --phase preparing`
 
 ## Phase 1: Prepare
 

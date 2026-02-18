@@ -439,7 +439,7 @@ description: "Render a status box"
 user-invocable: false
 argument-hint: "<count> <label>"
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-status-box" "$0" "$1"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-box" "$0" "$1"`
 ```
 
 When invoked with args `"5 done"`, SkillLoader resolves `$0` → `5` and `$1` → `done`
@@ -1456,7 +1456,7 @@ Skill content (-first-use/SKILL.md):
 The user wants you to respond with the contents of the latest `<output skill="help">` tag verbatim
 
 <output skill="help">
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-help-output"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-help-output"`
 </output>
 ```
 

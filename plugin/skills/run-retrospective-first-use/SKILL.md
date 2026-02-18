@@ -308,5 +308,5 @@ Before completing retrospective:
 - `cat:token-report` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items
 <output skill="retrospective">
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-retrospective-output"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-retrospective-output"`
 </output>

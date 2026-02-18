@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/user-prompt-submit"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/user-prompt-submit"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-ask-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-ask-output"
           }
         ]
       },
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-bash-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-bash-output"
           }
         ]
       },
@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-read-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-read-output"
           }
         ]
       },
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-edit-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-edit-output"
           }
         ]
       },
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-write-edit-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-write-edit-output"
           }
         ]
       },
@@ -71,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-task-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-task-output"
           }
         ]
       }
@@ -81,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-post-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-post-output"
           }
         ]
       },
@@ -98,7 +98,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-bash-post-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-bash-post-output"
           }
         ]
       },
@@ -107,7 +107,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-read-post-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-read-post-output"
           }
         ]
       }
@@ -117,7 +117,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/post-tool-use-failure"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-tool-use-failure"
           }
         ]
       },
@@ -135,7 +135,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/enforce-status"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/enforce-status"
           }
         ]
       }
@@ -145,7 +145,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/pre-compact-hook --precompact"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-compact-hook --precompact"
           }
         ]
       }
@@ -155,7 +155,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-session-end-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-session-end-output"
           }
         ]
       }
