@@ -429,6 +429,22 @@ in the description so intent routing matches correctly.
 
 Do NOT add fields set to their default value — it adds noise and obscures intentional overrides.
 
+**Positional arguments**: For skills that accept arguments, use `argument-hint` to document expected
+args and reference them as `$0`, `$1`, etc. in content. SkillLoader splits the args string on
+whitespace and resolves positional references.
+
+```yaml
+---
+description: "Render a status box"
+user-invocable: false
+argument-hint: "<count> <label>"
+---
+!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-status-box" "$0" "$1"`
+```
+
+When invoked with args `"5 done"`, SkillLoader resolves `$0` → `5` and `$1` → `done`
+before running the preprocessor directive.
+
 ---
 
 ## Skill Structure Template
