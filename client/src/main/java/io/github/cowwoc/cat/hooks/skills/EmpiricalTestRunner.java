@@ -84,12 +84,16 @@ public final class EmpiricalTestRunner
     Map<String, Object> config = scope.getJsonMapper().readValue(configJson, MAP_TYPE);
 
     String targetDescription = (String) config.getOrDefault("target_description", "");
+    String systemPrompt = (String) config.getOrDefault("system_prompt", "");
     @SuppressWarnings("unchecked")
     Map<String, Object> criteria = (Map<String, Object>) config.getOrDefault("success_criteria",
       new HashMap<>());
     @SuppressWarnings("unchecked")
     List<PrimingMessage> primingMessages = PrimingMessage.fromRawList(
       (List<Object>) config.getOrDefault("priming_messages", new ArrayList<>()));
+    @SuppressWarnings("unchecked")
+    List<String> systemReminders = (List<String>) config.getOrDefault("system_reminders",
+      new ArrayList<>());
     @SuppressWarnings("unchecked")
     Map<String, String> configs = (Map<String, String>) config.getOrDefault("configs",
       new HashMap<>());
@@ -108,8 +112,8 @@ public final class EmpiricalTestRunner
       System.out.println(configName + ":");
       System.out.flush();
 
-      ConfigResult result = runConfig(configName, prompt, primingMessages, criteria, trials,
-        model, cwd);
+      ConfigResult result = runConfig(configName, prompt, primingMessages, systemReminders,
+        criteria, trials, model, systemPrompt, cwd);
       allResults.put(configName, result);
 
       System.out.println("  RESULT: " + result.passes() + "/" + result.trials() + " (" +
@@ -173,21 +177,25 @@ public final class EmpiricalTestRunner
    * @param name the configuration name
    * @param prompt the prompt text
    * @param primingMessages list of priming messages to send before the test prompt
+   * @param systemReminders list of system reminder strings to inject into the test prompt
    * @param criteria the success criteria map
    * @param trials number of trials to run
    * @param model the model name
+   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
    * @param cwd the working directory
    * @return the configuration result
    */
   private ConfigResult runConfig(String name, String prompt, List<PrimingMessage> primingMessages,
-    Map<String, Object> criteria, int trials, String model, Path cwd)
+    List<String> systemReminders, Map<String, Object> criteria, int trials, String model,
+    String systemPrompt, Path cwd)
   {
     List<TrialResult> results = new ArrayList<>();
     int passes = 0;
 
     for (int i = 0; i < trials; ++i)
     {
-      TrialResult result = runTrial(primingMessages, prompt, criteria, model, cwd);
+      TrialResult result = runTrial(primingMessages, systemReminders, prompt, criteria, model,
+        systemPrompt, cwd);
       results.add(result);
       if (result.pass())
         ++passes;
@@ -223,6 +231,38 @@ public final class EmpiricalTestRunner
     if (text.length() > maxLength)
       return text.substring(0, maxLength);
     return text;
+  }
+
+  /**
+   * Builds the claude CLI command with appropriate flags.
+   *
+   * @param model the model name
+   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
+   * @return the command as a list of strings
+   * @throws NullPointerException if {@code model} or {@code systemPrompt} are null
+   */
+  public List<String> buildCommand(String model, String systemPrompt)
+  {
+    requireThat(model, "model").isNotBlank();
+    requireThat(systemPrompt, "systemPrompt").isNotNull();
+    List<String> command = new ArrayList<>();
+    command.add("claude");
+    command.add("-p");
+    command.add("--model");
+    command.add(model);
+    command.add("--input-format");
+    command.add("stream-json");
+    command.add("--output-format");
+    command.add("stream-json");
+    command.add("--verbose");
+    command.add("--no-session-persistence");
+    command.add("--dangerously-skip-permissions");
+    if (!systemPrompt.isEmpty())
+    {
+      command.add("--append-system-prompt");
+      command.add(systemPrompt);
+    }
+    return command;
   }
 
   /**
@@ -282,29 +322,20 @@ public final class EmpiricalTestRunner
    * Runs a single trial and evaluates the result.
    *
    * @param primingMessages list of priming messages
+   * @param systemReminders list of system reminder strings to inject into the test prompt
    * @param testPrompt the test prompt
    * @param criteria the success criteria
    * @param model the model name
+   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
    * @param cwd the working directory
    * @return the trial result
    */
-  private TrialResult runTrial(List<PrimingMessage> primingMessages, String testPrompt,
-    Map<String, Object> criteria, String model, Path cwd)
+  private TrialResult runTrial(List<PrimingMessage> primingMessages, List<String> systemReminders,
+    String testPrompt, Map<String, Object> criteria, String model, String systemPrompt, Path cwd)
   {
-    List<String> command = new ArrayList<>();
-    command.add("claude");
-    command.add("-p");
-    command.add("--model");
-    command.add(model);
-    command.add("--input-format");
-    command.add("stream-json");
-    command.add("--output-format");
-    command.add("stream-json");
-    command.add("--verbose");
-    command.add("--no-session-persistence");
-    command.add("--dangerously-skip-permissions");
+    List<String> command = buildCommand(model, systemPrompt);
 
-    String input = buildInput(primingMessages, testPrompt);
+    String input = buildInput(primingMessages, testPrompt, systemReminders);
 
     ProcessResult processResult = executeClaudeProcess(command, input, cwd);
 
@@ -346,8 +377,27 @@ public final class EmpiricalTestRunner
    */
   public String buildInput(List<PrimingMessage> primingMessages, String testPrompt)
   {
+    return buildInput(primingMessages, testPrompt, List.of());
+  }
+
+  /**
+   * Builds stream-json input with priming messages followed by test prompt, with optional
+   * system reminders injected into the test prompt user message.
+   *
+   * @param primingMessages the priming messages
+   * @param testPrompt the test prompt
+   * @param systemReminders list of system reminder strings to append to the test prompt,
+   *                        each wrapped in {@code <system-reminder>} tags
+   * @return the stream-json input string
+   * @throws NullPointerException if {@code primingMessages}, {@code testPrompt}, or
+   *                              {@code systemReminders} are null
+   */
+  public String buildInput(List<PrimingMessage> primingMessages, String testPrompt,
+    List<String> systemReminders)
+  {
     requireThat(primingMessages, "primingMessages").isNotNull();
     requireThat(testPrompt, "testPrompt").isNotNull();
+    requireThat(systemReminders, "systemReminders").isNotNull();
     StringJoiner joiner = new StringJoiner("\n");
     int toolUseCounter = 0;
     for (PrimingMessage msg : primingMessages)
@@ -365,7 +415,19 @@ public final class EmpiricalTestRunner
         }
       }
     }
-    joiner.add(makeUserMessage(testPrompt));
+    String finalPrompt = testPrompt;
+    if (!systemReminders.isEmpty())
+    {
+      StringBuilder sb = new StringBuilder(testPrompt);
+      for (String reminder : systemReminders)
+      {
+        sb.append("\n<system-reminder>\n").
+          append(reminder).
+          append("\n</system-reminder>");
+      }
+      finalPrompt = sb.toString();
+    }
+    joiner.add(makeUserMessage(finalPrompt));
     return joiner.toString();
   }
 
@@ -610,6 +672,8 @@ public final class EmpiricalTestRunner
           target_description  Description of expected behavior
           success_criteria    Object with must_contain, must_not_contain, must_use_tools, must_not_use_tools
           priming_messages    Array of messages to send before test prompt (simulates prior turns)
+          system_prompt       String passed as --append-system-prompt to claude CLI (optional)
+          system_reminders    Array of strings, each injected as <system-reminder> tags in test prompt (optional)
           configs             Object mapping config names to prompt text
 
         Examples:
