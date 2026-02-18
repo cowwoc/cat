@@ -403,11 +403,39 @@
       "correct_behavior": "Pattern 11 (critical self-acknowledgment) should only scan assistant messages (assistantMsg), not tool output. The existing check at lines 286-288 already handles legitimate critical self-acknowledgments in assistant messages. Remove Pattern 11 from the tool output scanning block entirely."
     },
     {
-      "id": "M356",
+      "id": "M357",
+      "timestamp": "2026-02-19T16:30:00Z",
+      "category": "missing_documentation",
+      "description": "Skill(cat:stakeholder-selection-box) invoked via Skill tool with args, but ${ARGUMENTS} was empty because SkillLoader did not resolve ARGUMENTS variable and the skill bypassed the SkillLoader pipeline entirely",
+      "root_cause": "stakeholder-selection-box/SKILL.md called the CLI handler directly via !backtick instead of routing through load-skill.sh/SkillLoader. SkillLoader did not resolve ${ARGUMENTS} as a built-in variable, so even if the skill had used load-skill.sh, the args from the Skill tool invocation would not have been substituted.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java",
+      "pattern_keywords": [
+        "skill-arguments",
+        "ARGUMENTS-variable",
+        "SkillLoader",
+        "stakeholder-selection-box",
+        "load-skill",
+        "variable-substitution"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Skills needing ${ARGUMENTS} substitution must route through load-skill.sh/SkillLoader (which now resolves ${ARGUMENTS}). SkillLoader.load() accepts args as a second parameter and substitutes ${ARGUMENTS} in all skill content."
+    },
+    {
+      "id": "M357",
       "timestamp": "2026-02-19T11:37:00Z",
       "category": "tool_misuse",
-      "description": "verify-audit CLI failed with Jackson \"Unrecognized character escape !\" when evidence strings contained backtick-exclamation preprocessing directives serialized via shell heredoc",
-      "root_cause": "Shell string interpolation in RESULTS_JSON heredoc embedded backtick-exclamation sequences literally in JSON string values, producing invalid JSON escape sequence \\! that Jackson rejected. The verify-implementation skill showed <<< heredoc as example but did not specify that evidence strings with special characters require json.dumps() serialization.",
+      "description": "verify-audit CLI failed with Jackson Unrecognized character escape \\! when evidence strings contained backtick-exclamation preprocessing directives serialized via shell heredoc",
+      "root_cause": "Shell string interpolation in RESULTS_JSON heredoc embedded backtick-exclamation sequences literally in JSON string values, producing invalid JSON escape sequence that Jackson rejected. The verify-implementation skill showed heredoc as example but did not specify that evidence strings with special characters require json.dumps() serialization.",
       "rca_method": "C",
       "rca_method_name": "causal-barrier",
       "prevention_type": "skill",
