@@ -1118,8 +1118,9 @@ public void emptyInput_returnsEmptyJson() throws IOException
 }
 ```
 
-### Parallel Execution
-Tests run in parallel. Test classes must not contain any shared state:
+### Parallel Execution and Test Isolation
+Tests run in parallel. In addition to the cross-language test isolation rules in `common.md`, Java tests must follow
+these Java-specific constraints:
 
 1. **No class fields** - use local variables only
 2. **No @BeforeMethod/@AfterMethod/@BeforeClass/@AfterClass** - initialize in each test method
@@ -1137,6 +1138,9 @@ Tests run in parallel. Test classes must not contain any shared state:
      to these methods passing `System.in`/`System.out`/`System.err`. Tests pass their own streams.
    - **Assert observable side effects**: When stream injection isn't practical, verify behavior through other means (e.g.,
      file still exists after failed deletion) rather than capturing stderr.
+9. **Classes that invoke git must accept a `directory` parameter** so tests can pass an isolated temporary repo created
+   via `TestUtils.createTempGitRepo()`. For validation-only tests where execution fails before any git operation (e.g.,
+   missing file check), passing `"."` is acceptable since no git command actually runs.
 
 ```java
 // Good - self-contained test with TestJvmScope
