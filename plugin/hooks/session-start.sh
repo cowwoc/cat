@@ -147,17 +147,23 @@ download_runtime() {
 
   debug "Downloading runtime from ${asset_url}"
 
-  local temp temp_sha256
+  local temp="" temp_sha256=""
   temp=$(mktemp --suffix=.tar.gz) || { debug "Failed to create temp file"; return 1; }
   temp_sha256=$(mktemp --suffix=.sha256) || { rm -f "$temp"; debug "Failed to create sha256 temp file"; return 1; }
 
-  # Clean up temp files on function exit (success or failure)
-  trap 'rm -f "$temp" "$temp_sha256"' RETURN
+  cleanup_temp() {
+    rm -f "$temp" "$temp_sha256"
+  }
 
-  curl -sSfL --max-time 300 --max-filesize 524288000 -o "$temp" "$asset_url" 2>/dev/null || { debug "Download failed: $asset_url"; return 1; }
+  curl -sSfL --max-time 300 --max-filesize 524288000 -o "$temp" "$asset_url" 2>/dev/null || {
+    debug "Download failed: $asset_url"
+    cleanup_temp
+    return 1
+  }
 
   curl -sSfL --max-time 30 -o "$temp_sha256" "$sha256_url" 2>/dev/null || {
     debug "SHA256 download failed: $sha256_url"
+    cleanup_temp
     return 1
   }
 
@@ -168,6 +174,7 @@ download_runtime() {
 
   if [[ "$expected_sha256" != "$actual_sha256" ]]; then
     debug "SHA256 verification failed for $archive_name"
+    cleanup_temp
     return 1
   fi
   debug "SHA256 verified for $archive_name"
@@ -175,8 +182,11 @@ download_runtime() {
   mkdir -p "$(dirname "$target_dir")"
   if ! tar --no-absolute-names -xzf "$temp" -C "$(dirname "$target_dir")" 2>/dev/null; then
     debug "Failed to extract archive"
+    cleanup_temp
     return 1
   fi
+
+  cleanup_temp
 
   # Verify no symlinks in extracted directory (defense against symlink attacks)
   if find "$target_dir" -type l 2>/dev/null | grep -q .; then
@@ -221,6 +231,7 @@ try_acquire_runtime() {
     return 0
   fi
 
+  debug "All runtime acquisition methods failed for version $plugin_version at $jdk_path"
   return 1
 }
 
@@ -276,17 +287,23 @@ main() {
     # It handles all session start tasks: upgrade check, update check, session ID,
     # retrospective reminders, session instructions, env injection, skill marker cleanup.
     # Pipe stdin directly to avoid buffering large input in memory.
+    local java_exit=0
     "$jdk_path/bin/java" \
       -Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 \
-      -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.SessionStartHook
+      -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.SessionStartHook || java_exit=$?
+
+    if [[ "$java_exit" -ne 0 ]]; then
+      log "error" "SessionStartHook Java dispatcher failed (exit code $java_exit). Run with CLAUDE_CODE_DEBUG_LOGS_DIR=/tmp/cat-debug.log for details."
+      flush_log
+      return 1
+    fi
     return 0
   fi
 
   # All strategies failed - warn with helpful context
   local platform
   platform=$(get_platform 2>/dev/null || echo "unknown")
-  debug "All acquisition methods failed"
-  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform}). Sessions will start without hook processing. Check your network connection and try restarting."
+  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform}).\\nSessions will start without hook processing.\\nCheck your network connection and try restarting."
   flush_log
 }
 
