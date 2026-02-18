@@ -7,9 +7,11 @@
 package io.github.cowwoc.cat.hooks.test;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.skills.GetStakeholderOutput;
-import io.github.cowwoc.cat.hooks.skills.GetStakeholderOutput.ReviewerStatus;
-import io.github.cowwoc.cat.hooks.skills.GetStakeholderOutput.SkippedStakeholder;
+import io.github.cowwoc.cat.hooks.skills.GetStakeholderConcernBox;
+import io.github.cowwoc.cat.hooks.skills.GetStakeholderReviewBox;
+import io.github.cowwoc.cat.hooks.skills.GetStakeholderReviewBox.ReviewerStatus;
+import io.github.cowwoc.cat.hooks.skills.GetStakeholderSelectionBox;
+import io.github.cowwoc.cat.hooks.skills.GetStakeholderSelectionBox.SkippedStakeholder;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -18,7 +20,7 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for GetStakeholderOutput functionality.
+ * Tests for stakeholder box output functionality.
  * <p>
  * Tests verify that stakeholder output generation for selection, review, and concern boxes
  * produces correctly formatted displays with proper structure and content.
@@ -38,7 +40,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         2, 5,
         List.of("design", "testing"),
@@ -58,7 +60,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         3, 7,
         List.of("design"),
@@ -78,7 +80,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         2, 4,
         List.of("design", "testing"),
@@ -98,7 +100,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         1, 3,
         List.of("design"),
@@ -122,7 +124,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         1, 2,
         List.of("design"),
@@ -142,7 +144,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         0, 3,
         List.of(),
@@ -162,7 +164,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-my-issue",
         List.of(new ReviewerStatus("design", "APPROVED")),
@@ -183,7 +185,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-important-task",
         List.of(new ReviewerStatus("design", "APPROVED")),
@@ -204,7 +206,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-task",
         List.of(
@@ -228,7 +230,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-task",
         List.of(new ReviewerStatus("design", "APPROVED")),
@@ -249,7 +251,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-task",
         List.of(
@@ -272,7 +274,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-task",
         List.of(new ReviewerStatus("design", "APPROVED")),
@@ -293,7 +295,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderReviewBox handler = new GetStakeholderReviewBox(scope);
       String result = handler.getReviewBox(
         "v2.1-task",
         List.of(new ReviewerStatus("design", "APPROVED")),
@@ -314,9 +316,9 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
-      String result = handler.getCriticalConcernBox(
-        "design", "Missing error handling", "src/Main.java:42");
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      String result = handler.getConcernBox(
+        "CRITICAL", "design", "Missing error handling", "src/Main.java:42");
 
       requireThat(result, "result").contains("CRITICAL");
     }
@@ -332,9 +334,9 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
-      String result = handler.getCriticalConcernBox(
-        "security", "SQL injection risk", "src/Database.java:15");
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      String result = handler.getConcernBox(
+        "CRITICAL", "security", "SQL injection risk", "src/Database.java:15");
 
       requireThat(result, "result").contains("[security]").contains("SQL injection risk").
         contains("src/Database.java:15");
@@ -351,9 +353,9 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
-      String result = handler.getCriticalConcernBox(
-        "design", "Issue found", "file.java:1");
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      String result = handler.getConcernBox(
+        "CRITICAL", "design", "Issue found", "file.java:1");
 
       requireThat(result, "result").contains("╭").contains("╰").contains("│");
     }
@@ -369,9 +371,9 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
-      String result = handler.getHighConcernBox(
-        "testing", "Missing unit tests", "src/Utils.java:30");
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      String result = handler.getConcernBox(
+        "HIGH", "testing", "Missing unit tests", "src/Utils.java:30");
 
       requireThat(result, "result").contains("HIGH");
     }
@@ -387,9 +389,9 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
-      String result = handler.getHighConcernBox(
-        "architect", "Circular dependency", "src/Module.java:5");
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      String result = handler.getConcernBox(
+        "HIGH", "architect", "Circular dependency", "src/Module.java:5");
 
       requireThat(result, "result").contains("[architect]").contains("Circular dependency").
         contains("src/Module.java:5");
@@ -406,9 +408,9 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
-      String result = handler.getCriticalConcernBox(
-        "design", "Missing validation", "src/Config.java:10");
+      GetStakeholderConcernBox handler = new GetStakeholderConcernBox(scope);
+      String result = handler.getConcernBox(
+        "CRITICAL", "design", "Missing validation", "src/Config.java:10");
 
       requireThat(result, "result").contains("└─ src/Config.java:10");
     }
@@ -424,7 +426,7 @@ public class GetStakeholderOutputTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-      GetStakeholderOutput handler = new GetStakeholderOutput(scope);
+      GetStakeholderSelectionBox handler = new GetStakeholderSelectionBox(scope);
       String result = handler.getSelectionBox(
         2, 5,
         List.of("design", "testing"),
