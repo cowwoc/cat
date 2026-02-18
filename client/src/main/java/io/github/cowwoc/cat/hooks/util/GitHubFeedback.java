@@ -141,21 +141,49 @@ public final class GitHubFeedback
    * URL and opens it using {@code xdg-open} (Linux) or {@code open} (macOS). The user's browser
    * session handles GitHub authentication — no token is required.
    * <p>
-   * Returns a JSON object with the {@code url} that was opened.
+   * Returns a JSON object with {@code status} and {@code url}. When the browser opens successfully,
+   * {@code status} is {@code "opened"}. When the browser is unavailable (e.g., headless environment),
+   * {@code status} is {@code "url_only"} and a {@code message} field explains why.
    *
    * @param title the issue title
    * @param body the issue body (markdown supported)
    * @param labels comma-separated list of labels to apply (may be empty)
-   * @return JSON string with the opened URL
+   * @return JSON string with the status and URL
    * @throws NullPointerException if {@code title}, {@code body}, or {@code labels} are null
    * @throws IllegalArgumentException if {@code title} or {@code body} are blank
-   * @throws IOException if the browser cannot be opened
+   * @throws IOException if JSON serialization fails
    */
   public String openIssue(String title, String body, String labels) throws IOException
+  {
+    return openIssue(title, body, labels, GitHubFeedback::openInBrowser);
+  }
+
+  /**
+   * Opens a pre-filled GitHub new issue page using the given browser opener.
+   * <p>
+   * This overload exists for testing — production code uses {@link #openIssue(String, String, String)}.
+   * <p>
+   * Returns a JSON object with {@code status} and {@code url}. When the browser opens successfully,
+   * {@code status} is {@code "opened"}. When the browser opener throws {@link IOException},
+   * {@code status} is {@code "url_only"} and a {@code message} field explains why.
+   *
+   * @param title the issue title
+   * @param body the issue body (markdown supported)
+   * @param labels comma-separated list of labels to apply (may be empty)
+   * @param browserOpener the function used to open the browser
+   * @return JSON string with the status and URL
+   * @throws NullPointerException if {@code title}, {@code body}, {@code labels}, or
+   *   {@code browserOpener} are null
+   * @throws IllegalArgumentException if {@code title} or {@code body} are blank
+   * @throws IOException if JSON serialization fails
+   */
+  public String openIssue(String title, String body, String labels, BrowserOpener browserOpener)
+    throws IOException
   {
     requireThat(title, "title").isNotBlank();
     requireThat(body, "body").isNotBlank();
     requireThat(labels, "labels").isNotNull();
+    requireThat(browserOpener, "browserOpener").isNotNull();
 
     String encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8);
     String encodedBody = URLEncoder.encode(body, StandardCharsets.UTF_8);
@@ -163,28 +191,23 @@ public final class GitHubFeedback
     StringBuilder urlBuilder = new StringBuilder(128);
     urlBuilder.append(GITHUB_BASE).append('/').append(REPOSITORY).append("/issues/new").
       append("?title=").append(encodedTitle).
-      append("&body=").append(encodedBody);
-
-    if (!labels.isEmpty())
-    {
-      StringJoiner labelJoiner = new StringJoiner(",");
-      for (String label : labels.split(","))
-      {
-        String trimmed = label.strip();
-        if (!trimmed.isEmpty())
-          labelJoiner.add(trimmed);
-      }
-      String joinedLabels = labelJoiner.toString();
-      if (!joinedLabels.isEmpty())
-        urlBuilder.append("&labels=").append(URLEncoder.encode(joinedLabels, StandardCharsets.UTF_8));
-    }
+      append("&body=").append(encodedBody).
+      append(buildLabelsQueryParam(labels));
 
     String url = urlBuilder.toString();
-    openInBrowser(url);
-
     JsonMapper mapper = scope.getJsonMapper();
     ObjectNode result = mapper.createObjectNode();
     result.put("url", url);
+    try
+    {
+      browserOpener.open(url);
+      result.put("status", "opened");
+    }
+    catch (IOException e)
+    {
+      result.put("status", "url_only");
+      result.put("message", "Browser unavailable: " + e.getMessage());
+    }
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
   }
 
@@ -220,6 +243,30 @@ public final class GitHubFeedback
       Thread.currentThread().interrupt();
       throw new IOException("Browser open request was interrupted for URL: " + url, e);
     }
+  }
+
+  /**
+   * Builds the labels query parameter for the issue URL.
+   *
+   * @param labels comma-separated list of labels (may be empty)
+   * @return the URL-encoded labels query parameter (e.g., {@code "&labels=bug%2Cenhancement"}),
+   *   or an empty string if no valid labels
+   */
+  private static String buildLabelsQueryParam(String labels)
+  {
+    if (labels.isEmpty())
+      return "";
+    StringJoiner labelJoiner = new StringJoiner(",");
+    for (String label : labels.split(","))
+    {
+      String trimmed = label.strip();
+      if (!trimmed.isEmpty())
+        labelJoiner.add(trimmed);
+    }
+    String joinedLabels = labelJoiner.toString();
+    if (joinedLabels.isEmpty())
+      return "";
+    return "&labels=" + URLEncoder.encode(joinedLabels, StandardCharsets.UTF_8);
   }
 
   /**
@@ -291,6 +338,7 @@ public final class GitHubFeedback
     }
     catch (IOException e)
     {
+      // openIssue() only throws IOException for JSON serialization failures, not browser errors
       exitWithError(e.getMessage());
     }
   }

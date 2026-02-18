@@ -110,16 +110,22 @@ Open the GitHub issue creation page in the user's browser using the `github-feed
   "bug"
 ```
 
-The script constructs a pre-filled GitHub issue URL and opens it in the user's default browser.
-No authentication token is required — the user's existing browser session handles GitHub login.
+The script constructs a pre-filled GitHub issue URL. No authentication token is required — the user's
+existing browser session handles GitHub login.
 
-The script returns JSON with the `url` that was opened.
+The script returns JSON with `status` and `url` fields:
+
+- `status: "opened"` — the browser opened successfully; the URL was loaded in the user's browser.
+- `status: "url_only"` — the browser was unavailable (e.g., headless environment); the user must open
+  the URL manually. A `message` field explains why the browser could not be opened.
 
 ## Step 5: Confirm
 
 After opening the browser or finding a duplicate issue, display the result to the user:
 
-- If browser opened: "The issue creation page was opened in your browser. Please review the pre-filled
-  details and click 'Submit new issue' to file the report."
+- If `status` is `"opened"`: "The issue creation page was opened in your browser. Please review the
+  pre-filled details and click 'Submit new issue' to file the report."
+- If `status` is `"url_only"`: "Unable to open a browser automatically. Please open this URL to file
+  the report:\n\n`<url from JSON response>`"
 - If duplicate found and user subscribed: "You are now subscribed to issue #N at [URL]."
 - If cancelled: "Cancelled. No issue was created."
