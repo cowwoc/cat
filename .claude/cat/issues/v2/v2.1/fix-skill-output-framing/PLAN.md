@@ -62,39 +62,15 @@ Empirical testing (configs A-S, 100+ trials) identified:
 ## Execution Steps
 1. **Update status-first-use/SKILL.md:**
    - Replace the entire instruction block with user-centric framing
-   - New first-use content:
-     ```markdown
-     # Status
-
-     The user wants you to respond with the contents of the last `<output skill="status">` tag below verbatim:
-
-     <output>
-     !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-status-output"`
-     </output>
-     </output>
-
-     After the contents of the output tag, append exactly:
-
-     **NEXT STEPS**
-
-     | Option | Action | Command |
-     |--------|--------|---------|
-     | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
-     | [**2**] | Add new issue | `/cat:add` |
-     ```
-   - Remove the "If the tag is missing below" error instruction
    - Files: `plugin/skills/status-first-use/SKILL.md`
 
 2. **Update SkillLoader.java reference text for subsequent invocations:**
-   - In the `load()` method, find the block that generates reference text for skills with output tags
-     (where `loadedSkills.contains(skillName)` is true)
-   - Change the reference text to: `Re-execute the skill instructions declared earlier in this conversation, using
-     the updated output tag below.`
-   - Ensure the reference text appears BEFORE the output tag (instructions first, then content)
+   - Change the reference text to instruct re-execution of original skill instructions
+   - Ensure the reference text appears BEFORE the output tag
    - Files: `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java`
 
 3. **Update SkillLoader tests:**
-   - Update test expectations in `SkillLoaderTest.java` to match the new reference text
+   - Update test expectations to match the new reference text
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java`
 
 4. **Rename and rewrite handler-chain-pattern.md:**
@@ -117,8 +93,7 @@ Empirical testing (configs A-S, 100+ trials) identified:
 
 ## Success Criteria
 - [ ] status-first-use/SKILL.md uses user-centric framing with no negative instructions
-- [ ] SkillLoader subsequent invocation text is generic ("Re-execute the skill instructions...") and appears before
-  the output tag
+- [ ] SkillLoader subsequent invocation text is generic and appears before the output tag
 - [ ] All SkillLoader tests pass
 - [ ] Empirical test with production content achieves >= 90% compliance on haiku
 - [ ] silent-execution.md correctly documents `$ARGUMENTS` (no braces) as the working syntax
