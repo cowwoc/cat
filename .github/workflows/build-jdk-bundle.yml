@@ -52,6 +52,7 @@ jobs:
 
       - name: Download Jackson JARs via Maven
         run: |
+          set -euo pipefail
           mkdir -p jackson-libs
           mvn dependency:copy \
             -Dartifact=tools.jackson.core:jackson-core:${{ env.JACKSON_VERSION }} \
@@ -66,6 +67,7 @@ jobs:
 
       - name: Build jlinked runtime
         run: |
+          set -euo pipefail
           # Build module path from Jackson jars
           MODULE_PATH=""
           for jar in jackson-libs/*.jar; do
@@ -94,8 +96,20 @@ jobs:
           # Show size
           du -sh cat-jdk-${JDK_VERSION}
 
+      - name: Write VERSION file into bundle
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "${VERSION}" > "cat-jdk-${JDK_VERSION}/VERSION"
+
       - name: Package bundle
         run: |
+          set -euo pipefail
           BUNDLE_NAME="cat-jdk-${JDK_VERSION}-${{ matrix.platform }}"
           tar -czf "${BUNDLE_NAME}.tar.gz" "cat-jdk-${JDK_VERSION}"
           ls -lh "${BUNDLE_NAME}.tar.gz"
@@ -112,7 +126,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: write
@@ -130,6 +144,7 @@ jobs:
       - name: Determine version
         id: version
         run: |
+          set -euo pipefail
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           else
