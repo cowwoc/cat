@@ -55,11 +55,11 @@ public final class AotTraining
       HookOutput output = new HookOutput(scope);
 
       // Hook handlers with run(HookInput, HookOutput)
-      new GetBashOutput(scope).run(input, output);
+      new PreToolUseHook(scope).run(input, output);
       new GetBashPostOutput().run(input, output);
       new GetReadOutput(scope).run(input, output);
       new GetReadPostOutput(scope).run(input, output);
-      new GetPostOutput(scope.getClaudeConfigDir()).run(input, output);
+      new PostToolUseHook(scope.getClaudeConfigDir()).run(input, output);
       new UserPromptSubmitHook(scope).run(input, output);
       new GetAskOutput(scope).run(input, output);
       new GetEditOutput().run(input, output);

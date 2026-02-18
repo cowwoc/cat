@@ -35,11 +35,11 @@ readonly MODULE_NAME="io.github.cowwoc.cat.hooks"
 # Handler registry: launcher-name:ClassName
 # Each entry generates a bin/<launcher-name> script in the jlink image.
 readonly -a HANDLERS=(
-  "get-bash-output:GetBashOutput"
+  "get-bash-output:PreToolUseHook"
   "get-bash-post-output:GetBashPostOutput"
   "get-read-output:GetReadOutput"
   "get-read-post-output:GetReadPostOutput"
-  "get-post-output:GetPostOutput"
+  "get-post-output:PostToolUseHook"
   "user-prompt-submit:UserPromptSubmitHook"
   "token-counter:TokenCounter"
   "enforce-status:EnforceStatusOutput"
@@ -291,7 +291,7 @@ generate_startup_archives() {
     -XX:AOTConfiguration="$aot_config" \
     -XX:AOTCache="$aot_cache" \
     -XX:+AOTClassLinking \
-    -m "$(handler_main GetBashOutput)" \
+    -m "$(handler_main PreToolUseHook)" \
     2>/dev/null; then
     log "Warning: Failed to create AOT cache"
     return 0

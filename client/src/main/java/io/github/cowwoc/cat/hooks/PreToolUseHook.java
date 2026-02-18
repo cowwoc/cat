@@ -21,6 +21,7 @@ import io.github.cowwoc.cat.hooks.bash.RemindGitSquash;
 import io.github.cowwoc.cat.hooks.bash.ValidateCommitType;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitFilterBranch;
 import io.github.cowwoc.cat.hooks.bash.ValidateGitOperations;
+import io.github.cowwoc.cat.hooks.bash.VerifyStateInCommit;
 import io.github.cowwoc.cat.hooks.bash.WarnFileExtraction;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -42,18 +43,18 @@ import java.util.List;
  *   <li>Allow commands (return allow)</li>
  * </ul>
  */
-public final class GetBashOutput implements HookHandler
+public final class PreToolUseHook implements HookHandler
 {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final List<BashHandler> handlers;
 
   /**
-   * Creates a new GetBashOutput instance with the specified JVM scope.
+   * Creates a new PreToolUseHook instance with the specified JVM scope.
    *
    * @param scope the JVM scope providing access to shared resources
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetBashOutput(JvmScope scope)
+  public PreToolUseHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -67,6 +68,7 @@ public final class GetBashOutput implements HookHandler
       new ValidateCommitType(),
       new ValidateGitFilterBranch(),
       new ValidateGitOperations(),
+      new VerifyStateInCommit(),
       new WarnFileExtraction());
   }
 
@@ -82,7 +84,7 @@ public final class GetBashOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetBashOutput(scope).run(input, output);
+      HookResult result = new PreToolUseHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -90,7 +92,7 @@ public final class GetBashOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetBashOutput.class);
+      Logger log = LoggerFactory.getLogger(PreToolUseHook.class);
       log.error("Unexpected error", e);
       throw e;
     }
