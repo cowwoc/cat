@@ -277,14 +277,14 @@ public final class InvestigationContextExtractorTest
 
       // First error: "{this is not valid json}" on line 2
       requireThat(parseErrors.get(0).path("line_number").asInt(), "errorLine0").isEqualTo(2);
-      requireThat(parseErrors.get(0).path("line_preview").asString(), "errorPreview0")
-        .isEqualTo("{this is not valid json}");
+      requireThat(parseErrors.get(0).path("line_preview").asString(), "errorPreview0").
+        isEqualTo("{this is not valid json}");
       requireThat(parseErrors.get(0).has("error"), "hasError0").isTrue();
 
       // Second error: "{also bad json" on line 3
       requireThat(parseErrors.get(1).path("line_number").asInt(), "errorLine1").isEqualTo(3);
-      requireThat(parseErrors.get(1).path("line_preview").asString(), "errorPreview1")
-        .isEqualTo("{also bad json");
+      requireThat(parseErrors.get(1).path("line_preview").asString(), "errorPreview1").
+        isEqualTo("{also bad json");
       requireThat(parseErrors.get(1).has("error"), "hasError1").isTrue();
     }
     finally
