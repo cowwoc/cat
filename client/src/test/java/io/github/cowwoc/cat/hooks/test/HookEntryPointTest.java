@@ -12,9 +12,9 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.GetAskOutput;
 import io.github.cowwoc.cat.hooks.GetBashPostOutput;
-import io.github.cowwoc.cat.hooks.GetBashOutput;
+import io.github.cowwoc.cat.hooks.PreToolUseHook;
 import io.github.cowwoc.cat.hooks.GetEditOutput;
-import io.github.cowwoc.cat.hooks.GetPostOutput;
+import io.github.cowwoc.cat.hooks.PostToolUseHook;
 import io.github.cowwoc.cat.hooks.GetReadPostOutput;
 import io.github.cowwoc.cat.hooks.GetReadOutput;
 import io.github.cowwoc.cat.hooks.UserPromptSubmitHook;
@@ -107,10 +107,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetBashOutput tests ---
+  // --- PreToolUseHook tests ---
 
   /**
-   * Verifies that GetBashOutput returns empty JSON for non-Bash tools.
+   * Verifies that PreToolUseHook returns empty JSON for non-Bash tools.
    */
   @Test
   public void getBashPretoolReturnsEmptyJsonForNonBashTool() throws IOException
@@ -121,7 +121,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -129,7 +129,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetBashOutput returns empty JSON when Bash tool has no command.
+   * Verifies that PreToolUseHook returns empty JSON when Bash tool has no command.
    */
   @Test
   public void getBashPretoolReturnsEmptyJsonWhenNoCommand() throws IOException
@@ -140,7 +140,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -148,7 +148,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetBashOutput returns empty JSON for Bash tool with command.
+   * Verifies that PreToolUseHook returns empty JSON for Bash tool with command.
    */
   @Test
   public void getBashPretoolReturnsEmptyJsonWithCommand() throws IOException
@@ -161,7 +161,7 @@ public class HookEntryPointTest
           "\"session_id\": \"test-session\", \"cwd\": \"/workspace\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetBashOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -252,10 +252,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetPostOutput tests ---
+  // --- PostToolUseHook tests ---
 
   /**
-   * Verifies that GetPostOutput returns empty JSON when given empty input.
+   * Verifies that PostToolUseHook returns empty JSON when given empty input.
    */
   @Test
   public void getPosttoolReturnsEmptyJsonForEmptyInput() throws IOException
@@ -267,7 +267,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput(tempDir).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PostToolUseHook(tempDir).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -279,7 +279,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetPostOutput returns empty JSON with a tool name present.
+   * Verifies that PostToolUseHook returns empty JSON with a tool name present.
    */
   @Test
   public void getPosttoolReturnsEmptyJsonWithToolName() throws IOException
@@ -292,7 +292,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetPostOutput(tempDir).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PostToolUseHook(tempDir).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
