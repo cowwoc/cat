@@ -63,6 +63,7 @@ public final class DestructiveOps implements PromptHandler
   @Override
   public String check(String prompt, String sessionId)
   {
+    requireThat(prompt, "prompt").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
     for (KeywordPattern kp : patterns)
     {

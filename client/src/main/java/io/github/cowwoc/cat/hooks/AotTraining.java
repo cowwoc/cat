@@ -60,13 +60,13 @@ public final class AotTraining
       new GetReadOutput(scope).run(input, output);
       new GetReadPostOutput(scope).run(input, output);
       new GetPostOutput(scope.getClaudeConfigDir()).run(input, output);
-      new GetSkillOutput(scope).run(input, output);
+      new UserPromptSubmitHook(scope).run(input, output);
       new GetAskOutput(scope).run(input, output);
       new GetEditOutput().run(input, output);
       new GetWriteEditOutput(scope).run(input, output);
       new GetTaskOutput(scope).run(input, output);
       new GetSessionEndOutput(scope).run(input, output);
-      new GetSessionStartOutput(scope).run(input, output);
+      new SessionStartHook(scope).run(input, output);
 
       // Skill handlers - construct to load class graphs.
       // Calling getOutput() would read the filesystem, which is unnecessary for training.

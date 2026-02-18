@@ -8,45 +8,45 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.prompt.CriticalThinking;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
 import io.github.cowwoc.cat.hooks.prompt.DetectGivingUp;
+import io.github.cowwoc.cat.hooks.prompt.ForcedEvalSkills;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Unified UserPromptSubmit hook for CAT
- *
+ * Unified UserPromptSubmit hook for CAT.
+ * <p>
  * TRIGGER: UserPromptSubmit
- *
+ * <p>
  * This dispatcher consolidates all UserPromptSubmit hooks into a single Java
  * entry point for prompt pattern checking.
  */
-public final class GetSkillOutput implements HookHandler
+public final class UserPromptSubmitHook implements HookHandler
 {
   private final List<PromptHandler> handlers;
 
   /**
-   * Creates a new GetSkillOutput instance.
+   * Creates a new UserPromptSubmitHook instance.
    *
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public GetSkillOutput(JvmScope scope)
+  public UserPromptSubmitHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
-      new CriticalThinking(),
+      new ForcedEvalSkills(scope),
       new DestructiveOps(),
       new DetectGivingUp(),
       scope.getUserIssues());
   }
 
   /**
-   * Entry point for the skill output hook.
+   * Entry point for the user prompt submit hook.
    *
    * @param args command line arguments
    */
@@ -56,7 +56,7 @@ public final class GetSkillOutput implements HookHandler
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetSkillOutput(scope).run(input, output);
+      HookResult result = new UserPromptSubmitHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -64,7 +64,7 @@ public final class GetSkillOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetSkillOutput.class);
+      Logger log = LoggerFactory.getLogger(UserPromptSubmitHook.class);
       log.error("Unexpected error", e);
       throw e;
     }
@@ -104,7 +104,7 @@ public final class GetSkillOutput implements HookHandler
       }
       catch (Exception e)
       {
-        warnings.add("get-skill-output: prompt handler error: " + e.getMessage());
+        warnings.add("user-prompt-submit: prompt handler error: " + e.getMessage());
       }
     }
 

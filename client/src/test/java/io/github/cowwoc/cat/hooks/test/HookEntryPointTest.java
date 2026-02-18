@@ -17,7 +17,7 @@ import io.github.cowwoc.cat.hooks.GetEditOutput;
 import io.github.cowwoc.cat.hooks.GetPostOutput;
 import io.github.cowwoc.cat.hooks.GetReadPostOutput;
 import io.github.cowwoc.cat.hooks.GetReadOutput;
-import io.github.cowwoc.cat.hooks.GetSkillOutput;
+import io.github.cowwoc.cat.hooks.UserPromptSubmitHook;
 import io.github.cowwoc.cat.hooks.GetTaskOutput;
 
 import io.github.cowwoc.cat.hooks.GetWriteEditOutput;
@@ -69,13 +69,13 @@ public class HookEntryPointTest
 
 
 
-  // --- GetSkillOutput tests ---
+  // --- UserPromptSubmitHook tests ---
 
   /**
-   * Verifies that GetSkillOutput returns empty JSON when given empty input.
+   * Verifies that UserPromptSubmitHook returns empty JSON when given empty input.
    */
   @Test
-  public void getSkillOutputReturnsEmptyJsonForEmptyInput() throws IOException
+  public void userPromptSubmitHookReturnsEmptyJsonForEmptyInput() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -83,17 +83,17 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetSkillOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
 
       requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
     }
   }
 
   /**
-   * Verifies that GetSkillOutput returns empty JSON when no message is present.
+   * Verifies that UserPromptSubmitHook returns empty JSON when no message is present.
    */
   @Test
-  public void getSkillOutputReturnsEmptyJsonWhenNoMessage() throws IOException
+  public void userPromptSubmitHookReturnsEmptyJsonWhenNoMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -101,7 +101,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetSkillOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
 
       requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
     }

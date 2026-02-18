@@ -19,14 +19,13 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class DetectGivingUpTest
 {
   /**
-   * Verifies that empty prompt returns empty string.
+   * Verifies that blank prompt throws IllegalArgumentException.
    */
-  @Test
-  public void emptyPromptReturnsEmpty()
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void blankPromptThrowsException()
   {
     DetectGivingUp handler = new DetectGivingUp();
-    String result = handler.check("", "test-session-1");
-    requireThat(result, "result").isEmpty();
+    handler.check("", "test-session-1");
   }
 
   /**
