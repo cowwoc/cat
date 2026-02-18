@@ -14,7 +14,6 @@ import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -29,9 +28,9 @@ import java.util.List;
 /**
  * Checks for CAT version upgrades on session start.
  * <p>
- * Compares the plugin version to the {@code last_migrated_version} in
- * {@code cat-config.json}. On upgrade, backs up state, runs pending migrations, and
- * updates the config. On downgrade, warns the user.
+ * Compares the plugin version to the version recorded in {@code .claude/cat/VERSION}.
+ * On upgrade, backs up state, runs pending migrations, and updates the VERSION file.
+ * On downgrade, warns the user.
  */
 public final class CheckUpgrade implements SessionStartHandler
 {
@@ -71,7 +70,7 @@ public final class CheckUpgrade implements SessionStartHandler
 
     try
     {
-      String lastMigratedVersion = getLastMigratedVersion(configFile);
+      String lastMigratedVersion = getLastMigratedVersion(projectDir);
       String pluginVersion = VersionUtils.getPluginVersion(scope.getJsonMapper(), pluginRoot);
 
       int cmp = VersionUtils.compareVersions(lastMigratedVersion, pluginVersion);
@@ -82,7 +81,7 @@ public final class CheckUpgrade implements SessionStartHandler
       if (cmp > 0)
         return handleDowngrade(lastMigratedVersion, pluginVersion);
 
-      return handleUpgrade(lastMigratedVersion, pluginVersion, configFile, pluginRoot, projectDir);
+      return handleUpgrade(lastMigratedVersion, pluginVersion, pluginRoot, projectDir);
     }
     catch (IOException e)
     {
@@ -91,23 +90,21 @@ public final class CheckUpgrade implements SessionStartHandler
   }
 
   /**
-   * Reads the last migrated version from cat-config.json.
+   * Reads the last migrated version from {@code .claude/cat/VERSION}.
    *
-   * @param configFile the config file path
-   * @return the version string, or "0.0.0" if the field is absent or invalid
-   * @throws IOException if reading the config file fails
+   * @param projectDir the project root directory
+   * @return the version string, or "0.0.0" if the file is absent or empty
+   * @throws IOException if reading the VERSION file fails
    */
-  private String getLastMigratedVersion(Path configFile) throws IOException
+  private String getLastMigratedVersion(Path projectDir) throws IOException
   {
-    JsonNode root = scope.getJsonMapper().readTree(Files.readString(configFile));
-    JsonNode versionNode = root.get("last_migrated_version");
-    if (versionNode != null && versionNode.isString())
-    {
-      String version = versionNode.asString();
-      if (!version.isEmpty() && !version.equals("null"))
-        return version;
-    }
-    return "0.0.0";
+    Path versionFile = projectDir.resolve(".claude/cat/VERSION");
+    if (!Files.isRegularFile(versionFile))
+      return "0.0.0";
+    String version = Files.readString(versionFile).strip();
+    if (version.isEmpty())
+      return "0.0.0";
+    return version;
   }
 
   /**
@@ -121,12 +118,12 @@ public final class CheckUpgrade implements SessionStartHandler
   {
     String message = "CAT VERSION MISMATCH DETECTED\n" +
       "\n" +
-      "Your config has last_migrated_version " + lastMigratedVersion +
+      ".claude/cat/VERSION contains " + lastMigratedVersion +
       " but the plugin is version " + pluginVersion + ".\n" +
       "This appears to be a downgrade.\n" +
       "\n" +
-      "**Action Required**: If this is intentional, manually update last_migrated_version " +
-      "in .claude/cat/cat-config.json.\n" +
+      "**Action Required**: If this is intentional, manually update the version " +
+      "in .claude/cat/VERSION.\n" +
       "Automatic downgrade migration is not supported to prevent data loss.";
     return Result.context(message);
   }
@@ -136,21 +133,20 @@ public final class CheckUpgrade implements SessionStartHandler
    *
    * @param lastMigratedVersion the previous version
    * @param pluginVersion the target version
-   * @param configFile the config file path
    * @param pluginRoot the plugin root directory
    * @param projectDir the project directory
    * @return a result with migration status
-   * @throws IOException if reading the migration registry, creating a backup, or updating the config fails
+   * @throws IOException if reading the migration registry, creating a backup, or updating the VERSION file fails
    */
   private Result handleUpgrade(String lastMigratedVersion, String pluginVersion,
-    Path configFile, Path pluginRoot, Path projectDir) throws IOException
+    Path pluginRoot, Path projectDir) throws IOException
   {
     List<Migration> pendingMigrations = getPendingMigrations(lastMigratedVersion, pluginVersion,
       pluginRoot);
 
     if (pendingMigrations.isEmpty())
     {
-      setLastMigratedVersion(configFile, pluginVersion);
+      setLastMigratedVersion(projectDir, pluginVersion);
       return Result.context("CAT upgraded: " + lastMigratedVersion + " -> " + pluginVersion +
         " (no migrations required)");
     }
@@ -214,7 +210,7 @@ public final class CheckUpgrade implements SessionStartHandler
       return Result.context(message);
     }
 
-    setLastMigratedVersion(configFile, pluginVersion);
+    setLastMigratedVersion(projectDir, pluginVersion);
 
     String stderrMessage = "\n" +
       "CAT UPGRADED from version " + lastMigratedVersion + " to " + pluginVersion + "\n";
@@ -269,18 +265,17 @@ public final class CheckUpgrade implements SessionStartHandler
   }
 
   /**
-   * Updates the last_migrated_version in cat-config.json.
+   * Writes the last migrated version to {@code .claude/cat/VERSION}.
    *
-   * @param configFile the config file path
+   * @param projectDir the project root directory
    * @param newVersion the new version to set
-   * @throws IOException if reading or writing the config file fails
+   * @throws IOException if writing the VERSION file fails
    */
-  private void setLastMigratedVersion(Path configFile, String newVersion) throws IOException
+  private void setLastMigratedVersion(Path projectDir, String newVersion) throws IOException
   {
-    JsonNode root = scope.getJsonMapper().readTree(Files.readString(configFile));
-    if (root instanceof ObjectNode objectNode)
-      objectNode.put("last_migrated_version", newVersion);
-    Files.writeString(configFile, scope.getJsonMapper().writeValueAsString(root));
+    Path versionFile = projectDir.resolve(".claude/cat/VERSION");
+    Files.createDirectories(versionFile.getParent());
+    Files.writeString(versionFile, newVersion + "\n");
   }
 
   /**
