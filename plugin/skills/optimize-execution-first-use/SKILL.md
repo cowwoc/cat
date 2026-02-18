@@ -46,7 +46,7 @@ SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}
 Execute the session analyzer to extract all mechanical data:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/bin/session-analyzer" "$SESSION_FILE"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer" "$SESSION_FILE"
 ```
 
 The skill outputs a JSON object with:

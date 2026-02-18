@@ -80,7 +80,7 @@ EXISTING_COMMITS=$(echo "$ARGUMENTS" | jq -r '.existing_commits // 0')
 Display the **Preparing phase** banner by running:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" ${ISSUE_ID} --phase preparing
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase preparing
 ```
 
 **If the command fails or produces no output**, STOP immediately:
@@ -123,7 +123,7 @@ to execution — another session owns this task.
 Display the **Implementing phase** banner by running:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" ${ISSUE_ID} --phase implementing
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase implementing
 ```
 
 **If the command fails or produces no output**, STOP immediately:
@@ -341,7 +341,7 @@ Track all amendments and include in the approval gate summary:
 Display the **Confirming phase** banner by running:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" ${ISSUE_ID} --phase confirming
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase confirming
 ```
 
 **If the command fails or produces no output**, STOP immediately:
@@ -431,7 +431,7 @@ Parse verification result to determine if all acceptance criteria were satisfied
 Display the **Reviewing phase** banner by running:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" ${ISSUE_ID} --phase reviewing
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase reviewing
 ```
 
 **If the command fails or produces no output**, STOP immediately:
@@ -706,7 +706,7 @@ Fail-fast principle: Unknown consent = No consent = STOP.
 Display the **Merging phase** banner by running:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" ${ISSUE_ID} --phase merging
+"${CLAUDE_PLUGIN_ROOT}/client/bin/progress-banner" ${ISSUE_ID} --phase merging
 ```
 
 **If the command fails or produces no output**, STOP immediately:
