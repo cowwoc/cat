@@ -282,6 +282,20 @@ JAVA_EOF
   unset CLAUDE_PLUGIN_ROOT
 }
 
+@test "flush_log renders newlines as JSON escape sequences" {
+  LOG_LEVEL=""
+  LOG_MESSAGE=""
+  DEBUG_LINES=""
+  log "warning" "line one"
+  log "warning" "line two"
+  run flush_log
+  [ "$status" -eq 0 ]
+  # The JSON output should contain \n (JSON escape) between the two lines,
+  # NOT literal backslash-n characters (\\n)
+  [[ "$output" == *'line one\nline two'* ]]
+  [[ "$output" != *'line one\\nline two'* ]]
+}
+
 @test "log accumulates messages and error escalates over warning" {
   LOG_LEVEL=""
   LOG_MESSAGE=""
