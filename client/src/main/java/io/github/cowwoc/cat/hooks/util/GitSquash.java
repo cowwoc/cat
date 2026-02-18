@@ -6,8 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommand;
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirectory;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -33,18 +33,23 @@ import java.time.format.DateTimeFormatter;
 public final class GitSquash
 {
   private final JvmScope scope;
+  private final String directory;
   private String backupBranch = "";
 
   /**
    * Creates a new GitSquash instance.
    *
-   * @param scope the JVM scope providing JSON mapper
-   * @throws NullPointerException if {@code scope} is null
+   * @param scope     the JVM scope providing JSON mapper
+   * @param directory the working directory for git commands
+   * @throws NullPointerException     if {@code scope} is null
+   * @throws IllegalArgumentException if {@code directory} is blank
    */
-  public GitSquash(JvmScope scope)
+  public GitSquash(JvmScope scope, String directory)
   {
     requireThat(scope, "scope").isNotNull();
+    requireThat(directory, "directory").isNotBlank();
     this.scope = scope;
+    this.directory = directory;
   }
 
   /**
@@ -83,14 +88,14 @@ public final class GitSquash
     if (!isWorkingDirectoryClean())
       throw new IOException("Working directory not clean - commit or stash changes first");
 
-    runGitCommandSingleLine("rev-parse", "--verify", baseCommit);
+    runGitCommandSingleLineInDirectory(directory, "rev-parse", "--verify", baseCommit);
 
     int commitCount = getCommitCount(baseCommit, "HEAD");
 
     String originalHead = getCommitHash("HEAD");
     String commitsBeforeBase = "";
 
-    String parents = runGitCommandSingleLine("log", "-1", "--format=%P", baseCommit);
+    String parents = runGitCommandSingleLineInDirectory(directory, "log", "-1", "--format=%P", baseCommit);
     if (!parents.isBlank())
       commitsBeforeBase = getCommitList(baseCommit + "~1");
 
@@ -129,7 +134,7 @@ public final class GitSquash
    */
   private void checkoutCommit(String commit) throws IOException
   {
-    runGitCommand("checkout", commit);
+    runGitCommandInDirectory(directory, "checkout", commit);
   }
 
   /**
@@ -141,7 +146,7 @@ public final class GitSquash
    */
   private String getCommitHash(String ref) throws IOException
   {
-    return runGitCommandSingleLine("rev-parse", ref);
+    return runGitCommandSingleLineInDirectory(directory, "rev-parse", ref);
   }
 
   /**
@@ -154,8 +159,8 @@ public final class GitSquash
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
     backupBranch = "backup-before-squash-" + LocalDateTime.now().format(formatter);
 
-    runGitCommand("branch", backupBranch);
-    runGitCommandSingleLine("rev-parse", "--verify", backupBranch);
+    runGitCommandInDirectory(directory, "branch", backupBranch);
+    runGitCommandSingleLineInDirectory(directory, "rev-parse", "--verify", backupBranch);
   }
 
 
@@ -167,7 +172,7 @@ public final class GitSquash
    */
   private boolean isWorkingDirectoryClean() throws IOException
   {
-    String status = runGitCommand("status", "--porcelain");
+    String status = runGitCommandInDirectory(directory, "status", "--porcelain");
     return status.isEmpty();
   }
 
@@ -182,7 +187,7 @@ public final class GitSquash
    */
   private int getCommitCount(String base, String head) throws IOException
   {
-    String count = runGitCommandSingleLine("rev-list", "--count", base + ".." + head);
+    String count = runGitCommandSingleLineInDirectory(directory, "rev-list", "--count", base + ".." + head);
     return Integer.parseInt(count);
   }
 
@@ -195,7 +200,7 @@ public final class GitSquash
    */
   private String getCommitList(String ref) throws IOException
   {
-    return runGitCommand("rev-list", ref);
+    return runGitCommandInDirectory(directory, "rev-list", ref);
   }
 
   /**
@@ -206,7 +211,7 @@ public final class GitSquash
    */
   private void softResetToBase(String baseCommit) throws IOException
   {
-    runGitCommand("reset", "--soft", baseCommit);
+    runGitCommandInDirectory(directory, "reset", "--soft", baseCommit);
   }
 
   /**
@@ -216,7 +221,7 @@ public final class GitSquash
    */
   private void verifyNoChangesLostOrAdded() throws IOException
   {
-    String diffOutput = runGitCommand("diff", "--stat", backupBranch);
+    String diffOutput = runGitCommandInDirectory(directory, "diff", "--stat", backupBranch);
     if (!diffOutput.isEmpty())
     {
       throw new IOException("Staged changes don't match original commits! " +
@@ -232,7 +237,7 @@ public final class GitSquash
    */
   private void createSquashedCommit(String message) throws IOException
   {
-    runGitCommand("commit", "-m", message);
+    runGitCommandInDirectory(directory, "commit", "-m", message);
   }
 
   /**
@@ -256,7 +261,7 @@ public final class GitSquash
       }
     }
 
-    String treeDiff = runGitCommand("diff", "--stat", originalHead);
+    String treeDiff = runGitCommandInDirectory(directory, "diff", "--stat", originalHead);
     if (!treeDiff.isEmpty())
     {
       throw new IOException("Working tree doesn't match original HEAD! " +
@@ -285,7 +290,7 @@ public final class GitSquash
    */
   private boolean isDetachedHead() throws IOException
   {
-    String branch = runGitCommandSingleLine("rev-parse", "--abbrev-ref", "HEAD");
+    String branch = runGitCommandSingleLineInDirectory(directory, "rev-parse", "--abbrev-ref", "HEAD");
     return branch.equals("HEAD");
   }
 
@@ -298,7 +303,7 @@ public final class GitSquash
    */
   private void forceUpdateBranch(String branch, String commit) throws IOException
   {
-    runGitCommand("branch", "-f", branch, commit);
+    runGitCommandInDirectory(directory, "branch", "-f", branch, commit);
   }
 
   /**
@@ -309,7 +314,7 @@ public final class GitSquash
    */
   private void checkoutBranch(String branch) throws IOException
   {
-    runGitCommand("checkout", branch);
+    runGitCommandInDirectory(directory, "checkout", branch);
   }
 
   /**
@@ -320,7 +325,7 @@ public final class GitSquash
     try
     {
       if (!backupBranch.isEmpty())
-        runGitCommand("branch", "-D", backupBranch);
+        runGitCommandInDirectory(directory, "branch", "-D", backupBranch);
     }
     catch (IOException _)
     {
@@ -381,7 +386,7 @@ public final class GitSquash
 
     try (JvmScope scope = new MainJvmScope())
     {
-      GitSquash cmd = new GitSquash(scope);
+      GitSquash cmd = new GitSquash(scope, ".");
       try
       {
         String result = cmd.execute(baseCommit, lastCommit, messageFile, originalBranch);
