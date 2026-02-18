@@ -57,7 +57,7 @@ public class GitSquashTest
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash(scope);
+      GitSquash cmd = new GitSquash(scope, ".");
 
       try
       {
@@ -92,7 +92,7 @@ public class GitSquashTest
       Path messageFile = tempDir.resolve("message.txt");
       Files.writeString(messageFile, "squash commit");
 
-      GitSquash cmd = new GitSquash(scope);
+      GitSquash cmd = new GitSquash(scope, ".");
 
       try
       {
@@ -122,7 +122,7 @@ public class GitSquashTest
     Path tempDir = createTempDir();
     try
     {
-      GitSquash cmd = new GitSquash(scope);
+      GitSquash cmd = new GitSquash(scope, ".");
 
       try
       {
@@ -143,6 +143,10 @@ public class GitSquashTest
 
   /**
    * Verifies that execute accepts empty originalBranch.
+   * <p>
+   * Uses a nonexistent message file so execution fails at the file-existence check (after all
+   * parameter validation passes) but before any git operations run. This keeps the test
+   * self-contained — it never touches the real repository.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -151,27 +155,17 @@ public class GitSquashTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = createTempDir();
-    try
-    {
-      Path messageFile = tempDir.resolve("message.txt");
-      Files.writeString(messageFile, "squash commit");
-
-      GitSquash cmd = new GitSquash(scope);
+      GitSquash cmd = new GitSquash(scope, ".");
 
       try
       {
-        cmd.execute("HEAD~1", "HEAD", messageFile.toString(), "");
+        cmd.execute("HEAD~1", "HEAD", "/nonexistent/message.txt", "");
+        requireThat(false, "execute").isEqualTo(true);
       }
-      catch (IOException _)
+      catch (IOException e)
       {
-        // Acceptable - git operation may fail depending on environment
+        requireThat(e.getMessage(), "message").contains("Commit message file not found");
       }
-    }
-    finally
-    {
-      TestUtils.deleteDirectoryRecursively(tempDir);
-    }
     }
   }
 }

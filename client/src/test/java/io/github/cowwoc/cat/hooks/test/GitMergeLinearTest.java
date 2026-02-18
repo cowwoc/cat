@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -32,7 +33,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope);
+    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
     try
     {
@@ -56,7 +57,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope);
+    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
     try
     {
@@ -80,7 +81,7 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope);
+    GitMergeLinear cmd = new GitMergeLinear(scope, ".");
 
     try
     {
@@ -104,16 +105,24 @@ public class GitMergeLinearTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    GitMergeLinear cmd = new GitMergeLinear(scope);
+      Path tempDir = TestUtils.createTempGitRepo("main");
+      try
+      {
+        GitMergeLinear cmd = new GitMergeLinear(scope, tempDir.toString());
 
-    try
-    {
-      cmd.execute("task-branch", "", false);
-    }
-    catch (IOException e)
-    {
-      requireThat(e.getMessage(), "message").isNotNull();
-    }
+        try
+        {
+          cmd.execute("task-branch", "", false);
+        }
+        catch (IOException e)
+        {
+          requireThat(e.getMessage(), "message").isNotNull();
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
     }
   }
 }

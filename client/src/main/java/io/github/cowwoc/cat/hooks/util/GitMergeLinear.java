@@ -6,8 +6,8 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommand;
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirectory;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
@@ -32,17 +32,22 @@ import org.slf4j.LoggerFactory;
 public final class GitMergeLinear
 {
   private final JvmScope scope;
+  private final String directory;
 
   /**
    * Creates a new GitMergeLinear instance.
    *
    * @param scope the JVM scope providing JSON mapper
+   * @param directory the working directory for git operations
    * @throws NullPointerException if {@code scope} is null
+   * @throws IllegalArgumentException if {@code directory} is blank
    */
-  public GitMergeLinear(JvmScope scope)
+  public GitMergeLinear(JvmScope scope, String directory)
   {
     requireThat(scope, "scope").isNotNull();
+    requireThat(directory, "directory").isNotBlank();
     this.scope = scope;
+    this.directory = directory;
   }
 
   /**
@@ -68,7 +73,7 @@ public final class GitMergeLinear
     if (!currentBranch.equals(baseBranch))
       throw new IOException("Must be on " + baseBranch + " branch. Currently on: " + currentBranch);
 
-    runGitCommandSingleLine("rev-parse", "--verify", taskBranch);
+    runGitCommandSingleLineInDirectory(directory,"rev-parse", "--verify", taskBranch);
 
     if (!isWorkingDirectoryClean())
       throw new IOException("Working directory is not clean. Commit or stash changes first.");
@@ -120,7 +125,7 @@ public final class GitMergeLinear
    */
   private String detectBaseBranch(String taskBranch) throws IOException
   {
-    String gitDir = runGitCommandSingleLine("rev-parse", "--git-dir");
+    String gitDir = runGitCommandSingleLineInDirectory(directory,"rev-parse", "--git-dir");
     Path catBasePath = Paths.get(gitDir, "worktrees", taskBranch, "cat-base");
 
     if (!Files.exists(catBasePath))
@@ -140,7 +145,7 @@ public final class GitMergeLinear
    */
   private String getCurrentBranch() throws IOException
   {
-    return runGitCommandSingleLine("branch", "--show-current");
+    return runGitCommandSingleLineInDirectory(directory,"branch", "--show-current");
   }
 
 
@@ -152,7 +157,7 @@ public final class GitMergeLinear
    */
   private boolean isWorkingDirectoryClean() throws IOException
   {
-    String status = runGitCommand("status", "--porcelain");
+    String status = runGitCommandInDirectory(directory,"status", "--porcelain");
     return status.isEmpty();
   }
 
@@ -166,7 +171,7 @@ public final class GitMergeLinear
    */
   private int getCommitCount(String base, String task) throws IOException
   {
-    String count = runGitCommandSingleLine("rev-list", "--count", base + ".." + task);
+    String count = runGitCommandSingleLineInDirectory(directory,"rev-list", "--count", base + ".." + task);
     return Integer.parseInt(count);
   }
 
@@ -182,6 +187,7 @@ public final class GitMergeLinear
     try
     {
       ProcessBuilder pb = new ProcessBuilder("git", "merge-base", "--is-ancestor", base, task);
+      pb.directory(Path.of(directory).toFile());
       pb.redirectErrorStream(true);
       Process process = pb.start();
       int exitCode = process.waitFor();
@@ -212,7 +218,7 @@ public final class GitMergeLinear
    */
   private String getCommitMessage(String branch) throws IOException
   {
-    return runGitCommandSingleLine("log", "-1", "--format=%s", branch);
+    return runGitCommandSingleLineInDirectory(directory,"log", "-1", "--format=%s", branch);
   }
 
   /**
@@ -224,7 +230,7 @@ public final class GitMergeLinear
    */
   private String getCommitSha(String ref) throws IOException
   {
-    return runGitCommandSingleLine("rev-parse", "--short", ref);
+    return runGitCommandSingleLineInDirectory(directory,"rev-parse", "--short", ref);
   }
 
   /**
@@ -238,6 +244,7 @@ public final class GitMergeLinear
     try
     {
       ProcessBuilder pb = new ProcessBuilder("git", "merge", "--ff-only", branch);
+      pb.directory(Path.of(directory).toFile());
       pb.redirectErrorStream(true);
       Process process = pb.start();
 
@@ -273,7 +280,7 @@ public final class GitMergeLinear
    */
   private void verifyLinearHistory() throws IOException
   {
-    String parents = runGitCommandSingleLine("log", "-1", "--format=%p", "HEAD");
+    String parents = runGitCommandSingleLineInDirectory(directory,"log", "-1", "--format=%p", "HEAD");
     String[] parentArray = parents.trim().split("\\s+");
     if (parentArray.length > 1)
       throw new IOException("Merge commit detected! History is not linear.");
@@ -288,7 +295,7 @@ public final class GitMergeLinear
    */
   private String findWorktreeForBranch(String branch) throws IOException
   {
-    String output = runGitCommand("worktree", "list", "--porcelain");
+    String output = runGitCommandInDirectory(directory,"worktree", "list", "--porcelain");
     String[] lines = output.split("\n");
 
     String currentWorktree = "";
@@ -311,7 +318,7 @@ public final class GitMergeLinear
    */
   private void removeWorktree(String path) throws IOException
   {
-    runGitCommand("worktree", "remove", path);
+    runGitCommandInDirectory(directory,"worktree", "remove", path);
   }
 
   /**
@@ -324,7 +331,7 @@ public final class GitMergeLinear
   {
     try
     {
-      runGitCommand("branch", "-d", branch);
+      runGitCommandInDirectory(directory,"branch", "-d", branch);
       return true;
     }
     catch (IOException _)
@@ -417,7 +424,7 @@ public final class GitMergeLinear
 
     try (JvmScope scope = new MainJvmScope())
     {
-      GitMergeLinear cmd = new GitMergeLinear(scope);
+      GitMergeLinear cmd = new GitMergeLinear(scope, ".");
       try
       {
         String result = cmd.execute(taskBranch, baseBranch, cleanup);
