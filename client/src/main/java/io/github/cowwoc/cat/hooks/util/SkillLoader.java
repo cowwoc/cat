@@ -64,9 +64,9 @@ import org.slf4j.LoggerFactory;
  * Undefined variables are passed through unchanged, matching Claude Code's native behavior.
  * <p>
  * <b>Preprocessor directives:</b> Lines containing {@code !`"path" [args]`} patterns are processed
- * after variable substitution. When the path references a known Java launcher in {@code hooks/bin/},
- * instantiates the class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])}
- * to replace the directive with the output.
+ * after variable substitution. When the path's filename matches a launcher in the {@code client/bin/}
+ * lookup directory, instantiates the class as a {@link SkillOutput} and calls
+ * {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
  *
  * @see io.github.cowwoc.cat.hooks.session.ClearSkillMarkers
  */
@@ -81,6 +81,7 @@ public final class SkillLoader
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
     "<output(?:\\s[^>]*)?>(.+?)</output>", Pattern.DOTALL);
   private static final Pattern POSITIONAL_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
+  private static final String LAUNCHER_DIRECTORY = "client/bin";
   /**
    * Parsed content from a {@code -first-use} SKILL.md file.
    * <p>
@@ -469,9 +470,10 @@ public final class SkillLoader
   /**
    * Processes preprocessor directives in content.
    * <p>
-   * Scans for patterns like {@code !`"path/to/launcher" [args]`} and when the launcher refers to a
-   * known Java class in {@code hooks/bin/}, instantiates the class as a {@link SkillOutput} and
-   * calls {@link SkillOutput#getOutput(String[])} to replace the directive with the output.
+   * Scans for patterns like {@code !`"path/to/launcher" [args]`} and when the launcher's filename
+   * matches a file in the {@code client/bin/} launcher lookup directory, instantiates the corresponding
+   * Java class as a {@link SkillOutput} and calls {@link SkillOutput#getOutput(String[])} to replace
+   * the directive with the output.
    *
    * @param content the content to process
    * @return the content with preprocessor directives replaced by their output
@@ -518,7 +520,7 @@ public final class SkillLoader
   {
     Path launcherFile = Paths.get(launcherPath);
     String launcherName = launcherFile.getFileName().toString();
-    Path expectedLauncher = pluginRoot.resolve("hooks/bin/" + launcherName);
+    Path expectedLauncher = pluginRoot.resolve(LAUNCHER_DIRECTORY + "/" + launcherName);
 
     if (!Files.exists(expectedLauncher))
       return originalDirective;

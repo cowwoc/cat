@@ -1020,7 +1020,7 @@ Regular content here
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/nonexistent-launcher"`
+Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/nonexistent-launcher"`
 Done
 """);
 
@@ -1029,7 +1029,7 @@ Done
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("!`\"" + tempPluginRoot + "/hooks/bin/nonexistent-launcher\"`").
+        contains("!`\"" + tempPluginRoot + "/client/bin/nonexistent-launcher\"`").
         contains("Done");
     }
     finally
@@ -1053,7 +1053,7 @@ Done
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
 Root: ${CLAUDE_PLUGIN_ROOT}
-Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
+Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 """);
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1081,7 +1081,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       Files.writeString(hooksDir.resolve("test-output"), """
         #!/bin/bash
@@ -1091,7 +1091,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
 
@@ -1122,7 +1122,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       Files.writeString(hooksDir.resolve("test-output"), """
         #!/bin/bash
@@ -1132,7 +1132,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
 
@@ -1157,7 +1157,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       Files.writeString(hooksDir.resolve("test-output"), """
         #!/bin/bash
@@ -1167,7 +1167,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
 
@@ -1197,7 +1197,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       Files.writeString(hooksDir.resolve("test-output"), """
         #!/bin/bash
@@ -1207,7 +1207,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
 
@@ -1237,7 +1237,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       Files.writeString(hooksDir.resolve("test-output"), """
         #!/bin/bash
@@ -1247,7 +1247,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output"`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
 
@@ -1376,7 +1376,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       // Launcher without -m pattern, so extractClassName always returns empty
       Files.writeString(hooksDir.resolve("test-output"), """
@@ -1387,7 +1387,7 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output" arg1 arg2`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" arg1 arg2`
         Done
         """);
 
@@ -1597,7 +1597,7 @@ Output content.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path hooksDir = tempPluginRoot.resolve("hooks/bin");
+      Path hooksDir = tempPluginRoot.resolve("client/bin");
       Files.createDirectories(hooksDir);
       Files.writeString(hooksDir.resolve("test-output"), """
         #!/bin/bash
@@ -1607,7 +1607,7 @@ Output content.
       Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
       Files.createDirectories(companionDir);
       Files.writeString(companionDir.resolve("SKILL.md"), """
-        Output: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-output" arg1 arg2`
+        Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" arg1 arg2`
         Done
         """);
 
