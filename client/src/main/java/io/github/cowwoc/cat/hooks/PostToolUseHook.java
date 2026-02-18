@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.tool.post.AutoLearnMistakes;
 import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
+import io.github.cowwoc.cat.hooks.tool.post.DetectTokenThreshold;
 import io.github.cowwoc.cat.hooks.tool.post.RemindRestartAfterSkillModification;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -33,22 +34,23 @@ import org.slf4j.LoggerFactory;
  * - Inject additional context (return additionalContext)
  * - Allow silently (return null)
  */
-public final class GetPostOutput implements HookHandler
+public final class PostToolUseHook implements HookHandler
 {
   private final List<PostToolHandler> handlers;
 
   /**
-   * Creates a new GetPostOutput instance with the specified Claude config directory.
+   * Creates a new PostToolUseHook instance with the specified Claude config directory.
    *
    * @param claudeConfigDir the Claude config directory path
    * @throws NullPointerException if {@code claudeConfigDir} is null
    */
-  public GetPostOutput(Path claudeConfigDir)
+  public PostToolUseHook(Path claudeConfigDir)
   {
     requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
     this.handlers = List.of(
       new AutoLearnMistakes(),
       new DetectAssistantGivingUp(claudeConfigDir),
+      new DetectTokenThreshold(claudeConfigDir),
       new RemindRestartAfterSkillModification());
   }
 
@@ -64,7 +66,7 @@ public final class GetPostOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetPostOutput(scope.getClaudeConfigDir()).run(input, output);
+      HookResult result = new PostToolUseHook(scope.getClaudeConfigDir()).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -72,7 +74,7 @@ public final class GetPostOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetPostOutput.class);
+      Logger log = LoggerFactory.getLogger(PostToolUseHook.class);
       log.error("Unexpected error", e);
       throw e;
     }
