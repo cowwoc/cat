@@ -15,11 +15,17 @@ reads those per-issue files as the source of truth.
 
 ## Files to Modify
 - `.claude/cat/issues/v2/v2.1/STATE.md` - Remove "## Issues In Progress" section and move its entries to Issues Pending
+- `plugin/migrations/2.1.sh` - Add migration step to remove "## Issues In Progress" from version STATE.md files
 
 ## Acceptance Criteria
 - [ ] No "## Issues In Progress" section exists in version-level STATE.md
 - [ ] Issues that were listed under In Progress are moved to Issues Pending
+- [ ] Migration script removes "## Issues In Progress" from any version STATE.md and merges entries into Issues Pending
 
 ## Execution Steps
-1. **Edit version STATE.md:** Remove the "## Issues In Progress" heading and move all entries beneath it to the "## Issues Pending" section.
-2. **Commit** the change.
+1. **Edit version STATE.md:** Remove the "## Issues In Progress" heading and move all entries beneath it to the
+   "## Issues Pending" section.
+2. **Update migration script:** Add a step to `plugin/migrations/2.1.sh` that finds version-level STATE.md files
+   containing "## Issues In Progress", extracts the entries, merges them into "## Issues Pending", and removes the
+   section.
+3. **Commit** the changes.
