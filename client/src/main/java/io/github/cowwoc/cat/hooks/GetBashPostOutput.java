@@ -67,7 +67,7 @@ public final class GetBashPostOutput implements HookHandler
         System.err.println(warning);
       System.out.println(result.output());
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetBashPostOutput.class);
       log.error("Unexpected error", e);

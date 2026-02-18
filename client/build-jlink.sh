@@ -63,6 +63,7 @@ readonly -a HANDLERS=(
   "verify-audit:skills.VerifyAudit"
   "empirical-test-runner:skills.EmpiricalTestRunner"
   "clear-skill-markers-on-compact:ClearSkillMarkersOnCompact"
+  "post-tool-use-failure:PostToolUseFailure"
 )
 
 # --- Logging ---

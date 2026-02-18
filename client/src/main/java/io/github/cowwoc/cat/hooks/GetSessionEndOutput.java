@@ -58,7 +58,7 @@ public final class GetSessionEndOutput implements HookHandler
         System.err.println(warning);
       System.out.println(result.output());
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetSessionEndOutput.class);
       log.error("Unexpected error", e);

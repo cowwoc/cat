@@ -125,7 +125,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/detect-repeated-failures.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/post-tool-use-failure"
           }
         ]
       }
