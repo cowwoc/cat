@@ -484,6 +484,34 @@
         "catches_variations": true
       },
       "correct_behavior": "When github-feedback.sh open fails, extract the url from the JSON output (or reconstruct it) and display it to the user so they can open it manually in their browser"
+    },
+    {
+      "id": "M360",
+      "timestamp": "2026-02-19T00:00:00Z",
+      "category": "missing_implementation",
+      "description": "SkillLoader.java still hardcodes hooks/bin/ lookup path after rename to client/bin, causing preprocessor directives to pass through unresolved to the agent",
+      "root_cause": "The refactor commit (10b2ff05) updated all skill SKILL.md files and hooks.json to reference client/bin instead of hooks/bin, but did not update the SkillLoader.java executeDirective() method which resolves launcher paths by looking in pluginRoot/hooks/bin/. When the launcher is not found there, the code silently returns the original !`...` directive unchanged, so the agent receives raw preprocessor syntax.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java",
+      "pattern_keywords": [
+        "preprocessor",
+        "skill_loader",
+        "path_mismatch",
+        "hooks_bin",
+        "client_bin",
+        "silent_passthrough"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "SkillLoader.executeDirective() should resolve launcher paths using client/bin/ instead of hooks/bin/, matching the renamed binary output directory. The lookup at line 521 should use pluginRoot.resolve(\"client/bin/\" + launcherName)."
     }
   ]
 }
