@@ -196,13 +196,20 @@ public final class DetectGivingUp implements PromptHandler
   {
   }
 
+  /**
+   * Checks the prompt for giving up patterns and returns the appropriate reminder.
+   *
+   * @param prompt the user's prompt text
+   * @param sessionId the current session ID
+   * @return a reminder string if a giving up pattern is detected, or empty string
+   * @throws NullPointerException if {@code prompt} or {@code sessionId} are null
+   * @throws IllegalArgumentException if {@code sessionId} is blank
+   */
   @Override
   public String check(String prompt, String sessionId)
   {
+    requireThat(prompt, "prompt").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
-
-    if (prompt.isEmpty())
-      return "";
 
     String workingText = removeQuotedSections(prompt);
     String violationType = detectViolationType(workingText);

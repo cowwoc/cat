@@ -15,15 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/forced-eval-skills.py"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-skill-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/user-prompt-submit"
           }
         ]
       }
@@ -153,7 +145,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/clear-skill-markers-on-compact"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/bin/pre-compact-hook --precompact"
           }
         ]
       }
