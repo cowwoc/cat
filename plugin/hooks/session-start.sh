@@ -9,7 +9,7 @@
 # Ensures the custom JDK runtime is available for Java hooks by comparing the
 # local bundle version against plugin.json version. If they match, uses the
 # existing bundle. If they differ, downloads the correct bundle from GitHub.
-# After JDK is ready, invokes the GetSessionStartOutput Java dispatcher
+# After JDK is ready, invokes the SessionStartHook Java dispatcher
 # which handles all session start tasks (upgrade check, update check,
 # session ID injection, retrospective reminders, instructions, env injection,
 # skill marker cleanup).
@@ -272,13 +272,13 @@ main() {
   if try_acquire_runtime "$jdk_path" "$plugin_version"; then
     debug "JDK runtime ready, invoking Java dispatcher"
 
-    # Invoke the GetSessionStartOutput Java dispatcher
+    # Invoke the SessionStartHook Java dispatcher
     # It handles all session start tasks: upgrade check, update check, session ID,
     # retrospective reminders, session instructions, env injection, skill marker cleanup.
     # Pipe stdin directly to avoid buffering large input in memory.
     "$jdk_path/bin/java" \
       -Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 \
-      -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.GetSessionStartOutput
+      -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.SessionStartHook
     return 0
   fi
 

@@ -6,10 +6,10 @@
  */
 package io.github.cowwoc.cat.hooks.test;
 
-import io.github.cowwoc.cat.hooks.GetSessionStartOutput;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.SessionStartHook;
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
 import io.github.cowwoc.cat.hooks.session.CheckUpgrade;
@@ -33,17 +33,17 @@ import java.util.List;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
- * Tests for GetSessionStartOutput and individual session start handlers.
+ * Tests for SessionStartHook and individual session start handlers.
  * <p>
  * Tests are designed for parallel execution - each test is self-contained with no shared state.
  */
-public class GetSessionStartOutputTest
+public class SessionStartHookTest
 {
   /**
    * Creates a HookInput from a JSON string.
    *
    * @param mapper the JSON mapper
-   * @param json the JSON input string
+   * @param json   the JSON input string
    * @return the parsed HookInput
    */
   private HookInput createInput(JsonMapper mapper, String json)
@@ -323,10 +323,10 @@ public class GetSessionStartOutputTest
     }
   }
 
-  // --- GetSessionStartOutput dispatcher tests ---
+  // --- SessionStartHook dispatcher tests (normal mode) ---
 
   /**
-   * Verifies that GetSessionStartOutput returns empty JSON when all handlers return empty.
+   * Verifies that SessionStartHook returns empty JSON when all handlers return empty.
    */
   @Test
   public void dispatcherReturnsEmptyWhenAllHandlersReturnEmpty() throws IOException
@@ -335,7 +335,7 @@ public class GetSessionStartOutputTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler emptyHandler = input -> SessionStartHandler.Result.empty();
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(emptyHandler));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(emptyHandler));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -347,7 +347,7 @@ public class GetSessionStartOutputTest
   }
 
   /**
-   * Verifies that GetSessionStartOutput combines context from multiple handlers.
+   * Verifies that SessionStartHook combines context from multiple handlers.
    */
   @Test
   public void dispatcherCombinesContextFromMultipleHandlers() throws IOException
@@ -357,7 +357,7 @@ public class GetSessionStartOutputTest
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("context from handler 1");
       SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("context from handler 2");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(handler1, handler2));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -372,7 +372,7 @@ public class GetSessionStartOutputTest
   }
 
   /**
-   * Verifies that GetSessionStartOutput returns warnings from handlers.
+   * Verifies that SessionStartHook returns warnings from handlers.
    */
   @Test
   public void dispatcherReturnsWarningsFromHandlers() throws IOException
@@ -381,7 +381,7 @@ public class GetSessionStartOutputTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.stderr("stderr message");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -395,7 +395,7 @@ public class GetSessionStartOutputTest
   }
 
   /**
-   * Verifies that GetSessionStartOutput handles handler exceptions gracefully.
+   * Verifies that SessionStartHook handles handler exceptions gracefully.
    */
   @Test
   public void dispatcherHandlesHandlerExceptionsGracefully() throws IOException
@@ -408,7 +408,7 @@ public class GetSessionStartOutputTest
         throw new IllegalStateException("test error");
       };
       SessionStartHandler goodHandler = input -> SessionStartHandler.Result.context("good context");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler, goodHandler));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(failingHandler, goodHandler));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -435,7 +435,7 @@ public class GetSessionStartOutputTest
       {
         throw new AssertionError("CLAUDE_SESSION_ID is not set");
       };
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(failingHandler));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(failingHandler));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -463,7 +463,7 @@ public class GetSessionStartOutputTest
         throw new IllegalStateException("handler 2 failed");
       };
       SessionStartHandler handler3 = input -> SessionStartHandler.Result.context("handler 3 output");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, failingHandler, handler3));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(handler1, failingHandler, handler3));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -489,7 +489,7 @@ public class GetSessionStartOutputTest
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler1 = input -> SessionStartHandler.Result.context("output 1");
       SessionStartHandler handler2 = input -> SessionStartHandler.Result.context("output 2");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler1, handler2));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(handler1, handler2));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -504,7 +504,7 @@ public class GetSessionStartOutputTest
   }
 
   /**
-   * Verifies that GetSessionStartOutput produces valid JSON with hookSpecificOutput.
+   * Verifies that SessionStartHook produces valid JSON with hookSpecificOutput.
    */
   @Test
   public void dispatcherProducesValidJsonWithHookSpecificOutput() throws IOException
@@ -513,7 +513,7 @@ public class GetSessionStartOutputTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.context("test context");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
 
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
@@ -531,7 +531,7 @@ public class GetSessionStartOutputTest
   }
 
   /**
-   * Verifies that GetSessionStartOutput with both context and warnings works correctly.
+   * Verifies that SessionStartHook with both context and warnings works correctly.
    */
   @Test
   public void dispatcherHandlesBothContextAndWarnings() throws IOException
@@ -540,7 +540,7 @@ public class GetSessionStartOutputTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       SessionStartHandler handler = input -> SessionStartHandler.Result.both("context msg", "stderr msg");
-      GetSessionStartOutput dispatcher = new GetSessionStartOutput(List.of(handler));
+      SessionStartHook dispatcher = new SessionStartHook(List.of(handler));
 
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
@@ -548,6 +548,68 @@ public class GetSessionStartOutputTest
 
       requireThat(result.warnings(), "warnings").contains("stderr msg");
       requireThat(result.output(), "output").contains("context msg");
+    }
+  }
+
+  // --- SessionStartHook preCompact mode tests ---
+
+  /**
+   * Verifies that preCompact mode returns empty JSON regardless of handler output.
+   */
+  @Test
+  public void preCompactModeReturnsEmptyJson() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler = input -> SessionStartHandler.Result.context("should be discarded");
+      SessionStartHook hook = new SessionStartHook(List.of(handler), true);
+
+      HookInput input = createInput(mapper, "{}");
+      HookOutput output = new HookOutput(scope);
+      io.github.cowwoc.cat.hooks.HookResult result = hook.run(input, output);
+
+      requireThat(result.output(), "output").isEqualTo("{}");
+    }
+  }
+
+  /**
+   * Verifies that preCompact mode still collects warnings from handlers even though context is discarded.
+   */
+  @Test
+  public void preCompactModeStillCollectsWarnings() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHandler handler = input -> SessionStartHandler.Result.both("context", "warning message");
+      SessionStartHook hook = new SessionStartHook(List.of(handler), true);
+
+      HookInput input = createInput(mapper, "{}");
+      HookOutput output = new HookOutput(scope);
+      io.github.cowwoc.cat.hooks.HookResult result = hook.run(input, output);
+
+      requireThat(result.output(), "output").isEqualTo("{}");
+      requireThat(result.warnings(), "warnings").contains("warning message");
+    }
+  }
+
+  /**
+   * Verifies that preCompact factory method creates a hook that returns empty JSON.
+   */
+  @Test
+  public void preCompactFactoryMethodCreatesValidHook() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      SessionStartHook hook = SessionStartHook.preCompact();
+
+      HookInput input = createInput(mapper, "{}");
+      HookOutput output = new HookOutput(scope);
+      io.github.cowwoc.cat.hooks.HookResult result = hook.run(input, output);
+
+      requireThat(result.output(), "output").isEqualTo("{}");
     }
   }
 

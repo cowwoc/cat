@@ -4,18 +4,17 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.hooks.prompt;
+package io.github.cowwoc.cat.hooks.session;
 
-import io.github.cowwoc.cat.hooks.PromptHandler;
-
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import io.github.cowwoc.cat.hooks.HookInput;
 
 /**
- * Always injects critical thinking requirements reminder.
+ * Injects critical thinking requirements into the session context once at session start
+ * and after compaction.
  */
-public final class CriticalThinking implements PromptHandler
+public final class InjectCriticalThinking implements SessionStartHandler
 {
-  private static final String REMINDER = """
+  static final String REMINDER = """
 ## CRITICAL THINKING REQUIREMENTS
 
 **MANDATORY**: Apply evidence-based critical thinking
@@ -38,17 +37,23 @@ However, we should also consider scenario Y where this might need adjustment."
 **APPLY TO CURRENT PROMPT**: Gather evidence first, then provide critical analysis based on that evidence.""";
 
   /**
-   * Creates a new critical thinking handler.
+   * Creates a new InjectCriticalThinking handler.
    */
-  public CriticalThinking()
+  public InjectCriticalThinking()
   {
     // Handler class
   }
 
+  /**
+   * Returns the critical thinking reminder to inject into session context.
+   *
+   * @param input the hook input
+   * @return a result containing the critical thinking reminder as additional context
+   * @throws NullPointerException if {@code input} is null
+   */
   @Override
-  public String check(String prompt, String sessionId)
+  public Result handle(HookInput input)
   {
-    requireThat(sessionId, "sessionId").isNotBlank();
-    return REMINDER;
+    return Result.context(REMINDER);
   }
 }

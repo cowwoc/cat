@@ -1342,11 +1342,11 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   {
     String launcherContent = """
       #!/bin/sh
-      exec java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.GetSkillOutput
+      exec java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.UserPromptSubmitHook
       """;
 
     String className = SkillLoader.extractClassName(launcherContent);
-    requireThat(className, "className").isEqualTo("io.github.cowwoc.cat.hooks.GetSkillOutput");
+    requireThat(className, "className").isEqualTo("io.github.cowwoc.cat.hooks.UserPromptSubmitHook");
   }
 
   /**
