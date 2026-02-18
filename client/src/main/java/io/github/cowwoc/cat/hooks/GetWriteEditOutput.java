@@ -9,7 +9,7 @@ package io.github.cowwoc.cat.hooks;
 import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
+import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
 import io.github.cowwoc.cat.hooks.write.StateSchemaValidator;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
@@ -22,8 +22,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * Hook: Enforce Worktree Isolation (M252).
- * <p>
  * Unified PreToolUse hook for Edit/Write operations.
  * <p>
  * TRIGGER: PreToolUse for Edit/Write
@@ -41,30 +39,34 @@ import org.slf4j.LoggerFactory;
  */
 public final class GetWriteEditOutput implements HookHandler
 {
-  // Handlers are checked in order. WarnBaseBranchEdit warns first (non-blocking),
-  // then blocking handlers (ValidateStateMdFormat, StateSchemaValidator,
-  // EnforcePluginFileIsolation) run. This ensures warnings are emitted even when
-  // validation would block the edit.
-  private static final List<FileWriteHandler> DEFAULT_HANDLERS = List.of(
-    new WarnBaseBranchEdit(),
-    new ValidateStateMdFormat(),
-    new StateSchemaValidator(),
-    new EnforcePluginFileIsolation());
   private final List<FileWriteHandler> handlers;
 
   /**
    * Creates a new GetWriteEditOutput instance with default handlers.
+   * <p>
+   * Handlers are checked in order. WarnBaseBranchEdit warns first (non-blocking),
+   * then blocking handlers (ValidateStateMdFormat, StateSchemaValidator,
+   * EnforceWorktreePathIsolation) run. This ensures warnings are emitted even when
+   * validation would block the edit.
+   *
+   * @param scope the JVM scope providing project directory and shared services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public GetWriteEditOutput()
+  public GetWriteEditOutput(JvmScope scope)
   {
-    this.handlers = DEFAULT_HANDLERS;
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(
+      new WarnBaseBranchEdit(),
+      new ValidateStateMdFormat(),
+      new StateSchemaValidator(),
+      new EnforceWorktreePathIsolation(scope));
   }
 
   /**
    * Creates a new GetWriteEditOutput instance with custom handlers.
    *
    * @param handlers the handlers to use
-   * @throws NullPointerException if handlers is null
+   * @throws NullPointerException if {@code handlers} is null
    */
   public GetWriteEditOutput(List<FileWriteHandler> handlers)
   {
@@ -84,7 +86,7 @@ public final class GetWriteEditOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetWriteEditOutput().run(input, output);
+      HookResult result = new GetWriteEditOutput(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
