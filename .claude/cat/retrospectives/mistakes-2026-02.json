@@ -140,7 +140,7 @@
       "timestamp": "2026-02-18T19:30:42Z",
       "category": "protocol_violation",
       "description": "merge-and-cleanup.sh did not delete backup-before-squash-* branches left by git-squash-quick.sh after successful merge",
-      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success \u2014 it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
+      "root_cause": "work-with-issue Step 6 runs git-squash-quick.sh before each approval gate presentation. When the workflow loops (user rejects, more work done, loop back to Step 6), each squash iteration creates a new uniquely-timestamped backup branch. git-squash-quick.sh only deletes the backup it JUST created on success — it cannot know about backups from previous loop iterations. merge-and-cleanup.sh, which runs after the final successful merge, had no logic to delete these orphaned backup branches.",
       "rca_method": "A",
       "rca_method_name": "5-whys",
       "prevention_type": "code_fix",
@@ -342,7 +342,7 @@
       "id": "M355",
       "timestamp": "2026-02-19T11:24:00Z",
       "category": "protocol_violation",
-      "description": "Agent corrupted verbatim status box output by inserting horizontal rule characters (\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500) between sections that were not in the original output",
+      "description": "Agent corrupted verbatim status box output by inserting horizontal rule characters (────────────────) between sections that were not in the original output",
       "root_cause": "REFLECTION failure: Agent read the verbatim instruction but its helpful-synthesis training overrode it by adding structural separators it perceived as clarifying. The instruction 'copy the contents verbatim' does not explicitly forbid adding characters, leaving room for the agent to 'enhance' the output while believing it complied. Third recurrence of verbatim output failure for status skill (M353, M354, M355).",
       "rca_method": "B",
       "rca_method_name": "taxonomy",
@@ -456,6 +456,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Skills needing ${ARGUMENTS} substitution must route through load-skill.sh/SkillLoader (which now resolves ${ARGUMENTS}). SkillLoader.load() accepts args as a second parameter and substitutes ${ARGUMENTS} in all skill content."
+    },
+    {
+      "id": "M359",
+      "timestamp": "2026-02-19T17:20:10Z",
+      "category": "missing_documentation",
+      "description": "Agent gave up on bug report when xdg-open failed in headless environment instead of providing URL to user",
+      "root_cause": "feedback skill Step 4 only documented the happy path (browser opens successfully) with no fallback for headless environments where xdg-open is unavailable. The skill said the script returns a url field but gave no instruction on what to do when the open command fails.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/feedback-first-use/SKILL.md",
+      "pattern_keywords": [
+        "headless",
+        "xdg-open",
+        "fallback",
+        "url",
+        "bug-report",
+        "feedback-skill"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When github-feedback.sh open fails, extract the url from the JSON output (or reconstruct it) and display it to the user so they can open it manually in their browser"
     }
   ]
 }
