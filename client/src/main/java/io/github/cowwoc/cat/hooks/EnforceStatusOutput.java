@@ -96,7 +96,7 @@ public final class EnforceStatusOutput
       }
       System.out.println(output);
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(EnforceStatusOutput.class);
       log.error("Unexpected error", e);

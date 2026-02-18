@@ -1139,7 +1139,7 @@ public final class GetStatusOutput implements SkillOutput
       System.err.println("Error generating status: " + e.getMessage());
       System.exit(1);
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetStatusOutput.class);
       log.error("Unexpected error", e);

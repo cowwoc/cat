@@ -77,7 +77,7 @@ public final class SessionAnalyzer
       JsonNode result = analyzer.analyzeSession(Path.of(args[0]));
       System.out.println(scope.getJsonMapper().writeValueAsString(result));
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(SessionAnalyzer.class);
       log.error("Unexpected error", e);

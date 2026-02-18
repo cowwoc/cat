@@ -964,6 +964,28 @@ throw new IOException("File not found");
 throw new Exception("Something went wrong");
 ```
 
+### Catching Error Types
+The only `Error` subclass you may catch is `AssertionError`. Never catch generic `Error`:
+
+```java
+// Good - catch AssertionError specifically if needed
+catch (RuntimeException | AssertionError e)
+{
+  log.error("Unexpected error", e);
+  throw e;
+}
+
+// Bad - catches all Errors including OutOfMemoryError, StackOverflowError, etc.
+catch (RuntimeException | Error e)
+{
+  log.error("Unexpected error", e);
+  throw e;
+}
+```
+
+Other `Error` types (`OutOfMemoryError`, `StackOverflowError`, `NoClassDefFoundError`, etc.) indicate
+unrecoverable JVM failures and must not be caught.
+
 ### Test Exceptions
 Tests should also throw specific exceptions:
 

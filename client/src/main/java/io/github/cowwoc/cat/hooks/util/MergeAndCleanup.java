@@ -435,7 +435,7 @@ public final class MergeAndCleanup
         System.exit(1);
       }
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(MergeAndCleanup.class);
       log.error("Unexpected error", e);

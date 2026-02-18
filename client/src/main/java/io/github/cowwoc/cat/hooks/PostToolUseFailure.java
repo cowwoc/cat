@@ -6,54 +6,57 @@
  */
 package io.github.cowwoc.cat.hooks;
 
-import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
-
-import io.github.cowwoc.cat.hooks.tool.post.AutoLearnMistakes;
-import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
-import io.github.cowwoc.cat.hooks.tool.post.RemindRestartAfterSkillModification;
+import io.github.cowwoc.cat.hooks.failure.DetectRepeatedFailures;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+
 /**
- * Unified PostToolUse hook for all tools
- *
- * TRIGGER: PostToolUse (no matcher - runs for all tools)
- *
- * Consolidates general PostToolUse hooks into a single Java dispatcher.
- * For Bash-specific PostToolUse hooks, see GetBashPostOutput.
- *
+ * Unified PostToolUseFailure hook for all tools.
+ * <p>
+ * TRIGGER: PostToolUseFailure (no matcher - runs for all tools)
+ * <p>
+ * Consolidates all PostToolUseFailure hooks into a single Java dispatcher.
+ * <p>
  * Handlers can:
- * - Warn about tool results (return warning string)
- * - Inject additional context (return additionalContext)
- * - Allow silently (return null)
+ * <ul>
+ *   <li>Warn about repeated failures (return warning string)</li>
+ *   <li>Allow silently (return allow)</li>
+ * </ul>
  */
-public final class GetPostOutput implements HookHandler
+public final class PostToolUseFailure implements HookHandler
 {
+  private final Logger log = LoggerFactory.getLogger(getClass());
   private final List<PostToolHandler> handlers;
 
   /**
-   * Creates a new GetPostOutput instance with the specified Claude config directory.
+   * Creates a new PostToolUseFailure with specified handlers.
    *
-   * @param claudeConfigDir the Claude config directory path
-   * @throws NullPointerException if {@code claudeConfigDir} is null
+   * @param handlers the handlers to use
+   * @throws NullPointerException if {@code handlers} is null
    */
-  public GetPostOutput(Path claudeConfigDir)
+  PostToolUseFailure(List<PostToolHandler> handlers)
   {
-    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
-    this.handlers = List.of(
-      new AutoLearnMistakes(),
-      new DetectAssistantGivingUp(claudeConfigDir),
-      new RemindRestartAfterSkillModification());
+    requireThat(handlers, "handlers").isNotNull();
+    this.handlers = handlers;
   }
 
   /**
-   * Entry point for the general post-tool output hook.
+   * Creates a new PostToolUseFailure instance.
+   */
+  public PostToolUseFailure()
+  {
+    this.handlers = List.of(new DetectRepeatedFailures());
+  }
+
+  /**
+   * Entry point for the PostToolUseFailure hook.
    *
    * @param args command line arguments
    */
@@ -64,7 +67,7 @@ public final class GetPostOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetPostOutput(scope.getClaudeConfigDir()).run(input, output);
+      HookResult result = new PostToolUseFailure().run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -72,7 +75,7 @@ public final class GetPostOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetPostOutput.class);
+      Logger log = LoggerFactory.getLogger(PostToolUseFailure.class);
       log.error("Unexpected error", e);
       throw e;
     }
@@ -92,19 +95,15 @@ public final class GetPostOutput implements HookHandler
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
-    String toolName = input.getToolName();
-    if (toolName.isEmpty())
+    String sessionId = input.getSessionId();
+    if (sessionId.isEmpty())
       return HookResult.withoutWarnings(output.empty());
 
+    String toolName = input.getToolName();
     JsonNode toolResult = input.getToolResult();
-    String sessionId = input.getSessionId();
-    requireThat(sessionId, "sessionId").isNotBlank();
-
     List<String> warnings = new ArrayList<>();
     List<String> additionalContexts = new ArrayList<>();
-    List<String> errorWarnings = new ArrayList<>();
 
-    // Run all general post-tool handlers
     for (PostToolHandler handler : handlers)
     {
       try
@@ -117,27 +116,19 @@ public final class GetPostOutput implements HookHandler
       }
       catch (Exception e)
       {
-        errorWarnings.add("get-post-output: handler error: " + e.getMessage());
+        log.error("post-tool-use-failure: handler error", e);
       }
     }
 
-    // Combine all warnings
-    List<String> allWarnings = new ArrayList<>();
-    allWarnings.addAll(warnings);
-    allWarnings.addAll(errorWarnings);
-
-    // Build response with additionalContext if present
     String jsonOutput;
     if (!additionalContexts.isEmpty())
     {
       String combined = String.join("\n\n", additionalContexts);
-      jsonOutput = output.additionalContext("PostToolUse", combined);
+      jsonOutput = output.additionalContext("PostToolUseFailure", combined);
     }
     else
-    {
       jsonOutput = output.empty();
-    }
 
-    return new HookResult(jsonOutput, allWarnings);
+    return new HookResult(jsonOutput, warnings);
   }
 }

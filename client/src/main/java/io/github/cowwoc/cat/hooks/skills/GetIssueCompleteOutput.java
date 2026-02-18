@@ -94,7 +94,7 @@ public final class GetIssueCompleteOutput
         }
       }
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetIssueCompleteOutput.class);
       log.error("Unexpected error", e);
