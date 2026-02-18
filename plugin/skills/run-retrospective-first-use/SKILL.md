@@ -20,30 +20,15 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-**MANDATORY: Check for the `<output>` tag in the preprocessor output below.**
+The user wants you to respond with the contents of the latest `<output skill="retrospective">` tag verbatim
 
-If the `<output>` tag is missing, preprocessing failed. Tell the user to run `/cat:feedback` to
-report this issue, then STOP.
+The tag contains one of three result types:
 
-The handler precomputes:
-- Trigger condition check (time-based and count-based)
-- Mistake gathering and filtering
-- Category breakdown
-- Action item effectiveness evaluation
-- Pattern status summary
-- Open action items list
-
-**If `SKILL OUTPUT RETROSPECTIVE ANALYSIS:` found inside `<output>`:**
-1. Output the analysis EXACTLY as provided
-2. Continue with workflow steps 5-9 (pattern identification, action derivation, etc.)
-
-**If `SKILL OUTPUT RETROSPECTIVE STATUS:` found inside `<output>`:**
-1. Output the status message
-2. STOP - retrospective not triggered
-
-**If `SKILL OUTPUT RETROSPECTIVE ERROR:` found inside `<output>`:**
-1. Output the error message
-2. STOP - cannot proceed
+| Content starts with | Action |
+|---------------------|--------|
+| Analysis data | Output verbatim, then continue with workflow steps 5-9 |
+| Status message | Output verbatim, then STOP - retrospective not triggered |
+| Error message | Output verbatim, then STOP - cannot proceed |
 
 ## Trigger Conditions
 
@@ -322,6 +307,6 @@ Before completing retrospective:
 - `cat:learn` - Records individual mistakes, triggers this skill
 - `cat:token-report` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items
-<output>
+<output skill="retrospective">
 !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-retrospective-output"`
 </output>

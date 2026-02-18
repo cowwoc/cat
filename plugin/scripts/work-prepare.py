@@ -596,14 +596,46 @@ def read_goal_from_plan(plan_path: Path) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Deterministic preparation phase for /cat:work")
-    parser.add_argument("--session-id", required=True, help="Current session ID")
-    parser.add_argument("--project-dir", required=True, help="Project root directory")
+    parser.add_argument("--session-id", required=False,
+                       default=os.environ.get("CLAUDE_SESSION_ID", ""),
+                       help="Current session ID (default: $CLAUDE_SESSION_ID)")
+    parser.add_argument("--project-dir", required=False,
+                       default=os.environ.get("CLAUDE_PROJECT_DIR", ""),
+                       help="Project root directory (default: $CLAUDE_PROJECT_DIR)")
     parser.add_argument("--exclude-pattern", required=False, help="Glob pattern to exclude issues")
     parser.add_argument("--issue-id", required=False, help="Specific issue ID to select (overrides priority-based selection)")
-    parser.add_argument("--trust-level", required=True, choices=["low", "medium", "high"],
-                       help="Trust level for execution")
+    parser.add_argument("--trust-level", required=False,
+                       default=os.environ.get("CAT_TRUST_LEVEL", "medium"),
+                       choices=["low", "medium", "high"],
+                       help="Trust level for execution (default: $CAT_TRUST_LEVEL or medium)")
+    parser.add_argument("--arguments", required=False, default="",
+                       help="Raw user arguments to parse (task ID, bare name, or filter)")
 
     args = parser.parse_args()
+
+    if not args.session_id:
+        print(json.dumps({
+            "status": "ERROR",
+            "message": "session-id is required (via --session-id or $CLAUDE_SESSION_ID)"
+        }))
+        sys.exit(1)
+
+    # Parse raw arguments if provided (replaces inline bash in work-first-use)
+    if args.arguments and not args.issue_id and not args.exclude_pattern:
+        raw = args.arguments.strip()
+        # Task ID format: VERSION[-SUFFIX] where VERSION is "N.N"
+        if re.match(r'^[0-9]+\.[0-9]+(-[a-zA-Z0-9_-]+)?$', raw):
+            args.issue_id = raw
+        # Bare issue name: starts with a letter
+        elif re.match(r'^[a-zA-Z][a-zA-Z0-9_-]*$', raw):
+            args.issue_id = raw
+        # Filter patterns
+        elif raw.startswith("skip "):
+            word = raw[5:].strip()
+            args.exclude_pattern = f"*{word}*"
+        elif raw.startswith("only "):
+            # "only" filters are handled post-hoc (script doesn't support inclusion)
+            pass
 
     # Fail-fast: project-dir must not be empty
     if not args.project_dir:

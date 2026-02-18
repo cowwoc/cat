@@ -75,7 +75,7 @@ public final class SkillLoader
   private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
     "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
-    "<output>(.*?)</output>", Pattern.DOTALL);
+    "<output(?:\\s[^>]*)?>(.+?)</output>", Pattern.DOTALL);
 
   /**
    * Parsed content from a {@code -first-use} SKILL.md file.
@@ -176,10 +176,9 @@ public final class SkillLoader
       StringBuilder output = new StringBuilder(4096);
       if (loadedSkills.contains(skillName))
       {
-        output.append("The `<output skill=\"").append(skillName).
-          append("\">` tag below contains updated pre-rendered terminal output. ").
-          append("Follow the same instructions from earlier: copy the tag content ").
-          append("character-for-character into your response.");
+        output.append("""
+          Re-execute the skill instructions declared earlier in this conversation, \
+          using the updated tag below.""");
       }
       else
       {
@@ -298,12 +297,19 @@ public final class SkillLoader
    */
   private String expandPaths(String content, Set<Path> visitedPaths) throws IOException
   {
+    Set<int[]> codeBlockRegions = findCodeBlockRegions(content);
     Matcher matcher = PATH_PATTERN.matcher(content);
     StringBuilder result = new StringBuilder();
     int lastEnd = 0;
 
     while (matcher.find())
     {
+      if (isInsideCodeBlock(matcher.start(), codeBlockRegions))
+      {
+        result.append(content, lastEnd, matcher.end());
+        lastEnd = matcher.end();
+        continue;
+      }
       result.append(content, lastEnd, matcher.start());
       String relativePath = matcher.group(1);
       Path filePath = pluginRoot.resolve(relativePath).toAbsolutePath().normalize();
@@ -329,6 +335,41 @@ public final class SkillLoader
     result.append(content.substring(lastEnd));
 
     return result.toString();
+  }
+
+  /**
+   * Finds all code block regions (between ``` fences) in the content.
+   *
+   * @param content the content to scan
+   * @return a set of int arrays where each array contains [start, end] positions of a code block
+   */
+  private static Set<int[]> findCodeBlockRegions(String content)
+  {
+    Set<int[]> regions = new HashSet<>();
+    // Match ``` fences on their own lines (with optional language tag), allowing any content between them
+    Pattern codeBlockPattern = Pattern.compile("^```[a-z]*\\s*$(.+?)^```\\s*$",
+      Pattern.DOTALL | Pattern.MULTILINE);
+    Matcher matcher = codeBlockPattern.matcher(content);
+    while (matcher.find())
+      regions.add(new int[]{matcher.start(), matcher.end()});
+    return regions;
+  }
+
+  /**
+   * Returns {@code true} if the given position falls inside any of the provided code block regions.
+   *
+   * @param position the character position to test
+   * @param regions the code block regions to check against
+   * @return {@code true} if position is inside a code block, {@code false} otherwise
+   */
+  private static boolean isInsideCodeBlock(int position, Set<int[]> regions)
+  {
+    for (int[] region : regions)
+    {
+      if (position >= region[0] && position < region[1])
+        return true;
+    }
+    return false;
   }
 
   /**
