@@ -558,4 +558,197 @@ public final class VerifyAuditTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that prepare returns a complete JSON object for valid input with all required fields.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void prepareReturnsCompleteJson() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("verify-audit-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      VerifyAudit audit = new VerifyAudit(scope);
+
+      Path issueDir = tempDir.resolve("issue");
+      Files.createDirectories(issueDir);
+      Path worktreeDir = tempDir.resolve("worktree");
+      Files.createDirectories(worktreeDir);
+
+      Files.writeString(issueDir.resolve("PLAN.md"), """
+        # Plan
+
+        ## Files to Modify
+        - plugin/skills/test.md - Update
+
+        ## Acceptance Criteria
+        - [ ] test.md has new section
+        """);
+
+      String argumentsJson = """
+        {
+          "issue_id": "2.1-test-issue",
+          "issue_path": "%s",
+          "worktree_path": "%s"
+        }
+        """.formatted(issueDir.toString(), worktreeDir.toString());
+
+      String result = audit.prepare(argumentsJson);
+      JsonNode root = mapper.readTree(result);
+
+      requireThat(root.path("issue_id").asString(), "issue_id").isEqualTo("2.1-test-issue");
+      requireThat(root.path("issue_path").asString(), "issue_path").isEqualTo(issueDir.toString());
+      requireThat(root.path("worktree_path").asString(), "worktree_path").isEqualTo(worktreeDir.toString());
+      requireThat(root.path("criteria_count").asInt(), "criteria_count").isEqualTo(1);
+      requireThat(root.path("file_count").asInt(), "file_count").isEqualTo(1);
+      requireThat(root.path("prompts").isArray(), "prompts.isArray").isTrue();
+      requireThat(root.path("prompts").size(), "prompts.size").isEqualTo(1);
+      requireThat(root.path("file_results").isObject(), "file_results.isObject").isTrue();
+      requireThat(root.path("file_results").path("modify").isObject(), "file_results.modify.isObject").isTrue();
+      requireThat(root.path("file_results").path("delete").isObject(), "file_results.delete.isObject").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare throws IllegalArgumentException when issue_id is missing.
+   *
+   * @throws IOException if JSON parsing fails
+   */
+  @Test
+  public void prepareRejectsMissingIssueId() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("verify-audit-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      VerifyAudit audit = new VerifyAudit(scope);
+
+      String json = """
+        {
+          "issue_path": "/tmp/issue",
+          "worktree_path": "/tmp/worktree"
+        }
+        """;
+
+      try
+      {
+        audit.prepare(json);
+        requireThat(false, "shouldThrow").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("issue_id");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare throws IllegalArgumentException when PLAN.md does not exist at issue_path.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void prepareRejectsMissingPlanMd() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("verify-audit-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      VerifyAudit audit = new VerifyAudit(scope);
+
+      Path issueDir = tempDir.resolve("issue-no-plan");
+      Files.createDirectories(issueDir);
+
+      String json = """
+        {
+          "issue_id": "2.1-test-issue",
+          "issue_path": "%s",
+          "worktree_path": "/tmp/worktree"
+        }
+        """.formatted(issueDir.toString());
+
+      try
+      {
+        audit.prepare(json);
+        requireThat(false, "shouldThrow").isEqualTo(true);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("PLAN.md");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that prepare generates prompts for each group derived from PLAN.md.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void prepareGeneratesPromptsForGroups() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("verify-audit-test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      VerifyAudit audit = new VerifyAudit(scope);
+
+      Path issueDir = tempDir.resolve("issue");
+      Files.createDirectories(issueDir);
+      Path worktreeDir = tempDir.resolve("worktree");
+      Files.createDirectories(worktreeDir);
+
+      Files.writeString(issueDir.resolve("PLAN.md"), """
+        # Plan
+
+        ## Files to Modify
+        - plugin/skills/test.md - Update
+        - hooks/src/Main.java - Add method
+
+        ## Acceptance Criteria
+        - [ ] test.md has new section
+        - [ ] Main.java has new method
+        """);
+
+      String argumentsJson = """
+        {
+          "issue_id": "2.1-test-issue",
+          "issue_path": "%s",
+          "worktree_path": "%s"
+        }
+        """.formatted(issueDir.toString(), worktreeDir.toString());
+
+      String result = audit.prepare(argumentsJson);
+      JsonNode root = mapper.readTree(result);
+
+      JsonNode prompts = root.path("prompts");
+      requireThat(prompts.isArray(), "prompts.isArray").isTrue();
+      requireThat(prompts.size(), "prompts.size").isGreaterThanOrEqualTo(1);
+
+      for (JsonNode promptEntry : prompts)
+      {
+        requireThat(promptEntry.has("group_index"), "hasGroupIndex").isTrue();
+        requireThat(promptEntry.has("prompt"), "hasPrompt").isTrue();
+        String promptText = promptEntry.path("prompt").asString();
+        requireThat(promptText, "promptText").contains("Acceptance Criteri");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }
