@@ -375,6 +375,59 @@
           "Consider adding PostToolUse hook to detect box-drawing characters in assistant output not preceded by script execution"
         ]
       }
+    },
+    {
+      "id": "M356",
+      "timestamp": "2026-02-19T11:38:00Z",
+      "category": "tool_misuse",
+      "description": "Pattern 11 in AutoLearnMistakes.java fires false positives on tool output containing CRITICAL from stakeholder review results and grep output",
+      "root_cause": "Pattern 11 checks tool output (gitFiltered) for CRITICAL+ISSUE/ERROR/etc but the stakeholder review box legitimately outputs Result lines containing Critical issue text, and grep searches return source code lines with CRITICAL. The pattern should only apply to assistant self-acknowledgment messages, not tool output.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/tool/post/AutoLearnMistakes.java",
+      "pattern_keywords": [
+        "false_positive",
+        "hook_detection",
+        "critical_self_acknowledgment",
+        "stakeholder_review"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pattern 11 (critical self-acknowledgment) should only scan assistant messages (assistantMsg), not tool output. The existing check at lines 286-288 already handles legitimate critical self-acknowledgments in assistant messages. Remove Pattern 11 from the tool output scanning block entirely."
+    },
+    {
+      "id": "M356",
+      "timestamp": "2026-02-19T11:37:00Z",
+      "category": "tool_misuse",
+      "description": "verify-audit CLI failed with Jackson \"Unrecognized character escape !\" when evidence strings contained backtick-exclamation preprocessing directives serialized via shell heredoc",
+      "root_cause": "Shell string interpolation in RESULTS_JSON heredoc embedded backtick-exclamation sequences literally in JSON string values, producing invalid JSON escape sequence \\! that Jackson rejected. The verify-implementation skill showed <<< heredoc as example but did not specify that evidence strings with special characters require json.dumps() serialization.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/verify-implementation-first-use/SKILL.md",
+      "pattern_keywords": [
+        "json-serialization",
+        "shell-heredoc",
+        "backtick-exclamation",
+        "jackson",
+        "verify-audit"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M330",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use Python subprocess with json.dumps() to pass results JSON to verify-audit CLI tool, ensuring all evidence string content is safely escaped regardless of special characters"
     }
   ]
 }
