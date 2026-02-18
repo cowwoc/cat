@@ -15,6 +15,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
+- fix-status-instruction-ordering
 - add-java-build-to-ci
 - compress-concepts-batch-5
 - compress-concepts-md
