@@ -14,7 +14,8 @@
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
 
-## Issues In Progress
+## Issues Pending
+- add-java-build-to-ci
 - compress-concepts-batch-5
 - compress-concepts-md
 - compress-md-files
@@ -25,10 +26,6 @@ Finalize naming conventions and UI polish before recording demo videos.
 - port-workflow-scripts
 - preprocessor-error-bug-reporting
 - preprocessor-skill-output-tags
-
-## Issues Pending
-- remove-in-progress-from-version-state
-- add-java-build-to-ci
 - ci-build-jlink-bundle
 - cleanup-orphaned-hook-scripts
 - cleanup-ported-scripts
