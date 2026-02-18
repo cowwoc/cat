@@ -8,6 +8,7 @@ Copyright (c) 2026 Gili Tzabari. All rights reserved.
 Licensed under the CAT Commercial License.
 See LICENSE.md in the project root for license terms.
 -->
+
 # Skill: stakeholder-review
 
 Multi-perspective stakeholder review gate for implementation quality assurance.
@@ -328,24 +329,16 @@ fi
 
 ### Output Format
 
-**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
-```
-FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
-Handler stakeholder_review_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+After context analysis, generate the selection box by invoking:
 
-After context analysis, use the **STAKEHOLDER_SELECTION** box from SKILL OUTPUT STAKEHOLDER BOXES.
-Replace placeholders with actual selection data.
+```
+Skill tool:
+  skill: "cat:stakeholder-selection-box"
+  args: "${SELECTED_COUNT} 11 ${SELECTED_LIST} ${SKIPPED_LIST}"
+```
 
-**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
-```
-FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
-Handler stakeholder_review_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
+Copy the output verbatim. The third argument is a comma-separated list of selected stakeholder names.
+The fourth argument is a comma-separated list of `stakeholder:reason` pairs.
 
 If file-based overrides occurred, add an "Overrides (file-based):" section inside the box.
 
@@ -658,29 +651,28 @@ User approval is a separate gate that follows stakeholder review.
 
 **Generate compact review report:**
 
-**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
-```
-FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
-Handler stakeholder_review_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
-```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
-
 Output the review results:
 
-**Summary box:** Use the **STAKEHOLDER_REVIEW** box from SKILL OUTPUT STAKEHOLDER BOXES.
-Replace placeholders with actual reviewer results.
+Generate the review summary by invoking:
 
-**If SKILL OUTPUT STAKEHOLDER BOXES not found:**
 ```
-FAIL: SKILL OUTPUT STAKEHOLDER BOXES not found.
-Handler stakeholder_review_handler.py should have provided this via additionalContext.
-Check that hooks are properly loaded.
+Skill tool:
+  skill: "cat:stakeholder-review-box"
+  args: "${ISSUE_ID} ${REVIEWER_STATUS_LIST} ${REVIEW_RESULT} ${REVIEW_SUMMARY}"
 ```
-Do NOT manually construct output or invoke scripts. Output the error and STOP.
 
-**Concern boxes (if any):** Use the **CRITICAL_CONCERN** or **HIGH_CONCERN** boxes.
-Repeat as needed for each concern.
+The second argument is a comma-separated list of `stakeholder:status` pairs
+(e.g., `"architect:✓ APPROVED,design:⚠ 1 HIGH"`).
+
+For each concern, generate a concern box:
+
+```
+Skill tool:
+  skill: "cat:stakeholder-concern-box"
+  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}"
+```
+
+Where `${SEVERITY}` is CRITICAL, HIGH, MEDIUM, or LOW.
 
 **Status icons:**
 - `✓` - APPROVED
@@ -706,7 +698,7 @@ The calling skill (work-with-issue) is responsible for:
 - User approval gates for MEDIUM concerns
 - Escalation handling when auto-fix fails
 
-**Output the final review status** using the appropriate box from SKILL OUTPUT STAKEHOLDER BOXES.
+**Output the final review status** using the review box generated above.
 
 </step>
 
@@ -714,7 +706,7 @@ The calling skill (work-with-issue) is responsible for:
 
 **User-Facing Output:**
 
-Display review results to the user using the STAKEHOLDER REVIEW box from SKILL OUTPUT STAKEHOLDER BOXES. The box report provides all information users need (stakeholder names, concern counts, icons, overall result).
+Display review results to the user using the review box CLI tool described in the report step. The box report provides all information users need (stakeholder names, concern counts, icons, overall result).
 
 **Machine-Facing Return Value (DO NOT DISPLAY TO USER):**
 
