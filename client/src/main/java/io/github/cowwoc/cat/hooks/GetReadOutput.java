@@ -63,7 +63,7 @@ public final class GetReadOutput implements HookHandler
         System.err.println(warning);
       System.out.println(result.output());
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetReadOutput.class);
       log.error("Unexpected error", e);

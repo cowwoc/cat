@@ -59,7 +59,7 @@ public final class GetReadPostOutput implements HookHandler
       HookOutput output = new HookOutput(scope);
       new GetReadPostOutput(scope).run(input, output);
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetReadPostOutput.class);
       log.error("Unexpected error", e);

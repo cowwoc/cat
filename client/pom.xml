@@ -118,7 +118,7 @@
 					<showWarnings>true</showWarnings>
 					<showDeprecation>true</showDeprecation>
 					<compilerArgs>
-						<arg>-Xlint:all,-exports,-requires-automatic</arg>
+						<arg>-Xlint:all,-exports,-requires-automatic,-module</arg>
 					</compilerArgs>
 				</configuration>
 			</plugin>

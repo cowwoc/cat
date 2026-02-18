@@ -79,7 +79,7 @@ public final class GetTaskOutput implements HookHandler
         System.err.println(warning);
       System.out.println(result.output());
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetTaskOutput.class);
       log.error("Unexpected error", e);

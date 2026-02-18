@@ -80,7 +80,7 @@ public final class TokenCounter
 
       System.out.println(mapper.writeValueAsString(result));
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(TokenCounter.class);
       log.error("Unexpected error", e);

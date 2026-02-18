@@ -118,7 +118,7 @@ public final class GetCheckpointOutput
         }
       }
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetCheckpointOutput.class);
       log.error("Unexpected error", e);

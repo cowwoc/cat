@@ -210,7 +210,7 @@ public final class WriteAndCommit
           }""".formatted(e.getMessage().replace("\"", "\\\"")));
         System.exit(1);
       }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(WriteAndCommit.class);
       log.error("Unexpected error", e);
