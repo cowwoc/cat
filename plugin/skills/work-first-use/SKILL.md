@@ -53,6 +53,8 @@ session becomes corrupted (all commands fail with exit code 1).
 Values are pre-loaded by handler preprocessing (shown above in CONFIGURATION section).
 Use these values: TRUST, VERIFY, AUTO_REMOVE.
 
+!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/progress-banner" --phase preparing`
+
 ## Phase 1: Prepare
 
 Execute the deterministic preparation script directly (no subagent needed).
@@ -65,7 +67,7 @@ Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py" --arguments "${ARGU
 
 | Status | Action |
 |--------|--------|
-| READY | Display progress banner, continue to Phase 2 |
+| READY | Continue to Phase 2 |
 | READY + `potentially_complete: true` | Ask user to verify (see below), then skip or continue |
 | NO_TASKS | Display extended diagnostics (see below), stop |
 | LOCKED | Display lock message, try next task |

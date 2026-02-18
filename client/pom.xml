@@ -47,6 +47,11 @@
 			<version>${requirements.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>io.github.cowwoc.requirements</groupId>
+			<artifactId>requirements-jackson</artifactId>
+			<version>${requirements.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>io.github.cowwoc.pouch</groupId>
 			<artifactId>pouch-core</artifactId>
 			<version>${pouch.version}</version>

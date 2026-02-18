@@ -182,10 +182,57 @@ if (!failures.isEmpty())
 | `length()` | Navigate to string/collection length |
 | `size()` | Navigate to collection size |
 
+## Jackson (JsonNode) Validation
+
+Use the `requirements-jackson` module for validating Jackson `JsonNode` objects. Access its validators through
+`DefaultJacksonValidators`:
+
+```java
+import io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators;
+```
+
+### Property Navigation
+
+Navigate into JSON object properties and validate their types:
+
+```java
+// Validate a property exists and is a string
+String issueId = requireThat(root, "root")
+  .property("issue_id").isString().getValue().asString();
+requireThat(issueId, "root.issue_id").isNotBlank();
+
+// Validate a property is an object
+requireThat(root, "root")
+  .property("config").isObject();
+
+// Validate a property is an array
+requireThat(root, "root")
+  .property("items").isArray();
+```
+
+### Available Type Checks
+
+| Method | Description |
+|--------|-------------|
+| `isString()` | Validates node is a string |
+| `isNumber()` | Validates node is a number |
+| `isBoolean()` | Validates node is a boolean |
+| `isArray()` | Validates node is an array |
+| `isObject()` | Validates node is an object |
+| `isMissing()` | Validates node is missing |
+| `isValue()` | Validates node is a value (string, number, boolean, null) |
+| `isContainer()` | Validates node is a container (array or object) |
+| `property(name)` | Navigate to a named property |
+| `size()` | Navigate to node size |
+
 ## Import
 
 ```java
+// Java validators (default for most validation)
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.checkIf;
+
+// Jackson validators (for JsonNode validation)
+import static io.github.cowwoc.requirements13.jackson.DefaultJacksonValidators.requireThat;
 ```
