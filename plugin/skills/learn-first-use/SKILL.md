@@ -186,11 +186,42 @@ Phase: Record
 The prevent phase could not implement prevention directly because the current branch is protected and the prevention
 requires source code changes. Create a CAT issue from the task_creation_info:
 
-1. Display to user: "Prevention requires code changes that cannot be committed on protected branch {branch}. Creating
+1. **Validate task_creation_info before proceeding.** Verify that:
+   - `task_creation_info` is present and non-empty in the prevent phase output
+   - `task_creation_info.suggested_title` is a non-empty string
+   - `task_creation_info.suggested_description` is a non-empty string
+   - `task_creation_info.suggested_acceptance_criteria` is a non-empty string
+
+   If any field is missing or empty, display:
+   ```
+   Error: Cannot create follow-up issue — task_creation_info is incomplete.
+   Missing fields: [list the missing field names]
+   Please create the issue manually using /cat:add.
+   Suggested title: {suggested_title or "(not provided)"}
+   Suggested description: {suggested_description or "(not provided)"}
+   Suggested acceptance criteria: {suggested_acceptance_criteria or "(not provided)"}
+   ```
+   Then skip to Step 4.
+
+2. Display to user: "Prevention requires code changes that cannot be committed on protected branch. Creating
    follow-up issue."
-2. The task_creation_info from the prevent phase contains suggested_title, suggested_description, and
-   suggested_acceptance_criteria
-3. Continue to Step 4 (Display Final Summary) - note that prevention_implemented is false in the summary
+
+3. Invoke `/cat:add suggested_title` where `suggested_title` is the one-line summary of the prevention needed
+   (e.g., "Fix SkillLoader to look up launchers in client/bin"). This becomes the issue's name. When cat:add
+   prompts for more detail, provide `suggested_description` as the description and
+   `suggested_acceptance_criteria` as the acceptance criteria.
+
+   If `cat:add` fails or returns an error, display:
+   ```
+   Error: Failed to create follow-up issue via cat:add.
+   You can create the issue manually using /cat:add with the following values:
+   Title: {suggested_title}
+   Description: {suggested_description}
+   Acceptance criteria: {suggested_acceptance_criteria}
+   ```
+   Then continue to Step 4.
+
+4. Continue to Step 4 (Display Final Summary) - note that prevention_implemented is false in the summary
 
 **Error handling:**
 
