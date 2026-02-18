@@ -2,7 +2,7 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-18
+- **Last Updated:** 2026-02-19
 
 
 # v2.1 State: Pre-Demo Polish
@@ -41,6 +41,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-stakeholders-md
 - compress-templates-md
 - developer-local-bundle-rebuild
+- fix-skill-output-framing
 - fix-stakeholder-review-preprocessing
 - migrate-python-to-java
 - optimize-learn-investigation
