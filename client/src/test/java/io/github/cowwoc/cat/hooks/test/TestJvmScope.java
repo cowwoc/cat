@@ -217,6 +217,13 @@ public final class TestJvmScope implements JvmScope
   }
 
   @Override
+  public String getTimezone()
+  {
+    ensureOpen();
+    return "UTC";
+  }
+
+  @Override
   public boolean isClosed()
   {
     return closed.get();

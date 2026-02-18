@@ -112,6 +112,18 @@ When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:
 4. Output (Issue Complete box) replaces the directive
 5. User sees only the formatted box — no Bash tool call
 
+## Anti-Pattern: Dropping Arguments
+
+When converting a visible Bash call to silent execution, **never drop arguments** that the original command accepted.
+If the original command used agent-determined values (e.g., keywords, filters, IDs), use the composition pattern:
+Skill A determines the values at runtime, then invokes Skill B with those values as arguments.
+
+**Wrong:** Remove keyword arguments because "preprocessing can't use agent-determined values."
+Preprocessing CAN use agent-determined values — that is the entire purpose of argument substitution (step 1 above).
+
+**Right:** Skill A determines keywords, invokes `/cat:skill-b keyword1 keyword2`. Skill B's preprocessor receives
+the keywords via `$ARGUMENTS` and passes them to the underlying command.
+
 ## When to Use
 
 **Good fit:**

@@ -12,6 +12,36 @@ This phase verifies the event sequence and analyzes the documentation path to un
 Complete the investigation phase for the learn skill. Your final message must be ONLY the JSON result object with no
 surrounding text or explanation. The parent agent parses your response as JSON.
 
+## Pre-Extracted Investigation Context
+
+The learn skill's preprocessing always provides pre-extracted investigation context. Use it as your primary source
+for Steps 1 and 1b. The pre-extracted data contains:
+
+- `documents_read`: All files the agent Read during the session (path, tool, timestamp)
+- `skill_invocations`: All skills invoked (skill name, args, timestamp)
+- `bash_commands`: Bash commands matching the mistake keywords, with their stdout/stderr results. Each entry includes
+  `line_number` (1-based JSONL line where the command appeared) and `result_truncated` (true if the result was cut off
+  at 2000 characters — use the line number to retrieve the full entry from the session file if needed)
+- `timeline_events`: Chronological list of significant events
+- `timezone_context`: Container timezone (e.g., `TZ=UTC`)
+
+**When using pre-extracted context:**
+
+1. Use `documents_read` instead of grepping the session JSONL for documents read
+2. Use `skill_invocations` instead of grepping for skill invocations
+3. Use `bash_commands` to find the failing commands and their outputs — no grep/jq needed
+4. Use `timeline_events` to reconstruct the event sequence
+5. Use `timezone_context` to interpret timestamps — skip timezone investigation
+6. Only fall back to direct JSONL parsing if the pre-extracted data is missing a specific piece of evidence you need
+
+**Early termination rule:** Stop searching for evidence once you have enough to establish the timeline. If you have
+found 3 or more positive matches for each evidence type (relevant commands, failure outputs, documents read), stop
+searching — additional matches rarely change the root cause.
+
+**Parallel reference file reads:** If you need to read reference files (scripts, skill files, agent definitions),
+read all of them in a single parallel batch at the start of this phase rather than reading them one at a time as
+needed.
+
 ## Step 1: Verify Event Sequence (MANDATORY)
 
 **CRITICAL: Do NOT rely on memory for root cause analysis.**

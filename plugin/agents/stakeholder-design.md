@@ -122,6 +122,10 @@ Evaluate implementation against these quality criteria:
 ### Critical (Must Fix)
 - **Dead Code**: Unreachable code, unused variables/methods, commented-out code blocks
 - **Obvious Bugs**: Logic errors, null pointer risks, resource leaks, infinite loops
+  - **Cross-Method Data Flow**: Trace fields and variables that are initialized in one method and updated in
+    another. Verify the initialized value is semantically correct at all points where it may be observed, including
+    before the updating method runs. Example: a flag initialized to `false` in method A but only set correctly in
+    method B — callers that read the flag before B executes will observe the wrong value.
 - **Test Anti-Patterns**: Tests that validate test data instead of system behavior, disabled tests
 
 ### High Priority
