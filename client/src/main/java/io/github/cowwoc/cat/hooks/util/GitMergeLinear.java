@@ -432,7 +432,7 @@ public final class GitMergeLinear
           }""".formatted(e.getMessage().replace("\"", "\\\"")));
         System.exit(1);
       }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GitMergeLinear.class);
       log.error("Unexpected error", e);

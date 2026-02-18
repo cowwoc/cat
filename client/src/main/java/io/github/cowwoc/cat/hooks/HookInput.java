@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import tools.jackson.core.JacksonException;
@@ -24,8 +25,17 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public final class HookInput
 {
+  /**
+   * Pattern that accepts alphanumeric characters, hyphens, and underscores.
+   * <p>
+   * Prevents path traversal characters ({@code /}, {@code ..}) while accepting UUIDs and any reasonable
+   * session ID format.
+   */
+  private static final Pattern SESSION_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+
   private final JsonMapper mapper;
   private final JsonNode data;
+  private final String sessionId;
 
   /**
    * Creates a new HookInput.
@@ -37,6 +47,31 @@ public final class HookInput
   {
     this.mapper = mapper;
     this.data = data;
+    this.sessionId = validateSessionId(data);
+  }
+
+  /**
+   * Validates and returns the session ID from the JSON data.
+   *
+   * @param data the parsed JSON data
+   * @return the session ID, or empty string if missing or empty
+   * @throws IllegalArgumentException if the session_id field is present but contains characters other than
+   *   alphanumerics, hyphens, and underscores
+   */
+  private static String validateSessionId(JsonNode data)
+  {
+    JsonNode node = data.get("session_id");
+    if (node == null || !node.isString())
+      return "";
+    String value = node.asString();
+    if (value == null || value.isBlank())
+      return "";
+    if (!SESSION_ID_PATTERN.matcher(value).matches())
+    {
+      throw new IllegalArgumentException("Invalid session_id format: '" + value +
+        "'. Expected alphanumeric, hyphens, and underscores only.");
+    }
+    return value;
   }
 
   /**
@@ -224,12 +259,15 @@ public final class HookInput
 
   /**
    * Get the session ID from standard hook input locations.
+   * <p>
+   * Returns empty string if the session ID is missing or empty. Throws if the session ID is present but
+   * contains characters other than alphanumerics, hyphens, and underscores.
    *
-   * @return the session ID, or empty string if not found
+   * @return the session ID, or empty string if not present
    */
   public String getSessionId()
   {
-    return getString("session_id", "");
+    return sessionId;
   }
 
   /**

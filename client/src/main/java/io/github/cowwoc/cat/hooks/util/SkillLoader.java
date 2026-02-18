@@ -593,7 +593,7 @@ public final class SkillLoader
       System.err.println("Error loading skill: " + e.getMessage());
       System.exit(1);
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(SkillLoader.class);
       log.error("Unexpected error", e);
