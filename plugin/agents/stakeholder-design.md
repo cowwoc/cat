@@ -134,6 +134,9 @@ Evaluate implementation against these quality criteria:
   - Use Grep and Glob tools to search for: class names, method signatures, similar patterns
   - Example: reviewing `GitCommands` inner class → search for `class.*GitCommands` across codebase
   - Flag duplication of existing public utilities as HIGH severity
+  - **JDK Duplication**: Check whether newly-added methods reimplement functionality already available in the JDK
+    standard library (e.g., `InputStream.readAllBytes()`, `Files.readString()`, `String.strip()`)
+  - Flag JDK-available replacements as HIGH severity with the specific JDK method to use
 - **Excessive Complexity**: Methods with high cyclomatic complexity, deeply nested conditionals
 - **Poor Cohesion**: Classes with unrelated responsibilities, methods doing too many things
 
