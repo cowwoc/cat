@@ -1267,6 +1267,55 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/test-launcher"`
   }
 
   /**
+   * Verifies that {@code @path} references inside markdown code blocks are not expanded.
+   * <p>
+   * When a code block contains an {@code @path}-style reference as an example, SkillLoader must
+   * preserve it as-is rather than attempting file expansion (which would throw IOException for
+   * non-existent files).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void atPathInsideCodeBlockIsNotExpanded() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(skillDir);
+
+      Files.writeString(skillDir.resolve("SKILL.md"), """
+        ---
+        description: test
+        ---
+        # Test
+
+        Example:
+        ```xml
+        @concepts/some-file.md
+        ```
+
+        <output skill="test">
+        test output
+        </output>
+        """);
+
+      // Note: concepts/some-file.md does NOT exist.
+      // If @path inside code block is expanded, this would throw IOException.
+      String uniqueSessionId = "code-block-test-" + System.nanoTime();
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSessionId, "/workspace");
+      String result = loader.load("test-skill");
+
+      // The @path inside the code block should be preserved as-is
+      requireThat(result, "result").contains("@concepts/some-file.md");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
    * Verifies that extractClassName handles multi-line launcher scripts with line continuations.
    */
   @Test
@@ -1444,7 +1493,8 @@ Dynamic output.
 
       String secondResult = loader.load("test-skill");
       requireThat(secondResult, "secondResult").
-        contains("copy the tag content character-for-character").
+        contains("Re-execute the skill instructions declared earlier in this conversation, " +
+          "using the updated tag below.").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output.").
         contains("</output>").
@@ -1569,6 +1619,144 @@ Output content.
         contains("ARGS:arg1,arg2").
         contains("Done").
         doesNotContain("!`");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code OUTPUT_TAG_PATTERN} matches an {@code <output>} tag that has a single attribute,
+   * capturing the body content on the first invocation.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesOutputTagWithSingleAttribute() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Full skill instructions.
+
+<output skill="test-skill">
+Dynamic output with attribute.
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+
+      String result = loader.load("test-skill");
+      requireThat(result, "result").
+        contains("Full skill instructions.").
+        contains("<output skill=\"test-skill\">").
+        contains("Dynamic output with attribute.").
+        contains("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code OUTPUT_TAG_PATTERN} matches an {@code <output>} tag with multiple attributes,
+   * capturing the body content on the first invocation.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesOutputTagWithMultipleAttributes() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Full skill instructions.
+
+<output data-id="123" skill="test">
+Dynamic output with multiple attributes.
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+
+      String result = loader.load("test-skill");
+      requireThat(result, "result").
+        contains("Full skill instructions.").
+        contains("<output skill=\"test-skill\">").
+        contains("Dynamic output with multiple attributes.").
+        contains("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that {@code OUTPUT_TAG_PATTERN} correctly handles an {@code <output>} tag with a single attribute
+   * on both the first and second invocations.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadHandlesOutputTagWithAttributeOnSubsequentInvocations() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Full skill instructions.
+
+<output skill="test-skill">
+Dynamic output with attribute.
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+
+      String firstResult = loader.load("test-skill");
+      requireThat(firstResult, "firstResult").
+        contains("Full skill instructions.").
+        contains("<output skill=\"test-skill\">").
+        contains("Dynamic output with attribute.").
+        contains("</output>");
+
+      String secondResult = loader.load("test-skill");
+      requireThat(secondResult, "secondResult").
+        contains("Re-execute the skill instructions declared earlier in this conversation, " +
+          "using the updated tag below.").
+        contains("<output skill=\"test-skill\">").
+        contains("Dynamic output with attribute.").
+        contains("</output>").
+        doesNotContain("Full skill instructions.");
     }
     finally
     {

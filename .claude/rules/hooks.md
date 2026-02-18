@@ -32,6 +32,19 @@ Pre-registered in `plugin/hooks/hooks.json`. Loaded automatically by Claude Code
 
 When investigating whether a plugin hook is active, check `plugin/hooks/hooks.json`, not `.claude/settings.json`.
 
+## Matcher Field Bug
+
+To match all tools, **omit the `matcher` field entirely**. Do NOT use `"matcher": ""` — despite the docs claiming empty
+string matches all, it silently fails to match anything (empirically verified 2026-02-19).
+
+```json
+// ✅ CORRECT: omit matcher entirely
+{ "hooks": [{ "type": "command", "command": "my-hook.sh" }] }
+
+// ❌ WRONG: empty string doesn't match
+{ "matcher": "", "hooks": [{ "type": "command", "command": "my-hook.sh" }] }
+```
+
 ## Approval Gate Protocol (M489)
 
 When trust != "high", approval gates MUST use AskUserQuestion tool immediately. Do NOT ask conversational questions first.

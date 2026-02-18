@@ -17,6 +17,7 @@ Outputs a fully-rendered Issue Complete or Scope Complete box with discovered ne
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -149,8 +150,12 @@ def main():
     parser = argparse.ArgumentParser(description="Generate Issue Complete box with next task discovery")
     parser.add_argument("--completed-issue", required=True, help="ID of completed issue")
     parser.add_argument("--base-branch", required=True, help="Base branch that was merged to")
-    parser.add_argument("--session-id", required=True, help="Current session ID")
-    parser.add_argument("--project-dir", required=True, help="Project root directory")
+    parser.add_argument("--session-id", required=False,
+                       default=os.environ.get("CLAUDE_SESSION_ID", ""),
+                       help="Current session ID (default: $CLAUDE_SESSION_ID)")
+    parser.add_argument("--project-dir", required=False,
+                       default=os.environ.get("CLAUDE_PROJECT_DIR", ""),
+                       help="Project root directory (default: $CLAUDE_PROJECT_DIR)")
     parser.add_argument("--exclude-pattern", required=False, help="Glob pattern to exclude issues")
 
     args = parser.parse_args()

@@ -44,6 +44,10 @@ Empirical testing (configs A-S, 100+ trials) identified:
 - `client/src/main/java/io/github/cowwoc/cat/hooks/util/SkillLoader.java` - Update reference text for subsequent
   invocations
 - `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java` - Update test expectations
+- `plugin/concepts/silent-execution.md` - Rename from handler-chain-pattern.md and rewrite with correct
+  argument substitution syntax
+- `plugin/skills/work-first-use/SKILL.md` - Convert Next Task section to use silent execution pattern via
+  work-complete skill invocation
 
 ## Acceptance Criteria
 - [ ] Bug fixed: status skill outputs only verbatim content + NEXT STEPS table, no instruction leakage
@@ -52,6 +56,8 @@ Empirical testing (configs A-S, 100+ trials) identified:
 - [ ] Pattern generalizes: any skill can adopt `<output>` tags and get correct first-use + subsequent behavior
 - [ ] Regression test: empirical test confirms 100% compliance with production-size content
 - [ ] No new issues introduced in other skills using output tags (statusline, run-retrospective)
+- [ ] silent-execution.md documents the correct argument substitution pipeline
+- [ ] Work skill Next Task section uses silent execution via skill invocation instead of inline Bash
 
 ## Execution Steps
 1. **Update status-first-use/SKILL.md:**
@@ -91,7 +97,22 @@ Empirical testing (configs A-S, 100+ trials) identified:
    - Update test expectations in `SkillLoaderTest.java` to match the new reference text
    - Files: `client/src/test/java/io/github/cowwoc/cat/hooks/test/SkillLoaderTest.java`
 
-4. **Run tests:**
+4. **Rename and rewrite handler-chain-pattern.md:**
+   - Rename to `silent-execution.md`
+   - Document the correct argument substitution pipeline: Claude Code resolves `$ARGUMENTS`, `$name`, `$1`,
+     `$ARGUMENTS[0]` BEFORE preprocessor directives execute
+   - Warn that `${ARGUMENTS}` (curly braces) does NOT work — only `$ARGUMENTS` (bare dollar sign)
+   - Files: `plugin/concepts/silent-execution.md`
+
+5. **Convert work skill Next Task section to silent execution:**
+   - Replace the inline `get-next-task-box` Bash command with a `/cat:work-complete` skill invocation
+   - The work skill passes `issue_id` and `base_branch` (and optionally `exclude_pattern`) as args
+   - The work-complete skill uses `$ARGUMENTS` in a preprocessor directive to run the command invisibly
+   - Keep the error handling `issue-lock.sh` as inline Bash (error paths need agent intervention)
+   - Files: `plugin/skills/work-first-use/SKILL.md`, new `plugin/skills/work-complete/SKILL.md` and
+     `plugin/skills/work-complete-first-use/SKILL.md`
+
+6. **Run tests:**
    - Run `mvn -f client/pom.xml test` to verify all tests pass
 
 ## Success Criteria
@@ -100,3 +121,5 @@ Empirical testing (configs A-S, 100+ trials) identified:
   the output tag
 - [ ] All SkillLoader tests pass
 - [ ] Empirical test with production content achieves >= 90% compliance on haiku
+- [ ] silent-execution.md correctly documents `$ARGUMENTS` (no braces) as the working syntax
+- [ ] Work skill Next Task section invokes work-complete skill instead of inline Bash
