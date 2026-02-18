@@ -11,8 +11,15 @@ the time on haiku with production-size Unicode box content. The agent either sum
 Skill tool, or leaks instruction text to the user. The SkillLoader subsequent invocation reference text also lacks
 explicit instructions for re-executing the original skill instructions and does not generalize to other skills.
 
-Many skills need the verbatim output pattern (status, render-diff, and future skills). The fix must be generic so all
-skills with `<output>` tags benefit from the improved framing.
+## Architectural Goal
+Establish a pattern where:
+1. **Instructions loaded once** — first-use SKILL.md carries full instructions, loaded into context on first call
+2. **Dynamic elements isolated in tags** — `<output>` tags contain data that changes between invocations
+3. **Subsequent calls reuse instructions** — reference text tells the agent to re-execute the original skill
+   instructions with the updated output tag
+
+Currently 3 skills use `<output>` tags (status, statusline, run-retrospective). As more skills migrate to this
+pattern, the SkillLoader infrastructure must handle it generically.
 
 ## Satisfies
 None
@@ -41,8 +48,10 @@ Empirical testing (configs A-S, 100+ trials) identified:
 ## Acceptance Criteria
 - [ ] Bug fixed: status skill outputs only verbatim content + NEXT STEPS table, no instruction leakage
 - [ ] SkillLoader reference text is generic and works for any skill with output tags
+- [ ] Subsequent invocation ordering: reference instruction BEFORE output tag (instructions first, content second)
+- [ ] Pattern generalizes: any skill can adopt `<output>` tags and get correct first-use + subsequent behavior
 - [ ] Regression test: empirical test confirms 100% compliance with production-size content
-- [ ] No new issues introduced in other skills using output tags
+- [ ] No new issues introduced in other skills using output tags (statusline, run-retrospective)
 
 ## Execution Steps
 1. **Update status-first-use/SKILL.md:**
