@@ -25,7 +25,7 @@ if [[ $# -lt 2 ]]; then
   exit 1
 fi
 
-"$PLUGIN_ROOT/hooks/bin/java" \
+"$PLUGIN_ROOT/client/bin/java" \
   -Xms16m \
   -Xmx96m \
   -Dstdin.encoding=UTF-8 \

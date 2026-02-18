@@ -293,33 +293,25 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void symlinkTrackingFilesAreSkippedDuringCleanup() throws IOException
   {
-    String sessionId = "test-session-symlink-" + System.nanoTime();
-    Path realFile = Files.createTempFile("cat-failure-real-", ".tmp");
-    Path symlinkFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-symlink-" + System.nanoTime();
+      Path realFile = Files.createTempFile(trackingDirectory, "cat-failure-real-", ".tmp");
+      Path symlinkFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
       Files.createSymbolicLink(symlinkFile, realFile);
 
-      // Handler should not throw even with symlink in /tmp
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      // Handler should not throw even with symlink in tracking directory
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
       JsonMapper mapper = JsonMapper.builder().build();
       String otherSession = "test-session-other-" + System.nanoTime();
-      Path otherFile = Path.of("/tmp/cat-failure-tracking-" + otherSession + ".count");
-      try
-      {
-        handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
-        // Symlink should still exist (not deleted)
-        requireThat(Files.exists(symlinkFile, LinkOption.NOFOLLOW_LINKS), "symlinkExists").isTrue();
-      }
-      finally
-      {
-        Files.deleteIfExists(otherFile);
-      }
+      handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
+      // Symlink should still exist (not deleted)
+      requireThat(Files.exists(symlinkFile, LinkOption.NOFOLLOW_LINKS), "symlinkExists").isTrue();
     }
     finally
     {
-      Files.deleteIfExists(symlinkFile);
-      Files.deleteIfExists(realFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -330,10 +322,12 @@ public final class DetectRepeatedFailuresTest
   public void expiredTrackingFilesAreDeletedDuringCleanup() throws IOException
   {
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
-    String sessionId = "test-session-ttl-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-ttl-" + System.nanoTime();
+      Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
+
       // Create an old tracking file (simulate 2-day-old file)
       Files.writeString(trackingFile, "5");
       Files.setLastModifiedTime(trackingFile,
@@ -341,25 +335,17 @@ public final class DetectRepeatedFailuresTest
 
       // New instance has lastCleanup=EPOCH, so cleanup runs on first check()
       String otherSession = "test-session-trigger-" + System.nanoTime();
-      Path otherFile = Path.of("/tmp/cat-failure-tracking-" + otherSession + ".count");
-      try
-      {
-        Clock clock = Clock.fixed(now, ZoneOffset.UTC);
-        DetectRepeatedFailures handler = new DetectRepeatedFailures(clock);
-        JsonMapper mapper = JsonMapper.builder().build();
-        handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
+      Clock clock = Clock.fixed(now, ZoneOffset.UTC);
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(clock, trackingDirectory);
+      JsonMapper mapper = JsonMapper.builder().build();
+      handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
 
-        // The old file should have been cleaned up
-        requireThat(Files.exists(trackingFile), "trackingFileExists").isFalse();
-      }
-      finally
-      {
-        Files.deleteIfExists(otherFile);
-      }
+      // The old file should have been cleaned up
+      requireThat(Files.exists(trackingFile), "trackingFileExists").isFalse();
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -371,47 +357,32 @@ public final class DetectRepeatedFailuresTest
   {
     Instant now = Instant.parse("2025-06-01T12:00:00Z");
     Clock clock = Clock.fixed(now, ZoneOffset.UTC);
-    String sessionId = "test-session-interval-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
       // First call sets lastCleanup = now (cleanup runs because lastCleanup starts at EPOCH)
       String triggerSession = "test-session-trigger-" + System.nanoTime();
-      Path triggerFile = Path.of("/tmp/cat-failure-tracking-" + triggerSession + ".count");
-      DetectRepeatedFailures handler = new DetectRepeatedFailures(clock);
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(clock, trackingDirectory);
       JsonMapper mapper = JsonMapper.builder().build();
-      try
-      {
-        handler.check("Bash", mapper.createObjectNode(), triggerSession, mapper.createObjectNode());
-      }
-      finally
-      {
-        Files.deleteIfExists(triggerFile);
-      }
+      handler.check("Bash", mapper.createObjectNode(), triggerSession, mapper.createObjectNode());
 
       // Now create an old tracking file
+      String sessionId = "test-session-interval-" + System.nanoTime();
+      Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
       Files.writeString(trackingFile, "5");
       Files.setLastModifiedTime(trackingFile,
         FileTime.from(now.minus(Duration.ofDays(2))));
 
       // Second call on same handler instance - cleanup should NOT run (now is within 6h of now)
       String otherSession = "test-session-noclean-" + System.nanoTime();
-      Path otherFile = Path.of("/tmp/cat-failure-tracking-" + otherSession + ".count");
-      try
-      {
-        handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
+      handler.check("Bash", mapper.createObjectNode(), otherSession, mapper.createObjectNode());
 
-        // The old file should still exist (cleanup didn't run)
-        requireThat(Files.exists(trackingFile), "trackingFileExists").isTrue();
-      }
-      finally
-      {
-        Files.deleteIfExists(otherFile);
-      }
+      // The old file should still exist (cleanup didn't run)
+      requireThat(Files.exists(trackingFile), "trackingFileExists").isTrue();
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
