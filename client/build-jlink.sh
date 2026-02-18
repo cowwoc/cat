@@ -40,7 +40,7 @@ readonly -a HANDLERS=(
   "get-read-output:GetReadOutput"
   "get-read-post-output:GetReadPostOutput"
   "get-post-output:GetPostOutput"
-  "get-skill-output:GetSkillOutput"
+  "user-prompt-submit:UserPromptSubmitHook"
   "token-counter:TokenCounter"
   "enforce-status:EnforceStatusOutput"
   "get-ask-output:GetAskOutput"
@@ -64,7 +64,7 @@ readonly -a HANDLERS=(
   "get-stakeholder-concern-box:skills.GetStakeholderConcernBox"
   "verify-audit:skills.VerifyAudit"
   "empirical-test-runner:skills.EmpiricalTestRunner"
-  "clear-skill-markers-on-compact:ClearSkillMarkersOnCompact"
+  "pre-compact-hook:SessionStartHook"
   "post-tool-use-failure:PostToolUseFailure"
 )
 
