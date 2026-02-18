@@ -126,7 +126,8 @@ check_runtime() {
   local java_bin="${jdk_path}/bin/java"
   [[ -x "$java_bin" ]] || { debug "java binary not executable or missing: $java_bin"; return 1; }
 
-  "$java_bin" -version &>/dev/null || { debug "java binary exists but failed to run: $java_bin"; return 1; }
+  local java_err=""
+  java_err=$("$java_bin" -version 2>&1) || { debug "java binary exists but failed to run: $java_bin: $java_err"; return 1; }
 
   debug "JDK runtime verified at: $jdk_path"
 }
@@ -155,14 +156,15 @@ download_runtime() {
     rm -f "$temp" "$temp_sha256"
   }
 
-  curl -sSfL --max-time 300 --max-filesize 524288000 -o "$temp" "$asset_url" 2>/dev/null || {
-    debug "Download failed: $asset_url"
+  local curl_err=""
+  curl_err=$(curl -sSfL --max-time 300 --max-filesize 524288000 -o "$temp" "$asset_url" 2>&1) || {
+    debug "Download failed: $asset_url: $curl_err"
     cleanup_temp
     return 1
   }
 
-  curl -sSfL --max-time 30 -o "$temp_sha256" "$sha256_url" 2>/dev/null || {
-    debug "SHA256 download failed: $sha256_url"
+  curl_err=$(curl -sSfL --max-time 30 -o "$temp_sha256" "$sha256_url" 2>&1) || {
+    debug "SHA256 download failed: $sha256_url: $curl_err"
     cleanup_temp
     return 1
   }
@@ -180,11 +182,12 @@ download_runtime() {
   debug "SHA256 verified for $archive_name"
 
   mkdir -p "$(dirname "$target_dir")"
-  if ! tar --no-absolute-names -xzf "$temp" -C "$(dirname "$target_dir")" 2>/dev/null; then
-    debug "Failed to extract archive"
+  local tar_err=""
+  tar_err=$(tar --no-absolute-names -xzf "$temp" -C "$(dirname "$target_dir")" 2>&1) || {
+    debug "Failed to extract archive to $(dirname "$target_dir"): $tar_err"
     cleanup_temp
     return 1
-  fi
+  }
 
   cleanup_temp
 
@@ -300,10 +303,14 @@ main() {
     return 0
   fi
 
-  # All strategies failed - warn with helpful context
+  # All strategies failed - surface debug trail in user-visible message
   local platform
   platform=$(get_platform 2>/dev/null || echo "unknown")
-  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform}).\\nSessions will start without hook processing.\\nCheck your network connection and try restarting."
+  local details=""
+  if [[ -n "$DEBUG_LINES" ]]; then
+    details="\\nDetails:\\n${DEBUG_LINES}"
+  fi
+  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform}).\\nSessions will start without hook processing.${details}"
   flush_log
 }
 
