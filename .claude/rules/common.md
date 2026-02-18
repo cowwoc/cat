@@ -21,23 +21,23 @@ Cross-cutting rules that apply to all CAT development work.
 
 | Component Type | Language | Rationale |
 |----------------|----------|-----------|
-| Plugin logic | **Python** | Rich ecosystem, testability, Claude Code integration |
+| Complex business logic | **Java** | Type safety, testability, jlink bundling |
 | CLI tools/hooks | Bash | Claude Code plugin integration, Unix tooling |
 | Configuration | JSON | Standard, machine-readable |
 | Documentation | Markdown | Human-readable, version-controlled |
 
-### Plugin Code (Python)
+### Plugin Code (Java)
 
-Python is used for:
+Java is used for:
 - Hook handlers (PreToolUse, PostToolUse, etc.)
 - Skill handlers
 - Display formatting and output
 - Configuration management
 - Test suites
 
-**Python Version:** 3.10+
+**Java Version:** 25+
 
-**Testing Framework:** pytest (with unittest compatibility)
+**Testing Framework:** TestNG with JsonMapper for serialization
 
 ### CLI/Hooks (Bash)
 
@@ -46,9 +46,10 @@ Bash scripts are appropriate for:
 - Git operations
 - Simple file manipulation
 - Environment setup
+- Complex logic when Java runtime is not yet available (e.g., bootstrap scripts)
 
 Bash scripts should NOT contain:
-- Complex business logic
+- Complex business logic (use Java instead)
 - State management beyond simple files
 
 ## Code Organization
@@ -56,7 +57,7 @@ Bash scripts should NOT contain:
 ```
 project/
 ├── plugin/                 # CAT plugin source
-│   ├── hooks/              # Hook handlers (Python/Bash)
+│   ├── hooks/              # Hook handlers (Java/Bash)
 │   ├── skills/             # Skill definitions (Markdown)
 │   ├── commands/           # Command definitions (Markdown)
 │   └── scripts/            # Utility scripts
@@ -66,7 +67,7 @@ project/
 
 ## Error Handling
 
-- Python: Use exceptions with meaningful messages; catch specific exceptions
+- Java: Use exceptions with meaningful messages; catch specific exceptions
 - Bash: Use `set -euo pipefail` and trap handlers
 - Always provide meaningful error messages
 - Log errors with context (what failed, why, how to fix)
@@ -232,7 +233,7 @@ fi
 
 ## Testing
 
-- Python: pytest for unit tests
+- Java: TestNG for unit tests
 - Bash: Bats (Bash Automated Testing System)
 - Minimum coverage: 80% for business logic
 - All edge cases must have tests

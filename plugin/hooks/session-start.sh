@@ -6,8 +6,9 @@
 #
 # session-start.sh - Bootstrap the CAT jlink runtime and run session handlers
 #
-# Ensures the custom JDK runtime is available for Java hooks by trying
-# (in order): existing install → download pre-built bundle from GitHub.
+# Ensures the custom JDK runtime is available for Java hooks by comparing the
+# local bundle version against plugin.json version. If they match, uses the
+# existing bundle. If they differ, downloads the correct bundle from GitHub.
 # After JDK is ready, invokes the GetSessionStartOutput Java dispatcher
 # which handles all session start tasks (upgrade check, update check,
 # session ID injection, retrospective reminders, instructions, env injection,
@@ -15,18 +16,9 @@
 
 set -euo pipefail
 
-# --- Save stdin early (before any command consumes it) ---
-
-STDIN_CONTENT=""
-if [ ! -t 0 ]; then
-  STDIN_CONTENT=$(cat)
-fi
-
 # --- Configuration ---
 
 readonly JDK_SUBDIR="hooks"
-readonly DOWNLOAD_BASE_URL="https://github.com/cowwoc/cat/releases/download"
-readonly PLUGIN_VERSION="v2.1"
 
 # --- Logging ---
 
@@ -60,38 +52,46 @@ log() {
   fi
 }
 
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\t'/\\t}"
+  s="${s//$'\r'/\\r}"
+  printf '%s' "$s"
+}
+
 flush_log() {
   [[ -z "$LOG_MESSAGE" ]] && return 0
 
-  local context=""
-  if [[ -n "$DEBUG_LINES" ]]; then
-    context="[session_start debug]\\n${DEBUG_LINES}"
-  fi
+  local escaped_status escaped_message
+  escaped_status=$(json_escape "$LOG_LEVEL")
+  escaped_message=$(json_escape "$LOG_MESSAGE")
 
-  if [[ -n "$context" ]]; then
-    cat <<EOF
-{
-  "status": "$LOG_LEVEL",
-  "message": "$LOG_MESSAGE",
-  "systemMessage": "$LOG_MESSAGE",
-  "hookSpecificOutput": {
-    "hookEventName": "SessionStart",
-    "additionalContext": "$context"
-  }
-}
-EOF
+  if [[ -n "$DEBUG_LINES" ]]; then
+    local context="[session_start debug]\\n${DEBUG_LINES}"
+    local escaped_context
+    escaped_context=$(json_escape "$context")
+    printf '{"status":"%s","message":"%s","systemMessage":"%s","hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' \
+      "$escaped_status" "$escaped_message" "$escaped_message" "$escaped_context"
   else
-    cat <<EOF
-{
-  "status": "$LOG_LEVEL",
-  "message": "$LOG_MESSAGE",
-  "systemMessage": "$LOG_MESSAGE"
-}
-EOF
+    printf '{"status":"%s","message":"%s","systemMessage":"%s"}\n' \
+      "$escaped_status" "$escaped_message" "$escaped_message"
   fi
 
   if [[ "$LOG_LEVEL" == "error" ]]; then
     exit 1
+  fi
+}
+
+# --- Version validation ---
+
+validate_semver() {
+  local version="$1"
+  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+    debug "Invalid version format: '$version' (expected X.Y or X.Y.Z)"
+    return 1
   fi
 }
 
@@ -133,42 +133,91 @@ check_runtime() {
 
 download_runtime() {
   local target_dir="$1"
+  local plugin_version="$2"
+
+  validate_semver "$plugin_version" || { debug "Refusing to construct URL with invalid version: $plugin_version"; return 1; }
+
   local platform
   platform=$(get_platform) || { debug "Unsupported platform"; return 1; }
 
   local archive_name="cat-jdk-25-${platform}.tar.gz"
-  local url="${DOWNLOAD_BASE_URL}/${PLUGIN_VERSION}/${archive_name}"
-  local temp="/tmp/${archive_name}"
+  local base_url="https://github.com/cowwoc/cat/releases/download/v${plugin_version}"
+  local asset_url="${base_url}/${archive_name}"
+  local sha256_url="${base_url}/${archive_name}.sha256"
 
-  debug "Downloading runtime from ${url}"
+  debug "Downloading runtime from ${asset_url}"
 
-  curl -sSfL -o "$temp" "$url" 2>/dev/null || { debug "Download failed: $url"; return 1; }
+  local temp temp_sha256
+  temp=$(mktemp --suffix=.tar.gz) || { debug "Failed to create temp file"; return 1; }
+  temp_sha256=$(mktemp --suffix=.sha256) || { rm -f "$temp"; debug "Failed to create sha256 temp file"; return 1; }
+
+  # Clean up temp files on function exit (success or failure)
+  trap 'rm -f "$temp" "$temp_sha256"' RETURN
+
+  curl -sSfL --max-time 300 --max-filesize 524288000 -o "$temp" "$asset_url" 2>/dev/null || { debug "Download failed: $asset_url"; return 1; }
+
+  curl -sSfL --max-time 30 -o "$temp_sha256" "$sha256_url" 2>/dev/null || {
+    debug "SHA256 download failed: $sha256_url"
+    return 1
+  }
+
+  # Verify checksum (sha256 file contains "hash  filename" format)
+  local expected_sha256 actual_sha256
+  expected_sha256=$(awk '{print $1}' "$temp_sha256")
+  actual_sha256=$(sha256sum "$temp" | awk '{print $1}')
+
+  if [[ "$expected_sha256" != "$actual_sha256" ]]; then
+    debug "SHA256 verification failed for $archive_name"
+    return 1
+  fi
+  debug "SHA256 verified for $archive_name"
 
   mkdir -p "$(dirname "$target_dir")"
-  if ! tar -xzf "$temp" -C "$(dirname "$target_dir")" 2>/dev/null; then
+  if ! tar --no-absolute-names -xzf "$temp" -C "$(dirname "$target_dir")" 2>/dev/null; then
     debug "Failed to extract archive"
-    rm -f "$temp"
     return 1
   fi
 
-  rm -f "$temp"
+  # Verify no symlinks in extracted directory (defense against symlink attacks)
+  if find "$target_dir" -type l 2>/dev/null | grep -q .; then
+    debug "Archive contains symlinks (rejected for security)"
+    rm -rf "$target_dir"
+    return 1
+  fi
+
   debug "Runtime installed to $target_dir"
 }
 
-# --- Runtime setup with fallback chain ---
+# --- Runtime setup with version comparison ---
 
 try_acquire_runtime() {
   local jdk_path="$1"
+  local plugin_version="$2"
 
-  # Strategy 1: Already installed
-  debug "Checking existing runtime..."
-  if check_runtime "$jdk_path"; then
-    return 0
+  # Check if the local bundle version matches the plugin version
+  local version_file="${jdk_path}/VERSION"
+  if [[ -f "$version_file" ]]; then
+    local local_version
+    local_version=$(cat "$version_file")
+    debug "Local bundle version: $local_version, plugin version: $plugin_version"
+
+    if [[ "$local_version" == "$plugin_version" ]]; then
+      # Versions match - verify runtime works and return
+      debug "Versions match, checking existing runtime..."
+      if check_runtime "$jdk_path"; then
+        return 0
+      fi
+      debug "Existing runtime check failed despite version match, re-downloading..."
+    else
+      debug "Version mismatch (local: $local_version, required: $plugin_version), downloading correct bundle..."
+    fi
+  else
+    debug "No VERSION file found at $version_file, downloading bundle..."
   fi
 
-  # Strategy 2: Download pre-built bundle
-  debug "Attempting download..."
-  if download_runtime "$jdk_path" && check_runtime "$jdk_path"; then
+  # Download the bundle matching the plugin version
+  if download_runtime "$jdk_path" "$plugin_version" && check_runtime "$jdk_path"; then
+    echo "${plugin_version}" > "${jdk_path}/VERSION"
     return 0
   fi
 
@@ -191,30 +240,56 @@ main() {
     debug "plugin_root=$plugin_root (from script location)"
   fi
 
+  # Read plugin version from plugin.json
+  local plugin_json="${plugin_root}/.claude-plugin/plugin.json"
+  if [[ ! -f "$plugin_json" ]]; then
+    log "error" "plugin.json not found: $plugin_json"
+    flush_log
+    return 1
+  fi
+
+  local plugin_version
+  plugin_version=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$plugin_json" | sed 's/.*"\([^"]*\)"$/\1/')
+
+  if [[ -z "$plugin_version" ]]; then
+    log "error" "Failed to read version from plugin.json: $plugin_json"
+    flush_log
+    return 1
+  fi
+
+  if ! validate_semver "$plugin_version"; then
+    log "error" "plugin.json contains invalid version format: '$plugin_version' (expected X.Y or X.Y.Z): $plugin_json"
+    flush_log
+    return 1
+  fi
+
+  debug "Plugin version: $plugin_version"
+
   # Acquire runtime
   local jdk_path="${plugin_root}/${JDK_SUBDIR}"
   debug "JDK path: $jdk_path"
 
-  if try_acquire_runtime "$jdk_path"; then
+  if try_acquire_runtime "$jdk_path" "$plugin_version"; then
     debug "JDK runtime ready, invoking Java dispatcher"
 
     # Invoke the GetSessionStartOutput Java dispatcher
     # It handles all session start tasks: upgrade check, update check, session ID,
-    # retrospective reminders, session instructions, env injection, skill marker cleanup
-    echo "$STDIN_CONTENT" | "$jdk_path/bin/java" \
+    # retrospective reminders, session instructions, env injection, skill marker cleanup.
+    # Pipe stdin directly to avoid buffering large input in memory.
+    "$jdk_path/bin/java" \
       -Xms16m -Xmx64m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 \
       -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.GetSessionStartOutput
     return 0
   fi
 
-  # All strategies failed
+  # All strategies failed - warn with helpful context
   local platform
   platform=$(get_platform 2>/dev/null || echo "unknown")
-  local archive_name="cat-jdk-25-${platform}.tar.gz"
-  local download_url="${DOWNLOAD_BASE_URL}/${PLUGIN_VERSION}/${archive_name}"
   debug "All acquisition methods failed"
-  log "error" "Failed to download CAT hooks runtime from ${download_url}"
+  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform}). Sessions will start without hook processing. Check your network connection and try restarting."
   flush_log
 }
 
-main "$@"
+if [[ "${BATS_TEST_SOURCED:-}" != "true" ]]; then
+  main "$@"
+fi
