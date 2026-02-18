@@ -25,12 +25,7 @@
     {
       "version": "2.1",
       "script": "2.1.sh",
-      "description": "Migration to 2.1 (no structural changes)"
-    },
-    {
-      "version": "2.3",
-      "script": "2.3.sh",
-      "description": "Rename version field to last_migrated_version for clarity"
+      "description": "Merge In Progress into Pending sections, rename status values, move version tracking to VERSION file"
     }
   ]
 }
