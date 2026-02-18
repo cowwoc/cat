@@ -397,7 +397,7 @@ public final class GitSquash
         System.exit(1);
       }
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GitSquash.class);
       log.error("Unexpected error", e);

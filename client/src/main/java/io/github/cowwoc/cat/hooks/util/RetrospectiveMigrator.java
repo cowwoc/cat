@@ -89,7 +89,7 @@ public final class RetrospectiveMigrator
         System.out.println(message);
       System.out.println(scope.getJsonMapper().writeValueAsString(result.stats()));
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(RetrospectiveMigrator.class);
       log.error("Unexpected error", e);

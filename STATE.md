@@ -5,4 +5,8 @@
 - **Dependencies:** []
 - **Blocks:** []
 - **Last Updated:** 2026-02-18
-- **Resolution:** implemented - Added -first-use skill pattern: SkillLoader now checks for {name}-first-use/SKILL.md companion files with <skill>/<output> XML tags, strips YAML frontmatter, and appends dynamic output on every invocation. Created status-first-use, run-retrospective-first-use, and statusline-first-use companion skills. Deleted old first-use.md files. Updated skill-loading.md documentation.
+- **Resolution:** implemented - Migrated detect-repeated-failures.sh to Java handler. Created
+  DetectRepeatedFailures.java in the hooks.failure package that tracks consecutive PostToolUseFailure events
+  per session using /tmp tracking files. Created OnPostToolUseFailure.java dispatcher. Updated
+  hooks.json to use the new Java binary. Added on-posttooluse-failure to build-jlink.sh handler
+  registry. Deleted detect-repeated-failures.sh. Added DetectRepeatedFailuresTest with 5 test cases.

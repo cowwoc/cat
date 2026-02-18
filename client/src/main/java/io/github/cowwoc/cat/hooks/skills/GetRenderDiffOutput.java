@@ -2047,7 +2047,7 @@ public final class GetRenderDiffOutput
       if (output != null)
         System.out.print(output);
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetRenderDiffOutput.class);
       log.error("Unexpected error", e);

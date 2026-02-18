@@ -75,7 +75,7 @@ public final class GetAskOutput implements HookHandler
         System.err.println(warning);
       System.out.println(result.output());
     }
-    catch (RuntimeException | Error e)
+    catch (RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetAskOutput.class);
       log.error("Unexpected error", e);
