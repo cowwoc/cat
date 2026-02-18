@@ -235,8 +235,7 @@ public final class EmpiricalTestRunnerTest
     }
     catch (IllegalArgumentException e)
     {
-      requireThat(e.getMessage(), "message").contains("tool");
-      requireThat(e.getMessage(), "message").contains("priming_messages[0]");
+      requireThat(e.getMessage(), "message").contains("tool").contains("priming_messages[0]");
     }
   }
 
@@ -261,8 +260,7 @@ public final class EmpiricalTestRunnerTest
     }
     catch (IllegalArgumentException e)
     {
-      requireThat(e.getMessage(), "message").contains("input");
-      requireThat(e.getMessage(), "message").contains("priming_messages[0]");
+      requireThat(e.getMessage(), "message").contains("input").contains("priming_messages[0]");
     }
   }
 
@@ -287,8 +285,7 @@ public final class EmpiricalTestRunnerTest
     }
     catch (IllegalArgumentException e)
     {
-      requireThat(e.getMessage(), "message").contains("output");
-      requireThat(e.getMessage(), "message").contains("priming_messages[0]");
+      requireThat(e.getMessage(), "message").contains("output").contains("priming_messages[0]");
     }
   }
 
@@ -325,8 +322,8 @@ public final class EmpiricalTestRunnerTest
     }
     catch (IllegalArgumentException e)
     {
-      requireThat(e.getMessage(), "message").contains("unsupported message type");
-      requireThat(e.getMessage(), "message").contains("priming_messages[0]");
+      requireThat(e.getMessage(), "message").contains("unsupported message type").
+        contains("priming_messages[0]");
     }
   }
 
@@ -352,8 +349,7 @@ public final class EmpiricalTestRunnerTest
     }
     catch (IllegalArgumentException e)
     {
-      requireThat(e.getMessage(), "message").contains("unsupported type");
-      requireThat(e.getMessage(), "message").contains("'invalid'");
+      requireThat(e.getMessage(), "message").contains("unsupported type").contains("'invalid'");
     }
   }
 
@@ -1437,6 +1433,164 @@ public final class EmpiricalTestRunnerTest
       requireThat(secondTrial.path("toolsUsed").size(), "secondTrialToolsUsedSize").isEqualTo(0);
       requireThat(secondTrial.path("checks").path("contains:hello").asBoolean(true),
         "secondTrialContainsHello").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildInput with system reminders appends them to the test prompt user message
+   * wrapped in system-reminder tags.
+   */
+  @Test
+  public void buildInputWithSystemReminders() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+
+      List<String> reminders = List.of("You are a helpful assistant.", "Always be concise.");
+
+      String result = runner.buildInput(new ArrayList<>(), "hello world", reminders);
+
+      // Should be a single line (one user message with reminders appended)
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(1);
+
+      JsonNode parsed = mapper.readTree(lines[0]);
+      String text = parsed.path("message").path("content").get(0).path("text").asString("");
+      requireThat(text, "text").contains("hello world").contains("<system-reminder>").
+        contains("You are a helpful assistant.").contains("Always be concise.").
+        contains("</system-reminder>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildInput with system reminders and priming messages produces the correct
+   * message sequence with reminders appended to the test prompt.
+   */
+  @Test
+  public void buildInputWithSystemRemindersAndPriming() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+
+      List<PrimingMessage> priming = List.of(
+        new PrimingMessage.UserMessage("first message"));
+      List<String> reminders = List.of("Reminder content here.");
+
+      String result = runner.buildInput(priming, "test prompt", reminders);
+
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(2);
+
+      // First line: priming message (should NOT contain reminder)
+      JsonNode firstMsg = mapper.readTree(lines[0]);
+      String firstText = firstMsg.path("message").path("content").get(0).path("text").asString("");
+      requireThat(firstText, "firstText").isEqualTo("first message");
+
+      // Second line: test prompt with system reminders appended
+      JsonNode secondMsg = mapper.readTree(lines[1]);
+      String secondText = secondMsg.path("message").path("content").get(0).path("text").asString("");
+      requireThat(secondText, "secondText").contains("test prompt").contains("<system-reminder>").
+        contains("Reminder content here.").contains("</system-reminder>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildCommand includes --append-system-prompt when system prompt is provided.
+   */
+  @Test
+  public void buildCommandWithSystemPrompt() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      List<String> command = runner.buildCommand("haiku", "You are a cat expert.");
+
+      requireThat(command, "command").contains("claude").contains("--append-system-prompt");
+      // Verify the system prompt value follows the flag
+      int flagIndex = command.indexOf("--append-system-prompt");
+      requireThat(flagIndex, "flagIndex").isGreaterThanOrEqualTo(0);
+      requireThat(command.get(flagIndex + 1), "systemPromptValue").isEqualTo(
+        "You are a cat expert.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildCommand omits --append-system-prompt when system prompt is empty.
+   */
+  @Test
+  public void buildCommandWithoutSystemPrompt() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      List<String> command = runner.buildCommand("haiku", "");
+
+      requireThat(command, "command").contains("claude");
+      requireThat(command.contains("--append-system-prompt"), "noSystemPromptFlag").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildInput with empty system reminders list produces the same output as
+   * without system reminders.
+   */
+  @Test
+  public void buildInputWithEmptySystemReminders() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+
+      String result = runner.buildInput(new ArrayList<>(), "hello world", List.of());
+
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(1);
+
+      JsonNode parsed = mapper.readTree(lines[0]);
+      String text = parsed.path("message").path("content").get(0).path("text").asString("");
+      requireThat(text, "text").isEqualTo("hello world");
     }
     finally
     {
