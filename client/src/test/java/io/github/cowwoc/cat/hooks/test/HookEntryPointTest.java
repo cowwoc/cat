@@ -1249,8 +1249,8 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString()
-        .replace("\\", "\\\\");
+      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString().
+        replace("\\", "\\\\");
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
         "\"session_id\": \"test\"}");
@@ -1274,8 +1274,8 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString()
-        .replace("\\", "\\\\");
+      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString().
+        replace("\\", "\\\\");
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"" + filePath + "\", " +
         "\"old_string\": \"a\", \"new_string\": \"b\"}, \"session_id\": \"test\"}");
@@ -1396,8 +1396,8 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
-      String filePath = Path.of("").toAbsolutePath().resolve("some-new-source.java").toString()
-        .replace("\\", "\\\\");
+      String filePath = Path.of("").toAbsolutePath().resolve("some-new-source.java").toString().
+        replace("\\", "\\\\");
       HookInput input = createInput(mapper,
         "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
         "\"session_id\": \"test-session\"}");
