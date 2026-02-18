@@ -32,7 +32,7 @@ CLAUDE_SESSION_ID="$3"
 SKILL_ARGS="${4:-}"
 
 # Invoke Java SkillLoader
-"$CLAUDE_PLUGIN_ROOT/hooks/bin/java" \
+"$CLAUDE_PLUGIN_ROOT/client/bin/java" \
   -Xms16m \
   -Xmx96m \
   -Dstdin.encoding=UTF-8 \
