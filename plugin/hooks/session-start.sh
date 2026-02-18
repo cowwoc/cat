@@ -28,7 +28,7 @@ DEBUG_LINES=""
 
 debug() {
   if [[ -n "$DEBUG_LINES" ]]; then
-    DEBUG_LINES="${DEBUG_LINES}\\n$*"
+    DEBUG_LINES="${DEBUG_LINES}"$'\n'"$*"
   else
     DEBUG_LINES="$*"
   fi
@@ -39,7 +39,7 @@ log() {
 
   # Accumulate message
   if [[ -n "$LOG_MESSAGE" ]]; then
-    LOG_MESSAGE="${LOG_MESSAGE}\\n${message}"
+    LOG_MESSAGE="${LOG_MESSAGE}"$'\n'"${message}"
   else
     LOG_MESSAGE="$message"
   fi
@@ -70,7 +70,7 @@ flush_log() {
   escaped_message=$(json_escape "$LOG_MESSAGE")
 
   if [[ -n "$DEBUG_LINES" ]]; then
-    local context="[session_start debug]\\n${DEBUG_LINES}"
+    local context="[session_start debug]"$'\n'"${DEBUG_LINES}"
     local escaped_context
     escaped_context=$(json_escape "$context")
     printf '{"status":"%s","message":"%s","systemMessage":"%s","hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' \
@@ -308,9 +308,9 @@ main() {
   platform=$(get_platform 2>/dev/null || echo "unknown")
   local details=""
   if [[ -n "$DEBUG_LINES" ]]; then
-    details="\\nDetails:\\n${DEBUG_LINES}"
+    details=$'\n'"Details:"$'\n'"${DEBUG_LINES}"
   fi
-  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform}).\\nSessions will start without hook processing.${details}"
+  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform})."$'\n'"Sessions will start without hook processing.${details}"
   flush_log
 }
 
