@@ -18,13 +18,14 @@ set -euo pipefail
 
 # --- Configuration ---
 
-readonly JDK_SUBDIR="hooks"
+readonly JDK_SUBDIR="client"
 
 # --- Logging ---
 
 LOG_LEVEL=""
 LOG_MESSAGE=""
 DEBUG_LINES=""
+FAILURE_CAUSE=""
 
 debug() {
   if [[ -n "$DEBUG_LINES" ]]; then
@@ -32,6 +33,11 @@ debug() {
   else
     DEBUG_LINES="$*"
   fi
+}
+
+fail() {
+  FAILURE_CAUSE="$*"
+  debug "$*"
 }
 
 log() {
@@ -136,12 +142,12 @@ download_runtime() {
   local target_dir="$1"
   local plugin_version="$2"
 
-  validate_semver "$plugin_version" || { debug "Refusing to construct URL with invalid version: $plugin_version"; return 1; }
+  validate_semver "$plugin_version" || { fail "Invalid plugin version: '$plugin_version'"; return 1; }
 
   local platform
-  platform=$(get_platform) || { debug "Unsupported platform"; return 1; }
+  platform=$(get_platform) || { fail "Unsupported platform: $(uname -s) $(uname -m)"; return 1; }
 
-  local archive_name="cat-jdk-25-${platform}.tar.gz"
+  local archive_name="cat-${plugin_version}-${platform}.tar.gz"
   local base_url="https://github.com/cowwoc/cat/releases/download/v${plugin_version}"
   local asset_url="${base_url}/${archive_name}"
   local sha256_url="${base_url}/${archive_name}.sha256"
@@ -158,13 +164,13 @@ download_runtime() {
 
   local curl_err=""
   curl_err=$(curl -sSfL --max-time 300 --max-filesize 524288000 -o "$temp" "$asset_url" 2>&1) || {
-    debug "Download failed: $asset_url: $curl_err"
+    fail "Download failed: $curl_err"
     cleanup_temp
     return 1
   }
 
   curl_err=$(curl -sSfL --max-time 30 -o "$temp_sha256" "$sha256_url" 2>&1) || {
-    debug "SHA256 download failed: $sha256_url: $curl_err"
+    fail "SHA256 checksum download failed: $curl_err"
     cleanup_temp
     return 1
   }
@@ -175,7 +181,7 @@ download_runtime() {
   actual_sha256=$(sha256sum "$temp" | awk '{print $1}')
 
   if [[ "$expected_sha256" != "$actual_sha256" ]]; then
-    debug "SHA256 verification failed for $archive_name"
+    fail "SHA256 verification failed for $archive_name (expected: ${expected_sha256:0:16}..., got: ${actual_sha256:0:16}...)"
     cleanup_temp
     return 1
   fi
@@ -184,7 +190,7 @@ download_runtime() {
   mkdir -p "$(dirname "$target_dir")"
   local tar_err=""
   tar_err=$(tar --no-absolute-names -xzf "$temp" -C "$(dirname "$target_dir")" 2>&1) || {
-    debug "Failed to extract archive to $(dirname "$target_dir"): $tar_err"
+    fail "Failed to extract archive: $tar_err"
     cleanup_temp
     return 1
   }
@@ -193,7 +199,7 @@ download_runtime() {
 
   # Verify no symlinks in extracted directory (defense against symlink attacks)
   if find "$target_dir" -type l 2>/dev/null | grep -q .; then
-    debug "Archive contains symlinks (rejected for security)"
+    fail "Archive contains symlinks (rejected for security)"
     rm -rf "$target_dir"
     return 1
   fi
@@ -234,7 +240,7 @@ try_acquire_runtime() {
     return 0
   fi
 
-  debug "All runtime acquisition methods failed for version $plugin_version at $jdk_path"
+  debug "All acquisition methods failed for version $plugin_version"
   return 1
 }
 
@@ -303,14 +309,23 @@ main() {
     return 0
   fi
 
-  # All strategies failed - surface debug trail in user-visible message
+  # All strategies failed - show cause and debug trail with readable formatting
   local platform
   platform=$(get_platform 2>/dev/null || echo "unknown")
-  local details=""
+  local cause="${FAILURE_CAUSE:-Unknown failure}"
+
+  local msg="Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform})."
+  msg+=$'\n'"Cause: ${cause}"
+  msg+=$'\n'"Sessions will start without hook processing."
   if [[ -n "$DEBUG_LINES" ]]; then
-    details=$'\n'"Details:"$'\n'"${DEBUG_LINES}"
+    msg+=$'\n'
+    msg+=$'\n'"Debug trail:"
+    local line
+    while IFS= read -r line; do
+      msg+=$'\n'"  ${line}"
+    done <<< "$DEBUG_LINES"
   fi
-  log "warning" "Failed to acquire CAT hooks runtime (version ${plugin_version}, platform ${platform})."$'\n'"Sessions will start without hook processing.${details}"
+  log "warning" "$msg"
   flush_log
 }
 

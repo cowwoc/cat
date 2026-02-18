@@ -22,20 +22,24 @@ If the build fails, stop and report the error.
 ### 2. Install jlink Runtime Image to Plugin Cache
 
 ```bash
-rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin \
-       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/lib \
-       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/conf \
-       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/legal \
-       /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/release
+rm -rf /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
 
-cp -r /workspace/client/target/jlink/* \
-      /home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/
+cp -r /workspace/client/target/jlink \
+      /home/node/.config/claude/plugins/cache/cat/cat/2.1/client
 ```
 
-### 3. Verify
+### 3. Write VERSION file
+
+Stamp the installed runtime with the plugin version so `session-start.sh` knows it's up to date:
+
+```bash
+echo "2.1" > /home/node/.config/claude/plugins/cache/cat/cat/2.1/client/VERSION
+```
+
+### 4. Verify
 
 Confirm the jlink runtime works:
 
 ```bash
-/home/node/.config/claude/plugins/cache/cat/cat/2.1/hooks/bin/java -version
+/home/node/.config/claude/plugins/cache/cat/cat/2.1/client/bin/java -version
 ```
