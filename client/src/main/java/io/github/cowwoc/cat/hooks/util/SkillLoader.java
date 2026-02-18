@@ -57,6 +57,10 @@ import org.slf4j.LoggerFactory;
  *   <li>{@code ${CLAUDE_PROJECT_DIR}} — project directory path</li>
  * </ul>
  * <p>
+ * <b>Positional arguments:</b> When constructed with a skill-args string (see 5-arg constructor),
+ * the string is split on whitespace into tokens. Skills reference these as {@code $0}, {@code $1},
+ * etc. Use the {@code argument-hint} frontmatter field to document expected arguments.
+ * <p>
  * Undefined variables are passed through unchanged, matching Claude Code's native behavior.
  * <p>
  * <b>Preprocessor directives:</b> Lines containing {@code !`"path" [args]`} patterns are processed
@@ -76,7 +80,7 @@ public final class SkillLoader
     "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
     "<output(?:\\s[^>]*)?>(.+?)</output>", Pattern.DOTALL);
-
+  private static final Pattern POSITIONAL_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
   /**
    * Parsed content from a {@code -first-use} SKILL.md file.
    * <p>
@@ -106,11 +110,12 @@ public final class SkillLoader
   private final Path pluginRoot;
   private final String sessionId;
   private final String projectDir;
+  private final String[] argTokens;
   private final Path sessionFile;
   private final Set<String> loadedSkills;
 
   /**
-   * Creates a new SkillLoader instance.
+   * Creates a new SkillLoader instance with no skill arguments.
    *
    * @param scope the JVM scope for accessing shared services
    * @param pluginRoot the Claude plugin root directory
@@ -123,15 +128,39 @@ public final class SkillLoader
    */
   public SkillLoader(JvmScope scope, String pluginRoot, String sessionId, String projectDir) throws IOException
   {
+    this(scope, pluginRoot, sessionId, projectDir, "");
+  }
+
+  /**
+   * Creates a new SkillLoader instance.
+   *
+   * @param scope the JVM scope for accessing shared services
+   * @param pluginRoot the Claude plugin root directory
+   * @param sessionId the Claude session ID
+   * @param projectDir the Claude project directory
+   * @param skillArgs the whitespace-separated positional arguments to map to named parameters
+   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code sessionId},
+   *   {@code projectDir}, or {@code skillArgs} are null
+   * @throws IllegalArgumentException if {@code pluginRoot}, {@code sessionId}, or {@code projectDir} are blank
+   * @throws IOException if the session file cannot be read
+   */
+  public SkillLoader(JvmScope scope, String pluginRoot, String sessionId, String projectDir, String skillArgs)
+    throws IOException
+  {
     requireThat(scope, "scope").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotBlank();
     requireThat(sessionId, "sessionId").isNotBlank();
     requireThat(projectDir, "projectDir").isNotBlank();
+    requireThat(skillArgs, "skillArgs").isNotNull();
 
     this.scope = scope;
     this.pluginRoot = Paths.get(pluginRoot);
     this.sessionId = sessionId;
     this.projectDir = projectDir;
+    if (skillArgs.isBlank())
+      this.argTokens = new String[0];
+    else
+      this.argTokens = skillArgs.strip().split("\\s+");
     this.sessionFile = Paths.get(System.getProperty("java.io.tmpdir"), "cat-skills-loaded-" + sessionId);
     this.loadedSkills = new HashSet<>();
 
@@ -167,7 +196,21 @@ public final class SkillLoader
   {
     requireThat(skillName, "skillName").isNotBlank();
 
-    String content = loadContent(skillName);
+    String rawContent = loadRawContent(skillName);
+    String content = stripFrontmatter(rawContent);
+    return processContent(skillName, content);
+  }
+
+  /**
+   * Processes loaded skill content by applying the first-use/reference logic and variable substitution.
+   *
+   * @param skillName the skill name
+   * @param content the skill content with frontmatter already stripped
+   * @return the processed skill output
+   * @throws IOException if processing fails
+   */
+  private String processContent(String skillName, String content) throws IOException
+  {
     ParsedContent parsed = parseContent(content);
 
     if (parsed != null)
@@ -215,23 +258,18 @@ public final class SkillLoader
 
 
   /**
-   * Loads the skill content from the {@code -first-use} companion SKILL.md.
-   * <p>
-   * Returns content with YAML frontmatter stripped but without variable substitution (so tags can
-   * be parsed first by {@link #load(String)}).
+   * Loads raw content (including frontmatter) from the {@code -first-use} companion SKILL.md.
    *
    * @param skillName the skill name
-   * @return the content, or empty string if no content file exists
+   * @return the raw content including YAML frontmatter, or empty string if no content file exists
    * @throws IOException if content file cannot be read
    */
-  private String loadContent(String skillName) throws IOException
+  private String loadRawContent(String skillName) throws IOException
   {
     Path contentPath = pluginRoot.resolve("skills/" + skillName + "-first-use/SKILL.md");
     if (!Files.exists(contentPath))
       return "";
-    String content = Files.readString(contentPath, StandardCharsets.UTF_8);
-    content = stripFrontmatter(content);
-    return content;
+    return Files.readString(contentPath, StandardCharsets.UTF_8);
   }
 
   /**
@@ -391,21 +429,41 @@ public final class SkillLoader
   private String substituteVars(String content) throws IOException
   {
     String expanded = expandPaths(content);
-    Matcher matcher = VAR_PATTERN.matcher(expanded);
-    StringBuilder result = new StringBuilder();
+
+    // Pass 1: resolve ${VAR_NAME} built-in variables
+    Matcher varMatcher = VAR_PATTERN.matcher(expanded);
+    StringBuilder varResult = new StringBuilder();
     int lastEnd = 0;
 
-    while (matcher.find())
+    while (varMatcher.find())
     {
-      result.append(expanded, lastEnd, matcher.start());
-      String varName = matcher.group(1);
+      varResult.append(expanded, lastEnd, varMatcher.start());
+      String varName = varMatcher.group(1);
       String replacement = resolveVariable(varName);
-      result.append(replacement);
-      lastEnd = matcher.end();
+      varResult.append(replacement);
+      lastEnd = varMatcher.end();
     }
-    result.append(expanded.substring(lastEnd));
+    varResult.append(expanded.substring(lastEnd));
 
-    return processPreprocessorDirectives(result.toString());
+    // Pass 2: resolve $N positional arguments
+    String afterVars = varResult.toString();
+    Matcher argMatcher = POSITIONAL_ARG_PATTERN.matcher(afterVars);
+    StringBuilder argResult = new StringBuilder();
+    lastEnd = 0;
+
+    while (argMatcher.find())
+    {
+      argResult.append(afterVars, lastEnd, argMatcher.start());
+      int index = Integer.parseInt(argMatcher.group(1));
+      if (index >= 0 && index < argTokens.length)
+        argResult.append(argTokens[index]);
+      else
+        argResult.append(argMatcher.group(0));
+      lastEnd = argMatcher.end();
+    }
+    argResult.append(afterVars.substring(lastEnd));
+
+    return processPreprocessorDirectives(argResult.toString());
   }
 
   /**
@@ -569,7 +627,11 @@ public final class SkillLoader
   }
 
   /**
-   * Resolves a single variable to its value.
+   * Resolves a single {@code ${VAR}} variable to its value.
+   * <p>
+   * Handles built-in variables only. Positional arguments ({@code $0}, {@code $1}, etc.) are
+   * resolved separately in {@link #substituteVars(String)}. Unknown variables are passed through
+   * as {@code ${varName}} literals, matching Claude Code's native behavior.
    *
    * @param varName the variable name (without ${} delimiters)
    * @return the resolved value, or the original {@code ${varName}} literal if undefined
@@ -605,16 +667,17 @@ public final class SkillLoader
    * Main method for command-line execution.
    * <p>
    * Provides CLI entry point to replace the original load-skill script.
-   * Invoked as: java -cp hooks.jar io.github.cowwoc.cat.hooks.util.SkillLoader
-   * plugin-root skill-name session-id project-dir
+   * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader
+   * plugin-root skill-name session-id project-dir [skill-args]
    *
-   * @param args command-line arguments: plugin-root skill-name session-id project-dir
+   * @param args command-line arguments: plugin-root skill-name session-id project-dir [skill-args]
    */
   public static void main(String[] args)
   {
-    if (args.length != 4)
+    if (args.length < 4 || args.length > 5)
     {
-      System.err.println("Usage: load-skill <plugin-root> <skill-name> <session-id> <project-dir>");
+      System.err.println(
+        "Usage: load-skill <plugin-root> <skill-name> <session-id> <project-dir> [skill-args]");
       System.exit(1);
     }
 
@@ -622,10 +685,15 @@ public final class SkillLoader
     String skillName = args[1];
     String sessionId = args[2];
     String projectDir = args[3];
+    String skillArgs;
+    if (args.length == 5)
+      skillArgs = args[4];
+    else
+      skillArgs = "";
 
     try (JvmScope scope = new MainJvmScope())
     {
-      SkillLoader loader = new SkillLoader(scope, pluginRoot, sessionId, projectDir);
+      SkillLoader loader = new SkillLoader(scope, pluginRoot, sessionId, projectDir, skillArgs);
       String result = loader.load(skillName);
       System.out.print(result);
     }

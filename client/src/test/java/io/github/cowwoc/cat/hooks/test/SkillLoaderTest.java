@@ -1763,4 +1763,153 @@ Dynamic output with attribute.
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
+
+  /**
+   * Verifies that positional arguments are resolved from the args string.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void positionalArgsResolved() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("SKILL.md"),
+        "Count: $0, Label: $1\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project", "42 hello");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Count: 42, Label: hello").
+        doesNotContain("$0").
+        doesNotContain("$1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that missing positional args are passed through as literals.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void missingPositionalArgsPassedThrough() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("SKILL.md"),
+        "First: $0, Second: $1\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project", "value1");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("First: value1").
+        contains("Second: $1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that extra positional args beyond referenced indices are ignored.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void extraPositionalArgsIgnored() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("SKILL.md"),
+        "Name: $0\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project", "Alice Bob Charlie");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("Name: Alice").
+        doesNotContain("Bob").
+        doesNotContain("Charlie");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that empty args leave positional references unresolved (passed through as literals).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void emptyArgsLeavePositionalRefsUnresolved() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("SKILL.md"),
+        "Count: $0\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("Count: $0");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that whitespace-only args leave positional references unresolved (passed through as
+   * literals).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void whitespaceOnlyArgsLeavePositionalRefsUnresolved() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("SKILL.md"),
+        "Count: $0\n");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project", "   ");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").contains("Count: $0");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
 }

@@ -28,6 +28,8 @@ fi
 CLAUDE_PLUGIN_ROOT="$1"
 SKILL="$2"
 CLAUDE_SESSION_ID="$3"
+# Optional: skill arguments passed from Skill tool invocation
+SKILL_ARGS="${4:-}"
 
 # Invoke Java SkillLoader
 "$CLAUDE_PLUGIN_ROOT/hooks/bin/java" \
@@ -42,4 +44,5 @@ CLAUDE_SESSION_ID="$3"
   "$CLAUDE_PLUGIN_ROOT" \
   "$SKILL" \
   "$CLAUDE_SESSION_ID" \
-  "$CLAUDE_PROJECT_DIR"
+  "$CLAUDE_PROJECT_DIR" \
+  "$SKILL_ARGS"
