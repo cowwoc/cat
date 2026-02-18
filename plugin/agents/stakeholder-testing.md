@@ -133,6 +133,10 @@ Evaluate implementation against these testing criteria:
   happy paths. Code that gathers data for reporting must apply the same validation/filtering as core logic.
 - **Comment-Code Consistency**: Comments that describe behavior the code actually implements. Flag comments claiming
   "check if X" or "verify Y" where the code does not perform that check.
+- **Cross-Method Initialization Coverage**: When a field or variable is initialized in one method and updated in
+  another, verify tests exercise the full initialization-to-update flow. Tests that only invoke the initializing
+  method without the updating method will observe a stale or default value and may pass vacuously. Flag missing tests
+  that verify the value after the updating method runs.
 
 ### Medium Priority
 - **Test Isolation Issues**: Tests with shared state, order dependencies

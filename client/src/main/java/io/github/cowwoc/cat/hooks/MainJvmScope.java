@@ -88,6 +88,13 @@ public final class MainJvmScope implements JvmScope
   });
   private final ConcurrentLazyReference<TerminalType> terminalType =
     ConcurrentLazyReference.create(TerminalType::detect);
+  private final ConcurrentLazyReference<String> tz = ConcurrentLazyReference.create(() ->
+  {
+    String tzValue = System.getenv("TZ");
+    if (tzValue == null || tzValue.isEmpty())
+      return "UTC";
+    return tzValue;
+  });
   private final AtomicBoolean closed = new AtomicBoolean();
 
   /**
@@ -172,6 +179,13 @@ public final class MainJvmScope implements JvmScope
   {
     ensureOpen();
     return userIssues.getValue();
+  }
+
+  @Override
+  public String getTimezone()
+  {
+    ensureOpen();
+    return tz.getValue();
   }
 
   @Override

@@ -56,6 +56,7 @@ readonly -a HANDLERS=(
   "get-retrospective-output:skills.GetRetrospectiveOutput"
   "get-render-diff-output:skills.GetRenderDiffOutput"
   "session-analyzer:util.SessionAnalyzer"
+  "extract-investigation-context:util.InvestigationContextExtractor"
   "progress-banner:skills.ProgressBanner"
   "get-stakeholder-selection-box:skills.GetStakeholderSelectionBox"
   "get-stakeholder-review-box:skills.GetStakeholderReviewBox"

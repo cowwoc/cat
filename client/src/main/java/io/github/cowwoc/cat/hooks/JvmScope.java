@@ -89,6 +89,16 @@ public interface JvmScope extends AutoCloseable
   JsonMapper getJsonMapper();
 
   /**
+   * Returns the system timezone string from the {@code TZ} environment variable.
+   * <p>
+   * Defaults to {@code "UTC"} if the variable is not set.
+   *
+   * @return the timezone string (e.g. {@code "UTC"} or {@code "America/New_York"})
+   * @throws IllegalStateException if this scope is closed
+   */
+  String getTimezone();
+
+  /**
    * Returns the sequential tool detection handler.
    *
    * @return the handler
