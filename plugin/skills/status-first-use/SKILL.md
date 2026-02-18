@@ -9,7 +9,7 @@ The user wants you to respond with the contents of the latest `<output skill="st
 contents of the <next-steps> tag below.
 
 <output skill="status">
-!`"${CLAUDE_PLUGIN_ROOT}/hooks/bin/get-status-output"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output"`
 </output>
 
 <next-steps>

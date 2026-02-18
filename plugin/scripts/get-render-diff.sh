@@ -126,7 +126,7 @@ echo "### Diff (4-column format)"
 echo ""
 
 # Generate rendered diff using Java launcher
-LAUNCHER="$SCRIPT_DIR/../hooks/bin/get-render-diff-output"
+LAUNCHER="$SCRIPT_DIR/../client/bin/get-render-diff-output"
 if [[ -f "$LAUNCHER" ]]; then
     "$LAUNCHER" 2>/dev/null || {
         echo "**Error:** Failed to render diff. Showing raw stats instead."
