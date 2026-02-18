@@ -101,6 +101,20 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > }
 > ```
 
+**Before spawning the deep-tier subagent, extract investigation context silently:**
+
+Derive keywords from the mistake description (e.g., command names, file names, skill names mentioned in the mistake).
+Then invoke the extraction skill with those keywords:
+
+```
+Skill tool:
+  skill: "cat:extract-investigation-context"
+  args: "keyword1 keyword2 keyword3"
+```
+
+The skill runs the extractor invisibly via preprocessing and returns the pre-extracted JSON. Capture this output as
+`PRE_EXTRACTED_CONTEXT`.
+
 **Prompt for deep-tier subagent:**
 
 > Execute the learn skill phases for a deep-tier mistake.
@@ -108,6 +122,11 @@ Delegate to general-purpose subagent using the Task tool with these JSON paramet
 > SESSION_ID: ${CLAUDE_SESSION_ID}
 > PROJECT_DIR: ${CLAUDE_PROJECT_DIR}
 > TIER: deep
+>
+> **Pre-Extracted Investigation Context:**
+> ```json
+> ${PRE_EXTRACTED_CONTEXT}
+> ```
 >
 > **Your task:** Execute phases in sequence: Investigate → Analyze → Prevent → Record
 >
