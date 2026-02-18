@@ -46,6 +46,7 @@ readonly -a HANDLERS=(
   "get-ask-output:GetAskOutput"
   "get-edit-output:GetEditOutput"
   "get-write-edit-output:GetWriteEditOutput"
+
   "get-task-output:GetTaskOutput"
   "get-session-end-output:GetSessionEndOutput"
   "get-checkpoint-box:skills.GetCheckpointOutput"

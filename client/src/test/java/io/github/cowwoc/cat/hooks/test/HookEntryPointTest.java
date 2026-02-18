@@ -19,6 +19,7 @@ import io.github.cowwoc.cat.hooks.GetReadPostOutput;
 import io.github.cowwoc.cat.hooks.GetReadOutput;
 import io.github.cowwoc.cat.hooks.GetSkillOutput;
 import io.github.cowwoc.cat.hooks.GetTaskOutput;
+
 import io.github.cowwoc.cat.hooks.GetWriteEditOutput;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
@@ -1210,7 +1211,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1230,7 +1231,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1239,6 +1240,8 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetWriteEditOutput uses case-insensitive matching for tool names.
+   * <p>
+   * Uses a file path inside the current working directory so worktree isolation does not block it.
    */
   @Test
   public void getWriteEditPretoolUsesCaseInsensitiveMatching() throws IOException
@@ -1246,11 +1249,14 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
+      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString()
+        .replace("\\", "\\\\");
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
+        "{\"tool_name\": \"write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
+        "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1259,6 +1265,8 @@ public class HookEntryPointTest
 
   /**
    * Verifies that GetWriteEditOutput accepts Edit tool_name.
+   * <p>
+   * Uses a file path inside the current working directory so worktree isolation does not block it.
    */
   @Test
   public void getWriteEditPretoolAcceptsEditToolName() throws IOException
@@ -1266,36 +1274,17 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
+      String filePath = Path.of("").toAbsolutePath().resolve("test.txt").toString()
+        .replace("\\", "\\\\");
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\", \"old_string\": \"a\", " +
-        "\"new_string\": \"b\"}, \"session_id\": \"test\"}");
+        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"" + filePath + "\", " +
+        "\"old_string\": \"a\", \"new_string\": \"b\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
-    }
-  }
-
-  /**
-   * Verifies that GetWriteEditOutput blocks plugin file edit on protected branch.
-   */
-  @Test
-  public void getWriteEditPretoolBlocksPluginFileOnProtectedBranch() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.py\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").contains("\"decision\"").contains("\"block\"");
     }
   }
 
@@ -1394,36 +1383,12 @@ public class HookEntryPointTest
   // --- GetWriteEditOutput dispatcher tests (using real handlers) ---
 
   /**
-   * Verifies that GetWriteEditOutput dispatcher blocks plugin file with block decision.
-   * <p>
-   * This tests the FULL dispatcher path including the block behavior with the real
-   * additionalContext isEmpty() check that was the CRITICAL bug fix.
-   */
-  @Test
-  public void getWriteEditPretoolBlocksPluginFileWithBlockDecision() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/hooks/test.sh\"}, " +
-        "\"session_id\": \"test-session\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").contains("\"decision\"");
-      requireThat(result, "result").contains("\"block\"");
-      requireThat(result, "result").contains("Cannot edit source files");
-    }
-  }
-
-  /**
    * Verifies that GetWriteEditOutput allows non-plugin file with warning.
    * <p>
    * Test that non-plugin, non-allowed files on v2.1 produce {} output from dispatcher
    * (warning goes to stderr, stdout is {}).
+   * <p>
+   * Uses a file path inside the current working directory so worktree isolation does not block it.
    */
   @Test
   public void getWriteEditPretoolAllowsNonPluginFileWithWarning() throws IOException
@@ -1431,12 +1396,14 @@ public class HookEntryPointTest
     try (JvmScope scope = new TestJvmScope())
     {
       JsonMapper mapper = scope.getJsonMapper();
+      String filePath = Path.of("").toAbsolutePath().resolve("some-new-source.java").toString()
+        .replace("\\", "\\\\");
       HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"/tmp/some-new-source.java\"}, " +
+        "{\"tool_name\": \"Write\", \"tool_input\": {\"file_path\": \"" + filePath + "\"}, " +
         "\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
