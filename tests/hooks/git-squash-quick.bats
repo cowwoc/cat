@@ -161,3 +161,100 @@ teardown() {
     [ "$status" -eq 0 ]
     assert_json_field "$output" '.status' 'OK'
 }
+
+# ============================================================================
+# Rebase conflict tests
+# ============================================================================
+
+@test "rebase conflict: exits with status 1" {
+    # Create a conflict: modify the same file on main and on test-branch
+    # setup() already created test-branch with 3 commits from main
+    # Add a conflicting commit to main
+    git -C "$TEST_TEMP_DIR" checkout --quiet main
+    echo "conflict on main" > "$TEST_TEMP_DIR/file.txt"
+    git -C "$TEST_TEMP_DIR" add file.txt
+    git -C "$TEST_TEMP_DIR" commit --quiet -m "conflicting change on main"
+
+    git -C "$TEST_TEMP_DIR" checkout --quiet test-branch
+
+    run "$SCRIPTS_DIR/git-squash-quick.sh" "main" "feature: squash with conflict" "$TEST_TEMP_DIR"
+    [ "$status" -eq 1 ]
+}
+
+@test "rebase conflict: outputs JSON with REBASE_CONFLICT status" {
+    git -C "$TEST_TEMP_DIR" checkout --quiet main
+    echo "conflict on main" > "$TEST_TEMP_DIR/file.txt"
+    git -C "$TEST_TEMP_DIR" add file.txt
+    git -C "$TEST_TEMP_DIR" commit --quiet -m "conflicting change on main"
+
+    git -C "$TEST_TEMP_DIR" checkout --quiet test-branch
+
+    run "$SCRIPTS_DIR/git-squash-quick.sh" "main" "feature: squash with conflict" "$TEST_TEMP_DIR"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"REBASE_CONFLICT"* ]]
+}
+
+@test "rebase conflict: output includes backup_branch field" {
+    git -C "$TEST_TEMP_DIR" checkout --quiet main
+    echo "conflict on main" > "$TEST_TEMP_DIR/file.txt"
+    git -C "$TEST_TEMP_DIR" add file.txt
+    git -C "$TEST_TEMP_DIR" commit --quiet -m "conflicting change on main"
+
+    git -C "$TEST_TEMP_DIR" checkout --quiet test-branch
+
+    run "$SCRIPTS_DIR/git-squash-quick.sh" "main" "feature: squash with conflict" "$TEST_TEMP_DIR"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"backup_branch"* ]]
+    [[ "$output" == *"backup-after-rebase-conflict-"* ]]
+}
+
+@test "rebase conflict: creates backup-after-rebase-conflict-* branch" {
+    git -C "$TEST_TEMP_DIR" checkout --quiet main
+    echo "conflict on main" > "$TEST_TEMP_DIR/file.txt"
+    git -C "$TEST_TEMP_DIR" add file.txt
+    git -C "$TEST_TEMP_DIR" commit --quiet -m "conflicting change on main"
+
+    git -C "$TEST_TEMP_DIR" checkout --quiet test-branch
+
+    run "$SCRIPTS_DIR/git-squash-quick.sh" "main" "feature: squash with conflict" "$TEST_TEMP_DIR"
+    [ "$status" -eq 1 ]
+
+    # Verify backup branch was created
+    local backup_branches
+    backup_branches=$(git -C "$TEST_TEMP_DIR" branch --list "backup-after-rebase-conflict-*" --format="%(refname:short)")
+    [ -n "$backup_branches" ]
+}
+
+@test "rebase conflict: working directory is left clean (rebase aborted)" {
+    git -C "$TEST_TEMP_DIR" checkout --quiet main
+    echo "conflict on main" > "$TEST_TEMP_DIR/file.txt"
+    git -C "$TEST_TEMP_DIR" add file.txt
+    git -C "$TEST_TEMP_DIR" commit --quiet -m "conflicting change on main"
+
+    git -C "$TEST_TEMP_DIR" checkout --quiet test-branch
+
+    run "$SCRIPTS_DIR/git-squash-quick.sh" "main" "feature: squash with conflict" "$TEST_TEMP_DIR"
+    [ "$status" -eq 1 ]
+
+    # Working tree should be clean (rebase was aborted)
+    local status_output
+    status_output=$(git -C "$TEST_TEMP_DIR" status --porcelain 2>/dev/null)
+    [ -z "$status_output" ]
+
+    # No ongoing rebase
+    local rebase_dir="$TEST_TEMP_DIR/.git/rebase-merge"
+    [ ! -d "$rebase_dir" ]
+}
+
+@test "rebase conflict: output includes conflicting_files array" {
+    git -C "$TEST_TEMP_DIR" checkout --quiet main
+    echo "conflict on main" > "$TEST_TEMP_DIR/file.txt"
+    git -C "$TEST_TEMP_DIR" add file.txt
+    git -C "$TEST_TEMP_DIR" commit --quiet -m "conflicting change on main"
+
+    git -C "$TEST_TEMP_DIR" checkout --quiet test-branch
+
+    run "$SCRIPTS_DIR/git-squash-quick.sh" "main" "feature: squash with conflict" "$TEST_TEMP_DIR"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"conflicting_files"* ]]
+}
