@@ -592,8 +592,21 @@ Present a summary and ask for approval:
 ```
 Display task goal from PLAN.md
 Display execution summary (commits, files changed)
-Display review results with concern details
+Display review results with ALL concern details (see below)
 ```
+
+**MANDATORY: Display ALL stakeholder concerns before the approval gate**, regardless of severity.
+Users need full visibility into review findings to make informed merge decisions. For each concern
+(CRITICAL, HIGH, MEDIUM, or LOW), render a concern box:
+
+```
+Skill tool:
+  skill: "cat:stakeholder-concern-box"
+  args: "${SEVERITY} ${STAKEHOLDER} ${CONCERN_DESCRIPTION} ${FILE_LOCATION}"
+```
+
+Do NOT suppress MEDIUM or LOW concerns. The auto-fix loop only addresses HIGH+ concerns automatically,
+but all concerns must be visible to the user at the approval gate.
 
 **Determine approval options based on remaining concerns:**
 

@@ -156,13 +156,28 @@ If rebase fails with conflicts:
 ### Step 5: Remove Worktree, Merge, and Cleanup
 
 ```bash
-# Exit worktree before removing it
-cd /workspace
-git worktree remove ${WORKTREE_PATH} --force &&
-  git merge --ff-only ${BRANCH} &&
-  git branch -d ${BRANCH} &&
-  "${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh" release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" --worktree "${WORKTREE_PATH}"
 ```
+
+The Java tool handles: fast-forward merge, worktree removal, branch deletion, backup branch cleanup,
+and lock release in a single atomic operation.
+
+**Result Handling:**
+
+On success, the tool prints JSON to stdout and exits with code 0. On failure, it prints a JSON error to stderr and
+exits with code 1.
+
+| Output | Meaning | Agent Recovery Action |
+|--------|---------|----------------------|
+| `"status": "success"` (stdout JSON) | Merge and cleanup completed | Report `commit_sha` and `base_branch`, continue to Step 6 |
+| `"status": "error"`: Not a CAT project | Missing `.claude/cat` directory | Verify `CLAUDE_PROJECT_DIR` is correct |
+| `"status": "error"`: Worktree not found | No worktree for issue branch | Check worktree exists with `git worktree list` |
+| `"status": "error"`: Worktree has uncommitted changes | Dirty worktree | Commit or stash changes in worktree first |
+| `"status": "error"`: Base branch has diverged | Base has commits not in HEAD | Rebase onto base branch before merging |
+| `"status": "error"`: Fast-forward merge not possible | History diverged | Rebase issue branch onto base first |
+| `"status": "error"`: cat-base file missing | Cannot determine base branch | Recreate worktree with `/cat:work` |
+| `"status": "error"`: Failed to release lock | Lock script failed | Manually release with `issue-lock.sh force-release` |
 
 ### Step 6: Auto-Complete Decomposed Parent
 

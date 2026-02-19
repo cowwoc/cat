@@ -916,16 +916,17 @@ DELETED=$(git diff --name-status "$BASE..HEAD" | grep "^D")
 ```markdown
 ## Execute
 \```bash
-"$(git rev-parse --show-toplevel)/plugin/scripts/git-merge-linear.sh" "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+  "$PROJECT_DIR" "$ISSUE_ID" "$SESSION_ID"
 \```
 
 ## Handle Results
-| Status | Meaning | Recovery |
-|--------|---------|----------|
-| OK | Merged | Done |
-| FF_FAILED | Base advanced | Rebase, retry |
-| DIVERGED | New base commits | Rebase, retry |
-| DELETIONS | Suspicious removals | Investigate resolution |
+| JSON status | Meaning | Recovery |
+|-------------|---------|----------|
+| success | Merged | Done |
+| IOException: Base branch has diverged | Base advanced | Rebase, retry |
+| IOException: Fast-forward merge not possible | Diverged | Rebase, retry |
+| IOException: Suspicious deletions | Infrastructure files deleted | Investigate resolution |
 ```
 
 ### Shared Dependencies
