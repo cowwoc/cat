@@ -160,6 +160,27 @@ public final class ProgressBanner implements SkillOutput
   }
 
   /**
+   * Parses a phase string to a Phase enum value.
+   *
+   * @param phaseStr the phase string to parse
+   * @return the corresponding Phase enum value
+   * @throws IllegalArgumentException if the phase string is not recognized
+   */
+  private Phase parsePhase(String phaseStr)
+  {
+    return switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
+    {
+      case "preparing" -> Phase.PREPARING;
+      case "implementing" -> Phase.IMPLEMENTING;
+      case "confirming" -> Phase.CONFIRMING;
+      case "reviewing" -> Phase.REVIEWING;
+      case "merging" -> Phase.MERGING;
+      default -> throw new IllegalArgumentException(
+        "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
+    };
+  }
+
+  /**
    * Generates skill output for preprocessor directives.
    *
    * @param args the arguments from the preprocessor directive
@@ -201,18 +222,7 @@ public final class ProgressBanner implements SkillOutput
       return generateGenericPreparingBanner();
     if (allPhases)
       return generateAllPhases(issueId);
-    Phase phase;
-    switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
-    {
-      case "preparing" -> phase = Phase.PREPARING;
-      case "implementing" -> phase = Phase.IMPLEMENTING;
-      case "confirming" -> phase = Phase.CONFIRMING;
-      case "reviewing" -> phase = Phase.REVIEWING;
-      case "merging" -> phase = Phase.MERGING;
-      default -> throw new IllegalArgumentException(
-        "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
-    }
-    return generateBanner(issueId, phase);
+    return generateBanner(issueId, parsePhase(phaseStr));
   }
 
   /**
