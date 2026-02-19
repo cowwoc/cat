@@ -140,16 +140,6 @@
         ]
       }
     ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-compact-hook --precompact"
-          }
-        ]
-      }
-    ],
     "SessionEnd": [
       {
         "hooks": [

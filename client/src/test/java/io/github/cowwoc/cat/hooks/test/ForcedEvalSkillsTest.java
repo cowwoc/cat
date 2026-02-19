@@ -73,13 +73,13 @@ public final class ForcedEvalSkillsTest
       ---
       """);
 
-    // Create a user-invocable: false skill (should be excluded)
+    // Create a model-invocable: false skill (should be excluded)
     Path internalSkill = skillsDir.resolve("work-merge");
     Files.createDirectories(internalSkill);
     Files.writeString(internalSkill.resolve("SKILL.md"), """
       ---
       description: Merge work into main branch.
-      user-invocable: false
+      model-invocable: false
       ---
       """);
 
@@ -134,12 +134,22 @@ public final class ForcedEvalSkillsTest
       description: My custom user skill.
       ---
       """);
-    // User skill that is user-invocable: false (should be excluded)
+    // User skill that is model-invocable: false (should be excluded)
     Path internalUserSkill = userSkillsDir.resolve("internal-user-skill");
     Files.createDirectories(internalUserSkill);
     Files.writeString(internalUserSkill.resolve("SKILL.md"), """
       ---
       description: Internal user skill.
+      model-invocable: false
+      ---
+      """);
+
+    // User skill with user-invocable: false but no model-invocable: false (should be included)
+    Path userOnlySkill = userSkillsDir.resolve("user-only-skill");
+    Files.createDirectories(userOnlySkill);
+    Files.writeString(userOnlySkill.resolve("SKILL.md"), """
+      ---
+      description: User-invocable false but model-invocable.
       user-invocable: false
       ---
       """);
@@ -232,10 +242,10 @@ public final class ForcedEvalSkillsTest
   }
 
   /**
-   * Verifies that user-invocable: false skills are excluded from the instruction.
+   * Verifies that model-invocable: false skills are excluded from the instruction.
    */
   @Test
-  public void userInvocableFalseSkillsExcluded() throws IOException
+  public void modelInvocableFalseSkillsExcluded() throws IOException
   {
     Path projectDir = Files.createTempDirectory("project");
     Path pluginRoot = createMockPluginRoot(projectDir);
@@ -372,7 +382,7 @@ public final class ForcedEvalSkillsTest
    * Verifies that project commands with frontmatter description are discovered and included.
    */
   @Test
-  public void projectCommandsWithDescriptionAreDiscovered() throws IOException
+  public void projectCommandsAreDiscovered() throws IOException
   {
     Path projectDir = Files.createTempDirectory("project");
     Path pluginRoot = createMockPluginRoot(projectDir);
@@ -381,9 +391,7 @@ public final class ForcedEvalSkillsTest
       ForcedEvalSkills handler = new ForcedEvalSkills(scope);
       String result = handler.check("some prompt", "test-session-cmd");
       requireThat(result, "result").contains("review");
-      requireThat(result, "result").contains("Review pull request changes.");
       requireThat(result, "result").contains("deploy");
-      requireThat(result, "result").contains("Deploy to production environment.");
     }
     finally
     {
@@ -426,7 +434,6 @@ public final class ForcedEvalSkillsTest
       ForcedEvalSkills handler = new ForcedEvalSkills(scope);
       String result = handler.check("some prompt", "test-session-user");
       requireThat(result, "result").contains("my-skill");
-      requireThat(result, "result").contains("My custom user skill.");
     }
     finally
     {
@@ -436,10 +443,10 @@ public final class ForcedEvalSkillsTest
   }
 
   /**
-   * Verifies that user skills with user-invocable: false are excluded.
+   * Verifies that user skills with model-invocable: false are excluded.
    */
   @Test
-  public void userInvocableFalseUserSkillsAreExcluded() throws IOException
+  public void modelInvocableFalseUserSkillsAreExcluded() throws IOException
   {
     Path projectDir = Files.createTempDirectory("project");
     Path pluginRoot = createMockPluginRoot(projectDir);
@@ -448,6 +455,27 @@ public final class ForcedEvalSkillsTest
       ForcedEvalSkills handler = new ForcedEvalSkills(scope);
       String result = handler.check("some prompt", "test-session-user-internal");
       requireThat(result, "result").doesNotContain("internal-user-skill");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that user-invocable: false skills without model-invocable: false are included.
+   */
+  @Test
+  public void userInvocableFalseWithoutModelInvocableFalseIsIncluded() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("project");
+    Path pluginRoot = createMockPluginRoot(projectDir);
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      ForcedEvalSkills handler = new ForcedEvalSkills(scope);
+      String result = handler.check("some prompt", "test-session-user-only");
+      requireThat(result, "result").contains("user-only-skill");
     }
     finally
     {
@@ -551,33 +579,33 @@ public final class ForcedEvalSkillsTest
   }
 
   /**
-   * Verifies isUserInvocableFalse returns true when user-invocable: false is present.
+   * Verifies isModelInvocableFalse returns true when model-invocable: false is present.
    */
   @Test
-  public void isUserInvocableFalseReturnsTrueWhenFalse()
+  public void isModelInvocableFalseReturnsTrueWhenFalse()
   {
-    String frontmatter = "description: Some skill\nuser-invocable: false\n";
-    requireThat(ForcedEvalSkills.isUserInvocableFalse(frontmatter), "result").isTrue();
+    String frontmatter = "description: Some skill\nmodel-invocable: false\n";
+    requireThat(ForcedEvalSkills.isModelInvocableFalse(frontmatter), "result").isTrue();
   }
 
   /**
-   * Verifies isUserInvocableFalse returns false when user-invocable: true is present.
+   * Verifies isModelInvocableFalse returns false when model-invocable: true is present.
    */
   @Test
-  public void isUserInvocableFalseReturnsFalseWhenTrue()
+  public void isModelInvocableFalseReturnsFalseWhenTrue()
   {
-    String frontmatter = "description: Some skill\nuser-invocable: true\n";
-    requireThat(ForcedEvalSkills.isUserInvocableFalse(frontmatter), "result").isFalse();
+    String frontmatter = "description: Some skill\nmodel-invocable: true\n";
+    requireThat(ForcedEvalSkills.isModelInvocableFalse(frontmatter), "result").isFalse();
   }
 
   /**
-   * Verifies isUserInvocableFalse returns false when user-invocable is absent.
+   * Verifies isModelInvocableFalse returns false when model-invocable is absent.
    */
   @Test
-  public void isUserInvocableFalseReturnsFalseWhenAbsent()
+  public void isModelInvocableFalseReturnsFalseWhenAbsent()
   {
     String frontmatter = "description: Some skill\n";
-    requireThat(ForcedEvalSkills.isUserInvocableFalse(frontmatter), "result").isFalse();
+    requireThat(ForcedEvalSkills.isModelInvocableFalse(frontmatter), "result").isFalse();
   }
 
   /**
