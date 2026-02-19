@@ -178,6 +178,113 @@ public final class VerifyStateInCommitTest
   }
 
   /**
+   * Verifies that when a command contains "cd /path", the handler uses that path to detect a CAT worktree,
+   * even when the working directory itself is not in a worktree.
+   */
+  @Test
+  public void cdPathUsedForWorktreeDetection() throws IOException
+  {
+    // mainRepo is a regular non-worktree directory (session's working directory)
+    Path mainRepo = TestUtils.createTempGitRepo("test-branch");
+    // worktreeDir is a separate CAT worktree with .git/cat-base marker
+    Path worktreeDir = TestUtils.createTempGitRepo("worktree-branch");
+    try (JvmScope scope = new TestJvmScope(mainRepo, mainRepo))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      // Set up worktreeDir as a CAT worktree by adding .git/cat-base
+      Path gitDir = worktreeDir.resolve(".git");
+      Files.writeString(gitDir.resolve("cat-base"), "v2.1");
+
+      // Stage a file in worktreeDir that is NOT STATE.md
+      Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
+      TestUtils.runGitCommand(worktreeDir, "add", "some-file.java");
+
+      VerifyStateInCommit handler = new VerifyStateInCommit();
+      JsonNode toolInput = mapper.readTree("{}");
+
+      // workingDirectory is mainRepo (not a CAT worktree), but command has "cd worktreeDir"
+      // The handler should detect worktreeDir as the effective directory via cd extraction
+      String command = "cd " + worktreeDir + " && git commit -m \"bugfix: fix something\"";
+      BashHandler.Result result = handler.check(command, mainRepo.toString(), toolInput, null, "test-session");
+
+      // Since worktreeDir is a CAT worktree and STATE.md is not staged, it should be blocked
+      requireThat(result.blocked(), "blocked").isTrue();
+      requireThat(result.reason(), "reason").contains("STATE.md not included");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(worktreeDir);
+    }
+  }
+
+  /**
+   * Verifies that when a command has multiple cd statements, the last cd path is used as the effective directory.
+   */
+  @Test
+  public void lastCdPathUsedWhenMultipleCdStatements() throws IOException
+  {
+    // firstDir is a CAT worktree (but is not the last cd target)
+    Path firstDir = TestUtils.createTempGitRepo("first-branch");
+    // secondDir is NOT a CAT worktree (it is the last cd target)
+    Path secondDir = TestUtils.createTempGitRepo("second-branch");
+    try (JvmScope scope = new TestJvmScope(firstDir, firstDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      // Set up firstDir as a CAT worktree
+      Path firstGitDir = firstDir.resolve(".git");
+      Files.writeString(firstGitDir.resolve("cat-base"), "v2.1");
+
+      VerifyStateInCommit handler = new VerifyStateInCommit();
+      JsonNode toolInput = mapper.readTree("{}");
+
+      // Command cd's to firstDir (CAT worktree) then to secondDir (not a worktree)
+      // The last cd (secondDir) should be used, so not in a CAT worktree → allowed
+      String command = "cd " + firstDir + " && cd " + secondDir +
+        " && git commit -m \"bugfix: fix something\"";
+      BashHandler.Result result = handler.check(command, firstDir.toString(), toolInput, null, "test-session");
+
+      // secondDir is not a CAT worktree, so no STATE.md check → allowed
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(firstDir);
+      TestUtils.deleteDirectoryRecursively(secondDir);
+    }
+  }
+
+  /**
+   * Verifies that when a command has no cd statement, the working directory is used for worktree detection.
+   */
+  @Test
+  public void fallsBackToWorkingDirectoryWhenNoCd() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("test-branch");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      // No .git/cat-base and no .claude/cat → not a CAT worktree → should allow
+      VerifyStateInCommit handler = new VerifyStateInCommit();
+      JsonNode toolInput = mapper.readTree("{}");
+
+      // No cd in command — working directory is used
+      BashHandler.Result result = handler.check(
+        "git commit -m \"bugfix: fix something\"", tempDir.toString(),
+        toolInput, null, "test-session");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Verifies that feature commits outside a CAT worktree are allowed without STATE.md checks.
    */
   @Test

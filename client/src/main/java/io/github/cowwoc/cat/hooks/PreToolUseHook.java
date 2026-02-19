@@ -62,7 +62,7 @@ public final class PreToolUseHook implements HookHandler
       new BlockMainRebase(),
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
-      new BlockUnsafeRemoval(),
+      new BlockUnsafeRemoval(scope),
       new ComputeBoxLines(scope),
       new RemindGitSquash(),
       new ValidateCommitType(),
