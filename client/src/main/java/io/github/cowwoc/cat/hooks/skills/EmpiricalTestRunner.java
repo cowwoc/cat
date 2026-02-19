@@ -257,9 +257,8 @@ public final class EmpiricalTestRunner
 
     List<TrialResult> results = Collections.synchronizedList(new ArrayList<>());
     AtomicBoolean failFast = new AtomicBoolean(false);
-    ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    try
+    try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor())
     {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -284,23 +283,14 @@ public final class EmpiricalTestRunner
             status = "FAIL";
 
           String preview = formatTrialPreview(result);
-
-          synchronized (System.out)
-          {
-            System.out.println("  t" + (trialIndex + 1) + " " + status + " (" +
-              result.elapsed() + "s)" + preview);
-            System.out.flush();
-          }
+          System.out.println("  t" + (trialIndex + 1) + " " + status + " (" +
+            result.elapsed() + "s)" + preview);
         }, executor);
         futures.add(future);
       }
 
       for (CompletableFuture<Void> future : futures)
         future.join();
-    }
-    finally
-    {
-      executor.shutdownNow();
     }
 
     int passes = (int) results.stream().filter(TrialResult::pass).count();
