@@ -66,7 +66,6 @@ readonly -a HANDLERS=(
   "empirical-test-runner:skills.EmpiricalTestRunner"
   "merge-and-cleanup:util.MergeAndCleanup"
   "git-merge-linear:util.GitMergeLinear"
-  "pre-compact-hook:SessionStartHook"
   "post-tool-use-failure:PostToolUseFailure"
 )
 
