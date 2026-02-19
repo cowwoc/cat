@@ -18,30 +18,25 @@ import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectCriticalThinking;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
+import io.github.cowwoc.cat.hooks.session.InjectSkillListing;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Unified SessionStart and PreCompact hook dispatcher.
+ * SessionStart hook dispatcher.
  * <p>
- * TRIGGER: SessionStart (normal mode) or PreCompact (preCompact mode)
- * <p>
- * In normal mode, consolidates all session start handlers into a single Java dispatcher. Each handler
- * contributes additional context for Claude and/or stderr messages for the user. The combined additional
- * context from all handlers is output as a single hookSpecificOutput JSON response.
- * <p>
- * In preCompact mode, runs only the ClearSkillMarkers and InjectCriticalThinking handlers for their side
- * effects, and always returns {@code "{}"} (discarding any additionalContext output).
+ * Consolidates all session start handlers into a single Java dispatcher. Each handler contributes
+ * additional context for Claude and/or stderr messages for the user. The combined additional context from
+ * all handlers is output as a single hookSpecificOutput JSON response.
  */
 public final class SessionStartHook implements HookHandler
 {
   private final List<SessionStartHandler> handlers;
-  private final boolean preCompact;
 
   /**
-   * Creates a new SessionStartHook in normal mode with the default handler list.
+   * Creates a new SessionStartHook with the default handler list.
    *
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if {@code scope} is null
@@ -54,67 +49,37 @@ public final class SessionStartHook implements HookHandler
       new EchoSessionId(),
       new CheckRetrospectiveDue(scope),
       new InjectSessionInstructions(),
+      new InjectSkillListing(scope),
       new ClearSkillMarkers(),
       new InjectCriticalThinking(),
-      new InjectEnv(scope)), false);
+      new InjectEnv(scope)));
   }
 
   /**
-   * Creates a new SessionStartHook in normal mode with custom handlers (for testing).
+   * Creates a new SessionStartHook with custom handlers (for testing).
    *
    * @param handlers the handlers to run
    * @throws NullPointerException if {@code handlers} is null
    */
   public SessionStartHook(List<SessionStartHandler> handlers)
   {
-    this(handlers, false);
-  }
-
-  /**
-   * Creates a new SessionStartHook with custom handlers and explicit mode (for testing preCompact mode).
-   *
-   * @param handlers  the handlers to run
-   * @param preCompact {@code true} to discard additionalContext and always return {@code "{}"};
-   *                  {@code false} for normal mode
-   * @throws NullPointerException if {@code handlers} is null
-   */
-  public SessionStartHook(List<SessionStartHandler> handlers, boolean preCompact)
-  {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = handlers;
-    this.preCompact = preCompact;
   }
 
   /**
-   * Creates a new SessionStartHook in preCompact mode with the default handler list.
+   * Entry point for the session start hook.
    *
-   * @return a SessionStartHook configured for PreCompact hook invocation
-   */
-  public static SessionStartHook preCompact()
-  {
-    return new SessionStartHook(List.of(new ClearSkillMarkers(), new InjectCriticalThinking()), true);
-  }
-
-  /**
-   * Entry point for the session start and pre-compact hooks.
-   * <p>
-   * Pass {@code --precompact} as the first argument to run in preCompact mode.
-   *
-   * @param args command line arguments; {@code --precompact} enables preCompact mode
+   * @param args command line arguments (unused)
    */
   public static void main(String[] args)
   {
-    boolean preCompactMode = args.length > 0 && args[0].equals("--precompact");
     try (JvmScope scope = new MainJvmScope())
     {
       tools.jackson.databind.json.JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      SessionStartHook hook;
-      if (preCompactMode)
-        hook = preCompact();
-      else
-        hook = new SessionStartHook(scope);
+      SessionStartHook hook = new SessionStartHook(scope);
       HookResult result = hook.run(input, output);
 
       for (String warning : result.warnings())
@@ -131,9 +96,6 @@ public final class SessionStartHook implements HookHandler
 
   /**
    * Processes hook input by running all session start handlers and combining their output.
-   * <p>
-   * In preCompact mode, handlers are still run for side effects, but the method always returns
-   * {@code "{}"} as the output regardless of handler context.
    *
    * @param input  the hook input to process
    * @param output the hook output builder for creating responses
@@ -170,9 +132,6 @@ public final class SessionStartHook implements HookHandler
         errors.add(errorMessage);
       }
     }
-
-    if (preCompact)
-      return new HookResult("{}", warnings);
 
     if (!errors.isEmpty())
     {
