@@ -267,7 +267,7 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // No .git/cat-base and no .claude/cat → not a CAT worktree → should allow
+      // No .git/cat-base → not a CAT worktree → should allow
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
 
@@ -277,6 +277,42 @@ public final class VerifyStateInCommitTest
         toolInput, null, "test-session");
 
       requireThat(result.blocked(), "blocked").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that commits in the main workspace (which has a .claude/cat directory but no .git/cat-base)
+   * are not blocked by the STATE.md check.
+   */
+  @Test
+  public void allowsMainWorkspaceCommitsWithClaudeCatDirectory() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("test-branch");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+
+      // Create .claude/cat directory (present in main workspace) but NOT .git/cat-base
+      // The main workspace has .claude/cat for retrospectives/issues but is not a worktree
+      Path claudeCat = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(claudeCat);
+
+      Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
+      TestUtils.runGitCommand(tempDir, "add", "Foo.java");
+
+      VerifyStateInCommit handler = new VerifyStateInCommit();
+      JsonNode toolInput = mapper.readTree("{}");
+
+      BashHandler.Result result = handler.check(
+        "git commit -m \"bugfix: fix something\"", tempDir.toString(),
+        toolInput, null, "test-session");
+
+      requireThat(result.blocked(), "blocked").isFalse();
+      requireThat(result.reason(), "reason").isEmpty();
     }
     finally
     {
@@ -295,7 +331,7 @@ public final class VerifyStateInCommitTest
     {
       JsonMapper mapper = scope.getJsonMapper();
 
-      // No .git/cat-base and no .claude/cat directory means not a CAT worktree
+      // No .git/cat-base means not a CAT worktree
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
       TestUtils.runGitCommand(tempDir, "add", "Foo.java");
 

@@ -121,6 +121,10 @@ public final class VerifyStateInCommit implements BashHandler
 
   /**
    * Checks whether the working directory is inside a CAT worktree.
+   * <p>
+   * Only the {@code cat-base} file inside the git directory is a reliable worktree marker. The
+   * {@code .claude/cat} directory exists in the main workspace too, so it cannot be used to detect
+   * worktrees.
    *
    * @param workingDirectory the working directory path
    * @return {@code true} if this is a CAT worktree
@@ -129,14 +133,11 @@ public final class VerifyStateInCommit implements BashHandler
   {
     Path workDir = Path.of(workingDirectory);
 
-    // Check for .git/cat-base file (worktree marker)
+    // Check for .git/cat-base file (worktree marker).
+    // This file is written by /cat:work when creating a worktree and is the only reliable indicator
+    // that we are operating inside a CAT worktree rather than the main workspace.
     Path gitCatBase = workDir.resolve(".git").resolve("cat-base");
-    if (Files.exists(gitCatBase))
-      return true;
-
-    // Check for .claude/cat directory
-    Path claudeCat = workDir.resolve(".claude").resolve("cat");
-    return Files.isDirectory(claudeCat);
+    return Files.exists(gitCatBase);
   }
 
   /**
