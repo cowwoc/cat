@@ -3,8 +3,8 @@
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
-- **Blocks:** []
-- **Last Updated:** 2026-02-06
+- **Blocks:** [ci-build-jlink-bundle]
+- **Last Updated:** 2026-02-20
 
 ## Decomposed Into
 - java-jdk-infrastructure (JDK bundle, bootstrap scripts)
