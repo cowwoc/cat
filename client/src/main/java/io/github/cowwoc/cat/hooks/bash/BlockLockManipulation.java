@@ -51,6 +51,8 @@ public final class BlockLockManipulation implements BashHandler
         CORRECT ACTIONS when encountering a lock:
         1. Execute a DIFFERENT task instead (use /cat:status to find available tasks)
         2. If you believe the lock is from a crashed session, ask the USER to run /cat:cleanup
+        3. If you are executing inside a cleanup skill, use the authorized command:
+           plugin/scripts/issue-lock.sh force-release <issue-id>
 
         NEVER delete lock files directly.""");
     }
@@ -58,8 +60,15 @@ public final class BlockLockManipulation implements BashHandler
     // Also block force removal of the entire locks directory
     if (LOCKS_DIR_PATTERN.matcher(command).find())
     {
-      return Result.block("BLOCKED: Cannot remove the locks directory. " +
-        "Use /cat:cleanup to safely remove stale locks.");
+      return Result.block("""
+        BLOCKED: Cannot remove the locks directory.
+
+        CORRECT ACTIONS:
+        1. Ask the USER to run /cat:cleanup to safely remove stale locks.
+        2. If you are executing inside a cleanup skill, use the authorized command:
+           plugin/scripts/issue-lock.sh force-release <issue-id>
+
+        NEVER remove the locks directory directly.""");
     }
 
     return Result.allow();
