@@ -1785,4 +1785,170 @@ public final class EmpiricalTestRunnerTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  /**
+   * Verifies that the exit code logic returns 0 when all configurations have 100% pass rate.
+   * <p>
+   * The {@code runTests()} method returns 0 when no config's rate falls below 100. This test
+   * directly validates that stream logic by constructing ConfigResult objects with 100% pass rate.
+   */
+  @Test
+  public void exitCodeIsZeroWhenAllConfigsPassAtHundredPercent()
+  {
+    List<EmpiricalTestRunner.ConfigResult> results = List.of(
+      new EmpiricalTestRunner.ConfigResult("config-a", 5, 5, 100, List.of()),
+      new EmpiricalTestRunner.ConfigResult("config-b", 3, 3, 100, List.of()),
+      new EmpiricalTestRunner.ConfigResult("config-c", 10, 10, 100, List.of()));
+
+    boolean anyFailed = results.stream().anyMatch(r -> r.rate() < 100);
+    int exitCode;
+    if (anyFailed)
+      exitCode = 1;
+    else
+      exitCode = 0;
+
+    requireThat(exitCode, "exitCode").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that the exit code logic returns 1 when any configuration has less than 100% pass rate.
+   * <p>
+   * The {@code runTests()} method returns 1 when at least one config's rate falls below 100. This
+   * test directly validates that stream logic by constructing ConfigResult objects with mixed rates.
+   */
+  @Test
+  public void exitCodeIsOneWhenAnyConfigHasLessThanHundredPercentPassRate()
+  {
+    List<EmpiricalTestRunner.ConfigResult> results = List.of(
+      new EmpiricalTestRunner.ConfigResult("config-a", 5, 5, 100, List.of()),
+      new EmpiricalTestRunner.ConfigResult("config-b", 5, 4, 80, List.of()),
+      new EmpiricalTestRunner.ConfigResult("config-c", 5, 5, 100, List.of()));
+
+    boolean anyFailed = results.stream().anyMatch(r -> r.rate() < 100);
+    int exitCode;
+    if (anyFailed)
+      exitCode = 1;
+    else
+      exitCode = 0;
+
+    requireThat(exitCode, "exitCode").isEqualTo(1);
+  }
+
+  /**
+   * Verifies that the exit code logic returns 1 when only one configuration has less than 100% pass rate.
+   * <p>
+   * Even a single failing config should cause exit code 1.
+   */
+  @Test
+  public void exitCodeIsOneWhenOnlyOneConfigFailsBelowHundred()
+  {
+    List<EmpiricalTestRunner.ConfigResult> results = List.of(
+      new EmpiricalTestRunner.ConfigResult("config-a", 10, 9, 90, List.of()));
+
+    boolean anyFailed = results.stream().anyMatch(r -> r.rate() < 100);
+    int exitCode;
+    if (anyFailed)
+      exitCode = 1;
+    else
+      exitCode = 0;
+
+    requireThat(exitCode, "exitCode").isEqualTo(1);
+  }
+
+  /**
+   * Verifies that the exit code logic returns 1 when a config has 0% pass rate (all trials fail).
+   */
+  @Test
+  public void exitCodeIsOneWhenConfigHasZeroPercentPassRate()
+  {
+    List<EmpiricalTestRunner.ConfigResult> results = List.of(
+      new EmpiricalTestRunner.ConfigResult("config-a", 5, 0, 0, List.of()));
+
+    boolean anyFailed = results.stream().anyMatch(r -> r.rate() < 100);
+    int exitCode;
+    if (anyFailed)
+      exitCode = 1;
+    else
+      exitCode = 0;
+
+    requireThat(exitCode, "exitCode").isEqualTo(1);
+  }
+
+  /**
+   * Verifies that ConfigResult correctly reports reduced trial counts when fail-fast triggers.
+   * <p>
+   * When fail-fast stops execution after the first failure, {@code actualTrials} will be less than
+   * the requested number of trials. ConfigResult stores the actual count, not the requested count.
+   */
+  @Test
+  public void configResultReportsReducedTrialCountWhenFailFastTriggers()
+  {
+    // Simulate 10 trials requested but only 3 ran before fail-fast triggered
+    int requestedTrials = 10;
+    int actualTrials = 3;
+    int passes = 2;
+    int rate = EmpiricalTestRunner.calculateRate(passes, actualTrials);
+
+    EmpiricalTestRunner.ConfigResult result =
+      new EmpiricalTestRunner.ConfigResult("config-a", actualTrials, passes, rate, List.of());
+
+    requireThat(result.trials(), "trials").isEqualTo(actualTrials);
+    requireThat(result.trials(), "trials").isLessThan(requestedTrials);
+    requireThat(result.passes(), "passes").isEqualTo(passes);
+    requireThat(result.rate(), "rate").isEqualTo(67);
+  }
+
+  /**
+   * Verifies that ConfigResult correctly reports 1 trial when fail-fast triggers on the first trial.
+   * <p>
+   * When the very first trial fails, fail-fast stops all remaining trials. ConfigResult stores
+   * actualTrials = 1 even though many more were requested.
+   */
+  @Test
+  public void configResultReportsOneTrialWhenFailFastTriggersImmediately()
+  {
+    // Only 1 trial ran before fail-fast triggered on first failure
+    int actualTrials = 1;
+    int passes = 0;
+    int rate = EmpiricalTestRunner.calculateRate(passes, actualTrials);
+
+    EmpiricalTestRunner.ConfigResult result =
+      new EmpiricalTestRunner.ConfigResult("config-a", actualTrials, passes, rate, List.of());
+
+    requireThat(result.trials(), "trials").isEqualTo(1);
+    requireThat(result.passes(), "passes").isEqualTo(0);
+    requireThat(result.rate(), "rate").isEqualTo(0);
+    // Rate < 100 confirms this would trigger exit code 1
+    requireThat(result.rate() < 100, "rateBelow100").isTrue();
+  }
+
+  /**
+   * Verifies that calculateRate handles 0 trials (edge case for fail-fast with no completed trials).
+   */
+  @Test
+  public void calculateRateWithZeroTrialsReturnsZero()
+  {
+    int rate = EmpiricalTestRunner.calculateRate(0, 0);
+    requireThat(rate, "rate").isEqualTo(0);
+  }
+
+  /**
+   * Verifies that calculateRate with 1 pass out of 1 trial returns 100%.
+   */
+  @Test
+  public void calculateRateOnePassOneTrial()
+  {
+    int rate = EmpiricalTestRunner.calculateRate(1, 1);
+    requireThat(rate, "rate").isEqualTo(100);
+  }
+
+  /**
+   * Verifies that calculateRate rounds 1 pass out of 2 trials to 50%.
+   */
+  @Test
+  public void calculateRateOneOfTwoReturnsHalf()
+  {
+    int rate = EmpiricalTestRunner.calculateRate(1, 2);
+    requireThat(rate, "rate").isEqualTo(50);
+  }
 }

@@ -17,12 +17,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -68,7 +73,7 @@ public final class EmpiricalTestRunner
    * @param model the model to test with (haiku, sonnet, opus)
    * @param cwd working directory for claude CLI
    * @param outputPath optional path to write full JSON results
-   * @return the overall exit code (1 if any config got 0% and there are multiple configs, 0 otherwise)
+   * @return the overall exit code (1 if any config achieved less than 100% pass rate, 0 otherwise)
    * @throws NullPointerException if {@code configPath}, {@code model}, or {@code cwd} are null
    * @throws IOException if config cannot be read or output cannot be written
    */
@@ -149,15 +154,10 @@ public final class EmpiricalTestRunner
       System.out.println("Full results written to: " + outputPath);
     }
 
-    if (allResults.size() > 1)
-    {
-      int worstRate = allResults.values().stream().
-        mapToInt(ConfigResult::rate).
-        min().
-        orElse(0);
-      if (worstRate == 0)
-        return 1;
-    }
+    boolean anyFailed = allResults.values().stream().
+      anyMatch(r -> r.rate() < 100);
+    if (anyFailed)
+      return 1;
 
     return 0;
   }
@@ -177,7 +177,45 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Runs all trials for a multi-message configuration.
+   * Formats the trial output preview for a failed trial result.
+   * <p>
+   * Returns a non-empty string with details about which messages and checks failed, or an error
+   * description if the trial encountered an error. Returns an empty string for passing trials.
+   *
+   * @param result the trial result to format
+   * @return the formatted preview string, possibly empty
+   */
+  private static String formatTrialPreview(TrialResult result)
+  {
+    if (!result.pass() && !result.messageEvaluations().isEmpty())
+    {
+      StringJoiner failedMsgs = new StringJoiner(", ");
+      for (MessageEvaluation eval : result.messageEvaluations())
+      {
+        if (!eval.pass())
+        {
+          StringJoiner failedChecks = new StringJoiner(", ");
+          for (Map.Entry<String, Boolean> check : eval.checks().entrySet())
+          {
+            if (!check.getValue())
+              failedChecks.add(check.getKey());
+          }
+          failedMsgs.add("msg" + eval.messageIndex() + ": " + failedChecks);
+        }
+      }
+      return " [" + failedMsgs + "]";
+    }
+    if (!result.error().isEmpty())
+      return " [ERROR: " + result.error() + "]";
+    return "";
+  }
+
+  /**
+   * Runs all trials for a multi-message configuration in parallel with fail-fast behavior.
+   * <p>
+   * Trials are executed concurrently using virtual threads. If any trial fails, remaining
+   * trials are cancelled immediately (fail-fast). The configuration is considered successful only
+   * when all trials pass.
    *
    * @param name the configuration name
    * @param configMap the configuration map containing a "messages" array
@@ -217,53 +255,58 @@ public final class EmpiricalTestRunner
       messages.add(new TestMessage(prompt, msgCriteria));
     }
 
-    List<TrialResult> results = new ArrayList<>();
-    int passes = 0;
+    List<TrialResult> results = Collections.synchronizedList(new ArrayList<>());
+    AtomicBoolean failFast = new AtomicBoolean(false);
+    ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    for (int i = 0; i < trials; ++i)
+    try
     {
-      TrialResult result = runMultiMessageTrial(primingMessages, systemReminders, messages,
-        model, systemPrompt, cwd);
-      results.add(result);
-      if (result.pass())
-        ++passes;
+      List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-      String status;
-      if (result.pass())
-        status = "PASS";
-      else
-        status = "FAIL";
-
-      String preview = "";
-      if (!result.pass() && !result.messageEvaluations().isEmpty())
+      for (int i = 0; i < trials; ++i)
       {
-        // Show which messages failed
-        StringJoiner failedMsgs = new StringJoiner(", ");
-        for (MessageEvaluation eval : result.messageEvaluations())
+        int trialIndex = i;
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() ->
         {
-          if (!eval.pass())
-          {
-            StringJoiner failedChecks = new StringJoiner(", ");
-            for (Map.Entry<String, Boolean> check : eval.checks().entrySet())
-            {
-              if (!check.getValue())
-                failedChecks.add(check.getKey());
-            }
-            failedMsgs.add("msg" + eval.messageIndex() + ": " + failedChecks);
-          }
-        }
-        preview = " [" + failedMsgs + "]";
-      }
-      else if (result.error() != null && !result.error().isEmpty())
-        preview = " [ERROR: " + result.error() + "]";
+          if (failFast.get())
+            return;
+          TrialResult result = runMultiMessageTrial(primingMessages, systemReminders, messages,
+            model, systemPrompt, cwd);
+          results.add(result);
 
-      System.out.println("  t" + (i + 1) + " " + status + " (" + result.elapsed() + "s)" +
-        preview);
-      System.out.flush();
+          if (!result.pass())
+            failFast.set(true);
+
+          String status;
+          if (result.pass())
+            status = "PASS";
+          else
+            status = "FAIL";
+
+          String preview = formatTrialPreview(result);
+
+          synchronized (System.out)
+          {
+            System.out.println("  t" + (trialIndex + 1) + " " + status + " (" +
+              result.elapsed() + "s)" + preview);
+            System.out.flush();
+          }
+        }, executor);
+        futures.add(future);
+      }
+
+      for (CompletableFuture<Void> future : futures)
+        future.join();
+    }
+    finally
+    {
+      executor.shutdownNow();
     }
 
-    int rate = calculateRate(passes, trials);
-    return new ConfigResult(name, trials, passes, rate, results);
+    int passes = (int) results.stream().filter(TrialResult::pass).count();
+    int actualTrials = results.size();
+    int rate = calculateRate(passes, actualTrials);
+    return new ConfigResult(name, actualTrials, passes, rate, List.copyOf(results));
   }
 
   /**
@@ -762,7 +805,7 @@ public final class EmpiricalTestRunner
 
         Options:
           --config <path>     Path to test config JSON file (required)
-          --trials <N>        Number of trials per config (default: 5)
+          --trials <N>        Number of trials per config (default: 10)
           --model <name>      Model to test with: haiku|sonnet|opus (default: haiku)
           --cwd <path>        Working directory for claude CLI (default: /workspace)
           --output <path>     Path to write JSON results (optional)
@@ -793,7 +836,7 @@ public final class EmpiricalTestRunner
     }
 
     Path configPath = null;
-    int trials = 5;
+    int trials = 10;
     String model = "haiku";
     Path cwd = Path.of("/workspace");
     Path outputPath = null;
