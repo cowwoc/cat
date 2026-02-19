@@ -18,6 +18,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -40,13 +43,27 @@ public final class BlockUnsafeRemoval implements BashHandler
 {
   private static final Pattern WORKTREE_REMOVE_PATTERN =
     Pattern.compile("\\bgit\\s+worktree\\s+remove\\s+(?:-[^\\s]+\\s+)*([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
+  private static final Duration STALE_LOCK_THRESHOLD = Duration.ofHours(4);
+  private final Clock clock;
 
   /**
-   * Creates a new handler for blocking unsafe directory removal.
+   * Creates a new handler for blocking unsafe directory removal using the system clock.
    */
   public BlockUnsafeRemoval()
   {
-    // Handler class
+    this(Clock.systemUTC());
+  }
+
+  /**
+   * Creates a new handler for blocking unsafe directory removal.
+   *
+   * @param clock the clock to use for determining lock staleness
+   * @throws NullPointerException if {@code clock} is null
+   */
+  public BlockUnsafeRemoval(Clock clock)
+  {
+    assert that(clock, "clock").isNotNull().elseThrow();
+    this.clock = clock;
   }
 
   @Override
@@ -345,6 +362,10 @@ public final class BlockUnsafeRemoval implements BashHandler
             if (isOwnedBySession(lockFile, sessionId))
               continue;
 
+            // Skip stale locks (older than 4 hours) - they are from dead sessions
+            if (isStale(lockFile))
+              continue;
+
             // Lock file name = {issue-id}.lock
             // Worktree path = {mainWorktree}/.claude/cat/worktrees/{issue-id}
             String fileName = lockFile.getFileName().toString();
@@ -385,6 +406,33 @@ public final class BlockUnsafeRemoval implements BashHandler
       if (lockSessionNode == null || !lockSessionNode.isString())
         return false;
       return sessionId.equals(lockSessionNode.asString());
+    }
+    catch (IOException _)
+    {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if a lock file is stale (older than the staleness threshold).
+   *
+   * @param lockFile the lock file path
+   * @return true if the lock is stale and should not be treated as active protection
+   */
+  private boolean isStale(Path lockFile)
+  {
+    try
+    {
+      String content = Files.readString(lockFile);
+      JsonMapper mapper = JsonMapper.builder().build();
+      JsonNode lock = mapper.readTree(content);
+      JsonNode createdAtNode = lock.get("created_at");
+      if (createdAtNode == null || !createdAtNode.isNumber())
+        return false;
+      long createdAtEpoch = createdAtNode.asLong();
+      Instant createdAt = Instant.ofEpochSecond(createdAtEpoch);
+      Duration age = Duration.between(createdAt, clock.instant());
+      return age.compareTo(STALE_LOCK_THRESHOLD) > 0;
     }
     catch (IOException _)
     {
