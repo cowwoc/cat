@@ -38,7 +38,7 @@ import java.util.stream.Stream;
  *   <li>User skills (from {@code skills/} in the config dir)</li>
  * </ul>
  * All skills that are not "-first-use" internal skills and do not have
- * {@code user-invocable: false} in their frontmatter are included.
+ * {@code model-invocable: false} in their frontmatter are included.
  */
 public final class ForcedEvalSkills implements PromptHandler
 {
@@ -136,13 +136,13 @@ public final class ForcedEvalSkills implements PromptHandler
    * Skills are included if:
    * <ul>
    *   <li>The directory name does not contain {@code -first-use}</li>
-   *   <li>The SKILL.md frontmatter does not have {@code user-invocable: false}</li>
+   *   <li>The SKILL.md frontmatter does not have {@code model-invocable: false}</li>
    *   <li>A {@code description:} field is present in the frontmatter</li>
    * </ul>
    *
    * @param configDir the Claude config directory containing {@code plugins/installed_plugins.json}
    * @param jsonMapper the JSON mapper used to parse installed_plugins.json
-   * @return list of formatted skill lines (e.g. {@code "- cat:name — description"})
+   * @return list of formatted skill lines (e.g. {@code "- cat:name"})
    */
   private static List<String> discoverPluginSkills(Path configDir, JsonMapper jsonMapper) throws IOException
   {
@@ -194,7 +194,7 @@ public final class ForcedEvalSkills implements PromptHandler
    *
    * @param pluginRoot the plugin root directory containing a {@code skills/} subdirectory
    * @param prefix the skill prefix (e.g. {@code cat})
-   * @return list of formatted skill lines (e.g. {@code "- cat:name — description"})
+   * @return list of formatted skill lines (e.g. {@code "- cat:name"})
    */
   private static List<String> discoverSkillsFromPluginRoot(Path pluginRoot, String prefix) throws IOException
   {
@@ -220,12 +220,12 @@ public final class ForcedEvalSkills implements PromptHandler
         String frontmatter = extractFrontmatter(content);
         if (frontmatter == null)
           continue;
-        if (isUserInvocableFalse(frontmatter))
+        if (isModelInvocableFalse(frontmatter))
           continue;
         String description = extractDescription(frontmatter);
         if (description == null || description.isBlank())
           continue;
-        lines.add("- " + prefix + ":" + name + " — " + description.strip());
+        lines.add("- " + prefix + ":" + name);
       }
     }
     return lines;
@@ -239,7 +239,7 @@ public final class ForcedEvalSkills implements PromptHandler
    * description are excluded.
    *
    * @param projectDir the Claude project directory
-   * @return list of formatted skill lines (e.g. {@code "- review — description"})
+   * @return list of formatted skill lines (e.g. {@code "- review"})
    */
   private static List<String> discoverProjectCommands(Path projectDir) throws IOException
   {
@@ -261,7 +261,7 @@ public final class ForcedEvalSkills implements PromptHandler
           description = extractDescription(frontmatter);
         if (description == null || description.isBlank())
           continue;
-        lines.add("- " + name + " — " + description.strip());
+        lines.add("- " + name);
       }
     }
     return lines;
@@ -271,10 +271,10 @@ public final class ForcedEvalSkills implements PromptHandler
    * Discovers model-invocable user skills from {@code ${configDir}/skills/}.
    * <p>
    * Scans directories under {@code ${configDir}/skills/} for {@code SKILL.md} files. Skills are
-   * included if they are not "-first-use" and do not have {@code user-invocable: false}.
+   * included if they are not "-first-use" and do not have {@code model-invocable: false}.
    *
    * @param configDir the Claude config directory containing the {@code skills/} subdirectory
-   * @return list of formatted skill lines (e.g. {@code "- my-skill — description"})
+   * @return list of formatted skill lines (e.g. {@code "- my-skill"})
    */
   private static List<String> discoverUserSkills(Path configDir) throws IOException
   {
@@ -300,12 +300,12 @@ public final class ForcedEvalSkills implements PromptHandler
         String frontmatter = extractFrontmatter(content);
         if (frontmatter == null)
           continue;
-        if (isUserInvocableFalse(frontmatter))
+        if (isModelInvocableFalse(frontmatter))
           continue;
         String description = extractDescription(frontmatter);
         if (description == null || description.isBlank())
           continue;
-        lines.add("- " + name + " — " + description.strip());
+        lines.add("- " + name);
       }
     }
     return lines;
@@ -328,17 +328,17 @@ public final class ForcedEvalSkills implements PromptHandler
   }
 
   /**
-   * Returns true if the frontmatter contains {@code user-invocable: false}.
+   * Returns true if the frontmatter contains {@code model-invocable: false}.
    *
    * @param frontmatter the YAML frontmatter text
-   * @return true if the skill is not user-invocable
+   * @return true if the skill is not model-invocable
    */
-  public static boolean isUserInvocableFalse(String frontmatter)
+  public static boolean isModelInvocableFalse(String frontmatter)
   {
     for (String line : frontmatter.split("\n"))
     {
       String stripped = line.strip();
-      if (stripped.equals("user-invocable: false"))
+      if (stripped.equals("model-invocable: false"))
         return true;
     }
     return false;

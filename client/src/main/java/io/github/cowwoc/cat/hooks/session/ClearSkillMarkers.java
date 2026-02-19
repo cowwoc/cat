@@ -20,8 +20,8 @@ import java.nio.file.Path;
  * The marker file {@code /tmp/cat-skills-loaded-{sessionId}} tracks which skills have been
  * loaded in the current session. Deleting it forces a fresh skill load on the next invocation.
  * <p>
- * This handler is registered for both {@code SessionStart} (so skills load fresh at session start)
- * and {@code PreCompact} (so skills reload after context compaction).
+ * This handler is registered for {@code SessionStart} so skills load fresh at session start. The normal
+ * SessionStart chain also fires after context compaction, ensuring skills reload.
  *
  * @see io.github.cowwoc.cat.hooks.util.SkillLoader
  */
