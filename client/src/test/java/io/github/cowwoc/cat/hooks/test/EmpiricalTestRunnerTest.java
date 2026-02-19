@@ -12,6 +12,8 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.EvaluationResult;
 import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.ParsedOutput;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.TestMessage;
+import io.github.cowwoc.cat.hooks.skills.EmpiricalTestRunner.TurnOutput;
 import io.github.cowwoc.cat.hooks.skills.PrimingMessage;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import java.io.IOException;
@@ -1395,9 +1397,9 @@ public final class EmpiricalTestRunnerTest
 
       List<EmpiricalTestRunner.TrialResult> trialResults = List.of(
         new EmpiricalTestRunner.TrialResult(true, Map.of("contains:hello", true), 5L,
-          "Hello world", List.of("Bash"), ""),
+          "Hello world", List.of("Bash"), "", List.of()),
         new EmpiricalTestRunner.TrialResult(false, Map.of("contains:hello", false), 3L,
-          "no match", List.of(), ""));
+          "no match", List.of(), "", List.of()));
       EmpiricalTestRunner.ConfigResult configResult =
         new EmpiricalTestRunner.ConfigResult("test-config", 2, 1, 50, trialResults);
 
@@ -1617,7 +1619,8 @@ public final class EmpiricalTestRunnerTest
         7L,
         "expected output text",
         List.of("Bash", "Read"),
-        "");
+        "",
+        List.of());
 
       String json = mapper.writeValueAsString(trialResult);
       JsonNode node = mapper.readTree(json);
@@ -1632,6 +1635,140 @@ public final class EmpiricalTestRunnerTest
       requireThat(node.path("checks").isObject(), "checksIsObject").isTrue();
       requireThat(node.path("checks").path("contains:expected").asBoolean(false),
         "containsExpected").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that parseOutput groups output into turns correctly, with each assistant event
+   * starting a new turn and result events adding to the last turn.
+   */
+  @Test
+  public void parseOutputGroupsTurnsByAssistantEvents() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+
+      String turn1Json = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
+        "\"content\":[{\"type\":\"text\",\"text\":\"Turn 1 text\"}]}}";
+      String turn2Json = "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\"," +
+        "\"content\":[{\"type\":\"text\",\"text\":\"Turn 2 text\"}," +
+        "{\"type\":\"tool_use\",\"name\":\"Bash\",\"id\":\"1\",\"input\":{}}]}}";
+      String resultJson = "{\"type\":\"result\",\"result\":\"Final result\"}";
+      String output = turn1Json + "\n" + turn2Json + "\n" + resultJson + "\n";
+
+      ParsedOutput parsed = runner.parseOutput(output);
+
+      // Flat lists should contain all items
+      requireThat(parsed.texts().size(), "textCount").isEqualTo(3);
+      requireThat(parsed.toolUses().size(), "toolUseCount").isEqualTo(1);
+
+      // Should have 2 turns: first assistant event, second assistant event + result
+      requireThat(parsed.turns().size(), "turnCount").isEqualTo(2);
+
+      TurnOutput turn1 = parsed.turns().get(0);
+      requireThat(turn1.texts().size(), "turn1TextCount").isEqualTo(1);
+      requireThat(turn1.texts().get(0), "turn1Text").isEqualTo("Turn 1 text");
+      requireThat(turn1.toolUses().isEmpty(), "turn1NoToolUses").isTrue();
+
+      TurnOutput turn2 = parsed.turns().get(1);
+      requireThat(turn2.texts().size(), "turn2TextCount").isEqualTo(2);
+      requireThat(turn2.texts().get(0), "turn2Text1").isEqualTo("Turn 2 text");
+      requireThat(turn2.texts().get(1), "turn2Text2").isEqualTo("Final result");
+      requireThat(turn2.toolUses().size(), "turn2ToolUseCount").isEqualTo(1);
+      requireThat(turn2.toolUses().get(0), "turn2ToolName").isEqualTo("Bash");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildInput with multiple test messages generates correct stream-json
+   * with one user message per test message.
+   */
+  @Test
+  public void buildInputWithMultipleTestMessages() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+
+      List<TestMessage> messages = List.of(
+        new TestMessage("First prompt", Map.of("must_contain", List.of("a"))),
+        new TestMessage("Second prompt", Map.of("must_contain", List.of("b"))),
+        new TestMessage("Third prompt", Map.of("must_contain", List.of("c"))));
+
+      String result = runner.buildInput(List.of(), messages, List.of());
+
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(3);
+
+      JsonNode first = mapper.readTree(lines[0]);
+      requireThat(first.path("message").path("content").get(0).path("text").asString(""),
+        "firstText").isEqualTo("First prompt");
+
+      JsonNode second = mapper.readTree(lines[1]);
+      requireThat(second.path("message").path("content").get(0).path("text").asString(""),
+        "secondText").isEqualTo("Second prompt");
+
+      JsonNode third = mapper.readTree(lines[2]);
+      requireThat(third.path("message").path("content").get(0).path("text").asString(""),
+        "thirdText").isEqualTo("Third prompt");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that buildInput with multiple test messages and system reminders appends
+   * reminders to each test message.
+   */
+  @Test
+  public void buildInputWithMultipleMessagesAndSystemReminders() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    Path envFile = Files.createTempFile(tempDir, "env", ".sh");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir, "test-session",
+      envFile, TerminalType.WINDOWS_TERMINAL))
+    {
+      EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
+      JsonMapper mapper = scope.getJsonMapper();
+
+      List<TestMessage> messages = List.of(
+        new TestMessage("First prompt", Map.of()),
+        new TestMessage("Second prompt", Map.of()));
+      List<String> reminders = List.of("Always be helpful.");
+
+      String result = runner.buildInput(List.of(), messages, reminders);
+
+      String[] lines = result.split("\n");
+      requireThat(lines.length, "lineCount").isEqualTo(2);
+
+      // Both messages should have system reminders appended
+      JsonNode first = mapper.readTree(lines[0]);
+      String firstText = first.path("message").path("content").get(0).path("text").asString("");
+      requireThat(firstText, "firstText").contains("First prompt").
+        contains("<system-reminder>").contains("Always be helpful.");
+
+      JsonNode second = mapper.readTree(lines[1]);
+      String secondText = second.path("message").path("content").get(0).path("text").asString("");
+      requireThat(secondText, "secondText").contains("Second prompt").
+        contains("<system-reminder>").contains("Always be helpful.");
     }
     finally
     {
