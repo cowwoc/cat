@@ -10,6 +10,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 import java.io.IOException;
 
 /**
@@ -23,7 +24,7 @@ import java.io.IOException;
  * <p>
  * Workflow phases: Preparing, Implementing, Confirming, Reviewing, Merging
  */
-public final class ProgressBanner
+public final class ProgressBanner implements SkillOutput
 {
   /**
    * Workflow phases for CAT issue processing.
@@ -159,6 +160,69 @@ public final class ProgressBanner
   }
 
   /**
+   * Generates skill output for preprocessor directives.
+   *
+   * @param args the arguments from the preprocessor directive
+   * @return the generated output
+   * @throws IOException if an I/O error occurs
+   */
+  @Override
+  public String getOutput(String[] args) throws IOException
+  {
+    String issueId = "";
+    String phaseStr = "";
+    boolean allPhases = false;
+
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (args[i].equals("--phase") && i + 1 < args.length)
+      {
+        phaseStr = args[i + 1];
+        ++i;
+      }
+      else if (args[i].equals("--all-phases"))
+      {
+        allPhases = true;
+      }
+      else if (args[i].equals("--project-dir") || args[i].equals("--session-id"))
+      {
+        ++i;
+      }
+      else if (!args[i].startsWith("--") && args[i].matches("^[0-9]+\\.[0-9]+-[a-zA-Z0-9_-]+$"))
+      {
+        issueId = args[i];
+      }
+    }
+
+    if (phaseStr.isEmpty())
+      allPhases = true;
+
+    if (issueId.isEmpty())
+    {
+      return generateGenericPreparingBanner();
+    }
+    else if (allPhases)
+    {
+      return generateAllPhases(issueId);
+    }
+    else
+    {
+      Phase phase;
+      switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
+      {
+        case "preparing" -> phase = Phase.PREPARING;
+        case "implementing" -> phase = Phase.IMPLEMENTING;
+        case "confirming" -> phase = Phase.CONFIRMING;
+        case "reviewing" -> phase = Phase.REVIEWING;
+        case "merging" -> phase = Phase.MERGING;
+        default -> throw new IllegalArgumentException(
+          "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
+      }
+      return generateBanner(issueId, phase);
+    }
+  }
+
+  /**
    * Builds a banner showing progress for the specified phase.
    *
    * @param issueId the issue ID (may be empty)
@@ -221,26 +285,10 @@ public final class ProgressBanner
    */
   public static void main(String[] args) throws IOException
   {
-    String issueId = "";
-    String phaseStr = "";
-    boolean allPhases = false;
-
-    for (int i = 0; i < args.length; ++i)
+    // Check for help flag
+    for (String arg : args)
     {
-      if (args[i].equals("--phase") && i + 1 < args.length)
-      {
-        phaseStr = args[i + 1];
-        ++i;
-      }
-      else if (args[i].equals("--all-phases"))
-      {
-        allPhases = true;
-      }
-      else if (args[i].equals("--project-dir") || args[i].equals("--session-id"))
-      {
-        ++i;
-      }
-      else if (args[i].equals("-h") || args[i].equals("--help"))
+      if (arg.equals("-h") || arg.equals("--help"))
       {
         System.out.println("""
           Usage: get-progress-banner [issue-id] [--phase <phase>] [--all-phases]
@@ -258,42 +306,13 @@ public final class ProgressBanner
             get-progress-banner --project-dir /workspace --session-id abc123""");
         return;
       }
-      else if (!args[i].startsWith("--") && args[i].matches("^[0-9]+\\.[0-9]+-[a-zA-Z0-9_-]+$"))
-      {
-        issueId = args[i];
-      }
     }
-
-    if (phaseStr.isEmpty())
-      allPhases = true;
 
     try (JvmScope scope = new MainJvmScope())
     {
       ProgressBanner banner = new ProgressBanner(scope);
-
-    if (issueId.isEmpty())
-    {
-      System.out.println(banner.generateGenericPreparingBanner());
-    }
-    else if (allPhases)
-    {
-      System.out.println(banner.generateAllPhases(issueId));
-    }
-    else
-    {
-      Phase phase;
-      switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
-      {
-        case "preparing" -> phase = Phase.PREPARING;
-        case "implementing" -> phase = Phase.IMPLEMENTING;
-        case "confirming" -> phase = Phase.CONFIRMING;
-        case "reviewing" -> phase = Phase.REVIEWING;
-        case "merging" -> phase = Phase.MERGING;
-        default -> throw new IllegalArgumentException(
-          "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
-      }
-      System.out.println(banner.generateBanner(issueId, phase));
-    }
+      String output = banner.getOutput(args);
+      System.out.println(output);
     }
   }
 }
