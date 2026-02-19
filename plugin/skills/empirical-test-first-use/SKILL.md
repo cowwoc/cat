@@ -102,6 +102,18 @@ branch` or `/cat:status`). This is critical for reproducing failures that only o
 **System prompt** is an optional string passed as `--append-system-prompt` to the claude CLI, simulating project
 instructions like CLAUDE.md content that would be present in a real session.
 
+**MANDATORY for verbatim-output skills:** When testing a skill that requires the agent to echo, copy, or reproduce
+content exactly (e.g., `/cat:status`, `/cat:get-history`), always populate `system_prompt` with the project's CLAUDE.md
+content. General project instructions like "be helpful" or "be concise" actively compete with verbatim-copy
+instructions, and tests without this context will report artificially high success rates that do not reflect real
+sessions. Omitting the system prompt is the primary cause of false positives in empirical tests.
+
+```bash
+# Read CLAUDE.md for use as system_prompt in verbatim-output skill tests
+CLAUDE_MD_CONTENT=$(cat "${CLAUDE_PROJECT_DIR}/CLAUDE.md")
+# Include as the "system_prompt" field in the test config JSON
+```
+
 **System reminders** are optional strings injected into the test prompt user message, each wrapped in
 `<system-reminder>` tags. This simulates hook-injected system reminders that appear in production sessions and can
 affect agent behavior.
@@ -246,7 +258,7 @@ Once the root cause is identified, create the candidate fix and test it in produ
 
 1. Apply the fix to the actual skill/prompt file
 2. Create a new config that uses the **actual file content** (not a simplified version)
-3. Include **all production elements** (priming, prefix, full content)
+3. Include **all production elements** (priming, prefix, full content, and system prompt from CLAUDE.md)
 4. Run with higher trial count (10-15) for statistical confidence
 
 ```bash
@@ -291,6 +303,9 @@ Present a summary report to the user:
 - **Start with haiku** — it's cheaper and more sensitive to prompt issues. If haiku passes, sonnet will too.
 - **Use 5 trials** for initial exploration, 10-15 for final validation.
 - **Priming matters** — always include tool-use priming if the real scenario has it.
+- **Include system prompt for verbatim-output tests** — tests of skills that echo content verbatim MUST include
+  CLAUDE.md content as the `system_prompt`. General project instructions compete with verbatim-copy instructions and
+  cause false positives when omitted (found in M361: test showed 100% but production failed).
 - **Test production content** — simplified test prompts may pass when production content fails (found in M507: isolated
   test 100% vs production 33%).
 - **Description lines hurt** — meta-descriptions like "Display current status" cause haiku to treat them as tasks.
