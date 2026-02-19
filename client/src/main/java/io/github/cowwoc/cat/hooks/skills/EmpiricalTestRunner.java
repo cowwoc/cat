@@ -95,7 +95,7 @@ public final class EmpiricalTestRunner
     List<String> systemReminders = (List<String>) config.getOrDefault("system_reminders",
       new ArrayList<>());
     @SuppressWarnings("unchecked")
-    Map<String, String> configs = (Map<String, String>) config.getOrDefault("configs",
+    Map<String, Object> configs = (Map<String, Object>) config.getOrDefault("configs",
       new HashMap<>());
 
     System.out.println("Empirical Compliance Test: " + targetDescription);
@@ -103,17 +103,34 @@ public final class EmpiricalTestRunner
     System.out.println("=".repeat(90));
 
     Map<String, ConfigResult> allResults = new HashMap<>();
-    for (Map.Entry<String, String> entry : configs.entrySet())
+    for (Map.Entry<String, Object> entry : configs.entrySet())
     {
       String configName = entry.getKey();
-      String prompt = entry.getValue();
+      Object configValue = entry.getValue();
 
       System.out.println();
       System.out.println(configName + ":");
       System.out.flush();
 
-      ConfigResult result = runConfig(configName, prompt, primingMessages, systemReminders,
-        criteria, trials, model, systemPrompt, cwd);
+      ConfigResult result;
+      if (configValue instanceof String prompt)
+      {
+        result = runConfig(configName, prompt, primingMessages, systemReminders,
+          criteria, trials, model, systemPrompt, cwd);
+      }
+      else if (configValue instanceof Map<?, ?>)
+      {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> configMap = (Map<String, Object>) configValue;
+        result = runMultiMessageConfig(configName, configMap, primingMessages, systemReminders,
+          trials, model, systemPrompt, cwd);
+      }
+      else
+      {
+        throw new IllegalArgumentException("Config '" + configName +
+          "' has unsupported value type: " + configValue.getClass().getName() +
+          ". Expected String or Map with 'messages' key.");
+      }
       allResults.put(configName, result);
 
       System.out.println("  RESULT: " + result.passes() + "/" + result.trials() + " (" +
@@ -134,7 +151,8 @@ public final class EmpiricalTestRunner
 
       try
       {
-        Files.writeString(outputPath, scope.getJsonMapper().writeValueAsString(output));
+        Files.writeString(outputPath, scope.getJsonMapper().writeValueAsString(output),
+          StandardCharsets.UTF_8);
       }
       catch (IOException e)
       {
@@ -212,6 +230,96 @@ public final class EmpiricalTestRunner
         preview = " [ERROR: " + result.error() + "]";
 
       System.out.println("  t" + (i + 1) + " " + status + " (" + result.elapsed() + "s)" + preview);
+      System.out.flush();
+    }
+
+    int rate = calculateRate(passes, trials);
+    return new ConfigResult(name, trials, passes, rate, results);
+  }
+
+  /**
+   * Runs all trials for a multi-message configuration.
+   *
+   * @param name the configuration name
+   * @param configMap the configuration map containing a "messages" array
+   * @param primingMessages list of priming messages to send before the test messages
+   * @param systemReminders list of system reminder strings to inject into each test message
+   * @param trials number of trials to run
+   * @param model the model name
+   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
+   * @param cwd the working directory
+   * @return the configuration result
+   */
+  private ConfigResult runMultiMessageConfig(String name, Map<String, Object> configMap,
+    List<PrimingMessage> primingMessages, List<String> systemReminders, int trials,
+    String model, String systemPrompt, Path cwd)
+  {
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> rawMessages =
+      (List<Map<String, Object>>) configMap.get("messages");
+    if (rawMessages == null)
+    {
+      throw new IllegalArgumentException("Config '" + name +
+        "' is a Map but missing required 'messages' key.");
+    }
+
+    List<TestMessage> messages = new ArrayList<>();
+    for (Map<String, Object> rawMsg : rawMessages)
+    {
+      String prompt = (String) rawMsg.get("prompt");
+      if (prompt == null)
+      {
+        throw new IllegalArgumentException("Config '" + name +
+          "': message is missing required 'prompt' field.");
+      }
+      @SuppressWarnings("unchecked")
+      Map<String, Object> msgCriteria = (Map<String, Object>) rawMsg.getOrDefault(
+        "success_criteria", new HashMap<>());
+      messages.add(new TestMessage(prompt, msgCriteria));
+    }
+
+    List<TrialResult> results = new ArrayList<>();
+    int passes = 0;
+
+    for (int i = 0; i < trials; ++i)
+    {
+      TrialResult result = runMultiMessageTrial(primingMessages, systemReminders, messages,
+        model, systemPrompt, cwd);
+      results.add(result);
+      if (result.pass())
+        ++passes;
+
+      String status;
+      if (result.pass())
+        status = "PASS";
+      else
+        status = "FAIL";
+
+      String preview = "";
+      if (!result.pass() && !result.messageEvaluations().isEmpty())
+      {
+        // Show which messages failed
+        StringJoiner failedMsgs = new StringJoiner(", ");
+        for (MessageEvaluation eval : result.messageEvaluations())
+        {
+          if (!eval.pass())
+          {
+            StringJoiner failedChecks = new StringJoiner(", ");
+            for (Map.Entry<String, Boolean> check : eval.checks().entrySet())
+            {
+              if (!check.getValue())
+                failedChecks.add(check.getKey());
+            }
+            failedMsgs.add("msg" + eval.messageIndex() + ": " + failedChecks);
+          }
+        }
+        preview = " [" + failedMsgs + "]";
+      }
+      else if (result.error() != null && !result.error().isEmpty())
+        preview = " [ERROR: " + result.error() + "]";
+
+      System.out.println("  t" + (i + 1) + " " + status + " (" + result.elapsed() + "s)" +
+        preview);
       System.out.flush();
     }
 
@@ -341,7 +449,7 @@ public final class EmpiricalTestRunner
 
     if (!processResult.error().isEmpty())
       return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
-        new ArrayList<>(), processResult.error());
+        new ArrayList<>(), processResult.error(), List.of());
 
     ParsedOutput parsed = parseOutput(processResult.output());
 
@@ -364,7 +472,89 @@ public final class EmpiricalTestRunner
       toolsUsed = parsed.toolUses();
 
     return new TrialResult(evaluation.pass(), evaluation.checks(), processResult.elapsed(),
-      truncatedPreview, toolsUsed, "");
+      truncatedPreview, toolsUsed, "", List.of());
+  }
+
+  /**
+   * Runs a single multi-message trial and evaluates each turn against its corresponding
+   * message's criteria.
+   *
+   * @param primingMessages list of priming messages
+   * @param systemReminders list of system reminder strings to inject into each test message
+   * @param messages the test messages with per-message criteria
+   * @param model the model name
+   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
+   * @param cwd the working directory
+   * @return the trial result
+   */
+  private TrialResult runMultiMessageTrial(List<PrimingMessage> primingMessages,
+    List<String> systemReminders, List<TestMessage> messages, String model,
+    String systemPrompt, Path cwd)
+  {
+    List<String> command = buildCommand(model, systemPrompt);
+
+    String input = buildInput(primingMessages, messages, systemReminders);
+
+    ProcessResult processResult = executeClaudeProcess(command, input, cwd);
+
+    if (!processResult.error().isEmpty())
+      return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
+        new ArrayList<>(), processResult.error(), List.of());
+
+    ParsedOutput parsed = parseOutput(processResult.output());
+
+    // Calculate number of priming turns to skip.
+    // Each UserMessage produces 1 turn, each ToolUse produces 1 turn.
+    int primingTurnCount = primingMessages.size();
+
+    List<TurnOutput> testTurns;
+    if (parsed.turns().size() > primingTurnCount)
+      testTurns = parsed.turns().subList(primingTurnCount, parsed.turns().size());
+    else
+      testTurns = List.of();
+
+    boolean allPass = true;
+    Map<String, Boolean> combinedChecks = new HashMap<>();
+    List<MessageEvaluation> evaluations = new ArrayList<>();
+
+    for (int i = 0; i < messages.size(); ++i)
+    {
+      TestMessage msg = messages.get(i);
+      TurnOutput turn;
+      if (i < testTurns.size())
+        turn = testTurns.get(i);
+      else
+        turn = new TurnOutput(List.of(), List.of());
+
+      EvaluationResult evaluation = evaluateOutput(turn.texts(), turn.toolUses(), msg.criteria());
+
+      String turnPreview = String.join("\n", turn.texts());
+      String truncatedTurnPreview = truncatePreview(turnPreview, 200).replace("\n", "\\n");
+
+      evaluations.add(new MessageEvaluation(i, evaluation.pass(), evaluation.checks(),
+        truncatedTurnPreview));
+
+      if (!evaluation.pass())
+        allPass = false;
+
+      for (Map.Entry<String, Boolean> check : evaluation.checks().entrySet())
+        combinedChecks.put("msg" + i + ":" + check.getKey(), check.getValue());
+    }
+
+    List<String> toolsUsed;
+    if (parsed.toolUses().size() > 5)
+      toolsUsed = parsed.toolUses().subList(0, 5);
+    else
+      toolsUsed = parsed.toolUses();
+
+    String overallPreview;
+    if (!evaluations.isEmpty())
+      overallPreview = evaluations.getFirst().outputPreview();
+    else
+      overallPreview = "";
+
+    return new TrialResult(allPass, combinedChecks, processResult.elapsed(),
+      overallPreview, toolsUsed, "", evaluations);
   }
 
   /**
@@ -428,6 +618,60 @@ public final class EmpiricalTestRunner
       finalPrompt = sb.toString();
     }
     joiner.add(makeUserMessage(finalPrompt));
+    return joiner.toString();
+  }
+
+  /**
+   * Builds stream-json input with priming messages followed by multiple test messages.
+   * System reminders are appended to each test message.
+   *
+   * @param primingMessages the priming messages
+   * @param messages the list of test messages
+   * @param systemReminders list of system reminder strings to append to each test message,
+   *                        each wrapped in {@code <system-reminder>} tags
+   * @return the stream-json input string
+   * @throws NullPointerException if {@code primingMessages}, {@code messages}, or
+   *                              {@code systemReminders} are null
+   */
+  public String buildInput(List<PrimingMessage> primingMessages, List<TestMessage> messages,
+    List<String> systemReminders)
+  {
+    requireThat(primingMessages, "primingMessages").isNotNull();
+    requireThat(messages, "messages").isNotNull();
+    requireThat(systemReminders, "systemReminders").isNotNull();
+    StringJoiner joiner = new StringJoiner("\n");
+    int toolUseCounter = 0;
+    for (PrimingMessage msg : primingMessages)
+    {
+      switch (msg)
+      {
+        case PrimingMessage.UserMessage userMsg ->
+          joiner.add(makeUserMessage(userMsg.text()));
+        case PrimingMessage.ToolUse toolUse ->
+        {
+          String toolUseId = "toolu_priming_" + toolUseCounter;
+          ++toolUseCounter;
+          joiner.add(makeToolUseMessage(toolUseId, toolUse.tool(), toolUse.input()));
+          joiner.add(makeToolResultMessage(toolUseId, toolUse.output()));
+        }
+      }
+    }
+    for (TestMessage testMsg : messages)
+    {
+      String finalPrompt = testMsg.prompt();
+      if (!systemReminders.isEmpty())
+      {
+        StringBuilder sb = new StringBuilder(testMsg.prompt());
+        for (String reminder : systemReminders)
+        {
+          sb.append("\n<system-reminder>\n").
+            append(reminder).
+            append("\n</system-reminder>");
+        }
+        finalPrompt = sb.toString();
+      }
+      joiner.add(makeUserMessage(finalPrompt));
+    }
     return joiner.toString();
   }
 
@@ -513,6 +757,9 @@ public final class EmpiricalTestRunner
     requireThat(output, "output").isNotNull();
     List<String> texts = new ArrayList<>();
     List<String> toolUses = new ArrayList<>();
+    List<TurnOutput> turns = new ArrayList<>();
+    List<String> currentTurnTexts = new ArrayList<>();
+    List<String> currentTurnToolUses = new ArrayList<>();
 
     for (String line : output.split("\n"))
     {
@@ -527,6 +774,14 @@ public final class EmpiricalTestRunner
 
         if (type.equals("assistant"))
         {
+          // Each assistant event starts a new turn
+          if (!currentTurnTexts.isEmpty() || !currentTurnToolUses.isEmpty())
+          {
+            turns.add(new TurnOutput(List.copyOf(currentTurnTexts),
+              List.copyOf(currentTurnToolUses)));
+            currentTurnTexts = new ArrayList<>();
+            currentTurnToolUses = new ArrayList<>();
+          }
           JsonNode content = event.path("message").path("content");
           if (content.isArray())
           {
@@ -534,9 +789,17 @@ public final class EmpiricalTestRunner
             {
               String blockType = block.path("type").asString("");
               if (blockType.equals("text"))
-                texts.add(block.path("text").asString(""));
+              {
+                String text = block.path("text").asString("");
+                texts.add(text);
+                currentTurnTexts.add(text);
+              }
               else if (blockType.equals("tool_use"))
-                toolUses.add(block.path("name").asString(""));
+              {
+                String name = block.path("name").asString("");
+                toolUses.add(name);
+                currentTurnToolUses.add(name);
+              }
             }
           }
         }
@@ -544,7 +807,10 @@ public final class EmpiricalTestRunner
         {
           String result = event.path("result").asString("");
           if (!result.isEmpty())
+          {
             texts.add(result);
+            currentTurnTexts.add(result);
+          }
         }
       }
       catch (Exception _)
@@ -553,7 +819,14 @@ public final class EmpiricalTestRunner
       }
     }
 
-    return new ParsedOutput(texts, toolUses);
+    // Flush the last turn
+    if (!currentTurnTexts.isEmpty() || !currentTurnToolUses.isEmpty())
+    {
+      turns.add(new TurnOutput(List.copyOf(currentTurnTexts),
+        List.copyOf(currentTurnToolUses)));
+    }
+
+    return new ParsedOutput(texts, toolUses, turns);
   }
 
   /**
@@ -674,7 +947,19 @@ public final class EmpiricalTestRunner
           priming_messages    Array of messages to send before test prompt (simulates prior turns)
           system_prompt       String passed as --append-system-prompt to claude CLI (optional)
           system_reminders    Array of strings, each injected as <system-reminder> tags in test prompt (optional)
-          configs             Object mapping config names to prompt text
+          configs             Object mapping config names to prompt text or multi-message object
+
+        Config value formats:
+          String: Single-message test using global success_criteria
+            "A_test": "Echo hello world"
+
+          Object: Multi-message test with per-message criteria
+            "A_test": {
+              "messages": [
+                { "prompt": "First prompt", "success_criteria": { "must_contain": ["expected"] } },
+                { "prompt": "Second prompt", "success_criteria": { "must_contain": ["other"] } }
+              ]
+            }
 
         Examples:
           empirical-test-runner --config /tmp/test.json --trials 10 --model sonnet
@@ -752,12 +1037,70 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Parsed output containing text blocks and tool uses.
+   * A single message in a multi-message test conversation.
    *
-   * @param texts the list of text outputs
-   * @param toolUses the list of tool use names
+   * @param prompt the prompt text to send
+   * @param criteria the success criteria for evaluating the response
    */
-  public record ParsedOutput(List<String> texts, List<String> toolUses)
+  public record TestMessage(String prompt, Map<String, Object> criteria)
+  {
+    /**
+     * Creates a new test message.
+     *
+     * @param prompt the prompt text to send
+     * @param criteria the success criteria for evaluating the response
+     * @throws NullPointerException if {@code prompt} or {@code criteria} are null
+     */
+    public TestMessage
+    {
+      requireThat(prompt, "prompt").isNotNull();
+      requireThat(criteria, "criteria").isNotNull();
+    }
+  }
+
+  /**
+   * Output from a single conversation turn.
+   *
+   * @param texts the text blocks from this turn
+   * @param toolUses the tool use names from this turn
+   */
+  public record TurnOutput(List<String> texts, List<String> toolUses)
+  {
+    /**
+     * Creates a new turn output.
+     *
+     * @param texts the text blocks from this turn
+     * @param toolUses the tool use names from this turn
+     * @throws NullPointerException if {@code texts} or {@code toolUses} are null
+     */
+    public TurnOutput
+    {
+      requireThat(texts, "texts").isNotNull();
+      requireThat(toolUses, "toolUses").isNotNull();
+    }
+  }
+
+  /**
+   * Evaluation result for a single message in a multi-message trial.
+   *
+   * @param messageIndex the 0-based index of the message
+   * @param pass whether this message's criteria were satisfied
+   * @param checks the map of check results for this message
+   * @param outputPreview a preview of the response
+   */
+  public record MessageEvaluation(int messageIndex, boolean pass, Map<String, Boolean> checks,
+    String outputPreview)
+  {
+  }
+
+  /**
+   * Parsed output containing text blocks, tool uses, and per-turn breakdown.
+   *
+   * @param texts the list of text outputs (flat, all turns combined)
+   * @param toolUses the list of tool use names (flat, all turns combined)
+   * @param turns the per-turn breakdown of output
+   */
+  public record ParsedOutput(List<String> texts, List<String> toolUses, List<TurnOutput> turns)
   {
   }
 
@@ -780,9 +1123,12 @@ public final class EmpiricalTestRunner
    * @param outputPreview a preview of the output
    * @param toolsUsed the list of tools used
    * @param error the error message if any
+   * @param messageEvaluations per-message evaluation results for multi-message trials, empty for
+   *                           single-message trials
    */
   public record TrialResult(boolean pass, Map<String, Boolean> checks, long elapsed,
-    String outputPreview, List<String> toolsUsed, String error)
+    String outputPreview, List<String> toolsUsed, String error,
+    List<MessageEvaluation> messageEvaluations)
   {
   }
 
