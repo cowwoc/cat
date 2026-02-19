@@ -18,6 +18,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -93,10 +94,7 @@ public final class MergeAndCleanup
 
     int diverged = getDivergenceCount(worktreePath, baseBranch);
     if (diverged > 0)
-    {
-      throw new IOException("Base branch has diverged: " + baseBranch + " has " + diverged +
-        " commit(s) not in HEAD. Rebase required before merge.");
-    }
+      rebaseOnto(worktreePath, baseBranch);
 
     if (!isFastForwardPossible(worktreePath, baseBranch))
     {
@@ -191,7 +189,7 @@ public final class MergeAndCleanup
   private String getBaseBranch(String projectDir, String taskBranch)
     throws IOException
   {
-    String gitDir = runGitCommandInDirectory(projectDir, "rev-parse", "--git-dir");
+    String gitDir = runGitCommandInDirectory(projectDir, "rev-parse", "--absolute-git-dir");
     Path catBasePath = Paths.get(gitDir, "worktrees", taskBranch, "cat-base");
 
     if (!Files.exists(catBasePath))
@@ -229,6 +227,100 @@ public final class MergeAndCleanup
     String count = runGitCommandSingleLineInDirectory(worktreePath, "rev-list", "--count",
       "HEAD.." + baseBranch);
     return Integer.parseInt(count);
+  }
+
+  /**
+   * Rebases the worktree branch onto the base branch using {@code git rebase --onto}.
+   * <p>
+   * This replays only the issue-specific commits onto the current tip of the base branch,
+   * avoiding the "120 skipped previously applied commit" problem from naive {@code git rebase <base>}.
+   * <p>
+   * If rebase fails due to conflicts, the rebase is aborted and an {@code IOException} is thrown.
+   *
+   * @param worktreePath the worktree path
+   * @param baseBranch the base branch to rebase onto
+   * @throws IOException if the rebase fails or is interrupted
+   */
+  private void rebaseOnto(String worktreePath, String baseBranch) throws IOException
+  {
+    String mergeBase;
+    try
+    {
+      String[] mergeBaseCommand = {"git", "-C", worktreePath, "merge-base", "HEAD", baseBranch};
+      ProcessBuilder pb = new ProcessBuilder(mergeBaseCommand);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+      StringBuilder output = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          if (output.length() > 0)
+            output.append('\n');
+          output.append(line);
+          line = reader.readLine();
+        }
+      }
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+      {
+        throw new IOException("Failed to compute merge-base between HEAD and " + baseBranch +
+          " in worktree: " + worktreePath + ". Output: " + output.toString().strip());
+      }
+      mergeBase = output.toString().strip();
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while computing merge-base", e);
+    }
+
+    try
+    {
+      String[] rebaseCommand = {"git", "-C", worktreePath, "rebase", "--onto", baseBranch, mergeBase};
+      ProcessBuilder pb = new ProcessBuilder(rebaseCommand);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+      StringBuilder output = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)))
+      {
+        String line = reader.readLine();
+        while (line != null)
+        {
+          if (output.length() > 0)
+            output.append('\n');
+          output.append(line);
+          line = reader.readLine();
+        }
+      }
+      int exitCode = process.waitFor();
+      if (exitCode != 0)
+      {
+        try
+        {
+          String[] abortCommand = {"git", "-C", worktreePath, "rebase", "--abort"};
+          ProcessBuilder abortPb = new ProcessBuilder(abortCommand);
+          abortPb.redirectErrorStream(true);
+          Process abortProcess = abortPb.start();
+          abortProcess.getInputStream().transferTo(OutputStream.nullOutputStream());
+          abortProcess.waitFor();
+        }
+        catch (InterruptedException _)
+        {
+          Thread.currentThread().interrupt();
+        }
+        throw new IOException("Rebase --onto failed in worktree: " + worktreePath +
+          ". Conflicts may exist. Output: " + output.toString().strip());
+      }
+    }
+    catch (InterruptedException e)
+    {
+      Thread.currentThread().interrupt();
+      throw new IOException("Interrupted while rebasing onto " + baseBranch, e);
+    }
   }
 
   /**
