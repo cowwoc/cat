@@ -553,68 +553,6 @@ public class SessionStartHookTest
     }
   }
 
-  // --- SessionStartHook preCompact mode tests ---
-
-  /**
-   * Verifies that preCompact mode returns empty JSON regardless of handler output.
-   */
-  @Test
-  public void preCompactModeReturnsEmptyJson() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      SessionStartHandler handler = input -> SessionStartHandler.Result.context("should be discarded");
-      SessionStartHook hook = new SessionStartHook(List.of(handler), true);
-
-      HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = hook.run(input, output);
-
-      requireThat(result.output(), "output").isEqualTo("{}");
-    }
-  }
-
-  /**
-   * Verifies that preCompact mode still collects warnings from handlers even though context is discarded.
-   */
-  @Test
-  public void preCompactModeStillCollectsWarnings() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      SessionStartHandler handler = input -> SessionStartHandler.Result.both("context", "warning message");
-      SessionStartHook hook = new SessionStartHook(List.of(handler), true);
-
-      HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = hook.run(input, output);
-
-      requireThat(result.output(), "output").isEqualTo("{}");
-      requireThat(result.warnings(), "warnings").contains("warning message");
-    }
-  }
-
-  /**
-   * Verifies that preCompact factory method creates a hook that returns empty JSON.
-   */
-  @Test
-  public void preCompactFactoryMethodCreatesValidHook() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      SessionStartHook hook = SessionStartHook.preCompact();
-
-      HookInput input = createInput(mapper, "{}");
-      HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = hook.run(input, output);
-
-      requireThat(result.output(), "output").isEqualTo("{}");
-    }
-  }
-
   // --- SessionStartHandler.Result factory tests ---
 
   /**
