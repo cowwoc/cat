@@ -98,3 +98,6 @@ imports, etc.). The header should be immediately followed by the code.
 See `plugin/concepts/license-header.md` for file-type-specific formats.
 
 JSON and XML files are exempt (JSON has no comment syntax; XML files are configuration files).
+
+`SKILL.md` files under `plugin/skills/` are exempt. These files are injected into agent context as prompts; license
+headers waste tokens without providing value.

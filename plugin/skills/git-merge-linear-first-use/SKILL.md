@@ -3,11 +3,6 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Git Linear Merge Skill
 
 Merge issue branch to its base branch using WORKTREE_PATH parameter. Uses `git -C` for all operations to avoid cd into
