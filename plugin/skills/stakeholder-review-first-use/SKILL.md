@@ -539,14 +539,49 @@ for entry in $CONVENTION_MAP; do
 done
 ```
 
+Before spawning, pre-fetch the issue context files using absolute worktree paths:
+
+```bash
+# Pre-fetch context files using absolute paths so subagents receive content directly
+# and do not need to read any files themselves
+ISSUE_DIR=$(ls -d "${WORKTREE_PATH}/.claude/cat/issues/"*/ 2>/dev/null | head -1)
+ISSUE_PLAN_CONTENT=""
+VERSION_PLAN_CONTENT=""
+if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
+    ISSUE_PLAN_CONTENT=$(cat "${ISSUE_DIR}PLAN.md")
+    # Derive version PLAN.md path from issue directory name (e.g., v2.1-issue-name -> v2.1)
+    ISSUE_NAME=$(basename "$ISSUE_DIR")
+    VERSION_PATTERN=$(echo "$ISSUE_NAME" | grep -oE '^v[0-9]+\.[0-9]+')
+    MAJOR_VERSION=$(echo "$VERSION_PATTERN" | grep -oE '^v[0-9]+')
+    if [[ -n "$MAJOR_VERSION" && -n "$VERSION_PATTERN" ]]; then
+        VERSION_PLAN="${WORKTREE_PATH}/.claude/cat/issues/${MAJOR_VERSION}/${VERSION_PATTERN}/PLAN.md"
+        if [[ -f "$VERSION_PLAN" ]]; then
+            VERSION_PLAN_CONTENT=$(cat "$VERSION_PLAN")
+        fi
+    fi
+fi
+```
+
 Spawn each stakeholder with this prompt:
 
 ```
 You are the {stakeholder} stakeholder reviewing an implementation.
 
 ## Working Directory
-You MUST work exclusively within this directory: {WORKTREE_PATH}
-All file reads, searches, and git commands must target this directory. Do NOT access files outside it.
+All file reads, searches, and git commands must target this directory: {WORKTREE_PATH}
+Use absolute paths prefixed with {WORKTREE_PATH}/ for any additional files you read.
+Do NOT access files outside this directory.
+
+## Issue Context (Pre-fetched)
+
+The following context has been pre-fetched from the worktree. Use this content directly
+rather than reading these files yourself.
+
+### Task PLAN.md ({ISSUE_DIR}PLAN.md)
+{ISSUE_PLAN_CONTENT}
+
+### Version PLAN.md
+{VERSION_PLAN_CONTENT}
 
 ## Your Role
 {content of agents/stakeholder-{stakeholder}.md}

@@ -207,30 +207,6 @@ git branch --show-current && git log --oneline -3 && git diff --stat
 
 **Worktree directory safety:** You may `cd` into worktrees to work. However, before removing a directory (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm`.
 
-## Git Worktree Hygiene (M488)
-
-**Worktrees must stay synchronized with their base branch before squashing.**
-
-When a worktree is created from a base branch (e.g., v2.1), and the base branch advances with new commits, the worktree's tree becomes stale. Squashing commits in a stale worktree can capture old file versions, effectively reverting unrelated changes.
-
-**The git-squash-quick.sh script prevents this by rebasing onto the base branch before squashing.** However, if rebase conflicts occur or the worktree has diverged significantly, explicit awareness helps:
-
-```bash
-# Check if worktree is behind its base branch
-BASE_BRANCH=$(cat "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-base" 2>/dev/null)
-BEHIND_COUNT=$(git rev-list --count HEAD.."$BASE_BRANCH" 2>/dev/null || echo "0")
-
-if [[ "$BEHIND_COUNT" -gt 0 ]]; then
-  echo "INFO: Worktree is $BEHIND_COUNT commits behind $BASE_BRANCH"
-  echo "Squash will rebase automatically."
-fi
-```
-
-**Key points:**
-- The squash script handles rebasing automatically (lines 16-55 of git-squash-quick.sh)
-- Rebase conflicts cause squash to abort safely with backup branch created
-- Manual `git reset --soft` is prohibited (M385) because it captures working directory state
-
 ## Testing
 
 - Java: TestNG for unit tests
