@@ -3,11 +3,6 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Work With Issue: Direct Phase Orchestration
 
 Execute all work phases (implement, confirm, review, merge) with the main agent directly orchestrating each phase.

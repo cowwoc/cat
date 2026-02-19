@@ -3,11 +3,6 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Grep and Read Skill
 
 **Purpose**: Search for pattern and read all matching files in a single coordinated operation, eliminating sequential
