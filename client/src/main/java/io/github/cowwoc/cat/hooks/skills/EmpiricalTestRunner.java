@@ -86,9 +86,6 @@ public final class EmpiricalTestRunner
     String targetDescription = (String) config.getOrDefault("target_description", "");
     String systemPrompt = (String) config.getOrDefault("system_prompt", "");
     @SuppressWarnings("unchecked")
-    Map<String, Object> criteria = (Map<String, Object>) config.getOrDefault("success_criteria",
-      new HashMap<>());
-    @SuppressWarnings("unchecked")
     List<PrimingMessage> primingMessages = PrimingMessage.fromRawList(
       (List<Object>) config.getOrDefault("priming_messages", new ArrayList<>()));
     @SuppressWarnings("unchecked")
@@ -112,25 +109,16 @@ public final class EmpiricalTestRunner
       System.out.println(configName + ":");
       System.out.flush();
 
-      ConfigResult result;
-      if (configValue instanceof String prompt)
-      {
-        result = runConfig(configName, prompt, primingMessages, systemReminders,
-          criteria, trials, model, systemPrompt, cwd);
-      }
-      else if (configValue instanceof Map<?, ?>)
-      {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> configMap = (Map<String, Object>) configValue;
-        result = runMultiMessageConfig(configName, configMap, primingMessages, systemReminders,
-          trials, model, systemPrompt, cwd);
-      }
-      else
+      if (!(configValue instanceof Map<?, ?>))
       {
         throw new IllegalArgumentException("Config '" + configName +
           "' has unsupported value type: " + configValue.getClass().getName() +
-          ". Expected String or Map with 'messages' key.");
+          ". Expected Map with 'messages' key.");
       }
+      @SuppressWarnings("unchecked")
+      Map<String, Object> configMap = (Map<String, Object>) configValue;
+      ConfigResult result = runMultiMessageConfig(configName, configMap, primingMessages,
+        systemReminders, trials, model, systemPrompt, cwd);
       allResults.put(configName, result);
 
       System.out.println("  RESULT: " + result.passes() + "/" + result.trials() + " (" +
@@ -146,7 +134,6 @@ public final class EmpiricalTestRunner
       output.put("target", targetDescription);
       output.put("model", model);
       output.put("trials", trials);
-      output.set("criteria", scope.getJsonMapper().valueToTree(criteria));
       output.set("results", scope.getJsonMapper().valueToTree(allResults));
 
       try
@@ -187,54 +174,6 @@ public final class EmpiricalTestRunner
     if (trials <= 0)
       return 0;
     return Math.round(passes * 100.0f / trials);
-  }
-
-  /**
-   * Runs all trials for a single configuration.
-   *
-   * @param name the configuration name
-   * @param prompt the prompt text
-   * @param primingMessages list of priming messages to send before the test prompt
-   * @param systemReminders list of system reminder strings to inject into the test prompt
-   * @param criteria the success criteria map
-   * @param trials number of trials to run
-   * @param model the model name
-   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
-   * @param cwd the working directory
-   * @return the configuration result
-   */
-  private ConfigResult runConfig(String name, String prompt, List<PrimingMessage> primingMessages,
-    List<String> systemReminders, Map<String, Object> criteria, int trials, String model,
-    String systemPrompt, Path cwd)
-  {
-    List<TrialResult> results = new ArrayList<>();
-    int passes = 0;
-
-    for (int i = 0; i < trials; ++i)
-    {
-      TrialResult result = runTrial(primingMessages, systemReminders, prompt, criteria, model,
-        systemPrompt, cwd);
-      results.add(result);
-      if (result.pass())
-        ++passes;
-
-      String status;
-      if (result.pass())
-        status = "PASS";
-      else
-        status = "FAIL";
-      String preview = "";
-      if (!result.pass() && !result.outputPreview().isEmpty())
-        preview = " [" + truncatePreview(result.outputPreview(), 80) + "]";
-      else if (result.error() != null && !result.error().isEmpty())
-        preview = " [ERROR: " + result.error() + "]";
-
-      System.out.println("  t" + (i + 1) + " " + status + " (" + result.elapsed() + "s)" + preview);
-      System.out.flush();
-    }
-
-    int rate = calculateRate(passes, trials);
-    return new ConfigResult(name, trials, passes, rate, results);
   }
 
   /**
@@ -427,55 +366,6 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Runs a single trial and evaluates the result.
-   *
-   * @param primingMessages list of priming messages
-   * @param systemReminders list of system reminder strings to inject into the test prompt
-   * @param testPrompt the test prompt
-   * @param criteria the success criteria
-   * @param model the model name
-   * @param systemPrompt the system prompt to append via CLI flag, or empty string for none
-   * @param cwd the working directory
-   * @return the trial result
-   */
-  private TrialResult runTrial(List<PrimingMessage> primingMessages, List<String> systemReminders,
-    String testPrompt, Map<String, Object> criteria, String model, String systemPrompt, Path cwd)
-  {
-    List<String> command = buildCommand(model, systemPrompt);
-
-    String input = buildInput(primingMessages, testPrompt, systemReminders);
-
-    ProcessResult processResult = executeClaudeProcess(command, input, cwd);
-
-    if (!processResult.error().isEmpty())
-      return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
-        new ArrayList<>(), processResult.error(), List.of());
-
-    ParsedOutput parsed = parseOutput(processResult.output());
-
-    // Evaluate only the last assistant response (the one answering the test prompt).
-    // Earlier responses are from priming messages and should not affect pass/fail.
-    List<String> lastResponse;
-    if (parsed.texts().isEmpty())
-      lastResponse = parsed.texts();
-    else
-      lastResponse = List.of(parsed.texts().getLast());
-    EvaluationResult evaluation = evaluateOutput(lastResponse, parsed.toolUses(), criteria);
-
-    String preview = String.join("\n", lastResponse);
-    String truncatedPreview = truncatePreview(preview, 300).replace("\n", "\\n");
-
-    List<String> toolsUsed;
-    if (parsed.toolUses().size() > 5)
-      toolsUsed = parsed.toolUses().subList(0, 5);
-    else
-      toolsUsed = parsed.toolUses();
-
-    return new TrialResult(evaluation.pass(), evaluation.checks(), processResult.elapsed(),
-      truncatedPreview, toolsUsed, "", List.of());
-  }
-
-  /**
    * Runs a single multi-message trial and evaluates each turn against its corresponding
    * message's criteria.
    *
@@ -555,70 +445,6 @@ public final class EmpiricalTestRunner
 
     return new TrialResult(allPass, combinedChecks, processResult.elapsed(),
       overallPreview, toolsUsed, "", evaluations);
-  }
-
-  /**
-   * Builds stream-json input with priming messages followed by test prompt.
-   *
-   * @param primingMessages the priming messages
-   * @param testPrompt the test prompt
-   * @return the stream-json input string
-   * @throws NullPointerException if {@code primingMessages} or {@code testPrompt} are null
-   */
-  public String buildInput(List<PrimingMessage> primingMessages, String testPrompt)
-  {
-    return buildInput(primingMessages, testPrompt, List.of());
-  }
-
-  /**
-   * Builds stream-json input with priming messages followed by test prompt, with optional
-   * system reminders injected into the test prompt user message.
-   *
-   * @param primingMessages the priming messages
-   * @param testPrompt the test prompt
-   * @param systemReminders list of system reminder strings to append to the test prompt,
-   *                        each wrapped in {@code <system-reminder>} tags
-   * @return the stream-json input string
-   * @throws NullPointerException if {@code primingMessages}, {@code testPrompt}, or
-   *                              {@code systemReminders} are null
-   */
-  public String buildInput(List<PrimingMessage> primingMessages, String testPrompt,
-    List<String> systemReminders)
-  {
-    requireThat(primingMessages, "primingMessages").isNotNull();
-    requireThat(testPrompt, "testPrompt").isNotNull();
-    requireThat(systemReminders, "systemReminders").isNotNull();
-    StringJoiner joiner = new StringJoiner("\n");
-    int toolUseCounter = 0;
-    for (PrimingMessage msg : primingMessages)
-    {
-      switch (msg)
-      {
-        case PrimingMessage.UserMessage userMsg ->
-          joiner.add(makeUserMessage(userMsg.text()));
-        case PrimingMessage.ToolUse toolUse ->
-        {
-          String toolUseId = "toolu_priming_" + toolUseCounter;
-          ++toolUseCounter;
-          joiner.add(makeToolUseMessage(toolUseId, toolUse.tool(), toolUse.input()));
-          joiner.add(makeToolResultMessage(toolUseId, toolUse.output()));
-        }
-      }
-    }
-    String finalPrompt = testPrompt;
-    if (!systemReminders.isEmpty())
-    {
-      StringBuilder sb = new StringBuilder(testPrompt);
-      for (String reminder : systemReminders)
-      {
-        sb.append("\n<system-reminder>\n").
-          append(reminder).
-          append("\n</system-reminder>");
-      }
-      finalPrompt = sb.toString();
-    }
-    joiner.add(makeUserMessage(finalPrompt));
-    return joiner.toString();
   }
 
   /**
@@ -943,17 +769,16 @@ public final class EmpiricalTestRunner
 
         Config JSON fields:
           target_description  Description of expected behavior
-          success_criteria    Object with must_contain, must_not_contain, must_use_tools, must_not_use_tools
           priming_messages    Array of messages to send before test prompt (simulates prior turns)
           system_prompt       String passed as --append-system-prompt to claude CLI (optional)
-          system_reminders    Array of strings, each injected as <system-reminder> tags in test prompt (optional)
-          configs             Object mapping config names to prompt text or multi-message object
+          system_reminders    Array of strings, each injected as <system-reminder> tags in test messages (optional)
+          configs             Object mapping config names to multi-message objects
 
-        Config value formats:
-          String: Single-message test using global success_criteria
-            "A_test": "Echo hello world"
+        Config value format:
+          Each config value is an object with a "messages" array. Each message has a "prompt" and
+          optional "success_criteria" with must_contain, must_not_contain, must_use_tools,
+          must_not_use_tools.
 
-          Object: Multi-message test with per-message criteria
             "A_test": {
               "messages": [
                 { "prompt": "First prompt", "success_criteria": { "must_contain": ["expected"] } },
