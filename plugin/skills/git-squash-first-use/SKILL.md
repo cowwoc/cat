@@ -123,7 +123,7 @@ fi
 ### Script Invocation
 
 ```bash
-"$(git rev-parse --show-toplevel)/plugin/scripts/git-squash-quick.sh" "<base-branch>" "$MESSAGE" "$WORKTREE_PATH"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "<base-branch>" "$MESSAGE" "$WORKTREE_PATH"
 ```
 
 The script implements: rebase onto base, backup, commit-tree squash, verify, cleanup. Outputs JSON on success.
