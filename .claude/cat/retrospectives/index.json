@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-18T22:26:53Z",
-  "mistake_count_since_last": 10,
+  "last_retrospective": "2026-02-20T06:19:02-05:00",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -392,7 +392,9 @@
         "M498",
         "M499"
       ],
-      "related_action_items": [],
+      "related_action_items": [
+        "A021"
+      ],
       "note": "Stakeholder reviewers (design, testing) fail to detect duplication, missing validation, and code quality issues. Reviewers read wrong branch or miss patterns spanning multiple files."
     }
   ],
@@ -830,7 +832,7 @@
       "description": "Fix squash workflow to require rebase-before-squash and clarify STATE.md grouping with implementation files, not as separate config commit.",
       "category": "incorrect_implementation",
       "pattern_id": "PATTERN-016",
-      "status": "open",
+      "status": "escalated",
       "created_date": "2026-02-06T19:00:00Z",
       "completed_date": null,
       "related_mistakes": [
@@ -851,6 +853,15 @@
           "M503"
         ],
         "verdict": "ineffective"
+      },
+      "escalation": {
+        "id": "ESCALATE-A018",
+        "escalated_date": "2026-02-20T06:19:02-05:00",
+        "reason": "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
+        "escalation_level": "partial_implementation",
+        "analysis": "git-squash-quick.sh already rebases before squash (confirmed in M488 fix). Remaining gap: ensure all agents use git-squash-quick.sh exclusively (hook blocks alternatives). Status: partially addressed by RemindGitSquash hook.",
+        "proposed_solution": "Hook enforcement in place. Monitor for bypass attempts and consider additional guards against manual git squash operations.",
+        "status": "open"
       }
     },
     {
@@ -894,6 +905,23 @@
         "post_fix_mistakes": [],
         "verdict": "pending"
       }
+    },
+    {
+      "id": "A021",
+      "priority": "medium",
+      "description": "Require stakeholder reviewers to diff against base branch and read all modified files before reviewing. Add mandatory file-reading evidence to review format.",
+      "category": "stakeholder_review_quality",
+      "pattern_id": "PATTERN-018",
+      "status": "open",
+      "created_date": "2026-02-20T06:19:02-05:00",
+      "completed_date": null,
+      "related_mistakes": [
+        "M478",
+        "M496",
+        "M498",
+        "M499"
+      ],
+      "effectiveness_check": null
     }
   ]
 }
