@@ -5,18 +5,17 @@ user-invocable: false
 
 # Status
 
-The user wants you to respond with the contents of the latest `<output skill="status">` tag verbatim, followed by the
-contents of the <next-steps> tag below.
+Echo the content inside the LATEST `<output skill="status">` tag below. Do not summarize, interpret, or add commentary.
 
 <output skill="status">
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output"`
 </output>
 
-<next-steps>
+Then echo this:
+
 **NEXT STEPS**
 
 | Option | Action | Command |
 |--------|--------|---------|
 | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
 | [**2**] | Add new issue | `/cat:add` |
-</next-steps>
