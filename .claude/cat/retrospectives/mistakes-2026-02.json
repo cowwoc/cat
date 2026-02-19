@@ -567,6 +567,35 @@
         "catches_variations": true
       },
       "correct_behavior": "Run git-squash-quick.sh to consolidate all implementation commits into 1 commit before presenting the approval gate. Verify COMMIT_COUNT == 1 before entering Step 7."
+    },
+    {
+      "id": "M363",
+      "timestamp": "2026-02-20T14:19:18.468Z",
+      "category": "environment_state_mismatch",
+      "description": "Worktree captured stale STATE.md for another issue (closed→open regression) during implementation commit",
+      "root_cause": "Worktree was branched from v2.1 before fix-status-instruction-ordering was merged. Implementation commit included the stale open STATE.md for that issue. No validation existed to detect STATE.md regressions for other issues before squashing.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-merge-first-use/SKILL.md",
+      "pattern_keywords": [
+        "STATE.md",
+        "worktree",
+        "stale",
+        "regression",
+        "closed",
+        "open",
+        "squash"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before squashing, verify that no other issues' STATE.md files regressed from closed to open. Restore from base branch if regression detected."
     }
   ]
 }
