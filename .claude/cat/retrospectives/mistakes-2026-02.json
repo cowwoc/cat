@@ -512,6 +512,34 @@
         "catches_variations": true
       },
       "correct_behavior": "SkillLoader.executeDirective() should resolve launcher paths using client/bin/ instead of hooks/bin/, matching the renamed binary output directory. The lookup at line 521 should use pluginRoot.resolve(\"client/bin/\" + launcherName)."
+    },
+    {
+      "id": "M361",
+      "timestamp": "2026-02-20T11:07:00Z",
+      "category": "misleading_documentation",
+      "description": "empirical-test claimed 100% success rate for /cat:status verbatim output but agent summarized instead of echoing in real sessions",
+      "root_cause": "empirical-test methodology does not mandate including the project system prompt (CLAUDE.md content) when testing verbatim-output skills. Tests run without competing general instructions (be helpful, be concise) that are active in real sessions, producing false positives. The correct approach echoes in isolation but fails in production where analytical training is reinforced by CLAUDE.md.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/empirical-test-first-use/SKILL.md",
+      "pattern_keywords": [
+        "empirical-test",
+        "verbatim",
+        "system_prompt",
+        "false_positive",
+        "status",
+        "echo"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When testing verbatim-output skills, always populate system_prompt with CLAUDE.md content to reproduce the competing instructions present in real sessions"
     }
   ]
 }
