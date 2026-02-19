@@ -126,6 +126,24 @@ Before merge, ensure STATE.md is updated in the implementation commit:
 - **Resolution:** implemented
 ```
 
+After updating the current issue's STATE.md, verify no other issues regressed. Run this check
+before calling `git-squash-quick.sh`:
+
+```bash
+# Check for STATE.md regressions: other issues showing closed→open
+REGRESSIONS=$(git -C "${WORKTREE_PATH}" diff "${BASE_BRANCH}..HEAD" -- \
+  '.claude/cat/issues/**/*.md' 2>/dev/null | \
+  grep -A5 "^---.*STATE.md" | grep "^-.*Status.*closed" | wc -l)
+
+if [[ "$REGRESSIONS" -gt 0 ]]; then
+  echo "WARNING: Found STATE.md regressions (closed→open) vs ${BASE_BRANCH}:"
+  git -C "${WORKTREE_PATH}" diff "${BASE_BRANCH}..HEAD" -- \
+    '.claude/cat/issues/**/*.md' | grep -B2 "^-.*Status.*closed"
+  echo "Restore the correct state from base branch before squashing:"
+  echo "  git checkout ${BASE_BRANCH} -- .claude/cat/issues/v*/v*/<issue-name>/STATE.md"
+fi
+```
+
 ### Step 3: Rebase task branch onto base
 
 Rebase the task branch onto the base branch:
