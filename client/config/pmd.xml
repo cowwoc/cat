@@ -115,15 +115,15 @@
   </rule>
   <rule ref="category/java/documentation.xml/CommentRequired">
     <properties>
-      <property name="methodWithOverrideCommentRequirement" value="Ignored"/>
-      <property name="accessorCommentRequirement" value="Ignored"/>
-      <property name="classCommentRequirement" value="Ignored"/>
-      <property name="fieldCommentRequirement" value="Ignored"/>
-      <property name="publicMethodCommentRequirement" value="Required"/>
-      <property name="protectedMethodCommentRequirement" value="Ignored"/>
-      <property name="enumCommentRequirement" value="Ignored"/>
-      <property name="serialVersionUIDCommentRequired" value="Ignored"/>
-      <property name="serialPersistentFieldsCommentRequired" value="Ignored"/>
+      <property name="methodWithOverrideCommentRequirement" value="ignored"/>
+      <property name="accessorCommentRequirement" value="ignored"/>
+      <property name="classCommentRequirement" value="ignored"/>
+      <property name="fieldCommentRequirement" value="ignored"/>
+      <property name="publicMethodCommentRequirement" value="required"/>
+      <property name="protectedMethodCommentRequirement" value="ignored"/>
+      <property name="enumCommentRequirement" value="ignored"/>
+      <property name="serialVersionUIDCommentRequired" value="ignored"/>
+      <property name="serialPersistentFieldsCommentRequired" value="ignored"/>
     </properties>
   </rule>
   <rule ref="category/java/errorprone.xml">
