@@ -1,6 +1,6 @@
 # State
 
-- **Status:** in-progress
+- **Status:** open
 - **Progress:** 60%
 - **Dependencies:** []
 - **Blocks:** []
