@@ -3,11 +3,6 @@ description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
 ---
 
-<!--
-Copyright (c) 2026 Gili Tzabari. All rights reserved.
-Licensed under the CAT Commercial License.
-See LICENSE.md in the project root for license terms.
--->
 # Command Optimizer Skill
 
 **Purpose**: Analyze session tool_use history to identify optimization opportunities and categorize
