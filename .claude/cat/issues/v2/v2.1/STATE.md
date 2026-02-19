@@ -60,6 +60,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - unify-work-preparing-banner
 - update-git-script-references
 - empirical-test-strict-defaults
+- forcedeval-model-invocable-filter
 
 ## Issues Completed
 - acceptance-criteria-options
