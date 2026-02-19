@@ -248,7 +248,9 @@ public class SessionStartHookTest
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try
     {
-      Files.writeString(pluginRoot.resolve("plugin.json"), "{\"version\": \"99.0.0\"}");
+      Path clientDir = pluginRoot.resolve("client");
+      Files.createDirectories(clientDir);
+      Files.writeString(clientDir.resolve("VERSION"), "99.0.0\n");
       try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot))
       {
         JsonMapper mapper = scope.getJsonMapper();
@@ -750,115 +752,101 @@ public class SessionStartHookTest
   }
 
   /**
-   * Verifies that getPluginVersion throws when plugin.json is not found.
+   * Verifies that getPluginVersion throws when client/VERSION is not found.
    */
   @Test(expectedExceptions = AssertionError.class)
-  public void getPluginVersionThrowsForMissingDir() throws IOException
+  public void getPluginVersionThrowsForMissingVersionFile() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = Files.createTempDirectory("cat-test-version-");
-      try
-      {
-        VersionUtils.getPluginVersion(mapper, tempDir);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      VersionUtils.getPluginVersion(tempDir);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that getPluginVersion reads from plugin.json.
+   * Verifies that getPluginVersion reads from client/VERSION.
    */
   @Test
-  public void getPluginVersionReadsFromPluginJson() throws IOException
+  public void getPluginVersionReadsFromClientVersion() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = Files.createTempDirectory("cat-test-version-");
-      try
-      {
-        Files.writeString(tempDir.resolve("plugin.json"), "{\"version\": \"2.5.0\"}");
-        String version = VersionUtils.getPluginVersion(mapper, tempDir);
-        requireThat(version, "version").isEqualTo("2.5.0");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      Path clientDir = tempDir.resolve("client");
+      Files.createDirectories(clientDir);
+      Files.writeString(clientDir.resolve("VERSION"), "3.1\n");
+      String version = VersionUtils.getPluginVersion(tempDir);
+      requireThat(version, "version").isEqualTo("3.1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that getPluginVersion falls back to .claude-plugin/plugin.json.
+   * Verifies that getPluginVersion accepts a three-part version.
    */
   @Test
-  public void getPluginVersionFallsBackToClaudePluginDir() throws IOException
+  public void getPluginVersionAcceptsThreePartVersion() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = Files.createTempDirectory("cat-test-version-");
-      try
-      {
-        Path claudePluginDir = tempDir.resolve(".claude-plugin");
-        Files.createDirectories(claudePluginDir);
-        Files.writeString(claudePluginDir.resolve("plugin.json"), "{\"version\": \"1.0.3\"}");
-        String version = VersionUtils.getPluginVersion(mapper, tempDir);
-        requireThat(version, "version").isEqualTo("1.0.3");
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      Path clientDir = tempDir.resolve("client");
+      Files.createDirectories(clientDir);
+      Files.writeString(clientDir.resolve("VERSION"), "3.2.1\n");
+      String version = VersionUtils.getPluginVersion(tempDir);
+      requireThat(version, "version").isEqualTo("3.2.1");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that getPluginVersion throws when plugin.json has no version field.
+   * Verifies that getPluginVersion throws for an invalid version format.
    */
   @Test(expectedExceptions = AssertionError.class)
-  public void getPluginVersionThrowsWhenNoVersionField() throws IOException
+  public void getPluginVersionThrowsForInvalidFormat() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = Files.createTempDirectory("cat-test-version-");
-      try
-      {
-        Files.writeString(tempDir.resolve("plugin.json"), "{\"name\": \"test\"}");
-        VersionUtils.getPluginVersion(mapper, tempDir);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      Path clientDir = tempDir.resolve("client");
+      Files.createDirectories(clientDir);
+      Files.writeString(clientDir.resolve("VERSION"), "not-a-version\n");
+      VersionUtils.getPluginVersion(tempDir);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 
   /**
-   * Verifies that getPluginVersion throws for malformed JSON.
+   * Verifies that getPluginVersion throws for an empty VERSION file.
    */
-  @Test(expectedExceptions = tools.jackson.core.JacksonException.class)
-  public void getPluginVersionThrowsForMalformedJson() throws IOException
+  @Test(expectedExceptions = AssertionError.class)
+  public void getPluginVersionThrowsForEmptyFile() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path tempDir = Files.createTempDirectory("cat-test-version-");
+    try
     {
-      JsonMapper mapper = scope.getJsonMapper();
-      Path tempDir = Files.createTempDirectory("cat-test-version-");
-      try
-      {
-        Files.writeString(tempDir.resolve("plugin.json"), "not json");
-        VersionUtils.getPluginVersion(mapper, tempDir);
-      }
-      finally
-      {
-        TestUtils.deleteDirectoryRecursively(tempDir);
-      }
+      Path clientDir = tempDir.resolve("client");
+      Files.createDirectories(clientDir);
+      Files.writeString(clientDir.resolve("VERSION"), "\n");
+      VersionUtils.getPluginVersion(tempDir);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
 }

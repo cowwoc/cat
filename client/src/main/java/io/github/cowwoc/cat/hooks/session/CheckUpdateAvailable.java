@@ -68,7 +68,7 @@ public final class CheckUpdateAvailable implements SessionStartHandler
 
     try
     {
-      String currentVersion = VersionUtils.getPluginVersion(scope.getJsonMapper(), pluginRoot);
+      String currentVersion = VersionUtils.getPluginVersion(pluginRoot);
 
       Path cacheDir = projectDir.resolve(".claude/cat/backups/update-check");
       Path cacheFile = cacheDir.resolve("latest_version.json");
