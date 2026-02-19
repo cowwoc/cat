@@ -198,28 +198,21 @@ public final class ProgressBanner implements SkillOutput
       allPhases = true;
 
     if (issueId.isEmpty())
-    {
       return generateGenericPreparingBanner();
-    }
-    else if (allPhases)
-    {
+    if (allPhases)
       return generateAllPhases(issueId);
-    }
-    else
+    Phase phase;
+    switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
     {
-      Phase phase;
-      switch (phaseStr.toLowerCase(java.util.Locale.ROOT))
-      {
-        case "preparing" -> phase = Phase.PREPARING;
-        case "implementing" -> phase = Phase.IMPLEMENTING;
-        case "confirming" -> phase = Phase.CONFIRMING;
-        case "reviewing" -> phase = Phase.REVIEWING;
-        case "merging" -> phase = Phase.MERGING;
-        default -> throw new IllegalArgumentException(
-          "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
-      }
-      return generateBanner(issueId, phase);
+      case "preparing" -> phase = Phase.PREPARING;
+      case "implementing" -> phase = Phase.IMPLEMENTING;
+      case "confirming" -> phase = Phase.CONFIRMING;
+      case "reviewing" -> phase = Phase.REVIEWING;
+      case "merging" -> phase = Phase.MERGING;
+      default -> throw new IllegalArgumentException(
+        "Unknown phase '" + phaseStr + "'. Valid: preparing, implementing, confirming, reviewing, merging");
     }
+    return generateBanner(issueId, phase);
   }
 
   /**
