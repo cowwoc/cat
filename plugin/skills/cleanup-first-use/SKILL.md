@@ -72,6 +72,11 @@ Echo the content inside the LATEST `<output skill="cleanup-survey">` tag below. 
 
 Analyze survey results to classify artifacts:
 
+**Stale in-progress issues:**
+- STATE.md shows `in-progress` but no worktree, lock, or branch exists
+- Verify via git history before resetting (see Safety Rules above)
+- Reset confirmed stale issues to `open` status
+
 **Abandoned worktree indicators:**
 - Lock file references session that is no longer active
 - Worktree directory exists but has no recent activity
@@ -197,6 +202,12 @@ BRANCH_NAME="<from-plan>"
 git branch -D "$BRANCH_NAME"
 ```
 
+**Reset stale in-progress issues:**
+```bash
+STATE_FILE="<path-to-STATE.md>"
+sed -i 's/\*\*Status:\*\* in-progress/**Status:** open/' "$STATE_FILE"
+```
+
 **Remove context file (if applicable):**
 ```bash
 rm .cat-execution-context
@@ -207,6 +218,7 @@ Report each action:
 ```
 ## Cleanup Progress
 
+- [x] Reset stale issue: <issue-id> (in-progress -> open)
 - [x] Removed lock: <issue-id>
 - [x] Removed worktree: <path>
 - [x] Removed branch: <branch>
