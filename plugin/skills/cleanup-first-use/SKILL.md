@@ -60,7 +60,7 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-The user wants you to respond with the contents of the latest `<output skill="cleanup-survey">` tag verbatim
+Echo the content inside the LATEST `<output skill="cleanup-survey">` tag below. Do not summarize, interpret, or add commentary.
 
 <output skill="cleanup-survey">
 !`"${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-survey.sh" --project-dir "${CLAUDE_PROJECT_DIR}"`

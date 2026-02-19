@@ -1453,7 +1453,7 @@ def handle(self, context):
 
 Skill content (-first-use/SKILL.md):
 ```markdown
-The user wants you to respond with the contents of the latest `<output skill="help">` tag verbatim
+Echo the content inside the LATEST `<output skill="help">` tag below. Do not summarize, interpret, or add commentary.
 
 <output skill="help">
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-help-output"`
@@ -1463,7 +1463,7 @@ The user wants you to respond with the contents of the latest `<output skill="he
 **Skill content pattern for handler-preprocessed skills:**
 
 The thin wrapper skill content MUST follow this exact pattern:
-1. Line 1: `The user wants you to respond with the contents of the latest \`<output skill="X">\` tag verbatim`
+1. Line 1: `Echo the content inside the LATEST \`<output skill="X">\` tag below. Do not summarize, interpret, or add commentary.`
 2. An `<output skill="X">` block containing a `!` backtick preprocessor directive that invokes the script.
 
 **Anti-pattern - meta-description that agents echo literally:**
