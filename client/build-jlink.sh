@@ -65,6 +65,7 @@ readonly -a HANDLERS=(
   "verify-audit:skills.VerifyAudit"
   "empirical-test-runner:skills.EmpiricalTestRunner"
   "merge-and-cleanup:util.MergeAndCleanup"
+  "git-squash:util.GitSquash"
   "git-merge-linear:util.GitMergeLinear"
   "post-tool-use-failure:PostToolUseFailure"
 )

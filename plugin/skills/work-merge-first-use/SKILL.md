@@ -86,7 +86,7 @@ constructing a valid message before calling the script:
 PRIMARY_MESSAGE=$(echo "$COMMITS" | python3 -c "import sys, json; commits = json.load(sys.stdin); print(commits[0]['message'])")
 
 # Squash implementation commits
-"${CLAUDE_PLUGIN_ROOT}/scripts/git-squash-quick.sh" "${BASE_BRANCH}" "$PRIMARY_MESSAGE" "${WORKTREE_PATH}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${BASE_BRANCH}" "$PRIMARY_MESSAGE" "${WORKTREE_PATH}"
 
 # Target: 1-2 commits max
 # - Implementation commit (all feature/bugfix/test work)
