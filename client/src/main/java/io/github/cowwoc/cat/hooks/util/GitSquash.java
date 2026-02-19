@@ -14,27 +14,33 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
- * Atomic git squash with comprehensive safety checks.
+ * Deterministic git squash via commit-tree with race condition prevention.
  * <p>
- * Performs all git-squash operations in a single atomic execution,
- * reducing round-trips while preserving all safety checks.
+ * Implements the commit-tree approach: pin base branch reference, rebase onto base,
+ * detect concurrent modifications, create backup, squash via commit-tree, and verify.
+ * <p>
+ * This replaces the prohibited soft-reset approach. The commit-tree method creates
+ * commits from committed tree objects, ignoring working directory state entirely.
  */
 public final class GitSquash
 {
+  private static final Pattern COMMIT_MESSAGE_PATTERN =
+    Pattern.compile("^(feature|bugfix|refactor|test|performance|config|planning|docs): \\S");
+  private static final DateTimeFormatter BACKUP_TIMESTAMP_FORMATTER =
+    DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
   private final JvmScope scope;
   private final String directory;
-  private String backupBranch = "";
 
   /**
    * Creates a new GitSquash instance.
@@ -53,344 +59,301 @@ public final class GitSquash
   }
 
   /**
-   * Executes the squash operation.
+   * Executes the squash operation using the commit-tree approach.
+   * <p>
+   * The process:
+   * <ol>
+   *   <li>Validate commit message format</li>
+   *   <li>Pin base branch reference to prevent race conditions</li>
+   *   <li>Compute merge-base for concurrent modification detection</li>
+   *   <li>Rebase onto pinned base (handle failures gracefully)</li>
+   *   <li>Detect concurrent modifications (files modified on both branches)</li>
+   *   <li>Create timestamped backup branch</li>
+   *   <li>Verify clean working directory</li>
+   *   <li>Create squashed commit via commit-tree</li>
+   *   <li>Move branch to new commit</li>
+   *   <li>Verify diff with backup is empty</li>
+   *   <li>Verify exactly 1 commit from base</li>
+   * </ol>
    *
-   * @param baseCommit the parent of first commit to squash
-   * @param lastCommit the last commit to include in squash
-   * @param messageFile the file containing commit message
-   * @param originalBranch the optional branch to update (empty for current)
+   * @param baseBranch    the base branch to squash onto
+   * @param commitMessage the commit message for the squashed commit
    * @return JSON string with operation result
-   * @throws IOException if the operation fails
+   * @throws IllegalArgumentException if {@code baseBranch} is blank, or {@code commitMessage} is blank
+   *                                  or has an invalid format
+   * @throws IOException              if the operation fails
    */
-  public String execute(String baseCommit, String lastCommit, String messageFile,
-    String originalBranch) throws IOException
+  public String execute(String baseBranch, String commitMessage) throws IOException
   {
-    requireThat(baseCommit, "baseCommit").isNotBlank();
-    requireThat(lastCommit, "lastCommit").isNotBlank();
-    requireThat(messageFile, "messageFile").isNotBlank();
-    requireThat(originalBranch, "originalBranch").isNotNull();
+    requireThat(baseBranch, "baseBranch").isNotBlank();
+    requireThat(commitMessage, "commitMessage").isNotBlank();
 
-    long startTime = System.currentTimeMillis();
-
-    Path messagePath = Paths.get(messageFile);
-    if (!Files.exists(messagePath))
-      throw new IOException("Commit message file not found: " + messageFile);
-
-    checkoutCommit(lastCommit);
-
-    String currentHead = getCommitHash("HEAD");
-    String expectedHead = getCommitHash(lastCommit);
-    if (!currentHead.equals(expectedHead))
-      throw new IOException("HEAD is not at expected last commit: " + lastCommit);
-
-    createBackupBranch();
-
-    if (!isWorkingDirectoryClean())
-      throw new IOException("Working directory not clean - commit or stash changes first");
-
-    runGitCommandSingleLineInDirectory(directory, "rev-parse", "--verify", baseCommit);
-
-    int commitCount = getCommitCount(baseCommit, "HEAD");
-
-    String originalHead = getCommitHash("HEAD");
-    String commitsBeforeBase = "";
-
-    String parents = runGitCommandSingleLineInDirectory(directory, "log", "-1", "--format=%P", baseCommit);
-    if (!parents.isBlank())
-      commitsBeforeBase = getCommitList(baseCommit + "~1");
-
-    softResetToBase(baseCommit);
-
-    verifyNoChangesLostOrAdded();
-
-    String commitMessage = Files.readString(messagePath, StandardCharsets.UTF_8);
-    createSquashedCommit(commitMessage);
-
-    String squashedCommit = getCommitHash("HEAD");
-
-    verifyNonSquashedCommitsUnchanged(baseCommit, commitsBeforeBase, originalHead);
-
-    verifyFinalCount(baseCommit);
-
-    if (!originalBranch.isEmpty() && isDetachedHead())
+    // Step 1: Validate commit message format
+    if (!COMMIT_MESSAGE_PATTERN.matcher(commitMessage).find())
     {
-      forceUpdateBranch(originalBranch, "HEAD");
-      checkoutBranch(originalBranch);
+      throw new IllegalArgumentException("""
+        Invalid commit message format.
+
+        Commit message must start with a valid type prefix:
+          feature:     New capability
+          bugfix:      Bug fix
+          refactor:    Code restructure
+          test:        Test addition/modification
+          performance: Optimization
+          config:      Configuration change
+          planning:    Issue tracking
+          docs:        Documentation
+
+        Received: %s
+
+        Example: feature: add user authentication""".formatted(commitMessage));
     }
 
-    deleteBackupBranch();
+    // Step 2: Pin base branch reference BEFORE rebase to prevent race conditions
+    String base = runGitCommandSingleLineInDirectory(directory, "rev-parse", baseBranch);
 
-    long endTime = System.currentTimeMillis();
-    long duration = (endTime - startTime) / 1000;
+    // Step 3: Save pre-rebase state for concurrent modification detection
+    String mergeBase = runGitCommandSingleLineInDirectory(directory, "merge-base", "HEAD", base);
 
-    return buildSuccessJson(commitCount, squashedCommit, duration);
-  }
+    // Step 4: Rebase onto pinned base
+    ProcessRunner.Result rebaseResult = ProcessRunner.run(
+      "git", "-C", directory, "rebase", base);
+    if (rebaseResult.exitCode() != 0)
+      return handleRebaseFailure(rebaseResult);
 
-  /**
-   * Checks out a commit.
-   *
-   * @param commit the commit reference
-   * @throws IOException if the operation fails
-   */
-  private void checkoutCommit(String commit) throws IOException
-  {
-    runGitCommandInDirectory(directory, "checkout", commit);
-  }
+    // Step 5: Detect concurrent modifications
+    Set<String> concurrentMods = detectConcurrentModifications(base, mergeBase);
 
-  /**
-   * Gets the full hash for a commit reference.
-   *
-   * @param ref the reference
-   * @return the full commit hash
-   * @throws IOException if the operation fails
-   */
-  private String getCommitHash(String ref) throws IOException
-  {
-    return runGitCommandSingleLineInDirectory(directory, "rev-parse", ref);
-  }
-
-  /**
-   * Creates a backup branch.
-   *
-   * @throws IOException if the operation fails
-   */
-  private void createBackupBranch() throws IOException
-  {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
-    backupBranch = "backup-before-squash-" + LocalDateTime.now().format(formatter);
-
+    // Step 6: Create timestamped backup branch
+    String backupBranch = "backup-before-squash-" + LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
     runGitCommandInDirectory(directory, "branch", backupBranch);
-    runGitCommandSingleLineInDirectory(directory, "rev-parse", "--verify", backupBranch);
-  }
 
+    // Verify backup was created
+    ProcessRunner.Result verifyBackup = ProcessRunner.run(
+      "git", "-C", directory, "show-ref", "--verify", "--quiet",
+      "refs/heads/" + backupBranch);
+    if (verifyBackup.exitCode() != 0)
+      throw new IOException("Backup branch '" + backupBranch + "' was not created");
 
-  /**
-   * Checks if the working directory is clean.
-   *
-   * @return true if clean
-   * @throws IOException if the operation fails
-   */
-  private boolean isWorkingDirectoryClean() throws IOException
-  {
+    // Step 7: Verify clean working directory
     String status = runGitCommandInDirectory(directory, "status", "--porcelain");
-    return status.isEmpty();
-  }
+    if (!status.isEmpty())
+      throw new IOException("Working directory is not clean");
 
+    // Step 8: Create squashed commit using commit-tree
+    String tree = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD^{tree}");
+    String newCommit = runGitCommandSingleLineInDirectory(directory,
+      "commit-tree", tree, "-p", base, "-m", commitMessage);
 
-  /**
-   * Gets the commit count between two references.
-   *
-   * @param base the base reference
-   * @param head the head reference
-   * @return the commit count
-   * @throws IOException if the operation fails
-   */
-  private int getCommitCount(String base, String head) throws IOException
-  {
-    String count = runGitCommandSingleLineInDirectory(directory, "rev-list", "--count", base + ".." + head);
-    return Integer.parseInt(count);
-  }
+    // Step 9: Move branch to new squashed commit
+    runGitCommandInDirectory(directory, "reset", "--hard", newCommit);
 
-  /**
-   * Gets the list of commit hashes.
-   *
-   * @param ref the reference
-   * @return newline-separated commit hashes
-   * @throws IOException if the operation fails
-   */
-  private String getCommitList(String ref) throws IOException
-  {
-    return runGitCommandInDirectory(directory, "rev-list", ref);
-  }
-
-  /**
-   * Performs a soft reset to the base commit.
-   *
-   * @param baseCommit the base commit
-   * @throws IOException if the operation fails
-   */
-  private void softResetToBase(String baseCommit) throws IOException
-  {
-    runGitCommandInDirectory(directory, "reset", "--soft", baseCommit);
-  }
-
-  /**
-   * Verifies that no changes were lost or added during squash.
-   *
-   * @throws IOException if changes were lost or added
-   */
-  private void verifyNoChangesLostOrAdded() throws IOException
-  {
-    String diffOutput = runGitCommandInDirectory(directory, "diff", "--stat", backupBranch);
+    // Step 10: Verify diff with backup is empty
+    String diffOutput = runGitCommandInDirectory(directory, "diff", backupBranch);
     if (!diffOutput.isEmpty())
     {
-      throw new IOException("Staged changes don't match original commits! " +
-        "Rollback: git reset --hard " + backupBranch);
+      String diffStat = runGitCommandInDirectory(directory, "diff", backupBranch, "--stat");
+      ObjectNode errorJson = scope.getJsonMapper().createObjectNode();
+      errorJson.put("status", "VERIFY_FAILED");
+      errorJson.put("backup_branch", backupBranch);
+      errorJson.put("message", "Content changed during squash - backup preserved");
+      errorJson.put("diff_stat", diffStat);
+      return scope.getJsonMapper().writeValueAsString(errorJson);
     }
-  }
 
-  /**
-   * Creates the squashed commit.
-   *
-   * @param message the commit message
-   * @throws IOException if the operation fails
-   */
-  private void createSquashedCommit(String message) throws IOException
-  {
-    runGitCommandInDirectory(directory, "commit", "-m", message);
-  }
-
-  /**
-   * Verifies that non-squashed commits remain unchanged.
-   *
-   * @param baseCommit the base commit
-   * @param commitsBeforeBase the commits before base
-   * @param originalHead the original HEAD
-   * @throws IOException if commits were modified
-   */
-  private void verifyNonSquashedCommitsUnchanged(String baseCommit, String commitsBeforeBase,
-    String originalHead) throws IOException
-  {
-    if (!commitsBeforeBase.isEmpty())
+    // Step 11: Verify exactly 1 commit from base
+    String countStr = runGitCommandSingleLineInDirectory(directory,
+      "rev-list", "--count", base + "..HEAD");
+    // git rev-list --count always returns a non-negative integer
+    int commitCount = Integer.parseInt(countStr);
+    if (commitCount != 1)
     {
-      String currentCommitsBeforeBase = getCommitList(baseCommit + "~1");
-      if (!commitsBeforeBase.equals(currentCommitsBeforeBase))
+      // Restore from backup
+      runGitCommandInDirectory(directory, "reset", "--hard", backupBranch);
+      throw new IOException("Expected 1 commit from base, got " + commitCount);
+    }
+
+    // Build success JSON
+    String shortCommit = runGitCommandSingleLineInDirectory(directory,
+      "rev-parse", "--short", "HEAD");
+    return buildSuccessJson(shortCommit, newCommit, backupBranch, concurrentMods);
+  }
+
+  /**
+   * Handles a rebase failure by creating a backup, aborting the rebase, and returning
+   * appropriate JSON.
+   *
+   * @param rebaseResult the failed rebase result
+   * @return JSON string with REBASE_CONFLICT or ERROR status
+   * @throws IOException if git operations fail during error handling
+   */
+  private String handleRebaseFailure(ProcessRunner.Result rebaseResult) throws IOException
+  {
+    // Check for conflicting files
+    ProcessRunner.Result conflictResult = ProcessRunner.run(
+      "git", "-C", directory, "diff", "--name-only", "--diff-filter=U");
+    String conflictingFiles = conflictResult.stdout().strip();
+
+    // Create backup before aborting
+    String rebaseBackup = "backup-after-rebase-conflict-" +
+      LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
+    ProcessRunner.run("git", "-C", directory, "branch", rebaseBackup);
+
+    // Abort rebase to return to clean state
+    ProcessRunner.run("git", "-C", directory, "rebase", "--abort");
+
+    ObjectNode json = scope.getJsonMapper().createObjectNode();
+
+    if (!conflictingFiles.isEmpty())
+    {
+      json.put("status", "REBASE_CONFLICT");
+      json.put("backup_branch", rebaseBackup);
+      json.put("message", "Conflict during pre-squash rebase");
+      ArrayNode filesArray = json.putArray("conflicting_files");
+      for (String file : conflictingFiles.split("\n"))
       {
-        throw new IOException("Commits before base were modified. " +
-          "Rollback: git reset --hard " + backupBranch);
+        String trimmed = file.strip();
+        if (!trimmed.isEmpty())
+          filesArray.add(trimmed);
       }
     }
-
-    String treeDiff = runGitCommandInDirectory(directory, "diff", "--stat", originalHead);
-    if (!treeDiff.isEmpty())
+    else
     {
-      throw new IOException("Working tree doesn't match original HEAD! " +
-        "Rollback: git reset --hard " + backupBranch);
+      json.put("status", "ERROR");
+      json.put("backup_branch", rebaseBackup);
+      json.put("message", "Rebase failed: " + rebaseResult.stdout().strip());
     }
+    return scope.getJsonMapper().writeValueAsString(json);
   }
 
   /**
-   * Verifies that exactly 1 commit exists after squash.
+   * Detects files modified on both the base branch and the issue branch.
+   * <p>
+   * These were auto-resolved by rebase, but the resolution should be verified by the caller.
    *
-   * @param baseCommit the base commit
-   * @throws IOException if the count is not 1
+   * @param base      the pinned base commit
+   * @param mergeBase the merge-base before rebase
+   * @return set of files modified on both branches, or empty set if none
    */
-  private void verifyFinalCount(String baseCommit) throws IOException
+  private Set<String> detectConcurrentModifications(String base, String mergeBase)
   {
-    int newCommitCount = getCommitCount(baseCommit, "HEAD");
-    if (newCommitCount != 1)
-      throw new IOException("Expected 1 commit after squash, got " + newCommitCount);
-  }
+    Set<String> result = new LinkedHashSet<>();
 
-  /**
-   * Checks if HEAD is detached.
-   *
-   * @return true if HEAD is detached
-   * @throws IOException if the operation fails
-   */
-  private boolean isDetachedHead() throws IOException
-  {
-    String branch = runGitCommandSingleLineInDirectory(directory, "rev-parse", "--abbrev-ref", "HEAD");
-    return branch.equals("HEAD");
-  }
+    // Files modified on base branch since the worktree branched
+    ProcessRunner.Result baseChangedResult = ProcessRunner.run(
+      "git", "-C", directory, "diff", "--name-only", mergeBase + ".." + base);
+    String baseOutput = baseChangedResult.stdout().strip();
+    if (baseChangedResult.exitCode() != 0 || baseOutput.isBlank())
+      return result;
 
-  /**
-   * Force updates a branch to point to a commit.
-   *
-   * @param branch the branch name
-   * @param commit the commit reference
-   * @throws IOException if the operation fails
-   */
-  private void forceUpdateBranch(String branch, String commit) throws IOException
-  {
-    runGitCommandInDirectory(directory, "branch", "-f", branch, commit);
-  }
+    Set<String> baseChanged = parseLinesToSet(baseOutput);
 
-  /**
-   * Checks out a branch.
-   *
-   * @param branch the branch name
-   * @throws IOException if the operation fails
-   */
-  private void checkoutBranch(String branch) throws IOException
-  {
-    runGitCommandInDirectory(directory, "checkout", branch);
-  }
+    // Files modified on issue branch (after rebase, relative to base)
+    ProcessRunner.Result issueChangedResult = ProcessRunner.run(
+      "git", "-C", directory, "diff", "--name-only", base + "..HEAD");
+    String issueOutput = issueChangedResult.stdout().strip();
+    if (issueChangedResult.exitCode() != 0 || issueOutput.isBlank())
+      return result;
 
-  /**
-   * Deletes the backup branch.
-   */
-  private void deleteBackupBranch()
-  {
-    try
+    Set<String> issueChanged = parseLinesToSet(issueOutput);
+
+    // Intersection
+    for (String file : baseChanged)
     {
-      if (!backupBranch.isEmpty())
-        runGitCommandInDirectory(directory, "branch", "-D", backupBranch);
+      if (issueChanged.contains(file))
+        result.add(file);
     }
-    catch (IOException _)
-    {
-    }
+    return result;
+  }
+
+  /**
+   * Parses newline-delimited output into a set of non-empty strings.
+   *
+   * @param output the newline-delimited string
+   * @return a set of non-empty lines, preserving insertion order
+   */
+  private static Set<String> parseLinesToSet(String output)
+  {
+    Set<String> result = new LinkedHashSet<>(Arrays.asList(output.split("\n")));
+    result.removeIf(String::isEmpty);
+    return result;
   }
 
   /**
    * Builds the success JSON response.
    *
-   * @param commitCount the number of commits squashed
-   * @param squashedCommit the squashed commit hash
-   * @param duration the operation duration in seconds
-   * @return JSON string
-   * @throws IOException if JSON creation fails
+   * @param shortCommit    the short commit hash
+   * @param fullCommit     the full commit hash
+   * @param backupBranch   the backup branch name
+   * @param concurrentMods files modified on both branches, or empty set
+   * @return JSON string with OK status
+   * @throws IOException if JSON serialization fails
    */
-  private String buildSuccessJson(int commitCount, String squashedCommit, long duration)
-    throws IOException
+  private String buildSuccessJson(String shortCommit, String fullCommit, String backupBranch,
+    Set<String> concurrentMods) throws IOException
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
-    json.put("status", "success");
-    json.put("message", "Squash completed successfully: " + commitCount + " commits → 1 commit");
-    json.put("duration_seconds", duration);
-    json.put("backup_branch", "none");
-    json.put("squashed_commit", squashedCommit);
-    json.put("commits_squashed", commitCount);
-    json.put("working_directory", System.getProperty("user.dir"));
-    json.put("timestamp", Instant.now().toString());
+    json.put("status", "OK");
+    json.put("commit", shortCommit);
+    json.put("commit_full", fullCommit);
+    json.put("backup_branch", backupBranch);
+    json.put("backup_verified", true);
 
-    return scope.getJsonMapper().writerWithDefaultPrettyPrinter().writeValueAsString(json);
+    if (!concurrentMods.isEmpty())
+    {
+      ArrayNode warningsArray = json.putArray("warnings");
+      ObjectNode warning = warningsArray.addObject();
+      warning.put("type", "CONCURRENT_MODIFICATION");
+      ArrayNode filesArray = warning.putArray("files");
+      for (String file : concurrentMods)
+        filesArray.add(file);
+      warning.put("message",
+        "These files were modified on both branches. Rebase auto-resolved the changes " +
+          "but the result should be verified.");
+    }
+
+    return scope.getJsonMapper().writeValueAsString(json);
   }
 
   /**
    * Main method for command-line execution.
    *
-   * @param args command-line arguments
+   * @param args command-line arguments: BASE_BRANCH COMMIT_MESSAGE [WORKTREE_PATH]
    * @throws IOException if the operation fails
    */
   public static void main(String[] args) throws IOException
   {
-    if (args.length < 3)
+    if (args.length < 2)
     {
       System.err.println("""
         {
           "status": "error",
-          "message": "Usage: git-squash <base_commit> <last_commit> <message_file> [branch]"
+          "message": "Usage: git-squash <BASE_BRANCH> <COMMIT_MESSAGE> [WORKTREE_PATH]"
         }""");
       System.exit(1);
     }
 
-    String baseCommit = args[0];
-    String lastCommit = args[1];
-    String messageFile = args[2];
-    String originalBranch;
-    if (args.length > 3)
-      originalBranch = args[3];
+    String baseBranch = args[0];
+    String commitMessage = args[1];
+    String directory;
+    if (args.length > 2)
+      directory = args[2];
     else
-      originalBranch = "";
+      directory = ".";
 
     try (JvmScope scope = new MainJvmScope())
     {
-      GitSquash cmd = new GitSquash(scope, ".");
+      GitSquash cmd = new GitSquash(scope, directory);
       try
       {
-        String result = cmd.execute(baseCommit, lastCommit, messageFile, originalBranch);
+        String result = cmd.execute(baseBranch, commitMessage);
         System.out.println(result);
+      }
+      catch (IllegalArgumentException e)
+      {
+        // Commit message validation failure - print plain text to stderr (matching bash behavior)
+        System.err.println(e.getMessage());
+        System.exit(1);
       }
       catch (IOException e)
       {

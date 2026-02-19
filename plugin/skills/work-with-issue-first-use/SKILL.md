@@ -533,12 +533,11 @@ Initialize loop counter: `AUTOFIX_ITERATION=0`
 **NOTE:** "REVIEW_PASSED" means stakeholder review passed, NOT user approval to merge.
 User approval is a SEPARATE gate in Step 6.
 
-## Step 6: Squash Commits Before Review
+## Step 6: Rebase and Squash Commits Before Review
 
-**Squash worktree commits by topic into clean, reviewable commits before presenting the approval gate.**
-
-**Rebase onto current base first.** The base branch may have advanced since the worktree was
-created (e.g., learning commits, other merges). Rebase ensures squashing only captures task changes:
+**MANDATORY: Rebase the issue branch onto the base branch before presenting work for user review.** The base branch may
+have advanced since the worktree was created (e.g., learning commits, other merges). Rebasing ensures the user reviews
+changes against the current base, not a stale snapshot, and that squashing only captures task changes:
 
 ```bash
 git -C ${WORKTREE_PATH} rebase ${BASE_BRANCH}
@@ -553,7 +552,7 @@ Then use `/cat:git-squash` to consolidate commits:
 topics exist, use the most significant commit's message. The squash script requires the message as its second argument:
 
 ```bash
-"$(git rev-parse --show-toplevel)/plugin/scripts/git-squash-quick.sh" "${BASE_BRANCH}" "<commit message from execution result>" "${WORKTREE_PATH}"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${BASE_BRANCH}" "<commit message from execution result>" "${WORKTREE_PATH}"
 ```
 
 Do NOT use generic messages like "squash commit", "squash commits", or "combined work". The main agent already has the
