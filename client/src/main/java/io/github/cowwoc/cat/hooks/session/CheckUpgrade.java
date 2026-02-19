@@ -71,7 +71,7 @@ public final class CheckUpgrade implements SessionStartHandler
     try
     {
       String lastMigratedVersion = getLastMigratedVersion(projectDir);
-      String pluginVersion = VersionUtils.getPluginVersion(scope.getJsonMapper(), pluginRoot);
+      String pluginVersion = VersionUtils.getPluginVersion(pluginRoot);
 
       int cmp = VersionUtils.compareVersions(lastMigratedVersion, pluginVersion);
 
