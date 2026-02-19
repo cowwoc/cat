@@ -8,18 +8,18 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 /**
  * Utility methods for plugin version reading and semantic version comparison.
  */
 public final class VersionUtils
 {
+  private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+(\\.\\d+){0,2}$");
+
   /**
    * Prevents instantiation.
    */
@@ -28,34 +28,30 @@ public final class VersionUtils
   }
 
   /**
-   * Reads the plugin version from plugin.json.
-   * <p>
-   * Searches first in {@code pluginRoot/plugin.json}, then falls back to
-   * {@code pluginRoot/.claude-plugin/plugin.json}.
+   * Reads the plugin version from {@code pluginRoot/client/VERSION}.
    *
-   * @param mapper the JSON mapper to use for parsing
    * @param pluginRoot the plugin root directory
    * @return the version string
-   * @throws NullPointerException if mapper or pluginRoot is null
-   * @throws AssertionError if plugin.json is not found or the version field is missing/invalid
-   * @throws IOException if reading plugin.json fails
+   * @throws NullPointerException if {@code pluginRoot} is null
+   * @throws AssertionError if the VERSION file is not found, empty, or has an invalid format
+   * @throws IOException if reading the VERSION file fails
    */
-  public static String getPluginVersion(JsonMapper mapper, Path pluginRoot) throws IOException
+  public static String getPluginVersion(Path pluginRoot) throws IOException
   {
-    requireThat(mapper, "mapper").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotNull();
-    Path pluginFile = pluginRoot.resolve("plugin.json");
-    if (!Files.isRegularFile(pluginFile))
-      pluginFile = pluginRoot.resolve(".claude-plugin/plugin.json");
-    if (!Files.isRegularFile(pluginFile))
-      throw new AssertionError("plugin.json not found in " + pluginRoot + " or " +
-        pluginRoot.resolve(".claude-plugin"));
-
-    JsonNode root = mapper.readTree(Files.readString(pluginFile));
-    JsonNode versionNode = root.get("version");
-    if (versionNode == null || !versionNode.isString())
-      throw new AssertionError("version field missing or invalid in plugin.json");
-    return versionNode.asString();
+    Path versionFile = pluginRoot.resolve("client/VERSION");
+    if (!Files.isRegularFile(versionFile))
+    {
+      throw new AssertionError("Plugin version not found: " + versionFile + "\n" +
+        "Run /cat-update-client to build and install the jlink runtime.");
+    }
+    String version = Files.readString(versionFile).strip();
+    if (version.isEmpty() || !VERSION_PATTERN.matcher(version).matches())
+    {
+      throw new AssertionError("Invalid version format in " + versionFile + ": '" + version +
+        "'. Expected X.Y or X.Y.Z");
+    }
+    return version;
   }
 
   /**
