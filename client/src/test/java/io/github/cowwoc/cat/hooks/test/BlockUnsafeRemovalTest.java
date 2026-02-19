@@ -750,7 +750,8 @@ public final class BlockUnsafeRemovalTest
     try (JvmScope scope = new TestJvmScope())
     {
       // Clock is fixed 14399 seconds (4 hours minus 1 second) after lock creation
-      Clock boundaryClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).minusSeconds(1), ZoneOffset.UTC);
+      Instant boundaryInstant = Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).minusSeconds(1);
+      Clock boundaryClock = Clock.fixed(boundaryInstant, ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, boundaryClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
@@ -794,7 +795,8 @@ public final class BlockUnsafeRemovalTest
     try (JvmScope scope = new TestJvmScope())
     {
       // Clock is fixed 14401 seconds (4 hours plus 1 second) after lock creation
-      Clock boundaryClock = Clock.fixed(Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).plusSeconds(1), ZoneOffset.UTC);
+      Instant boundaryInstant = Instant.ofEpochSecond(lockCreatedAt).plus(Duration.ofHours(4)).plusSeconds(1);
+      Clock boundaryClock = Clock.fixed(boundaryInstant, ZoneOffset.UTC);
       BlockUnsafeRemoval handler = new BlockUnsafeRemoval(scope, boundaryClock);
       String workingDirectory = tempDir.toString();
       String command = "rm -rf " + worktreePath;
