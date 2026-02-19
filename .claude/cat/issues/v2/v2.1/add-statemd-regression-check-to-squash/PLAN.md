@@ -1,9 +1,10 @@
-# Plan: Add STATE.md Regression Check to git-squash-quick.sh
+# Plan: Add Concurrent Modification Detection to GitSquash
 
 ## Goal
 
-Add automated validation to git-squash-quick.sh that detects and aborts when another issue's STATE.md regresses from
-closed to open, preventing stale worktree captures from reaching the final squash commit.
+Add concurrent modification detection to GitSquash.java that warns when files were modified on both the base branch
+and the issue branch. This is a general-purpose safety check that helps callers verify auto-resolved rebase results.
+Replaces the bash script git-squash-quick.sh with a Java implementation using the commit-tree approach.
 
 ## Satisfies
 
@@ -12,24 +13,45 @@ None (infrastructure/prevention from M363)
 ## Risk Assessment
 
 - **Risk Level:** LOW
-- **Concerns:** False positives if the current issue legitimately changes another STATE.md
-- **Mitigation:** Exclude the current issue's own STATE.md from the regression check
+- **Concerns:** Warnings for intentional concurrent modifications may be noisy
+- **Mitigation:** Warnings only (squash still succeeds); callers decide whether to act
 
 ## Files to Modify
 
-- plugin/scripts/git-squash-quick.sh - Add regression check after rebase, before commit-tree
+- client/src/main/java/io/github/cowwoc/cat/hooks/util/GitSquash.java - Rewrite with commit-tree approach and
+  concurrent modification detection
+- client/src/test/java/io/github/cowwoc/cat/hooks/test/GitSquashTest.java - TestNG tests for all squash scenarios
+- client/build-jlink.sh - Add git-squash launcher to HANDLERS
+- plugin/skills/work-merge-first-use/SKILL.md - Update script path to Java launcher
+- plugin/skills/work-with-issue-first-use/SKILL.md - Update script path to Java launcher
+- plugin/skills/git-squash-first-use/SKILL.md - Update script path to Java launcher
+
+## Files to Delete
+
+- plugin/scripts/git-squash-quick.sh - Replaced by Java
+- tests/hooks/git-squash-quick.bats - Replaced by TestNG
 
 ## Acceptance Criteria
 
-- [ ] git-squash-quick.sh aborts with clear error when another issue's STATE.md regressed from closed to open
-- [ ] git-squash-quick.sh succeeds normally when current issue's STATE.md changes from open/in-progress to closed
-- [ ] Bats test for regression detection added to tests/hooks/git-squash-quick.bats
+- [x] GitSquash.java warns (in JSON output) when files are modified on both branches
+- [x] GitSquash.java succeeds normally when only the issue branch modifies files
+- [x] TestNG tests for concurrent modification detection, commit message validation, rebase conflicts, and squash
+  verification
+- [x] Skill SKILL.md files updated to reference Java launcher
+- [x] Bash script and bats tests deleted
 
 ## Execution Steps
 
-1. **Add regression check function:** After the rebase step and before commit-tree, scan all STATE.md files in the
-   rebased tree that differ from BASE. If any show `Status: open` where BASE has `Status: closed`, abort with an error
-   listing the regressed files.
-   - Files: plugin/scripts/git-squash-quick.sh
-2. **Add Bats tests:** Test that squash aborts on STATE.md regression and succeeds on normal STATE.md changes.
-   - Files: tests/hooks/git-squash-quick.bats
+1. **Rewrite GitSquash.java:** Replace prohibited soft-reset approach with commit-tree approach. Add concurrent
+   modification detection after rebase, comparing files modified on base branch (merge-base..base) with files modified
+   on issue branch (base..HEAD). Report overlapping files as warnings in JSON output.
+   - Files: client/src/main/java/io/github/cowwoc/cat/hooks/util/GitSquash.java
+2. **Rewrite GitSquashTest.java:** Convert bats tests to TestNG with isolated temp git repos.
+   - Files: client/src/test/java/io/github/cowwoc/cat/hooks/test/GitSquashTest.java
+3. **Add launcher:** Register git-squash in build-jlink.sh HANDLERS array.
+   - Files: client/build-jlink.sh
+4. **Update skill references:** Change script paths from bash to Java launcher.
+   - Files: plugin/skills/work-merge-first-use/SKILL.md, plugin/skills/work-with-issue-first-use/SKILL.md,
+     plugin/skills/git-squash-first-use/SKILL.md
+5. **Delete bash script and bats tests.**
+   - Files: plugin/scripts/git-squash-quick.sh, tests/hooks/git-squash-quick.bats
