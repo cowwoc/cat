@@ -7,10 +7,12 @@
 # merge-and-cleanup.sh - Merge issue branch and clean up worktree/branch/lock
 #
 # Handles the happy path of the merging phase for CAT's /cat:work command:
-# 1. Fast-forward merge issue branch to base branch (from worktree, no checkout required)
-# 2. Remove the issue worktree
-# 3. Delete the issue branch
-# 4. Release the issue lock
+# 1. Detect worktree and base branch
+# 2. Fast-forward merge issue branch to base branch (from worktree, no checkout required)
+# 3. Remove the issue worktree
+# 4. Delete the issue branch
+# 5. Delete backup-before-squash-* branches that are ancestors of the merged commit
+# 6. Release the issue lock
 #
 # Usage:
 #   merge-and-cleanup.sh <project-dir> <issue-id> <session-id> [--worktree <path>]
@@ -86,10 +88,12 @@ Arguments:
   --worktree     Optional worktree path (auto-detected if not provided)
 
 Operations (in order):
-  1. Fast-forward merge issue branch to base branch (using git push . HEAD:<base>)
-  2. Remove issue worktree
-  3. Delete issue branch
-  4. Release issue lock
+  1. Detect worktree and base branch
+  2. Fast-forward merge issue branch to base branch (using git push . HEAD:<base>)
+  3. Remove issue worktree
+  4. Delete issue branch
+  5. Delete backup-before-squash-* branches that are ancestors of the merged commit
+  6. Release issue lock
 
 Exit Codes:
   0: Success
@@ -237,7 +241,7 @@ fi
 # Source progress library if available
 if [[ -f "${SCRIPT_DIR}/lib/progress.sh" ]]; then
   source "${SCRIPT_DIR}/lib/progress.sh"
-  progress_init 4
+  progress_init 6
 else
   # Stub functions if progress.sh not available
   progress_init() { :; }
@@ -343,7 +347,26 @@ else
 fi
 
 # ============================================================================
-# STEP 5: Release issue lock
+# STEP 5: Clean up squash backup branches
+# ============================================================================
+progress_step "Cleaning up squash backup branches"
+
+BACKUPS_DELETED=0
+for backup in $(git -C "$PROJECT_DIR" branch --list "backup-before-squash-*" --format="%(refname:short)" 2>/dev/null); do
+  # HEAD now points to the merged commit on $BASE_BRANCH (updated by STEP 2)
+  if git -C "$PROJECT_DIR" merge-base --is-ancestor "$backup" HEAD 2>/dev/null; then
+    if git -C "$PROJECT_DIR" branch -D "$backup" >/dev/null 2>&1; then
+      BACKUPS_DELETED=$((BACKUPS_DELETED + 1))
+    else
+      echo "WARNING: Failed to delete backup branch: $backup" >&2
+    fi
+  fi
+done
+
+progress_done "Deleted $BACKUPS_DELETED squash backup branch(es)"
+
+# ============================================================================
+# STEP 6: Release issue lock
 # ============================================================================
 progress_step "Releasing issue lock"
 

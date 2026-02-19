@@ -16,15 +16,6 @@ BASE_BRANCH="${1:?ERROR: BASE_BRANCH required as first argument}"
 COMMIT_MESSAGE="${2:?ERROR: COMMIT_MESSAGE required as second argument}"
 WORKTREE_PATH="${3:-.}"
 
-# Cleanup handler: delete backup branch if script exits after creating it
-BACKUP=""
-cleanup_backup() {
-  if [[ -n "$BACKUP" ]]; then
-    git -C "$WORKTREE_PATH" branch -D "$BACKUP" >/dev/null 2>&1 || true
-  fi
-}
-trap cleanup_backup EXIT
-
 # Validate commit message format
 if ! echo "$COMMIT_MESSAGE" | grep -qE '^(feature|bugfix|refactor|test|performance|config|planning|docs): \S'; then
   cat >&2 <<EOF
@@ -51,23 +42,17 @@ fi
 BASE=$(git -C "$WORKTREE_PATH" rev-parse "$BASE_BRANCH")
 
 # Rebase onto pinned base
-REBASE_OUTPUT=$(git -C "$WORKTREE_PATH" rebase "$BASE" 2>&1)
-REBASE_EXIT=$?
-
-if [[ $REBASE_EXIT -ne 0 ]]; then
+REBASE_BACKUP=""
+if ! REBASE_OUTPUT=$(git -C "$WORKTREE_PATH" rebase "$BASE" 2>&1); then
   # Rebase failed - check if it's a conflict
   CONFLICTING_FILES=$(git -C "$WORKTREE_PATH" diff --name-only --diff-filter=U 2>/dev/null || echo "")
 
   # Create backup before aborting
-  BACKUP="backup-after-rebase-conflict-$(date +%Y%m%d-%H%M%S)"
-  git -C "$WORKTREE_PATH" branch "$BACKUP" 2>/dev/null || true
+  REBASE_BACKUP="backup-after-rebase-conflict-$(date +%Y%m%d-%H%M%S)"
+  git -C "$WORKTREE_PATH" branch "$REBASE_BACKUP" 2>/dev/null || true
 
   # Abort rebase to return to clean state
   git -C "$WORKTREE_PATH" rebase --abort 2>/dev/null || true
-
-  # Preserve rebase conflict backup for caller recovery (clear so trap doesn't delete)
-  REBASE_BACKUP="$BACKUP"
-  BACKUP=""
 
   if [[ -n "$CONFLICTING_FILES" ]]; then
     # Format conflicting files as JSON array
@@ -123,9 +108,8 @@ git -C "$WORKTREE_PATH" reset --hard "$NEW_COMMIT"
 DIFF_OUTPUT=$(git -C "$WORKTREE_PATH" diff "$BACKUP" 2>&1)
 if [[ -n "$DIFF_OUTPUT" ]]; then
   DIFF_STAT=$(git -C "$WORKTREE_PATH" diff "$BACKUP" --stat 2>&1)
-  # Preserve backup for investigation (clear so trap doesn't delete)
+  # Preserve backup for investigation
   VERIFY_BACKUP="$BACKUP"
-  BACKUP=""
   cat >&2 <<EOF
 {
   "status": "VERIFY_FAILED",
@@ -143,14 +127,8 @@ if [[ "$COMMIT_COUNT" -ne 1 ]]; then
   echo "ERROR: Expected 1 commit from base, got $COMMIT_COUNT" >&2
   echo "Restoring backup..." >&2
   git -C "$WORKTREE_PATH" reset --hard "$BACKUP"
-  # Backup used for restore — clear so trap doesn't delete
-  BACKUP=""
   exit 1
 fi
-
-# Delete backup (clear variable so trap doesn't re-delete)
-git -C "$WORKTREE_PATH" branch -D "$BACKUP" >/dev/null
-BACKUP=""
 
 # Output JSON for machine parsing
 cat <<EOF
@@ -158,7 +136,7 @@ cat <<EOF
   "status": "OK",
   "commit": "$(git -C "$WORKTREE_PATH" rev-parse --short HEAD)",
   "commit_full": "$NEW_COMMIT",
-  "backup_verified": true,
-  "backup_deleted": true
+  "backup_branch": "$BACKUP",
+  "backup_verified": true
 }
 EOF
