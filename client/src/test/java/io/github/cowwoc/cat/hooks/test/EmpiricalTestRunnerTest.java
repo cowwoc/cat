@@ -33,7 +33,7 @@ import tools.jackson.databind.json.JsonMapper;
 public final class EmpiricalTestRunnerTest
 {
   /**
-   * Verifies that buildInput with empty priming produces only the test prompt message.
+   * Verifies that buildInput with empty priming produces only the test message.
    */
   @Test
   public void buildInputWithEmptyPriming() throws IOException
@@ -46,7 +46,8 @@ public final class EmpiricalTestRunnerTest
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
 
-      String result = runner.buildInput(new ArrayList<>(), "hello world");
+      String result = runner.buildInput(new ArrayList<>(),
+        List.of(new TestMessage("hello world", Map.of())), List.of());
 
       // Should be a single line (one user message)
       String[] lines = result.split("\n");
@@ -68,7 +69,7 @@ public final class EmpiricalTestRunnerTest
 
   /**
    * Verifies that buildInput with string-only priming produces user messages for each string
-   * plus the test prompt.
+   * plus the test message.
    */
   @Test
   public void buildInputWithStringOnlyPriming() throws IOException
@@ -85,7 +86,8 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.UserMessage("first message"),
         new PrimingMessage.UserMessage("second message"));
 
-      String result = runner.buildInput(priming, "test prompt");
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("test prompt", Map.of())), List.of());
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(3);
@@ -100,7 +102,7 @@ public final class EmpiricalTestRunnerTest
       requireThat(second.path("message").path("content").get(0).path("text").asString(""),
         "secondText").isEqualTo("second message");
 
-      // Verify test prompt
+      // Verify test message
       JsonNode third = mapper.readTree(lines[2]);
       requireThat(third.path("message").path("content").get(0).path("text").asString(""),
         "testPrompt").isEqualTo("test prompt");
@@ -129,9 +131,10 @@ public final class EmpiricalTestRunnerTest
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.ToolUse("Bash", Map.of("command", "ls"), "file1.txt\nfile2.txt"));
 
-      String result = runner.buildInput(priming, "test prompt");
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("test prompt", Map.of())), List.of());
 
-      // tool_use generates 2 messages (assistant + user tool_result), plus test prompt = 3 lines
+      // tool_use generates 2 messages (assistant + user tool_result), plus test message = 3 lines
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(3);
 
@@ -186,9 +189,10 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.UserMessage("user prompt"),
         new PrimingMessage.ToolUse("Read", Map.of("file_path", "/tmp/test.txt"), "contents"));
 
-      String result = runner.buildInput(priming, "final prompt");
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("final prompt", Map.of())), List.of());
 
-      // 1 user message + 2 tool messages + 1 test prompt = 4 lines
+      // 1 user message + 2 tool messages + 1 test message = 4 lines
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(4);
 
@@ -205,7 +209,7 @@ public final class EmpiricalTestRunnerTest
       requireThat(thirdMsg.path("message").path("content").get(0).path("type").asString(""),
         "thirdContentType").isEqualTo("tool_result");
 
-      // Fourth: test prompt
+      // Fourth: test message
       JsonNode fourthMsg = mapper.readTree(lines[3]);
       requireThat(fourthMsg.path("message").path("content").get(0).path("text").asString(""),
         "testPrompt").isEqualTo("final prompt");
@@ -374,7 +378,8 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.ToolUse("Bash", Map.of("command", "echo 'hello\nworld'"),
           "hello\nworld"));
 
-      String result = runner.buildInput(priming, "test");
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("test", Map.of())), List.of());
 
       // Each line should be parseable as JSON individually
       for (String line : result.split("\n"))
@@ -898,7 +903,8 @@ public final class EmpiricalTestRunnerTest
       List<PrimingMessage> priming = List.of(
         new PrimingMessage.ToolUse("Bash", complexInput, "abc123 Initial commit"));
 
-      String result = runner.buildInput(priming, "test");
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("test", Map.of())), List.of());
 
       String[] lines = result.split("\n");
       JsonNode assistantMsg = mapper.readTree(lines[0]);
@@ -1002,10 +1008,11 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.ToolUse("Read", Map.of("file_path", "/tmp/test"), "output2"),
         new PrimingMessage.ToolUse("Write", Map.of("file_path", "/tmp/out"), "output3"));
 
-      String result = runner.buildInput(priming, "test");
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("test", Map.of())), List.of());
 
       String[] lines = result.split("\n");
-      // 3 tool uses = 6 messages (assistant + user for each) + 1 test prompt = 7 lines
+      // 3 tool uses = 6 messages (assistant + user for each) + 1 test message = 7 lines
       requireThat(lines.length, "lineCount").isEqualTo(7);
 
       // Verify first tool_use has ID toolu_priming_0
@@ -1139,7 +1146,7 @@ public final class EmpiricalTestRunnerTest
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       try
       {
-        runner.buildInput(null, "prompt");
+        runner.buildInput(null, List.of(new TestMessage("prompt", Map.of())), List.of());
         requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
@@ -1154,10 +1161,10 @@ public final class EmpiricalTestRunnerTest
   }
 
   /**
-   * Verifies that buildInput rejects null testPrompt.
+   * Verifies that buildInput rejects null messages list.
    */
   @Test
-  public void buildInputRejectsNullTestPrompt() throws IOException
+  public void buildInputRejectsNullMessages() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     Path envFile = Files.createTempFile(tempDir, "env", ".sh");
@@ -1167,12 +1174,12 @@ public final class EmpiricalTestRunnerTest
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       try
       {
-        runner.buildInput(List.of(), null);
+        runner.buildInput(List.of(), null, List.of());
         requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
-        requireThat(e.getMessage(), "message").contains("testPrompt");
+        requireThat(e.getMessage(), "message").contains("messages");
       }
     }
     finally
@@ -1443,7 +1450,7 @@ public final class EmpiricalTestRunnerTest
   }
 
   /**
-   * Verifies that buildInput with system reminders appends them to the test prompt user message
+   * Verifies that buildInput with system reminders appends them to the test message user message
    * wrapped in system-reminder tags.
    */
   @Test
@@ -1459,7 +1466,8 @@ public final class EmpiricalTestRunnerTest
 
       List<String> reminders = List.of("You are a helpful assistant.", "Always be concise.");
 
-      String result = runner.buildInput(new ArrayList<>(), "hello world", reminders);
+      String result = runner.buildInput(new ArrayList<>(),
+        List.of(new TestMessage("hello world", Map.of())), reminders);
 
       // Should be a single line (one user message with reminders appended)
       String[] lines = result.split("\n");
@@ -1479,7 +1487,7 @@ public final class EmpiricalTestRunnerTest
 
   /**
    * Verifies that buildInput with system reminders and priming messages produces the correct
-   * message sequence with reminders appended to the test prompt.
+   * message sequence with reminders appended to the test message.
    */
   @Test
   public void buildInputWithSystemRemindersAndPriming() throws IOException
@@ -1496,7 +1504,8 @@ public final class EmpiricalTestRunnerTest
         new PrimingMessage.UserMessage("first message"));
       List<String> reminders = List.of("Reminder content here.");
 
-      String result = runner.buildInput(priming, "test prompt", reminders);
+      String result = runner.buildInput(priming,
+        List.of(new TestMessage("test prompt", Map.of())), reminders);
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(2);
@@ -1506,7 +1515,7 @@ public final class EmpiricalTestRunnerTest
       String firstText = firstMsg.path("message").path("content").get(0).path("text").asString("");
       requireThat(firstText, "firstText").isEqualTo("first message");
 
-      // Second line: test prompt with system reminders appended
+      // Second line: test message with system reminders appended
       JsonNode secondMsg = mapper.readTree(lines[1]);
       String secondText = secondMsg.path("message").path("content").get(0).path("text").asString("");
       requireThat(secondText, "secondText").contains("test prompt").contains("<system-reminder>").
@@ -1585,7 +1594,8 @@ public final class EmpiricalTestRunnerTest
       EmpiricalTestRunner runner = new EmpiricalTestRunner(scope);
       JsonMapper mapper = scope.getJsonMapper();
 
-      String result = runner.buildInput(new ArrayList<>(), "hello world", List.of());
+      String result = runner.buildInput(new ArrayList<>(),
+        List.of(new TestMessage("hello world", Map.of())), List.of());
 
       String[] lines = result.split("\n");
       requireThat(lines.length, "lineCount").isEqualTo(1);
