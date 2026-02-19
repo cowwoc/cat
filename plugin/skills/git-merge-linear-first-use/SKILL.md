@@ -58,23 +58,28 @@ fi
 ## Script Invocation
 
 ```bash
-"$(git rev-parse --show-toplevel)/plugin/scripts/git-merge-linear.sh" "$WORKTREE_PATH" "$COMMIT_MSG"
+"${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear" \
+  "$TASK_BRANCH" --base "$BASE_BRANCH"
 ```
 
-The script implements all steps: pin base, check divergence, check deletions, squash commits if needed, verify
-merge-base, fast-forward, verify, and cleanup. Outputs JSON on success.
+The Java tool implements all steps: detect base branch, check divergence, check suspicious deletions, verify
+merge-base, fast-forward merge, cleanup (optional). Outputs JSON on success.
 
 ## Result Handling
 
-| Status | Meaning | Agent Recovery Action |
+On success, the tool prints JSON to stdout (exit code 0) with `"status": "success"`. On failure, it prints a JSON error
+to stderr (exit code 1) with `"status": "error"` and a `"message"` field containing the error description.
+
+| Output | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
-| `OK` | Merge completed successfully | Report success with commit hash and files changed |
-| `NOT_LINEAR` | History is not linear | Rebase issue branch onto base first, then retry merge |
-| `FF_FAILED` | Base branch advanced during merge | Rebase issue branch onto updated base, then retry merge |
-| `ERROR: Base branch has diverged` | Base has commits not in issue branch | Rebase onto base before merging. These commits would be LOST if squashed now |
-| `ERROR: Suspicious deletions detected` | Issue branch deletes infrastructure files | Likely from incorrect rebase conflict resolution. Re-rebase with correct resolution |
-| `ERROR: No commits to merge` | Issue branch is already at base | Nothing to merge |
-| `ERROR: Uncommitted changes detected` | Working directory not clean | Commit or stash changes before merging |
+| `"status": "success"` (stdout) | Merge completed successfully | Report `commit_sha` and `task_branch`, continue |
+| `"status": "error"`: Must be on {base} branch | Wrong branch checked out | `git checkout {base_branch}` first |
+| `"status": "error"`: Working directory is not clean | Uncommitted changes | Commit or stash changes before merging |
+| `"status": "error"`: Task branch must have exactly 1 commit | Multiple commits | Squash commits first |
+| `"status": "error"`: Task branch is behind {base} | Base has commits not in issue branch | Rebase onto base before merging |
+| `"status": "error"`: Fast-forward merge failed | History diverged | Rebase issue branch onto base first |
+| `"status": "error"`: Merge commit detected | Non-linear history after merge | Investigate merge state, should not occur with ff-only |
+| `"status": "error"`: cat-base file not found | Cannot auto-detect base branch | Pass `--base {branch}` explicitly or recreate worktree |
 
 ## Common Issues
 
