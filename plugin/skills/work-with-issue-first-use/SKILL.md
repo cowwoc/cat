@@ -567,6 +567,36 @@ commits from the execution result — reuse the primary implementation commit's 
 
 This ensures the user reviews clean commit history, not intermediate implementation state.
 
+### Verify Squash Quality
+
+**After squashing, verify that no further squashing is needed.**
+
+Run this check against the commits on the branch:
+
+```bash
+git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD
+```
+
+**Indicators that further squashing is needed** (any one triggers):
+
+1. **Same type prefix + overlapping files:** Two or more commits share the same type prefix (e.g., both `feature:`)
+   AND modify at least one file in common. Check with:
+   ```bash
+   # For each pair of same-prefix commits, check file overlap
+   comm -12 <(git show --name-only --format="" COMMIT_A | sort) \
+            <(git show --name-only --format="" COMMIT_B | sort)
+   ```
+
+2. **Iterative commit messages:** Commit messages containing words like "fix", "update", "address", "correct",
+   "adjust" that reference work done in an earlier commit on the same branch.
+
+3. **Refactor touching same files as feature:** A `refactor:` commit modifies the same files as a preceding
+   `feature:` or `bugfix:` commit, suggesting the refactor is part of the same work.
+
+**If any indicator triggers:** Return to squash step and consolidate the affected commits.
+
+**If no indicators trigger:** Proceed to approval gate.
+
 ## Step 7: Approval Gate
 
 **CRITICAL: This step is MANDATORY when trust != "high".**
