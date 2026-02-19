@@ -15,8 +15,10 @@ import tools.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -29,6 +31,7 @@ public final class VerifyStateInCommit implements BashHandler
 {
   private static final Pattern IMPLEMENTATION_COMMIT_PATTERN = Pattern.compile(
     "git\\s+commit(?!.*--amend).*-m\\s+.*?(bugfix|feature):", Pattern.DOTALL);
+  private static final Pattern CD_PATTERN = Pattern.compile("(?:^|[;&|])\\s*cd\\s+([^;&|\\s]+)");
 
   /**
    * Creates a new handler for verifying STATE.md in commits.
@@ -50,12 +53,17 @@ public final class VerifyStateInCommit implements BashHandler
     if (!IMPLEMENTATION_COMMIT_PATTERN.matcher(command).find())
       return Result.allow();
 
-    if (!isInCatWorktree(workingDirectory))
+    // If the command contains a "cd <path>", use that as the effective working directory.
+    // This handles patterns like "cd /path/to/worktree && git commit ..." where the Claude
+    // session cwd differs from where git is actually running.
+    String effectiveDirectory = extractCdDirectory(command, workingDirectory);
+
+    if (!isInCatWorktree(effectiveDirectory))
       return Result.allow();
 
     try
     {
-      List<String> stagedFiles = getStagedFilesInDirectory(workingDirectory);
+      List<String> stagedFiles = getStagedFilesInDirectory(effectiveDirectory);
       boolean stateMdStaged = stagedFiles.stream().anyMatch(f -> f.endsWith("STATE.md"));
 
       if (!stateMdStaged)
@@ -70,7 +78,7 @@ public final class VerifyStateInCommit implements BashHandler
             git add .claude/cat/issues/**/STATE.md""");
       }
 
-      String stateMdContent = readStagedStateMd(stagedFiles, workingDirectory);
+      String stateMdContent = readStagedStateMd(stagedFiles, effectiveDirectory);
       if (!stateMdContent.isEmpty() && !stateMdContent.contains("completed"))
       {
         return Result.warn(
@@ -84,6 +92,31 @@ public final class VerifyStateInCommit implements BashHandler
     {
       return Result.allow();
     }
+  }
+
+  /**
+   * Extracts the effective working directory from a command, checking for a leading {@code cd} that
+   * changes directory before running git.
+   * <p>
+   * When a command contains {@code cd /path && git commit}, the git command runs in {@code /path},
+   * not in the Claude session's {@code cwd}. This method detects that pattern and returns the
+   * {@code cd} target so that git operations run in the correct directory.
+   *
+   * @param command the bash command string
+   * @param fallback the fallback directory if no {@code cd} is found
+   * @return the extracted directory, or {@code fallback} if no {@code cd} is present
+   */
+  private String extractCdDirectory(String command, String fallback)
+  {
+    Matcher cdMatcher = CD_PATTERN.matcher(command);
+    String lastCdDir = fallback;
+    while (cdMatcher.find())
+    {
+      String dir = cdMatcher.group(1).strip();
+      if (!dir.isEmpty())
+        lastCdDir = Paths.get(dir).normalize().toString();
+    }
+    return lastCdDir;
   }
 
   /**

@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
+import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -44,25 +45,32 @@ public final class BlockUnsafeRemoval implements BashHandler
   private static final Pattern WORKTREE_REMOVE_PATTERN =
     Pattern.compile("\\bgit\\s+worktree\\s+remove\\s+(?:-[^\\s]+\\s+)*([^\\s;&|]+)", Pattern.CASE_INSENSITIVE);
   private static final Duration STALE_LOCK_THRESHOLD = Duration.ofHours(4);
+  private final JsonMapper jsonMapper;
   private final Clock clock;
 
   /**
-   * Creates a new handler for blocking unsafe directory removal using the system clock.
+   * Creates a new handler for blocking unsafe directory removal.
+   *
+   * @param scope the JVM scope providing access to shared resources
+   * @throws NullPointerException if {@code scope} is null
    */
-  public BlockUnsafeRemoval()
+  public BlockUnsafeRemoval(JvmScope scope)
   {
-    this(Clock.systemUTC());
+    this(scope, Clock.systemUTC());
   }
 
   /**
    * Creates a new handler for blocking unsafe directory removal.
    *
+   * @param scope the JVM scope providing access to shared resources
    * @param clock the clock to use for determining lock staleness
-   * @throws NullPointerException if {@code clock} is null
+   * @throws NullPointerException if {@code scope} or {@code clock} are null
    */
-  public BlockUnsafeRemoval(Clock clock)
+  public BlockUnsafeRemoval(JvmScope scope, Clock clock)
   {
+    assert that(scope, "scope").isNotNull().elseThrow();
     assert that(clock, "clock").isNotNull().elseThrow();
+    this.jsonMapper = scope.getJsonMapper();
     this.clock = clock;
   }
 
@@ -326,11 +334,12 @@ public final class BlockUnsafeRemoval implements BashHandler
    * <ul>
    *   <li>Main worktree root (derived from git structure)</li>
    *   <li>Current session's CWD (from hook input)</li>
-   *   <li>Locked worktrees owned by other sessions</li>
+   *   <li>Locked worktrees owned by other active sessions</li>
    * </ul>
    * <p>
    * Worktrees locked by the current session are NOT protected, allowing the owning
-   * session to clean up its own worktrees during merge/cleanup.
+   * session to clean up its own worktrees during merge/cleanup. Locks older than 4
+   * hours are treated as stale (from dead sessions) and are not protected.
    *
    * @param workingDirectory the shell's current working directory
    * @param sessionId the current session ID
@@ -350,7 +359,7 @@ public final class BlockUnsafeRemoval implements BashHandler
     {
       paths.add(mainWorktree.toRealPath());
 
-      // 3. Locked worktrees owned by OTHER sessions
+      // 3. Locked worktrees owned by OTHER active sessions
       Path locksDir = mainWorktree.resolve(".claude/cat/locks");
       if (Files.isDirectory(locksDir))
       {
@@ -387,6 +396,25 @@ public final class BlockUnsafeRemoval implements BashHandler
   }
 
   /**
+   * Reads and parses a lock file as JSON.
+   *
+   * @param lockFile the lock file to parse
+   * @return the parsed JSON node, or null if the file cannot be parsed
+   */
+  private JsonNode parseLockFile(Path lockFile)
+  {
+    try
+    {
+      String content = Files.readString(lockFile);
+      return jsonMapper.readTree(content);
+    }
+    catch (IOException _)
+    {
+      return null;
+    }
+  }
+
+  /**
    * Checks if a lock file is owned by the given session.
    *
    * @param lockFile the lock file path
@@ -397,20 +425,13 @@ public final class BlockUnsafeRemoval implements BashHandler
   {
     if (sessionId.isEmpty())
       return false;
-    try
-    {
-      String content = Files.readString(lockFile);
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode lock = mapper.readTree(content);
-      JsonNode lockSessionNode = lock.get("session_id");
-      if (lockSessionNode == null || !lockSessionNode.isString())
-        return false;
-      return sessionId.equals(lockSessionNode.asString());
-    }
-    catch (IOException _)
-    {
+    JsonNode lock = parseLockFile(lockFile);
+    if (lock == null)
       return false;
-    }
+    JsonNode lockSessionNode = lock.get("session_id");
+    if (lockSessionNode == null || !lockSessionNode.isString())
+      return false;
+    return sessionId.equals(lockSessionNode.asString());
   }
 
   /**
@@ -421,23 +442,18 @@ public final class BlockUnsafeRemoval implements BashHandler
    */
   private boolean isStale(Path lockFile)
   {
-    try
-    {
-      String content = Files.readString(lockFile);
-      JsonMapper mapper = JsonMapper.builder().build();
-      JsonNode lock = mapper.readTree(content);
-      JsonNode createdAtNode = lock.get("created_at");
-      if (createdAtNode == null || !createdAtNode.isNumber())
-        return false;
-      long createdAtEpoch = createdAtNode.asLong();
-      Instant createdAt = Instant.ofEpochSecond(createdAtEpoch);
-      Duration age = Duration.between(createdAt, clock.instant());
-      return age.compareTo(STALE_LOCK_THRESHOLD) > 0;
-    }
-    catch (IOException _)
-    {
+    JsonNode lock = parseLockFile(lockFile);
+    if (lock == null)
       return false;
-    }
+    JsonNode createdAtNode = lock.get("created_at");
+    if (createdAtNode == null || !createdAtNode.isNumber())
+      return false;
+    long createdAtEpoch = createdAtNode.asLong();
+    if (createdAtEpoch <= 0)
+      return false;
+    Instant createdAt = Instant.ofEpochSecond(createdAtEpoch);
+    Duration age = Duration.between(createdAt, clock.instant());
+    return age.compareTo(STALE_LOCK_THRESHOLD) > 0;
   }
 
   /**
