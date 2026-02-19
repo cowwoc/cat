@@ -596,6 +596,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before squashing, verify that no other issues' STATE.md files regressed from closed to open. Restore from base branch if regression detected."
+    },
+    {
+      "id": "M364",
+      "timestamp": "2026-02-20T16:29:42Z",
+      "category": "protocol_violation",
+      "description": "Stakeholder review subagents read files from /workspace/ (main worktree) instead of the issue worktree, causing false-positive rejection findings",
+      "root_cause": "Delegation prompt instructed subagents to work within the worktree path but subagents ignored the directive and used their default cwd (/workspace/). Issue context files (PLAN.md) were not pre-fetched with absolute paths, leaving subagents to discover them independently via relative paths that resolved to the wrong workspace.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review-first-use/SKILL.md",
+      "pattern_keywords": [
+        "worktree",
+        "subagent",
+        "file_path",
+        "stakeholder_review",
+        "absolute_path"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M267",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Pre-fetch issue context files using absolute worktree paths and embed content directly in delegation prompt; instruct subagents to use absolute paths prefixed with WORKTREE_PATH/ for any additional reads"
     }
   ]
 }
