@@ -59,6 +59,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - unify-userpromptsubmit-hooks
 - unify-work-preparing-banner
 - update-git-script-references
+- empirical-test-strict-defaults
 
 ## Issues Completed
 - acceptance-criteria-options
