@@ -98,6 +98,59 @@ else
 fi
 echo ""
 
+# Detect stale in-progress issues (in-progress status but no worktree/lock/branch)
+echo "### Stale In-Progress Issues"
+echo ""
+ISSUES_DIR="$PROJECT_DIR/.claude/cat/issues"
+STALE_ISSUES=""
+if [[ -d "$ISSUES_DIR" ]]; then
+    while IFS= read -r state_file; do
+        # Skip version-level STATE.md files (parent dir starts with "v")
+        issue_dir=$(dirname "$state_file")
+        issue_name=$(basename "$issue_dir")
+        [[ "$issue_name" =~ ^v[0-9] ]] && continue
+
+        status=$(grep -oP '\*\*Status:\*\* \K.*' "$state_file" 2>/dev/null | tr -d ' ')
+        [[ "$status" != "in-progress" ]] && continue
+
+        # Extract version from path: .../vMAJOR/vMAJOR.MINOR/issue-name/STATE.md
+        version_dir=$(dirname "$issue_dir")
+        version=$(basename "$version_dir")
+        major_dir=$(dirname "$version_dir")
+        major=$(basename "$major_dir")
+
+        # Derive the issue ID (e.g., 2.1-issue-name)
+        major_num="${major#v}"
+        minor_num="${version#v${major_num}.}"
+        issue_id="${major_num}.${minor_num}-${issue_name}"
+
+        # Check for corresponding worktree, lock, or branch
+        has_worktree=false
+        has_lock=false
+        has_branch=false
+
+        [[ -d "$PROJECT_DIR/.claude/cat/worktrees/$issue_id" ]] && has_worktree=true
+        [[ -f "$PROJECT_DIR/.claude/cat/locks/${issue_id}.lock" ]] && has_lock=true
+        git show-ref --verify --quiet "refs/heads/$issue_id" 2>/dev/null && has_branch=true
+
+        if [[ "$has_worktree" == "false" && "$has_lock" == "false" && "$has_branch" == "false" ]]; then
+            STALE_ISSUES+="  $issue_id (no worktree, no lock, no branch)"$'\n'
+        fi
+    done < <(find "$ISSUES_DIR" -name "STATE.md" 2>/dev/null)
+fi
+
+if [[ -n "$STALE_ISSUES" ]]; then
+    echo '```'
+    echo -n "$STALE_ISSUES"
+    echo '```'
+    echo ""
+    echo "These issues have **Status: in-progress** but no active worktree, lock, or branch."
+    echo "They were likely set to in-progress by a session that crashed or was cancelled."
+else
+    echo "No stale in-progress issues found."
+fi
+echo ""
+
 echo "---"
 echo ""
 echo "**Survey complete.** Review the items above and proceed with cleanup plan."
