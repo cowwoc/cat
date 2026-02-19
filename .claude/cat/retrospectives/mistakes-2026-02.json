@@ -540,6 +540,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When testing verbatim-output skills, always populate system_prompt with CLAUDE.md content to reproduce the competing instructions present in real sessions"
+    },
+    {
+      "id": "M362",
+      "timestamp": "2026-02-20T14:18:47Z",
+      "category": "protocol_violation",
+      "description": "Agent presented 6 unsquashed commits at the approval gate instead of squashing by topic first",
+      "root_cause": "The work-with-issue skill Step 6 (Squash Commits Before Review) had no enforcement gate. The agent skipped the squash step and proceeded directly to Step 7 (Approval Gate) because no blocking check verified squashing had completed before entering the gate.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue-first-use/SKILL.md",
+      "pattern_keywords": [
+        "squash",
+        "approval_gate",
+        "unsquashed_commits",
+        "protocol_violation",
+        "commit_count"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Run git-squash-quick.sh to consolidate all implementation commits into 1 commit before presenting the approval gate. Verify COMMIT_COUNT == 1 before entering Step 7."
     }
   ]
 }
