@@ -1,6 +1,6 @@
 # State
 
-- **Status:** in-progress
+- **Status:** open
 - **Progress:** 33%
 - **Dependencies:** [migrate-python-to-java]
 - **Blocks:** []
