@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -71,8 +70,7 @@ public final class WarnApprovalWithoutRenderDiff implements AskHandler
     if (sessionId.isEmpty())
       return Result.allow();
 
-    Path sessionFile = Paths.get(System.getProperty("user.home"),
-      ".config/claude/projects/-workspace", sessionId + ".jsonl");
+    Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))
       return Result.allow();

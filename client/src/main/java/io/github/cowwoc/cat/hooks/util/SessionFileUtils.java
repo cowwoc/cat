@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Utility methods for working with session files.
  * <p>
- * Session files are stored in JSONL format at ~/.config/claude/projects/-workspace/[session_id].jsonl
+ * Session files are stored in JSONL format at {claudeConfigDir}/projects/-workspace/[session_id].jsonl
  */
 public final class SessionFileUtils
 {
