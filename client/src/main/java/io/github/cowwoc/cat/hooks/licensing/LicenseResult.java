@@ -43,17 +43,17 @@ public record LicenseResult(
   }
 
   /**
-   * Creates a default result for indie tier (no license).
+   * Creates a default result for core tier (no license).
    *
-   * @return a license result indicating indie tier
+   * @return a license result indicating core tier
    */
-  public static LicenseResult indie()
+  public static LicenseResult core()
   {
-    return new LicenseResult(false, Tier.INDIE, false, false, 0, "", "");
+    return new LicenseResult(false, Tier.CORE, false, false, 0, "", "");
   }
 
   /**
-   * Creates an error result for indie tier.
+   * Creates an error result for core tier.
    *
    * @param errorMessage the error message
    * @return a license result with error
@@ -62,6 +62,6 @@ public record LicenseResult(
   public static LicenseResult error(String errorMessage)
   {
     requireThat(errorMessage, "errorMessage").isNotNull();
-    return new LicenseResult(false, Tier.INDIE, false, false, 0, errorMessage, "");
+    return new LicenseResult(false, Tier.CORE, false, false, 0, errorMessage, "");
   }
 }

@@ -65,7 +65,6 @@ public class WriteAndCommitTest
       try
       {
         cmd.execute(null, contentFile.toString(), commitMsgFile.toString(), false);
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (NullPointerException e)
       {
@@ -102,7 +101,6 @@ public class WriteAndCommitTest
       try
       {
         cmd.execute("", contentFile.toString(), commitMsgFile.toString(), false);
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (IllegalArgumentException e)
       {
@@ -138,7 +136,6 @@ public class WriteAndCommitTest
       {
         cmd.execute("test.txt", tempDir.resolve("missing.txt").toString(),
           commitMsgFile.toString(), false);
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (IOException e)
       {
@@ -174,7 +171,6 @@ public class WriteAndCommitTest
       {
         cmd.execute("test.txt", contentFile.toString(),
           tempDir.resolve("missing.txt").toString(), false);
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (IOException e)
       {

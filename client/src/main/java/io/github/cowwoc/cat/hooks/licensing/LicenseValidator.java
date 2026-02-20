@@ -72,13 +72,13 @@ public final class LicenseValidator
     }
     catch (Exception _)
     {
-      return LicenseResult.indie();
+      return LicenseResult.core();
     }
 
     // Get license token
     String token = config.getString("license");
     if (token.isEmpty())
-      return LicenseResult.indie();
+      return LicenseResult.core();
 
     // Find public key
     Path keyPath = scope.getClaudePluginRoot().resolve("config").resolve("cat-public-key.pem");
@@ -163,7 +163,7 @@ public final class LicenseValidator
       Map<String, Object> payload = scope.getJsonMapper().readValue(payloadJson, MAP_TYPE);
 
       // Extract fields
-      String tierString = (String) payload.getOrDefault("tier", "indie");
+      String tierString = (String) payload.getOrDefault("tier", "core");
       Tier tier = Tier.fromString(tierString);
       Object expObj = payload.get("exp");
       Object graceDaysObj = payload.get("grace_days");
@@ -198,9 +198,9 @@ public final class LicenseValidator
           }
           else
           {
-            // Past grace period - fall back to indie
+            // Past grace period - fall back to core
             warning = "License expired. Run /cat:login to renew.";
-            tier = Tier.INDIE;
+            tier = Tier.CORE;
           }
         }
         else

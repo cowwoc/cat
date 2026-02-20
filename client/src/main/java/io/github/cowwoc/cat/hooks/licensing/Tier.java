@@ -13,20 +13,20 @@ import java.util.Locale;
 /**
  * License tiers that determine feature entitlements.
  * <p>
- * Tiers are ordered from least to most capable: INDIE, TEAM, ENTERPRISE.
+ * Tiers are ordered from least to most capable: CORE, PRO, ENTERPRISE.
  * Each tier inherits features from all lower tiers.
  */
 public enum Tier
 {
   /**
-   * Free tier with basic features.
+   * Core tier with basic features.
    */
-  INDIE("indie"),
+  CORE("core"),
 
   /**
-   * Team tier with collaboration features.
+   * Pro tier with advanced capabilities for professional developers.
    */
-  TEAM("team"),
+  PRO("pro"),
 
   /**
    * Enterprise tier with all features.
@@ -51,7 +51,7 @@ public enum Tier
   /**
    * Looks up a tier by its string name, case-insensitively.
    *
-   * @param name the tier name (e.g., "indie", "TEAM", "Enterprise")
+   * @param name the tier name (e.g., "core", "pro", "enterprise")
    * @return the matching tier
    * @throws NullPointerException if name is null
    * @throws IllegalArgumentException if name is blank or does not match any tier

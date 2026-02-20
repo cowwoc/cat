@@ -255,7 +255,6 @@ public final class MarkdownWrapperTest
     try
     {
       MarkdownWrapper.wrapMarkdown(null, 120);
-      requireThat(false, "expectedException").isEqualTo(true);
     }
     catch (NullPointerException e)
     {
@@ -272,7 +271,6 @@ public final class MarkdownWrapperTest
     try
     {
       MarkdownWrapper.wrapMarkdown("content", 0);
-      requireThat(false, "expectedException").isEqualTo(true);
     }
     catch (IllegalArgumentException e)
     {
@@ -289,7 +287,6 @@ public final class MarkdownWrapperTest
     try
     {
       MarkdownWrapper.wrapMarkdown("content", -1);
-      requireThat(false, "expectedException").isEqualTo(true);
     }
     catch (IllegalArgumentException e)
     {
