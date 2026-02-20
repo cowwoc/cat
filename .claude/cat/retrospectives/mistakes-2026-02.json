@@ -733,6 +733,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Every reviewer prompt in every round (including re-runs after fixes) must embed the full FILE_CONTENTS prepared in the prepare step; never simplify prompts by replacing file content with read instructions"
+    },
+    {
+      "id": "M369",
+      "timestamp": "2026-02-21T00:00:00Z",
+      "category": "tool_misuse",
+      "description": "git-squash reported OK with backup_verified:true but worktree had no commits ahead of base due to diverged working tree state",
+      "root_cause": "The old git-squash script used branch pointer moves (git branch -f) without updating the working tree. The verify step checked diff content but not working tree state. backup_verified:true confirmed content correctness only, not working tree sync.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-squash-first-use/SKILL.md",
+      "pattern_keywords": [
+        "git-squash",
+        "working-tree",
+        "update-ref",
+        "branch-f",
+        "backup_verified",
+        "worktree-diverged"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "MEMORY:Git-Merge-Pitfalls",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After git-squash OK response, run git -C $WORKTREE_PATH status --porcelain and verify output is empty. If diverged, run git -C $WORKTREE_PATH reset --hard HEAD to sync."
     }
   ]
 }

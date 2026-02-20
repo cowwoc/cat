@@ -132,10 +132,31 @@ The script implements: rebase onto base, backup, commit-tree squash, verify, cle
 
 | Status | Meaning | Agent Recovery Action |
 |--------|---------|----------------------|
-| `OK` | Squash completed successfully | Report success with commit hash |
+| `OK` | Squash completed successfully | Verify working tree (see below), then report success |
 | `REBASE_CONFLICT` | Conflict during pre-squash rebase | Agent decides: resolve conflict and retry, or abort |
 | `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat |
 | `ERROR` | Rebase or squash failed | Check backup_branch and error message for details |
+
+### Post-Squash Working Tree Verification (MANDATORY on `OK`)
+
+After receiving `OK`, verify the working tree in the worktree is clean and the branch points to the squashed commit:
+
+```bash
+# Confirm the worktree branch is at the squashed commit
+git -C "$WORKTREE_PATH" log --oneline -1
+# Output must show the squashed commit hash from the OK response
+
+# Confirm the working tree is clean (no diverged state)
+git -C "$WORKTREE_PATH" status --porcelain
+# Output must be empty — any output indicates a diverged working tree
+
+# If working tree shows diverged state (output not empty):
+git -C "$WORKTREE_PATH" reset --hard HEAD
+```
+
+**Why this check is required:** `backup_verified: true` in the OK response confirms content correctness but does
+NOT confirm the working tree was updated. If the worktree is in a diverged state, `git log` will show the squashed
+commit but on-disk files will differ from HEAD. The `git status --porcelain` check catches this immediately.
 
 ## Interactive Rebase Workflow (Commits in Middle of History)
 
