@@ -4,15 +4,11 @@
  * Licensed under the CAT Commercial License.
  * See LICENSE.md in the project root for license terms.
  */
-package io.github.cowwoc.cat.hooks.session;
+package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.HookHandler;
-import io.github.cowwoc.cat.hooks.HookInput;
-import io.github.cowwoc.cat.hooks.HookOutput;
-import io.github.cowwoc.cat.hooks.HookResult;
-import io.github.cowwoc.cat.hooks.JvmScope;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -23,10 +19,15 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * SessionUnlock - Handles lock cleanup on session end.
+ * Unified SessionEnd hook for CAT.
  * <p>
- * Removes:
+ * TRIGGER: SessionEnd
+ * <p>
+ * Handles session cleanup operations including lock removal:
  * <ul>
  *   <li>Project lock file (.claude/cat/locks/${PROJECT_NAME}.lock)</li>
  *   <li>Task locks owned by the current session</li>
@@ -34,25 +35,51 @@ import java.util.List;
  *   <li>Stale locks older than 24 hours</li>
  * </ul>
  */
-public final class SessionUnlock implements HookHandler
+public final class SessionEndHook implements HookHandler
 {
   private static final long STALE_LOCK_AGE_SECONDS = 24L * 60L * 60L;
   private final JvmScope scope;
 
   /**
-   * Creates a new SessionUnlock handler.
+   * Creates a new SessionEndHook instance.
    *
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public SessionUnlock(JvmScope scope)
+  public SessionEndHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
   }
 
   /**
-   * Processes hook input and releases locks.
+   * Entry point for the session end hook.
+   *
+   * @param args command line arguments
+   */
+  public static void main(String[] args)
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = HookInput.readFromStdin(mapper);
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new SessionEndHook(scope).run(input, output);
+
+      for (String warning : result.warnings())
+        System.err.println(warning);
+      System.out.println(result.output());
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(SessionEndHook.class);
+      log.error("Unexpected error", e);
+      throw e;
+    }
+  }
+
+  /**
+   * Processes hook input and returns the result with any warnings.
    *
    * @param input the hook input to process
    * @param output the hook output builder for creating responses
@@ -105,7 +132,7 @@ public final class SessionUnlock implements HookHandler
     }
     catch (Exception e)
     {
-      return new HookResult(output.empty(), List.of("SessionUnlock error: " + e.getMessage()));
+      return new HookResult(output.empty(), List.of("SessionEndHook error: " + e.getMessage()));
     }
   }
 
