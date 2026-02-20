@@ -25,7 +25,7 @@ import java.nio.file.StandardOpenOption;
  * {@code CLAUDE_SESSION_ID} to the env file so they are available in all subsequent
  * Bash tool calls.
  * <p>
- * Workaround for https://github.com/anthropics/claude-code/issues/24775:
+ * Workaround for <a href="https://github.com/anthropics/claude-code/issues/24775">#24775</a>:
  * On resumed sessions, CLAUDE_ENV_FILE points to a startup session directory, but the env
  * loader reads from the resumed session directory. To fix this, we also write the env file
  * to the resumed session's directory using the session_id from stdin JSON.
