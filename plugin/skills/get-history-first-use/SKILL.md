@@ -11,48 +11,38 @@ user-invocable: false
 
 **Session ID**: Available as `${CLAUDE_SESSION_ID}`.
 
-## Efficient Search Techniques
+## Structured Query Tool (Preferred)
 
-**Problem**: JSONL lines contain entire conversation turns (megabytes each). Raw grep returns unusable output.
-
-**Solution**: Use `-o` flag to extract only matching patterns, not full lines:
-
-```bash
-HIST="/home/node/.config/claude/projects/-workspace"
-
-# Count occurrences of specific IDs/values (most efficient)
-grep -oh 'EXACT_PATTERN' "$HIST"/*.jsonl 2>/dev/null | sort | uniq -c | sort -rn
-
-# Extract variable assignments
-grep -oh 'VAR_NAME\s*=\s*"[^"]*"' "$HIST"/*.jsonl 2>/dev/null | sort -u
-
-# Extract JSON field values
-grep -oh '"field_name":\s*"[^"]*"' "$HIST"/*.jsonl 2>/dev/null | sort -u
-
-# Extract markdown tables (split \n first, then filter)
-sed 's/\\n/\n/g' "$HIST"/*.jsonl 2>/dev/null | grep -oE '\|[^|]+\|[^|]+\|[^\\]*' | sort -u | head -50
-```
-
-## Common Search Patterns
+Use the Java `session-analyzer` tool for structured queries. It handles mega-line JSONL correctly by parsing
+the JSON structure rather than treating lines as text.
 
 ```bash
-HIST="/home/node/.config/claude/projects/-workspace"
+SESSION_ANALYZER="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin/session-analyzer"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
-# Find specific known IDs (most reliable - list IDs you're looking for)
-grep -oh 'IKne3meq5aSn9XLyUdCD\|onwK4e9ZLuTAKqWW03F9\|TxGEqnHWrfWFTfGW9XjX' "$HIST"/*.jsonl 2>/dev/null | sort | uniq -c | sort -rn
+# Search for keyword with 2 lines of surrounding context
+"$SESSION_ANALYZER" search "$SESSION_FILE" "keyword" --context 2
 
-# Extract name-to-ID mappings from markdown tables
-perl -pe 's/\\n/\n/g' "$HIST"/*.jsonl 2>/dev/null | grep -oE '\| *[A-Z][a-z]+ *\|[^|]*\| *`?[A-Za-z0-9]{20,22}`? *\|' | sort -u
+# List all tool errors (non-zero exit codes and error patterns)
+"$SESSION_ANALYZER" errors "$SESSION_FILE"
 
-# Count tool invocations by name
-grep -oh '"name":\s*"[A-Za-z]*"' "$HIST"/*.jsonl 2>/dev/null | sort | uniq -c | sort -rn | head -20
+# Trace all reads/writes/edits to a file path
+"$SESSION_ANALYZER" file-history "$SESSION_FILE" "config.json"
 
-# Find discussions with context (truncate long lines)
-perl -pe 's/\\n/\n/g' "$HIST"/*.jsonl 2>/dev/null | grep -i "keyword" | grep -v "node_modules\|base64" | cut -c1-200 | head -30
-
-# Extract code variable assignments
-grep -oE '(VOICE_ID|API_KEY|CONFIG)\s*=\s*"[^"]*"' "$HIST"/*.jsonl 2>/dev/null | sort -u
+# Full session analysis (tool frequency, cache/batch/parallel candidates)
+"$SESSION_ANALYZER" analyze "$SESSION_FILE"
 ```
+
+Output is structured JSON, suitable for further processing or direct inspection.
+
+## Subcommand Reference
+
+| Subcommand | Arguments | Description |
+|------------|-----------|-------------|
+| `analyze` | `<file>` | Full session analysis (default when no subcommand given) |
+| `search` | `<file> <keyword> [--context N]` | Find entries containing keyword with N context lines |
+| `errors` | `<file>` | List tool_result entries with error indicators |
+| `file-history` | `<file> <path-pattern>` | Chronological list of Read/Write/Edit/Bash ops on a file |
 
 ## Entry Types
 
@@ -72,33 +62,23 @@ Subagent sessions are stored in a subdirectory of the parent session, NOT at the
 
 **Finding agentId from parent session:**
 ```bash
-HIST="/home/node/.config/claude/projects/-workspace"
-PARENT_SESSION="your-parent-session-id-here"
+SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
-# Extract agentIds from parent session's Task tool results
-grep -oh '"agentId":"[^"]*"' "$HIST/$PARENT_SESSION.jsonl" 2>/dev/null | sort -u
-
-# Or from raw output (agentId appears in result text)
-grep -oh 'agentId: [a-f0-9]*' "$HIST/$PARENT_SESSION.jsonl" 2>/dev/null | sort -u
+# Search for agentId references in parent session
+"$SESSION_ANALYZER" search "$SESSION_FILE" "agentId"
 ```
 
 **Verifying what tools a subagent actually used:**
 ```bash
 AGENT_ID="ad630cb"  # Example agentId
-SUBAGENT_FILE="$HIST/$PARENT_SESSION/subagents/agent-$AGENT_ID.jsonl"
+PARENT_SESSION="${CLAUDE_SESSION_ID}"
+SUBAGENT_FILE="/home/node/.config/claude/projects/-workspace/$PARENT_SESSION/subagents/agent-$AGENT_ID.jsonl"
 
-# Count tool invocations
-grep -oh '"name":"[^"]*"' "$SUBAGENT_FILE" 2>/dev/null | sort | uniq -c | sort -rn
+# Full analysis of subagent session
+"$SESSION_ANALYZER" analyze "$SUBAGENT_FILE"
 
-# Check for specific skill invocation
-grep -c '"name":"Skill"' "$SUBAGENT_FILE" 2>/dev/null
-grep -oh '"skill":"[^"]*"' "$SUBAGENT_FILE" 2>/dev/null | sort -u
-```
-
-**Use case: Verify subagent actually invoked a validation skill:**
-```bash
-# Check if subagent invoked /cat:compare-docs or /cat:shrink-doc
-grep '"name":"Skill"' "$SUBAGENT_FILE" 2>/dev/null | grep -E 'compare-docs|shrink-doc'
+# Search for specific skill invocation
+"$SESSION_ANALYZER" search "$SUBAGENT_FILE" "compare-docs"
 ```
 
 **Note:** The agentId is included in the Task tool result output. Look for patterns like:

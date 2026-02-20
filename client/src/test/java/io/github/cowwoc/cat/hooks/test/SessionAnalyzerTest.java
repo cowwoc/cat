@@ -707,4 +707,400 @@ public final class SessionAnalyzerTest
       Files.deleteIfExists(tempFile);
     }
   }
+
+  /**
+   * Verifies that search returns entries containing the keyword with context.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchReturnsMatchingEntriesWithContext() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents with keyword here") + "\n" +
+        assistantMessage("msg2", "tool2", "Write",
+          "\"file_path\":\"/out.txt\",\"content\":\"no match here\"") + "\n" +
+        toolResult("tool2", "no match") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.search(tempFile, "keyword", 0);
+
+      requireThat(result.path("matches").size(),
+        "matches_size").isGreaterThanOrEqualTo(1);
+      boolean foundKeyword = false;
+      for (JsonNode match : result.path("matches"))
+      {
+        String text = match.path("text").asString();
+        if (text.contains("keyword"))
+          foundKeyword = true;
+      }
+      requireThat(foundKeyword, "found_keyword").isTrue();
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that search with context N returns surrounding lines from the same entry,
+   * including the lines before and after the keyword match.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchReturnsContextLines() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      // Build an assistant message with text content mentioning the keyword
+      String msgWithKeyword = "{\"type\":\"assistant\",\"message\":{\"id\":\"msg1\"," +
+        "\"content\":[{\"type\":\"text\",\"text\":\"line1\\nkeyword found here\\nline3\"}]}}";
+      Files.writeString(tempFile, msgWithKeyword + "\n");
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.search(tempFile, "keyword", 1);
+
+      requireThat(result.path("matches").size(),
+        "matches_size").isEqualTo(1);
+      JsonNode match = result.path("matches").get(0);
+      String text = match.path("text").asString();
+      requireThat(text, "context_text").contains("line1");
+      requireThat(text, "context_text").contains("keyword found here");
+      requireThat(text, "context_text").contains("line3");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that search returns an empty matches array when the keyword is not found.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchReturnsEmptyWhenKeywordNotFound() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl = assistantMessage("msg1", "tool1", "Read",
+        "\"file_path\":\"/test.txt\"") + "\n" +
+        toolResult("tool1", "file contents without the search term") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.search(tempFile, "nonexistent_keyword_xyz", 0);
+
+      requireThat(result.path("matches").size(),
+        "matches_size").isEqualTo(0);
+      requireThat(result.path("keyword").asString(),
+        "keyword").isEqualTo("nonexistent_keyword_xyz");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that search with an empty keyword matches all entries (since every string contains "").
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void searchWithEmptyKeyword() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl = assistantMessage("msg1", "tool1", "Read",
+        "\"file_path\":\"/test.txt\"") + "\n" +
+        assistantMessage("msg2", "tool2", "Write",
+          "\"file_path\":\"/out.txt\"") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.search(tempFile, "", 0);
+
+      // Empty keyword matches every entry — behavior is well-defined as "match all"
+      requireThat(result.path("matches").size(),
+        "matches_size").isEqualTo(2);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that errors method returns tool_result entries with non-zero exit codes,
+   * capturing the exit code and error output correctly.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void errorsReturnsFailedToolResults() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String successResult = "{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool1\"," +
+        "\"content\":\"{\\\"exit_code\\\":0,\\\"stdout\\\":\\\"success\\\"}\"}\n";
+      String errorResult = "{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool2\"," +
+        "\"content\":\"{\\\"exit_code\\\":1,\\\"stderr\\\":\\\"ERROR: something failed\\\"}\"}\n";
+      String bashToolUse = assistantMessage("msg1", "tool2", "Bash",
+        "\"command\":\"some-command\"") + "\n";
+      Files.writeString(tempFile, bashToolUse + successResult + errorResult);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.errors(tempFile);
+
+      requireThat(result.path("errors").size(),
+        "errors_size").isEqualTo(1);
+      JsonNode firstError = result.path("errors").get(0);
+      requireThat(firstError.path("tool_use_id").asString(),
+        "tool_use_id").isEqualTo("tool2");
+      requireThat(firstError.path("exit_code").asInt(),
+        "exit_code").isEqualTo(1);
+      requireThat(firstError.path("error_output").asString(),
+        "error_output").contains("ERROR: something failed");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that errors method detects error patterns in non-JSON content (pattern-based errors).
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void errorsDetectsPatternBasedErrors() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String buildFailedResult = "{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool1\"," +
+        "\"content\":\"Compiling sources...\\nBUILD FAILED\\nTotal time: 2s\"}\n";
+      String errorColonResult = "{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool2\"," +
+        "\"content\":\"Processing...\\nERROR: file not found\\nAborted\"}\n";
+      String successResult = "{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool3\"," +
+        "\"content\":\"BUILD SUCCESS\\nTotal time: 1s\"}\n";
+      Files.writeString(tempFile, buildFailedResult + errorColonResult + successResult);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.errors(tempFile);
+
+      requireThat(result.path("errors").size(),
+        "errors_size").isEqualTo(2);
+      requireThat(result.path("errors").get(0).path("tool_use_id").asString(),
+        "first_error_id").isEqualTo("tool1");
+      requireThat(result.path("errors").get(1).path("tool_use_id").asString(),
+        "second_error_id").isEqualTo("tool2");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that errors method returns empty list when no errors exist.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void errorsReturnsEmptyListWhenNoErrors() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String successResult = "{\"type\":\"tool_result\"," +
+        "\"tool_use_id\":\"tool1\"," +
+        "\"content\":\"success output\"}\n";
+      Files.writeString(tempFile, successResult);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.errors(tempFile);
+
+      requireThat(result.path("errors").size(),
+        "errors_size").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that file-history returns all tool uses referencing a path pattern.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void fileHistoryTracksReadWriteEditOperations() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/workspace/config.json\"") + "\n" +
+        assistantMessage("msg2", "tool2", "Write",
+          "\"file_path\":\"/workspace/config.json\"," +
+          "\"content\":\"new content\"") + "\n" +
+        assistantMessage("msg3", "tool3", "Read",
+          "\"file_path\":\"/workspace/other.txt\"") + "\n" +
+        assistantMessage("msg4", "tool4", "Edit",
+          "\"file_path\":\"/workspace/config.json\"," +
+          "\"old_string\":\"old\",\"new_string\":\"new\"") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.fileHistory(tempFile, "config.json");
+
+      JsonNode operations = result.path("operations");
+      requireThat(operations.size(), "operations_size").isEqualTo(3);
+
+      requireThat(operations.get(0).path("tool").asString(),
+        "first_tool").isEqualTo("Read");
+      requireThat(operations.get(1).path("tool").asString(),
+        "second_tool").isEqualTo("Write");
+      requireThat(operations.get(2).path("tool").asString(),
+        "third_tool").isEqualTo("Edit");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that file-history returns empty list when no matching operations exist.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void fileHistoryReturnsEmptyWhenNoMatchingFiles() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/workspace/other.txt\"") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.fileHistory(tempFile, "config.json");
+
+      requireThat(result.path("operations").size(),
+        "operations_size").isEqualTo(0);
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that Bash tool uses referencing a file pattern are included in file-history.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void fileHistoryIncludesBashCommandsReferencingFile() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Bash",
+          "\"command\":\"cat /workspace/config.json\"") + "\n" +
+        assistantMessage("msg2", "tool2", "Read",
+          "\"file_path\":\"/workspace/unrelated.txt\"") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.fileHistory(tempFile, "config.json");
+
+      requireThat(result.path("operations").size(),
+        "operations_size").isEqualTo(1);
+      requireThat(result.path("operations").get(0).path("tool").asString(),
+        "tool").isEqualTo("Bash");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
+
+  /**
+   * Verifies that file-history correctly matches path patterns containing special characters such as dots.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void fileHistoryWithSpecialCharacters() throws IOException
+  {
+    Path tempFile = Files.createTempFile("session-", ".jsonl");
+    try
+    {
+      String jsonl =
+        assistantMessage("msg1", "tool1", "Read",
+          "\"file_path\":\"/workspace/pom.xml\"") + "\n" +
+        assistantMessage("msg2", "tool2", "Read",
+          "\"file_path\":\"/workspace/build.gradle.kts\"") + "\n" +
+        assistantMessage("msg3", "tool3", "Bash",
+          "\"command\":\"mvn -f pom.xml test\"") + "\n" +
+        assistantMessage("msg4", "tool4", "Read",
+          "\"file_path\":\"/workspace/README.md\"") + "\n";
+      Files.writeString(tempFile, jsonl);
+
+      SessionAnalyzer analyzer =
+        new SessionAnalyzer(new TestJvmScope());
+      JsonNode result = analyzer.fileHistory(tempFile, "pom.xml");
+
+      // Should match /workspace/pom.xml (Read) and mvn -f pom.xml test (Bash) — 2 operations
+      requireThat(result.path("operations").size(),
+        "operations_size").isEqualTo(2);
+      requireThat(result.path("operations").get(0).path("tool").asString(),
+        "first_tool").isEqualTo("Read");
+      requireThat(result.path("operations").get(1).path("tool").asString(),
+        "second_tool").isEqualTo("Bash");
+      requireThat(result.path("path_pattern").asString(),
+        "path_pattern").isEqualTo("pom.xml");
+    }
+    finally
+    {
+      Files.deleteIfExists(tempFile);
+    }
+  }
 }

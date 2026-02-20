@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,9 @@ public final class SessionAnalyzer
 {
   private static final int MIN_BATCH_SIZE = 2;
   private static final Pattern AGENT_ID_PATTERN = Pattern.compile("\"agentId\"\\s*:\\s*\"([^\"]+)\"");
+  private static final Pattern ERROR_PATTERN = Pattern.compile(
+    "build failed|failed|error:|exception|fatal:",
+    Pattern.CASE_INSENSITIVE);
   private final JvmScope scope;
 
   /**
@@ -59,22 +63,97 @@ public final class SessionAnalyzer
   /**
    * Main method for command-line execution.
    * <p>
-   * Analyzes a session JSONL file and prints the JSON result to stdout.
+   * Subcommands:
+   * <ul>
+   *   <li>{@code analyze <file>} — full session analysis (default when no subcommand given)</li>
+   *   <li>{@code search <file> <keyword> [--context N]} — search for keyword with N lines of context</li>
+   *   <li>{@code errors <file>} — list tool_result entries containing error indicators</li>
+   *   <li>{@code file-history <file> <path-pattern>} — trace tool uses referencing a path pattern</li>
+   * </ul>
    *
-   * @param args command-line arguments: {@code <session-file>}
+   * @param args command-line arguments
    * @throws IOException if the operation fails
    */
   public static void main(String[] args) throws IOException
   {
     if (args.length < 1)
     {
-      System.err.println("Usage: SessionAnalyzer <session-file>");
+      System.err.println("""
+        Usage: SessionAnalyzer <session-file>
+               SessionAnalyzer analyze <session-file>
+               SessionAnalyzer search <session-file> <keyword> [--context N]
+               SessionAnalyzer errors <session-file>
+               SessionAnalyzer file-history <session-file> <path-pattern>""");
       System.exit(1);
     }
     try (MainJvmScope scope = new MainJvmScope())
     {
       SessionAnalyzer analyzer = new SessionAnalyzer(scope);
-      JsonNode result = analyzer.analyzeSession(Path.of(args[0]));
+      String firstArg = args[0];
+      JsonNode result;
+      switch (firstArg)
+      {
+        case "analyze" ->
+        {
+          if (args.length < 2)
+          {
+            System.err.println("Usage: SessionAnalyzer analyze <session-file>");
+            System.exit(1);
+          }
+          result = analyzer.analyzeSession(Path.of(args[1]));
+        }
+        case "search" ->
+        {
+          if (args.length < 3)
+          {
+            System.err.println("Usage: SessionAnalyzer search <session-file> <keyword> [--context N]");
+            System.exit(1);
+          }
+          Path filePath = Path.of(args[1]);
+          String keyword = args[2];
+          int contextLines = 0;
+          for (int i = 3; i < args.length - 1; ++i)
+          {
+            if (args[i].equals("--context"))
+            {
+              try
+              {
+                contextLines = Integer.parseInt(args[i + 1]);
+              }
+              catch (NumberFormatException e)
+              {
+                System.err.println("Error: --context requires an integer value, got: " + args[i + 1]);
+                System.exit(1);
+              }
+              break;
+            }
+          }
+          result = analyzer.search(filePath, keyword, contextLines);
+        }
+        case "errors" ->
+        {
+          if (args.length < 2)
+          {
+            System.err.println("Usage: SessionAnalyzer errors <session-file>");
+            System.exit(1);
+          }
+          result = analyzer.errors(Path.of(args[1]));
+        }
+        case "file-history" ->
+        {
+          if (args.length < 3)
+          {
+            System.err.println("Usage: SessionAnalyzer file-history <session-file> <path-pattern>");
+            System.exit(1);
+          }
+          result = analyzer.fileHistory(Path.of(args[1]), args[2]);
+        }
+        default ->
+        {
+          // Backward compatibility: treat first arg as session file for analyze
+          result = analyzer.analyzeSession(Path.of(firstArg));
+        }
+      }
       System.out.println(scope.getJsonMapper().writeValueAsString(result));
     }
     catch (RuntimeException | AssertionError e)
@@ -363,6 +442,34 @@ public final class SessionAnalyzer
   }
 
   /**
+   * Converts a JsonNode content field (which may be an array of text objects or a plain string) to a single string.
+   *
+   * @param content the content JsonNode from a session entry
+   * @return the concatenated string representation of the content
+   * @throws NullPointerException if {@code content} is null
+   */
+  private static String contentToString(JsonNode content)
+  {
+    requireThat(content, "content").isNotNull();
+
+    if (content.isArray())
+    {
+      StringBuilder sb = new StringBuilder();
+      for (JsonNode item : content)
+      {
+        String text;
+        if (item.isObject())
+          text = getStringOrDefault(item, "text", "");
+        else
+          text = item.asString();
+        sb.append(text).append('\n');
+      }
+      return sb.toString();
+    }
+    return content.asString();
+  }
+
+  /**
    * Extracts output sizes from tool_result entries.
    *
    * @param entries list of session entries
@@ -380,24 +487,7 @@ public final class SessionAnalyzer
         continue;
 
       JsonNode content = entry.path("content");
-      String contentStr;
-
-      if (content.isArray())
-      {
-        StringBuilder sb = new StringBuilder();
-        for (JsonNode item : content)
-        {
-          String text;
-          if (item.isObject())
-            text = getStringOrDefault(item, "text", "");
-          else
-            text = item.asString();
-          sb.append(text).append('\n');
-        }
-        contentStr = sb.toString();
-      }
-      else
-        contentStr = content.asString();
+      String contentStr = contentToString(content);
 
       sizes.add(new OutputSize(
         getStringOrDefault(entry, "tool_use_id", ""),
@@ -620,24 +710,7 @@ public final class SessionAnalyzer
         continue;
 
       JsonNode content = entry.path("content");
-      String contentStr;
-
-      if (content.isArray())
-      {
-        StringBuilder sb = new StringBuilder();
-        for (JsonNode item : content)
-        {
-          String text;
-          if (item.isObject())
-            text = getStringOrDefault(item, "text", "");
-          else
-            text = item.asString();
-          sb.append(text).append('\n');
-        }
-        contentStr = sb.toString();
-      }
-      else
-        contentStr = content.asString();
+      String contentStr = contentToString(content);
 
       if (contentStr.contains("\"agentId\":"))
       {
@@ -789,6 +862,285 @@ public final class SessionAnalyzer
     combined.set("summary", summaryNode);
 
     return combined;
+  }
+
+  /**
+   * Searches a session JSONL file for entries containing a keyword.
+   * <p>
+   * For each matching entry, extracts the relevant text block containing the keyword with
+   * up to {@code contextLines} surrounding lines from the same message.
+   *
+   * @param filePath path to the session JSONL file
+   * @param keyword the keyword to search for (case-sensitive)
+   * @param contextLines number of surrounding lines to include before and after the match
+   * @return JSON object with a "matches" array, each element containing "type", "text", and "entry_index"
+   * @throws NullPointerException if {@code filePath} or {@code keyword} are null
+   * @throws IOException if file reading fails
+   */
+  public JsonNode search(Path filePath, String keyword, int contextLines) throws IOException
+  {
+    requireThat(filePath, "filePath").isNotNull();
+    requireThat(keyword, "keyword").isNotNull();
+
+    List<JsonNode> entries = parseJsonl(filePath);
+    ArrayNode matches = scope.getJsonMapper().createArrayNode();
+
+    for (int entryIndex = 0; entryIndex < entries.size(); ++entryIndex)
+    {
+      JsonNode entry = entries.get(entryIndex);
+      String entryText = extractTextContent(entry);
+      if (!entryText.contains(keyword))
+        continue;
+
+      String[] lines = entryText.split("\n", -1);
+      LinkedHashSet<String> contextBlock = new LinkedHashSet<>();
+      for (int lineIndex = 0; lineIndex < lines.length; ++lineIndex)
+      {
+        if (lines[lineIndex].contains(keyword))
+        {
+          int start = Math.max(0, lineIndex - contextLines);
+          int end = Math.min(lines.length, lineIndex + contextLines + 1);
+          for (int i = start; i < end; ++i)
+            contextBlock.add(lines[i]);
+        }
+      }
+
+      ObjectNode match = scope.getJsonMapper().createObjectNode();
+      String type = getStringOrDefault(entry, "type", "unknown");
+      match.put("type", type);
+      match.put("entry_index", entryIndex);
+      match.put("text", String.join("\n", contextBlock));
+      matches.add(match);
+    }
+
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    result.set("matches", matches);
+    result.put("keyword", keyword);
+    result.put("total_entries_scanned", entries.size());
+    return result;
+  }
+
+  /**
+   * Extracts readable text content from a session entry for search purposes.
+   *
+   * @param entry a JSONL entry
+   * @return concatenated text content from the entry
+   */
+  private String extractTextContent(JsonNode entry)
+  {
+    StringBuilder sb = new StringBuilder();
+    // For assistant messages, extract text and tool_use content
+    JsonNode message = entry.path("message");
+    if (!message.isMissingNode())
+    {
+      JsonNode content = message.path("content");
+      if (content.isArray())
+      {
+        for (JsonNode item : content)
+        {
+          String itemType = getStringOrDefault(item, "type", "");
+          if (itemType.equals("text"))
+            sb.append(getStringOrDefault(item, "text", "")).append('\n');
+          else if (itemType.equals("tool_use"))
+            sb.append(item.toString()).append('\n');
+        }
+      }
+      else if (content.isString())
+        sb.append(content.asString()).append('\n');
+    }
+    // For tool_result entries, extract content
+    JsonNode content = entry.path("content");
+    if (!content.isMissingNode())
+    {
+      if (content.isArray())
+      {
+        for (JsonNode item : content)
+        {
+          if (item.isObject())
+            sb.append(getStringOrDefault(item, "text", "")).append('\n');
+          else
+            sb.append(item.asString()).append('\n');
+        }
+      }
+      else if (content.isString())
+        sb.append(content.asString()).append('\n');
+      else if (!content.isMissingNode())
+        sb.append(content.toString()).append('\n');
+    }
+    // Fall back to full entry string if nothing extracted
+    if (sb.isEmpty())
+      sb.append(entry.toString());
+    return sb.toString();
+  }
+
+  /**
+   * Scans a session JSONL file for tool_result entries containing error indicators.
+   * <p>
+   * Detects errors via non-zero exit codes in JSON content, or error keyword patterns
+   * in the output text.
+   *
+   * @param filePath path to the session JSONL file
+   * @return JSON object with an "errors" array, each element containing "tool_use_id",
+   *   "exit_code", "error_output", and "entry_index"
+   * @throws NullPointerException if {@code filePath} is null
+   * @throws IOException if file reading fails
+   */
+  public JsonNode errors(Path filePath) throws IOException
+  {
+    requireThat(filePath, "filePath").isNotNull();
+
+    List<JsonNode> entries = parseJsonl(filePath);
+    ArrayNode errors = scope.getJsonMapper().createArrayNode();
+
+    for (int entryIndex = 0; entryIndex < entries.size(); ++entryIndex)
+    {
+      JsonNode entry = entries.get(entryIndex);
+      if (!"tool_result".equals(getStringOrDefault(entry, "type", "")))
+        continue;
+
+      String toolUseId = getStringOrDefault(entry, "tool_use_id", "");
+      JsonNode content = entry.path("content");
+      String contentStr = contentToString(content);
+
+      int exitCode = 0;
+      String errorOutput = "";
+      boolean isError = false;
+
+      // Try to parse content as JSON to extract exit code — only when content looks like JSON
+      if (contentStr.contains("exit_code") || contentStr.contains("exitCode"))
+      try
+      {
+        JsonNode contentJson = scope.getJsonMapper().readTree(contentStr);
+        JsonNode exitCodeNode = contentJson.path("exit_code");
+        if (!exitCodeNode.isMissingNode())
+          exitCode = exitCodeNode.asInt(0);
+        JsonNode exitCodeCamel = contentJson.path("exitCode");
+        if (!exitCodeCamel.isMissingNode() && exitCode == 0)
+          exitCode = exitCodeCamel.asInt(0);
+
+        if (exitCode != 0)
+        {
+          isError = true;
+          String stderr = getStringOrDefault(contentJson, "stderr", "");
+          String stdout = getStringOrDefault(contentJson, "stdout", "");
+          if (stderr.isEmpty())
+            errorOutput = stdout;
+          else
+            errorOutput = stderr;
+        }
+      }
+      catch (JacksonException _)
+      {
+        // Content is not JSON — check for error patterns in raw text
+      }
+
+      if (!isError && ERROR_PATTERN.matcher(contentStr).find())
+      {
+        isError = true;
+        errorOutput = contentStr;
+      }
+
+      if (isError)
+      {
+        ObjectNode errorNode = scope.getJsonMapper().createObjectNode();
+        errorNode.put("tool_use_id", toolUseId);
+        errorNode.put("exit_code", exitCode);
+        String effectiveErrorOutput;
+        if (errorOutput.isEmpty())
+          effectiveErrorOutput = contentStr;
+        else
+          effectiveErrorOutput = errorOutput;
+        errorNode.put("error_output", effectiveErrorOutput);
+        errorNode.put("entry_index", entryIndex);
+        errors.add(errorNode);
+      }
+    }
+
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    result.set("errors", errors);
+    result.put("total_entries_scanned", entries.size());
+    return result;
+  }
+
+  /**
+   * Traces all Read, Write, Edit, and Bash tool uses referencing a file path pattern.
+   * <p>
+   * Returns operations in chronological order as they appear in the session file.
+   *
+   * @param filePath path to the session JSONL file
+   * @param pathPattern substring pattern to match against file paths and command text
+   * @return JSON object with an "operations" array, each element containing "tool", "input",
+   *   "message_id", and "tool_use_id"
+   * @throws NullPointerException if {@code filePath} or {@code pathPattern} are null
+   * @throws IOException if file reading fails
+   */
+  public JsonNode fileHistory(Path filePath, String pathPattern) throws IOException
+  {
+    requireThat(filePath, "filePath").isNotNull();
+    requireThat(pathPattern, "pathPattern").isNotNull();
+
+    List<JsonNode> entries = parseJsonl(filePath);
+    ArrayNode operations = scope.getJsonMapper().createArrayNode();
+
+    for (JsonNode entry : entries)
+    {
+      if (!"assistant".equals(getStringOrDefault(entry, "type", "")))
+        continue;
+
+      JsonNode message = entry.path("message");
+      JsonNode content = message.path("content");
+      if (!content.isArray())
+        continue;
+
+      String messageId = getStringOrDefault(message, "id", "");
+
+      for (JsonNode item : content)
+      {
+        if (!"tool_use".equals(getStringOrDefault(item, "type", "")))
+          continue;
+
+        String toolName = getStringOrDefault(item, "name", "");
+        JsonNode input = item.path("input");
+        String toolUseId = getStringOrDefault(item, "id", "");
+
+        boolean matches = false;
+        switch (toolName)
+        {
+          case "Read", "Write", "Edit" ->
+          {
+            String itemFilePath = getStringOrDefault(input, "file_path", "");
+            if (itemFilePath.contains(pathPattern))
+              matches = true;
+          }
+          case "Bash" ->
+          {
+            String command = getStringOrDefault(input, "command", "");
+            if (command.contains(pathPattern))
+              matches = true;
+          }
+          default ->
+          {
+            // Other tools are not file operations — skip
+          }
+        }
+
+        if (matches)
+        {
+          ObjectNode operation = scope.getJsonMapper().createObjectNode();
+          operation.put("tool", toolName);
+          operation.set("input", input);
+          operation.put("message_id", messageId);
+          operation.put("tool_use_id", toolUseId);
+          operations.add(operation);
+        }
+      }
+    }
+
+    ObjectNode result = scope.getJsonMapper().createObjectNode();
+    result.set("operations", operations);
+    result.put("path_pattern", pathPattern);
+    result.put("total_entries_scanned", entries.size());
+    return result;
   }
 
   /**
