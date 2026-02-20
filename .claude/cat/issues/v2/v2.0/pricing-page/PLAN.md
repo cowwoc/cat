@@ -1,8 +1,8 @@
 # Plan: pricing-page
 
 ## Goal
-Consolidate pricing information and create a professional GitHub Pages pricing page. Based on stakeholder review (Sales
-+ Marketing), this task implements a unified pricing strategy.
+Consolidate pricing information and create a professional GitHub Pages pricing page. Based on business stakeholder
+review, this task implements a unified pricing strategy.
 
 ## Satisfies
 - Professional pricing presentation for SMB buyers
@@ -11,12 +11,10 @@ Consolidate pricing information and create a professional GitHub Pages pricing p
 
 ## Stakeholder Recommendations (Implemented)
 
-### Sales Stakeholder
+### Business Stakeholder
 - Keep brief pricing mention in README (free tier is competitive advantage)
 - Remove hardcoded prices from LICENSE.md
 - Create professional GitHub Pages pricing page
-
-### Marketing Stakeholder
 - Streamline README to focus on value proposition
 - Reference pricing URL in LICENSE instead of hardcoded prices
 - GitHub Pages pricing page for professional SaaS appearance

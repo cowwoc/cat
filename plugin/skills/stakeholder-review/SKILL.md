@@ -1,5 +1,5 @@
 ---
-description: Use when code changes need quality review - multi-perspective review from architect, security, design, testing, performance stakeholders
+description: Use when code changes need quality review - multi-perspective review from architecture, security, design, testing, performance stakeholders
 user-invocable: false
 ---
 
