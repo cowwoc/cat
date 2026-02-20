@@ -23,15 +23,15 @@ None - infrastructure/refactoring
 
 | Current Path | New Path | Agent Name |
 |--------------|----------|------------|
-| `plugin/stakeholders/architect.md` | `plugin/agents/stakeholder-architect.md` | `stakeholder-architect` |
+| `plugin/stakeholders/architect.md` | `plugin/agents/stakeholder-architecture.md` | `stakeholder-architecture` |
 | `plugin/stakeholders/deployment.md` | `plugin/agents/stakeholder-deployment.md` | `stakeholder-deployment` |
 | `plugin/stakeholders/design.md` | `plugin/agents/stakeholder-design.md` | `stakeholder-design` |
 | `plugin/stakeholders/index.md` | `plugin/agents/stakeholder-index.md` | `stakeholder-index` |
 | `plugin/stakeholders/legal.md` | `plugin/agents/stakeholder-legal.md` | `stakeholder-legal` |
-| `plugin/stakeholders/marketing.md` | `plugin/agents/stakeholder-marketing.md` | `stakeholder-marketing` |
+| `plugin/stakeholders/marketing.md` | `plugin/agents/stakeholder-business.md` (merged) | `stakeholder-business` |
 | `plugin/stakeholders/performance.md` | `plugin/agents/stakeholder-performance.md` | `stakeholder-performance` |
 | `plugin/stakeholders/requirements.md` | `plugin/agents/stakeholder-requirements.md` | `stakeholder-requirements` |
-| `plugin/stakeholders/sales.md` | `plugin/agents/stakeholder-sales.md` | `stakeholder-sales` |
+| `plugin/stakeholders/sales.md` | `plugin/agents/stakeholder-business.md` (merged) | `stakeholder-business` |
 | `plugin/stakeholders/security.md` | `plugin/agents/stakeholder-security.md` | `stakeholder-security` |
 | `plugin/stakeholders/testing.md` | `plugin/agents/stakeholder-testing.md` | `stakeholder-testing` |
 | `plugin/stakeholders/ux.md` | `plugin/agents/stakeholder-ux.md` | `stakeholder-ux` |

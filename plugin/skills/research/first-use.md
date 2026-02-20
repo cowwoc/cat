@@ -51,18 +51,17 @@ Task tool:
   model: "sonnet"
   description: "Stakeholder research: {topic}"
   prompt: |
-    Research {topic} from 9 stakeholder perspectives: architect, security, design,
-    testing, performance, ux, sales, marketing, legal.
+    Research {topic} from 8 stakeholder perspectives: architecture, security, design,
+    testing, performance, ux, business, legal.
 
     Load stakeholder definitions:
-    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-architect.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-architecture.md
     @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-security.md
     @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-design.md
     @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-testing.md
     @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-performance.md
     @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-ux.md
-    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-sales.md
-    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-marketing.md
+    @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-business.md
     @${CLAUDE_PLUGIN_ROOT}/agents/stakeholder-legal.md
     @${CLAUDE_PLUGIN_ROOT}/concepts/research-pitfalls.md
 
@@ -74,8 +73,8 @@ Task tool:
     Identify 2-4 distinct implementation approaches. For each:
     - Name and description
     - Top 3 specific providers (if category)
-    - Ratings for 11 dimensions: Speed, Cost, Quality, Architect, Security,
-      Testing, Performance, UX, Sales, Marketing, Legal
+    - Ratings for 10 dimensions: Speed, Cost, Quality, Architecture, Security,
+      Testing, Performance, UX, Business, Legal
     - Best-fit scenario
 
     Output format:
