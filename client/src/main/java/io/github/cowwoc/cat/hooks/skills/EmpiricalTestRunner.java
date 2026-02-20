@@ -521,7 +521,7 @@ public final class EmpiricalTestRunner
     {
       sessionFiles = collectSessionFiles(parsed.sessionId());
     }
-    catch (IOException e)
+    catch (IOException _)
     {
       sessionFiles = List.of();
     }
