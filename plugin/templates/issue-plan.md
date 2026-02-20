@@ -42,8 +42,11 @@ Select the appropriate template based on issue type.
 - path/to/file2.ext - [specific change]
 
 ## Acceptance Criteria
+<!-- Include at least one end-to-end criterion that verifies the feature works in its real environment -->
+<!-- Unit tests verify components; E2E criteria verify the feature works as a whole -->
 - [ ] Criterion 1
 - [ ] Criterion 2
+- [ ] E2E: [observable outcome confirming the feature works end-to-end]
 
 ## Execution Steps
 <!-- ACTIONS ONLY - Do NOT include expected outcomes like "score = 1.0" or "should be X" -->
