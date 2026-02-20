@@ -7,7 +7,7 @@ execute/review/merge phases at the main agent level, enabling proper skill invoc
 ## Problem Statement
 Claude Code subagents cannot:
 - Spawn nested subagents (Task tool unavailable)
-- Invoke skills dynamically (Skill tool unavailable)
+- Invoke skills via Skill tool (unavailable to subagents; use load-skill.sh via Bash instead)
 
 The current architecture has work-batch-executor (a subagent) attempting to spawn work-execute,
 work-review, and work-merge subagents. This is architecturally impossible.

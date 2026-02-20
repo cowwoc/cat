@@ -1755,9 +1755,9 @@ Step 1: Display status
 When a skill spawns subagents (via Task tool), check whether those subagents would benefit from
 having skills preloaded via frontmatter.
 
-**The problem**: Subagents cannot invoke skills (Skill tool unavailable). If a subagent needs
-domain knowledge from skills (git operations, validation patterns, etc.), it must receive that
-knowledge through its context at startup.
+**The problem**: Subagents cannot use the Skill tool directly. They can load skills dynamically via
+`load-skill.sh` (Bash), and receive the skill listing at startup. For skills that must be available
+immediately without a load step, preload them via frontmatter.
 
 **Claude Code `skills` frontmatter field**: Agents in `plugin/agents/` can specify skills to
 preload into their context automatically:
