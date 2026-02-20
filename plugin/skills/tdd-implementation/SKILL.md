@@ -1,5 +1,5 @@
 ---
-description: Test-Driven Development workflow for features with testable inputs/outputs
+description: Use when implementing features or bug fixes with testable inputs/outputs - TDD, test-driven, write tests first
 user-invocable: false
 ---
 

@@ -63,12 +63,12 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that constructor rejects null session ID.
+   * Verifies that constructor rejects null CAT agent ID.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = NullPointerException.class)
-  public void constructorRejectsNullSessionId() throws IOException
+  public void constructorRejectsNullCatAgentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -82,12 +82,12 @@ public class SkillLoaderTest
   }
 
   /**
-   * Verifies that constructor rejects empty session ID.
+   * Verifies that constructor rejects empty CAT agent ID.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
-  public void constructorRejectsEmptySessionId() throws IOException
+  public void constructorRejectsEmptyCatAgentId() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-");
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
@@ -149,9 +149,9 @@ public class SkillLoaderTest
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
 """);
 
@@ -170,7 +170,7 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
   }
 
   /**
-   * Verifies that load substitutes CLAUDE_SESSION_ID variable.
+   * Verifies that load substitutes CLAUDE_SESSION_ID variable with the scope's session ID.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -180,18 +180,19 @@ Path: ${CLAUDE_PLUGIN_ROOT}/file.txt
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Session: ${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "/project");
+      String uniqueCatAgentId = "agent-" + System.nanoTime();
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueCatAgentId, "/project");
       String result = loader.load("test-skill");
 
+      // CLAUDE_SESSION_ID is resolved from scope.getClaudeSessionId(), not from catAgentId
       requireThat(result, "result").
-        contains("Session: " + uniqueSession).
+        contains("Session: " + scope.getClaudeSessionId()).
         doesNotContain("${CLAUDE_SESSION_ID}");
     }
     finally
@@ -211,9 +212,9 @@ Session: ${CLAUDE_SESSION_ID}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Project: ${CLAUDE_PROJECT_DIR}/data
 """);
 
@@ -242,9 +243,9 @@ Project: ${CLAUDE_PROJECT_DIR}/data
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Full skill content here
 """);
 
@@ -271,9 +272,9 @@ Full skill content here
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Full skill content
 """);
 
@@ -374,20 +375,20 @@ Full skill content
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Path: ${CLAUDE_PLUGIN_ROOT}/contains_${CLAUDE_SESSION_ID}
 Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "/workspace");
+      String uniqueCatAgentId = "agent-" + System.nanoTime();
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueCatAgentId, "/workspace");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
-        contains("Path: " + tempPluginRoot + "/contains_" + uniqueSession).
-        contains("Project: /workspace/session_" + uniqueSession).
+        contains("Path: " + tempPluginRoot + "/contains_" + scope.getClaudeSessionId()).
+        contains("Project: /workspace/session_" + scope.getClaudeSessionId()).
         doesNotContain("${CLAUDE_PLUGIN_ROOT}").
         doesNotContain("${CLAUDE_SESSION_ID}").
         doesNotContain("${CLAUDE_PROJECT_DIR}");
@@ -410,9 +411,9 @@ Project: ${CLAUDE_PROJECT_DIR}/session_${CLAUDE_SESSION_ID}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Value: ${UNDEFINED_VAR}
 """);
 
@@ -439,20 +440,20 @@ Value: ${UNDEFINED_VAR}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Root: ${CLAUDE_PLUGIN_ROOT}
 Session: ${CLAUDE_SESSION_ID}
 """);
 
-      String uniqueSession = "test-" + System.nanoTime();
-      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueSession, "/project");
+      String uniqueCatAgentId = "agent-" + System.nanoTime();
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), uniqueCatAgentId, "/project");
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
         contains("Root: " + tempPluginRoot).
-        contains("Session: " + uniqueSession);
+        contains("Session: " + scope.getClaudeSessionId());
     }
     finally
     {
@@ -478,9 +479,9 @@ Session: ${CLAUDE_SESSION_ID}
 Context file content
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/context.md
 # Main Content
 """);
@@ -517,9 +518,9 @@ Context file content
 Root: ${CLAUDE_PLUGIN_ROOT}
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/context.md
 # Main
 """);
@@ -549,9 +550,9 @@ Root: ${CLAUDE_PLUGIN_ROOT}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/missing.md
 # Main
 """);
@@ -577,9 +578,9 @@ Root: ${CLAUDE_PLUGIN_ROOT}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Email: user@example.com
 @Override annotation
 @author tag
@@ -624,9 +625,9 @@ Content B
 @concepts/file-a.md
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/file-a.md
 """);
 
@@ -671,9 +672,9 @@ Details section
 Conclusion section
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 # Header
 @concepts/intro.md
 @concepts/details.md
@@ -724,9 +725,9 @@ enabled: true
 Plain text content
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 # Configuration
 @config/settings.yaml
 # Notes
@@ -768,9 +769,9 @@ Plain text content
 Content with spaces in filename
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/my notes.md
 """);
 
@@ -806,9 +807,9 @@ Content with spaces in filename
 This should not be included
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 See @concepts/note.md for details
 """);
 
@@ -841,9 +842,9 @@ See @concepts/note.md for details
       Files.createDirectories(conceptsDir);
       Files.writeString(conceptsDir.resolve("no-newline.md"), "Content without newline");
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/no-newline.md
 Next line
 """);
@@ -876,9 +877,9 @@ Next line
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Branch: ${BASE}
 Other: ${SOME_UNKNOWN}
 Root: ${CLAUDE_PLUGIN_ROOT}
@@ -919,9 +920,9 @@ git checkout ${BASE}
 ```
 """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 @concepts/version-paths.md
 # Main
 """);
@@ -951,9 +952,9 @@ git checkout ${BASE}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"),
+      Files.writeString(companionDir.resolve("first-use.md"),
         "---\n" +
         "name: test-skill\n" +
         "---\n" +
@@ -984,9 +985,9 @@ git checkout ${BASE}
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 # No License Header
 Regular content here
 """);
@@ -1016,9 +1017,9 @@ Regular content here
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/nonexistent-launcher"`
 Done
 """);
@@ -1048,9 +1049,9 @@ Done
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
 Root: ${CLAUDE_PLUGIN_ROOT}
 Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
 """);
@@ -1087,9 +1088,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
@@ -1128,9 +1129,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsIo "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
@@ -1163,9 +1164,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsRuntime "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
@@ -1203,9 +1204,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsFromConstructor "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
@@ -1243,9 +1244,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutputThrowsNullMessage "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output"`
         Done
         """);
@@ -1280,10 +1281,10 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path skillDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path skillDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(skillDir);
 
-      Files.writeString(skillDir.resolve("SKILL.md"), """
+      Files.writeString(skillDir.resolve("first-use.md"), """
         ---
         description: test
         ---
@@ -1385,9 +1386,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
         exec java -jar app.jar "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" arg1 arg2`
         Done
         """);
@@ -1421,9 +1422,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1469,9 +1470,9 @@ Output content here.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1524,9 +1525,9 @@ Dynamic output.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1560,9 +1561,9 @@ Skill body without output.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Internal skill. Do not invoke directly."
 user-invocable: false
@@ -1612,9 +1613,9 @@ Output content.
         java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.test.TestSkillOutput "$@"
         """);
 
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"), """
+      Files.writeString(companionDir.resolve("first-use.md"), """
         Output: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-output" arg1 arg2`
         Done
         """);
@@ -1646,9 +1647,9 @@ Output content.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1691,9 +1692,9 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1736,9 +1737,9 @@ Dynamic output with multiple attributes.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1789,9 +1790,9 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"),
+      Files.writeString(companionDir.resolve("first-use.md"),
         "Count: $0, Label: $1\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1820,9 +1821,9 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"),
+      Files.writeString(companionDir.resolve("first-use.md"),
         "First: $0, Second: $1\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1850,9 +1851,9 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"),
+      Files.writeString(companionDir.resolve("first-use.md"),
         "Name: $0\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1881,9 +1882,9 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"),
+      Files.writeString(companionDir.resolve("first-use.md"),
         "Count: $0\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1910,9 +1911,9 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path companionDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(companionDir);
-      Files.writeString(companionDir.resolve("SKILL.md"),
+      Files.writeString(companionDir.resolve("first-use.md"),
         "Count: $0\n");
 
       SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
@@ -1943,11 +1944,11 @@ Dynamic output with attribute.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
       // The instruction text contains a backtick-quoted <output> reference.
       // This should NOT be treated as a real <output> tag.
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -1989,9 +1990,9 @@ Read the `<output skill="test-skill">` tag below and echo it verbatim.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -2036,9 +2037,9 @@ status data here
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -2078,9 +2079,9 @@ some `code` here
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -2137,9 +2138,9 @@ actual preprocessor content
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Test skill"
 user-invocable: false
@@ -2191,9 +2192,9 @@ More documentation text.
     Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
     try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
     {
-      Path firstUseDir = tempPluginRoot.resolve("skills/status-first-use");
+      Path firstUseDir = tempPluginRoot.resolve("skills/status");
       Files.createDirectories(firstUseDir);
-      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+      Files.writeString(firstUseDir.resolve("first-use.md"), """
 ---
 description: "Internal skill for subagent preloading. Do not invoke directly."
 user-invocable: false
@@ -2229,6 +2230,38 @@ status output here
         contains("</instructions>").
         contains("<output skill=\"status\">").
         contains("status output here");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that load strips plugin prefix from skill name when resolving directory path.
+   * Directory is {@code skills/git-commit/} but skill name is {@code cat:git-commit}.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void loadStripsPluginPrefixFromSkillName() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      // Directory uses bare name without prefix
+      Path companionDir = tempPluginRoot.resolve("skills/test-skill");
+      Files.createDirectories(companionDir);
+      Files.writeString(companionDir.resolve("first-use.md"), """
+Prefixed skill content
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      // Load with prefixed name (as SubagentStartHook lists it)
+      String result = loader.load("cat:test-skill");
+
+      requireThat(result, "result").contains("Prefixed skill content");
     }
     finally
     {

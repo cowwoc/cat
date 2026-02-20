@@ -1,5 +1,5 @@
 ---
-description: "Generate Issue Complete box after merge. Invoked by /cat:work."
+description: Internal (invoked by /cat:work after merge) - generates the Issue Complete summary box
 user-invocable: false
 arguments:
   - completedIssue

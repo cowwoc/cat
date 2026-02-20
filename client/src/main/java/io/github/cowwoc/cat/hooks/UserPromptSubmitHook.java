@@ -10,7 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.prompt.DestructiveOps;
 import io.github.cowwoc.cat.hooks.prompt.DetectGivingUp;
-import io.github.cowwoc.cat.hooks.prompt.ForcedEvalSkills;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,6 @@ public final class UserPromptSubmitHook implements HookHandler
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
-      new ForcedEvalSkills(scope),
       new DestructiveOps(),
       new DetectGivingUp(),
       scope.getUserIssues());

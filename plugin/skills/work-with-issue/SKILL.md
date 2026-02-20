@@ -1,5 +1,5 @@
 ---
-description: Execute work phases with issue-aware progress banner rendering (internal skill, invoked by /cat:work)
+description: Internal orchestration (invoked by /cat:work) - runs implement, confirm, review, and merge phases
 user-invocable: false
 allowed-tools:
   - Read
