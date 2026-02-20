@@ -93,9 +93,12 @@ This indicates Phase 1 (prepare) has completed and work phases are starting.
 
 ```bash
 python3 -c "
-import json, sys
+import json, os, sys
 lock_file = '${CLAUDE_PROJECT_DIR}/.claude/cat/locks/${ISSUE_ID}.lock'
-expected = '${CLAUDE_SESSION_ID}'
+expected = os.environ.get('CLAUDE_SESSION_ID', '')
+if not expected:
+    print('ERROR: CLAUDE_SESSION_ID environment variable is not set')
+    sys.exit(1)
 try:
     with open(lock_file) as f:
         session = json.load(f).get('session_id', '')
@@ -772,7 +775,7 @@ Task tool:
     Execute the merge phase for task ${ISSUE_ID}.
 
     ## Configuration
-    SESSION_ID: ${CLAUDE_SESSION_ID}
+    SESSION_ID: $CLAUDE_SESSION_ID
     ISSUE_ID: ${ISSUE_ID}
     ISSUE_PATH: ${ISSUE_PATH}
     WORKTREE_PATH: ${WORKTREE_PATH}
@@ -815,7 +818,7 @@ If any phase fails:
 
 1. Capture error message and phase name
 2. Attempt lock release: `${CLAUDE_PLUGIN_ROOT}/scripts/issue-lock.sh release "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}"
-   "${CLAUDE_SESSION_ID}"`
+   "$CLAUDE_SESSION_ID"`
 3. Return FAILED status with actual error details
 
 ```json

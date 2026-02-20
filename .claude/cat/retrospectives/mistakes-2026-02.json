@@ -677,6 +677,34 @@
         "catches_variations": true
       },
       "correct_behavior": "When prevention type is skill/process/documentation/config and no active worktree exists, include prevention files in the same commit as retrospective metadata (single commit in Step 13). Only split commits when prevention targets a worktree (code_fix, hook, validation)."
+    },
+    {
+      "id": "M367",
+      "timestamp": "2026-02-20T18:19:36.497Z",
+      "category": "environment_state_mismatch",
+      "description": "Lock verification used baked-in template session ID instead of runtime env var, causing false mismatch after /clear rotated CLAUDE_SESSION_ID",
+      "root_cause": "work-with-issue-first-use SKILL.md rendered ${CLAUDE_SESSION_ID} at skill-load time (from SessionStart), but /clear rotated the actual CLAUDE_SESSION_ID env var. Lock was acquired with runtime env var; verification compared against stale baked-in value.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue-first-use/SKILL.md",
+      "pattern_keywords": [
+        "session_id",
+        "lock",
+        "CLAUDE_SESSION_ID",
+        "verification",
+        "template",
+        "clear"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Lock verification must read CLAUDE_SESSION_ID from the OS environment at runtime using os.environ.get('CLAUDE_SESSION_ID'), not from a value baked in by template substitution at skill-load time."
     }
   ]
 }
