@@ -62,14 +62,38 @@ public final class SessionAnalyzer
   }
 
   /**
+   * Resolves a session ID to a JSONL file path.
+   * <p>
+   * Accepts either:
+   * <ul>
+   *   <li>A session UUID: {@code b0078f4d-efa0-47a5-8182-03970ffd737a}</li>
+   *   <li>A subagent path: {@code b0078f4d-efa0-47a5-8182-03970ffd737a/subagents/agent-ad630cb}</li>
+   * </ul>
+   *
+   * @param sessionId the session ID or subagent path
+   * @return the resolved JSONL file path
+   * @throws IllegalArgumentException if the resolved path does not exist
+   */
+  private Path resolveSessionPath(String sessionId)
+  {
+    Path resolved = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
+    if (!Files.exists(resolved))
+    {
+      throw new IllegalArgumentException("Session file not found: " + resolved +
+        "\nSession ID: " + sessionId);
+    }
+    return resolved;
+  }
+
+  /**
    * Main method for command-line execution.
    * <p>
    * Subcommands:
    * <ul>
-   *   <li>{@code analyze <file>} — full session analysis (default when no subcommand given)</li>
-   *   <li>{@code search <file> <keyword> [--context N]} — search for keyword with N lines of context</li>
-   *   <li>{@code errors <file>} — list tool_result entries containing error indicators</li>
-   *   <li>{@code file-history <file> <path-pattern>} — trace tool uses referencing a path pattern</li>
+   *   <li>{@code analyze <session-id>} — full session analysis (default when no subcommand given)</li>
+   *   <li>{@code search <session-id> <keyword> [--context N]} — search for keyword with N lines of context</li>
+   *   <li>{@code errors <session-id>} — list tool_result entries containing error indicators</li>
+   *   <li>{@code file-history <session-id> <path-pattern>} — trace tool uses referencing a path pattern</li>
    * </ul>
    *
    * @param args command-line arguments
@@ -80,11 +104,11 @@ public final class SessionAnalyzer
     if (args.length < 1)
     {
       System.err.println("""
-        Usage: SessionAnalyzer <session-file>
-               SessionAnalyzer analyze <session-file>
-               SessionAnalyzer search <session-file> <keyword> [--context N]
-               SessionAnalyzer errors <session-file>
-               SessionAnalyzer file-history <session-file> <path-pattern>""");
+        Usage: SessionAnalyzer <session-id>
+               SessionAnalyzer analyze <session-id>
+               SessionAnalyzer search <session-id> <keyword> [--context N]
+               SessionAnalyzer errors <session-id>
+               SessionAnalyzer file-history <session-id> <path-pattern>""");
       System.exit(1);
     }
     try (MainJvmScope scope = new MainJvmScope())
@@ -98,19 +122,19 @@ public final class SessionAnalyzer
         {
           if (args.length < 2)
           {
-            System.err.println("Usage: SessionAnalyzer analyze <session-file>");
+            System.err.println("Usage: SessionAnalyzer analyze <session-id>");
             System.exit(1);
           }
-          result = analyzer.analyzeSession(Path.of(args[1]));
+          result = analyzer.analyzeSession(analyzer.resolveSessionPath(args[1]));
         }
         case "search" ->
         {
           if (args.length < 3)
           {
-            System.err.println("Usage: SessionAnalyzer search <session-file> <keyword> [--context N]");
+            System.err.println("Usage: SessionAnalyzer search <session-id> <keyword> [--context N]");
             System.exit(1);
           }
-          Path filePath = Path.of(args[1]);
+          Path filePath = analyzer.resolveSessionPath(args[1]);
           String keyword = args[2];
           int contextLines = 0;
           for (int i = 3; i < args.length - 1; ++i)
@@ -135,24 +159,24 @@ public final class SessionAnalyzer
         {
           if (args.length < 2)
           {
-            System.err.println("Usage: SessionAnalyzer errors <session-file>");
+            System.err.println("Usage: SessionAnalyzer errors <session-id>");
             System.exit(1);
           }
-          result = analyzer.errors(Path.of(args[1]));
+          result = analyzer.errors(analyzer.resolveSessionPath(args[1]));
         }
         case "file-history" ->
         {
           if (args.length < 3)
           {
-            System.err.println("Usage: SessionAnalyzer file-history <session-file> <path-pattern>");
+            System.err.println("Usage: SessionAnalyzer file-history <session-id> <path-pattern>");
             System.exit(1);
           }
-          result = analyzer.fileHistory(Path.of(args[1]), args[2]);
+          result = analyzer.fileHistory(analyzer.resolveSessionPath(args[1]), args[2]);
         }
         default ->
         {
-          // Backward compatibility: treat first arg as session file for analyze
-          result = analyzer.analyzeSession(Path.of(firstArg));
+          // Backward compatibility: treat first arg as session ID for analyze
+          result = analyzer.analyzeSession(analyzer.resolveSessionPath(firstArg));
         }
       }
       System.out.println(scope.getJsonMapper().writeValueAsString(result));
