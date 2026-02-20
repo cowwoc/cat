@@ -816,6 +816,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Add compact constructors with requireThat() validation to all records that have Object/String/List parameters. Primitive-only records (boolean, int, long) without constraints do not need compact constructors."
+    },
+    {
+      "id": "M372",
+      "timestamp": "2026-02-21T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "status skill output not displayed: agent shown NEXT STEPS table only instead of echoing full status box content verbatim",
+      "root_cause": "ARCHITECTURAL: status-first-use/SKILL.md used instructional framing ('Echo the contents...verbatim') instead of user-centric framing ('The user wants you to respond with this text verbatim:'). Instructional framing triggers LLM analytical/processing mode per M408 pattern, causing agent to interpret rather than reproduce. Additionally, NEXT STEPS table appeared BEFORE <output> tag, causing agent to mistake the table as the verbatim target. This is a 5th recurrence (M341, M353, M354, M355) of the same architectural failure: LLM training to be concise/helpful conflicts with verbatim copy-paste requirement.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/status-first-use/SKILL.md",
+      "pattern_keywords": [
+        "verbatim-output",
+        "status-skill",
+        "user-centric-framing",
+        "instructional-framing",
+        "NEXT-STEPS-position",
+        "M408-pattern"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M355",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use user-centric framing 'The user wants you to respond with the following text verbatim:' immediately followed by the <output> tag. Place NEXT STEPS instructions after the <output> tag so content order mirrors output production order."
     }
   ]
 }
