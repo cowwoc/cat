@@ -20,7 +20,7 @@ Implements the full workflow defined in `retrospectives.json`.
 
 ## Skill Output Analysis
 
-Echo the content inside the LATEST `<output skill="retrospective">` tag below. Do not summarize, interpret, or add commentary.
+Echo the contents of the latest `<output skill="run-retrospective">` tag verbatim.
 
 The tag contains one of three result types:
 
