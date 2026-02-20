@@ -80,6 +80,66 @@ directive. Debug log: `[Agent: cat:preprocess-tester] Preloaded skill 'cat:prepr
 and preprocessor-based plugin skills. Be aware of the shared marker file issue when the same skill is
 also invoked by the parent agent.
 
+## Skill Arguments
+
+### The `argument-hint` Field
+
+The `argument-hint` frontmatter field is a display-only hint shown in the CLI prompt bar when users type the slash
+command. It does not affect argument parsing. Follow standard CLI conventions:
+
+| Syntax | Meaning | Example |
+|--------|---------|---------|
+| `<arg>` | Required argument | `<file>` |
+| `[arg]` | Optional argument | `[open]` |
+| `<arg...>` | Variable-length (one or more) | `<keywords...>` |
+
+### Passing Arguments to Preprocessor Commands
+
+Skills that use `!` backtick preprocessor commands can receive arguments from the caller. Two patterns exist:
+
+| Pattern | Syntax | When to Use |
+|---------|--------|-------------|
+| Fixed arguments | `$N` positional references | Known number of arguments |
+| Variable-length arguments | `$ARGUMENTS` | Unknown/variable number of arguments |
+
+### Fixed Arguments (`$N` Pattern)
+
+For skills with a known number of arguments, use `argument-hint` frontmatter to document expected arguments and `$N`
+positional references (`$0`, `$1`, `$2`, ...) in the preprocessor command. SkillLoader splits the caller's args string
+on whitespace and maps tokens to positional indices.
+
+```yaml
+---
+argument-hint: "<severity> <stakeholder> <description> <location>"
+---
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" "$0" "$1" "$2" "$3"`
+```
+
+Quoting `"$N"` is recommended to preserve arguments containing special characters after substitution.
+
+**Behavior for out-of-range indices:** If `$N` references an index beyond the argument count, the literal `$N` string
+is passed through unchanged — this will likely cause errors in the target binary.
+
+### Variable-Length Arguments (`$ARGUMENTS`)
+
+For skills that accept a variable number of arguments (e.g., keyword lists), use the unbraced `$ARGUMENTS` variable.
+This bypasses SkillLoader's variable substitution and is expanded by the shell, where Claude Code sets the `ARGUMENTS`
+environment variable to the raw args string.
+
+```yaml
+---
+argument-hint: "<keywords...>"
+---
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/my-tool" $ARGUMENTS`
+```
+
+**Do NOT use `${ARGUMENTS}`** (braced form). SkillLoader's variable resolver intercepts braced variables and
+`ARGUMENTS` is not a recognized built-in, causing it to resolve to empty. See
+[claude-code#18044](https://github.com/anthropics/claude-code/issues/18044).
+
+Leave `$ARGUMENTS` unquoted so the shell performs word-splitting, passing each whitespace-separated token as a separate
+argument to the binary.
+
 ## Loading Paths
 
 | Loader Path | How Invoked | Session Marker Used? |
