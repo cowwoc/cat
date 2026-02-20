@@ -307,6 +307,6 @@ Before completing retrospective:
 - `cat:learn` - Records individual mistakes, triggers this skill
 - `cat:token-report` - Provides context metrics for analysis
 - `cat:work` - Can be used to implement action items
-<output skill="retrospective">
+<output skill="run-retrospective">
 !`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-retrospective-output"`
 </output>
