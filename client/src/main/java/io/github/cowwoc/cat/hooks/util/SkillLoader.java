@@ -81,7 +81,10 @@ public final class SkillLoader
     "\\A---\\n.*?\\n---\\n?", Pattern.DOTALL);
   private static final Pattern OUTPUT_TAG_PATTERN = Pattern.compile(
     "<output(?:\\s[^>]*)?>(.+?)</output>", Pattern.DOTALL);
+  private static final Pattern INLINE_BACKTICK_PATTERN = Pattern.compile("`[^`\n]+`");
   private static final Pattern POSITIONAL_ARG_PATTERN = Pattern.compile("\\$(\\d+)");
+  private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("^```[a-z]*\\s*$(.+?)^```\\s*$",
+    Pattern.DOTALL | Pattern.MULTILINE);
   private static final String LAUNCHER_DIRECTORY = "client/bin";
   /**
    * Parsed content from a {@code -first-use} SKILL.md file.
@@ -299,27 +302,75 @@ public final class SkillLoader
   }
 
   /**
+   * Replaces inline backtick-quoted segments (e.g., {@code `<output skill="X">`}) with
+   * equal-length space sequences, producing a sanitized copy of the content.
+   * <p>
+   * This prevents {@code OUTPUT_TAG_PATTERN} from matching {@code <output>} tags that appear
+   * inside backtick-quoted text in instruction prose.
+   * <p>
+   * Only inline backticks are replaced. Fenced code blocks (triple-backtick) are not affected
+   * because triple-backtick fences do not match the single-backtick pattern used here.
+   * <p>
+   * Replacements use equal-length space sequences (not shorter tokens) to preserve the string
+   * length invariant. This ensures that character positions found by pattern matching on the
+   * sanitized copy remain valid indices into the original content.
+   *
+   * @param content the original content
+   * @return a sanitized copy where inline backtick segments are replaced with spaces
+   */
+  private static String sanitizeInlineBackticks(String content)
+  {
+    Matcher matcher = INLINE_BACKTICK_PATTERN.matcher(content);
+    StringBuilder sanitized = new StringBuilder(content);
+    while (matcher.find())
+    {
+      int start = matcher.start();
+      int end = matcher.end();
+      for (int i = start; i < end; ++i)
+        sanitized.setCharAt(i, ' ');
+    }
+    return sanitized.toString();
+  }
+
+  /**
    * Parses content into instructions and output body using the {@code <output>} tag as delimiter.
    * <p>
-   * Everything before the {@code <output>} tag is treated as instructions. The content inside
-   * the {@code <output>} tag is the preprocessor directive body.
+   * Everything before the last {@code <output>} tag is treated as instructions. The content inside
+   * the last {@code <output>} tag is the preprocessor directive body.
+   * <p>
+   * Inline backtick-quoted segments (e.g., {@code `<output skill="X">`}) are ignored during
+   * tag detection, so literal references in instruction prose do not corrupt the parse.
+   * <p>
+   * {@code <output>} tags inside fenced code blocks (triple-backtick) are also ignored, so
+   * example skill files shown in documentation do not corrupt the parse.
+   * <p>
+   * <b>Index invariant:</b> {@code sanitizeInlineBackticks} replaces segments with equal-length
+   * spaces, preserving string length. This means positions found in the sanitized copy apply
+   * directly to the original content for substring extraction.
    *
    * @param content the content to parse
-   * @return the parsed content, or {@code null} if no {@code <output>} tag is found
+   * @return the parsed content, or {@code null} if no real {@code <output>} tag is found
    */
   private static ParsedContent parseContent(String content)
   {
-    Matcher outputMatcher = OUTPUT_TAG_PATTERN.matcher(content);
+    String sanitized = sanitizeInlineBackticks(content);
+    Set<int[]> codeBlockRegions = findCodeBlockRegions(sanitized);
+    Matcher outputMatcher = OUTPUT_TAG_PATTERN.matcher(sanitized);
     int lastStart = -1;
-    String lastBody = null;
+    int lastGroupStart = -1;
+    int lastGroupEnd = -1;
     while (outputMatcher.find())
     {
+      if (isInsideCodeBlock(outputMatcher.start(), codeBlockRegions))
+        continue;
       lastStart = outputMatcher.start();
-      lastBody = outputMatcher.group(1).strip();
+      lastGroupStart = outputMatcher.start(1);
+      lastGroupEnd = outputMatcher.end(1);
     }
     if (lastStart == -1)
       return null;
     String instructions = content.substring(0, lastStart).strip();
+    String lastBody = content.substring(lastGroupStart, lastGroupEnd).strip();
     return new ParsedContent(instructions, lastBody);
   }
 
@@ -399,10 +450,7 @@ public final class SkillLoader
   private static Set<int[]> findCodeBlockRegions(String content)
   {
     Set<int[]> regions = new HashSet<>();
-    // Match ``` fences on their own lines (with optional language tag), allowing any content between them
-    Pattern codeBlockPattern = Pattern.compile("^```[a-z]*\\s*$(.+?)^```\\s*$",
-      Pattern.DOTALL | Pattern.MULTILINE);
-    Matcher matcher = codeBlockPattern.matcher(content);
+    Matcher matcher = CODE_BLOCK_PATTERN.matcher(content);
     while (matcher.find())
       regions.add(new int[]{matcher.start(), matcher.end()});
     return regions;
