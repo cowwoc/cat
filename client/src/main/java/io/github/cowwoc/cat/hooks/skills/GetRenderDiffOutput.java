@@ -6,6 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
+
 import java.io.IOException;
 
 import java.nio.file.Path;
@@ -585,6 +588,7 @@ public final class GetRenderDiffOutput
     boolean space;
     boolean tab;
     boolean wrap;
+    boolean wordDiff;
   }
 
   /**
@@ -1176,6 +1180,40 @@ public final class GetRenderDiffOutput
   {
     // Width of border characters and indicators: left│ (1) + mid│ (1) + 2 indicator chars (2) + right│ (1)
     private static final int BORDER_AND_INDICATOR_WIDTH = 5;
+    /**
+     * Placeholder token inserted before a changed region; replaced with {@code **} after escaping.
+     * Contains only null bytes so {@link #escapeMarkdown(String)} passes it through unchanged.
+     */
+    private static final String DIFF_OPEN = "\u0000\u0001";
+    /**
+     * Placeholder token inserted after a changed region; replaced with {@code **} after escaping.
+     * Contains only null bytes so {@link #escapeMarkdown(String)} passes it through unchanged.
+     */
+    private static final String DIFF_CLOSE = "\u0000\u0002";
+    /**
+     * Maximum number of characters on either side before falling back to line-level diff.
+     * Prevents heap exhaustion for very long lines.
+     */
+    private static final int MAX_CHARS_FOR_WORD_DIFF = 1500;
+    /**
+     * Shared generator for word-level inline diffs using placeholder tags.
+     */
+    private static final DiffRowGenerator DIFF_ROW_GENERATOR = DiffRowGenerator.create().
+      showInlineDiffs(true).
+      inlineDiffByWord(true).
+      oldTag(f ->
+      {
+        if (f)
+          return DIFF_OPEN;
+        return DIFF_CLOSE;
+      }).
+      newTag(f ->
+      {
+        if (f)
+          return DIFF_OPEN;
+        return DIFF_CLOSE;
+      }).
+      build();
 
     private final int width;
     private final DisplayUtils display;
@@ -1230,6 +1268,47 @@ public final class GetRenderDiffOutput
         return text.substring(0, 1);
 
       return text.substring(0, endIndex);
+    }
+
+    /**
+     * Escapes markdown special characters in content so they render as literals.
+     * <p>
+     * This is needed because diff output is displayed as raw markdown (not inside a code fence),
+     * so special characters in code content would otherwise trigger markdown formatting.
+     *
+     * @param content the content to escape
+     * @return the content with markdown special characters escaped
+     */
+    static String escapeMarkdown(String content)
+    {
+      // Escape backslash first (so we don't double-escape), then other special chars
+      // Characters that trigger markdown formatting: * _ ~ ` [ ] \ < >
+      return content.
+        replace("\\", "\\\\").
+        replace("*", "\\*").
+        replace("_", "\\_").
+        replace("~", "\\~").
+        replace("`", "\\`").
+        replace("[", "\\[").
+        replace("]", "\\]").
+        replace("<", "\\<").
+        replace(">", "\\>");
+    }
+
+    /**
+     * Escapes markdown special characters in content while preserving diff markers.
+     * <p>
+     * Diff markers ({@code DIFF_OPEN}/{@code DIFF_CLOSE}) use null chars that are not in the escape set,
+     * so {@link #escapeMarkdown(String)} passes them through unchanged. After escaping, the placeholders
+     * are replaced with {@code **} to produce markdown bold markers around changed tokens.
+     *
+     * @param content the content with diff markers inserted by the word-diff generator
+     * @return the content with markdown escaped and diff markers converted to bold ({@code **})
+     */
+    private static String escapeAndRestoreMarkers(String content)
+    {
+      String escaped = escapeMarkdown(content);
+      return escaped.replace(DIFF_OPEN, "**").replace(DIFF_CLOSE, "**");
     }
 
     /**
@@ -1387,6 +1466,8 @@ public final class GetRenderDiffOutput
           legendItems.add(DisplayUtils.ARROW_RIGHT + "  tab");
         if (used.wrap)
           legendItems.add("↩  wrap");
+        if (used.wordDiff)
+          legendItems.add("**bold**  changed word");
 
         if (legendItems.isEmpty())
           return;
@@ -1574,6 +1655,26 @@ public final class GetRenderDiffOutput
       }
 
       /**
+       * Calculates the display width of content, ignoring markdown bold markers ({@code **})
+       * and backslash escape sequences.
+       * <p>
+       * Bold markers and escape backslashes are consumed by markdown rendering and do not occupy
+       * display width, but they are present in the raw string and must be excluded from width
+       * calculations. For example, {@code \*} displays as {@code *} (1 char wide, not 2).
+       *
+       * @param content the content possibly containing {@code **} markers or backslash escapes
+       * @return the display width excluding {@code **} markers and escape backslashes
+       */
+      private int markdownDisplayWidth(String content)
+      {
+        // Strip bold markers
+        String stripped = content.replace("**", "");
+        // Strip escape backslashes (each \x displays as just x)
+        stripped = stripped.replaceAll("\\\\([*_~`\\[\\]\\\\<>])", "$1");
+        return display.displayWidth(stripped);
+      }
+
+      /**
        * Wraps content into segments that fit within contentWidth.
        *
        * @param content the content to wrap
@@ -1582,7 +1683,7 @@ public final class GetRenderDiffOutput
       private List<String> wrapContent(String content)
       {
         List<String> segments = new ArrayList<>();
-        int contentLen = display.displayWidth(content);
+        int contentLen = markdownDisplayWidth(content);
 
         if (contentLen <= contentWidth)
         {
@@ -1604,7 +1705,7 @@ public final class GetRenderDiffOutput
         // Continuation segments
         while (!remaining.isEmpty())
         {
-          int partLen = display.displayWidth(remaining);
+          int partLen = markdownDisplayWidth(remaining);
           if (partLen <= contentWidth)
           {
             String padded = remaining + " ".repeat(contentWidth - partLen);
@@ -1681,6 +1782,7 @@ public final class GetRenderDiffOutput
         return result.toString();
       }
     }
+
 
     /**
      * Calculates the line number column width for a hunk (max 4 digits = 9999).
@@ -1951,7 +2053,7 @@ public final class GetRenderDiffOutput
       ContentFormatter formatter)
     {
       ParsedLine line = parsedLines.get(index);
-      formatter.printRow(newLine, "  ", line.content());
+      formatter.printRow(newLine, "  ", escapeMarkdown(line.content()));
       return index + 1;
     }
 
@@ -1970,7 +2072,7 @@ public final class GetRenderDiffOutput
       used.minus = true;
       ParsedLine delLine = parsedLines.get(index);
       String delContent = delLine.content();
-      formatter.printRow(oldLine, "- ", delContent);
+      formatter.printRow(oldLine, "- ", escapeMarkdown(delContent));
       return index + 1;
     }
 
@@ -2000,13 +2102,31 @@ public final class GetRenderDiffOutput
       {
         String delVis = whitespaceHandler.visualizeWhitespace(delContent);
         String addVis = whitespaceHandler.visualizeWhitespace(addContent);
-        formatter.printRow(oldLine, "- ", delVis);
-        formatter.printRow(newLine, "+ ", addVis);
+        formatter.printRow(oldLine, "- ", escapeMarkdown(delVis));
+        formatter.printRow(newLine, "+ ", escapeMarkdown(addVis));
+      }
+      else if (delContent.length() > MAX_CHARS_FOR_WORD_DIFF || addContent.length() > MAX_CHARS_FOR_WORD_DIFF)
+      {
+        formatter.printRow(oldLine, "- ", escapeMarkdown(delContent));
+        formatter.printRow(newLine, "+ ", escapeMarkdown(addContent));
       }
       else
       {
-        formatter.printRow(oldLine, "- ", delContent);
-        formatter.printRow(newLine, "+ ", addContent);
+        List<DiffRow> rows = DIFF_ROW_GENERATOR.generateDiffRows(
+          List.of(delContent),
+          List.of(addContent));
+        if (!rows.isEmpty() && rows.getFirst().getTag() == DiffRow.Tag.CHANGE)
+        {
+          DiffRow row = rows.getFirst();
+          used.wordDiff = true;
+          formatter.printRow(oldLine, "- ", escapeAndRestoreMarkers(row.getOldLine()));
+          formatter.printRow(newLine, "+ ", escapeAndRestoreMarkers(row.getNewLine()));
+        }
+        else
+        {
+          formatter.printRow(oldLine, "- ", escapeMarkdown(delContent));
+          formatter.printRow(newLine, "+ ", escapeMarkdown(addContent));
+        }
       }
 
       return index + 1;
@@ -2026,7 +2146,7 @@ public final class GetRenderDiffOutput
     {
       used.plus = true;
       ParsedLine line = parsedLines.get(index);
-      formatter.printRow(newLine, "+ ", line.content());
+      formatter.printRow(newLine, "+ ", escapeMarkdown(line.content()));
       return index + 1;
     }
   }

@@ -61,6 +61,11 @@
 			<artifactId>jtokkit</artifactId>
 			<version>1.1.0</version>
 		</dependency>
+		<dependency>
+			<groupId>io.github.java-diff-utils</groupId>
+			<artifactId>java-diff-utils</artifactId>
+			<version>4.16</version>
+		</dependency>
 	</dependencies>
 
 	<build>
