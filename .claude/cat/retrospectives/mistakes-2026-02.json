@@ -788,6 +788,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Parent agent injects system-specific domain knowledge (e.g., available APIs, output formats, session mechanics) into every stakeholder delegation prompt via a Domain Knowledge section, enabling reviewers to identify better alternatives"
+    },
+    {
+      "id": "M371",
+      "timestamp": "2026-02-21T15:44:48Z",
+      "category": "convention_violation",
+      "description": "EmpiricalTestRunner records missing compact constructors with requireThat() validation",
+      "root_cause": "Agent did not apply java.md convention requiring record compact constructors with parameter validation to all records with Object/String parameters. The convention file was read but inconsistently applied: some records (TestMessage, TurnOutput) received validation while others (ProcessResult, MessageEvaluation, ParsedOutput, EvaluationResult, TrialResult, ConfigResult) did not.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "/workspace/client/src/main/java/io/github/cowwoc/cat/hooks/skills/EmpiricalTestRunner.java",
+      "pattern_keywords": [
+        "records",
+        "compact-constructor",
+        "requireThat",
+        "validation",
+        "java-conventions",
+        "inconsistent-application"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Add compact constructors with requireThat() validation to all records that have Object/String/List parameters. Primitive-only records (boolean, int, long) without constraints do not need compact constructors."
     }
   ]
 }
