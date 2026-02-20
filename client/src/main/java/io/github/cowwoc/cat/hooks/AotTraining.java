@@ -56,16 +56,15 @@ public final class AotTraining
 
       // Hook handlers with run(HookInput, HookOutput)
       new PreToolUseHook(scope).run(input, output);
-      new GetBashPostOutput().run(input, output);
-      new GetReadOutput(scope).run(input, output);
-      new GetReadPostOutput(scope).run(input, output);
+      new PostBashHook().run(input, output);
+      new PreReadHook(scope).run(input, output);
+      new PostReadHook(scope).run(input, output);
       new PostToolUseHook(scope.getClaudeConfigDir()).run(input, output);
       new UserPromptSubmitHook(scope).run(input, output);
-      new GetAskOutput(scope).run(input, output);
-      new PreEditHook().run(input, output);
-      new WriteEditHook(scope).run(input, output);
-      new GetTaskOutput(scope).run(input, output);
-      new GetSessionEndOutput(scope).run(input, output);
+      new PreAskHook(scope).run(input, output);
+      new PreWriteHook(scope).run(input, output);
+      new PreTaskHook(scope).run(input, output);
+      new SessionEndHook(scope).run(input, output);
       new SessionStartHook(scope).run(input, output);
       new SubagentStartHook(scope).run(input, output);
 

@@ -28,19 +28,19 @@ import org.slf4j.LoggerFactory;
  * - Block operations (return block=true with message)
  * - Allow silently (return null)
  */
-public final class GetReadOutput implements HookHandler
+public final class PreReadHook implements HookHandler
 {
   private static final Set<String> SUPPORTED_TOOLS = Set.of("Read", "Glob", "Grep");
 
   private final List<ReadHandler> handlers;
 
   /**
-   * Creates a new GetReadOutput instance.
+   * Creates a new PreReadHook instance.
    *
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public GetReadOutput(JvmScope scope)
+  public PreReadHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(scope.getPredictBatchOpportunity());
@@ -57,7 +57,7 @@ public final class GetReadOutput implements HookHandler
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetReadOutput(scope).run(input, output);
+      HookResult result = new PreReadHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -65,7 +65,7 @@ public final class GetReadOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetReadOutput.class);
+      Logger log = LoggerFactory.getLogger(PreReadHook.class);
       log.error("Unexpected error", e);
       throw e;
     }

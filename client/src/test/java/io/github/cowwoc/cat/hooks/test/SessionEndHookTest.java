@@ -11,7 +11,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.JvmScope;
-import io.github.cowwoc.cat.hooks.session.SessionUnlock;
+import io.github.cowwoc.cat.hooks.SessionEndHook;
 
 import org.testng.annotations.Test;
 
@@ -24,19 +24,19 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Tests for SessionUnlock.
+ * Tests for SessionEndHook.
  */
-public final class SessionUnlockTest
+public final class SessionEndHookTest
 {
   /**
-   * Creates a SessionUnlock instance for testing.
+   * Creates a SessionEndHook instance for testing.
    *
    * @param scope the JVM scope
-   * @return a new SessionUnlock instance
+   * @return a new SessionEndHook instance
    */
-  private SessionUnlock createSessionUnlock(JvmScope scope)
+  private SessionEndHook createSessionEndHook(JvmScope scope)
   {
-    return new SessionUnlock(scope);
+    return new SessionEndHook(scope);
   }
 
   /**
@@ -47,7 +47,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -60,7 +60,7 @@ public final class SessionUnlockTest
       HookInput input = HookInput.empty(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(lockFile), "lockFileExists").isFalse();
     }
@@ -79,7 +79,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -95,7 +95,7 @@ public final class SessionUnlockTest
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(taskLock1), "taskLock1Exists").isFalse();
       requireThat(Files.exists(taskLock2), "taskLock2Exists").isTrue();
@@ -115,7 +115,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/worktree-locks");
@@ -131,7 +131,7 @@ public final class SessionUnlockTest
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(worktreeLock1), "worktreeLock1Exists").isFalse();
       requireThat(Files.exists(worktreeLock2), "worktreeLock2Exists").isTrue();
@@ -151,7 +151,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -168,7 +168,7 @@ public final class SessionUnlockTest
       HookInput input = HookInput.empty(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(staleLock), "staleLockExists").isFalse();
       requireThat(Files.exists(freshLock), "freshLockExists").isTrue();
@@ -188,7 +188,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path taskLockDir = tempDir.resolve(".claude/cat/locks");
@@ -204,7 +204,7 @@ public final class SessionUnlockTest
       HookInput input = HookInput.empty(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(taskLock), "taskLockExists").isTrue();
       requireThat(Files.exists(worktreeLock), "worktreeLockExists").isTrue();
@@ -224,7 +224,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -244,7 +244,7 @@ public final class SessionUnlockTest
       HookInput input = HookInput.empty(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(justWithinBoundary), "justWithinBoundary").isTrue();
       requireThat(Files.exists(justBeyondBoundary), "justBeyondBoundary").isFalse();
@@ -264,7 +264,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       String json = "{\"session_id\": \"session123\"}";
@@ -272,7 +272,7 @@ public final class SessionUnlockTest
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult result = createSessionUnlock(scope).
+      io.github.cowwoc.cat.hooks.HookResult result = createSessionEndHook(scope).
         runWithProjectDir(input, output, tempDir);
 
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -296,7 +296,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -314,7 +314,7 @@ public final class SessionUnlockTest
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(lockA), "lockA").isTrue();
       requireThat(Files.exists(lockB), "lockB").isFalse();
@@ -335,12 +335,12 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(null, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(null, output, tempDir);
     }
     finally
     {
@@ -357,11 +357,11 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       HookInput input = HookInput.empty(scope.getJsonMapper());
-      createSessionUnlock(scope).runWithProjectDir(input, null, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, null, tempDir);
     }
     finally
     {
@@ -381,7 +381,7 @@ public final class SessionUnlockTest
     HookInput input = HookInput.empty(scope.getJsonMapper());
     HookOutput output = new HookOutput(scope);
 
-    createSessionUnlock(scope).runWithProjectDir(input, output, null);
+    createSessionEndHook(scope).runWithProjectDir(input, output, null);
     }
   }
 
@@ -393,7 +393,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path taskLockDir = tempDir.resolve(".claude/cat/locks");
@@ -411,7 +411,7 @@ public final class SessionUnlockTest
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(taskLock), "taskLockExists").isTrue();
       requireThat(Files.exists(worktreeLock), "worktreeLockExists").isTrue();
@@ -431,7 +431,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -445,7 +445,7 @@ public final class SessionUnlockTest
         new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)));
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       requireThat(Files.exists(directoryLock), "directoryLockExists").isTrue();
     }
@@ -464,7 +464,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -480,7 +480,7 @@ public final class SessionUnlockTest
       HookInput input = HookInput.empty(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       // IOException was caught gracefully — lock file still exists (deletion failed)
       requireThat(Files.exists(lockFile), "lockFileStillExists").isTrue();
@@ -500,7 +500,7 @@ public final class SessionUnlockTest
   {
     try (JvmScope scope = new TestJvmScope())
     {
-    Path tempDir = Files.createTempDirectory("session-unlock-test");
+    Path tempDir = Files.createTempDirectory("session-end-hook-test");
     try
     {
       Path lockDir = tempDir.resolve(".claude/cat/locks");
@@ -515,7 +515,7 @@ public final class SessionUnlockTest
       HookInput input = HookInput.empty(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
 
-      createSessionUnlock(scope).runWithProjectDir(input, output, tempDir);
+      createSessionEndHook(scope).runWithProjectDir(input, output, tempDir);
 
       // IOException was caught gracefully — directory-as-lock still exists (deletion failed)
       requireThat(Files.exists(directoryAsLockFile), "directoryLockStillExists").isTrue();

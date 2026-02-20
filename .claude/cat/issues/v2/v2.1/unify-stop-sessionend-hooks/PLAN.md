@@ -7,7 +7,7 @@
 Stop hook is already Java. SessionEnd has 1 bash script that needs migration.
 
 ## Target State
-New GetSessionEndOutput Java dispatcher for SessionEnd. Stop hook remains as-is (already Java).
+New SessionEndHook Java dispatcher for SessionEnd. Stop hook remains as-is (already Java).
 
 ## Satisfies
 None
@@ -18,10 +18,10 @@ None
 - **Mitigation:** Simple file operations; straightforward to port
 
 ## Files to Modify
-- hooks/src/main/java/com/cat/hooks/GetSessionEndOutput.java - NEW: Dispatcher
+- hooks/src/main/java/com/cat/hooks/SessionEndHook.java - NEW: Dispatcher
 - hooks/src/main/java/com/cat/hooks/session/SessionUnlock.java - NEW: Lock cleanup handler
 - hooks/src/test/java/com/cat/hooks/session/SessionUnlockTest.java - NEW
-- plugin/hooks/hooks.json - Replace session-unlock.sh with java.sh GetSessionEndOutput
+- plugin/hooks/hooks.json - Replace session-unlock.sh with java.sh SessionEndHook
 - plugin/hooks/session-unlock.sh - DELETE
 
 ## Acceptance Criteria
@@ -43,7 +43,7 @@ None
 
 ## Execution Steps
 1. Create SessionUnlock handler class
-2. Create GetSessionEndOutput dispatcher
+2. Create SessionEndHook dispatcher
 3. Write tests
 4. Update hooks.json
 5. Delete session-unlock.sh

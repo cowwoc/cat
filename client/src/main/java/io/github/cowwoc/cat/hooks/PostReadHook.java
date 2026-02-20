@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * - Warn about patterns (return warning)
  * - Allow silently (return null)
  */
-public final class GetReadPostOutput implements HookHandler
+public final class PostReadHook implements HookHandler
 {
   private static final Set<String> SUPPORTED_TOOLS = Set.of(
       "Read", "Glob", "Grep", "WebFetch", "WebSearch");
@@ -35,12 +35,12 @@ public final class GetReadPostOutput implements HookHandler
   private final List<ReadHandler> handlers;
 
   /**
-   * Creates a new GetReadPostOutput instance.
+   * Creates a new PostReadHook instance.
    *
    * @param scope the JVM scope providing singleton handlers
    * @throws NullPointerException if scope is null
    */
-  public GetReadPostOutput(JvmScope scope)
+  public PostReadHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(scope.getDetectSequentialTools());
@@ -57,11 +57,11 @@ public final class GetReadPostOutput implements HookHandler
     {
       HookInput input = HookInput.readFromStdin(scope.getJsonMapper());
       HookOutput output = new HookOutput(scope);
-      new GetReadPostOutput(scope).run(input, output);
+      new PostReadHook(scope).run(input, output);
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetReadPostOutput.class);
+      Logger log = LoggerFactory.getLogger(PostReadHook.class);
       log.error("Unexpected error", e);
       throw e;
     }

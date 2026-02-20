@@ -30,27 +30,27 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  *   <li>Allow silently (return allow)</li>
  * </ul>
  */
-public final class PostToolUseFailure implements HookHandler
+public final class PostToolUseFailureHook implements HookHandler
 {
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final List<PostToolHandler> handlers;
 
   /**
-   * Creates a new PostToolUseFailure with specified handlers.
+   * Creates a new PostToolUseFailureHook with specified handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if {@code handlers} is null
    */
-  PostToolUseFailure(List<PostToolHandler> handlers)
+  PostToolUseFailureHook(List<PostToolHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = handlers;
   }
 
   /**
-   * Creates a new PostToolUseFailure instance.
+   * Creates a new PostToolUseFailureHook instance.
    */
-  public PostToolUseFailure()
+  public PostToolUseFailureHook()
   {
     this.handlers = List.of(new DetectRepeatedFailures());
   }
@@ -67,7 +67,7 @@ public final class PostToolUseFailure implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new PostToolUseFailure().run(input, output);
+      HookResult result = new PostToolUseFailureHook().run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -75,7 +75,7 @@ public final class PostToolUseFailure implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(PostToolUseFailure.class);
+      Logger log = LoggerFactory.getLogger(PostToolUseFailureHook.class);
       log.error("Unexpected error", e);
       throw e;
     }
@@ -124,7 +124,7 @@ public final class PostToolUseFailure implements HookHandler
     if (!additionalContexts.isEmpty())
     {
       String combined = String.join("\n\n", additionalContexts);
-      jsonOutput = output.additionalContext("PostToolUseFailure", combined);
+      jsonOutput = output.additionalContext("PostToolUseFailureHook", combined);
     }
     else
       jsonOutput = output.empty();

@@ -35,21 +35,20 @@ readonly MODULE_NAME="io.github.cowwoc.cat.hooks"
 # Handler registry: launcher-name:ClassName
 # Each entry generates a bin/<launcher-name> script in the jlink image.
 readonly -a HANDLERS=(
-  "get-bash-output:PreToolUseHook"
-  "get-bash-post-output:GetBashPostOutput"
-  "get-read-output:GetReadOutput"
-  "get-read-post-output:GetReadPostOutput"
-  "get-post-output:PostToolUseHook"
+  "pre-bash:PreToolUseHook"
+  "post-bash:PostBashHook"
+  "pre-read:PreReadHook"
+  "post-read:PostReadHook"
+  "post-tool-use:PostToolUseHook"
   "user-prompt-submit:UserPromptSubmitHook"
   "token-counter:TokenCounter"
   "enforce-status:EnforceStatusOutput"
-  "get-ask-output:GetAskOutput"
-  "get-edit-output:PreEditHook"
-  "get-write-edit-output:WriteEditHook"
+  "pre-ask:PreAskHook"
+  "pre-write:PreWriteHook"
 
   "subagent-start:SubagentStartHook"
-  "get-task-output:GetTaskOutput"
-  "get-session-end-output:GetSessionEndOutput"
+  "pre-task:PreTaskHook"
+  "session-end:SessionEndHook"
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-task-box:skills.GetNextTaskOutput"
@@ -68,7 +67,7 @@ readonly -a HANDLERS=(
   "merge-and-cleanup:util.MergeAndCleanup"
   "git-squash:util.GitSquash"
   "git-merge-linear:util.GitMergeLinear"
-  "post-tool-use-failure:PostToolUseFailure"
+  "post-tool-use-failure:PostToolUseFailureHook"
 )
 
 # --- Logging ---
@@ -353,11 +352,11 @@ verify_image() {
     error "java -version failed"
   fi
 
-  log "  Testing get-bash-output launcher..."
-  if echo '{}' | "${OUTPUT_DIR}/bin/get-bash-output" &>/dev/null; then
-    log "  get-bash-output launcher works"
+  log "  Testing pre-bash launcher..."
+  if echo '{}' | "${OUTPUT_DIR}/bin/pre-bash" &>/dev/null; then
+    log "  pre-bash launcher works"
   else
-    log "  Warning: get-bash-output launcher test failed"
+    log "  Warning: pre-bash launcher test failed"
   fi
 
   log "Verification complete"

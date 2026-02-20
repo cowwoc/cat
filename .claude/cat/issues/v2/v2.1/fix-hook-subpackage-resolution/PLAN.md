@@ -112,7 +112,7 @@ Mapping (from HANDLERS array in build-jlink.sh):
 | `hook.sh GetBashPosttoolOutput` | `bin/after-bash` |
 | `hook.sh GetReadPosttoolOutput` | `bin/after-read` |
 | `hook.sh EnforceStatusOutput` | `bin/enforce-status` |
-| `hook.sh GetSessionEndOutput` | `bin/get-session-end-output` |
+| `hook.sh SessionEndHook` | `bin/get-session-end-output` |
 
 - Files: `plugin/hooks/hooks.json`
 
