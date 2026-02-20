@@ -422,7 +422,75 @@ Parse verification result to determine if all acceptance criteria were satisfied
 
 **If any criteria Partial:**
 - Note partial status in metrics
-- Continue to Step 5
+- Continue to E2E verification below
+
+### End-to-End Verification
+
+**After acceptance criteria verification, run E2E testing to verify the change works in its real environment.**
+
+This applies to all implementation issue types (feature, bugfix, refactor, performance). Skip for docs and config
+issues that don't change runtime behavior.
+
+**Step 1: Check for E2E criteria in PLAN.md:**
+
+```bash
+grep -i "e2e\|end.to.end\|end-to-end" "${ISSUE_PATH}/PLAN.md"
+```
+
+**If no E2E criteria found in PLAN.md:**
+- Output: "Warning: No E2E acceptance criteria found in PLAN.md for this issue."
+- Output: "Running E2E verification based on the feature's goal."
+- Proceed to Step 2 using the goal from PLAN.md to determine what to test.
+
+**If E2E criteria found:**
+- Extract the E2E criteria text.
+- Proceed to Step 2 using those criteria.
+
+**Step 2: Run E2E verification:**
+
+**Isolation requirement:** E2E tests must not impact other Claude instances or the main worktree. Always test using the
+worktree's own built artifacts (jlink image, scripts) rather than the cached plugin installation. If the test requires
+modifying shared state (e.g., updating the cached plugin, writing to shared config), explain the impact to the user via
+AskUserQuestion and let them decide whether to proceed or skip E2E testing.
+
+The main agent (not a subagent) must verify the change works in its real environment. This means:
+- If the change adds/modifies a hook: build the jlink image from the worktree and test the binary with realistic input
+- If the change adds/modifies a skill: invoke load-skill.sh from the worktree and confirm it produces expected output
+- If the change modifies agent behavior: spawn a test subagent and verify the behavior
+- If the change adds/modifies a CLI tool: run the tool from the worktree with test input and verify output
+- If the change fixes a bug: reproduce the bug scenario and verify it no longer occurs
+
+```bash
+# Example: testing a hook binary (uses worktree's jlink, not cached plugin)
+echo '{"test": "input"}' | "${WORKTREE_PATH}/client/target/jlink/bin/<hook-name>" 2>/dev/null
+
+# Example: testing skill loading (uses worktree's scripts, not cached plugin)
+"${WORKTREE_PATH}/plugin/scripts/load-skill.sh" "${WORKTREE_PATH}/plugin" "cat:<skill>" \
+  "${CAT_AGENT_ID}" "${CLAUDE_SESSION_ID}" "${CLAUDE_PROJECT_DIR}"
+```
+
+**If the jlink image is not built**, build it first:
+```bash
+"${WORKTREE_PATH}/client/build-jlink.sh"
+```
+
+**If E2E test requires shared state changes:**
+```
+AskUserQuestion:
+  header: "E2E Test"
+  question: "E2E testing for this feature requires [describe impact]. Proceed or skip?"
+  options:
+    - "Proceed with E2E test" (accept the impact)
+    - "Skip E2E test" (proceed to review without E2E verification)
+```
+
+**If E2E test passes:** Continue to Step 5.
+
+**If E2E test fails:**
+- Spawn implementation subagent to fix (max 1 iteration)
+- Re-run E2E test
+- If still failing after fix attempt, note the failure and continue to Step 5 (stakeholder review
+  may catch the issue, and the user can decide at the approval gate)
 
 ## Step 5: Review Phase
 
@@ -619,8 +687,13 @@ Present a summary and ask for approval:
 ```
 Display task goal from PLAN.md
 Display execution summary (commits, files changed)
+Display E2E testing summary (see below)
 Display review results with ALL concern details (see below)
 ```
+
+**MANDATORY: Display E2E testing summary before the approval gate.** Explain what E2E tests were run, what they
+verified, and what the results were. This helps the user determine whether the feature works in its real environment.
+If E2E testing was skipped (no E2E criteria in PLAN.md, or non-feature issue), state that explicitly.
 
 **MANDATORY: Display ALL stakeholder concerns before the approval gate**, regardless of severity.
 Users need full visibility into review findings to make informed merge decisions. For each concern
