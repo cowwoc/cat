@@ -623,6 +623,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Pre-fetch issue context files using absolute worktree paths and embed content directly in delegation prompt; instruct subagents to use absolute paths prefixed with WORKTREE_PATH/ for any additional reads"
+    },
+    {
+      "id": "M365",
+      "timestamp": "2026-02-20T16:47:44Z",
+      "category": "misleading_documentation",
+      "description": "work-merge subagent created merge commit (78827a66) using --no-ff instead of --ff-only, violating linear history requirement",
+      "root_cause": "merge-and-cleanup.md concept doc contained code examples showing 'git merge --no-ff' in two places (subagent merge Step 2 and main merge Step 7), priming subagent to use --no-ff. When subagent researched how to perform the merge, it read this doc and was primed to use --no-ff instead of the --ff-only specified in the work-merge-first-use skill Step 5.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/concepts/merge-and-cleanup.md",
+      "pattern_keywords": [
+        "merge-commit",
+        "no-ff",
+        "ff-only",
+        "linear-history",
+        "documentation-priming"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "medium",
+        "catches_variations": true
+      },
+      "correct_behavior": "Always use git merge --ff-only when merging issue branches to base. If fast-forward is not possible, rebase first. Never create merge commits. Use merge-and-cleanup Java tool (${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup) which enforces ff-only."
     }
   ]
 }
