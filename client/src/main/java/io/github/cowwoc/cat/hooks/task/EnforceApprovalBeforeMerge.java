@@ -17,7 +17,6 @@ import tools.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 
@@ -80,8 +79,7 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
       return Result.block(reason);
     }
 
-    Path sessionFile = Paths.get(System.getProperty("user.home"),
-      ".config/claude/projects/-workspace", sessionId + ".jsonl");
+    Path sessionFile = scope.getSessionBasePath().resolve(sessionId + ".jsonl");
 
     if (!Files.exists(sessionFile))
     {

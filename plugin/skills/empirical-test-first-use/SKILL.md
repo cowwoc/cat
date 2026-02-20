@@ -164,10 +164,12 @@ fi
 If the baseline shows 80%+ success, the failure may depend on specific conversation context. Add more priming messages
 or adjust the test prompt to match the real failure scenario.
 
-## Step 4: Examine Full Agent Responses
+## Step 4: Examine Raw JSONL from Test Trials
 
-When baseline confirms failure (0-70% success rate), run with `--output` to capture full agent responses before
-proceeding to isolation. The summary output shows only a short preview — full responses reveal *why* the agent failed.
+When baseline confirms failure (0-70% success rate), run with `--output` to capture full agent responses, then examine
+the raw JSONL session files to understand what the agent actually received and produced. The summary output shows only a
+short preview — raw JSONL reveals the complete conversation, including what content was actually delivered vs what the
+source files intended to deliver.
 
 ```bash
 "$CLIENT_BIN/empirical-test-runner" \
@@ -177,7 +179,47 @@ proceeding to isolation. The summary output shows only a short preview — full 
     --output /tmp/empirical-test-baseline.json
 ```
 
-Open `/tmp/empirical-test-baseline.json` and examine the `results` field. Each trial contains:
+The output file records the session ID for each trial. Use session-analyzer to examine the raw JSONL as the primary
+source of evidence for what the agent received:
+
+```bash
+SESSION_ANALYZER="${WORKTREE_PATH}/client/target/jlink/bin/session-analyzer"
+if [[ ! -x "$SESSION_ANALYZER" ]]; then
+  SESSION_ANALYZER="/workspace/client/target/jlink/bin/session-analyzer"
+fi
+
+# Find the session ID for a specific trial (from --output JSON session_id field)
+TRIAL_SESSION_ID="TRIAL-SESSION-ID"  # from --output JSON session_id field
+```
+
+**Session-analyzer commands** — choose the right one for your investigation need:
+
+| Command | When to Use |
+|---------|-------------|
+| `search <session-id> <keyword> --context N` | Find specific content the agent received (test prompt, system prompt) |
+| `errors <session-id>` | Find tool failures, non-zero exit codes, error patterns |
+| `analyze <session-id>` | Get full session overview including subagent discovery |
+
+```bash
+# Find what content was delivered for the test prompt
+"$SESSION_ANALYZER" search "$TRIAL_SESSION_ID" "keyword-from-test-prompt" --context 5
+
+# Find tool errors in the trial
+"$SESSION_ANALYZER" errors "$TRIAL_SESSION_ID"
+
+# Get session overview (useful if trial spawned subagents)
+"$SESSION_ANALYZER" analyze "$TRIAL_SESSION_ID"
+```
+
+**What to verify in raw JSONL before assuming the source content was delivered intact:**
+- Did the test prompt content appear in the agent's context exactly as written?
+- Was any content transformed, truncated, or altered during delivery?
+- Did the agent receive the system prompt and system reminders as configured?
+- If JSONL content differs from the test config, flag the discrepancy — this is a delivery issue, not a compliance
+  issue
+
+**After JSONL examination**, open `/tmp/empirical-test-baseline.json` and examine the `results` field for the
+structured trial summaries. Each trial contains:
 - `outputPreview`: a 300-character preview of the agent's response
 - `toolsUsed`: which tools the agent called
 - `checks`: which success criteria passed or failed
@@ -187,12 +229,14 @@ response. Failures in priming responses (e.g., a tool_use turn) do not indicate 
 expected intermediate steps. Check which specific response triggered the `success_criteria` evaluation. Only the final
 response to the test prompt is evaluated against the criteria.
 
-Use the full output to form a hypothesis about *what* the agent produced (hallucinating content, refusing to act, using
-wrong format) before attempting isolation. Isolation experiments are more targeted when the failure mode is understood.
+Use the raw JSONL and full output together to form a hypothesis about *what* the agent produced (hallucinating content,
+refusing to act, using wrong format) before attempting isolation. Isolation experiments are more targeted when the
+failure mode is understood from actual delivered content, not assumed from source files.
 
 ## Step 5: Isolate Variables
 
-Generate test configurations that vary one element at a time from the failing baseline. Each hypothesis becomes a config.
+Generate test configurations that vary one element at a time from the failing baseline. Each hypothesis becomes a
+config.
 
 **Common variables to isolate:**
 
@@ -286,9 +330,9 @@ Present a summary report to the user:
 
 | Config | Rate | Notes |
 |--------|------|-------|
-| A_baseline (original) | 20% | Reproduces failure |
-| B_without_X | 100% | Removing X fixes it |
-| C_with_fix | 93% | Production validation |
+| A_baseline (original) | {actual}% | Reproduces failure |
+| B_without_X | {actual}% | Effect of removing X |
+| C_with_fix | {actual}% | Production validation |
 
 **Mechanism:** [explanation of why the root cause affects agent behavior]
 ```
@@ -301,8 +345,8 @@ Present a summary report to the user:
 - **Include system prompt for verbatim-output tests** — tests of skills that echo content verbatim MUST include
   CLAUDE.md content as the `system_prompt`. General project instructions compete with verbatim-copy instructions and
   cause false positives when omitted (found in M361: test showed 100% but production failed).
-- **Test production content** — simplified test prompts may pass when production content fails (found in M507: isolated
-  test 100% vs production 33%).
+- **Test production content** — simplified test prompts may pass when production content fails (found in M507:
+  isolated test 100% vs production 33%).
 - **Description lines hurt** — meta-descriptions like "Display current status" cause haiku to treat them as tasks.
 - **Ordering matters** — put the most important instruction first (primacy effect).
 - **Explain WHY** — Anthropic docs: "Add context/motivation to improve performance."
