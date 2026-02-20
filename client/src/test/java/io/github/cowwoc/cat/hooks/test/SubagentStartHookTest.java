@@ -328,5 +328,4 @@ public final class SubagentStartHookTest
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
-
 }

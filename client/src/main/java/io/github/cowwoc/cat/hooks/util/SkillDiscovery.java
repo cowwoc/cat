@@ -115,9 +115,9 @@ public final class SkillDiscovery
     if (entries.isEmpty())
       return "";
     StringBuilder sb = new StringBuilder(512);
-    sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n");
-    sb.append("  \"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh\" \"${CLAUDE_PLUGIN_ROOT}\" " +
-      "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
+    sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
+      append("  \"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh\" \"${CLAUDE_PLUGIN_ROOT}\" " +
+        "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
     for (SkillEntry entry : entries)
       sb.append("- ").append(entry.name()).append(": ").append(entry.description()).append('\n');
     return sb.toString();
