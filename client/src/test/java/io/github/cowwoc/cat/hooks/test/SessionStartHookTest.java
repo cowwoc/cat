@@ -366,10 +366,12 @@ public class SessionStartHookTest
         // Count occurrences of CLAUDE_SESSION_ID - should appear exactly once
         int count = 0;
         int idx = 0;
-        while ((idx = content.indexOf("CLAUDE_SESSION_ID", idx)) != -1)
+        idx = content.indexOf("CLAUDE_SESSION_ID", idx);
+        while (idx != -1)
         {
           ++count;
           ++idx;
+          idx = content.indexOf("CLAUDE_SESSION_ID", idx);
         }
         requireThat(count, "sessionIdOccurrences").isEqualTo(1);
       }
