@@ -18,6 +18,7 @@ import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
 import io.github.cowwoc.cat.hooks.session.InjectSessionInstructions;
 import io.github.cowwoc.cat.hooks.session.SessionStartHandler;
+import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import io.github.cowwoc.cat.hooks.util.VersionUtils;
 import org.testng.annotations.Test;
 import tools.jackson.databind.JsonNode;
@@ -233,6 +234,714 @@ public class SessionStartHookTest
       // CLAUDE_ENV_FILE is not set in the test environment
       HookInput input = createInput(mapper, "{}");
       new InjectEnv(scope).handle(input);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs writes to multiple UUID-named sibling directories.
+   */
+  @Test
+  public void injectEnvWritesToMultipleSessionDirs() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // sessionEnvBase/ (2 levels up from envFile)
+      //   startupId/sessionstart-hook-1.sh  ← CLAUDE_ENV_FILE
+      //   siblingId/                        ← sibling session dir (UUID-named)
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String siblingId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path siblingDir = sessionEnvBase.resolve(siblingId);
+      Files.createDirectories(startupDir);
+      Files.createDirectories(siblingDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+        requireThat(Files.exists(envFile), "startupEnvFileExists").isTrue();
+        Path siblingEnvFile = siblingDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(siblingEnvFile), "siblingEnvFileExists").isTrue();
+        String siblingContent = Files.readString(siblingEnvFile);
+        requireThat(siblingContent, "siblingContent").contains("CLAUDE_SESSION_ID=\"" + sessionId + "\"");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs skips non-UUID-named directories.
+   */
+  @Test
+  public void injectEnvSkipsNonUuidNamedDirs() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path nonUuidDir = sessionEnvBase.resolve("not-a-uuid");
+      Files.createDirectories(startupDir);
+      Files.createDirectories(nonUuidDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+        // Non-UUID directory should not have an env file written
+        Path nonUuidEnvFile = nonUuidDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(nonUuidEnvFile), "nonUuidEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs skips the directory that envPath already points to.
+   */
+  @Test
+  public void injectEnvSkipsAlreadyWrittenDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // When session_id matches startupId, only one write should happen (no duplicate writes)
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+        // File should exist but should not be double-written (appended twice)
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+        String content = Files.readString(envFile);
+        // Count occurrences of CLAUDE_SESSION_ID - should appear exactly once
+        int count = 0;
+        int idx = 0;
+        while ((idx = content.indexOf("CLAUDE_SESSION_ID", idx)) != -1)
+        {
+          ++count;
+          ++idx;
+        }
+        requireThat(count, "sessionIdOccurrences").isEqualTo(1);
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs handles empty sessionEnvBase gracefully (no sibling dirs).
+   */
+  @Test
+  public void injectEnvHandlesEmptySessionEnvBase() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // sessionEnvBase exists but has no sibling UUID dirs
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          // Should succeed with no warnings (only the startup dir and the resumed session dir)
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs handles non-existent sessionEnvBase gracefully.
+   */
+  @Test
+  public void injectEnvHandlesNonExistentSessionEnvBase() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      // sessionEnvBase is only 1 level deep - so getParent().getParent() doesn't exist
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      // envFile is directly in tempBase (no sessionEnvBase subdirectory)
+      Path startupDir = tempBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          // sessionEnvBase = envFile.getParent().getParent() = tempBase
+          // tempBase exists and has startupId in it, so this will iterate without crashing
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          requireThat(result.stderr(), "stderr").isEmpty();
+        }
+        requireThat(Files.exists(envFile), "envFileExists").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that writeToAllSessionDirs skips symlink directories.
+   */
+  @Test
+  public void injectEnvSkipsSymlinkDirs() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String symlinkId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Path realTarget = tempBase.resolve("real-target-dir");
+      Files.createDirectories(startupDir);
+      Files.createDirectories(realTarget);
+      Path symlinkDir = sessionEnvBase.resolve(symlinkId);
+      Files.createSymbolicLink(symlinkDir, realTarget);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+        // Symlink directory should not have an env file written inside it
+        Path symlinkEnvFile = symlinkDir.resolve("sessionstart-hook-1.sh");
+        requireThat(Files.exists(symlinkEnvFile), "symlinkEnvFileExists").isFalse();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * a dangerous shell character such as {@code $}.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * {@code $} via TestJvmScope. Note: real filesystem paths cannot contain {@code $} on most systems, so
+   * this validation is defense-in-depth for injected values; the test uses Path.of() to bypass filesystem
+   * restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void injectEnvRejectsDangerousShellCharacterInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectDir path that contains '$' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-$INJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          // validateEnvValue is called with projectDir.toString() which contains '$'
+          new InjectEnv(scope).handle(input);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * a double quote character.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * {@code "} via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void injectEnvRejectsDoubleQuoteInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectDir path that contains '"' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-\"INJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * a backtick character.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * a backtick via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void injectEnvRejectsBacktickInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectDir path that contains '`' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-`INJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the projectDir path contains
+   * a newline character.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * a newline via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void injectEnvRejectsNewlineInProjectDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a projectDir path that contains '\n' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousProjectDir = Path.of("/tmp/test-\nINJECTED");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(dangerousProjectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv returns a warning when the env file in the resumed session directory is a symlink.
+   * <p>
+   * When the session_id differs from the startup session ID, InjectEnv writes to the resumed session
+   * directory. If the env file at that location is already a symlink, it should return a warning and
+   * skip the write for security.
+   */
+  @Test
+  public void injectEnvHandlesSymlinkInResumedSessionDir() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String sessionId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Create the resumed session directory and place a symlink at the env file location
+      Path resumedSessionDir = sessionEnvBase.resolve(sessionId);
+      Files.createDirectories(resumedSessionDir);
+      Path realEnvTarget = tempBase.resolve("real-env-target.sh");
+      Files.writeString(realEnvTarget, "# real target");
+      Path resumedEnvFile = resumedSessionDir.resolve("sessionstart-hook-1.sh");
+      Files.createSymbolicLink(resumedEnvFile, realEnvTarget);
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          // The env file in the resumed session dir is a symlink - should return a warning
+          requireThat(result.additionalContext(), "additionalContext").contains("symlink");
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() returns early with a context message when CLAUDE_ENV_FILE is a symlink.
+   * <p>
+   * When the env file itself is a symlink, InjectEnv skips all writes for security and returns a
+   * message containing "symlink".
+   */
+  @Test
+  public void injectEnvSkipsWhenEnvFileIsSymlink() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+
+      // Create a real target file and then create envFile as a symlink pointing to it
+      Path realTarget = tempBase.resolve("real-target.sh");
+      Files.writeString(realTarget, "# real target");
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+      Files.createSymbolicLink(envFile, realTarget);
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          requireThat(result.additionalContext(), "additionalContext").contains("symlink");
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the pluginRoot path contains
+   * a dangerous shell character such as {@code $}.
+   * <p>
+   * Since validateEnvValue is private, this test exercises it indirectly by injecting a path containing
+   * {@code $} via TestJvmScope. The test uses Path.of() to bypass filesystem restrictions.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void injectEnvRejectsDangerousShellCharacterInPluginRoot() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Inject a pluginRoot path that contains '$' - a dangerous shell character
+      // Path.of() allows this without touching the filesystem
+      Path dangerousPluginRoot = Path.of("/tmp/test-$INJECTED");
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, dangerousPluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          new InjectEnv(scope).handle(input);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() throws IllegalArgumentException when the session_id from stdin
+   * contains a dangerous shell character such as {@code $}.
+   * <p>
+   * The session_id value is validated before being written into the env file. Injecting a dangerous
+   * character via the JSON input must cause an immediate failure.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void injectEnvRejectsDangerousShellCharacterInSessionId() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          // Inject a session_id that contains '$' - a dangerous shell character
+          HookInput input = createInput(mapper, "{\"session_id\": \"test-$INJECTED\"}");
+          new InjectEnv(scope).handle(input);
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
+    }
+  }
+
+  /**
+   * Verifies that InjectEnv.handle() returns a warning when a sibling session directory contains an env file
+   * that is a symlink.
+   * <p>
+   * When writing to sibling session directories, InjectEnv skips symlinked env files for security and
+   * returns a warning message containing "symlink".
+   */
+  @Test
+  public void injectEnvWarnsWhenSiblingEnvFileIsSymlink() throws IOException
+  {
+    Path tempBase = Files.createTempDirectory("cat-test-inject-env-");
+    try
+    {
+      String startupId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+      String siblingId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+      Path sessionEnvBase = tempBase.resolve("session-env");
+      Path startupDir = sessionEnvBase.resolve(startupId);
+      Files.createDirectories(startupDir);
+      Path envFile = startupDir.resolve("sessionstart-hook-1.sh");
+
+      // Create sibling directory with env file as a symlink
+      Path siblingDir = sessionEnvBase.resolve(siblingId);
+      Files.createDirectories(siblingDir);
+      Path realTarget = tempBase.resolve("real-sibling-target.sh");
+      Files.writeString(realTarget, "# real sibling target");
+      Path siblingEnvFile = siblingDir.resolve("sessionstart-hook-1.sh");
+      Files.createSymbolicLink(siblingEnvFile, realTarget);
+
+      Path projectDir = Files.createTempDirectory("cat-test-project-");
+      Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+      try
+      {
+        try (TestJvmScope scope = new TestJvmScope(projectDir, pluginRoot, "test-session",
+          envFile, TerminalType.WINDOWS_TERMINAL))
+        {
+          JsonMapper mapper = scope.getJsonMapper();
+          // Use startupId as session_id so the resumed session dir equals startupDir (no resumed write)
+          HookInput input = createInput(mapper, "{\"session_id\": \"" + startupId + "\"}");
+          SessionStartHandler.Result result = new InjectEnv(scope).handle(input);
+          requireThat(result.additionalContext(), "additionalContext").contains("symlink");
+        }
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(projectDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempBase);
     }
   }
 
