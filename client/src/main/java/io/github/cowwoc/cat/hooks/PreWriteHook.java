@@ -10,6 +10,10 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
+import io.github.cowwoc.cat.hooks.write.EnforceWorktreePathIsolation;
+import io.github.cowwoc.cat.hooks.write.StateSchemaValidator;
+import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
+import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -19,11 +23,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
- * Unified PreToolUse hook for Edit operations.
+ * Unified PreToolUse hook for Write/Edit operations.
  * <p>
- * TRIGGER: PreToolUse (matcher: Edit)
+ * TRIGGER: PreToolUse for Write|Edit
  * <p>
- * Consolidates all Edit validation hooks into a single Java dispatcher.
+ * REGISTRATION: plugin/hooks/hooks.json (plugin hook)
+ * <p>
+ * Consolidates all Write/Edit validation hooks into a single Java dispatcher.
  * <p>
  * Handlers can:
  * <ul>
@@ -32,35 +38,45 @@ import org.slf4j.LoggerFactory;
  *   <li>Allow edits (return allow)</li>
  * </ul>
  */
-public final class PreEditHook implements HookHandler
+public final class PreWriteHook implements HookHandler
 {
-  // Handlers are checked in order. EnforceWorkflowCompletion blocks first if approval is missing.
-  private static final List<EditHandler> DEFAULT_HANDLERS = List.of(
-    new EnforceWorkflowCompletion());
-  private final List<EditHandler> handlers;
+  private final List<FileWriteHandler> handlers;
 
   /**
-   * Creates a new PreEditHook instance with default handlers.
+   * Creates a new PreWriteHook instance with default handlers.
+   * <p>
+   * Handlers are checked in order. EnforceWorkflowCompletion warns first, then WarnBaseBranchEdit
+   * warns (non-blocking), followed by blocking handlers (ValidateStateMdFormat, StateSchemaValidator,
+   * EnforceWorktreePathIsolation).
+   *
+   * @param scope the JVM scope providing project directory and shared services
+   * @throws NullPointerException if {@code scope} is null
    */
-  public PreEditHook()
+  public PreWriteHook(JvmScope scope)
   {
-    this.handlers = DEFAULT_HANDLERS;
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(
+      new EnforceWorkflowCompletion(),
+      new WarnBaseBranchEdit(),
+      new ValidateStateMdFormat(),
+      new StateSchemaValidator(),
+      new EnforceWorktreePathIsolation(scope));
   }
 
   /**
-   * Creates a new PreEditHook instance with custom handlers.
+   * Creates a new PreWriteHook instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if {@code handlers} is null
    */
-  public PreEditHook(List<EditHandler> handlers)
+  public PreWriteHook(List<FileWriteHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
   }
 
   /**
-   * Entry point for the Edit pretool output hook.
+   * Entry point for the Write/Edit PreToolUse hook.
    *
    * @param args command line arguments
    */
@@ -71,7 +87,7 @@ public final class PreEditHook implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new PreEditHook().run(input, output);
+      HookResult result = new PreWriteHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -79,7 +95,7 @@ public final class PreEditHook implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(PreEditHook.class);
+      Logger log = LoggerFactory.getLogger(PreWriteHook.class);
       log.error("Unexpected error", e);
       throw e;
     }
@@ -100,7 +116,7 @@ public final class PreEditHook implements HookHandler
     requireThat(output, "output").isNotNull();
 
     String toolName = input.getToolName();
-    if (!equalsIgnoreCase(toolName, "Edit"))
+    if (!(equalsIgnoreCase(toolName, "Write") || equalsIgnoreCase(toolName, "Edit")))
       return HookResult.withoutWarnings(output.empty());
 
     JsonNode toolInput = input.getToolInput();
@@ -108,11 +124,12 @@ public final class PreEditHook implements HookHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
-    for (EditHandler handler : this.handlers)
+    StringBuilder additionalContextAccumulator = new StringBuilder();
+    for (FileWriteHandler handler : this.handlers)
     {
       try
       {
-        EditHandler.Result result = handler.check(toolInput, sessionId);
+        FileWriteHandler.Result result = handler.check(toolInput, sessionId);
         if (result.blocked())
         {
           String jsonOutput;
@@ -124,6 +141,12 @@ public final class PreEditHook implements HookHandler
         }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
+        if (!result.additionalContext().isEmpty())
+        {
+          if (!additionalContextAccumulator.isEmpty())
+            additionalContextAccumulator.append('\n');
+          additionalContextAccumulator.append(result.additionalContext());
+        }
       }
       catch (RuntimeException e)
       {
@@ -133,6 +156,11 @@ public final class PreEditHook implements HookHandler
       }
     }
 
-    return new HookResult(output.empty(), warnings);
+    String jsonOutput;
+    if (!additionalContextAccumulator.isEmpty())
+      jsonOutput = output.additionalContext("PreToolUse", additionalContextAccumulator.toString());
+    else
+      jsonOutput = output.empty();
+    return new HookResult(jsonOutput, warnings);
   }
 }

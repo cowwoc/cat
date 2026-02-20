@@ -8,7 +8,7 @@ package io.github.cowwoc.cat.hooks.edit;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
-import io.github.cowwoc.cat.hooks.EditHandler;
+import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import tools.jackson.databind.JsonNode;
 
 import java.util.regex.Pattern;
@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * <p>
  * Completion bias led to skipping stakeholder_review and approval_gate phases.
  */
-public final class EnforceWorkflowCompletion implements EditHandler
+public final class EnforceWorkflowCompletion implements FileWriteHandler
 {
   private static final Pattern STATE_MD_PATTERN =
     Pattern.compile("\\.claude/cat/v[0-9]+/v[0-9]+\\.[0-9]+/[^/]+/STATE\\.md$");

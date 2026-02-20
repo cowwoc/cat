@@ -34,7 +34,7 @@ import java.util.List;
  *   <li>Allow silently (return allow)</li>
  * </ul>
  */
-public final class GetBashPostOutput implements HookHandler
+public final class PostBashHook implements HookHandler
 {
   private static final List<BashHandler> HANDLERS = List.of(
     new DetectConcatenatedCommit(),
@@ -43,9 +43,9 @@ public final class GetBashPostOutput implements HookHandler
     new VerifyCommitType());
 
   /**
-   * Creates a new GetBashPostOutput instance.
+   * Creates a new PostBashHook instance.
    */
-  public GetBashPostOutput()
+  public PostBashHook()
   {
   }
 
@@ -61,7 +61,7 @@ public final class GetBashPostOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetBashPostOutput().run(input, output);
+      HookResult result = new PostBashHook().run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -69,7 +69,7 @@ public final class GetBashPostOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetBashPostOutput.class);
+      Logger log = LoggerFactory.getLogger(PostBashHook.class);
       log.error("Unexpected error", e);
       throw e;
     }

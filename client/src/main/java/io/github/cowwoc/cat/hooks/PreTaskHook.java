@@ -33,29 +33,29 @@ import org.slf4j.LoggerFactory;
  *   <li>Allow task operations (return allow)</li>
  * </ul>
  */
-public final class GetTaskOutput implements HookHandler
+public final class PreTaskHook implements HookHandler
 {
   private final List<TaskHandler> handlers;
 
   /**
-   * Creates a new GetTaskOutput instance with default handlers.
+   * Creates a new PreTaskHook instance with default handlers.
    *
    * @param scope the JVM scope
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetTaskOutput(JvmScope scope)
+  public PreTaskHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(new EnforceWorktreeSafetyBeforeMerge(), new EnforceApprovalBeforeMerge(scope));
   }
 
   /**
-   * Creates a new GetTaskOutput instance with custom handlers.
+   * Creates a new PreTaskHook instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if handlers is null
    */
-  public GetTaskOutput(List<TaskHandler> handlers)
+  public PreTaskHook(List<TaskHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
@@ -73,7 +73,7 @@ public final class GetTaskOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetTaskOutput(scope).run(input, output);
+      HookResult result = new PreTaskHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -81,7 +81,7 @@ public final class GetTaskOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetTaskOutput.class);
+      Logger log = LoggerFactory.getLogger(PreTaskHook.class);
       log.error("Unexpected error", e);
       throw e;
     }

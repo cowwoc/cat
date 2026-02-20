@@ -48,9 +48,9 @@ hooks application JAR, Jackson 3 for JSON processing, and SLF4J/Logback for logg
 runtime/cat-jdk-25/
 ├── bin/
 │   ├── java                     # JVM binary
-│   ├── get-bash-output          # Generated launcher scripts
-│   ├── get-read-output          #   (one per handler class)
-│   ├── get-post-output
+│   ├── pre-bash                 # Generated launcher scripts
+│   ├── pre-read                 #   (one per handler class))
+│   ├── post-tool-use
 │   └── ...
 └── lib/
     └── server/
@@ -82,20 +82,19 @@ Each handler is registered in `build-jlink.sh`'s `HANDLERS` array as `launcher-n
 
 | Launcher | Class | Hook Event |
 |----------|-------|------------|
-| `get-bash-output` | `GetBashOutput` | PreToolUse (Bash) |
-| `get-bash-post-output` | `GetBashPostOutput` | PostToolUse (Bash) |
-| `get-read-output` | `GetReadOutput` | PreToolUse (Read/Glob/Grep) |
-| `get-read-post-output` | `GetReadPostOutput` | PostToolUse (Read/Glob/Grep) |
-| `get-post-output` | `GetPostOutput` | PostToolUse (all) |
-| `get-skill-output` | `GetSkillOutput` | UserPromptSubmit |
-| `get-ask-output` | `GetAskOutput` | PreToolUse (AskUserQuestion) |
-| `get-edit-output` | `PreEditHook` | PreToolUse (Edit) |
-| `get-write-edit-output` | `WriteEditHook` | PreToolUse (Write/Edit) |
-| `get-task-output` | `GetTaskOutput` | PreToolUse (Task) |
-| `get-session-end-output` | `GetSessionEndOutput` | SessionEnd |
+| `pre-bash` | `PreToolUseHook` | PreToolUse (Bash) |
+| `post-bash` | `PostBashHook` | PostToolUse (Bash) |
+| `pre-read` | `PreReadHook` | PreToolUse (Read/Glob/Grep) |
+| `post-read` | `PostReadHook` | PostToolUse (Read/Glob/Grep) |
+| `post-tool-use` | `PostToolUseHook` | PostToolUse (all) |
+| `user-prompt-submit` | `UserPromptSubmitHook` | UserPromptSubmit |
+| `pre-ask` | `PreAskHook` | PreToolUse (AskUserQuestion) |
+| `pre-write` | `PreWriteHook` | PreToolUse (Write/Edit) |
+| `pre-task` | `PreTaskHook` | PreToolUse (Task) |
+| `session-end` | `SessionEndHook` | SessionEnd |
 | `token-counter` | `TokenCounter` | PostToolUse (all) |
 | `enforce-status` | `EnforceStatusOutput` | Stop |
-| `get-status-output` | `skills.RunGetStatusOutput` | Skill handler (status) |
+| `get-status-output` | `skills.GetStatusOutput` | Skill handler (status) |
 | `get-checkpoint-box` | `skills.GetCheckpointOutput` | Skill handler (checkpoint) |
 | `get-issue-complete-box` | `skills.GetIssueCompleteOutput` | Skill handler (issue-complete) |
 | `get-next-task-box` | `skills.GetNextTaskOutput` | Skill handler (next-task) |

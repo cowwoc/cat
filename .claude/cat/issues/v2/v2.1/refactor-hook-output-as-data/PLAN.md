@@ -37,7 +37,7 @@ None
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/GetBashPostOutput.java` - return warnings in result
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/GetSkillOutput.java` - return warnings in result
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/GetSessionStartOutput.java` - return warnings in result
-- `hooks/src/main/java/io/github/cowwoc/cat/hooks/GetSessionEndOutput.java` - return warnings in result
+- `hooks/src/main/java/io/github/cowwoc/cat/hooks/SessionEndHook.java` - return warnings in result
 - `hooks/src/main/java/io/github/cowwoc/cat/hooks/HookOutput.java` - update to handle warnings from return values
 
 ### Utility classes (return warnings as data):
