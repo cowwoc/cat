@@ -10,16 +10,20 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -45,6 +49,8 @@ import tools.jackson.databind.node.ObjectNode;
 public final class EmpiricalTestRunner
 {
   private static final int DEFAULT_TIMEOUT_SECONDS = 180;
+  private static final Path SESSION_DIR = Path.of(
+    System.getProperty("user.home"), ".config", "claude", "projects", "-workspace");
   private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
   {
   };
@@ -314,6 +320,25 @@ public final class EmpiricalTestRunner
   }
 
   /**
+   * Lists all .jsonl session files in the session directory.
+   *
+   * @return the set of session file paths, or an empty set if the directory doesn't exist
+   * @throws IOException if the directory exists but cannot be read
+   */
+  private static Set<Path> listSessionFiles() throws IOException
+  {
+    Set<Path> files = new HashSet<>();
+    if (!Files.isDirectory(SESSION_DIR))
+      return files;
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(SESSION_DIR, "*.jsonl"))
+    {
+      for (Path path : stream)
+        files.add(path);
+    }
+    return files;
+  }
+
+  /**
    * Builds the claude CLI command with appropriate flags.
    *
    * @param model the model name
@@ -335,7 +360,6 @@ public final class EmpiricalTestRunner
     command.add("--output-format");
     command.add("stream-json");
     command.add("--verbose");
-    command.add("--no-session-persistence");
     command.add("--dangerously-skip-permissions");
     if (!systemPrompt.isEmpty())
     {
@@ -418,11 +442,36 @@ public final class EmpiricalTestRunner
 
     String input = buildInput(primingMessages, messages, systemReminders);
 
+    Set<Path> sessionFilesBefore;
+    Set<Path> sessionFilesAfter;
+    try
+    {
+      sessionFilesBefore = listSessionFiles();
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
     ProcessResult processResult = executeClaudeProcess(command, input, cwd);
+    try
+    {
+      sessionFilesAfter = listSessionFiles();
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
+
+    List<String> newSessionFiles = new ArrayList<>();
+    for (Path path : sessionFilesAfter)
+    {
+      if (!sessionFilesBefore.contains(path))
+        newSessionFiles.add(path.toString());
+    }
 
     if (!processResult.error().isEmpty())
       return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
-        new ArrayList<>(), processResult.error(), List.of());
+        new ArrayList<>(), processResult.error(), List.of(), newSessionFiles);
 
     ParsedOutput parsed = parseOutput(processResult.output());
 
@@ -477,7 +526,7 @@ public final class EmpiricalTestRunner
       overallPreview = "";
 
     return new TrialResult(allPass, combinedChecks, processResult.elapsed(),
-      overallPreview, toolsUsed, "", evaluations);
+      overallPreview, toolsUsed, "", evaluations, newSessionFiles);
   }
 
   /**
@@ -983,10 +1032,11 @@ public final class EmpiricalTestRunner
    * @param error the error message if any
    * @param messageEvaluations per-message evaluation results for multi-message trials, empty for
    *                           single-message trials
+   * @param sessionFiles paths to session .jsonl files created during this trial
    */
   public record TrialResult(boolean pass, Map<String, Boolean> checks, long elapsed,
     String outputPreview, List<String> toolsUsed, String error,
-    List<MessageEvaluation> messageEvaluations)
+    List<MessageEvaluation> messageEvaluations, List<String> sessionFiles)
   {
   }
 
