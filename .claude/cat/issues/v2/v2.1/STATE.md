@@ -61,6 +61,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - update-git-script-references
 - empirical-test-strict-defaults
 - forcedeval-model-invocable-filter
+- learn-examine-raw-conversation
+- output-tag-skip-backtick-quoted
 
 
 ## Issues Completed
