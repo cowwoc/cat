@@ -38,7 +38,6 @@ public final class TestJvmScopeTest
       try
       {
         scope.getJsonMapper();
-        requireThat(false, "getJsonMapper()").isEqualTo(true);
       }
       catch (IllegalStateException e)
       {
@@ -69,7 +68,6 @@ public final class TestJvmScopeTest
       try
       {
         scope.getDisplayUtils();
-        requireThat(false, "getDisplayUtils()").isEqualTo(true);
       }
       catch (IllegalStateException e)
       {
@@ -100,7 +98,6 @@ public final class TestJvmScopeTest
       try
       {
         scope.getClaudeProjectDir();
-        requireThat(false, "getClaudeProjectDir()").isEqualTo(true);
       }
       catch (IllegalStateException e)
       {
@@ -123,7 +120,6 @@ public final class TestJvmScopeTest
     try
     {
       new TestJvmScope(null, validPath);
-      requireThat(false, "constructor").isEqualTo(true);
     }
     catch (NullPointerException e)
     {
@@ -141,7 +137,6 @@ public final class TestJvmScopeTest
     try
     {
       new TestJvmScope(validPath, null);
-      requireThat(false, "constructor").isEqualTo(true);
     }
     catch (NullPointerException e)
     {

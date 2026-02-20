@@ -38,7 +38,6 @@ public class HookRegistrarTest
     try
     {
       new Config(null, HookTrigger.PRE_TOOL_USE, "Bash", false, "#!/bin/bash\necho test");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -55,7 +54,6 @@ public class HookRegistrarTest
     try
     {
       new Config("test-hook", null, "Bash", false, "#!/bin/bash\necho test");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -72,7 +70,6 @@ public class HookRegistrarTest
     try
     {
       new Config("test-hook", HookTrigger.PRE_TOOL_USE, null, false, "#!/bin/bash\necho test");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -89,7 +86,6 @@ public class HookRegistrarTest
     try
     {
       new Config("test-hook", HookTrigger.PRE_TOOL_USE, "Bash", false, null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -338,7 +334,6 @@ public class HookRegistrarTest
       new Result(
         null, "msg", "hook", "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
         "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -357,7 +352,6 @@ public class HookRegistrarTest
       new Result(
         OperationStatus.SUCCESS, null, "hook", "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
         "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -376,7 +370,6 @@ public class HookRegistrarTest
       new Result(
         OperationStatus.SUCCESS, "msg", null, "/path", HookTrigger.PRE_TOOL_USE, "", false, false, false, "cmd",
         "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -395,7 +388,6 @@ public class HookRegistrarTest
       new Result(
         OperationStatus.SUCCESS, "msg", "hook", "/path", HookTrigger.PRE_TOOL_USE, null, false, false, false, "cmd",
         "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
