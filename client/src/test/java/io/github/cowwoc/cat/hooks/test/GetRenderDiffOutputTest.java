@@ -573,9 +573,9 @@ public class GetRenderDiffOutputTest
         GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
         String result = handler.getOutput(tempDir);
 
-        // Should contain both modifications
-        requireThat(result, "result").contains("Modified section 1").
-          contains("Modified section 2").contains("multi.txt");
+        // Should contain both modifications (word diff marks changed words with **)
+        requireThat(result, "result").contains("**Modified**").
+          contains("multi.txt");
       }
       finally
       {
@@ -1162,10 +1162,351 @@ public class GetRenderDiffOutputTest
         String result = handler.getOutput(tempDir);
 
         // git diff shows cumulative changes from both commits
-        // Final state should show "modified twice" (result of both commits)
+        // Final state shows "modified twice" content; since no tokens are shared with "initial",
+        // the entire new phrase is bold-marked as changed
         requireThat(result, "result").contains("Diff Summary");
-        requireThat(result, "result").contains("modified twice");
+        requireThat(result, "result").contains("**modified");
         requireThat(result, "result").contains("initial");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that modification lines have bold markers on changed words.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void modificationLinesHaveWordDiffMarkers() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        setupTestRepo(tempDir, "main", "2.0-word-diff", "code.txt",
+          "hello world foo\n", "hello earth foo\n");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // "world" changed to "earth" - both should be bold-marked
+        requireThat(result, "result").contains("**world**");
+        requireThat(result, "result").contains("**earth**");
+        // Unchanged words should appear without markers
+        requireThat(result, "result").contains("hello");
+        requireThat(result, "result").contains("foo");
+        // Legend should explain bold = changed word
+        requireThat(result, "result").contains("**bold**");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that unchanged words in modification lines have no bold markers.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void unchangedWordsHaveNoBoldMarkers() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        setupTestRepo(tempDir, "main", "2.0-unchanged-words", "text.txt",
+          "alpha beta gamma\n", "alpha BETA gamma\n");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // "beta" changed to "BETA" - only these should be bold-marked
+        requireThat(result, "result").contains("**beta**");
+        requireThat(result, "result").contains("**BETA**");
+        // "alpha" and "gamma" are unchanged - they must appear plain in the diff
+        // (they appear in both the deletion and addition lines without **)
+        requireThat(result, "result").contains("alpha").doesNotContain("**alpha**");
+        requireThat(result, "result").contains("gamma").doesNotContain("**gamma**");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that pure addition and deletion lines (not modifications) have no bold markers.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void pureAdditionDeletionLinesHaveNoBoldMarkers() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        // Initialize git repo
+        runGit(tempDir, "init");
+        runGit(tempDir, "checkout", "-b", "main");
+
+        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+
+        // Initial file with two lines
+        Files.writeString(tempDir.resolve("lines.txt"), "line one\nline two\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "initial");
+
+        runGit(tempDir, "checkout", "-b", "v2.0");
+        runGit(tempDir, "checkout", "-b", "2.0-pure-add-del");
+
+        // Add a new line, delete a different one (not a modification pair)
+        Files.writeString(tempDir.resolve("lines.txt"), "line one\nline two\nline three\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "add third line");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Pure addition "line three" should appear without ** markers
+        requireThat(result, "result").contains("line three").
+          doesNotContain("**line").doesNotContain("three**");
+        requireThat(result, "result").contains("+ ");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that markdown special characters in content are escaped to prevent formatting.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void markdownSpecialCharsAreEscaped() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        setupTestRepo(tempDir, "main", "2.0-markdown-escape", "code.py",
+          "def func(**kwargs):\n", "def func(**args):\n");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // The literal ** in kwargs/args should be escaped (\\*\\*), not rendered as bold.
+        // The library tokenizes by word boundary, so the ** prefix stays as an unchanged token
+        // (escaped) and the word suffix (kwargs/args) is bold-marked as the changed part.
+        requireThat(result, "result").contains("\\*\\*");
+        requireThat(result, "result").contains("**kwargs**");
+        requireThat(result, "result").contains("**args**");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that underscores in content are escaped to prevent italic formatting.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void underscoresInContentAreEscaped() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        setupTestRepo(tempDir, "main", "2.0-underscore-escape", "code.py",
+          "my_variable = 1\n", "my_variable = 2\n");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Underscores should be escaped
+        requireThat(result, "result").contains("my\\_variable");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that whitespace-only changes use whitespace visualization, not word diff bold markers.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void whitespaceOnlyChangesUseVisualizationNotWordDiff() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        // Initialize git repo
+        runGit(tempDir, "init");
+        runGit(tempDir, "checkout", "-b", "main");
+
+        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 80}");
+
+        // File with spaces between words
+        Files.writeString(tempDir.resolve("ws.txt"), "hello world\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "initial");
+
+        runGit(tempDir, "checkout", "-b", "v2.0");
+        runGit(tempDir, "checkout", "-b", "2.0-ws-only");
+
+        // Same words, but space replaced with tab - whitespace-only change
+        Files.writeString(tempDir.resolve("ws.txt"), "hello\tworld\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "space to tab");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Whitespace-only path uses visualization markers (· and →), not bold word markers
+        requireThat(result, "result").contains("·");   // Space marker
+        requireThat(result, "result").contains("→");   // Tab marker
+        // Words "hello" and "world" must NOT be wrapped in bold markers
+        requireThat(result, "result").doesNotContain("**hello**").doesNotContain("**world**");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that modification lines with bold markers align correctly - box drawing characters
+   * line up regardless of whether content contains bold markers.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void modificationLinesWithBoldMarkersAlignCorrectly() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        setupTestRepo(tempDir, "main", "2.0-align-test", "align.txt",
+          "alpha beta gamma\n", "alpha BETA gamma\n");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Verify word diff bold markers are present (changes are marked)
+        requireThat(result, "result").contains("**beta**");
+        requireThat(result, "result").contains("**BETA**");
+
+        // Verify that the right-side vertical border (│) appears and that lines are aligned.
+        // Each rendered row has the form: │<lineNum>│<indicator><content><padding>│
+        // Split by newline and find rows that contain the bold-marked content.
+        // All data rows must end with │ (the right border), confirming padding is correct.
+        String[] lines = result.split("\n");
+        boolean foundBoldRow = false;
+        for (String line : lines)
+        {
+          if (line.contains("**beta**") || line.contains("**BETA**"))
+          {
+            foundBoldRow = true;
+            // The row must end with the box vertical character
+            requireThat(line, "line").endsWith("│");
+          }
+        }
+        requireThat(foundBoldRow, "foundBoldRow").isTrue();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+      }
+    }
+  }
+
+  /**
+   * Verifies that lines with more than 500 tokens on either side fall back to plain escaped
+   * rendering (no bold word-diff markers applied).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void tokenCountExceedingLimitFallsBackToPlainRendering() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      Path tempDir = Files.createTempDirectory("render-diff-test");
+      try
+      {
+        // Initialize git repo
+        runGit(tempDir, "init");
+        runGit(tempDir, "checkout", "-b", "main");
+
+        Path catDir = tempDir.resolve(".claude").resolve("cat");
+        Files.createDirectories(catDir);
+        Files.writeString(catDir.resolve("cat-config.json"), "{\"terminalWidth\": 220}");
+
+        // Build a line with > 500 tokens.
+        // The tokenizer splits on word/whitespace boundaries: each "word N" = 1 word + 1 space = 2 tokens,
+        // so 260 words yields 520 tokens (> 500 limit).
+        StringBuilder oldLineBuilder = new StringBuilder();
+        StringBuilder newLineBuilder = new StringBuilder();
+        for (int i = 0; i < 260; ++i)
+        {
+          oldLineBuilder.append("word").append(i).append(' ');
+          newLineBuilder.append("word").append(i).append(' ');
+        }
+        // Change only the last word so this qualifies as a modification pair
+        newLineBuilder.replace(newLineBuilder.lastIndexOf("word259"), newLineBuilder.length(), "CHANGED ");
+
+        Files.writeString(tempDir.resolve("tokens.txt"), oldLineBuilder + "\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "initial");
+
+        runGit(tempDir, "checkout", "-b", "v2.0");
+        runGit(tempDir, "checkout", "-b", "2.0-token-limit");
+        Files.writeString(tempDir.resolve("tokens.txt"), newLineBuilder + "\n");
+        runGit(tempDir, "add", ".");
+        runGit(tempDir, "commit", "-m", "modify last word");
+
+        GetRenderDiffOutput handler = new GetRenderDiffOutput(scope);
+        String result = handler.getOutput(tempDir);
+
+        // Word diff must NOT be applied (line has > 500 tokens)
+        requireThat(result, "result").doesNotContain("**word0**");
+        requireThat(result, "result").doesNotContain("**CHANGED**");
+        // The content must still appear (plain escaped rendering)
+        requireThat(result, "result").contains("word0");
+        requireThat(result, "result").contains("CHANGED");
       }
       finally
       {

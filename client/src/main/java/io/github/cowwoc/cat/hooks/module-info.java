@@ -11,6 +11,7 @@ module io.github.cowwoc.cat.hooks
   requires io.github.cowwoc.requirements13.jackson;
   requires io.github.cowwoc.pouch10.core;
   requires jtokkit;
+  requires io.github.javadiffutils;
   requires java.net.http;
   requires org.slf4j;
   requires ch.qos.logback.classic;
