@@ -460,6 +460,11 @@ The main agent (not a subagent) must verify the change works in its real environ
 - If the change adds/modifies a CLI tool: run the tool from the worktree with test input and verify output
 - If the change fixes a bug: reproduce the bug scenario and verify it no longer occurs
 
+**Runtime invocation is required. Static file checks are not E2E testing.** Inspecting file contents
+(grep for patterns, cat of file, reading the file) does NOT verify runtime behavior. Skill variable
+expansion, argument passing, and output rendering only occur when the skill is actually invoked. Always
+run the artifact — do not substitute reading it for running it.
+
 ```bash
 # Example: testing a hook binary (uses worktree's jlink, not cached plugin)
 echo '{"test": "input"}' | "${WORKTREE_PATH}/client/target/jlink/bin/<hook-name>" 2>/dev/null
