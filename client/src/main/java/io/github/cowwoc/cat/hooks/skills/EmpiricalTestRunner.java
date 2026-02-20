@@ -10,7 +10,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
-import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,9 +20,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Locale;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -320,20 +317,39 @@ public final class EmpiricalTestRunner
   }
 
   /**
-   * Lists all .jsonl session files in the session directory.
+   * Collects all session files (main + subagent) for a given session ID.
+   * <p>
+   * Session files follow this structure:
+   * <pre>
+   * SESSION_DIR/
+   *   {sessionId}.jsonl              — main agent session
+   *   {sessionId}/subagents/
+   *     agent-{agentId}.jsonl        — subagent sessions
+   * </pre>
    *
-   * @return the set of session file paths, or an empty set if the directory doesn't exist
-   * @throws IOException if the directory exists but cannot be read
+   * @param sessionId the session ID extracted from stream-json output
+   * @return the list of session file paths (main first, then subagents), or empty list if
+   *         sessionId is empty
+   * @throws IOException if the subagents directory exists but cannot be read
    */
-  private static Set<Path> listSessionFiles() throws IOException
+  private static List<Path> collectSessionFiles(String sessionId) throws IOException
   {
-    Set<Path> files = new HashSet<>();
-    if (!Files.isDirectory(SESSION_DIR))
-      return files;
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(SESSION_DIR, "*.jsonl"))
+    if (sessionId.isEmpty())
+      return List.of();
+
+    List<Path> files = new ArrayList<>();
+    Path mainFile = SESSION_DIR.resolve(sessionId + ".jsonl");
+    if (Files.isRegularFile(mainFile))
+      files.add(mainFile);
+
+    Path subagentsDir = SESSION_DIR.resolve(sessionId).resolve("subagents");
+    if (Files.isDirectory(subagentsDir))
     {
-      for (Path path : stream)
-        files.add(path);
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(subagentsDir, "*.jsonl"))
+      {
+        for (Path path : stream)
+          files.add(path);
+      }
     }
     return files;
   }
@@ -442,36 +458,11 @@ public final class EmpiricalTestRunner
 
     String input = buildInput(primingMessages, messages, systemReminders);
 
-    Set<Path> sessionFilesBefore;
-    Set<Path> sessionFilesAfter;
-    try
-    {
-      sessionFilesBefore = listSessionFiles();
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
     ProcessResult processResult = executeClaudeProcess(command, input, cwd);
-    try
-    {
-      sessionFilesAfter = listSessionFiles();
-    }
-    catch (IOException e)
-    {
-      throw WrappedCheckedException.wrap(e);
-    }
-
-    List<String> newSessionFiles = new ArrayList<>();
-    for (Path path : sessionFilesAfter)
-    {
-      if (!sessionFilesBefore.contains(path))
-        newSessionFiles.add(path.toString());
-    }
 
     if (!processResult.error().isEmpty())
       return new TrialResult(false, new HashMap<>(), processResult.elapsed(), "",
-        new ArrayList<>(), processResult.error(), List.of(), newSessionFiles);
+        new ArrayList<>(), processResult.error(), List.of(), List.of());
 
     ParsedOutput parsed = parseOutput(processResult.output());
 
@@ -525,8 +516,18 @@ public final class EmpiricalTestRunner
     else
       overallPreview = "";
 
+    List<Path> sessionFiles;
+    try
+    {
+      sessionFiles = collectSessionFiles(parsed.sessionId());
+    }
+    catch (IOException e)
+    {
+      sessionFiles = List.of();
+    }
+
     return new TrialResult(allPass, combinedChecks, processResult.elapsed(),
-      overallPreview, toolsUsed, "", evaluations, newSessionFiles);
+      overallPreview, toolsUsed, "", evaluations, sessionFiles);
   }
 
   /**
@@ -668,6 +669,7 @@ public final class EmpiricalTestRunner
     List<TurnOutput> turns = new ArrayList<>();
     List<String> currentTurnTexts = new ArrayList<>();
     List<String> currentTurnToolUses = new ArrayList<>();
+    String sessionId = "";
 
     for (String line : output.split("\n"))
     {
@@ -679,6 +681,13 @@ public final class EmpiricalTestRunner
       {
         JsonNode event = scope.getJsonMapper().readTree(trimmed);
         String type = event.path("type").asString("");
+
+        if (sessionId.isEmpty())
+        {
+          String id = event.path("sessionId").asString("");
+          if (!id.isEmpty())
+            sessionId = id;
+        }
 
         if (type.equals("assistant"))
         {
@@ -734,7 +743,7 @@ public final class EmpiricalTestRunner
         List.copyOf(currentTurnToolUses)));
     }
 
-    return new ParsedOutput(texts, toolUses, turns);
+    return new ParsedOutput(texts, toolUses, turns, sessionId);
   }
 
   /**
@@ -941,6 +950,19 @@ public final class EmpiricalTestRunner
    */
   private record ProcessResult(String output, long elapsed, String error)
   {
+    /**
+     * Creates a new process result.
+     *
+     * @param output  the process output
+     * @param elapsed the elapsed time in seconds
+     * @param error   the error message, or empty string if none
+     * @throws NullPointerException if {@code output} or {@code error} are null
+     */
+    ProcessResult
+    {
+      requireThat(output, "output").isNotNull();
+      requireThat(error, "error").isNotNull();
+    }
   }
 
   /**
@@ -998,6 +1020,20 @@ public final class EmpiricalTestRunner
   public record MessageEvaluation(int messageIndex, boolean pass, Map<String, Boolean> checks,
     String outputPreview)
   {
+    /**
+     * Creates a new message evaluation.
+     *
+     * @param messageIndex  the 0-based index of the message
+     * @param pass          whether this message's criteria were satisfied
+     * @param checks        the map of check results for this message
+     * @param outputPreview a preview of the response
+     * @throws NullPointerException if {@code checks} or {@code outputPreview} are null
+     */
+    public MessageEvaluation
+    {
+      requireThat(checks, "checks").isNotNull();
+      requireThat(outputPreview, "outputPreview").isNotNull();
+    }
   }
 
   /**
@@ -1006,9 +1042,28 @@ public final class EmpiricalTestRunner
    * @param texts the list of text outputs (flat, all turns combined)
    * @param toolUses the list of tool use names (flat, all turns combined)
    * @param turns the per-turn breakdown of output
+   * @param sessionId the session ID extracted from the output, or empty string if not found
    */
-  public record ParsedOutput(List<String> texts, List<String> toolUses, List<TurnOutput> turns)
+  public record ParsedOutput(List<String> texts, List<String> toolUses, List<TurnOutput> turns,
+    String sessionId)
   {
+    /**
+     * Creates a new parsed output.
+     *
+     * @param texts     the list of text outputs (flat, all turns combined)
+     * @param toolUses  the list of tool use names (flat, all turns combined)
+     * @param turns     the per-turn breakdown of output
+     * @param sessionId the session ID extracted from the output, or empty string if not found
+     * @throws NullPointerException if {@code texts}, {@code toolUses}, {@code turns}, or
+     *                              {@code sessionId} are null
+     */
+    public ParsedOutput
+    {
+      requireThat(texts, "texts").isNotNull();
+      requireThat(toolUses, "toolUses").isNotNull();
+      requireThat(turns, "turns").isNotNull();
+      requireThat(sessionId, "sessionId").isNotNull();
+    }
   }
 
   /**
@@ -1019,6 +1074,17 @@ public final class EmpiricalTestRunner
    */
   public record EvaluationResult(boolean pass, Map<String, Boolean> checks)
   {
+    /**
+     * Creates a new evaluation result.
+     *
+     * @param pass   whether all checks passed
+     * @param checks the map of check name to result
+     * @throws NullPointerException if {@code checks} is null
+     */
+    public EvaluationResult
+    {
+      requireThat(checks, "checks").isNotNull();
+    }
   }
 
   /**
@@ -1029,15 +1095,43 @@ public final class EmpiricalTestRunner
    * @param elapsed the elapsed time in seconds
    * @param outputPreview a preview of the output
    * @param toolsUsed the list of tools used
-   * @param error the error message if any
+   * @param error the error message if any, or empty string if none
    * @param messageEvaluations per-message evaluation results for multi-message trials, empty for
    *                           single-message trials
-   * @param sessionFiles paths to session .jsonl files created during this trial
+   * @param sessionFiles paths to session .jsonl files created during this trial (main agent first,
+   *                     then subagents), or empty list if the session ID was not found in the output
    */
   public record TrialResult(boolean pass, Map<String, Boolean> checks, long elapsed,
     String outputPreview, List<String> toolsUsed, String error,
-    List<MessageEvaluation> messageEvaluations, List<String> sessionFiles)
+    List<MessageEvaluation> messageEvaluations, List<Path> sessionFiles)
   {
+    /**
+     * Creates a new trial result.
+     *
+     * @param pass               whether the trial passed
+     * @param checks             the map of check results
+     * @param elapsed            the elapsed time in seconds
+     * @param outputPreview      a preview of the output
+     * @param toolsUsed          the list of tools used
+     * @param error              the error message if any, or empty string if none
+     * @param messageEvaluations per-message evaluation results for multi-message trials, empty for
+     *                           single-message trials
+     * @param sessionFiles       paths to session .jsonl files created during this trial (main agent
+     *                           first, then subagents), or empty list if the session ID was not found
+     *                           in the output
+     * @throws NullPointerException if {@code checks}, {@code outputPreview}, {@code toolsUsed},
+     *                              {@code error}, {@code messageEvaluations}, or {@code sessionFiles}
+     *                              are null
+     */
+    public TrialResult
+    {
+      requireThat(checks, "checks").isNotNull();
+      requireThat(outputPreview, "outputPreview").isNotNull();
+      requireThat(toolsUsed, "toolsUsed").isNotNull();
+      requireThat(error, "error").isNotNull();
+      requireThat(messageEvaluations, "messageEvaluations").isNotNull();
+      requireThat(sessionFiles, "sessionFiles").isNotNull();
+    }
   }
 
   /**
@@ -1052,5 +1146,21 @@ public final class EmpiricalTestRunner
   public record ConfigResult(String name, int trials, int passes, int rate,
     List<TrialResult> results)
   {
+    /**
+     * Creates a new configuration result.
+     *
+     * @param name    the configuration name
+     * @param trials  the number of trials
+     * @param passes  the number of passing trials
+     * @param rate    the pass rate as a percentage
+     * @param results the list of trial results
+     * @throws NullPointerException     if {@code name} or {@code results} are null
+     * @throws IllegalArgumentException if {@code name} is blank
+     */
+    public ConfigResult
+    {
+      requireThat(name, "name").isNotBlank();
+      requireThat(results, "results").isNotNull();
+    }
   }
 }
