@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.SequencedSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,7 +121,7 @@ public final class SessionAnalyzer
               {
                 contextLines = Integer.parseInt(args[i + 1]);
               }
-              catch (NumberFormatException e)
+              catch (NumberFormatException _)
               {
                 System.err.println("Error: --context requires an integer value, got: " + args[i + 1]);
                 System.exit(1);
@@ -893,7 +894,7 @@ public final class SessionAnalyzer
         continue;
 
       String[] lines = entryText.split("\n", -1);
-      LinkedHashSet<String> contextBlock = new LinkedHashSet<>();
+      SequencedSet<String> contextBlock = new LinkedHashSet<>();
       for (int lineIndex = 0; lineIndex < lines.length; ++lineIndex)
       {
         if (lines[lineIndex].contains(keyword))
