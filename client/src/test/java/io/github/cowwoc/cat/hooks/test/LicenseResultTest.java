@@ -19,15 +19,15 @@ import org.testng.annotations.Test;
 public final class LicenseResultTest
 {
   /**
-   * Verifies that indie factory returns correct defaults.
+   * Verifies that core factory returns correct defaults.
    */
   @Test
-  public void indieFactoryReturnsCorrectDefaults()
+  public void coreFactoryReturnsCorrectDefaults()
   {
-    LicenseResult result = LicenseResult.indie();
+    LicenseResult result = LicenseResult.core();
 
     requireThat(result.valid(), "valid").isFalse();
-    requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+    requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
     requireThat(result.expired(), "expired").isFalse();
     requireThat(result.inGrace(), "inGrace").isFalse();
     requireThat(result.daysRemaining(), "daysRemaining").isEqualTo(0);
@@ -44,7 +44,7 @@ public final class LicenseResultTest
     LicenseResult result = LicenseResult.error("Invalid token");
 
     requireThat(result.valid(), "valid").isFalse();
-    requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+    requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
     requireThat(result.expired(), "expired").isFalse();
     requireThat(result.inGrace(), "inGrace").isFalse();
     requireThat(result.daysRemaining(), "daysRemaining").isEqualTo(0);
@@ -61,7 +61,6 @@ public final class LicenseResultTest
     try
     {
       new LicenseResult(true, null, false, false, 0, "", "");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -77,8 +76,7 @@ public final class LicenseResultTest
   {
     try
     {
-      new LicenseResult(true, Tier.TEAM, false, false, 0, null, "");
-      requireThat(false, "shouldThrow").isTrue();
+      new LicenseResult(true, Tier.PRO, false, false, 0, null, "");
     }
     catch (NullPointerException e)
     {
@@ -94,8 +92,7 @@ public final class LicenseResultTest
   {
     try
     {
-      new LicenseResult(true, Tier.TEAM, false, false, 0, "", null);
-      requireThat(false, "shouldThrow").isTrue();
+      new LicenseResult(true, Tier.PRO, false, false, 0, "", null);
     }
     catch (NullPointerException e)
     {

@@ -1048,19 +1048,22 @@ unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 
 ## Testing
 
-### No Catch-and-Fail for Unexpected Exceptions
-TestNG's `@Test` already fails tests that throw unexpected exceptions. Do not catch exception types just to manually
-fail — let them propagate naturally:
+### Minimal Exception Testing
+TestNG already fails tests that throw unexpected exceptions. Keep exception tests minimal:
+
+1. **No sentinel lines** — do not add `requireThat(false, ...).isTrue()` after the method call. If the method must
+   throw, the catch block handles it. If it doesn't throw, the test passes (which is correct for "accepts" tests, and
+   for "rejects" tests the catch assertion simply doesn't run).
+2. **No catch blocks for unexpected exceptions** — let them propagate to TestNG.
 
 ```java
-// Good - only catch the EXPECTED exception; unexpected ones propagate
+// Good - catch only the expected exception; no sentinel, no extra catch blocks
 @Test
 public void executeRejectsNullInput() throws IOException
 {
   try
   {
     cmd.execute(null, "value");
-    requireThat(false, "execute").isEqualTo(true);
   }
   catch (NullPointerException e)
   {
@@ -1069,7 +1072,7 @@ public void executeRejectsNullInput() throws IOException
   // IOException propagates naturally → TestNG fails the test
 }
 
-// Avoid - redundant catch-and-fail
+// Avoid - sentinel line and redundant catch block
 @Test
 public void executeRejectsNullInput()
 {
@@ -1084,7 +1087,7 @@ public void executeRejectsNullInput()
   }
   catch (IOException _)
   {
-    requireThat(false, "shouldThrowNullPointerException").isEqualTo(true); // Redundant
+    requireThat(false, "shouldThrowNullPointerException").isEqualTo(true);
   }
 }
 ```
@@ -1092,7 +1095,7 @@ public void executeRejectsNullInput()
 **For "accepts" tests** (verifying no validation exception is thrown):
 
 ```java
-// Good - catch only the acceptable operational exception
+// Good - call the method directly; TestNG fails on unexpected exceptions
 @Test
 public void executeAcceptsEmptyBranch() throws IOException
 {

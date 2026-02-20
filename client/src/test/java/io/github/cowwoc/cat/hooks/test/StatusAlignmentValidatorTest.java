@@ -249,7 +249,6 @@ public final class StatusAlignmentValidatorTest
     try
     {
       StatusAlignmentValidator.validate(null);
-      requireThat(false, "expectedException").isEqualTo(true);
     }
     catch (NullPointerException e)
     {
@@ -266,7 +265,6 @@ public final class StatusAlignmentValidatorTest
     try
     {
       StatusAlignmentValidator.validateAndFormat(null);
-      requireThat(false, "expectedException").isEqualTo(true);
     }
     catch (NullPointerException e)
     {

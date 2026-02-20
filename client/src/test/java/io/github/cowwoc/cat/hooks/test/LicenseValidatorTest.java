@@ -39,10 +39,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class LicenseValidatorTest
 {
   /**
-   * Verifies that missing config file returns indie tier.
+   * Verifies that missing config file returns core tier.
    */
   @Test
-  public void missingConfigFileReturnsIndie() throws IOException
+  public void missingConfigFileReturnsCore() throws IOException
   {
     Path tempDir = createTempDir();
     Path pluginRoot = createPluginRoot();
@@ -54,7 +54,7 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").isEmpty();
       }
       finally
@@ -66,12 +66,12 @@ public class LicenseValidatorTest
   }
 
   /**
-   * Verifies that empty license token returns indie tier.
+   * Verifies that empty license token returns core tier.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void emptyLicenseTokenReturnsIndie() throws IOException
+  public void emptyLicenseTokenReturnsCore() throws IOException
   {
     Path tempDir = createTempDir();
     Path pluginRoot = createPluginRoot();
@@ -91,7 +91,7 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").isEmpty();
       }
       finally
@@ -119,14 +119,14 @@ public class LicenseValidatorTest
         KeyPair keyPair = generateKeyPair();
         writePublicKey(pluginRoot, keyPair.getPublic());
 
-        String token = createToken(keyPair.getPrivate(), "team", null, null);
+        String token = createToken(keyPair.getPrivate(), "pro", null, null);
         writeConfig(tempDir, token);
 
         LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.TEAM);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.PRO);
         requireThat(result.expired(), "expired").isFalse();
         requireThat(result.error(), "error").isEmpty();
       }
@@ -162,7 +162,7 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").contains("Invalid token format");
       }
       finally
@@ -188,14 +188,14 @@ public class LicenseValidatorTest
       try
       {
         KeyPair keyPair = generateKeyPair();
-        String token = createToken(keyPair.getPrivate(), "team", null, null);
+        String token = createToken(keyPair.getPrivate(), "pro", null, null);
         writeConfig(tempDir, token);
 
         LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").contains("Public key not found");
       }
       finally
@@ -207,12 +207,12 @@ public class LicenseValidatorTest
   }
 
   /**
-   * Verifies that expired token past grace period falls back to indie.
+   * Verifies that expired token past grace period falls back to core.
    *
    * @throws Exception if key generation or signing fails
    */
   @Test
-  public void expiredTokenPastGracePeriodFallsBackToIndie() throws Exception
+  public void expiredTokenPastGracePeriodFallsBackToCore() throws Exception
   {
     Path tempDir = createTempDir();
     Path pluginRoot = createPluginRoot();
@@ -224,14 +224,14 @@ public class LicenseValidatorTest
         writePublicKey(pluginRoot, keyPair.getPublic());
 
         long expiredTime = Instant.now().minusSeconds(10 * 86_400).getEpochSecond();
-        String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
+        String token = createToken(keyPair.getPrivate(), "pro", expiredTime, 7);
         writeConfig(tempDir, token);
 
         LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.expired(), "expired").isTrue();
         requireThat(result.inGrace(), "inGrace").isFalse();
         requireThat(result.warning(), "warning").contains("expired");
@@ -262,14 +262,14 @@ public class LicenseValidatorTest
         writePublicKey(pluginRoot, keyPair.getPublic());
 
         long expiredTime = Instant.now().minusSeconds(3 * 86_400).getEpochSecond();
-        String token = createToken(keyPair.getPrivate(), "team", expiredTime, 7);
+        String token = createToken(keyPair.getPrivate(), "pro", expiredTime, 7);
         writeConfig(tempDir, token);
 
         LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isTrue();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.TEAM);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.PRO);
         requireThat(result.expired(), "expired").isTrue();
         requireThat(result.inGrace(), "inGrace").isTrue();
         requireThat(result.warning(), "warning").contains("expired");
@@ -301,14 +301,14 @@ public class LicenseValidatorTest
         KeyPair keyPair2 = generateKeyPair();
         writePublicKey(pluginRoot, keyPair1.getPublic());
 
-        String token = createToken(keyPair2.getPrivate(), "team", null, null);
+        String token = createToken(keyPair2.getPrivate(), "pro", null, null);
         writeConfig(tempDir, token);
 
         LicenseValidator validator = new LicenseValidator(scope);
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").contains("Invalid signature");
       }
       finally
@@ -380,7 +380,7 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").contains("Invalid token format");
       }
       finally
@@ -415,7 +415,7 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").contains("Invalid token format");
       }
       finally
@@ -453,7 +453,7 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").isNotEmpty();
       }
       finally
@@ -488,8 +488,77 @@ public class LicenseValidatorTest
         LicenseResult result = validator.validate(tempDir);
 
         requireThat(result.valid(), "valid").isFalse();
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.error(), "error").isNotEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+  }
+
+  /**
+   * Verifies that a JWT with an invalid tier string returns an error result.
+   *
+   * @throws Exception if key generation or signing fails
+   */
+  @Test
+  public void tokenWithInvalidTierStringReturnsError() throws Exception
+  {
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    {
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
+
+        String token = createToken(keyPair.getPrivate(), "indie", null, null);
+        writeConfig(tempDir, token);
+
+        LicenseValidator validator = new LicenseValidator(scope);
+        LicenseResult result = validator.validate(tempDir);
+
+        requireThat(result.valid(), "valid").isFalse();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
+        requireThat(result.error(), "error").isNotEmpty();
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempDir);
+        TestUtils.deleteDirectoryRecursively(pluginRoot);
+      }
+    }
+  }
+
+  /**
+   * Verifies that a JWT token with no tier field defaults to core tier.
+   *
+   * @throws Exception if key generation or signing fails
+   */
+  @Test
+  public void tokenWithMissingTierFieldDefaultsToCore() throws Exception
+  {
+    Path tempDir = createTempDir();
+    Path pluginRoot = createPluginRoot();
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    {
+      try
+      {
+        KeyPair keyPair = generateKeyPair();
+        writePublicKey(pluginRoot, keyPair.getPublic());
+
+        String token = createTokenWithoutTier(keyPair.getPrivate(), null, null);
+        writeConfig(tempDir, token);
+
+        LicenseValidator validator = new LicenseValidator(scope);
+        LicenseResult result = validator.validate(tempDir);
+
+        requireThat(result.valid(), "valid").isTrue();
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
       }
       finally
       {
@@ -590,6 +659,49 @@ public class LicenseValidatorTest
       payload.append(",\"exp\":").append(exp);
     if (graceDays != null)
       payload.append(",\"grace_days\":").append(graceDays);
+    payload.append('}');
+
+    String payloadB64 = base64UrlEncode(payload.toString().getBytes(StandardCharsets.UTF_8));
+
+    String message = headerB64 + "." + payloadB64;
+    Signature sig = Signature.getInstance("Ed25519");
+    sig.initSign(privateKey);
+    sig.update(message.getBytes(StandardCharsets.UTF_8));
+    byte[] signature = sig.sign();
+    String signatureB64 = base64UrlEncode(signature);
+
+    return message + "." + signatureB64;
+  }
+
+  /**
+   * Creates a signed JWT token without a tier field for testing.
+   *
+   * @param privateKey the private key for signing
+   * @param exp the expiration timestamp (null for no expiration)
+   * @param graceDays the grace period in days (null for default)
+   * @return the JWT token string
+   * @throws Exception if signing fails
+   */
+  private String createTokenWithoutTier(PrivateKey privateKey, Long exp, Integer graceDays) throws Exception
+  {
+    String header = """
+      {"alg":"Ed25519","typ":"JWT"}""";
+    String headerB64 = base64UrlEncode(header.getBytes(StandardCharsets.UTF_8));
+
+    StringBuilder payload = new StringBuilder(100);
+    payload.append('{');
+    boolean hasField = false;
+    if (exp != null)
+    {
+      payload.append("\"exp\":").append(exp);
+      hasField = true;
+    }
+    if (graceDays != null)
+    {
+      if (hasField)
+        payload.append(',');
+      payload.append("\"grace_days\":").append(graceDays);
+    }
     payload.append('}');
 
     String payloadB64 = base64UrlEncode(payload.toString().getBytes(StandardCharsets.UTF_8));

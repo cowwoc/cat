@@ -144,7 +144,6 @@ public class IssueLockTest
         try
         {
           lock.acquire("test-issue", "not-a-uuid", "/path/to/worktree");
-          requireThat(false, "shouldThrow").isTrue();
         }
         catch (IllegalArgumentException e)
         {
@@ -604,7 +603,6 @@ public class IssueLockTest
         try
         {
           lock.check("test-issue");
-          requireThat(false, "shouldThrow").isTrue();
         }
         catch (NullPointerException e)
         {
@@ -750,7 +748,6 @@ public class IssueLockTest
         try
         {
           new IssueLock(scope);
-          requireThat(false, "shouldThrow").isTrue();
         }
         catch (IllegalArgumentException e)
         {

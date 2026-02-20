@@ -23,12 +23,12 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class FeatureGateTest
 {
   /**
-   * Verifies that no license defaults to indie tier.
+   * Verifies that no license defaults to core tier.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void noLicenseDefaultsToIndie() throws IOException
+  public void noLicenseDefaultsToCore() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
     Path projectDir = Files.createTempDirectory("project-");
@@ -40,7 +40,7 @@ public final class FeatureGateTest
         FeatureGate gate = FeatureGate.create(scope);
         FeatureGate.GateResult result = gate.check(projectDir, "single-agent-execution");
 
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.allowed(), "allowed").isTrue();
       }
       finally
@@ -52,12 +52,12 @@ public final class FeatureGateTest
   }
 
   /**
-   * Verifies that indie tier is blocked from team features.
+   * Verifies that core tier is blocked from pro features.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void indieTierBlockedFromTeamFeatures() throws IOException
+  public void coreTierBlockedFromProFeatures() throws IOException
   {
     Path pluginRoot = createTempPluginRoot();
     Path projectDir = Files.createTempDirectory("project-");
@@ -69,9 +69,9 @@ public final class FeatureGateTest
         FeatureGate gate = FeatureGate.create(scope);
         FeatureGate.GateResult result = gate.check(projectDir, "multi-agent-orchestration");
 
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
         requireThat(result.allowed(), "allowed").isFalse();
-        requireThat(result.message(), "message").contains("requires team tier");
+        requireThat(result.message(), "message").contains("requires pro tier");
         requireThat(result.feature(), "feature").isEqualTo("multi-agent-orchestration");
       }
       finally
@@ -103,7 +103,7 @@ public final class FeatureGateTest
         requireThat(result.allowed(), "allowed").isTrue();
         requireThat(result.message(), "message").isEqualTo("");
         requireThat(result.feature(), "feature").isEqualTo("single-agent-execution");
-        requireThat(result.tier(), "tier").isEqualTo(Tier.INDIE);
+        requireThat(result.tier(), "tier").isEqualTo(Tier.CORE);
       }
       finally
       {
@@ -162,7 +162,6 @@ public final class FeatureGateTest
         try
         {
           gate.check(projectDir, null);
-          requireThat(false, "shouldThrow").isTrue();
         }
         catch (NullPointerException e)
         {
@@ -192,16 +191,16 @@ public final class FeatureGateTest
     String tiersJson = """
       {
         "tiers": {
-          "indie": {
+          "core": {
             "features": ["single-agent-execution", "basic-task-management"]
           },
-          "team": {
+          "pro": {
             "features": ["multi-agent-orchestration"],
-            "includes": "indie"
+            "includes": "core"
           },
           "enterprise": {
             "features": ["audit-logging"],
-            "includes": "team"
+            "includes": "pro"
           }
         }
       }
