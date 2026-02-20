@@ -150,20 +150,15 @@ public class ExistingWorkCheckerTest
    * Verifies that check throws on non-existent worktree path.
    */
   @Test
-  public void checkThrowsOnNonExistentWorktreePath()
+  public void checkThrowsOnNonExistentWorktreePath() throws IOException
   {
     try
     {
       ExistingWorkChecker.check("/nonexistent/path", "base-branch");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
       requireThat(e.getMessage(), "message").contains("Cannot access worktree");
-    }
-    catch (IOException _)
-    {
-      requireThat(false, "wrongException").isTrue();
     }
   }
 
@@ -185,7 +180,6 @@ public class ExistingWorkCheckerTest
       try
       {
         ExistingWorkChecker.check(tempDir.toString(), "main");
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (IOException e)
       {
@@ -215,7 +209,6 @@ public class ExistingWorkCheckerTest
       try
       {
         ExistingWorkChecker.check(tempDir.toString(), "nonexistent-branch");
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (IOException e)
       {

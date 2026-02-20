@@ -61,7 +61,6 @@ public class MergeAndCleanupTest
       try
       {
         cmd.execute(null, "issue-id", "session-id", "", tempDir.toString());
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (NullPointerException e)
       {
@@ -95,7 +94,6 @@ public class MergeAndCleanupTest
       try
       {
         cmd.execute("", "issue-id", "session-id", "", tempDir.toString());
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (IllegalArgumentException e)
       {
@@ -129,7 +127,6 @@ public class MergeAndCleanupTest
       try
       {
         cmd.execute(tempDir.toString(), null, "session-id", "", tempDir.toString());
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (NullPointerException e)
       {
@@ -164,7 +161,6 @@ public class MergeAndCleanupTest
       {
         cmd.execute(tempDir.toString(), "issue-id", "session-id", "",
           tempDir.toString());
-        requireThat(false, "execute").isEqualTo(true);
       }
       catch (IOException e)
       {

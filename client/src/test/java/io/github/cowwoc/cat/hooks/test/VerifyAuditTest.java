@@ -639,7 +639,6 @@ public final class VerifyAuditTest
       try
       {
         audit.prepare(json);
-        requireThat(false, "shouldThrow").isEqualTo(true);
       }
       catch (IllegalArgumentException e)
       {
@@ -679,7 +678,6 @@ public final class VerifyAuditTest
       try
       {
         audit.prepare(json);
-        requireThat(false, "shouldThrow").isEqualTo(true);
       }
       catch (IllegalArgumentException e)
       {

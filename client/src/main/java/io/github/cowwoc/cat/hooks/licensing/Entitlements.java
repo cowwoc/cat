@@ -26,7 +26,7 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Maps license tiers to entitled features.
  * <p>
- * Implements tier inheritance (e.g., TEAM includes all INDIE features).
+ * Implements tier inheritance (e.g., PRO includes all CORE features).
  */
 public final class Entitlements
 {

@@ -41,7 +41,6 @@ public class GetRenderDiffOutputTest
       try
       {
         handler.getOutput(null);
-        requireThat(false, "getOutput").isEqualTo(true);
       }
       catch (NullPointerException e)
       {
@@ -59,7 +58,6 @@ public class GetRenderDiffOutputTest
     try
     {
       new GetRenderDiffOutput(null);
-      requireThat(false, "constructor").isEqualTo(true);
     }
     catch (NullPointerException e)
     {

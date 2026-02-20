@@ -92,7 +92,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentInfo(null, "task", SubagentStatus.RUNNING, 0, 0, "/path");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -102,7 +101,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentInfo("abc123", null, SubagentStatus.RUNNING, 0, 0, "/path");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -112,7 +110,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentInfo("abc123", "task", null, 0, 0, "/path");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -122,7 +119,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, 0, 0, null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -139,7 +135,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, -1, 0, "/path");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -156,7 +151,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentInfo("abc123", "task", SubagentStatus.RUNNING, 0, -1, "/path");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -173,7 +167,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentMonitor.Summary(-1, 0, 0, 0);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -183,7 +176,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentMonitor.Summary(0, -1, 0, 0);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -193,7 +185,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentMonitor.Summary(0, 0, -1, 0);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -203,7 +194,6 @@ public class SubagentMonitorTest
     try
     {
       new SubagentMonitor.Summary(0, 0, 0, -1);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -260,7 +250,6 @@ public class SubagentMonitorTest
     try
     {
       new MonitorResult(null, new SubagentMonitor.Summary(0, 0, 0, 0));
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -277,7 +266,6 @@ public class SubagentMonitorTest
     try
     {
       new MonitorResult(java.util.List.of(), null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {

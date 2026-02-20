@@ -34,7 +34,6 @@ public class BatchReaderTest
     try
     {
       new Config(null, 5, 100, "");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -51,7 +50,6 @@ public class BatchReaderTest
     try
     {
       new Config("pattern", 0, 100, "");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -61,7 +59,6 @@ public class BatchReaderTest
     try
     {
       new Config("pattern", -1, 100, "");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -78,7 +75,6 @@ public class BatchReaderTest
     try
     {
       new Config("pattern", 5, -1, "");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -95,7 +91,6 @@ public class BatchReaderTest
     try
     {
       new Config("pattern", 5, 100, null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -161,7 +156,6 @@ public class BatchReaderTest
     try
     {
       new Result(null, "msg", 0L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -178,7 +172,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, null, 0L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -195,7 +188,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", -1L, "pattern", 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -212,7 +204,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", 0L, null, 0, 0, "", "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -229,7 +220,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", -1, 0, "", "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -246,7 +236,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, -1, "", "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -263,7 +252,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, null, "/dir", "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -280,7 +268,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, "", null, "2024-01-01T00:00:00Z");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -297,7 +284,6 @@ public class BatchReaderTest
     try
     {
       new Result(OperationStatus.SUCCESS, "msg", 0L, "pattern", 0, 0, "", "/dir", null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {

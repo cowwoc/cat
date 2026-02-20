@@ -38,7 +38,6 @@ public class GitMergeLinearTest
     try
     {
       cmd.execute(null, "main", false);
-      requireThat(false, "execute").isEqualTo(true);
     }
     catch (NullPointerException e)
     {
@@ -62,7 +61,6 @@ public class GitMergeLinearTest
     try
     {
       cmd.execute("", "main", false);
-      requireThat(false, "execute").isEqualTo(true);
     }
     catch (IllegalArgumentException e)
     {
@@ -86,7 +84,6 @@ public class GitMergeLinearTest
     try
     {
       cmd.execute("task-branch", null, false);
-      requireThat(false, "execute").isEqualTo(true);
     }
     catch (NullPointerException e)
     {

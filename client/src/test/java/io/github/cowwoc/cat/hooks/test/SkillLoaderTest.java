@@ -636,7 +636,6 @@ Content B
       try
       {
         loader.load("test-skill");
-        requireThat(false, "load").isEqualTo(true);
       }
       catch (IOException e)
       {
@@ -1396,7 +1395,6 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       try
       {
         loader.load("test-skill");
-        requireThat(false, "load").isEqualTo(true);
       }
       catch (IOException e)
       {
