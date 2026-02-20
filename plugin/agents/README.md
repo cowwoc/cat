@@ -78,14 +78,13 @@ The following components will be migrated to this directory:
 
 ### From `plugin/stakeholders/` (COMPLETED)
 All stakeholder files have been migrated to this directory with proper agent format:
-- stakeholder-architect.md
+- stakeholder-architecture.md
+- stakeholder-business.md
 - stakeholder-deployment.md
 - stakeholder-design.md
 - stakeholder-legal.md
-- stakeholder-marketing.md
 - stakeholder-performance.md
 - stakeholder-requirements.md
-- stakeholder-sales.md
 - stakeholder-security.md
 - stakeholder-testing.md
 - stakeholder-ux.md
@@ -101,14 +100,13 @@ plugin/agents/
 ├── README.md                      # This file
 ├── work-execute.md                # Implementation specialist (Phase 2)
 ├── work-merge.md                  # Work merge agent
-├── stakeholder-architect.md       # Architecture review
+├── stakeholder-architecture.md    # Architecture review
+├── stakeholder-business.md        # Commercial readiness review (sales + marketing)
 ├── stakeholder-deployment.md      # Deployment/release review
 ├── stakeholder-design.md          # Code quality review
 ├── stakeholder-legal.md           # Legal/compliance review
-├── stakeholder-marketing.md       # Marketing readiness review
 ├── stakeholder-performance.md     # Performance review
 ├── stakeholder-requirements.md    # Requirements verification review
-├── stakeholder-sales.md           # Sales readiness review
 ├── stakeholder-security.md        # Security review
 ├── stakeholder-testing.md         # Test coverage review
 └── stakeholder-ux.md              # UX/accessibility review
