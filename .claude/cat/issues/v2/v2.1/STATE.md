@@ -2,14 +2,14 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-19
+- **Last Updated:** 2026-02-20
 
 
 # v2.1 State: Pre-Demo Polish
 
 ## Status
 - **Status:** in-progress
-- **Progress:** 85%
+- **Progress:** 86%
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
@@ -62,7 +62,9 @@ Finalize naming conventions and UI polish before recording demo videos.
 - empirical-test-strict-defaults
 - forcedeval-model-invocable-filter
 
+
 ## Issues Completed
+- add-statemd-regression-check-to-squash
 - acceptance-criteria-options
 - add-build-hooks-skill
 - add-deployment-stakeholder
