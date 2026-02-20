@@ -181,10 +181,16 @@ Append custom criteria to the standard list for TASK_TYPE.
 
 | Type | Standard Criteria |
 |------|-------------------|
-| Feature | Functionality works, Tests passing, No regressions |
-| Bugfix | Bug fixed, Regression test added, No new issues |
-| Refactor | User-visible behavior unchanged, Tests passing, Code quality improved |
-| Performance | Target met, Benchmarks added, No functionality regression |
+| Feature | Functionality works, Tests passing, No regressions, E2E verification |
+| Bugfix | Bug fixed, Regression test added, No new issues, E2E verification |
+| Refactor | User-visible behavior unchanged, Tests passing, Code quality improved, E2E verification |
+| Performance | Target met, Benchmarks added, No functionality regression, E2E verification |
+
+**E2E verification criterion:** For all implementation issues (feature, bugfix, refactor, performance), always include
+at least one acceptance criterion that verifies the change works end-to-end in its real environment, not just that unit
+tests pass. Describe an observable outcome (e.g., "Spawn a subagent and confirm it receives the skill listing", "Run
+the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer occurs").
+This ensures the change is tested as a whole before review.
 
 Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom additions.
 
