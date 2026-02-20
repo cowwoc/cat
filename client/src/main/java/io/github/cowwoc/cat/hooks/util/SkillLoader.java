@@ -39,10 +39,11 @@ import org.slf4j.LoggerFactory;
  * </pre>
  * <p>
  * <b>Tag-based content:</b> The SKILL.md file may contain an optional {@code <output>} tag that separates
- * static instructions from dynamic preprocessor content. Everything before the {@code <output>} tag is
- * treated as skill instructions. On first use, the instructions are output directly. On subsequent uses,
- * a brief reference instruction is generated dynamically. The {@code <output>} section is always wrapped
- * in {@code <output skill="X">} tags (where X is the skill name) and appended on every invocation.
+ * static instructions from dynamic preprocessor content. Everything before the last {@code <output>} tag
+ * is treated as skill instructions. On first use, instructions are wrapped in
+ * {@code <instructions skill="X">} tags and followed by an execution trigger. On subsequent uses, only
+ * the execution trigger is generated. The {@code <output>} section is always wrapped in
+ * {@code <output skill="X">} tags (where X is the skill name) and appended on every invocation.
  * <p>
  * <b>File inclusion via @path:</b> Lines in skill content starting with {@code @} followed by a
  * relative path containing at least one {@code /} (e.g., {@code @concepts/version-paths.md},
@@ -182,10 +183,11 @@ public final class SkillLoader
    * subsequent loads.
    * <p>
    * When the skill has a {@code -first-use} companion SKILL.md with an {@code <output>} tag,
-   * the instructions before the tag are returned on first load and a brief reference instruction
-   * on subsequent loads. The {@code <output>} section (dynamic preprocessor content) is always
-   * wrapped in {@code <output skill="X">} tags and appended regardless of whether it is the
-   * first or subsequent load.
+   * the instructions before the tag are wrapped in {@code <instructions skill="X">} tags on first
+   * load, followed by an execution trigger. On subsequent loads, only the execution trigger is
+   * emitted. The {@code <output>} section (dynamic preprocessor content) is always wrapped in
+   * {@code <output skill="X">} tags and appended regardless of whether it is the first or
+   * subsequent load.
    *
    * @param skillName the skill name
    * @return the skill content with environment variables substituted
@@ -204,6 +206,10 @@ public final class SkillLoader
 
   /**
    * Processes loaded skill content by applying the first-use/reference logic and variable substitution.
+   * <p>
+   * For skills with {@code <output>} tags: on first use, wraps instructions in
+   * {@code <instructions skill="X">} tags followed by an execution trigger. On subsequent uses,
+   * only the execution trigger is emitted. The {@code <output>} section is always appended.
    *
    * @param skillName the skill name
    * @param content the skill content with frontmatter already stripped
@@ -216,20 +222,22 @@ public final class SkillLoader
 
     if (parsed != null)
     {
-      // -first-use pattern with <output> tag
       StringBuilder output = new StringBuilder(4096);
+      String executeRef = "Execute the <instructions skill=\"" + skillName +
+        "\"> block from earlier in this conversation, using the updated <output skill=\"" +
+        skillName + "\"> tag below.";
       if (loadedSkills.contains(skillName))
       {
-        output.append("""
-          Re-execute the skill instructions declared earlier in this conversation, \
-          using the updated tag below.""");
+        output.append(executeRef);
       }
       else
       {
+        output.append("<instructions skill=\"").append(skillName).append("\">\n");
         output.append(substituteVars(parsed.instructions()));
+        output.append("\n</instructions>\n\n");
+        output.append(executeRef);
         markSkillLoaded(skillName);
       }
-      // Always execute <output> preprocessor (fresh data each invocation)
       if (!parsed.outputBody().isEmpty())
       {
         String processedOutput = substituteVars(parsed.outputBody());
@@ -302,11 +310,17 @@ public final class SkillLoader
   private static ParsedContent parseContent(String content)
   {
     Matcher outputMatcher = OUTPUT_TAG_PATTERN.matcher(content);
-    if (!outputMatcher.find())
+    int lastStart = -1;
+    String lastBody = null;
+    while (outputMatcher.find())
+    {
+      lastStart = outputMatcher.start();
+      lastBody = outputMatcher.group(1).strip();
+    }
+    if (lastStart == -1)
       return null;
-    String instructions = content.substring(0, outputMatcher.start()).strip();
-    String outputBody = outputMatcher.group(1).strip();
-    return new ParsedContent(instructions, outputBody);
+    String instructions = content.substring(0, lastStart).strip();
+    return new ParsedContent(instructions, lastBody);
   }
 
   /**
