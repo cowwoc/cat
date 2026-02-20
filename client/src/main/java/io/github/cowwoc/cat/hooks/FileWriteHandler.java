@@ -15,7 +15,7 @@ import tools.jackson.databind.JsonNode;
  * PreToolUse handlers can block edits or inject warnings.
  * <p>
  * Result factory methods: FileWriteHandler uses warn() to emit stderr warnings
- * for non-blocking violations (similar to EditHandler).
+ * for non-blocking violations.
  */
 @FunctionalInterface
 public interface FileWriteHandler

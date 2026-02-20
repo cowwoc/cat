@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-ask-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-ask"
           }
         ]
       },
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-bash-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-bash"
           }
         ]
       },
@@ -54,16 +54,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-read-output"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-edit-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-read"
           }
         ]
       },
@@ -72,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-write-edit-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-write"
           }
         ]
       },
@@ -81,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-task-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/pre-task"
           }
         ]
       }
@@ -91,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-post-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-tool-use"
           }
         ]
       },
@@ -108,7 +99,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-bash-post-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-bash"
           }
         ]
       },
@@ -117,7 +108,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-read-post-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-read"
           }
         ]
       }
@@ -155,7 +146,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/get-session-end-output"
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/session-end"
           }
         ]
       }
