@@ -37,22 +37,20 @@ import org.slf4j.LoggerFactory;
  *   <li>Allow edits (return allow)</li>
  * </ul>
  */
-public final class GetWriteEditOutput implements HookHandler
+public final class WriteEditHook implements HookHandler
 {
   private final List<FileWriteHandler> handlers;
 
   /**
-   * Creates a new GetWriteEditOutput instance with default handlers.
+   * Creates a new WriteEditHook instance with default handlers.
    * <p>
-   * Handlers are checked in order. WarnBaseBranchEdit warns first (non-blocking),
-   * then blocking handlers (ValidateStateMdFormat, StateSchemaValidator,
-   * EnforceWorktreePathIsolation) run. This ensures warnings are emitted even when
-   * validation would block the edit.
+   * Handlers are checked in order. WarnBaseBranchEdit warns (non-blocking), followed by blocking
+   * handlers (ValidateStateMdFormat, StateSchemaValidator, EnforceWorktreePathIsolation).
    *
    * @param scope the JVM scope providing project directory and shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetWriteEditOutput(JvmScope scope)
+  public WriteEditHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.handlers = List.of(
@@ -63,12 +61,12 @@ public final class GetWriteEditOutput implements HookHandler
   }
 
   /**
-   * Creates a new GetWriteEditOutput instance with custom handlers.
+   * Creates a new WriteEditHook instance with custom handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if {@code handlers} is null
    */
-  public GetWriteEditOutput(List<FileWriteHandler> handlers)
+  public WriteEditHook(List<FileWriteHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
@@ -86,7 +84,7 @@ public final class GetWriteEditOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetWriteEditOutput(scope).run(input, output);
+      HookResult result = new WriteEditHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -94,7 +92,7 @@ public final class GetWriteEditOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetWriteEditOutput.class);
+      Logger log = LoggerFactory.getLogger(WriteEditHook.class);
       log.error("Unexpected error", e);
       throw e;
     }
@@ -123,6 +121,7 @@ public final class GetWriteEditOutput implements HookHandler
     requireThat(sessionId, "sessionId").isNotBlank();
     List<String> warnings = new ArrayList<>();
 
+    StringBuilder additionalContextAccumulator = new StringBuilder();
     for (FileWriteHandler handler : this.handlers)
     {
       try
@@ -139,6 +138,12 @@ public final class GetWriteEditOutput implements HookHandler
         }
         if (!result.reason().isEmpty())
           warnings.add(result.reason());
+        if (!result.additionalContext().isEmpty())
+        {
+          if (!additionalContextAccumulator.isEmpty())
+            additionalContextAccumulator.append('\n');
+          additionalContextAccumulator.append(result.additionalContext());
+        }
       }
       catch (RuntimeException e)
       {
@@ -148,6 +153,11 @@ public final class GetWriteEditOutput implements HookHandler
       }
     }
 
-    return new HookResult(output.empty(), warnings);
+    String jsonOutput;
+    if (!additionalContextAccumulator.isEmpty())
+      jsonOutput = output.additionalContext("PreToolUse", additionalContextAccumulator.toString());
+    else
+      jsonOutput = output.empty();
+    return new HookResult(jsonOutput, warnings);
   }
 }

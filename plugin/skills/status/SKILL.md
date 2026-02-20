@@ -1,5 +1,5 @@
 ---
-description: Display project progress - versions, issues, and completion status
+description: Use when user asks about progress, status, what's done, or what's next - show project issues and completion status
 model: haiku
 allowed-tools:
   - Skill

@@ -1,5 +1,5 @@
 ---
-description: Create file and commit atomically (60-75% faster than step-by-step)
+description: PREFER when creating a new file that needs immediate committing - creates and commits atomically
 user-invocable: false
 allowed-tools: Bash, Write
 ---

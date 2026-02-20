@@ -32,16 +32,19 @@ injected into the subagent's context at startup.
 - Subagents **do not inherit** skills from the parent conversation
 - Use this to ensure subagents have all necessary guidance without manual skill calls
 
+**Note:** Since dynamic skill loading (SubagentStartHook) injects the full skill listing and
+`load-skill.sh` instructions into all subagents at startup, most agents no longer need `skills:`
+frontmatter. Use it only when a skill's full instructions must be available immediately at startup
+without requiring a load step.
+
 **Example use case:**
-A git merge agent needs to know about merge and rebase procedures. By listing these
-skills in the frontmatter, the agent has this knowledge immediately available without
-requiring explicit skill invocations during execution. Scripts like `git-squash-quick.sh`
-are called directly and do not need skill preloading.
+A git merge agent needs merge and rebase procedures immediately available. By listing these
+skills in the frontmatter, the agent has this knowledge from the start without calling load-skill.sh.
 
 ```yaml
 skills:
-  - cat:git-merge-linear-first-use
-  - cat:validate-git-safety-first-use
+  - cat:git-merge-linear
+  - cat:validate-git-safety
 ```
 
 ## Example Agent

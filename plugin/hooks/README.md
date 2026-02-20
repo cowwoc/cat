@@ -89,8 +89,8 @@ Each handler is registered in `build-jlink.sh`'s `HANDLERS` array as `launcher-n
 | `get-post-output` | `GetPostOutput` | PostToolUse (all) |
 | `get-skill-output` | `GetSkillOutput` | UserPromptSubmit |
 | `get-ask-output` | `GetAskOutput` | PreToolUse (AskUserQuestion) |
-| `get-edit-output` | `GetEditOutput` | PreToolUse (Edit) |
-| `get-write-edit-output` | `GetWriteEditOutput` | PreToolUse (Write/Edit) |
+| `get-edit-output` | `PreEditHook` | PreToolUse (Edit) |
+| `get-write-edit-output` | `WriteEditHook` | PreToolUse (Write/Edit) |
 | `get-task-output` | `GetTaskOutput` | PreToolUse (Task) |
 | `get-session-end-output` | `GetSessionEndOutput` | SessionEnd |
 | `token-counter` | `TokenCounter` | PostToolUse (all) |

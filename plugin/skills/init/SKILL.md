@@ -1,5 +1,5 @@
 ---
-description: Initialize CAT planning structure (new or existing project)
+description: Use when starting a new project or adding CAT to an existing one - initializes planning structure
 allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
 ---
 

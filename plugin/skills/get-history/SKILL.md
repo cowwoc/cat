@@ -1,5 +1,5 @@
 ---
-description: Access raw conversation history from Claude Code session storage for analysis
+description: Use when you need to examine past conversation, session logs, or raw chat history
 user-invocable: false
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Merge phase for /cat:work - squashes commits, merges to main, cleans up
+description: Internal merge phase (invoked by /cat:work) - squashes commits, merges to base branch, cleans up
 user-invocable: false
 ---
 

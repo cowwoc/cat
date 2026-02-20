@@ -1,5 +1,5 @@
 ---
-description: Preparation phase for /cat:work - finds task, acquires lock, creates worktree
+description: Internal prepare phase (invoked by /cat:work) - finds next task, acquires lock, creates worktree
 user-invocable: false
 ---
 

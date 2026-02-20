@@ -95,32 +95,43 @@ public class SessionStartHookTest
   @Test
   public void clearSkillMarkersReturnsEmptyResultWhenNoSessionId() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path projectDir = Files.createTempDirectory("cat-test-clear-markers-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = createInput(mapper, "{}");
-      SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
+      SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
       requireThat(result.additionalContext(), "additionalContext").isEmpty();
       requireThat(result.stderr(), "stderr").isEmpty();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
 
   /**
-   * Verifies that ClearSkillMarkers deletes the marker file for the current session.
+   * Verifies that ClearSkillMarkers deletes skill marker files for the current session.
    */
   @Test
   public void clearSkillMarkersDeletesCurrentSessionMarker() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path projectDir = Files.createTempDirectory("cat-test-clear-markers-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-session-" + System.nanoTime();
-      Path markerFile = Path.of("/tmp/cat-skills-loaded-" + sessionId);
-      Files.writeString(markerFile, "marker");
+      Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
+      Files.createDirectories(sessionDir);
+      Path markerFile = sessionDir.resolve("skills-loaded-agent-1");
+      Files.writeString(markerFile, "test-skill");
       try
       {
         HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
-        SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
+        SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
         requireThat(Files.exists(markerFile), "markerFileExists").isFalse();
@@ -130,26 +141,35 @@ public class SessionStartHookTest
         Files.deleteIfExists(markerFile);
       }
     }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
   }
 
   /**
-   * Verifies that ClearSkillMarkers skips symlinks in /tmp.
+   * Verifies that ClearSkillMarkers skips symlinked marker files in the session directory.
    */
   @Test
   public void clearSkillMarkersSkipsSymlinks() throws IOException
   {
-    try (JvmScope scope = new TestJvmScope())
+    Path projectDir = Files.createTempDirectory("cat-test-clear-markers-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
       JsonMapper mapper = scope.getJsonMapper();
       String sessionId = "test-symlink-" + System.nanoTime();
-      Path targetFile = Path.of("/tmp/cat-skills-loaded-symlink-target-" + sessionId);
-      Path symlink = Path.of("/tmp/cat-skills-loaded-" + sessionId);
+      Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
+      Files.createDirectories(sessionDir);
+      Path targetFile = sessionDir.resolve("real-target.txt");
+      Path symlink = sessionDir.resolve("skills-loaded-agent-1");
       Files.writeString(targetFile, "should-not-be-deleted");
       Files.createSymbolicLink(symlink, targetFile);
       try
       {
         HookInput input = createInput(mapper, "{\"session_id\": \"" + sessionId + "\"}");
-        SessionStartHandler.Result result = new ClearSkillMarkers().handle(input);
+        SessionStartHandler.Result result = new ClearSkillMarkers(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
         // Symlink should not have been deleted
@@ -160,6 +180,11 @@ public class SessionStartHookTest
         Files.deleteIfExists(symlink);
         Files.deleteIfExists(targetFile);
       }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
 

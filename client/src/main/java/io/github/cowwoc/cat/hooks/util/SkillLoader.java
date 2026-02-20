@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
  * <pre>
  * plugin-root/
  *   skills/
- *     {skill-name}-first-use/
- *       SKILL.md                — Skill content with optional {@code <output>} tag
+ *     {skill-name}/
+ *       first-use.md            — Skill content with optional {@code <output>} tag
  * </pre>
  * <p>
  * <b>Tag-based content:</b> The SKILL.md file may contain an optional {@code <output>} tag that separates
@@ -113,10 +113,9 @@ public final class SkillLoader
 
   private final JvmScope scope;
   private final Path pluginRoot;
-  private final String sessionId;
   private final String projectDir;
   private final String[] argTokens;
-  private final Path sessionFile;
+  private final Path agentMarkerFile;
   private final Set<String> loadedSkills;
 
   /**
@@ -124,16 +123,16 @@ public final class SkillLoader
    *
    * @param scope the JVM scope for accessing shared services
    * @param pluginRoot the Claude plugin root directory
-   * @param sessionId the Claude session ID
+   * @param catAgentId the CAT agent identifier (unique per agent instance within the session)
    * @param projectDir the Claude project directory
-   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code sessionId}, or {@code projectDir}
+   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code catAgentId}, or {@code projectDir}
    *   are null
-   * @throws IllegalArgumentException if {@code pluginRoot}, {@code sessionId}, or {@code projectDir} are blank
-   * @throws IOException if the session file cannot be read
+   * @throws IllegalArgumentException if {@code pluginRoot}, {@code catAgentId}, or {@code projectDir} are blank
+   * @throws IOException if the agent marker file cannot be read
    */
-  public SkillLoader(JvmScope scope, String pluginRoot, String sessionId, String projectDir) throws IOException
+  public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir) throws IOException
   {
-    this(scope, pluginRoot, sessionId, projectDir, "");
+    this(scope, pluginRoot, catAgentId, projectDir, "");
   }
 
   /**
@@ -141,37 +140,40 @@ public final class SkillLoader
    *
    * @param scope the JVM scope for accessing shared services
    * @param pluginRoot the Claude plugin root directory
-   * @param sessionId the Claude session ID
+   * @param catAgentId the CAT agent identifier (unique per agent instance within the session)
    * @param projectDir the Claude project directory
    * @param skillArgs the whitespace-separated positional arguments to map to named parameters
-   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code sessionId},
+   * @throws NullPointerException if {@code scope}, {@code pluginRoot}, {@code catAgentId},
    *   {@code projectDir}, or {@code skillArgs} are null
-   * @throws IllegalArgumentException if {@code pluginRoot}, {@code sessionId}, or {@code projectDir} are blank
-   * @throws IOException if the session file cannot be read
+   * @throws IllegalArgumentException if {@code pluginRoot}, {@code catAgentId}, or {@code projectDir} are blank
+   * @throws IOException if the agent marker file cannot be read
    */
-  public SkillLoader(JvmScope scope, String pluginRoot, String sessionId, String projectDir, String skillArgs)
+  public SkillLoader(JvmScope scope, String pluginRoot, String catAgentId, String projectDir, String skillArgs)
     throws IOException
   {
     requireThat(scope, "scope").isNotNull();
     requireThat(pluginRoot, "pluginRoot").isNotBlank();
-    requireThat(sessionId, "sessionId").isNotBlank();
+    requireThat(catAgentId, "catAgentId").isNotBlank();
     requireThat(projectDir, "projectDir").isNotBlank();
     requireThat(skillArgs, "skillArgs").isNotNull();
 
     this.scope = scope;
     this.pluginRoot = Paths.get(pluginRoot);
-    this.sessionId = sessionId;
     this.projectDir = projectDir;
     if (skillArgs.isBlank())
       this.argTokens = new String[0];
     else
       this.argTokens = skillArgs.strip().split("\\s+");
-    this.sessionFile = Paths.get(System.getProperty("java.io.tmpdir"), "cat-skills-loaded-" + sessionId);
+
+    String sessionId = scope.getClaudeSessionId();
+    Path sessionDir = scope.getClaudeConfigDir().resolve("projects/-workspace/" + sessionId);
+    Files.createDirectories(sessionDir);
+    this.agentMarkerFile = sessionDir.resolve("skills-loaded-" + catAgentId);
     this.loadedSkills = new HashSet<>();
 
-    if (Files.exists(sessionFile))
+    if (Files.exists(agentMarkerFile))
     {
-      String content = Files.readString(sessionFile, StandardCharsets.UTF_8);
+      String content = Files.readString(agentMarkerFile, StandardCharsets.UTF_8);
       for (String line : content.split("\n"))
       {
         String trimmed = line.strip();
@@ -270,7 +272,7 @@ public final class SkillLoader
 
 
   /**
-   * Loads raw content (including frontmatter) from the {@code -first-use} companion SKILL.md.
+   * Loads raw content (including frontmatter) from the skill's {@code first-use.md} file.
    *
    * @param skillName the skill name
    * @return the raw content including YAML frontmatter, or empty string if no content file exists
@@ -278,10 +280,28 @@ public final class SkillLoader
    */
   private String loadRawContent(String skillName) throws IOException
   {
-    Path contentPath = pluginRoot.resolve("skills/" + skillName + "-first-use/SKILL.md");
+    String dirName = stripPrefix(skillName);
+    Path contentPath = pluginRoot.resolve("skills/" + dirName + "/first-use.md");
     if (!Files.exists(contentPath))
       return "";
     return Files.readString(contentPath, StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Strips the plugin prefix from a qualified skill name.
+   * <p>
+   * For example, {@code "cat:git-commit"} becomes {@code "git-commit"}.
+   * Names without a prefix are returned unchanged.
+   *
+   * @param qualifiedName the qualified skill name
+   * @return the bare skill name without the prefix
+   */
+  private static String stripPrefix(String qualifiedName)
+  {
+    int colonIndex = qualifiedName.indexOf(':');
+    if (colonIndex >= 0)
+      return qualifiedName.substring(colonIndex + 1);
+    return qualifiedName;
   }
 
   /**
@@ -705,7 +725,7 @@ public final class SkillLoader
     if (varName.equals("CLAUDE_PLUGIN_ROOT"))
       return pluginRoot.toString();
     if (varName.equals("CLAUDE_SESSION_ID"))
-      return sessionId;
+      return scope.getClaudeSessionId();
     if (varName.equals("CLAUDE_PROJECT_DIR"))
       return projectDir;
 
@@ -714,15 +734,15 @@ public final class SkillLoader
   }
 
   /**
-   * Marks a skill as loaded in the session file.
+   * Marks a skill as loaded in the agent marker file.
    *
    * @param skillName the skill name
-   * @throws IOException if the session file cannot be written
+   * @throws IOException if the agent marker file cannot be written
    */
   private void markSkillLoaded(String skillName) throws IOException
   {
     loadedSkills.add(skillName);
-    Files.writeString(sessionFile, skillName + "\n", StandardCharsets.UTF_8,
+    Files.writeString(agentMarkerFile, skillName + "\n", StandardCharsets.UTF_8,
       StandardOpenOption.CREATE,
       StandardOpenOption.APPEND);
   }
@@ -732,22 +752,22 @@ public final class SkillLoader
    * <p>
    * Provides CLI entry point to replace the original load-skill script.
    * Invoked as: java -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader
-   * plugin-root skill-name session-id project-dir [skill-args]
+   * plugin-root skill-name cat-agent-id project-dir [skill-args]
    *
-   * @param args command-line arguments: plugin-root skill-name session-id project-dir [skill-args]
+   * @param args command-line arguments: plugin-root skill-name cat-agent-id project-dir [skill-args]
    */
   public static void main(String[] args)
   {
     if (args.length < 4 || args.length > 5)
     {
       System.err.println(
-        "Usage: load-skill <plugin-root> <skill-name> <session-id> <project-dir> [skill-args]");
+        "Usage: load-skill <plugin-root> <skill-name> <cat-agent-id> <project-dir> [skill-args]");
       System.exit(1);
     }
 
     String pluginRoot = args[0];
     String skillName = args[1];
-    String sessionId = args[2];
+    String catAgentId = args[2];
     String projectDir = args[3];
     String skillArgs;
     if (args.length == 5)
@@ -757,7 +777,7 @@ public final class SkillLoader
 
     try (JvmScope scope = new MainJvmScope())
     {
-      SkillLoader loader = new SkillLoader(scope, pluginRoot, sessionId, projectDir, skillArgs);
+      SkillLoader loader = new SkillLoader(scope, pluginRoot, catAgentId, projectDir, skillArgs);
       String result = loader.load(skillName);
       System.out.print(result);
     }

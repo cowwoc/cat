@@ -1,5 +1,5 @@
 ---
-description: Multi-perspective quality review gate with architect, security, design, testing, performance, and deployment stakeholders
+description: Use when code changes need quality review - multi-perspective review from architect, security, design, testing, performance stakeholders
 user-invocable: false
 ---
 

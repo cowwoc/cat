@@ -1,5 +1,5 @@
 ---
-description: Merge subagent branch into issue branch with conflict resolution and cleanup
+description: Use when subagent work is done and needs merging back - merge subagent branch into issue branch
 user-invocable: false
 ---
 

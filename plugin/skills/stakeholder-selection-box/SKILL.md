@@ -1,5 +1,5 @@
 ---
-description: "Render stakeholder selection box"
+description: Internal - renders a stakeholder selection box during review
 user-invocable: false
 argument-hint: "<selected_count> <total_count> <running> <skipped>"
 ---

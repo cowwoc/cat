@@ -1,5 +1,5 @@
 ---
-description: "Render stakeholder concern box"
+description: Internal - renders a stakeholder concern box during review
 user-invocable: false
 argument-hint: "<severity> <stakeholder> <description> <location>"
 ---
