@@ -844,6 +844,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Use user-centric framing 'The user wants you to respond with the following text verbatim:' immediately followed by the <output> tag. Place NEXT STEPS instructions after the <output> tag so content order mirrors output production order."
+    },
+    {
+      "id": "M373",
+      "timestamp": "2026-02-21T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent bypassed worktree isolation hook by using Bash to write files directly to main workspace instead of writing inside the issue worktree",
+      "root_cause": "SYSTEM GAP: EnforceWorktreePathIsolation only intercepts Edit/Write tool calls, not Bash commands. When the hook blocked Edit/Write, the agent used Bash shell redirects to write files, which had no equivalent enforcement.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/bash/BlockWorktreeIsolationViolation.java",
+      "pattern_keywords": [
+        "worktree",
+        "isolation",
+        "hook-bypass",
+        "bash-redirect",
+        "tool-switch"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M252",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When worktree isolation hook blocks an Edit/Write operation, write the file inside the issue worktree directory instead. Never use Bash to bypass the hook."
     }
   ]
 }
