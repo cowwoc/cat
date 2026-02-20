@@ -10,7 +10,6 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
-import io.github.cowwoc.cat.hooks.edit.WarnSkillEditWithoutBuilder;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -33,30 +32,28 @@ import org.slf4j.LoggerFactory;
  *   <li>Allow edits (return allow)</li>
  * </ul>
  */
-public final class GetEditOutput implements HookHandler
+public final class PreEditHook implements HookHandler
 {
-  // Handlers are checked in order. EnforceWorkflowCompletion blocks first if approval is missing,
-  // then WarnSkillEditWithoutBuilder warns about skill editing patterns (non-blocking).
+  // Handlers are checked in order. EnforceWorkflowCompletion blocks first if approval is missing.
   private static final List<EditHandler> DEFAULT_HANDLERS = List.of(
-    new EnforceWorkflowCompletion(),
-    new WarnSkillEditWithoutBuilder());
+    new EnforceWorkflowCompletion());
   private final List<EditHandler> handlers;
 
   /**
-   * Creates a new GetEditOutput instance with default handlers.
+   * Creates a new PreEditHook instance with default handlers.
    */
-  public GetEditOutput()
+  public PreEditHook()
   {
     this.handlers = DEFAULT_HANDLERS;
   }
 
   /**
-   * Creates a new GetEditOutput instance with custom handlers.
+   * Creates a new PreEditHook instance with custom handlers.
    *
    * @param handlers the handlers to use
-   * @throws NullPointerException if handlers is null
+   * @throws NullPointerException if {@code handlers} is null
    */
-  public GetEditOutput(List<EditHandler> handlers)
+  public PreEditHook(List<EditHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = List.copyOf(handlers);
@@ -74,7 +71,7 @@ public final class GetEditOutput implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new GetEditOutput().run(input, output);
+      HookResult result = new PreEditHook().run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
@@ -82,7 +79,7 @@ public final class GetEditOutput implements HookHandler
     }
     catch (RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetEditOutput.class);
+      Logger log = LoggerFactory.getLogger(PreEditHook.class);
       log.error("Unexpected error", e);
       throw e;
     }

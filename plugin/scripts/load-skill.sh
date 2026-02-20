@@ -17,7 +17,7 @@ if [[ -z "${2:-}" ]]; then
   exit 1
 fi
 if [[ -z "${3:-}" ]]; then
-  echo "ERROR: CLAUDE_SESSION_ID (arg 3) is required" >&2
+  echo "ERROR: CAT_AGENT_ID (arg 3) is required" >&2
   exit 1
 fi
 if [[ -z "${CLAUDE_PROJECT_DIR:-}" ]]; then
@@ -27,7 +27,7 @@ fi
 
 CLAUDE_PLUGIN_ROOT="$1"
 SKILL="$2"
-CLAUDE_SESSION_ID="$3"
+CAT_AGENT_ID="$3"
 # Optional: skill arguments passed from Skill tool invocation
 SKILL_ARGS="${4:-}"
 
@@ -43,6 +43,6 @@ SKILL_ARGS="${4:-}"
   -m io.github.cowwoc.cat.hooks/io.github.cowwoc.cat.hooks.util.SkillLoader \
   "$CLAUDE_PLUGIN_ROOT" \
   "$SKILL" \
-  "$CLAUDE_SESSION_ID" \
+  "$CAT_AGENT_ID" \
   "$CLAUDE_PROJECT_DIR" \
   "$SKILL_ARGS"

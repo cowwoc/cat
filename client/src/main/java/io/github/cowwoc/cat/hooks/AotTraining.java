@@ -62,11 +62,12 @@ public final class AotTraining
       new PostToolUseHook(scope.getClaudeConfigDir()).run(input, output);
       new UserPromptSubmitHook(scope).run(input, output);
       new GetAskOutput(scope).run(input, output);
-      new GetEditOutput().run(input, output);
-      new GetWriteEditOutput(scope).run(input, output);
+      new PreEditHook().run(input, output);
+      new WriteEditHook(scope).run(input, output);
       new GetTaskOutput(scope).run(input, output);
       new GetSessionEndOutput(scope).run(input, output);
       new SessionStartHook(scope).run(input, output);
+      new SubagentStartHook(scope).run(input, output);
 
       // Skill handlers - construct to load class graphs.
       // Calling getOutput() would read the filesystem, which is unnecessary for training.

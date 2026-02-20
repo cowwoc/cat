@@ -13,18 +13,17 @@ import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.GetAskOutput;
 import io.github.cowwoc.cat.hooks.GetBashPostOutput;
 import io.github.cowwoc.cat.hooks.PreToolUseHook;
-import io.github.cowwoc.cat.hooks.GetEditOutput;
+import io.github.cowwoc.cat.hooks.PreEditHook;
 import io.github.cowwoc.cat.hooks.PostToolUseHook;
 import io.github.cowwoc.cat.hooks.GetReadPostOutput;
 import io.github.cowwoc.cat.hooks.GetReadOutput;
 import io.github.cowwoc.cat.hooks.UserPromptSubmitHook;
 import io.github.cowwoc.cat.hooks.GetTaskOutput;
 
-import io.github.cowwoc.cat.hooks.GetWriteEditOutput;
+import io.github.cowwoc.cat.hooks.WriteEditHook;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
-import io.github.cowwoc.cat.hooks.edit.WarnSkillEditWithoutBuilder;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
@@ -531,10 +530,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetEditOutput tests ---
+  // --- PreEditHook tests ---
 
   /**
-   * Verifies that GetEditOutput returns empty JSON for non-Edit tools.
+   * Verifies that PreEditHook returns empty JSON for non-Edit tools.
    */
   @Test
   public void getEditPretoolReturnsEmptyForNonEditTool() throws IOException
@@ -545,7 +544,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreEditHook().run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -553,7 +552,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetEditOutput returns empty JSON when tool_input is empty.
+   * Verifies that PreEditHook returns empty JSON when tool_input is empty.
    */
   @Test
   public void getEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
@@ -565,7 +564,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreEditHook().run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -573,7 +572,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetEditOutput throws IllegalArgumentException when session_id is missing.
+   * Verifies that PreEditHook throws IllegalArgumentException when session_id is missing.
    */
   @Test(expectedExceptions = IllegalArgumentException.class)
   public void getEditPretoolThrowsOnMissingSessionId() throws IOException
@@ -585,7 +584,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}}");
       HookOutput output = new HookOutput(scope);
 
-      new GetEditOutput().run(input, output);
+      new PreEditHook().run(input, output);
     }
   }
 
@@ -645,29 +644,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
-    }
-  }
-
-  // --- WarnSkillEditWithoutBuilder tests ---
-
-  /**
-   * Verifies that WarnSkillEditWithoutBuilder allows edits to non-skill files.
-   */
-  @Test
-  public void warnSkillEditAllowsNonSkillFiles() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/README.md\"}, \"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreEditHook().run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -909,7 +886,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreEditHook().run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -930,74 +907,13 @@ public class HookEntryPointTest
         "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreEditHook().run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
     }
   }
 
-  // --- WarnSkillEditWithoutBuilder handler tests ---
-
-  /**
-   * Verifies that WarnSkillEditWithoutBuilder warns when editing skill SKILL.md files.
-   */
-  @Test
-  public void warnSkillEditWarnsOnSkillMdFiles() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      JsonNode toolInput = mapper.readTree(
-        "{\"file_path\": \"/workspace/plugin/skills/my-skill/SKILL.md\"}");
-      EditHandler.Result result = new WarnSkillEditWithoutBuilder().check(toolInput, "test");
-      requireThat(result.blocked(), "blocked").isFalse();
-      requireThat(result.reason(), "reason").contains("SKILL EDIT DETECTED");
-      requireThat(result.reason(), "reason").contains("my-skill");
-    }
-  }
-
-  /**
-   * Verifies that WarnSkillEditWithoutBuilder allows files that do not match skill pattern.
-   */
-  @Test
-  public void warnSkillEditAllowsNonSkillPaths() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/skills/test-skill/SKILL.md\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
-    }
-  }
-
-  /**
-   * Verifies that WarnSkillEditWithoutBuilder allows non-SKILL.md files in skills directory.
-   */
-  @Test
-  public void warnSkillEditAllowsNonSkillMdFiles() throws IOException
-  {
-    try (JvmScope scope = new TestJvmScope())
-    {
-      JsonMapper mapper = scope.getJsonMapper();
-      HookInput input = createInput(mapper,
-        "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/workspace/plugin/skills/my-skill/helper.py\"}, " +
-        "\"session_id\": \"test\"}");
-      HookOutput output = new HookOutput(scope);
-
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetEditOutput().run(input, output);
-
-      String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
-    }
-  }
 
   // --- WarnApprovalWithoutRenderDiff handler tests ---
 
@@ -1197,10 +1113,10 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetWriteEditOutput dispatcher tests ---
+  // --- WriteEditHook dispatcher tests ---
 
   /**
-   * Verifies that GetWriteEditOutput returns empty JSON for non-Write/Edit tools.
+   * Verifies that WriteEditHook returns empty JSON for non-Write/Edit tools.
    */
   @Test
   public void getWriteEditPretoolReturnsEmptyForNonWriteEditTool() throws IOException
@@ -1211,7 +1127,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new WriteEditHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1219,7 +1135,7 @@ public class HookEntryPointTest
   }
 
   /**
-   * Verifies that GetWriteEditOutput returns empty JSON when tool_input is empty.
+   * Verifies that WriteEditHook does not block when tool_input is empty.
    */
   @Test
   public void getWriteEditPretoolReturnsEmptyForEmptyToolInput() throws IOException
@@ -1231,15 +1147,17 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new WriteEditHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(result, "result").
+        doesNotContain("\"decision\" : \"block\"").
+        doesNotContain("\"reason\"");
     }
   }
 
   /**
-   * Verifies that GetWriteEditOutput uses case-insensitive matching for tool names.
+   * Verifies that WriteEditHook uses case-insensitive matching for tool names.
    * <p>
    * Uses a file path inside the current working directory so worktree isolation does not block it.
    */
@@ -1256,15 +1174,17 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new WriteEditHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(result, "result").
+        doesNotContain("\"decision\" : \"block\"").
+        doesNotContain("\"reason\"");
     }
   }
 
   /**
-   * Verifies that GetWriteEditOutput accepts Edit tool_name.
+   * Verifies that WriteEditHook accepts Edit tool_name.
    * <p>
    * Uses a file path inside the current working directory so worktree isolation does not block it.
    */
@@ -1281,10 +1201,12 @@ public class HookEntryPointTest
         "\"old_string\": \"a\", \"new_string\": \"b\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new WriteEditHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(result, "result").
+        doesNotContain("\"decision\" : \"block\"").
+        doesNotContain("\"reason\"");
     }
   }
 
@@ -1380,13 +1302,13 @@ public class HookEntryPointTest
     }
   }
 
-  // --- GetWriteEditOutput dispatcher tests (using real handlers) ---
+  // --- WriteEditHook dispatcher tests (using real handlers) ---
 
   /**
-   * Verifies that GetWriteEditOutput allows non-plugin file with warning.
+   * Verifies that WriteEditHook allows non-plugin file with warning.
    * <p>
-   * Test that non-plugin, non-allowed files on v2.1 produce {} output from dispatcher
-   * (warning goes to stderr, stdout is {}).
+   * Test that non-plugin, non-allowed files on v2.1 produce non-blocking output from dispatcher
+   * (warning goes to stderr).
    * <p>
    * Uses a file path inside the current working directory so worktree isolation does not block it.
    */
@@ -1403,10 +1325,12 @@ public class HookEntryPointTest
         "\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new GetWriteEditOutput(scope).run(input, output);
+      io.github.cowwoc.cat.hooks.HookResult hookResult = new WriteEditHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
-      requireThat(result, "result").isEqualTo("{}");
+      requireThat(result, "result").
+        doesNotContain("\"decision\" : \"block\"").
+        doesNotContain("\"reason\"");
     }
   }
 
@@ -1423,7 +1347,7 @@ public class HookEntryPointTest
       FileWriteHandler handler1 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 1");
       FileWriteHandler handler2 = (toolInput, sessionId) -> FileWriteHandler.Result.warn("Warning from handler 2");
 
-      GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
+      WriteEditHook dispatcher = new WriteEditHook(List.of(handler1, handler2));
 
       JsonMapper mapper = scope.getJsonMapper();
       String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
@@ -1453,7 +1377,7 @@ public class HookEntryPointTest
       EditHandler handler1 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 1");
       EditHandler handler2 = (toolInput, sessionId) -> EditHandler.Result.warn("Warning from edit handler 2");
 
-      GetEditOutput dispatcher = new GetEditOutput(List.of(handler1, handler2));
+      PreEditHook dispatcher = new PreEditHook(List.of(handler1, handler2));
 
       JsonMapper mapper = scope.getJsonMapper();
       String inputJson = "{\"tool_name\": \"Edit\", \"tool_input\": " +
@@ -1514,7 +1438,7 @@ public class HookEntryPointTest
       FileWriteHandler handler2 = (toolInput, sessionId) ->
         FileWriteHandler.Result.block("Blocked by handler 2");
 
-      GetWriteEditOutput dispatcher = new GetWriteEditOutput(List.of(handler1, handler2));
+      WriteEditHook dispatcher = new WriteEditHook(List.of(handler1, handler2));
 
       JsonMapper mapper = scope.getJsonMapper();
       String inputJson = "{\"tool_name\": \"Write\", \"tool_input\": " +
