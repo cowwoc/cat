@@ -4,13 +4,13 @@ Version 1.0
 
 ## Overview
 
-License keys authenticate paid tier features (Team and Enterprise). The system must be:
+License keys authenticate paid tier features (Pro and Enterprise). The system must be:
 
 - **Secure** — Keys can't be forged or shared trivially
 - **Offline-capable** — Don't break CI/CD if license server is down
 - **Developer-friendly** — Multiple configuration methods
 
-Indie tier requires no license key.
+Core tier requires no license key.
 
 ---
 
@@ -22,14 +22,14 @@ CAT-{TIER}-{UNIQUE_ID}-{CHECKSUM}
 
 **Examples:**
 ```
-CAT-TEAM-a7Kx9Pm2Qw4R-3f8a
+CAT-PRO-a7Kx9Pm2Qw4R-3f8a
 CAT-ENT-b8Lm3Nv5Xt6Y-9c2d
 ```
 
 | Component | Description |
 |-----------|-------------|
 | `CAT` | Prefix (identifies as CAT license) |
-| `TIER` | `TEAM` or `ENT` (no key needed for Indie) |
+| `TIER` | `PRO` or `ENT` (no key needed for Core) |
 | `UNIQUE_ID` | 12-char alphanumeric, server-generated |
 | `CHECKSUM` | 4-char validation (prevents typos) |
 
@@ -42,20 +42,20 @@ CAT checks these locations in priority order, uses first valid key found:
 | Priority | Method | Location | Use case |
 |----------|--------|----------|----------|
 | 1 | Environment variable | `CAT_LICENSE_KEY` | CI/CD, containers |
-| 2 | Project config | `.claude/cat/license.json` | Team shared config |
+| 2 | Project config | `.claude/cat/license.json` | Pro shared config |
 | 3 | User config | `~/.config/cat/license.json` | Personal machine |
 
 ### Environment Variable
 
 ```bash
-export CAT_LICENSE_KEY="CAT-TEAM-a7Kx9Pm2Qw4R-3f8a"
+export CAT_LICENSE_KEY="CAT-PRO-a7Kx9Pm2Qw4R-3f8a"
 ```
 
 ### Config File Format
 
 ```json
 {
-  "key": "CAT-TEAM-a7Kx9Pm2Qw4R-3f8a",
+  "key": "CAT-PRO-a7Kx9Pm2Qw4R-3f8a",
   "email": "dev@company.com",
   "activated": "2026-01-15T10:30:00Z"
 }
@@ -71,14 +71,14 @@ export CAT_LICENSE_KEY="CAT-TEAM-a7Kx9Pm2Qw4R-3f8a"
 
 ```bash
 $ cat:activate
-Enter license key: CAT-TEAM-a7Kx9Pm2Qw4R-3f8a
+Enter license key: CAT-PRO-a7Kx9Pm2Qw4R-3f8a
 Enter email: dev@company.com
 
 ✓ License validated
 ✓ Saved to ~/.config/cat/license.json
-✓ Team features unlocked
+✓ Pro features unlocked
 
-License: CAT Team
+License: CAT Pro
 Seats: 1 of 25 used
 Expires: 2027-01-15
 
@@ -88,7 +88,7 @@ Manage your license: https://cat.dev/account
 ### Silent Activation (CI/CD)
 
 ```bash
-$ CAT_LICENSE_KEY="CAT-TEAM-..." cat:status
+$ CAT_LICENSE_KEY="CAT-PRO-..." cat:status
 # Automatically validates and uses key
 ```
 
@@ -138,7 +138,7 @@ def require_tier(minimum_tier: Tier):
     license = load_license()
 
     if license is None:
-        current_tier = Tier.INDIE
+        current_tier = Tier.CORE
     else:
         current_tier = validate_and_get_tier(license)
 
@@ -150,7 +150,7 @@ def require_tier(minimum_tier: Tier):
         )
 
 # Usage in skills
-@require_tier(Tier.TEAM)
+@require_tier(Tier.PRO)
 def task_lock_acquire(task_id: str):
     ...
 
@@ -174,8 +174,8 @@ def sync_jira_issues():
 ```
 License Status
 ──────────────
-Plan:       Team
-Key:        CAT-TEAM-****-3f8a (masked)
+Plan:       Pro
+Key:        CAT-PRO-****-3f8a (masked)
 Email:      dev@company.com
 Activated:  2026-01-15
 Expires:    2027-01-15
@@ -196,7 +196,7 @@ Manage: https://cat.dev/account
 
 ## Feature Gating Matrix
 
-| Feature | Indie | Team | Enterprise |
+| Feature | Core | Pro | Enterprise |
 |---------|:-----:|:----:|:----------:|
 | **Seats** | 1 | 1-50 | Unlimited |
 | **Core CAT workflow** | ✓ | ✓ | ✓ |
@@ -222,12 +222,12 @@ Manage: https://cat.dev/account
 
 | Scenario | Message |
 |----------|---------|
-| No license, Team feature | `This feature requires Team. Current: Indie. Upgrade: https://cat.dev/pricing` |
-| No license, Enterprise feature | `This feature requires Enterprise. Current: Indie. Upgrade: https://cat.dev/pricing` |
-| Team license, Enterprise feature | `This feature requires Enterprise. Current: Team. Upgrade: https://cat.dev/pricing` |
+| No license, Pro feature | `This feature requires Pro. Current: Core. Upgrade: https://cat.dev/pricing` |
+| No license, Enterprise feature | `This feature requires Enterprise. Current: Core. Upgrade: https://cat.dev/pricing` |
+| Pro license, Enterprise feature | `This feature requires Enterprise. Current: Pro. Upgrade: https://cat.dev/pricing` |
 | Expired license | `License expired on 2026-12-15. Renew: https://cat.dev/account` |
 | All seats used | `All 25 seats are in use. Add seats: https://cat.dev/account` |
-| Invalid key format | `Invalid license key format. Expected: CAT-TEAM-xxxx-xxxx or CAT-ENT-xxxx-xxxx` |
+| Invalid key format | `Invalid license key format. Expected: CAT-PRO-xxxx-xxxx or CAT-ENT-xxxx-xxxx` |
 | Network unavailable, no cache | `Cannot validate license (offline). Grace period: 28 days remaining.` |
 | Grace period expired | `License validation required. Connect to internet and retry.` |
 
@@ -235,7 +235,7 @@ Manage: https://cat.dev/account
 
 ## Implementation Notes
 
-1. **Never log full license keys** — Always mask middle characters: `CAT-TEAM-****-3f8a`
+1. **Never log full license keys** — Always mask middle characters: `CAT-PRO-****-3f8a`
 
 2. **Cache validation results** — Store in `~/.cache/cat/license-validation.json` with 7-day TTL
 

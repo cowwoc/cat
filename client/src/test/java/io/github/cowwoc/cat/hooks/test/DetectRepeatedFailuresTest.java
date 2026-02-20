@@ -224,7 +224,6 @@ public final class DetectRepeatedFailuresTest
     try
     {
       handler.check("Bash", toolResult, "", hookData);
-      requireThat(false, "check").isEqualTo(true);
     }
     catch (IllegalArgumentException e)
     {

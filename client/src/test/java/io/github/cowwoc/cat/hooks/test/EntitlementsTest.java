@@ -25,17 +25,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class EntitlementsTest
 {
   /**
-   * Verifies that indie tier has basic features.
+   * Verifies that core tier has basic features.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void indieTierHasBasicFeatures() throws IOException
+  public void coreTierHasBasicFeatures() throws IOException
   {
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["single-agent-execution", "basic-task-management"]
             }
           }
@@ -48,11 +48,11 @@ public final class EntitlementsTest
       {
         Entitlements entitlements = new Entitlements(scope);
 
-        requireThat(entitlements.hasFeature(Tier.INDIE, "single-agent-execution"), "hasFeature").
+        requireThat(entitlements.hasFeature(Tier.CORE, "single-agent-execution"), "hasFeature").
           isTrue();
-        requireThat(entitlements.hasFeature(Tier.INDIE, "basic-task-management"), "hasFeature").
+        requireThat(entitlements.hasFeature(Tier.CORE, "basic-task-management"), "hasFeature").
           isTrue();
-        requireThat(entitlements.hasFeature(Tier.INDIE, "multi-agent-orchestration"), "hasFeature").
+        requireThat(entitlements.hasFeature(Tier.CORE, "multi-agent-orchestration"), "hasFeature").
           isFalse();
       }
       finally
@@ -63,22 +63,22 @@ public final class EntitlementsTest
   }
 
   /**
-   * Verifies that team tier includes indie features.
+   * Verifies that pro tier includes core features.
    *
    * @throws IOException if test setup fails
    */
   @Test
-  public void teamTierIncludesIndieFeatures() throws IOException
+  public void proTierIncludesCoreFeatures() throws IOException
   {
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["single-agent-execution"]
             },
-            "team": {
+            "pro": {
               "features": ["multi-agent-orchestration"],
-              "includes": "indie"
+              "includes": "core"
             }
           }
         }
@@ -90,9 +90,9 @@ public final class EntitlementsTest
       {
         Entitlements entitlements = new Entitlements(scope);
 
-        requireThat(entitlements.hasFeature(Tier.TEAM, "single-agent-execution"), "hasIndieFeature").
+        requireThat(entitlements.hasFeature(Tier.PRO, "single-agent-execution"), "hasCoreFeature").
           isTrue();
-        requireThat(entitlements.hasFeature(Tier.TEAM, "multi-agent-orchestration"), "hasTeamFeature").
+        requireThat(entitlements.hasFeature(Tier.PRO, "multi-agent-orchestration"), "hasProFeature").
           isTrue();
       }
       finally
@@ -103,7 +103,7 @@ public final class EntitlementsTest
   }
 
   /**
-   * Verifies that enterprise tier includes team and indie features.
+   * Verifies that enterprise tier includes pro and core features.
    *
    * @throws IOException if test setup fails
    */
@@ -113,16 +113,16 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["single-agent-execution"]
             },
-            "team": {
+            "pro": {
               "features": ["multi-agent-orchestration"],
-              "includes": "indie"
+              "includes": "core"
             },
             "enterprise": {
               "features": ["audit-logging"],
-              "includes": "team"
+              "includes": "pro"
             }
           }
         }
@@ -134,9 +134,9 @@ public final class EntitlementsTest
       {
         Entitlements entitlements = new Entitlements(scope);
 
-        requireThat(entitlements.hasFeature(Tier.ENTERPRISE, "single-agent-execution"), "hasIndieFeature").
+        requireThat(entitlements.hasFeature(Tier.ENTERPRISE, "single-agent-execution"), "hasCoreFeature").
           isTrue();
-        requireThat(entitlements.hasFeature(Tier.ENTERPRISE, "multi-agent-orchestration"), "hasTeamFeature").
+        requireThat(entitlements.hasFeature(Tier.ENTERPRISE, "multi-agent-orchestration"), "hasProFeature").
           isTrue();
         requireThat(entitlements.hasFeature(Tier.ENTERPRISE, "audit-logging"), "hasEnterpriseFeature").
           isTrue();
@@ -159,16 +159,16 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["single-agent-execution"]
             },
-            "team": {
+            "pro": {
               "features": ["multi-agent-orchestration"],
-              "includes": "indie"
+              "includes": "core"
             },
             "enterprise": {
               "features": ["audit-logging"],
-              "includes": "team"
+              "includes": "pro"
             }
           }
         }
@@ -180,10 +180,10 @@ public final class EntitlementsTest
       {
         Entitlements entitlements = new Entitlements(scope);
 
-        requireThat(entitlements.getRequiredTier("single-agent-execution"), "indieFeature").
-          isEqualTo(Optional.of(Tier.INDIE));
-        requireThat(entitlements.getRequiredTier("multi-agent-orchestration"), "teamFeature").
-          isEqualTo(Optional.of(Tier.TEAM));
+        requireThat(entitlements.getRequiredTier("single-agent-execution"), "coreFeature").
+          isEqualTo(Optional.of(Tier.CORE));
+        requireThat(entitlements.getRequiredTier("multi-agent-orchestration"), "proFeature").
+          isEqualTo(Optional.of(Tier.PRO));
         requireThat(entitlements.getRequiredTier("audit-logging"), "enterpriseFeature").
           isEqualTo(Optional.of(Tier.ENTERPRISE));
         requireThat(entitlements.getRequiredTier("nonexistent-feature"), "unknownFeature").
@@ -207,12 +207,12 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["feature-a", "feature-b"]
             },
-            "team": {
+            "pro": {
               "features": ["feature-c"],
-              "includes": "indie"
+              "includes": "core"
             }
           }
         }
@@ -224,11 +224,11 @@ public final class EntitlementsTest
       {
         Entitlements entitlements = new Entitlements(scope);
 
-        Set<String> teamFeatures = entitlements.getTierFeatures(Tier.TEAM);
-        requireThat(teamFeatures, "teamFeatures").contains("feature-a");
-        requireThat(teamFeatures, "teamFeatures").contains("feature-b");
-        requireThat(teamFeatures, "teamFeatures").contains("feature-c");
-        requireThat(teamFeatures.size(), "size").isEqualTo(3);
+        Set<String> proFeatures = entitlements.getTierFeatures(Tier.PRO);
+        requireThat(proFeatures, "proFeatures").contains("feature-a");
+        requireThat(proFeatures, "proFeatures").contains("feature-b");
+        requireThat(proFeatures, "proFeatures").contains("feature-c");
+        requireThat(proFeatures.size(), "size").isEqualTo(3);
       }
       finally
       {
@@ -248,7 +248,7 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["feature-a"]
             }
           }
@@ -263,8 +263,7 @@ public final class EntitlementsTest
 
         try
         {
-          entitlements.getTierFeatures(Tier.TEAM);
-          requireThat(false, "shouldThrow").isTrue();
+          entitlements.getTierFeatures(Tier.PRO);
         }
         catch (IllegalArgumentException e)
         {
@@ -289,13 +288,13 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
               "features": ["feature-a"],
-              "includes": "team"
+              "includes": "pro"
             },
-            "team": {
+            "pro": {
               "features": ["feature-b"],
-              "includes": "indie"
+              "includes": "core"
             }
           }
         }
@@ -306,7 +305,7 @@ public final class EntitlementsTest
       try
       {
         Entitlements entitlements = new Entitlements(scope);
-        Set<String> features = entitlements.getTierFeatures(Tier.INDIE);
+        Set<String> features = entitlements.getTierFeatures(Tier.CORE);
 
         requireThat(features, "features").contains("feature-a");
         requireThat(features, "features").contains("feature-b");
@@ -330,7 +329,7 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "indie": {
+            "core": {
             }
           }
         }
@@ -341,7 +340,7 @@ public final class EntitlementsTest
       try
       {
         Entitlements entitlements = new Entitlements(scope);
-        Set<String> features = entitlements.getTierFeatures(Tier.INDIE);
+        Set<String> features = entitlements.getTierFeatures(Tier.CORE);
 
         requireThat(features.size(), "size").isEqualTo(0);
       }
@@ -363,7 +362,7 @@ public final class EntitlementsTest
     Path tempDir = createTempTiersConfig("""
         {
           "tiers": {
-            "team": {
+            "pro": {
               "features": ["feature-a"],
               "includes": "nonexistent"
             }
@@ -376,7 +375,7 @@ public final class EntitlementsTest
       try
       {
         Entitlements entitlements = new Entitlements(scope);
-        Set<String> features = entitlements.getTierFeatures(Tier.TEAM);
+        Set<String> features = entitlements.getTierFeatures(Tier.PRO);
 
         requireThat(features, "features").contains("feature-a");
         requireThat(features.size(), "size").isEqualTo(1);

@@ -90,7 +90,7 @@ public final class GetStatusOutput implements SkillOutput
 
     Path issuesDir = catDir.resolve("issues");
 
-    if (licenseResult.tier().compareTo(Tier.TEAM) >= 0)
+    if (licenseResult.tier().compareTo(Tier.PRO) >= 0)
       branchStatusCache = loadBranchStatuses(projectDir);
     else
       branchStatusCache = Map.of();
@@ -312,7 +312,7 @@ public final class GetStatusOutput implements SkillOutput
   /**
    * Gets task status from STATE.md file.
    * <p>
-   * If STATE.md status is "open", checks for lock files (Indie tier) and git branches (Team tier)
+   * If STATE.md status is "open", checks for lock files (Core tier) and git branches (Pro tier)
    * to determine if the task is actually in-progress.
    *
    * @param stateFile the STATE.md file path
@@ -339,7 +339,7 @@ public final class GetStatusOutput implements SkillOutput
       if (Files.exists(lockFile))
         return "in-progress";
 
-      if (licenseResult.tier().compareTo(Tier.TEAM) >= 0)
+      if (licenseResult.tier().compareTo(Tier.PRO) >= 0)
       {
         Path issueRelPath = stateFile.getParent();
         Path projectRoot = catDir.getParent().getParent();

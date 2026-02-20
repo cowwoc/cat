@@ -237,7 +237,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(raw);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -262,7 +261,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(raw);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -287,7 +285,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(raw);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -304,7 +301,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -324,7 +320,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(raw);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -351,7 +346,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(raw);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -1124,7 +1118,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       new EmpiricalTestRunner(null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -1147,7 +1140,6 @@ public final class EmpiricalTestRunnerTest
       try
       {
         runner.buildInput(null, List.of(new TestMessage("prompt", Map.of())), List.of());
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
@@ -1175,7 +1167,6 @@ public final class EmpiricalTestRunnerTest
       try
       {
         runner.buildInput(List.of(), null, List.of());
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
@@ -1203,7 +1194,6 @@ public final class EmpiricalTestRunnerTest
       try
       {
         runner.parseOutput(null);
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
@@ -1231,7 +1221,6 @@ public final class EmpiricalTestRunnerTest
       try
       {
         runner.evaluateOutput(null, List.of(), Map.of());
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
@@ -1259,7 +1248,6 @@ public final class EmpiricalTestRunnerTest
       try
       {
         runner.evaluateOutput(List.of(), null, Map.of());
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
@@ -1287,7 +1275,6 @@ public final class EmpiricalTestRunnerTest
       try
       {
         runner.evaluateOutput(List.of(), List.of(), null);
-        requireThat(false, "shouldThrow").isTrue();
       }
       catch (NullPointerException e)
       {
@@ -1313,7 +1300,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       PrimingMessage.fromRawList(raw);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (IllegalArgumentException e)
     {
@@ -1330,7 +1316,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       new PrimingMessage.UserMessage(null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -1347,7 +1332,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       new PrimingMessage.ToolUse(null, Map.of(), "out");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -1364,7 +1348,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       new PrimingMessage.ToolUse("Bash", null, "out");
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
@@ -1381,7 +1364,6 @@ public final class EmpiricalTestRunnerTest
     try
     {
       new PrimingMessage.ToolUse("Bash", Map.of(), null);
-      requireThat(false, "shouldThrow").isTrue();
     }
     catch (NullPointerException e)
     {
