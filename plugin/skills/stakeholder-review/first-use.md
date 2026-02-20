@@ -41,15 +41,14 @@ changes affect the overall codebase. This enables reviewers to catch:
 | Stakeholder | Reference | Focus |
 |-------------|-----------|-------|
 | requirements | @agents/stakeholder-requirements.md | Requirement satisfaction verification |
-| architect | @agents/stakeholder-architect.md | System design, module boundaries, APIs |
+| architecture | @agents/stakeholder-architecture.md | System design, module boundaries, APIs |
 | security | @agents/stakeholder-security.md | Vulnerabilities, input validation |
 | design | @agents/stakeholder-design.md | Code quality, complexity, duplication |
 | testing | @agents/stakeholder-testing.md | Test coverage, edge cases |
 | performance | @agents/stakeholder-performance.md | Efficiency, resource usage |
 | deployment | @agents/stakeholder-deployment.md | CI/CD, build systems, release readiness |
 | ux | @agents/stakeholder-ux.md | Usability, accessibility, interaction design |
-| sales | @agents/stakeholder-sales.md | Customer value, competitive positioning |
-| marketing | @agents/stakeholder-marketing.md | Positioning, messaging, go-to-market |
+| business | @agents/stakeholder-business.md | Customer value, competitive positioning, market readiness |
 | legal | @agents/stakeholder-legal.md | Licensing, compliance, IP, data privacy |
 
 ## Progress Output
@@ -70,7 +69,7 @@ internal file reads and analysis are invisible.
 ```
 ✓ Review complete: {APPROVED|CONCERNS|REJECTED}
   → requirements: ✓
-  → architect: ✓
+  → architecture: ✓
   → security: ⚠ 1 HIGH
   → testing: ✓
   → performance: ✓
@@ -115,10 +114,10 @@ Detect issue type from PLAN.md `## Type` field or infer from commit messages/des
 
 | Issue Type | Include | Exclude |
 |-----------|---------|---------|
-| documentation | requirements | architect, security, design, testing, performance, ux, sales, marketing |
-| refactor | architect, design, testing | ux, sales, marketing |
-| bugfix | requirements, design, testing, security | sales, marketing |
-| performance | performance, architect, testing | ux, sales, marketing |
+| documentation | requirements | architecture, security, design, testing, performance, ux, business |
+| refactor | architecture, design, testing | ux, business |
+| bugfix | requirements, design, testing, security | business |
+| performance | performance, architecture, testing | ux, business |
 
 ### Keyword Mappings
 
@@ -128,8 +127,8 @@ Scan issue description, goal, and PLAN.md for keywords:
 |----------|---------|
 | "license", "compliance", "legal" | legal |
 | "UI", "frontend", "user interface" | ux |
-| "API", "endpoint", "public" | architect, security, marketing |
-| "internal", "tooling", "CLI" | architect, design (exclude ux, sales, marketing) |
+| "API", "endpoint", "public" | architecture, security, business |
+| "internal", "tooling", "CLI" | architecture, design (exclude ux, business) |
 | "security", "auth", "permission" | security |
 | "CI", "CD", "pipeline", "build", "deploy", "release", "migration" | deployment |
 
@@ -137,7 +136,7 @@ Scan issue description, goal, and PLAN.md for keywords:
 
 Check version PLAN.md for strategic focus:
 
-- If version PLAN.md mentions "commercialization" → include legal, sales, marketing
+- If version PLAN.md mentions "commercialization" → include legal, business
 
 ### File-Based Overrides (Review Mode Only)
 
@@ -194,23 +193,23 @@ fi
 # Apply issue type mappings
 case "$TASK_TYPE" in
     documentation)
-        EXCLUDED="architect security design testing performance ux sales marketing"
+        EXCLUDED="architecture security design testing performance ux business"
         ;;
     refactor)
-        SELECTED="$SELECTED architect design testing"
-        EXCLUDED="ux sales marketing"
+        SELECTED="$SELECTED architecture design testing"
+        EXCLUDED="ux business"
         ;;
     bugfix)
         SELECTED="$SELECTED design testing security"
-        EXCLUDED="sales marketing"
+        EXCLUDED="business"
         ;;
     performance)
-        SELECTED="$SELECTED performance architect testing"
-        EXCLUDED="ux sales marketing"
+        SELECTED="$SELECTED performance architecture testing"
+        EXCLUDED="ux business"
         ;;
     *)
         # Default: include core technical reviewers
-        SELECTED="$SELECTED architect security design testing performance"
+        SELECTED="$SELECTED architecture security design testing performance"
         EXCLUDED=""
         ;;
 esac
@@ -225,11 +224,11 @@ if echo "$TASK_TEXT" | grep -qE '\bui\b|frontend|user interface'; then
     SELECTED="$SELECTED ux"
 fi
 if echo "$TASK_TEXT" | grep -qE '\bapi\b|endpoint|public'; then
-    SELECTED="$SELECTED architect security marketing"
+    SELECTED="$SELECTED architecture security business"
 fi
 if echo "$TASK_TEXT" | grep -qE 'internal|tooling|\bcli\b'; then
-    SELECTED="$SELECTED architect design"
-    EXCLUDED="$EXCLUDED ux sales marketing"
+    SELECTED="$SELECTED architecture design"
+    EXCLUDED="$EXCLUDED ux business"
 fi
 if echo "$TASK_TEXT" | grep -qE 'security|auth|permission'; then
     SELECTED="$SELECTED security"
@@ -241,7 +240,7 @@ fi
 # Check version PLAN.md for focus
 VERSION_PLAN=$(cat .claude/cat/versions/*/PLAN.md 2>/dev/null || echo "")
 if echo "$VERSION_PLAN" | grep -qi 'commercialization'; then
-    SELECTED="$SELECTED legal sales marketing"
+    SELECTED="$SELECTED legal business"
 fi
 
 # Add forced stakeholders
@@ -311,14 +310,14 @@ if echo "$CHANGED_FILES" | grep -qvE '\.md$' | grep -q .; then
 else
     # Only markdown files - limit to requirements and design
     SELECTED="requirements design"
-    SKIPPED="$SKIPPED architect:only_md_files security:only_md_files testing:only_md_files performance:only_md_files ux:only_md_files sales:only_md_files marketing:only_md_files legal:only_md_files"
+    SKIPPED="$SKIPPED architecture:only_md_files security:only_md_files testing:only_md_files performance:only_md_files ux:only_md_files business:only_md_files legal:only_md_files"
 fi
 
 # Special case: only test files changed
 NON_TEST_FILES=$(echo "$CHANGED_FILES" | grep -vE '(Test|Spec|_test)\.' || true)
 if [[ -z "$NON_TEST_FILES" ]] && [[ -n "$CHANGED_FILES" ]]; then
     SELECTED="requirements testing design"
-    SKIPPED="$SKIPPED architect:only_test_files security:only_test_files performance:only_test_files ux:only_test_files sales:only_test_files marketing:only_test_files legal:only_test_files"
+    SKIPPED="$SKIPPED architecture:only_test_files security:only_test_files performance:only_test_files ux:only_test_files business:only_test_files legal:only_test_files"
 fi
 ```
 
@@ -329,7 +328,7 @@ After context analysis, generate the selection box by invoking:
 ```
 Skill tool:
   skill: "cat:stakeholder-selection-box"
-  args: "${SELECTED_COUNT} 11 ${SELECTED_LIST} ${SKIPPED_LIST}"
+  args: "${SELECTED_COUNT} 10 ${SELECTED_LIST} ${SKIPPED_LIST}"
 ```
 
 Copy the output verbatim. The third argument is a comma-separated list of selected stakeholder names.
@@ -343,11 +342,10 @@ If file-based overrides occurred, add an "Overrides (file-based):" section insid
 |-------------|---------------------|
 | ux | No UI/frontend changes detected |
 | legal | No licensing/compliance keywords in issue |
-| sales | Internal tooling issue / No user-facing features |
-| marketing | Internal tooling issue / No public API changes |
+| business | Internal tooling issue / No user-facing features |
 | performance | No algorithm-heavy code changes |
 | deployment | No CI/CD, build, or release changes detected |
-| architect | Documentation-only issue |
+| architecture | Documentation-only issue |
 | security | Documentation-only issue / No source code changes |
 | design | Documentation-only issue |
 | testing | Documentation-only issue |
@@ -408,7 +406,7 @@ if [[ -f "${CLAUDE_PLUGIN_ROOT}/lang/${PRIMARY_LANG}.md" ]]; then
 fi
 
 # SELECTED is populated by analyze_context step
-# Contains: space-separated stakeholder names (e.g., "requirements architect security design testing")
+# Contains: space-separated stakeholder names (e.g., "requirements architecture security design testing")
 # SKIPPED contains: stakeholder:reason pairs for reporting
 # OVERRIDDEN contains: stakeholder:reason pairs for file-based overrides
 
@@ -425,7 +423,7 @@ if [[ -d ".claude/cat/conventions" ]]; then
             stakeholder_line=$(echo "$frontmatter" | grep '^stakeholders:' || echo "")
 
             if [[ -n "$stakeholder_line" ]]; then
-                # Extract stakeholders from array format: [design, architect] or [design,architect]
+                # Extract stakeholders from array format: [design, architecture] or [design,architecture]
                 convention_stakeholders=$(echo "$stakeholder_line" | sed 's/^stakeholders:\s*\[//;s/\]\s*$//' | tr ',' '\n' | sed 's/^[ \t]*//;s/[ \t]*$//')
 
                 # Add this convention to each stakeholder's map
@@ -510,7 +508,7 @@ DIFF_SUMMARY=$(git diff "${BASE_BRANCH}..HEAD" -U3 2>/dev/null || git diff --cac
 The `analyze_context` step determines which stakeholders run based on:
 1. Issue type (documentation, refactor, bugfix, performance)
 2. Keywords in issue description (license, UI, API, security, etc.)
-3. Version focus (commercialization triggers legal/sales/marketing)
+3. Version focus (commercialization triggers legal/business)
 4. File-based overrides (review mode only)
 5. User-forced stakeholders via `## Force Stakeholders` in PLAN.md
 
@@ -534,7 +532,7 @@ For each relevant stakeholder, spawn a subagent with:
 
 ```bash
 # For each stakeholder in $SELECTED
-stakeholder="architect"  # example
+stakeholder="architecture"  # example
 
 # Collect conventions for this stakeholder
 STAKEHOLDER_CONVENTIONS=""
@@ -663,7 +661,7 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
 
 ```json
 {
-  "stakeholder": "architect|security|design|testing|performance",
+  "stakeholder": "architecture|security|design|testing|performance",
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [...],
   "summary": "..."
@@ -726,7 +724,7 @@ Skill tool:
 ```
 
 The second argument is a comma-separated list of `stakeholder:status` pairs
-(e.g., `"architect:✓ APPROVED,design:⚠ 1 HIGH"`).
+(e.g., `"architecture:✓ APPROVED,design:⚠ 1 HIGH"`).
 
 For each concern, generate a concern box:
 
@@ -781,15 +779,14 @@ Return the structured result below as your final message for the orchestrating a
   "review_status": "APPROVED|CONCERNS|REJECTED",
   "stakeholder_results": {
     "requirements": {"status": "...", "concerns": [...]},
-    "architect": {"status": "...", "concerns": [...]},
+    "architecture": {"status": "...", "concerns": [...]},
     "security": {"status": "...", "concerns": [...]},
     "design": {"status": "...", "concerns": [...]},
     "testing": {"status": "...", "concerns": [...]},
     "performance": {"status": "...", "concerns": [...]},
     "deployment": {"status": "...", "concerns": [...]},
     "ux": {"status": "...", "concerns": [...]},
-    "sales": {"status": "...", "concerns": [...]},
-    "marketing": {"status": "...", "concerns": [...]},
+    "business": {"status": "...", "concerns": [...]},
     "legal": {"status": "...", "concerns": [...]}
   },
   "aggregated_concerns": {

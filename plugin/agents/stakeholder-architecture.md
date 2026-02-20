@@ -1,11 +1,11 @@
 ---
-name: stakeholder-architect
-description: "Software Architect stakeholder for code review and research. Focus: system architecture, module boundaries, design patterns"
+name: stakeholder-architecture
+description: "Architecture stakeholder for code review and research. Focus: system architecture, module boundaries, design patterns"
 tools: Read, Grep, Glob, WebSearch, WebFetch
 model: haiku
 ---
 
-# Stakeholder: Architect
+# Stakeholder: Architecture
 
 **Role**: Software Architect
 **Focus**: System architecture, module boundaries, design patterns, and structural decisions
@@ -54,7 +54,7 @@ decisions about [topic].
 
 ```json
 {
-  "stakeholder": "architect",
+  "stakeholder": "architecture",
   "mode": "research",
   "topic": "[the specific topic researched]",
   "expertise": {
@@ -139,7 +139,7 @@ Evaluate implementation against these architectural criteria:
 
 ```json
 {
-  "stakeholder": "architect",
+  "stakeholder": "architecture",
   "approval": "APPROVED|CONCERNS|REJECTED",
   "concerns": [
     {
