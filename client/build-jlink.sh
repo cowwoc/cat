@@ -44,9 +44,10 @@ readonly -a HANDLERS=(
   "token-counter:TokenCounter"
   "enforce-status:EnforceStatusOutput"
   "get-ask-output:GetAskOutput"
-  "get-edit-output:GetEditOutput"
-  "get-write-edit-output:GetWriteEditOutput"
+  "get-edit-output:PreEditHook"
+  "get-write-edit-output:WriteEditHook"
 
+  "subagent-start:SubagentStartHook"
   "get-task-output:GetTaskOutput"
   "get-session-end-output:GetSessionEndOutput"
   "get-checkpoint-box:skills.GetCheckpointOutput"

@@ -1,5 +1,5 @@
 ---
-description: Detect goal drift by comparing failing actions against PLAN.md execution steps
+description: Use when actions keep failing or progress has stalled - detects goal drift by comparing actions against PLAN.md
 model: haiku
 allowed-tools:
   - Read

@@ -1,5 +1,5 @@
 ---
-description: Configure Claude Code statusline to show CAT context information
+description: Use when user wants to set up or customize the Claude Code statusline to show CAT project context
 model: haiku
 allowed-tools:
   - Read

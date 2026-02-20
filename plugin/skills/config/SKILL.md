@@ -1,5 +1,5 @@
 ---
-description: Interactive wizard to customize your CAT settings
+description: Use when user wants to customize CAT settings, change configuration, or set up preferences - interactive wizard
 model: haiku
 context: fork
 allowed-tools:

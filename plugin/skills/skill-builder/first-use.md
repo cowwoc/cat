@@ -389,26 +389,34 @@ The description is used for **intent routing** — it tells Claude WHEN to invok
 on user input. Include ONLY trigger conditions and synonyms. Exclude implementation details
 (trust levels, auto-continue behavior, internal architecture, etc.).
 
+**Descriptions must start with an imperative keyword** from the trigger patterns below. Do NOT start
+with bare "When..." — it's passive and doesn't instruct the agent to act. Always use "Use when..."
+instead.
+
+**Trigger patterns** (start descriptions with one of these):
+- `MANDATORY:` - Required for specific scenarios (e.g., "MANDATORY: Use instead of `git rebase`")
+- `PREFER` - Recommended over alternatives (e.g., "PREFER when reading 3+ related files")
+- `Use when` - Triggered by a condition (e.g., "Use when session crashed or locks blocking")
+- `Use BEFORE` - Should be loaded before an action (e.g., "Use BEFORE creating or updating any skill")
+- `Use after` - Post-action skill (e.g., "Use after complex issues to analyze session efficiency")
+- `Use instead of` - Replaces a dangerous operation (e.g., "Use instead of `git commit --amend`")
+- `Internal` - For non-user-facing skills (e.g., "Internal (invoked by /cat:work) - merge phase")
+
 ```
-Format: "[WHEN to use] - [what it does briefly]"
+Format: "<trigger-pattern> [condition] - [what it does briefly]"
 
 Good examples:
-  "Work on or resume issues - use when user says work, resume, continue, or pick up"
+  "Use when user says work, resume, continue, or pick up - start or resume issue work"
   "Use BEFORE creating or updating any skill - decomposes goal into forward steps"
   "Use when session crashed or locks blocking - cleans abandoned worktrees and locks"
+  "PREFER when reading 3+ related files - batch operation eliminates round-trips"
+  "MANDATORY: Use instead of `git rebase` - provides automatic backup and conflict recovery"
 
-Bad examples (implementation details leak):
-  "Work on issues (approval required unless trust=high; auto-continues when trust >= medium)"
-  "Run stakeholder review (spawns 6 parallel subagents, costs ~30K tokens)"
-  "Merge branch (uses --ff-only, requires linear history)"
+Bad examples:
+  "When an issue is too large..."        ← passive, use "Use when" instead
+  "Test-Driven Development workflow..."  ← describes what, not when to use
+  "Merge branch (uses --ff-only)"        ← leaks implementation details
 ```
-
-**Trigger patterns**:
-- `MANDATORY: Load BEFORE [action]` - Must be loaded before doing something
-- `MANDATORY: Use for [situation]` - Required for specific scenarios
-- `Use BEFORE [action]` - Should be used before doing something
-- `Use when [condition]` - Triggered by a specific situation
-- `Use instead of [alternative]` - Replaces a dangerous or complex operation
 
 **Include user synonyms**: If users might say "resume" instead of "work on", include both
 in the description so intent routing matches correctly.

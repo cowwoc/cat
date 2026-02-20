@@ -1,5 +1,15 @@
 {
   "hooks": {
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/subagent-start"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [

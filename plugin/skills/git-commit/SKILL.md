@@ -1,5 +1,5 @@
 ---
-description: Guide for writing clear, descriptive commit messages
+description: Before committing or writing a commit message - guidance for clear, descriptive git commits
 user-invocable: false
 ---
 
