@@ -522,6 +522,14 @@ See `analyze_context` step for full selection rules and skip reasons.
 
 **Spawn stakeholder subagents in parallel:**
 
+**Prompt Completeness Requirement (applies to ALL rounds including re-runs after fixes):**
+
+Every reviewer prompt MUST include the complete set of sections below — including `## Files to Review
+(Full Content)` with the actual `FILE_CONTENTS` embedded. Do NOT simplify prompts in subsequent
+rounds by replacing file content with instructions like "Read InjectEnv.java and verify". Subagents
+receiving simplified prompts will read from their default working directory (`/workspace/`), which
+contains the base-branch code, not the worktree's implementation — producing false-positive rejections.
+
 For each relevant stakeholder, spawn a subagent with:
 
 ```bash
