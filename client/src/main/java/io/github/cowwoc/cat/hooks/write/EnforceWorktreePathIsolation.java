@@ -86,17 +86,25 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
     if (filePathAbs.startsWith(worktreePathAbs))
       return FileWriteHandler.Result.allow();
 
+    // Compute the corrected worktree-relative path
+    Path projectDirAbs = projectDir.toAbsolutePath().normalize();
+    Path relativePath = projectDirAbs.relativize(filePathAbs);
+    Path correctedPath = worktreePathAbs.resolve(relativePath);
+
     String message = """
       ERROR: Worktree isolation violation
 
-      You are working in a worktree: %s
-      But attempting to edit file outside it: %s
+      You are working in worktree: %s
+      But attempting to edit outside it: %s
 
-      All edits must target files within the current worktree.
+      Use the corrected worktree path instead:
+        %s
 
-      Reference: CLAUDE.md § Worktree Path Handling""".formatted(
+      Do NOT bypass this hook using Bash (cat, echo, tee, etc.) to write the file directly. \
+      The worktree exists to isolate changes from the main workspace until merge.""".formatted(
       worktreePathAbs,
-      filePathAbs);
+      filePathAbs,
+      correctedPath);
 
     return FileWriteHandler.Result.block(message);
   }
