@@ -898,6 +898,35 @@
         "catches_variations": true
       },
       "correct_behavior": "For skill changes, invoke load-skill.sh from the worktree with realistic arguments and verify the output. Running the artifact is the only valid E2E test \u2014 reading its contents is not."
+    },
+    {
+      "id": "M375",
+      "timestamp": "2026-02-22T08:40:00Z",
+      "category": "tool_misuse",
+      "description": "Design stakeholder missed cross-file method duplication (tokenize, resolvePath) between BlockWorktreeIsolationViolation and BlockUnsafeRemoval because it only reviewed changed files (git diff) without searching unchanged sibling files for identical methods",
+      "root_cause": "The design stakeholder's duplication check instruction said 'MANDATORY: search for new utility classes, inner classes, or helper methods' \u2014 triggering on CLASS type rather than METHOD name. BlockWorktreeIsolationViolation is a concrete handler class (not a utility/inner class), so the Grep search was never triggered. Identical private methods (tokenize, resolvePath) in unchanged sibling file BlockUnsafeRemoval were invisible in FILE_CONTENTS which only contained changed files.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees/2.1-block-worktree-isolation-violations-via-bash/plugin/agents/stakeholder-design.md",
+      "pattern_keywords": [
+        "design-stakeholder",
+        "duplication",
+        "cross-file",
+        "unchanged-files",
+        "tokenize",
+        "resolvePath",
+        "private-methods"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When reviewing any new file, search all sibling files for methods matching the new file's private helper method names using Grep. The trigger is the presence of helper methods in the new file, not the class type (utility/inner/concrete)."
     }
   ]
 }
