@@ -232,10 +232,10 @@ public final class SkillLoader
       }
       else
       {
-        output.append("<instructions skill=\"").append(skillName).append("\">\n");
-        output.append(substituteVars(parsed.instructions()));
-        output.append("\n</instructions>\n\n");
-        output.append(executeRef);
+        output.append("<instructions skill=\"").append(skillName).append("\">\n").
+          append(substituteVars(parsed.instructions())).
+          append("\n</instructions>\n\n").
+          append(executeRef);
         markSkillLoaded(skillName);
       }
       if (!parsed.outputBody().isEmpty())
