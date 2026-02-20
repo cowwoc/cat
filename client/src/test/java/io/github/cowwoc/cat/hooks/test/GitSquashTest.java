@@ -965,6 +965,39 @@ public class GitSquashTest
   }
 
   // ============================================================================
+  // HEAD verification tests
+  // ============================================================================
+
+  /**
+   * Verifies that after a successful squash, HEAD matches the commit hash returned in the result JSON.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void successfulSquashHasHeadMatchingCommitHash() throws IOException
+  {
+    Path tempDir = TestUtils.createTempGitRepo("main");
+    Path pluginRoot = Files.createTempDirectory("plugin-root-");
+    try (JvmScope scope = new TestJvmScope(tempDir, pluginRoot))
+    {
+      createTestBranch(tempDir, "test-branch", 3);
+      GitSquash cmd = new GitSquash(scope, tempDir.toString());
+      String result = cmd.execute("main", "feature: add user authentication");
+      JsonNode json = scope.getJsonMapper().readTree(result);
+      requireThat(json.get("status").asString(), "status").isEqualTo("OK");
+
+      String commitFull = json.get("commit_full").asString();
+      String actualHead = TestUtils.runGitCommandWithOutput(tempDir, "rev-parse", "HEAD").strip();
+      requireThat(actualHead, "actualHead").isEqualTo(commitFull);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  // ============================================================================
   // Helper methods
   // ============================================================================
 
