@@ -52,6 +52,24 @@ Bash scripts should NOT contain:
 - Complex business logic (use Java instead)
 - State management beyond simple files
 
+### Tool Availability
+
+The plugin's runtime environment provides:
+
+- **Bash** and standard POSIX utilities (`grep`, `sed`, `awk`, `sort`, `find`, `cat`, `head`, `tail`, `cut`, `tr`,
+  `wc`, `xargs`, `mktemp`, `date`, etc.)
+- **Git**
+- **The jlink bundle** (Java tools: `session-analyzer`, `progress-banner`, `verify-audit`, etc.)
+
+Do NOT assume or use tools outside this set. In particular, `jq`, `python`, `python3`, `node`, and `ruby` are **not
+available**.
+
+- **JSON parsing:** Use Java (via jlink tools) or Bash pattern matching, not `jq`
+- **Complex data processing:** Use jlink-bundled Java tools, not Python scripts
+- **Scripting:** Use Bash or Java, not Python
+
+Existing Python scripts are tracked for migration under `migrate-python-to-java`.
+
 ## Code Organization
 
 ```

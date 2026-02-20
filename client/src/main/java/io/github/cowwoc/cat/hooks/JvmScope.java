@@ -64,6 +64,19 @@ public interface JvmScope extends AutoCloseable
   Path getClaudeConfigDir();
 
   /**
+   * Returns the base directory for session JSONL files.
+   * <p>
+   * Session files are stored at {@code {sessionBasePath}/{sessionId}.jsonl}.
+   *
+   * @return the session base directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  default Path getSessionBasePath()
+  {
+    return getClaudeConfigDir().resolve("projects/-workspace");
+  }
+
+  /**
    * Returns the path to the Claude environment file.
    *
    * @return the environment file path

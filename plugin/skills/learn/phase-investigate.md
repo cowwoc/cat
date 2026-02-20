@@ -14,8 +14,12 @@ surrounding text or explanation. The parent agent parses your response as JSON.
 
 ## Pre-Extracted Investigation Context
 
-The learn skill's preprocessing always provides pre-extracted investigation context. Use it as your primary source
-for Steps 1 and 1b. The pre-extracted data contains:
+**CRITICAL: Raw JSONL is the authoritative source for what the agent actually received.** Source files show what
+*should* have been delivered; JSONL shows what *was* delivered. Any corruption, transformation, or injection invisible
+in source files is visible in JSONL.
+
+The learn skill's preprocessing provides pre-extracted investigation context as a convenience layer. The pre-extracted
+data contains:
 
 - `documents_read`: All files the agent Read during the session (path, tool, timestamp)
 - `skill_invocations`: All skills invoked (skill name, args, timestamp)
@@ -27,12 +31,13 @@ for Steps 1 and 1b. The pre-extracted data contains:
 
 **When using pre-extracted context:**
 
-1. Use `documents_read` instead of grepping the session JSONL for documents read
-2. Use `skill_invocations` instead of grepping for skill invocations
+1. Use `documents_read` to identify which documents to look up in the JSONL (not to assume delivery was correct)
+2. Use `skill_invocations` to identify which skills to look up in the JSONL
 3. Use `bash_commands` to find the failing commands and their outputs — no grep/jq needed
 4. Use `timeline_events` to reconstruct the event sequence
 5. Use `timezone_context` to interpret timestamps — skip timezone investigation
-6. Only fall back to direct JSONL parsing if the pre-extracted data is missing a specific piece of evidence you need
+6. Use session-analyzer on the raw JSONL to verify the content the agent actually received for any document that may
+   be relevant to the mistake (see Step 2)
 
 **Early termination rule:** Stop searching for evidence once you have enough to establish the timeline. If you have
 found 3 or more positive matches for each evidence type (relevant commands, failure outputs, documents read), stop
@@ -58,45 +63,79 @@ Memory is unreliable for causation, timing, attribution.
 
 **If get-history unavailable:** Document analysis based on current context only, may be incomplete.
 
-## Step 1b: Analyze Documentation Path
+## Step 2: Examine Raw JSONL and Analyze Documentation Path
 
-**CRITICAL: ALWAYS check documentation path FIRST after collecting history.**
-
-**MANDATORY FIRST STEP:** Before any other analysis, identify what documents/skills the agent
-read and check if they caused the mistake. Do NOT skip to "agent error" conclusions without first
-checking if documentation primed the wrong behavior.
-
-Using the session history from Step 1, identify all documents the agent read.
+**CRITICAL: ALWAYS examine raw JSONL FIRST. Source files show what *should* be delivered; JSONL shows what
+*was* delivered. Any corruption, transformation, or injection that happens between source files and agent delivery
+is invisible when only reading source files.**
 
 **NOTE:** `CLAUDE_SESSION_ID` is available in skill preprocessing but NOT exported to bash.
 You must substitute the actual session ID value in bash commands, not use the variable reference.
 
 ```bash
-# Replace with actual session ID - do NOT use ${CLAUDE_SESSION_ID} in bash
-SESSION_FILE="/home/node/.config/claude/projects/-workspace/YOUR-SESSION-ID-HERE.jsonl"
+# Replace YOUR-SESSION-ID with the actual session ID value
+SESSION_ID="YOUR-SESSION-ID-HERE"
+SESSION_ANALYZER="${WORKTREE_PATH}/client/target/jlink/bin/session-analyzer"
+if [[ ! -x "$SESSION_ANALYZER" ]]; then
+  SESSION_ANALYZER="/workspace/client/target/jlink/bin/session-analyzer"
+fi
+```
 
-# Note: Tool uses are nested inside assistant messages as content blocks
-# Structure: {type: "assistant", message: {content: [{type: "tool_use", name: "...", input: {...}}]}}
+**Primary: Examine raw JSONL**
 
-# Find documents read
-echo "=== Documents Read ==="
-grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use") |
-    select(.name == "Read" or .name == "Skill") |
-    if .name == "Read" then .input.file_path
-    else "skill:" + .input.skill end' 2>/dev/null | sort -u
+Use raw JSONL as the primary source to determine what the agent actually received.
 
-# Find skill invocations vs expected
-echo "=== Skill Invocations ==="
-grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Skill") |
-    .input.skill + " " + (.input.args // "")' 2>/dev/null
+**Session-analyzer commands** — choose the right one for your investigation need:
 
-# Find Issue prompts (delegation prompts are documents too!)
-echo "=== Issue Delegation Prompts ==="
-grep '"type":"assistant"' "$SESSION_FILE" | \
-  jq -r '.message.content[]? | select(.type == "tool_use" and .name == "Issue") |
-    "Issue: " + .input.description + "\n" + .input.prompt' 2>/dev/null
+| Command | When to Use |
+|---------|-------------|
+| `search <session-id> <keyword> --context N` | Find specific content the agent received (skills, documents, prompts) |
+| `errors <session-id>` | Find tool failures, non-zero exit codes, error patterns |
+| `file-history <session-id> <path>` | Trace all reads/writes/edits to a specific file path |
+| `analyze <session-id>` | Get full session overview including subagent discovery |
+
+```bash
+# Find what content was delivered for a specific skill or document
+"$SESSION_ANALYZER" search "$SESSION_ID" "skill-name-or-keyword" --context 5
+
+# Find tool errors that may have triggered the mistake
+"$SESSION_ANALYZER" errors "$SESSION_ID"
+
+# Get session overview with subagent discovery
+"$SESSION_ANALYZER" analyze "$SESSION_ID"
+```
+
+**Subagent investigation:** If the mistake happened inside a subagent, the parent session JSONL does not contain the
+subagent's full conversation. Use `analyze` to discover subagent IDs, then search their individual JSONL files:
+
+```bash
+# Discover subagent IDs (listed in analyze output under "subagents")
+"$SESSION_ANALYZER" analyze "$SESSION_ID"
+
+# Search a specific subagent's conversation
+"$SESSION_ANALYZER" search "$SESSION_ID/subagents/agent-AGENT_ID" "keyword" --context 5
+```
+
+**What to verify in JSONL before looking at source files:**
+- Did the skill/document content actually appear in the agent's context as expected?
+- Was any content transformed, truncated, or corrupted during delivery?
+- Did injection or preprocessing alter the content?
+- If JSONL content differs from source files, flag the discrepancy explicitly
+
+**Secondary: Compare with source files**
+
+After JSONL examination, use source files for comparison only. Source files are SECONDARY evidence — used to compare
+"expected vs actual":
+
+```bash
+# Cross-reference documents read with actual source files
+"$SESSION_ANALYZER" search "$SESSION_ID" "Read" --context 2
+
+# Find skill invocations
+"$SESSION_ANALYZER" search "$SESSION_ID" "Skill" --context 2
+
+# Find delegation prompts (Task tool invocations)
+"$SESSION_ANALYZER" search "$SESSION_ID" "Task" --context 5
 ```
 
 **For each document, check for priming patterns:**
@@ -145,123 +184,9 @@ When a mistake involves invoking a tool/skill with wrong parameters:
 3. Check what documentation showed similar-looking parameters that may have primed the incorrect usage
 4. The cause is often "saw parameter X used somewhere, assumed it applies to tool Y"
 
-**For subagent mistakes, ALSO check the Issue prompt that spawned it:**
-
-The delegation prompt IS the primary "document" the subagent received. Check it for:
-- Expected values embedded in output format (e.g., "score: 1.0 (required)")
-- Outcome requirements that conflict with reality (e.g., "MUST be 1.0")
-- Any content telling the subagent what to report vs what to measure
-
-**CHECK FOR TECHNICALLY IMPOSSIBLE INSTRUCTIONS:**
-
-When a subagent fails to follow instructions, check whether the instructions were **technically possible** given Claude
-Code's subagent architecture:
-
-| Subagent Capability | Available? | Evidence |
-|---------------------|------------|----------|
-| Spawn nested subagents (Task tool) | **NO** | Task tool not exposed to subagents |
-| Invoke skills dynamically (Skill tool) | **NO** | Skill tool not available to subagents |
-| Read/Write/Edit files | YES | Standard file tools available |
-| Run bash commands | YES | Bash tool available |
-| Web search/fetch | YES | Available to subagents |
-
-**If instructions required unavailable capabilities:**
-
-```yaml
-technically_impossible_check:
-  instruction_required: "Invoke /cat:{skill-name} for each item"
-  capability_needed: "Skill tool"
-  available_to_subagent: false
-  conclusion: "IMPOSSIBLE - instruction cannot be executed as written"
-  root_cause: "architectural_flaw"
-  fix_type: "Redesign workflow to invoke skills at main agent level"
-```
-
-**Common patterns of impossible instructions:**
-
-| Instruction Pattern | Why Impossible | Correct Design |
-|--------------------|----------------|----------------|
-| "Subagent must invoke /cat:skill" | Skill tool unavailable | Main agent invokes skill before/after delegation |
-| "Spawn reviewer subagents" | Task tool unavailable | Main agent spawns reviewers directly |
-| "Delegate to sub-subagent" | Max depth is 1 | Flatten to single delegation level |
-| "Use parallel-execute skill" | Skill tool unavailable | Main agent handles parallelization |
-
-**When this check identifies impossible instructions:**
-
-1. Root cause is `architectural_flaw` (not agent error)
-2. Prevention must redesign the WORKFLOW, not add guidance
-3. The skill/workflow documentation is the source of the bug
-4. Do NOT add "agent should have..." instructions - they cannot help
-
-**CHECK FOR MISSING SKILL PRELOADING:**
-
-When a subagent fails to follow skill-based guidance correctly, check whether the subagent would
-have benefited from having skills preloaded via frontmatter.
-
-**Claude Code `skills` frontmatter field:**
-
-Agents defined in `plugin/agents/` can specify skills to preload:
-
-```yaml
----
-name: work-merge
-description: Merge phase for /cat:work
-tools: Read, Bash, Grep, Glob
-model: haiku
-skills:
-  - git-squash
-  - git-rebase
-  - git-merge-linear
----
-```
-
-The `skills` field causes Claude Code to inject the listed skill content into the subagent's
-context at startup - the subagent receives the knowledge without needing to invoke the Skill tool.
-
-**Questions to ask when subagent makes a mistake:**
-
-| Question | If YES |
-|----------|--------|
-| Did subagent need skill knowledge it didn't have? | Consider adding skill to frontmatter |
-| Was `general-purpose` subagent used for domain-specific work? | Create dedicated agent type |
-| Did subagent try to invoke a skill (and fail)? | Move skill knowledge to frontmatter |
-| Would preloaded guidance have prevented the mistake? | Add skill to agent's `skills` field |
-
-**If general-purpose agent was used and skills would help:**
-
-```yaml
-subagent_skills_analysis:
-  subagent_type_used: "general-purpose"
-  domain_knowledge_needed: ["git-squash", "git-rebase"]
-  skill_invocation_attempted: true
-  skill_invocation_succeeded: false  # Skill tool not available to subagents
-
-  recommendation:
-    action: "Create dedicated agent type"
-    agent_name: "{domain}-agent"
-    skills_to_preload: ["skill-1", "skill-2"]
-    rationale: "Subagent needs domain knowledge but cannot invoke skills"
-```
-
-**Prevention pattern for skill preloading issues:**
-
-1. Identify the skills the subagent needed
-2. Check if a dedicated agent type already exists (check `plugin/agents/`)
-3. If yes: Use that agent type instead of `general-purpose`
-4. If no: Create new agent in `plugin/agents/{name}.md` with `skills` frontmatter
-5. Update the delegation code to use the new agent type
-
-**Record in mistake entry:**
-
-```json
-{
-  "category": "architectural_flaw",
-  "root_cause": "Subagent lacked skill knowledge; general-purpose agent used for domain work",
-  "prevention_type": "config",
-  "prevention_path": "plugin/agents/{new-agent}.md",
-  "subagent_skills_needed": ["skill-1", "skill-2"]
-}
-```
+**For subagent mistakes:** Read `phase-investigate-subagent.md` (in the same directory as this file) for subagent-specific
+investigation checks including delegation prompt analysis, technically impossible instructions, and missing skill
+preloading.
 
 **CRITICAL: Trace the FULL priming chain:**
 
@@ -287,12 +212,10 @@ Message described problem without actionable guidance
 
 ```bash
 # Find subagent failure messages that preceded the bad decision
-grep '"type":"tool_result"' "$SESSION_FILE" | \
-  jq -r 'select(.content | type == "array") | .content[]? |
-    select(.text? | contains("FAILED") or contains("excessive") or contains("nesting"))' 2>/dev/null
+"$SESSION_ANALYZER" search "$SESSION_ID" "FAILED" --context 5
 
-# Find Task tool results with failure status
-grep -B5 "do NOT invoke" "$SESSION_FILE" | head -50  # Find context before bypass instruction
+# Find tool errors (non-zero exit codes, error patterns)
+"$SESSION_ANALYZER" errors "$SESSION_ID"
 ```
 
 **If a subagent failure message primed the main agent:**
@@ -318,6 +241,9 @@ documentation_priming:
 
 Your final message MUST be ONLY this JSON (no other text):
 
+Valid `priming_type` values: `algorithm_exposure`, `output_format`, `cost_concern`, `conflicting_guidance`,
+`impossible_instruction`, `missing_skill_preload`.
+
 ```json
 {
   "phase": "investigate",
@@ -333,7 +259,7 @@ Your final message MUST be ONLY this JSON (no other text):
   "priming_analysis": {
     "priming_found": true,
     "document": "path or description",
-    "priming_type": "algorithm_exposure|output_format|cost_concern|conflicting_guidance|impossible_instruction|missing_skill_preload",
+    "priming_type": "see valid values above",
     "how_it_misled": "explanation"
   },
   "session_id": "actual-session-id"
