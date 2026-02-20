@@ -148,6 +148,11 @@ public final class GitSquash
     // Step 9: Move branch to new squashed commit
     runGitCommandInDirectory(directory, "reset", "--hard", newCommit);
 
+    // Step 9a: Verify HEAD actually moved to newCommit
+    String actualHead = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD");
+    if (!actualHead.equals(newCommit))
+      throw new IOException("reset --hard failed to move HEAD. Expected: " + newCommit + ", actual: " + actualHead);
+
     // Step 10: Verify diff with backup is empty
     String diffOutput = runGitCommandInDirectory(directory, "diff", backupBranch);
     if (!diffOutput.isEmpty())
