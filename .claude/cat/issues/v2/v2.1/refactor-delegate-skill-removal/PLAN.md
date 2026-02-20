@@ -6,7 +6,7 @@ CAT issue delegation (`--issues`), not skill invocation delegation.
 
 ## Problem Statement
 The `--skill` parameter in delegate attempts to spawn subagents that invoke skills.
-But subagents cannot invoke skills (Skill tool unavailable). This creates a broken
+But subagents cannot use the Skill tool (though they can use load-skill.sh via Bash). This creates a broken
 workflow where delegated skill invocations silently fail or require manual workarounds.
 
 The correct pattern is:
