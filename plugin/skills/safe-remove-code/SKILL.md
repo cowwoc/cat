@@ -1,5 +1,5 @@
 ---
-description: Safely remove code patterns from multiple files with validation and rollback (project)
+description: Use when removing code patterns across multiple files - safe removal with validation and rollback
 user-invocable: false
 allowed-tools: Bash, Read, Edit, Grep, Glob
 ---

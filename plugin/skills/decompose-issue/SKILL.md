@@ -1,5 +1,5 @@
 ---
-description: Split oversized issue into smaller issues with proper dependency management
+description: Use when an issue is too large or needs breaking down - split into smaller, manageable issues
 user-invocable: false
 ---
 

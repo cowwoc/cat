@@ -1,5 +1,5 @@
 ---
-description: Verify PLAN.md acceptance criteria were implemented after /cat:work execution
+description: After implementation - verify all PLAN.md acceptance criteria were met
 user-invocable: false
 model: sonnet
 allowed-tools:

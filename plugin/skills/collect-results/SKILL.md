@@ -1,5 +1,5 @@
 ---
-description: Gather results from completed subagent including commits, metrics, and state updates
+description: Use when a subagent finishes - collect its commits, metrics, and state updates
 user-invocable: false
 ---
 

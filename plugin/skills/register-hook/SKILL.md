@@ -1,5 +1,5 @@
 ---
-description: Create and register hook scripts with proper error handling and settings
+description: Use when adding a new hook or registering a hook script - create and register with proper settings
 user-invocable: false
 allowed-tools: Bash, Write, Read, Edit
 ---

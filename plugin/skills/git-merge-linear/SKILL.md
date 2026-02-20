@@ -1,5 +1,5 @@
 ---
-description: Merge issue branch to base branch with linear history (works from any directory via git -C)
+description: Use when merging a branch with linear history - merge, rebase onto main, linear merge
 user-invocable: false
 allowed-tools: Bash, Read
 ---

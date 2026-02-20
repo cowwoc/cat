@@ -50,7 +50,7 @@ public final class SessionStartHook implements HookHandler
       new CheckRetrospectiveDue(scope),
       new InjectSessionInstructions(),
       new InjectSkillListing(scope),
-      new ClearSkillMarkers(),
+      new ClearSkillMarkers(scope),
       new InjectCriticalThinking(),
       new InjectEnv(scope)));
   }

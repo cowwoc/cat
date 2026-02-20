@@ -22,9 +22,8 @@ How to register, invoke, and reference skills for main agents and subagents in C
 ```
 {skill-name}/
   SKILL.md        — Frontmatter (description, user-invocable) + preprocessor directive or content
-{skill-name}-first-use/
-  SKILL.md        — Companion skill content as plain markdown
-reference.md      — Short content returned on subsequent invocations (optional; empty if absent)
+  first-use.md    — Full content returned on first invocation (required)
+  reference.md    — Short content returned on subsequent invocations (optional; empty if absent)
 ```
 
 ## Invoking Skills
@@ -36,7 +35,7 @@ The Skill tool triggers the full SkillLoader pipeline:
 1. Claude Code routes to the skill's SKILL.md
 2. SKILL.md preprocessor directive (`!` backtick) calls `load-skill.sh`
 3. `load-skill.sh` invokes `SkillLoader.java`
-4. SkillLoader checks marker file, returns full content or `reference.md`
+4. SkillLoader checks marker file, returns full content from `first-use.md` or `reference.md`
 5. Variable substitution and `@path` expansion run on the returned content
 
 ```
@@ -81,61 +80,13 @@ directive. Debug log: `[Agent: cat:preprocess-tester] Preloaded skill 'cat:prepr
 and preprocessor-based plugin skills. Be aware of the shared marker file issue when the same skill is
 also invoked by the parent agent.
 
-## `-first-use` Skill Pattern
-
-The `-first-use` pattern provides a companion skill directory for subagent preloading. The companion SKILL.md
-contains the full static instructions for the skill and is injected directly into the subagent's context via
-`skills:` frontmatter.
-
-### Architecture
-
-```
-plugin/skills/
-  {skill-name}/
-    SKILL.md            — Main skill entry point (preprocessor directive calls SkillLoader)
-  {skill-name}-first-use/
-    SKILL.md            — Companion: full static instructions for subagent preloading
-```
-
-The companion SKILL.md contains:
-
-```markdown
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
-# Skill Title
-
-Full skill instructions as plain markdown. These instructions are injected directly into the
-subagent's context when the agent is spawned via the Task tool.
-```
-
-### Loading Paths
+## Loading Paths
 
 | Loader Path | How Invoked | Session Marker Used? |
 |-------------|-------------|----------------------|
-| Main agent via Skill tool | `cat:{skill-name}` | Yes — first-use vs reference |
-| Subagent via `skills:` frontmatter | `cat:{skill-name}-first-use` | No — SKILL.md injected directly |
-
-**Why subagents reference `-first-use` directly:**
-- Subagents use `skills:` frontmatter, which preprocesses and injects SKILL.md content
-- By pointing at `{skill-name}-first-use`, subagents get the full instructions in one step
-- This bypasses the SkillLoader marker file, so the parent's "already loaded" state doesn't affect the
-  subagent
-
-### Creating a `-first-use` Companion Skill
-
-1. Create directory: `plugin/skills/{skill-name}-first-use/`
-2. Create `SKILL.md` with:
-   - YAML frontmatter (`user-invocable: false`)
-   - Full skill instructions as plain markdown
-3. Update any subagent frontmatter that preloads the skill to reference `cat:{skill-name}-first-use`
-
-### Visibility
-
-The companion skill must have `user-invocable: false` in its YAML frontmatter to prevent users from
-discovering or invoking it directly. It is an internal implementation detail of the parent skill.
+| Main agent via Skill tool | `cat:{skill-name}` | Yes — returns `first-use.md` or `reference.md` |
+| Subagent via `skills:` frontmatter | `cat:{skill-name}` | Yes — shared with parent's marker file |
+| Subagent via SubagentStartHook | skill listing injected at spawn | On-demand via `load-skill.sh` |
 
 ## Session Markers (First-Use vs Reference)
 
@@ -145,7 +96,7 @@ SkillLoader tracks which skills have been loaded via marker files:
 /tmp/cat-skills-loaded-{sessionId}
 ```
 
-- **First invocation:** Returns full content (from `-first-use/SKILL.md`), writes skill name to marker file
+- **First invocation:** Returns full content from `first-use.md`, writes skill name to marker file
 - **Subsequent invocations:** Returns `reference.md` (or empty string if no reference.md exists)
 
 ### Shared Session ID Between Parent and Subagents
@@ -189,7 +140,7 @@ Skill tool invocations to ensure reliable resolution.
 # ✅ Frontmatter: content injected at spawn (preprocessor runs)
 ---
 skills:
-  - cat:git-merge-linear-first-use
+  - cat:git-merge-linear
 ---
 
 # ✅ Skill tool: content loaded on demand during execution
@@ -218,9 +169,8 @@ get `reference.md` instead of full content.
 
 1. Create directory: `plugin/skills/{skill-name}/`
 2. Create `SKILL.md` with frontmatter and preprocessor directive
-3. Create `plugin/skills/{skill-name}-first-use/SKILL.md` with skill content (using the `-first-use`
-   companion pattern -- see above)
-4. Optionally create `reference.md` for subsequent invocations
+3. Create `plugin/skills/{skill-name}/first-use.md` with full skill content
+4. Optionally create `plugin/skills/{skill-name}/reference.md` for subsequent invocations
 5. The skill is automatically available as `cat:{skill-name}`
 
 ### Creating a New Project Skill

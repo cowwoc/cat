@@ -1,5 +1,5 @@
 ---
-description: "Guide for formatting Claude-facing documentation with proper line wrapping and YAML multi-line syntax"
+description: Before writing or editing markdown documentation - format docs with proper line wrapping and YAML syntax
 user-invocable: false
 ---
 

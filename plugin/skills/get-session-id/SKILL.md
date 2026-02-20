@@ -1,5 +1,5 @@
 ---
-description: Reference for accessing session ID via ${CLAUDE_SESSION_ID} automatic substitution
+description: Use when you need the current session ID - access via ${CLAUDE_SESSION_ID} variable
 user-invocable: false
 ---
 
