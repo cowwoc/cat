@@ -136,14 +136,24 @@ def gather_diagnostic_info(project_dir: Path) -> Dict[str, Any]:
     total_count = 0
 
     # Build issue index once for O(1) lookup
+    # Primary keys are version-qualified: "2.1-issue-name"
+    # Secondary index maps bare names to qualified names for legacy compatibility
     issue_index = {}
+    bare_name_index = {}  # bare_name -> list of qualified_names
     for state_file in issues_dir.rglob("STATE.md"):
         issue_name = state_file.parent.name
+        version_dir = state_file.parent.parent.name  # e.g., "v2.1"
+        if version_dir.startswith("v"):
+            version = version_dir[1:]  # e.g., "2.1"
+            qualified_name = f"{version}-{issue_name}"
+        else:
+            qualified_name = issue_name
         with open(state_file, 'r') as f:
-            issue_index[issue_name] = {
+            issue_index[qualified_name] = {
                 "state_file": state_file,
                 "content": f.read()
             }
+        bare_name_index.setdefault(issue_name, []).append(qualified_name)
 
     # Scan all issues using the index
     for issue_name, issue_data in issue_index.items():
@@ -171,9 +181,15 @@ def gather_diagnostic_info(project_dir: Path) -> Dict[str, Any]:
                     deps = [d.strip() for d in deps_str.split(',') if d.strip()]
 
                     # Check each dependency's status using O(1) lookup
+                    # Supports both version-qualified ("2.1-foo") and bare ("foo") formats
                     unresolved_deps = []
                     for dep in deps:
                         dep_data = issue_index.get(dep)
+                        if not dep_data:
+                            # Try bare name lookup
+                            candidates = bare_name_index.get(dep, [])
+                            if len(candidates) == 1:
+                                dep_data = issue_index.get(candidates[0])
 
                         if dep_data:
                             dep_content = dep_data["content"]
