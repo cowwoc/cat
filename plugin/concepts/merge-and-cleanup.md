@@ -24,11 +24,11 @@ Identify all subagent branches for the issue:
 
 ### 2. Sequential Subagent Merge
 
-For each subagent branch:
+For each subagent branch (subagent branches within an issue worktree may use --ff-only):
 ```bash
 # In issue worktree
 git checkout {major}.{minor}-{issue-name}
-git merge {subagent-branch} --no-ff -m "Merge subagent work: {summary}"
+git merge --ff-only {subagent-branch}
 ```
 
 Handle conflicts if they arise:
@@ -112,18 +112,17 @@ git commit --amend --no-edit
 
 ### 7. Merge to Main
 
-After approval and STATE.md update:
+After approval and STATE.md update, use the `merge-and-cleanup` Java tool which performs a
+fast-forward-only merge:
+
 ```bash
-# Ensure main is up to date
-git checkout main
-git pull origin main
-
-# Merge issue branch (STATE.md already included)
-git merge {major}.{minor}-{issue-name} --no-ff
-
-# Push to remote
-git push origin main
+"${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup" \
+  "${CLAUDE_PROJECT_DIR}" "${ISSUE_ID}" "${SESSION_ID}" --worktree "${WORKTREE_PATH}"
 ```
+
+**Linear history is mandatory.** Merge commits are prohibited. The `merge-and-cleanup` tool
+enforces fast-forward-only merging. If fast-forward is not possible, rebase the issue branch
+onto the base branch first (see Step 3 of work-merge-first-use skill).
 
 #### Merging When Base Branch Is Checked Out in Main Workspace
 
@@ -141,11 +140,10 @@ cd /workspace
 # Verify you're on the base branch
 git branch --show-current  # Should show base branch (e.g., v2.1)
 
-# Merge task branch without checkout (already on base)
+# Merge task branch using fast-forward only (enforces linear history)
 git merge --ff-only {issue-branch}
-
-# If fast-forward not possible, use no-ff merge
-git merge {issue-branch} --no-ff
+# If fast-forward not possible, rebase the issue branch first:
+#   git rebase v2.1  (in the worktree), then retry --ff-only
 ```
 
 **Why this works:**
