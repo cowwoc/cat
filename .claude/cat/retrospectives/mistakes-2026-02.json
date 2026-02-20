@@ -650,6 +650,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Always use git merge --ff-only when merging issue branches to base. If fast-forward is not possible, rebase first. Never create merge commits. Use merge-and-cleanup Java tool (${CLAUDE_PLUGIN_ROOT}/client/bin/merge-and-cleanup) which enforces ff-only."
+    },
+    {
+      "id": "M366",
+      "timestamp": "2026-02-20T17:00:00Z",
+      "category": "protocol_violation",
+      "description": "learn skill deep-tier subagent created two separate commits for prevention file and retrospective metadata when both go to main workspace",
+      "root_cause": "phase-record.md Step 12 unconditionally commits prevention files as a separate commit before Step 13 commits retrospective metadata. When prevention type is skill/config/documentation/process and no issue worktree exists, both sets of files go to the same location (main workspace) and should be combined into one commit, but no such instruction existed.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-record.md",
+      "pattern_keywords": [
+        "learn-skill",
+        "split-commit",
+        "phase-record",
+        "single-commit-rule",
+        "retrospective"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When prevention type is skill/process/documentation/config and no active worktree exists, include prevention files in the same commit as retrospective metadata (single commit in Step 13). Only split commits when prevention targets a worktree (code_fix, hook, validation)."
     }
   ]
 }
