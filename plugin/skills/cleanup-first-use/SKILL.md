@@ -55,11 +55,7 @@ work was completed on the base branch. Resetting to `pending` causes duplicate w
 
 ### Step 1: Survey Current State
 
-Echo the contents of the latest `<output skill="cleanup">` tag verbatim.
-
-<output skill="cleanup-survey">
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-survey.sh" --project-dir "${CLAUDE_PROJECT_DIR}"`
-</output>
+Echo the contents of the `<output skill="cleanup">` tag below verbatim.
 
 ---
 
@@ -298,3 +294,7 @@ The resulting box will be output verbatim.
 1. List branches (Step 1)
 2. Confirm they have no unique unmerged commits
 3. Delete branches
+
+<output skill="cleanup">
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-survey.sh" --project-dir "${CLAUDE_PROJECT_DIR}"`
+</output>

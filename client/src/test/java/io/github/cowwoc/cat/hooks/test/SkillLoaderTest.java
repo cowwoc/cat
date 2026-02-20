@@ -1926,4 +1926,313 @@ Dynamic output with attribute.
       TestUtils.deleteDirectoryRecursively(tempPluginRoot);
     }
   }
+
+  /**
+   * Verifies that a backtick-quoted {@code <output>} reference in instruction text is not treated
+   * as a real {@code <output>} tag, so the skill structure is parsed correctly.
+   * <p>
+   * This test captures the M341-M372 bug: instructions containing a literal backtick-quoted
+   * {@code `<output skill="X">`} reference were being matched by {@code OUTPUT_TAG_PATTERN},
+   * corrupting the split between instructions and output body.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseContentIgnoresBacktickQuotedOutputTagInInstructions() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      // The instruction text contains a backtick-quoted <output> reference.
+      // This should NOT be treated as a real <output> tag.
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Read the `<output skill="test-skill">` tag below and echo it verbatim.
+
+<output skill="test-skill">
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output"`
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // The instructions must include the text about reading the <output> tag
+      requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
+        contains("Read the `<output skill=\"test-skill\">` tag below and echo it verbatim.").
+        contains("</instructions>").
+        contains("<output skill=\"test-skill\">");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that a backtick-quoted {@code <output>} reference with multiple attributes in
+   * instruction text is not treated as a real {@code <output>} tag.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseContentIgnoresBacktickQuotedOutputTagWithAttributes() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Echo the contents of the latest `<output skill="statusline">` tag verbatim.
+
+<output skill="statusline">
+status data here
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // Instructions must contain the backtick reference and NOT be split at it
+      requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
+        contains("Echo the contents of the latest `<output skill=\"statusline\">` tag verbatim.").
+        contains("</instructions>").
+        contains("<output skill=\"test-skill\">").
+        contains("status data here");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that backtick-quoted content inside the {@code <output>} body is preserved verbatim.
+   * <p>
+   * The equal-length sanitization invariant ensures positions from the sanitized copy are valid
+   * indices into the original content, so backticks inside the output body are not lost.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseContentPreservesBacktickContentInOutputBody() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+Instructions without backtick references.
+
+<output skill="test">
+some `code` here
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      requireThat(result, "result").
+        contains("<output skill=\"test-skill\">").
+        contains("some `code` here").
+        contains("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that an {@code <output>} tag inside a fenced code block is ignored, and only the real
+   * {@code <output>} tag outside the code block is matched by parseContent().
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseContentIgnoresCodeBlockQuotedOutputTag() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+# Skill Instructions
+
+Example of a skill file:
+
+```markdown
+Echo the output below.
+
+<output skill="example">
+!`"some/path"`
+</output>
+```
+
+More instructions here.
+
+<output skill="real">
+actual preprocessor content
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // The real tag (outside code block) should be used; instructions should include code block content
+      requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
+        contains("More instructions here").
+        contains("```markdown").
+        contains("</instructions>").
+        contains("<output skill=\"test-skill\">").
+        contains("actual preprocessor content").
+        contains("</output>");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that when all {@code <output>} tags are inside fenced code blocks, parseContent()
+   * returns null (no real output tag found) and the content is treated as non-tagged.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseContentReturnsNonTaggedWhenAllOutputTagsInCodeBlocks() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/test-skill-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Test skill"
+user-invocable: false
+---
+
+# Skill Builder Guide
+
+Example:
+
+```markdown
+<output skill="help">
+!`"path/to/script"`
+</output>
+```
+
+More documentation text.
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("test-skill");
+
+      // No real output tag — content should be returned as non-tagged skill content (no wrapping).
+      // The raw content includes <output skill="help"> inside the code block as an example;
+      // that literal is preserved verbatim. We verify the non-tagged path was taken by checking
+      // that no <instructions skill=...> wrapper was generated.
+      requireThat(result, "result").
+        contains("More documentation text.").
+        doesNotContain("<instructions skill=");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that the status-first-use pattern is correctly parsed: instructions containing a
+   * backtick-quoted {@code <output>} reference and a trailing table are preserved in instructions,
+   * and only the real {@code <output>} tag body is used as the output section.
+   * <p>
+   * This is the specific pattern from M341-M372 that caused catastrophic instruction corruption.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void parseContentHandlesStatusFirstUsePattern() throws IOException
+  {
+    Path tempPluginRoot = Files.createTempDirectory("skill-loader-test");
+    try (JvmScope scope = new TestJvmScope(tempPluginRoot, tempPluginRoot))
+    {
+      Path firstUseDir = tempPluginRoot.resolve("skills/status-first-use");
+      Files.createDirectories(firstUseDir);
+      Files.writeString(firstUseDir.resolve("SKILL.md"), """
+---
+description: "Internal skill for subagent preloading. Do not invoke directly."
+user-invocable: false
+---
+
+# Status
+
+Read the `<output skill="status">` tag below and respond verbatim.
+After the verbatim content, append exactly:
+
+**NEXT STEPS**
+
+| Option | Action | Command |
+|--------|--------|---------|
+| [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
+| [**2**] | Add new issue | `/cat:add` |
+
+<output skill="status">
+status output here
+</output>
+""");
+
+      SkillLoader loader = new SkillLoader(scope, tempPluginRoot.toString(), "session-" +
+        System.nanoTime(), "/project");
+      String result = loader.load("status");
+
+      // All instruction text (including table) must be in the instructions block
+      requireThat(result, "result").
+        contains("<instructions skill=\"status\">").
+        contains("Read the `<output skill=\"status\">` tag below and respond verbatim.").
+        contains("**NEXT STEPS**").
+        contains("Execute an issue").
+        contains("</instructions>").
+        contains("<output skill=\"status\">").
+        contains("status output here");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempPluginRoot);
+    }
+  }
 }
