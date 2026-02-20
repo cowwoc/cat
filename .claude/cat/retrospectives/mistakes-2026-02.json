@@ -761,6 +761,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After git-squash OK response, run git -C $WORKTREE_PATH status --porcelain and verify output is empty. If diverged, run git -C $WORKTREE_PATH reset --hard HEAD to sync."
+    },
+    {
+      "id": "M370",
+      "timestamp": "2026-02-21T15:34:13Z",
+      "category": "stakeholder_review_quality",
+      "description": "Performance stakeholder missed O(n) directory scanning because it lacked domain knowledge about Claude CLI session mechanics (sessionId available in stream-json output)",
+      "root_cause": "SYSTEM: Parent agent spawned stakeholder reviewers without injecting domain knowledge about the code being reviewed. Stakeholders lack context about Claude CLI session behavior (sessionId availability in stream-json output), which prevented the performance reviewer from identifying the O(n) directory scan as replaceable with a direct extraction.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/stakeholder-review-first-use/SKILL.md",
+      "pattern_keywords": [
+        "stakeholder",
+        "domain-knowledge",
+        "performance",
+        "review",
+        "context-injection"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Parent agent injects system-specific domain knowledge (e.g., available APIs, output formats, session mechanics) into every stakeholder delegation prompt via a Domain Knowledge section, enabling reviewers to identify better alternatives"
     }
   ]
 }

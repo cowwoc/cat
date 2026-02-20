@@ -570,6 +570,25 @@ if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
 fi
 ```
 
+**Domain Knowledge Injection:**
+
+Before spawning stakeholders, collect domain knowledge relevant to the code being reviewed. This
+is system-specific context that stakeholders need to identify better alternatives — knowledge that
+is not visible in the code itself.
+
+```bash
+# Collect domain knowledge from PLAN.md "Domain Knowledge" section (if present)
+DOMAIN_KNOWLEDGE=""
+if [[ -n "$ISSUE_DIR" && -f "${ISSUE_DIR}PLAN.md" ]]; then
+    DOMAIN_KNOWLEDGE=$(awk '/^## Domain Knowledge/,/^## /' "${ISSUE_DIR}PLAN.md" | \
+        grep -v '^## ' | sed '/^$/d' | head -50)
+fi
+```
+
+If the PLAN.md does not have a `## Domain Knowledge` section but the implementation touches
+system-specific APIs or behaviors (e.g., CLI output formats, session mechanics, external service
+contracts), synthesize the key facts and add them to the prompt as domain knowledge.
+
 Spawn each stakeholder with this prompt:
 
 ```
@@ -590,6 +609,13 @@ rather than reading these files yourself.
 
 ### Version PLAN.md
 {VERSION_PLAN_CONTENT}
+
+## Domain Knowledge
+
+The following system-specific knowledge is relevant for reviewing this code. Use it when
+evaluating whether there are better alternatives to the approaches chosen.
+
+{DOMAIN_KNOWLEDGE if non-empty, otherwise "No domain-specific knowledge provided for this review."}
 
 ## Your Role
 {content of agents/stakeholder-{stakeholder}.md}
