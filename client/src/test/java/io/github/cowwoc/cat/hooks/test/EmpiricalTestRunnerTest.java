@@ -1386,9 +1386,9 @@ public final class EmpiricalTestRunnerTest
 
       List<EmpiricalTestRunner.TrialResult> trialResults = List.of(
         new EmpiricalTestRunner.TrialResult(true, Map.of("contains:hello", true), 5L,
-          "Hello world", List.of("Bash"), "", List.of()),
+          "Hello world", List.of("Bash"), "", List.of(), List.of()),
         new EmpiricalTestRunner.TrialResult(false, Map.of("contains:hello", false), 3L,
-          "no match", List.of(), "", List.of()));
+          "no match", List.of(), "", List.of(), List.of()));
       EmpiricalTestRunner.ConfigResult configResult =
         new EmpiricalTestRunner.ConfigResult("test-config", 2, 1, 50, trialResults);
 
@@ -1612,6 +1612,7 @@ public final class EmpiricalTestRunnerTest
         "expected output text",
         List.of("Bash", "Read"),
         "",
+        List.of(),
         List.of());
 
       String json = mapper.writeValueAsString(trialResult);

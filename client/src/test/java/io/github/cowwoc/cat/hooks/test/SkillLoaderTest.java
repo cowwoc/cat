@@ -1306,7 +1306,9 @@ Directive: !`"${CLAUDE_PLUGIN_ROOT}/client/bin/test-launcher"`
       String result = loader.load("test-skill");
 
       // The @path inside the code block should be preserved as-is
-      requireThat(result, "result").contains("@concepts/some-file.md");
+      requireThat(result, "result").
+        contains("@concepts/some-file.md").
+        contains("<instructions skill=\"test-skill\">");
     }
     finally
     {
@@ -1439,7 +1441,10 @@ Output content here.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
         contains("Skill instructions here.").
+        contains("</instructions>").
+        contains("Execute the <instructions skill=\"test-skill\"> block from earlier in this conversation,").
         contains("<output skill=\"test-skill\">").
         contains("Output content here.").
         contains("</output>").
@@ -1454,7 +1459,7 @@ Output content here.
 
   /**
    * Verifies that on the second invocation of a skill with a {@code -first-use} companion,
-   * the dynamic reference text is returned while the output body is still appended.
+   * the execution trigger is returned while the output body is still appended.
    *
    * @throws IOException if an I/O error occurs
    */
@@ -1484,15 +1489,18 @@ Dynamic output.
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
+        contains("<instructions skill=\"test-skill\">").
         contains("Full skill instructions.").
+        contains("</instructions>").
+        contains("Execute the <instructions skill=\"test-skill\"> block from earlier in this conversation,").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output.").
         contains("</output>");
 
       String secondResult = loader.load("test-skill");
       requireThat(secondResult, "secondResult").
-        contains("Re-execute the skill instructions declared earlier in this conversation, " +
-          "using the updated tag below.").
+        contains("Execute the <instructions skill=\"test-skill\"> block from earlier in this conversation," +
+          " using the updated <output skill=\"test-skill\"> tag below.").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output.").
         contains("</output>").
@@ -1572,7 +1580,9 @@ Output content.
       String result = loader.load("test-skill");
 
       requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
         contains("Content after frontmatter.").
+        contains("</instructions>").
         contains("<output skill=\"test-skill\">").
         contains("Output content.").
         doesNotContain("description:").
@@ -1656,7 +1666,9 @@ Dynamic output with attribute.
 
       String result = loader.load("test-skill");
       requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
         contains("Full skill instructions.").
+        contains("</instructions>").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output with attribute.").
         contains("</output>");
@@ -1699,7 +1711,9 @@ Dynamic output with multiple attributes.
 
       String result = loader.load("test-skill");
       requireThat(result, "result").
+        contains("<instructions skill=\"test-skill\">").
         contains("Full skill instructions.").
+        contains("</instructions>").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output with multiple attributes.").
         contains("</output>");
@@ -1742,15 +1756,17 @@ Dynamic output with attribute.
 
       String firstResult = loader.load("test-skill");
       requireThat(firstResult, "firstResult").
+        contains("<instructions skill=\"test-skill\">").
         contains("Full skill instructions.").
+        contains("</instructions>").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output with attribute.").
         contains("</output>");
 
       String secondResult = loader.load("test-skill");
       requireThat(secondResult, "secondResult").
-        contains("Re-execute the skill instructions declared earlier in this conversation, " +
-          "using the updated tag below.").
+        contains("Execute the <instructions skill=\"test-skill\"> block from earlier in this conversation," +
+          " using the updated <output skill=\"test-skill\"> tag below.").
         contains("<output skill=\"test-skill\">").
         contains("Dynamic output with attribute.").
         contains("</output>").
