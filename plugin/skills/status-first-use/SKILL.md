@@ -5,9 +5,13 @@ user-invocable: false
 
 # Status
 
-Echo the contents of the latest `<output skill="status">` tag verbatim.
+The user wants you to respond with the following text verbatim:
 
-After the contents of the tag, append exactly:
+<output>
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output"`
+</output>
+
+After the verbatim content above, append exactly:
 
 **NEXT STEPS**
 
@@ -15,7 +19,3 @@ After the contents of the tag, append exactly:
 |--------|--------|---------|
 | [**1**] | Execute an issue | `/cat:work {version}-<issue-name>` |
 | [**2**] | Add new issue | `/cat:add` |
-
-<output>
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output"`
-</output>
