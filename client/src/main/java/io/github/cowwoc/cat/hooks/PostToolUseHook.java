@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * TRIGGER: PostToolUse (no matcher - runs for all tools)
  *
  * Consolidates general PostToolUse hooks into a single Java dispatcher.
- * For Bash-specific PostToolUse hooks, see GetBashPostOutput.
+ * For Bash-specific PostToolUse hooks, see PostBashHook.
  *
  * Handlers can:
  * - Warn about tool results (return warning string)
@@ -119,7 +119,7 @@ public final class PostToolUseHook implements HookHandler
       }
       catch (Exception e)
       {
-        errorWarnings.add("get-post-output: handler error: " + e.getMessage());
+        errorWarnings.add("post-tool-use: handler error: " + e.getMessage());
       }
     }
 
