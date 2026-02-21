@@ -45,7 +45,7 @@ hooks application JAR, Jackson 3 for JSON processing, and SLF4J/Logback for logg
 ### Runtime Structure
 
 ```
-runtime/cat-jdk-25/
+runtime/client/
 ├── bin/
 │   ├── java                     # JVM binary
 │   ├── pre-bash                 # Generated launcher scripts
@@ -69,7 +69,7 @@ compatibility, creates the jlink image, generates Leyden AOT caches, and writes 
 
 Output: `client/target/jlink/`
 
-The `session-start.sh` hook copies the built image to `${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/` at session start.
+The `session-start.sh` hook downloads the jlink image from GitHub releases to `${CLAUDE_PLUGIN_ROOT}/runtime/client/` if not already present.
 
 **Using the `/cat-update-hooks` skill:** For development workflows, use the `/cat-update-hooks` skill to build and
 install the hooks into your current Claude Code project. This skill handles building, installation, and plugin cache
@@ -185,8 +185,8 @@ Missing include files are silently skipped.
 
 The `session-start.sh` hook runs at each Claude Code session start:
 
-1. Checks if the jlink runtime exists at `${CLAUDE_PLUGIN_ROOT}/runtime/cat-jdk-25/`
-2. If missing, copies from `client/target/jlink/` (local build)
+1. Checks if the jlink runtime exists at `${CLAUDE_PLUGIN_ROOT}/runtime/client/`
+2. If missing, downloads from GitHub releases
 3. Invokes session-start handlers for initialization tasks
 
 ## Troubleshooting
@@ -203,5 +203,5 @@ Ensure you're using JDK 25 (not just JRE). jlink requires the full JDK.
 ### Hook produces no output
 
 1. Check `hooks.json` maps the event to the correct launcher
-2. Verify the launcher exists: `ls runtime/cat-jdk-25/bin/<launcher-name>`
-3. Test directly: `echo '{}' | runtime/cat-jdk-25/bin/<launcher-name>`
+2. Verify the launcher exists: `ls runtime/client/bin/<launcher-name>`
+3. Test directly: `echo '{}' | runtime/client/bin/<launcher-name>`
