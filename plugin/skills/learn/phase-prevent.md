@@ -359,6 +359,16 @@ IN_ISSUE_WORKTREE=$([[ -f "$CAT_BASE_FILE" ]] && echo "true" || echo "false")
 The prevention step must result in a modified file - code, hook, configuration, or documentation.
 If you finish this step without editing a file, you have not implemented prevention.
 
+**MANDATORY: Follow project formatting conventions when editing files.** Markdown files must
+wrap at 120 characters (per `.claude/rules/common.md`). After editing, verify no line exceeds
+120 characters:
+
+```bash
+awk '{if(length($0) > 120) print FILENAME":"NR": "length($0)" chars"}' <edited-file>
+```
+
+If any lines exceed 120 characters, wrap them before committing.
+
 **CRITICAL: After editing a file, use Read tool to verify your change is present.**
 
 Do not proceed to the blocking gate below until you have:
