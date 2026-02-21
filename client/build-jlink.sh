@@ -52,6 +52,7 @@ readonly -a HANDLERS=(
   "get-checkpoint-box:skills.GetCheckpointOutput"
   "get-issue-complete-box:skills.GetIssueCompleteOutput"
   "get-next-task-box:skills.GetNextTaskOutput"
+  "get-config-output:skills.GetConfigOutput"
   "get-status-output:skills.GetStatusOutput"
   "get-statusline-output:skills.GetStatuslineOutput"
   "get-retrospective-output:skills.GetRetrospectiveOutput"
