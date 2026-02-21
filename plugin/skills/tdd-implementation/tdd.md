@@ -10,9 +10,9 @@ before implementation, producing cleaner interfaces and more testable code.
 **Principle:** If you can describe the behavior as `expect(fn(input)).toBe(output)` before writing `fn`, TDD improves
 the result.
 
-**Key insight:** TDD work is fundamentally heavier than standard tasks—it requires 2-3 execution cycles (RED → GREEN →
-REFACTOR), each with file reads, test runs, and potential debugging. TDD features get dedicated changes to ensure full
-context is available throughout the cycle.
+**Key insight:** TDD work is fundamentally heavier than standard tasks. It requires multiple execution cycles
+(RED → GREEN → REFACTOR), each with file reads, test runs, and potential debugging. TDD features get dedicated changes
+to ensure full context is available throughout the cycle.
 </overview>
 
 <when_to_use_tdd>
@@ -99,27 +99,60 @@ standard change and add tests after.
 </tdd_plan_structure>
 
 <execution_flow>
-## Red-Green-Refactor Cycle
+## Red-Green-Refactor Cycles
+
+TDD features are built iteratively, one behavior at a time. Each behavior completes a full RED-GREEN-REFACTOR cycle,
+then the ITERATE OR VERIFY step decides whether to loop back for more behaviors or proceed to final verification.
+
+### Single Cycle (One Behavior)
 
 **RED - Write failing test:**
 1. Create test file following project conventions
-2. Write test describing expected behavior (from `<behavior>` element)
+2. Write test describing ONE behavior (from `<behavior>` element)
 3. Run test - it MUST fail
 4. If test passes: feature exists or test is wrong. Investigate.
-5. Commit: `test: add failing test for [feature]`
+5. Commit: `test: add failing test for [behavior]`
 
 **GREEN - Implement to pass:**
 1. Write minimal code to make test pass
 2. No cleverness, no optimization - just make it work
 3. Run test - it MUST pass
-4. Commit: `feature: implement [feature]`
+4. Commit: `feature: implement [behavior]`
 
 **REFACTOR (if needed):**
 1. Clean up implementation if obvious improvements exist
 2. Run tests - MUST still pass
-3. Only commit if changes made: `refactor: clean up [feature]`
+3. Only commit if changes made: `refactor: clean up [behavior]`
 
-**Result:** Each TDD change produces 2-3 atomic commits.
+### Multiple Cycles (Multiple Behaviors)
+
+Features often need multiple behaviors implemented incrementally:
+
+```
+Behavior 1: Basic case
+├─ RED: test basic behavior
+├─ GREEN: implement basic behavior
+└─ REFACTOR: clean up if needed
+  └─ Commit count: 2-3 commits for Behavior 1
+
+Behavior 2: Edge case
+├─ RED: test edge case
+├─ GREEN: implement edge case handling
+└─ REFACTOR: clean up if needed
+  └─ Commit count: 2-3 commits for Behavior 2
+
+Behavior N: Additional case
+├─ RED: test additional behavior
+├─ GREEN: implement additional case
+└─ REFACTOR: clean up if needed
+  └─ Commit count: 2-3 commits for Behavior N
+```
+
+At each ITERATE OR VERIFY step, decide:
+- **More behaviors?** Loop back to RED
+- **All behaviors done?** Proceed to VERIFY
+
+**Result:** Each feature produces multiple cycles (e.g., 6-9 commits if 3 behaviors), then squash before review.
 </execution_flow>
 
 <test_quality>
@@ -222,53 +255,111 @@ Framework setup is a one-time cost included in the first TDD change's RED releas
 <commit_pattern>
 ## Commit Pattern for TDD Changes
 
-TDD changes produce 2-3 atomic commits (one per release):
+TDD changes produce multiple cycles with granular commits, then squash before review.
+
+### Development Phase: Granular Per-Cycle Commits
+
+Each cycle produces 2-3 atomic commits, one per release:
 
 ```
-test: add failing test for email validation
+Cycle 1 - Valid email detection:
+test: add failing test for valid email formats
+- Tests RFC 5322 compliant emails accepted
+- Tests simple and complex formats
 
-- Tests valid email formats accepted
-- Tests invalid formats rejected
+feature: implement basic email validation
+- Regex pattern validates format
+- Returns boolean for validity
+
+refactor: extract regex pattern (optional)
+- Moved to EMAIL_REGEX constant
+- No behavior changes
+
+Cycle 2 - Invalid format rejection:
+test: add failing test for invalid email formats
+- Tests malformed emails rejected
 - Tests empty input handling
 
-feature: implement email validation
+feature: add invalid format handling
+- Rejects emails not matching pattern
+- Handles null and empty string cases
 
-- Regex pattern matches RFC 5322
-- Returns boolean for validity
-- Handles edge cases (empty, null)
-
-refactor: extract regex to constant (optional)
-
-- Moved pattern to EMAIL_REGEX constant
-- No behavior changes
-- Tests still pass
+Cycle 3 - Edge cases (if needed):
+...
 ```
+
+### Pre-Review Phase: Squash for Release
+
+Before creating a pull request, use `cat:git-squash` to combine cycles by topic:
+
+```bash
+# During development: granular commits (6-9+ commits for 3 behaviors)
+git log --oneline
+# a3f5x2z refactor: extract regex pattern
+# b2e4c1y feature: add invalid format handling
+# c1d3b0w test: add failing test for invalid email formats
+# d0c2a9v feature: implement basic email validation
+# e9b1a8u refactor: extract validation helper
+# f8a0a7t test: add failing test for valid email formats
+
+# After squash: focused commits per topic
+cat:git-squash --topic "email-validation"
+
+git log --oneline
+# x1z3c5a feature: implement email validation
+# (contains all 6 commits squashed with combined message)
+```
+
+**Why granular → squash workflow:**
+- **Granular during development:** Each test and implementation is independently revertable; easier to debug
+- **Squashed for review:** Clean history tells the story of what changed and why
+- **Flexibility:** Supports both debug workflows (need revert) and release workflows (need clean history)
 
 **Comparison with standard changes:**
 - Standard changes: 1 commit per task, 2-4 commits per change
-- TDD changes: 2-3 commits for single feature
-
-Both follow same format: `{type}: {description}`
+- TDD changes (granular): 2-3 commits per behavior cycle
+- TDD changes (final): 1 focused commit per feature topic
 
 **Benefits:**
-- Each commit independently revertable
-- Git bisect works at commit level
-- Clear history showing TDD discipline
+- During development: Atomic reverts, clear git bisect points
+- For review: Clean narrative of implementation decisions
+- Flexible workflow: Choose granularity based on need
 - Consistent with overall commit strategy
 </commit_pattern>
 
 <context_budget>
 ## Context Budget
 
-TDD changes target **~40% context usage** (lower than standard changes' ~50%).
+TDD changes target **~40% context usage per cycle** (lower than standard changes' ~50% per task).
 
-Why lower:
+### Why Lower Per Cycle
+
+Each RED-GREEN-REFACTOR cycle is inherently heavier than linear task execution:
 - RED release: write test, run test, potentially debug why it didn't fail
 - GREEN release: implement, run test, potentially iterate on failures
 - REFACTOR release: modify code, run tests, verify no regressions
 
-Each release involves reading files, running commands, analyzing output. The back-and-forth is inherently heavier than
-linear task execution.
+Each release involves reading files, running commands, analyzing output with potential debugging loops.
 
-Single feature focus ensures full quality throughout the cycle.
+### Iterative Impact on Budget
+
+Features with multiple behaviors will produce multiple cycles:
+
+- **Single behavior:** 1 cycle = ~40% context (2-3 commits)
+- **Three behaviors:** 3 cycles = ~120% context across cycles (6-9 commits), then squash before review
+- **Within-session total:** Multiple cycles can fit in a larger session, or continue across sessions
+
+If the feature requires more cycles than fit in remaining context, use ITERATE OR VERIFY step to pause, commit the
+current cycles, and continue in the next session. The squash-before-review pattern ensures commits remain atomic and
+revertable during development, supporting both single-session and multi-session workflows.
+
+### Multi-Session Workflow
+
+When pausing mid-feature:
+1. Complete the current RED-GREEN-REFACTOR cycle (commit the last behavior)
+2. Document remaining behaviors in issue comments or STATE.md
+3. Next session picks up at STEP 1 (RED) for the next behavior
+4. Final session uses `cat:git-squash` to consolidate all cycles before review
+
+Single feature focus within each cycle ensures full quality throughout the development process.
 </context_budget>
