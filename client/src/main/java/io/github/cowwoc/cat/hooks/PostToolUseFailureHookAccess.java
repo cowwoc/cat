@@ -14,6 +14,7 @@ import java.util.List;
  * Part of the SharedSecrets mechanism that enables tests to inject custom handler lists without using
  * reflection.
  */
+@FunctionalInterface
 public interface PostToolUseFailureHookAccess
 {
   /**
