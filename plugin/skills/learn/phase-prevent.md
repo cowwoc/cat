@@ -368,6 +368,12 @@ Do not proceed to the blocking gate below until you have:
 
 If the file content does NOT contain your change, the edit failed - you MUST retry the edit.
 
+**Follow project documentation style when editing Markdown files.**
+
+Check your project context (CLAUDE.md, `.claude/rules/`) for a line length convention.
+If one exists, apply it to every line you add or modify — including lines inside fenced
+code blocks and indented template sections. Measure actual line lengths before finalizing.
+
 **Escalation and Layered Prevention:**
 
 When escalating from documentation to hook/validation, **keep both layers** but align them:

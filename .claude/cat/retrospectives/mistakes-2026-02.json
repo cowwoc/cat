@@ -1087,6 +1087,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Project conventions in .claude/rules/ apply only to project-level files. Plugin files under plugin/ are shared across all CAT users and must never embed project-specific conventions. To enforce project conventions on subagents, add rules to CLAUDE.md, .claude/rules/, or project hooks in .claude/settings.json."
+    },
+    {
+      "id": "M382",
+      "timestamp": "2026-02-22T17:00:00Z",
+      "category": "formatting_violation",
+      "description": "Learn subagent (M378 quick-tier) wrote 261-char lines in plugin/skills/work-with-issue/first-use.md despite 120-char limit in project rules",
+      "root_cause": "TAXONOMY: ACTION module failure. When implementing prevention text during phase-prevent execution, the subagent attended exclusively to CONTENT correctness (commit type guidance) and did not actively apply the project's line-wrapping rule. The rule was present in the system context (common.md) but not salient during the edit. The deeply-indented fenced code block context reduced attention to formatting. Phase-prevent had no reminder to check line lengths after editing.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-prevent.md",
+      "pattern_keywords": [
+        "line_wrapping",
+        "formatting",
+        "prevention_edit",
+        "120_char",
+        "markdown_style"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After editing a Markdown file during prevention, check that all added lines comply with the project's line-length limit (found in .claude/rules/common.md). Wrap any lines that exceed the limit before finalizing the edit."
     }
   ]
 }
