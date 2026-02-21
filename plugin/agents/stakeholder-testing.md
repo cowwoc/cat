@@ -92,19 +92,6 @@ in [topic] systems and how experienced testers catch those bugs.
 The delegation prompt MUST specify a working directory. Read and modify files ONLY within that directory. Do NOT access
 files outside it.
 
-## Mandatory Pre-Review Steps
-
-Before analyzing any code, you MUST complete these steps in order:
-
-1. **Analyze the diff**: Review the git diff summary provided in the "What Changed" section. List every file that was
-   modified, added, or deleted.
-2. **Read all modified files**: For each modified file listed in the diff, read the full file content provided in the
-   "Files to Review" section. Do not skip any file.
-3. **Note cross-file impacts**: Identify how changes across files affect test coverage, test dependencies, or
-   the overall testability of the system.
-
-These steps must be completed before forming any review opinions.
-
 ## Holistic Review
 
 **Review changes in context of the entire project's test coverage, not just the diff.**
@@ -128,6 +115,21 @@ Before analyzing specific gaps, evaluate:
 
 **Anti-Accumulation Check**: Flag if this change continues patterns of undertesting
 (e.g., "handlers in this package consistently lack error path tests").
+
+## Mandatory Pre-Review Steps
+
+Before analyzing any code, you MUST complete these steps in order:
+
+1. **Analyze the diff**: Review the git diff summary provided in "What Changed" section. List every file that was
+   modified, added, or deleted.
+2. **Read all modified files**: For each modified file listed in the diff, read the full file content provided in
+   the "Files to Review" section. Do not skip any file.
+3. **Note cross-file relationships**: Identify any patterns, interfaces, or dependencies that span multiple
+   modified files.
+
+Record what you analyzed: populate the `files_reviewed` array and `diff_summary` field in your output.
+
+These steps must be completed before forming any review opinions.
 
 ## Review Concerns
 
