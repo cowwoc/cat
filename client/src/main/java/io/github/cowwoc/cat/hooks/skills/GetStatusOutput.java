@@ -489,6 +489,8 @@ public final class GetStatusOutput implements SkillOutput
     // terminalWidth is the total terminal columns; box borders add 2 chars (│ on each side)
     int terminalWidth = config.getInt("terminalWidth", 120);
     int maxBoxContentWidth = terminalWidth - 2;
+    // Inner boxes have their own borders: "│ " prefix + " │" suffix = 4 additional chars
+    int maxInnerBoxContentWidth = maxBoxContentWidth - 4;
 
     List<String> contentItems = new ArrayList<>();
 
@@ -609,7 +611,11 @@ public final class GetStatusOutput implements SkillOutput
               if (!task.blockedBy.isEmpty())
               {
                 String blockedStr = String.join(", ", task.blockedBy);
-                innerContent.add("   " + taskEmoji + " " + task.name + " (blocked by: " + blockedStr + ")");
+                String blockedLine = "   " + taskEmoji + " " + task.name + " (blocked by: " + blockedStr + ")";
+                // indentWidth = 3 spaces + emoji prefix width + 1 space = indent to content start
+                int indentWidth = display.displayWidth("   " + taskEmoji + " ");
+                List<String> wrappedLines = display.wrapLine(blockedLine, maxInnerBoxContentWidth, indentWidth);
+                innerContent.addAll(wrappedLines);
               }
               else
               {
@@ -671,9 +677,24 @@ public final class GetStatusOutput implements SkillOutput
     if (maxContentWidth > maxBoxContentWidth)
       maxContentWidth = maxBoxContentWidth;
 
+    // Wrap any content lines that still exceed maxBoxContentWidth
+    List<String> wrappedContentItems = new ArrayList<>();
+    for (String item : contentItems)
+    {
+      if (display.displayWidth(item) > maxBoxContentWidth)
+      {
+        List<String> wrappedLines = display.wrapLine(item, maxBoxContentWidth, 0);
+        wrappedContentItems.addAll(wrappedLines);
+      }
+      else
+      {
+        wrappedContentItems.add(item);
+      }
+    }
+
     StringBuilder result = new StringBuilder();
     result.append(display.buildTopBorder(maxContentWidth)).append('\n');
-    for (String item : contentItems)
+    for (String item : wrappedContentItems)
       result.append(display.buildLine(item, maxContentWidth)).append('\n');
     result.append(display.buildBottomBorder(maxContentWidth));
 
