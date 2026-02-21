@@ -93,7 +93,7 @@ public final class GetRenderDiffOutput
 
       try
       {
-        GitCommands.runGitCommandInDirectory(projectRoot.toString(), "rev-parse", "--verify", branch);
+        GitCommands.runGit(projectRoot, "rev-parse", "--verify", branch);
         return true;
       }
       catch (IOException _)
@@ -117,7 +117,7 @@ public final class GetRenderDiffOutput
 
       try
       {
-        String output = GitCommands.runGitCommandInDirectory(projectRoot.toString(), "diff", "--name-only",
+        String output = GitCommands.runGit(projectRoot, "diff", "--name-only",
           baseBranch + "..HEAD");
         List<String> result = new ArrayList<>();
         for (String line : output.split("\n"))
@@ -152,7 +152,7 @@ public final class GetRenderDiffOutput
 
       try
       {
-        String output = GitCommands.runGitCommandInDirectory(projectRoot.toString(), "diff", "--stat",
+        String output = GitCommands.runGit(projectRoot, "diff", "--stat",
           baseBranch + "..HEAD");
         if (!output.isEmpty())
         {
@@ -239,7 +239,7 @@ public final class GetRenderDiffOutput
 
       try
       {
-        return GitCommands.runGitCommandInDirectory(projectRoot.toString(), "diff", baseBranch + "..HEAD");
+        return GitCommands.runGit(projectRoot, "diff", baseBranch + "..HEAD");
       }
       catch (IOException _)
       {

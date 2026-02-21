@@ -141,21 +141,10 @@ fi
 
 ### Step 3: Rebase task branch onto base
 
-Rebase the task branch onto the base branch:
-
-```bash
-cd ${WORKTREE_PATH}
-
-# Fetch latest base branch state
-git fetch origin ${BASE_BRANCH} 2>/dev/null || true
-
-# Rebase onto current base
-git rebase ${BASE_BRANCH}
-```
+The `merge-and-cleanup` tool in Step 5 handles origin sync and rebasing atomically. No manual
+rebase is required here.
 
 **Note:** Before Step 5 (worktree removal), ensure your shell is NOT inside the worktree directory.
-
-**If rebase has conflicts:** Return CONFLICT status. Do NOT fall back to merge commit.
 
 ### Step 4: Handle Rebase Conflicts (if any)
 

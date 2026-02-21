@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommand;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLine;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -89,10 +89,10 @@ public final class WriteAndCommit
     if (executable)
       makeExecutable(targetPath);
 
-    runGitCommand("add", filePath);
+    runGit("add", filePath);
 
     String commitMsg = Files.readString(commitMsgPath, StandardCharsets.UTF_8);
-    runGitCommand("commit", "-m", commitMsg);
+    runGit("commit", "-m", commitMsg);
 
     String commitSha = runGitCommandSingleLine("rev-parse", "--short", "HEAD");
 

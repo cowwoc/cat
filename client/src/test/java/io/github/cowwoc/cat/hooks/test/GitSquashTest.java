@@ -598,12 +598,12 @@ public class GitSquashTest
       createTestBranch(tempDir, "test-branch", 3);
 
       // Create a conflicting commit on main
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("file.txt"), "conflict on main");
-      TestUtils.runGitCommand(tempDir, "add", "file.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "conflicting change on main");
+      TestUtils.runGit(tempDir, "add", "file.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "conflicting change on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "test-branch");
+      TestUtils.runGit(tempDir, "checkout", "test-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       String result = cmd.execute("main", "feature: squash with conflict");
@@ -631,12 +631,12 @@ public class GitSquashTest
     {
       createTestBranch(tempDir, "test-branch", 3);
 
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("file.txt"), "conflict on main");
-      TestUtils.runGitCommand(tempDir, "add", "file.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "conflicting change on main");
+      TestUtils.runGit(tempDir, "add", "file.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "conflicting change on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "test-branch");
+      TestUtils.runGit(tempDir, "checkout", "test-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       String result = cmd.execute("main", "feature: squash with conflict");
@@ -666,12 +666,12 @@ public class GitSquashTest
     {
       createTestBranch(tempDir, "test-branch", 3);
 
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("file.txt"), "conflict on main");
-      TestUtils.runGitCommand(tempDir, "add", "file.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "conflicting change on main");
+      TestUtils.runGit(tempDir, "add", "file.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "conflicting change on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "test-branch");
+      TestUtils.runGit(tempDir, "checkout", "test-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       cmd.execute("main", "feature: squash with conflict");
@@ -702,12 +702,12 @@ public class GitSquashTest
     {
       createTestBranch(tempDir, "test-branch", 3);
 
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("file.txt"), "conflict on main");
-      TestUtils.runGitCommand(tempDir, "add", "file.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "conflicting change on main");
+      TestUtils.runGit(tempDir, "add", "file.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "conflicting change on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "test-branch");
+      TestUtils.runGit(tempDir, "checkout", "test-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       cmd.execute("main", "feature: squash with conflict");
@@ -740,12 +740,12 @@ public class GitSquashTest
     {
       createTestBranch(tempDir, "test-branch", 3);
 
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("file.txt"), "conflict on main");
-      TestUtils.runGitCommand(tempDir, "add", "file.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "conflicting change on main");
+      TestUtils.runGit(tempDir, "add", "file.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "conflicting change on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "test-branch");
+      TestUtils.runGit(tempDir, "checkout", "test-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       String result = cmd.execute("main", "feature: squash with conflict");
@@ -778,26 +778,26 @@ public class GitSquashTest
     {
       // Add shared.txt on main
       Files.writeString(tempDir.resolve("shared.txt"), "line1\nline2\nline3\nline4\nline5\n");
-      TestUtils.runGitCommand(tempDir, "add", "shared.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "initial: add shared.txt");
+      TestUtils.runGit(tempDir, "add", "shared.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "initial: add shared.txt");
 
       // Create issue branch BEFORE main advances
-      TestUtils.runGitCommand(tempDir, "checkout", "-b", "concurrent-branch");
+      TestUtils.runGit(tempDir, "checkout", "-b", "concurrent-branch");
 
       // Issue branch modifies the LAST line
       Files.writeString(tempDir.resolve("shared.txt"), "line1\nline2\nline3\nline4\nissue-line5\n");
       Files.writeString(tempDir.resolve("feature.txt"), "feature work");
-      TestUtils.runGitCommand(tempDir, "add", ".");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "feature: modify line5");
+      TestUtils.runGit(tempDir, "add", ".");
+      TestUtils.runGit(tempDir, "commit", "-m", "feature: modify line5");
 
       // Main modifies the FIRST line (non-overlapping, rebase will auto-merge)
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("shared.txt"), "base-line1\nline2\nline3\nline4\nline5\n");
-      TestUtils.runGitCommand(tempDir, "add", "shared.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "update line1 on main");
+      TestUtils.runGit(tempDir, "add", "shared.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "update line1 on main");
 
       // Back to issue branch for squash
-      TestUtils.runGitCommand(tempDir, "checkout", "concurrent-branch");
+      TestUtils.runGit(tempDir, "checkout", "concurrent-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       String result = cmd.execute("main", "feature: add something");
@@ -828,26 +828,26 @@ public class GitSquashTest
       // Add two shared files
       Files.writeString(tempDir.resolve("config.yaml"), "aaa\nbbb\nccc\n");
       Files.writeString(tempDir.resolve("data.json"), "xxx\nyyy\nzzz\n");
-      TestUtils.runGitCommand(tempDir, "add", "config.yaml", "data.json");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "initial: add config and data");
+      TestUtils.runGit(tempDir, "add", "config.yaml", "data.json");
+      TestUtils.runGit(tempDir, "commit", "-m", "initial: add config and data");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "-b", "concurrent-branch2");
+      TestUtils.runGit(tempDir, "checkout", "-b", "concurrent-branch2");
 
       // Issue branch modifies last line of both files
       Files.writeString(tempDir.resolve("config.yaml"), "aaa\nbbb\nissue-ccc\n");
       Files.writeString(tempDir.resolve("data.json"), "xxx\nyyy\nissue-zzz\n");
       Files.writeString(tempDir.resolve("feature.txt"), "feature work");
-      TestUtils.runGitCommand(tempDir, "add", ".");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "feature: modify config and data");
+      TestUtils.runGit(tempDir, "add", ".");
+      TestUtils.runGit(tempDir, "commit", "-m", "feature: modify config and data");
 
       // Main modifies first line of both files (non-overlapping)
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("config.yaml"), "base-aaa\nbbb\nccc\n");
       Files.writeString(tempDir.resolve("data.json"), "base-xxx\nyyy\nzzz\n");
-      TestUtils.runGitCommand(tempDir, "add", "config.yaml", "data.json");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "update config and data on main");
+      TestUtils.runGit(tempDir, "add", "config.yaml", "data.json");
+      TestUtils.runGit(tempDir, "commit", "-m", "update config and data on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "concurrent-branch2");
+      TestUtils.runGit(tempDir, "checkout", "concurrent-branch2");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       String result = cmd.execute("main", "feature: add something");
@@ -928,22 +928,22 @@ public class GitSquashTest
     {
       // Add shared.txt on main
       Files.writeString(tempDir.resolve("shared.txt"), "line1\nline2\nline3\nline4\nline5\n");
-      TestUtils.runGitCommand(tempDir, "add", "shared.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "initial: add shared.txt");
+      TestUtils.runGit(tempDir, "add", "shared.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "initial: add shared.txt");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "-b", "verify-branch");
+      TestUtils.runGit(tempDir, "checkout", "-b", "verify-branch");
 
       Files.writeString(tempDir.resolve("shared.txt"), "line1\nline2\nline3\nline4\nissue-line5\n");
       Files.writeString(tempDir.resolve("feature.txt"), "feature work");
-      TestUtils.runGitCommand(tempDir, "add", ".");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "feature: modify shared");
+      TestUtils.runGit(tempDir, "add", ".");
+      TestUtils.runGit(tempDir, "commit", "-m", "feature: modify shared");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "main");
+      TestUtils.runGit(tempDir, "checkout", "main");
       Files.writeString(tempDir.resolve("shared.txt"), "base-line1\nline2\nline3\nline4\nline5\n");
-      TestUtils.runGitCommand(tempDir, "add", "shared.txt");
-      TestUtils.runGitCommand(tempDir, "commit", "-m", "update shared on main");
+      TestUtils.runGit(tempDir, "add", "shared.txt");
+      TestUtils.runGit(tempDir, "commit", "-m", "update shared on main");
 
-      TestUtils.runGitCommand(tempDir, "checkout", "verify-branch");
+      TestUtils.runGit(tempDir, "checkout", "verify-branch");
 
       GitSquash cmd = new GitSquash(scope, tempDir.toString());
       String result = cmd.execute("main", "feature: add something");
@@ -1015,7 +1015,7 @@ public class GitSquashTest
    */
   private static void createTestBranch(Path repoDir, String branchName, int commitCount)
   {
-    TestUtils.runGitCommand(repoDir, "checkout", "-b", branchName);
+    TestUtils.runGit(repoDir, "checkout", "-b", branchName);
     for (int i = 1; i <= commitCount; ++i)
     {
       try
@@ -1026,8 +1026,8 @@ public class GitSquashTest
       {
         throw WrappedCheckedException.wrap(e);
       }
-      TestUtils.runGitCommand(repoDir, "add", "file.txt");
-      TestUtils.runGitCommand(repoDir, "commit", "-m", "commit " + i);
+      TestUtils.runGit(repoDir, "add", "file.txt");
+      TestUtils.runGit(repoDir, "commit", "-m", "commit " + i);
     }
   }
 }

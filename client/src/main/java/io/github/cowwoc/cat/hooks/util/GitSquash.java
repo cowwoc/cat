@@ -6,7 +6,9 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirectory;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
+
+import java.nio.file.Path;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -127,7 +129,7 @@ public final class GitSquash
 
     // Step 6: Create timestamped backup branch
     String backupBranch = "backup-before-squash-" + LocalDateTime.now().format(BACKUP_TIMESTAMP_FORMATTER);
-    runGitCommandInDirectory(directory, "branch", backupBranch);
+    runGit(Path.of(directory), "branch", backupBranch);
 
     // Verify backup was created
     ProcessRunner.Result verifyBackup = ProcessRunner.run(
@@ -137,7 +139,7 @@ public final class GitSquash
       throw new IOException("Backup branch '" + backupBranch + "' was not created");
 
     // Step 7: Verify clean working directory
-    String status = runGitCommandInDirectory(directory, "status", "--porcelain");
+    String status = runGit(Path.of(directory), "status", "--porcelain");
     if (!status.isEmpty())
       throw new IOException("Working directory is not clean");
 
@@ -147,7 +149,7 @@ public final class GitSquash
       "commit-tree", tree, "-p", base, "-m", commitMessage);
 
     // Step 9: Move branch to new squashed commit
-    runGitCommandInDirectory(directory, "reset", "--hard", newCommit);
+    runGit(Path.of(directory), "reset", "--hard", newCommit);
 
     // Step 9a: Verify HEAD actually moved to newCommit
     String actualHead = runGitCommandSingleLineInDirectory(directory, "rev-parse", "HEAD");
@@ -155,10 +157,10 @@ public final class GitSquash
       throw new IOException("reset --hard failed to move HEAD. Expected: " + newCommit + ", actual: " + actualHead);
 
     // Step 10: Verify diff with backup is empty
-    String diffOutput = runGitCommandInDirectory(directory, "diff", backupBranch);
+    String diffOutput = runGit(Path.of(directory), "diff", backupBranch);
     if (!diffOutput.isEmpty())
     {
-      String diffStat = runGitCommandInDirectory(directory, "diff", backupBranch, "--stat");
+      String diffStat = runGit(Path.of(directory), "diff", backupBranch, "--stat");
       ObjectNode errorJson = scope.getJsonMapper().createObjectNode();
       errorJson.put("status", "VERIFY_FAILED");
       errorJson.put("backup_branch", backupBranch);
@@ -175,12 +177,12 @@ public final class GitSquash
     if (commitCount != 1)
     {
       // Restore from backup
-      runGitCommandInDirectory(directory, "reset", "--hard", backupBranch);
+      runGit(Path.of(directory), "reset", "--hard", backupBranch);
       throw new IOException("Expected 1 commit from base, got " + commitCount);
     }
 
     // Step 12: Delete backup branch after successful verification
-    runGitCommandInDirectory(directory, "branch", "-D", backupBranch);
+    runGit(Path.of(directory), "branch", "-D", backupBranch);
 
     // Build success JSON
     String shortCommit = runGitCommandSingleLineInDirectory(directory,

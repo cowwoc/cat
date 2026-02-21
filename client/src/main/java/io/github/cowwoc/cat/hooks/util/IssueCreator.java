@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirectory;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import tools.jackson.databind.JsonNode;
@@ -112,11 +112,11 @@ public final class IssueCreator
 
     String issueRelPath = workingDirectory.relativize(issuePath).toString();
     String parentRelPath = workingDirectory.relativize(parentStatePath).toString();
-    runGitCommandInDirectory(workingDirectory.toString(), "add", issueRelPath, parentRelPath);
+    runGit(workingDirectory, "add", issueRelPath, parentRelPath);
 
     String commitMessage = "planning: add issue " + issueName + " to " + major + "." + minor +
       "\n\n" + commitDesc;
-    runGitCommandInDirectory(workingDirectory.toString(), "commit", "-m", commitMessage);
+    runGit(workingDirectory, "commit", "-m", commitMessage);
 
     ObjectNode result = mapper.createObjectNode();
     result.put("success", true);

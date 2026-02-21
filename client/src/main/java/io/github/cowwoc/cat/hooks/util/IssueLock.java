@@ -429,7 +429,7 @@ public final class IssueLock
 
       try
       {
-        String branchList = GitCommands.runGitCommand("branch", "-r");
+        String branchList = GitCommands.runGit("branch", "-r");
         for (String pattern : List.of("origin/" + issueId, "origin/*-" + issueId.replaceFirst("^[^-]*-", "")))
         {
           for (String line : branchList.split("\n"))
@@ -447,9 +447,9 @@ public final class IssueLock
 
         if (!remoteBranch.isEmpty())
         {
-          remoteAuthor = GitCommands.runGitCommand("log", "-1", "--format=%an", remoteBranch).strip();
-          remoteEmail = GitCommands.runGitCommand("log", "-1", "--format=%ae", remoteBranch).strip();
-          remoteDate = GitCommands.runGitCommand("log", "-1", "--format=%cr", remoteBranch).strip();
+          remoteAuthor = GitCommands.runGit("log", "-1", "--format=%an", remoteBranch).strip();
+          remoteEmail = GitCommands.runGit("log", "-1", "--format=%ae", remoteBranch).strip();
+          remoteDate = GitCommands.runGit("log", "-1", "--format=%cr", remoteBranch).strip();
         }
       }
       catch (IOException _)
