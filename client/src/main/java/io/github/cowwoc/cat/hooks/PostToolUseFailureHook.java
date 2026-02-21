@@ -6,6 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks;
 
+import io.github.cowwoc.cat.hooks.failure.DetectPreprocessorFailure;
 import io.github.cowwoc.cat.hooks.failure.DetectRepeatedFailures;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +63,9 @@ public final class PostToolUseFailureHook implements HookHandler
   public PostToolUseFailureHook(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
-    this.handlers = List.of(new DetectRepeatedFailures(Clock.systemUTC(), scope.getSessionDirectory()));
+    this.handlers = List.of(
+      new DetectRepeatedFailures(Clock.systemUTC(), scope.getSessionDirectory()),
+      new DetectPreprocessorFailure());
   }
 
   /**
