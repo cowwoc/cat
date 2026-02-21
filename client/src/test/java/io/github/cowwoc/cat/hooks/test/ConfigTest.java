@@ -164,8 +164,8 @@ public class ConfigTest
   /**
    * Verifies that Config.load() throws JacksonException for invalid JSON.
    * <p>
-   * Jackson 3.x throws JacksonException (not IOException) for parse errors,
-   * so invalid JSON is not silently caught by the IOException handler in Config.load().
+   * Jackson 3.x throws JacksonException (which extends IOException) for parse errors,
+   * so invalid JSON propagates directly to the caller.
    *
    * @throws IOException if an I/O error occurs creating test files
    */
@@ -247,6 +247,338 @@ public class ConfigTest
       requireThat(result, "result").contains("Curiosity: medium");
       requireThat(result, "result").contains("Patience: low");
       requireThat(result, "result").contains("Keep");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getReviewThresholds returns defaults when config file is missing.
+   */
+  @Test
+  public void reviewThresholdsReturnsDefaultsWhenConfigMissing() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+      Map<String, Object> thresholds = config.getReviewThresholds();
+
+      requireThat(thresholds, "thresholds").isNotNull();
+      requireThat(thresholds.get("autofix").toString(), "autofix").isEqualTo("high_and_above");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getAutofixLevel returns "high_and_above" by default.
+   */
+  @Test
+  public void autofixLevelDefaultsToHighAndAbove() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("high_and_above");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getProceedLimit returns expected defaults matching current hardcoded behavior.
+   */
+  @Test
+  public void proceedLimitDefaultsMatchCurrentBehavior() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getProceedLimit("critical"), "critical").isEqualTo(0);
+      requireThat(config.getProceedLimit("high"), "high").isEqualTo(0);
+      requireThat(config.getProceedLimit("medium"), "medium").isEqualTo(0);
+      requireThat(config.getProceedLimit("low"), "low").isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that custom reviewThresholds are read from cat-config.json.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void reviewThresholdsReadFromConfigFile() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "reviewThresholds": {
+            "autofix": "all",
+            "proceed": { "critical": 0, "high": 0, "medium": 0, "low": 2147483647 }
+          }
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("all");
+      requireThat(config.getProceedLimit("critical"), "critical").isEqualTo(0);
+      requireThat(config.getProceedLimit("high"), "high").isEqualTo(0);
+      requireThat(config.getProceedLimit("medium"), "medium").isEqualTo(0);
+      requireThat(config.getProceedLimit("low"), "low").isEqualTo(2147483647);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that partial reviewThresholds config falls back to defaults for missing fields.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void reviewThresholdsPartialConfigFallsBackToDefaults() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "reviewThresholds": {
+            "autofix": "critical"
+          }
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getAutofixLevel(), "autofixLevel").isEqualTo("critical");
+      // proceed limits should fall back to defaults since no "proceed" key present
+      requireThat(config.getProceedLimit("critical"), "critical").isEqualTo(0);
+      requireThat(config.getProceedLimit("high"), "high").isEqualTo(0);
+      requireThat(config.getProceedLimit("medium"), "medium").isEqualTo(0);
+      requireThat(config.getProceedLimit("low"), "low").isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that asMap includes reviewThresholds in defaults.
+   */
+  @Test
+  public void configAsMapIncludesReviewThresholds() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+      Map<String, Object> values = config.asMap();
+
+      requireThat(values.containsKey("reviewThresholds"), "hasReviewThresholds").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getProceedLimit throws NullPointerException for null severity.
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void getProceedLimitThrowsForNullSeverity() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      config.getProceedLimit(null);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getProceedLimit throws IllegalArgumentException for blank severity.
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getProceedLimitThrowsForBlankSeverity() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Config config = Config.load(mapper, tempDir);
+
+      config.getProceedLimit("");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getAutofixLevel throws IllegalArgumentException for an unrecognized value.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getAutofixLevelThrowsForInvalidValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "reviewThresholds": {
+            "autofix": "bad_value"
+          }
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getAutofixLevel();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getProceedLimit throws IllegalArgumentException for a negative value.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getProceedLimitThrowsForNegativeValue() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "reviewThresholds": {
+            "proceed": { "critical": -1 }
+          }
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+      config.getProceedLimit("critical");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that a partial proceed map falls back to defaults for missing severity keys.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void reviewThresholdsPartialProceedMapFallsBackToDefaults() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "reviewThresholds": {
+            "autofix": "critical",
+            "proceed": { "critical": 1 }
+          }
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getProceedLimit("critical"), "critical").isEqualTo(1);
+      requireThat(config.getProceedLimit("high"), "high").isEqualTo(0);
+      requireThat(config.getProceedLimit("medium"), "medium").isEqualTo(0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that cat-config.local.json overrides values from cat-config.json.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void localConfigOverridesBaseConfig() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope())
+    {
+      JsonMapper mapper = scope.getJsonMapper();
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "trust": "medium"
+        }
+        """);
+      Files.writeString(catDir.resolve("cat-config.local.json"), """
+        {
+          "trust": "high"
+        }
+        """);
+
+      Config config = Config.load(mapper, tempDir);
+
+      requireThat(config.getString("trust"), "trust").isEqualTo("high");
     }
     finally
     {

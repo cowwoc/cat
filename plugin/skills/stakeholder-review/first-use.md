@@ -682,6 +682,7 @@ Count concerns across all stakeholders:
 ```bash
 CRITICAL_COUNT=0
 HIGH_COUNT=0
+MEDIUM_COUNT=0
 REJECTED_COUNT=0
 
 for review in reviews:
@@ -692,6 +693,8 @@ for review in reviews:
             CRITICAL_COUNT++
         elif concern.severity == "HIGH":
             HIGH_COUNT++
+        elif concern.severity == "MEDIUM":
+            MEDIUM_COUNT++
 ```
 
 **Decision rules:**
@@ -702,10 +705,12 @@ User approval is a separate gate that follows stakeholder review.
 | Condition | Decision |
 |-----------|----------|
 | CRITICAL_COUNT > 0 | REJECTED - Must fix critical issues |
-| REJECTED_COUNT > 0 | REJECTED - Stakeholder rejected |
-| HIGH_COUNT >= 3 | REJECTED - Too many high concerns |
+| REJECTED_COUNT > 0 | REJECTED - Stakeholder explicitly rejected |
 | HIGH_COUNT > 0 | CONCERNS - Document but proceed to user approval |
 | Otherwise | REVIEW_PASSED - Proceed to user approval |
+
+The calling skill (work-with-issue) reads the reviewThresholds config and decides whether to trigger the auto-fix loop
+and when to stop, based on the AUTOFIX_LEVEL and PROCEED_* values from config.
 
 </step>
 
