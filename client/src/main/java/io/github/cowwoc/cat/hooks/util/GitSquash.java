@@ -74,6 +74,7 @@ public final class GitSquash
    *   <li>Move branch to new commit</li>
    *   <li>Verify diff with backup is empty</li>
    *   <li>Verify exactly 1 commit from base</li>
+   *   <li>Delete backup branch after successful verification</li>
    * </ol>
    *
    * @param baseBranch    the base branch to squash onto
@@ -178,10 +179,13 @@ public final class GitSquash
       throw new IOException("Expected 1 commit from base, got " + commitCount);
     }
 
+    // Step 12: Delete backup branch after successful verification
+    runGitCommandInDirectory(directory, "branch", "-D", backupBranch);
+
     // Build success JSON
     String shortCommit = runGitCommandSingleLineInDirectory(directory,
       "rev-parse", "--short", "HEAD");
-    return buildSuccessJson(shortCommit, newCommit, backupBranch, concurrentMods);
+    return buildSuccessJson(shortCommit, newCommit, concurrentMods);
   }
 
   /**
@@ -289,19 +293,17 @@ public final class GitSquash
    *
    * @param shortCommit    the short commit hash
    * @param fullCommit     the full commit hash
-   * @param backupBranch   the backup branch name
    * @param concurrentMods files modified on both branches, or empty set
    * @return JSON string with OK status
    * @throws IOException if JSON serialization fails
    */
-  private String buildSuccessJson(String shortCommit, String fullCommit, String backupBranch,
+  private String buildSuccessJson(String shortCommit, String fullCommit,
     Set<String> concurrentMods) throws IOException
   {
     ObjectNode json = scope.getJsonMapper().createObjectNode();
     json.put("status", "OK");
     json.put("commit", shortCommit);
     json.put("commit_full", fullCommit);
-    json.put("backup_branch", backupBranch);
     json.put("backup_verified", true);
 
     if (!concurrentMods.isEmpty())

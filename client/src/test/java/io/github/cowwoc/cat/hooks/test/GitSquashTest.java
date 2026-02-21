@@ -949,8 +949,13 @@ public class GitSquashTest
       String result = cmd.execute("main", "feature: add something");
       JsonNode json = scope.getJsonMapper().readTree(result);
       requireThat(json.get("status").asString(), "status").isEqualTo("OK");
-      requireThat(result, "result").contains("backup_branch");
-      requireThat(result, "result").contains("backup_verified");
+      requireThat(json.has("backup_branch"), "hasBackupBranch").isFalse();
+      requireThat(json.get("backup_verified").asBoolean(), "backupVerified").isTrue();
+
+      // Verify the backup branch was deleted after successful squash
+      String branchList = TestUtils.runGitCommandWithOutput(tempDir,
+        "branch", "--list", "backup-before-squash-*");
+      requireThat(branchList.strip(), "backupBranches").isEmpty();
 
       // Verify exactly 1 commit from base
       String count = TestUtils.runGitCommandWithOutput(tempDir,

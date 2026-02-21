@@ -663,6 +663,14 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
 {
   "stakeholder": "architecture|security|design|testing|performance",
   "approval": "APPROVED|CONCERNS|REJECTED",
+  "files_reviewed": [
+    {
+      "path": "relative/path/to/file.ext",
+      "action": "modified|added|deleted",
+      "analyzed": true
+    }
+  ],
+  "diff_summary": "Brief description of what changed across all files",
   "concerns": [...],
   "summary": "..."
 }
@@ -670,6 +678,70 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
 
 Handle parse failures gracefully - if a stakeholder returns invalid JSON, treat as CONCERNS
 with a note about the parse failure.
+
+**Evidence Validation:**
+
+After parsing each review, validate the evidence fields. Accumulate all missing-evidence concerns into
+`review_concerns` — do not overwrite earlier concerns with later ones. Both checks can independently
+contribute a HIGH concern, and both must be present in the final list when both fields are missing.
+
+```bash
+# For each parsed review:
+CHANGED_FILE_COUNT=$(echo "$CHANGED_FILES" | grep -c .)
+
+# Start with any concerns already present in the parsed review
+ACCUMULATED_CONCERNS="$review_concerns"
+
+# Check files_reviewed field — append a HIGH concern if missing or empty
+if [[ -z "$review_files_reviewed" ]] || [[ "$review_files_reviewed" == "[]" ]]; then
+    # Missing or empty files_reviewed - reviewer did not document which files were read
+    review_approval="CONCERNS"
+    FILES_REVIEWED_CONCERN='{
+  "severity": "HIGH",
+  "category": "missing_evidence",
+  "location": "review output",
+  "issue": "Reviewer did not produce files_reviewed evidence. Cannot verify that all modified files were analyzed.",
+  "recommendation": "Reviewer must list all files examined in the files_reviewed array."
+}'
+    # Append to accumulated concerns (handle empty base case)
+    if [[ -z "$ACCUMULATED_CONCERNS" ]] || [[ "$ACCUMULATED_CONCERNS" == "[]" ]]; then
+        ACCUMULATED_CONCERNS="[$FILES_REVIEWED_CONCERN]"
+    else
+        # Strip trailing ] and append new concern
+        ACCUMULATED_CONCERNS="${ACCUMULATED_CONCERNS%]}, $FILES_REVIEWED_CONCERN]"
+    fi
+fi
+
+# Check diff_summary field — append a HIGH concern if missing
+if [[ -z "$review_diff_summary" ]]; then
+    # Missing diff_summary - reviewer did not document what changed
+    review_approval="CONCERNS"
+    DIFF_SUMMARY_CONCERN='{
+  "severity": "HIGH",
+  "category": "missing_evidence",
+  "location": "review output",
+  "issue": "Reviewer did not produce a diff_summary. Cannot verify that the diff was analyzed.",
+  "recommendation": "Reviewer must provide a brief description of what changed across all files in diff_summary."
+}'
+    # Append to accumulated concerns (handle empty base case)
+    if [[ -z "$ACCUMULATED_CONCERNS" ]] || [[ "$ACCUMULATED_CONCERNS" == "[]" ]]; then
+        ACCUMULATED_CONCERNS="[$DIFF_SUMMARY_CONCERN]"
+    else
+        # Strip trailing ] and append new concern
+        ACCUMULATED_CONCERNS="${ACCUMULATED_CONCERNS%]}, $DIFF_SUMMARY_CONCERN]"
+    fi
+fi
+
+# Both concerns are now in ACCUMULATED_CONCERNS — assign back to review_concerns
+review_concerns="$ACCUMULATED_CONCERNS"
+
+# Check for file count mismatch (warning, not blocking)
+REVIEWED_COUNT=$(echo "$review_files_reviewed" | grep -c '"path"' 2>/dev/null || echo 0)
+if [[ "$REVIEWED_COUNT" -lt "$CHANGED_FILE_COUNT" ]]; then
+    # Reviewer documented fewer files than were changed - add warning to summary
+    review_summary="${review_summary} [WARNING: Reviewer documented ${REVIEWED_COUNT} files but ${CHANGED_FILE_COUNT} files were changed. Some files may have been skipped.]"
+fi
+```
 
 </step>
 

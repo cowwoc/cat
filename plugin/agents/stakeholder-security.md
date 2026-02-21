@@ -91,6 +91,19 @@ secure implementation patterns for [topic].
 The delegation prompt MUST specify a working directory. Read and modify files ONLY within that directory. Do NOT access
 files outside it.
 
+## Mandatory Pre-Review Steps
+
+Before analyzing any code, you MUST complete these steps in order:
+
+1. **Analyze the diff**: Review the git diff summary provided in the "What Changed" section. List every file that was
+   modified, added, or deleted.
+2. **Read all modified files**: For each modified file listed in the diff, read the full file content provided in the
+   "Files to Review" section. Do not skip any file.
+3. **Note cross-file impacts**: Identify how changes across files affect attack surface, trust boundaries, or
+   data validation coverage.
+
+These steps must be completed before forming any review opinions.
+
 ## Holistic Review
 
 **Review changes in context of the entire project's security posture, not just the diff.**
@@ -165,6 +178,14 @@ applicable to pure documentation changes.
 {
   "stakeholder": "security",
   "approval": "APPROVED|CONCERNS|REJECTED",
+  "files_reviewed": [
+    {
+      "path": "relative/path/to/file.ext",
+      "action": "modified|added|deleted",
+      "analyzed": true
+    }
+  ],
+  "diff_summary": "Brief description of what changed across all files",
   "concerns": [
     {
       "severity": "CRITICAL|HIGH|MEDIUM",
