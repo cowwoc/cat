@@ -355,13 +355,14 @@ public final class GetRenderDiffOutput
 
   /**
    * Pre-compute rendered diff using project root from environment.
-   *
+   * <p>
    * This method supports direct preprocessing pattern - it collects all
    * necessary data from the environment without requiring LLM-provided arguments.
    *
    * @return the formatted diff output, or null if CLAUDE_PROJECT_DIR not set or on error
+   * @throws IOException if the config file cannot be read or contains invalid JSON
    */
-  public String getOutput()
+  public String getOutput() throws IOException
   {
     return getOutput(scope.getClaudeProjectDir());
   }
@@ -371,9 +372,10 @@ public final class GetRenderDiffOutput
    *
    * @param projectRoot the project root path
    * @return the formatted diff output, or null on error
+   * @throws IOException if the config file cannot be read or contains invalid JSON
    * @throws NullPointerException if {@code projectRoot} is null
    */
-  public String getOutput(Path projectRoot)
+  public String getOutput(Path projectRoot) throws IOException
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
 
@@ -2167,7 +2169,7 @@ public final class GetRenderDiffOutput
       if (output != null)
         System.out.print(output);
     }
-    catch (RuntimeException | AssertionError e)
+    catch (IOException | RuntimeException | AssertionError e)
     {
       Logger log = LoggerFactory.getLogger(GetRenderDiffOutput.class);
       log.error("Unexpected error", e);
