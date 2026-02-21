@@ -28,11 +28,6 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class Config
 {
-  // Type reference for JSON deserialization (avoids unchecked cast)
-  private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
-  {
-  };
-
   /**
    * Default autofix level for the stakeholder review loop.
    * <p>
@@ -66,6 +61,11 @@ public final class Config
   public static final Map<String, Object> DEFAULT_REVIEW_THRESHOLDS = Map.of(
     "autofix", DEFAULT_AUTOFIX_LEVEL,
     "proceed", DEFAULT_PROCEED_LIMITS);
+
+  // Type reference for JSON deserialization (avoids unchecked cast)
+  private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>()
+  {
+  };
 
   // Default configuration values
   private static final Map<String, Object> DEFAULTS;
