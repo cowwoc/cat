@@ -77,6 +77,8 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {terminalWidth || 120} characters"
   - label: "🔀 Completion Workflow"
     description: "Currently: {completionWorkflow || 'merge'}"
+  - label: "🔍 Review Thresholds"
+    description: "Currently: autofix={reviewThresholds.autofix || 'high_and_above'}"
   - label: "📊 Version Gates"
     description: "Entry/exit conditions for versions"
 
@@ -290,6 +292,82 @@ Map: Merge → `completionWorkflow: "merge"`, Pull Request → `completionWorkfl
 jq '.completionWorkflow = "{value}"' .claude/cat/cat-config.json > .claude/cat/cat-config.json.tmp \
   && mv .claude/cat/cat-config.json.tmp .claude/cat/cat-config.json
 ```
+
+</step>
+
+<step name="review-thresholds">
+
+**🔍 Review Thresholds configuration:**
+
+Review thresholds control when the agent automatically loops back to fix concerns vs presents them to the user.
+
+**Step 1: Select autofix level**
+
+AskUserQuestion:
+- header: "Review Thresholds — Auto-fix"
+- question: "Which concern severities should be automatically fixed before presenting to user? (Current: {reviewThresholds.autofix || 'high_and_above'})"
+- options:
+  - label: "High and Above (Recommended)"
+    description: "Auto-fix CRITICAL and HIGH; present MEDIUM to user for decision"
+  - label: "All"
+    description: "Auto-fix CRITICAL, HIGH, and MEDIUM before showing to user"
+  - label: "Critical only"
+    description: "Auto-fix CRITICAL only; present HIGH and MEDIUM to user"
+  - label: "None"
+    description: "Never auto-fix; always present all concerns to user at approval gate"
+  - label: "← Back"
+    description: "Return to main menu"
+
+Map selections:
+- High and Above → `reviewThresholds.autofix: "high_and_above"`
+- All → `reviewThresholds.autofix: "all"`
+- Critical only → `reviewThresholds.autofix: "critical"`
+- None → `reviewThresholds.autofix: "none"`
+
+**Step 2: Configure proceed limits**
+
+AskUserQuestion:
+- header: "Review Thresholds — Proceed Limits"
+- question: "Maximum concerns at each severity allowed to proceed to approval (after auto-fix)? 0 = none allowed."
+- options:
+  - label: "Default (all=0, reject any concern)"
+    description: "Zero tolerance: all concerns must be resolved before proceeding"
+  - label: "Lenient (critical=0, high=3, medium=5, low=2147483647)"
+    description: "Allow some HIGH/MEDIUM through, unlimited LOW"
+  - label: "← Back"
+    description: "Return to main menu"
+
+Map selections to `reviewThresholds.proceed` values:
+- Default → `{ "critical": 0, "high": 0, "medium": 0, "low": 0 }`
+- Lenient → `{ "critical": 0, "high": 3, "medium": 5, "low": 2147483647 }`
+
+**Update config using the Write tool:**
+
+After collecting the user's selections (AUTOFIX value and proceed limits), use the Write tool to update the config:
+
+1. Read the current `.claude/cat/cat-config.json` content using the Read tool.
+2. Merge the new `reviewThresholds` value into the existing config object (update or add the key).
+3. Write the complete updated JSON back using the Write tool.
+
+Example: if the current config has `{"trust": "medium"}` and the user selected "high_and_above" with default proceed
+limits, write:
+
+```json
+{
+  "trust": "medium",
+  "reviewThresholds": {
+    "autofix": "high_and_above",
+    "proceed": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    }
+  }
+}
+```
+
+Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
 
 </step>
 
@@ -517,6 +595,17 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 | `patience` | string | "high" | When to act on discoveries |
 | `autoRemoveWorktrees` | boolean | true | Auto-remove worktrees |
 | `completionWorkflow` | string | "merge" | Issue completion behavior (merge or PR) |
+| `reviewThresholds` | object | see below | Stakeholder review auto-fix and proceed limits |
+
+### reviewThresholds
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `autofix` | string | "high_and_above" | Which severities trigger automatic fix loops |
+| `proceed.critical` | integer | 0 | Max CRITICAL concerns allowed (0=none, 2147483647=unlimited) |
+| `proceed.high` | integer | 0 | Max HIGH concerns allowed (0=none, 2147483647=unlimited) |
+| `proceed.medium` | integer | 0 | Max MEDIUM concerns allowed (0=none, 2147483647=unlimited) |
+| `proceed.low` | integer | 0 | Max LOW concerns allowed (0=none, 2147483647=unlimited) |
 
 **Context Limits:** Fixed values, not configurable. See agent-architecture.md § Context Limit Constants.
 
@@ -544,6 +633,12 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 - `merge` — Merge issue branch directly to base branch after approval (default).
 - `pr` — Create a pull request instead of merging directly.
 
+### Review Thresholds autofix Values
+- `high_and_above` — Auto-fix CRITICAL and HIGH concerns; proceed to user with MEDIUM (default).
+- `all` — Auto-fix CRITICAL, HIGH, and MEDIUM before presenting to user.
+- `critical` — Auto-fix CRITICAL only; proceed to user with HIGH and MEDIUM.
+- `none` — Never auto-fix; always present all concerns to user at approval gate.
+
 </configuration_reference>
 
 <success_criteria>
@@ -551,6 +646,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 - [ ] Current configuration displayed
 - [ ] User navigated wizard successfully
 - [ ] Settings updated in cat-config.json using safe jq pattern
+- [ ] Review thresholds configurable via wizard
 - [ ] Version gates viewable and editable via wizard
 - [ ] Gate changes saved to version PLAN.md files
 - [ ] Changes confirmed with before/after values

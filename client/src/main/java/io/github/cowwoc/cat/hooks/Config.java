@@ -11,9 +11,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
+
+import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Unified configuration loader for CAT plugin.
@@ -30,18 +33,64 @@ public final class Config
   {
   };
 
+  /**
+   * Default autofix level for the stakeholder review loop.
+   * <p>
+   * Controls which concern severity levels trigger automatic fix attempts before presenting results to the
+   * user. {@code "high_and_above"} means CRITICAL and HIGH concerns are auto-fixed, while MEDIUM and LOW
+   * concerns are passed through to the user approval gate.
+   *
+   * @see #getAutofixLevel()
+   */
+  public static final String DEFAULT_AUTOFIX_LEVEL = "high_and_above";
+
+  /**
+   * Default per-severity limits on how many unresolved concerns are allowed before the review is rejected.
+   * <p>
+   * After auto-fix attempts complete, if the remaining concern count at a given severity exceeds its limit,
+   * the workflow rejects the review instead of proceeding to user approval.
+   * {@link Integer#MAX_VALUE} means unlimited (never reject for that severity).
+   * {@code 0} means zero tolerance.
+   * <p>
+   * Defaults: all severities=0 (reject on any unresolved concern).
+   *
+   * @see #getProceedLimit(String)
+   */
+  public static final Map<String, Integer> DEFAULT_PROCEED_LIMITS = Map.of(
+    "critical", 0, "high", 0, "medium", 0, "low", 0);
+
+  /**
+   * Combined default review thresholds, composed from {@link #DEFAULT_AUTOFIX_LEVEL} and
+   * {@link #DEFAULT_PROCEED_LIMITS}.
+   */
+  public static final Map<String, Object> DEFAULT_REVIEW_THRESHOLDS = Map.of(
+    "autofix", DEFAULT_AUTOFIX_LEVEL,
+    "proceed", DEFAULT_PROCEED_LIMITS);
+
   // Default configuration values
-  private static final Map<String, Object> DEFAULTS = Map.of(
-    "autoRemoveWorktrees", true,
-    "trust", "medium",
-    "verify", "changed",
-    "curiosity", "low",
-    "patience", "high",
-    "terminalWidth", 120,
-    "completionWorkflow", "merge");
+  private static final Map<String, Object> DEFAULTS;
+
+  static
+  {
+    Map<String, Object> defaults = new HashMap<>();
+    defaults.put("autoRemoveWorktrees", true);
+    defaults.put("trust", "medium");
+    defaults.put("verify", "changed");
+    defaults.put("curiosity", "low");
+    defaults.put("patience", "high");
+    defaults.put("terminalWidth", 120);
+    defaults.put("completionWorkflow", "merge");
+    defaults.put("reviewThresholds", DEFAULT_REVIEW_THRESHOLDS);
+    DEFAULTS = Map.copyOf(defaults);
+  }
 
   private final Map<String, Object> values;
 
+  /**
+   * Creates a new Config with the given values.
+   *
+   * @param values the merged configuration values
+   */
   private Config(Map<String, Object> values)
   {
     this.values = values;
@@ -49,18 +98,21 @@ public final class Config
 
   /**
    * Load configuration with three-layer override.
-   *
+   * <p>
    * Loading order (later overrides earlier):
-   * 1. Default values
-   * 2. cat-config.json (project settings)
-   * 3. cat-config.local.json (user overrides)
+   * <ol>
+   * <li>Default values</li>
+   * <li>cat-config.json (project settings)</li>
+   * <li>cat-config.local.json (user overrides)</li>
+   * </ol>
    *
    * @param mapper the JSON mapper to use for parsing
-   * @param projectDir Project root directory containing .claude/cat/
-   * @return Loaded configuration
-   * @throws NullPointerException if mapper or projectDir is null
+   * @param projectDir the project root directory containing .claude/cat/
+   * @return the loaded configuration
+   * @throws IOException if a config file exists but cannot be read or contains invalid JSON
+   * @throws NullPointerException if {@code mapper} or {@code projectDir} are null
    */
-  public static Config load(JsonMapper mapper, Path projectDir)
+  public static Config load(JsonMapper mapper, Path projectDir) throws IOException
   {
     Map<String, Object> merged = new HashMap<>(DEFAULTS);
 
@@ -70,30 +122,16 @@ public final class Config
     Path baseConfigPath = configDir.resolve("cat-config.json");
     if (Files.exists(baseConfigPath))
     {
-      try
-      {
-        Map<String, Object> baseConfig = loadJsonFile(mapper, baseConfigPath);
-        merged.putAll(baseConfig);
-      }
-      catch (IOException _)
-      {
-        // Invalid or unreadable base config - continue with defaults
-      }
+      Map<String, Object> baseConfig = loadJsonFile(mapper, baseConfigPath);
+      merged.putAll(baseConfig);
     }
 
     // Layer 3: Load cat-config.local.json (overrides base)
     Path localConfigPath = configDir.resolve("cat-config.local.json");
     if (Files.exists(localConfigPath))
     {
-      try
-      {
-        Map<String, Object> localConfig = loadJsonFile(mapper, localConfigPath);
-        merged.putAll(localConfig);
-      }
-      catch (IOException _)
-      {
-        // Invalid or unreadable local config - continue with base
-      }
+      Map<String, Object> localConfig = loadJsonFile(mapper, localConfigPath);
+      merged.putAll(localConfig);
     }
 
     return new Config(merged);
@@ -209,6 +247,105 @@ public final class Config
       }
     }
     return defaultValue;
+  }
+
+  /**
+   * Get the review thresholds configuration.
+   * <p>
+   * Returns the {@code reviewThresholds} object from config, or the defaults if not configured.
+   * The returned map contains:
+   * <ul>
+   * <li>{@code autofix} — string: "all", "high_and_above", "critical", or "none"</li>
+   * <li>{@code proceed} — map with integer values for "critical", "high", "medium", "low"
+   *   ({@code 0} means reject any, {@link Integer#MAX_VALUE} means unlimited)</li>
+   * </ul>
+   *
+   * @return the review thresholds map (never null)
+   */
+  public Map<String, Object> getReviewThresholds()
+  {
+    Object value = values.get("reviewThresholds");
+    if (value instanceof Map<?, ?> map)
+    {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> typedMap = (Map<String, Object>) map;
+      return typedMap;
+    }
+    return DEFAULT_REVIEW_THRESHOLDS;
+  }
+
+  /**
+   * Get the autofix level from review thresholds.
+   * <p>
+   * Controls which severity levels trigger automatic fix loops:
+   * <ul>
+   * <li>{@code "all"} — fix CRITICAL, HIGH, and MEDIUM before presenting to user</li>
+   * <li>{@code "high_and_above"} — fix CRITICAL and HIGH; proceed with MEDIUM (default)</li>
+   * <li>{@code "critical"} — fix only CRITICAL; proceed with HIGH and MEDIUM</li>
+   * <li>{@code "none"} — never auto-fix; always proceed to user approval</li>
+   * </ul>
+   *
+   * @return the autofix level (defaults to "high_and_above" if not configured)
+   */
+  public String getAutofixLevel()
+  {
+    Map<String, Object> thresholds = getReviewThresholds();
+    Object value = thresholds.get("autofix");
+    String level;
+    if (value != null)
+      level = value.toString();
+    else
+      level = DEFAULT_AUTOFIX_LEVEL;
+    Set<String> allowed = Set.of("all", "high_and_above", "critical", "none");
+    if (!allowed.contains(level))
+    {
+      throw new IllegalArgumentException("Invalid autofix level: '" + level +
+        "'. Expected one of: " + allowed);
+    }
+    return level;
+  }
+
+  /**
+   * Get the maximum number of concerns at a given severity allowed to proceed to user approval.
+   * <p>
+   * After auto-fix attempts, if remaining concerns at the given severity exceed this limit,
+   * the workflow blocks rather than proceeding to user approval.
+   * {@link Integer#MAX_VALUE} means unlimited (always proceed regardless of count).
+   * {@code 0} means none are allowed.
+   * <p>
+   *
+   * @param severity the concern severity: "critical", "high", "medium", or "low"
+   * @return the maximum allowed count ({@link Integer#MAX_VALUE} for unlimited), or the default for that
+   *   severity
+   * @throws IllegalArgumentException if {@code severity} is blank or the configured value is negative
+   * @throws NullPointerException if {@code severity} is null
+   */
+  public int getProceedLimit(String severity)
+  {
+    requireThat(severity, "severity").isNotBlank();
+    Map<String, Object> thresholds = getReviewThresholds();
+    Object proceedObj = thresholds.get("proceed");
+    if (proceedObj instanceof Map<?, ?> proceedMap)
+    {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> typedProceedMap = (Map<String, Object>) proceedMap;
+      Object value = typedProceedMap.get(severity);
+      if (value instanceof Number n)
+      {
+        int result = n.intValue();
+        if (result < 0)
+        {
+          throw new IllegalArgumentException("Invalid proceed limit for severity '" + severity + "': " +
+            result + ". Must be >= 0, or use " + Integer.MAX_VALUE + " for unlimited.");
+        }
+        return result;
+      }
+    }
+    // Fall back to default for this severity
+    Integer defaultValue = DEFAULT_PROCEED_LIMITS.get(severity);
+    if (defaultValue != null)
+      return defaultValue;
+    return Integer.MAX_VALUE;
   }
 
   /**
