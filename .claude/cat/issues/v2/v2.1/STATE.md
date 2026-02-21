@@ -67,6 +67,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - output-tag-skip-backtick-quoted
 - fix-skill-arguments-pattern
 - delete-jlink-config-sh
+- port-reset-failure-counter
 
 
 ## Issues Completed
