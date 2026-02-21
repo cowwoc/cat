@@ -980,6 +980,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Before presenting options for uncommitted changes, check if the branch is merged into the base branch. If merged, communicate that branch commits are safe and only the uncommitted modifications are at risk. Reserve high-risk framing for unmerged branches where discarding changes may lose the only copy of work."
+    },
+    {
+      "id": "M378",
+      "timestamp": "2026-02-22T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Autofix subagent instructed to commit concern fixes with `test:` type in a separate commit instead of using the primary implementation commit type",
+      "root_cause": "Autofix delegation prompts said 'appropriate commit messages' without clarifying that concern-fix commits must use the same type as the primary implementation, since all commits are squashed together in Step 6",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "autofix",
+        "commit_type",
+        "test_commit",
+        "squash",
+        "concern_fix"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Autofix subagent should commit using the same type as the primary implementation (e.g., bugfix:, feature:), since all commits are squashed into one implementation commit in Step 6"
     }
   ]
 }
