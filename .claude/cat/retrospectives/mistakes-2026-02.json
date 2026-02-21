@@ -927,6 +927,32 @@
         "catches_variations": true
       },
       "correct_behavior": "When reviewing any new file, search all sibling files for methods matching the new file's private helper method names using Grep. The trigger is the presence of helper methods in the new file, not the class type (utility/inner/concrete)."
+    },
+    {
+      "id": "M376",
+      "timestamp": "2026-02-22T00:00:00Z",
+      "category": "incorrect_implementation",
+      "description": "Status display box extends far beyond terminal width - box width not capped to configured terminalWidth",
+      "root_cause": "GetStatusOutput.generateStatusDisplay() calculated maxContentWidth from content only, with no upper bound. The terminalWidth config value (default 120) was never consulted, causing box-drawing lines to extend to full content width regardless of terminal size.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/skills/GetStatusOutput.java",
+      "pattern_keywords": [
+        "terminal_width",
+        "box_overflow",
+        "status_display",
+        "horizontal_overflow"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Load Config and read terminalWidth, then cap maxContentWidth to (terminalWidth - 2) before rendering the outer box. Inner boxes are already content-sized but the outer wrapper must respect terminal width."
     }
   ]
 }
