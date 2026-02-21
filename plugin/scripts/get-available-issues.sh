@@ -320,6 +320,18 @@ is_dependency_satisfied() {
     local dep_state
     dep_state=$(find "$CAT_DIR" -path "*/$dep_name/STATE.md" 2>/dev/null | head -1)
 
+    # If not found and name is version-qualified (e.g., "2.1-port-lock-and-worktree"),
+    # extract version and bare name to construct the direct path
+    if [[ -z "$dep_state" && "$dep_name" =~ ^([0-9]+\.[0-9]+)-([a-zA-Z][a-zA-Z0-9_-]*)$ ]]; then
+        local dep_version="${BASH_REMATCH[1]}"
+        local bare_name="${BASH_REMATCH[2]}"
+        local dep_dir
+        dep_dir=$(get_issue_dir "$dep_version" "$bare_name" "$CAT_DIR")
+        if [[ -f "$dep_dir/STATE.md" ]]; then
+            dep_state="$dep_dir/STATE.md"
+        fi
+    fi
+
     if [[ -z "$dep_state" ]]; then
         # Dependency not found - treat as unsatisfied
         echo "false"
@@ -327,7 +339,11 @@ is_dependency_satisfied() {
     fi
 
     local status
-    status=$(get_issue_status "$dep_state")
+    if ! status=$(get_issue_status "$dep_state" 2>/dev/null); then
+        # Status check failed (malformed STATE.md) - treat as unsatisfied
+        echo "false"
+        return
+    fi
 
     if [[ "$status" == "closed" ]]; then
         echo "true"
@@ -435,7 +451,10 @@ check_exit_gate_rule() {
 
         # Check if this non-exit-gate issue is complete
         local status
-        status=$(get_issue_status "$issue_dir/STATE.md")
+        if ! status=$(get_issue_status "$issue_dir/STATE.md" 2>/dev/null); then
+            pending_issues+=("$this_issue")
+            continue
+        fi
         if [[ "$status" != "closed" ]]; then
             pending_issues+=("$this_issue")
         fi
@@ -473,7 +492,9 @@ find_issue_in_minor() {
         fi
 
         local status
-        status=$(get_issue_status "$issue_dir/STATE.md")
+        if ! status=$(get_issue_status "$issue_dir/STATE.md" 2>/dev/null); then
+            continue
+        fi
 
         # Only consider open or in-progress issues
         if [[ "$status" != "open" && "$status" != "in-progress" ]]; then
@@ -570,7 +591,9 @@ find_first_incomplete_minor() {
             [[ "$issue_name" =~ ^v[0-9] ]] && continue
 
             local status
-            status=$(get_issue_status "$issue_dir/STATE.md")
+            if ! status=$(get_issue_status "$issue_dir/STATE.md" 2>/dev/null); then
+                continue
+            fi
             if [[ "$status" == "open" || "$status" == "in-progress" ]]; then
                 echo "$minor_dir"
                 return 0
@@ -705,7 +728,10 @@ find_next_issue() {
 
         # Check status (M415: distinguish task-complete from task-not-found)
         local status
-        status=$(get_issue_status "$issue_dir/STATE.md")
+        if ! status=$(get_issue_status "$issue_dir/STATE.md" 2>/dev/null); then
+            echo '{"status":"not_executable","message":"Issue '"$TARGET"' has no readable status","issue_id":"'"$TARGET"'"}'
+            return 1
+        fi
         if [[ "$status" != "open" && "$status" != "in-progress" ]]; then
             if [[ "$status" == "closed" ]]; then
                 echo '{"status":"already_complete","message":"Issue '"$TARGET"' is already closed - no work needed","issue_id":"'"$TARGET"'"}'
