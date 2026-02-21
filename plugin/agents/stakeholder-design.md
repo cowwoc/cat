@@ -130,10 +130,14 @@ Evaluate implementation against these quality criteria:
 
 ### High Priority
 - **Code Duplication**: Repeated logic that should be extracted, copy-paste violations
-  - **MANDATORY**: When reviewing new utility classes, inner classes, or helper methods, search the codebase for existing utilities with similar names or functionality
+  - **MANDATORY**: When a new file contains helper methods (private or otherwise), actively search the codebase for
+    existing methods with identical or similar names, regardless of whether the enclosing class is a utility,
+    inner class, or concrete handler. The key signal is the method name, not the class type.
   - Use Grep and Glob tools to search for: class names, method signatures, similar patterns
-  - Example: reviewing `GitCommands` inner class → search for `class.*GitCommands` across codebase
-  - Flag duplication of existing public utilities as HIGH severity
+  - Example: new file contains `tokenize(String input)` → search for `private.*tokenize\(` across all `.java` files
+  - Example: new file contains `resolvePath(String path, String base)` → search for `resolvePath` across codebase
+  - Files NOT in the diff (unchanged files) may still contain identical methods — search finds what the diff hides
+  - Flag duplication of existing methods in sibling classes as HIGH severity
   - **JDK Duplication**: Check whether newly-added methods reimplement functionality already available in the JDK
     standard library (e.g., `InputStream.readAllBytes()`, `Files.readString()`, `String.strip()`)
   - Flag JDK-available replacements as HIGH severity with the specific JDK method to use

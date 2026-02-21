@@ -10,6 +10,7 @@ import static io.github.cowwoc.cat.hooks.Strings.equalsIgnoreCase;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 import io.github.cowwoc.cat.hooks.bash.BlockLockManipulation;
+import io.github.cowwoc.cat.hooks.bash.BlockWorktreeIsolationViolation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.github.cowwoc.cat.hooks.bash.BlockMainRebase;
@@ -63,6 +64,7 @@ public final class PreToolUseHook implements HookHandler
       new BlockMergeCommits(),
       new BlockReflogDestruction(),
       new BlockUnsafeRemoval(scope),
+      new BlockWorktreeIsolationViolation(scope),
       new ComputeBoxLines(scope),
       new RemindGitSquash(),
       new ValidateCommitType(),
