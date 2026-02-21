@@ -28,23 +28,24 @@ Use Test-Driven Development for features that benefit from upfront behavior spec
 ```
 ╭─ TDD STATE MACHINE ───────────────────────────────────────────────────────────────╮
 
-   [START] ──► [RED] ──► [GREEN] ──► [REFACTOR] ──► [VERIFY] ──► [COMPLETE]
-               │  ▲       │           │              │
-               ▼  │       ▼           ▼              ▼
-           Write  │   Write impl   Clean up     Run ORIGINAL
-           test   │   Run test     Run tests    use-case!
-           MUST   │   MUST PASS    MUST PASS       │
-           FAIL   │                                │
-                  │                    ┌───────────┴───────────┐
-                  │                    ▼                       ▼
-                  │               STILL FAILS?             WORKS!
-                  │                    │                       │
-                  └────────────────────┘                       ▼
-                   Test didn't capture                    [COMPLETE]
-                   the REAL bug - write
-                   NEW test that fails
-                   for same reason as
-                   original use-case
+     [START] ──► [RED] ──► [GREEN] ──► [REFACTOR] ──► [ITERATE OR VERIFY]
+                  │  ▲       │           │              │                │
+                  ▼  │       ▼           ▼              ▼                ▼
+              Write  │   Write impl   Clean up     Check behaviors   VERIFY
+              test   │   Run test     Run tests    ───────────────   ORIGINAL
+              MUST   │   MUST PASS    MUST PASS      │        │      use-case!
+              FAIL   │                              YES       NO        │
+                     │                    ┌──────────┘          │       │
+                     │                    ▼                     │       ▼
+                     │              MORE BEHAVIORS?             │      WORKS!
+                     │                    │                     │       │
+                     │                   YES                    ▼       │
+                     │                    │              STILL FAILS?  │
+                     │                    ▼                    │        │
+                     └────────────────[LOOP to RED]           │        ▼
+                      Test didn't capture the REAL bug       NO      [COMPLETE]
+                                                              │
+                                                        [COMPLETE]
 
 ╰───────────────────────────────────────────────────────────────────────────────────╯
 ```
@@ -167,7 +168,34 @@ git commit -m "refactor: clean up [feature]
 
 ---
 
-## STEP 4: VERIFY AGAINST ORIGINAL USE-CASE
+## STEP 4: ITERATE OR VERIFY - Check Behaviors and Decide Next Action
+
+### Actions:
+1. **Review your feature plan** - Check off each behavior you've implemented
+2. **Identify remaining behaviors** - Are there more behaviors or edge cases to implement?
+3. **Make the decision**:
+   - **If MORE behaviors remain**: Commit current work, loop back to STEP 1 (RED)
+   - **If ALL behaviors complete**: Proceed to STEP 5 (VERIFY)
+
+### Why Iterate:
+- TDD discovers behaviors incrementally - one test at a time
+- Each RED-GREEN-REFACTOR cycle implements ONE behavior
+- Build features incrementally: small test → minimal code → clean up → repeat
+- Commit patterns stay atomic and focused per behavior
+
+### Before Looping Back to RED:
+```bash
+# Your current work should be clean and committed
+git status --porcelain  # Should show nothing or only untracked files
+```
+
+### Commit Message When Looping:
+When you're ready to tackle the next behavior, no new commit is needed - STEP 1 will create a new test
+commit. Just ensure previous cycle is complete.
+
+---
+
+## STEP 5: VERIFY AGAINST ORIGINAL USE-CASE
 
 **⚠️ CRITICAL: Test passing ≠ bug is fixed. Verify your RED test captured the actual bug.**
 
@@ -197,7 +225,7 @@ git commit -m "refactor: clean up [feature]
    - Uses the exact inputs/conditions that exposed the bug
    - Is a faithful reproduction, not an approximation
 
-3. **Repeat the full cycle**: RED → GREEN → REFACTOR → VERIFY
+3. **Repeat the full cycle**: RED → GREEN → REFACTOR → ITERATE OR VERIFY
 
 **This loop continues until the ORIGINAL use-case works.**
 
@@ -205,26 +233,57 @@ git commit -m "refactor: clean up [feature]
 
 ## TDD Commit Pattern
 
-TDD produces 2-3 atomic commits per feature:
+TDD produces multiple commit cycles, each 2-3 commits per behavior, then squash before review.
+
+### Development Phase: Per-Behavior Commits
+
+Each behavior gets its own RED-GREEN-REFACTOR cycle with atomic commits:
 
 ```
-test: add failing test for email validation
+Behavior 1: Valid email detection
+├─ test: add failing test for valid email formats
+│  - Tests RFC 5322 compliant emails accepted
+│  - Tests simple and complex formats
+│
+├─ feature: implement basic email validation
+│  - Regex pattern validates common formats
+│  - Returns boolean for validity
+│
+└─ (optional) refactor: extract regex pattern
+   - Moved to EMAIL_REGEX constant
+   - No behavior changes
 
-- Tests valid email formats accepted
-- Tests invalid formats rejected
-- Tests empty input handling
-
-feature: implement email validation
-
-- Regex pattern validates format
-- Returns boolean for validity
-- Handles edge cases
-
-refactor: extract validation helper (optional)
-
-- Moved pattern to constant
-- No behavior changes
+Behavior 2: Invalid email detection
+├─ test: add failing test for invalid email formats
+│  - Tests malformed emails rejected
+│  - Tests empty input handling
+│
+└─ feature: add invalid format handling
+   - Validates format with improved regex
+   - Rejects empty and null inputs
 ```
+
+### Pre-Review Phase: Squash by Topic
+
+Before requesting review, use `cat:git-squash` to consolidate behavior cycles by topic:
+
+```bash
+# Squash all email validation commits into logical groups:
+cat:git-squash --topic "email-validation"
+
+# Result: single focused commit per topic
+# Example output:
+# feature: implement email validation
+#
+# - Valid email format detection (RFC 5322 compliant)
+# - Invalid format rejection
+# - Edge case handling (empty, null)
+```
+
+**Why squash before review:**
+- Granular commits during development (easier debugging, easier to revert individual tests)
+- Focused commits for review (cleaner history, tells the story of "what changed and why")
+- Supports both development and release workflows
 
 ---
 
