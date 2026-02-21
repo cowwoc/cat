@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.licensing.LicenseResult;
@@ -483,6 +484,12 @@ public final class GetStatusOutput implements SkillOutput
    */
   private String generateStatusDisplay(StatusData data, Path catDir) throws IOException
   {
+    Path projectDir = catDir.getParent().getParent();
+    Config config = Config.load(scope.getJsonMapper(), projectDir);
+    // terminalWidth is the total terminal columns; box borders add 2 chars (│ on each side)
+    int terminalWidth = config.getInt("terminalWidth", 120);
+    int maxBoxContentWidth = terminalWidth - 2;
+
     List<String> contentItems = new ArrayList<>();
 
     String progressBar = display.buildProgressBar(data.overallPercent);
@@ -661,6 +668,8 @@ public final class GetStatusOutput implements SkillOutput
       if (width > maxContentWidth)
         maxContentWidth = width;
     }
+    if (maxContentWidth > maxBoxContentWidth)
+      maxContentWidth = maxBoxContentWidth;
 
     StringBuilder result = new StringBuilder();
     result.append(display.buildTopBorder(maxContentWidth)).append('\n');
