@@ -115,6 +115,19 @@ git -C "$WORKTREE_PATH" status --porcelain
 
 If output is non-empty, there is uncommitted work.
 
+**Before assessing risk, check if the worktree branch is already merged:**
+
+```bash
+BRANCH_NAME="<branch-from-survey>"
+BASE_BRANCH=$(cat "$(git -C "$WORKTREE_PATH" rev-parse --git-dir)/cat-base" 2>/dev/null || echo "main")
+MERGED=$(git -C "$WORKTREE_PATH" branch --merged "$BASE_BRANCH" | grep -q "^[* ]*${BRANCH_NAME}$" && echo "yes" || echo "no")
+```
+
+| Merge Status | Risk Assessment |
+|---|---|
+| Branch is merged into base | Low risk — branch commits are safe on base; only uncommitted modifications would be lost |
+| Branch is NOT merged | High risk — discarding uncommitted work may also represent the only copy of work in progress |
+
 Present findings:
 
 ```
@@ -122,16 +135,20 @@ Present findings:
 
 ### <worktree-path>
 Status: CLEAN | HAS UNCOMMITTED WORK
+Branch merge status: MERGED into <base-branch> | NOT MERGED
 
 If uncommitted:
   Modified files:
   - <file1>
   - <file2>
 
+  Note: Branch commits are safe on <base-branch>. Only the uncommitted file modifications would be lost.
+  (Include this note only when branch is merged — omit when not merged.)
+
   Options:
   1. Commit changes first
   2. Stash: git -C <path> stash
-  3. Discard: git -C <path> checkout -- . (DESTRUCTIVE)
+  3. Discard the uncommitted modifications: git -C <path> checkout -- .
   4. Skip this worktree
 ```
 

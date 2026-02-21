@@ -953,6 +953,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Load Config and read terminalWidth, then cap maxContentWidth to (terminalWidth - 2) before rendering the outer box. Inner boxes are already content-sized but the outer wrapper must respect terminal width."
+    },
+    {
+      "id": "M377",
+      "timestamp": "2026-02-22T15:00:00Z",
+      "category": "protocol_violation",
+      "description": "During cleanup, agent labeled 'Discard changes' as (DESTRUCTIVE) without verifying branch was already merged into base, overstating actual risk",
+      "root_cause": "Cleanup skill Step 3 template included unconditional (DESTRUCTIVE) label on discard option without instructing agent to check branch merge status before assigning risk level",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/cleanup/first-use.md",
+      "pattern_keywords": [
+        "cleanup",
+        "risk_assessment",
+        "merge_check",
+        "destructive_label",
+        "uncommitted_changes"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before presenting options for uncommitted changes, check if the branch is merged into the base branch. If merged, communicate that branch commits are safe and only the uncommitted modifications are at risk. Reserve high-risk framing for unmerged branches where discarding changes may lose the only copy of work."
     }
   ]
 }
