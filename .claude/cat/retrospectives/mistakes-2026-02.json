@@ -1249,6 +1249,33 @@
         "catches_variations": true
       },
       "correct_behavior": "SKILL OUTPUT CONFIG BOXES should be injected via a !\\ preprocessor directive in an <output> section of first-use.md, invoking GetConfigOutput.java (which must implement SkillOutput)."
+    },
+    {
+      "id": "M387",
+      "timestamp": "2026-02-22T19:26:49Z",
+      "category": "misleading_documentation",
+      "description": "config skill first-use.md references config_handler.py (Python, old plugin system) which no longer exists in v2.1 Java plugin; GetConfigOutput.java was created but not wired as a SkillOutput preprocessor directive",
+      "root_cause": "Incomplete migration from Python plugin to Java plugin: config_handler.py was not ported to a get-config-output launcher + SkillOutput implementation in client/bin/. The first-use.md still references config_handler.py. When /cat:config is invoked, SKILL OUTPUT CONFIG BOXES is never provided.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/config/first-use.md",
+      "pattern_keywords": [
+        "config_handler",
+        "skill_output",
+        "preprocessor",
+        "missing_launcher",
+        "migration_incomplete"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "SKILL OUTPUT CONFIG BOXES should be injected via a !`${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output` preprocessor directive in an <output> section of first-use.md, invoking GetConfigOutput.java (which must implement SkillOutput). A get-config-output launcher must be created in client/bin/."
     }
   ]
 }
