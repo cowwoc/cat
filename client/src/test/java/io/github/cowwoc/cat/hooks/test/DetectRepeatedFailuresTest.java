@@ -37,14 +37,15 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void firstFailureAllowsQuietly() throws IOException
   {
-    String sessionId = "test-session-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-" + System.nanoTime();
+
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
 
@@ -53,7 +54,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -63,14 +64,15 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void secondFailureReturnsWarning() throws IOException
   {
-    String sessionId = "test-session-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-" + System.nanoTime();
+
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       // First failure - no warning
       handler.check("Bash", toolResult, sessionId, hookData);
@@ -84,7 +86,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -94,14 +96,15 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void thirdFailureContinuesToWarn() throws IOException
   {
-    String sessionId = "test-session-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-" + System.nanoTime();
+
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       handler.check("Bash", toolResult, sessionId, hookData);
       handler.check("Bash", toolResult, sessionId, hookData);
@@ -112,7 +115,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -122,26 +125,29 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void failureCountPersistsAcrossInstances() throws IOException
   {
-    String sessionId = "test-session-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-" + System.nanoTime();
+
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
 
       // First instance records one failure
-      new DetectRepeatedFailures().check("Bash", toolResult, sessionId, hookData);
+      DetectRepeatedFailures handler1 = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
+      handler1.check("Bash", toolResult, sessionId, hookData);
 
       // Second instance should see the persisted count and warn on second failure
-      PostToolHandler.Result result = new DetectRepeatedFailures().check("Bash", toolResult, sessionId, hookData);
+      DetectRepeatedFailures handler2 = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
+      PostToolHandler.Result result = handler2.check("Bash", toolResult, sessionId, hookData);
 
       requireThat(result.warning(), "warning").isEmpty();
       requireThat(result.additionalContext(), "additionalContext").contains("REPEATED TOOL FAILURES DETECTED");
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -151,16 +157,16 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void differentSessionsAreIndependent() throws IOException
   {
-    String sessionId1 = "test-session-a-" + System.nanoTime();
-    String sessionId2 = "test-session-b-" + System.nanoTime();
-    Path trackingFile1 = Path.of("/tmp/cat-failure-tracking-" + sessionId1 + ".count");
-    Path trackingFile2 = Path.of("/tmp/cat-failure-tracking-" + sessionId2 + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId1 = "test-session-a-" + System.nanoTime();
+      String sessionId2 = "test-session-b-" + System.nanoTime();
+
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       // First failure on session 1 - no warning
       PostToolHandler.Result result1 = handler.check("Bash", toolResult, sessionId1, hookData);
@@ -172,8 +178,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile1);
-      Files.deleteIfExists(trackingFile2);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -183,14 +188,15 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void warningContainsDriftRecoveryGuidance() throws IOException
   {
-    String sessionId = "test-session-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-" + System.nanoTime();
+
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       handler.check("Bash", toolResult, sessionId, hookData);
       PostToolHandler.Result result = handler.check("Read", toolResult, sessionId, hookData);
@@ -203,7 +209,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -216,18 +222,26 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void blankSessionIdThrows() throws IOException
   {
-    JsonMapper mapper = JsonMapper.builder().build();
-    JsonNode toolResult = mapper.createObjectNode();
-    JsonNode hookData = mapper.createObjectNode();
-    DetectRepeatedFailures handler = new DetectRepeatedFailures();
-
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
-      handler.check("Bash", toolResult, "", hookData);
+      JsonMapper mapper = JsonMapper.builder().build();
+      JsonNode toolResult = mapper.createObjectNode();
+      JsonNode hookData = mapper.createObjectNode();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
+
+      try
+      {
+        handler.check("Bash", toolResult, "", hookData);
+      }
+      catch (IllegalArgumentException e)
+      {
+        requireThat(e.getMessage(), "message").contains("sessionId");
+      }
     }
-    catch (IllegalArgumentException e)
+    finally
     {
-      requireThat(e.getMessage(), "message").contains("sessionId");
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -238,16 +252,17 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void corruptedTrackingFileResetsCounter() throws IOException
   {
-    String sessionId = "test-session-corrupt-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-corrupt-" + System.nanoTime();
+      Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
       Files.writeString(trackingFile, "not-a-number");
 
       JsonMapper mapper = JsonMapper.builder().build();
       JsonNode toolResult = mapper.createObjectNode();
       JsonNode hookData = mapper.createObjectNode();
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
 
       PostToolHandler.Result result = handler.check("Bash", toolResult, sessionId, hookData);
 
@@ -256,7 +271,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -266,11 +281,13 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void trackingFileHasOwnerOnlyPermissions() throws IOException
   {
-    String sessionId = "test-session-perms-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      String sessionId = "test-session-perms-" + System.nanoTime();
+      Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
+
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
       JsonMapper mapper = JsonMapper.builder().build();
       handler.check("Bash", mapper.createObjectNode(), sessionId, mapper.createObjectNode());
 
@@ -281,7 +298,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 
@@ -392,16 +409,18 @@ public final class DetectRepeatedFailuresTest
   @Test
   public void unreadableTrackingFileResetsCounter() throws IOException
   {
-    String sessionId = "test-session-unreadable-" + System.nanoTime();
-    Path trackingFile = Path.of("/tmp/cat-failure-tracking-" + sessionId + ".count");
+    Path trackingDirectory = Files.createTempDirectory("cat-failure-test-");
     try
     {
+      String sessionId = "test-session-unreadable-" + System.nanoTime();
+      Path trackingFile = trackingDirectory.resolve("cat-failure-tracking-" + sessionId + ".count");
+
       // Create file with no read permission
       Files.writeString(trackingFile, "10");
       Set<PosixFilePermission> noRead = Set.of(PosixFilePermission.OWNER_WRITE);
       Files.setPosixFilePermissions(trackingFile, noRead);
 
-      DetectRepeatedFailures handler = new DetectRepeatedFailures();
+      DetectRepeatedFailures handler = new DetectRepeatedFailures(Clock.systemUTC(), trackingDirectory);
       JsonMapper mapper = JsonMapper.builder().build();
       // First call should treat as count=0 (can't read), increment to 1
       PostToolHandler.Result result = handler.check("Bash", mapper.createObjectNode(), sessionId,
@@ -411,17 +430,7 @@ public final class DetectRepeatedFailuresTest
     }
     finally
     {
-      // Restore permissions for cleanup
-      try
-      {
-        Files.setPosixFilePermissions(trackingFile,
-          Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-      }
-      catch (IOException _)
-      {
-        // Ignore
-      }
-      Files.deleteIfExists(trackingFile);
+      TestUtils.deleteDirectoryRecursively(trackingDirectory);
     }
   }
 }

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,16 +33,21 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  */
 public final class PostToolUseFailureHook implements HookHandler
 {
+  static
+  {
+    SharedSecrets.setPostToolUseFailureHookAccess(PostToolUseFailureHook::new);
+  }
+
   private final Logger log = LoggerFactory.getLogger(getClass());
   private final List<PostToolHandler> handlers;
 
   /**
-   * Creates a new PostToolUseFailureHook with specified handlers.
+   * Creates a new PostToolUseFailureHook with the specified handlers.
    *
    * @param handlers the handlers to use
    * @throws NullPointerException if {@code handlers} is null
    */
-  PostToolUseFailureHook(List<PostToolHandler> handlers)
+  private PostToolUseFailureHook(List<PostToolHandler> handlers)
   {
     requireThat(handlers, "handlers").isNotNull();
     this.handlers = handlers;
@@ -49,10 +55,14 @@ public final class PostToolUseFailureHook implements HookHandler
 
   /**
    * Creates a new PostToolUseFailureHook instance.
+   *
+   * @param scope the JVM scope providing configuration paths
+   * @throws NullPointerException if {@code scope} is null
    */
-  public PostToolUseFailureHook()
+  public PostToolUseFailureHook(JvmScope scope)
   {
-    this.handlers = List.of(new DetectRepeatedFailures());
+    requireThat(scope, "scope").isNotNull();
+    this.handlers = List.of(new DetectRepeatedFailures(Clock.systemUTC(), scope.getSessionDirectory()));
   }
 
   /**
@@ -67,7 +77,7 @@ public final class PostToolUseFailureHook implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new PostToolUseFailureHook().run(input, output);
+      HookResult result = new PostToolUseFailureHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);

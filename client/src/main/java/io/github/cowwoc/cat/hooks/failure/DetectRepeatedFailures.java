@@ -30,38 +30,17 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Tracks consecutive PostToolUseFailure events per session. When 2 or more consecutive failures are
  * detected, injects a system-reminder suggesting {@code /cat:recover-from-drift}.
  * <p>
- * Failure counts are persisted in {@code /tmp/cat-failure-tracking-<sessionId>.count}. Files older than
- * 1 day are cleaned up at most every 6 hours.
+ * Failure counts are persisted in {@code {sessionDirectory}/cat-failure-tracking-<sessionId>.count}.
+ * Files older than 1 day are cleaned up at most every 6 hours.
  */
 public final class DetectRepeatedFailures implements PostToolHandler
 {
   private static final int FAILURE_THRESHOLD = 2;
   private static final Duration FILE_TTL = Duration.ofDays(1);
   private static final Duration CLEANUP_INTERVAL = Duration.ofHours(6);
-  private static final Path DEFAULT_TRACKING_DIRECTORY = Path.of("/tmp");
   private final Clock clock;
   private final Path trackingDirectory;
   private Instant lastCleanup = Instant.EPOCH;
-
-  /**
-   * Creates a new DetectRepeatedFailures handler using the system UTC clock and the default tracking
-   * directory ({@code /tmp}).
-   */
-  public DetectRepeatedFailures()
-  {
-    this(Clock.systemUTC(), DEFAULT_TRACKING_DIRECTORY);
-  }
-
-  /**
-   * Creates a new DetectRepeatedFailures handler with the default tracking directory ({@code /tmp}).
-   *
-   * @param clock the clock to use for time-based operations
-   * @throws NullPointerException if {@code clock} is null
-   */
-  public DetectRepeatedFailures(Clock clock)
-  {
-    this(clock, DEFAULT_TRACKING_DIRECTORY);
-  }
 
   /**
    * Creates a new DetectRepeatedFailures handler.
@@ -130,6 +109,7 @@ public final class DetectRepeatedFailures implements PostToolHandler
   {
     try
     {
+      Files.createDirectories(trackingDirectory);
       Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
       try
       {
@@ -148,9 +128,9 @@ public final class DetectRepeatedFailures implements PostToolHandler
   }
 
   /**
-   * Removes tracking files older than the TTL from {@code /tmp}.
+   * Removes tracking files older than the TTL from the tracking directory.
    * <p>
-   * Cleanup runs at most once every {@link #CLEANUP_INTERVAL} to avoid scanning {@code /tmp} on every
+   * Cleanup runs at most once every {@link #CLEANUP_INTERVAL} to avoid scanning the directory on every
    * invocation.
    */
   private void cleanupOldTrackingFiles()
@@ -169,7 +149,7 @@ public final class DetectRepeatedFailures implements PostToolHandler
     }
     catch (IOException _)
     {
-      // Fail gracefully if /tmp is not accessible
+      // Fail gracefully if the tracking directory is not accessible
     }
   }
 

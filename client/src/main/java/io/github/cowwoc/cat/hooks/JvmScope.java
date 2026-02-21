@@ -77,6 +77,19 @@ public interface JvmScope extends AutoCloseable
   }
 
   /**
+   * Returns the directory for the current session's tracking files.
+   * <p>
+   * Located at {@code {configDir}/projects/-workspace/{sessionId}/}.
+   *
+   * @return the session directory path
+   * @throws IllegalStateException if this scope is closed
+   */
+  default Path getSessionDirectory()
+  {
+    return getSessionBasePath().resolve(getClaudeSessionId());
+  }
+
+  /**
    * Returns the path to the Claude environment file.
    *
    * @return the environment file path
