@@ -14,8 +14,9 @@ None (infrastructure improvement)
 
 - **Risk Level:** LOW
 - **Concerns:** Other scripts or documentation may reference the old `cat-jdk-25` path
-- **Mitigation:** Grep for all `cat-jdk` references and update them; session-start.sh already uses
-  `cat-${plugin_version}` for archive names so the pattern is established
+- **Mitigation:** Grep for all `cat-jdk` references and update them. Note: `session-start.sh` does NOT source
+  `jlink-config.sh` — they are independent. `session-start.sh` downloads pre-built bundles to `client/` using its own
+  version logic from `plugin.json`. `jlink-config.sh` is a standalone build tool for creating jlink bundles locally.
 
 ## Files to Modify
 
