@@ -66,7 +66,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - learn-examine-raw-conversation
 - output-tag-skip-backtick-quoted
 - fix-skill-arguments-pattern
-- rename-jlink-runtime
+- delete-jlink-config-sh
 
 
 ## Issues Completed
