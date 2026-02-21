@@ -587,6 +587,126 @@ public class ConfigTest
   }
 
   /**
+   * Verifies that null scope throws NullPointerException.
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void constructorRejectsNullScope()
+  {
+    new GetConfigOutput(null);
+  }
+
+  /**
+   * Verifies that getOutput rejects non-empty arguments.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void getOutputRejectsNonEmptyArguments() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetConfigOutput generator = new GetConfigOutput(scope);
+      generator.getOutput(new String[]{"unexpected"});
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns non-null output containing expected box headers
+   * when a cat-config.json file exists.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputContainsExpectedBoxHeaders() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), """
+        {
+          "trust": "medium",
+          "verify": "changed"
+        }
+        """);
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").isNotNull();
+      requireThat(result, "result").contains("CURRENT_SETTINGS:");
+      requireThat(result, "result").contains("VERSION_GATES_OVERVIEW:");
+      requireThat(result, "result").contains("CONFIGURATION_SAVED:");
+      requireThat(result, "result").contains("NO_CHANGES:");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput returns non-null output even when no cat-config.json file exists.
+   * <p>
+   * When CURRENT_SETTINGS returns null (no config file), the section header is still present
+   * but contains no box content. The remaining sections are always present.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputWorksWithoutConfigFile() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      String result = handler.getOutput(new String[0]);
+
+      requireThat(result, "result").isNotNull();
+      // CURRENT_SETTINGS section header is present but has no box content (null when config missing)
+      requireThat(result, "result").contains("CURRENT_SETTINGS:");
+      requireThat(result, "result").doesNotContain("CURRENT SETTINGS");
+      requireThat(result, "result").contains("VERSION_GATES_OVERVIEW:");
+      requireThat(result, "result").contains("CONFIGURATION_SAVED:");
+      requireThat(result, "result").contains("NO_CHANGES:");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that getOutput propagates JacksonException when config file contains invalid JSON.
+   *
+   * @throws IOException if an I/O error occurs creating test files
+   */
+  @Test(expectedExceptions = JacksonException.class)
+  public void getOutputPropagatesIOException() throws IOException
+  {
+    Path tempDir = createTempDir();
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      Path catDir = tempDir.resolve(".claude").resolve("cat");
+      Files.createDirectories(catDir);
+      Files.writeString(catDir.resolve("cat-config.json"), "{ invalid json }");
+
+      GetConfigOutput handler = new GetConfigOutput(scope);
+      handler.getOutput(new String[0]);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
    * Creates a temporary directory for test isolation.
    *
    * @return the path to the created temporary directory

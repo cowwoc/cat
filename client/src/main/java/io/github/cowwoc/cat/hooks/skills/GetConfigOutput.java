@@ -6,22 +6,27 @@
  */
 package io.github.cowwoc.cat.hooks.skills;
 
-import io.github.cowwoc.cat.hooks.Config;
-import io.github.cowwoc.cat.hooks.JvmScope;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.github.cowwoc.cat.hooks.Config;
+import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
+
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
 /**
  * Output generator for /cat:config skill.
- *
- * Reads configuration and provides config box outputs.
+ * <p>
+ * Reads configuration and provides config box outputs for all configuration-related display boxes.
  */
-public final class GetConfigOutput
+public final class GetConfigOutput implements SkillOutput
 {
   /**
    * The JVM scope for accessing shared services.
@@ -219,6 +224,67 @@ public final class GetConfigOutput
       List.of(
         "",
         "Configuration unchanged."));
+  }
+
+  /**
+   * Generates all config output boxes as a labeled string for use by the skill preprocessor.
+   * <p>
+   * Each box is labeled with its section name so the skill can reference it by name.
+   *
+   * @param args the arguments from the preprocessor directive (must be empty)
+   * @return the formatted config output containing all boxes, or an error message if the project
+   *   directory is not available
+   * @throws NullPointerException if {@code args} is null
+   * @throws IllegalArgumentException if {@code args} is not empty
+   * @throws IOException if an I/O error occurs
+   */
+  @Override
+  public String getOutput(String[] args) throws IOException
+  {
+    requireThat(args, "args").length().isEqualTo(0);
+    String currentSettings = getCurrentSettings();
+    String versionGatesOverview = getVersionGatesOverview();
+    String configurationSaved = getConfigurationSaved();
+    String noChanges = getNoChanges();
+
+    StringBuilder output = new StringBuilder();
+    output.append("SKILL OUTPUT CONFIG BOXES\n\n");
+    output.append("CURRENT_SETTINGS:\n");
+    if (currentSettings != null)
+      output.append(currentSettings).append('\n');
+    output.append("\nVERSION_GATES_OVERVIEW:\n");
+    output.append(versionGatesOverview).append('\n');
+    output.append("\nCONFIGURATION_SAVED:\n");
+    output.append(configurationSaved).append('\n');
+    output.append("\nNO_CHANGES:\n");
+    output.append(noChanges).append('\n');
+    return output.toString();
+  }
+
+  /**
+   * Main entry point.
+   *
+   * @param args command line arguments (unused)
+   */
+  public static void main(String[] args)
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetConfigOutput generator = new GetConfigOutput(scope);
+      String output = generator.getOutput(args);
+      System.out.println(output);
+    }
+    catch (IOException e)
+    {
+      System.err.println("Error generating config output: " + e.getMessage());
+      System.exit(1);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      Logger log = LoggerFactory.getLogger(GetConfigOutput.class);
+      log.error("Unexpected error", e);
+      throw e;
+    }
   }
 
   /**
