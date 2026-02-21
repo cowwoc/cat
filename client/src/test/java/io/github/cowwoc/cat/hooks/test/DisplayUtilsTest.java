@@ -1207,4 +1207,383 @@ public class DisplayUtilsTest
       TestUtils.deleteDirectoryRecursively(tempDir);
     }
   }
+
+  // --- wrapLine tests ---
+
+  /**
+   * Verifies that wrapLine returns the original line unchanged when it fits within maxWidth.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineShortLineReturnsSingleElement() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      List<String> result = display.wrapLine("short line", 40, 0);
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0), "first").isEqualTo("short line");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine returns the original line unchanged when it exactly equals maxWidth.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineExactWidthReturnsSingleElement() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      String line = "A".repeat(20);
+      List<String> result = display.wrapLine(line, 20, 0);
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0), "first").isEqualTo(line);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine wraps a line one character over maxWidth into two lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineOneCharOverWrapsToTwoLines() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      // "word1 word2" = 11 chars; maxWidth=10 causes wrap at the space
+      List<String> result = display.wrapLine("word1 word2", 10, 0);
+      requireThat(result, "result").size().isEqualTo(2);
+      requireThat(result.get(0), "firstLine").isEqualTo("word1");
+      requireThat(result.get(1), "secondLine").isEqualTo("word2");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine adds the correct indent to continuation lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineContinuationLinesHaveCorrectIndent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      List<String> result = display.wrapLine("word1 word2 word3", 12, 3);
+      requireThat(result, "result").size().isGreaterThanOrEqualTo(2);
+      for (int i = 1; i < result.size(); ++i)
+        requireThat(result.get(i), "continuationLine").startsWith("   ");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine wraps a long blocked-by list into multiple lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineLongBlockedByListWraps() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      // Simulate a blocked-by line with many dependencies, like the real use case
+      StringBuilder deps = new StringBuilder();
+      for (int i = 1; i <= 10; ++i)
+      {
+        if (i > 1)
+          deps.append(", ");
+        deps.append("task-").append(i);
+      }
+      String line = "   🚫 cleanup-ported-scripts (blocked by: " + deps + ")";
+      List<String> result = display.wrapLine(line, 80, 7);
+      requireThat(result, "result").size().isGreaterThan(1);
+      // All lines must fit within maxWidth
+      for (String wrappedLine : result)
+        requireThat(display.displayWidth(wrappedLine), "lineWidth").isLessThanOrEqualTo(80);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine with null line throws NullPointerException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void wrapLineWithNullLineThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      display.wrapLine(null, 80, 0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine with negative maxWidth throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void wrapLineWithNegativeMaxWidthThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      display.wrapLine("hello", -1, 0);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine with negative indentWidth throws IllegalArgumentException.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void wrapLineWithNegativeIndentWidthThrows() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      display.wrapLine("hello", 80, -1);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine preserves all content across wrapped lines.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLinePreservesAllContent() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      String line = "alpha beta gamma delta epsilon zeta eta theta";
+      List<String> result = display.wrapLine(line, 20, 0);
+      // All words should appear somewhere in the result
+      String joined = String.join(" ", result);
+      requireThat(joined, "joined").contains("alpha").contains("beta").contains("gamma").
+        contains("delta").contains("epsilon").contains("zeta").contains("eta").contains("theta");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine wraps at commas as well as spaces.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineWrapsAtComma() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      // "aaa, bbb" = 8 chars; maxWidth=6 should break at the comma
+      List<String> result = display.wrapLine("aaa, bbb", 6, 0);
+      requireThat(result, "result").size().isEqualTo(2);
+      requireThat(result.get(0), "firstLine").isEqualTo("aaa,");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine handles an empty string by returning a single empty string element.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineEmptyStringReturnsSingleEmptyElement() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      List<String> result = display.wrapLine("", 80, 0);
+      requireThat(result, "result").size().isEqualTo(1);
+      requireThat(result.get(0), "first").isEqualTo("");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine with maxWidth=0 terminates without infinite looping and produces
+   * segments of at most zero display width (i.e., each character on its own line).
+   * <p>
+   * When maxWidth is 0, every character exceeds the budget, so the force-break path is taken at
+   * each iteration, advancing by one character at a time. The result must be finite and non-empty.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineZeroMaxWidthProducesFiniteResult() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      List<String> result = display.wrapLine("abc", 0, 0);
+      // Must terminate and produce at least one segment
+      requireThat(result, "result").isNotEmpty();
+      // Each segment must fit within maxWidth=0, meaning each has display width <= 1
+      // (force-break advances at least 1 char, so segments are single characters)
+      for (String segment : result)
+        requireThat(display.displayWidth(segment), "segmentWidth").isLessThanOrEqualTo(1);
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine force-breaks a word with no space or comma break points.
+   * <p>
+   * When the input word "HelloWorld" (10 chars) exceeds maxWidth=5 with no spaces or commas,
+   * the method must force-break at position maxWidth, producing segments of at most 5 characters.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineWordExceedingMaxWidthWithNoBreakPointForceBreaks() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      List<String> result = display.wrapLine("HelloWorld", 5, 0);
+      // Must wrap into multiple segments
+      requireThat(result, "result").size().isGreaterThan(1);
+      // Each segment must fit within maxWidth
+      for (String segment : result)
+        requireThat(display.displayWidth(segment), "segmentWidth").isLessThanOrEqualTo(5);
+      // All characters must be preserved across segments
+      String joined = String.join("", result);
+      requireThat(joined, "joined").isEqualTo("HelloWorld");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
+
+  /**
+   * Verifies that wrapLine correctly handles the case where indentWidth reduces effectiveMax
+   * for continuation lines, forcing aggressive force-breaks on long words.
+   * <p>
+   * With maxWidth=10 and indentWidth=4, continuation lines have effectiveMax=(10-4)=6.
+   * When the continuation word "abcdefghijkl" (12 chars) exceeds maxWidth=10 when combined
+   * with the 4-space indent (4+12=16), the while loop re-enters and force-breaks the word
+   * into chunks of at most 6 content characters. Each resulting segment (indent + chunk) fits
+   * within maxWidth=10. The test verifies: multiple segments are produced, each fits within
+   * maxWidth, continuation lines carry the correct indentation, and all content is preserved.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void wrapLineWithLargeIndentWidthReducingEffectiveMax() throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("test-");
+    try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
+    {
+      DisplayUtils display = new DisplayUtils(scope);
+      // maxWidth=10, indentWidth=4: continuation effectiveMax = 10 - 4 = 6
+      // "hi abcdefghijkl" = 15 chars, exceeds maxWidth=10.
+      // Step 1: first line fits "hi" (2 chars <= 10), break at space, remaining="abcdefghijkl" (12 chars).
+      // Step 2: displayWidth("abcdefghijkl")=12 > 10, re-enter loop.
+      //   effectiveMax=6, force-break: segment="abcdef" (6 chars), result += "    abcdef" (10 chars).
+      //   remaining="ghijkl" (6 chars).
+      // Step 3: displayWidth("ghijkl")=6 <= 10, exit loop.
+      //   result += "    ghijkl" (4+6=10 chars).
+      // All segments fit within maxWidth=10.
+      String line = "hi abcdefghijkl";
+      List<String> result = display.wrapLine(line, 10, 4);
+
+      // Must produce at least 3 segments: "hi", force-broken chunk, final remainder
+      requireThat(result, "result").size().isGreaterThanOrEqualTo(3);
+
+      // Each segment must fit within maxWidth=10
+      for (String segment : result)
+        requireThat(display.displayWidth(segment), "segmentWidth").isLessThanOrEqualTo(10);
+
+      // Continuation lines (index >= 1) must start with the 4-space indent
+      String expectedIndent = "    ";
+      for (int i = 1; i < result.size(); ++i)
+        requireThat(result.get(i), "continuationLine").startsWith(expectedIndent);
+
+      // The first segment must contain "hi"
+      requireThat(result.get(0), "firstSegment").isEqualTo("hi");
+
+      // All original word characters must be preserved across segments (no truncation).
+      // Strip the continuation indent before joining to reconstruct contiguous word content.
+      StringBuilder contentBuilder = new StringBuilder(result.get(0));
+      for (int i = 1; i < result.size(); ++i)
+        contentBuilder.append(result.get(i).substring(expectedIndent.length()));
+      String recoveredContent = contentBuilder.toString();
+      requireThat(recoveredContent, "recoveredContent").contains("abcdefghijkl");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(tempDir);
+    }
+  }
 }

@@ -574,6 +574,126 @@ public final class DisplayUtils
   }
 
   /**
+   * Wraps a single line to fit within the given display width.
+   * <p>
+   * If the line already fits, a single-element list containing the original line is returned.
+   * Continuation lines are indented by {@code indentWidth} spaces. Breaks occur at the last space
+   * or comma before {@code maxWidth}. Emoji widths are accounted for via {@link #displayWidth(String)}.
+   * <p>
+   * When {@code maxWidth} is 0, each character is placed on its own line (force-break at every position).
+   *
+   * @param line the text to wrap
+   * @param maxWidth the maximum display width per line
+   * @param indentWidth the number of spaces to prefix on continuation lines
+   * @return a list of wrapped lines (never empty)
+   * @throws NullPointerException if {@code line} is null
+   * @throws IllegalArgumentException if {@code maxWidth} or {@code indentWidth} are negative
+   */
+  public List<String> wrapLine(String line, int maxWidth, int indentWidth)
+  {
+    requireThat(line, "line").isNotNull();
+    requireThat(maxWidth, "maxWidth").isNotNegative();
+    requireThat(indentWidth, "indentWidth").isNotNegative();
+
+    if (displayWidth(line) <= maxWidth)
+      return List.of(line);
+
+    List<String> result = new ArrayList<>();
+    String remaining = line;
+    String currentIndent = "";
+
+    while (displayWidth(remaining) > maxWidth)
+    {
+      // Find the break point: last space or comma at or before maxWidth
+      int breakIndex = -1;
+      int currentWidth = 0;
+      int i = 0;
+      int effectiveMax = maxWidth - displayWidth(currentIndent);
+
+      while (i < remaining.length())
+      {
+        int[] advance = advanceCharacter(remaining, i, currentWidth, effectiveMax);
+        int newIndex = advance[0];
+        int newWidth = advance[1];
+        int newBreakIndex = advance[2];
+
+        if (newIndex == i)
+        {
+          // Character exceeds effective width; stop here
+          break;
+        }
+        currentWidth = newWidth;
+        i = newIndex;
+        if (newBreakIndex >= 0)
+          breakIndex = newBreakIndex;
+      }
+
+      if (breakIndex <= 0)
+      {
+        // No break found, force break at current position; ensure at least one character advances
+        breakIndex = Math.max(i, 1);
+      }
+
+      // Include comma in the first segment but not the space
+      String segment = remaining.substring(0, breakIndex);
+      result.add(currentIndent + segment);
+
+      // Skip leading space on the next segment
+      int nextStart = breakIndex;
+      if (nextStart < remaining.length() && remaining.charAt(nextStart) == ' ')
+        ++nextStart;
+      remaining = remaining.substring(nextStart);
+      currentIndent = " ".repeat(indentWidth);
+    }
+
+    if (!remaining.isEmpty())
+      result.add(currentIndent + remaining);
+
+    return result;
+  }
+
+  /**
+   * Advances past the character (or emoji) at position {@code startIndex} in {@code remaining},
+   * returning the new index, cumulative display width, and the last seen break-point index.
+   * <p>
+   * If the next character or emoji would exceed {@code effectiveMax}, the index is returned
+   * unchanged (equal to {@code startIndex}) to signal that the caller should stop advancing.
+   *
+   * @param remaining the string being scanned
+   * @param startIndex the current position in {@code remaining}
+   * @param currentWidth the cumulative display width up to {@code startIndex}
+   * @param effectiveMax the maximum allowed display width for this pass
+   * @return an int array of length 3: {@code [newIndex, newWidth, breakIndex]} where
+   *   {@code breakIndex} is the index of the last seen space or comma, or {@code -1} if none was
+   *   seen at this position
+   */
+  private int[] advanceCharacter(String remaining, int startIndex, int currentWidth, int effectiveMax)
+  {
+    String rest = remaining.substring(startIndex);
+
+    for (String emoji : sortedEmojis)
+    {
+      if (rest.startsWith(emoji))
+      {
+        int emojiDisplayWidth = emojiWidths.get(emoji);
+        if (currentWidth + emojiDisplayWidth > effectiveMax)
+          return new int[]{startIndex, currentWidth, -1};
+        return new int[]{startIndex + emoji.length(), currentWidth + emojiDisplayWidth, -1};
+      }
+    }
+
+    if (currentWidth + 1 > effectiveMax)
+      return new int[]{startIndex, currentWidth, -1};
+    char c = remaining.charAt(startIndex);
+    int breakIndex;
+    if (c == ' ' || c == ',')
+      breakIndex = startIndex;
+    else
+      breakIndex = -1;
+    return new int[]{startIndex + 1, currentWidth + 1, breakIndex};
+  }
+
+  /**
    * Convert a 1-5 rating to filled/empty circle display.
    *
    * @param rating the rating value (1-5)
