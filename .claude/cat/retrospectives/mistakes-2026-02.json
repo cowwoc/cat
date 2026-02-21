@@ -1034,6 +1034,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After verifying the squash diff is empty and commit count is 1, delete the backup branch with 'git branch -D <backupBranch>' before returning the OK JSON response. The OK response should not include backup_branch since it has been deleted."
+    },
+    {
+      "id": "M380",
+      "timestamp": "2026-02-22T16:26:18Z",
+      "category": "protocol_violation",
+      "description": "Java code and Javadoc lines exceeded 120 characters in DisplayUtils.java and DisplayUtilsTest.java",
+      "root_cause": "java.md conventions file had no line length guidance, so agents wrote arbitrarily long lines without knowing the 120-character Checkstyle limit",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/conventions/java.md",
+      "pattern_keywords": [
+        "line-length",
+        "120-characters",
+        "checkstyle",
+        "java-conventions",
+        "javadoc-wrap"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Keep all Java source lines (including comments and Javadoc) at most 120 characters; run mvn verify to catch violations"
     }
   ]
 }
