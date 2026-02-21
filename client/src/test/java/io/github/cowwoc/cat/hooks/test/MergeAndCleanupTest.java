@@ -212,6 +212,291 @@ public class MergeAndCleanupTest
   }
 
   /**
+   * Verifies that execute fast-forwards the local base branch when it is behind origin.
+   * <p>
+   * When the local base branch is behind origin (origin has new commits), the merge should
+   * fetch and fast-forward the local base branch before proceeding.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeUpdatesLocalBaseBranchWhenBehindOrigin() throws IOException
+  {
+    // Create a bare "origin" repo
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path localRepo = Files.createTempDirectory("local-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      // Initialize bare origin
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      // Create local repo and clone from origin
+      TestUtils.runGit(localRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(localRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(localRepo, "config", "user.name", "Test User");
+
+      // Create initial commit in local
+      Files.writeString(localRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(localRepo, "add", "README.md");
+      TestUtils.runGit(localRepo, "commit", "-m", "Initial commit");
+
+      // Add origin remote and push
+      TestUtils.runGit(localRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(localRepo, "push", "-u", "origin", "v2.1");
+
+      // Add a new commit to origin (simulating another developer pushing)
+      // We create a separate temp repo to push to origin
+      Path tempClone = Files.createTempDirectory("temp-clone-");
+      try
+      {
+        TestUtils.runGit(tempClone, "clone", originRepo.toString(), ".");
+        TestUtils.runGit(tempClone, "config", "user.email", "test@example.com");
+        TestUtils.runGit(tempClone, "config", "user.name", "Test User");
+        Files.writeString(tempClone.resolve("origin-advance.txt"), "from origin");
+        TestUtils.runGit(tempClone, "add", "origin-advance.txt");
+        TestUtils.runGit(tempClone, "commit", "-m", "Origin advance commit");
+        TestUtils.runGit(tempClone, "push", "origin", "v2.1");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempClone);
+      }
+
+      // Create the issue branch from v2.1 in the local repo
+      String issueBranch = "my-sync-issue";
+      Path issueWorktree = TestUtils.createWorktree(localRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+
+      // Add an issue-specific commit in the worktree
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+
+      // Set up .claude/cat structure in local repo
+      Path catDir = localRepo.resolve(".claude/cat");
+      Files.createDirectories(catDir);
+
+      // Allow pushing to the checked-out branch
+      TestUtils.runGit(localRepo, "config", "receive.denyCurrentBranch", "ignore");
+
+      // Create the cat-base file for the worktree
+      String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
+      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
+      Files.createDirectories(catBasePath.getParent());
+      Files.writeString(catBasePath, "v2.1");
+
+      try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        // Verify precondition: local v2.1 is stale (does not have origin's advance commit)
+        String preLog = TestUtils.runGitCommandWithOutput(localRepo, "log", "--oneline", "v2.1");
+        requireThat(preLog, "preLog").doesNotContain("Origin advance commit");
+
+        String result = cmd.execute(localRepo.toString(), issueBranch, "test-session",
+          issueWorktree.toString(), pluginRoot.toString());
+
+        requireThat(result, "result").contains("\"status\" : \"success\"");
+
+        // Verify local v2.1 now contains the origin advance commit
+        String v21Log = TestUtils.runGitCommandWithOutput(localRepo, "log", "--oneline", "v2.1");
+        requireThat(v21Log, "v21Log").contains("Origin advance commit");
+        requireThat(v21Log, "v21Log").contains("Issue commit");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(localRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that execute throws a clear error when the local base branch has diverged from origin.
+   * <p>
+   * When the local base branch has commits not in origin, the fast-forward update fails and
+   * execute must throw an IOException with a message explaining the divergence.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeThrowsWhenLocalBaseBranchDivergedFromOrigin() throws IOException
+  {
+    // Create a bare "origin" repo
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path localRepo = Files.createTempDirectory("local-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      // Initialize bare origin
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      // Create local repo
+      TestUtils.runGit(localRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(localRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(localRepo, "config", "user.name", "Test User");
+
+      // Create initial commit in local
+      Files.writeString(localRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(localRepo, "add", "README.md");
+      TestUtils.runGit(localRepo, "commit", "-m", "Initial commit");
+
+      // Add origin remote and push initial state
+      TestUtils.runGit(localRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(localRepo, "push", "-u", "origin", "v2.1");
+
+      // Add a divergent commit to local v2.1 that is NOT in origin (local diverged)
+      Files.writeString(localRepo.resolve("local-only.txt"), "local only");
+      TestUtils.runGit(localRepo, "add", "local-only.txt");
+      TestUtils.runGit(localRepo, "commit", "-m", "Local-only divergent commit");
+
+      // Add a different commit to origin (via tempClone), making them truly divergent
+      Path tempClone = Files.createTempDirectory("temp-clone-");
+      try
+      {
+        TestUtils.runGit(tempClone, "clone", originRepo.toString(), ".");
+        TestUtils.runGit(tempClone, "config", "user.email", "test@example.com");
+        TestUtils.runGit(tempClone, "config", "user.name", "Test User");
+        Files.writeString(tempClone.resolve("origin-only.txt"), "origin only");
+        TestUtils.runGit(tempClone, "add", "origin-only.txt");
+        TestUtils.runGit(tempClone, "commit", "-m", "Origin-only divergent commit");
+        TestUtils.runGit(tempClone, "push", "origin", "v2.1");
+      }
+      finally
+      {
+        TestUtils.deleteDirectoryRecursively(tempClone);
+      }
+
+      // Create the issue branch from local v2.1
+      String issueBranch = "my-diverged-issue";
+      Path issueWorktree = TestUtils.createWorktree(localRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+
+      // Add an issue commit
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+
+      // Set up .claude/cat structure
+      Path catDir = localRepo.resolve(".claude/cat");
+      Files.createDirectories(catDir);
+
+      // Create the cat-base file
+      String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
+      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
+      Files.createDirectories(catBasePath.getParent());
+      Files.writeString(catBasePath, "v2.1");
+
+      try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute(localRepo.toString(), issueBranch, "test-session",
+            issueWorktree.toString(), pluginRoot.toString());
+        }
+        catch (IOException e)
+        {
+          requireThat(e.getMessage(), "message").contains("diverged");
+          requireThat(e.getMessage(), "message").contains("v2.1");
+        }
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(localRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that execute throws a clear error when fetch fails due to an invalid remote.
+   * <p>
+   * When the origin remote is unreachable or does not exist, the fetch must fail immediately
+   * with an IOException describing the network/remote issue.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeThrowsWhenFetchFailsDueToInvalidRemote() throws IOException
+  {
+    Path localRepo = Files.createTempDirectory("local-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      // Create a local repo with an invalid/missing origin remote
+      TestUtils.runGit(localRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(localRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(localRepo, "config", "user.name", "Test User");
+
+      Files.writeString(localRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(localRepo, "add", "README.md");
+      TestUtils.runGit(localRepo, "commit", "-m", "Initial commit");
+
+      // Add a broken/nonexistent origin remote
+      TestUtils.runGit(localRepo, "remote", "add", "origin",
+        "/nonexistent/path/that/does/not/exist");
+
+      // Create the issue branch
+      String issueBranch = "my-fetch-fail-issue";
+      Path issueWorktree = TestUtils.createWorktree(localRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+
+      // Add an issue commit
+      Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
+
+      // Set up .claude/cat structure
+      Path catDir = localRepo.resolve(".claude/cat");
+      Files.createDirectories(catDir);
+
+      // Create the cat-base file
+      String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
+      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
+      Files.createDirectories(catBasePath.getParent());
+      Files.writeString(catBasePath, "v2.1");
+
+      try (JvmScope scope = new TestJvmScope(localRepo, pluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+
+        try
+        {
+          cmd.execute(localRepo.toString(), issueBranch, "test-session",
+            issueWorktree.toString(), pluginRoot.toString());
+        }
+        catch (IOException e)
+        {
+          requireThat(e.getMessage(), "message").contains("origin");
+          requireThat(e.getMessage(), "message").contains("v2.1");
+        }
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(localRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
    * Verifies that execute auto-rebases when base branch has diverged from the issue branch.
    * <p>
    * When the base branch has new commits not in the issue branch, the merge should
@@ -223,36 +508,55 @@ public class MergeAndCleanupTest
   @Test
   public void executeAutoRebasesWhenBaseBranchDiverged() throws IOException
   {
-    Path mainRepo = TestUtils.createTempGitRepo("v2.1");
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path mainRepo = Files.createTempDirectory("main-repo-");
     Path worktreesDir = Files.createTempDirectory("worktrees-");
     Path pluginRoot = Files.createTempDirectory("test-plugin");
 
     try
     {
+      // Initialize bare origin
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      // Create main repo and set up initial commit
+      TestUtils.runGit(mainRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(mainRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(mainRepo, "config", "user.name", "Test User");
+      Files.writeString(mainRepo.resolve("README.md"), "test");
+      TestUtils.runGit(mainRepo, "add", "README.md");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Initial commit");
+
+      // Add origin remote and push initial state
+      TestUtils.runGit(mainRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(mainRepo, "push", "-u", "origin", "v2.1");
+
       // Create the issue branch from v2.1 (this is the divergence point / merge-base)
       String issueBranch = "my-issue";
       Path issueWorktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueBranch);
 
       // Configure user in worktree
-      TestUtils.runGitCommand(issueWorktree, "config", "user.email", "test@example.com");
-      TestUtils.runGitCommand(issueWorktree, "config", "user.name", "Test User");
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
 
       // Add an issue-specific commit in the worktree
       Files.writeString(issueWorktree.resolve("issue-work.txt"), "issue work");
-      TestUtils.runGitCommand(issueWorktree, "add", "issue-work.txt");
-      TestUtils.runGitCommand(issueWorktree, "commit", "-m", "Issue commit");
+      TestUtils.runGit(issueWorktree, "add", "issue-work.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Issue commit");
 
       // Now advance the base branch (v2.1) with a new commit, causing divergence
       Files.writeString(mainRepo.resolve("base-advance.txt"), "base branch advance");
-      TestUtils.runGitCommand(mainRepo, "add", "base-advance.txt");
-      TestUtils.runGitCommand(mainRepo, "commit", "-m", "Base branch advance commit");
+      TestUtils.runGit(mainRepo, "add", "base-advance.txt");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Base branch advance commit");
+
+      // Also push this advance to origin so syncBaseBranchWithOrigin doesn't fail
+      TestUtils.runGit(mainRepo, "push", "origin", "v2.1");
 
       // Set up .claude/cat structure in main repo
       Path catDir = mainRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
       // Allow pushing to the checked-out branch (v2.1 is checked out in the main repo)
-      TestUtils.runGitCommand(mainRepo, "config", "receive.denyCurrentBranch", "ignore");
+      TestUtils.runGit(mainRepo, "config", "receive.denyCurrentBranch", "ignore");
 
       // Create the cat-base file for the worktree so getBaseBranch() works
       // git rev-parse --git-dir returns an absolute path for the main repo
@@ -285,6 +589,7 @@ public class MergeAndCleanupTest
     {
       TestUtils.deleteDirectoryRecursively(worktreesDir);
       TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
