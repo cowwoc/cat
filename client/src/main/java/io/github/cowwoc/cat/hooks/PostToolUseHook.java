@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.failure.ResetFailureCounter;
 import io.github.cowwoc.cat.hooks.tool.post.AutoLearnMistakes;
 import io.github.cowwoc.cat.hooks.tool.post.DetectAssistantGivingUp;
 import io.github.cowwoc.cat.hooks.tool.post.DetectTokenThreshold;
@@ -36,18 +37,38 @@ import org.slf4j.LoggerFactory;
  */
 public final class PostToolUseHook implements HookHandler
 {
+  static
+  {
+    SharedSecrets.setPostToolUseHookAccess(PostToolUseHook::new);
+  }
+
   private final List<PostToolHandler> handlers;
 
   /**
-   * Creates a new PostToolUseHook instance with the specified Claude config directory.
+   * Creates a new PostToolUseHook with the specified handlers.
    *
-   * @param claudeConfigDir the Claude config directory path
-   * @throws NullPointerException if {@code claudeConfigDir} is null
+   * @param handlers the handlers to use
+   * @throws NullPointerException if {@code handlers} is null
    */
-  public PostToolUseHook(Path claudeConfigDir)
+  private PostToolUseHook(List<PostToolHandler> handlers)
   {
-    requireThat(claudeConfigDir, "claudeConfigDir").isNotNull();
+    requireThat(handlers, "handlers").isNotNull();
+    this.handlers = handlers;
+  }
+
+  /**
+   * Creates a new PostToolUseHook instance.
+   *
+   * @param scope the JVM scope providing configuration paths
+   * @throws NullPointerException if {@code scope} is null
+   */
+  public PostToolUseHook(JvmScope scope)
+  {
+    requireThat(scope, "scope").isNotNull();
+    Path claudeConfigDir = scope.getClaudeConfigDir();
+    Path sessionDirectory = scope.getSessionDirectory();
     this.handlers = List.of(
+      new ResetFailureCounter(sessionDirectory),
       new AutoLearnMistakes(),
       new DetectAssistantGivingUp(claudeConfigDir),
       new DetectTokenThreshold(claudeConfigDir),
@@ -66,7 +87,7 @@ public final class PostToolUseHook implements HookHandler
       JsonMapper mapper = scope.getJsonMapper();
       HookInput input = HookInput.readFromStdin(mapper);
       HookOutput output = new HookOutput(scope);
-      HookResult result = new PostToolUseHook(scope.getClaudeConfigDir()).run(input, output);
+      HookResult result = new PostToolUseHook(scope).run(input, output);
 
       for (String warning : result.warnings())
         System.err.println(warning);
