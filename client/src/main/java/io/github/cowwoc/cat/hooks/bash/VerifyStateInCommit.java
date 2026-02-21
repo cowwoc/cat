@@ -149,7 +149,7 @@ public final class VerifyStateInCommit implements BashHandler
    */
   private List<String> getStagedFilesInDirectory(String directory) throws IOException
   {
-    String output = GitCommands.runGitCommandInDirectory(directory, "diff", "--cached", "--name-only");
+    String output = GitCommands.runGit(Path.of(directory), "diff", "--cached", "--name-only");
     if (output.isEmpty())
       return List.of();
     return Arrays.asList(output.split("\n"));

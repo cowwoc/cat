@@ -1572,21 +1572,21 @@ public class HookEntryPointTest
   {
     Path tempDir = Files.createTempDirectory("git-test-");
 
-    runGitCommand(tempDir, "init");
-    runGitCommand(tempDir, "config", "user.email", "test@example.com");
-    runGitCommand(tempDir, "config", "user.name", "Test User");
+    runGit(tempDir, "init");
+    runGit(tempDir, "config", "user.email", "test@example.com");
+    runGit(tempDir, "config", "user.name", "Test User");
 
     Files.writeString(tempDir.resolve("README.md"), "test");
-    runGitCommand(tempDir, "add", "README.md");
-    runGitCommand(tempDir, "commit", "-m", "Initial commit");
+    runGit(tempDir, "add", "README.md");
+    runGit(tempDir, "commit", "-m", "Initial commit");
 
     if (!branchName.equals("master") && !branchName.equals("main"))
     {
-      runGitCommand(tempDir, "checkout", "-b", branchName);
+      runGit(tempDir, "checkout", "-b", branchName);
     }
     if (branchName.equals("main") && !getCurrentBranchName(tempDir).equals("main"))
     {
-      runGitCommand(tempDir, "branch", "-m", "main");
+      runGit(tempDir, "branch", "-m", "main");
     }
 
     return tempDir;
@@ -1598,7 +1598,7 @@ public class HookEntryPointTest
    * @param directory the directory to run the command in
    * @param args the git command arguments
    */
-  private void runGitCommand(Path directory, String... args)
+  private void runGit(Path directory, String... args)
   {
     try
     {
