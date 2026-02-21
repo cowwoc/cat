@@ -186,7 +186,7 @@ public class EnforcePluginFileIsolationTest
       }
       finally
       {
-        TestUtils.runGitCommand(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
+        TestUtils.runGit(mainDir, "worktree", "remove", "--force", worktreeDir.toString());
         TestUtils.deleteDirectoryRecursively(worktreeDir);
       }
     }
