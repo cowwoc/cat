@@ -59,7 +59,7 @@ public final class AotTraining
       new PostBashHook().run(input, output);
       new PreReadHook(scope).run(input, output);
       new PostReadHook(scope).run(input, output);
-      new PostToolUseHook(scope.getClaudeConfigDir()).run(input, output);
+      new PostToolUseHook(scope).run(input, output);
       new UserPromptSubmitHook(scope).run(input, output);
       new PreAskHook(scope).run(input, output);
       new PreWriteHook(scope).run(input, output);
