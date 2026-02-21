@@ -15,6 +15,7 @@
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
+- require-reviewer-file-evidence
 - fix-cleanup-lock-removal
 - fix-status-instruction-ordering
 - add-java-build-to-ci
