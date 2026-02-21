@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-20T06:19:02-05:00",
-  "mistake_count_since_last": 15,
+  "last_retrospective": "2026-02-22T13:45:25Z",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -165,12 +165,12 @@
     {
       "pattern_id": "PATTERN-008",
       "pattern": "pre_rendered_output_bypass",
-      "occurrences_total": 15,
-      "occurrences_after_fix": 5,
+      "occurrences_total": 18,
+      "occurrences_after_fix": 8,
       "first_seen": "2026-01-29T09:00:00Z",
-      "last_seen": "2026-02-06T18:30:00Z",
+      "last_seen": "2026-02-19T11:24:00Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M311",
@@ -336,12 +336,12 @@
     {
       "pattern_id": "PATTERN-016",
       "pattern": "squash_commit_corruption",
-      "occurrences_total": 6,
-      "occurrences_after_fix": 4,
+      "occurrences_total": 8,
+      "occurrences_after_fix": 6,
       "first_seen": "2026-02-06T12:54:53Z",
-      "last_seen": "2026-02-16T09:38:00Z",
+      "last_seen": "2026-02-21T15:44:48Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M450",
@@ -379,12 +379,12 @@
     {
       "pattern_id": "PATTERN-018",
       "pattern": "stakeholder_review_quality",
-      "occurrences_total": 4,
-      "occurrences_after_fix": 0,
+      "occurrences_total": 7,
+      "occurrences_after_fix": 3,
       "first_seen": "2026-02-08T14:00:00Z",
-      "last_seen": "2026-02-15T12:00:00Z",
+      "last_seen": "2026-02-21T15:34:13Z",
       "last_action_date": null,
-      "status": "new",
+      "status": "recurring",
       "effectiveness": "pending",
       "preventions": [
         "M478",
@@ -434,10 +434,11 @@
       "escalation": {
         "id": "ESCALATE-A001",
         "escalated_date": "2026-02-02T18:00:00-05:00",
+        "last_reviewed": "2026-02-22T13:45:25Z",
         "reason": "5 post-fix mistakes (M346, M349, M356 in current period) - documentation-level prevention ineffective",
         "escalation_level": "hook",
-        "analysis": "Documentation tells subagents not to fabricate, but subagents ignore it when prompts contain example values. Need to either: (1) prevent priming at prompt construction time, or (2) verify skill invocation evidence in results.",
-        "proposed_solution": "Add A012 (prompt priming prevention) AND require explicit evidence (tool output) in validation results. Consider PostToolUse hook to detect validation claims without corresponding skill invocation in session.",
+        "analysis": "Documentation tells subagents not to fabricate, but subagents ignore it when prompts contain example values. PATTERN-018 (R021) adds new dimension: subagents also ignore workspace path directives and use default CWD. Root gap is subagent compliance with delegation prompt constraints generally, not only validation. Need either structural prompt isolation or hook-level enforcement of subagent output evidence.",
+        "proposed_solution": "Add A012 (prompt priming prevention) AND require explicit evidence (tool output) in validation results. Consider PostToolUse hook to detect validation claims without corresponding skill invocation in session. R021: A021 addresses stakeholder review path compliance downstream.",
         "status": "open"
       }
     },
@@ -857,10 +858,11 @@
       "escalation": {
         "id": "ESCALATE-A018",
         "escalated_date": "2026-02-20T06:19:02-05:00",
+        "last_reviewed": "2026-02-22T13:45:25Z",
         "reason": "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
         "escalation_level": "partial_implementation",
-        "analysis": "git-squash-quick.sh already rebases before squash (confirmed in M488 fix). Remaining gap: ensure all agents use git-squash-quick.sh exclusively (hook blocks alternatives). Status: partially addressed by RemindGitSquash hook.",
-        "proposed_solution": "Hook enforcement in place. Monitor for bypass attempts and consider additional guards against manual git squash operations.",
+        "analysis": "R021 adds 2 new squash failures: M362 (agent skipped squash step entirely - no commit-count gate) and M369 (worktree diverged after squash despite backup_verified:true - working tree not updated). Hook blocks git reset --soft alternatives but does not enforce pre-gate squash verification. M362 prevention adds commit-count check to work-with-issue Step 7. M369 prevention adds post-squash working-tree sync check.",
+        "proposed_solution": "Hook enforcement partially in place. M362 fix adds gate verification (COMMIT_COUNT == 1 before Step 7). M369 fix requires post-squash git status --porcelain check and reset --hard if diverged. Both implemented as skill-level preventions. Monitor for further recurrence.",
         "status": "open"
       }
     },
@@ -921,6 +923,21 @@
         "M498",
         "M499"
       ],
+      "effectiveness_check": null
+    },
+    {
+      "id": "A022",
+      "priority": "medium",
+      "description": "Fix learn skill commit-grouping: when prevention type is skill/process/documentation/config and no active worktree exists, include prevention files in same commit as retrospective metadata. Only split commits when prevention targets a worktree (code_fix, hook, validation).",
+      "category": "protocol_violation",
+      "pattern_id": null,
+      "status": "implemented",
+      "created_date": "2026-02-22T13:45:25Z",
+      "completed_date": "2026-02-22T13:45:25Z",
+      "related_mistakes": [
+        "M366"
+      ],
+      "implementation": "M366 prevention added single-commit-rule to phase-record.md Step 12-13: when prevention is skill/process/documentation/config type, group prevention file and retrospective metadata into one commit in Step 13. Only split when prevention targets a worktree.",
       "effectiveness_check": null
     }
   ]
