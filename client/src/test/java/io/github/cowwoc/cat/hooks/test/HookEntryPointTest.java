@@ -21,7 +21,9 @@ import io.github.cowwoc.cat.hooks.PreTaskHook;
 import io.github.cowwoc.cat.hooks.PreWriteHook;
 import io.github.cowwoc.cat.hooks.HookInput;
 import io.github.cowwoc.cat.hooks.HookOutput;
+import io.github.cowwoc.cat.hooks.HookResult;
 import io.github.cowwoc.cat.hooks.edit.EnforceWorkflowCompletion;
+import io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge;
 import io.github.cowwoc.cat.hooks.write.EnforcePluginFileIsolation;
 import io.github.cowwoc.cat.hooks.write.ValidateStateMdFormat;
 import io.github.cowwoc.cat.hooks.write.WarnBaseBranchEdit;
@@ -80,7 +82,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
+      HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
 
       requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
     }
@@ -98,7 +100,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
+      HookResult hookResult = new UserPromptSubmitHook(scope).run(input, output);
 
       requireThat(hookResult.output().trim(), "output").isEqualTo("{}");
     }
@@ -118,7 +120,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreToolUseHook(scope).run(input, output);
+      HookResult hookResult = new PreToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -137,7 +139,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\", \"tool_input\": {}}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreToolUseHook(scope).run(input, output);
+      HookResult hookResult = new PreToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -158,7 +160,7 @@ public class HookEntryPointTest
           "\"session_id\": \"test-session\", \"cwd\": \"/workspace\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreToolUseHook(scope).run(input, output);
+      HookResult hookResult = new PreToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -179,7 +181,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PostBashHook().run(input, output);
+      HookResult hookResult = new PostBashHook().run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -201,7 +203,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Read\", \"tool_input\": {\"file_path\": \"/tmp/test\"}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreReadHook(scope).run(input, output);
+      HookResult hookResult = new PreReadHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -220,7 +222,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Bash\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreReadHook(scope).run(input, output);
+      HookResult hookResult = new PreReadHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -242,7 +244,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Grep\", \"tool_input\": {}, \"tool_result\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PostReadHook(scope).run(input, output);
+      HookResult hookResult = new PostReadHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -264,7 +266,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PostToolUseHook(tempDir).run(input, output);
+      HookResult hookResult = new PostToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -289,7 +291,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Write\", \"tool_result\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PostToolUseHook(tempDir).run(input, output);
+      HookResult hookResult = new PostToolUseHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -501,7 +503,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -521,7 +523,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"AskUserQuestion\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -542,7 +544,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -562,7 +564,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Edit\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -600,7 +602,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreTaskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -620,7 +622,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreTaskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -642,7 +644,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Edit\", \"tool_input\": {\"file_path\": \"/tmp/test.txt\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -665,7 +667,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -688,7 +690,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -711,7 +713,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreTaskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -731,7 +733,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreTaskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -750,8 +752,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:implement\"}");
-      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
-        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      EnforceWorktreeSafetyBeforeMerge handler =
+        new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session",
         "/workspace/.claude/cat/worktrees/2.1-my-task");
       requireThat(result.blocked(), "blocked").isFalse();
@@ -768,8 +770,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
-      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
-        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      EnforceWorktreeSafetyBeforeMerge handler =
+        new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session",
         "/workspace/.claude/cat/worktrees/2.1-my-task");
       requireThat(result.blocked(), "blocked").isTrue();
@@ -788,8 +790,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
-      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
-        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      EnforceWorktreeSafetyBeforeMerge handler =
+        new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session", "/workspace");
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -805,8 +807,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
-      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
-        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      EnforceWorktreeSafetyBeforeMerge handler =
+        new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session", "");
       requireThat(result.blocked(), "blocked").isFalse();
     }
@@ -822,8 +824,8 @@ public class HookEntryPointTest
     {
       JsonMapper mapper = scope.getJsonMapper();
       JsonNode toolInput = mapper.readTree("{\"subagent_type\": \"cat:work-merge\"}");
-      io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge handler =
-        new io.github.cowwoc.cat.hooks.task.EnforceWorktreeSafetyBeforeMerge();
+      EnforceWorktreeSafetyBeforeMerge handler =
+        new EnforceWorktreeSafetyBeforeMerge();
       TaskHandler.Result result = handler.check(toolInput, "test-session",
         "/workspace/.claude/cat/worktrees/2.1-my-task/src/main/java");
       requireThat(result.blocked(), "blocked").isTrue();
@@ -884,7 +886,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -905,7 +907,7 @@ public class HookEntryPointTest
         "\"new_string\": \"Status: in_progress\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -929,7 +931,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -950,7 +952,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -973,7 +975,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
@@ -995,7 +997,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       // WarnUnsquashedApproval also checks git state - outside a task worktree it allows
@@ -1018,7 +1020,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreAskHook(scope).run(input, output);
+      HookResult hookResult = new PreAskHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       // WarnApprovalWithoutRenderDiff and WarnUnsquashedApproval don't inject context in this case
@@ -1125,7 +1127,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1145,7 +1147,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Write\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").
@@ -1172,7 +1174,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").
@@ -1199,7 +1201,7 @@ public class HookEntryPointTest
         "\"old_string\": \"a\", \"new_string\": \"b\"}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").
@@ -1323,7 +1325,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      io.github.cowwoc.cat.hooks.HookResult hookResult = new PreWriteHook(scope).run(input, output);
+      HookResult hookResult = new PreWriteHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").
@@ -1355,7 +1357,7 @@ public class HookEntryPointTest
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
       HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("Warning from handler 1");
       requireThat(result.warnings(), "warnings").contains("Warning from handler 2");
@@ -1385,7 +1387,7 @@ public class HookEntryPointTest
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
       HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("Warning from edit handler 1");
       requireThat(result.warnings(), "warnings").contains("Warning from edit handler 2");
@@ -1415,7 +1417,7 @@ public class HookEntryPointTest
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
       HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").contains("Warning from task handler 1");
       requireThat(result.warnings(), "warnings").contains("Warning from task handler 2");
@@ -1446,7 +1448,7 @@ public class HookEntryPointTest
         new ByteArrayInputStream(fullInput.toString().getBytes(StandardCharsets.UTF_8)));
 
       HookOutput output = new HookOutput(scope);
-      io.github.cowwoc.cat.hooks.HookResult result = dispatcher.run(input, output);
+      HookResult result = dispatcher.run(input, output);
 
       requireThat(result.warnings(), "warnings").doesNotContain("This warning should not appear");
       requireThat(result.output(), "output").contains("\"decision\"");
