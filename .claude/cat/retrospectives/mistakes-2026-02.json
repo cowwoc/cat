@@ -1167,6 +1167,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Invoke stakeholder-review automatically as part of the mandatory workflow without asking user for permission"
+    },
+    {
+      "id": "M385",
+      "timestamp": "2026-02-22T14:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent presented 5 unsquashed commits at approval gate instead of squashing by topic first",
+      "root_cause": "work-with-issue first-use.md Step 7 (Approval Gate) had no blocking verification that Step 6 (Squash) completed. The agent skipped Step 6 and presented the approval gate with raw commits. This is a recurrence of M362 where skill-level documentation guidance failed to enforce the squash requirement.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "squash",
+        "approval_gate",
+        "unsquashed_commits",
+        "protocol_violation",
+        "commit_count"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": "M362",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before presenting the approval gate in Step 7, count commits on the branch (git rev-list --count BASE_BRANCH..HEAD). If COMMIT_COUNT > 1, return to Step 6 to complete the squash. Only enter Step 7 after COMMIT_COUNT == 1."
     }
   ]
 }
