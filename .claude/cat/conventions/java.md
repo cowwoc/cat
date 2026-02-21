@@ -1051,9 +1051,10 @@ unchecked wrapper types (`UncheckedIOException`, custom wrappers, etc.).
 ### Minimal Exception Testing
 TestNG already fails tests that throw unexpected exceptions. Keep exception tests minimal:
 
-1. **No sentinel lines** — do not add `requireThat(false, ...).isTrue()` after the method call. If the method must
-   throw, the catch block handles it. If it doesn't throw, the test passes (which is correct for "accepts" tests, and
-   for "rejects" tests the catch assertion simply doesn't run).
+1. **No sentinel lines** — do not add `requireThat(false, ...).isTrue()` or
+   `throw new AssertionError("Expected X was not thrown")` after the method call. If the method must throw, the catch
+   block handles it. If it doesn't throw, the test passes (which is correct for "accepts" tests, and for "rejects"
+   tests the catch assertion simply doesn't run).
 2. **No catch blocks for unexpected exceptions** — let them propagate to TestNG.
 
 ```java
@@ -1079,7 +1080,8 @@ public void executeRejectsNullInput()
   try
   {
     cmd.execute(null, "value");
-    requireThat(false, "execute").isEqualTo(true);
+    requireThat(false, "execute").isEqualTo(true);  // sentinel - don't do this
+    // also wrong: throw new AssertionError("Expected NullPointerException was not thrown");
   }
   catch (NullPointerException e)
   {

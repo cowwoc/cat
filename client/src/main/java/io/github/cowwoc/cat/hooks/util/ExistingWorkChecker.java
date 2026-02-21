@@ -94,7 +94,7 @@ public final class ExistingWorkChecker
     if (!Files.isDirectory(worktree))
       throw new IllegalArgumentException("Cannot access worktree: " + worktreePath);
 
-    String countOutput = GitCommands.runGitCommandInDirectory(worktreePath,
+    String countOutput = GitCommands.runGit(Path.of(worktreePath),
       "rev-list", "--count", baseBranch + "..HEAD");
     int commitCount;
     try
@@ -108,7 +108,7 @@ public final class ExistingWorkChecker
 
     if (commitCount > 0)
     {
-      String logOutput = GitCommands.runGitCommandInDirectory(worktreePath,
+      String logOutput = GitCommands.runGit(Path.of(worktreePath),
         "log", "--oneline", baseBranch + "..HEAD", "-5");
 
       String[] lines = logOutput.split("\n");

@@ -39,10 +39,10 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
 
       CheckResult result = ExistingWorkChecker.check(tempDir.toString(), "base-branch");
 
@@ -67,10 +67,10 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
       createCommit(tempDir, "Work in progress 1");
       createCommit(tempDir, "Work in progress 2");
 
@@ -97,10 +97,10 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
       for (int i = 1; i <= 7; ++i)
         createCommit(tempDir, "Commit " + i);
 
@@ -129,10 +129,10 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
       createCommit(tempDir, "First work");
       createCommit(tempDir, "Second work");
 
@@ -173,9 +173,9 @@ public class ExistingWorkCheckerTest
     Path tempDir = Files.createTempDirectory("empty-repo-test");
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "init");
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "config", "user.name", "Test User");
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "config", "user.email", "test@example.com");
+      GitCommands.runGit(tempDir, "init");
+      GitCommands.runGit(tempDir, "config", "user.name", "Test User");
+      GitCommands.runGit(tempDir, "config", "user.email", "test@example.com");
 
       try
       {
@@ -203,7 +203,7 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "real-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "real-branch");
       createCommit(tempDir, "Initial commit");
 
       try
@@ -232,10 +232,10 @@ public class ExistingWorkCheckerTest
     Path tempDir = createTempGitRepo();
     try
     {
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "base-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "base-branch");
       createCommit(tempDir, "Initial commit");
 
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "checkout", "-b", "task-branch");
+      GitCommands.runGit(tempDir, "checkout", "-b", "task-branch");
       for (int i = 1; i <= 5; ++i)
         createCommit(tempDir, "Commit " + i);
 
@@ -310,9 +310,9 @@ public class ExistingWorkCheckerTest
     try
     {
       Path tempDir = Files.createTempDirectory("existing-work-test");
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "init");
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "config", "user.name", "Test User");
-      GitCommands.runGitCommandInDirectory(tempDir.toString(), "config", "user.email", "test@example.com");
+      GitCommands.runGit(tempDir, "init");
+      GitCommands.runGit(tempDir, "config", "user.name", "Test User");
+      GitCommands.runGit(tempDir, "config", "user.email", "test@example.com");
       return tempDir;
     }
     catch (IOException e)
@@ -332,7 +332,7 @@ public class ExistingWorkCheckerTest
   {
     Path file = repoPath.resolve("file-" + System.nanoTime() + ".txt");
     Files.writeString(file, "content " + System.nanoTime());
-    GitCommands.runGitCommandInDirectory(repoPath.toString(), "add", file.getFileName().toString());
-    GitCommands.runGitCommandInDirectory(repoPath.toString(), "commit", "-m", message);
+    GitCommands.runGit(repoPath, "add", file.getFileName().toString());
+    GitCommands.runGit(repoPath, "commit", "-m", message);
   }
 }

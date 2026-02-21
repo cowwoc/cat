@@ -118,7 +118,7 @@ public final class VerifyStateInCommitTest
 
       // Stage a file that is NOT STATE.md
       Files.writeString(tempDir.resolve("some-file.java"), "class Foo {}");
-      TestUtils.runGitCommand(tempDir, "add", "some-file.java");
+      TestUtils.runGit(tempDir, "add", "some-file.java");
 
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
@@ -155,11 +155,11 @@ public final class VerifyStateInCommitTest
       Path issueDir = tempDir.resolve(".claude").resolve("cat").resolve("issues").resolve("test-issue");
       Files.createDirectories(issueDir);
       Files.writeString(issueDir.resolve("STATE.md"), "status: in-progress\n");
-      TestUtils.runGitCommand(tempDir, "add", issueDir.resolve("STATE.md").toString());
+      TestUtils.runGit(tempDir, "add", issueDir.resolve("STATE.md").toString());
 
       // Also stage a source file
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
-      TestUtils.runGitCommand(tempDir, "add", "Foo.java");
+      TestUtils.runGit(tempDir, "add", "Foo.java");
 
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
@@ -198,7 +198,7 @@ public final class VerifyStateInCommitTest
 
       // Stage a file in worktreeDir that is NOT STATE.md
       Files.writeString(worktreeDir.resolve("some-file.java"), "class Foo {}");
-      TestUtils.runGitCommand(worktreeDir, "add", "some-file.java");
+      TestUtils.runGit(worktreeDir, "add", "some-file.java");
 
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
@@ -302,7 +302,7 @@ public final class VerifyStateInCommitTest
       Files.createDirectories(claudeCat);
 
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
-      TestUtils.runGitCommand(tempDir, "add", "Foo.java");
+      TestUtils.runGit(tempDir, "add", "Foo.java");
 
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");
@@ -333,7 +333,7 @@ public final class VerifyStateInCommitTest
 
       // No .git/cat-base means not a CAT worktree
       Files.writeString(tempDir.resolve("Foo.java"), "class Foo {}");
-      TestUtils.runGitCommand(tempDir, "add", "Foo.java");
+      TestUtils.runGit(tempDir, "add", "Foo.java");
 
       VerifyStateInCommit handler = new VerifyStateInCommit();
       JsonNode toolInput = mapper.readTree("{}");

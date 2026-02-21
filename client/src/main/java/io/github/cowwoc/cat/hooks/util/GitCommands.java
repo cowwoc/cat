@@ -42,7 +42,7 @@ public final class GitCommands
    */
   public static String getLatestCommitMessage() throws IOException
   {
-    return runGitCommand("log", "-1", "--format=%B");
+    return runGit("log", "-1", "--format=%B");
   }
 
   /**
@@ -64,7 +64,7 @@ public final class GitCommands
    */
   public static String getLatestCommitFiles() throws IOException
   {
-    return runGitCommand("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD");
+    return runGit("diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD");
   }
 
   /**
@@ -184,7 +184,7 @@ public final class GitCommands
    * @return the command output trimmed
    * @throws IOException if the git command fails
    */
-  public static String runGitCommand(String... args) throws IOException
+  public static String runGit(String... args) throws IOException
   {
     String[] command = new String[args.length + 1];
     command[0] = "git";
@@ -226,13 +226,13 @@ public final class GitCommands
    * @return the command output trimmed
    * @throws IOException if the git command fails
    */
-  public static String runGitCommandInDirectory(String directory, String... args) throws IOException
+  public static String runGit(Path directory, String... args) throws IOException
   {
     String[] dirArgs = new String[args.length + 2];
     dirArgs[0] = "-C";
-    dirArgs[1] = directory;
+    dirArgs[1] = directory.toString();
     System.arraycopy(args, 0, dirArgs, 2, args.length);
-    return runGitCommand(dirArgs);
+    return runGit(dirArgs);
   }
 
   /**

@@ -745,6 +745,16 @@ git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD
 **Enforced by hook M480:** PreToolUse hook on Task tool blocks work-merge spawn when trust=medium/low
 and no explicit user approval is detected in session history.
 
+### Pre-Gate Squash Verification (BLOCKING)
+
+Before presenting the approval gate, verify that Step 6 (Rebase and Squash) was executed. Squashing by topic
+may produce 1-2 commits (e.g., one implementation commit + one config commit), so commit count alone does not
+determine completion. Instead, confirm that `/cat:git-squash` was invoked in Step 6.
+
+**If Step 6 was skipped:** STOP — return to Step 6 and complete the rebase and squash before proceeding.
+
+**If Step 6 was completed:** Proceed to approval gate below.
+
 ### If trust == "high"
 
 Skip approval gate. Continue directly to Step 8 (merge).

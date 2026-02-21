@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirectory;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -157,7 +157,7 @@ public final class GitMergeLinear
    */
   private boolean isWorkingDirectoryClean() throws IOException
   {
-    String status = runGitCommandInDirectory(directory,"status", "--porcelain");
+    String status = runGit(Path.of(directory),"status", "--porcelain");
     return status.isEmpty();
   }
 
@@ -295,7 +295,7 @@ public final class GitMergeLinear
    */
   private String findWorktreeForBranch(String branch) throws IOException
   {
-    String output = runGitCommandInDirectory(directory,"worktree", "list", "--porcelain");
+    String output = runGit(Path.of(directory),"worktree", "list", "--porcelain");
     String[] lines = output.split("\n");
 
     String currentWorktree = "";
@@ -318,7 +318,7 @@ public final class GitMergeLinear
    */
   private void removeWorktree(String path) throws IOException
   {
-    runGitCommandInDirectory(directory,"worktree", "remove", path);
+    runGit(Path.of(directory),"worktree", "remove", path);
   }
 
   /**
@@ -331,7 +331,7 @@ public final class GitMergeLinear
   {
     try
     {
-      runGitCommandInDirectory(directory,"branch", "-d", branch);
+      runGit(Path.of(directory),"branch", "-d", branch);
       return true;
     }
     catch (IOException _)

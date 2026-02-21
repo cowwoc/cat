@@ -6,7 +6,7 @@
  */
 package io.github.cowwoc.cat.hooks.util;
 
-import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandInDirectory;
+import static io.github.cowwoc.cat.hooks.util.GitCommands.runGit;
 import static io.github.cowwoc.cat.hooks.util.GitCommands.runGitCommandSingleLineInDirectory;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -92,6 +92,8 @@ public final class MergeAndCleanup
         ". Commit or stash changes first.");
     }
 
+    syncBaseBranchWithOrigin(worktreePath, baseBranch);
+
     int diverged = getDivergenceCount(worktreePath, baseBranch);
     if (diverged > 0)
       rebaseOnto(worktreePath, baseBranch);
@@ -163,7 +165,7 @@ public final class MergeAndCleanup
    */
   private String findWorktreeForBranch(String projectDir, String branch) throws IOException
   {
-    String output = runGitCommandInDirectory(projectDir, "worktree", "list", "--porcelain");
+    String output = runGit(Path.of(projectDir), "worktree", "list", "--porcelain");
     String[] lines = output.split("\n");
 
     String currentWorktree = "";
@@ -189,7 +191,7 @@ public final class MergeAndCleanup
   private String getBaseBranch(String projectDir, String taskBranch)
     throws IOException
   {
-    String gitDir = runGitCommandInDirectory(projectDir, "rev-parse", "--absolute-git-dir");
+    String gitDir = runGit(Path.of(projectDir), "rev-parse", "--absolute-git-dir");
     Path catBasePath = Paths.get(gitDir, "worktrees", taskBranch, "cat-base");
 
     if (!Files.exists(catBasePath))
@@ -210,8 +212,46 @@ public final class MergeAndCleanup
    */
   private boolean isWorktreeDirty(String worktreePath) throws IOException
   {
-    String status = runGitCommandInDirectory(worktreePath, "status", "--porcelain");
+    String status = runGit(Path.of(worktreePath), "status", "--porcelain");
     return !status.isEmpty();
+  }
+
+  /**
+   * Fetches the base branch from origin and fast-forwards the local base branch to match.
+   * <p>
+   * This ensures the local base branch is up to date with origin before checking divergence.
+   *
+   * @param worktreePath the worktree path
+   * @param baseBranch the base branch name
+   * @throws IOException if fetch fails (network/remote unavailable) or fast-forward fails
+   *   (local branch has diverged from origin)
+   */
+  private void syncBaseBranchWithOrigin(String worktreePath, String baseBranch) throws IOException
+  {
+    try
+    {
+      runGit(Path.of(worktreePath), "fetch", "origin", baseBranch);
+    }
+    catch (IOException e)
+    {
+      throw new IOException(
+        "Failed to fetch origin/" + baseBranch + " in worktree: " + worktreePath +
+          ". Check network connectivity and that 'origin' remote is available. " +
+          "Original error: " + e.getMessage(), e);
+    }
+
+    try
+    {
+      runGit(Path.of(worktreePath), "push", ".", "origin/" + baseBranch + ":" + baseBranch);
+    }
+    catch (IOException e)
+    {
+      throw new IOException(
+        "Failed to fast-forward local " + baseBranch + " to match origin/" + baseBranch +
+          " in worktree: " + worktreePath + ". The local " + baseBranch +
+          " branch has diverged from origin and cannot be fast-forwarded. " +
+          "Resolve the divergence before merging. Original error: " + e.getMessage(), e);
+    }
   }
 
   /**
@@ -372,7 +412,7 @@ public final class MergeAndCleanup
    */
   private void fastForwardMerge(String worktreePath, String baseBranch) throws IOException
   {
-    runGitCommandInDirectory(worktreePath, "push", ".", "HEAD:" + baseBranch);
+    runGit(Path.of(worktreePath), "push", ".", "HEAD:" + baseBranch);
   }
 
   /**
@@ -384,7 +424,7 @@ public final class MergeAndCleanup
    */
   private void removeWorktree(String projectDir, String worktreePath) throws IOException
   {
-    runGitCommandInDirectory(projectDir, "worktree", "remove", worktreePath);
+    runGit(Path.of(projectDir), "worktree", "remove", worktreePath);
   }
 
   /**
@@ -396,7 +436,7 @@ public final class MergeAndCleanup
    */
   private void deleteBranch(String projectDir, String branch) throws IOException
   {
-    runGitCommandInDirectory(projectDir, "branch", "-d", branch);
+    runGit(Path.of(projectDir), "branch", "-d", branch);
   }
 
   /**

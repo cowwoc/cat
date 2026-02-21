@@ -108,7 +108,7 @@ public final class EnforcePluginFileIsolation implements FileWriteHandler
   {
     try
     {
-      String gitDirPath = GitCommands.runGitCommandInDirectory(directory, "rev-parse", "--git-dir");
+      String gitDirPath = GitCommands.runGit(Path.of(directory), "rev-parse", "--git-dir");
       if (gitDirPath.isEmpty())
         return false;
       Path catBase = Paths.get(gitDirPath).resolve("cat-base");

@@ -44,18 +44,18 @@ public final class TestUtils
   {
     Path tempDir = Files.createTempDirectory("git-test-");
 
-    runGitCommand(tempDir, "init");
-    runGitCommand(tempDir, "config", "user.email", "test@example.com");
-    runGitCommand(tempDir, "config", "user.name", "Test User");
+    runGit(tempDir, "init");
+    runGit(tempDir, "config", "user.email", "test@example.com");
+    runGit(tempDir, "config", "user.name", "Test User");
 
     Files.writeString(tempDir.resolve("README.md"), "test");
-    runGitCommand(tempDir, "add", "README.md");
-    runGitCommand(tempDir, "commit", "-m", "Initial commit");
+    runGit(tempDir, "add", "README.md");
+    runGit(tempDir, "commit", "-m", "Initial commit");
 
     if (!branchName.equals("master") && !branchName.equals("main"))
-      runGitCommand(tempDir, "checkout", "-b", branchName);
+      runGit(tempDir, "checkout", "-b", branchName);
     if (branchName.equals("main") && !getCurrentBranch(tempDir).equals("main"))
-      runGitCommand(tempDir, "branch", "-m", "main");
+      runGit(tempDir, "branch", "-m", "main");
 
     return tempDir;
   }
@@ -72,7 +72,7 @@ public final class TestUtils
   public static Path createWorktree(Path mainRepo, Path worktreesDir, String branchName) throws IOException
   {
     Path worktreePath = worktreesDir.resolve(branchName);
-    runGitCommand(mainRepo, "worktree", "add", "-b", branchName, worktreePath.toString());
+    runGit(mainRepo, "worktree", "add", "-b", branchName, worktreePath.toString());
     return worktreePath;
   }
 
@@ -83,7 +83,7 @@ public final class TestUtils
    * @param args the git command arguments
    * @throws WrappedCheckedException if the git command fails or is interrupted
    */
-  public static void runGitCommand(Path directory, String... args)
+  public static void runGit(Path directory, String... args)
   {
     try
     {
