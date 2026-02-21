@@ -1114,6 +1114,33 @@
         "catches_variations": true
       },
       "correct_behavior": "After editing a Markdown file during prevention, check that all added lines comply with the project's line-length limit (found in .claude/rules/common.md). Wrap any lines that exceed the limit before finalizing the edit."
+    },
+    {
+      "id": "M383",
+      "timestamp": "2026-02-22T00:00:00Z",
+      "category": "incorrect_implementation",
+      "description": "Autofix added `throw new AssertionError(\"Expected IOException was not thrown\")` as sentinel after cmd.execute() in error-path tests in MergeAndCleanupTest.java",
+      "root_cause": "The Minimal Exception Testing section in java.md listed requireThat(false,...) as the only sentinel anti-pattern example, omitting `throw new AssertionError(...)` as an equivalent sentinel. The agent applied a pattern from training that java.md did not explicitly forbid.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/.claude/cat/conventions/java.md",
+      "pattern_keywords": [
+        "sentinel",
+        "AssertionError",
+        "expected exception",
+        "test pattern",
+        "TestNG"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Use TestNG @Test(expectedExceptions=...) or assertThrows(), or write a try/catch that catches only the expected exception with no sentinel line after the call. TestNG fails the test automatically if the expected exception is not thrown."
     }
   ]
 }
