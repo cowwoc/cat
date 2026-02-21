@@ -91,13 +91,13 @@ public final class SharedSecrets
   /**
    * Initializes a class. If the class is already initialized, this method has no effect.
    *
-   * @param c the class
+   * @param clazz the class
    */
-  private static void initialize(Class<?> c)
+  private static void initialize(Class<?> clazz)
   {
     try
     {
-      LOOKUP.ensureInitialized(c);
+      LOOKUP.ensureInitialized(clazz);
     }
     catch (IllegalAccessException e)
     {
