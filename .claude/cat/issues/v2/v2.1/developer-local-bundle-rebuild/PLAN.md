@@ -14,7 +14,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 
 ## Files to Modify
 - `plugin/hooks/jlink/build-bundle.sh` - New script: rebuild jlink bundle locally when sources change
-- `plugin/hooks/jlink-config.sh` - Already modified in ci-build-jlink-bundle to include cat-hooks.jar
+- `plugin/hooks/build-jlink.sh` - Already modified in ci-build-jlink-bundle to include cat-hooks.jar
 
 ## Acceptance Criteria
 - [ ] Developer can run a single command to rebuild the local jlink bundle
@@ -28,7 +28,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
    - Files: `plugin/hooks/jlink/build-bundle.sh`
    - Check if JDK 25 is available
    - Compare mtimes of Java source files against the bundle VERSION marker
-   - If stale: run `hooks/build.sh` then `jlink-config.sh build`
+   - If stale: run `hooks/build.sh` then `build-jlink.sh`
    - Write VERSION marker matching plugin.json version
    - If up-to-date: skip with message
 
