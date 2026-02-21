@@ -348,7 +348,7 @@ public class ConfigTest
       requireThat(config.getProceedLimit("critical"), "critical").isEqualTo(0);
       requireThat(config.getProceedLimit("high"), "high").isEqualTo(0);
       requireThat(config.getProceedLimit("medium"), "medium").isEqualTo(0);
-      requireThat(config.getProceedLimit("low"), "low").isEqualTo(2147483647);
+      requireThat(config.getProceedLimit("low"), "low").isEqualTo(Integer.MAX_VALUE);
     }
     finally
     {
