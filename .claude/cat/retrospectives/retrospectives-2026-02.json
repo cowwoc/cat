@@ -599,6 +599,91 @@
           "Category spread wider (5 categories) - no dominant failure mode in this period"
         ]
       }
+    },
+    {
+      "id": "R021",
+      "timestamp": "2026-02-22T13:45:25Z",
+      "trigger": "count (15 >= 10)",
+      "period_analyzed": "2026-02-20T06:19:02-05:00 to 2026-02-22T13:45:25Z",
+      "mistakes_analyzed": 14,
+      "summary": "14 mistakes across 8 categories. Protocol violations dominant (5/14, 36%). Three key clusters: (1) stakeholder review quality (PATTERN-018, 3 new: M364/M368/M370) - reviewers use wrong workspace paths and lack domain knowledge; (2) squash workflow (PATTERN-016, 2 new: M362/M369) - unsquashed commits at gate, worktree diverged after squash; (3) verbatim output (PATTERN-008, 2 new: M353/M354/M355) - status skill instruction ordering and framing failures. New action item A022 for learn skill commit-grouping protocol. Escalations updated: A001 continues ineffective (subagent fabrication persists), A018 continues with hook partially addressing squash bypass.",
+      "findings": {
+        "category_breakdown": {
+          "assumption_without_verification": 1,
+          "convention_violation": 1,
+          "environment_state_mismatch": 2,
+          "misleading_documentation": 1,
+          "prompt_engineering": 1,
+          "protocol_violation": 5,
+          "stakeholder_review_quality": 1,
+          "tool_misuse": 2
+        },
+        "mistakes_in_period": [
+          "M344", "M345", "M346", "M347", "M348", "M349", "M350",
+          "M351", "M352", "M353", "M354", "M355", "M356", "M357",
+          "M358", "M359", "M360", "M361", "M362", "M363", "M364",
+          "M365", "M366", "M367", "M368", "M369", "M370", "M371"
+        ],
+        "patterns_updated": [
+          "PATTERN-016",
+          "PATTERN-018",
+          "PATTERN-008"
+        ],
+        "new_patterns": [],
+        "action_items_effective": [
+          "A004",
+          "A006",
+          "A007"
+        ],
+        "action_items_ineffective": [
+          "A001",
+          "A003",
+          "A018"
+        ],
+        "action_items_partially_effective": [
+          "A002",
+          "A005",
+          "A008"
+        ],
+        "action_items_pending": [
+          "A009", "A010", "A011", "A012", "A013", "A014", "A015",
+          "A016", "A019", "A020", "A021"
+        ],
+        "new_action_items": [
+          "A022"
+        ],
+        "escalations_updated": [
+          {
+            "id": "ESCALATE-A001",
+            "update": "A001 remains ineffective. PATTERN-018 (stakeholder review) recurring with 3 new mistakes (M364/M368/M370). Subagent fabrication and wrong-path reads persist despite documentation and hook-level preventions. Root cause is subagents ignoring delegation prompts and using default CWD. A021 and A022 address downstream symptoms; core subagent compliance gap unresolved.",
+            "status": "open"
+          },
+          {
+            "id": "ESCALATE-A018",
+            "update": "A018 remains ineffective for squash workflow. 2 new failures (M362: unsquashed commits presented at gate, M369: worktree diverged after squash with backup_verified:true). RemindGitSquash hook blocks git reset --soft but does not enforce pre-gate squash verification. Gap: no gate check that COMMIT_COUNT == 1 before Step 7. M362 prevention adds commit count verification to work-with-issue skill.",
+            "status": "open"
+          }
+        ],
+        "recurrences": {
+          "M353": "PATTERN-008 (verbatim output failure - status skill)",
+          "M354": "M353 (status skill verbatim - skipped box content)",
+          "M355": "M353 (status skill verbatim - output corruption)",
+          "M364": "M267 (stakeholder subagents reading wrong workspace)",
+          "M368": "M364 (stakeholder reviewer prompt simplification causing wrong workspace reads)",
+          "M369": "MEMORY:Git-Merge-Pitfalls (git-squash worktree diverged)",
+          "M357": "M330 (JSON serialization in shell heredoc)"
+        },
+        "observations": [
+          "Protocol violations remain most common category (5/14, 36%)",
+          "PATTERN-018 (stakeholder review quality) has 3 new occurrences - A021 now open, implementation needed",
+          "PATTERN-016 (squash commit corruption) continues: M362 (pre-gate squash skip) and M369 (worktree diverged after squash)",
+          "PATTERN-008 (verbatim output) has 3 new status-skill failures (M353/M354/M355) - skill instruction ordering is root cause",
+          "M365 (--no-ff documentation priming) is a new misleading_documentation instance related to PATTERN-012",
+          "M371 (convention_violation - records without compact constructors) is isolated; convention doc fix implemented",
+          "A001/A003/A018 all confirmed ineffective across multiple retrospectives - structural enforcement needed",
+          "A004/A006/A007 remain consistently effective - hook-level preventions outperform documentation-level"
+        ]
+      }
     }
   ]
 }
