@@ -1194,6 +1194,61 @@
         "catches_variations": true
       },
       "correct_behavior": "Before presenting the approval gate in Step 7, count commits on the branch (git rev-list --count BASE_BRANCH..HEAD). If COMMIT_COUNT > 1, return to Step 6 to complete the squash. Only enter Step 7 after COMMIT_COUNT == 1."
+    },
+    {
+      "id": "M386",
+      "timestamp": "2026-02-22T17:00:00Z",
+      "category": "tool_misuse",
+      "description": "Merge subagent moved branch pointer without updating main workspace working tree, causing stale STATE.md (showed open when HEAD had closed)",
+      "root_cause": "MergeAndCleanup.fastForwardMerge() uses 'git push . HEAD:baseBranch' which is a pointer-only operation. It moves the base branch pointer in the main repo from the worktree context, but does not update the main workspace working tree files. After worktree removal, reading files from main workspace returns stale content not matching the new HEAD commit.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/MergeAndCleanup.java",
+      "pattern_keywords": [
+        "merge-and-cleanup",
+        "working-tree",
+        "pointer-only",
+        "git-push-refspec",
+        "stale-state-md",
+        "fast-forward-merge"
+      ],
+      "prevention_implemented": false,
+      "prevention_verified": false,
+      "recurrence_of": "M369",
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After fastForwardMerge() calls 'git push . HEAD:baseBranch', call syncMainWorkingTree(projectDir) which runs 'git reset --hard HEAD' in projectDir to sync the main workspace working tree with the updated branch pointer. This ensures files on disk match HEAD after the merge."
+    },
+    {
+      "id": "M386",
+      "timestamp": "2026-02-22T00:00:00Z",
+      "category": "misleading_documentation",
+      "description": "config skill first-use.md references config_handler.py (Python, old system) which no longer exists in v2.1 Java plugin; GetConfigOutput.java exists but is not wired as a SkillOutput preprocessor directive",
+      "root_cause": "Incomplete migration: Python config_handler.py was not ported to a SkillOutput launcher in client/bin/. GetConfigOutput.java was created but not connected to the skill preprocessor pipeline.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/config/first-use.md",
+      "pattern_keywords": [
+        "config_handler",
+        "skill_output",
+        "preprocessor",
+        "missing_launcher",
+        "migration_incomplete"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "SKILL OUTPUT CONFIG BOXES should be injected via a !\\ preprocessor directive in an <output> section of first-use.md, invoking GetConfigOutput.java (which must implement SkillOutput)."
     }
   ]
 }
