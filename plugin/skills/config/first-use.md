@@ -16,6 +16,10 @@ users through modifying their preferences.
 
 ---
 
+<output skill="config">
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output"`
+</output>
+
 <process>
 
 **If SKILL OUTPUT CONFIG BOXES not found:**
