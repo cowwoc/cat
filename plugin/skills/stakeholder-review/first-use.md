@@ -663,14 +663,8 @@ Wait for all stakeholder subagents to complete. Parse each response as JSON:
 {
   "stakeholder": "architecture|security|design|testing|performance",
   "approval": "APPROVED|CONCERNS|REJECTED",
-  "files_reviewed": [
-    {
-      "path": "relative/path/to/file.ext",
-      "action": "modified|added|deleted",
-      "analyzed": true
-    }
-  ],
-  "diff_summary": "Brief description of what changed across all files",
+  "files_reviewed": [...],
+  "diff_summary": "...",
   "concerns": [...],
   "summary": "..."
 }
@@ -681,66 +675,65 @@ with a note about the parse failure.
 
 **Evidence Validation:**
 
-After parsing each review, validate the evidence fields. Accumulate all missing-evidence concerns into
-`review_concerns` — do not overwrite earlier concerns with later ones. Both checks can independently
-contribute a HIGH concern, and both must be present in the final list when both fields are missing.
+After parsing each review, validate that the reviewer provided evidence of their analysis.
 
-```bash
-# For each parsed review:
-CHANGED_FILE_COUNT=$(echo "$CHANGED_FILES" | grep -c .)
+NOTE: The pseudocode below is instructional guidance for you (the LLM orchestrator) — it is NOT literal bash to
+execute. You parse the reviewer JSON natively and apply this logic to determine whether evidence fields are present
+and sufficient.
 
-# Start with any concerns already present in the parsed review
-ACCUMULATED_CONCERNS="$review_concerns"
+```
+# NOTE: Instructional pseudocode — interpreted by the LLM agent, not executed as bash.
+# You have already parsed REVIEW_JSON into a structured object. Use your native JSON understanding.
 
-# Check files_reviewed field — append a HIGH concern if missing or empty
-if [[ -z "$review_files_reviewed" ]] || [[ "$review_files_reviewed" == "[]" ]]; then
-    # Missing or empty files_reviewed - reviewer did not document which files were read
-    review_approval="CONCERNS"
-    FILES_REVIEWED_CONCERN='{
-  "severity": "HIGH",
-  "category": "missing_evidence",
-  "location": "review output",
-  "issue": "Reviewer did not produce files_reviewed evidence. Cannot verify that all modified files were analyzed.",
-  "recommendation": "Reviewer must list all files examined in the files_reviewed array."
-}'
-    # Append to accumulated concerns (handle empty base case)
-    if [[ -z "$ACCUMULATED_CONCERNS" ]] || [[ "$ACCUMULATED_CONCERNS" == "[]" ]]; then
-        ACCUMULATED_CONCERNS="[$FILES_REVIEWED_CONCERN]"
-    else
-        # Strip trailing ] and append new concern
-        ACCUMULATED_CONCERNS="${ACCUMULATED_CONCERNS%]}, $FILES_REVIEWED_CONCERN]"
-    fi
-fi
+for each reviewer_name, review_object in parsed_reviews:
+    review_approval = review_object.get("approval")  # Start with the reviewer's own assessment
 
-# Check diff_summary field — append a HIGH concern if missing
-if [[ -z "$review_diff_summary" ]]; then
-    # Missing diff_summary - reviewer did not document what changed
-    review_approval="CONCERNS"
-    DIFF_SUMMARY_CONCERN='{
-  "severity": "HIGH",
-  "category": "missing_evidence",
-  "location": "review output",
-  "issue": "Reviewer did not produce a diff_summary. Cannot verify that the diff was analyzed.",
-  "recommendation": "Reviewer must provide a brief description of what changed across all files in diff_summary."
-}'
-    # Append to accumulated concerns (handle empty base case)
-    if [[ -z "$ACCUMULATED_CONCERNS" ]] || [[ "$ACCUMULATED_CONCERNS" == "[]" ]]; then
-        ACCUMULATED_CONCERNS="[$DIFF_SUMMARY_CONCERN]"
-    else
-        # Strip trailing ] and append new concern
-        ACCUMULATED_CONCERNS="${ACCUMULATED_CONCERNS%]}, $DIFF_SUMMARY_CONCERN]"
-    fi
-fi
+    # --- Check 1: files_reviewed field ---
+    # Count entries in the files_reviewed array by inspecting the parsed object directly.
+    # An absent field or an empty array both count as "no evidence".
+    files_reviewed_list = review_object.get("files_reviewed", [])
+    files_reviewed_count = length(files_reviewed_list)   # 0 if absent or empty
 
-# Both concerns are now in ACCUMULATED_CONCERNS — assign back to review_concerns
-review_concerns="$ACCUMULATED_CONCERNS"
+    if files_reviewed_count == 0:
+        # Override the reviewer's original approval — missing evidence invalidates any APPROVED status.
+        review_approval = "CONCERNS"
+        add concern:
+        {
+            "severity": "HIGH",
+            "category": "missing_evidence",
+            "issue": "Reviewer '<reviewer_name>' did not provide files_reviewed evidence. Review may be incomplete.",
+            "recommendation": "Re-run review with complete evidence."
+        }
 
-# Check for file count mismatch (warning, not blocking)
-REVIEWED_COUNT=$(echo "$review_files_reviewed" | grep -c '"path"' 2>/dev/null || echo 0)
-if [[ "$REVIEWED_COUNT" -lt "$CHANGED_FILE_COUNT" ]]; then
-    # Reviewer documented fewer files than were changed - add warning to summary
-    review_summary="${review_summary} [WARNING: Reviewer documented ${REVIEWED_COUNT} files but ${CHANGED_FILE_COUNT} files were changed. Some files may have been skipped.]"
-fi
+    # --- Check 2: diff_summary field ---
+    # The field must be present AND non-empty. Both absent field and empty string trigger this concern.
+    diff_summary = review_object.get("diff_summary", "")
+
+    if diff_summary is absent or empty:
+        add concern:
+        {
+            "severity": "MEDIUM",
+            "category": "missing_evidence",
+            "issue": "Reviewer '<reviewer_name>' did not provide diff_summary evidence.",
+            "recommendation": "Re-run review with complete evidence."
+        }
+
+    # --- Check 3: file count mismatch ---
+    # Compare how many files the reviewer listed against how many files actually changed.
+    # changed_files comes from the prepare step: CHANGED_FILES=$(git diff --name-only "${BASE_BRANCH}..HEAD")
+    # Check 1 already covers the case where files_reviewed_count == 0 (HIGH severity).
+    # This check catches partial reviews where some files were listed but others skipped.
+    changed_file_count = length(changed_files)   # 0 when no files changed
+
+    if files_reviewed_count > 0 and files_reviewed_count < changed_file_count:
+        add concern:
+        {
+            "severity": "MEDIUM",
+            "category": "incomplete_review",
+            "issue": "Reviewer '<reviewer_name>' listed <files_reviewed_count> files reviewed but
+                      <changed_file_count> files were changed. Some files may have been skipped.",
+            "recommendation": "Verify all changed files were analyzed."
+        }
 ```
 
 </step>
