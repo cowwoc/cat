@@ -628,7 +628,10 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
        - Fix each concern according to the recommendation
-       - Commit your fixes using the same commit type as the primary implementation (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main implementation commit in Step 6. Do NOT use `test:` as an independent commit type for concern fixes.
+       - Commit your fixes using the same commit type as the primary implementation
+         (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
+         implementation commit in Step 6. Do NOT use `test:` as an independent commit
+         type for concern fixes.
        - Return JSON status when complete
 
        ## Return Format
@@ -829,7 +832,10 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        ## Instructions
        - Work in the worktree at ${WORKTREE_PATH}
        - Fix each concern according to the recommendation
-       - Commit your fixes using the same commit type as the primary implementation (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main implementation commit in Step 6. Do NOT use `test:` as an independent commit type for concern fixes.
+       - Commit your fixes using the same commit type as the primary implementation
+         (e.g., `bugfix:`, `feature:`). These commits will be squashed into the main
+         implementation commit in Step 6. Do NOT use `test:` as an independent commit
+         type for concern fixes.
        - Return JSON status when complete
 
        ## Return Format
