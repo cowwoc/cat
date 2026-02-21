@@ -13,25 +13,6 @@ stakeholders: [design, architect]
 
 ## Code Style
 
-### Line Length
-
-Keep all lines at most 120 characters. This is enforced by Checkstyle. Break long lines using Java's string
-concatenation, method chaining, or continuation indentation:
-
-```java
-// Good - long string broken at 120 characters
-throw new IOException("git branch --show-current returned no output in directory: " +
-  directory);
-
-// Good - long Javadoc wrapped at 120 characters
-/**
- * Returns the wrapped line content after splitting the input at word boundaries
- * to fit within the configured terminal width.
- */
-```
-
-Run `mvn verify` to catch line length violations before committing. The Checkstyle `LineLength` rule enforces max=120.
-
 ### Braces
 Use Allman style (opening brace on its own line):
 
