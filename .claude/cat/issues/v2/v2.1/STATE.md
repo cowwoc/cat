@@ -68,6 +68,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-skill-arguments-pattern
 - delete-jlink-config-sh
 - port-reset-failure-counter
+- port-skill-preprocessor-failure
 
 
 ## Issues Completed
