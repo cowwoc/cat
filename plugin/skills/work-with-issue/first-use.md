@@ -540,14 +540,73 @@ The stakeholder-review skill will spawn its own reviewer subagents and return ag
 
 Parse review result and filter false positives (concerns from reviewers that read base branch instead of worktree).
 
-**Auto-fix loop for HIGH+ concerns:**
+**Read auto-fix level and proceed limits from config:**
+
+```bash
+# Read reviewThresholds from .claude/cat/cat-config.json
+# Defaults match current hardcoded behavior if config is missing or field is absent
+AUTOFIX_LEVEL="high_and_above"
+PROCEED_CRITICAL=0
+PROCEED_HIGH=0
+PROCEED_MEDIUM=0
+PROCEED_LOW=0
+
+CONFIG_FILE="${CLAUDE_PROJECT_DIR}/.claude/cat/cat-config.json"
+if [[ -f "$CONFIG_FILE" ]]; then
+    # Extract reviewThresholds.autofix using grep/sed (no jq available)
+    AUTOFIX_RAW=$(grep -o '"autofix"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" | head -1 | \
+        sed 's/.*"autofix"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    if [[ -n "$AUTOFIX_RAW" ]]; then
+        AUTOFIX_LEVEL="$AUTOFIX_RAW"
+    fi
+
+    # Extract reviewThresholds.proceed values
+    # The proceed block looks like: "proceed": { "critical": 0, "high": 3, ... }
+    PROCEED_SECTION=$(awk '/"proceed"/{found=1} found{print; if(/\}/) {count++; if(count>=2) exit}}' "$CONFIG_FILE" 2>/dev/null || echo "")
+
+    extract_proceed_value() {
+        local key="$1"
+        local default_val="$2"
+        local val
+        val=$(echo "$PROCEED_SECTION" | grep -o "\"${key}\"[[:space:]]*:[[:space:]]*-\?[0-9]*" | head -1 | grep -o '-\?[0-9]*$')
+        if [[ -n "$val" ]]; then
+            echo "$val"
+        else
+            echo "$default_val"
+        fi
+    }
+
+    PROCEED_CRITICAL=$(extract_proceed_value "critical" 0)
+    PROCEED_HIGH=$(extract_proceed_value "high" 0)
+    PROCEED_MEDIUM=$(extract_proceed_value "medium" 0)
+    PROCEED_LOW=$(extract_proceed_value "low" 0)
+fi
+
+# Determine minimum severity to auto-fix based on AUTOFIX_LEVEL:
+# "all"            -> auto-fix CRITICAL, HIGH, and MEDIUM
+# "high_and_above" -> auto-fix CRITICAL and HIGH (default)
+# "critical"       -> auto-fix CRITICAL only
+# "none"           -> never auto-fix
+#
+# Use PROCEED_* to decide when to block (stop auto-fix loop) vs proceed to user approval.
+# A value of 0 means reject if any concerns remain at that severity.
+# A value of 0 means none are allowed (must block if any remain).
+```
+
+**Auto-fix loop for concerns (based on configured autofix level):**
 
 Initialize loop counter: `AUTOFIX_ITERATION=0`
 
-**While any concerns have severity >= HIGH and AUTOFIX_ITERATION < 3:**
+**While concerns exist at or above the configured auto-fix threshold and AUTOFIX_ITERATION < 3:**
+
+The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
+- `"all"`: loop while CRITICAL, HIGH, or MEDIUM concerns exist
+- `"high_and_above"`: loop while CRITICAL or HIGH concerns exist (default)
+- `"critical"`: loop while CRITICAL concerns exist
+- `"none"`: skip auto-fix loop entirely (proceed directly to approval gate)
 
 1. Increment iteration counter: `AUTOFIX_ITERATION++`
-2. Extract HIGH+ concerns (severity, description, location, recommendation)
+2. Extract concerns at or above the auto-fix threshold (severity, description, location, recommendation)
 3. Spawn implementation subagent to fix the concerns:
    ```
    Task tool:

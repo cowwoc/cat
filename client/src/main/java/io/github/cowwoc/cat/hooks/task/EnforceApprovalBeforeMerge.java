@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.TaskHandler;
 import io.github.cowwoc.cat.hooks.util.SessionFileUtils;
+import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 
 import java.io.IOException;
@@ -64,7 +65,15 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
     if (!subagentType.equals("cat:work-merge"))
       return Result.allow();
 
-    String trust = getTrustLevel();
+    String trust;
+    try
+    {
+      trust = getTrustLevel();
+    }
+    catch (IOException e)
+    {
+      throw WrappedCheckedException.wrap(e);
+    }
 
     if (trust.equals("high"))
       return Result.allow();
@@ -121,8 +130,9 @@ public final class EnforceApprovalBeforeMerge implements TaskHandler
    * Get the trust level from cat-config.json.
    *
    * @return the trust level ("high", "medium", or "low")
+   * @throws IOException if the config file cannot be read or contains invalid JSON
    */
-  private String getTrustLevel()
+  private String getTrustLevel() throws IOException
   {
     Config config = Config.load(scope.getJsonMapper(), scope.getClaudeProjectDir());
     return config.getString("trust", "medium");
