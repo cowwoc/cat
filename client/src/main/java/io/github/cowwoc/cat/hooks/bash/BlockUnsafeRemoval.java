@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.bash;
 
 import io.github.cowwoc.cat.hooks.BashHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.ShellParser;
 import io.github.cowwoc.pouch10.core.WrappedCheckedException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -148,7 +149,7 @@ public final class BlockUnsafeRemoval implements BashHandler
     String rmArgs = afterRm.substring(0, operatorIndex);
 
     // Tokenize by whitespace, respecting quotes
-    List<String> tokens = tokenize(rmArgs);
+    List<String> tokens = ShellParser.tokenize(rmArgs);
 
     boolean endOfOptions = false;
     for (String token : tokens)
@@ -175,54 +176,6 @@ public final class BlockUnsafeRemoval implements BashHandler
     }
 
     return targets;
-  }
-
-  /**
-   * Tokenizes a string by whitespace, respecting single and double quotes.
-   *
-   * @param input the input string
-   * @return list of tokens
-   */
-  private List<String> tokenize(String input)
-  {
-    List<String> tokens = new ArrayList<>();
-    StringBuilder current = new StringBuilder();
-    boolean inSingleQuote = false;
-    boolean inDoubleQuote = false;
-
-    for (int i = 0; i < input.length(); ++i)
-    {
-      char c = input.charAt(i);
-
-      if (c == '\'' && !inDoubleQuote)
-      {
-        inSingleQuote = !inSingleQuote;
-        continue;
-      }
-
-      if (c == '"' && !inSingleQuote)
-      {
-        inDoubleQuote = !inDoubleQuote;
-        continue;
-      }
-
-      if (Character.isWhitespace(c) && !inSingleQuote && !inDoubleQuote)
-      {
-        if (current.length() > 0)
-        {
-          tokens.add(current.toString());
-          current.setLength(0);
-        }
-        continue;
-      }
-
-      current.append(c);
-    }
-
-    if (current.length() > 0)
-      tokens.add(current.toString());
-
-    return tokens;
   }
 
   /**
@@ -294,7 +247,7 @@ public final class BlockUnsafeRemoval implements BashHandler
       return null;
 
     // Resolve target path (may not exist yet, so use normalize not toRealPath)
-    Path targetPath = resolvePath(target, workingDirectory);
+    Path targetPath = ShellParser.resolvePath(target, workingDirectory);
 
     // Check if any protected path is inside or equal to the target
     for (Path protectedPath : protectedPaths)
@@ -476,22 +429,6 @@ public final class BlockUnsafeRemoval implements BashHandler
       current = current.getParent();
     }
     return null;
-  }
-
-  /**
-   * Resolves a path (absolute or relative) against a base directory.
-   *
-   * @param path the path to resolve
-   * @param base the base directory for relative paths
-   * @return the resolved absolute path
-   */
-  private Path resolvePath(String path, String base)
-  {
-    path = path.replaceAll("['\"]", "").strip();
-    Path p = Paths.get(path);
-    if (p.isAbsolute())
-      return p.normalize();
-    return Paths.get(base, path).normalize();
   }
 
   /**

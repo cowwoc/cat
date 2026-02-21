@@ -10,12 +10,10 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.WorktreeContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -72,24 +70,17 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
     if (filePath.isEmpty())
       return FileWriteHandler.Result.allow();
 
-    String issueId = findIssueIdForSession(sessionId);
-    if (issueId == null)
+    WorktreeContext context = WorktreeContext.forSession(projectDir, mapper, sessionId);
+    if (context == null)
       return FileWriteHandler.Result.allow();
 
-    Path worktreePath = projectDir.resolve(".claude").resolve("cat").resolve("worktrees").resolve(issueId);
-    if (!Files.isDirectory(worktreePath))
-      return FileWriteHandler.Result.allow();
+    Path absoluteFilePath = Path.of(filePath).toAbsolutePath().normalize();
 
-    Path filePathAbs = Path.of(filePath).toAbsolutePath().normalize();
-    Path worktreePathAbs = worktreePath.toAbsolutePath().normalize();
-
-    if (filePathAbs.startsWith(worktreePathAbs))
+    if (absoluteFilePath.startsWith(context.absoluteWorktreePath()))
       return FileWriteHandler.Result.allow();
 
     // Compute the corrected worktree-relative path
-    Path projectDirAbs = projectDir.toAbsolutePath().normalize();
-    Path relativePath = projectDirAbs.relativize(filePathAbs);
-    Path correctedPath = worktreePathAbs.resolve(relativePath);
+    Path correctedPath = context.correctedPath(absoluteFilePath);
 
     String message = """
       ERROR: Worktree isolation violation
@@ -102,57 +93,10 @@ public final class EnforceWorktreePathIsolation implements FileWriteHandler
 
       Do NOT bypass this hook using Bash (cat, echo, tee, etc.) to write the file directly. \
       The worktree exists to isolate changes from the main workspace until merge.""".formatted(
-      worktreePathAbs,
-      filePathAbs,
+      context.absoluteWorktreePath(),
+      absoluteFilePath,
       correctedPath);
 
     return FileWriteHandler.Result.block(message);
-  }
-
-  /**
-   * Scans the lock directory to find the issue ID associated with the given session ID.
-   * <p>
-   * Returns {@code null} if no matching lock file is found or if an I/O error occurs during
-   * the scan (treated as no active lock context).
-   *
-   * @param sessionId the session ID to search for
-   * @return the issue ID extracted from the lock filename, or {@code null} if not found
-   */
-  private String findIssueIdForSession(String sessionId)
-  {
-    Path lockDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
-    if (!Files.isDirectory(lockDir))
-      return null;
-
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(lockDir, "*.lock"))
-    {
-      for (Path lockFile : stream)
-      {
-        try
-        {
-          String content = Files.readString(lockFile);
-          JsonNode lockData = mapper.readTree(content);
-          JsonNode sessionNode = lockData.get("session_id");
-          if (sessionNode == null)
-            continue;
-
-          if (sessionId.equals(sessionNode.asString()))
-          {
-            String filename = lockFile.getFileName().toString();
-            return filename.substring(0, filename.length() - ".lock".length());
-          }
-        }
-        catch (IOException _)
-        {
-          // Skip unreadable or malformed lock files
-        }
-      }
-    }
-    catch (IOException _)
-    {
-      // Lock directory not accessible - no active lock context
-    }
-
-    return null;
   }
 }
