@@ -5,8 +5,9 @@
 - **Dependencies:** []
 - **Blocks:** []
 - **Last Updated:** 2026-02-22
-- **Resolution:** implemented - Ported reset-failure-counter.sh to Java by adding ResetFailureCounter handler to the
-  PostToolUseHook pipeline. The handler deletes the cat-failure-tracking-<sessionId>.count file on each successful tool
-  execution. Deleted reset-failure-counter.sh and removed its hooks.json registration. Added ResetFailureCounterTest
-  with 5 test cases covering file deletion, missing file tolerance, IO error graceful handling, blank sessionId
-  validation, and always-allow result.
+- **Resolution:** implemented - Ported skill-preprocessor-failure.sh to Java by adding DetectPreprocessorFailure handler
+  to the PostToolUseHook and PostToolUseFailureHook pipelines. The handler checks the hook data error field for the
+  preprocessor failure pattern and injects additionalContext instructing the agent to run /cat:feedback. Deleted
+  skill-preprocessor-failure.sh and removed its hooks.json registration. Added DetectPreprocessorFailureTest with test
+  cases covering matching errors, non-matching errors, missing error field, embedded pattern matching, empty error
+  strings, non-string error field types, JSON null error field, and case-sensitive matching.

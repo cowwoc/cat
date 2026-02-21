@@ -113,14 +113,6 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/client/bin/post-tool-use-failure"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/skill-preprocessor-failure.sh"
-          }
-        ]
       }
     ],
     "Stop": [
