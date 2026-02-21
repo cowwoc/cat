@@ -1007,6 +1007,33 @@
         "catches_variations": true
       },
       "correct_behavior": "Autofix subagent should commit using the same type as the primary implementation (e.g., bugfix:, feature:), since all commits are squashed into one implementation commit in Step 6"
+    },
+    {
+      "id": "M379",
+      "timestamp": "2026-02-22T16:24:00Z",
+      "category": "protocol_violation",
+      "description": "git-squash Quick Workflow leaves orphaned backup branch after successful squash",
+      "root_cause": "GitSquash.java creates the backup branch and verifies diff is empty, but never calls 'git branch -D' to delete it on success. The buildSuccessJson method included backup_branch in the OK response, teaching callers to expect it rather than verifying deletion.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/client/src/main/java/io/github/cowwoc/cat/hooks/util/GitSquash.java",
+      "pattern_keywords": [
+        "backup_branch",
+        "git-squash",
+        "orphaned_branch",
+        "cleanup",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "After verifying the squash diff is empty and commit count is 1, delete the backup branch with 'git branch -D <backupBranch>' before returning the OK JSON response. The OK response should not include backup_branch since it has been deleted."
     }
   ]
 }
