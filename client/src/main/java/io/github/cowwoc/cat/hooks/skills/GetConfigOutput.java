@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.skills;
 import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -41,13 +42,14 @@ public final class GetConfigOutput
 
   /**
    * Get current settings display box using project root from environment.
-   *
+   * <p>
    * This method supports direct preprocessing pattern - it collects all
    * necessary data from the environment without requiring LLM-provided arguments.
    *
    * @return the formatted settings box, or null if CLAUDE_PROJECT_DIR not set or config not found
+   * @throws IOException if the config file cannot be read or contains invalid JSON
    */
-  public String getCurrentSettings()
+  public String getCurrentSettings() throws IOException
   {
     return getCurrentSettings(scope.getClaudeProjectDir());
   }
@@ -57,9 +59,10 @@ public final class GetConfigOutput
    *
    * @param projectRoot the project root path
    * @return the formatted settings box, or null if config file not found
-   * @throws NullPointerException if projectRoot is null
+   * @throws IOException if the config file cannot be read or contains invalid JSON
+   * @throws NullPointerException if {@code projectRoot} is null
    */
-  public String getCurrentSettings(Path projectRoot)
+  public String getCurrentSettings(Path projectRoot) throws IOException
   {
     requireThat(projectRoot, "projectRoot").isNotNull();
 

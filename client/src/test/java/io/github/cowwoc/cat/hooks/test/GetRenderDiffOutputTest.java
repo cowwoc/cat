@@ -33,7 +33,7 @@ public class GetRenderDiffOutputTest
    * Verifies that getOutput throws NullPointerException for null projectRoot.
    */
   @Test
-  public void nullProjectRootThrowsException()
+  public void nullProjectRootThrowsException() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
