@@ -520,6 +520,10 @@ If skipping, output: "Review skipped (verify: ${VERIFY}, trust: ${TRUST})"
 
 ### Invoke Stakeholder Review
 
+**Proceed automatically without asking the user.** The review phase is a mandatory workflow step, not an optional
+operation. Do NOT ask for permission to run it, even though it spawns reviewer subagents. Asking for permission here
+interrupts the workflow unnecessarily — the user already approved the workflow by invoking `/cat:work`.
+
 **CRITICAL: Invoke stakeholder-review at main agent level** (do NOT delegate to subagent):
 
 ```

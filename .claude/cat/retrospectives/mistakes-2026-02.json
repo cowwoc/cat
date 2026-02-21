@@ -1141,6 +1141,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Use TestNG @Test(expectedExceptions=...) or assertThrows(), or write a try/catch that catches only the expected exception with no sentinel line after the call. TestNG fails the test automatically if the expected exception is not thrown."
+    },
+    {
+      "id": "M384",
+      "timestamp": "2026-02-22T17:40:28Z",
+      "category": "protocol_violation",
+      "description": "Agent asked user for permission to run stakeholder review, treating mandatory workflow step as optional operation",
+      "root_cause": "Skill documentation lacked explicit instruction to proceed automatically through the review phase; agent sought permission for heavyweight subagent-spawning operations without guidance that review is non-optional",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "stakeholder_review",
+        "protocol_violation",
+        "unnecessary_permission",
+        "mandatory_step"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Invoke stakeholder-review automatically as part of the mandatory workflow without asking user for permission"
     }
   ]
 }
