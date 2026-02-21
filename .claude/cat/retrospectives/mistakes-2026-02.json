@@ -1061,6 +1061,32 @@
         "catches_variations": true
       },
       "correct_behavior": "Keep all Java source lines (including comments and Javadoc) at most 120 characters; run mvn verify to catch violations"
+    },
+    {
+      "id": "M381",
+      "timestamp": "2026-02-22T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent added project-specific 120-char line wrapping rule to plugin/skills/learn/phase-prevent.md, a shared plugin file",
+      "root_cause": "Agent conflated project-level conventions (.claude/rules/common.md) with plugin-level behavior. The learn subagent was implementing prevention for a formatting issue and applied the project rule to the shared plugin file instead of recognizing that plugin files are shared across all users and must not contain project-specific conventions.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-prevent.md",
+      "pattern_keywords": [
+        "plugin_scope_violation",
+        "project_convention",
+        "shared_plugin_file",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Project conventions in .claude/rules/ apply only to project-level files. Plugin files under plugin/ are shared across all CAT users and must never embed project-specific conventions. To enforce project conventions on subagents, add rules to CLAUDE.md, .claude/rules/, or project hooks in .claude/settings.json."
     }
   ]
 }
