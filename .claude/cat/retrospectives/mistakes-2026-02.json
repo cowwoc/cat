@@ -1386,6 +1386,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When a decomposed parent issue is requested and has open sub-issues, return NO_TASKS with a clear message directing the user to work on sub-issues first. When all sub-issues are closed, the parent becomes available automatically and work-prepare should proceed normally."
+    },
+    {
+      "id": "M392",
+      "timestamp": "2026-02-23T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "/cat:work offered to close decomposed parent issue before verifying acceptance criteria",
+      "root_cause": "work/first-use.md had no protocol for the decomposed-parent-all-children-closed scenario. When the agent detected all sub-issues were closed, no guidance existed requiring acceptance criteria verification before offering closure. The agent proceeded directly from 'children closed' to 'offer closure', skipping the mandatory acceptance criteria check.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work/first-use.md",
+      "pattern_keywords": [
+        "decomposed",
+        "parent-issue",
+        "acceptance-criteria",
+        "closure-verification",
+        "work-prepare"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all PLAN.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed → criteria verified → offer closure."
     }
   ]
 }
