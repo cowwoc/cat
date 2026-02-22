@@ -12,11 +12,9 @@
 ## Tasks
 [Brief description of tasks in this patch]
 
-## Gates
-
-### Entry
+## Pre-conditions
 - Previous version complete (or no prerequisites)
 
-### Exit
+## Post-conditions
 - All tasks complete
 - All requirements verified (if any)

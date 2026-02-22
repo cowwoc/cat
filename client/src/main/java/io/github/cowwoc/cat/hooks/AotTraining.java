@@ -80,7 +80,7 @@ public final class AotTraining
         Path planFile = tempDir.resolve("PLAN.md");
         Files.writeString(planFile, """
           # Plan
-          ## Acceptance Criteria
+          ## Post-conditions
           - [ ] Test criterion
           ## Files to Modify
           - test.md
