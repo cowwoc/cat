@@ -334,7 +334,7 @@ Track all amendments and include in the approval gate summary:
 
 ## Step 4: Confirm Implementation
 
-**This step confirms PLAN.md acceptance criteria were implemented before stakeholder quality review.**
+**This step confirms PLAN.md post-conditions were implemented before stakeholder quality review.**
 
 Display the **Confirming phase** banner by running:
 
@@ -376,10 +376,10 @@ Skill tool:
 
 ### Handle Verification Result
 
-Parse verification result to determine if all acceptance criteria were satisfied.
+Parse verification result to determine if all post-conditions were satisfied.
 
 **If all criteria Done:**
-- Output: "All acceptance criteria verified - proceeding to review"
+- Output: "All post-conditions verified - proceeding to review"
 - Continue to Step 5
 
 **If any criteria Missing:**
@@ -387,23 +387,23 @@ Parse verification result to determine if all acceptance criteria were satisfied
 - Spawn implementation subagent to fix gaps (max 2 iterations):
   ```
   Task tool:
-    description: "Fix missing acceptance criteria (iteration ${ITERATION})"
+    description: "Fix missing post-conditions (iteration ${ITERATION})"
     subagent_type: "cat:work-execute"
     model: "sonnet"
     prompt: |
-      Fix the following missing acceptance criteria for task ${ISSUE_ID}.
+      Fix the following missing post-conditions for task ${ISSUE_ID}.
 
       ## Task Configuration
       ISSUE_ID: ${ISSUE_ID}
       WORKTREE_PATH: ${WORKTREE_PATH}
       BRANCH: ${BRANCH}
 
-      ## Missing Acceptance Criteria
+      ## Missing Post-conditions
       ${missing_criteria_formatted}
 
       ## Instructions
       - Work in the worktree at ${WORKTREE_PATH}
-      - Implement each missing criterion according to PLAN.md
+      - Implement each missing post-condition according to PLAN.md
       - Commit your fixes with appropriate commit messages
       - Return JSON status when complete
 
@@ -438,7 +438,7 @@ grep -i "e2e\|end.to.end\|end-to-end" "${ISSUE_PATH}/PLAN.md"
 ```
 
 **If no E2E criteria found in PLAN.md:**
-- Output: "Warning: No E2E acceptance criteria found in PLAN.md for this issue."
+- Output: "Warning: No E2E post-conditions found in PLAN.md for this issue."
 - Output: "Running E2E verification based on the feature's goal."
 - Proceed to Step 2 using the goal from PLAN.md to determine what to test.
 
