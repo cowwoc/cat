@@ -56,6 +56,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - remove-license-from-skill-md
 - restructure-pricing-tiers
 - session-start-version-check
+- simplify-review-thresholds
 - unify-hook-dispatchers
 - unify-posttooluse-failure-hooks
 - unify-posttooluse-hooks
