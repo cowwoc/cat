@@ -755,6 +755,22 @@ determine completion. Instead, confirm that `/cat:git-squash` was invoked in Ste
 
 **If Step 6 was completed:** Proceed to approval gate below.
 
+### Pre-Gate Skill-Builder Review (BLOCKING)
+
+When the issue modifies files in `plugin/skills/` or `plugin/commands/`, invoke `/cat:skill-builder` to review
+each modified skill or command file before presenting the approval gate.
+
+```bash
+# Check whether any skill or command files were modified
+git diff --name-only "$(cat "$(git rev-parse --git-dir)/cat-base")..HEAD" | grep -E '^plugin/(skills|commands)/'
+```
+
+**If skill or command files were modified:** Invoke `/cat:skill-builder` with the path to each modified skill or
+command. Review the output and address any priming issues or structural problems it identifies before proceeding
+to the approval gate.
+
+**If no skill or command files were modified:** Skip this check and proceed to the approval gate below.
+
 ### If trust == "high"
 
 Skip approval gate. Continue directly to Step 8 (merge).
