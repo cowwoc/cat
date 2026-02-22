@@ -25,7 +25,7 @@ public final class DetectPreprocessorFailureTest
    * containing the feedback instruction.
    */
   @Test
-  public void matchingError_returnsContextWithFeedbackInstruction()
+  public void matchingErrorReturnsContextWithFeedbackInstruction()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -43,7 +43,7 @@ public final class DetectPreprocessorFailureTest
    * Verifies that a non-matching error field returns an allow result.
    */
   @Test
-  public void nonMatchingError_returnsAllow()
+  public void nonMatchingErrorReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -60,7 +60,7 @@ public final class DetectPreprocessorFailureTest
    * Verifies that a missing error field returns an allow result.
    */
   @Test
-  public void missingErrorField_returnsAllow()
+  public void missingErrorFieldReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     JsonNode hookData = mapper.createObjectNode();
@@ -76,7 +76,7 @@ public final class DetectPreprocessorFailureTest
    * Verifies that an error containing the pattern anywhere in the string is matched.
    */
   @Test
-  public void errorWithPatternEmbedded_returnsContextResult()
+  public void errorWithPatternEmbeddedReturnsContextResult()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -94,7 +94,7 @@ public final class DetectPreprocessorFailureTest
    * Verifies that an empty error string returns an allow result.
    */
   @Test
-  public void emptyErrorString_returnsAllow()
+  public void emptyErrorStringReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -113,7 +113,7 @@ public final class DetectPreprocessorFailureTest
    * so the pattern does not match and the result is allow.
    */
   @Test
-  public void numericErrorField_returnsAllow()
+  public void numericErrorFieldReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -132,7 +132,7 @@ public final class DetectPreprocessorFailureTest
    * so the pattern does not match and the result is allow.
    */
   @Test
-  public void booleanErrorField_returnsAllow()
+  public void booleanErrorFieldReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -150,7 +150,7 @@ public final class DetectPreprocessorFailureTest
    * Jackson's asString() on a null node returns null, triggering the null check.
    */
   @Test
-  public void jsonNullErrorField_returnsAllow()
+  public void jsonNullErrorFieldReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
@@ -168,7 +168,7 @@ public final class DetectPreprocessorFailureTest
    * This confirms the implementation intentionally uses case-sensitive string contains.
    */
   @Test
-  public void lowercasePattern_returnsAllow()
+  public void lowercasePatternReturnsAllow()
   {
     JsonMapper mapper = JsonMapper.builder().build();
     ObjectNode hookData = mapper.createObjectNode();
