@@ -1496,6 +1496,33 @@
         "catches_variations": true
       },
       "correct_behavior": "When asked to commit a file at a path outside the repository root, ask the user to clarify rather than attempting a git operation that will always fail"
+    },
+    {
+      "id": "M396",
+      "timestamp": "2026-02-24T01:24:00Z",
+      "category": "protocol_violation",
+      "description": "Agent implemented bugfix for bare issue name scope detection without invoking cat:tdd-implementation first",
+      "root_cause": "CLAUDE.md Testing Requirements only mandated running tests before review, not writing failing tests first. Without an explicit requirement to invoke cat:tdd-implementation before implementing, the agent committed the bugfix (95735cc8) and added tests as a follow-up (d314c63c, 9701eb0a) instead of following TDD order.",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/CLAUDE.md",
+      "pattern_keywords": [
+        "tdd",
+        "bugfix",
+        "test-first",
+        "cat:tdd-implementation",
+        "ad-hoc-fix"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before implementing any bugfix or feature with testable inputs/outputs, invoke cat:tdd-implementation to write failing tests first. This applies to all contexts including ad-hoc user-requested fixes, not only formal /cat:work issue workflows."
     }
   ]
 }

@@ -1,8 +1,7 @@
 # State
 
-- **Status:** closed
-- **Progress:** 100%
-- **Resolution:** verified - code already correct, all 23 WorkPrepare tests pass
+- **Status:** open
+- **Progress:** 0%
 - **Dependencies:** []
 - **Blocks:** []
 - **Last Updated:** 2026-02-24

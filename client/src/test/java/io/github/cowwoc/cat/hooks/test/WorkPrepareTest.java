@@ -1281,6 +1281,54 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that bare issue names passed via --arguments detect as Scope.BARE_NAME
+   * and qualified names detect as Scope.ISSUE.
+   *
+   * This test ensures that the scope detection pattern correctly distinguishes
+   * between bare names (e.g., 'fix-bug') and qualified names (e.g., '2.1-fix-bug').
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeBareNameDetectionViaArguments() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create an issue with a bare name
+      createIssue(projectDir, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add fix-bug issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+
+      // Pass bare issue name directly - must be detected as BARE_NAME scope
+      // and resolve to the correct qualified issue
+      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+
+      // Must succeed with READY status when bare name resolves
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      // Must resolve to the fully-qualified issue ID
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-fix-bug");
+      // Must have bare issue name extracted correctly
+      requireThat(node.path("issue_name").asString(), "issueName").isEqualTo("fix-bug");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
