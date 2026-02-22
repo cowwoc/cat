@@ -4,8 +4,8 @@
     "mistake_count_threshold": 10,
     "trigger_interval_days": 7
   },
-  "last_retrospective": "2026-02-22T13:45:25Z",
-  "mistake_count_since_last": 13,
+  "last_retrospective": "2026-02-23T10:22:49.437200407Z",
+  "mistake_count_since_last": 0,
   "files": {
     "mistakes": [
       "mistakes-2026-01.json",
@@ -336,10 +336,10 @@
     {
       "pattern_id": "PATTERN-016",
       "pattern": "squash_commit_corruption",
-      "occurrences_total": 8,
-      "occurrences_after_fix": 6,
+      "occurrences_total": 11,
+      "occurrences_after_fix": 9,
       "first_seen": "2026-02-06T12:54:53Z",
-      "last_seen": "2026-02-21T15:44:48Z",
+      "last_seen": "2026-02-22T17:00:00Z",
       "last_action_date": null,
       "status": "recurring",
       "effectiveness": "pending",
@@ -349,12 +349,15 @@
         "M484",
         "M488",
         "M500",
-        "M503"
+        "M503",
+        "M379",
+        "M385",
+        "M386"
       ],
       "related_action_items": [
         "A018"
       ],
-      "note": "Git squash operations produce incorrect results - manual squash bypass, stale worktree capture, generic commit messages. Now enforced by RemindGitSquash hook blocking git reset --soft."
+      "note": "Git squash operations produce incorrect results - orphaned backup branches, unsquashed commits at approval gate, working tree not updated after branch pointer move. RemindGitSquash hook blocks direct reset alternatives but does not enforce pre-gate squash verification. GitSquash.java now deletes backup branch on success. Squash gate added to work-with-issue Step 7."
     },
     {
       "pattern_id": "PATTERN-017",
@@ -379,10 +382,10 @@
     {
       "pattern_id": "PATTERN-018",
       "pattern": "stakeholder_review_quality",
-      "occurrences_total": 7,
-      "occurrences_after_fix": 3,
+      "occurrences_total": 8,
+      "occurrences_after_fix": 4,
       "first_seen": "2026-02-08T14:00:00Z",
-      "last_seen": "2026-02-21T15:34:13Z",
+      "last_seen": "2026-02-23T02:00:00Z",
       "last_action_date": null,
       "status": "recurring",
       "effectiveness": "pending",
@@ -390,12 +393,51 @@
         "M478",
         "M496",
         "M498",
-        "M499"
+        "M499",
+        "M389"
       ],
       "related_action_items": [
         "A021"
       ],
-      "note": "Stakeholder reviewers (design, testing) fail to detect duplication, missing validation, and code quality issues. Reviewers read wrong branch or miss patterns spanning multiple files."
+      "note": "Stakeholder reviewers fail to detect behavioral gaps, missing validation, and code quality issues. Reviewers read wrong branch or miss patterns spanning multiple files. Requirements stakeholder skips task-local Success Criteria for porting tasks, reading only formal REQ-IDs and missing behavioral parity checks. Pattern persists across 8 total occurrences despite multiple preventions."
+    },
+    {
+      "pattern_id": "PATTERN-019",
+      "pattern": "line_length_violation",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-22T16:26:18Z",
+      "last_seen": "2026-02-22T17:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M380",
+        "M382"
+      ],
+      "related_action_items": [
+        "A023"
+      ],
+      "note": "Agents write lines exceeding 120-character limit in both Java source files and Markdown skill files. Prevention rules exist in java.md and common.md but agents do not actively verify line length when editing content-focused files. Formatting attention is consumed by content correctness."
+    },
+    {
+      "pattern_id": "PATTERN-020",
+      "pattern": "mandatory_step_treated_as_optional",
+      "occurrences_total": 2,
+      "occurrences_after_fix": 0,
+      "first_seen": "2026-02-22T17:40:28Z",
+      "last_seen": "2026-02-23T00:00:00Z",
+      "last_action_date": null,
+      "status": "new",
+      "effectiveness": "pending",
+      "preventions": [
+        "M384",
+        "M388"
+      ],
+      "related_action_items": [
+        "A024"
+      ],
+      "note": "Agents ask user permission before mandatory workflow steps or skip them entirely. Examples: asking permission for stakeholder review (mandatory in work-with-issue), skipping skill-builder review before approval gate. Agents cannot distinguish mandatory from optional workflow steps when skill documentation does not explicitly mark steps as MANDATORY."
     }
   ],
   "action_items": [
@@ -434,11 +476,11 @@
       "escalation": {
         "id": "ESCALATE-A001",
         "escalated_date": "2026-02-02T18:00:00-05:00",
-        "last_reviewed": "2026-02-22T13:45:25Z",
+        "last_reviewed": "2026-02-23T10:22:49Z",
         "reason": "5 post-fix mistakes (M346, M349, M356 in current period) - documentation-level prevention ineffective",
         "escalation_level": "hook",
-        "analysis": "Documentation tells subagents not to fabricate, but subagents ignore it when prompts contain example values. PATTERN-018 (R021) adds new dimension: subagents also ignore workspace path directives and use default CWD. Root gap is subagent compliance with delegation prompt constraints generally, not only validation. Need either structural prompt isolation or hook-level enforcement of subagent output evidence.",
-        "proposed_solution": "Add A012 (prompt priming prevention) AND require explicit evidence (tool output) in validation results. Consider PostToolUse hook to detect validation claims without corresponding skill invocation in session. R021: A021 addresses stakeholder review path compliance downstream.",
+        "analysis": "R022 update: No new PATTERN-001 recurrences in current period (M377-M391). Prior period had 5 post-fix failures (M346, M349, M356, M364, M368). A012 (prompt priming prevention) may be taking effect - descriptive placeholders instead of example values appears to reduce fabrication rate. PATTERN-020 (mandatory step bypass) shows subagent compliance gap persists in different form. Escalation remains open: if PATTERN-001 recurs, implement PostToolUse hook to detect validation claims without corresponding skill invocation evidence in session transcript.",
+        "proposed_solution": "Continue monitoring. A012 (prompt priming prevention) may be stabilizing the pattern. R022: No new recurrences in current period. If recurrence in next period, implement structural enforcement: PostToolUse hook requiring tool output evidence in subagent validation claims. Current escalation level: hook (proposed but not implemented). Monitor for 2+ clean periods before closing.",
         "status": "open"
       }
     },
@@ -497,7 +539,10 @@
         "reason": "Documentation-level prevention ineffective (4 post-fix mistakes vs 3 before)",
         "escalation_level": "hook",
         "implementation": "Enhanced warn-base-branch-edit.sh to detect and warn when Edit/Write uses absolute /workspace/ paths while in a worktree, bypassing isolation",
-        "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh"
+        "prevention_path": "${CLAUDE_PLUGIN_ROOT}/hooks/warn-base-branch-edit.sh",
+        "last_reviewed": "2026-02-23T10:22:49Z",
+        "analysis": "R022 update: M390 (learn skill committed retrospective metadata to main workspace instead of active worktree) adds new path/commit-routing assumption instance. warn-base-branch-edit.sh hook covers Edit/Write tool calls in worktrees, but learn skill commit routing decisions are not enforced at hook level. A022 (phase-record.md single-commit-rule) partially addresses M390 scenario. Documentation-level A003 (agent-architecture.md section) confirmed ineffective across 5+ instances. Hook enforcement covers only a subset of path assumption failure modes.",
+        "proposed_solution": "Expand hook coverage to detect commits to main workspace while active worktree exists. A022 prevention (phase-record.md) addresses the specific M390 learn-skill scenario. Consider adding commit destination validation to learn skill phase-record subagent. R022: Escalation remains open; M390 prevention implemented but not yet verified."
       }
     },
     {
@@ -858,11 +903,11 @@
       "escalation": {
         "id": "ESCALATE-A018",
         "escalated_date": "2026-02-20T06:19:02-05:00",
-        "last_reviewed": "2026-02-22T13:45:25Z",
+        "last_reviewed": "2026-02-23T10:22:49Z",
         "reason": "Squash workflow continues to fail despite A018. 4 post-fix mistakes (M484, M488, M500, M503). M503 added RemindGitSquash hook blocking git reset --soft, but underlying issue is worktree staleness and manual squash bypass.",
         "escalation_level": "partial_implementation",
-        "analysis": "R021 adds 2 new squash failures: M362 (agent skipped squash step entirely - no commit-count gate) and M369 (worktree diverged after squash despite backup_verified:true - working tree not updated). Hook blocks git reset --soft alternatives but does not enforce pre-gate squash verification. M362 prevention adds commit-count check to work-with-issue Step 7. M369 prevention adds post-squash working-tree sync check.",
-        "proposed_solution": "Hook enforcement partially in place. M362 fix adds gate verification (COMMIT_COUNT == 1 before Step 7). M369 fix requires post-squash git status --porcelain check and reset --hard if diverged. Both implemented as skill-level preventions. Monitor for further recurrence.",
+        "analysis": "R022 update: 3 new squash-related failures in current period: M379 (GitSquash.java leaves orphaned backup branch - never deletes on success), M385 (5 unsquashed commits at approval gate - recurs M362, skill gate bypassed again), M386 (fastForwardMerge uses pointer-only git push refspec, does not sync working tree - recurs M369). PATTERN-016 now has 11 total occurrences, 9 after first fix attempt. Three distinct sub-issues identified: (1) backup cleanup, (2) pre-gate squash enforcement, (3) working tree sync. All three have code-level fixes pending implementation (not yet verified). RemindGitSquash hook blocks direct reset alternatives but cannot prevent agent skipping squash step or the working-tree-pointer-divergence issue in MergeAndCleanup.",
+        "proposed_solution": "Three distinct code fixes required (all identified, not yet verified): (1) GitSquash.java: delete backup branch before returning OK JSON response (M379). (2) work-with-issue Step 7: COMMIT_COUNT == 1 gate before entering approval gate (M385). (3) MergeAndCleanup.java: call syncMainWorkingTree() running git reset hard HEAD after fastForwardMerge() (M386). Items (1) and (3) require Java code changes. Item (2) requires skill update. Monitor after all three are verified. Current escalation level: partial_implementation. R022: All three preventions recorded in mistakes file but none yet implemented in codebase.",
         "status": "open"
       }
     },
@@ -938,6 +983,36 @@
         "M366"
       ],
       "implementation": "M366 prevention added single-commit-rule to phase-record.md Step 12-13: when prevention is skill/process/documentation/config type, group prevention file and retrospective metadata into one commit in Step 13. Only split when prevention targets a worktree.",
+      "effectiveness_check": null
+    },
+    {
+      "id": "A023",
+      "priority": "low",
+      "description": "Add active line-length verification reminder to phase-prevent.md: after editing any Markdown or Java file, verify all added lines comply with the 120-character limit (common.md). Include in phase-prevent Step 4 a checkstep: count characters in each added line and wrap any that exceed 120.",
+      "category": "formatting_violation",
+      "pattern_id": "PATTERN-019",
+      "status": "open",
+      "created_date": "2026-02-23T10:22:49Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M380",
+        "M382"
+      ],
+      "effectiveness_check": null
+    },
+    {
+      "id": "A024",
+      "priority": "high",
+      "description": "Explicitly label all mandatory workflow steps as MANDATORY in work-with-issue and other orchestration skills. Add explicit instruction that mandatory steps do not require user permission and must not be skipped. Affected steps: stakeholder-review (Step 5), skill-builder review before approval gate, squash before approval gate (Step 6). Add a MANDATORY STEPS checklist at the top of work-with-issue/first-use.md.",
+      "category": "protocol_violation",
+      "pattern_id": "PATTERN-020",
+      "status": "open",
+      "created_date": "2026-02-23T10:22:49Z",
+      "completed_date": null,
+      "related_mistakes": [
+        "M384",
+        "M388"
+      ],
       "effectiveness_check": null
     }
   ]
