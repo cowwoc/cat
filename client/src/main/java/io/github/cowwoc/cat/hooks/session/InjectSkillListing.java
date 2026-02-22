@@ -52,7 +52,7 @@ public final class InjectSkillListing implements SessionStartHandler
     String source = input.getString("source");
     if (!source.equals("compact"))
       return Result.empty();
-    String listing = SkillDiscovery.formatSkillListing(scope);
+    String listing = SkillDiscovery.getMainAgentSkillListing(scope);
     if (listing.isEmpty())
       return Result.empty();
     return Result.context(listing);

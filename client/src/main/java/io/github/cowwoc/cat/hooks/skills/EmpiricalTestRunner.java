@@ -483,15 +483,33 @@ public final class EmpiricalTestRunner
     for (int i = 0; i < messages.size(); ++i)
     {
       TestMessage msg = messages.get(i);
-      TurnOutput turn;
-      if (i < testTurns.size())
-        turn = testTurns.get(i);
-      else
-        turn = new TurnOutput(List.of(), List.of());
 
-      EvaluationResult evaluation = evaluateOutput(turn.texts(), turn.toolUses(), msg.criteria());
+      // Aggregate all turns that belong to this message.
+      // For single-message configs, all test turns belong to message 0.
+      // For multi-message configs, turns are split evenly across messages.
+      List<String> aggregatedTexts = new ArrayList<>();
+      List<String> aggregatedToolUses = new ArrayList<>();
+      if (messages.size() == 1)
+      {
+        // Single message: all turns belong to it
+        for (TurnOutput turn : testTurns)
+        {
+          aggregatedTexts.addAll(turn.texts());
+          aggregatedToolUses.addAll(turn.toolUses());
+        }
+      }
+      else if (i < testTurns.size())
+      {
+        // Multi-message: map turn i to message i (original behavior)
+        TurnOutput turn = testTurns.get(i);
+        aggregatedTexts.addAll(turn.texts());
+        aggregatedToolUses.addAll(turn.toolUses());
+      }
 
-      String turnPreview = String.join("\n", turn.texts());
+      EvaluationResult evaluation = evaluateOutput(aggregatedTexts, aggregatedToolUses,
+        msg.criteria());
+
+      String turnPreview = String.join("\n", aggregatedTexts);
       String truncatedTurnPreview = truncatePreview(turnPreview, 200).replace("\n", "\\n");
 
       evaluations.add(new MessageEvaluation(i, evaluation.pass(), evaluation.checks(),
