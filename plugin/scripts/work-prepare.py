@@ -714,6 +714,52 @@ def main():
             print(json.dumps(result, indent=2))
             sys.exit(0)
 
+        if status == "decomposed":
+            issue_id = discovery_result.get("issue_id", "")
+            print(json.dumps({
+                "status": "NO_TASKS",
+                "message": (
+                    f"Issue {issue_id} is a decomposed parent task with open sub-issues - "
+                    "work on its sub-issues first, then the parent will become available "
+                    "automatically when all sub-issues are closed"
+                ),
+                "suggestion": "Use /cat:status to see available sub-issues"
+            }))
+            sys.exit(0)
+
+        if status == "already_complete":
+            issue_id = discovery_result.get("issue_id", "")
+            print(json.dumps({
+                "status": "ERROR",
+                "message": f"Issue {issue_id} is already closed - no work needed"
+            }))
+            sys.exit(1)
+
+        if status == "not_executable":
+            print(json.dumps({
+                "status": "ERROR",
+                "message": discovery_result.get("message", "Issue is not executable")
+            }))
+            sys.exit(1)
+
+        if status == "blocked":
+            issue_id = discovery_result.get("issue_id", "")
+            blocking = discovery_result.get("blocking", [])
+            print(json.dumps({
+                "status": "ERROR",
+                "message": f"Issue {issue_id} is blocked by: {', '.join(blocking)}"
+            }))
+            sys.exit(1)
+
+        if status == "existing_worktree":
+            issue_id = discovery_result.get("issue_id", "")
+            worktree_path = discovery_result.get("worktree_path", "")
+            print(json.dumps({
+                "status": "ERROR",
+                "message": f"Issue {issue_id} has an existing worktree at: {worktree_path}"
+            }))
+            sys.exit(1)
+
         if status != "found":
             print(json.dumps({
                 "status": "ERROR",

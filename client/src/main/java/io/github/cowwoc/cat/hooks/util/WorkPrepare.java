@@ -320,6 +320,16 @@ public final class WorkPrepare
         "message", "Issue " + alreadyComplete.issueId() + " is already closed")));
     }
 
+    if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.Decomposed decomposed)
+    {
+      return Optional.of(mapper.writeValueAsString(Map.of(
+        "status", "NO_TASKS",
+        "message", "Issue " + decomposed.issueId() + " is a decomposed parent task with open " +
+          "sub-issues - work on its sub-issues first, then the parent will become available " +
+          "automatically when all sub-issues are closed",
+        "suggestion", "Use /cat:status to see available sub-issues")));
+    }
+
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.Blocked blocked)
     {
       return Optional.of(mapper.writeValueAsString(Map.of(
