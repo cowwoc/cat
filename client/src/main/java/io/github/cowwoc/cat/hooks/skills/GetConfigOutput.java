@@ -248,7 +248,6 @@ public final class GetConfigOutput implements SkillOutput
     String noChanges = getNoChanges();
 
     StringBuilder output = new StringBuilder();
-    output.append("SKILL OUTPUT CONFIG BOXES\n\n");
     output.append("CURRENT_SETTINGS:\n");
     if (currentSettings != null)
       output.append(currentSettings).append('\n');
