@@ -1216,6 +1216,71 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that bare issue names (e.g., 'fix-bug') resolve via Scope.BARE_NAME
+   * and fully-qualified issue names (e.g., '2.1-fix-bug') resolve via Scope.ISSUE.
+   *
+   * This test explicitly checks that the scope detection pattern correctly
+   * distinguishes between bare names and qualified names.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeScopeDetectionForBareVsQualifiedNames() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath1 = null;
+    Path worktreePath2 = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create a bare-named issue
+      createIssue(projectDir, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add fix-bug issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+
+      // Test 1: Bare name 'fix-bug' should resolve via BARE_NAME scope
+      PrepareInput bareNameInput = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+      String bareNameJson = prepare.execute(bareNameInput);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode bareNameNode = mapper.readTree(bareNameJson);
+      requireThat(bareNameNode.path("status").asString(), "bareNameStatus").isEqualTo("READY");
+      requireThat(bareNameNode.path("issue_id").asString(), "bareNameIssueId").isEqualTo("2.1-fix-bug");
+      worktreePath1 = Path.of(bareNameNode.path("worktree_path").asString());
+
+      // Release the lock by removing the worktree and lock file so we can test qualified name
+      if (worktreePath1 != null && Files.exists(worktreePath1))
+      {
+        GitCommands.runGit(projectDir, "worktree", "remove", worktreePath1.toString(), "--force");
+        worktreePath1 = null;
+      }
+      // Clean up the lock file for the bare name issue
+      Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
+      Path lockFile = locksDir.resolve("2.1-fix-bug.lock");
+      if (Files.exists(lockFile))
+        Files.delete(lockFile);
+
+      // Test 2: Qualified name '2.1-fix-bug' should resolve via ISSUE scope
+      sessionId = UUID.randomUUID().toString();
+      PrepareInput qualifiedNameInput = new PrepareInput(sessionId, "", "2.1-fix-bug", TrustLevel.MEDIUM);
+      String qualifiedNameJson = prepare.execute(qualifiedNameInput);
+
+      JsonNode qualifiedNameNode = mapper.readTree(qualifiedNameJson);
+      requireThat(qualifiedNameNode.path("status").asString(), "qualifiedNameStatus").isEqualTo("READY");
+      requireThat(qualifiedNameNode.path("issue_id").asString(), "qualifiedNameIssueId").isEqualTo("2.1-fix-bug");
+      worktreePath2 = Path.of(qualifiedNameNode.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath1);
+      cleanupWorktreeIfExists(projectDir, worktreePath2);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Cleans up a worktree if it exists (best-effort, errors are swallowed).
    *
    * @param projectDir the project root directory
