@@ -14,7 +14,13 @@ import io.github.cowwoc.cat.hooks.skills.GetRenderDiffOutput;
 import io.github.cowwoc.cat.hooks.skills.GetStatusOutput;
 import io.github.cowwoc.cat.hooks.skills.ProgressBanner;
 import io.github.cowwoc.cat.hooks.skills.VerifyAudit;
+import io.github.cowwoc.cat.hooks.util.BatchReader;
+import io.github.cowwoc.cat.hooks.util.HookRegistrar;
+import io.github.cowwoc.cat.hooks.util.MarkdownWrapper;
 import io.github.cowwoc.cat.hooks.util.SessionAnalyzer;
+import io.github.cowwoc.cat.hooks.util.StatusAlignmentValidator;
+import io.github.cowwoc.cat.hooks.util.SubagentMonitor;
+import io.github.cowwoc.cat.hooks.util.WorkPrepare;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import tools.jackson.databind.json.JsonMapper;
@@ -106,6 +112,12 @@ public final class AotTraining
       referenceClass(SessionAnalyzer.class);
       referenceClass(ProgressBanner.class);
       referenceClass(EmpiricalTestRunner.class);
+      referenceClass(WorkPrepare.class);
+      referenceClass(MarkdownWrapper.class);
+      referenceClass(BatchReader.class);
+      referenceClass(SubagentMonitor.class);
+      referenceClass(HookRegistrar.class);
+      referenceClass(StatusAlignmentValidator.class);
     }
   }
 

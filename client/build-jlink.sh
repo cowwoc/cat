@@ -72,6 +72,13 @@ readonly -a HANDLERS=(
   "git-squash:util.GitSquash"
   "git-merge-linear:util.GitMergeLinear"
   "post-tool-use-failure:PostToolUseFailureHook"
+
+  "work-prepare:util.WorkPrepare"
+  "wrap-markdown:util.MarkdownWrapper"
+  "batch-read:util.BatchReader"
+  "monitor-subagents:util.SubagentMonitor"
+  "register-hook:util.HookRegistrar"
+  "validate-status-alignment:util.StatusAlignmentValidator"
 )
 
 # --- Logging ---

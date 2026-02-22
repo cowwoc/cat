@@ -56,7 +56,7 @@ Execute the deterministic preparation script directly (no subagent needed).
 
 **Call the prepare script:**
 
-Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/work-prepare.py" --arguments "${ARGUMENTS}"` and parse the JSON output from stdout.
+Run `"${CLAUDE_PLUGIN_ROOT}/client/bin/work-prepare" --arguments "${ARGUMENTS}"` and parse the JSON output from stdout.
 
 **Handle result:**
 

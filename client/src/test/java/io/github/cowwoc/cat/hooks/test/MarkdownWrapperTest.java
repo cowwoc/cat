@@ -400,4 +400,31 @@ public final class MarkdownWrapperTest
     requireThat(normalized, "content").contains("- and");
     requireThat(normalized, "content").contains("significantly");
   }
+
+  /**
+   * Verifies that parseWidthArg returns the parsed integer for a valid value.
+   */
+  @Test
+  public void parseWidthArgReturnsIntegerForValidValue()
+  {
+    int result = MarkdownWrapper.parseWidthArg("120");
+    requireThat(result, "result").isEqualTo(120);
+  }
+
+  /**
+   * Verifies that parseWidthArg throws IllegalArgumentException for non-integer input.
+   */
+  @Test
+  public void parseWidthArgThrowsForNonIntegerValue()
+  {
+    try
+    {
+      MarkdownWrapper.parseWidthArg("not-a-number");
+    }
+    catch (IllegalArgumentException e)
+    {
+      requireThat(e.getMessage(), "message").contains("--width");
+      requireThat(e.getMessage(), "message").contains("not-a-number");
+    }
+  }
 }

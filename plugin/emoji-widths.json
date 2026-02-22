@@ -1,6 +1,6 @@
 {
   "$schema": "./emoji-widths.schema.json",
-  "$comment": "Emoji display widths by terminal. Run scripts/measure-emoji-widths.sh to contribute.",
+  "$comment": "Emoji display widths by terminal. To contribute new measurements, run https://github.com/cowwoc/cat/blob/main/plugin/scripts/measure-emoji-widths.sh",
   "emojis": {
     "closed": "☑️",
     "in_progress": "🔄",
