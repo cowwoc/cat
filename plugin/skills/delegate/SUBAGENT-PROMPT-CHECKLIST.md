@@ -160,7 +160,7 @@ When executing /cat:{skill-name}, you MUST:
 - If postcondition failed, include the actual values
 ```
 
-Refer to each skill's SKILL.md for its specific postconditions and success criteria.
+Refer to each skill's SKILL.md for its specific postconditions.
 
 ## Final Verification Checklist
 
