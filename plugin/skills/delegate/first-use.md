@@ -387,7 +387,7 @@ context limits, and skill delegation rules. Load it before constructing any suba
 
 ### Progress Output (MANDATORY)
 
-**Check for SKILL OUTPUT DELEGATE PROGRESS in context.**
+**Check for `<output skill="delegate">` tag in context.**
 
 If found: Use the appropriate template (PARALLEL or SEQUENTIAL) and replace placeholders.
 
@@ -396,7 +396,7 @@ If NOT found: **FAIL immediately.**
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/check-hooks-loaded.sh" "delegate progress" "/cat:delegate"
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: SKILL OUTPUT DELEGATE PROGRESS not found."
+  echo "ERROR: <output skill=\"delegate\"> tag not found."
   echo "Handler delegate_handler.py should have provided this via additionalContext."
   echo "Check that hooks are properly loaded."
 fi
@@ -542,7 +542,7 @@ Task tool invocation:
 
     POSTCONDITION REPORTING: Report validation score and pass/fail.
 
-    SKILL OUTPUT CAPTURE: If the skill produces user-visible output (validation
+    OUTPUT CAPTURE: If the skill produces user-visible output (validation
     results, compression stats, comparison tables), include the FULL textual output
     in your completion JSON under "skill_output". Users cannot see subagent tool calls.
 

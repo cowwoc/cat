@@ -77,7 +77,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     if (!Files.isDirectory(retroDir))
     {
       return """
-        SKILL OUTPUT RETROSPECTIVE ERROR:
+        ERROR:
         Retrospectives directory not found: %s
         """.formatted(retroDir);
     }
@@ -86,7 +86,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     if (!Files.exists(indexFile))
     {
       return """
-        SKILL OUTPUT RETROSPECTIVE ERROR:
+        ERROR:
         Index file not found: %s
         """.formatted(indexFile);
     }
@@ -130,7 +130,6 @@ public final class GetRetrospectiveOutput implements SkillOutput
       else
         daysSince = daysSinceDate(lastRetro);
       return """
-        SKILL OUTPUT RETROSPECTIVE STATUS:
         Retrospective not triggered.
         Days since last retrospective: %d/%d
         Mistakes accumulated: %d/%d
@@ -205,7 +204,7 @@ public final class GetRetrospectiveOutput implements SkillOutput
     List<JsonNode> mistakes = loadMistakesSince(retroDir, index, lastRetroTime, mapper);
     int mistakesAnalyzed = mistakes.size();
 
-    return "SKILL OUTPUT RETROSPECTIVE ANALYSIS:\n\n" +
+    return "RETROSPECTIVE ANALYSIS:\n\n" +
       "Trigger: " + triggerReason + "\n" +
       "Period analyzed: " + periodAnalyzed + "\n" +
       "Mistakes analyzed: " + mistakesAnalyzed + "\n\n" +
