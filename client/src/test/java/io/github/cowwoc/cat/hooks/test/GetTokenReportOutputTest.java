@@ -250,6 +250,23 @@ public class GetTokenReportOutputTest
   }
 
   /**
+   * Verifies that getOutput(sessionId) returns null for a session ID with no session file,
+   * verifying the main() null-guard behavior (output is silently skipped when null).
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputReturnsNullWhenSessionFileMissing() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetTokenReportOutput handler = new GetTokenReportOutput(scope);
+      String result = handler.getOutput("session-that-does-not-exist-xyz-99999");
+      requireThat(result, "result").isNull();
+    }
+  }
+
+  /**
    * Verifies that context percentage is included in the output.
    *
    * @throws IOException if an I/O error occurs
