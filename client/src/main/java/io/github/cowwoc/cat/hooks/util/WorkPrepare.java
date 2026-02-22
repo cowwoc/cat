@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.util;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -1076,6 +1077,124 @@ public final class WorkPrepare
     catch (IOException _)
     {
       // Best-effort
+    }
+  }
+
+  /**
+   * Main method for command-line execution.
+   * <p>
+   * Accepts named arguments:
+   * <ul>
+   *   <li>{@code --session-id ID} — the Claude session ID (defaults to {@code CLAUDE_SESSION_ID})</li>
+   *   <li>{@code --exclude-pattern GLOB} — glob to exclude issues by name</li>
+   *   <li>{@code --issue-id ID} — specific issue ID to select</li>
+   *   <li>{@code --trust-level LEVEL} — low, medium, or high (defaults to {@code CAT_TRUST_LEVEL} or medium)</li>
+   *   <li>{@code --arguments RAW} — raw user arguments to parse into issue-id or exclude-pattern</li>
+   * </ul>
+   *
+   * @param args command-line arguments
+   * @throws IOException if execution fails
+   */
+  public static void main(String[] args) throws IOException
+  {
+    String sessionIdOverride = "";
+    String excludePattern = "";
+    String issueId = "";
+    String trustLevelStr = "medium";
+    String rawArguments = "";
+
+    // Loop bound is args.length - 1 so that args[i+1] (the flag value) is always available.
+    // A lone flag key at the last position is intentionally skipped to avoid ArrayIndexOutOfBoundsException.
+    for (int i = 0; i < args.length - 1; ++i)
+    {
+      switch (args[i])
+      {
+        case "--session-id" ->
+        {
+          ++i;
+          sessionIdOverride = args[i];
+        }
+        case "--exclude-pattern" ->
+        {
+          ++i;
+          excludePattern = args[i];
+        }
+        case "--issue-id" ->
+        {
+          ++i;
+          issueId = args[i];
+        }
+        case "--trust-level" ->
+        {
+          ++i;
+          trustLevelStr = args[i];
+        }
+        case "--arguments" ->
+        {
+          ++i;
+          rawArguments = args[i];
+        }
+        default ->
+        {
+          // ignore unknown flags
+        }
+      }
+    }
+
+    // Parse raw arguments into issue-id or exclude-pattern
+    if (!rawArguments.isBlank() && issueId.isEmpty() && excludePattern.isEmpty())
+    {
+      String raw = rawArguments.strip();
+      if (raw.matches("^[0-9]+\\.[0-9]+(-[a-zA-Z0-9_-]+)?$") ||
+        raw.matches("^[a-zA-Z][a-zA-Z0-9_-]*$"))
+      {
+        issueId = raw;
+      }
+      else if (raw.startsWith("skip "))
+      {
+        String word = raw.substring(5).strip();
+        excludePattern = "*" + word + "*";
+      }
+    }
+
+    TrustLevel trustLevel;
+    try
+    {
+      trustLevel = TrustLevel.fromString(trustLevelStr);
+    }
+    catch (IllegalArgumentException e)
+    {
+      System.out.println("""
+        {
+          "status": "ERROR",
+          "message": "%s"
+        }""".formatted(e.getMessage().replace("\"", "\\\"")));
+      System.exit(1);
+      return;
+    }
+
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      // Use scope-provided session ID if not overridden via --session-id
+      String sessionId;
+      if (!sessionIdOverride.isEmpty())
+        sessionId = sessionIdOverride;
+      else
+        sessionId = scope.getClaudeSessionId();
+
+      PrepareInput input = new PrepareInput(sessionId, excludePattern, issueId, trustLevel);
+      WorkPrepare wp = new WorkPrepare(scope);
+      String result = wp.execute(input);
+      System.out.println(result);
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      System.err.println("""
+        {
+          "status": "ERROR",
+          "message": "Unexpected error: %s"
+        }""".formatted(e.getMessage().replace("\"", "\\\"")));
+      System.exit(1);
     }
   }
 

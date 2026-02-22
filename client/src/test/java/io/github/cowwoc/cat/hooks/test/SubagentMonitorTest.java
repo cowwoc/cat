@@ -38,7 +38,8 @@ public class SubagentMonitorTest
     Path sessionBase = Files.createTempDirectory("session-test");
     try
     {
-      MonitorResult result = SubagentMonitor.monitor(sessionBase.toString());
+      JsonMapper mapper = JsonMapper.builder().build();
+      MonitorResult result = SubagentMonitor.monitor(sessionBase.toString(), mapper);
 
       requireThat(result.summary().total(), "total").isEqualTo(0);
       requireThat(result.summary().running(), "running").isEqualTo(0);
@@ -63,10 +64,10 @@ public class SubagentMonitorTest
     Path sessionBase = Files.createTempDirectory("session-test");
     try
     {
-      MonitorResult result = SubagentMonitor.monitor(sessionBase.toString());
-      String json = result.toJson();
-
       JsonMapper mapper = JsonMapper.builder().build();
+      MonitorResult result = SubagentMonitor.monitor(sessionBase.toString(), mapper);
+      String json = result.toJson(mapper);
+
       JsonNode root = mapper.readTree(json);
       requireThat(root.has("subagents"), "hasSubagents").isTrue();
       requireThat(root.get("subagents").isArray(), "subagentsIsArray").isTrue();
@@ -214,9 +215,9 @@ public class SubagentMonitorTest
       java.util.List.of(info),
       new SubagentMonitor.Summary(1, 1, 0, 0));
 
-    String json = result.toJson();
-
     JsonMapper mapper = JsonMapper.builder().build();
+    String json = result.toJson(mapper);
+
     JsonNode root = mapper.readTree(json);
     JsonNode subagent = root.get("subagents").get(0);
     requireThat(subagent.get("id").asString(), "id").isEqualTo("abc123");
@@ -235,7 +236,8 @@ public class SubagentMonitorTest
   @Test
   public void monitorHandlesNonExistentSessionBase() throws IOException
   {
-    MonitorResult result = SubagentMonitor.monitor("/nonexistent/path");
+    JsonMapper mapper = JsonMapper.builder().build();
+    MonitorResult result = SubagentMonitor.monitor("/nonexistent/path", mapper);
 
     requireThat(result.summary().total(), "total").isNotNegative();
     requireThat(result.subagents(), "subagents").isNotNull();
@@ -289,9 +291,9 @@ public class SubagentMonitorTest
       java.util.List.of(info1, info2),
       new SubagentMonitor.Summary(2, 1, 1, 0));
 
-    String json = result.toJson();
-
     JsonMapper mapper = JsonMapper.builder().build();
+    String json = result.toJson(mapper);
+
     JsonNode parsed = mapper.readTree(json);
 
     requireThat(parsed.has("subagents"), "hasSubagents").isTrue();
