@@ -188,6 +188,7 @@
 				</dependencies>
 				<executions>
 					<execution>
+						<phase>process-test-classes</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
@@ -231,6 +232,7 @@
 				</configuration>
 				<executions>
 					<execution>
+						<phase>process-test-classes</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
