@@ -81,7 +81,7 @@ The main agent is the **decision maker**. The subagent is the **executor** or **
 | Make decisions | Execute decisions OR gather info |
 | Choose approach | Follow approach (never choose) |
 | Resolve ambiguities | Report ambiguities, fail-fast |
-| Define success criteria | Verify against criteria |
+| Define post-conditions | Verify against post-conditions |
 | Review exploration results | Return exploration results |
 | Handle failures | Report failures immediately |
 
