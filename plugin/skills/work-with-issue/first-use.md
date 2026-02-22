@@ -815,10 +815,10 @@ about what they are approving.
 
 **Required pre-gate output sequence (all mandatory, in this order):**
 
-1. **Render diff** — invoke `cat:render-diff` to display the changes:
+1. **Get diff** — invoke `cat:get-diff` to display the changes:
    ```
    Skill tool:
-     skill: "cat:render-diff"
+     skill: "cat:get-diff"
    ```
 
 2. **Display commit summary** — list commits since base branch:
