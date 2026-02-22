@@ -1276,6 +1276,33 @@
         "catches_variations": true
       },
       "correct_behavior": "SKILL OUTPUT CONFIG BOXES should be injected via a !`${CLAUDE_PLUGIN_ROOT}/client/bin/get-config-output` preprocessor directive in an <output> section of first-use.md, invoking GetConfigOutput.java (which must implement SkillOutput). A get-config-output launcher must be created in client/bin/."
+    },
+    {
+      "id": "M388",
+      "timestamp": "2026-02-23T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "Missed skill-builder review: agent modified plugin/skills/ files without invoking /cat:skill-builder before approval gate",
+      "root_cause": "PLANNING failure: work-with-issue workflow has no step requiring /cat:skill-builder review when skill files are modified, leaving the review as an implicit expectation that agents can overlook",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "skill_builder",
+        "skill_review",
+        "approval_gate",
+        "protocol_violation",
+        "plugin_skills"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before presenting the approval gate, run /cat:skill-builder on each modified plugin/skills/ or plugin/commands/ file to review for priming issues or structural problems."
     }
   ]
 }
