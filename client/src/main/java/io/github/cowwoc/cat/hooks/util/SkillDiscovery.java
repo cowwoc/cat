@@ -98,17 +98,17 @@ public final class SkillDiscovery
   }
 
   /**
-   * Formats the full skill listing for injection into agent context.
+   * Formats the skill listing for injection into the main agent context.
    * <p>
    * Discovers all model-invocable skills and returns them as a formatted listing string. Each entry
    * uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
-   * The header references {@code load-skill.sh} since subagents cannot use the Skill tool directly.
+   * The header references {@code load-skill.sh} as an alternative to the Skill tool for loading skills.
    *
    * @param scope the JVM scope providing environment paths and configuration
    * @return the formatted skill listing, or an empty string if no skills are found
    * @throws NullPointerException if {@code scope} is null
    */
-  public static String formatSkillListing(JvmScope scope)
+  public static String getMainAgentSkillListing(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
@@ -118,9 +118,55 @@ public final class SkillDiscovery
     sb.append("The following skills are available. To load a skill's instructions, run via Bash:\n").
       append("  \"${CLAUDE_PLUGIN_ROOT}/scripts/load-skill.sh\" \"${CLAUDE_PLUGIN_ROOT}\" " +
         "\"<skill-name>\" \"<cat-agent-id>\"\n\n");
+    appendSkillEntries(sb, entries);
+    return sb.toString();
+  }
+
+  /**
+   * Formats the skill listing for injection into subagent context.
+   * <p>
+   * Uses the Skill tool as the primary invocation mechanism (subagents have access to the Skill tool)
+   * and includes behavioral instructions so subagents know when to invoke skills, not just how.
+   *
+   * @param scope the JVM scope providing environment paths and configuration
+   * @return the formatted skill listing, or an empty string if no skills are found
+   * @throws NullPointerException if {@code scope} is null
+   */
+  public static String getSubagentSkillListing(JvmScope scope)
+  {
+    requireThat(scope, "scope").isNotNull();
+    List<SkillEntry> entries = new SkillDiscovery(scope).discoverAll();
+    if (entries.isEmpty())
+      return "";
+    StringBuilder sb = new StringBuilder(1024);
+    sb.append("""
+      ## Skill Instructions
+
+      You have access to skills via the Skill tool. Before performing any action, check if a skill \
+      below matches what you are about to do. If it matches, this is a BLOCKING REQUIREMENT: invoke \
+      the Skill tool BEFORE performing that action.
+
+      **How to invoke:** Use the Skill tool with the skill name (e.g., `skill: "cat:git-commit"`).
+
+      NEVER perform an action that a skill covers without invoking the skill first. NEVER mention a \
+      skill without actually calling the Skill tool.
+
+      **Available skills:**
+      """);
+    appendSkillEntries(sb, entries);
+    return sb.toString();
+  }
+
+  /**
+   * Appends skill entries to a StringBuilder.
+   *
+   * @param sb the StringBuilder to append to
+   * @param entries the skill entries to append
+   */
+  private static void appendSkillEntries(StringBuilder sb, List<SkillEntry> entries)
+  {
     for (SkillEntry entry : entries)
       sb.append("- ").append(entry.name()).append(": ").append(entry.description()).append('\n');
-    return sb.toString();
   }
 
   /**
