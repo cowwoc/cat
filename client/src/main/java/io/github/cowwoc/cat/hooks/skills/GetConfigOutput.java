@@ -136,8 +136,16 @@ public final class GetConfigOutput implements SkillOutput
     requireThat(version, "version").isNotBlank();
     requireThat(preconditionsDescription, "preconditionsDescription").isNotNull();
     requireThat(postconditionsDescription, "postconditionsDescription").isNotNull();
-    String displayPreconditions = preconditionsDescription.isBlank() ? "(none)" : preconditionsDescription;
-    String displayPostconditions = postconditionsDescription.isBlank() ? "(none)" : postconditionsDescription;
+    String displayPreconditions;
+    if (preconditionsDescription.isBlank())
+      displayPreconditions = "(none)";
+    else
+      displayPreconditions = preconditionsDescription;
+    String displayPostconditions;
+    if (postconditionsDescription.isBlank())
+      displayPostconditions = "(none)";
+    else
+      displayPostconditions = postconditionsDescription;
 
     return buildSimpleHeaderBox(
       "🚧",
@@ -162,8 +170,16 @@ public final class GetConfigOutput implements SkillOutput
     requireThat(version, "version").isNotBlank();
     requireThat(newPreconditions, "newPreconditions").isNotNull();
     requireThat(newPostconditions, "newPostconditions").isNotNull();
-    String displayPreconditions = newPreconditions.isBlank() ? "(none)" : newPreconditions;
-    String displayPostconditions = newPostconditions.isBlank() ? "(none)" : newPostconditions;
+    String displayPreconditions;
+    if (newPreconditions.isBlank())
+      displayPreconditions = "(none)";
+    else
+      displayPreconditions = newPreconditions;
+    String displayPostconditions;
+    if (newPostconditions.isBlank())
+      displayPostconditions = "(none)";
+    else
+      displayPostconditions = newPostconditions;
 
     return buildSimpleHeaderBox(
       "✅",

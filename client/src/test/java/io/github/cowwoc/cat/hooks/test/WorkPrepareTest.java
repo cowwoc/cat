@@ -1100,10 +1100,10 @@ public class WorkPrepareTest
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    StringBuilder planContent = new StringBuilder();
+    StringBuilder planContent = new StringBuilder(128);
     planContent.append("# Plan\n\n## Pre-conditions\n\n");
     for (String precondition : preconditions)
-      planContent.append("- [ ] ").append(precondition).append("\n");
+      planContent.append("- [ ] ").append(precondition).append('\n');
     planContent.append("\n## Execution Steps\n\n1. Do the work\n");
 
     Files.writeString(issueDir.resolve("PLAN.md"), planContent.toString());
@@ -1127,12 +1127,12 @@ public class WorkPrepareTest
       resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
     Files.createDirectories(issueDir);
 
-    StringBuilder planContent = new StringBuilder();
+    StringBuilder planContent = new StringBuilder(128);
     planContent.append("# Plan\n\n## Pre-conditions\n\n");
     for (String item : uncheckedItems)
-      planContent.append("- [ ] ").append(item).append("\n");
+      planContent.append("- [ ] ").append(item).append('\n');
     for (String item : checkedItems)
-      planContent.append("- [x] ").append(item).append("\n");
+      planContent.append("- [x] ").append(item).append('\n');
     planContent.append("\n## Execution Steps\n\n1. Do the work\n");
 
     Files.writeString(issueDir.resolve("PLAN.md"), planContent.toString());
