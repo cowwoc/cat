@@ -18,11 +18,9 @@
 - **v{{MAJOR}}.0** - [initial milestone focus]
 - **v{{MAJOR}}.1** - [second milestone focus]
 
-## Gates
-
-### Entry
+## Pre-conditions
 - Previous version complete (or no prerequisites)
 
-### Exit
+## Post-conditions
 - All minor versions complete
 - Vision requirements satisfied

@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -458,6 +459,21 @@ public final class WorkPrepare
     // Read goal from PLAN.md
     String goal = readGoalFromPlan(planPath);
 
+    // Read pre-conditions from PLAN.md
+    List<String> preconditions;
+    try
+    {
+      preconditions = readPreconditionsFromPlan(planPath);
+    }
+    catch (IOException e)
+    {
+      cleanupWorktree(projectDir, worktreePath);
+      releaseLock(issueId, input.sessionId());
+      return mapper.writeValueAsString(Map.of(
+        "status", "ERROR",
+        "message", "Failed to read pre-conditions from PLAN.md: " + e.getMessage()));
+    }
+
     // Step 10: Return READY JSON
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("status", "READY");
@@ -472,6 +488,7 @@ public final class WorkPrepare
     result.put("estimated_tokens", estimatedTokens);
     result.put("percent_of_threshold", (int) ((estimatedTokens / (double) TOKEN_LIMIT) * 100));
     result.put("goal", goal);
+    result.put("preconditions", preconditions);
     result.put("approach_selected", "auto");
     result.put("lock_acquired", true);
     result.put("has_existing_work", existingWork.hasExistingWork());
@@ -982,6 +999,47 @@ public final class WorkPrepare
     if (blankIndex >= 0)
       return goal.substring(0, blankIndex).strip();
     return goal;
+  }
+
+  /**
+   * Reads the pre-conditions from a PLAN.md file.
+   * <p>
+   * Extracts checkbox items from the "## Pre-conditions" section. Returns a list of pre-condition
+   * text strings (without the checkbox prefix).
+   *
+   * @param planPath the path to the PLAN.md file
+   * @return list of pre-condition text strings, empty if section not found or file does not exist
+   * @throws IOException if the file exists but cannot be read
+   */
+  private List<String> readPreconditionsFromPlan(Path planPath) throws IOException
+  {
+    if (!Files.isRegularFile(planPath))
+      return Collections.emptyList();
+
+    List<String> lines = Files.readAllLines(planPath);
+
+    List<String> preconditions = new ArrayList<>();
+    boolean inSection = false;
+    for (String line : lines)
+    {
+      if (line.strip().startsWith("## Pre-conditions"))
+      {
+        inSection = true;
+        continue;
+      }
+      if (inSection && line.strip().startsWith("##"))
+        break;
+      if (inSection)
+      {
+        String stripped = line.strip();
+        if (stripped.startsWith("- [ ]"))
+          preconditions.add(stripped.substring(6).strip());
+        else if (stripped.startsWith("- [x]"))
+          preconditions.add(stripped.substring(6).strip());
+      }
+    }
+
+    return preconditions;
   }
 
   /**
