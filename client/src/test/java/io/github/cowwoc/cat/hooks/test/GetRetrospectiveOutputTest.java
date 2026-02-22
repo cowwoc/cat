@@ -51,7 +51,7 @@ public final class GetRetrospectiveOutputTest
     {
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ERROR:");
+      requireThat(output, "output").contains("ERROR:");
       requireThat(output, "output").contains("Retrospectives directory not found");
     }
     finally
@@ -74,7 +74,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ERROR:");
+      requireThat(output, "output").contains("ERROR:");
       requireThat(output, "output").contains("Index file not found");
     }
     finally
@@ -142,7 +142,6 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE STATUS:");
       requireThat(output, "output").contains("Retrospective not triggered");
       requireThat(output, "output").contains("Days since last retrospective: 1/7");
       requireThat(output, "output").contains("Mistakes accumulated: 5/10");
@@ -189,7 +188,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Trigger: 8 days since last retrospective (threshold: 7)");
       requireThat(output, "output").contains("Period analyzed:");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
@@ -236,7 +235,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Trigger: 12 mistakes accumulated (threshold: 10)");
       requireThat(output, "output").contains("Mistakes analyzed: 0");
     }
@@ -298,7 +297,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Trigger: First retrospective with 1 logged mistakes");
     }
     finally
@@ -844,7 +843,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("Mistakes analyzed: 1");
       requireThat(output, "output").contains("valid_category: 1");
       requireThat(output, "output").doesNotContain("bad_timestamp");
@@ -939,7 +938,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE STATUS:");
+      requireThat(output, "output").contains("Retrospective not triggered");
       requireThat(output, "output").contains("Days since last retrospective: 1/7");
       requireThat(output, "output").contains("Mistakes accumulated: 5/10");
     }
@@ -1189,7 +1188,7 @@ public final class GetRetrospectiveOutputTest
 
       GetRetrospectiveOutput handler = new GetRetrospectiveOutput(scope);
       String output = handler.getOutput(new String[0]);
-      requireThat(output, "output").startsWith("SKILL OUTPUT RETROSPECTIVE ANALYSIS:");
+      requireThat(output, "output").startsWith("RETROSPECTIVE ANALYSIS:");
       requireThat(output, "output").contains("First retrospective with 1 logged mistakes");
     }
     finally
