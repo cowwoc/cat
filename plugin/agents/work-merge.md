@@ -15,6 +15,6 @@ Your responsibilities:
 Key constraints:
 - Never force-push without validation
 - Always verify branch state before destructive operations
-- Call git-squash-quick.sh directly for commit squashing (never git rebase -i)
-- Use git-merge-linear for merge operations
+- Use "${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" for commit squashing (never git rebase -i)
+- Use "${CLAUDE_PLUGIN_ROOT}/client/bin/git-merge-linear" for merge operations
 - Follow fail-fast principle on any unexpected state

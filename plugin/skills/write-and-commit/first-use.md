@@ -57,7 +57,7 @@ user-invocable: false
 [LLM Round 1] Change and execute
   → Write content to temp file
   → Write commit message to temp file
-  → Bash: write-and-commit.sh file.sh /tmp/content /tmp/msg --executable
+  → Bash: "${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file.sh /tmp/content /tmp/msg --executable
 
 [LLM Round 2] Report success
   → Parse JSON result
@@ -86,7 +86,7 @@ Description of what this file does.
 EOF
 
 # Step 2: Execute atomic creation
-~/.claude/scripts/write-and-commit.sh \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" \
   "path/to/file.txt" \
   "/tmp/content-$$.txt" \
   "/tmp/commit-msg-$$.txt"
@@ -96,7 +96,7 @@ EOF
 
 ```bash
 # For scripts that need executable permissions
-~/.claude/scripts/write-and-commit.sh \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" \
   ".claude/scripts/my-script.sh" \
   "/tmp/content-$$.txt" \
   "/tmp/commit-msg-$$.txt" \
@@ -105,7 +105,7 @@ EOF
 
 ## Output Format
 
-Script returns JSON:
+Tool returns JSON:
 
 ```json
 {
@@ -143,7 +143,7 @@ Removes .tmp files older than 7 days from /tmp directory.
 MSG
 
 # Execute atomic creation
-~/.claude/scripts/write-and-commit.sh \
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" \
   ".claude/scripts/cleanup-temp.sh" \
   "/tmp/cleanup-script-$$.sh" \
   "/tmp/commit-msg-$$.txt" \
@@ -185,12 +185,12 @@ Created cleanup script successfully!
 
 ### Error Handling
 
-On any error, script:
+On any error, the tool:
 - Exits immediately with clear error message
 - Returns JSON with error status
 - Leaves repository in clean state (file may be staged)
 
-**Recovery**: If script fails after file creation but before commit:
+**Recovery**: If the tool fails after file creation but before commit:
 ```bash
 # File exists but not committed
 git reset HEAD <file>  # Unstage
@@ -209,7 +209,7 @@ cat > /tmp/content.txt <<'EOF'
 build/
 EOF
 
-write-and-commit.sh ".gitignore" /tmp/content.txt /tmp/msg.txt
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" ".gitignore" /tmp/content.txt /tmp/msg.txt
 ```
 
 ### 2. Create Documentation
@@ -221,7 +221,7 @@ cat > /tmp/content.txt <<'EOF'
 ...
 EOF
 
-write-and-commit.sh "docs/component/README.md" /tmp/content.txt /tmp/msg.txt
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" "docs/component/README.md" /tmp/content.txt /tmp/msg.txt
 ```
 
 ### 3. Create Test File
@@ -237,7 +237,7 @@ public class MyTest {
 }
 EOF
 
-write-and-commit.sh "src/test/java/MyTest.java" /tmp/content.txt /tmp/msg.txt
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" "src/test/java/MyTest.java" /tmp/content.txt /tmp/msg.txt
 ```
 
 ### 4. Create Executable Script
@@ -249,7 +249,7 @@ cat > /tmp/content.txt <<'EOF'
 # Hook implementation
 EOF
 
-write-and-commit.sh ".claude/hooks/my-hook.sh" /tmp/content.txt /tmp/msg.txt --executable
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" ".claude/hooks/my-hook.sh" /tmp/content.txt /tmp/msg.txt --executable
 ```
 
 ## When NOT to Use
@@ -258,9 +258,9 @@ write-and-commit.sh ".claude/hooks/my-hook.sh" /tmp/content.txt /tmp/msg.txt --e
 
 **❌ Wrong**: Create files one-by-one with write-and-commit
 ```bash
-write-and-commit.sh file1.txt /tmp/content1 /tmp/msg1
-write-and-commit.sh file2.txt /tmp/content2 /tmp/msg2
-write-and-commit.sh file3.txt /tmp/content3 /tmp/msg3
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file1.txt /tmp/content1 /tmp/msg1
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file2.txt /tmp/content2 /tmp/msg2
+"${CLAUDE_PLUGIN_ROOT}/client/bin/write-and-commit" file3.txt /tmp/content3 /tmp/msg3
 # Result: 3 separate commits
 ```
 

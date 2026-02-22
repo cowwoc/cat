@@ -90,7 +90,7 @@ All stakeholder files have been migrated to this directory with proper agent for
 - stakeholder-ux.md
 
 ### From `plugin/skills/` (subagent-style skills)
-- work-merge (calls git-squash-quick.sh directly, needs git-merge-linear, validate-git-safety preloaded)
+- work-merge (uses client/bin/git-squash Java tool, needs git-merge-linear, validate-git-safety preloaded)
 - Future skills that use delegation patterns
 
 ## Directory Structure
