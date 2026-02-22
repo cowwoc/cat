@@ -157,7 +157,7 @@ public final class InjectSessionInstructions implements SessionStartHandler
 
       ### Verbatim Output Skills
       These skills produce skill output. Follow their instructions exactly:
-      `/cat:status`, `/cat:help`, `/cat:token-report`, `/cat:render-diff`""";
+      `/cat:status`, `/cat:help`, `/cat:token-report`, `/cat:get-diff`""";
 
   /**
    * Creates a new InjectSessionInstructions handler.
