@@ -247,16 +247,19 @@ public final class GetConfigOutput implements SkillOutput
     String configurationSaved = getConfigurationSaved();
     String noChanges = getNoChanges();
 
-    StringBuilder output = new StringBuilder();
-    output.append("CURRENT_SETTINGS:\n");
+    StringBuilder output = new StringBuilder(100).
+      append("CURRENT_SETTINGS:\n");
     if (currentSettings != null)
       output.append(currentSettings).append('\n');
-    output.append("\nVERSION_GATES_OVERVIEW:\n");
-    output.append(versionGatesOverview).append('\n');
-    output.append("\nCONFIGURATION_SAVED:\n");
-    output.append(configurationSaved).append('\n');
-    output.append("\nNO_CHANGES:\n");
-    output.append(noChanges).append('\n');
+    output.append("\nVERSION_GATES_OVERVIEW:\n").
+      append(versionGatesOverview).
+      append('\n').
+      append("\nCONFIGURATION_SAVED:\n").
+      append(configurationSaved).
+      append('\n').
+      append("\nNO_CHANGES:\n").
+      append(noChanges).
+      append('\n');
     return output.toString();
   }
 
