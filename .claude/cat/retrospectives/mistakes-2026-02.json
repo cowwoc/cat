@@ -1303,6 +1303,61 @@
         "catches_variations": true
       },
       "correct_behavior": "Before presenting the approval gate, run /cat:skill-builder on each modified plugin/skills/ or plugin/commands/ file to review for priming issues or structural problems."
+    },
+    {
+      "id": "M389",
+      "timestamp": "2026-02-23T02:00:00Z",
+      "category": "stakeholder_review_quality",
+      "description": "Requirements stakeholder missed 2-level-only version scheme limitation during porting task review: IssueDiscovery.java only handled major (v2) and major.minor (v2.1), not major.minor.patch (v2.1.3)",
+      "root_cause": "Requirements stakeholder Review Process only covers REQ-XXX formal requirements from parent PLAN.md, not task-local Success Criteria (e.g., produce identical output, match bash implementation) and does not mandate reading original source files to verify behavioral parity. The PLAN.md stated identical JSON output and matched bash implementation in Success Criteria, but the review process skipped those in favor of checking formal REQ-IDs (which this task had none of - only a parent issue reference).",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/agents/stakeholder-requirements.md",
+      "pattern_keywords": [
+        "stakeholder_review",
+        "requirements_stakeholder",
+        "porting_task",
+        "version_scheme",
+        "behavioral_parity",
+        "success_criteria_gap"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Requirements stakeholder should read both task PLAN.md Success Criteria AND Satisfies REQ-XXX IDs. For porting tasks, the stakeholder must read original source file(s) to enumerate all supported inputs/behaviors and verify the new implementation covers the same scope (e.g., all 3 version schemes: major, major.minor, major.minor.patch)."
+    },
+    {
+      "id": "M390",
+      "timestamp": "2026-02-23T08:08:05Z",
+      "category": "protocol_violation",
+      "description": "learn skill subagent committed retrospective metadata to main workspace instead of active issue worktree, splitting a single learn session across two git trees",
+      "root_cause": "phase-record.md protocol said 'Retrospective metadata always goes to the main workspace' regardless of active worktree, causing the learn session output to be split: prevention to worktree, metadata to main workspace \u2014 violating worktree isolation and the single-commit rule",
+      "rca_method": "A",
+      "rca_method_name": "5-whys",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/learn/phase-record.md",
+      "pattern_keywords": [
+        "worktree_isolation",
+        "split_commit",
+        "learn_skill",
+        "retrospective_metadata",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "ALL learning changes (prevention files + retrospective metadata) go to the same location in a SINGLE commit: active worktree when one exists, main workspace otherwise"
     }
   ]
 }
