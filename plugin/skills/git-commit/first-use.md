@@ -318,8 +318,27 @@ Proceed directly to `git add <files> && git commit`.
 - Changes span files you didn't directly edit
 - Uncertain about repository state
 
+## Verify Files Are Inside the Repository Before Committing
+
+Files must be inside the git repository for `git add` to work. Verify file paths are within the
+repository root before attempting any git operation.
+
+```bash
+# Verify file is inside the repository
+git ls-files --error-unmatch <file> 2>/dev/null || git rev-parse --show-toplevel
+# Or check that the file path starts with the repo root
+```
+
+If a file path is outside the repository (e.g., `/tmp/`, `/home/`), do NOT attempt `git add`.
+Instead, ask the user whether they meant a different path or a different location for the file.
+
+**Contradictory requests:** When asked to commit a file at a path outside the repository root,
+ask for clarification rather than proceeding — the operation will always fail and attempting it
+is tool misuse.
+
 ## Checklist Before Committing
 
+- [ ] **Files inside repository**: All files to commit are under the repository root
 - [ ] **In correct worktree**: `pwd` shows issue worktree, NOT `/workspace`
 - [ ] Subject line is imperative mood ("Add", not "Added")
 - [ ] Subject line is specific (not "Update files")
