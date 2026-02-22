@@ -106,6 +106,7 @@ public final class MergeAndCleanup
 
     String commitSha = getCommitSha(worktreePath, "HEAD");
     fastForwardMerge(worktreePath, baseBranch);
+    syncMainWorkingTree(projectPath);
 
     boolean worktreeRemoved = false;
     if (autoRemoveWorktrees)
@@ -413,6 +414,21 @@ public final class MergeAndCleanup
   private void fastForwardMerge(String worktreePath, String baseBranch) throws IOException
   {
     runGit(Path.of(worktreePath), "push", ".", "HEAD:" + baseBranch);
+  }
+
+  /**
+   * Syncs the main working tree to match HEAD after a pointer-only fast-forward merge.
+   * <p>
+   * {@code git push . HEAD:baseBranch} advances the branch pointer without updating the working tree
+   * in the main repo. This method runs {@code git reset --hard HEAD} in the project directory to
+   * bring the on-disk files in sync with the updated branch pointer.
+   *
+   * @param projectDir the project root directory
+   * @throws IOException if the reset fails
+   */
+  private void syncMainWorkingTree(Path projectDir) throws IOException
+  {
+    runGit(projectDir, "reset", "--hard", "HEAD");
   }
 
   /**
