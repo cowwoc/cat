@@ -148,6 +148,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-jlink-utf8-encoding
 - fix-load-skill-env-resolution
 - fix-merge-base-false-positive
+- fix-merge-push-to-local-failure
 - fix-merge-parent-shell-corruption
 - fix-merge-subagent-worktree-cd
 - fix-multirelease-jar-detection
