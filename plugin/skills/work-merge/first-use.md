@@ -66,24 +66,24 @@ Group commits into categories:
 - Implementation: feature, bugfix, refactor, test, docs
 - Infrastructure: config
 
-Squash each category into a single commit by calling `git-squash-quick.sh` directly:
+Squash each category into a single commit using the `git-squash` Java tool directly:
 
 **NEVER use `git rebase -i`** (requires interactive input) or manual `git reset --soft` (captures stale working
-directory state). Always use `git-squash-quick.sh` which uses `commit-tree` to create commits from committed tree
-objects.
+directory state). Always use `"${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash"` which uses `commit-tree` to create commits
+from committed tree objects.
 
 Derive the commit message from the COMMITS input JSON. The merge subagent is responsible for
-constructing a valid message before calling the script:
+constructing a valid message before calling the tool:
 - Use the first implementation commit's message as the base (it already has the correct type prefix)
 - If multiple implementation commits exist, append a summary of additional work after the base message
   (e.g., first commit "feature: add parser" + test commit → "feature: add parser with tests")
 - The message MUST match the format `type: description` where type is one of: feature, bugfix,
   refactor, test, performance, config, planning, docs. The description must start with a non-whitespace
-  character. The script rejects invalid messages.
+  character. The tool rejects invalid messages.
 
 ```bash
 # Example: Extract commit message from COMMITS JSON
-PRIMARY_MESSAGE=$(echo "$COMMITS" | python3 -c "import sys, json; commits = json.load(sys.stdin); print(commits[0]['message'])")
+PRIMARY_MESSAGE=$(echo "$COMMITS" | grep -o '"message"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/"message"[[:space:]]*:[[:space:]]*"\(.*\)"/\1/')
 
 # Squash implementation commits
 "${CLAUDE_PLUGIN_ROOT}/client/bin/git-squash" "${BASE_BRANCH}" "$PRIMARY_MESSAGE" "${WORKTREE_PATH}"
@@ -93,13 +93,13 @@ PRIMARY_MESSAGE=$(echo "$COMMITS" | python3 -c "import sys, json; commits = json
 # - Config commit (optional, if config changes exist)
 ```
 
-**Handle script result:**
+**Handle tool result:**
 
-The script validates the commit message format before any git operations. If validation fails, it
+The tool validates the commit message format before any git operations. If validation fails, it
 exits with status 1 and prints a plain text error to stderr (not JSON). Ensure your commit message
-follows the format `type: description` before calling the script.
+follows the format `type: description` before calling the tool.
 
-If validation passes, the script returns JSON to stdout:
+If validation passes, the tool returns JSON to stdout:
 
 | Status | Meaning | Agent Action |
 |--------|---------|--------------|
@@ -122,7 +122,7 @@ Before merge, ensure STATE.md is updated in the implementation commit:
 ```
 
 After updating the current issue's STATE.md, verify no other issues regressed. Run this check
-before calling `git-squash-quick.sh`:
+before calling the `git-squash` tool:
 
 ```bash
 # Check for STATE.md regressions: other issues showing closed→open
