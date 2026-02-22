@@ -217,90 +217,51 @@ fi
 
 Do not proceed until verification confirms the entry exists.
 
-## Step 12: Commit Prevention Changes
+## Step 12: Determine Commit Location
 
-**MANDATORY: Commit prevention changes to the active worktree BEFORE recording retrospective.**
+**Single-commit rule:** ALL learning changes — prevention files AND retrospective metadata — go to the same location
+in a SINGLE commit. Never split a learn session across two separate commits or two separate git trees.
 
-Prevention changes from Phase 3 (Step 9) must be committed to the active issue worktree if one exists, otherwise to the
-main workspace. Retrospective metadata always goes to the main workspace.
-
-**Single-commit rule:** When prevention type is `skill`, `process`, `documentation`, or `config` AND no active issue
-worktree exists, BOTH the prevention files AND the retrospective metadata (mistakes file + index) go to the same
-location (main workspace). In this case, skip the separate commit in Step 12 and include the prevention files together
-with the retrospective metadata in the single Step 13 commit. Do NOT create two separate commits for the same learning
-operation.
+**Commit location:**
+- Active issue worktree exists → commit everything to the worktree
+- No active worktree → commit everything to the main workspace
 
 ```bash
 # Determine commit location: worktree if active, otherwise main workspace
 if [[ -f "$(git rev-parse --git-common-dir)/worktrees/$(basename "$PWD")/cat-base" ]]; then
-  PREVENTION_DIR="$PWD"  # Already in a worktree
+  COMMIT_DIR="$PWD"  # Already in a worktree
   IN_WORKTREE=true
 else
   # Check for active worktrees
   ACTIVE_WORKTREE=$(find "${CLAUDE_PROJECT_DIR}/.claude/cat/worktrees" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | head -1)
   if [[ -n "$ACTIVE_WORKTREE" ]]; then
-    PREVENTION_DIR="$ACTIVE_WORKTREE"
+    COMMIT_DIR="$ACTIVE_WORKTREE"
     IN_WORKTREE=true
   else
-    PREVENTION_DIR="${CLAUDE_PROJECT_DIR}"
+    COMMIT_DIR="${CLAUDE_PROJECT_DIR}"
     IN_WORKTREE=false
   fi
 fi
 
-# When prevention goes to main workspace (no worktree), combine with Step 13 retrospective commit
-COMBINE_WITH_RETRO=false
-if [[ "$IN_WORKTREE" == "false" ]]; then
-  PREVENTION_TYPE="${prevention_type}"  # From Phase 3 JSON
-  if [[ "$PREVENTION_TYPE" =~ ^(skill|process|documentation|config)$ ]]; then
-    echo "INFO: Prevention type '$PREVENTION_TYPE' with no active worktree — combining with retrospective commit in Step 13"
-    COMBINE_WITH_RETRO=true
-  fi
-fi
-
-if [[ "$COMBINE_WITH_RETRO" == "false" ]]; then
-  # Stage prevention files in the target directory
-  cd "$PREVENTION_DIR"
-  PREVENTION_FILES=("${files_modified[@]}")  # From Phase 3 JSON
-
-  for file in "${PREVENTION_FILES[@]}"; do
-    if [[ ! -f "$file" ]]; then
-      echo "ERROR: Prevention file not found: $file"
-      echo "Phase 3 claimed to modify this file but it doesn't exist."
-      exit 1
-    fi
-    git add "$file"
-  done
-
-  # Commit prevention changes
-  PREVENTION_COMMIT_MSG="config: record learning ${NEXT_ID} - {short description}"
-  git commit -m "$PREVENTION_COMMIT_MSG"
-  PREVENTION_COMMIT_HASH=$(git rev-parse --short HEAD)
-
-  echo "Prevention committed at $PREVENTION_COMMIT_HASH (in $PREVENTION_DIR)"
-fi
+echo "Commit location: $COMMIT_DIR (in_worktree=$IN_WORKTREE)"
 ```
 
-**Why commit prevention to the worktree:**
+**Why all changes go to the same location:**
 
-Prevention changes modify plugin source code, skills, or hooks. Committing to the worktree ensures they flow through
-the normal merge and review process. If the worktree is aborted, the prevention is lost but can be re-implemented.
-Retrospective metadata (`.claude/cat/retrospectives/`) goes to the main workspace since it is shared infrastructure.
+Prevention files and retrospective metadata are both produced by the same learn session. Splitting them across the
+worktree and main workspace violates worktree isolation: the main workspace branch advances independently, bypassing
+review. Committing everything together — to the active worktree when one exists — ensures the full learning record
+flows through the normal merge and review process.
 
 ## Step 13: Update Retrospective Counter and Commit
 
-**MANDATORY: Update counter and commit files together.**
+**MANDATORY: Update counter and commit all files (prevention + retrospective metadata) to $COMMIT_DIR together.**
 
 **VALIDATION CHECK**: Before incrementing, verify counter matches actual mistake count:
 
 ```bash
 RETRO_DIR="${CLAUDE_PROJECT_DIR}/.claude/cat/retrospectives"
 INDEX_FILE="$RETRO_DIR/index.json"
-
-# Check for active worktrees (warning only - non-blocking)
-ACTIVE_WORKTREES=$(git -C "${CLAUDE_PROJECT_DIR}" worktree list --porcelain | grep -c "^worktree " || true)
-if [[ $ACTIVE_WORKTREES -gt 1 ]]; then
-  echo "WARNING: $((ACTIVE_WORKTREES - 1)) active worktree(s) detected. Committing to base branch."
-fi
 
 LAST_RETRO=$(jq -r '.last_retrospective // empty' "$INDEX_FILE")
 
@@ -327,18 +288,14 @@ else
     && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
 fi
 
-# Commit split file and index together (plus prevention files if combined)
-git -C "${CLAUDE_PROJECT_DIR}" add "$MISTAKES_FILE" "$INDEX_FILE"
+# Stage ALL files: retrospective metadata + prevention files — all go to $COMMIT_DIR
+git -C "$COMMIT_DIR" add "$MISTAKES_FILE" "$INDEX_FILE"
+for file in "${files_modified[@]}"; do
+  git -C "$COMMIT_DIR" add "$file"
+done
 
-# When prevention type goes to main workspace (no worktree), add prevention files to this same commit
-if [[ "$COMBINE_WITH_RETRO" == "true" ]]; then
-  for file in "${files_modified[@]}"; do
-    git -C "${CLAUDE_PROJECT_DIR}" add "$file"
-  done
-fi
-
-COMMIT_OUTPUT=$(git -C "${CLAUDE_PROJECT_DIR}" commit -m "config: record learning ${NEXT_ID} - {short description}" 2>&1)
-COMMIT_HASH=$(git -C "${CLAUDE_PROJECT_DIR}" rev-parse --short HEAD)
+COMMIT_OUTPUT=$(git -C "$COMMIT_DIR" commit -m "config: record learning ${NEXT_ID} - {short description}" 2>&1)
+COMMIT_HASH=$(git -C "$COMMIT_DIR" rev-parse --short HEAD)
 
 # CRITICAL: Verify commit succeeded and capture actual hash
 if [[ $? -ne 0 ]]; then
