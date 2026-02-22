@@ -736,7 +736,32 @@ git -C ${WORKTREE_PATH} log --format="%H %s" ${BASE_BRANCH}..HEAD
 
 **If any indicator triggers:** Return to squash step and consolidate the affected commits.
 
-**If no indicators trigger:** Proceed to approval gate.
+**If no indicators trigger:** Proceed to STATE.md closure verification.
+
+### Verify STATE.md Closure (BLOCKING)
+
+**Before proceeding to the approval gate, verify that STATE.md is closed in the final commit.**
+
+```bash
+# Check STATE.md status in the HEAD commit
+STATE_RELATIVE=$(realpath --relative-to="${WORKTREE_PATH}" "${ISSUE_PATH}/STATE.md")
+STATUS_IN_COMMIT=$(git -C "${WORKTREE_PATH}" show "HEAD:${STATE_RELATIVE}" 2>/dev/null | \
+  grep -i "^\*\*Status:\*\*\|^- \*\*Status:\*\*" | head -1)
+echo "STATE.md status in HEAD commit: ${STATUS_IN_COMMIT}"
+```
+
+**Blocking condition:** If STATE.md status is NOT `closed` in HEAD, STOP and fix before presenting the approval gate:
+
+1. Open `${ISSUE_PATH}/STATE.md` and set `Status: closed`, `Progress: 100%`
+2. Amend the most recent implementation commit to include the STATE.md change:
+   ```bash
+   git -C "${WORKTREE_PATH}" add "${ISSUE_PATH}/STATE.md"
+   git -C "${WORKTREE_PATH}" commit --amend --no-edit
+   ```
+3. Re-run squash quality verification above
+
+**Why this check exists:** The approval gate presents final work for user review. STATE.md must already
+reflect the closed state at review time — not in a separate follow-up commit.
 
 ## Step 7: Approval Gate
 
@@ -779,14 +804,37 @@ Skip approval gate. Continue directly to Step 8 (merge).
 
 **STOP HERE for user approval.** Do NOT proceed to merge automatically.
 
-Present a summary and ask for approval:
+### Present Changes Before Approval Gate (BLOCKING)
 
-```
-Display task goal from PLAN.md
-Display execution summary (commits, files changed)
-Display E2E testing summary (see below)
-Display review results with ALL concern details (see below)
-```
+**MANDATORY: Render the diff and output the full change summary BEFORE invoking AskUserQuestion.**
+
+Context compaction can occur at any point in a long session. When the conversation is compacted, the user's
+visible context resets — they will only see output from the current turn onward. If AskUserQuestion is invoked
+without first presenting the changes in the same turn, the user sees an approval gate with no visible context
+about what they are approving.
+
+**Required pre-gate output sequence (all mandatory, in this order):**
+
+1. **Render diff** — invoke `cat:render-diff` to display the changes:
+   ```
+   Skill tool:
+     skill: "cat:render-diff"
+   ```
+
+2. **Display commit summary** — list commits since base branch:
+   ```bash
+   git -C ${WORKTREE_PATH} log --oneline ${BASE_BRANCH}..HEAD
+   ```
+
+3. **Display task goal** (from PLAN.md)
+
+4. **Display execution summary** (commits count, files changed)
+
+5. **Display E2E testing summary** (see below)
+
+6. **Display review results with ALL concern details** (see below)
+
+Only after all six items above have been output in the current conversation turn may you invoke AskUserQuestion.
 
 **MANDATORY: Display E2E testing summary before the approval gate.** Explain what E2E tests were run, what they
 verified, and what the results were. This helps the user determine whether the feature works in its real environment.

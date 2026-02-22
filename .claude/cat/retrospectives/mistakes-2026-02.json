@@ -1412,7 +1412,62 @@
         "fragility": "low",
         "catches_variations": true
       },
-      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all PLAN.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed → criteria verified → offer closure."
+      "correct_behavior": "When a decomposed parent issue is selected (all sub-issues closed), verify all PLAN.md acceptance criteria are satisfied before offering to close the parent. The sequence is: children closed \u2192 criteria verified \u2192 offer closure."
+    },
+    {
+      "id": "M393",
+      "timestamp": "2026-02-23T00:00:00Z",
+      "category": "protocol_violation",
+      "description": "After context compaction, agent presented approval gate (AskUserQuestion) without first showing the diff, commit summary, or change context in the current turn",
+      "root_cause": "The approval gate instructions listed display requirements (task goal, execution summary, E2E results, review concerns) but did not require rendering the diff via cat:render-diff and outputting all context items in the same conversation turn before invoking AskUserQuestion. After compaction, the user's visible context resets, so items displayed in prior turns are no longer visible.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "approval gate",
+        "compaction",
+        "context reset",
+        "diff",
+        "AskUserQuestion",
+        "no context"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before invoking AskUserQuestion at the approval gate, always output in the current turn: (1) render diff via cat:render-diff, (2) commit summary, (3) task goal, (4) execution summary, (5) E2E summary, (6) review concerns. This ensures the user has full context regardless of whether compaction occurred."
+    },
+    {
+      "id": "M394",
+      "timestamp": "2026-02-23T11:00:00Z",
+      "category": "protocol_violation",
+      "description": "Agent presented implementation for review without closing STATE.md in the same commit",
+      "root_cause": "The work-with-issue squash+verification step lacks a blocking check that STATE.md is closed in the final commit before proceeding to the approval gate. The rule exists in documentation (CLAUDE.md M487 and delegation prompt) but without a verification gate, the agent can proceed to review with STATE.md still open.",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "validation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-with-issue/first-use.md",
+      "pattern_keywords": [
+        "STATE.md",
+        "closed",
+        "approval gate",
+        "same commit",
+        "protocol_violation"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "Before presenting the approval gate, verify that STATE.md shows Status: closed in the HEAD commit. If not, amend the implementation commit to include the STATE.md closure before proceeding."
     }
   ]
 }
