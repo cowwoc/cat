@@ -210,8 +210,13 @@ public final class WorkPrepare
 
     if (!input.issueId().isEmpty())
     {
-      discoveryScope = IssueDiscovery.Scope.ISSUE;
-      discoveryTarget = input.issueId();
+      String id = input.issueId();
+      // Detect whether the ID is fully-qualified (e.g. "2.1-fix-bug") or a bare name (e.g. "fix-bug")
+      if (id.matches("^\\d+(?:\\.\\d+(?:\\.\\d+)?)?-[a-zA-Z][a-zA-Z0-9_-]*$"))
+        discoveryScope = IssueDiscovery.Scope.ISSUE;
+      else
+        discoveryScope = IssueDiscovery.Scope.BARE_NAME;
+      discoveryTarget = id;
     }
     else
     {
