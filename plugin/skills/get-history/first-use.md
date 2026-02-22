@@ -17,7 +17,7 @@ Use the Java `session-analyzer` tool for structured queries. It handles mega-lin
 the JSON structure rather than treating lines as text.
 
 ```bash
-SESSION_ANALYZER="${CLAUDE_PROJECT_DIR}/client/target/jlink/bin/session-analyzer"
+SESSION_ANALYZER="${CLAUDE_PLUGIN_ROOT}/client/bin/session-analyzer"
 SESSION_FILE="/home/node/.config/claude/projects/-workspace/${CLAUDE_SESSION_ID}.jsonl"
 
 # Search for keyword with 2 lines of surrounding context
