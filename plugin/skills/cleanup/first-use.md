@@ -170,7 +170,7 @@ echo '{
     "branches_to_remove": ["2.1-issue-name"],
     "stale_remotes": []
   }
-}' | python3 "${CLAUDE_PLUGIN_ROOT}/hooks/invoke-handler.py"
+}' | "${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --phase plan
 ```
 
 Replace the example values with actual items identified in Step 2.
@@ -266,7 +266,7 @@ echo '{
     "remaining_branches": [],
     "remaining_locks": []
   }
-}' | python3 "${CLAUDE_PLUGIN_ROOT}/hooks/invoke-handler.py"
+}' | "${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --phase verify
 ```
 
 Replace the example values with actual cleanup results.
@@ -313,5 +313,5 @@ The resulting box will be output verbatim.
 3. Delete branches
 
 <output skill="cleanup">
-!`"${CLAUDE_PLUGIN_ROOT}/scripts/get-cleanup-survey.sh" --project-dir "${CLAUDE_PROJECT_DIR}"`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-cleanup-output" --project-dir "${CLAUDE_PROJECT_DIR}"`
 </output>

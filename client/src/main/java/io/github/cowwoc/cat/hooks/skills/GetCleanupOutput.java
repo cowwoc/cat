@@ -7,15 +7,21 @@
 package io.github.cowwoc.cat.hooks.skills;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -678,5 +684,189 @@ public final class GetCleanupOutput
     // Build outer box with header
     String header = DisplayUtils.EMOJI_CHECKMARK + " Cleanup Complete";
     return display.buildHeaderBox(header, contentItems, List.of(), 50, DisplayUtils.HORIZONTAL_LINE + " ");
+  }
+
+  /**
+   * Main entry point for the cleanup skill.
+   * <p>
+   * Handles three phases via command-line arguments:
+   * <ul>
+   *   <li><b>survey</b> (default): Gathers data from the filesystem and formats the survey box.
+   *       Accepts {@code --project-dir PATH}; if omitted, falls back to {@code CLAUDE_PROJECT_DIR}
+   *       via scope. This is the only phase that reads the environment automatically.</li>
+   *   <li><b>plan</b>: Formats the cleanup plan box from JSON provided on stdin. All data is
+   *       supplied by the caller (no filesystem reads). Accepts {@code --phase plan}.</li>
+   *   <li><b>verify</b>: Formats the cleanup verification box from JSON provided on stdin. All
+   *       data is supplied by the caller (no filesystem reads). Accepts {@code --phase verify}.</li>
+   * </ul>
+   * <p>
+   * Usage:
+   * <pre>
+   *   get-cleanup-survey-output [--project-dir PATH]
+   *   get-cleanup-survey-output --phase plan   &lt; plan.json
+   *   get-cleanup-survey-output --phase verify &lt; verify.json
+   * </pre>
+   *
+   * @param args command line arguments
+   */
+  public static void main(String[] args)
+  {
+    String projectDirArg = "";
+    String phase = "survey";
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (args[i].equals("--project-dir"))
+      {
+        if (i + 1 >= args.length)
+        {
+          System.err.println("Error: --project-dir flag requires a PATH argument.");
+          System.exit(1);
+        }
+        projectDirArg = args[i + 1];
+        ++i;
+      }
+      else if (args[i].equals("--phase"))
+      {
+        if (i + 1 >= args.length)
+        {
+          System.err.println("Error: --phase flag requires a value (survey, plan, or verify).");
+          System.exit(1);
+        }
+        phase = args[i + 1];
+        ++i;
+      }
+    }
+
+    try (JvmScope scope = new MainJvmScope())
+    {
+      GetCleanupOutput output = new GetCleanupOutput(scope);
+      String result;
+      switch (phase)
+      {
+        case "survey" ->
+        {
+          Path projectDir;
+          if (!projectDirArg.isEmpty())
+            projectDir = Path.of(projectDirArg);
+          else
+            projectDir = scope.getClaudeProjectDir();
+          result = output.gatherAndFormatSurveyOutput(projectDir);
+        }
+        case "plan" ->
+        {
+          String json = readStdin();
+          result = output.formatPlanFromJson(json);
+        }
+        case "verify" ->
+        {
+          String json = readStdin();
+          result = output.formatVerifyFromJson(json);
+        }
+        default ->
+        {
+          System.err.println("Error: unknown --phase value '" + phase +
+            "'. Expected: survey, plan, or verify.");
+          System.exit(1);
+          return;
+        }
+      }
+      System.out.println(result);
+    }
+    catch (IOException e)
+    {
+      System.err.println("Error generating cleanup output: " + e.getMessage());
+      System.exit(1);
+    }
+  }
+
+  /**
+   * Reads all of stdin and returns it as a string.
+   *
+   * @return the stdin content
+   * @throws IOException if an I/O error occurs
+   */
+  private static String readStdin() throws IOException
+  {
+    try (InputStream in = System.in)
+    {
+      return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+    }
+  }
+
+  /**
+   * Formats the cleanup plan box from a JSON string.
+   *
+   * @param json the JSON input with plan phase data
+   * @return the formatted plan output
+   * @throws IOException if parsing fails
+   * @throws NullPointerException if json is null
+   */
+  public String formatPlanFromJson(String json) throws IOException
+  {
+    requireThat(json, "json").isNotNull();
+    JsonMapper mapper = JsonMapper.builder().build();
+    JsonNode root = mapper.readTree(json);
+    JsonNode context = root.path("context");
+
+    List<String> locksToRemove = new ArrayList<>();
+    for (JsonNode lock : context.path("locks_to_remove"))
+      locksToRemove.add(lock.asString());
+
+    List<WorktreeToRemove> worktreesToRemove = new ArrayList<>();
+    for (JsonNode wt : context.path("worktrees_to_remove"))
+      worktreesToRemove.add(new WorktreeToRemove(wt.path("path").asString(),
+        wt.path("branch").asString()));
+
+    List<String> branchesToRemove = new ArrayList<>();
+    for (JsonNode branch : context.path("branches_to_remove"))
+      branchesToRemove.add(branch.asString());
+
+    List<StaleRemote> staleRemotes = new ArrayList<>();
+    for (JsonNode remote : context.path("stale_remotes"))
+    {
+      staleRemotes.add(new StaleRemote(
+        remote.path("branch").asString(),
+        remote.path("author").asString(),
+        remote.path("last_updated").asString(),
+        remote.path("staleness").asString()));
+    }
+
+    return getPlanOutput(locksToRemove, worktreesToRemove, branchesToRemove, staleRemotes);
+  }
+
+  /**
+   * Formats the cleanup verification box from a JSON string.
+   *
+   * @param json the JSON input with verify phase data
+   * @return the formatted verify output
+   * @throws IOException if parsing fails
+   * @throws NullPointerException if json is null
+   */
+  public String formatVerifyFromJson(String json) throws IOException
+  {
+    requireThat(json, "json").isNotNull();
+    JsonMapper mapper = JsonMapper.builder().build();
+    JsonNode root = mapper.readTree(json);
+    JsonNode context = root.path("context");
+
+    JsonNode removedCountsNode = context.path("removed_counts");
+    RemovedCounts removedCounts = new RemovedCounts(
+      removedCountsNode.path("locks").asInt(0),
+      removedCountsNode.path("worktrees").asInt(0),
+      removedCountsNode.path("branches").asInt(0));
+
+    List<String> remainingWorktrees = new ArrayList<>();
+    for (JsonNode wt : context.path("remaining_worktrees"))
+      remainingWorktrees.add(wt.asString());
+
+    List<String> remainingBranches = new ArrayList<>();
+    for (JsonNode branch : context.path("remaining_branches"))
+      remainingBranches.add(branch.asString());
+
+    List<String> remainingLocks = new ArrayList<>();
+    for (JsonNode lock : context.path("remaining_locks"))
+      remainingLocks.add(lock.asString());
+
+    return getVerifyOutput(remainingWorktrees, remainingBranches, remainingLocks, removedCounts);
   }
 }
