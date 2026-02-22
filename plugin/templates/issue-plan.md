@@ -41,12 +41,10 @@ Select the appropriate template based on issue type.
 - path/to/file1.ext - [specific change]
 - path/to/file2.ext - [specific change]
 
-## Acceptance Criteria
-<!-- Include at least one end-to-end criterion that verifies the feature works in its real environment -->
-<!-- Unit tests verify components; E2E criteria verify the feature works as a whole -->
-- [ ] Criterion 1
-- [ ] Criterion 2
-- [ ] E2E: [observable outcome confirming the feature works end-to-end]
+## Pre-conditions
+<!-- Conditions that must be true before this issue can begin execution -->
+<!-- Default: all dependent issues listed in STATE.md are closed -->
+- [ ] All dependent issues are closed
 
 ## Execution Steps
 <!-- ACTIONS ONLY - Do NOT include expected outcomes like "score = 1.0" or "should be X" -->
@@ -56,11 +54,12 @@ Select the appropriate template based on issue type.
 2. **Step 2:** [action to perform]
    ...
 
-## Success Criteria
-<!-- MEASURABLE OUTCOMES - What the execution should achieve -->
+## Post-conditions
+<!-- MEASURABLE OUTCOMES - What must be true after execution completes -->
+<!-- Include at least one end-to-end criterion that verifies the feature works in its real environment -->
 <!-- These are verified by the orchestrator, NOT passed to subagents -->
 - [ ] Criterion 1 with measurable outcome (e.g., "All files achieve EQUIVALENT status")
-- [ ] Criterion 2 with threshold (e.g., "Token reduction > 30%")
+- [ ] E2E: [observable outcome confirming the feature works end-to-end]
 ```
 
 ---
@@ -102,12 +101,15 @@ code_that_fails();
 - [ ] Original bug scenario - now passes
 - [ ] Edge cases - still work
 
+## Pre-conditions
+- [ ] All dependent issues are closed
+
 ## Execution Steps
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
 1. **Step 1:** [action with specific code changes]
 2. **Step 2:** [next action]
 
-## Success Criteria
+## Post-conditions
 <!-- MEASURABLE OUTCOMES - verified separately from execution -->
 - [ ] All test cases pass
 - [ ] No regressions in related functionality
@@ -138,12 +140,15 @@ code_that_fails();
 ## Files to Modify
 - path/to/file.ext - [specific change]
 
+## Pre-conditions
+- [ ] All dependent issues are closed
+
 ## Execution Steps
 <!-- ACTIONS ONLY - Do NOT include expected outcomes -->
 1. **Step 1:** [action with before/after patterns]
 2. **Step 2:** [next action]
 
-## Success Criteria
+## Post-conditions
 <!-- MEASURABLE OUTCOMES - verified separately from execution -->
 - [ ] All tests pass after refactoring
 - [ ] Code quality metrics maintained or improved

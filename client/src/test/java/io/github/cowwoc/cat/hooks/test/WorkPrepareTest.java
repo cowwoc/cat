@@ -360,6 +360,105 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute includes preconditions in READY result when PLAN.md has a Pre-conditions section.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeIncludesPreconditionsFromPlanMd() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "my-feature", "open");
+      createPlanWithPreconditions(projectDir, "2", "1", "my-feature",
+        new String[]{"All tests pass", "Branch is up to date"});
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with preconditions");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      JsonNode preconditions = node.path("preconditions");
+      requireThat(preconditions.isMissingNode(), "hasPreconditions").isFalse();
+      requireThat(preconditions.isArray(), "preconditionsIsArray").isTrue();
+      requireThat(preconditions.size(), "preconditionCount").isEqualTo(2);
+      requireThat(preconditions.get(0).asString(), "precondition0").isEqualTo("All tests pass");
+      requireThat(preconditions.get(1).asString(), "precondition1").isEqualTo("Branch is up to date");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that execute returns an empty preconditions list when PLAN.md has no Pre-conditions section.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsEmptyPreconditionsWhenSectionMissing() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "no-preconditions", "open");
+
+      // Create a PLAN.md without a Pre-conditions section
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("no-preconditions");
+      String planContent = """
+        # Plan
+
+        ## Goal
+
+        A simple feature
+
+        ## Execution Steps
+
+        1. Do the work
+        """;
+      Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue without preconditions");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      JsonNode preconditions = node.path("preconditions");
+      requireThat(preconditions.isMissingNode(), "hasPreconditions").isFalse();
+      requireThat(preconditions.isArray(), "preconditionsIsArray").isTrue();
+      requireThat(preconditions.size(), "preconditionCount").isEqualTo(0);
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute returns LOCKED when IssueDiscovery returns NotExecutable with "locked" reason.
    * <p>
    * Creates a lock file for the issue before calling execute to trigger the LOCKED path.
@@ -839,6 +938,204 @@ public class WorkPrepareTest
       """.formatted(goalText);
 
     Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+  }
+
+  /**
+   * Verifies that execute includes pre-conditions with checked items (- [x]) in the READY result.
+   * Checked items represent completed pre-conditions and must still be included.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeIncludesPreconditionsWithCheckedItems() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "my-feature", "open");
+      createPlanWithMixedPreconditions(projectDir, "2", "1", "my-feature",
+        new String[]{"Unchecked item"},
+        new String[]{"Checked item"});
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with checked preconditions");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      JsonNode preconditions = node.path("preconditions");
+      requireThat(preconditions.size(), "preconditionCount").isEqualTo(2);
+      requireThat(preconditions.get(0).asString(), "precondition0").isEqualTo("Unchecked item");
+      requireThat(preconditions.get(1).asString(), "precondition1").isEqualTo("Checked item");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that execute returns an empty preconditions list when the Pre-conditions section exists
+   * but contains no checkbox items.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeReturnsEmptyPreconditionsWhenSectionHasNoItems() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "empty-precond", "open");
+
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("empty-precond");
+      String planContent = """
+        # Plan
+
+        ## Pre-conditions
+
+        ## Execution Steps
+
+        1. Do the work
+        """;
+      Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with empty preconditions section");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      JsonNode preconditions = node.path("preconditions");
+      requireThat(preconditions.isMissingNode(), "hasPreconditions").isFalse();
+      requireThat(preconditions.isArray(), "preconditionsIsArray").isTrue();
+      requireThat(preconditions.size(), "preconditionCount").isEqualTo(0);
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that execute correctly reads preconditions when the Pre-conditions section is the last
+   * section in PLAN.md with no trailing newline.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeIncludesPreconditionsWhenSectionAtEndOfFile() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "eof-precond", "open");
+
+      Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+        resolve("v2").resolve("v2.1").resolve("eof-precond");
+      // No trailing newline after the last item
+      String planContent = "# Plan\n\n## Execution Steps\n\n1. Do the work\n\n## Pre-conditions\n\n- [ ] Final check";
+      Files.writeString(issueDir.resolve("PLAN.md"), planContent);
+
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add issue with preconditions at EOF");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      JsonNode preconditions = node.path("preconditions");
+      requireThat(preconditions.size(), "preconditionCount").isEqualTo(1);
+      requireThat(preconditions.get(0).asString(), "precondition0").isEqualTo("Final check");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Creates a PLAN.md with a Pre-conditions section containing the given checkbox items.
+   *
+   * @param projectDir the project root directory
+   * @param major the major version number
+   * @param minor the minor version number
+   * @param issueName the issue name
+   * @param preconditions the pre-condition text items to include as unchecked checkboxes
+   * @throws IOException if file creation fails
+   */
+  private void createPlanWithPreconditions(Path projectDir, String major, String minor,
+    String issueName, String[] preconditions) throws IOException
+  {
+    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    StringBuilder planContent = new StringBuilder();
+    planContent.append("# Plan\n\n## Pre-conditions\n\n");
+    for (String precondition : preconditions)
+      planContent.append("- [ ] ").append(precondition).append("\n");
+    planContent.append("\n## Execution Steps\n\n1. Do the work\n");
+
+    Files.writeString(issueDir.resolve("PLAN.md"), planContent.toString());
+  }
+
+  /**
+   * Creates a PLAN.md with a Pre-conditions section containing both unchecked and checked checkbox items.
+   *
+   * @param projectDir the project root directory
+   * @param major the major version number
+   * @param minor the minor version number
+   * @param issueName the issue name
+   * @param uncheckedItems the unchecked pre-condition items to include as unchecked checkboxes
+   * @param checkedItems the checked pre-condition items to include as checked checkboxes
+   * @throws IOException if file creation fails
+   */
+  private void createPlanWithMixedPreconditions(Path projectDir, String major, String minor,
+    String issueName, String[] uncheckedItems, String[] checkedItems) throws IOException
+  {
+    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    StringBuilder planContent = new StringBuilder();
+    planContent.append("# Plan\n\n## Pre-conditions\n\n");
+    for (String item : uncheckedItems)
+      planContent.append("- [ ] ").append(item).append("\n");
+    for (String item : checkedItems)
+      planContent.append("- [x] ").append(item).append("\n");
+    planContent.append("\n## Execution Steps\n\n1. Do the work\n");
+
+    Files.writeString(issueDir.resolve("PLAN.md"), planContent.toString());
   }
 
   /**

@@ -610,6 +610,29 @@ def read_goal_from_plan(plan_path: Path) -> str:
     return goal
 
 
+def read_preconditions_from_plan(plan_path: Path) -> list[str]:
+    """Read ## Pre-conditions section from PLAN.md and return checkbox items."""
+    preconditions = []
+    try:
+        content = plan_path.read_text()
+        in_section = False
+        for line in content.splitlines():
+            if line.strip() == "## Pre-conditions":
+                in_section = True
+                continue
+            if in_section and line.startswith("## "):
+                break
+            if in_section:
+                stripped = line.strip()
+                if stripped.startswith("- [ ] "):
+                    preconditions.append(stripped[6:].strip())
+                elif stripped.startswith("- [x] "):
+                    preconditions.append(stripped[6:].strip())
+    except OSError:
+        pass
+    return preconditions
+
+
 def main():
     parser = argparse.ArgumentParser(description="Deterministic preparation phase for /cat:work")
     parser.add_argument("--session-id", required=False,
@@ -855,6 +878,9 @@ def main():
         # Read goal from PLAN.md
         goal = read_goal_from_plan(plan_path)
 
+        # Read pre-conditions from PLAN.md
+        preconditions = read_preconditions_from_plan(plan_path)
+
         # Step 10: Return READY JSON
         result = {
             "status": "READY",
@@ -869,6 +895,7 @@ def main():
             "estimated_tokens": estimated_tokens,
             "percent_of_threshold": int((estimated_tokens / 160000) * 100),
             "goal": goal,
+            "preconditions": preconditions,
             "approach_selected": "auto",
             "lock_acquired": True,
             "has_existing_work": existing_work.get("has_existing_work", False),

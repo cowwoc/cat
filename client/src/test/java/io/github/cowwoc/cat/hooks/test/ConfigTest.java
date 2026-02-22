@@ -641,7 +641,7 @@ public class ConfigTest
 
       requireThat(result, "result").isNotNull();
       requireThat(result, "result").contains("CURRENT_SETTINGS:");
-      requireThat(result, "result").contains("VERSION_GATES_OVERVIEW:");
+      requireThat(result, "result").contains("VERSION_CONDITIONS_OVERVIEW:");
       requireThat(result, "result").contains("CONFIGURATION_SAVED:");
       requireThat(result, "result").contains("NO_CHANGES:");
     }
@@ -672,7 +672,7 @@ public class ConfigTest
       // CURRENT_SETTINGS section header is present but has no box content (null when config missing)
       requireThat(result, "result").contains("CURRENT_SETTINGS:");
       requireThat(result, "result").doesNotContain("CURRENT SETTINGS");
-      requireThat(result, "result").contains("VERSION_GATES_OVERVIEW:");
+      requireThat(result, "result").contains("VERSION_CONDITIONS_OVERVIEW:");
       requireThat(result, "result").contains("CONFIGURATION_SAVED:");
       requireThat(result, "result").contains("NO_CHANGES:");
     }

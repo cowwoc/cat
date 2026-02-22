@@ -14,6 +14,12 @@ set -euo pipefail
 #    pending → open, completed/complete → closed
 # 3. Move version tracking from cat-config.json to .claude/cat/VERSION plain text file
 #    (handles both old "version" field and renamed "last_migrated_version" field)
+# 4. Rename sections in PLAN.md files:
+#    "## Acceptance Criteria" → "## Post-conditions"
+#    "## Success Criteria" → merged into "## Post-conditions"
+#    "## Gates" / "### Entry" / "### Exit" → "## Pre-conditions" / "## Post-conditions"
+#    "## Entry Gate" / "## Exit Gate" → "## Pre-conditions" / "## Post-conditions"
+#    "## Exit Gate Tasks" → "## Post-conditions"
 
 trap 'echo "ERROR in 2.1.sh at line $LINENO: $BASH_COMMAND" >&2; exit 1' ERR
 
@@ -218,11 +224,11 @@ else
     migrated_version=""
     field_to_remove=""
 
-    if jq -e '.last_migrated_version' "$config_file" >/dev/null 2>&1; then
-        migrated_version=$(jq -r '.last_migrated_version' "$config_file")
+    if grep -q '"last_migrated_version"[[:space:]]*:' "$config_file" 2>/dev/null; then
+        migrated_version=$(sed -n 's/.*"last_migrated_version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$config_file")
         field_to_remove="last_migrated_version"
-    elif jq -e '.version' "$config_file" >/dev/null 2>&1; then
-        migrated_version=$(jq -r '.version' "$config_file")
+    elif grep -q '"version"[[:space:]]*:' "$config_file" 2>/dev/null; then
+        migrated_version=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$config_file")
         field_to_remove="version"
     fi
 
@@ -232,15 +238,183 @@ else
         # Write to VERSION file
         printf '%s\n' "$migrated_version" > "$version_file"
 
-        # Remove the field from cat-config.json
+        # Remove the field from cat-config.json using awk (no jq required)
+        # Handles field at start/middle (followed by comma) and at end (preceded by comma)
         tmp_file="${config_file}.tmp"
-        jq "del(.${field_to_remove})" "$config_file" > "$tmp_file"
+        awk -v field="$field_to_remove" '{
+            # Remove "field": "value", pattern (field followed by comma)
+            gsub("\"" field "\"[[:space:]]*:[[:space:]]*\"[^\"]*\"[[:space:]]*,[[:space:]]*", "")
+            # Remove , "field": "value" pattern (field preceded by comma)
+            gsub("[[:space:]]*,[[:space:]]*\"" field "\"[[:space:]]*:[[:space:]]*\"[^\"]*\"", "")
+            # Remove "field": "value" pattern (sole field, no adjacent comma)
+            gsub("\"" field "\"[[:space:]]*:[[:space:]]*\"[^\"]*\"", "")
+            print
+        }' "$config_file" > "$tmp_file"
         mv "$tmp_file" "$config_file"
 
         log_migration "Phase 3 complete: moved to VERSION file and removed from config"
     else
         log_migration "No version field found in config - skipping phase 3"
     fi
+fi
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 4: Rename PLAN.md sections to pre-conditions / post-conditions
+# ──────────────────────────────────────────────────────────────────────────────
+
+log_migration "Phase 4: Rename PLAN.md sections to pre-conditions/post-conditions"
+
+all_plan_files=$(find .claude/cat/issues -name "PLAN.md" -type f 2>/dev/null || true)
+all_plan_count=$(echo "$all_plan_files" | grep -c "PLAN.md" || echo 0)
+
+if [[ "$all_plan_count" -eq 0 ]]; then
+    log_migration "No PLAN.md files found - skipping phase 4"
+else
+    log_migration "Found $all_plan_count PLAN.md files to check"
+
+    phase4_changed=0
+
+    while IFS= read -r plan_file; do
+        [[ -z "$plan_file" ]] && continue
+
+        changed=false
+
+        # Rename "## Acceptance Criteria" → "## Post-conditions"
+        if grep -q "^## Acceptance Criteria" "$plan_file" 2>/dev/null; then
+            sed -i 's/^## Acceptance Criteria$/## Post-conditions/' "$plan_file"
+            changed=true
+            log_migration "  Renamed Acceptance Criteria → Post-conditions: $plan_file"
+        fi
+
+        # Rename "## Success Criteria" → "## Post-conditions" (merge)
+        # If both "## Post-conditions" and "## Success Criteria" exist, remove Success Criteria section
+        # If only "## Success Criteria" exists, rename it
+        if grep -q "^## Success Criteria" "$plan_file" 2>/dev/null; then
+            if grep -q "^## Post-conditions" "$plan_file" 2>/dev/null; then
+                # Both sections exist - merge Success Criteria content into Post-conditions
+                # Extract Success Criteria items
+                success_items=$(awk '
+                    /^## Success Criteria/ { in_section=1; next }
+                    in_section && /^## / { in_section=0 }
+                    in_section && /^- / { print }
+                ' "$plan_file")
+
+                # Remove Success Criteria section
+                awk '
+                    /^## Success Criteria/ { skip=1; next }
+                    skip && /^## / { skip=0; print; next }
+                    skip { next }
+                    { print }
+                ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+
+                # Append Success Criteria items to Post-conditions section
+                if [[ -n "$success_items" ]]; then
+                    awk -v items="$success_items" '
+                        /^## Post-conditions/ { print; in_section=1; next }
+                        in_section && /^## / {
+                            # End of post-conditions section - insert items before next heading
+                            n = split(items, arr, "\n")
+                            for (i = 1; i <= n; i++) {
+                                if (arr[i] != "") print arr[i]
+                            }
+                            print ""
+                            in_section=0
+                            print
+                            next
+                        }
+                        in_section { print; next }
+                        { print }
+                        END {
+                            if (in_section) {
+                                n = split(items, arr, "\n")
+                                for (i = 1; i <= n; i++) {
+                                    if (arr[i] != "") print arr[i]
+                                }
+                            }
+                        }
+                    ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+                fi
+            else
+                # Only Success Criteria - rename it to Post-conditions
+                sed -i 's/^## Success Criteria$/## Post-conditions/' "$plan_file"
+            fi
+            changed=true
+            log_migration "  Merged/renamed Success Criteria → Post-conditions: $plan_file"
+        fi
+
+        # Handle "## Gates" with "### Entry" and "### Exit" subsections
+        if grep -q "^## Gates" "$plan_file" 2>/dev/null; then
+            # Extract Entry section content
+            entry_content=$(awk '
+                /^### Entry/ { in_section=1; next }
+                in_section && /^### / { in_section=0 }
+                in_section && /^## / { in_section=0 }
+                in_section { print }
+            ' "$plan_file")
+
+            # Extract Exit section content
+            exit_content=$(awk '
+                /^### Exit/ { in_section=1; next }
+                in_section && /^### / { in_section=0 }
+                in_section && /^## / { in_section=0 }
+                in_section { print }
+            ' "$plan_file")
+
+            # Replace ## Gates section in-place with ## Pre-conditions / ## Post-conditions
+            awk -v entry="$entry_content" -v exit_cond="$exit_content" '
+                /^## Gates/ { skip=1; next }
+                skip && /^### / { next }
+                skip && /^## / {
+                    skip=0
+                    print "## Pre-conditions"
+                    if (entry != "") print entry; else print "- Previous version complete (or no prerequisites)"
+                    print ""
+                    print "## Post-conditions"
+                    if (exit_cond != "") print exit_cond; else print "- All tasks complete"
+                    print ""
+                    print
+                    next
+                }
+                skip { next }
+                { print }
+                END {
+                    if (skip) {
+                        print ""
+                        print "## Pre-conditions"
+                        if (entry != "") print entry; else print "- Previous version complete (or no prerequisites)"
+                        print ""
+                        print "## Post-conditions"
+                        if (exit_cond != "") print exit_cond; else print "- All tasks complete"
+                    }
+                }
+            ' "$plan_file" > "${plan_file}.tmp" && mv "${plan_file}.tmp" "$plan_file"
+
+            changed=true
+            log_migration "  Converted Gates → Pre/Post-conditions in-place: $plan_file"
+        fi
+
+        # Handle standalone "## Entry Gate" section
+        if grep -q "^## Entry Gate$" "$plan_file" 2>/dev/null; then
+            sed -i 's/^## Entry Gate$/## Pre-conditions/' "$plan_file"
+            changed=true
+            log_migration "  Renamed Entry Gate → Pre-conditions: $plan_file"
+        fi
+
+        # Handle standalone "## Exit Gate" or "## Exit Gate Tasks" section
+        if grep -q "^## Exit Gate" "$plan_file" 2>/dev/null; then
+            sed -i 's/^## Exit Gate Tasks$/## Post-conditions/' "$plan_file"
+            sed -i 's/^## Exit Gate$/## Post-conditions/' "$plan_file"
+            changed=true
+            log_migration "  Renamed Exit Gate → Post-conditions: $plan_file"
+        fi
+
+        if [[ "$changed" == "true" ]]; then
+            ((phase4_changed++)) || true
+        fi
+
+    done <<< "$all_plan_files"
+
+    log_migration "Phase 4 complete: $phase4_changed files changed"
 fi
 
 log_success "Migration to 2.1 completed"

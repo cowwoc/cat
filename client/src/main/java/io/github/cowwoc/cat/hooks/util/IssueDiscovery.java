@@ -494,10 +494,10 @@ public final class IssueDiscovery
    * @param target the target version or issue ID (may be empty)
    * @param sessionId the Claude session ID for lock acquisition (may be empty to skip locking)
    * @param excludePattern a glob-style pattern to exclude issues by name (may be empty)
-   * @param overrideGate if true, skip entry gate evaluation
+   * @param overridePostconditions if true, skip post-condition evaluation
    */
   public record SearchOptions(Scope scope, String target, String sessionId, String excludePattern,
-    boolean overrideGate)
+    boolean overridePostconditions)
   {
     /**
      * Creates new search options.
@@ -506,7 +506,7 @@ public final class IssueDiscovery
      * @param target the target version or issue ID (may be empty)
      * @param sessionId the Claude session ID for lock acquisition (may be empty to skip locking)
      * @param excludePattern a glob-style pattern to exclude issues by name (may be empty)
-     * @param overrideGate if true, skip entry gate evaluation
+     * @param overridePostconditions if true, skip post-condition evaluation
      * @throws NullPointerException if {@code scope}, {@code target}, {@code sessionId} or
      *   {@code excludePattern} are null
      */
@@ -1045,8 +1045,9 @@ public final class IssueDiscovery
       if (!blockingDependencies.isEmpty())
         continue;
 
-      // Check exit gate if this is an exit gate issue (exit gate applies at minor dir level)
-      if (!options.overrideGate() && isExitGateIssue(minorDir, issueName) && !exitGateSatisfied(minorDir))
+      // Check post-condition gate if this is a post-condition issue (applies at minor dir level)
+      if (!options.overridePostconditions() && isPostconditionIssue(minorDir, issueName) &&
+        !postconditionsSatisfied(minorDir))
         continue;
 
       // Check for existing worktree
@@ -1377,35 +1378,35 @@ public final class IssueDiscovery
   }
 
   /**
-   * Checks if a specific issue is an exit gate issue for its version.
+   * Checks if a specific issue is a post-condition issue for its version.
    *
    * @param minorDir the minor version directory
    * @param issueName the bare issue name
-   * @return true if the issue is listed as an exit gate issue in the version's PLAN.md
+   * @return true if the issue is listed as a post-condition issue in the version's PLAN.md
    * @throws IOException if file operations fail
    */
-  private boolean isExitGateIssue(Path minorDir, String issueName) throws IOException
+  private boolean isPostconditionIssue(Path minorDir, String issueName) throws IOException
   {
-    return parseExitGateIssues(minorDir).contains(issueName);
+    return parsePostconditionIssues(minorDir).contains(issueName);
   }
 
   /**
-   * Checks if the exit gate rule is satisfied for a version: all non-exit-gate issues must be closed.
+   * Checks if post-conditions are satisfied for a version: all non-post-condition issues must be closed.
    *
    * @param minorDir the minor version directory
-   * @return true if all non-exit-gate issues are closed
+   * @return true if all non-post-condition issues are closed
    * @throws IOException if file operations fail
    */
-  private boolean exitGateSatisfied(Path minorDir) throws IOException
+  private boolean postconditionsSatisfied(Path minorDir) throws IOException
   {
-    List<String> exitIssues = parseExitGateIssues(minorDir);
+    List<String> postconditionIssues = parsePostconditionIssues(minorDir);
 
-    // Check all non-exit-gate issues in the version
+    // Check all non-post-condition issues in the version
     for (Path issueDir : listIssueDirs(minorDir))
     {
       String dirName = issueDir.getFileName().toString();
-      // Skip exit gate issues
-      if (exitIssues.contains(dirName))
+      // Skip post-condition issues
+      if (postconditionIssues.contains(dirName))
         continue;
 
       Path statePath = issueDir.resolve("STATE.md");
@@ -1499,27 +1500,27 @@ public final class IssueDiscovery
   }
 
   /**
-   * Parses exit gate issue names from a version's PLAN.md file.
+   * Parses post-condition issue names from a version's PLAN.md file.
    *
    * @param minorDir the minor version directory containing the PLAN.md
-   * @return list of bare issue names that are exit gate issues, empty if no PLAN.md or no exit issues
+   * @return list of bare issue names that are post-condition issues, empty if no PLAN.md or no such issues
    * @throws IOException if reading the file fails
    */
-  private List<String> parseExitGateIssues(Path minorDir) throws IOException
+  private List<String> parsePostconditionIssues(Path minorDir) throws IOException
   {
     Path planPath = minorDir.resolve("PLAN.md");
     if (!Files.isRegularFile(planPath))
       return Collections.emptyList();
 
-    List<String> exitIssues = new ArrayList<>();
+    List<String> postconditionIssues = new ArrayList<>();
     List<String> lines = Files.readAllLines(planPath);
     for (String line : lines)
     {
       Matcher matcher = EXIT_ISSUE_PATTERN.matcher(line.strip());
       if (matcher.matches())
-        exitIssues.add(matcher.group(1).strip());
+        postconditionIssues.add(matcher.group(1).strip());
     }
-    return exitIssues;
+    return postconditionIssues;
   }
 
   /**

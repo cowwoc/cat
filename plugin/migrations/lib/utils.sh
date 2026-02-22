@@ -116,9 +116,9 @@ get_plugin_version() {
     fi
 
     local version
-    version=$(jq -r '.version // empty' "$plugin_file")
+    version=$(sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$plugin_file" | head -1)
 
-    if [[ -z "$version" || "$version" == "null" ]]; then
+    if [[ -z "$version" ]]; then
         log_migration "ERROR: No version field in $plugin_file"
         echo "ERROR: No version field in plugin.json" >&2
         exit 1
@@ -181,14 +181,16 @@ get_pending_migrations() {
         return
     fi
 
-    # Get all migrations where version > from_version AND version <= to_version
-    jq -r --arg from "$from_version" --arg to "$to_version" '
-        .migrations
-        | sort_by(.version)
-        | .[]
-        | select(.version != null and .script != null)
-        | "\(.version)|\(.script)"
-    ' "$registry_file" | while IFS='|' read -r ver script; do
+    # Parse version|script pairs from registry JSON using awk (no jq required)
+    awk '
+        /^[[:space:]]*"version"[[:space:]]*:/ {
+            gsub(/.*"version"[[:space:]]*:[[:space:]]*"/, ""); gsub(/".*/, ""); ver=$0
+        }
+        /^[[:space:]]*"script"[[:space:]]*:/ {
+            gsub(/.*"script"[[:space:]]*:[[:space:]]*"/, ""); gsub(/".*/, ""); scr=$0
+            if (ver != "") { print ver "|" scr; ver="" }
+        }
+    ' "$registry_file" | sort -t'|' -k1 -V | while IFS='|' read -r ver script; do
         local cmp_from
         local cmp_to
         cmp_from=$(version_compare "$ver" "$from_version")

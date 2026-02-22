@@ -71,7 +71,7 @@ public final class VerifyAudit
   }
 
   /**
-   * Parses PLAN.md and extracts acceptance criteria, file specs, and grouped criteria.
+   * Parses PLAN.md and extracts post-conditions, file specs, and grouped criteria.
    * <p>
    * Returns a JSON object with the following schema:
    * <pre>{@code
@@ -91,7 +91,7 @@ public final class VerifyAudit
    * }
    * }</pre>
    * <p>
-   * The {@code criteria} array contains all acceptance criteria extracted from the "Acceptance Criteria"
+   * The {@code criteria} array contains all post-conditions extracted from the "Post-conditions"
    * section. The {@code file_specs} object lists files to modify or delete. The {@code groups} array
    * organizes criteria by their file dependencies for optimized verification.
    *
@@ -105,7 +105,7 @@ public final class VerifyAudit
     requireThat(planPath, "planPath").isNotNull();
 
     String content = Files.readString(planPath);
-    List<String> criteria = extractAcceptanceCriteria(content);
+    List<String> criteria = extractPostconditions(content);
     FileSpecs fileSpecs = extractFileSpecs(content);
     List<CriteriaGroup> groups = groupCriteriaByFiles(criteria, fileSpecs);
 
@@ -311,7 +311,7 @@ public final class VerifyAudit
       throw new IllegalArgumentException("PLAN.md not found at " + issuePath);
 
     String content = Files.readString(planFile);
-    List<String> criteria = extractAcceptanceCriteria(content);
+    List<String> criteria = extractPostconditions(content);
     FileSpecs fileSpecs = extractFileSpecs(content);
     List<CriteriaGroup> groups = groupCriteriaByFiles(criteria, fileSpecs);
 
@@ -492,14 +492,14 @@ public final class VerifyAudit
     String criterionSection;
     if (criteria.size() == 1)
     {
-      criterionSection = "## Acceptance Criterion\n" + criteria.get(0);
+      criterionSection = "## Post-condition\n" + criteria.get(0);
     }
     else
     {
       StringBuilder lines = new StringBuilder();
       for (int i = 0; i < criteria.size(); ++i)
         lines.append(i + 1).append(". ").append(criteria.get(i)).append('\n');
-      criterionSection = "## Acceptance Criteria\n" + lines.toString().stripTrailing();
+      criterionSection = "## Post-conditions\n" + lines.toString().stripTrailing();
     }
 
     String taskVerb;
@@ -509,7 +509,7 @@ public final class VerifyAudit
       taskVerb = "EACH criterion is";
 
     return """
-      You are a verification agent auditing implementation compliance with planned acceptance criteria.
+      You are a verification agent auditing implementation compliance with planned post-conditions.
 
       %s
 
@@ -634,19 +634,19 @@ public final class VerifyAudit
   }
 
   /**
-   * Extracts acceptance criteria from PLAN.md content.
+   * Extracts post-conditions from PLAN.md content.
    *
    * @param content the PLAN.md file content
-   * @return list of criteria text
+   * @return list of post-condition text
    */
-  private List<String> extractAcceptanceCriteria(String content)
+  private List<String> extractPostconditions(String content)
   {
     List<String> criteria = new ArrayList<>();
     boolean inSection = false;
 
     for (String line : content.split("\n"))
     {
-      if (line.startsWith("## Acceptance Criteria"))
+      if (line.startsWith("## Post-conditions"))
       {
         inSection = true;
         continue;
@@ -884,7 +884,7 @@ public final class VerifyAudit
     StringBuilder output = new StringBuilder(512);
     output.append(topLine).append('\n');
     appendBoxLine(output, " Summary", contentWidth);
-    appendBoxLine(output, "   Acceptance Criteria:", contentWidth);
+    appendBoxLine(output, "   Post-conditions:", contentWidth);
     appendBoxLine(output, "     Total:        " + total, contentWidth);
     appendBoxLine(output, "     ✓ Done:       " + done, contentWidth);
     appendBoxLine(output, "     ◐ Partial:    " + partial, contentWidth);
@@ -952,7 +952,7 @@ public final class VerifyAudit
   {
     StringBuilder output = new StringBuilder(512);
     output.append("━".repeat(80)).append('\n').
-      append("ACCEPTANCE CRITERIA VERIFICATION").append('\n').
+      append("POST-CONDITIONS VERIFICATION").append('\n').
       append("━".repeat(80)).append('\n').append('\n');
 
     int index = 1;

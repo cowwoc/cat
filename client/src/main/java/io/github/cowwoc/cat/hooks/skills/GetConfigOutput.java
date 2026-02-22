@@ -104,72 +104,75 @@ public final class GetConfigOutput implements SkillOutput
   }
 
   /**
-   * Get version gates overview box.
+   * Get version conditions overview box.
    *
    * @return the formatted overview box
    */
-  public String getVersionGatesOverview()
+  public String getVersionConditionsOverview()
   {
     return buildSimpleHeaderBox(
       "📊",
-      "VERSION GATES",
+      "VERSION CONDITIONS",
       List.of(
         "",
-        "Entry and exit gates control version dependencies.",
+        "Pre-conditions and post-conditions control version dependencies.",
         "",
-        "Select a version to configure its gates,",
+        "Select a version to configure its conditions,",
         "or choose 'Apply defaults to all'."));
   }
 
   /**
-   * Get gates for version box.
+   * Get conditions for version box.
    *
    * @param version the version number
-   * @param entryGateDescription the entry gate description
-   * @param exitGateDescription the exit gate description
-   * @return the formatted gates box
+   * @param preconditionsDescription the pre-conditions description (empty/blank shows "(none)")
+   * @param postconditionsDescription the post-conditions description (empty/blank shows "(none)")
+   * @return the formatted conditions box
    * @throws NullPointerException if any parameter is null
-   * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getGatesForVersion(String version, String entryGateDescription, String exitGateDescription)
+  public String getConditionsForVersion(String version, String preconditionsDescription,
+    String postconditionsDescription)
   {
     requireThat(version, "version").isNotBlank();
-    requireThat(entryGateDescription, "entryGateDescription").isNotBlank();
-    requireThat(exitGateDescription, "exitGateDescription").isNotBlank();
+    requireThat(preconditionsDescription, "preconditionsDescription").isNotNull();
+    requireThat(postconditionsDescription, "postconditionsDescription").isNotNull();
+    String displayPreconditions = preconditionsDescription.isBlank() ? "(none)" : preconditionsDescription;
+    String displayPostconditions = postconditionsDescription.isBlank() ? "(none)" : postconditionsDescription;
 
     return buildSimpleHeaderBox(
       "🚧",
-      "GATES FOR " + version,
+      "CONDITIONS FOR " + version,
       List.of(
         "",
-        "Entry: " + entryGateDescription,
-        "Exit: " + exitGateDescription));
+        "Pre-conditions: " + displayPreconditions,
+        "Post-conditions: " + displayPostconditions));
   }
 
   /**
-   * Get gates updated confirmation box.
+   * Get conditions updated confirmation box.
    *
    * @param version the version number
-   * @param newEntryGate the new entry gate description
-   * @param newExitGate the new exit gate description
+   * @param newPreconditions the new pre-conditions description (empty/blank shows "(none)")
+   * @param newPostconditions the new post-conditions description (empty/blank shows "(none)")
    * @return the formatted confirmation box
    * @throws NullPointerException if any parameter is null
-   * @throws IllegalArgumentException if any parameter is blank
    */
-  public String getGatesUpdated(String version, String newEntryGate, String newExitGate)
+  public String getConditionsUpdated(String version, String newPreconditions, String newPostconditions)
   {
     requireThat(version, "version").isNotBlank();
-    requireThat(newEntryGate, "newEntryGate").isNotBlank();
-    requireThat(newExitGate, "newExitGate").isNotBlank();
+    requireThat(newPreconditions, "newPreconditions").isNotNull();
+    requireThat(newPostconditions, "newPostconditions").isNotNull();
+    String displayPreconditions = newPreconditions.isBlank() ? "(none)" : newPreconditions;
+    String displayPostconditions = newPostconditions.isBlank() ? "(none)" : newPostconditions;
 
     return buildSimpleHeaderBox(
       "✅",
-      "GATES UPDATED",
+      "CONDITIONS UPDATED",
       List.of(
         "",
         "Version: " + version,
-        "Entry: " + newEntryGate,
-        "Exit: " + newExitGate));
+        "Pre-conditions: " + displayPreconditions,
+        "Post-conditions: " + displayPostconditions));
   }
 
   /**
@@ -243,7 +246,7 @@ public final class GetConfigOutput implements SkillOutput
   {
     requireThat(args, "args").length().isEqualTo(0);
     String currentSettings = getCurrentSettings();
-    String versionGatesOverview = getVersionGatesOverview();
+    String versionConditionsOverview = getVersionConditionsOverview();
     String configurationSaved = getConfigurationSaved();
     String noChanges = getNoChanges();
 
@@ -251,8 +254,8 @@ public final class GetConfigOutput implements SkillOutput
       append("CURRENT_SETTINGS:\n");
     if (currentSettings != null)
       output.append(currentSettings).append('\n');
-    output.append("\nVERSION_GATES_OVERVIEW:\n").
-      append(versionGatesOverview).
+    output.append("\nVERSION_CONDITIONS_OVERVIEW:\n").
+      append(versionConditionsOverview).
       append('\n').
       append("\nCONFIGURATION_SAVED:\n").
       append(configurationSaved).
