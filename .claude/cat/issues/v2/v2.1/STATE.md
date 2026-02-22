@@ -71,6 +71,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - port-reset-failure-counter
 - port-skill-preprocessor-failure
 - fix-config-skill-output
+- wire-remaining-java-equivalents
 
 
 ## Issues Completed
