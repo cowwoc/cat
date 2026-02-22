@@ -7,6 +7,7 @@
 package io.github.cowwoc.cat.hooks.write;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
+import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 
 import io.github.cowwoc.cat.hooks.FileWriteHandler;
 import tools.jackson.databind.JsonNode;
@@ -49,12 +50,7 @@ public final class ValidateStateMdFormat implements FileWriteHandler
     requireThat(toolInput, "toolInput").isNotNull();
     requireThat(sessionId, "sessionId").isNotBlank();
 
-    JsonNode filePathNode = toolInput.get("file_path");
-    String filePath;
-    if (filePathNode != null)
-      filePath = filePathNode.asString();
-    else
-      filePath = "";
+    String filePath = getStringOrDefault(toolInput, "file_path", "");
 
     if (filePath.isEmpty())
       return FileWriteHandler.Result.allow();
@@ -62,12 +58,10 @@ public final class ValidateStateMdFormat implements FileWriteHandler
     if (!STATE_MD_PATTERN.matcher(filePath).find())
       return FileWriteHandler.Result.allow();
 
-    JsonNode contentNode = toolInput.get("content");
-    String content;
-    if (contentNode != null)
-      content = contentNode.asString();
-    else
-      content = "";
+    String content = getStringOrDefault(toolInput, "content", "");
+
+    if (content.isEmpty())
+      return FileWriteHandler.Result.allow();
 
     if (!STATUS_LINE.matcher(content).find())
     {

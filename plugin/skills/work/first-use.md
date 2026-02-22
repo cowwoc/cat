@@ -105,17 +105,24 @@ Fallback to `message` field if extended fields are absent:
 When prepare returns READY with `potentially_complete: true`, work may already exist on the base branch
 with STATE.md not reflecting completion (e.g., stale merge overwrote status).
 
-1. Display the suspicious commits from `suspicious_commits` field
-2. Use AskUserQuestion to ask user whether the issue is already complete:
-   ```
-   AskUserQuestion:
-     header: "${issue_id}"
-     question: "Is ${issue_id} already complete?"
-     options:
-       - "Already complete" (Fix STATE.md to closed, release lock, clean up worktree, select next task)
-       - "Not complete, continue" (Proceed to Phase 2 normally)
-   ```
-3. Do NOT proceed to Phase 2 without user confirmation
+1. Read the diff for each commit in `suspicious_commits` using `git show --stat <hash>` (run in the base branch's
+   working tree, not the new worktree).
+2. Read the issue's goal from its PLAN.md.
+3. Analyze whether the suspicious commits implement the issue's goal:
+   - **YES** (commits clearly address the goal) → ask user permission to close:
+     ```
+     AskUserQuestion:
+       header: "${issue_id}"
+       question: "Is ${issue_id} already complete?"
+       options:
+         - "Already complete" (Fix STATE.md to closed, release lock, clean up worktree, select next task)
+         - "Not complete, continue" (Proceed to Phase 2 normally)
+     ```
+   - **NO** (commits are unrelated or tangential to the goal) → log a note that the suspicious commits don't
+     implement the issue, then proceed to Phase 2 automatically without asking the user.
+   - **UNCERTAIN** → ask the user using the same AskUserQuestion as the YES case above.
+
+Do NOT ask the user when the commits are clearly unrelated — that interruption is unnecessary friction.
 
 **Decomposed Parent Closure Verification:**
 
