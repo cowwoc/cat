@@ -1358,6 +1358,34 @@
         "catches_variations": true
       },
       "correct_behavior": "ALL learning changes (prevention files + retrospective metadata) go to the same location in a SINGLE commit: active worktree when one exists, main workspace otherwise"
+    },
+    {
+      "id": "M391",
+      "timestamp": "2026-02-23T10:20:00Z",
+      "category": "incorrect_implementation",
+      "description": "work-prepare.py and WorkPrepare.java returned ERROR for decomposed parent issues even when all sub-issues were closed - decomposed status not handled, blocking parent auto-closure",
+      "root_cause": "work-prepare.py only handled locked/not_found/found statuses from get-available-issues.sh; the decomposed status (and other statuses: already_complete, not_executable, blocked, existing_worktree) fell through to a generic ERROR. WorkPrepare.java similarly lacked a Decomposed case in handleNonFoundResult()",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "code_fix",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/scripts/work-prepare.py",
+      "pattern_keywords": [
+        "decomposed",
+        "parent",
+        "work-prepare",
+        "status",
+        "children",
+        "closed"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When a decomposed parent issue is requested and has open sub-issues, return NO_TASKS with a clear message directing the user to work on sub-issues first. When all sub-issues are closed, the parent becomes available automatically and work-prepare should proceed normally."
     }
   ]
 }
