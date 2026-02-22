@@ -104,9 +104,10 @@ public final class MergeAndCleanup
         baseBranch + ". Rebase required.");
     }
 
+    String baseSha = runGitCommandSingleLineInDirectory(worktreePath, "rev-parse",
+      "refs/heads/" + baseBranch);
     String commitSha = getCommitSha(worktreePath, "HEAD");
-    fastForwardMerge(worktreePath, baseBranch);
-    syncMainWorkingTree(projectPath);
+    fastForwardMerge(worktreePath, baseBranch, baseSha);
 
     boolean worktreeRemoved = false;
     if (autoRemoveWorktrees)
@@ -243,12 +244,15 @@ public final class MergeAndCleanup
 
     try
     {
-      runGit(Path.of(worktreePath), "push", ".", "origin/" + baseBranch + ":" + baseBranch);
+      String oldSha = runGitCommandSingleLineInDirectory(worktreePath, "rev-parse",
+        "refs/heads/" + baseBranch);
+      runGit(Path.of(worktreePath), "update-ref", "refs/heads/" + baseBranch,
+        "origin/" + baseBranch, oldSha);
     }
     catch (IOException e)
     {
       throw new IOException(
-        "Failed to fast-forward local " + baseBranch + " to match origin/" + baseBranch +
+        "Failed to update local " + baseBranch + " to match origin/" + baseBranch +
           " in worktree: " + worktreePath + ". The local " + baseBranch +
           " branch has diverged from origin and cannot be fast-forwarded. " +
           "Resolve the divergence before merging. Original error: " + e.getMessage(), e);
@@ -405,30 +409,20 @@ public final class MergeAndCleanup
   }
 
   /**
-   * Performs a fast-forward merge using git push.
+   * Performs a fast-forward merge using {@code git update-ref} with compare-and-swap.
+   * <p>
+   * This advances the base branch pointer to HEAD without requiring the branch to be checked out,
+   * and without being blocked by {@code receive.denyCurrentBranch}.
    *
    * @param worktreePath the worktree path
    * @param baseBranch the base branch
+   * @param baseSha the expected current SHA of the base branch (for compare-and-swap)
    * @throws IOException if the merge fails
    */
-  private void fastForwardMerge(String worktreePath, String baseBranch) throws IOException
+  private void fastForwardMerge(String worktreePath, String baseBranch, String baseSha)
+    throws IOException
   {
-    runGit(Path.of(worktreePath), "push", ".", "HEAD:" + baseBranch);
-  }
-
-  /**
-   * Syncs the main working tree to match HEAD after a pointer-only fast-forward merge.
-   * <p>
-   * {@code git push . HEAD:baseBranch} advances the branch pointer without updating the working tree
-   * in the main repo. This method runs {@code git reset --hard HEAD} in the project directory to
-   * bring the on-disk files in sync with the updated branch pointer.
-   *
-   * @param projectDir the project root directory
-   * @throws IOException if the reset fails
-   */
-  private void syncMainWorkingTree(Path projectDir) throws IOException
-  {
-    runGit(projectDir, "reset", "--hard", "HEAD");
+    runGit(Path.of(worktreePath), "update-ref", "refs/heads/" + baseBranch, "HEAD", baseSha);
   }
 
   /**

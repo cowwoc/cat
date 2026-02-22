@@ -280,9 +280,6 @@ public class MergeAndCleanupTest
       Path catDir = localRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Allow pushing to the checked-out branch
-      TestUtils.runGit(localRepo, "config", "receive.denyCurrentBranch", "ignore");
-
       // Create the cat-base file for the worktree
       String gitDir = TestUtils.runGitCommandWithOutput(localRepo, "rev-parse", "--absolute-git-dir");
       Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
@@ -555,9 +552,6 @@ public class MergeAndCleanupTest
       Path catDir = mainRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Allow pushing to the checked-out branch (v2.1 is checked out in the main repo)
-      TestUtils.runGit(mainRepo, "config", "receive.denyCurrentBranch", "ignore");
-
       // Create the cat-base file for the worktree so getBaseBranch() works
       // git rev-parse --git-dir returns an absolute path for the main repo
       String gitDir = TestUtils.runGitCommandWithOutput(mainRepo, "rev-parse", "--absolute-git-dir");
@@ -595,16 +589,17 @@ public class MergeAndCleanupTest
   }
 
   /**
-   * Verifies that after execute completes, the main working tree is clean (no stale files).
+   * Verifies that after execute completes, the base branch ref is updated but the main working
+   * tree is intentionally left unchanged.
    * <p>
-   * The fast-forward merge uses {@code git push . HEAD:baseBranch} which only moves the branch
-   * pointer. Without syncing, the working tree would be stale. This test verifies that execute
-   * calls {@code git reset --hard HEAD} to bring the working tree in sync.
+   * The merge uses {@code git update-ref} which only moves the branch pointer.
+   * The working tree in the main repo is not synced because git commands resolve branches
+   * through refs, not disk files.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void executeSyncsMainWorkingTreeAfterMerge() throws IOException
+  public void executeUpdatesRefWithoutSyncingWorkingTree() throws IOException
   {
     Path originRepo = Files.createTempDirectory("origin-repo-");
     Path mainRepo = Files.createTempDirectory("main-repo-");
@@ -643,9 +638,6 @@ public class MergeAndCleanupTest
       Path catDir = mainRepo.resolve(".claude/cat");
       Files.createDirectories(catDir);
 
-      // Allow pushing to the checked-out branch
-      TestUtils.runGit(mainRepo, "config", "receive.denyCurrentBranch", "ignore");
-
       // Create the cat-base file
       String gitDir = TestUtils.runGitCommandWithOutput(mainRepo, "rev-parse", "--absolute-git-dir");
       Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
@@ -664,15 +656,13 @@ public class MergeAndCleanupTest
 
         requireThat(result, "result").contains("\"status\" : \"success\"");
 
-        // Verify the main working tree is clean (git status --porcelain returns empty)
-        String status = TestUtils.runGitCommandWithOutput(mainRepo, "status", "--porcelain");
-        requireThat(status.strip(), "gitStatus").isEmpty();
+        // Verify the ref was updated (v2.1 now includes the issue commit)
+        String v21Log = TestUtils.runGitCommandWithOutput(mainRepo, "log", "--oneline", "v2.1");
+        requireThat(v21Log, "v21Log").contains("Add new feature file");
 
-        // Verify the new file now exists in the main working tree
+        // Verify the main working tree was NOT synced (no syncMainWorkingTree call)
         requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
-          "fileExistsAfterMerge").isTrue();
-        String content = Files.readString(mainRepo.resolve("new-feature.txt"));
-        requireThat(content, "fileContent").isEqualTo("new feature content");
+          "fileExistsAfterMerge").isFalse();
       }
     }
     finally
