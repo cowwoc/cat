@@ -52,6 +52,11 @@ steps under the same number.
 
 ## Testing Requirements
 
+**MANDATORY: Invoke `cat:tdd-implementation` before implementing any bugfix or feature with testable inputs/outputs.**
+
+This applies to all implementation contexts: formal `/cat:work` issue workflows AND ad-hoc user-requested fixes.
+Write failing tests first, then implement the fix to make them pass.
+
 **MANDATORY: Run all tests before presenting any task for user review.**
 
 ```bash
