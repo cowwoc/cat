@@ -18,6 +18,7 @@
 - port-analysis-to-java (analyze-session.py, migrate-retrospectives.py)
 - port-operational-scripts-to-java (monitor-subagents.sh, batch-read.sh, register-hook.sh)
 - cleanup-ported-scripts (remove old scripts, update skill references - already exists)
+- wire-remaining-java-equivalents (add main() methods, jlink launchers, update skill refs, remove old scripts)
 
 ## Parallel Execution Plan
 
