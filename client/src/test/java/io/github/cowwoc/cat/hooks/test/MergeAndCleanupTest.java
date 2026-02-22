@@ -593,4 +593,94 @@ public class MergeAndCleanupTest
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
+
+  /**
+   * Verifies that after execute completes, the main working tree is clean (no stale files).
+   * <p>
+   * The fast-forward merge uses {@code git push . HEAD:baseBranch} which only moves the branch
+   * pointer. Without syncing, the working tree would be stale. This test verifies that execute
+   * calls {@code git reset --hard HEAD} to bring the working tree in sync.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeSyncsMainWorkingTreeAfterMerge() throws IOException
+  {
+    Path originRepo = Files.createTempDirectory("origin-repo-");
+    Path mainRepo = Files.createTempDirectory("main-repo-");
+    Path worktreesDir = Files.createTempDirectory("worktrees-");
+    Path pluginRoot = Files.createTempDirectory("test-plugin");
+
+    try
+    {
+      // Initialize bare origin
+      TestUtils.runGit(originRepo, "init", "--bare", "--initial-branch=v2.1");
+
+      // Create main repo with initial commit
+      TestUtils.runGit(mainRepo, "init", "--initial-branch=v2.1");
+      TestUtils.runGit(mainRepo, "config", "user.email", "test@example.com");
+      TestUtils.runGit(mainRepo, "config", "user.name", "Test User");
+      Files.writeString(mainRepo.resolve("README.md"), "initial");
+      TestUtils.runGit(mainRepo, "add", "README.md");
+      TestUtils.runGit(mainRepo, "commit", "-m", "Initial commit");
+
+      // Add origin remote and push
+      TestUtils.runGit(mainRepo, "remote", "add", "origin", originRepo.toString());
+      TestUtils.runGit(mainRepo, "push", "-u", "origin", "v2.1");
+
+      // Create the issue branch via worktree
+      String issueBranch = "my-wt-sync-issue";
+      Path issueWorktree = TestUtils.createWorktree(mainRepo, worktreesDir, issueBranch);
+      TestUtils.runGit(issueWorktree, "config", "user.email", "test@example.com");
+      TestUtils.runGit(issueWorktree, "config", "user.name", "Test User");
+
+      // Add a new file in the worktree issue branch
+      Files.writeString(issueWorktree.resolve("new-feature.txt"), "new feature content");
+      TestUtils.runGit(issueWorktree, "add", "new-feature.txt");
+      TestUtils.runGit(issueWorktree, "commit", "-m", "Add new feature file");
+
+      // Set up .claude/cat structure in main repo
+      Path catDir = mainRepo.resolve(".claude/cat");
+      Files.createDirectories(catDir);
+
+      // Allow pushing to the checked-out branch
+      TestUtils.runGit(mainRepo, "config", "receive.denyCurrentBranch", "ignore");
+
+      // Create the cat-base file
+      String gitDir = TestUtils.runGitCommandWithOutput(mainRepo, "rev-parse", "--absolute-git-dir");
+      Path catBasePath = Path.of(gitDir).resolve("worktrees").resolve(issueBranch).resolve("cat-base");
+      Files.createDirectories(catBasePath.getParent());
+      Files.writeString(catBasePath, "v2.1");
+
+      // Verify precondition: new-feature.txt does NOT exist in main working tree
+      requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
+        "fileExistsBeforeMerge").isFalse();
+
+      try (JvmScope scope = new TestJvmScope(mainRepo, pluginRoot))
+      {
+        MergeAndCleanup cmd = new MergeAndCleanup(scope);
+        String result = cmd.execute(mainRepo.toString(), issueBranch, "test-session",
+          issueWorktree.toString(), pluginRoot.toString());
+
+        requireThat(result, "result").contains("\"status\" : \"success\"");
+
+        // Verify the main working tree is clean (git status --porcelain returns empty)
+        String status = TestUtils.runGitCommandWithOutput(mainRepo, "status", "--porcelain");
+        requireThat(status.strip(), "gitStatus").isEmpty();
+
+        // Verify the new file now exists in the main working tree
+        requireThat(Files.exists(mainRepo.resolve("new-feature.txt")),
+          "fileExistsAfterMerge").isTrue();
+        String content = Files.readString(mainRepo.resolve("new-feature.txt"));
+        requireThat(content, "fileContent").isEqualTo("new feature content");
+      }
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(worktreesDir);
+      TestUtils.deleteDirectoryRecursively(mainRepo);
+      TestUtils.deleteDirectoryRecursively(originRepo);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
 }
