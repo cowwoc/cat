@@ -255,6 +255,42 @@ public class WorkPrepareTest
   }
 
   /**
+   * Verifies that execute resolves bare issue names (e.g., "fix-bug") to the correct qualified ID.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeResolvesBareBugNameToQualifiedIssueId() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      createIssue(projectDir, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add fix-bug issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-fix-bug");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
    * Verifies that execute applies exclude pattern and returns NO_TASKS when all issues are excluded.
    *
    * @throws IOException if an I/O error occurs
@@ -1136,6 +1172,47 @@ public class WorkPrepareTest
     planContent.append("\n## Execution Steps\n\n1. Do the work\n");
 
     Files.writeString(issueDir.resolve("PLAN.md"), planContent.toString());
+  }
+
+  /**
+   * Verifies that execute resolves bare issue names (e.g., "fix-bug") to Scope.BARE_NAME correctly.
+   * This ensures that bare names can resolve to any version when uniquely identifying an issue.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void executeBareIssueNameResolvedToBareNameScope() throws IOException
+  {
+    Path projectDir = createTempGitCatProject("v2.1");
+    Path worktreePath = null;
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Create an issue with a bare name
+      createIssue(projectDir, "2", "1", "fix-bug", "open");
+      GitCommands.runGit(projectDir, "add", ".");
+      GitCommands.runGit(projectDir, "commit", "-m", "Add bare-named issue");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      String sessionId = UUID.randomUUID().toString();
+      // Pass bare issue name (no version prefix) - should resolve via BARE_NAME scope
+      PrepareInput input = new PrepareInput(sessionId, "", "fix-bug", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      // Should succeed with READY status, resolving the bare name to the qualified issue
+      requireThat(node.path("status").asString(), "status").isEqualTo("READY");
+      requireThat(node.path("issue_id").asString(), "issueId").isEqualTo("2.1-fix-bug");
+      requireThat(node.path("issue_name").asString(), "issueName").isEqualTo("fix-bug");
+
+      worktreePath = Path.of(node.path("worktree_path").asString());
+    }
+    finally
+    {
+      cleanupWorktreeIfExists(projectDir, worktreePath);
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
   }
 
   /**
