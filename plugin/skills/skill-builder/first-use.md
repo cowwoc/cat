@@ -1447,20 +1447,20 @@ skill content.
 └──────────────────────┘     └──────────────────────────────┘
 ```
 
-**Example**: Help display - handler generates full help output, skill content outputs it.
+**Example**: Status display - handler generates full status output, skill content outputs it.
 
-Handler (`skill_handlers/help_handler.py`):
+Handler (`skill_handlers/status_handler.py`):
 ```python
 def handle(self, context):
-    return rendered_help
+    return rendered_status
 ```
 
 Skill content (-first-use/SKILL.md):
 ```markdown
-Echo the content inside the LATEST `<output skill="help">` tag below. Do not summarize, interpret, or add commentary.
+Echo the content inside the LATEST `<output skill="status">` tag below. Do not summarize, interpret, or add commentary.
 
-<output skill="help">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-help-output"`
+<output skill="status">
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-status-output" --project-dir "${CLAUDE_PROJECT_DIR}"`
 </output>
 ```
 

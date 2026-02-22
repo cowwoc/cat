@@ -654,10 +654,10 @@ This section should appear before the "Satisfies" section in all templates.
 
 **After generating STATE.md and PLAN.md content, create the issue:**
 
-Call the create-issue.py script with JSON input:
+Call the create-issue binary with JSON input:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/create-issue.py" --json '{
+"${CLAUDE_PLUGIN_ROOT}/client/bin/create-issue" --json '{
   "major": "{major}",
   "minor": "{minor}",
   "issue_name": "{issue-name}",
