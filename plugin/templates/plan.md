@@ -83,17 +83,16 @@ minor version's PLAN.md. Issues may satisfy zero or more requirements.
 ## Dependencies
 - [issue-name] - [why needed]
 
-## Acceptance Criteria
-- [ ] Criterion 1
-- [ ] Criterion 2
+## Pre-conditions
+- [ ] All dependent issues are closed
 
 ## Execution Steps
 
-**TDD Required:** First step must create failing tests for acceptance criteria.
+**TDD Required:** First step must create failing tests for post-conditions.
 
 1. **Write Tests First:**
    - Files: tests/... (test file paths)
-   - Action: Create tests that verify acceptance criteria
+   - Action: Create tests that verify post-conditions
    - Verify: Tests fail (functionality not implemented yet)
 2. **Implement Feature:**
    - Files: [implementation paths]
@@ -101,6 +100,10 @@ minor version's PLAN.md. Issues may satisfy zero or more requirements.
    - Verify: Tests now pass
 3. **Additional Steps:** [if needed]
    ...
+
+## Post-conditions
+- [ ] Criterion 1
+- [ ] Criterion 2
 ```
 
 ---
@@ -146,6 +149,9 @@ code_that_fails();
 - [ ] Original bug scenario - now passes
 - [ ] Edge cases - still work
 
+## Pre-conditions
+- [ ] All dependent issues are closed
+
 ## Execution Steps
 
 **TDD Required:** First step must create failing test that reproduces the bug.
@@ -160,6 +166,10 @@ code_that_fails();
    - Verify: Test now passes
 3. **Add Edge Case Tests:** [if needed]
    - Verify: All tests pass
+
+## Post-conditions
+- [ ] All test cases pass
+- [ ] No regressions in related functionality
 ```
 
 ---
@@ -187,6 +197,9 @@ code_that_fails();
 ## Files to Modify
 - path/to/file.ext - [specific change]
 
+## Pre-conditions
+- [ ] All dependent issues are closed
+
 ## Execution Steps
 
 **TDD Required:** First step must verify existing tests pass, then refactor.
@@ -200,4 +213,8 @@ code_that_fails();
    - Verify: Tests still pass after each change
 3. **Add Tests for New Patterns:** [if behavior exposed]
    - Verify: Coverage maintained or improved
+
+## Post-conditions
+- [ ] All tests pass after refactoring
+- [ ] Code quality metrics maintained or improved
 ```

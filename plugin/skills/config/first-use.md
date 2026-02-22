@@ -85,8 +85,8 @@ Show current values in descriptions using data from read-config step.
     description: "Currently: {completionWorkflow || 'merge'}"
   - label: "🔍 Review Thresholds"
     description: "Currently: autofix={reviewThresholds.autofix || 'high_and_above'}"
-  - label: "📊 Version Gates"
-    description: "Entry/exit conditions for versions"
+  - label: "📊 Version Conditions"
+    description: "Pre/post-conditions for versions"
 
 If user selects "Other" and types "done", "exit", or "back", proceed to exit step.
 
@@ -378,11 +378,11 @@ Do NOT use `python3`, `jq`, or any external tool. Use the Write tool directly.
 
 </step>
 
-<step name="version-gates">
+<step name="version-conditions">
 
-**📊 Version Gates configuration:**
+**📊 Version Conditions configuration:**
 
-Use the **VERSION_GATES_OVERVIEW** box from `<output skill="config">`.
+Use the **VERSION_CONDITIONS_OVERVIEW** box from `<output skill="config">`.
 
 **If `<output skill="config">` not found:**
 ```
@@ -405,7 +405,7 @@ Determine current minor version from ROADMAP.md (first non-completed).
 
 Use AskUserQuestion:
 - header: "Select Version"
-- question: "Which version's gates do you want to configure?"
+- question: "Which version's conditions do you want to configure?"
 - options:
   - "v{X}.{Y-1} - Previous minor" (if exists)
   - "v{X}.{Y} - Current minor" (highlighted)
@@ -421,7 +421,7 @@ Use AskUserQuestion:
 
 Parse input to determine if major (single digit) or minor (X.Y format).
 
-**Step 2: Display current gates**
+**Step 2: Display current conditions**
 
 Read the PLAN.md for selected version:
 ```bash
@@ -429,8 +429,8 @@ cat .claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md 2>/dev/null || \
 cat .claude/cat/issues/v{major}/PLAN.md 2>/dev/null
 ```
 
-Extract the `## Gates` section and use the **GATES_FOR_VERSION** box from `<output skill="config">`.
-Replace `{version}` and gate descriptions with actual values.
+Extract the `## Pre-conditions` and `## Post-conditions` sections and use the **CONDITIONS_FOR_VERSION**
+box from `<output skill="config">`. Replace `{version}` and condition descriptions with actual values.
 
 **If `<output skill="config">` not found:**
 ```
@@ -447,19 +447,19 @@ Use AskUserQuestion:
 - header: "Action"
 - question: "What would you like to do?"
 - options:
-  - label: "Edit entry gate"
+  - label: "Edit pre-conditions"
     description: "Change when work can start"
-  - label: "Edit exit gate"
+  - label: "Edit post-conditions"
     description: "Change completion criteria"
   - label: "View another version"
     description: "Select a different version"
   - label: "← Back"
     description: "Return to main menu"
 
-**Step 4a: Edit entry gate**
+**Step 4a: Edit pre-conditions**
 
 Use AskUserQuestion:
-- header: "Entry Gate"
+- header: "Pre-conditions"
 - question: "Select entry conditions (current: {current conditions}):"
 - multiSelect: true
 - options:
@@ -474,10 +474,10 @@ If "Specific issue(s) complete":
 If "Specific version(s) complete":
 - Ask: "Which version(s)? (e.g., 0.3, 0.4, comma-separated)"
 
-**Step 4b: Edit exit gate**
+**Step 4b: Edit post-conditions**
 
 Use AskUserQuestion:
-- header: "Exit Gate"
+- header: "Post-conditions"
 - question: "Select exit conditions (current: {current conditions}):"
 - multiSelect: true
 - options:
@@ -491,28 +491,26 @@ If "Specific issue(s) complete":
 
 **Step 5: Update PLAN.md**
 
-Read the version's PLAN.md, update the `## Gates` section:
+Read the version's PLAN.md, update the `## Pre-conditions` and `## Post-conditions` sections:
 
 ```markdown
-## Gates
-
-### Entry
+## Pre-conditions
 - {condition 1}
 - {condition 2}
 
-### Exit
+## Post-conditions
 - {condition 1}
 - {condition 2}
 ```
 
-If the PLAN.md doesn't have a `## Gates` section, insert it after `## Focus` or `## Vision`.
+If the PLAN.md doesn't have these sections, insert them after `## Focus` or `## Vision`.
 
 Write the updated PLAN.md using the Write tool.
 
 **Step 6: Confirm and loop**
 
-Use the **GATES_UPDATED** box from `<output skill="config">`.
-Replace `{version}`, `{new-entry-gate}`, `{new-exit-gate}` with actual values.
+Use the **CONDITIONS_UPDATED** box from `<output skill="config">`.
+Replace `{version}`, `{new-preconditions}`, `{new-postconditions}` with actual values.
 
 **If `<output skill="config">` not found:**
 ```
@@ -660,7 +658,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 - [ ] User navigated wizard successfully
 - [ ] Settings updated in cat-config.json using safe jq pattern
 - [ ] Review thresholds configurable via wizard
-- [ ] Version gates viewable and editable via wizard
+- [ ] Version conditions viewable and editable via wizard
 - [ ] Gate changes saved to version PLAN.md files
 - [ ] Changes confirmed with before/after values
 

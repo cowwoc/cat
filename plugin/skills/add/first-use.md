@@ -142,7 +142,7 @@ Continue to next step.
 
 <step name="task_ask_type_and_criteria">
 
-**Ask issue type and custom acceptance criteria:**
+**Ask issue type and custom post-conditions:**
 
 Use AskUserQuestion with multiple questions:
 - questions:
@@ -159,40 +159,40 @@ Use AskUserQuestion with multiple questions:
           description: "Improve speed/efficiency"
       multiSelect: false
 
-    - question: "Standard criteria (functionality, tests, no regressions) will be applied. Any additional acceptance
-      criteria?"
-      header: "Custom Criteria"
+    - question: "Standard post-conditions (functionality, tests, no regressions) will be applied. Any additional
+      post-conditions?"
+      header: "Custom Post-conditions"
       options:
-        - label: "No, standard criteria are sufficient"
-          description: "Use the default acceptance criteria for this issue type"
-        - label: "Yes, add custom criteria"
+        - label: "No, standard post-conditions are sufficient"
+          description: "Use the default post-conditions for this issue type"
+        - label: "Yes, add custom post-conditions"
           description: "I have specific requirements beyond the standard"
       multiSelect: false
 
 Capture issue type as TASK_TYPE.
 
-**If "Yes, add custom criteria":**
+**If "Yes, add custom post-conditions":**
 
-Ask inline: "What additional acceptance criteria should be met?"
+Ask inline: "What additional post-conditions should be met?"
 
-Append custom criteria to the standard list for TASK_TYPE.
+Append custom post-conditions to the standard list for TASK_TYPE.
 
-**Standard criteria by type (applied automatically):**
+**Standard post-conditions by type (applied automatically):**
 
-| Type | Standard Criteria |
-|------|-------------------|
+| Type | Standard Post-conditions |
+|------|--------------------------|
 | Feature | Functionality works, Tests passing, No regressions, E2E verification |
 | Bugfix | Bug fixed, Regression test added, No new issues, E2E verification |
 | Refactor | User-visible behavior unchanged, Tests passing, Code quality improved, E2E verification |
 | Performance | Target met, Benchmarks added, No functionality regression, E2E verification |
 
-**E2E verification criterion:** For all implementation issues (feature, bugfix, refactor, performance), always include
-at least one acceptance criterion that verifies the change works end-to-end in its real environment, not just that unit
-tests pass. Describe an observable outcome (e.g., "Spawn a subagent and confirm it receives the skill listing", "Run
-the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer occurs").
-This ensures the change is tested as a whole before review.
+**E2E verification post-condition:** For all implementation issues (feature, bugfix, refactor, performance), always
+include at least one post-condition that verifies the change works end-to-end in its real environment, not just that
+unit tests pass. Describe an observable outcome (e.g., "Spawn a subagent and confirm it receives the skill listing",
+"Run the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer
+occurs"). This ensures the change is tested as a whole before review.
 
-Set ACCEPTANCE_CRITERIA to standard criteria for TASK_TYPE, plus any custom additions.
+Set POSTCONDITIONS to standard post-conditions for TASK_TYPE, plus any custom additions.
 
 </step>
 
@@ -492,7 +492,7 @@ Addresses the known gap where incorrect acceptance criteria primed incorrect imp
 Gather the following for validation:
 - TASK_DESCRIPTION (from task_gather_intent)
 - TASK_TYPE (from task_ask_type_and_criteria)
-- ACCEPTANCE_CRITERIA (from task_ask_type_and_criteria)
+- POSTCONDITIONS (from task_ask_type_and_criteria)
 - All ancestor version requirements (from task_select_requirements and ancestor PLAN.md files)
 
 **Spawn requirements stakeholder subagent:**
@@ -500,7 +500,7 @@ Gather the following for validation:
 Use Task tool to spawn a cat:stakeholder-requirements subagent with the following prompt:
 
 ```
-You are validating acceptance criteria for a CAT issue before PLAN.md creation.
+You are validating post-conditions for a CAT issue before PLAN.md creation.
 
 **Task Description:**
 {TASK_DESCRIPTION}
@@ -508,19 +508,19 @@ You are validating acceptance criteria for a CAT issue before PLAN.md creation.
 **Task Type:**
 {TASK_TYPE}
 
-**Proposed Acceptance Criteria:**
-{ACCEPTANCE_CRITERIA}
+**Proposed Post-conditions:**
+{POSTCONDITIONS}
 
 **Ancestor Version Requirements Satisfied:**
 {Selected REQ-XXX requirements from all ancestor versions, or "None"}
 
 **Your validation responsibilities:**
 
-1. **Completeness Check:** Break TASK_DESCRIPTION into discrete requirements. Verify each requirement has at least one corresponding acceptance criterion. List any missing requirements.
+1. **Completeness Check:** Break TASK_DESCRIPTION into discrete requirements. Verify each requirement has at least one corresponding post-condition. List any missing requirements.
 
-2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the acceptance criteria address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 PLAN.md and v2 PLAN.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding acceptance criterion.
+2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the post-conditions address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 PLAN.md and v2 PLAN.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding post-condition.
 
-3. **Contradiction Check:** Verify no criterion contradicts the task goal or established principles (e.g., M462 pattern: fail-fast criteria must not require recovery instructions).
+3. **Contradiction Check:** Verify no post-condition contradicts the task goal or established principles (e.g., M462 pattern: fail-fast post-conditions must not require recovery instructions).
 
 **Output format:**
 
@@ -528,12 +528,12 @@ COMPLETENESS: [PASS|FAIL]
 Missing requirements (if FAIL): [list each missing requirement]
 
 VERSION_REQUIREMENTS: [PASS|FAIL|N/A]
-Unaddressed requirements (if FAIL): [list each REQ-XXX with missing criteria]
+Unaddressed requirements (if FAIL): [list each REQ-XXX with missing post-conditions]
 
 CONTRADICTIONS: [PASS|FAIL]
 Contradictions found (if FAIL): [describe each contradiction with reference to principle]
 
-ADDITIONAL_CRITERIA: [list additional criteria to add, or "None"]
+ADDITIONAL_CRITERIA: [list additional post-conditions to add, or "None"]
 ```
 
 Capture the subagent's response.
@@ -558,27 +558,27 @@ Parse the subagent response to extract:
 
 **If COMPLETENESS is FAIL or VERSION_REQUIREMENTS is FAIL:**
 
-- Auto-add the criteria from ADDITIONAL_CRITERIA to ACCEPTANCE_CRITERIA
+- Auto-add the criteria from ADDITIONAL_CRITERIA to POSTCONDITIONS
 - Display to user:
   ```
-  Added missing acceptance criteria:
-  {list each added criterion}
+  Added missing post-conditions:
+  {list each added post-condition}
   ```
 
 **If CONTRADICTIONS is FAIL:**
 
 - Display contradictions to user
 - Use AskUserQuestion:
-  - header: "Acceptance Criteria Contradiction"
-  - question: "The following contradictions were found in acceptance criteria. How should we proceed?"
+  - header: "Post-conditions Contradiction"
+  - question: "The following contradictions were found in post-conditions. How should we proceed?"
   - Provide the contradiction details from subagent
   - options:
-    - "Revise criteria manually" - Let me rewrite the problematic criteria
-    - "Remove contradicting criteria" - Remove the criteria that contradict principles
-    - "Override - criteria are correct" - Proceed with criteria as-is (I understand the risk)
+    - "Revise post-conditions manually" - Let me rewrite the problematic post-conditions
+    - "Remove contradicting post-conditions" - Remove the post-conditions that contradict principles
+    - "Override - post-conditions are correct" - Proceed with post-conditions as-is (I understand the risk)
 
-- If "Revise criteria manually": use AskUserQuestion to gather revised ACCEPTANCE_CRITERIA
-- If "Remove contradicting criteria": auto-remove the contradicting criteria identified by subagent
+- If "Revise post-conditions manually": use AskUserQuestion to gather revised POSTCONDITIONS
+- If "Remove contradicting post-conditions": auto-remove the contradicting post-conditions identified by subagent
 - If "Override": proceed without changes
 
 **If all checks PASS:**
@@ -626,7 +626,7 @@ results.
 model to implement mechanically without making architectural decisions. Include:
 - Exact file paths to create/modify
 - Specific code patterns or formats to use
-- Complete lists (all files, all references to update, all acceptance criteria)
+- Complete lists (all files, all references to update, all post-conditions)
 - Research findings that inform implementation decisions
 
 If the execution subagent needs to make judgment calls about "how" to implement, the PLAN.md
@@ -702,7 +702,7 @@ if [[ -f "${PARENT_ISSUE_DIR}/STATE.md" ]] && grep -q "^## Decomposed Into" "${P
   echo ""
   echo "Completion requirements:"
   echo "  1. All sub-issues must be individually completed and closed"
-  echo "  2. Parent's own acceptance criteria must be verified"
+  echo "  2. Parent's own post-conditions must be verified"
   echo "  3. Only then can the parent be marked complete"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo ""
@@ -1065,37 +1065,37 @@ Present for review with AskUserQuestion.
 
 </step>
 
-<step name="version_configure_gates">
+<step name="version_configure_conditions">
 
-**Apply standard gates with option for customization:**
+**Apply standard pre/post-conditions with option for customization:**
 
-Standard gates are applied automatically - do not ask users to confirm obvious requirements.
+Standard conditions are applied automatically - do not ask users to confirm obvious requirements.
 
-**Standard gates by version type:**
+**Standard conditions by version type:**
 
-| Type | Entry Gate | Exit Gate |
-|------|------------|-----------|
+| Type | Pre-conditions | Post-conditions |
+|------|----------------|-----------------|
 | Major | Previous major complete (or none) | All minors complete, vision satisfied |
 | Minor | Previous minor complete (or none) | All issues complete, tests pass |
 | Patch | Issue identified | Fix verified, regression tests pass |
 
-**Only ask if user wants CUSTOM gates:**
+**Only ask if user wants CUSTOM conditions:**
 
 Use AskUserQuestion:
-- header: "Custom Gates"
-- question: "Standard gates will be applied (entry: dependencies complete, exit: all issues + tests pass). Any custom
-  gate requirements?"
+- header: "Custom Conditions"
+- question: "Standard conditions will be applied (pre-conditions: dependencies complete, post-conditions: all issues +
+  tests pass). Any custom conditions?"
 - options:
-  - label: "No, standard gates are sufficient"
-    description: "Use default entry/exit criteria"
-  - label: "Yes, add custom gates"
-    description: "I have specific gate requirements"
+  - label: "No, standard conditions are sufficient"
+    description: "Use default pre/post-conditions"
+  - label: "Yes, add custom conditions"
+    description: "I have specific condition requirements"
 
-**If "Yes, add custom gates":**
+**If "Yes, add custom conditions":**
 
-Ask inline: "What additional entry or exit gate requirements should be met?"
+Ask inline: "What additional pre-condition or post-condition requirements should be met?"
 
-Append custom gates to standard gates.
+Append custom conditions to standard conditions.
 
 </step>
 
@@ -1207,11 +1207,11 @@ $VERSION_GOALS
 ## Requirements
 $VERSION_REQUIREMENTS
 
-## Entry Gate
-$ENTRY_GATE
+## Pre-conditions
+$PRECONDITIONS
 
-## Exit Gate
-$EXIT_GATE
+## Post-conditions
+$POSTCONDITIONS
 EOF
 [ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Minor PLAN.md not created"
 ```
@@ -1277,11 +1277,11 @@ $VERSION_GOALS
 ## Requirements
 $VERSION_REQUIREMENTS
 
-## Entry Gate
-$ENTRY_GATE
+## Pre-conditions
+$PRECONDITIONS
 
-## Exit Gate
-$EXIT_GATE
+## Post-conditions
+$POSTCONDITIONS
 EOF
 [ -f "$VERSION_PATH/PLAN.md" ] || echo "ERROR: Patch PLAN.md not created"
 ```

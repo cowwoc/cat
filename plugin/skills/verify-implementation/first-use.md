@@ -16,7 +16,7 @@ review phases.
 
 ## When to Use
 
-- Invoked by `/cat:work` between execute and review phases to verify PLAN.md acceptance criteria before stakeholder
+- Invoked by `/cat:work` between execute and review phases to verify PLAN.md post-conditions before stakeholder
   quality review
 
 ## Arguments Format
@@ -66,7 +66,7 @@ fi
 ```
 
 After running, read the JSON output to extract values:
-- Display: "◆ Auditing issue: {issue_id}" and "◆ Found {criteria_count} acceptance criteria and {file_count} file
+- Display: "◆ Auditing issue: {issue_id}" and "◆ Found {criteria_count} post-conditions and {file_count} file
   specifications"
 - Extract `prompts` array — each entry has `group_index` and `prompt` fields
 - Store `file_results` for the collect_results step
@@ -170,10 +170,10 @@ implementation or accept the current state.
 
 - **Heuristic-based verification:** Automated checks parse PLAN.md structure and verify file operations, but cannot
   replace human review for semantic correctness.
-- **Parse-dependent:** Only verifies what can be parsed from PLAN.md. If acceptance criteria or file specifications
+- **Parse-dependent:** Only verifies what can be parsed from PLAN.md. If post-conditions or file specifications
   are not explicitly documented, they will not be verified.
 - **No semantic understanding:** Verifies that code exists and was modified, but cannot judge whether implementation
-  correctly satisfies the intent behind acceptance criteria.
+  correctly satisfies the intent behind post-conditions.
 - **Limited to documented plans:** Cannot verify undocumented requirements or implicit expectations.
 
 ## Example Usage

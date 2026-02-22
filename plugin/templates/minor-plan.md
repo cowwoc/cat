@@ -31,11 +31,9 @@
 ## Tasks
 [Brief description of how tasks divide the work for this version]
 
-## Gates
-
-### Entry
+## Pre-conditions
 - Previous version complete (or no prerequisites)
 
-### Exit
+## Post-conditions
 - All tasks complete
 - All requirements verified

@@ -725,12 +725,12 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that the exit gate is enforced when non-gate issues are not all closed.
+   * Verifies that the post-condition issue is enforced when non-post-condition issues are not all closed.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void exitGateIsEnforcedWhenPrerequisitesAreOpen() throws IOException
+  public void postconditionIssueIsEnforcedWhenPrerequisitesAreOpen() throws IOException
   {
     Path projectDir = createTempProject();
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
@@ -740,13 +740,13 @@ public class IssueDiscoveryTest
         String sessionId = UUID.randomUUID().toString();
         // Create a regular open issue
         createIssue(projectDir, "2", "1", "regular-feature", "open");
-        // Create exit gate issue
+        // Create post-condition issue
         createIssue(projectDir, "2", "1", "exit-gate-issue", "open");
-        // Create a PLAN.md marking exit-gate-issue as an exit gate
+        // Create a PLAN.md marking exit-gate-issue as a post-condition issue
         createVersionPlanWithExitGate(projectDir, "2", "1", "exit-gate-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
-        // Verify the scan skips the exit gate issue when regular-feature is still open
+        // Verify the scan skips the post-condition issue when regular-feature is still open
         SearchOptions scanOptions = new SearchOptions(Scope.ALL, "", sessionId, "", false);
         DiscoveryResult scanResult = discovery.findNextIssue(scanOptions);
 
@@ -795,12 +795,12 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Verifies that with overrideGate=true, exit gate issues are found even when prerequisites are open.
+   * Verifies that with overridePostconditions=true, post-condition issues are found even when prerequisites are open.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void exitGateSkippedWhenOverrideGateIsTrue() throws IOException
+  public void postconditionIssueSkippedWhenOverridePostconditionsIsTrue() throws IOException
   {
     Path projectDir = createTempProject();
     try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
@@ -808,22 +808,22 @@ public class IssueDiscoveryTest
       try
       {
         String sessionId = UUID.randomUUID().toString();
-        // Create a regular open issue (unsatisfied prerequisite for exit gate)
+        // Create a regular open issue (unsatisfied prerequisite for post-condition issue)
         createIssue(projectDir, "2", "1", "regular-feature", "open");
-        // Create an exit gate issue
+        // Create a post-condition issue
         createIssue(projectDir, "2", "1", "exit-gate-issue", "open");
-        // Mark exit-gate-issue as an exit gate in PLAN.md
+        // Mark exit-gate-issue as a post-condition issue in PLAN.md
         createVersionPlanWithExitGate(projectDir, "2", "1", "exit-gate-issue");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
 
-        // First confirm: without overrideGate, exit-gate-issue is skipped in scan
+        // First confirm: without overridePostconditions, exit-gate-issue is skipped in scan
         SearchOptions scanWithoutOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature",
           false);
         DiscoveryResult withoutOverride = discovery.findNextIssue(scanWithoutOverride);
         requireThat(withoutOverride, "withoutOverride").isInstanceOf(DiscoveryResult.NotFound.class);
 
-        // With overrideGate=true, exit gate evaluation is skipped so exit-gate-issue is returned
+        // With overridePostconditions=true, post-condition evaluation is skipped so exit-gate-issue is returned
         SearchOptions scanWithOverride = new SearchOptions(Scope.ALL, "", sessionId, "regular-feature",
           true);
         DiscoveryResult withOverride = discovery.findNextIssue(scanWithOverride);
@@ -1430,16 +1430,16 @@ public class IssueDiscoveryTest
   }
 
   /**
-   * Creates a version PLAN.md marking an issue as an exit gate.
+   * Creates a version PLAN.md marking an issue as a post-condition issue.
    *
    * @param projectDir the project root directory
    * @param major the major version number
    * @param minor the minor version number
-   * @param exitGateIssueName the name of the exit gate issue
+   * @param postconditionIssueName the name of the post-condition issue
    * @throws IOException if file creation fails
    */
   private void createVersionPlanWithExitGate(Path projectDir, String major, String minor,
-    String exitGateIssueName) throws IOException
+    String postconditionIssueName) throws IOException
   {
     Path versionDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
       resolve("v" + major).resolve("v" + major + "." + minor);
@@ -1448,10 +1448,10 @@ public class IssueDiscoveryTest
     String planContent = """
       # Plan for v%s.%s
 
-      ## Exit
+      ## Post-conditions
 
       - [issue] %s
-      """.formatted(major, minor, exitGateIssueName);
+      """.formatted(major, minor, postconditionIssueName);
 
     Files.writeString(versionDir.resolve("PLAN.md"), planContent);
   }

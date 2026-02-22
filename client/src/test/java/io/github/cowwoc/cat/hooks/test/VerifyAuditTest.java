@@ -23,7 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 public final class VerifyAuditTest
 {
   /**
-   * Verifies that parse extracts acceptance criteria from PLAN.md.
+   * Verifies that parse extracts post-conditions from PLAN.md.
    *
    * @throws IOException if file operations fail
    */
@@ -40,7 +40,7 @@ public final class VerifyAuditTest
       Files.writeString(planFile, """
         # Plan
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] First criterion
         - [x] Second criterion checked
         - [ ] Third criterion
@@ -87,7 +87,7 @@ public final class VerifyAuditTest
         - plugin/skills/test.md - Update something
         - hooks/src/Main.java - Add feature
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] Test criterion
         """);
 
@@ -130,7 +130,7 @@ public final class VerifyAuditTest
         2. Files: hooks/src/test/Test.java - create test
         3. Update the documentation
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] Test criterion
         """);
 
@@ -184,7 +184,7 @@ public final class VerifyAuditTest
         - plugin/skills/test.md - Update
         - hooks/src/Main.java - Update
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] test.md should have new section
         - [ ] test.md formatting is correct
         - [ ] Main.java has new method
@@ -251,7 +251,7 @@ public final class VerifyAuditTest
         - plugin/skills/test.md - Update
         - hooks/src/Main.java - Update
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] General criterion with no file mention
         """);
 
@@ -438,7 +438,7 @@ public final class VerifyAuditTest
   }
 
   /**
-   * Verifies that parse handles empty acceptance criteria section.
+   * Verifies that parse handles empty post-conditions section.
    *
    * @throws IOException if file operations fail
    */
@@ -455,7 +455,7 @@ public final class VerifyAuditTest
       Files.writeString(planFile, """
         # Plan
 
-        ## Acceptance Criteria
+        ## Post-conditions
 
         ## Files to Modify
         - test.md - Update
@@ -496,7 +496,7 @@ public final class VerifyAuditTest
         - plugin/skills/old-skill.md - Remove deprecated skill
         - hooks/src/OldClass.java - Remove old implementation
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] Old files removed
         """);
 
@@ -538,7 +538,7 @@ public final class VerifyAuditTest
         - plugin/skills/test.md - Update
         - plugin/commands/test.md - Update different test file
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] test.md in skills has new section
         - [ ] test.md in commands has new content
         """);
@@ -584,7 +584,7 @@ public final class VerifyAuditTest
         ## Files to Modify
         - plugin/skills/test.md - Update
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] test.md has new section
         """);
 
@@ -716,7 +716,7 @@ public final class VerifyAuditTest
         - plugin/skills/test.md - Update
         - hooks/src/Main.java - Add method
 
-        ## Acceptance Criteria
+        ## Post-conditions
         - [ ] test.md has new section
         - [ ] Main.java has new method
         """);
@@ -741,7 +741,7 @@ public final class VerifyAuditTest
         requireThat(promptEntry.has("group_index"), "hasGroupIndex").isTrue();
         requireThat(promptEntry.has("prompt"), "hasPrompt").isTrue();
         String promptText = promptEntry.path("prompt").asString();
-        requireThat(promptText, "promptText").contains("Acceptance Criteri");
+        requireThat(promptText, "promptText").contains("Post-condition");
       }
     }
     finally

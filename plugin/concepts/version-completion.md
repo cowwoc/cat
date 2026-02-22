@@ -26,8 +26,8 @@ fi
 
 **MANDATORY**: Before marking a version complete, verify all requirements are satisfied.
 
-> **Note**: This check is implicit and always runs - it is not listed in the Exit gate section.
-> Exit gates are for user-defined additional conditions (tests passing, manual sign-off, etc.).
+> **Note**: This check is implicit and always runs - it is not listed in the Post-conditions section.
+> Post-conditions are for user-defined additional conditions (tests passing, manual sign-off, etc.).
 > Requirements can be defined at any version level (major, minor, or patch).
 
 > **See also:** [version-scheme.md](version-scheme.md) for versioning scheme details.
