@@ -148,18 +148,36 @@ Satisfies section?"*
 
 ## Review Process
 
-1. **Read the task's PLAN.md** to extract the `## Satisfies` section (list of REQ-XXX IDs)
+1. **Read the issue's PLAN.md** to extract:
+   - The `## Satisfies` section (list of REQ-XXX IDs, if any)
+   - The `## Success Criteria` section (issue-local acceptance criteria, if any)
+   - The `## Target State` or goal description (what the implementation should produce)
 2. **Read the parent minor version's PLAN.md** to get the full requirement descriptions
    - Path: `.claude/cat/issues/v{major}/v{major}.{minor}/PLAN.md`
    - Extract the Requirements table with ID, description, priority, and acceptance criteria
-3. **For each claimed requirement**:
+3. **For each claimed requirement** (REQ-XXX IDs):
    - Locate the requirement definition in the minor version PLAN.md
-   - Map the requirement to implementation evidence in the task's code
+   - Map the requirement to implementation evidence in the issue's code
    - Verify the acceptance criteria are met
-4. **Flag mismatches**:
-   - Claimed but not implemented (task says it satisfies REQ-001 but doesn't)
+4. **For each Success Criteria item** (issue-local criteria):
+   - Verify the implementation satisfies the stated criterion
+   - For porting/migration issues: read both source (original script/code) and target (new implementation)
+     to confirm behavioral parity, including supported input ranges, formats, and edge cases
+5. **Flag mismatches**:
+   - Claimed but not implemented (issue says it satisfies REQ-001 but doesn't)
    - Partially implemented (some acceptance criteria not met)
-   - Over-claimed (task claims requirements it doesn't address)
+   - Over-claimed (issue claims requirements it doesn't address)
+   - Success Criteria not met (issue-local criteria that the implementation misses)
+
+### Porting/Migration Issue Verification
+
+When the PLAN.md describes porting a script or migrating code to a new language/system:
+
+- Read the original source file(s) to understand the full scope of supported inputs/behaviors
+- Verify the new implementation supports the same input ranges (e.g., version schemes: major, major.minor,
+  major.minor.patch)
+- Check that all code paths from the source are present in the target
+- Flag any feature or input variant supported by the source but absent in the target as **Partial Implementation**
 
 ## Review Concerns
 
