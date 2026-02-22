@@ -99,6 +99,9 @@ Each handler is registered in `build-jlink.sh`'s `HANDLERS` array as `launcher-n
 | `get-issue-complete-box` | `skills.GetIssueCompleteOutput` | Skill handler (issue-complete) |
 | `get-next-task-box` | `skills.GetNextTaskOutput` | Skill handler (next-task) |
 | `get-render-diff-output` | `skills.GetRenderDiffOutput` | Skill handler (render-diff) |
+| `get-token-report-output` | `skills.GetTokenReportOutput` | Skill handler (token-report) |
+| `get-cleanup-output` | `skills.GetCleanupOutput` | Skill handler (cleanup survey) |
+| `create-issue` | `util.IssueCreator` | Issue creation utility |
 
 ### Launcher Script Format
 

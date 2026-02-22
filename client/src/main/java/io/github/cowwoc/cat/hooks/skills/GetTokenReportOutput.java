@@ -17,6 +17,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import io.github.cowwoc.cat.hooks.JvmScope;
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 
 import static io.github.cowwoc.cat.hooks.skills.JsonHelper.getStringOrDefault;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
@@ -516,6 +517,30 @@ public final class GetTokenReportOutput
   {
     int tokens;
     int durationMs;
+  }
+
+  /**
+   * Main entry point.
+   * <p>
+   * A {@link JvmScope} is required to resolve the session ID from {@code CLAUDE_SESSION_ID}
+   * and to locate session JSONL files on the filesystem. The output may be null when no
+   * session file is found; in that case nothing is printed. Command-line arguments are unused.
+   *
+   * @param args command line arguments (unused)
+   */
+  public static void main(String[] args)
+  {
+    try (JvmScope scope = new MainJvmScope())
+    {
+      String output = new GetTokenReportOutput(scope).getOutput();
+      if (output != null)
+        System.out.println(output);
+    }
+    catch (Exception e)
+    {
+      System.err.println("Error generating token report: " + e.getMessage());
+      System.exit(1);
+    }
   }
 
   /**
