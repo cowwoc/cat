@@ -20,7 +20,8 @@ import org.slf4j.LoggerFactory;
  * static frontmatter preloading.
  * <p>
  * Each entry uses the format {@code "- name: description"}, matching Claude Code's native skill listing.
- * The header references {@code load-skill.sh} since subagents cannot use the Skill tool directly.
+ * The header instructs subagents to use the Skill tool for invoking skills and includes behavioral
+ * instructions about when to invoke them.
  */
 public final class SubagentStartHook implements HookHandler
 {
@@ -79,7 +80,7 @@ public final class SubagentStartHook implements HookHandler
     requireThat(input, "input").isNotNull();
     requireThat(output, "output").isNotNull();
 
-    String listing = SkillDiscovery.formatSkillListing(scope);
+    String listing = SkillDiscovery.getSubagentSkillListing(scope);
     if (listing.isEmpty())
       return HookResult.withoutWarnings(output.empty());
     return HookResult.withoutWarnings(output.additionalContext("SubagentStart", listing));

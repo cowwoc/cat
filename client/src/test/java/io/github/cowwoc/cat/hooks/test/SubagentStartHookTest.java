@@ -176,7 +176,8 @@ public final class SubagentStartHookTest
 
         requireThat(result.output(), "output").contains("hookSpecificOutput");
         requireThat(result.output(), "output").contains("SubagentStart");
-        requireThat(result.output(), "output").contains("The following skills are available.");
+        requireThat(result.output(), "output").contains("Skill Instructions");
+        requireThat(result.output(), "output").contains("Skill tool");
         requireThat(result.output(), "output").contains("my-test-skill");
         requireThat(result.output(), "output").contains("A test skill for unit testing.");
         requireThat(result.warnings(), "warnings").isEmpty();
@@ -214,7 +215,7 @@ public final class SubagentStartHookTest
         String hookEventName = hookOutput.get("hookEventName").asString();
         requireThat(hookEventName, "hookEventName").isEqualTo("SubagentStart");
         String additionalContext = hookOutput.get("additionalContext").asString();
-        requireThat(additionalContext, "additionalContext").contains("The following skills are available.");
+        requireThat(additionalContext, "additionalContext").contains("Skill Instructions");
       }
     }
     finally
@@ -225,16 +226,16 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that SkillDiscovery.formatSkillListing returns empty string when no skills are discoverable.
+   * Verifies that SkillDiscovery.getMainAgentSkillListing returns empty string when no skills are discoverable.
    */
   @Test
-  public void formatSkillListingReturnsEmptyStringWhenNoSkills() throws IOException
+  public void getMainAgentSkillListingReturnsEmptyStringWhenNoSkills() throws IOException
   {
     Path projectDir = Files.createTempDirectory("cat-test-subagent-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
     try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
     {
-      String listing = SkillDiscovery.formatSkillListing(scope);
+      String listing = SkillDiscovery.getMainAgentSkillListing(scope);
       requireThat(listing, "listing").isEmpty();
     }
     finally
@@ -245,10 +246,10 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that SkillDiscovery.formatSkillListing includes the correct header and skill entries.
+   * Verifies that SkillDiscovery.getMainAgentSkillListing includes the correct header and skill entries.
    */
   @Test
-  public void formatSkillListingIncludesHeaderAndEntries() throws IOException
+  public void getMainAgentSkillListingIncludesHeaderAndEntries() throws IOException
   {
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -257,7 +258,7 @@ public final class SubagentStartHookTest
       setupFakePlugin(configDir, "fmt", "format-test-skill", "Format test skill description.", true);
       try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
       {
-        String listing = SkillDiscovery.formatSkillListing(scope);
+        String listing = SkillDiscovery.getMainAgentSkillListing(scope);
         requireThat(listing, "listing").contains("The following skills are available.");
         requireThat(listing, "listing").contains("load-skill.sh");
         requireThat(listing, "listing").contains("fmt:format-test-skill");
@@ -273,10 +274,10 @@ public final class SubagentStartHookTest
   }
 
   /**
-   * Verifies that SkillDiscovery.formatSkillListing excludes skills with model-invocable: false.
+   * Verifies that SkillDiscovery.getMainAgentSkillListing excludes skills with model-invocable: false.
    */
   @Test
-  public void formatSkillListingExcludesNonModelInvocableSkills() throws IOException
+  public void getMainAgentSkillListingExcludesNonModelInvocableSkills() throws IOException
   {
     Path configDir = Files.createTempDirectory("cat-test-subagent-config-");
     Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
@@ -316,7 +317,7 @@ public final class SubagentStartHookTest
 
       try (JvmScope scope = new TestJvmScope(configDir, pluginRoot))
       {
-        String listing = SkillDiscovery.formatSkillListing(scope);
+        String listing = SkillDiscovery.getMainAgentSkillListing(scope);
         requireThat(listing, "listing").contains("excl:included-skill");
         requireThat(listing, "listing").doesNotContain("excl:excluded-skill");
         requireThat(listing, "listing").doesNotContain("This skill should not appear.");
