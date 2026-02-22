@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -170,12 +171,14 @@ public final class HookRegistrar
     /**
      * Converts this result to JSON format.
      *
+     * @param mapper the JSON mapper to use
      * @return JSON string representation
+     * @throws NullPointerException if {@code mapper} is null
      * @throws IOException if JSON conversion fails
      */
-    public String toJson() throws IOException
+    public String toJson(JsonMapper mapper) throws IOException
     {
-      JsonMapper mapper = JsonMapper.builder().build();
+      requireThat(mapper, "mapper").isNotNull();
       ObjectNode root = mapper.createObjectNode();
       root.put("status", status.toJson());
       root.put("message", message);
@@ -200,18 +203,141 @@ public final class HookRegistrar
   }
 
   /**
+   * Main method for command-line execution.
+   * <p>
+   * Usage: {@code register-hook --name NAME --trigger EVENT [--matcher PATTERN] [--can-block]
+   * --script-content CONTENT [--claude-dir DIR]}
+   * <p>
+   * Registers a hook script and outputs JSON result to stdout.
+   *
+   * @param args command-line arguments
+   * @throws IOException if file operations fail
+   */
+  public static void main(String[] args) throws IOException
+  {
+    String name = "";
+    String trigger = "";
+    String matcher = "";
+    boolean canBlock = false;
+    String scriptContent = "";
+    String claudeDir = System.getProperty("user.home") + "/.claude";
+
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (i + 1 < args.length)
+      {
+        switch (args[i])
+        {
+          case "--name" ->
+          {
+            ++i;
+            name = args[i];
+          }
+          case "--trigger" ->
+          {
+            ++i;
+            trigger = args[i];
+          }
+          case "--matcher" ->
+          {
+            ++i;
+            matcher = args[i];
+          }
+          case "--script-content" ->
+          {
+            ++i;
+            scriptContent = args[i];
+          }
+          case "--claude-dir" ->
+          {
+            ++i;
+            claudeDir = args[i];
+          }
+          default ->
+          {
+            if (args[i].equals("--can-block"))
+              canBlock = true;
+          }
+        }
+      }
+      else if (args[i].equals("--can-block"))
+      {
+        canBlock = true;
+      }
+    }
+
+    if (name.isEmpty() || trigger.isEmpty() || scriptContent.isEmpty())
+    {
+      System.err.println("""
+        {
+          "status": "ERROR",
+          "message": "Usage: register-hook --name NAME --trigger EVENT --script-content CONTENT \
+[--matcher PATTERN] [--can-block] [--claude-dir DIR]"
+        }""");
+      System.exit(1);
+      return;
+    }
+
+    HookTrigger hookTrigger;
+    try
+    {
+      hookTrigger = switch (trigger)
+      {
+        case "SessionStart" -> HookTrigger.SESSION_START;
+        case "UserPromptSubmit" -> HookTrigger.USER_PROMPT_SUBMIT;
+        case "PreToolUse" -> HookTrigger.PRE_TOOL_USE;
+        case "PostToolUse" -> HookTrigger.POST_TOOL_USE;
+        case "PreCompact" -> HookTrigger.PRE_COMPACT;
+        default -> throw new IllegalArgumentException(
+          "Invalid trigger: '" + trigger + "'. Expected: SessionStart, UserPromptSubmit, " +
+            "PreToolUse, PostToolUse, or PreCompact");
+      };
+    }
+    catch (IllegalArgumentException e)
+    {
+      System.err.println("""
+        {
+          "status": "ERROR",
+          "message": "%s"
+        }""".formatted(e.getMessage().replace("\"", "\\\"")));
+      System.exit(1);
+      return;
+    }
+
+    Config config = new Config(name, hookTrigger, matcher, canBlock, scriptContent);
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      Result result = register(config, claudeDir, scope.getJsonMapper());
+      System.out.println(result.toJson(scope.getJsonMapper()));
+      if (result.status() != OperationStatus.SUCCESS)
+        System.exit(1);
+    }
+    catch (IOException e)
+    {
+      System.err.println("""
+        {
+          "status": "ERROR",
+          "message": "%s"
+        }""".formatted(e.getMessage().replace("\"", "\\\"")));
+      System.exit(1);
+    }
+  }
+
+  /**
    * Registers a hook script.
    *
    * @param config the hook registration configuration
    * @param claudeDir the Claude configuration directory (typically ~/.claude)
+   * @param mapper the JSON mapper to use for reading and writing settings.json
    * @return the registration result
-   * @throws NullPointerException if {@code config} or {@code claudeDir} is null
+   * @throws NullPointerException if {@code config}, {@code claudeDir}, or {@code mapper} is null
    * @throws IOException if file operations fail
    */
-  public static Result register(Config config, String claudeDir) throws IOException
+  public static Result register(Config config, String claudeDir, JsonMapper mapper) throws IOException
   {
     requireThat(config, "config").isNotNull();
     requireThat(claudeDir, "claudeDir").isNotNull();
+    requireThat(mapper, "mapper").isNotNull();
 
     String timestamp = Instant.now().toString();
 
@@ -313,7 +439,6 @@ public final class HookRegistrar
       Files.writeString(settingsFile, "{}", StandardCharsets.UTF_8);
     }
 
-    JsonMapper mapper = JsonMapper.builder().build();
     String settingsJson = Files.readString(settingsFile, StandardCharsets.UTF_8);
     JsonNode settings = mapper.readTree(settingsJson);
     ObjectNode settingsObj;
@@ -361,8 +486,7 @@ public final class HookRegistrar
 
     try
     {
-      JsonMapper verifyMapper = JsonMapper.builder().build();
-      verifyMapper.readTree(Files.readString(settingsFile, StandardCharsets.UTF_8));
+      mapper.readTree(Files.readString(settingsFile, StandardCharsets.UTF_8));
     }
     catch (IOException e)
     {

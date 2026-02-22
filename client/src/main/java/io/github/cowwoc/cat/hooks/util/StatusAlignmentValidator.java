@@ -8,6 +8,8 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -63,6 +65,20 @@ public final class StatusAlignmentValidator
    */
   private StatusAlignmentValidator()
   {
+  }
+
+  /**
+   * Main method for command-line execution.
+   * <p>
+   * Reads input from stdin, validates alignment, and writes the result to stdout.
+   *
+   * @param args command-line arguments (unused)
+   * @throws IOException if reading from stdin fails
+   */
+  public static void main(String[] args) throws IOException
+  {
+    String input = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
+    System.out.println(validateAndFormat(input));
   }
 
   /**

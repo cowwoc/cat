@@ -133,9 +133,9 @@ public class BatchReaderTest
       "/working/dir",
       "2024-01-01T00:00:00Z");
 
-    String json = result.toJson();
-
     JsonMapper mapper = JsonMapper.builder().build();
+    String json = result.toJson(mapper);
+
     JsonNode root = mapper.readTree(json);
     requireThat(root.get("status").asString(), "status").isEqualTo("success");
     requireThat(root.get("message").asString(), "message").isEqualTo("Test message");
@@ -340,10 +340,35 @@ public class BatchReaderTest
     Config config = new Config("package io.github.cowwoc.cat.hooks.util", 1, 5, "java");
     Result result = BatchReader.read(config);
 
-    if (result.status() == OperationStatus.SUCCESS)
+    requireThat(result.status(), "status").isEqualTo(OperationStatus.SUCCESS);
+    requireThat(result.outputContent(), "outputContent").contains("truncated");
+    requireThat(result.outputContent(), "outputContent").contains("showing 5");
+  }
+
+  /**
+   * Verifies that parseIntFlag returns the parsed integer for a valid value.
+   */
+  @Test
+  public void parseIntFlagReturnsIntegerForValidValue()
+  {
+    int result = BatchReader.parseIntFlag("--max-files", "42");
+    requireThat(result, "result").isEqualTo(42);
+  }
+
+  /**
+   * Verifies that parseIntFlag throws IllegalArgumentException for non-integer input.
+   */
+  @Test
+  public void parseIntFlagThrowsForNonIntegerValue()
+  {
+    try
     {
-      requireThat(result.outputContent(), "outputContent").contains("truncated");
-      requireThat(result.outputContent(), "outputContent").contains("showing 5");
+      BatchReader.parseIntFlag("--max-files", "not-a-number");
+    }
+    catch (IllegalArgumentException e)
+    {
+      requireThat(e.getMessage(), "message").contains("--max-files");
+      requireThat(e.getMessage(), "message").contains("not-a-number");
     }
   }
 }
