@@ -9,6 +9,7 @@ package io.github.cowwoc.cat.hooks.util;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.that;
 
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ArrayNode;
@@ -161,12 +162,14 @@ public final class SubagentMonitor
     /**
      * Converts this result to JSON format.
      *
+     * @param mapper the JSON mapper to use
      * @return JSON string representation
+     * @throws NullPointerException if {@code mapper} is null
      * @throws IOException if JSON conversion fails
      */
-    public String toJson() throws IOException
+    public String toJson(JsonMapper mapper) throws IOException
     {
-      JsonMapper mapper = JsonMapper.builder().build();
+      requireThat(mapper, "mapper").isNotNull();
       ObjectNode root = mapper.createObjectNode();
 
       ArrayNode subagentsArray = mapper.createArrayNode();
@@ -202,16 +205,77 @@ public final class SubagentMonitor
   }
 
   /**
+   * Main method for command-line execution.
+   * <p>
+   * Usage: {@code monitor-subagents [--session-base DIR]}
+   * <p>
+   * Outputs JSON with status of all active subagents to stdout.
+   *
+   * @param args command-line arguments
+   * @throws IOException if git operations or file reading fails
+   */
+  public static void main(String[] args) throws IOException
+  {
+    String sessionBaseOverride = "";
+
+    for (int i = 0; i < args.length - 1; ++i)
+    {
+      if (args[i].equals("--session-base"))
+      {
+        ++i;
+        sessionBaseOverride = args[i];
+      }
+    }
+
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      // Use scope-provided session base path if not overridden via --session-base
+      String sessionBase;
+      if (!sessionBaseOverride.isEmpty())
+        sessionBase = sessionBaseOverride;
+      else
+        sessionBase = scope.getSessionBasePath().toString();
+
+      try
+      {
+        JsonMapper mapper = scope.getJsonMapper();
+        MonitorResult result = monitor(sessionBase, mapper);
+        System.out.println(result.toJson(mapper));
+      }
+      catch (IOException e)
+      {
+        System.err.println("""
+          {
+            "status": "ERROR",
+            "message": "%s"
+          }""".formatted(e.getMessage().replace("\"", "\\\"")));
+        System.exit(1);
+      }
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      System.err.println("""
+        {
+          "status": "ERROR",
+          "message": "Unexpected error: %s"
+        }""".formatted(e.getMessage().replace("\"", "\\\"")));
+      System.exit(1);
+    }
+  }
+
+  /**
    * Monitors all subagent worktrees and returns status information.
    *
    * @param sessionBase the session files base directory (e.g., "/home/node/.config/claude/projects/-workspace")
+   * @param mapper the JSON mapper to use for parsing completion files
    * @return the monitoring result
-   * @throws NullPointerException if {@code sessionBase} is null
+   * @throws NullPointerException if {@code sessionBase} or {@code mapper} is null
    * @throws IOException if git operations or file reading fails
    */
-  public static MonitorResult monitor(String sessionBase) throws IOException
+  public static MonitorResult monitor(String sessionBase, JsonMapper mapper) throws IOException
   {
     requireThat(sessionBase, "sessionBase").isNotNull();
+    requireThat(mapper, "mapper").isNotNull();
 
     List<SubagentInfo> subagents = new ArrayList<>();
     int total = 0;
@@ -241,7 +305,6 @@ public final class SubagentMonitor
         status = SubagentStatus.COMPLETE;
         ++complete;
 
-        JsonMapper mapper = JsonMapper.builder().build();
         String completionJson = Files.readString(completionFile, StandardCharsets.UTF_8);
         JsonNode completionData = mapper.readTree(completionJson);
         if (completionData.has("tokensUsed"))
@@ -268,7 +331,7 @@ public final class SubagentMonitor
 
           if (Files.exists(sessionFile))
           {
-            TokenCounts counts = countTokensAndCompactions(sessionFile);
+            TokenCounts counts = countTokensAndCompactions(sessionFile, mapper);
             tokens = counts.tokens();
             compactions = counts.compactions();
           }
@@ -392,15 +455,15 @@ public final class SubagentMonitor
    * Counts tokens and compaction events from a session file.
    *
    * @param sessionFile the session JSONL file
+   * @param mapper the JSON mapper to use for parsing
    * @return the token and compaction counts
    * @throws IOException if reading or parsing fails
    */
-  private static TokenCounts countTokensAndCompactions(Path sessionFile) throws IOException
+  private static TokenCounts countTokensAndCompactions(Path sessionFile, JsonMapper mapper) throws IOException
   {
     int totalTokens = 0;
     int compactionCount = 0;
 
-    JsonMapper mapper = JsonMapper.builder().build();
     List<String> lines = Files.readAllLines(sessionFile, StandardCharsets.UTF_8);
     for (String line : lines)
     {

@@ -52,6 +52,56 @@ public final class MarkdownWrapper
   }
 
   /**
+   * Main method for command-line execution.
+   * <p>
+   * Usage: {@code wrap-markdown <file-path> [--width N]}
+   * <p>
+   * Wraps the specified file to the given width (default: 120) and writes it back in place.
+   * With no file argument, reads from stdin and writes wrapped content to stdout.
+   *
+   * @param args command-line arguments
+   * @throws IOException if file operations fail
+   */
+  public static void main(String[] args) throws IOException
+  {
+    int maxWidth = 120;
+    String filePath = "";
+
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (args[i].equals("--width") && i + 1 < args.length)
+      {
+        ++i;
+        try
+        {
+          maxWidth = parseWidthArg(args[i]);
+        }
+        catch (IllegalArgumentException e)
+        {
+          System.err.println(e.getMessage());
+          System.exit(1);
+        }
+      }
+      else if (!args[i].startsWith("--"))
+      {
+        filePath = args[i];
+      }
+    }
+
+    if (filePath.isEmpty())
+    {
+      // Read from stdin, wrap, write to stdout
+      String content = new String(System.in.readAllBytes(), StandardCharsets.UTF_8);
+      String wrapped = wrapMarkdown(content, maxWidth);
+      System.out.print(wrapped);
+    }
+    else
+    {
+      wrapFile(Path.of(filePath), maxWidth);
+    }
+  }
+
+  /**
    * Wraps a markdown file to the specified width and writes it back.
    *
    * @param filePath the path to the markdown file
@@ -409,6 +459,25 @@ public final class MarkdownWrapper
       return continuationIndent + currentLine.substring(lastSpace + 1) + " " + word;
     }
     return testLine;
+  }
+
+  /**
+   * Parses the --width argument value.
+   *
+   * @param value the string value to parse
+   * @return the parsed integer width
+   * @throws IllegalArgumentException if {@code value} is not a valid integer
+   */
+  public static int parseWidthArg(String value)
+  {
+    try
+    {
+      return Integer.parseInt(value);
+    }
+    catch (NumberFormatException _)
+    {
+      throw new IllegalArgumentException("Error: --width requires an integer value, got: " + value);
+    }
   }
 
   /**

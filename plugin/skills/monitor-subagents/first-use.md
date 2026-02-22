@@ -89,7 +89,7 @@ For accurate token metrics on completed subagents, use `/cat:token-report` which
 
 ```bash
 # ❌ Invoking shell script (exposes tool calls to user)
-${CLAUDE_PLUGIN_ROOT}/scripts/monitor-subagents.sh
+"${CLAUDE_PLUGIN_ROOT}/client/bin/monitor-subagents"
 
 # ✅ Use preprocessed output
 # Check for `<output skill="monitor-subagents">` tag in context

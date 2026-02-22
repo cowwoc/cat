@@ -8,6 +8,7 @@ package io.github.cowwoc.cat.hooks.util;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
+import io.github.cowwoc.cat.hooks.MainJvmScope;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -115,12 +116,14 @@ public final class BatchReader
     /**
      * Converts this result to JSON format.
      *
+     * @param mapper the JSON mapper to use
      * @return JSON string representation
+     * @throws NullPointerException if {@code mapper} is null
      * @throws IOException if JSON conversion fails
      */
-    public String toJson() throws IOException
+    public String toJson(JsonMapper mapper) throws IOException
     {
-      JsonMapper mapper = JsonMapper.builder().build();
+      requireThat(mapper, "mapper").isNotNull();
       ObjectNode root = mapper.createObjectNode();
       root.put("status", status.toJson());
       root.put("message", message);
@@ -139,6 +142,97 @@ public final class BatchReader
    */
   private BatchReader()
   {
+  }
+
+  /**
+   * Main method for command-line execution.
+   * <p>
+   * Usage: {@code batch-read <pattern> [--max-files N] [--context-lines N] [--file-type TYPE]}
+   *
+   * @param args command-line arguments
+   * @throws IOException if file operations fail
+   */
+  public static void main(String[] args) throws IOException
+  {
+    if (args.length < 1)
+    {
+      System.err.println("""
+        {
+          "status": "ERROR",
+          "message": "Usage: batch-read <pattern> [--max-files N] [--context-lines N] [--file-type TYPE]"
+        }""");
+      System.exit(1);
+    }
+
+    String pattern = args[0];
+    int maxFiles = 10;
+    int contextLines = 0;
+    String fileType = "";
+
+    // Loop bound is args.length - 1 so that args[i+1] (the flag value) is always available.
+    // A lone flag key at the last position is intentionally skipped to avoid ArrayIndexOutOfBoundsException.
+    for (int i = 1; i < args.length - 1; ++i)
+    {
+      switch (args[i])
+      {
+        case "--max-files" ->
+        {
+          ++i;
+          try
+          {
+            maxFiles = parseIntFlag("--max-files", args[i]);
+          }
+          catch (IllegalArgumentException e)
+          {
+            System.err.println(e.getMessage());
+            System.exit(1);
+          }
+        }
+        case "--context-lines" ->
+        {
+          ++i;
+          try
+          {
+            contextLines = parseIntFlag("--context-lines", args[i]);
+          }
+          catch (IllegalArgumentException e)
+          {
+            System.err.println(e.getMessage());
+            System.exit(1);
+          }
+        }
+        case "--file-type" ->
+        {
+          ++i;
+          fileType = args[i];
+        }
+        default ->
+        {
+          // ignore unknown flags
+        }
+      }
+    }
+
+    Config config = new Config(pattern, maxFiles, contextLines, fileType);
+    Result result = read(config);
+
+    // Print file contents to stdout for consumption
+    if (result.status() == OperationStatus.SUCCESS)
+      System.out.print(result.outputContent());
+
+    // Print JSON metadata to stderr for diagnostics
+    try (MainJvmScope scope = new MainJvmScope())
+    {
+      System.err.println(result.toJson(scope.getJsonMapper()));
+    }
+    catch (RuntimeException | AssertionError e)
+    {
+      System.err.println("{\"status\": \"ERROR\", \"message\": \"" +
+        e.getMessage().replace("\"", "\\\"") + "\"}");
+    }
+
+    if (result.status() != OperationStatus.SUCCESS)
+      System.exit(1);
   }
 
   /**
@@ -332,5 +426,25 @@ public final class BatchReader
     }
 
     return files;
+  }
+
+  /**
+   * Parses an integer value for a command-line flag.
+   *
+   * @param flagName the name of the flag (e.g., "--max-files")
+   * @param value the string value to parse
+   * @return the parsed integer
+   * @throws IllegalArgumentException if {@code value} is not a valid integer
+   */
+  public static int parseIntFlag(String flagName, String value)
+  {
+    try
+    {
+      return Integer.parseInt(value);
+    }
+    catch (NumberFormatException _)
+    {
+      throw new IllegalArgumentException("Error: " + flagName + " requires an integer, got: " + value);
+    }
   }
 }

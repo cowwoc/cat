@@ -60,7 +60,7 @@ though it executes within a single context rather than spawning subagents.
 
 ```
 [LLM Round 1] Execute batch-read
-  -> Bash: batch-read.sh "FormattingRule" --max-files 3
+  -> Bash: "${CLAUDE_PLUGIN_ROOT}/client/bin/batch-read" "FormattingRule" --max-files 3
   -> [Script finds files + reads all + returns content]
 
 [LLM Round 2] Analyze and report
