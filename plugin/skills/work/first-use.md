@@ -117,6 +117,37 @@ with STATE.md not reflecting completion (e.g., stale merge overwrote status).
    ```
 3. Do NOT proceed to Phase 2 without user confirmation
 
+**Decomposed Parent Closure Verification:**
+
+When prepare returns READY for an issue that is a decomposed parent (its STATE.md contains
+a `## Decomposed Into` section listing sub-issues), verify acceptance criteria BEFORE offering
+closure to the user.
+
+**Decomposed parent detection:**
+
+```bash
+ISSUE_STATE="${issue_path}/STATE.md"
+IS_DECOMPOSED=$(grep -q "^## Decomposed Into" "$ISSUE_STATE" && echo "true" || echo "false")
+```
+
+**Required flow when IS_DECOMPOSED is true:**
+
+1. Read PLAN.md acceptance criteria: `cat "${issue_path}/PLAN.md"`
+2. Verify each acceptance criterion is satisfied (spawn an Explore subagent if needed)
+3. Only after all criteria are verified, use AskUserQuestion to offer closure:
+   ```
+   AskUserQuestion:
+     header: "${issue_id}"
+     question: "All sub-issues are closed. Close parent issue ${issue_id}?"
+     options:
+       - "Close parent issue" (Update STATE.md to closed, commit, release lock, clean up worktree)
+       - "Keep open" (Release lock, clean up worktree, stop)
+   ```
+
+**CRITICAL: Do NOT offer to close before verifying acceptance criteria.**
+The sequence is always: children closed → criteria verified → offer closure.
+Offering closure without criteria verification is a protocol violation.
+
 **Store phase 1 results:**
 - `issue_id`, `issue_path`, `worktree_path`, `branch`, `base_branch`
 - `estimated_tokens`
