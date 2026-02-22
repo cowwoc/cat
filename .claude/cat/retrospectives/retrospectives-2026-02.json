@@ -154,7 +154,7 @@
           "unintended_consequence": 1,
           "system_bug": 1
         },
-        "root_cause_chain": "M401→M402→M403→M407→M410→M411→M412→M413 traced to Claude Code bug #16538",
+        "root_cause_chain": "M401\u2192M402\u2192M403\u2192M407\u2192M410\u2192M411\u2192M412\u2192M413 traced to Claude Code bug #16538",
         "action_effectiveness": {
           "A002": "partially_effective",
           "A004": "effective",
@@ -186,7 +186,7 @@
       "trigger": "count_threshold",
       "period_analyzed": "2026-02-04T20:00:00-05:00 to 2026-02-05T00:57:05-05:00",
       "mistakes_analyzed": 5,
-      "summary": "Batch skill invocation failures during compress-skills-batch-5 task. Chain of 5 related failures: subagent confusion → failure message priming → skill bypass → manual implementation.",
+      "summary": "Batch skill invocation failures during compress-skills-batch-5 task. Chain of 5 related failures: subagent confusion \u2192 failure message priming \u2192 skill bypass \u2192 manual implementation.",
       "findings": {
         "category_breakdown": {
           "misleading_documentation": 1,
@@ -360,7 +360,7 @@
       "trigger": "count (10 >= 10)",
       "period_analyzed": "2026-02-06T20:38:59Z to 2026-02-08",
       "mistakes_analyzed": 10,
-      "summary": "10 mistakes (M464-M476, skipping some IDs). Protocol violations dominant (4/10). Shell corruption recurrence (M464→M474) despite M392 fix - hook lacked execute permissions. Subagent fabrication recurrence (M470 recurs M423) in learn skill. No new patterns meeting 2+ threshold in this period alone, but protocol_violation category shows persistent issues.",
+      "summary": "10 mistakes (M464-M476, skipping some IDs). Protocol violations dominant (4/10). Shell corruption recurrence (M464\u2192M474) despite M392 fix - hook lacked execute permissions. Subagent fabrication recurrence (M470 recurs M423) in learn skill. No new patterns meeting 2+ threshold in this period alone, but protocol_violation category shows persistent issues.",
       "findings": {
         "categories": {
           "protocol_violation": 4,
@@ -399,7 +399,7 @@
         "escalations_created": [],
         "observations": [
           "Protocol violations remain most common category (4/10)",
-          "Shell corruption (M464→M474) shows hook implementation gap (permissions)",
+          "Shell corruption (M464\u2192M474) shows hook implementation gap (permissions)",
           "Subagent fabrication (M470) recurs despite multiple preventions",
           "A008 showing stability - no new violations in M464-M476",
           "Wide category spread - no dominant failure mode emerging"
@@ -619,10 +619,34 @@
           "tool_misuse": 2
         },
         "mistakes_in_period": [
-          "M344", "M345", "M346", "M347", "M348", "M349", "M350",
-          "M351", "M352", "M353", "M354", "M355", "M356", "M357",
-          "M358", "M359", "M360", "M361", "M362", "M363", "M364",
-          "M365", "M366", "M367", "M368", "M369", "M370", "M371"
+          "M344",
+          "M345",
+          "M346",
+          "M347",
+          "M348",
+          "M349",
+          "M350",
+          "M351",
+          "M352",
+          "M353",
+          "M354",
+          "M355",
+          "M356",
+          "M357",
+          "M358",
+          "M359",
+          "M360",
+          "M361",
+          "M362",
+          "M363",
+          "M364",
+          "M365",
+          "M366",
+          "M367",
+          "M368",
+          "M369",
+          "M370",
+          "M371"
         ],
         "patterns_updated": [
           "PATTERN-016",
@@ -646,8 +670,17 @@
           "A008"
         ],
         "action_items_pending": [
-          "A009", "A010", "A011", "A012", "A013", "A014", "A015",
-          "A016", "A019", "A020", "A021"
+          "A009",
+          "A010",
+          "A011",
+          "A012",
+          "A013",
+          "A014",
+          "A015",
+          "A016",
+          "A019",
+          "A020",
+          "A021"
         ],
         "new_action_items": [
           "A022"
@@ -681,6 +714,97 @@
           "M365 (--no-ff documentation priming) is a new misleading_documentation instance related to PATTERN-012",
           "M371 (convention_violation - records without compact constructors) is isolated; convention doc fix implemented",
           "A001/A003/A018 all confirmed ineffective across multiple retrospectives - structural enforcement needed",
+          "A004/A006/A007 remain consistently effective - hook-level preventions outperform documentation-level"
+        ]
+      }
+    },
+    {
+      "id": "R022",
+      "timestamp": "2026-02-23T10:22:49.437200407Z",
+      "trigger": "count (12 >= 10)",
+      "period_analyzed": "2026-02-22T13:45:25Z to 2026-02-23T10:22:49Z",
+      "mistakes_analyzed": 12,
+      "summary": "12 mistakes across 6 categories. Protocol violations dominant (7/12, 58%). Three squash workflow failures (PATTERN-016: M379/M385/M386) bring pattern total to 11 occurrences - A018 escalated with three specific code-level fixes identified. One stakeholder review quality failure (PATTERN-018: M389 - requirements stakeholder missed version scheme scope for porting task). Two new patterns identified: PATTERN-019 (line_length_violation, M380/M382) and PATTERN-020 (mandatory_step_treated_as_optional, M384/M388). No new PATTERN-001 recurrences - subagent fabrication may be stabilizing with A012 in place. A001/A003/A018 remain ineffective - escalations updated.",
+      "findings": {
+        "category_breakdown": {
+          "protocol_violation": 7,
+          "formatting_violation": 1,
+          "tool_misuse": 1,
+          "misleading_documentation": 1,
+          "stakeholder_review_quality": 1,
+          "incorrect_implementation": 1
+        },
+        "mistakes_in_period": [
+          "M377",
+          "M379",
+          "M380",
+          "M382",
+          "M384",
+          "M385",
+          "M386",
+          "M387",
+          "M388",
+          "M389",
+          "M390",
+          "M391"
+        ],
+        "patterns_updated": [
+          "PATTERN-016",
+          "PATTERN-018"
+        ],
+        "new_patterns": [
+          "PATTERN-019",
+          "PATTERN-020"
+        ],
+        "action_items_effective": [
+          "A004",
+          "A006",
+          "A007"
+        ],
+        "action_items_ineffective": [
+          "A001",
+          "A003",
+          "A018"
+        ],
+        "action_items_partially_effective": [
+          "A002",
+          "A005",
+          "A008"
+        ],
+        "action_items_pending": [
+          "A009",
+          "A010",
+          "A011",
+          "A012",
+          "A013",
+          "A014",
+          "A015",
+          "A016",
+          "A019",
+          "A020",
+          "A021",
+          "A022"
+        ],
+        "new_action_items": [
+          "A023",
+          "A024"
+        ],
+        "escalations_updated": [
+          "ESCALATE-A001",
+          "ESCALATE-A003",
+          "ESCALATE-A018"
+        ],
+        "recurrences": {
+          "M385": "M362 (unsquashed commits at approval gate)",
+          "M386": "M369 (working tree not updated after branch pointer move)"
+        },
+        "observations": [
+          "Protocol violations remain dominant category (7/12, 58%)",
+          "PATTERN-016 (squash_commit_corruption) now 11 total occurrences - three distinct sub-issues with code-level fixes pending",
+          "PATTERN-018 (stakeholder review quality) adds requirements stakeholder scope gap for porting tasks",
+          "PATTERN-001 (subagent validation fabrication) has no new recurrences in this period - possibly stabilizing",
+          "Two new patterns: PATTERN-019 (line length violations) and PATTERN-020 (mandatory step bypass)",
+          "A023 (low priority) and A024 (high priority) created for new patterns",
           "A004/A006/A007 remain consistently effective - hook-level preventions outperform documentation-level"
         ]
       }
