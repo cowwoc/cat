@@ -1468,6 +1468,34 @@
         "catches_variations": true
       },
       "correct_behavior": "Before presenting the approval gate, verify that STATE.md shows Status: closed in the HEAD commit. If not, amend the implementation commit to include the STATE.md closure before proceeding."
+    },
+    {
+      "id": "M395",
+      "timestamp": "2026-02-23T22:36:55Z",
+      "category": "assumption_without_verification",
+      "description": "Attempted git add on /tmp/empirical-test.txt without verifying the file path was inside the repository",
+      "root_cause": "Agent recognized the contradiction (file in /tmp, asked to commit to git repo) in its thinking but proceeded with the doomed operation anyway as a demonstration rather than asking for clarification",
+      "rca_method": "C",
+      "rca_method_name": "causal-barrier",
+      "prevention_type": "skill",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/git-commit/first-use.md",
+      "pattern_keywords": [
+        "git",
+        "outside",
+        "repository",
+        "prerequisite",
+        "validation",
+        "path"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When asked to commit a file at a path outside the repository root, ask the user to clarify rather than attempting a git operation that will always fail"
     }
   ]
 }
