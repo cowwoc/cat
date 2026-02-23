@@ -15,7 +15,6 @@
 Record demo videos showcasing CAT features for marketing and documentation.
 
 ## Issues Pending
-- detect-duplicate-functionality
 - simplify-readme
 - task-management-demo
 - git-safety-demo
