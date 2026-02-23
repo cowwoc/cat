@@ -119,8 +119,8 @@ rca_depth_check:
   # Question 4: Is this a recurring failure?
   recurring_pattern:
     question: "Has this type of failure occurred before? Check recurrence_of in mistakes.json"
-    if_yes_multiple: "Previous fixes FAILED - dig deeper into WHY they failed"
-    if_3_plus_recurrences: "ARCHITECTURAL issue likely - see Step 4d"
+    if_yes_multiple: "Investigate independently. Do NOT assume past RCA conclusions are correct. Verify the root cause from fresh evidence, then compare with past conclusions."
+    if_3_plus_recurrences: "Investigate independently first. After establishing root cause from fresh evidence, check Step 4d for architectural patterns."
     your_answer: "_______________"
 
   # Question 5: Prevention vs Detection
@@ -171,8 +171,8 @@ Each independent mistake gets its own `/cat:learn` invocation with full RCA and 
 
 **CRITICAL: Check for recurring patterns that indicate architectural flaws.**
 
-When a mistake has recurrences (check `recurrence_of` field in mistakes.json), the fixes have failed.
-Multiple failed fixes indicate the root cause is DEEPER than documentation or hooks can address.
+When a mistake has recurrences (check `recurrence_of` field in mistakes.json), independently verify the root cause.
+Do NOT assume past analyses were correct -- they may have had wrong conclusions that cascaded.
 
 **Recurrence Chain Check:**
 
