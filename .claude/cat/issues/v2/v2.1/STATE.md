@@ -2,43 +2,27 @@
 
 - **Dependencies:** []
 - **Blocks:** []
-- **Last Updated:** 2026-02-20
+- **Last Updated:** 2026-02-24
 
 
 # v2.1 State: Pre-Demo Polish
 
 ## Status
 - **Status:** in-progress
-- **Progress:** 86%
+- **Progress:** 93%
 
 ## Summary
 Finalize naming conventions and UI polish before recording demo videos.
 
 ## Issues Pending
-- audience-aware-rules-injection
-- add-preconditions-postconditions
-- fix-status-line-wrapping
-- require-reviewer-file-evidence
-- fix-cleanup-lock-removal
-- fix-status-instruction-ordering
 - add-java-build-to-ci
+- audience-aware-rules-injection
+- ci-build-jlink-bundle
+- compress-concepts-batch-1
+- compress-concepts-batch-4
 - compress-concepts-batch-5
 - compress-concepts-md
 - compress-md-files
-- enforce-worktree-isolation-in-learn
-- fix-squash-backup-branch-naming
-- port-display-scripts
-- port-utility-scripts
-- port-workflow-scripts
-- preprocessor-error-bug-reporting
-- preprocessor-skill-output-tags
-- rename-render-diff-to-get-diff
-- ci-build-jlink-bundle
-- cleanup-orphaned-hook-scripts
-- cleanup-ported-scripts
-- cleanup-squash-backups-in-merge
-- compress-concepts-batch-1
-- compress-concepts-batch-4
 - compress-skills-batch-1
 - compress-skills-batch-2
 - compress-skills-batch-3
@@ -48,40 +32,11 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-stakeholders-md
 - compress-templates-md
 - developer-local-bundle-rebuild
-- fix-skill-output-framing
-- fix-stakeholder-review-preprocessing
 - migrate-python-to-java
-- optimize-learn-investigation
-- port-issue-discovery
-- port-work-prepare
-- remove-license-from-skill-md
-- restructure-pricing-tiers
 - session-start-version-check
-- simplify-review-thresholds
-- unify-hook-dispatchers
-- unify-posttooluse-failure-hooks
-- unify-posttooluse-hooks
-- unify-project-hooks
-- unify-userpromptsubmit-hooks
-- unify-work-preparing-banner
-- update-git-script-references
-- empirical-test-strict-defaults
-- forcedeval-model-invocable-filter
-- learn-examine-raw-conversation
-- output-tag-skip-backtick-quoted
-- fix-skill-arguments-pattern
-- delete-jlink-config-sh
-- port-reset-failure-counter
-- port-skill-preprocessor-failure
-- fix-config-skill-output
-- prevent-rca-cascade-bias
-- update-empirical-test-trial-counts
-- replace-update-ref-with-merge
-- fix-cleanup-output-skill-output
 
 
 ## Issues Completed
-- add-statemd-regression-check-to-squash
 - acceptance-criteria-options
 - add-build-hooks-skill
 - add-deployment-stakeholder
@@ -94,12 +49,14 @@ Finalize naming conventions and UI polish before recording demo videos.
 - add-main-agent-only-restrictions
 - add-opus-model-guidance
 - add-pipelining-to-optimize-execution
+- add-preconditions-postconditions
 - add-race-condition-review-criteria
 - add-record-validation
 - add-release-plugin-skill
 - add-requirements-validation
 - add-skill-content-headers
 - add-skill-context-router
+- add-statemd-regression-check-to-squash
 - add-statusline-skill
 - add-wizard-context-headers
 - add-work-with-issue-banners
@@ -113,7 +70,10 @@ Finalize naming conventions and UI polish before recording demo videos.
 - centralize-json-mapper
 - chain-add-wizard-bash-calls
 - cleanup-orphaned-backup-branches
+- cleanup-orphaned-hook-scripts
+- cleanup-ported-scripts
 - cleanup-python-files
+- cleanup-squash-backups-in-merge
 - collapse-completed-in-status
 - command-optimizer
 - compress-commands-md
@@ -128,15 +88,18 @@ Finalize naming conventions and UI polish before recording demo videos.
 - create-agents-directory
 - deduplicate-embedded-content
 - define-wave-terminology
+- delete-jlink-config-sh
 - detect-subagent-fabrication
-- document-subagent-skill-invocation
 - document-skillloader-passthrough
+- document-subagent-skill-invocation
 - empirical-test-full-response-investigation
+- empirical-test-strict-defaults
 - empirical-test-tool-use-priming
 - enforce-jvmscope-env-access
 - enforce-python-for-comparisons
 - enforce-script-output-failfast
 - enforce-state-schema-hook
+- enforce-worktree-isolation-in-learn
 - enhance-add-complete-multi-issue
 - evaluate-skill-activation
 - fail-fast-missing-banners
@@ -147,6 +110,9 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-banner-skip-vs-failfast
 - fix-block-unsafe-removal-cwd-detection
 - fix-blocked-tasks-diagnostics
+- fix-cleanup-lock-removal
+- fix-cleanup-output-skill-output
+- fix-config-skill-output
 - fix-decomposed-parent-completion
 - fix-empirical-test-skill-registration
 - fix-git-skill-race-conditions
@@ -156,8 +122,8 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-jlink-utf8-encoding
 - fix-load-skill-env-resolution
 - fix-merge-base-false-positive
-- fix-merge-push-to-local-failure
 - fix-merge-parent-shell-corruption
+- fix-merge-push-to-local-failure
 - fix-merge-subagent-worktree-cd
 - fix-multirelease-jar-detection
 - fix-plugin-isolation-branch-detection
@@ -165,12 +131,17 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-progress-banner-newline
 - fix-retrospective-handler-timezone
 - fix-scope-complete-box-alignment
+- fix-skill-arguments-pattern
 - fix-skill-loader-dotall-regex
+- fix-skill-output-framing
 - fix-skill-preprocessor-args
 - fix-skillloader-unknown-vars
 - fix-squash-workflow
+- fix-stakeholder-review-preprocessing
 - fix-status-box-alignment
 - fix-status-in-progress-detection
+- fix-status-instruction-ordering
+- fix-status-line-wrapping
 - fix-status-verbatim-output
 - fix-surefire-utf8-encoding
 - fix-throws-documentation
@@ -181,6 +152,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - fix-work-prepare-issue-name-matching
 - fix-work-prepare-wrong-task
 - fix-worktree-merge-docs
+- forcedeval-model-invocable-filter
 - harden-reference-md-redirect
 - hide-add-skill-bash-output
 - hide-issue-complete-bash-output
@@ -202,6 +174,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - json-complex-handler-migration
 - json-core-api-migration
 - lazy-load-requirements-api
+- learn-examine-raw-conversation
 - learn-skill-worktree-safety
 - make-project-dir-mandatory
 - mavenize-java-hooks
@@ -222,25 +195,37 @@ Finalize naming conventions and UI polish before recording demo videos.
 - optimize-execution-script
 - optimize-execution-subagents
 - optimize-hook-json-parser
+- optimize-learn-investigation
 - optimize-shrink-doc-workflow
 - optimize-verify-subagent-count
 - optimize-work-command-context
+- output-tag-skip-backtick-quoted
 - persist-project-dir-via-env-file
 - planning-commits-on-issue-branch
 - port-analysis-to-java
 - port-box-lines-to-java
 - port-cleanup-display-to-java
 - port-completion-boxes
+- port-display-scripts
 - port-git-scripts
 - port-init-boxes
+- port-issue-discovery
 - port-licensing-to-java
 - port-lock-and-worktree
 - port-operational-scripts-to-java
+- port-reset-failure-counter
+- port-skill-preprocessor-failure
 - port-standalone-scripts
 - port-status-display
 - port-text-utilities-to-java
+- port-utility-scripts
+- port-work-prepare
+- port-workflow-scripts
 - preprocess-env-vars-in-skill-content
+- preprocessor-error-bug-reporting
+- preprocessor-skill-output-tags
 - prevent-plan-md-priming
+- prevent-rca-cascade-bias
 - prevent-squash-discarding-learn-commits
 - python-prerendered-output
 - recover-from-drift
@@ -257,11 +242,13 @@ Finalize naming conventions and UI polish before recording demo videos.
 - release-changelog-validation
 - remove-cat-java-home
 - remove-cd-worktree-priming
+- remove-license-from-skill-md
 - remove-scope-question-from-add-wizard
 - remove-version-from-cat-config
 - rename-engine-to-client
 - rename-hooks-to-engine
 - rename-precomputed-output
+- rename-render-diff-to-get-diff
 - rename-script-output-to-render-output
 - rename-script-output-to-skill-output
 - rename-stakeholders
@@ -277,9 +264,12 @@ Finalize naming conventions and UI polish before recording demo videos.
 - replace-precomputed-with-script-output
 - replace-prepare-subagent-with-script
 - replace-trim-with-strip
+- replace-update-ref-with-merge
+- require-reviewer-file-evidence
 - research-new-issues
 - restore-status-handler
 - restructure-learn-tiered
+- restructure-pricing-tiers
 - run-retrospective-handler
 - scan-outdated-templates
 - self-discover-env-vars
@@ -289,6 +279,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - shrink-doc-token-metrics
 - simplify-detect-giving-up
 - simplify-prerendered-skills
+- simplify-review-thresholds
 - skip-decomposed-parents-in-discovery
 - split-learn-into-phases
 - stakeholder-convention-routing
@@ -298,11 +289,19 @@ Finalize naming conventions and UI polish before recording demo videos.
 - strip-orphaned-work-docs
 - subagent-doc-heavy-steps
 - suggest-issue-names
+- unify-hook-dispatchers
 - unify-output-template-delivery
+- unify-posttooluse-failure-hooks
+- unify-posttooluse-hooks
 - unify-pretooluse-hooks
+- unify-project-hooks
 - unify-sessionstart-hooks
 - unify-stop-sessionend-hooks
+- unify-userpromptsubmit-hooks
+- unify-work-preparing-banner
 - update-diff-column-format
+- update-empirical-test-trial-counts
+- update-git-script-references
 - update-skill-builder-docs
 - update-worktree-cd-convention
 - use-patch-id-for-commit-tracking
