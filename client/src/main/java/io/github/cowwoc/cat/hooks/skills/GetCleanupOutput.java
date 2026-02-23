@@ -10,6 +10,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.IssueLock;
 import io.github.cowwoc.cat.hooks.util.ProcessRunner;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,7 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
  * Generates box displays for survey results, cleanup plan, and verification.
  * Also provides data gathering methods for worktrees, locks, branches, and stale remotes.
  */
-public final class GetCleanupOutput
+public final class GetCleanupOutput implements SkillOutput
 {
   private static final Pattern CAT_BRANCH_PATTERN = Pattern.compile("(release/|worktree|\\d+\\.\\d+-)");
   private static final Pattern STALE_REMOTE_PATTERN = Pattern.compile("origin/\\d+\\.\\d+-");
@@ -183,6 +184,40 @@ public final class GetCleanupOutput
       requireThat(worktrees, "worktrees").isNotNegative();
       requireThat(branches, "branches").isNotNegative();
     }
+  }
+
+  /**
+   * Generates the survey output for this skill.
+   * <p>
+   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
+   * {@code scope.getClaudeProjectDir()}.
+   *
+   * @param args the arguments from the preprocessor directive
+   * @return the formatted survey display
+   * @throws NullPointerException     if {@code args} is null
+   * @throws IllegalArgumentException if {@code --project-dir} flag is present but lacks a PATH value
+   * @throws IOException              if an I/O error occurs
+   */
+  @Override
+  public String getOutput(String[] args) throws IOException
+  {
+    requireThat(args, "args").isNotNull();
+    Path projectDir = null;
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (args[i].equals("--project-dir"))
+      {
+        if (i + 1 >= args.length)
+          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
+        projectDir = Path.of(args[i + 1]);
+        ++i;
+      }
+      else
+        throw new IllegalArgumentException("Unknown argument: " + args[i]);
+    }
+    if (projectDir == null)
+      projectDir = scope.getClaudeProjectDir();
+    return gatherAndFormatSurveyOutput(projectDir);
   }
 
   /**

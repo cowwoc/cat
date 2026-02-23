@@ -25,6 +25,7 @@ import io.github.cowwoc.cat.hooks.Config;
 import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.MainJvmScope;
 import io.github.cowwoc.cat.hooks.util.GitCommands;
+import io.github.cowwoc.cat.hooks.util.SkillOutput;
 
 import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.requireThat;
 
@@ -46,7 +47,7 @@ import org.slf4j.LoggerFactory;
  *   with first addition, etc.), which may not reflect the actual semantic relationship.</li>
  * </ul>
  */
-public final class GetRenderDiffOutput
+public final class GetDiffOutput implements SkillOutput
 {
   /**
    * Maximum number of files to display in the summary.
@@ -58,12 +59,12 @@ public final class GetRenderDiffOutput
   private final JvmScope scope;
 
   /**
-   * Creates a GetRenderDiffOutput instance.
+   * Creates a GetDiffOutput instance.
    *
    * @param scope the JVM scope for accessing shared services
    * @throws NullPointerException if {@code scope} is null
    */
-  public GetRenderDiffOutput(JvmScope scope)
+  public GetDiffOutput(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -267,7 +268,7 @@ public final class GetRenderDiffOutput
     {
       requireThat(projectRoot, "projectRoot").isNotNull();
 
-      Logger log = LoggerFactory.getLogger(GetRenderDiffOutput.class);
+      Logger log = LoggerFactory.getLogger(GetDiffOutput.class);
       try
       {
         String worktreeBase = detectFromWorktreePath();
@@ -354,17 +355,37 @@ public final class GetRenderDiffOutput
   }
 
   /**
-   * Pre-compute rendered diff using project root from environment.
+   * Generates the diff output for this skill.
    * <p>
-   * This method supports direct preprocessing pattern - it collects all
-   * necessary data from the environment without requiring LLM-provided arguments.
+   * Parses {@code --project-dir PATH} from {@code args} if present; otherwise falls back to
+   * {@code scope.getClaudeProjectDir()}.
    *
-   * @return the formatted diff output, or null if CLAUDE_PROJECT_DIR not set or on error
-   * @throws IOException if the config file cannot be read or contains invalid JSON
+   * @param args the arguments from the preprocessor directive
+   * @return the formatted diff display
+   * @throws NullPointerException     if {@code args} is null
+   * @throws IllegalArgumentException if {@code --project-dir} flag is present but lacks a PATH value
+   * @throws IOException              if an I/O error occurs
    */
-  public String getOutput() throws IOException
+  @Override
+  public String getOutput(String[] args) throws IOException
   {
-    return getOutput(scope.getClaudeProjectDir());
+    requireThat(args, "args").isNotNull();
+    Path projectDir = null;
+    for (int i = 0; i < args.length; ++i)
+    {
+      if (args[i].equals("--project-dir"))
+      {
+        if (i + 1 >= args.length)
+          throw new IllegalArgumentException("Missing PATH argument for --project-dir");
+        projectDir = Path.of(args[i + 1]);
+        ++i;
+      }
+      else
+        throw new IllegalArgumentException("Unknown argument: " + args[i]);
+    }
+    if (projectDir == null)
+      projectDir = scope.getClaudeProjectDir();
+    return getOutput(projectDir);
   }
 
   /**
@@ -1172,7 +1193,7 @@ public final class GetRenderDiffOutput
   /**
    * Renders diff in 2-column table format.
    * <p>
-   * This class is nested within GetRenderDiffOutput to keep its private implementation
+   * This class is nested within GetDiffOutput to keep its private implementation
    * types (ParsedLine, LineType, DiffHunk, ParsedDiff, UsedSymbols, DisplayUtils)
    * encapsulated. Extracting it to a top-level class would require making all these
    * types package-private, exposing internal implementation details. The nesting is
@@ -2164,14 +2185,14 @@ public final class GetRenderDiffOutput
   {
     try (JvmScope scope = new MainJvmScope())
     {
-      GetRenderDiffOutput generator = new GetRenderDiffOutput(scope);
-      String output = generator.getOutput();
+      GetDiffOutput generator = new GetDiffOutput(scope);
+      String output = generator.getOutput(args);
       if (output != null)
         System.out.print(output);
     }
     catch (IOException | RuntimeException | AssertionError e)
     {
-      Logger log = LoggerFactory.getLogger(GetRenderDiffOutput.class);
+      Logger log = LoggerFactory.getLogger(GetDiffOutput.class);
       log.error("Unexpected error", e);
       System.err.println("Error generating diff: " + e.getMessage());
       System.exit(1);
