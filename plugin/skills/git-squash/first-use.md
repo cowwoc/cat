@@ -134,8 +134,8 @@ The script implements: rebase onto base, backup, commit-tree squash, verify, cle
 |--------|---------|----------------------|
 | `OK` | Squash completed successfully | Verify working tree (see below), then report success |
 | `REBASE_CONFLICT` | Conflict during pre-squash rebase | Agent decides: resolve conflict and retry, or abort |
-| `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat |
-| `ERROR` | Rebase or squash failed | Check backup_branch and error message for details |
+| `VERIFY_FAILED` | Content changed during squash | Restore from backup branch, investigate diff_stat. Delete backup after investigation. |
+| `ERROR` | Rebase or squash failed | Check backup_branch and error message for details. Delete backup after the error is handled. |
 
 ### Post-Squash Working Tree Verification (MANDATORY on `OK`)
 
