@@ -774,8 +774,8 @@ User approval is a separate gate that follows stakeholder review.
 | HIGH_COUNT > 0 | CONCERNS - Document but proceed to user approval |
 | Otherwise | REVIEW_PASSED - Proceed to user approval |
 
-The calling skill (work-with-issue) reads the reviewThresholds config and decides whether to trigger the auto-fix loop
-and when to stop, based on the AUTOFIX_LEVEL and PROCEED_* values from config.
+The calling skill (work-with-issue) reads the reviewThreshold config and decides whether to trigger the auto-fix loop
+and when to stop, based on the configured AUTOFIX_LEVEL severity threshold.
 
 </step>
 
