@@ -1,8 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 @concepts/version-paths.md
 
 # Remove Issue or Version
@@ -171,7 +171,11 @@ If dependents found:
 
 Use AskUserQuestion:
 - header: "Dependency Warning"
-- question: "The following issues depend on this issue:\n\n[list]\n\nRemoving will leave these issues with unmet
+- question: "The following issues depend on this issue:
+
+[list]
+
+Removing will leave these issues with unmet
   dependencies. Continue?"
 - options:
   - "Yes, remove anyway" - Proceed
@@ -185,7 +189,11 @@ Use AskUserQuestion:
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove issue '{issue-name}' from {major}.{minor}?\n\nThis will delete:\n- STATE.md\n- PLAN.md"
+- question: "Remove issue '{issue-name}' from {major}.{minor}?
+
+This will delete:
+- STATE.md
+- PLAN.md"
 - options:
   - "Yes, remove it" - Proceed
   - "No, cancel" - Abort
@@ -410,7 +418,11 @@ INCOMPLETE=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "v*" \
 
 Use AskUserQuestion:
 - header: "Incomplete Work"
-- question: "This {VERSION_TYPE} version has incomplete work:\n\n{list}\n\nWhat would you like to do?"
+- question: "This {VERSION_TYPE} version has incomplete work:
+
+{list}
+
+What would you like to do?"
 - options:
   - "Force remove everything" - Delete despite incomplete work
   - "Cancel" - Stop removal
@@ -434,7 +446,11 @@ If dependents found:
 
 Use AskUserQuestion:
 - header: "Dependency Warning"
-- question: "Later major versions may depend on this one:\n\n[list]\n\nRemoving may affect project structure. Continue?"
+- question: "Later major versions may depend on this one:
+
+[list]
+
+Removing may affect project structure. Continue?"
 - options:
   - "Yes, remove anyway" - Proceed
   - "No, cancel" - Abort
@@ -464,7 +480,11 @@ If later patches exist:
 
 Use AskUserQuestion:
 - header: "Dependency Warning"
-- question: "Later patch versions exist:\n\n{list}\n\nRemoving v$MAJOR.$MINOR.$PATCH may affect version sequence.
+- question: "Later patch versions exist:
+
+{list}
+
+Removing v$MAJOR.$MINOR.$PATCH may affect version sequence.
   Continue?"
 - options:
   - "Yes, remove anyway" - Proceed
@@ -501,8 +521,15 @@ TASK_COUNT=$(find "$VERSION_PATH" -mindepth 1 -maxdepth 1 -type d ! -name "issue
 
 Use AskUserQuestion:
 - header: "CONFIRM MAJOR VERSION REMOVAL"
-- question: "You are about to remove Major Version {major}.\n\nThis will permanently delete:\n- {minor_count} minor
-  versions\n- {task_count} issues\n- All associated STATE.md, PLAN.md, CHANGELOG.md files\n\nThis action cannot be
+- question: "You are about to remove Major Version {major}.
+
+This will permanently delete:
+- {minor_count} minor
+  versions
+- {task_count} issues
+- All associated STATE.md, PLAN.md, CHANGELOG.md files
+
+This action cannot be
   undone (except via git). Are you absolutely sure?"
 - options:
   - "Yes, permanently remove Major {major}" - Proceed with removal
@@ -512,7 +539,11 @@ Use AskUserQuestion:
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove minor version {major}.{minor}?\n\nThis will delete:\n- {task_count} issues\n- All STATE.md, PLAN.md
+- question: "Remove minor version {major}.{minor}?
+
+This will delete:
+- {task_count} issues
+- All STATE.md, PLAN.md
   files"
 - options:
   - "Yes, remove it" - Proceed
@@ -522,7 +553,11 @@ Use AskUserQuestion:
 
 Use AskUserQuestion:
 - header: "Confirm Removal"
-- question: "Remove patch version $MAJOR.$MINOR.$PATCH?\n\nThis will delete:\n- $TASK_COUNT issues\n- All STATE.md,
+- question: "Remove patch version $MAJOR.$MINOR.$PATCH?
+
+This will delete:
+- $TASK_COUNT issues
+- All STATE.md,
   PLAN.md, CHANGELOG.md files"
 - options:
   - "Yes, remove it" - Proceed

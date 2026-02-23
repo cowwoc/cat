@@ -1,7 +1,7 @@
 # Plan: fix-work-complete-json-args
 
 ## Goal
-Fix the work-complete skill invocation failure when JSON arguments containing curly braces are interpreted by zsh
+Fix the work-complete skill invocation failure when JSON arguments containing curly braces are interpreted by the shell
 before reaching the handler.
 
 ## Satisfies
@@ -19,7 +19,7 @@ Invoking `/cat:work-complete` with JSON arguments like:
 ```
 Produces: `(eval):1: parse error near '}'`
 
-The curly braces in the JSON are interpreted by zsh glob expansion before the skill preprocessor receives them.
+The curly braces in the JSON are interpreted by shell brace expansion before the skill preprocessor receives them.
 
 ## Files to Modify
 - TBD after investigation (likely in skill preprocessor or load-skill.sh quoting)
