@@ -329,4 +329,126 @@ public final class SubagentStartHookTest
       TestUtils.deleteDirectoryRecursively(pluginRoot);
     }
   }
+
+  // ---- getCatRules behavior: blank vs populated subagent_type ----
+
+  /**
+   * Verifies that getCatRules (via run()) includes a rule with subAgents:[all] when
+   * subagent_type is blank. Rules with "all" target should reach all subagents regardless of type.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesBlankSubagentTypeMatchesAllRule() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("cat-test-getrules-blank-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("universal.md"), """
+        ---
+        mainAgent: false
+        subAgents: [all]
+        ---
+        # Universal subagent content
+        Applies to any subagent.
+        """);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper, "{\"session_id\": \"test-session\"}");
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new SubagentStartHook(scope).run(input, output);
+
+      requireThat(result.output(), "output").contains("Universal subagent content");
+      requireThat(result.output(), "output").contains("Applies to any subagent.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that getCatRules (via run()) includes a specific-type rule when
+   * subagent_type matches the rule's subAgents value.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesPopulatedSubagentTypeMatchesSpecificRule() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("cat-test-getrules-specific-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("typed-rule.md"), """
+        ---
+        mainAgent: false
+        subAgents: ["cat:work-execute"]
+        ---
+        # Work execute specific content
+        Only for cat:work-execute.
+        """);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"test-session\", \"subagent_type\": \"cat:work-execute\"}");
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new SubagentStartHook(scope).run(input, output);
+
+      requireThat(result.output(), "output").contains("Work execute specific content");
+      requireThat(result.output(), "output").contains("Only for cat:work-execute.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
+
+  /**
+   * Verifies that getCatRules (via run()) excludes a specific-type rule when
+   * subagent_type does not match the rule's subAgents value.
+   *
+   * @throws IOException if file operations fail
+   */
+  @Test
+  public void getCatRulesPopulatedSubagentTypeExcludesNonMatchingRule() throws IOException
+  {
+    Path projectDir = Files.createTempDirectory("cat-test-getrules-nomatch-");
+    Path pluginRoot = Files.createTempDirectory("cat-test-plugin-");
+    try (JvmScope scope = new TestJvmScope(projectDir, pluginRoot))
+    {
+      Path rulesDir = scope.getClaudeProjectDir().resolve(".claude/cat/rules");
+      Files.createDirectories(rulesDir);
+      Files.writeString(rulesDir.resolve("typed-rule.md"), """
+        ---
+        mainAgent: false
+        subAgents: ["cat:work-execute"]
+        ---
+        # Work execute only content
+        Should not appear for Explore.
+        """);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      // Different subagent type — rule should not match
+      HookInput input = createInput(mapper,
+        "{\"session_id\": \"test-session\", \"subagent_type\": \"Explore\"}");
+      HookOutput output = new HookOutput(scope);
+      HookResult result = new SubagentStartHook(scope).run(input, output);
+
+      requireThat(result.output(), "output").doesNotContain("Work execute only content");
+      requireThat(result.output(), "output").doesNotContain("Should not appear for Explore.");
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+      TestUtils.deleteDirectoryRecursively(pluginRoot);
+    }
+  }
 }
