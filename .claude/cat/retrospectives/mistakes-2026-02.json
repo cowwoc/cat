@@ -1630,6 +1630,34 @@
         "catches_variations": true
       },
       "correct_behavior": "When NO_TASKS is returned with blocked_tasks, list each blocked issue and what it is blocked by, then direct the user to /cat:status to determine what to resolve. Never suggest working on a blocking dependency by name. Use issue terminology (not task) for CAT project work items."
+    },
+    {
+      "id": "M401",
+      "timestamp": "2026-02-24T15:30:00Z",
+      "category": "misleading_documentation",
+      "description": "WorkPrepare diagnostic scan truncates at 1000 file-system entries, causing closed dependencies to appear as not_found in blocked_tasks output",
+      "root_cause": "WorkPrepare.buildIssueIndex uses Files.walk().limit(1000) which truncates the index when a project has many issues. Dependencies that fall beyond entry 999 are missing from the index and incorrectly reported as not_found in the diagnostic blocked_tasks list, even though IssueDiscovery resolves them correctly using a separate unlimited scan. This misleads users into thinking work-prepare has a bug when it is actually behaving correctly.",
+      "rca_method": "B",
+      "rca_method_name": "taxonomy",
+      "prevention_type": "documentation",
+      "prevention_path": "${CLAUDE_PROJECT_DIR}/plugin/skills/work-prepare/first-use.md",
+      "pattern_keywords": [
+        "work-prepare",
+        "NO_TASKS",
+        "not_found",
+        "diagnostic",
+        "scan_limit",
+        "blocked_tasks"
+      ],
+      "prevention_implemented": true,
+      "prevention_verified": true,
+      "recurrence_of": null,
+      "prevention_quality": {
+        "verification_type": "positive",
+        "fragility": "low",
+        "catches_variations": true
+      },
+      "correct_behavior": "When blocked_tasks shows not_found for a dependency, verify the dependency STATE.md directly. The diagnostic is for context only; the selection result is authoritative. The code fix (remove .limit(1000) from buildIssueIndex) is tracked as task M401-fix."
     }
   ]
 }
