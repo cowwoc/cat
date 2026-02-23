@@ -33,6 +33,7 @@ Finalize naming conventions and UI polish before recording demo videos.
 - compress-templates-md
 - developer-local-bundle-rebuild
 - migrate-python-to-java
+- rename-task-to-issue-phase2
 - session-start-version-check
 
 
