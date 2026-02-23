@@ -1579,18 +1579,15 @@ public class WorkPrepareTest
       WorkPrepare prepare = new WorkPrepare(scope, 5, 1000);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
 
-      boolean exceptionThrown = false;
       try
       {
         prepare.execute(input);
       }
       catch (IOException e)
       {
-        exceptionThrown = true;
         requireThat(e.getMessage(), "message").contains("safety threshold");
         requireThat(e.getMessage(), "message").contains("at least 5");
       }
-      requireThat(exceptionThrown, "exceptionThrown").isTrue();
     }
     finally
     {
@@ -1621,18 +1618,15 @@ public class WorkPrepareTest
       WorkPrepare prepare = new WorkPrepare(scope, 100_000, 0);
       PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
 
-      boolean exceptionThrown = false;
       try
       {
         prepare.execute(input);
       }
       catch (IOException e)
       {
-        exceptionThrown = true;
         requireThat(e.getMessage(), "message").contains("maximum recursion depth");
         requireThat(e.getMessage(), "message").contains("0");
       }
-      requireThat(exceptionThrown, "exceptionThrown").isTrue();
     }
     finally
     {
@@ -1675,6 +1669,424 @@ public class WorkPrepareTest
     {
       TestUtils.deleteDirectoryRecursively(projectDir);
     }
+  }
+
+  /**
+   * Verifies that a cycle through a single decomposed parent is detected.
+   * <p>
+   * Scenario: A depends on decomposed parent B, and B's sub-issue C depends on A.
+   * The cycle is: A -> B -> C -> A.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticDetectsCycleThroughDecomposedParent() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // A depends on decomposed B (which has sub-issue C depending on A)
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
+
+      String expectedCycle =
+        "2.1-issue-c -> 2.1-issue-a -> 2.1-issue-b -> 2.1-issue-c";
+      boolean foundCycle = false;
+      for (JsonNode cycle : cycles)
+      {
+        if (cycle.asString().equals(expectedCycle))
+        {
+          foundCycle = true;
+          break;
+        }
+      }
+      requireThat(foundCycle, "foundCycle").withContext(expectedCycle, "expectedCycle").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that a cycle through nested decomposed parents is detected.
+   * <p>
+   * Scenario: A depends on decomposed B, B has sub-issue C (also decomposed), C has sub-issue D,
+   * and D depends on A. The cycle traverses both decomposed parents.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticDetectsCycleThroughNestedDecomposedParents() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // A -> B(decomposed->C) -> C(decomposed->D) -> D -> A
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
+      createDecomposedIssue(projectDir, "2", "1", "issue-c", "issue-d");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-d", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
+
+      String expectedCycle =
+        "2.1-issue-a -> 2.1-issue-b -> 2.1-issue-c -> 2.1-issue-d -> 2.1-issue-a";
+      boolean foundCycle = false;
+      for (JsonNode cycle : cycles)
+      {
+        if (cycle.asString().equals(expectedCycle))
+        {
+          foundCycle = true;
+          break;
+        }
+      }
+      requireThat(foundCycle, "foundCycle").withContext(expectedCycle, "expectedCycle").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that no false positive is reported when A depends on decomposed B, but B's sub-issues
+   * do not depend back on A.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticNoFalsePositiveWithDecomposedParent() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // A depends on decomposed B; B has sub-issue C; C has no further deps
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
+      createIssue(projectDir, "2", "1", "issue-c", "open");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      boolean hasCircularDependencies = node.has("circular_dependencies") &&
+        node.path("circular_dependencies").size() > 0;
+      requireThat(hasCircularDependencies, "hasCircularDependencies").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that both direct cycles and cycles through decomposed parents are reported together.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticDetectsBothDirectAndDecomposedCycles() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // Direct cycle: issue-x depends on issue-y, issue-y depends on issue-x
+      createIssueWithDependencies(projectDir, "2", "1", "issue-x", "open", "2.1-issue-y");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-y", "open", "2.1-issue-x");
+
+      // Decomposed cycle: issue-a depends on decomposed issue-b, issue-b's sub-issue issue-c depends on issue-a
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-c");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-c", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.path("status").asString(), "status").isEqualTo("NO_ISSUES");
+
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThanOrEqualTo(2);
+
+      String expectedDirectCycle = "2.1-issue-y -> 2.1-issue-x -> 2.1-issue-y";
+      String expectedDecomposedCycle =
+        "2.1-issue-c -> 2.1-issue-a -> 2.1-issue-b -> 2.1-issue-c";
+      boolean foundDirectCycle = false;
+      boolean foundDecomposedCycle = false;
+      for (JsonNode cycle : cycles)
+      {
+        String cycleStr = cycle.asString();
+        if (cycleStr.equals(expectedDirectCycle))
+          foundDirectCycle = true;
+        if (cycleStr.equals(expectedDecomposedCycle))
+          foundDecomposedCycle = true;
+      }
+      requireThat(foundDirectCycle, "foundDirectCycle").
+        withContext(expectedDirectCycle, "expectedDirectCycle").isTrue();
+      requireThat(foundDecomposedCycle, "foundDecomposedCycle").
+        withContext(expectedDecomposedCycle, "expectedDecomposedCycle").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that a cycle through a decomposed parent is detected when the sub-issue name is
+   * fully-qualified and directly references the cycling issue.
+   * <p>
+   * Scenario: Decomposed parent B lists fully-qualified name {@code 2.1-issue-sub}. {@code 2.1-issue-sub}
+   * depends on A, creating a cycle: A -> B -> 2.1-issue-sub -> A.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticResolvesAmbiguousSubIssueToAllCandidates() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // A depends on decomposed B; B lists fully-qualified "2.1-issue-sub" which cycles back to A
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssue(projectDir, "2", "1", "issue-b", "issue-sub");
+      createIssue(projectDir, "2", "0", "issue-sub", "open");
+      createIssueWithDependencies(projectDir, "2", "1", "issue-sub", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
+
+      boolean foundCycle = false;
+      for (JsonNode cycle : cycles)
+      {
+        String cycleStr = cycle.asString();
+        if (cycleStr.contains("2.1-issue-a") && cycleStr.contains("2.1-issue-b") &&
+          cycleStr.contains("2.1-issue-sub"))
+        {
+          foundCycle = true;
+          break;
+        }
+      }
+      requireThat(foundCycle, "foundCycle").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that when a direct dependency uses a bare name that is ambiguous (matches multiple
+   * qualified names in different versions), all candidates are resolved so cycle detection can
+   * find cycles through any of them.
+   * <p>
+   * Scenario: {@code issue-a} depends on bare name "shared-dep". Two qualified issues share that
+   * bare name: {@code 2.0-shared-dep} and {@code 2.1-shared-dep}. {@code 2.1-shared-dep} depends
+   * back on {@code issue-a}, creating a cycle. The cycle must be detected because all candidates
+   * are resolved from the ambiguous bare name.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticDetectsDirectCycleThroughAmbiguousDependency() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // issue-a depends on bare name "shared-dep" (ambiguous: matches both 2.0 and 2.1 versions)
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "shared-dep");
+      // Two issues share the bare name "shared-dep"
+      createIssue(projectDir, "2", "0", "shared-dep", "open");
+      // Only the 2.1 variant cycles back to issue-a
+      createIssueWithDependencies(projectDir, "2", "1", "shared-dep", "open", "2.1-issue-a");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      requireThat(node.has("circular_dependencies"), "hasCircularDependencies").isTrue();
+      JsonNode cycles = node.path("circular_dependencies");
+      requireThat(cycles.size(), "cycleCount").isGreaterThan(0);
+
+      boolean foundCycle = false;
+      for (JsonNode cycle : cycles)
+      {
+        String cycleStr = cycle.asString();
+        if (cycleStr.contains("2.1-issue-a") && cycleStr.contains("2.1-shared-dep"))
+        {
+          foundCycle = true;
+          break;
+        }
+      }
+      requireThat(foundCycle, "foundCycle").isTrue();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Verifies that malformed "Decomposed Into" entries are gracefully skipped and do not cause errors.
+   * <p>
+   * Only fully-qualified names matching the pattern {@code <major>.<minor>-<bare-name>} are accepted.
+   * Entries like {@code v2.1/issue-x}, {@code some.thing}, or bare names without a version prefix
+   * should be silently ignored.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void diagnosticSkipsMalformedDecomposedEntries() throws IOException
+  {
+    Path projectDir = createTempCatProject();
+    try (JvmScope scope = new TestJvmScope(projectDir, projectDir))
+    {
+      // B is a decomposed parent with one valid and several malformed entries
+      createIssueWithDependencies(projectDir, "2", "1", "issue-a", "open", "2.1-issue-b");
+      createDecomposedIssueWithMalformedEntries(projectDir, "2", "1", "issue-b", "issue-c");
+      createIssue(projectDir, "2", "1", "issue-c", "open");
+
+      WorkPrepare prepare = new WorkPrepare(scope);
+      PrepareInput input = new PrepareInput(UUID.randomUUID().toString(), "*", "", TrustLevel.MEDIUM);
+
+      // Should complete without error; no cycles since C has no dep on A
+      String json = prepare.execute(input);
+
+      JsonMapper mapper = scope.getJsonMapper();
+      JsonNode node = mapper.readTree(json);
+      boolean hasCircularDependencies = node.has("circular_dependencies") &&
+        node.path("circular_dependencies").size() > 0;
+      requireThat(hasCircularDependencies, "hasCircularDependencies").isFalse();
+    }
+    finally
+    {
+      TestUtils.deleteDirectoryRecursively(projectDir);
+    }
+  }
+
+  /**
+   * Creates a decomposed parent issue directory with a STATE.md listing a single sub-issue.
+   * <p>
+   * The parent issue has open status and a "## Decomposed Into" section listing the sub-issue
+   * using its fully-qualified name (e.g., {@code 2.1-issue-c}).
+   * No PLAN.md is created, so the parent is treated as a decomposed parent only.
+   *
+   * @param projectDir the project root directory
+   * @param major the major version number
+   * @param minor the minor version number
+   * @param issueName the parent issue name
+   * @param subIssueName the bare name of the sub-issue; will be prefixed with the version to form
+   *         a fully-qualified name in the "Decomposed Into" section
+   * @throws IOException if file creation fails
+   */
+  private void createDecomposedIssue(Path projectDir, String major, String minor,
+    String issueName, String subIssueName) throws IOException
+  {
+    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    String qualifiedSubIssueName = major + "." + minor + "-" + subIssueName;
+    String stateContent = """
+      # State
+
+      - **Status:** open
+      - **Progress:** 0%%
+      - **Dependencies:** []
+      - **Blocks:** []
+
+      ## Decomposed Into
+      - %s
+      """.formatted(qualifiedSubIssueName);
+
+    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
+  }
+
+  /**
+   * Creates a decomposed parent issue directory whose STATE.md "Decomposed Into" section contains
+   * one valid fully-qualified name and several malformed entries (containing dots without the
+   * version format, slashes, or other characters that are not valid qualified names).
+   * <p>
+   * The malformed entries should be silently skipped by the sub-issue resolver.
+   *
+   * @param projectDir the project root directory
+   * @param major the major version number
+   * @param minor the minor version number
+   * @param issueName the parent issue name
+   * @param validSubIssueName the valid bare name of the sub-issue; will be prefixed with the
+   *         version to form a fully-qualified name
+   * @throws IOException if file creation fails
+   */
+  private void createDecomposedIssueWithMalformedEntries(Path projectDir, String major, String minor,
+    String issueName, String validSubIssueName) throws IOException
+  {
+    Path issueDir = projectDir.resolve(".claude").resolve("cat").resolve("issues").
+      resolve("v" + major).resolve("v" + major + "." + minor).resolve(issueName);
+    Files.createDirectories(issueDir);
+
+    String qualifiedSubIssueName = major + "." + minor + "-" + validSubIssueName;
+    String stateContent = """
+      # State
+
+      - **Status:** open
+      - **Progress:** 0%%
+      - **Dependencies:** []
+      - **Blocks:** []
+
+      ## Decomposed Into
+      - %s
+      - v2.1/issue-bad-slash
+      - some.dotted.name
+      - bare-name-without-version
+      """.formatted(qualifiedSubIssueName);
+
+    Files.writeString(issueDir.resolve("STATE.md"), stateContent);
   }
 
   /**

@@ -29,6 +29,29 @@ changes affect the overall codebase. This enables reviewers to catch:
 - Architecture violations that only appear in full context
 - Testing gaps relative to surrounding code
 
+## Arguments Format
+
+Positional space-separated arguments:
+
+```
+<issue_id> <worktree_path> <verify_level> <commits_compact>
+```
+
+| Position | Name | Example |
+|----------|------|---------|
+| 1 | issue_id | `2.1-issue-name` |
+| 2 | worktree_path | `/workspace/.claude/cat/worktrees/2.1-issue-name` |
+| 3 | verify_level | `quick` or `changed` or `all` |
+| 4 | commits_compact | `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`) |
+
+Parse from ARGUMENTS:
+```bash
+read ISSUE_ID WORKTREE_PATH VERIFY_LEVEL COMMITS_COMPACT <<< "$ARGUMENTS"
+```
+
+Commits can be expanded by splitting on `,` then `:` to get hash and type.
+Commit messages are available via `git log` in the worktree if needed.
+
 ## When to Use
 
 - After implementation phase completes in `/cat:work`
@@ -326,6 +349,9 @@ fi
 
 After context analysis, generate the selection box by invoking:
 
+**IMPORTANT:** `cat:stakeholder-selection-box` uses POSITIONAL space-separated arguments, NOT JSON.
+Do NOT pass the skill's own arguments or a JSON object. Compute the values first, then pass them as:
+
 ```
 Skill tool:
   skill: "cat:stakeholder-selection-box"
@@ -390,7 +416,7 @@ specifies the correct location. Running git commands from `/workspace/` reads th
 
 ```bash
 # CRITICAL: Set working directory to worktree if provided in arguments
-# WORKTREE_PATH comes from the skill's JSON arguments (e.g., /workspace/.claude/cat/worktrees/2.1-issue-name)
+# WORKTREE_PATH comes from the skill's positional arguments (e.g., /workspace/.claude/cat/worktrees/2.1-issue-name)
 # All subsequent git commands and file reads MUST use this directory
 if [[ -n "${WORKTREE_PATH}" ]]; then
     cd "${WORKTREE_PATH}" || { echo "ERROR: Cannot cd to worktree: ${WORKTREE_PATH}"; exit 1; }

@@ -168,20 +168,12 @@ render progress banners automatically for all 4 phases.
 
 **Invoke the work-with-issue skill:**
 
-Use the Skill tool to invoke `/cat:work-with-issue` with JSON arguments:
+Use the Skill tool to invoke `/cat:work-with-issue` with positional space-separated arguments:
 
-```json
-{
-  "issue_id": "${issue_id}",
-  "issue_path": "${issue_path}",
-  "worktree_path": "${worktree_path}",
-  "branch": "${branch}",
-  "base_branch": "${base_branch}",
-  "estimated_tokens": ${estimated_tokens},
-  "trust": "${TRUST}",
-  "verify": "${VERIFY}",
-  "auto_remove": ${AUTO_REMOVE}
-}
+```
+Skill tool:
+  skill: "cat:work-with-issue"
+  args: "${issue_id} ${issue_path} ${worktree_path} ${branch} ${base_branch} ${estimated_tokens} ${TRUST} ${VERIFY} ${AUTO_REMOVE}"
 ```
 
 The skill will:

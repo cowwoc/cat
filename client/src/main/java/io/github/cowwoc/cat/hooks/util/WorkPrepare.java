@@ -657,7 +657,10 @@ public final class WorkPrepare
    * Returns the resolved dependency IDs for an open or in-progress issue.
    * <p>
    * Bare dependency names (without a version prefix) are resolved to qualified names via
-   * {@code bareNameIndex} when the resolution is unambiguous (exactly one candidate).
+   * {@code bareNameIndex}. When exactly one candidate exists, that candidate is used. When
+   * multiple candidates exist (ambiguous), all candidates are added so cycle detection can
+   * find cycles through any of them. When no candidates exist, the bare name is skipped
+   * because it would not match any graph key.
    *
    * @param content the content of the issue's STATE.md file
    * @param issueIndex the qualified name to issue entry index
@@ -699,10 +702,7 @@ public final class WorkPrepare
       else
       {
         List<String> candidates = bareNameIndex.getOrDefault(depId, List.of());
-        if (candidates.size() == 1)
-          resolvedDeps.add(candidates.get(0));
-        else
-          resolvedDeps.add(depId);
+        resolvedDeps.addAll(candidates);
       }
     }
 
@@ -858,6 +858,42 @@ public final class WorkPrepare
       dependencyGraph.put(qualifiedName, activeDeps);
     }
 
+    // Augment the graph with implicit edges from decomposed parents to their sub-issues.
+    // When issue A depends on decomposed parent B, the explicit graph has A -> B.
+    // Adding B -> sub-issues allows cycle detection to traverse: A -> B -> sub-issue -> A.
+    // Build augmented edges separately, then merge into the graph after the loop to avoid
+    // modifying the graph during iteration.
+    Map<String, List<String>> augmentedEdges = new LinkedHashMap<>();
+    for (Map.Entry<String, IssueIndexEntry> entry : issueIndex.entrySet())
+    {
+      String qualifiedName = entry.getKey();
+      String content = entry.getValue().content();
+
+      List<String> subIssueNames = getDecomposedSubIssueNames(content, issueIndex);
+      if (subIssueNames.isEmpty())
+        continue;
+
+      augmentedEdges.put(qualifiedName, subIssueNames);
+    }
+
+    for (Map.Entry<String, List<String>> augEntry : augmentedEdges.entrySet())
+    {
+      String qualifiedName = augEntry.getKey();
+      List<String> subIssueNames = augEntry.getValue();
+
+      List<String> existing = dependencyGraph.get(qualifiedName);
+      if (existing == null)
+      {
+        dependencyGraph.put(qualifiedName, new ArrayList<>(subIssueNames));
+      }
+      else
+      {
+        Set<String> merged = new LinkedHashSet<>(existing);
+        merged.addAll(subIssueNames);
+        dependencyGraph.put(qualifiedName, new ArrayList<>(merged));
+      }
+    }
+
     // DFS-based cycle detection: track visited nodes and current path
     CycleDetectionContext context = new CycleDetectionContext(maxCycleDetectionDepth);
 
@@ -872,6 +908,55 @@ public final class WorkPrepare
     }
 
     return context.cycles;
+  }
+
+  /**
+   * Returns the qualified names of sub-issues listed in the "## Decomposed Into" section of a
+   * STATE.md file.
+   * <p>
+   * Names in the "Decomposed Into" section are fully-qualified (e.g., {@code 2.1-parser-lexer})
+   * and are returned as-is since they already match the keys in the issue index.
+   * <p>
+   * Entries that do not match the qualified name pattern are skipped.
+   *
+   * @param content the content of the STATE.md file
+   * @param issueIndex the qualified name to issue entry index, used to verify that returned names
+   *         exist in the index
+   * @return the list of qualified sub-issue names, or an empty list if the issue is not a
+   *         decomposed parent or has no recognized sub-issue entries
+   */
+  private List<String> getDecomposedSubIssueNames(String content,
+    Map<String, IssueIndexEntry> issueIndex)
+  {
+    Matcher decomposedMatcher = IssueDiscovery.DECOMPOSED_INTO_PATTERN.matcher(content);
+    if (!decomposedMatcher.find())
+      return List.of();
+
+    int sectionStart = decomposedMatcher.end();
+
+    // Find the next section header to delimit the "Decomposed Into" section
+    int sectionEnd = content.length();
+    Matcher nextSectionMatcher = IssueDiscovery.NEXT_SECTION_PATTERN.matcher(content);
+    nextSectionMatcher.region(sectionStart, content.length());
+    if (nextSectionMatcher.find())
+      sectionEnd = nextSectionMatcher.start();
+
+    String sectionContent = content.substring(sectionStart, sectionEnd);
+
+    List<String> result = new ArrayList<>();
+    Matcher itemMatcher = IssueDiscovery.SUBISSUE_ITEM_PATTERN.matcher(sectionContent);
+    while (itemMatcher.find())
+    {
+      String name = itemMatcher.group(1);
+      if (name.isEmpty())
+        continue;
+      if (!IssueDiscovery.QUALIFIED_NAME_PATTERN.matcher(name).matches())
+        continue;
+      if (issueIndex.containsKey(name))
+        result.add(name);
+    }
+
+    return result;
   }
 
   /**

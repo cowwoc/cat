@@ -20,21 +20,23 @@ skill invocation at the main agent level.
 
 ## Arguments Format
 
-The main `/cat:work` skill invokes this with JSON-encoded arguments:
+The main `/cat:work` skill invokes this with positional space-separated arguments:
 
-```json
-{
-  "issue_id": "2.1-issue-name",
-  "issue_path": "/workspace/.claude/cat/issues/v2/v2.1/issue-name",
-  "worktree_path": "/workspace/.claude/cat/worktrees/2.1-issue-name",
-  "branch": "2.1-issue-name",
-  "base_branch": "v2.1",
-  "estimated_tokens": 45000,
-  "trust": "medium",
-  "verify": "changed",
-  "auto_remove": true
-}
 ```
+<issue_id> <issue_path> <worktree_path> <branch> <base_branch> <estimated_tokens> <trust> <verify> <auto_remove>
+```
+
+| Position | Name | Example |
+|----------|------|---------|
+| 1 | issue_id | `2.1-issue-name` |
+| 2 | issue_path | `/workspace/.claude/cat/issues/v2/v2.1/issue-name` |
+| 3 | worktree_path | `/workspace/.claude/cat/worktrees/2.1-issue-name` |
+| 4 | branch | `2.1-issue-name` |
+| 5 | base_branch | `v2.1` |
+| 6 | estimated_tokens | `45000` |
+| 7 | trust | `medium` |
+| 8 | verify | `changed` |
+| 9 | auto_remove | `true` |
 
 ## Progress Banners
 
@@ -53,21 +55,13 @@ Progress banners are generated on-demand by invoking the ProgressBanner CLI tool
 
 ## Configuration
 
-Extract configuration from arguments:
+Extract configuration from the positional ARGUMENTS string. The arguments are space-separated.
+Since some paths may theoretically contain spaces but in practice CAT paths never do,
+split on whitespace:
 
 ```bash
-# Parse JSON arguments
-ISSUE_ID=$(echo "$ARGUMENTS" | jq -r '.issue_id')
-ISSUE_PATH=$(echo "$ARGUMENTS" | jq -r '.issue_path')
-WORKTREE_PATH=$(echo "$ARGUMENTS" | jq -r '.worktree_path')
-BRANCH=$(echo "$ARGUMENTS" | jq -r '.branch')
-BASE_BRANCH=$(echo "$ARGUMENTS" | jq -r '.base_branch')
-ESTIMATED_TOKENS=$(echo "$ARGUMENTS" | jq -r '.estimated_tokens')
-TRUST=$(echo "$ARGUMENTS" | jq -r '.trust')
-VERIFY=$(echo "$ARGUMENTS" | jq -r '.verify')
-AUTO_REMOVE=$(echo "$ARGUMENTS" | jq -r '.auto_remove')
-HAS_EXISTING_WORK=$(echo "$ARGUMENTS" | jq -r '.has_existing_work // false')
-EXISTING_COMMITS=$(echo "$ARGUMENTS" | jq -r '.existing_commits // 0')
+# Parse positional arguments
+read ISSUE_ID ISSUE_PATH WORKTREE_PATH BRANCH BASE_BRANCH ESTIMATED_TOKENS TRUST VERIFY AUTO_REMOVE <<< "$ARGUMENTS"
 ```
 
 ## Step 1: Display Preparing Banner
@@ -130,12 +124,6 @@ FAIL: progress-banner launcher failed for phase 'implementing'.
 The jlink image may not be built. Run: mvn -f hooks/pom.xml verify
 ```
 Do NOT skip the banner or continue without it.
-
-### Skip if Resuming
-
-If `HAS_EXISTING_WORK == true`:
-- Output: "Resuming issue with existing work - skipping to verification"
-- Skip to Step 4
 
 ### Read PLAN.md and Identify Skills
 
@@ -526,16 +514,13 @@ interrupts the workflow unnecessarily — the user already approved the workflow
 
 **CRITICAL: Invoke stakeholder-review at main agent level** (do NOT delegate to subagent):
 
+Encode commits in compact format: `hash:type,hash:type` (e.g., `abc123:bugfix,def456:test`).
+Build COMMITS_COMPACT from the execution result's commits array.
+
 ```
 Skill tool:
   skill: "cat:stakeholder-review"
-  args: |
-    {
-      "issue_id": "${ISSUE_ID}",
-      "worktree_path": "${WORKTREE_PATH}",
-      "verify_level": "${VERIFY}",
-      "commits": ${execution_commits_json}
-    }
+  args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${COMMITS_COMPACT}"
 ```
 
 The stakeholder-review skill will spawn its own reviewer subagents and return aggregated results.
@@ -619,17 +604,11 @@ The auto-fix threshold is determined by `AUTOFIX_LEVEL`:
        }
        ```
    ```
-4. Re-run stakeholder review:
+4. Re-run stakeholder review (encode all commits in compact format `hash:type,hash:type`):
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
-     args: |
-       {
-         "issue_id": "${ISSUE_ID}",
-         "worktree_path": "${WORKTREE_PATH}",
-         "verify_level": "${VERIFY}",
-         "commits": ${all_commits_json}
-       }
+     args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
 5. Parse new review result
 6. If concerns at or above the configured auto-fix threshold remain, continue loop (if under iteration limit)
@@ -897,17 +876,11 @@ Fail-fast principle: Unknown consent = No consent = STOP.
        }
        ```
    ```
-3. **MANDATORY: Re-run stakeholder review after fixes:**
+3. **MANDATORY: Re-run stakeholder review after fixes** (encode all commits in compact format `hash:type,hash:type`):
    ```
    Skill tool:
      skill: "cat:stakeholder-review"
-     args: |
-       {
-         "issue_id": "${ISSUE_ID}",
-         "worktree_path": "${WORKTREE_PATH}",
-         "verify_level": "${VERIFY}",
-         "commits": ${all_commits_json}
-       }
+     args: "${ISSUE_ID} ${WORKTREE_PATH} ${VERIFY} ${ALL_COMMITS_COMPACT}"
    ```
    **The review MUST be re-run to:**
    - Verify the concerns were actually resolved

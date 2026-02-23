@@ -7,6 +7,6 @@
 - **Last Updated:** 2026-02-18
 
 ## Decomposed Into
-- ci-build-jlink-bundle
-- session-start-version-check
-- developer-local-bundle-rebuild
+- 2.1-ci-build-jlink-bundle
+- 2.1-session-start-version-check
+- 2.1-developer-local-bundle-rebuild

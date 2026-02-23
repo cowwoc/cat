@@ -8,11 +8,11 @@
 - **Last Updated:** 2026-02-20
 
 ## Decomposed Into
-- unify-sessionstart-hooks
-- unify-userpromptsubmit-hooks
-- unify-pretooluse-hooks
-- unify-posttooluse-hooks
-- unify-stop-sessionend-hooks
-- unify-project-hooks
-- unify-posttooluse-failure-hooks
-- cleanup-orphaned-hook-scripts
+- 2.1-unify-sessionstart-hooks
+- 2.1-unify-userpromptsubmit-hooks
+- 2.1-unify-pretooluse-hooks
+- 2.1-unify-posttooluse-hooks
+- 2.1-unify-stop-sessionend-hooks
+- 2.1-unify-project-hooks
+- 2.1-unify-posttooluse-failure-hooks
+- 2.1-cleanup-orphaned-hook-scripts

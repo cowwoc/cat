@@ -44,6 +44,31 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public final class IssueDiscovery
 {
   /**
+   * Pattern matching a bare issue name like {@code fix-bug}.
+   */
+  static final Pattern BARE_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_-]*$");
+  /**
+   * Pattern matching a fully-qualified issue name like {@code 2.1-fix-bug} or {@code 2.1a-fix-bug}.
+   * <p>
+   * Group 1 captures the version prefix (e.g., {@code 2.1-} or {@code 2.1a-}).
+   * Group 2 captures the bare name (e.g., {@code fix-bug}).
+   */
+  static final Pattern QUALIFIED_NAME_PATTERN =
+    Pattern.compile("^(\\d+\\.\\d+[a-z]?-)(\\S+)$");
+  /**
+   * Pattern for the "Decomposed Into" section header in STATE.md.
+   */
+  static final Pattern DECOMPOSED_INTO_PATTERN = Pattern.compile("^## Decomposed Into",
+    Pattern.MULTILINE);
+  /**
+   * Pattern for the next section header in STATE.md.
+   */
+  static final Pattern NEXT_SECTION_PATTERN = Pattern.compile("^## ", Pattern.MULTILINE);
+  /**
+   * Pattern for sub-issue list items in the "Decomposed Into" section.
+   */
+  static final Pattern SUBISSUE_ITEM_PATTERN = Pattern.compile("^- ([^(\\s]+)", Pattern.MULTILINE);
+  /**
    * Pattern matching a version directory name like {@code v2}, {@code v2.1}, or {@code v2.1.3}.
    */
   private static final Pattern VERSION_DIR_PATTERN = Pattern.compile("^v\\d+(\\.\\d+){0,2}$");
@@ -68,22 +93,6 @@ public final class IssueDiscovery
    */
   private static final Pattern QUALIFIED_ISSUE_ID_PATTERN =
     Pattern.compile("^(\\d+)(?:\\.(\\d+)(?:\\.(\\d+))?)?-([a-zA-Z][a-zA-Z0-9_-]*)$");
-  /**
-   * Pattern matching a bare issue name like {@code fix-bug}.
-   */
-  private static final Pattern BARE_NAME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_-]*$");
-  /**
-   * Pattern for the "Decomposed Into" section header in STATE.md.
-   */
-  private static final Pattern DECOMPOSED_INTO_PATTERN = Pattern.compile("^## Decomposed Into");
-  /**
-   * Pattern for the next section header in STATE.md.
-   */
-  private static final Pattern NEXT_SECTION_PATTERN = Pattern.compile("^## ");
-  /**
-   * Pattern for sub-issue list items in the "Decomposed Into" section.
-   */
-  private static final Pattern SUBISSUE_ITEM_PATTERN = Pattern.compile("^- ([^(\\s]+)");
   /**
    * Pattern for issue entries in the exit section of a version PLAN.md.
    */
@@ -1206,10 +1215,14 @@ public final class IssueDiscovery
 
     for (String subissueName : subissueNames)
     {
-      // Skip malformed sub-issue references that could cause path traversal
-      if (!BARE_NAME_PATTERN.matcher(subissueName).matches())
+      // Resolve the directory name for the sub-issue.
+      // Names are fully-qualified (e.g., "2.1-fix-bug") — strip the version prefix to get the
+      // directory name (e.g., "fix-bug"). Skip bare names and malformed references.
+      Matcher qualifiedMatcher = QUALIFIED_NAME_PATTERN.matcher(subissueName);
+      if (!qualifiedMatcher.matches())
         continue;
-      Path subissueStatePath = parentVersionDir.resolve(subissueName).resolve("STATE.md");
+      String dirName = qualifiedMatcher.group(2);
+      Path subissueStatePath = parentVersionDir.resolve(dirName).resolve("STATE.md");
       if (!Files.isRegularFile(subissueStatePath))
         return false;
       try
