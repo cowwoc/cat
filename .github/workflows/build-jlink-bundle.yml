@@ -1,0 +1,163 @@
+# Copyright (c) 2026 Gili Tzabari. All rights reserved.
+#
+# Licensed under the CAT Commercial License.
+# See LICENSE.md in the project root for license terms.
+name: Build jlink Bundle
+
+on:
+  push:
+    branches:
+      - main
+      - 'v*'
+    paths:
+      - 'client/**'
+      - '.github/workflows/build-jlink-bundle.yml'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  JDK_VERSION: '25'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+          - os: ubuntu-24.04-arm
+            platform: linux-aarch64
+          - os: macos-latest
+            platform: macos-x64
+          - os: macos-latest-xlarge
+            platform: macos-aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          elif [[ "$GITHUB_REF" == refs/heads/v* ]]; then
+            VERSION="${GITHUB_REF#refs/heads/v}"
+          else
+            VERSION=$(grep '"version"' plugin/.claude-plugin/plugin.json | sed 's/.*"version": *"\([^"]*\)".*/\1/')
+          fi
+          if [[ -z "${VERSION}" ]]; then
+            echo "ERROR: Failed to determine bundle version" >&2
+            echo "GITHUB_REF=${GITHUB_REF}" >&2
+            exit 1
+          fi
+          echo "Bundle version: ${VERSION}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Set up JDK ${{ env.JDK_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JDK_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Verify JDK version
+        run: |
+          java -version
+          jlink --version
+
+      - name: Build jlink bundle
+        run: |
+          set -euo pipefail
+          cd client
+          chmod +x build-jlink.sh
+          ./build-jlink.sh
+
+      - name: Write VERSION file into bundle
+        run: |
+          echo "${{ steps.version.outputs.version }}" > "client/target/jlink/VERSION"
+
+      - name: Package bundle
+        run: |
+          set -euo pipefail
+          [[ -d "client/target/jlink/bin" ]] || {
+            echo "ERROR: jlink output not found at client/target/jlink/bin" >&2
+            echo "Expected build-jlink.sh to produce client/target/jlink/ with a bin/ subdirectory" >&2
+            exit 1
+          }
+          BUNDLE_NAME="cat-${{ steps.version.outputs.version }}-${{ matrix.platform }}"
+          tar -czf "${BUNDLE_NAME}.tar.gz" -C client/target jlink
+          ls -lh "${BUNDLE_NAME}.tar.gz"
+          sha256sum "${BUNDLE_NAME}.tar.gz" > "${BUNDLE_NAME}.tar.gz.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cat-${{ steps.version.outputs.version }}-${{ matrix.platform }}
+          path: |
+            cat-${{ steps.version.outputs.version }}-${{ matrix.platform }}.tar.gz
+            cat-${{ steps.version.outputs.version }}-${{ matrix.platform }}.tar.gz.sha256
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/v'))
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - name: Determine version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          elif [[ "$GITHUB_REF" == refs/heads/v* ]]; then
+            echo "version=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          else
+            echo "ERROR: Cannot determine release version from GITHUB_REF=${GITHUB_REF}" >&2
+            exit 1
+          fi
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: CAT Bundle ${{ steps.version.outputs.version }}
+          body: |
+            ## CAT Bundle
+
+            Pre-built jlinked runtime (JDK ${{ env.JDK_VERSION }} + cat-hooks.jar + Jackson) for CAT plugin hooks.
+
+            ### Platforms
+            - `cat-${{ steps.version.outputs.version }}-linux-x64.tar.gz` - Linux x86_64
+            - `cat-${{ steps.version.outputs.version }}-linux-aarch64.tar.gz` - Linux ARM64
+            - `cat-${{ steps.version.outputs.version }}-macos-x64.tar.gz` - macOS Intel
+            - `cat-${{ steps.version.outputs.version }}-macos-aarch64.tar.gz` - macOS Apple Silicon
+
+            ### Installation
+            The CAT plugin automatically downloads the appropriate bundle on first use.
+            For manual installation, extract to `~/.config/claude/cat-runtime/`.
+
+            ### Verification
+            SHA256 checksums are provided for each bundle.
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.sha256
+          draft: false
+          prerelease: false

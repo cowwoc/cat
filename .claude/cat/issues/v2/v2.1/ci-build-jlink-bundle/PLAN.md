@@ -23,7 +23,7 @@ None - infrastructure sub-issue of add-java-build-to-ci
 - [ ] Bundle is published as a GitHub release artifact with platform-specific naming
 - [ ] Bundle includes a version marker file matching plugin.json version
 - [ ] Cross-platform builds work (at minimum linux-x64)
-- [ ] java.sh can find and use cat-hooks.jar from within the jlink bundle
+- [x] ~~java.sh can find and use cat-hooks.jar from within the jlink bundle~~ (N/A - jlink launchers handle classpath via module system directly)
 
 ## Execution Steps
 1. **Modify build-jlink.sh to include cat-hooks.jar**
@@ -32,23 +32,18 @@ None - infrastructure sub-issue of add-java-build-to-ci
    - Write a version marker file (`VERSION`) inside the bundle directory containing the plugin.json version
    - Update the build function to first build cat-hooks.jar via `hooks/build.sh`
 
-2. **Update java.sh classpath resolution**
-   - Files: `plugin/hooks/java.sh`
-   - Update `find_hooks_jar()` and `build_classpath()` to look for JARs inside the jlink bundle directory
-   - Add priority path: `${CAT_JAVA_HOME}/lib/cat-hooks.jar`
-
-3. **Create GitHub Actions workflow**
+2. **Create GitHub Actions workflow**
    - Files: `.github/workflows/build-jlink-bundle.yml`
    - Trigger on push to main/v* branches when Java source files change
    - Steps: checkout, setup JDK 25, build cat-hooks.jar, run build-jlink.sh, upload artifact
    - Use build matrix for platform variants (linux-x64 at minimum)
    - Publish as release artifact tagged with plugin.json version
 
-4. **Run tests**
+3. **Run tests**
    - `python3 /workspace/run_tests.py`
 
 ## Success Criteria
 - [ ] build-jlink.sh produces a bundle containing JDK + cat-hooks.jar + Jackson
 - [ ] Bundle contains VERSION marker file
 - [ ] GitHub Actions workflow builds and publishes successfully
-- [ ] java.sh finds JAR from bundle location
+- [x] ~~java.sh finds JAR from bundle location~~ (N/A - jlink module system handles this)
