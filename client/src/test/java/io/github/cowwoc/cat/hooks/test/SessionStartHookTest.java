@@ -12,7 +12,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.SessionStartHook;
 import io.github.cowwoc.cat.hooks.session.CheckRetrospectiveDue;
 import io.github.cowwoc.cat.hooks.session.CheckUpdateAvailable;
-import io.github.cowwoc.cat.hooks.session.CheckUpgrade;
+import io.github.cowwoc.cat.hooks.session.CheckDataMigration;
 import io.github.cowwoc.cat.hooks.session.ClearSkillMarkers;
 import io.github.cowwoc.cat.hooks.session.EchoSessionId;
 import io.github.cowwoc.cat.hooks.session.InjectEnv;
@@ -1003,10 +1003,10 @@ public class SessionStartHookTest
     }
   }
 
-  // --- CheckUpgrade tests ---
+  // --- CheckDataMigration tests ---
 
   /**
-   * Verifies that CheckUpgrade runs without error and returns empty when no config file exists.
+   * Verifies that CheckDataMigration runs without error and returns empty when no config file exists.
    */
   @Test
   public void checkUpgradeRunsWithEnvironment() throws IOException
@@ -1020,7 +1020,7 @@ public class SessionStartHookTest
       {
         JsonMapper mapper = scope.getJsonMapper();
         HookInput input = createInput(mapper, "{}");
-        SessionStartHandler.Result result = new CheckUpgrade(scope).handle(input);
+        SessionStartHandler.Result result = new CheckDataMigration(scope).handle(input);
         requireThat(result.additionalContext(), "additionalContext").isEmpty();
         requireThat(result.stderr(), "stderr").isEmpty();
       }

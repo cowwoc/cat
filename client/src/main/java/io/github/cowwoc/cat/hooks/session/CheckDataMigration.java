@@ -32,17 +32,17 @@ import java.util.List;
  * On upgrade, backs up state, runs pending migrations, and updates the VERSION file.
  * On downgrade, warns the user.
  */
-public final class CheckUpgrade implements SessionStartHandler
+public final class CheckDataMigration implements SessionStartHandler
 {
   private final JvmScope scope;
 
   /**
-   * Creates a new CheckUpgrade handler.
+   * Creates a new CheckDataMigration handler.
    *
    * @param scope the JVM scope providing environment configuration
    * @throws NullPointerException if scope is null
    */
-  public CheckUpgrade(JvmScope scope)
+  public CheckDataMigration(JvmScope scope)
   {
     requireThat(scope, "scope").isNotNull();
     this.scope = scope;
@@ -169,14 +169,14 @@ public final class CheckUpgrade implements SessionStartHandler
         Path realMigrationsDir = migrationsDir.toRealPath();
         if (!realPath.startsWith(realMigrationsDir))
         {
-          warnings.add("CheckUpgrade: Migration script escapes migrations directory: " + scriptPath);
+          warnings.add("CheckDataMigration: Migration script escapes migrations directory: " + scriptPath);
           migrationLog.append("\n- ").append(migration.version()).append(": SKIPPED (invalid path)");
           continue;
         }
       }
       catch (IOException _)
       {
-        warnings.add("CheckUpgrade: Cannot resolve migration script path: " + scriptPath);
+        warnings.add("CheckDataMigration: Cannot resolve migration script path: " + scriptPath);
         migrationLog.append("\n- ").append(migration.version()).append(": SKIPPED (unresolvable path)");
         continue;
       }
