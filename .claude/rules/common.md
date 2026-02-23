@@ -4,7 +4,7 @@ Cross-cutting rules that apply to all CAT development work.
 
 ## Terminology: CAT Issues vs Claude TaskList
 
-**CRITICAL DISTINCTION (M400):** Two different "task" systems exist. Never conflate them.
+**CRITICAL DISTINCTION:** Two different "task" systems exist. Never conflate them.
 
 | System | Tool/Location | Purpose | Example |
 |--------|---------------|---------|---------|
@@ -223,7 +223,8 @@ git branch --show-current && git log --oneline -3 && git diff --stat
 # Bad: 3 separate tool calls for independent checks
 ```
 
-**Worktree directory safety:** You may `cd` into worktrees to work. However, before removing a directory (via `rm`, `git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm`.
+**Worktree directory safety:** You may `cd` into worktrees to work. However, before removing a directory (via `rm`,
+`git worktree remove`, etc.), ensure your shell is NOT inside the directory being removed. See `/cat:safe-rm`.
 
 ## Testing
 

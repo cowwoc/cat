@@ -13,7 +13,7 @@ Initialize CAT planning structure for new or existing projects.
 
 <objective>
 Initialize CAT planning structure. Creates `.claude/cat/` with PROJECT.md, ROADMAP.md, cat-config.json,
-`.claude/rules/` for always-loaded conventions, and `.claude/cat/conventions/` for on-demand standards.
+`.claude/rules/` for universal rules, and `.claude/cat/rules/` for audience-filtered standards.
 </objective>
 
 
@@ -94,7 +94,7 @@ AskUserQuestion: header="Project Type", question="What type?", options=["New pro
 <step name="new_setup" condition="New project">
 
 ```bash
-mkdir -p .claude/rules .claude/cat/conventions
+mkdir -p .claude/rules .claude/cat/rules
 ```
 
 **Deep questioning flow:**
@@ -219,7 +219,7 @@ grep -rl "## Objective\|## Issues" . --include="*.md" 2>/dev/null | head -30
 <step name="existing_create" condition="Existing codebase">
 
 ```bash
-mkdir -p .claude/rules .claude/cat/conventions
+mkdir -p .claude/rules .claude/cat/rules
 ```
 
 Create PROJECT.md with inferred state (existing capabilities → Validated requirements).
@@ -804,28 +804,30 @@ Rules loaded automatically every session (main agent and subagents). Use for:
 
 Keep minimal - everything here costs context on every session.
 
-### On-Demand: `.claude/cat/conventions/`
+### Audience-Filtered: `.claude/cat/rules/`
 
-Standards loaded only when needed (similar to SKILL.md files). Use for:
-- Language-specific conventions (java.md, typescript.md, etc.)
-- Domain-specific guidelines (api-design.md, database.md)
-- Testing standards for specific frameworks
-- Detailed style guides
+Rules injected by CAT hooks with audience filtering. Use for:
+- Language-specific conventions (java.md, typescript.md, etc.) with `paths:` frontmatter
+- Orchestration rules for the main agent only (`subAgents: []`)
+- Domain-specific guidelines with specific subagent targeting
+
+**Frontmatter properties (all optional, shown with non-default values):**
+```yaml
+---
+mainAgent: false       # default: true (omit to inject into main agent)
+subAgents: []          # default: all (omit to inject into all subagents)
+paths: ["*.java"]      # default: always (omit to always inject)
+---
+```
 
 **Structure:**
 ```
-.claude/rules/
-└── conventions.md        # Always-loaded index pointing to on-demand conventions
-
-.claude/cat/conventions/
-├── {language}.md         # Language-specific (java.md, typescript.md, etc.)
-├── testing.md            # Testing standards
-└── {domain}/             # Optional subdirectories for complex domains
-    └── {topic}.md
+.claude/cat/rules/
+├── INDEX.md              # Summary of all rules with audience information
+├── common.md             # Common conventions (main + all subagents)
+├── {language}.md         # Language-specific with paths: frontmatter
+└── {topic}.md            # Topic-specific rules
 ```
-
-**conventions.md purpose:** Always-loaded index that tells agents which on-demand conventions exist
-and when to load them. Each entry should have a one-line description of when to load it.
 
 **Content guidelines:**
 - Optimized for AI consumption (concise, unambiguous, examples over prose)
@@ -1011,7 +1013,7 @@ Do NOT manually construct output or invoke scripts. Output the error and STOP.
 | PROJECT.md captures context | ✓ | ✓ (inferred) |
 | ROADMAP.md created | ✓ | ✓ (with history) |
 | .claude/rules/ directory | ✓ | ✓ |
-| .claude/cat/conventions/ directory | ✓ | ✓ |
+| .claude/cat/rules/ directory | ✓ | ✓ |
 | Issue dirs with PLAN/STATE | - | ✓ (full content) |
 | Entry/exit gates configured | - | ✓ (or skipped) |
 | cat-config.json | ✓ | ✓ |
