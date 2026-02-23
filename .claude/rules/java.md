@@ -1,5 +1,5 @@
 ---
-stakeholders: [design, architect]
+paths: ["*.java"]
 ---
 
 # Java Conventions

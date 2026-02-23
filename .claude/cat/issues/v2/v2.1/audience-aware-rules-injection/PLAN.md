@@ -47,15 +47,15 @@ Files in `.claude/cat/rules/` support these optional frontmatter properties:
 
 ```yaml
 ---
-mainAgent: true              # Inject into main agent context (default: true)
-subAgents: [all]             # Which subagent types receive this (default: [all])
 paths: ["*.java"]            # Only inject when operating on matching files (default: always)
-stakeholders: [design]       # Stakeholder tags for review workflows
 ---
 ```
 
+All properties are optional. `mainAgent` defaults to `true`, `subAgents` defaults to all, `paths` defaults
+to always inject.
+
 `subAgents` values:
-- `[all]` — inject into all subagents (default)
+- Omitted — inject into all subagents (default)
 - `[]` — do not inject into any subagent
 - `["cat:work-execute", "Explore"]` — inject only into specific subagent types
 

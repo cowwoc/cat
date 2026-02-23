@@ -12,6 +12,7 @@ import io.github.cowwoc.cat.hooks.read.pre.PredictBatchOpportunity;
 import io.github.cowwoc.cat.hooks.skills.DisplayUtils;
 import io.github.cowwoc.cat.hooks.skills.TerminalType;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import java.nio.file.Path;
 
@@ -113,6 +114,14 @@ public interface JvmScope extends AutoCloseable
    * @throws IllegalStateException if this scope is closed
    */
   JsonMapper getJsonMapper();
+
+  /**
+   * Returns the shared YAML mapper.
+   *
+   * @return the YAML mapper singleton
+   * @throws IllegalStateException if this scope is closed
+   */
+  YAMLMapper getYamlMapper();
 
   /**
    * Returns the system timezone string from the {@code TZ} environment variable.

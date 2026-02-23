@@ -431,25 +431,35 @@ fi
 
 # Discover convention files and build per-stakeholder convention map
 CONVENTION_MAP=""  # Will store "stakeholder:convention_path" entries
-if [[ -d ".claude/cat/conventions" ]]; then
-    for convention_file in .claude/cat/conventions/*.md; do
+if [[ -d ".claude/cat/rules" ]]; then
+    for convention_file in .claude/cat/rules/*.md; do
         if [[ -f "$convention_file" ]]; then
-            # Parse YAML frontmatter for stakeholders field
+            # Parse YAML frontmatter for subAgents field
             # Extract lines between --- delimiters at start of file
             frontmatter=$(sed -n '1{/^---$/!q};1,/^---$/p' "$convention_file" | sed '1d;$d')
 
-            # Extract stakeholders array from frontmatter (format: stakeholders: [foo, bar])
-            stakeholder_line=$(echo "$frontmatter" | grep '^stakeholders:' || echo "")
+            # Extract subAgents array from frontmatter (format: subAgents: [all] or [cat:stakeholder-design, ...])
+            subagents_line=$(echo "$frontmatter" | grep '^subAgents:' || echo "")
 
-            if [[ -n "$stakeholder_line" ]]; then
-                # Extract stakeholders from array format: [design, architecture] or [design,architecture]
-                convention_stakeholders=$(echo "$stakeholder_line" | sed 's/^stakeholders:\s*\[//;s/\]\s*$//' | tr ',' '
-' | sed 's/^[ 	]*//;s/[ 	]*$//')
+            if [[ -n "$subagents_line" ]]; then
+                # Extract array contents: strip "subAgents: [" prefix and "]" suffix
+                subagents_raw=$(echo "$subagents_line" | sed 's/^subAgents:\s*\[//;s/\]\s*$//' | tr ',' '\n' | sed 's/^[ 	]*//;s/[ 	]*$//')
 
-                # Add this convention to each stakeholder's map
-                for stakeholder in $convention_stakeholders; do
-                    CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
-                done
+                # Handle [all]: convention applies to every selected stakeholder
+                if echo "$subagents_raw" | grep -qx 'all'; then
+                    for stakeholder in $SELECTED; do
+                        CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
+                    done
+                else
+                    # Handle specific types: extract stakeholder name by stripping cat:stakeholder- prefix
+                    for agent_type in $subagents_raw; do
+                        stakeholder="${agent_type#cat:stakeholder-}"
+                        # Only add if the prefix was actually stripped (i.e., it was a stakeholder type)
+                        if [[ "$stakeholder" != "$agent_type" ]]; then
+                            CONVENTION_MAP="${CONVENTION_MAP}${stakeholder}:${convention_file} "
+                        fi
+                    done
+                fi
             fi
         fi
     done
