@@ -14,5 +14,5 @@ Output the skill result verbatim. Do not summarize, interpret, or modify the out
 - If output contains "Scope Complete" → no next issue
 
 <output skill="work-complete">
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-task-box" --completed-issue $0 --base-branch $1 --session-id ${CLAUDE_SESSION_ID} --project-dir ${CLAUDE_PROJECT_DIR}`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" --completed-issue $0 --base-branch $1 --session-id ${CLAUDE_SESSION_ID} --project-dir ${CLAUDE_PROJECT_DIR}`
 </output>

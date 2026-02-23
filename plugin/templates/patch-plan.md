@@ -9,12 +9,12 @@
 |----|-------------|----------|---------------------|
 | REQ-001 | [requirement description] | must-have | [how to verify] |
 
-## Tasks
-[Brief description of tasks in this patch]
+## Issues
+[Brief description of issues in this patch]
 
 ## Pre-conditions
 - Previous version complete (or no prerequisites)
 
 ## Post-conditions
-- All tasks complete
+- All issues complete
 - All requirements verified (if any)

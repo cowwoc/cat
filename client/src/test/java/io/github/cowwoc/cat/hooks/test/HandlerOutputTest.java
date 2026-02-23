@@ -10,7 +10,7 @@ import io.github.cowwoc.cat.hooks.JvmScope;
 import io.github.cowwoc.cat.hooks.skills.GetAddOutput;
 import io.github.cowwoc.cat.hooks.skills.GetConfigOutput;
 import io.github.cowwoc.cat.hooks.skills.ItemType;
-import io.github.cowwoc.cat.hooks.skills.TaskType;
+import io.github.cowwoc.cat.hooks.skills.IssueType;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "parse-tokens",
         "2.0",
-        TaskType.FEATURE,
+        IssueType.FEATURE,
         List.of(),
         "",
         "");
@@ -71,7 +71,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "test-issue",
         "2.1",
-        TaskType.BUGFIX,
+        IssueType.BUGFIX,
         List.of("dep1", "dep2"),
         "",
         "");
@@ -95,7 +95,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "test-issue",
         "2.1",
-        TaskType.FEATURE,
+        IssueType.FEATURE,
         List.of(),
         "",
         "");
@@ -143,7 +143,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "my-task",
         "2.0",
-        TaskType.FEATURE,
+        IssueType.FEATURE,
         List.of(),
         "",
         "");
@@ -177,12 +177,12 @@ public class HandlerOutputTest
   }
 
   /**
-   * Verifies that GetAddOutput formats task type correctly.
+   * Verifies that GetAddOutput formats issue type correctly.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getAddOutputFormatsTaskType() throws IOException
+  public void getAddOutputFormatsIssueType() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -191,7 +191,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "test-issue",
         "2.0",
-        TaskType.BUGFIX,
+        IssueType.BUGFIX,
         List.of(),
         "",
         "");
@@ -263,7 +263,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "test-issue",
         "2.0",
-        TaskType.FEATURE,
+        IssueType.FEATURE,
         List.of(),
         "",
         "");
@@ -288,7 +288,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "test-issue",
         "2.0",
-        TaskType.FEATURE,
+        IssueType.FEATURE,
         List.of(),
         "",
         "");
@@ -624,7 +624,7 @@ public class HandlerOutputTest
         ItemType.ISSUE,
         "parse-tokens",
         "2.0",
-        TaskType.FEATURE,
+        IssueType.FEATURE,
         List.of(),
         "",
         "");

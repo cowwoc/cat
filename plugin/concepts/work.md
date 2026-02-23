@@ -73,7 +73,7 @@ Main agent does NOT:
 Each phase subagent returns structured JSON. Main agent parses and routes.
 
 **Success statuses:** READY, SUCCESS, APPROVED, MERGED
-**Failure statuses:** NO_TASKS, LOCKED, BLOCKED, FAILED, CONFLICT, ERROR
+**Failure statuses:** NO_ISSUES, LOCKED, BLOCKED, FAILED, CONFLICT, ERROR
 
 See individual skill files for full contracts:
 - work-prepare/SKILL.md

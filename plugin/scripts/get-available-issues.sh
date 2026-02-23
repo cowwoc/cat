@@ -14,7 +14,7 @@
 #
 # Path Discovery:
 #   PROJECT_DIR is auto-discovered via git (finds main workspace, not worktree).
-#   This ensures locks and task state are always in the main workspace.
+#   This ensures locks and issue state are always in the main workspace.
 #   SESSION_ID must be passed via --session-id (no way to discover).
 #
 # Output (JSON):
@@ -34,7 +34,7 @@ source "${SCRIPT_DIR}/lib/version-utils.sh"
 # Find the main project directory (not a worktree)
 # This is critical because:
 # - Locks must be in main workspace to be shared across sessions
-# - Task discovery must use main workspace's current state, not worktree snapshot
+# - Issue discovery must use main workspace's current state, not worktree snapshot
 #
 # Uses git to find the common .git directory, then derives main workspace from that.
 find_project_dir() {
@@ -157,7 +157,7 @@ Path Discovery:
 
   This is critical because:
   - Locks must be in main workspace to be shared across sessions
-  - Task discovery must use main workspace's current state, not worktree snapshot
+  - Issue discovery must use main workspace's current state, not worktree snapshot
 
   SESSION_ID must always be passed via --session-id as it cannot be discovered.
 
@@ -177,7 +177,7 @@ EOF
 all_subissues_closed() {
     local state_file="$1"
 
-    # Check if this is a decomposed parent task
+    # Check if this is a decomposed parent issue
     if ! grep -q "^## Decomposed Into" "$state_file" 2>/dev/null; then
         # Not a decomposed parent - return success (no sub-issues to check)
         return 0
@@ -267,13 +267,13 @@ get_issue_status() {
         return 1
     fi
 
-    # M279: Validate decomposed parent tasks aren't marked closed prematurely
+    # Validate decomposed parent issues aren't marked closed prematurely
     if [[ "$status" == "closed" ]]; then
         # Use the reusable all_subissues_closed function
         if ! all_subissues_closed "$state_file"; then
-            echo "ERROR: Decomposed parent task marked 'closed' but sub-issues are not all closed in $state_file" >&2
-            echo "Parent tasks with '## Decomposed Into' must stay 'open' or 'in-progress' until ALL sub-issues are closed." >&2
-            echo "See M263 in decompose-task skill for correct lifecycle." >&2
+            echo "ERROR: Decomposed parent issue marked 'closed' but sub-issues are not all closed in $state_file" >&2
+            echo "Parent issues with '## Decomposed Into' must stay 'open' or 'in-progress' until ALL sub-issues are closed." >&2
+            echo "See decompose-issue skill for correct lifecycle." >&2
             return 1
         fi
     fi
@@ -501,7 +501,7 @@ find_issue_in_minor() {
             continue
         fi
 
-        # Skip decomposed parent tasks UNLESS all their sub-issues are closed
+        # Skip decomposed parent issues UNLESS all their sub-issues are closed
         # When all sub-issues are closed, the parent can be selected for validation and closure
         if grep -q "^## Decomposed Into" "$issue_dir/STATE.md" 2>/dev/null; then
             if ! all_subissues_closed "$issue_dir/STATE.md"; then
@@ -570,7 +570,7 @@ find_first_incomplete_minor() {
     for minor_dir in $(find "$major_dir" -maxdepth 1 -type d -name "v*.*" 2>/dev/null | sort -V); do
         [[ ! -d "$minor_dir" ]] && continue
 
-        # M282: Check version-level dependencies BEFORE scanning tasks
+        # M282: Check version-level dependencies BEFORE scanning issues
         # If version STATE.md has dependencies, verify they're satisfied
         local version_state="$minor_dir/STATE.md"
         if [[ -f "$version_state" ]]; then
@@ -726,7 +726,7 @@ find_next_issue() {
             return 1
         fi
 
-        # Check status (M415: distinguish task-complete from task-not-found)
+        # Check status (M415: distinguish issue-complete from issue-not-found)
         local status
         if ! status=$(get_issue_status "$issue_dir/STATE.md" 2>/dev/null); then
             echo '{"status":"not_executable","message":"Issue '"$TARGET"' has no readable status","issue_id":"'"$TARGET"'"}'
@@ -741,13 +741,13 @@ find_next_issue() {
             return 1
         fi
 
-        # Check if this is a decomposed parent task
+        # Check if this is a decomposed parent issue
         # Decomposed parents with open sub-issues cannot be executed - their sub-issues should be run instead
         # But if all sub-issues are closed, allow the parent to be selected for validation and closure
         if grep -q "^## Decomposed Into" "$issue_dir/STATE.md" 2>/dev/null; then
             if ! all_subissues_closed "$issue_dir/STATE.md"; then
                 # Still has open sub-issues - reject selection
-                echo '{"status":"decomposed","message":"Issue is a decomposed parent task - execute sub-issues instead","issue_id":"'"$TARGET"'"}'
+                echo '{"status":"decomposed","message":"Issue is a decomposed parent issue - execute sub-issues instead","issue_id":"'"$TARGET"'"}'
                 return 1
             fi
             # All sub-issues closed - proceed normally

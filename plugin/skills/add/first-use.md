@@ -47,8 +47,8 @@ If `planning_valid` is false in HANDLER_DATA:
 **Check if description argument was provided:**
 
 If the command was invoked with arguments (e.g., `/cat:add make installation easier`):
-- Capture the full argument string as TASK_DESCRIPTION
-- Skip directly to step: task_ask_type_and_criteria (bypassing select_type and the freeform description question)
+- Capture the full argument string as ISSUE_DESCRIPTION
+- Skip directly to step: issue_ask_type_and_criteria (bypassing select_type and the freeform description question)
 
 If no arguments provided:
 - Continue to step: select_type
@@ -75,7 +75,7 @@ Use AskUserQuestion:
 **Route based on selection:**
 
 **If "Issue":**
-- Continue to add_task workflow (step: task_gather_intent)
+- Continue to add_issue workflow (step: issue_gather_intent)
 
 **If "Patch version":**
 - Set VERSION_TYPE="patch", PARENT_TYPE="minor", CHILD_TYPE="issue"
@@ -93,30 +93,30 @@ Use AskUserQuestion:
 
 <!-- ========== ISSUE WORKFLOW ========== -->
 
-<step name="task_gather_intent">
+<step name="issue_gather_intent">
 
 **Gather issue intent BEFORE selecting version:**
 
 The goal is to understand what the user wants to accomplish first, then intelligently suggest which
 version it belongs to.
 
-**If TASK_DESCRIPTION already set (from command args):**
+**If ISSUE_DESCRIPTION already set (from command args):**
 - Skip the freeform question
-- Continue directly to step: task_ask_type_and_criteria
+- Continue directly to step: issue_ask_type_and_criteria
 
 **Otherwise, ask for description (FREEFORM):**
 
 Ask inline: "What do you want to accomplish? Describe the issue you have in mind."
 
-Capture as TASK_DESCRIPTION, then continue to step: task_clarify_intent.
+Capture as ISSUE_DESCRIPTION, then continue to step: issue_clarify_intent.
 
 </step>
 
-<step name="task_clarify_intent">
+<step name="issue_clarify_intent">
 
 **Clarify vague requirements if needed:**
 
-Analyze TASK_DESCRIPTION for vagueness indicators:
+Analyze ISSUE_DESCRIPTION for vagueness indicators:
 - Less than 10 words
 - Contains generic terms like "improve", "fix", "make better" without specifics
 - Missing what/where/why context
@@ -133,14 +133,14 @@ Use AskUserQuestion:
   - "Description is complete" - Proceed without clarification
 
 **If user provides more details:**
-Append clarification to TASK_DESCRIPTION.
+Append clarification to ISSUE_DESCRIPTION.
 
 **If "Description is complete":**
 Continue to next step.
 
 </step>
 
-<step name="task_ask_type_and_criteria">
+<step name="issue_ask_type_and_criteria">
 
 **Ask issue type and custom post-conditions:**
 
@@ -169,13 +169,13 @@ Use AskUserQuestion with multiple questions:
           description: "I have specific requirements beyond the standard"
       multiSelect: false
 
-Capture issue type as TASK_TYPE.
+Capture issue type as ISSUE_TYPE.
 
 **If "Yes, add custom post-conditions":**
 
 Ask inline: "What additional post-conditions should be met?"
 
-Append custom post-conditions to the standard list for TASK_TYPE.
+Append custom post-conditions to the standard list for ISSUE_TYPE.
 
 **Standard post-conditions by type (applied automatically):**
 
@@ -192,11 +192,11 @@ unit tests pass. Describe an observable outcome (e.g., "Spawn a subagent and con
 "Run the hook and verify output contains expected fields", or "Reproduce the bug scenario and confirm it no longer
 occurs"). This ensures the change is tested as a whole before review.
 
-Set POSTCONDITIONS to standard post-conditions for TASK_TYPE, plus any custom additions.
+Set POSTCONDITIONS to standard post-conditions for ISSUE_TYPE, plus any custom additions.
 
 </step>
 
-<step name="task_analyze_versions">
+<step name="issue_analyze_versions">
 
 **Analyze existing versions and suggest best fit:**
 
@@ -218,7 +218,7 @@ Create a mental map of each version's focus using the pre-loaded summaries.
 
 **3. Compare issue to version focuses:**
 
-Analyze TASK_DESCRIPTION against each version's focus:
+Analyze ISSUE_DESCRIPTION against each version's focus:
 - Keyword matching (e.g., "parser" matches parser-focused versions)
 - Domain alignment (e.g., UI issue matches UI-focused versions)
 - Scope fit (bugfix in active development version vs new feature in upcoming version)
@@ -231,7 +231,7 @@ Score each version based on:
 
 </step>
 
-<step name="task_suggest_version">
+<step name="issue_suggest_version">
 
 **Present intelligent version recommendation:**
 
@@ -268,7 +268,7 @@ Use AskUserQuestion:
 
 </step>
 
-<step name="task_validate_version">
+<step name="issue_validate_version">
 
 **Validate selected version exists AND is not completed:**
 
@@ -282,15 +282,15 @@ If version not found in HANDLER_DATA.versions:
 
 </step>
 
-<step name="task_suggest_names">
+<step name="issue_suggest_names">
 
 **Generate and present issue name suggestions:**
 
-Based on TASK_DESCRIPTION and TASK_TYPE, generate 3-4 suggested names:
+Based on ISSUE_DESCRIPTION and ISSUE_TYPE, generate 3-4 suggested names:
 
 **Name generation rules:**
 1. Extract key action verbs and nouns from description
-2. Use standard prefixes based on TASK_TYPE:
+2. Use standard prefixes based on ISSUE_TYPE:
    - Feature: `add-`, `implement-`, `create-`, `enable-`
    - Bugfix: `fix-`, `resolve-`, `correct-`
    - Refactor: `refactor-`, `restructure-`, `simplify-`, `extract-`
@@ -315,13 +315,13 @@ Use AskUserQuestion:
   - "{suggestion3}" - Shorter variant (if applicable)
 
 **If user selects "Other" (custom name):**
-Capture custom input as TASK_NAME.
+Capture custom input as ISSUE_NAME.
 
-Otherwise, capture selected suggestion as TASK_NAME.
+Otherwise, capture selected suggestion as ISSUE_NAME.
 
 </step>
 
-<step name="task_validate_name">
+<step name="issue_validate_name">
 
 **Validate issue name:**
 
@@ -329,7 +329,7 @@ Use HANDLER_DATA.versions[selected_version].existing_issues to check both format
 
 **Format validation:**
 
-Check that TASK_NAME matches the regex pattern: `^[a-z][a-z0-9-]{0,48}[a-z0-9]$`
+Check that ISSUE_NAME matches the regex pattern: `^[a-z][a-z0-9-]{0,48}[a-z0-9]$`
 
 If format is invalid:
 - Output error: "Invalid issue name. Use lowercase letters, numbers, and hyphens only."
@@ -338,20 +338,20 @@ If format is invalid:
 
 **Uniqueness check:**
 
-Check if TASK_NAME appears in HANDLER_DATA.versions[selected_version].existing_issues list.
+Check if ISSUE_NAME appears in HANDLER_DATA.versions[selected_version].existing_issues list.
 
 If name already exists:
-- Output error: "Issue '{TASK_NAME}' already exists in version {major}.{minor}"
-- Return to task_suggest_names step with different suggestions
+- Output error: "Issue '{ISSUE_NAME}' already exists in version {major}.{minor}"
+- Return to issue_suggest_names step with different suggestions
 
 </step>
 
-<step name="task_discuss">
+<step name="issue_discuss">
 
 **Gather additional issue context:**
 
-Note: Issue description and type were already captured in task_gather_intent step.
-Use TASK_DESCRIPTION and TASK_TYPE from that step.
+Note: Issue description and type were already captured in issue_gather_intent step.
+Use ISSUE_DESCRIPTION and ISSUE_TYPE from that step.
 
 Initialize UNKNOWNS as empty list.
 
@@ -373,7 +373,7 @@ Use HANDLER_DATA.versions[selected_version].issue_count to determine if this is 
 
 Estimate the number of files this issue will touch based on the description and type:
 - Consider the issue type (Feature, Bugfix, Refactor, Performance)
-- Analyze the scope described in TASK_DESCRIPTION
+- Analyze the scope described in ISSUE_DESCRIPTION
 - Estimate whether it's likely 1-2 files, 3-5 files, or 6+ files
 
 Store the estimate internally as SCOPE_ESTIMATE (do not ask user).
@@ -426,7 +426,7 @@ When blockers are selected, add this new issue to their Dependencies list in STA
 
 </step>
 
-<step name="task_research">
+<step name="issue_research">
 
 **Run research if unknowns exist:**
 
@@ -442,17 +442,17 @@ Invoke the research skill:
 ```bash
 # Use Skill tool to invoke research
 Skill: "research"
-Args: "{TASK_DESCRIPTION}"
+Args: "{ISSUE_DESCRIPTION}"
 ```
 
 Capture research findings as RESEARCH_FINDINGS.
 
 **If UNKNOWNS is empty:**
-Skip to step: task_select_requirements.
+Skip to step: issue_select_requirements.
 
 </step>
 
-<step name="task_select_requirements">
+<step name="issue_select_requirements">
 
 **Select requirements this issue satisfies:**
 
@@ -480,7 +480,7 @@ If no requirements defined in parent version: Satisfies = None
 
 </step>
 
-<step name="task_validate_criteria">
+<step name="issue_validate_criteria">
 
 **Validate acceptance criteria against requirements:**
 
@@ -490,10 +490,10 @@ Addresses the known gap where incorrect acceptance criteria primed incorrect imp
 **Prepare validation context:**
 
 Gather the following for validation:
-- TASK_DESCRIPTION (from task_gather_intent)
-- TASK_TYPE (from task_ask_type_and_criteria)
-- POSTCONDITIONS (from task_ask_type_and_criteria)
-- All ancestor version requirements (from task_select_requirements and ancestor PLAN.md files)
+- ISSUE_DESCRIPTION (from issue_gather_intent)
+- ISSUE_TYPE (from issue_ask_type_and_criteria)
+- POSTCONDITIONS (from issue_ask_type_and_criteria)
+- All ancestor version requirements (from issue_select_requirements and ancestor PLAN.md files)
 
 **Spawn requirements stakeholder subagent:**
 
@@ -503,10 +503,10 @@ Use Task tool to spawn a cat:stakeholder-requirements subagent with the followin
 You are validating post-conditions for a CAT issue before PLAN.md creation.
 
 **Issue Description:**
-{TASK_DESCRIPTION}
+{ISSUE_DESCRIPTION}
 
 **Issue Type:**
-{TASK_TYPE}
+{ISSUE_TYPE}
 
 **Proposed Post-conditions:**
 {POSTCONDITIONS}
@@ -516,7 +516,7 @@ You are validating post-conditions for a CAT issue before PLAN.md creation.
 
 **Your validation responsibilities:**
 
-1. **Completeness Check:** Break TASK_DESCRIPTION into discrete requirements. Verify each requirement has at least one corresponding post-condition. List any missing requirements.
+1. **Completeness Check:** Break ISSUE_DESCRIPTION into discrete requirements. Verify each requirement has at least one corresponding post-condition. List any missing requirements.
 
 2. **Version Requirements Cross-Check:** If this issue satisfies REQ-XXX requirements, verify the post-conditions address the intent of those requirements. Check requirements from ALL ancestor versions recursively (e.g., for an issue in v2.1, check both v2.1 PLAN.md and v2 PLAN.md requirements). Flag any satisfied requirement from any ancestor that has no corresponding post-condition.
 
@@ -542,7 +542,7 @@ Capture the subagent's response.
 
 If the subagent fails to return output, times out, or returns unparseable output:
 - Display: "Requirements validation could not be completed. Proceeding with existing criteria."
-- Skip validation processing and proceed to next step (task_create)
+- Skip validation processing and proceed to next step (issue_create)
 
 If the subagent returns output but individual fields are missing or unparseable:
 - Treat missing fields as PASS (no issues detected for that check)
@@ -587,7 +587,7 @@ Proceed silently to next step (no user interaction needed).
 
 </step>
 
-<step name="task_create">
+<step name="issue_create">
 
 **Note branching strategy information:**
 
@@ -679,7 +679,7 @@ Check the JSON output for success status.
 
 </step>
 
-<step name="task_check_parent_decomposition">
+<step name="issue_check_parent_decomposition">
 
 **Check if parent issue is decomposed:**
 
@@ -713,7 +713,7 @@ This check ensures the agent is reminded that decomposed parents require all sub
 
 </step>
 
-<step name="task_done">
+<step name="issue_done">
 
 **Present completion:**
 

@@ -43,7 +43,7 @@ improvement through modular classification.
 process:
   1. Classify mistake into module category:
      - MEMORY: Failed to retain/recall earlier context
-     - PLANNING: Poor task decomposition or sequencing
+     - PLANNING: Poor issue decomposition or sequencing
      - ACTION: Incorrect tool use or execution
      - REFLECTION: Failed to detect/correct own error
      - SYSTEM: Environment, tooling, or integration failure

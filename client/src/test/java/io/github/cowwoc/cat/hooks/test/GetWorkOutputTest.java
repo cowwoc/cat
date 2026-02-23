@@ -28,33 +28,33 @@ import static io.github.cowwoc.requirements13.java.DefaultJavaValidators.require
 public class GetWorkOutputTest
 {
   /**
-   * Verifies that getNoExecutableTasks returns non-null output.
+   * Verifies that getNoExecutableIssues returns non-null output.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getNoExecutableTasksReturnsOutput() throws IOException
+  public void getNoExecutableIssuesReturnsOutput() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
-      String result = handler.getNoExecutableTasks();
+      String result = handler.getNoExecutableIssues();
       requireThat(result, "result").length().isGreaterThan(0);
     }
   }
 
   /**
-   * Verifies that getNoExecutableTasks contains helpful message.
+   * Verifies that getNoExecutableIssues contains helpful message.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getNoExecutableTasksContainsMessage() throws IOException
+  public void getNoExecutableIssuesContainsMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
       GetWorkOutput handler = new GetWorkOutput(scope);
-      String result = handler.getNoExecutableTasks();
+      String result = handler.getNoExecutableIssues();
       requireThat(result, "result").contains("No executable");
     }
   }
@@ -266,12 +266,12 @@ public class GetWorkOutputTest
   }
 
   /**
-   * Verifies that getIssueCompleteWithNext includes next task name.
+   * Verifies that getIssueCompleteWithNext includes next issue name.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getIssueCompleteWithNextIncludesNextTask() throws IOException
+  public void getIssueCompleteWithNextIncludesNextIssueName() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -505,12 +505,12 @@ public class GetWorkOutputTest
   }
 
   /**
-   * Verifies that getScopeComplete contains all tasks complete message.
+   * Verifies that getScopeComplete contains all issues complete message.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void getScopeCompleteContainsTasksCompleteMessage() throws IOException
+  public void getScopeCompleteContainsIssuesCompleteMessage() throws IOException
   {
     try (JvmScope scope = new TestJvmScope())
     {
@@ -519,7 +519,7 @@ public class GetWorkOutputTest
         "Version 2.0",
         "All version 2.0 features complete");
 
-      requireThat(result, "result").contains("all tasks complete");
+      requireThat(result, "result").contains("all issues complete");
     }
   }
 

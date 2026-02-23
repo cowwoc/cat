@@ -172,25 +172,25 @@ SKIPPED=""
 OVERRIDDEN=""
 
 # Read issue PLAN.md
-TASK_PLAN=$(cat .claude/cat/issues/*/PLAN.md 2>/dev/null || echo "")
+ISSUE_PLAN=$(cat .claude/cat/issues/*/PLAN.md 2>/dev/null || echo "")
 
 # Check for forced stakeholders
-FORCED=$(echo "$TASK_PLAN" | sed -n '/## Force Stakeholders/,/^##/p' | grep '^ *-' | sed 's/^ *- *//')
+FORCED=$(echo "$ISSUE_PLAN" | sed -n '/## Force Stakeholders/,/^##/p' | grep '^ *-' | sed 's/^ *- *//')
 
 # Detect issue type
-TASK_TYPE=$(echo "$TASK_PLAN" | grep -E '^## Type' -A1 | tail -1 | tr '[:upper:]' '[:lower:]' || echo "")
-if [[ -z "$TASK_TYPE" ]]; then
+ISSUE_TYPE=$(echo "$ISSUE_PLAN" | grep -E '^## Type' -A1 | tail -1 | tr '[:upper:]' '[:lower:]' || echo "")
+if [[ -z "$ISSUE_TYPE" ]]; then
     # Infer from commit messages or issue name
-    TASK_TYPE=$(git log -1 --pretty=%s 2>/dev/null | grep -oE '^(fix|feat|refactor|docs|perf)' | head -1)
-    case "$TASK_TYPE" in
-        docs) TASK_TYPE="documentation" ;;
-        fix) TASK_TYPE="bugfix" ;;
-        perf) TASK_TYPE="performance" ;;
+    ISSUE_TYPE=$(git log -1 --pretty=%s 2>/dev/null | grep -oE '^(fix|feat|refactor|docs|perf)' | head -1)
+    case "$ISSUE_TYPE" in
+        docs) ISSUE_TYPE="documentation" ;;
+        fix) ISSUE_TYPE="bugfix" ;;
+        perf) ISSUE_TYPE="performance" ;;
     esac
 fi
 
 # Apply issue type mappings
-case "$TASK_TYPE" in
+case "$ISSUE_TYPE" in
     documentation)
         EXCLUDED="architecture security design testing performance ux business"
         ;;
@@ -214,25 +214,25 @@ case "$TASK_TYPE" in
 esac
 
 # Scan for keywords in issue description
-TASK_TEXT=$(echo "$TASK_PLAN" | tr '[:upper:]' '[:lower:]')
+ISSUE_TEXT=$(echo "$ISSUE_PLAN" | tr '[:upper:]' '[:lower:]')
 
-if echo "$TASK_TEXT" | grep -qE 'license|compliance|legal'; then
+if echo "$ISSUE_TEXT" | grep -qE 'license|compliance|legal'; then
     SELECTED="$SELECTED legal"
 fi
-if echo "$TASK_TEXT" | grep -qE 'ui|frontend|user interface'; then
+if echo "$ISSUE_TEXT" | grep -qE 'ui|frontend|user interface'; then
     SELECTED="$SELECTED ux"
 fi
-if echo "$TASK_TEXT" | grep -qE 'api|endpoint|public'; then
+if echo "$ISSUE_TEXT" | grep -qE 'api|endpoint|public'; then
     SELECTED="$SELECTED architecture security business"
 fi
-if echo "$TASK_TEXT" | grep -qE 'internal|tooling|cli'; then
+if echo "$ISSUE_TEXT" | grep -qE 'internal|tooling|cli'; then
     SELECTED="$SELECTED architecture design"
     EXCLUDED="$EXCLUDED ux business"
 fi
-if echo "$TASK_TEXT" | grep -qE 'security|auth|permission'; then
+if echo "$ISSUE_TEXT" | grep -qE 'security|auth|permission'; then
     SELECTED="$SELECTED security"
 fi
-if echo "$TASK_TEXT" | grep -qE 'ci|cd|pipeline|build|deploy|release|migration'; then
+if echo "$ISSUE_TEXT" | grep -qE 'ci|cd|pipeline|build|deploy|release|migration'; then
     SELECTED="$SELECTED deployment"
 fi
 

@@ -132,7 +132,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").contains("Overall:").contains("0% · 0/1 tasks");
+      requireThat(result, "result").contains("Overall:").contains("0% · 0/1 issues");
     }
     finally
     {
@@ -177,20 +177,20 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path task1Dir = minorDir.resolve("task-1");
-    Path task2Dir = minorDir.resolve("task-2");
-    Files.createDirectories(task1Dir);
-    Files.createDirectories(task2Dir);
+    Path issue1Dir = minorDir.resolve("task-1");
+    Path issue2Dir = minorDir.resolve("task-2");
+    Files.createDirectories(issue1Dir);
+    Files.createDirectories(issue2Dir);
 
-    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").contains("50% · 1/2 tasks");
+      requireThat(result, "result").contains("50% · 1/2 issues");
     }
     finally
     {
@@ -199,21 +199,21 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that single version with open tasks renders correctly.
+   * Verifies that single version with open issues renders correctly.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void singleVersionWithOpenTasksRendersCorrectly() throws IOException
+  public void singleVersionWithOpenIssuesRendersCorrectly() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-single-version");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.0");
-    Path taskDir = minorDir.resolve("my-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("my-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -230,21 +230,21 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that in-progress task shows spinner emoji.
+   * Verifies that in-progress issue shows spinner emoji.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void inProgressTaskShowsSpinnerEmoji() throws IOException
+  public void inProgressIssueShowsSpinnerEmoji() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-in-progress");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path taskDir = minorDir.resolve("active-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("active-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** in-progress\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -260,24 +260,24 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that blocked task shows blocked emoji and blockedBy list.
+   * Verifies that blocked issue shows blocked emoji and blockedBy list.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void blockedTaskShowsBlockedEmojiAndList() throws IOException
+  public void blockedIssueShowsBlockedEmojiAndList() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-blocked");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path task1Dir = minorDir.resolve("task-1");
-    Path task2Dir = minorDir.resolve("task-2");
-    Files.createDirectories(task1Dir);
-    Files.createDirectories(task2Dir);
+    Path issue1Dir = minorDir.resolve("task-1");
+    Path issue2Dir = minorDir.resolve("task-2");
+    Files.createDirectories(issue1Dir);
+    Files.createDirectories(issue2Dir);
 
-    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** open\n");
-    Files.writeString(task2Dir.resolve("STATE.md"),
+    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue2Dir.resolve("STATE.md"),
       "- **Status:** open\n" +
       "\n" +
       "## Dependencies\n" +
@@ -308,13 +308,13 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path task1Dir = minorDir.resolve("done-task");
-    Path task2Dir = minorDir.resolve("open-task");
-    Files.createDirectories(task1Dir);
-    Files.createDirectories(task2Dir);
+    Path issue1Dir = minorDir.resolve("done-task");
+    Path issue2Dir = minorDir.resolve("open-task");
+    Files.createDirectories(issue1Dir);
+    Files.createDirectories(issue2Dir);
 
-    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -341,10 +341,10 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path taskDir = minorDir.resolve("open-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("open-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -360,21 +360,21 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that current task shows in footer.
+   * Verifies that current issue shows in footer.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void currentTaskShowsInFooter() throws IOException
+  public void currentIssueShowsInFooter() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-current-footer");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path taskDir = minorDir.resolve("active-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("active-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** in-progress\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** in-progress\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -390,21 +390,21 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that next task shows in footer when no task is in progress.
+   * Verifies that next issue shows in footer when no issue is in progress.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void nextTaskShowsInFooterWhenNoTaskInProgress() throws IOException
+  public void nextIssueShowsInFooterWhenNoIssueInProgress() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-next-footer");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path taskDir = minorDir.resolve("next-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("next-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -420,12 +420,12 @@ public class GetStatusOutputTest
   }
 
   /**
-   * Verifies that footer shows no tasks when all are complete.
+   * Verifies that footer shows no issues when all are complete.
    *
    * @throws IOException if an I/O error occurs
    */
   @Test
-  public void footerShowsNoTasksWhenAllComplete() throws IOException
+  public void footerShowsNoIssuesWhenAllComplete() throws IOException
   {
     Path tempDir = Files.createTempDirectory("test-no-tasks");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
@@ -433,16 +433,16 @@ public class GetStatusOutputTest
     Path major2Dir = issuesDir.resolve("v2");
     Path minor10Dir = major1Dir.resolve("v1.0");
     Path minor20Dir = major2Dir.resolve("v2.0");
-    Path task1Dir = minor10Dir.resolve("done-task");
-    Path task2Dir = minor20Dir.resolve("another-done-task");
-    Path task3Dir = minor20Dir.resolve("blocked-task");
-    Files.createDirectories(task1Dir);
-    Files.createDirectories(task2Dir);
-    Files.createDirectories(task3Dir);
+    Path issue1Dir = minor10Dir.resolve("done-task");
+    Path issue2Dir = minor20Dir.resolve("another-done-task");
+    Path issue3Dir = minor20Dir.resolve("blocked-task");
+    Files.createDirectories(issue1Dir);
+    Files.createDirectories(issue2Dir);
+    Files.createDirectories(issue3Dir);
 
-    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(task3Dir.resolve("STATE.md"),
+    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(issue3Dir.resolve("STATE.md"),
       "- **Status:** blocked\n" +
       "\n" +
       "## Dependencies\n" +
@@ -453,7 +453,7 @@ public class GetStatusOutputTest
       GetStatusOutput handler = new GetStatusOutput(scope);
       String result = handler.getOutput(new String[0]);
 
-      requireThat(result, "result").contains("No open tasks available");
+      requireThat(result, "result").contains("No open issues available");
     }
     finally
     {
@@ -506,10 +506,10 @@ public class GetStatusOutputTest
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
-    Path taskDir = minorDir.resolve("task-1");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("task-1");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
     Files.writeString(catDir.resolve("ROADMAP.md"),
       "# Roadmap\n" +
       "\n" +
@@ -570,10 +570,10 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v1");
     Path minorDir = majorDir.resolve("v1.0");
-    Path taskDir = minorDir.resolve("task-1");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("task-1");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -601,13 +601,13 @@ public class GetStatusOutputTest
     Path majorDir = issuesDir.resolve("v1");
     Path minor1Dir = majorDir.resolve("v1.0");
     Path minor2Dir = majorDir.resolve("v1.1");
-    Path task1Dir = minor1Dir.resolve("task-1");
-    Path task2Dir = minor2Dir.resolve("task-2");
-    Files.createDirectories(task1Dir);
-    Files.createDirectories(task2Dir);
+    Path issue1Dir = minor1Dir.resolve("task-1");
+    Path issue2Dir = minor2Dir.resolve("task-2");
+    Files.createDirectories(issue1Dir);
+    Files.createDirectories(issue2Dir);
 
-    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -672,10 +672,10 @@ public class GetStatusOutputTest
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
-    Path taskDir = minorDir.resolve("my-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("my-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     Path locksDir = catDir.resolve("locks");
     Files.createDirectories(locksDir);
@@ -709,10 +709,10 @@ public class GetStatusOutputTest
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
-    Path taskDir = minorDir.resolve("pending-task");
-    Files.createDirectories(taskDir);
+    Path issueDir = minorDir.resolve("pending-task");
+    Files.createDirectories(issueDir);
 
-    Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {
@@ -740,13 +740,13 @@ public class GetStatusOutputTest
     Path issuesDir = catDir.resolve("issues");
     Path majorDir = issuesDir.resolve("v2");
     Path minorDir = majorDir.resolve("v2.1");
-    Path task1Dir = minorDir.resolve("done-task");
-    Path task2Dir = minorDir.resolve("open-task");
-    Files.createDirectories(task1Dir);
-    Files.createDirectories(task2Dir);
+    Path issue1Dir = minorDir.resolve("done-task");
+    Path issue2Dir = minorDir.resolve("open-task");
+    Files.createDirectories(issue1Dir);
+    Files.createDirectories(issue2Dir);
 
-    Files.writeString(task1Dir.resolve("STATE.md"), "- **Status:** closed\n");
-    Files.writeString(task2Dir.resolve("STATE.md"), "- **Status:** open\n");
+    Files.writeString(issue1Dir.resolve("STATE.md"), "- **Status:** closed\n");
+    Files.writeString(issue2Dir.resolve("STATE.md"), "- **Status:** open\n");
 
     Path locksDir = catDir.resolve("locks");
     Files.createDirectories(locksDir);
@@ -1141,22 +1141,22 @@ public class GetStatusOutputTest
     Path tempDir = Files.createTempDirectory("test-alignment");
     Path issuesDir = tempDir.resolve(".claude/cat/issues");
 
-    // Major v1 has many tasks (wider content)
+    // Major v1 has many issues (wider content)
     Path major1Dir = issuesDir.resolve("v1");
     Path minor10Dir = major1Dir.resolve("v1.0");
     for (int i = 1; i <= 5; ++i)
     {
-      Path taskDir = minor10Dir.resolve("long-task-name-number-" + i);
-      Files.createDirectories(taskDir);
-      Files.writeString(taskDir.resolve("STATE.md"), "- **Status:** open\n");
+      Path issueDir = minor10Dir.resolve("long-task-name-number-" + i);
+      Files.createDirectories(issueDir);
+      Files.writeString(issueDir.resolve("STATE.md"), "- **Status:** open\n");
     }
 
-    // Major v2 has one short task (narrower content)
+    // Major v2 has one short issue (narrower content)
     Path major2Dir = issuesDir.resolve("v2");
     Path minor20Dir = major2Dir.resolve("v2.0");
-    Path shortTaskDir = minor20Dir.resolve("x");
-    Files.createDirectories(shortTaskDir);
-    Files.writeString(shortTaskDir.resolve("STATE.md"), "- **Status:** open\n");
+    Path shortIssueDir = minor20Dir.resolve("x");
+    Files.createDirectories(shortIssueDir);
+    Files.writeString(shortIssueDir.resolve("STATE.md"), "- **Status:** open\n");
 
     try (JvmScope scope = new TestJvmScope(tempDir, tempDir))
     {

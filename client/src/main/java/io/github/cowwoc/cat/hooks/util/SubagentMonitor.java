@@ -73,7 +73,7 @@ public final class SubagentMonitor
    * Subagent status information.
    *
    * @param id the subagent ID (short hash)
-   * @param task the task name
+   * @param task the Claude Task tool name (not a CAT issue ID)
    * @param status the status
    * @param tokens the token count
    * @param compactions the compaction event count
@@ -91,7 +91,7 @@ public final class SubagentMonitor
      * Creates a new subagent info record.
      *
      * @param id the subagent ID (short hash)
-     * @param task the task name
+     * @param task the Claude Task tool name (not a CAT issue ID)
      * @param status the status
      * @param tokens the token count
      * @param compactions the compaction event count

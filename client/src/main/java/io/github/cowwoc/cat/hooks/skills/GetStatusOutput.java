@@ -38,11 +38,11 @@ import org.slf4j.LoggerFactory;
  * Output generator for /cat:status skill.
  * <p>
  * Renders comprehensive project status display including:
- * - Overall progress bar with task completion percentage
+ * - Overall progress bar with issue completion percentage
  * - Active agents working on issues
  * - Major version sections with nested minor versions
- * - Task lists for active minors (in-progress, blocked, open, and recent completed tasks)
- * - Actionable footer showing current/next task commands
+ * - Issue lists for active minors (in-progress, blocked, open, and recent completed issues)
+ * - Actionable footer showing current/next issue commands
  */
 public final class GetStatusOutput implements SkillOutput
 {
@@ -141,10 +141,10 @@ public final class GetStatusOutput implements SkillOutput
       roadmapContent = Files.readString(roadmapFile);
 
     int totalCompleted = 0;
-    int totalTasks = 0;
+    int totalIssues = 0;
     String currentMinor = "";
-    String inProgressTask = "";
-    String nextTask = "";
+    String inProgressIssue = "";
+    String nextIssue = "";
 
     try (Stream<Path> majorStream = Files.list(issuesDir))
     {
@@ -205,35 +205,35 @@ public final class GetStatusOutput implements SkillOutput
             String minorId = minorDir.getFileName().toString();
             String minorNum = minorId.substring(1);
 
-            List<Task> tasks = new ArrayList<>();
-            Map<String, String> allTaskStatuses = new HashMap<>();
+            List<IssueItem> issues = new ArrayList<>();
+            Map<String, String> allIssueStatuses = new HashMap<>();
 
-            try (Stream<Path> taskStream = Files.list(minorDir))
+            try (Stream<Path> issueStream = Files.list(minorDir))
             {
-              List<Path> taskDirs = taskStream.
+              List<Path> issueDirs = issueStream.
                 filter(Files::isDirectory).
                 sorted().
                 toList();
 
               // Two-pass loop is intentional for dependency resolution:
-              // Pass 1: Collect all task statuses into allTaskStatuses map
-              // Pass 2: Build task objects with blockedBy lists resolved from the map
-              // This ensures dependencies can reference tasks defined later in the directory listing
-              for (Path taskDir : taskDirs)
+              // Pass 1: Collect all issue statuses into allIssueStatuses map
+              // Pass 2: Build issue objects with blockedBy lists resolved from the map
+              // This ensures dependencies can reference issues defined later in the directory listing
+              for (Path issueDir : issueDirs)
               {
-                String taskName = taskDir.getFileName().toString();
-                Path stateFile = taskDir.resolve("STATE.md");
-                Path planFile = taskDir.resolve("PLAN.md");
+                String issueName = issueDir.getFileName().toString();
+                Path stateFile = issueDir.resolve("STATE.md");
+                Path planFile = issueDir.resolve("PLAN.md");
 
                 if (!Files.exists(stateFile) && !Files.exists(planFile))
                   continue;
 
-                String status = getTaskStatus(stateFile, catDir, minorNum, taskName, licenseResult);
-                allTaskStatuses.put(taskName, status);
+                String status = getIssueStatus(stateFile, catDir, minorNum, issueName, licenseResult);
+                allIssueStatuses.put(issueName, status);
               }
 
-              TaskStats stats = buildMinorVersionTasks(taskDirs, catDir, minorNum, licenseResult,
-                allTaskStatuses, tasks);
+              IssueStats stats = buildMinorVersionIssues(issueDirs, catDir, minorNum, licenseResult,
+                allIssueStatuses, issues);
               int localTotal = stats.total;
               int localCompleted = stats.completed;
               String localInprog = stats.inProgress;
@@ -247,33 +247,33 @@ public final class GetStatusOutput implements SkillOutput
                 desc = minorMatcher.group(1).trim();
 
               totalCompleted += localCompleted;
-              totalTasks += localTotal;
+              totalIssues += localTotal;
 
               if (currentMinor.isEmpty())
               {
                 if (!localInprog.isEmpty())
                 {
                   currentMinor = minorId;
-                  inProgressTask = localInprog;
+                  inProgressIssue = localInprog;
                 }
                 else if (localCompleted < localTotal)
                 {
                   currentMinor = minorId;
-                  for (Task task : tasks)
+                  for (IssueItem issue : issues)
                   {
-                    if (task.status.equals("open") && task.blockedBy.isEmpty())
+                    if (issue.status.equals("open") && issue.blockedBy.isEmpty())
                     {
-                      nextTask = task.name;
+                      nextIssue = issue.name;
                       break;
                     }
                   }
-                  if (nextTask.isEmpty())
+                  if (nextIssue.isEmpty())
                   {
-                    for (Task task : tasks)
+                    for (IssueItem issue : issues)
                     {
-                      if (task.status.equals("open"))
+                      if (issue.status.equals("open"))
                       {
-                        nextTask = task.name;
+                        nextIssue = issue.name;
                         break;
                       }
                     }
@@ -288,7 +288,7 @@ public final class GetStatusOutput implements SkillOutput
               minor.completed = localCompleted;
               minor.total = localTotal;
               minor.inProgress = localInprog;
-              minor.tasks = tasks;
+              minor.issues = issues;
               data.minors.add(minor);
             }
           }
@@ -296,35 +296,35 @@ public final class GetStatusOutput implements SkillOutput
       }
     }
 
-    if (totalTasks == 0)
-      totalTasks = 1;
-    int percent = totalCompleted * 100 / totalTasks;
+    if (totalIssues == 0)
+      totalIssues = 1;
+    int percent = totalCompleted * 100 / totalIssues;
 
     data.overallPercent = percent;
     data.overallCompleted = totalCompleted;
-    data.overallTotal = totalTasks;
+    data.overallTotal = totalIssues;
     data.currentMinor = currentMinor;
-    data.inProgressTask = inProgressTask;
-    data.nextTask = nextTask;
+    data.inProgressIssue = inProgressIssue;
+    data.nextIssue = nextIssue;
 
     return data;
   }
 
   /**
-   * Gets task status from STATE.md file.
+   * Gets issue status from STATE.md file.
    * <p>
    * If STATE.md status is "open", checks for lock files (Core tier) and git branches (Pro tier)
-   * to determine if the task is actually in-progress.
+   * to determine if the issue is actually in-progress.
    *
    * @param stateFile the STATE.md file path
    * @param catDir the CAT directory (for lock file lookup)
    * @param minorNum the minor version number (e.g., "2.1")
-   * @param taskName the task name
+   * @param issueName the issue name
    * @param licenseResult the license validation result
    * @return the normalized status
    * @throws IOException if an I/O error occurs
    */
-  private String getTaskStatus(Path stateFile, Path catDir, String minorNum, String taskName,
+  private String getIssueStatus(Path stateFile, Path catDir, String minorNum, String issueName,
     LicenseResult licenseResult) throws IOException
   {
     if (!Files.exists(stateFile))
@@ -335,7 +335,7 @@ public final class GetStatusOutput implements SkillOutput
 
     if (status.equals("open"))
     {
-      String lockFileName = minorNum + "-" + taskName + ".lock";
+      String lockFileName = minorNum + "-" + issueName + ".lock";
       Path lockFile = catDir.resolve("locks").resolve(lockFileName);
       if (Files.exists(lockFile))
         return "in-progress";
@@ -419,13 +419,13 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Gets task dependencies from STATE.md file.
+   * Gets issue dependencies from STATE.md file.
    *
    * @param stateFile the STATE.md file path
    * @return the list of dependency issue IDs
    * @throws IOException if an I/O error occurs
    */
-  private List<String> getTaskDependencies(Path stateFile) throws IOException
+  private List<String> getIssueDependencies(Path stateFile) throws IOException
   {
     if (!Files.exists(stateFile))
       return List.of();
@@ -496,7 +496,7 @@ public final class GetStatusOutput implements SkillOutput
 
     String progressBar = display.buildProgressBar(data.overallPercent);
     contentItems.add("📊 Overall: [" + progressBar + "] " + data.overallPercent + "% · " +
-                     data.overallCompleted + "/" + data.overallTotal + " tasks");
+                     data.overallCompleted + "/" + data.overallTotal + " issues");
     contentItems.add("");
 
     String currentSession;
@@ -581,59 +581,59 @@ public final class GetStatusOutput implements SkillOutput
 
           if (isActive)
           {
-            if (!minor.tasks.isEmpty())
+            if (!minor.issues.isEmpty())
               innerContent.add("");
 
-            List<Task> completedTasks = new ArrayList<>();
-            List<Task> nonCompletedTasks = new ArrayList<>();
+            List<IssueItem> completedIssues = new ArrayList<>();
+            List<IssueItem> nonCompletedIssues = new ArrayList<>();
 
-            for (Task task : minor.tasks)
+            for (IssueItem issue : minor.issues)
             {
-              if (task.status.equals("closed") || task.status.equals("done"))
-                completedTasks.add(task);
+              if (issue.status.equals("closed") || issue.status.equals("done"))
+                completedIssues.add(issue);
               else
-                nonCompletedTasks.add(task);
+                nonCompletedIssues.add(issue);
             }
 
-            completedTasks.sort(Comparator.comparingLong((Task t) -> t.mtime).reversed());
+            completedIssues.sort(Comparator.comparingLong((IssueItem i) -> i.mtime).reversed());
 
-            for (Task task : nonCompletedTasks)
+            for (IssueItem issue : nonCompletedIssues)
             {
-              String taskEmoji;
-              if (task.status.equals("in-progress") || task.status.equals("active") ||
-                  task.status.equals("in_progress"))
-                taskEmoji = "🔄";
-              else if (!task.blockedBy.isEmpty())
-                taskEmoji = "🚫";
+              String issueEmoji;
+              if (issue.status.equals("in-progress") || issue.status.equals("active") ||
+                  issue.status.equals("in_progress"))
+                issueEmoji = "🔄";
+              else if (!issue.blockedBy.isEmpty())
+                issueEmoji = "🚫";
               else
-                taskEmoji = "🔳";
+                issueEmoji = "🔳";
 
-              if (!task.blockedBy.isEmpty())
+              if (!issue.blockedBy.isEmpty())
               {
-                String blockedStr = String.join(", ", task.blockedBy);
-                String blockedLine = "   " + taskEmoji + " " + task.name + " (blocked by: " + blockedStr + ")";
+                String blockedStr = String.join(", ", issue.blockedBy);
+                String blockedLine = "   " + issueEmoji + " " + issue.name + " (blocked by: " + blockedStr + ")";
                 // indentWidth = 3 spaces + emoji prefix width + 1 space = indent to content start
-                int indentWidth = display.displayWidth("   " + taskEmoji + " ");
+                int indentWidth = display.displayWidth("   " + issueEmoji + " ");
                 List<String> wrappedLines = display.wrapLine(blockedLine, maxInnerBoxContentWidth, indentWidth);
                 innerContent.addAll(wrappedLines);
               }
               else
               {
-                innerContent.add("   " + taskEmoji + " " + task.name);
+                innerContent.add("   " + issueEmoji + " " + issue.name);
               }
             }
 
-            List<Task> visibleCompleted = completedTasks.stream().
+            List<IssueItem> visibleCompleted = completedIssues.stream().
               limit(MAX_VISIBLE_COMPLETED).
               toList();
-            for (Task task : visibleCompleted)
-              innerContent.add("   ☑️ " + task.name);
+            for (IssueItem issue : visibleCompleted)
+              innerContent.add("   ☑️ " + issue.name);
 
-            int remainingCompleted = completedTasks.size() - visibleCompleted.size();
+            int remainingCompleted = completedIssues.size() - visibleCompleted.size();
             if (remainingCompleted > 0)
               innerContent.add("   ☑️ ... and " + remainingCompleted + " more completed");
 
-            if (!minor.tasks.isEmpty())
+            if (!minor.issues.isEmpty())
               innerContent.add("");
           }
         }
@@ -654,17 +654,17 @@ public final class GetStatusOutput implements SkillOutput
       contentItems.add("");
     }
 
-    if (!data.inProgressTask.isEmpty())
+    if (!data.inProgressIssue.isEmpty())
     {
-      contentItems.add("📋 Current: /cat:work " + data.currentMinor + "-" + data.inProgressTask);
+      contentItems.add("📋 Current: /cat:work " + data.currentMinor + "-" + data.inProgressIssue);
     }
-    else if (!data.nextTask.isEmpty())
+    else if (!data.nextIssue.isEmpty())
     {
-      contentItems.add("📋 Next: /cat:work " + data.currentMinor + "-" + data.nextTask);
+      contentItems.add("📋 Next: /cat:work " + data.currentMinor + "-" + data.nextIssue);
     }
     else
     {
-      contentItems.add("📋 No open tasks available");
+      contentItems.add("📋 No open issues available");
     }
 
     int maxContentWidth = 0;
@@ -723,11 +723,11 @@ public final class GetStatusOutput implements SkillOutput
     String first = sorted.get(0).id;
     String last = sorted.get(sorted.size() - 1).id;
     int totalCompleted = sorted.stream().mapToInt(m -> m.completed).sum();
-    int totalTasks = sorted.stream().mapToInt(m -> m.total).sum();
+    int totalIssues = sorted.stream().mapToInt(m -> m.total).sum();
 
     if (first.equals(last))
-      return "☑️ " + first + " (" + totalCompleted + "/" + totalTasks + ")";
-    return "☑️ " + first + " - " + last + " (" + totalCompleted + "/" + totalTasks + ")";
+      return "☑️ " + first + " (" + totalCompleted + "/" + totalIssues + ")";
+    return "☑️ " + first + " - " + last + " (" + totalCompleted + "/" + totalIssues + ")";
   }
 
   /**
@@ -1010,78 +1010,78 @@ public final class GetStatusOutput implements SkillOutput
   }
 
   /**
-   * Builds the task list for a minor version by processing task directories.
+   * Builds the issue list for a minor version by processing issue directories.
    * <p>
-   * Creates Task objects with resolved dependency information, tracking completion
+   * Creates IssueItem objects with resolved dependency information, tracking completion
    * counts and in-progress status.
    *
-   * @param taskDirs the list of task directories to process
+   * @param issueDirs the list of issue directories to process
    * @param catDir the CAT root directory
    * @param minorNum the minor version number (e.g., "2.1")
    * @param licenseResult the license validation result
-   * @param allTaskStatuses map of task name to status (from first pass)
-   * @param tasks the list to populate with Task objects
-   * @return task statistics including total, completed, and in-progress task name
+   * @param allIssueStatuses map of issue name to status (from first pass)
+   * @param issues the list to populate with IssueItem objects
+   * @return issue statistics including total, completed, and in-progress issue name
    * @throws IOException if an I/O error occurs
    */
-  private TaskStats buildMinorVersionTasks(List<Path> taskDirs, Path catDir, String minorNum,
-    LicenseResult licenseResult, Map<String, String> allTaskStatuses, List<Task> tasks) throws IOException
+  private IssueStats buildMinorVersionIssues(List<Path> issueDirs, Path catDir, String minorNum,
+    LicenseResult licenseResult, Map<String, String> allIssueStatuses, List<IssueItem> issues) throws IOException
   {
     int total = 0;
     int completed = 0;
     String inProgress = "";
 
-    for (Path taskDir : taskDirs)
+    for (Path issueDir : issueDirs)
     {
-      String taskName = taskDir.getFileName().toString();
-      Path stateFile = taskDir.resolve("STATE.md");
-      Path planFile = taskDir.resolve("PLAN.md");
+      String issueName = issueDir.getFileName().toString();
+      Path stateFile = issueDir.resolve("STATE.md");
+      Path planFile = issueDir.resolve("PLAN.md");
 
       if (!Files.exists(stateFile) && !Files.exists(planFile))
         continue;
 
-      String status = getTaskStatus(stateFile, catDir, minorNum, taskName, licenseResult);
-      List<String> dependencies = getTaskDependencies(stateFile);
+      String status = getIssueStatus(stateFile, catDir, minorNum, issueName, licenseResult);
+      List<String> dependencies = getIssueDependencies(stateFile);
       ++total;
 
       List<String> blockedBy = new ArrayList<>();
       for (String dep : dependencies)
       {
-        String depStatus = allTaskStatuses.getOrDefault(dep, "open");
+        String depStatus = allIssueStatuses.getOrDefault(dep, "open");
         if (!depStatus.equals("closed"))
           blockedBy.add(dep);
       }
 
-      long mtime = Files.getLastModifiedTime(taskDir).toMillis();
+      long mtime = Files.getLastModifiedTime(issueDir).toMillis();
 
-      Task task = new Task();
-      task.name = taskName;
-      task.status = status;
-      task.dependencies = dependencies;
-      task.blockedBy = blockedBy;
-      task.mtime = mtime;
-      tasks.add(task);
+      IssueItem issue = new IssueItem();
+      issue.name = issueName;
+      issue.status = status;
+      issue.dependencies = dependencies;
+      issue.blockedBy = blockedBy;
+      issue.mtime = mtime;
+      issues.add(issue);
 
       if (status.equals("closed"))
         ++completed;
       else if (status.equals("in-progress"))
-        inProgress = taskName;
+        inProgress = issueName;
     }
 
-    return new TaskStats(total, completed, inProgress);
+    return new IssueStats(total, completed, inProgress);
   }
 
   /**
-   * Holds task statistics for a minor version.
+   * Holds issue statistics for a minor version.
    *
-   * @param total the total number of tasks
-   * @param completed the number of completed tasks
-   * @param inProgress the name of the in-progress task, or empty string if none
+   * @param total the total number of issues
+   * @param completed the number of completed issues
+   * @param inProgress the name of the in-progress issue, or empty string if none
    * @throws NullPointerException if {@code inProgress} is null
    */
-  private record TaskStats(int total, int completed, String inProgress)
+  private record IssueStats(int total, int completed, String inProgress)
   {
-    TaskStats
+    IssueStats
     {
       requireThat(inProgress, "inProgress").isNotNull();
     }
@@ -1098,8 +1098,8 @@ public final class GetStatusOutput implements SkillOutput
     int overallCompleted;
     int overallTotal;
     String currentMinor = "";
-    String inProgressTask = "";
-    String nextTask = "";
+    String inProgressIssue = "";
+    String nextIssue = "";
     final List<MajorVersion> majors = new ArrayList<>();
     final List<MinorVersion> minors = new ArrayList<>();
   }
@@ -1125,13 +1125,13 @@ public final class GetStatusOutput implements SkillOutput
     int completed;
     int total;
     String inProgress = "";
-    List<Task> tasks = new ArrayList<>();
+    List<IssueItem> issues = new ArrayList<>();
   }
 
   /**
-   * Represents a task within a minor version.
+   * Represents an issue within a minor version.
    */
-  private static final class Task
+  private static final class IssueItem
   {
     String name = "";
     String status = "";

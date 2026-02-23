@@ -227,7 +227,7 @@ For each requirement in PLAN.md:
     }
   ],
   "diff_summary": "Brief description of what changed across all files",
-  "task_claims": ["REQ-001", "REQ-003"],
+  "issue_claims": ["REQ-001", "REQ-003"],
   "version_requirements_source": ".claude/cat/issues/v1/v1.0/PLAN.md",
   "requirements_checked": [
     {

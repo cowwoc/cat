@@ -13,7 +13,7 @@ Bash tool calls.
 When a workflow runs shell commands via the Bash tool, each call appears in the user's terminal:
 
 ```
-● Bash(get-next-task-box --completed-issue 2.1-fix-bug ...)    ← visible noise
+● Bash(get-next-issue-box --completed-issue 2.1-fix-bug ...)    ← visible noise
 ● Bash(issue-lock.sh release ...)                               ← visible noise
 ```
 
@@ -88,7 +88,7 @@ Skill B's preprocessor runs the command invisibly using the passed arguments.
 
 ```markdown
 ## Next Issue
-Run `get-next-task-box --completed-issue "${issue_id}" ...` to generate the box.
+Run `get-next-issue-box --completed-issue "${issue_id}" ...` to generate the box.
 ```
 
 Agent makes a visible Bash tool call. User sees the command.
@@ -101,14 +101,14 @@ arguments:
   - completedIssue
   - baseBranch
 ---
-!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-task-box" $completedIssue $baseBranch`
+!`"${CLAUDE_PLUGIN_ROOT}/client/bin/get-next-issue-box" $completedIssue $baseBranch`
 ```
 
 When `/cat:work-complete 2.1-fix-bug v2.1` is invoked:
 
 1. `$completedIssue` → `2.1-fix-bug`, `$baseBranch` → `v2.1`
 2. `${CLAUDE_PLUGIN_ROOT}` → `/path/to/plugin`
-3. Command executes: `get-next-task-box 2.1-fix-bug v2.1`
+3. Command executes: `get-next-issue-box 2.1-fix-bug v2.1`
 4. Output (Issue Complete box) replaces the directive
 5. User sees only the formatted box — no Bash tool call
 

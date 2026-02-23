@@ -177,7 +177,7 @@ public final class WorkPrepare
    * JSON status values:
    * <ul>
    *   <li>{@code READY} - worktree created, ready to execute</li>
-   *   <li>{@code NO_TASKS} - no executable tasks found</li>
+   *   <li>{@code NO_ISSUES} - no executable issues found</li>
    *   <li>{@code LOCKED} - selected issue is locked by another session</li>
    *   <li>{@code OVERSIZED} - estimated tokens exceed hard limit</li>
    *   <li>{@code ERROR} - unexpected error during preparation</li>
@@ -203,7 +203,7 @@ public final class WorkPrepare
         "message", "No .claude/cat/ directory or cat-config.json found"));
     }
 
-    // Step 2: Find available task
+    // Step 2: Find available issue
     IssueDiscovery discovery = new IssueDiscovery(scope);
     IssueDiscovery.Scope discoveryScope;
     String discoveryTarget;
@@ -257,8 +257,8 @@ public final class WorkPrepare
     {
       return mapper.writeValueAsString(Map.of(
         "status", "OVERSIZED",
-        "message", "Task estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")",
-        "suggestion", "Use /cat:decompose-issue to break into smaller tasks",
+        "message", "Issue estimated at " + estimatedTokens + " tokens (limit: " + TOKEN_LIMIT + ")",
+        "suggestion", "Use /cat:decompose-issue to break into smaller issues",
         "issue_id", issueId,
         "estimated_tokens", estimatedTokens));
     }
@@ -289,14 +289,14 @@ public final class WorkPrepare
       DiagnosticInfo diagnostics = gatherDiagnosticInfo(projectDir);
 
       Map<String, Object> result = new LinkedHashMap<>();
-      result.put("status", "NO_TASKS");
-      result.put("message", "No executable tasks available");
-      result.put("suggestion", "Use /cat:status to see available tasks");
+      result.put("status", "NO_ISSUES");
+      result.put("message", "No executable issues available");
+      result.put("suggestion", "Use /cat:status to see available issues");
 
-      if (!diagnostics.blockedTasks().isEmpty())
-        result.put("blocked_tasks", diagnostics.blockedTasks());
-      if (!diagnostics.lockedTasks().isEmpty())
-        result.put("locked_tasks", diagnostics.lockedTasks());
+      if (!diagnostics.blockedIssues().isEmpty())
+        result.put("blocked_issues", diagnostics.blockedIssues());
+      if (!diagnostics.lockedIssues().isEmpty())
+        result.put("locked_issues", diagnostics.lockedIssues());
 
       result.put("closed_count", diagnostics.closedCount());
       result.put("total_count", diagnostics.totalCount());
@@ -330,8 +330,8 @@ public final class WorkPrepare
     if (discoveryResult instanceof IssueDiscovery.DiscoveryResult.Decomposed decomposed)
     {
       return Optional.of(mapper.writeValueAsString(Map.of(
-        "status", "NO_TASKS",
-        "message", "Issue " + decomposed.issueId() + " is a decomposed parent task with open " +
+        "status", "NO_ISSUES",
+        "message", "Issue " + decomposed.issueId() + " is a decomposed parent issue with open " +
           "sub-issues - work on its sub-issues first, then the parent will become available " +
           "automatically when all sub-issues are closed",
         "suggestion", "Use /cat:status to see available sub-issues")));
@@ -524,9 +524,9 @@ public final class WorkPrepare
   }
 
   /**
-   * Gathers diagnostic information when no tasks are available.
+   * Gathers diagnostic information when no issues are available.
    * <p>
-   * Scans issue directories to find blocked tasks, locked tasks, and closed/total counts.
+   * Scans issue directories to find blocked issues, locked issues, and closed/total counts.
    *
    * @param projectDir the project root directory
    * @return the diagnostic info
@@ -540,7 +540,7 @@ public final class WorkPrepare
     Map<String, List<String>> bareNameIndex = new LinkedHashMap<>();
     buildIssueIndex(issuesDir, issueIndex, bareNameIndex);
 
-    List<Map<String, Object>> blockedTasks = findBlockedTasks(issueIndex, bareNameIndex);
+    List<Map<String, Object>> blockedIssues = findBlockedIssues(issueIndex, bareNameIndex);
     int closedCount = 0;
     int totalCount = 0;
 
@@ -552,9 +552,9 @@ public final class WorkPrepare
         ++closedCount;
     }
 
-    List<Map<String, Object>> lockedTasks = findLockedTasks(projectDir);
+    List<Map<String, Object>> lockedIssues = findLockedIssues(projectDir);
 
-    return new DiagnosticInfo(blockedTasks, lockedTasks, closedCount, totalCount);
+    return new DiagnosticInfo(blockedIssues, lockedIssues, closedCount, totalCount);
   }
 
   /**
@@ -603,16 +603,16 @@ public final class WorkPrepare
   }
 
   /**
-   * Finds blocked tasks from the issue index by checking unresolved dependencies.
+   * Finds blocked issues from the issue index by checking unresolved dependencies.
    *
    * @param issueIndex the qualified name to issue entry index
    * @param bareNameIndex the bare name to qualified name list index
-   * @return a list of blocked task maps with issue_id, blocked_by, and reason fields
+   * @return a list of blocked issue maps with issue_id, blocked_by, and reason fields
    */
-  private List<Map<String, Object>> findBlockedTasks(Map<String, IssueIndexEntry> issueIndex,
+  private List<Map<String, Object>> findBlockedIssues(Map<String, IssueIndexEntry> issueIndex,
     Map<String, List<String>> bareNameIndex)
   {
-    List<Map<String, Object>> blockedTasks = new ArrayList<>();
+    List<Map<String, Object>> blockedIssues = new ArrayList<>();
 
     for (Map.Entry<String, IssueIndexEntry> entry : issueIndex.entrySet())
     {
@@ -682,31 +682,31 @@ public final class WorkPrepare
           reasonParts.add(depEntry.get("id") + " (" + depEntry.get("status") + ")");
         }
 
-        Map<String, Object> blockedTask = new LinkedHashMap<>();
-        blockedTask.put("issue_id", qualifiedIssueName);
-        blockedTask.put("blocked_by", blockedBy);
-        blockedTask.put("reason", String.join(", ", reasonParts));
-        blockedTasks.add(blockedTask);
+        Map<String, Object> blockedIssue = new LinkedHashMap<>();
+        blockedIssue.put("issue_id", qualifiedIssueName);
+        blockedIssue.put("blocked_by", blockedBy);
+        blockedIssue.put("reason", String.join(", ", reasonParts));
+        blockedIssues.add(blockedIssue);
       }
     }
 
-    return blockedTasks;
+    return blockedIssues;
   }
 
   /**
-   * Finds locked tasks by scanning the locks directory.
+   * Finds locked issues by scanning the locks directory.
    *
    * @param projectDir the project root directory
-   * @return a list of locked task maps with issue_id and locked_by fields
+   * @return a list of locked issue maps with issue_id and locked_by fields
    * @throws IOException if file operations fail
    */
-  private List<Map<String, Object>> findLockedTasks(Path projectDir) throws IOException
+  private List<Map<String, Object>> findLockedIssues(Path projectDir) throws IOException
   {
-    List<Map<String, Object>> lockedTasks = new ArrayList<>();
+    List<Map<String, Object>> lockedIssues = new ArrayList<>();
     Path locksDir = projectDir.resolve(".claude").resolve("cat").resolve("locks");
 
     if (!Files.isDirectory(locksDir))
-      return lockedTasks;
+      return lockedIssues;
 
     try (Stream<Path> stream = Files.list(locksDir))
     {
@@ -725,10 +725,10 @@ public final class WorkPrepare
           String lockIssueId = lockFile.getFileName().toString().
             substring(0, lockFile.getFileName().toString().length() - ".lock".length());
 
-          Map<String, Object> lockedTask = new LinkedHashMap<>();
-          lockedTask.put("issue_id", lockIssueId);
-          lockedTask.put("locked_by", lockData.getOrDefault("session_id", "unknown").toString());
-          lockedTasks.add(lockedTask);
+          Map<String, Object> lockedIssue = new LinkedHashMap<>();
+          lockedIssue.put("issue_id", lockIssueId);
+          lockedIssue.put("locked_by", lockData.getOrDefault("session_id", "unknown").toString());
+          lockedIssues.add(lockedIssue);
         }
         catch (IOException _)
         {
@@ -737,7 +737,7 @@ public final class WorkPrepare
       }
     }
 
-    return lockedTasks;
+    return lockedIssues;
   }
 
   /**
@@ -887,7 +887,7 @@ public final class WorkPrepare
         return "";
 
       List<String> planningPrefixes = List.of(
-        "planning:", "config: add issue", "config: add task", "config: mark", "config: decompose");
+        "planning:", "config: add issue", "planning: add issue", "config: mark", "config: decompose");
 
       List<String> filtered = new ArrayList<>();
       for (String line : logOutput.split("\n"))
@@ -1247,33 +1247,33 @@ public final class WorkPrepare
   }
 
   /**
-   * Diagnostic information about the state of issues when no tasks are available.
+   * Diagnostic information about the state of issues when no issues are available.
    *
-   * @param blockedTasks issues that are blocked by unsatisfied dependencies
-   * @param lockedTasks issues that are locked by another session
+   * @param blockedIssues issues that are blocked by unsatisfied dependencies
+   * @param lockedIssues issues that are locked by another session
    * @param closedCount the number of closed issues
    * @param totalCount the total number of issues
    */
   private record DiagnosticInfo(
-    List<Map<String, Object>> blockedTasks,
-    List<Map<String, Object>> lockedTasks,
+    List<Map<String, Object>> blockedIssues,
+    List<Map<String, Object>> lockedIssues,
     int closedCount,
     int totalCount)
   {
     /**
      * Creates new diagnostic info.
      *
-     * @param blockedTasks issues that are blocked by unsatisfied dependencies
-     * @param lockedTasks issues that are locked by another session
+     * @param blockedIssues issues that are blocked by unsatisfied dependencies
+     * @param lockedIssues issues that are locked by another session
      * @param closedCount the number of closed issues
      * @param totalCount the total number of issues
-     * @throws NullPointerException if {@code blockedTasks} or {@code lockedTasks} are null
+     * @throws NullPointerException if {@code blockedIssues} or {@code lockedIssues} are null
      * @throws IllegalArgumentException if {@code closedCount} or {@code totalCount} are negative
      */
     DiagnosticInfo
     {
-      assert that(blockedTasks, "blockedTasks").isNotNull().elseThrow();
-      assert that(lockedTasks, "lockedTasks").isNotNull().elseThrow();
+      assert that(blockedIssues, "blockedIssues").isNotNull().elseThrow();
+      assert that(lockedIssues, "lockedIssues").isNotNull().elseThrow();
       assert that(closedCount, "closedCount").isGreaterThanOrEqualTo(0).elseThrow();
       assert that(totalCount, "totalCount").isGreaterThanOrEqualTo(0).elseThrow();
     }

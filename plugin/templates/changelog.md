@@ -1,7 +1,7 @@
 # Changelog: {version-name}
 
 > **PURPOSE**: This is a USER-FACING release notes document. Content should describe what
-> END-USERS get from this version, NOT internal task names. When the version is released,
+> END-USERS get from this version, NOT internal issue names. When the version is released,
 > this content is copied to the root CHANGELOG.md.
 
 **Completed**: {YYYY-MM-DD}

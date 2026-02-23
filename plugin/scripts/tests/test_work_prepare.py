@@ -79,11 +79,11 @@ class TestCheckBaseBranchCommits(unittest.TestCase):
 
         self.assertIsNone(result)
 
-    def test_filters_add_task_commits(self):
-        """config: add task commits should be filtered out."""
+    def test_filters_add_issue_commits(self):
+        """config: add issue commits should be filtered out."""
         mock_result = MagicMock()
         mock_result.returncode = 0
-        mock_result.stdout = "jkl012 config: add task update-docs to 2.1\n"
+        mock_result.stdout = "jkl012 config: add issue update-docs to 2.1\n"
 
         with patch('subprocess.run', return_value=mock_result):
             result = check_base_branch_commits(

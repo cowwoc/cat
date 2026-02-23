@@ -32,7 +32,7 @@ Reference for categorizing mistakes in `/cat:learn`.
 | Pattern | Indicators | Typical Prevention |
 |---------|------------|-------------------|
 | Assumption without verification | "I assumed...", claimed state without measurement | Add verification step (hook/validation) |
-| Completion bias | Rationalized ignoring protocol to finish task | Strengthen enforcement (hook/code_fix) |
+| Completion bias | Rationalized ignoring protocol to finish issue | Strengthen enforcement (hook/code_fix) |
 | Memory reliance | Used memory instead of get-history/re-reading | Add verification requirement (process) |
 | Environment state mismatch | Wrong directory, stale data, wrong branch | Add state verification (hook/validation) |
 | Documentation ignored | Rule existed but wasn't followed | Escalate to hook/code_fix |

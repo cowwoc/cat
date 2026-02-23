@@ -90,14 +90,14 @@ Each handler is registered in `build-jlink.sh`'s `HANDLERS` array as `launcher-n
 | `user-prompt-submit` | `UserPromptSubmitHook` | UserPromptSubmit |
 | `pre-ask` | `PreAskHook` | PreToolUse (AskUserQuestion) |
 | `pre-write` | `PreWriteHook` | PreToolUse (Write/Edit) |
-| `pre-task` | `PreTaskHook` | PreToolUse (Task) |
+| `pre-issue` | `PreIssueHook` | PreToolUse (Task) |
 | `session-end` | `SessionEndHook` | SessionEnd |
 | `token-counter` | `TokenCounter` | PostToolUse (all) |
 | `enforce-status` | `EnforceStatusOutput` | Stop |
 | `get-status-output` | `skills.GetStatusOutput` | Skill handler (status) |
 | `get-checkpoint-box` | `skills.GetCheckpointOutput` | Skill handler (checkpoint) |
 | `get-issue-complete-box` | `skills.GetIssueCompleteOutput` | Skill handler (issue-complete) |
-| `get-next-task-box` | `skills.GetNextTaskOutput` | Skill handler (next-task) |
+| `get-next-issue-box` | `skills.GetNextIssueOutput` | Skill handler (next-issue) |
 | `get-diff-output` | `skills.GetDiffOutput` | Skill handler (get-diff) |
 | `get-token-report-output` | `skills.GetTokenReportOutput` | Skill handler (token-report) |
 | `get-cleanup-output` | `skills.GetCleanupOutput` | Skill handler (cleanup survey) |

@@ -109,19 +109,19 @@ public final class GetWorkOutput implements SkillOutput
   }
 
   /**
-   * Builds the no executable tasks box.
+   * Builds the no executable issues box.
    *
    * @return the formatted box
    */
-  public String getNoExecutableTasks()
+  public String getNoExecutableIssues()
   {
     DisplayUtils display = scope.getDisplayUtils();
     return display.buildSimpleBox(
       "ℹ️",
-      "No executable tasks",
+      "No executable issues",
       List.of(
         "",
-        "Run /cat:status to see available tasks"));
+        "Run /cat:status to see available issues"));
   }
 
   /**
@@ -375,7 +375,7 @@ public final class GetWorkOutput implements SkillOutput
 
     List<String> contentLines = List.of(
       "",
-      "**" + scopeDescription + "** - all tasks complete!",
+      "**" + scopeDescription + "** - all issues complete!",
       "",
       completionMessage,
       "");

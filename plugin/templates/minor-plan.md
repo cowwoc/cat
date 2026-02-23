@@ -28,12 +28,12 @@
 - [pitfall 1]: [prevention]
 - [pitfall 2]: [prevention]
 
-## Tasks
-[Brief description of how tasks divide the work for this version]
+## Issues
+[Brief description of how issues divide the work for this version]
 
 ## Pre-conditions
 - Previous version complete (or no prerequisites)
 
 ## Post-conditions
-- All tasks complete
+- All issues complete
 - All requirements verified

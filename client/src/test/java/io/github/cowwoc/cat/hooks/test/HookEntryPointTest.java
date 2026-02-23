@@ -16,7 +16,7 @@ import io.github.cowwoc.cat.hooks.PostToolUseHook;
 import io.github.cowwoc.cat.hooks.PostReadHook;
 import io.github.cowwoc.cat.hooks.PreReadHook;
 import io.github.cowwoc.cat.hooks.UserPromptSubmitHook;
-import io.github.cowwoc.cat.hooks.PreTaskHook;
+import io.github.cowwoc.cat.hooks.PreIssueHook;
 
 import io.github.cowwoc.cat.hooks.PreWriteHook;
 import io.github.cowwoc.cat.hooks.HookInput;
@@ -602,7 +602,7 @@ public class HookEntryPointTest
       HookInput input = createInput(mapper, "{\"tool_name\": \"Read\"}");
       HookOutput output = new HookOutput(scope);
 
-      HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -622,7 +622,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test-session\"}");
       HookOutput output = new HookOutput(scope);
 
-      HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -713,7 +713,7 @@ public class HookEntryPointTest
         "\"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -733,7 +733,7 @@ public class HookEntryPointTest
         "{\"tool_name\": \"Task\", \"tool_input\": {}, \"session_id\": \"test\"}");
       HookOutput output = new HookOutput(scope);
 
-      HookResult hookResult = new PreTaskHook(scope).run(input, output);
+      HookResult hookResult = new PreIssueHook(scope).run(input, output);
 
       String result = hookResult.output().trim();
       requireThat(result, "result").isEqualTo("{}");
@@ -1407,7 +1407,7 @@ public class HookEntryPointTest
       TaskHandler handler1 = (toolInput, sessionId, cwd) -> TaskHandler.Result.warn("Warning from task handler 1");
       TaskHandler handler2 = (toolInput, sessionId, cwd) -> TaskHandler.Result.warn("Warning from task handler 2");
 
-      PreTaskHook dispatcher = new PreTaskHook(List.of(handler1, handler2));
+      PreIssueHook dispatcher = new PreIssueHook(List.of(handler1, handler2));
 
       JsonMapper mapper = scope.getJsonMapper();
       String inputJson = "{\"tool_name\": \"Task\", \"tool_input\": " +
