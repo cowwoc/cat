@@ -3,7 +3,7 @@
 - **Status:** open
 - **Progress:** 0%
 - **Dependencies:** []
-- **Blocks:** [ci-build-jlink-bundle]
+- **Blocks:** [add-java-build-to-ci]
 - **Last Updated:** 2026-02-20
 
 ## Decomposed Into
@@ -12,7 +12,6 @@
 - 2.1-java-skill-handlers (5 missing + verify 11 existing)
 - 2.1-java-bash-handlers (3 missing + verify 14 existing)
 - 2.1-java-other-handlers (6 missing + verify 6 existing)
-- 2.1-add-java-build-to-ci (JAR build step for SessionStart)
 - 2.1-migrate-enforce-hooks (EnforceWorktreeIsolation + EnforceStatusOutput to Java)
 - 2.1-migrate-token-counting (Python tiktoken to Java JTokkit)
 - 2.1-migrate-python-tests (18 Python test files to Java TestNG)
@@ -28,7 +27,7 @@
 ### Wave 2 (Sequential - Core)
 | Task | Est. Tokens | Dependencies |
 |------|-------------|--------------|
-| java-core-hooks | ~20K | java-jdk-infrastructure, add-java-build-to-ci |
+| java-core-hooks | ~20K | java-jdk-infrastructure |
 
 ### Wave 3 (Concurrent - Handlers + Token Counting)
 | Task | Est. Tokens | Dependencies |
@@ -38,7 +37,6 @@
 | java-other-handlers | ~25K | java-core-hooks |
 | migrate-enforce-hooks | ~15K | java-core-hooks |
 | migrate-token-counting | ~15K | java-core-hooks |
-| add-java-build-to-ci | ~10K | None (can start anytime) |
 
 ### Wave 4 (Sequential - Tests)
 | Task | Est. Tokens | Dependencies |
@@ -50,5 +48,5 @@
 |------|-------------|--------------|
 | cleanup-python-files | ~10K | migrate-python-tests |
 
-**Total sub-issues:** 10
-**Max concurrent:** 6 (in wave 3)
+**Total sub-issues:** 9
+**Max concurrent:** 5 (in wave 3)
