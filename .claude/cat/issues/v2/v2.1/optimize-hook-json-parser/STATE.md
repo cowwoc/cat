@@ -8,10 +8,10 @@
 - **Last Updated:** 2026-02-11
 
 ## Decomposed Into
-- hook-sh-fix
-- json-core-api-migration
-- json-complex-handler-migration
-- build-optimize-validate
+- 2.1-hook-sh-fix
+- 2.1-json-core-api-migration
+- 2.1-json-complex-handler-migration
+- 2.1-build-optimize-validate
 
 ## Parallel Execution Plan
 

@@ -8,11 +8,11 @@
 - **Last Updated:** 2026-01-26
 
 ## Decomposed Into
-- rename-task-scripts (sequence 1/5, no dependencies)
-- rename-task-in-skills (sequence 2/5, depends on scripts)
-- rename-task-in-concepts (sequence 3/5, depends on scripts)
-- rename-task-in-commands (sequence 4/5, depends on scripts)
-- rename-task-remaining (sequence 5/5, depends on all above)
+- 2.1-rename-task-scripts (sequence 1/5, no dependencies)
+- 2.1-rename-task-in-skills (sequence 2/5, depends on scripts)
+- 2.1-rename-task-in-concepts (sequence 3/5, depends on scripts)
+- 2.1-rename-task-in-commands (sequence 4/5, depends on scripts)
+- 2.1-rename-task-remaining (sequence 5/5, depends on all above)
 
 ## Parallel Execution Plan
 

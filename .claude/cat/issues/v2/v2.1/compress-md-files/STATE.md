@@ -7,12 +7,12 @@
 - **Last Updated:** 2026-01-26
 
 ## Decomposed Into
-- compress-skills-md (34 files)
-- compress-commands-md (10 files)
-- compress-concepts-md (18 files)
-- compress-templates-md (12 files)
-- compress-stakeholders-md (11 files)
-- compress-lang-md (1 file)
+- 2.1-compress-skills-md (34 files)
+- 2.1-compress-commands-md (10 files)
+- 2.1-compress-concepts-md (18 files)
+- 2.1-compress-templates-md (12 files)
+- 2.1-compress-stakeholders-md (11 files)
+- 2.1-compress-lang-md (1 file)
 
 ## Parallel Execution Plan
 
