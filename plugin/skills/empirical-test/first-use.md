@@ -1,8 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Empirical Compliance Test
 
 Systematically troubleshoot agent compliance failures using controlled experiments with statistical trials.
@@ -125,7 +125,8 @@ affect agent behavior.
 "priming_messages": [
   "User asked: What is the current branch?",
   {"type": "tool_use", "tool": "Bash", "input": {"command": "git branch --show-current"}, "output": "main"},
-  {"type": "tool_use", "tool": "Read", "input": {"file_path": "/workspace/README.md"}, "output": "# Project\n..."}
+  {"type": "tool_use", "tool": "Read", "input": {"file_path": "/workspace/README.md"}, "output": "# Project
+..."}
 ]
 ```
 
@@ -134,7 +135,8 @@ This generates the conversation:
 2. Assistant tool_use: Bash with command "git branch --show-current"
 3. User tool_result: "main"
 4. Assistant tool_use: Read with file_path "/workspace/README.md"
-5. User tool_result: "# Project\n..."
+5. User tool_result: "# Project
+..."
 6. User message: [test prompt]
 
 ## Step 3: Run Baseline and Confirm Failure

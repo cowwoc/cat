@@ -363,4 +363,104 @@ public class GetNextTaskOutputTest
       requireThat(result, "result").isNotEmpty();
     }
   }
+
+  /**
+   * Verifies that getOutput parses CLI-style arguments correctly.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputParsesArguments() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      String[] args = {
+        "--completed-issue", "2.1-test-issue",
+        "--base-branch", "v2.1",
+        "--session-id", "test-session-123",
+        "--project-dir", "/tmp"
+      };
+      String result = output.getOutput(args);
+      requireThat(result, "result").isNotEmpty();
+    }
+  }
+
+  /**
+   * Verifies that getOutput throws for missing required arguments.
+   *
+   * @throws IOException expected for missing arguments
+   */
+  @Test(expectedExceptions = IOException.class)
+  public void getOutputThrowsForMissingArguments() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      output.getOutput(new String[]{"--completed-issue", "2.1-test"});
+    }
+  }
+
+  /**
+   * Verifies that getOutput preserves JSON-like argument values containing curly braces.
+   * <p>
+   * This is the primary regression test for the zsh JSON quoting bug where arguments containing
+   * {@code {}} were silently dropped or corrupted before being passed to the Java layer.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputPreservesJsonArgWithCurlyBraces() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      String jsonValue = "{\"key\":\"value\"}";
+      String[] args = {
+        "--completed-issue", "2.1-test-issue",
+        "--base-branch", "v2.1",
+        "--session-id", "test-session-123",
+        "--project-dir", "/tmp",
+        "--exclude-pattern", jsonValue
+      };
+      String result = output.getOutput(args);
+      requireThat(result, "result").isNotEmpty();
+    }
+  }
+
+  /**
+   * Verifies that getOutput throws NullPointerException for null args.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test(expectedExceptions = NullPointerException.class)
+  public void getOutputThrowsOnNullArgs() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      output.getOutput(null);
+    }
+  }
+
+  /**
+   * Verifies that getOutput falls back to scope session ID and project dir when those arguments are omitted.
+   *
+   * @throws IOException if an I/O error occurs
+   */
+  @Test
+  public void getOutputFallsBackToScopeWhenSessionIdAndProjectDirOmitted() throws IOException
+  {
+    try (JvmScope scope = new TestJvmScope())
+    {
+      GetNextTaskOutput output = new GetNextTaskOutput(scope);
+      // Omit --session-id and --project-dir; scope provides defaults
+      String[] args = {
+        "--completed-issue", "2.1-test-issue",
+        "--base-branch", "v2.1"
+      };
+      String result = output.getOutput(args);
+      requireThat(result, "result").isNotEmpty();
+    }
+  }
 }

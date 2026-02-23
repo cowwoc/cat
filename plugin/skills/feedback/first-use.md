@@ -1,8 +1,8 @@
----
-description: "Internal skill for subagent preloading. Do not invoke directly."
-user-invocable: false
----
-
+<!--
+Copyright (c) 2026 Gili Tzabari. All rights reserved.
+Licensed under the CAT Commercial License.
+See LICENSE.md in the project root for license terms.
+-->
 # Feedback: File a Bug Report
 
 File a bug report for a CAT plugin issue on GitHub. Checks for duplicates before creating a new issue.
@@ -121,6 +121,8 @@ After opening the browser or finding a duplicate issue, display the result to th
 - If `status` is `"opened"`: "The issue creation page was opened in your browser. Please review the
   pre-filled details and click 'Submit new issue' to file the report."
 - If `status` is `"url_only"`: "Unable to open a browser automatically. Please open this URL to file
-  the report:\n\n`<url from JSON response>`"
+  the report:
+
+`<url from JSON response>`"
 - If duplicate found and user subscribed: "You are now subscribed to issue #N at [URL]."
 - If cancelled: "Cancelled. No issue was created."
