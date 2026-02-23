@@ -121,6 +121,8 @@ Before spawning, the main agent must be able to answer "yes" to all:
 4. Do I know exactly what "success" looks like?
 5. Have I specified what to do if things go wrong?
 6. Is my commit message written?
+7. If the subagent will write or edit files, have I included relevant project conventions
+   (e.g., line wrapping, license headers, language-specific style) in the prompt?
 
 If any answer is "no", do not spawn. Gather more information first.
 

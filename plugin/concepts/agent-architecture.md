@@ -188,6 +188,18 @@ COMPACTIONS=$(jq -s '[.[] | select(.type == "summary")] | length' "${SESSION_FIL
 
 **Output**: Print the JSON to stdout before exiting. Main agent will capture this.
 
+### Skill Invocation
+
+- **Subagents CAN invoke the Skill tool** — Not in the subagent exclusion set. Invokable at runtime, not just via
+  `skills:` frontmatter preloading. Empirically confirmed.
+- **Native skill listing fires only for main agent** — Claude Code's `<available_skills>` injection does NOT fire for
+  subagents. Subagents receive no skill listings from Claude Code itself.
+- **SubagentStartHook fills the gap** — Injects skill listings as `<system-reminder>` (`hook_additional_context` type).
+  This is the only mechanism that tells subagents which skills exist and when to invoke them.
+- **JSONL filtering of hook context** — Claude Code filters `hook_additional_context` from JSONL transcripts by
+  default. Set `CLAUDE_CODE_SAVE_HOOK_ADDITIONAL_CONTEXT=1` to include them. Skill listings are invisible in
+  transcripts but present in live context.
+
 ## Communication Flow
 
 ```
@@ -441,8 +453,9 @@ path resolution failures.
 **Context details:**
 
 1. **Skill preprocessing (`!` subprocess)**: The `!` line in SKILL.md runs load-skill.sh, which processes handler.sh
-   output AND skill content through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are string-substituted.
-   CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When skill content contains
+   output AND skill content through substitute_vars. Only CLAUDE_PLUGIN_ROOT and CLAUDE_SESSION_ID are
+   string-substituted. CLAUDE_PROJECT_DIR is neither substituted nor available as an env var. When skill content
+   contains
    `${CLAUDE_PROJECT_DIR}` in code blocks, it passes through as literal text — it resolves later because Claude copies
    those code blocks into Bash tool calls where the variable IS available via CLAUDE_ENV_FILE.
 
