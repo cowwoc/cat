@@ -7,11 +7,11 @@
 - **Last Updated:** 2026-02-13
 
 ## Decomposed Into
-- compress-concepts-batch-1 (agent-related: 3 files)
-- compress-concepts-batch-2 (execution-related: 3 files)
-- compress-concepts-batch-3 (git-related: 3 files)
-- compress-concepts-batch-4 (versioning-related: 4 files)
-- compress-concepts-batch-5 (process-related: 4 files)
+- 2.1-compress-concepts-batch-1 (agent-related: 3 files)
+- 2.1-compress-concepts-batch-2 (execution-related: 3 files)
+- 2.1-compress-concepts-batch-3 (git-related: 3 files)
+- 2.1-compress-concepts-batch-4 (versioning-related: 4 files)
+- 2.1-compress-concepts-batch-5 (process-related: 4 files)
 
 ## Parallel Execution Plan
 

@@ -14,12 +14,12 @@
 - get-cleanup-survey.sh → GetCleanupOutput.java
 
 ## Decomposed Into
-- port-licensing-to-java (feature-gate.sh, entitlements.sh, validate-license.py)
-- port-text-utilities-to-java (wrap-markdown.py, get-render-diff.sh, validate-status-alignment.sh)
-- port-analysis-to-java (analyze-session.py, migrate-retrospectives.py)
-- port-operational-scripts-to-java (monitor-subagents.sh, batch-read.sh, register-hook.sh)
-- cleanup-ported-scripts (remove old scripts, update skill references - already exists)
-- wire-remaining-java-equivalents (add main() methods, jlink launchers, update skill refs, remove old scripts)
+- 2.1-port-licensing-to-java (feature-gate.sh, entitlements.sh, validate-license.py)
+- 2.1-port-text-utilities-to-java (wrap-markdown.py, get-render-diff.sh, validate-status-alignment.sh)
+- 2.1-port-analysis-to-java (analyze-session.py, migrate-retrospectives.py)
+- 2.1-port-operational-scripts-to-java (monitor-subagents.sh, batch-read.sh, register-hook.sh)
+- 2.1-cleanup-ported-scripts (remove old scripts, update skill references - already exists)
+- 2.1-wire-remaining-java-equivalents (add main() methods, jlink launchers, update skill refs, remove old scripts)
 
 ## Parallel Execution Plan
 

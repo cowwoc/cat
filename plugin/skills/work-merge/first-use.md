@@ -208,6 +208,8 @@ for parent_dir in "$VERSION_DIR"/*/; do
     while IFS= read -r subissue; do
       subissue=$(echo "$subissue" | sed 's/^- //' | cut -d' ' -f1 | tr -d '()')
       [[ -z "$subissue" ]] && continue
+      # Strip version prefix from fully-qualified names (e.g., "2.1-fix-bug" -> "fix-bug")
+      subissue=$(echo "$subissue" | sed 's/^[0-9][0-9]*\.[0-9][0-9]*[a-z]*-//')
       subissue_state="$VERSION_DIR/$subissue/STATE.md"
       if [[ -f "$subissue_state" ]]; then
         st=$(grep -oP '(?<=\*\*Status:\*\* ).*' "$subissue_state" | head -1 | tr -d ' ')

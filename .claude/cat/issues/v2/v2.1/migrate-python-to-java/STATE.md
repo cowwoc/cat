@@ -7,16 +7,16 @@
 - **Last Updated:** 2026-02-20
 
 ## Decomposed Into
-- java-jdk-infrastructure (JDK bundle, bootstrap scripts)
-- java-core-hooks (wire up entry points in hooks.json)
-- java-skill-handlers (5 missing + verify 11 existing)
-- java-bash-handlers (3 missing + verify 14 existing)
-- java-other-handlers (6 missing + verify 6 existing)
-- add-java-build-to-ci (JAR build step for SessionStart)
-- migrate-enforce-hooks (EnforceWorktreeIsolation + EnforceStatusOutput to Java)
-- migrate-token-counting (Python tiktoken to Java JTokkit)
-- migrate-python-tests (18 Python test files to Java TestNG)
-- cleanup-python-files (remove all Python hook/test files)
+- 2.1-java-jdk-infrastructure (JDK bundle, bootstrap scripts)
+- 2.1-java-core-hooks (wire up entry points in hooks.json)
+- 2.1-java-skill-handlers (5 missing + verify 11 existing)
+- 2.1-java-bash-handlers (3 missing + verify 14 existing)
+- 2.1-java-other-handlers (6 missing + verify 6 existing)
+- 2.1-add-java-build-to-ci (JAR build step for SessionStart)
+- 2.1-migrate-enforce-hooks (EnforceWorktreeIsolation + EnforceStatusOutput to Java)
+- 2.1-migrate-token-counting (Python tiktoken to Java JTokkit)
+- 2.1-migrate-python-tests (18 Python test files to Java TestNG)
+- 2.1-cleanup-python-files (remove all Python hook/test files)
 
 ## Parallel Execution Plan
 

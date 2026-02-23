@@ -37,7 +37,10 @@ all_subissues_closed() {
     parent_version_dir=$(dirname "$issue_dir")
 
     for subissue in $subissue_names; do
-        local subissue_state="${parent_version_dir}/${subissue}/STATE.md"
+        # Strip version prefix from fully-qualified names (e.g., "2.1-fix-bug" -> "fix-bug")
+        local subissue_dir
+        subissue_dir=$(echo "$subissue" | sed 's/^[0-9][0-9]*\.[0-9][0-9]*[a-z]*-//')
+        local subissue_state="${parent_version_dir}/${subissue_dir}/STATE.md"
         if [[ -f "$subissue_state" ]]; then
             local subissue_status
             subissue_status=$(grep -E "^\- \*\*Status:\*\*" "$subissue_state" 2>/dev/null | sed 's/.*\*\*Status:\*\* //' | tr -d ' ')

@@ -368,7 +368,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "1", "sub-task", "open");
         // Create a decomposed parent
         createDecomposedParent(projectDir, "2", "1", "parent-task", "open",
-          "sub-task");
+          "2.1-sub-task");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         // Only parent-task should be skipped, sub-task should be found
@@ -404,7 +404,7 @@ public class IssueDiscoveryTest
         createIssue(projectDir, "2", "1", "sub-task", "closed");
         // Create a decomposed parent with in-progress status (all sub-issues closed)
         createDecomposedParent(projectDir, "2", "1", "parent-task", "in-progress",
-          "sub-task");
+          "2.1-sub-task");
 
         IssueDiscovery discovery = new IssueDiscovery(scope);
         SearchOptions options = new SearchOptions(Scope.ISSUE, "2.1-parent-task", sessionId, "", false);
